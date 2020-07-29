@@ -28,6 +28,7 @@ import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
+import ExploreQueryInspector from './ExploreQueryInspector';
 import {
   addQueryRow,
   changeSize,
@@ -130,6 +131,7 @@ export interface ExploreProps {
 
 interface ExploreState {
   showRichHistory: boolean;
+  showQueryInspector: boolean;
 }
 
 /**
@@ -165,6 +167,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.exploreEvents = new Emitter();
     this.state = {
       showRichHistory: false,
+      showQueryInspector: false,
     };
   }
 
@@ -281,6 +284,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     });
   };
 
+  toggleShowQueryInspector = () => {
+    this.setState(state => {
+      return {
+        showQueryInspector: !state.showQueryInspector,
+      };
+    });
+  };
+
   refreshExplore = () => {
     const { exploreId, update } = this.props;
 
@@ -319,7 +330,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       showLogs,
       showTrace,
     } = this.props;
-    const { showRichHistory } = this.state;
+    const { showRichHistory, showQueryInspector } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles(theme);
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
@@ -343,8 +354,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 //TODO:unification
                 addQueryRowButtonHidden={false}
                 richHistoryButtonActive={showRichHistory}
+                queryInspectorButtonActive={showQueryInspector}
                 onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                 onClickRichHistoryButton={this.toggleShowRichHistory}
+                onClickQueryInspectorButton={this.toggleShowQueryInspector}
               />
             </div>
             <ErrorContainer queryError={queryError} />
@@ -419,6 +432,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           width={width}
                           exploreId={exploreId}
                           onClose={this.toggleShowRichHistory}
+                        />
+                      )}
+                      {showQueryInspector && (
+                        <ExploreQueryInspector
+                          exploreId={exploreId}
+                          width={width}
+                          onClose={this.toggleShowQueryInspector}
                         />
                       )}
                     </ErrorBoundaryAlert>
