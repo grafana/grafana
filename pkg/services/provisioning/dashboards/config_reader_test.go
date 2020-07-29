@@ -26,9 +26,8 @@ func TestDashboardsAsConfig(t *testing.T) {
 		sqlstore.InitTestDB(t)
 		for _, index := range []int{1, 2} {
 			orgCommand := models.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", index)}
-			if err := sqlstore.CreateOrg(&orgCommand); err != nil {
-				t.Fatal(err)
-			}
+			err := sqlstore.CreateOrg(&orgCommand)
+			require.NoError(t, err)
 		}
 
 		t.Run("default values should be applied", func(t *testing.T) {

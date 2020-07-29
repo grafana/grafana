@@ -32,7 +32,7 @@ func TestNotificationAsConfig(t *testing.T) {
 	Convey("Testing notification as configuration", t, func() {
 		sqlstore.InitTestDB(t)
 
-		for _, index := range []int{1, 2, 3, 4} {
+		for i := 1; i < 5; i++ {
 			orgCommand := models.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", index)}
 			err := sqlstore.CreateOrg(&orgCommand)
 			So(err, ShouldBeNil)

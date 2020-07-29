@@ -98,7 +98,7 @@ func (cr *configReader) validateDefaultUniqueness(datasources []*configs) error 
 			}
 
 			if err := cr.validateAccessAndOrgID(ds); err != nil {
-				return fmt.Errorf("failed to provision %s datasource: %w", ds.Name, err)
+				return fmt.Errorf("failed to provision %q data source: %w", ds.Name, err)
 			}
 
 			if ds.IsDefault {

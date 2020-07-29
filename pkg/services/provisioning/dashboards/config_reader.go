@@ -90,7 +90,7 @@ func (cr *configReader) readConfig() ([]*config, error) {
 		}
 
 		if err := utils.CheckOrgExists(dashboard.OrgID); err != nil {
-			return nil, fmt.Errorf("failed to provision dashboards with %s reader: %w", dashboard.Name, err)
+			return nil, fmt.Errorf("failed to provision dashboards with %q reader: %w", dashboard.Name, err)
 		}
 
 		if dashboard.Type == "" {

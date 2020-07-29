@@ -86,7 +86,7 @@ func checkOrgIDAndOrgName(notifications []*notificationsAsConfig) error {
 				}
 			} else {
 				if err := utils.CheckOrgExists(notification.OrgID); err != nil {
-					return fmt.Errorf("failed to provision %s notification: %w", notification.Name, err)
+					return fmt.Errorf("failed to provision %q notification: %w", notification.Name, err)
 				}
 			}
 		}
