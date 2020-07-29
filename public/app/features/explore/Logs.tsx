@@ -18,7 +18,7 @@ import {
 import { LegacyForms, LogLabels, ToggleButtonGroup, ToggleButton, LogRows, Button } from '@grafana/ui';
 const { Switch } = LegacyForms;
 import store from 'app/core/store';
-import { SortOrder, sortInAscendingOrder, sortInDescendingOrder } from 'app/core/utils/explore';
+import { SortOrder, sortLogRows } from 'app/core/utils/explore';
 
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { MetaInfoText } from './MetaInfoText';
@@ -152,15 +152,6 @@ export class Logs extends PureComponent<Props, State> {
     }
   };
 
-  orderLogs = (logRows: LogRowModel[], logsSortOrder: SortOrder | null): LogRowModel[] => {
-    if (logsSortOrder === null) {
-      return logRows;
-    }
-    return logsSortOrder === SortOrder.Ascending
-      ? logRows.sort(sortInAscendingOrder)
-      : logRows.sort(sortInDescendingOrder);
-  };
-
   render() {
     const {
       logRows,
@@ -275,7 +266,7 @@ export class Logs extends PureComponent<Props, State> {
           wrapLogMessage={wrapLogMessage}
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
-          orderLogs={this.orderLogs}
+          orderLogs={sortLogRows}
           logsOrder={logsOrder}
         />
 
