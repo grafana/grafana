@@ -666,22 +666,22 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	provisioningConfig := iniFile.Section("provisioning")
-	provisioningDatasourcesPath, err := valueAsString(provisioningConfig, "datasources_path", path.Join(provisioning, "datasources"))
+	provisioningDatasourcesPath, err := valueAsString(provisioningConfig, "datasources_path", filepath.Join(provisioning, "datasources"))
 	if err != nil {
 		return err
 	}
 	cfg.ProvisioningDatasourcesPath = makeAbsolute(provisioningDatasourcesPath, HomePath)
-	provisioningDashboardsPath, err := valueAsString(provisioningConfig, "dashboards_path", path.Join(provisioning, "dashboards"))
+	provisioningDashboardsPath, err := valueAsString(provisioningConfig, "dashboards_path", filepath.Join(provisioning, "dashboards"))
 	if err != nil {
 		return err
 	}
 	cfg.ProvisioningDashboardsPath = makeAbsolute(provisioningDashboardsPath, HomePath)
-	provisioningNotifiersPath, err := valueAsString(provisioningConfig, "notifiers_path", path.Join(provisioning, "notifiers"))
+	provisioningNotifiersPath, err := valueAsString(provisioningConfig, "notifiers_path", filepath.Join(provisioning, "notifiers"))
 	if err != nil {
 		return err
 	}
 	cfg.ProvisioningNotifiersPath = makeAbsolute(provisioningNotifiersPath, HomePath)
-	provisioningPluginsPath, err := valueAsString(provisioningConfig, "plugins_path", path.Join(provisioning, "plugins"))
+	provisioningPluginsPath, err := valueAsString(provisioningConfig, "plugins_path", filepath.Join(provisioning, "plugins"))
 	if err != nil {
 		return err
 	}
@@ -1187,7 +1187,7 @@ func (cfg *Cfg) LogConfigSources() {
 	cfg.Logger.Info("Path Data", "path", cfg.DataPath)
 	cfg.Logger.Info("Path Logs", "path", cfg.LogsPath)
 	cfg.Logger.Info("Path Plugins", "path", PluginsPath)
-	cfg.Logger.Info("Path Datasources Provisioning", "path", cfg.ProvisioningDatasourcesPath)
+	cfg.Logger.Info("Path Data Sources Provisioning", "path", cfg.ProvisioningDatasourcesPath)
 	cfg.Logger.Info("Path Dashboards Provisioning", "path", cfg.ProvisioningDashboardsPath)
 	cfg.Logger.Info("Path Notifiers Provisioning", "path", cfg.ProvisioningNotifiersPath)
 	cfg.Logger.Info("Path Plugins Provisioning", "path", cfg.ProvisioningPluginsPath)
