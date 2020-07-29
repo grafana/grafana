@@ -298,7 +298,7 @@ func TestLoadingSettings(t *testing.T) {
 	})
 
 	Convey("Test reading provisioning config", t, func() {
-		Convey("By default it should use provisioning folder setting", func() {
+		Convey("By default it should use the provisioning folder setting", func() {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
@@ -310,7 +310,7 @@ func TestLoadingSettings(t *testing.T) {
 			So(cfg.ProvisioningPluginsPath, ShouldEqual, "../../conf/provisioning/plugins")
 		})
 
-		Convey("With settings in provisioning section it should override defaults", func() {
+		Convey("With settings in the provisioning section it should override defaults", func() {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
