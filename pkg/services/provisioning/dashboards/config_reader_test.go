@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -22,10 +23,16 @@ var (
 func TestDashboardsAsConfig(t *testing.T) {
 	t.Run("Dashboards as configuration", func(t *testing.T) {
 		logger := log.New("test-logger")
-
 		sqlstore.InitTestDB(t)
-		for _, index := range []int{1, 2} {
-			orgCommand := models.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", index)}
+
+		t.Run("Should fail if orgs don't exist in the database", func(t *testing.T) {
+			cfgProvider := configReader{path: appliedDefaults, log: logger}
+			_, err := cfgProvider.readConfig()
+			require.Equal(t, errors.Unwrap(err), models.ErrOrgNotFound)
+		})
+
+		for i := 1; i <= 2; i++ {
+			orgCommand := models.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", i)}
 			err := sqlstore.CreateOrg(&orgCommand)
 			require.NoError(t, err)
 		}
