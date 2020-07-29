@@ -75,7 +75,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 
 		meta, exists := enabledPlugins.DataSources[ds.Type]
 		if !exists {
-			log.Error(3, "Could not find plugin definition for data source: %v", ds.Type)
+			log.Errorf(3, "Could not find plugin definition for data source: %v", ds.Type)
 			continue
 		}
 
@@ -167,11 +167,23 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		}
 	}
 
+	hideVersion := hs.Cfg.AnonymousHideVersion && !c.IsSignedIn
+	version := setting.BuildVersion
+	commit := setting.BuildCommit
+	buildstamp := setting.BuildStamp
+
+	if hideVersion {
+		version = ""
+		commit = ""
+		buildstamp = 0
+	}
+
 	jsonObj := map[string]interface{}{
 		"defaultDatasource":          defaultDatasource,
 		"datasources":                datasources,
 		"minRefreshInterval":         setting.MinRefreshInterval,
 		"panels":                     panels,
+		"appUrl":                     setting.AppUrl,
 		"appSubUrl":                  setting.AppSubUrl,
 		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":           setting.AuthProxyEnabled,
@@ -181,7 +193,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
 		"alertingMinInterval":        setting.AlertingMinInterval,
 		"autoAssignOrg":              setting.AutoAssignOrg,
-		"verfiyEmailEnabled":         setting.VerifyEmailEnabled,
+		"verifyEmailEnabled":         setting.VerifyEmailEnabled,
 		"exploreEnabled":             setting.ExploreEnabled,
 		"googleAnalyticsId":          setting.GoogleAnalyticsId,
 		"disableLoginForm":           setting.DisableLoginForm,
@@ -196,9 +208,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
 		"pluginsToPreload":           pluginsToPreload,
 		"buildInfo": map[string]interface{}{
-			"version":       setting.BuildVersion,
-			"commit":        setting.BuildCommit,
-			"buildstamp":    setting.BuildStamp,
+			"hideVersion":   hideVersion,
+			"version":       version,
+			"commit":        commit,
+			"buildstamp":    buildstamp,
 			"edition":       hs.License.Edition(),
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,

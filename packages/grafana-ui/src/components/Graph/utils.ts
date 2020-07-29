@@ -3,6 +3,7 @@ import {
   Field,
   formattedValueToString,
   getDisplayProcessor,
+  getFieldDisplayName,
   TimeZone,
   dateTimeFormat,
   localTimeFormat,
@@ -92,7 +93,7 @@ export const getMultiSeriesGraphHoverInfo = (
       datapointIndex: hoverIndex,
       seriesIndex: i,
       color: disp.color,
-      label: field.name,
+      label: getFieldDisplayName(field),
       time: time.display ? formattedValueToString(time.display(pointTime)) : pointTime,
     });
   }

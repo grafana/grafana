@@ -20,6 +20,7 @@ export interface BuildInfo {
   edition: string;
   latestVersion: string;
   hasUpdate: boolean;
+  hideVersion: boolean;
 }
 
 /**
@@ -30,14 +31,17 @@ export interface BuildInfo {
  * @public
  */
 export interface FeatureToggles {
-  transformations: boolean;
+  live: boolean;
   expressions: boolean;
-  newEdit: boolean;
+
   /**
    * @remarks
    * Available only in Grafana Enterprise
    */
   meta: boolean;
+  datasourceInsights: boolean;
+  reportGrid: boolean;
+  standaloneAlerts: boolean;
 }
 
 /**

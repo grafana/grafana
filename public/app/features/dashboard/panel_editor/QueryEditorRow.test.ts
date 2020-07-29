@@ -53,7 +53,11 @@ describe('filterPanelDataToQuery', () => {
     } as unknown) as PanelData;
 
     const panelData = filterPanelDataToQuery(withError, 'B');
+    expect(panelData).toBeDefined();
+
+    // @ts-ignore typescript doesn't understand that panelData can't be undefined here
     expect(panelData.state).toBe(LoadingState.Error);
+    // @ts-ignore typescript doesn't understand that panelData can't be undefined here
     expect(panelData.error).toBe(withError.error);
   });
 });

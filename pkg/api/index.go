@@ -342,6 +342,12 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 			{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "graph-bar"},
 		}
 
+		if hs.Live != nil {
+			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+				Text: "Live", Id: "live", Url: setting.AppSubUrl + "/admin/live", Icon: "water",
+			})
+		}
+
 		if setting.LDAPEnabled {
 			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 				Text: "LDAP", Id: "ldap", Url: setting.AppSubUrl + "/admin/ldap", Icon: "book",
@@ -360,9 +366,14 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		})
 	}
 
+	helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
+	if hs.Cfg.AnonymousHideVersion && !c.IsSignedIn {
+		helpVersion = setting.ApplicationName
+	}
+
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
 		Text:         "Help",
-		SubTitle:     fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit),
+		SubTitle:     helpVersion,
 		Id:           "help",
 		Url:          "#",
 		Icon:         "question-circle",

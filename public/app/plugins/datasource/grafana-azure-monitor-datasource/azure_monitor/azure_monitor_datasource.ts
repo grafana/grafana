@@ -8,8 +8,9 @@ import {
   AzureDataSourceJsonData,
   AzureMonitorMetricDefinitionsResponse,
   AzureMonitorResourceGroupsResponse,
+  AzureQueryType,
 } from '../types';
-import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
+import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
 import { getBackendSrv, DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
 const defaultDropdownValue = 'select';
@@ -31,8 +32,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     this.subscriptionId = instanceSettings.jsonData.subscriptionId;
     this.cloudName = instanceSettings.jsonData.cloudName || 'azuremonitor';
     this.baseUrl = `/${this.cloudName}/subscriptions`;
-    this.url = instanceSettings.url;
-
+    this.url = instanceSettings.url!;
     this.supportedMetricNamespaces = new SupportedNamespaces(this.cloudName).get();
   }
 
@@ -43,13 +43,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   filterQuery(item: AzureMonitorQuery): boolean {
     return (
       item.hide !== true &&
-      item.azureMonitor.resourceGroup &&
       item.azureMonitor.resourceGroup !== defaultDropdownValue &&
-      item.azureMonitor.resourceName &&
       item.azureMonitor.resourceName !== defaultDropdownValue &&
-      item.azureMonitor.metricDefinition &&
       item.azureMonitor.metricDefinition !== defaultDropdownValue &&
-      item.azureMonitor.metricName &&
       item.azureMonitor.metricName !== defaultDropdownValue
     );
   }
@@ -73,12 +69,21 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const aggregation = templateSrv.replace(item.aggregation, scopedVars);
     const top = templateSrv.replace(item.top || '', scopedVars);
 
+    const dimensionsFilters = item.dimensionFilters
+      .filter(f => f.dimension && f.dimension !== 'None')
+      .map(f => {
+        const filter = templateSrv.replace(f.filter ?? '', scopedVars);
+        return {
+          dimension: templateSrv.replace(f.dimension, scopedVars),
+          operator: f.operator || 'eq',
+          filter: filter || '*', // send * when empty
+        };
+      });
+
     return {
       refId: target.refId,
       subscription: subscriptionId,
-      queryType: 'Azure Monitor',
-      type: 'timeSeriesQuery',
-      raw: false,
+      queryType: AzureQueryType.AzureMonitor,
       azureMonitor: {
         resourceGroup,
         resourceName,
@@ -89,16 +94,21 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
         metricNamespace:
           metricNamespace && metricNamespace !== defaultDropdownValue ? metricNamespace : metricDefinition,
         aggregation: aggregation,
-        dimension: templateSrv.replace(item.dimension, scopedVars),
+        dimensionsFilters,
         top: top || '10',
-        dimensionFilter: templateSrv.replace(item.dimensionFilter, scopedVars),
         alias: item.alias,
         format: target.format,
       },
     };
   }
 
-  metricFindQuery(query: string) {
+  /**
+   * This is named differently than DataSourceApi.metricFindQuery
+   * because it's not exposed to Grafana like the main AzureMonitorDataSource.
+   * And some of the azure internal data sources return null in this function, which the
+   * external interface does not support
+   */
+  metricFindQueryInternal(query: string): Promise<MetricFindValue[]> | null {
     const subscriptionsQuery = query.match(/^Subscriptions\(\)/i);
     if (subscriptionsQuery) {
       return this.getSubscriptions();
@@ -187,7 +197,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       return this.getMetricNames(subscription, resourceGroup, metricDefinition, resourceName, metricNamespace);
     }
 
-    return undefined;
+    return null;
   }
 
   toVariable(metric: string) {
@@ -386,7 +396,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
   }
 
-  isValidConfigField(field: string) {
+  isValidConfigField(field?: string) {
     return field && field.length > 0;
   }
 

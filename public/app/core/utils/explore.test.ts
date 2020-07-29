@@ -8,30 +8,30 @@ import {
   hasNonEmptyQuery,
   parseUrlState,
   refreshIntervalToSortOrder,
-  serializeStateToUrlParam,
   sortLogsResult,
   SortOrder,
   updateHistory,
+  getExploreUrl,
+  GetExploreUrlArguments,
 } from './explore';
-import { ExploreUrlState } from 'app/types/explore';
 import store from 'app/core/store';
 import {
   DataQueryError,
   dateTime,
-  ExploreMode,
   LogLevel,
   LogRowModel,
   LogsDedupStrategy,
   LogsModel,
   MutableDataFrame,
+  ExploreUrlState,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
+import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: '',
   queries: [],
   range: DEFAULT_RANGE,
-  mode: ExploreMode.Metrics,
   ui: {
     showingGraph: true,
     showingTable: true,
@@ -65,10 +65,26 @@ describe('state functions', () => {
     });
 
     it('returns a valid Explore state from a compact URL parameter', () => {
-      const paramValue = '%5B"now-1h","now","Local","5m",%7B"expr":"metric"%7D,"ui"%5D';
+      // ["now-1h","now","Local",{"expr":"metric"},{"ui":[true,true,true,"none"]}]
+      const paramValue =
+        '%5B"now-1h","now","Local",%7B"expr":"metric"%7D,%7B%22ui%22:%5Btrue,true,true,%22none%22%5D%7D%5D';
       expect(parseUrlState(paramValue)).toMatchObject({
         datasource: 'Local',
         queries: [{ expr: 'metric' }],
+        range: {
+          from: 'now-1h',
+          to: 'now',
+        },
+      });
+    });
+
+    it('should return queries if queryType is present in the url', () => {
+      // ["now-1h","now","x-ray-datasource",{"queryType":"getTraceSummaries"},{"ui":[true,true,true,"none"]}]
+      const paramValue =
+        '%5B"now-1h","now","x-ray-datasource",%7B"queryType":"getTraceSummaries"%7D,%7B%22ui%22:%5Btrue,true,true,%22none%22%5D%7D%5D';
+      expect(parseUrlState(paramValue)).toMatchObject({
+        datasource: 'x-ray-datasource',
+        queries: [{ queryType: 'getTraceSummaries' }],
         range: {
           from: 'now-1h',
           to: 'now',
@@ -99,7 +115,6 @@ describe('state functions', () => {
       expect(serializeStateToUrlParam(state)).toBe(
         '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}"},' +
           '{"expr":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"},' +
-          '"mode":"Metrics",' +
           '"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true,"dedupStrategy":"none"}}'
       );
     });
@@ -122,7 +137,7 @@ describe('state functions', () => {
         },
       };
       expect(serializeStateToUrlParam(state, true)).toBe(
-        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"},{"mode":"Metrics"},{"ui":[true,true,true,"none"]}]'
+        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"},{"ui":[true,true,true,"none"]}]'
       );
     });
   });
@@ -171,6 +186,32 @@ describe('state functions', () => {
       const parsed = parseUrlState(serialized);
       expect(state).toMatchObject(parsed);
     });
+  });
+});
+
+describe('getExploreUrl', () => {
+  const args = ({
+    panel: {
+      getSavedId: () => 1,
+    },
+    panelTargets: [{ refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' }],
+    panelDatasource: {
+      name: 'testDataSource',
+      meta: {
+        id: '1',
+      },
+    },
+    datasourceSrv: {
+      get: jest.fn(),
+      getDataSourceById: jest.fn(),
+    },
+    timeSrv: {
+      timeRangeForUrl: () => '1',
+    },
+  } as unknown) as GetExploreUrlArguments;
+
+  it('should omit legendFormat in explore url', () => {
+    expect(getExploreUrl(args).then(data => expect(data).not.toMatch(/legendFormat1/g)));
   });
 });
 

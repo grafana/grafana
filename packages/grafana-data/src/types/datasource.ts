@@ -15,20 +15,10 @@ export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonDat
 }
 
 // Utility type to extract the query type TQuery from a class extending DataSourceApi<TQuery, TOptions>
-export type DataSourceQueryType<DSType extends DataSourceApi<any, any>> = DSType extends DataSourceApi<
-  infer TQuery,
-  infer _TOptions
->
-  ? TQuery
-  : never;
+export type DataSourceQueryType<DSType> = DSType extends DataSourceApi<infer TQuery, any> ? TQuery : never;
 
 // Utility type to extract the options type TOptions from a class extending DataSourceApi<TQuery, TOptions>
-export type DataSourceOptionsType<DSType extends DataSourceApi<any, any>> = DSType extends DataSourceApi<
-  infer _TQuery,
-  infer TOptions
->
-  ? TOptions
-  : never;
+export type DataSourceOptionsType<DSType> = DSType extends DataSourceApi<any, infer TOptions> ? TOptions : never;
 
 export class DataSourcePlugin<
   DSType extends DataSourceApi<TQuery, TOptions>,
@@ -310,7 +300,6 @@ export interface QueryEditorProps<
    * Contains query response filtered by refId of QueryResultBase and possible query error
    */
   data?: PanelData;
-  exploreMode?: ExploreMode;
   exploreId?: any;
   history?: HistoryItem[];
 }
@@ -334,13 +323,11 @@ export interface ExploreQueryFieldProps<
   history: any[];
   onBlur?: () => void;
   absoluteRange?: AbsoluteTimeRange;
-  exploreMode?: ExploreMode;
   exploreId?: any;
 }
 
 export interface ExploreStartPageProps {
-  datasource?: DataSourceApi;
-  exploreMode: ExploreMode;
+  datasource: DataSourceApi;
   onClickExample: (query: DataQuery) => void;
   exploreId?: any;
 }
@@ -426,11 +413,9 @@ export interface DataQueryError {
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   requestId: string; // Used to identify results and optionally cancel the request in backendSrv
 
-  dashboardId: number;
   interval: string;
-  intervalMs?: number;
+  intervalMs: number;
   maxDataPoints?: number;
-  panelId: number;
   range: TimeRange;
   reverse?: boolean;
   scopedVars: ScopedVars;
@@ -442,10 +427,17 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   exploreMode?: ExploreMode;
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
+  panelId?: number;
+  dashboardId?: number;
 
   // Request Timing
   startTime: number;
   endTime?: number;
+
+  // Explore state used by various datasources
+  liveStreaming?: boolean;
+  showingGraph?: boolean;
+  showingTable?: boolean;
 }
 
 export interface DataQueryTimings {
@@ -453,7 +445,6 @@ export interface DataQueryTimings {
 }
 
 export interface QueryFix {
-  type: string;
   label: string;
   action?: QueryFixAction;
 }
@@ -472,6 +463,7 @@ export interface QueryHint {
 
 export interface MetricFindValue {
   text: string;
+  expandable?: boolean;
 }
 
 export interface DataSourceJsonData {
@@ -500,7 +492,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   isDefault: boolean;
   jsonData: T;
   secureJsonData?: S;
-  secureJsonFields?: KeyValue<boolean>;
+  secureJsonFields: KeyValue<boolean>;
   readOnly: boolean;
   withCredentials: boolean;
   version?: number;

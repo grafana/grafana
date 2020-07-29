@@ -52,6 +52,7 @@ export const Pages = {
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
         saveDashBoard: 'Dashboard settings aside actions Save button',
         saveAsDashBoard: 'Dashboard settings aside actions Save As button',
+        timezone: 'Time zone picker select container',
         title: 'Dashboard settings page title',
       },
       Variables: {

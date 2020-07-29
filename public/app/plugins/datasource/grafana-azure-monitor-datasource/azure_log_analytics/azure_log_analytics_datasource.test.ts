@@ -1,14 +1,15 @@
 import AzureMonitorDatasource from '../datasource';
 import FakeSchemaData from './__mocks__/schema';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { KustoSchema, AzureLogsVariable } from '../types';
+import { AzureLogsVariable, KustoSchema } from '../types';
 import { toUtc } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { backendSrv } from 'app/core/services/backend_srv';
 
 const templateSrv = new TemplateSrv();
 
+jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
   getTemplateSrv: () => templateSrv,
 }));

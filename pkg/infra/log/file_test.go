@@ -17,7 +17,6 @@ func (w *FileLogWriter) WriteLine(line string) error {
 }
 
 func TestLogFile(t *testing.T) {
-
 	Convey("When logging to file", t, func() {
 		fileLogWrite := NewFileWriter()
 		So(fileLogWrite, ShouldNotBeNil)

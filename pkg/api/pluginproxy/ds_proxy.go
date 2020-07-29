@@ -73,7 +73,7 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 // NewDataSourceProxy creates a new Datasource proxy
 func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
 	proxyPath string, cfg *setting.Cfg) (*DataSourceProxy, error) {
-	targetURL, err := datasource.ValidateURL(ds.Url)
+	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
 	if err != nil {
 		return nil, err
 	}
@@ -159,19 +159,20 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 
 		reqQueryVals := req.URL.Query()
 
-		if proxy.ds.Type == models.DS_INFLUXDB_08 {
+		switch proxy.ds.Type {
+		case models.DS_INFLUXDB_08:
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Database+"/"+proxy.proxyPath)
 			reqQueryVals.Add("u", proxy.ds.User)
 			reqQueryVals.Add("p", proxy.ds.DecryptedPassword())
 			req.URL.RawQuery = reqQueryVals.Encode()
-		} else if proxy.ds.Type == models.DS_INFLUXDB {
+		case models.DS_INFLUXDB:
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 			req.URL.RawQuery = reqQueryVals.Encode()
 			if !proxy.ds.BasicAuth {
 				req.Header.Del("Authorization")
 				req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.User, proxy.ds.DecryptedPassword()))
 			}
-		} else {
+		default:
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 		}
 

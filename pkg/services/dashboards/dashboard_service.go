@@ -103,7 +103,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 	if !util.IsValidShortUID(dash.Uid) {
 		return nil, models.ErrDashboardInvalidUid
 	} else if len(dash.Uid) > 40 {
-		return nil, models.ErrDashboardUidToLong
+		return nil, models.ErrDashboardUidTooLong
 	}
 
 	if err := validateDashboardRefreshInterval(dash); err != nil {
@@ -277,7 +277,6 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDash
 }
 
 func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error) {
-
 	cmd, err := dr.buildSaveDashboardCommand(dto, true, !allowUiUpdate)
 	if err != nil {
 		return nil, err

@@ -2,22 +2,11 @@ version: 2.1
 
 aliases:
   # Workflow filters
-  # filter-all triggers for all branches and version tags
-  - &filter-all
-    tags:
-      only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
   - &filter-only-release
     branches:
       only: chore/test-release-pipeline
     tags:
       only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
-  - &filter-not-release-or-master
-    tags:
-      ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
-    branches:
-      ignore:
-        - master
-        - chore/test-release-pipeline
   - &filter-only-master
     branches:
       only: master
@@ -35,13 +24,13 @@ executors:
       - image: cimg/base:stable
   node:
     docker:
-      - image: cimg/node:12.16
+      - image: cimg/node:12.18
   go:
     docker:
       - image: cimg/go:1.14
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.19
+      - image: grafana/build-container:1.2.20
   grafana-publish:
     docker:
       - image: grafana/grafana-ci-deploy:1.2.5
@@ -56,7 +45,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.4.11
+            VERSION=0.4.25
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -625,11 +614,12 @@ jobs:
       - run:
           name: Install gcloud SDK
           command: |
-            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | \
-              sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
-              sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-            sudo apt-get update && sudo apt-get install google-cloud-sdk
+            VERSION=298.0.0
+            curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+            echo 0d58f451331abf43d080fa997c8e580d64897627e30be74f6d8f983ccfabef1e \
+              google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz | sha256sum --check --strict --status
+            tar xf google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz
+            ./google-cloud-sdk/install.sh -q
       # XXX: Is this necessary?
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run:
@@ -639,6 +629,7 @@ jobs:
       - run:
           name: Build Docker images
           command: |
+            source google-cloud-sdk/path.bash.inc
             if [[ -n $CIRCLE_TAG || $CIRCLE_BRANCH == "chore/test-release-pipeline" || $CIRCLE_BRANCH == "master" ]]; then
               # It's a full build
               /tmp/grabpl build-docker --jobs 4 --edition << parameters.edition >> \
@@ -665,8 +656,7 @@ jobs:
               # This is a release
               /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
             else
-              # TODO: Don't ignore errors, temporary workaround until we fix #22955
-              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >> || echo Publishing failed!
+              /tmp/grabpl publish-docker --jobs 4 --edition << parameters.edition >> --ubuntu=<< parameters.ubuntu >>
             fi
       - run:
           name: CI job failed
@@ -811,31 +801,32 @@ jobs:
           name: Install Go linters
           command: |
             pushd /tmp
-            curl -fLO https://github.com/golangci/golangci-lint/releases/download/v1.24.0/golangci-lint-1.24.0-linux-amd64.tar.gz
-            echo 241ca454102e909de04957ff8a5754c757cefa255758b3e1fba8a4533d19d179 \
-              golangci-lint-1.24.0-linux-amd64.tar.gz | sha256sum --check --strict --status
-            tar -xf golangci-lint-1.24.0-linux-amd64.tar.gz
-            sudo mv golangci-lint-1.24.0-linux-amd64/golangci-lint /usr/local/bin/
+            VERSION=1.28.0
+            curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${VERSION}/golangci-lint-${VERSION}-linux-amd64.tar.gz
+            echo 179d34edf4baf6454a7081fbaaf74dc99397a3be8e1a535dee04d835a977bf76 \
+              golangci-lint-${VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
+            tar -xf golangci-lint-${VERSION}-linux-amd64.tar.gz
+            sudo mv golangci-lint-${VERSION}-linux-amd64/golangci-lint /usr/local/bin/
             popd
-            make scripts/go/bin/revive scripts/go/bin/gosec
+            make scripts/go/bin/revive
       - run:
           name: Lint Go
           command: |
-            go vet ./pkg/...
-            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E deadcode -E gofmt \
-              -E gosimple -E ineffassign -E structcheck -E typecheck ./pkg/...
-            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.yml -E unconvert -E unused \
-              -E varcheck -E goconst -E errcheck -E staticcheck ./pkg/...
+            # To save memory, run in two batches
+            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.toml -E deadcode -E depguard -E dogsled \
+              -E errcheck -E goconst -E golint -E gosec -E gosimple -E govet -E exportloopref -E whitespace \
+              -E goprintffuncname ./pkg/...
+            golangci-lint run -v -j 4 --config scripts/go/configs/ci/.golangci.toml -E ineffassign -E gocritic -E nakedret \
+              -E rowserrcheck -E staticcheck -E structcheck -E typecheck -E unconvert -E unused -E varcheck ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive.toml ./pkg/...
             ./scripts/go/bin/revive -formatter stylish -config ./scripts/go/configs/revive-strict.toml \
               -exclude ./pkg/plugins/backendplugin/pluginextensionv2/... \
               ./pkg/services/alerting/... \
               ./pkg/services/provisioning/datasources/... \
               ./pkg/services/provisioning/dashboards/... \
+              ./pkg/services/provisioning/notifiers/... \
+              ./pkg/services/provisioning/values/... \
               ./pkg/plugins/backendplugin/...
-
-            ./scripts/go/bin/gosec -quiet -exclude=G104,G107,G108,G201,G202,G204,G301,G304,G401,G402,G501 \
-              -conf=./scripts/go/configs/gosec.json ./pkg/...
 
   test-frontend:
     executor: node
@@ -923,11 +914,14 @@ jobs:
     description: "Deploy Grafana master Docker image to Kubernetes"
     executor: base
     steps:
+      - attach_workspace:
+          at: /tmp/workspace
       - install-grabpl
       - run:
           name: Deploy to Kubernetes
           command: |
-            /tmp/grabpl deploy-to-k8s $CIRCLE_WORKFLOW_ID
+            cp -r /tmp/workspace/enterprise/dist .
+            /tmp/grabpl deploy-to-k8s
 
   release-packages:
     executor: node
@@ -1047,39 +1041,39 @@ workflows:
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-all
+          filters: *filter-master-or-release
           edition: oss
           variant: osx64
           name: build-oss-backend-osx64
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-all
+          filters: *filter-master-or-release
           edition: oss
           variant: win64
           name: build-oss-backend-win64
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-all
+          filters: *filter-master-or-release
           edition: oss
           variant: linux-x64
           name: build-oss-backend-linux-x64
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-all
+          filters: *filter-master-or-release
           edition: oss
           variant: linux-x64-musl
           name: build-oss-backend-linux-x64-musl
           requires:
             - lint-go
       - build-frontend:
-          filters: *filter-all
+          filters: *filter-master-or-release
           name: build-oss-frontend
           edition: oss
       - build-plugins:
-          filters: *filter-all
+          filters: *filter-master-or-release
           name: build-oss-plugins
           edition: oss
           requires:
@@ -1120,39 +1114,39 @@ workflows:
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-all
+          filters: *filter-master-or-release
           name: build-enterprise-backend-osx64
           edition: enterprise
           variant: osx64
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-all
+          filters: *filter-master-or-release
           name: build-enterprise-backend-win64
           edition: enterprise
           variant: win64
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-all
+          filters: *filter-master-or-release
           name: build-enterprise-backend-linux-x64
           edition: enterprise
           variant: linux-x64
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-all
+          filters: *filter-master-or-release
           name: build-enterprise-backend-linux-x64-musl
           edition: enterprise
           variant: linux-x64-musl
           requires:
             - lint-go
       - build-frontend:
-          filters: *filter-all
+          filters: *filter-master-or-release
           name: build-enterprise-frontend
           edition: enterprise
       - build-plugins:
-          filters: *filter-all
+          filters: *filter-master-or-release
           name: build-enterprise-plugins
           edition: enterprise
           requires:
@@ -1160,31 +1154,31 @@ workflows:
       - build-release-publisher:
           filters: *filter-master-or-release
       - codespell:
-          filters: *filter-all
+          filters: *filter-master-or-release
       - lint-go:
-          filters: *filter-all
+          filters: *filter-master-or-release
       - shellcheck:
-          filters: *filter-all
+          filters: *filter-master-or-release
       - test-backend:
-          filters: *filter-all
+          filters: *filter-master-or-release
           requires:
             - lint-go
       - test-frontend:
-          filters: *filter-all
+          filters: *filter-master-or-release
       - mysql-integration-test:
-          filters: *filter-all
+          filters: *filter-master-or-release
           requires:
             - lint-go
             - test-backend
             - test-frontend
       - postgres-integration-test:
-          filters: *filter-all
+          filters: *filter-master-or-release
           requires:
             - lint-go
             - test-backend
             - test-frontend
       - package-oss:
-          filters: *filter-all
+          filters: *filter-master-or-release
           requires:
             - build-oss-backend-armv6
             - build-oss-backend-armv7
@@ -1202,7 +1196,7 @@ workflows:
             - shellcheck
             - build-oss-plugins
       - package-enterprise:
-          filters: *filter-all
+          filters: *filter-master-or-release
           requires:
             - build-enterprise-backend-armv6
             - build-enterprise-backend-armv7
@@ -1220,11 +1214,11 @@ workflows:
             - shellcheck
             - build-enterprise-plugins
       - build-oss-windows-installer:
-          filters: *filter-all
+          filters: *filter-master-or-release
           requires:
             - package-oss
       - build-enterprise-windows-installer:
-          filters: *filter-all
+          filters: *filter-master-or-release
           requires:
             - package-enterprise
       - release-next-packages:
@@ -1260,12 +1254,12 @@ workflows:
             - postgres-integration-test
             - build-release-publisher
       - publish-storybook:
-          filters: *filter-all
+          filters: *filter-master-or-release
           requires:
             - test-backend
             - test-frontend
       - build-docker-images:
-          filters: *filter-all
+          filters: *filter-master-or-release
           name: build-oss-docker-images
           edition: oss
           ubuntu: false
@@ -1276,7 +1270,7 @@ workflows:
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
-          filters: *filter-all
+          filters: *filter-master-or-release
           name: build-oss-ubuntu-docker-images
           edition: oss
           ubuntu: true
@@ -1287,7 +1281,7 @@ workflows:
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
-          filters: *filter-all
+          filters: *filter-master-or-release
           name: build-enterprise-docker-images
           edition: enterprise
           ubuntu: false
@@ -1298,7 +1292,7 @@ workflows:
             - package-enterprise
             - build-enterprise-windows-installer
       - build-docker-images:
-          filters: *filter-all
+          filters: *filter-master-or-release
           name: build-enterprise-ubuntu-docker-images
           edition: enterprise
           ubuntu: true
@@ -1309,14 +1303,9 @@ workflows:
             - package-enterprise
             - build-enterprise-windows-installer
       - end-to-end-tests:
-          filters: *filter-all
+          filters: *filter-master-or-release
           requires:
             - package-oss
-      - build-docs-website:
-          filters: *filter-not-release-or-master
-          requires:
-            - mysql-integration-test
-            - postgres-integration-test
       - deploy-to-kubernetes:
           filters: *filter-only-master
           requires:

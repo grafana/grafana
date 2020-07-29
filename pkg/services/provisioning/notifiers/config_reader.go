@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -46,7 +47,7 @@ func (cr *configReader) readConfig(path string) ([]*notificationsAsConfig, error
 		return nil, err
 	}
 
-	checkOrgIdAndOrgName(notifications)
+	checkOrgIDAndOrgName(notifications)
 
 	err = validateNotifications(notifications)
 	if err != nil {
@@ -72,24 +73,24 @@ func (cr *configReader) parseNotificationConfig(path string, file os.FileInfo) (
 	return cfg.mapToNotificationFromConfig(), nil
 }
 
-func checkOrgIdAndOrgName(notifications []*notificationsAsConfig) {
+func checkOrgIDAndOrgName(notifications []*notificationsAsConfig) {
 	for i := range notifications {
 		for _, notification := range notifications[i].Notifications {
-			if notification.OrgId < 1 {
+			if notification.OrgID < 1 {
 				if notification.OrgName == "" {
-					notification.OrgId = 1
+					notification.OrgID = 1
 				} else {
-					notification.OrgId = 0
+					notification.OrgID = 0
 				}
 			}
 		}
 
 		for _, notification := range notifications[i].DeleteNotifications {
-			if notification.OrgId < 1 {
+			if notification.OrgID < 1 {
 				if notification.OrgName == "" {
-					notification.OrgId = 1
+					notification.OrgID = 1
 				} else {
-					notification.OrgId = 0
+					notification.OrgID = 0
 				}
 			}
 		}
@@ -107,7 +108,7 @@ func validateRequiredField(notifications []*notificationsAsConfig) error {
 				)
 			}
 
-			if notification.Uid == "" {
+			if notification.UID == "" {
 				errStrings = append(
 					errStrings,
 					fmt.Sprintf("Added alert notification item %d in configuration doesn't contain required field uid", index+1),
@@ -123,7 +124,7 @@ func validateRequiredField(notifications []*notificationsAsConfig) error {
 				)
 			}
 
-			if notification.Uid == "" {
+			if notification.UID == "" {
 				errStrings = append(
 					errStrings,
 					fmt.Sprintf("Deleted alert notification item %d in configuration doesn't contain required field uid", index+1),
@@ -140,7 +141,6 @@ func validateRequiredField(notifications []*notificationsAsConfig) error {
 }
 
 func validateNotifications(notifications []*notificationsAsConfig) error {
-
 	for i := range notifications {
 		if notifications[i].Notifications == nil {
 			continue
@@ -148,9 +148,10 @@ func validateNotifications(notifications []*notificationsAsConfig) error {
 
 		for _, notification := range notifications[i].Notifications {
 			_, err := alerting.InitNotifier(&models.AlertNotification{
-				Name:     notification.Name,
-				Settings: notification.SettingsToJson(),
-				Type:     notification.Type,
+				Name:           notification.Name,
+				Settings:       notification.SettingsToJSON(),
+				SecureSettings: securejsondata.GetEncryptedJsonData(notification.SecureSettings),
+				Type:           notification.Type,
 			})
 
 			if err != nil {

@@ -1,13 +1,23 @@
-import { DataQuery, DataSourceJsonData, DataSourceSettings } from '@grafana/data';
+import { DataQuery, DataSourceJsonData, DataSourceSettings, TableData } from '@grafana/data';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
+export enum AzureQueryType {
+  AzureMonitor = 'Azure Monitor',
+  ApplicationInsights = 'Application Insights',
+  InsightsAnalytics = 'Insights Analytics',
+  LogAnalytics = 'Azure Log Analytics',
+}
+
 export interface AzureMonitorQuery extends DataQuery {
+  queryType: AzureQueryType;
   format: string;
   subscription: string;
+
   azureMonitor: AzureMetricQuery;
   azureLogAnalytics: AzureLogsQuery;
   appInsights: ApplicationInsightsQuery;
+  insightsAnalytics: InsightsAnalyticsQuery;
 }
 
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
@@ -35,6 +45,12 @@ export interface AzureDataSourceSecureJsonData {
   appInsightsApiKey?: string;
 }
 
+export interface AzureMetricDimension {
+  dimension: string;
+  operator: 'eq'; // future proof
+  filter?: string; // *
+}
+
 export interface AzureMetricQuery {
   resourceGroup: string;
   resourceName: string;
@@ -45,8 +61,7 @@ export interface AzureMetricQuery {
   timeGrain: string;
   allowedTimeGrainsMs: number[];
   aggregation: string;
-  dimension: string;
-  dimensionFilter: string;
+  dimensionFilters: AzureMetricDimension[];
   alias: string;
   top: string;
 }
@@ -58,16 +73,20 @@ export interface AzureLogsQuery {
 }
 
 export interface ApplicationInsightsQuery {
-  rawQuery: boolean;
-  rawQueryString: any;
   metricName: string;
   timeGrainUnit: string;
   timeGrain: string;
   allowedTimeGrainsMs: number[];
   aggregation: string;
-  dimension: string;
+  dimension: string[]; // Was string before 7.1
+  // dimensions: string[]; why is this metadata stored on the object!
   dimensionFilter: string;
   alias: string;
+}
+
+export interface InsightsAnalyticsQuery {
+  query: string;
+  resultFormat: string;
 }
 
 // Azure Monitor API Types
@@ -124,14 +143,10 @@ export interface AzureLogsVariable {
   value: string;
 }
 
-export interface AzureLogsTableData {
+export interface AzureLogsTableData extends TableData {
   columns: AzureLogsTableColumn[];
   rows: any[];
   type: string;
-  refId: string;
-  meta: {
-    query: string;
-  };
 }
 
 export interface AzureLogsTableColumn {

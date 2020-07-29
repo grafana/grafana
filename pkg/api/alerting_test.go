@@ -13,7 +13,6 @@ import (
 
 func TestAlertingApiEndpoint(t *testing.T) {
 	Convey("Given an alert in a dashboard with an acl", t, func() {
-
 		singleAlert := &models.Alert{Id: 1, DashboardId: 1, Name: "singlealert"}
 
 		bus.AddHandler("test", func(query *models.GetAlertByIdQuery) error {

@@ -91,7 +91,7 @@ describe('GraphCtrl', () => {
     });
 
     it('should set datapointsOutside', () => {
-      expect(ctx.ctrl.dataWarning).toBe(null);
+      expect(ctx.ctrl.dataWarning).toBeUndefined();
     });
   });
 

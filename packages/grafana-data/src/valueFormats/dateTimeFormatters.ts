@@ -44,8 +44,12 @@ export function toNanoSeconds(size: number, decimals?: DecimalCount, scaledDecim
     return toFixedScaled(size / 1000000, decimals, scaledDecimals, 6, ' ms');
   } else if (Math.abs(size) < 60000000000) {
     return toFixedScaled(size / 1000000000, decimals, scaledDecimals, 9, ' s');
-  } else {
+  } else if (Math.abs(size) < 3600000000000) {
     return toFixedScaled(size / 60000000000, decimals, scaledDecimals, 12, ' min');
+  } else if (Math.abs(size) < 86400000000000) {
+    return toFixedScaled(size / 3600000000000, decimals, scaledDecimals, 13, ' hour');
+  } else {
+    return toFixedScaled(size / 86400000000000, decimals, scaledDecimals, 14, ' day');
   }
 }
 
@@ -311,6 +315,24 @@ export function toDurationInHoursMinutesSeconds(size: number): FormattedValue {
   numMinutes > 9 ? strings.push('' + numMinutes) : strings.push('0' + numMinutes);
   numSeconds > 9 ? strings.push('' + numSeconds) : strings.push('0' + numSeconds);
   return { text: strings.join(':') };
+}
+
+export function toDurationInDaysHoursMinutesSeconds(size: number): FormattedValue {
+  if (size < 0) {
+    const v = toDurationInDaysHoursMinutesSeconds(-size);
+    if (!v.suffix) {
+      v.suffix = '';
+    }
+    v.suffix += ' ago';
+    return v;
+  }
+  let dayString = '';
+  const numDays = Math.floor(size / (24 * 3600));
+  if (numDays > 0) {
+    dayString = numDays + ' d ';
+  }
+  const hmsString = toDurationInHoursMinutesSeconds(size - numDays * 24 * 3600);
+  return { text: dayString + hmsString.text };
 }
 
 export function toTimeTicks(size: number, decimals: DecimalCount, scaledDecimals: DecimalCount): FormattedValue {

@@ -225,4 +225,4 @@ Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}
 
 ## Configure Grafana
 
-Refer to the [Configuration]({{< relref "configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to the [Configuration]({{< relref "../administration/configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
