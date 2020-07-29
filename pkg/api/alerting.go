@@ -106,7 +106,7 @@ func (hs *HTTPServer) GetAlerts(c *models.ReqContext) Response {
 		Limit:                   c.QueryInt64("limit"),
 		User:                    c.SignedInUser,
 		Query:                   c.Query("query"),
-		StandaloneAlertsEnabled: hs.Cfg.StandaloneAlertsEnabled(),
+		StandaloneAlertsEnabled: hs.Cfg.IsStandaloneAlertsEnabled(),
 	}
 
 	states := c.QueryStrings("state")
