@@ -319,7 +319,8 @@ func TestLoadingSettings(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(cfg.ProvisioningDashboardsPath, ShouldEqual, "/etc/absolute/path")
 			So(cfg.ProvisioningDatasourcesPath, ShouldEqual, "../../not/absolute/path")
-			// There are no entries in mock provisioning config for plugins and notifiers. They should be default values
+			// There are no entries in mock provisioning config for plugins and notifiers
+			// They should equal default values
 			So(cfg.ProvisioningNotifiersPath, ShouldEqual, "../../conf/provisioning/notifiers")
 			So(cfg.ProvisioningPluginsPath, ShouldEqual, "../../conf/provisioning/plugins")
 		})
