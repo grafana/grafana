@@ -210,6 +210,7 @@ func deleteDashboard(c *models.ReqContext) Response {
 	return JSON(200, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
+		"id":      dash.Id,
 	})
 }
 
