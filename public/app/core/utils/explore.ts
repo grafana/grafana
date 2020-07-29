@@ -520,19 +520,11 @@ export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
 
 export const sortLogsResult = (logsResult: LogsModel | null, sortOrder: SortOrder): LogsModel => {
   const rows = logsResult ? sortLogRows(logsResult.rows, sortOrder) : [];
-  const result: LogsModel = logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
-  return result;
+  return logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
 };
 
-export const sortLogRows = (logRows: LogRowModel[], logsSortOrder: SortOrder | null) => {
-  if (logsSortOrder === null) {
-    return logRows;
-  }
-
-  return logsSortOrder === SortOrder.Ascending
-    ? logRows.sort(sortInAscendingOrder)
-    : logRows.sort(sortInDescendingOrder);
-};
+export const sortLogRows = (logRows: LogRowModel[], sortOrder: SortOrder) =>
+  sortOrder === SortOrder.Ascending ? logRows.sort(sortInAscendingOrder) : logRows.sort(sortInDescendingOrder);
 
 export const convertToWebSocketUrl = (url: string) => {
   const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';

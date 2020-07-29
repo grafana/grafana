@@ -72,8 +72,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     }
   }
 
-  makeGetRows = memoizeOne((processedRows: LogRowModel[]) => {
-    return () => processedRows;
+  makeGetRows = memoizeOne((orderedRows: LogRowModel[]) => {
+    return () => orderedRows;
   });
 
   render() {
@@ -113,13 +113,13 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
-    const orderedRows = orderLogs ? orderLogs(processedRows, logsOrder) : processedRows;
+    const orderedRows = logsOrder && orderLogs ? orderLogs(processedRows, logsOrder) : processedRows;
     const firstRows = orderedRows.slice(0, previewLimit!);
-    const rowCount = Math.min(processedRows.length, rowLimit!);
+    const rowCount = Math.min(orderedRows.length, rowLimit!);
     const lastRows = orderedRows.slice(previewLimit!, rowCount);
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
-    const getRows = this.makeGetRows(processedRows);
+    const getRows = this.makeGetRows(orderedRows);
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
 
     return (
