@@ -33,7 +33,7 @@ func TestNotificationAsConfig(t *testing.T) {
 		sqlstore.InitTestDB(t)
 
 		for i := 1; i < 5; i++ {
-			orgCommand := models.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", index)}
+			orgCommand := models.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", i)}
 			err := sqlstore.CreateOrg(&orgCommand)
 			So(err, ShouldBeNil)
 		}
