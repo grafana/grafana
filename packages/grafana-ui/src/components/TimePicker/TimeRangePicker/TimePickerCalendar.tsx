@@ -9,15 +9,15 @@ import { Icon } from '../../Icon/Icon';
 import { Portal } from '../../Portal/Portal';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme, isReversed = false) => {
   const containerBorder = theme.isDark ? theme.palette.dark9 : theme.palette.gray5;
 
   return {
     container: css`
       top: -1px;
       position: absolute;
-      right: 544px;
-      box-shadow: 0px 0px 20px ${theme.colors.dropdownShadow};
+      ${isReversed ? 'left' : 'right'}: 544px;
+      box-shadow: ${isReversed ? '10px' : '0px'} 0px 20px ${theme.colors.dropdownShadow};
       background-color: ${theme.colors.bodyBg};
       z-index: -1;
       border: 1px solid ${containerBorder};
@@ -28,7 +28,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         background-color: ${theme.colors.bodyBg};
         width: 19px;
         height: 100%;
-        content: ' ';
+        content: ${!isReversed ? ' ' : ''};
         position: absolute;
         top: 0;
         right: -19px;
@@ -193,13 +193,14 @@ interface Props {
   onChange: (from: DateTime, to: DateTime) => void;
   isFullscreen: boolean;
   timeZone?: TimeZone;
+  isReversed?: boolean;
 }
 
 const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
 
 export const TimePickerCalendar = memo<Props>(props => {
   const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, props.isReversed);
   const { isOpen, isFullscreen } = props;
 
   if (!isOpen) {

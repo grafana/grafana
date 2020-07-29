@@ -28,7 +28,7 @@ WORKDIR $GF_PATHS_HOME
 
 # Install dependencies
 # We need curl in the image
-RUN apt-get update && apt-get upgrade -y && apt-get install -y ca-certificates curl tzdata && \
+RUN apt-get update && apt-get install -y ca-certificates curl tzdata && \
     apt-get autoremove -y && rm -rf /var/lib/apt/lists/*;
 
 COPY --from=grafana-builder /tmp/grafana "$GF_PATHS_HOME"
