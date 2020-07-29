@@ -296,6 +296,34 @@ func TestLoadingSettings(t *testing.T) {
 			So(value, ShouldEqual, "")
 		})
 	})
+
+	Convey("Test reading provisioning config", t, func() {
+		Convey("By default it should use provisioning folder setting", func() {
+			cfg := NewCfg()
+			err := cfg.Load(&CommandLineArgs{
+				HomePath: "../../",
+			})
+			So(err, ShouldBeNil)
+			So(cfg.ProvisioningDashboardsPath, ShouldEqual, "../../conf/provisioning/dashboards")
+			So(cfg.ProvisioningDatasourcesPath, ShouldEqual, "../../conf/provisioning/datasources")
+			So(cfg.ProvisioningNotifiersPath, ShouldEqual, "../../conf/provisioning/notifiers")
+			So(cfg.ProvisioningPluginsPath, ShouldEqual, "../../conf/provisioning/plugins")
+		})
+
+		Convey("With settings in provisioning section it should override defaults", func() {
+			cfg := NewCfg()
+			err := cfg.Load(&CommandLineArgs{
+				HomePath: "../../",
+				Config:   filepath.Join(HomePath, "pkg/setting/testdata/provisioning.ini"),
+			})
+			So(err, ShouldBeNil)
+			So(cfg.ProvisioningDashboardsPath, ShouldEqual, "/etc/absolute/path")
+			So(cfg.ProvisioningDatasourcesPath, ShouldEqual, "../../not/absolute/path")
+			// There are no entries in mock provisioning config for plugins and notifiers. They should be default values
+			So(cfg.ProvisioningNotifiersPath, ShouldEqual, "../../conf/provisioning/notifiers")
+			So(cfg.ProvisioningPluginsPath, ShouldEqual, "../../conf/provisioning/plugins")
+		})
+	})
 }
 
 func TestParseAppUrlAndSubUrl(t *testing.T) {
