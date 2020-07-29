@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import { css, cx } from 'emotion';
 
 import {
   rangeUtil,
@@ -217,26 +218,37 @@ export class Logs extends PureComponent<Props, State> {
         </div>
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
-            <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
-            <Switch label="Unique labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
-            <Switch label="Wrap lines" checked={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
-            <ToggleButtonGroup label="Dedup" transparent={true}>
-              {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
-                <ToggleButton
-                  key={i}
-                  value={dedupType}
-                  onChange={this.onChangeDedup}
-                  selected={dedupStrategy === dedupType}
-                  // @ts-ignore
-                  tooltip={LogsDedupDescription[dedupType]}
-                >
-                  {dedupType}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
-            <Button style={{ marginLeft: 'auto', marginRight: 0 }} variant="secondary" onClick={this.onChangeLogsOrder}>
-              Flip results order
-            </Button>
+            <div className="logs-panel-controls-main">
+              <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
+              <Switch label="Unique labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
+              <Switch label="Wrap lines" checked={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
+              <ToggleButtonGroup label="Dedup" transparent={true}>
+                {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
+                  <ToggleButton
+                    key={i}
+                    value={dedupType}
+                    onChange={this.onChangeDedup}
+                    selected={dedupStrategy === dedupType}
+                    // @ts-ignore
+                    tooltip={LogsDedupDescription[dedupType]}
+                  >
+                    {dedupType}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
+            </div>
+            <button
+              aria-label="Flip results order"
+              className={cx(
+                'gf-form-label gf-form-label--btn',
+                css`
+                  margin-top: 4px;
+                `
+              )}
+              onClick={this.onChangeLogsOrder}
+            >
+              <span className="btn-title">Flip results order</span>
+            </button>
           </div>
         </div>
 
