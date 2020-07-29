@@ -7,6 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -78,7 +80,11 @@ func TestAlertingApiEndpoint(t *testing.T) {
 				return nil
 			})
 
-			sc.handlerFunc = GetAlerts
+			hs := HTTPServer{
+				Cfg: setting.NewCfg(),
+			}
+			sc.handlerFunc = hs.GetAlerts
+
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 			So(searchQuery, ShouldBeNil)
@@ -102,7 +108,11 @@ func TestAlertingApiEndpoint(t *testing.T) {
 				return nil
 			})
 
-			sc.handlerFunc = GetAlerts
+			hs := HTTPServer{
+				Cfg: setting.NewCfg(),
+			}
+
+			sc.handlerFunc = hs.GetAlerts
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
 			So(searchQuery, ShouldNotBeNil)

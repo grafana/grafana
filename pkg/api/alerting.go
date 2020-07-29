@@ -47,7 +47,7 @@ func GetAlertStatesForDashboard(c *models.ReqContext) Response {
 }
 
 // GET /api/alerts
-func GetAlerts(c *models.ReqContext) Response {
+func (hs *HTTPServer) GetAlerts(c *models.ReqContext) Response {
 	dashboardQuery := c.Query("dashboardQuery")
 	dashboardTags := c.QueryStrings("dashboardTag")
 	stringDashboardIDs := c.QueryStrings("dashboardId")
@@ -100,12 +100,13 @@ func GetAlerts(c *models.ReqContext) Response {
 	}
 
 	query := models.GetAlertsQuery{
-		OrgId:        c.OrgId,
-		DashboardIDs: dashboardIDs,
-		PanelId:      c.QueryInt64("panelId"),
-		Limit:        c.QueryInt64("limit"),
-		User:         c.SignedInUser,
-		Query:        c.Query("query"),
+		OrgId:                   c.OrgId,
+		DashboardIDs:            dashboardIDs,
+		PanelId:                 c.QueryInt64("panelId"),
+		Limit:                   c.QueryInt64("limit"),
+		User:                    c.SignedInUser,
+		Query:                   c.Query("query"),
+		StandaloneAlertsEnabled: hs.Cfg.IsStandaloneAlertsEnabled(),
 	}
 
 	states := c.QueryStrings("state")
@@ -118,7 +119,11 @@ func GetAlerts(c *models.ReqContext) Response {
 	}
 
 	for _, alert := range query.Result {
-		alert.Url = models.GetDashboardUrl(alert.DashboardUid, alert.DashboardSlug)
+		if alert.DashboardUid == "" && alert.DashboardSlug == "" {
+			alert.Url = ""
+		} else {
+			alert.Url = models.GetDashboardUrl(alert.DashboardUid, alert.DashboardSlug)
+		}
 	}
 
 	return JSON(200, query.Result)

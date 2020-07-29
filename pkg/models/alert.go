@@ -196,13 +196,14 @@ type SetAlertStateCommand struct {
 
 //Queries
 type GetAlertsQuery struct {
-	OrgId        int64
-	State        []string
-	DashboardIDs []int64
-	PanelId      int64
-	Limit        int64
-	Query        string
-	User         *SignedInUser
+	OrgId                   int64
+	State                   []string
+	DashboardIDs            []int64
+	PanelId                 int64
+	Limit                   int64
+	Query                   string
+	User                    *SignedInUser
+	StandaloneAlertsEnabled bool
 
 	Result []*AlertListItemDTO
 }

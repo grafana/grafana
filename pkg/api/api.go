@@ -347,7 +347,7 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Post("/test", bind(dtos.AlertTestCommand{}), Wrap(AlertTest))
 			alertsRoute.Post("/:alertId/pause", reqEditorRole, bind(dtos.PauseAlertCommand{}), Wrap(PauseAlert))
 			alertsRoute.Get("/:alertId", ValidateOrgAlert, Wrap(GetAlert))
-			alertsRoute.Get("/", Wrap(GetAlerts))
+			alertsRoute.Get("/", Wrap(hs.GetAlerts))
 			alertsRoute.Get("/states-for-dashboard", Wrap(GetAlertStatesForDashboard))
 
 			if hs.Cfg.IsStandaloneAlertsEnabled() {

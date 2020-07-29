@@ -83,7 +83,11 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *DBSession) erro
 func HandleAlertsQuery(query *models.GetAlertsQuery) error {
 	builder := SqlBuilder{}
 
-	builder.Write(`SELECT
+	joinType := "INNER"
+	if query.StandaloneAlertsEnabled {
+		joinType = "LEFT OUTER"
+	}
+	builder.Write(fmt.Sprintf(`SELECT
 		alert.id,
 		alert.dashboard_id,
 		alert.panel_id,
@@ -96,7 +100,7 @@ func HandleAlertsQuery(query *models.GetAlertsQuery) error {
 		dashboard.uid as dashboard_uid,
 		dashboard.slug as dashboard_slug
 		FROM alert
-		INNER JOIN dashboard on dashboard.id = alert.dashboard_id `)
+		%s JOIN dashboard on dashboard.id = alert.dashboard_id `, joinType))
 
 	builder.Write(`WHERE alert.org_id = ?`, query.OrgId)
 
