@@ -179,7 +179,9 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     };
 
     let tabs = [QueriesTab, StarredTab, SettingsTab];
-    return <TabbedContainer tabs={tabs} onClose={onClose} defaultTab={firstTab} />;
+    return (
+      <TabbedContainer tabs={tabs} onClose={onClose} defaultTab={firstTab} closeIconTooltip="Close query history" />
+    );
   }
 }
 

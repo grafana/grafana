@@ -15,6 +15,7 @@ export interface TabConfig {
 export interface TabbedContainerProps extends Themeable {
   tabs: TabConfig[];
   defaultTab?: string;
+  closeIconTooltip?: string;
   onClose: () => void;
 }
 
@@ -57,7 +58,7 @@ function UnThemedTabbedContainer(props: TabbedContainerProps) {
     setActiveTab(item.value!);
   };
 
-  const { tabs, theme, onClose } = props;
+  const { tabs, theme, onClose, closeIconTooltip } = props;
   const styles = getStyles(theme);
 
   return (
@@ -72,7 +73,7 @@ function UnThemedTabbedContainer(props: TabbedContainerProps) {
             icon={t.icon}
           />
         ))}
-        <IconButton className={styles.close} onClick={onClose} name="times" title="Close query history" />
+        <IconButton className={styles.close} onClick={onClose} name="times" title={closeIconTooltip ?? 'Close'} />
       </TabsBar>
       <CustomScrollbar className={styles.scrollbar}>
         <TabContent className={styles.tabContent}>{tabs.find(t => t.value === activeTab)?.content}</TabContent>

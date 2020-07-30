@@ -164,7 +164,7 @@ function ExploreQueryInspector(props: Props) {
   const tabs = [statsTab, inspectorTab];
   return (
     <ExploreDrawer width={width} onResize={() => {}}>
-      <TabbedContainer tabs={tabs} onClose={onClose} />
+      <TabbedContainer tabs={tabs} onClose={onClose} closeIconTooltip="Close query inspector" />
     </ExploreDrawer>
   );
 }
