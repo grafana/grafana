@@ -298,27 +298,30 @@ func TestLoadingSettings(t *testing.T) {
 	})
 
 	Convey("Test reading provisioning config", t, func() {
+		homePath, err := filepath.Abs("../..")
+		So(err, ShouldBeNil)
+
 		Convey("By default it should use the provisioning folder setting", func() {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
-				HomePath: "../../",
+				HomePath: homePath,
 			})
 			So(err, ShouldBeNil)
-			So(cfg.ProvisioningDashboardsPath, ShouldEqual, "../../conf/provisioning/dashboards")
-			So(cfg.ProvisioningDatasourcesPath, ShouldEqual, "../../conf/provisioning/datasources")
-			So(cfg.ProvisioningNotifiersPath, ShouldEqual, "../../conf/provisioning/notifiers")
-			So(cfg.ProvisioningPluginsPath, ShouldEqual, "../../conf/provisioning/plugins")
+			So(cfg.ProvisioningDashboardsPath, ShouldEqual, filepath.Join(homePath, "conf/provisioning/dashboards"))
+			So(cfg.ProvisioningDatasourcesPath, ShouldEqual, filepath.Join(homePath, "conf/provisioning/datasources"))
+			So(cfg.ProvisioningNotifiersPath, ShouldEqual, filepath.Join(homePath, "conf/provisioning/notifiers"))
+			So(cfg.ProvisioningPluginsPath, ShouldEqual, filepath.Join(homePath, "conf/provisioning/plugins"))
 		})
 
 		Convey("With settings in the provisioning section it should override defaults", func() {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
-				HomePath: "../../",
+				HomePath: homePath,
 				Config:   filepath.Join(HomePath, "pkg/setting/testdata/provisioning.ini"),
 			})
 			So(err, ShouldBeNil)
 			So(cfg.ProvisioningDashboardsPath, ShouldEqual, "/etc/absolute/path")
-			So(cfg.ProvisioningDatasourcesPath, ShouldEqual, "../../not/absolute/path")
+			So(cfg.ProvisioningDatasourcesPath, ShouldEqual, filepath.Join(homePath, "not/absolute/path"))
 			So(cfg.ProvisioningNotifiersPath, ShouldEqual, "/another/path")
 			So(cfg.ProvisioningPluginsPath, ShouldEqual, "/yet/another/path")
 		})
