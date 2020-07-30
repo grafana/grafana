@@ -160,8 +160,8 @@ export class QueryOptions extends PureComponent<Props, State> {
             placeholder="60"
             name={name}
             spellCheck={false}
-            onBlur={this.onDataSourceOptionBlur('maxDataPoints')}
-            onChange={this.onDataSourceOptionChange('maxDataPoints')}
+            onBlur={this.onDataSourceOptionBlur('cacheTimeout')}
+            onChange={this.onDataSourceOptionChange('cacheTimeout')}
             value={cacheTimeout}
           />
         </div>

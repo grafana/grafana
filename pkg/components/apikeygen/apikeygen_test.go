@@ -8,7 +8,6 @@ import (
 )
 
 func TestApiKeyGen(t *testing.T) {
-
 	Convey("When generating new api key", t, func() {
 		result, err := New(12, "Cool key")
 		So(err, ShouldBeNil)

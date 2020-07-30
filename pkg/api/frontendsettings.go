@@ -75,7 +75,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 
 		meta, exists := enabledPlugins.DataSources[ds.Type]
 		if !exists {
-			log.Error(3, "Could not find plugin definition for data source: %v", ds.Type)
+			log.Errorf(3, "Could not find plugin definition for data source: %v", ds.Type)
 			continue
 		}
 
@@ -193,7 +193,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
 		"alertingMinInterval":        setting.AlertingMinInterval,
 		"autoAssignOrg":              setting.AutoAssignOrg,
-		"verfiyEmailEnabled":         setting.VerifyEmailEnabled,
+		"verifyEmailEnabled":         setting.VerifyEmailEnabled,
 		"exploreEnabled":             setting.ExploreEnabled,
 		"googleAnalyticsId":          setting.GoogleAnalyticsId,
 		"disableLoginForm":           setting.DisableLoginForm,

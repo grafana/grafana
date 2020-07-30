@@ -124,7 +124,6 @@ func TestValues(t *testing.T) {
 		})
 
 		Convey("JSONValue", func() {
-
 			type Data struct {
 				Val JSONValue `yaml:"val"`
 			}
@@ -237,7 +236,6 @@ func TestValues(t *testing.T) {
 					"three": "$STRING",
 					"four":  "true",
 				})
-
 			})
 		})
 

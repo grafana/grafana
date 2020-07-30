@@ -24,7 +24,19 @@ func init() {
       <h3 class="page-heading">PagerDuty settings</h3>
       <div class="gf-form">
         <span class="gf-form-label width-14">Integration Key</span>
-        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.integrationKey" placeholder="Pagerduty Integration Key"></input>
+		<div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.integrationKey">
+			<input type="text"
+				class="gf-form-input max-width-22"
+				ng-init="ctrl.model.secureSettings.integrationKey = ctrl.model.settings.integrationKey || null; ctrl.model.settings.integrationKey = null;"
+				ng-model="ctrl.model.secureSettings.integrationKey"
+				placeholder="Pagerduty Integration Key"
+				data-placement="right">
+			</input>
+		</div>
+		<div class="gf-form" ng-if="ctrl.model.secureFields.integrationKey">
+			<input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
+			<a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.integrationKey = false">reset</a>
+		</div>
       </div>
       <div class="gf-form">
         <span class="gf-form-label width-14">Severity</span>
@@ -105,7 +117,7 @@ var (
 func NewPagerdutyNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	severity := model.Settings.Get("severity").MustString("critical")
 	autoResolve := model.Settings.Get("autoResolve").MustBool(false)
-	key := model.Settings.Get("integrationKey").MustString()
+	key := model.DecryptedValue("integrationKey", model.Settings.Get("integrationKey").MustString())
 	messageInDetails := model.Settings.Get("messageInDetails").MustBool(false)
 	if key == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find integration key property in settings"}
@@ -134,7 +146,6 @@ type PagerdutyNotifier struct {
 
 // buildEventPayload is responsible for building the event payload body for sending to Pagerduty v2 API
 func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext) ([]byte, error) {
-
 	eventType := "trigger"
 	if evalContext.Rule.State == models.AlertStateOK {
 		eventType = "resolve"
@@ -241,7 +252,6 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 
 // Notify sends an alert notification to PagerDuty
 func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
-
 	if evalContext.Rule.State == models.AlertStateOK && !pn.AutoResolve {
 		pn.log.Info("Not sending a trigger to Pagerduty", "state", evalContext.Rule.State, "auto resolve", pn.AutoResolve)
 		return nil

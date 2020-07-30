@@ -16,7 +16,7 @@ func (s SecureJsonData) DecryptedValue(key string) (string, bool) {
 	if value, ok := s[key]; ok {
 		decryptedData, err := util.Decrypt(value, setting.SecretKey)
 		if err != nil {
-			log.Fatal(4, err.Error())
+			log.Fatalf(4, err.Error())
 		}
 		return string(decryptedData), true
 	}
@@ -30,7 +30,7 @@ func (s SecureJsonData) Decrypt() map[string]string {
 	for key, data := range s {
 		decryptedData, err := util.Decrypt(data, setting.SecretKey)
 		if err != nil {
-			log.Fatal(4, err.Error())
+			log.Fatalf(4, err.Error())
 		}
 
 		decrypted[key] = string(decryptedData)
@@ -44,7 +44,7 @@ func GetEncryptedJsonData(sjd map[string]string) SecureJsonData {
 	for key, data := range sjd {
 		encryptedData, err := util.Encrypt([]byte(data), setting.SecretKey)
 		if err != nil {
-			log.Fatal(4, err.Error())
+			log.Fatalf(4, err.Error())
 		}
 
 		encrypted[key] = encryptedData

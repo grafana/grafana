@@ -294,7 +294,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 		dataField.Name = amr.Value[0].Name.LocalizedValue
 		dataField.Labels = labels
 		dataField.SetConfig(&data.FieldConfig{
-			Unit: amr.Value[0].Unit,
+			Unit: toGrafanaUnit(amr.Value[0].Unit),
 		})
 		if query.Alias != "" {
 			dataField.Config.DisplayName = formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"],
@@ -338,6 +338,17 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 	endIndex := strings.Index(seriesID, "/providers")
 	resourceGroup := seriesID[startIndex:endIndex]
 
+	// Could be a collision problem if there were two keys that varied only in case, but I don't think that would happen in azure.
+	lowerLabels := data.Labels{}
+	for k, v := range labels {
+		lowerLabels[strings.ToLower(k)] = v
+	}
+	keys := make([]string, 0, len(labels))
+	for k := range lowerLabels {
+		keys = append(keys, k)
+	}
+	keys = sort.StringSlice(keys)
+
 	result := legendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {
 		metaPartName := strings.Replace(string(in), "{{", "", 1)
 		metaPartName = strings.Replace(metaPartName, "}}", "", 1)
@@ -359,27 +370,41 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 			return []byte(metricName)
 		}
 
-		keys := make([]string, 0, len(labels))
-		if metaPartName == "dimensionname" || metaPartName == "dimensionvalue" {
-			for k := range labels {
-				keys = append(keys, k)
-			}
-			keys = sort.StringSlice(keys)
-		}
-
 		if metaPartName == "dimensionname" {
 			return []byte(keys[0])
 		}
 
 		if metaPartName == "dimensionvalue" {
-			return []byte(labels[keys[0]])
+			return []byte(lowerLabels[keys[0]])
 		}
 
-		if v, ok := labels[metaPartName]; ok {
+		if v, ok := lowerLabels[metaPartName]; ok {
 			return []byte(v)
 		}
 		return in
 	})
 
 	return string(result)
+}
+
+// Map values from:
+//   https://docs.microsoft.com/en-us/azure/azure-monitor/platform/metrics-supported#microsoftanalysisservicesservers
+// to
+//   https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/valueFormats/categories.ts#L24
+func toGrafanaUnit(unit string) string {
+	switch unit {
+	case "Percent":
+		return "percent"
+	case "Count":
+		return "short" // this is used for integers
+	case "Bytes":
+		return "decbytes" // or ICE
+	case "BytesPerSecond":
+		return "Bps"
+	case "CountPerSecond":
+		return "cps"
+	case "Milliseconds":
+		return "ms"
+	}
+	return unit // this will become a suffix in the display
 }

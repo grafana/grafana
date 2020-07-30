@@ -18,7 +18,7 @@ describe('getHighlighterExpressionsFromQuery', () => {
   });
 
   it('returns null if filter term is not wrapped in double quotes', () => {
-    expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= x')).toEqual(null);
+    expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= x')).toEqual([]);
   });
 
   it('escapes filter term if regex filter operator is not used', () => {

@@ -53,6 +53,17 @@ GF_PATHS_LOGS         | /var/log/grafana
 GF_PATHS_PLUGINS      | /var/lib/grafana/plugins
 GF_PATHS_PROVISIONING | /etc/grafana/provisioning
 
+## Logging
+
+Logs in the Docker container go to standard out by default, as is common in the Docker world. Change this by setting a different [log mode]({{< relref "../administration/configuration.md#mode" >}}).
+
+Example:
+
+```bash
+# Run Grafana while logging to both standard out and /var/log/grafana/grafana.log
+docker run -p 3000:3000 -e "GF_LOG_MODE=console file" grafana/grafana
+```
+
 ## Configure Grafana with Docker Secrets
 
 > Only available in Grafana v5.2 and later.

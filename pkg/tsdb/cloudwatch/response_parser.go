@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
+func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
 	mdr := make(map[string]map[string]*cloudwatch.MetricDataResult)
 	for _, mdo := range metricDataOutputs {
 		requestExceededMaxLimit := false

@@ -20,15 +20,15 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions> {
-  basicAuth: string;
-  withCredentials: boolean;
+  basicAuth?: string;
+  withCredentials?: boolean;
   url: string;
   name: string;
   index: string;
   timeField: string;
   esVersion: number;
   interval: string;
-  maxConcurrentShardRequests: number;
+  maxConcurrentShardRequests?: number;
   queryBuilder: ElasticQueryBuilder;
   indexPattern: IndexPattern;
   logMessageField?: string;
@@ -44,9 +44,9 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     super(instanceSettings);
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
-    this.url = instanceSettings.url;
+    this.url = instanceSettings.url!;
     this.name = instanceSettings.name;
-    this.index = instanceSettings.database;
+    this.index = instanceSettings.database ?? '';
     const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
 
     this.timeField = settingsData.timeField;
@@ -63,11 +63,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     this.dataLinks = settingsData.dataLinks || [];
 
     if (this.logMessageField === '') {
-      this.logMessageField = null;
+      this.logMessageField = undefined;
     }
 
     if (this.logLevelField === '') {
-      this.logLevelField = null;
+      this.logLevelField = undefined;
     }
   }
 
@@ -315,7 +315,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         return { status: 'success', message: 'Index OK. Time field name OK.' };
       },
       (err: any) => {
-        console.log(err);
+        console.error(err);
         if (err.data && err.data.error) {
           let message = angular.toJson(err.data.error);
           if (err.data.error.reason) {
@@ -335,9 +335,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       ignore_unavailable: true,
       index: this.indexPattern.getIndexList(timeFrom, timeTo),
     };
+
     if (this.esVersion >= 56 && this.esVersion < 70) {
       queryHeader['max_concurrent_shard_requests'] = this.maxConcurrentShardRequests;
     }
+
     return angular.toJson(queryHeader);
   }
 
@@ -363,7 +365,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       let queryObj;
       if (target.isLogsQuery || queryDef.hasMetricOfType(target, 'logs')) {
         target.bucketAggs = [queryDef.defaultBucketAgg()];
-        target.metrics = [queryDef.defaultMetricAgg()];
+        target.metrics = [];
         // Setting this for metrics queries that are typed as logs
         target.isLogsQuery = true;
         queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, queryString);
@@ -402,6 +404,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
     return this.post(url, payload).then((res: any) => {
       const er = new ElasticResponse(sentTargets, res);
+
       if (sentTargets.some(target => target.isLogsQuery)) {
         const response = er.getLogs(this.logMessageField, this.logLevelField);
         for (const dataFrame of response.data) {

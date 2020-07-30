@@ -39,7 +39,7 @@ import {
   MetricRequest,
   TSDBResponse,
 } from './types';
-import { empty, from, Observable } from 'rxjs';
+import { empty, from, Observable, of, merge } from 'rxjs';
 import { catchError, delay, expand, finalize, map, mergeMap, tap } from 'rxjs/operators';
 import { CloudWatchLanguageProvider } from './language_provider';
 
@@ -79,7 +79,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   datasourceName: string;
   debouncedAlert: (datasourceName: string, region: string) => void;
   debouncedCustomAlert: (title: string, message: string) => void;
-  logQueries: Record<string, { id: string; region: string }>;
+  logQueries: Record<string, { id: string; region: string; statsQuery: boolean }>;
   languageProvider: CloudWatchLanguageProvider;
 
   /** @ngInject */
@@ -101,55 +101,78 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     this.languageProvider = new CloudWatchLanguageProvider(this);
   }
 
-  query(options: DataQueryRequest<CloudWatchQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse> {
+  query(options: DataQueryRequest<CloudWatchQuery>): Observable<DataQueryResponse> {
     options = angular.copy(options);
 
-    const firstTarget = options.targets[0];
-
     let queries = options.targets.filter(item => item.id !== '' || item.hide !== true);
+    const { logQueries, metricsQueries } = this.getTargetsByQueryMode(queries);
 
-    if (firstTarget.queryMode === 'Logs') {
-      const logQueries: CloudWatchLogsQuery[] = queries.filter(item => item.queryMode === 'Logs') as any;
-
-      const validLogQueries = logQueries.filter(item => item.logGroupNames?.length);
-      if (logQueries.length > validLogQueries.length) {
-        return Promise.resolve({ data: [], error: { message: 'Log group is required' } });
-      }
-
-      // No valid targets, return the empty result to save a round trip.
-      if (_.isEmpty(validLogQueries)) {
-        return Promise.resolve({ data: [] });
-      }
-
-      const queryParams = validLogQueries.map((target: CloudWatchLogsQuery) => ({
-        queryString: target.expression,
-        refId: target.refId,
-        logGroupNames: target.logGroupNames,
-        region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
-      }));
-
-      return this.makeLogActionRequest('StartQuery', queryParams, options.scopedVars).pipe(
-        mergeMap(dataFrames =>
-          this.logsQuery(
-            dataFrames.map(dataFrame => ({
-              queryId: dataFrame.fields[0].values.get(0),
-              region: dataFrame.meta?.custom?.['Region'] ?? 'default',
-              refId: dataFrame.refId!,
-              statsGroups: (options.targets.find(target => target.refId === dataFrame.refId)! as CloudWatchLogsQuery)
-                .statsGroups,
-            }))
-          )
-        ),
-        map(response => this.addDataLinksToLogsResponse(response, options))
-      );
+    const dataQueryResponses: Array<Observable<DataQueryResponse>> = [];
+    if (logQueries.length > 0) {
+      dataQueryResponses.push(this.handleLogQueries(logQueries, options));
     }
 
-    const metricQueries: MetricQuery[] = options.targets
+    if (metricsQueries.length > 0) {
+      dataQueryResponses.push(this.handleMetricQueries(metricsQueries, options));
+    }
+
+    // No valid targets, return the empty result to save a round trip.
+    if (_.isEmpty(dataQueryResponses)) {
+      return of({
+        data: [],
+        state: LoadingState.Done,
+      });
+    }
+
+    return merge(...dataQueryResponses);
+  }
+
+  handleLogQueries = (
+    logQueries: CloudWatchLogsQuery[],
+    options: DataQueryRequest<CloudWatchQuery>
+  ): Observable<DataQueryResponse> => {
+    const validLogQueries = logQueries.filter(item => item.logGroupNames?.length);
+    if (logQueries.length > validLogQueries.length) {
+      return of({ data: [], error: { message: 'Log group is required' } });
+    }
+
+    // No valid targets, return the empty result to save a round trip.
+    if (_.isEmpty(validLogQueries)) {
+      return of({ data: [], state: LoadingState.Done });
+    }
+
+    const queryParams = validLogQueries.map((target: CloudWatchLogsQuery) => ({
+      queryString: target.expression,
+      refId: target.refId,
+      logGroupNames: target.logGroupNames,
+      region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
+    }));
+
+    return this.makeLogActionRequest('StartQuery', queryParams, options.scopedVars).pipe(
+      mergeMap(dataFrames =>
+        this.logsQuery(
+          dataFrames.map(dataFrame => ({
+            queryId: dataFrame.fields[0].values.get(0),
+            region: dataFrame.meta?.custom?.['Region'] ?? 'default',
+            refId: dataFrame.refId!,
+            statsGroups: (logQueries.find(target => target.refId === dataFrame.refId)! as CloudWatchLogsQuery)
+              .statsGroups,
+          }))
+        )
+      ),
+      map(response => this.addDataLinksToLogsResponse(response, options))
+    );
+  };
+
+  handleMetricQueries = (
+    metricQueries: CloudWatchMetricsQuery[],
+    options: DataQueryRequest<CloudWatchQuery>
+  ): Observable<DataQueryResponse> => {
+    const validMetricsQueries = metricQueries
       .filter(
         item =>
-          item.queryMode !== 'Logs' &&
-          ((!!item.region && !!item.namespace && !!item.metricName && !_.isEmpty(item.statistics)) ||
-            item.expression?.length > 0)
+          (!!item.region && !!item.namespace && !!item.metricName && !_.isEmpty(item.statistics)) ||
+          item.expression?.length > 0
       )
       .map(
         (item: CloudWatchMetricsQuery): MetricQuery => {
@@ -177,7 +200,6 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
           }
 
           return {
-            refId: item.refId,
             intervalMs: options.intervalMs,
             maxDataPoints: options.maxDataPoints,
             datasourceId: this.id,
@@ -188,25 +210,29 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       );
 
     // No valid targets, return the empty result to save a round trip.
-    if (_.isEmpty(metricQueries)) {
-      return Promise.resolve({ data: [] });
+    if (_.isEmpty(validMetricsQueries)) {
+      return of({ data: [] });
     }
 
     const request = {
       from: options?.range?.from.valueOf().toString(),
       to: options?.range?.to.valueOf().toString(),
-      queries: metricQueries,
+      queries: validMetricsQueries,
     };
 
-    return this.performTimeSeriesQuery(request, options.range);
-  }
+    return from(this.performTimeSeriesQuery(request, options.range));
+  };
 
   logsQuery(
     queryParams: Array<{ queryId: string; refId: string; limit?: number; region: string; statsGroups?: string[] }>
   ): Observable<DataQueryResponse> {
     this.logQueries = {};
     queryParams.forEach(param => {
-      this.logQueries[param.refId] = { id: param.queryId, region: param.region };
+      this.logQueries[param.refId] = {
+        id: param.queryId,
+        region: param.region,
+        statsQuery: (param.statsGroups?.length ?? 0) > 0 ?? false,
+      };
     });
     let prevRecordsMatched: Record<string, number> = {};
 
@@ -280,9 +306,9 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
         start,
         timeType: 'ABSOLUTE',
         tz: 'UTC',
-        editorString: curTarget.expression,
+        editorString: curTarget.expression ?? '',
         isLiveTail: false,
-        source: curTarget.logGroupNames,
+        source: curTarget.logGroupNames ?? [],
       };
 
       const encodedUrl = encodeUrl(
@@ -903,11 +929,30 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
   getQueryDisplayText(query: CloudWatchQuery) {
     if (query.queryMode === 'Logs') {
-      return query.expression;
+      return query.expression ?? '';
     } else {
       return JSON.stringify(query);
     }
   }
+
+  getTargetsByQueryMode = (targets: CloudWatchQuery[]) => {
+    const logQueries: CloudWatchLogsQuery[] = [];
+    const metricsQueries: CloudWatchMetricsQuery[] = [];
+
+    targets.forEach(query => {
+      const mode = query.queryMode ?? 'Metrics';
+      if (mode === 'Logs') {
+        logQueries.push(query as CloudWatchLogsQuery);
+      } else {
+        metricsQueries.push(query as CloudWatchMetricsQuery);
+      }
+    });
+
+    return {
+      logQueries,
+      metricsQueries,
+    };
+  };
 }
 
 function withTeardown<T = any>(observable: Observable<T>, onUnsubscribe: () => void): Observable<T> {

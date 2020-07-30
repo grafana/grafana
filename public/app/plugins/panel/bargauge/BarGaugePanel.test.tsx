@@ -84,6 +84,7 @@ function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<B
       timeRange={timeRange}
       timeZone={'utc'}
       options={options}
+      title="hello"
       fieldConfig={fieldConfig}
       onFieldConfigChange={() => {}}
       onOptionsChange={() => {}}

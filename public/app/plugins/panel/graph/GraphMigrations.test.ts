@@ -123,7 +123,7 @@ describe('Graph Panel Migrations', () => {
     expect(result.dataLinks).toBeUndefined();
     expect(fieldSource.defaults.links).toHaveLength(1);
 
-    const link = fieldSource.defaults.links[0];
+    const link = fieldSource.defaults.links![0];
     expect(link.url).toEqual('THE DRILLDOWN URL');
   });
 });
