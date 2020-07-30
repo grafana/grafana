@@ -499,7 +499,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   generateAutoUnits(timeGrain: string, timeGrains: Array<{ value: string }>) {
     if (timeGrain === 'auto') {
       return TimegrainConverter.findClosestTimeGrain(
-        this.templateSrv.getBuiltInIntervalValue(),
+        '1m',
         _.map(timeGrains, o => TimegrainConverter.createKbnUnitFromISO8601Duration(o.value)) || [
           '1m',
           '5m',
@@ -578,16 +578,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   get templateVariables() {
     return this.templateSrv.getVariables().map(t => '$' + t.name);
-  }
-
-  /* Application Insights Section */
-
-  getAppInsightsAutoInterval() {
-    const interval = this.templateSrv.getBuiltInIntervalValue();
-    if (interval[interval.length - 1] === 's') {
-      return '1m';
-    }
-    return interval;
   }
 
   getAppInsightsMetricNames() {

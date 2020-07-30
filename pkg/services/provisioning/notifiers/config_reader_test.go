@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -30,6 +31,12 @@ func TestNotificationAsConfig(t *testing.T) {
 
 	Convey("Testing notification as configuration", t, func() {
 		sqlstore.InitTestDB(t)
+
+		for i := 1; i < 5; i++ {
+			orgCommand := models.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", i)}
+			err := sqlstore.CreateOrg(&orgCommand)
+			So(err, ShouldBeNil)
+		}
 
 		alerting.RegisterNotifier(&alerting.NotifierPlugin{
 			Type:    "slack",
@@ -227,12 +234,12 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		Convey("Can read correct properties with orgName instead of orgId", func() {
-			existingOrg1 := models.CreateOrgCommand{Name: "Main Org. 1"}
-			err := sqlstore.CreateOrg(&existingOrg1)
+			existingOrg1 := models.GetOrgByNameQuery{Name: "Main Org. 1"}
+			err := sqlstore.GetOrgByName(&existingOrg1)
 			So(err, ShouldBeNil)
 			So(existingOrg1.Result, ShouldNotBeNil)
-			existingOrg2 := models.CreateOrgCommand{Name: "Main Org. 2"}
-			err = sqlstore.CreateOrg(&existingOrg2)
+			existingOrg2 := models.GetOrgByNameQuery{Name: "Main Org. 2"}
+			err = sqlstore.GetOrgByName(&existingOrg2)
 			So(err, ShouldBeNil)
 			So(existingOrg2.Result, ShouldNotBeNil)
 
