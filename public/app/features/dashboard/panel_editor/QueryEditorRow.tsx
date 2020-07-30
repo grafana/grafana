@@ -178,6 +178,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           onChange={onChange}
           onRunQuery={this.onRunQuery}
           data={data}
+          range={getTimeSrv().timeRange()}
         />
       );
     }
