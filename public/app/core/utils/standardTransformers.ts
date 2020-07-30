@@ -7,6 +7,7 @@ import { seriesToFieldsTransformerRegistryItem } from '../components/Transformer
 import { calculateFieldTransformRegistryItem } from '../components/TransformersUI/CalculateFieldTransformerEditor';
 import { labelsToFieldsTransformerRegistryItem } from '../components/TransformersUI/LabelsToFieldsTransformerEditor';
 import { mergeTransformerRegistryItem } from '../components/TransformersUI/MergeTransformerEditor';
+import { autoMinMaxPerFieldTransformerRegistryItem } from '../components/TransformersUI/AutoMinMaxPerFieldTransformerEditor';
 import { seriesToRowsTransformerRegistryItem } from '../components/TransformersUI/SeriesToRowsTransformerEditor';
 
 export const getStandardTransformers = (): Array<TransformerRegistyItem<any>> => {
@@ -20,5 +21,6 @@ export const getStandardTransformers = (): Array<TransformerRegistyItem<any>> =>
     calculateFieldTransformRegistryItem,
     labelsToFieldsTransformerRegistryItem,
     mergeTransformerRegistryItem,
+    autoMinMaxPerFieldTransformerRegistryItem,
   ];
 };
