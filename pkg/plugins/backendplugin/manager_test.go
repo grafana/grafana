@@ -251,6 +251,7 @@ func TestManager(t *testing.T) {
 		t.Run("Plugin registration scenario when Grafana is licensed", func(t *testing.T) {
 			ctx.license.edition = "Enterprise"
 			ctx.license.hasLicense = true
+			ctx.license.tokenRaw = "testtoken"
 			ctx.cfg.BuildVersion = "7.0.0"
 			ctx.cfg.EnterpriseLicensePath = "/license.txt"
 
@@ -258,8 +259,8 @@ func TestManager(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Run("Should provide expected host environment variables", func(t *testing.T) {
-				require.Len(t, ctx.env, 3)
-				require.EqualValues(t, []string{"GF_VERSION=7.0.0", "GF_EDITION=Enterprise", "GF_ENTERPRISE_LICENSE_PATH=/license.txt"}, ctx.env)
+				require.Len(t, ctx.env, 4)
+				require.EqualValues(t, []string{"GF_VERSION=7.0.0", "GF_EDITION=Enterprise", "GF_ENTERPRISE_LICENSE_PATH=/license.txt", "GF_ENTERPRISE_LICENSE_TEXT=testtoken"}, ctx.env)
 			})
 		})
 	})
@@ -383,6 +384,7 @@ func (tp *testPlugin) CallResource(ctx context.Context, req *backend.CallResourc
 type testLicensingService struct {
 	edition    string
 	hasLicense bool
+	tokenRaw   string
 }
 
 func (t *testLicensingService) HasLicense() bool {
@@ -407,4 +409,8 @@ func (t *testLicensingService) LicenseURL(user *models.SignedInUser) string {
 
 func (t *testLicensingService) HasValidLicense() bool {
 	return false
+}
+
+func (t *testLicensingService) TokenRaw() string {
+	return t.tokenRaw
 }

@@ -3,14 +3,12 @@ import React, { PureComponent } from 'react';
 
 // Services
 import { getAngularLoader, AngularComponent } from '@grafana/runtime';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { Emitter } from 'app/core/utils/emitter';
 import { DataQuery } from '@grafana/data';
 import { TimeRange } from '@grafana/data';
 import 'app/features/plugins/plugin_loader';
-import { dateTime } from '@grafana/data';
 
 interface QueryEditorProps {
   error?: any;
@@ -33,8 +31,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
       return;
     }
 
-    const { datasource, initialQuery, exploreEvents, range } = this.props;
-    this.initTimeSrv(range);
+    const { datasource, initialQuery, exploreEvents } = this.props;
 
     const loader = getAngularLoader();
     const template = '<plugin-component type="query-ctrl"> </plugin-component>';
@@ -90,19 +87,6 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     if (this.component) {
       this.component.destroy();
     }
-  }
-
-  initTimeSrv(range: TimeRange) {
-    const timeSrv = getTimeSrv();
-    timeSrv.init({
-      time: {
-        from: dateTime(range.from),
-        to: dateTime(range.to),
-      },
-      refresh: false,
-      getTimezone: () => 'utc',
-      timeRangeUpdated: () => console.log('refreshDashboard!'),
-    });
   }
 
   render() {

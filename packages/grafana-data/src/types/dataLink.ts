@@ -1,4 +1,5 @@
 import { ScopedVars } from './ScopedVars';
+import { DataQuery } from './datasource';
 
 /**
  * Callback info for DataLink click events
@@ -10,10 +11,13 @@ export interface DataLinkClickEvent<T = any> {
 }
 
 /**
- * Link configuration.  The values may contain variables that need to be
- * processed before running
+ * Link configuration. The values may contain variables that need to be
+ * processed before showing the link to user.
+ *
+ * TODO: <T extends DataQuery> is not strictly true for internal links as we do not need refId for example but all
+ *  data source defined queries extend this so this is more for documentation.
  */
-export interface DataLink {
+export interface DataLink<T extends DataQuery = any> {
   title: string;
   targetBlank?: boolean;
 
@@ -28,16 +32,20 @@ export interface DataLink {
   // Not saved in JSON/DTO
   onClick?: (event: DataLinkClickEvent) => void;
 
-  // At the moment this is used for derived fields for metadata about internal linking.
-  meta?: {
-    datasourceUid?: string;
+  // If dataLink represents internal link this has to be filled. Internal link is defined as a query in a particular
+  // datas ource that we want to show to the user. Usually this results in a link to explore but can also lead to
+  // more custom onClick behaviour if needed.
+  // @internal and subject to change in future releases
+  internal?: {
+    query: T;
+    datasourceUid: string;
   };
 }
 
 export type LinkTarget = '_blank' | '_self' | undefined;
 
 /**
- * Processed Link Model.  The values are ready to use
+ * Processed Link Model. The values are ready to use
  */
 export interface LinkModel<T = any> {
   href: string;

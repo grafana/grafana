@@ -34,7 +34,7 @@ import { PanelProps } from '@grafana/data';
 |  [replaceVariables](#replacevariables-property) | <code>InterpolateFunction</code> | Template variables interpolation function |
 |  [timeRange](#timerange-property) | <code>TimeRange</code> | Time range of the current dashboard |
 |  [timeZone](#timezone-property) | <code>TimeZone</code> | Time zone of the current dashboard |
-|  [transparent](#transparent-property) | <code>boolean</code> | Indicathes whether or not panel should be rendered transparent |
+|  [transparent](#transparent-property) | <code>boolean</code> | Indicates whether or not panel should be rendered transparent |
 |  [width](#width-property) | <code>number</code> | Current width of the panel |
 
 ### data property
@@ -149,7 +149,7 @@ timeZone: TimeZone;
 
 ### transparent property
 
-Indicathes whether or not panel should be rendered transparent
+Indicates whether or not panel should be rendered transparent
 
 <b>Signature</b>
 

@@ -123,7 +123,7 @@ options are enabled, Grafana converts the labels from plain text to a regex comp
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Prometheus supports two ways to query annotations.

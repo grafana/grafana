@@ -41,7 +41,7 @@ This section describes the fields you fill out to create an alert.
 - **Evaluate every -** Specify how often the scheduler should evaluate the alert rule. This is referred to as the _evaluation interval_.
 - **For -** Specify how long the query needs to violate the configured thresholds before the alert notification triggers.
 
-You can set a minimum evaluation interval in the `alerting.min_interval_seconds` config field, to set a minimum time between evaluations. Refer to [Configuration]({{< relref "../installation/configuration.md" >}}#min-interval-seconds) for more information.
+You can set a minimum evaluation interval in the `alerting.min_interval_seconds` config field, to set a minimum time between evaluations. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}#min-interval-seconds) for more information.
 
 > **Caution:** Do not use `For` with the `If no data or all values are null` setting set to `No Data`. The triggering of `No Data` will trigger instantly and not take `For` into consideration. This may also result in that an OK notification not being sent if alert transitions from `No Data -> Pending -> OK`.
 
@@ -83,7 +83,7 @@ If a query returns multiple series then the aggregation function and threshold c
 - Alert condition with query that returns 2 series: **server1** and **server2**
 - **server1** series causes the alert rule to fire and switch to state `Alerting`
 - Notifications are sent out with message: _load peaking (server1)_
-- In a subsequence evaluation of the same alert rule the **server2** series also cause the alert rule to fire
+- In a subsequent evaluation of the same alert rule, the **server2** series also causes the alert rule to fire
 - No new notifications are sent as the alert rule is already in state `Alerting`.
 
 So as you can see from the above scenario Grafana will not send out notifications when other series cause the alert to fire if the rule already is in state `Alerting`. To improve support for queries that return multiple series we plan to track state **per series** in a future release.

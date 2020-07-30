@@ -1,0 +1,72 @@
+{
+  "value": {
+    "start": "2020-06-25T16:15:32.140Z",
+    "end": "2020-06-25T16:19:32.140Z",
+    "interval": "PT2M",
+    "segments": [
+      {
+        "start": "2020-06-25T16:15:32.140Z",
+        "end": "2020-06-25T16:16:00.000Z",
+        "segments": [
+          {
+            "client/countryOrRegion": "United States",
+            "segments": [
+              {
+                "traces/count": {
+                  "sum": 2
+                },
+                "client/city": "Washington"
+              },
+              {
+                "traces/count": {
+                  "sum": 2
+                },
+                "client/city": "Des Moines"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "start": "2020-06-25T16:16:00.000Z",
+        "end": "2020-06-25T16:18:00.000Z",
+        "segments": [
+          {
+            "client/countryOrRegion": "United States",
+            "segments": [
+              {
+                "traces/count": {
+                  "sum": 11
+                },
+                "client/city": ""
+              },
+              {
+                "traces/count": {
+                  "sum": 3
+                },
+                "client/city": "Chicago"
+              },
+              {
+                "traces/count": {
+                  "sum": 1
+                },
+                "client/city": "Des Moines"
+              }
+            ]
+          },
+          {
+            "client/countryOrRegion": "Japan",
+            "segments": [
+              {
+                "traces/count": {
+                  "sum": 1
+                },
+                "client/city": "Tokyo"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

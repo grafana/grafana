@@ -70,6 +70,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         },
         (err: any) => {
           const regions = [
+            'af-south-1',
             'ap-east-1',
             'ap-northeast-1',
             'ap-northeast-2',
@@ -130,6 +131,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 onChange={option => {
                   if (options.jsonData.authType === 'arn' && option.value !== 'arn') {
                     delete this.props.options.jsonData.assumeRoleArn;
+                    delete this.props.options.jsonData.externalId;
                   }
                   onUpdateDatasourceJsonDataOptionSelect(this.props, 'authType')(option);
                 }}
@@ -236,6 +238,22 @@ export class ConfigEditor extends PureComponent<Props, State> {
                     placeholder="arn:aws:iam:*"
                     value={options.jsonData.assumeRoleArn || ''}
                     onChange={onUpdateDatasourceJsonDataOption(this.props, 'assumeRoleArn')}
+                  />
+                </div>
+              </div>
+              <div className="gf-form">
+                <InlineFormLabel
+                  className="width-14"
+                  tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
+                >
+                  External ID
+                </InlineFormLabel>
+                <div className="width-30">
+                  <Input
+                    className="width-30"
+                    placeholder="External ID"
+                    value={options.jsonData.externalId || ''}
+                    onChange={onUpdateDatasourceJsonDataOption(this.props, 'externalId')}
                   />
                 </div>
               </div>

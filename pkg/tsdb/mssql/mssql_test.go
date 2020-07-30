@@ -90,7 +90,9 @@ func TestMSSQL(t *testing.T) {
 						c_smalldatetime smalldatetime,
 						c_date date,
 						c_time time,
-						c_datetimeoffset datetimeoffset
+						c_datetimeoffset datetimeoffset,
+
+						c_uuid uniqueidentifier
 					)
 				`
 
@@ -103,6 +105,7 @@ func TestMSSQL(t *testing.T) {
 			dt2 := time.Date(2018, 3, 14, 21, 20, 6, 8896406e2, time.UTC)
 			dt2Format := "2006-01-02 15:04:05.999999999 -07:00"
 			d2 := dt2.Format(dt2Format)
+			uuid := "B33D42A3-AC5A-4D4C-81DD-72F3D5C49025"
 
 			sql = fmt.Sprintf(`
 				INSERT INTO [mssql_types]
@@ -111,8 +114,9 @@ func TestMSSQL(t *testing.T) {
 		    1.11, 2.22, 3.33,
 					'char10', 'varchar10', 'text',
 					N'☺nchar12☺', N'☺nvarchar12☺', N'☺text☺',
-					CAST('%s' AS DATETIME), CAST('%s' AS DATETIME2), CAST('%s' AS SMALLDATETIME), CAST('%s' AS DATE), CAST('%s' AS TIME), SWITCHOFFSET(CAST('%s' AS DATETIMEOFFSET), '-07:00')
-		`, d, d2, d, d, d, d2)
+					CAST('%s' AS DATETIME), CAST('%s' AS DATETIME2), CAST('%s' AS SMALLDATETIME), CAST('%s' AS DATE), CAST('%s' AS TIME), SWITCHOFFSET(CAST('%s' AS DATETIMEOFFSET), '-07:00'),
+					CONVERT(uniqueidentifier, '%s')
+		`, d, d2, d, d, d, d2, uuid)
 
 			_, err = sess.Exec(sql)
 			So(err, ShouldBeNil)
@@ -164,6 +168,8 @@ func TestMSSQL(t *testing.T) {
 				So(column[20].(time.Time), ShouldEqual, dt.Truncate(24*time.Hour))
 				So(column[21].(time.Time), ShouldEqual, time.Date(1, 1, 1, dt.Hour(), dt.Minute(), dt.Second(), dt.Nanosecond(), time.UTC))
 				So(column[22].(time.Time), ShouldEqual, dt2.In(time.FixedZone("UTC-7", int(-7*60*60))))
+
+				So(column[23].(string), ShouldEqual, uuid)
 			})
 		})
 
@@ -300,7 +306,6 @@ func TestMSSQL(t *testing.T) {
 				}
 
 				So(points[6][0].Valid, ShouldBeFalse)
-
 			})
 
 			Convey("When doing a metric query using timeGroup and $__interval", func() {
@@ -699,7 +704,6 @@ func TestMSSQL(t *testing.T) {
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 				So(queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
-
 			})
 
 			Convey("Given a stored procedure that takes @from and @to in epoch time", func() {
@@ -1133,7 +1137,9 @@ func TestMSSQL(t *testing.T) {
 }
 
 func InitMSSQLTestDB(t *testing.T) *xorm.Engine {
-	x, err := xorm.NewEngine(sqlutil.TestDB_Mssql.DriverName, strings.Replace(sqlutil.TestDB_Mssql.ConnStr, "localhost", serverIP, 1))
+	testDB := sqlutil.MSSQLTestDB()
+	x, err := xorm.NewEngine(testDB.DriverName, strings.Replace(testDB.ConnStr, "localhost",
+		serverIP, 1))
 	if err != nil {
 		t.Fatalf("Failed to init mssql db %v", err)
 	}

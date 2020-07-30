@@ -1,5 +1,13 @@
+import moment from 'moment-timezone';
+import { memoize } from 'lodash';
 import { TimeZone } from '../types';
 import { getTimeZone } from './common';
+
+export enum InternalTimeZones {
+  default = '',
+  localBrowserTime = 'browser',
+  utc = 'utc',
+}
 
 export const timeZoneFormatUserFriendly = (timeZone: TimeZone | undefined) => {
   switch (getTimeZone({ timeZone })) {
@@ -12,392 +20,413 @@ export const timeZoneFormatUserFriendly = (timeZone: TimeZone | undefined) => {
   }
 };
 
-// List taken from https://stackoverflow.com/questions/38399465/how-to-get-list-of-all-timezones-in-javascript
-export const getTimeZoneGroups = () => {
-  const europeZones = [
-    'Europe/Amsterdam',
-    'Europe/Andorra',
-    'Europe/Astrakhan',
-    'Europe/Athens',
-    'Europe/Belgrade',
-    'Europe/Berlin',
-    'Europe/Brussels',
-    'Europe/Bucharest',
-    'Europe/Budapest',
-    'Europe/Chisinau',
-    'Europe/Copenhagen',
-    'Europe/Dublin',
-    'Europe/Gibraltar',
-    'Europe/Helsinki',
-    'Europe/Istanbul',
-    'Europe/Kaliningrad',
-    'Europe/Kiev',
-    'Europe/Kirov',
-    'Europe/Lisbon',
-    'Europe/London',
-    'Europe/Luxembourg',
-    'Europe/Madrid',
-    'Europe/Malta',
-    'Europe/Minsk',
-    'Europe/Monaco',
-    'Europe/Moscow',
-    'Europe/Oslo',
-    'Europe/Paris',
-    'Europe/Prague',
-    'Europe/Riga',
-    'Europe/Rome',
-    'Europe/Samara',
-    'Europe/Saratov',
-    'Europe/Simferopol',
-    'Europe/Sofia',
-    'Europe/Stockholm',
-    'Europe/Tallinn',
-    'Europe/Tirane',
-    'Europe/Ulyanovsk',
-    'Europe/Uzhgorod',
-    'Europe/Vienna',
-    'Europe/Vilnius',
-    'Europe/Volgograd',
-    'Europe/Warsaw',
-    'Europe/Zaporozhye',
-    'Europe/Zurich',
-  ];
+export interface TimeZoneCountry {
+  code: string;
+  name: string;
+}
+export interface TimeZoneInfo {
+  name: string;
+  zone: string;
+  countries: TimeZoneCountry[];
+  abbreviation: string;
+  offsetInMins: number;
+}
 
-  const africaZones = [
-    'Africa/Abidjan',
-    'Africa/Accra',
-    'Africa/Algiers',
-    'Africa/Bissau',
-    'Africa/Cairo',
-    'Africa/Casablanca',
-    'Africa/Ceuta',
-    'Africa/El_Aaiun',
-    'Africa/Johannesburg',
-    'Africa/Juba',
-    'Africa/Khartoum',
-    'Africa/Lagos',
-    'Africa/Maputo',
-    'Africa/Monrovia',
-    'Africa/Nairobi',
-    'Africa/Ndjamena',
-    'Africa/Sao_Tome',
-    'Africa/Tripoli',
-    'Africa/Tunis',
-    'Africa/Windhoek',
-  ];
+export interface GroupedTimeZones {
+  name: string;
+  zones: TimeZone[];
+}
 
-  const asiaZones = [
-    'Asia/Almaty',
-    'Asia/Amman',
-    'Asia/Anadyr',
-    'Asia/Aqtau',
-    'Asia/Aqtobe',
-    'Asia/Ashgabat',
-    'Asia/Atyrau',
-    'Asia/Baghdad',
-    'Asia/Baku',
-    'Asia/Bangkok',
-    'Asia/Barnaul',
-    'Asia/Beirut',
-    'Asia/Bishkek',
-    'Asia/Brunei',
-    'Asia/Chita',
-    'Asia/Choibalsan',
-    'Asia/Colombo',
-    'Asia/Damascus',
-    'Asia/Dhaka',
-    'Asia/Dili',
-    'Asia/Dubai',
-    'Asia/Dushanbe',
-    'Asia/Famagusta',
-    'Asia/Gaza',
-    'Asia/Hebron',
-    'Asia/Ho_Chi_Minh',
-    'Asia/Hong_Kong',
-    'Asia/Hovd',
-    'Asia/Irkutsk',
-    'Asia/Jakarta',
-    'Asia/Jayapura',
-    'Asia/Jerusalem',
-    'Asia/Kabul',
-    'Asia/Kamchatka',
-    'Asia/Karachi',
-    'Asia/Kathmandu',
-    'Asia/Khandyga',
-    'Asia/Kolkata',
-    'Asia/Krasnoyarsk',
-    'Asia/Kuala_Lumpur',
-    'Asia/Kuching',
-    'Asia/Macau',
-    'Asia/Magadan',
-    'Asia/Makassar',
-    'Asia/Manila',
-    'Asia/Nicosia',
-    'Asia/Novokuznetsk',
-    'Asia/Novosibirsk',
-    'Asia/Omsk',
-    'Asia/Oral',
-    'Asia/Pontianak',
-    'Asia/Pyongyang',
-    'Asia/Qatar',
-    'Asia/Qostanay',
-    'Asia/Qyzylorda',
-    'Asia/Riyadh',
-    'Asia/Sakhalin',
-    'Asia/Samarkand',
-    'Asia/Seoul',
-    'Asia/Shanghai',
-    'Asia/Singapore',
-    'Asia/Srednekolymsk',
-    'Asia/Taipei',
-    'Asia/Tashkent',
-    'Asia/Tbilisi',
-    'Asia/Tehran',
-    'Asia/Thimphu',
-    'Asia/Tokyo',
-    'Asia/Tomsk',
-    'Asia/Ulaanbaatar',
-    'Asia/Urumqi',
-    'Asia/Ust-Nera',
-    'Asia/Vladivostok',
-    'Asia/Yakutsk',
-    'Asia/Yangon',
-    'Asia/Yekaterinburg',
-    'Asia/Yerevan',
-  ];
+export const getTimeZoneInfo = (zone: string, timestamp: number): TimeZoneInfo | undefined => {
+  const internal = mapInternal(zone, timestamp);
 
-  const antarcticaZones = [
-    'Antarctica/Casey',
-    'Antarctica/Davis',
-    'Antarctica/DumontDUrville',
-    'Antarctica/Macquarie',
-    'Antarctica/Mawson',
-    'Antarctica/Palmer',
-    'Antarctica/Rothera',
-    'Antarctica/Syowa',
-    'Antarctica/Troll',
-    'Antarctica/Vostok',
-  ];
+  if (internal) {
+    return internal;
+  }
 
-  const americaZones = [
-    'America/Adak',
-    'America/Anchorage',
-    'America/Araguaina',
-    'America/Argentina/Buenos_Aires',
-    'America/Argentina/Catamarca',
-    'America/Argentina/Cordoba',
-    'America/Argentina/Jujuy',
-    'America/Argentina/La_Rioja',
-    'America/Argentina/Mendoza',
-    'America/Argentina/Rio_Gallegos',
-    'America/Argentina/Salta',
-    'America/Argentina/San_Juan',
-    'America/Argentina/San_Luis',
-    'America/Argentina/Tucuman',
-    'America/Argentina/Ushuaia',
-    'America/Asuncion',
-    'America/Atikokan',
-    'America/Bahia',
-    'America/Bahia_Banderas',
-    'America/Barbados',
-    'America/Belem',
-    'America/Belize',
-    'America/Blanc-Sablon',
-    'America/Boa_Vista',
-    'America/Bogota',
-    'America/Boise',
-    'America/Cambridge_Bay',
-    'America/Campo_Grande',
-    'America/Cancun',
-    'America/Caracas',
-    'America/Cayenne',
-    'America/Chicago',
-    'America/Chihuahua',
-    'America/Costa_Rica',
-    'America/Creston',
-    'America/Cuiaba',
-    'America/Curacao',
-    'America/Danmarkshavn',
-    'America/Dawson',
-    'America/Dawson_Creek',
-    'America/Denver',
-    'America/Detroit',
-    'America/Edmonton',
-    'America/Eirunepe',
-    'America/El_Salvador',
-    'America/Fort_Nelson',
-    'America/Fortaleza',
-    'America/Glace_Bay',
-    'America/Godthab',
-    'America/Goose_Bay',
-    'America/Grand_Turk',
-    'America/Guatemala',
-    'America/Guayaquil',
-    'America/Guyana',
-    'America/Halifax',
-    'America/Havana',
-    'America/Hermosillo',
-    'America/Indiana/Indianapolis',
-    'America/Indiana/Knox',
-    'America/Indiana/Marengo',
-    'America/Indiana/Petersburg',
-    'America/Indiana/Tell_City',
-    'America/Indiana/Vevay',
-    'America/Indiana/Vincennes',
-    'America/Indiana/Winamac',
-    'America/Inuvik',
-    'America/Iqaluit',
-    'America/Jamaica',
-    'America/Juneau',
-    'America/Kentucky/Louisville',
-    'America/Kentucky/Monticello',
-    'America/La_Paz',
-    'America/Lima',
-    'America/Los_Angeles',
-    'America/Maceio',
-    'America/Managua',
-    'America/Manaus',
-    'America/Martinique',
-    'America/Matamoros',
-    'America/Mazatlan',
-    'America/Menominee',
-    'America/Merida',
-    'America/Metlakatla',
-    'America/Mexico_City',
-    'America/Miquelon',
-    'America/Moncton',
-    'America/Monterrey',
-    'America/Montevideo',
-    'America/Nassau',
-    'America/New_York',
-    'America/Nipigon',
-    'America/Nome',
-    'America/Noronha',
-    'America/North_Dakota/Beulah',
-    'America/North_Dakota/Center',
-    'America/North_Dakota/New_Salem',
-    'America/Ojinaga',
-    'America/Panama',
-    'America/Pangnirtung',
-    'America/Paramaribo',
-    'America/Phoenix',
-    'America/Port-au-Prince',
-    'America/Port_of_Spain',
-    'America/Porto_Velho',
-    'America/Puerto_Rico',
-    'America/Punta_Arenas',
-    'America/Rainy_River',
-    'America/Rankin_Inlet',
-    'America/Recife',
-    'America/Regina',
-    'America/Resolute',
-    'America/Rio_Branco',
-    'America/Santarem',
-    'America/Santiago',
-    'America/Santo_Domingo',
-    'America/Sao_Paulo',
-    'America/Scoresbysund',
-    'America/Sitka',
-    'America/St_Johns',
-    'America/Swift_Current',
-    'America/Tegucigalpa',
-    'America/Thule',
-    'America/Thunder_Bay',
-    'America/Tijuana',
-    'America/Toronto',
-    'America/Vancouver',
-    'America/Whitehorse',
-    'America/Winnipeg',
-    'America/Yakutat',
-    'America/Yellowknife',
-  ];
-
-  const pacificZones = [
-    'Pacific/Apia',
-    'Pacific/Auckland',
-    'Pacific/Bougainville',
-    'Pacific/Chatham',
-    'Pacific/Chuuk',
-    'Pacific/Easter',
-    'Pacific/Efate',
-    'Pacific/Enderbury',
-    'Pacific/Fakaofo',
-    'Pacific/Fiji',
-    'Pacific/Funafuti',
-    'Pacific/Galapagos',
-    'Pacific/Gambier',
-    'Pacific/Guadalcanal',
-    'Pacific/Guam',
-    'Pacific/Honolulu',
-    'Pacific/Kiritimati',
-    'Pacific/Kosrae',
-    'Pacific/Kwajalein',
-    'Pacific/Majuro',
-    'Pacific/Marquesas',
-    'Pacific/Nauru',
-    'Pacific/Niue',
-    'Pacific/Norfolk',
-    'Pacific/Noumea',
-    'Pacific/Pago_Pago',
-    'Pacific/Palau',
-    'Pacific/Pitcairn',
-    'Pacific/Pohnpei',
-    'Pacific/Port_Moresby',
-    'Pacific/Rarotonga',
-    'Pacific/Tahiti',
-    'Pacific/Tarawa',
-    'Pacific/Tongatapu',
-    'Pacific/Wake',
-    'Pacific/Wallis',
-  ];
-
-  const australiaZones = [
-    'Australia/Adelaide',
-    'Australia/Brisbane',
-    'Australia/Broken_Hill',
-    'Australia/Currie',
-    'Australia/Darwin',
-    'Australia/Eucla',
-    'Australia/Hobart',
-    'Australia/Lindeman',
-    'Australia/Lord_Howe',
-    'Australia/Melbourne',
-    'Australia/Perth',
-    'Australia/Sydney',
-  ];
-
-  const atlanticZones = [
-    'Atlantic/Azores',
-    'Atlantic/Bermuda',
-    'Atlantic/Canary',
-    'Atlantic/Cape_Verde',
-    'Atlantic/Faroe',
-    'Atlantic/Madeira',
-    'Atlantic/Reykjavik',
-    'Atlantic/South_Georgia',
-    'Atlantic/Stanley',
-  ];
-
-  const indianZones = [
-    'Indian/Chagos',
-    'Indian/Christmas',
-    'Indian/Cocos',
-    'Indian/Kerguelen',
-    'Indian/Mahe',
-    'Indian/Maldives',
-    'Indian/Mauritius',
-    'Indian/Reunion',
-  ];
-
-  return [
-    { label: 'Africa', options: africaZones },
-    { label: 'America', options: americaZones },
-    { label: 'Antarctica', options: antarcticaZones },
-    { label: 'Asia', options: asiaZones },
-    { label: 'Atlantic', options: atlanticZones },
-    { label: 'Australia', options: australiaZones },
-    { label: 'Europe', options: europeZones },
-    { label: 'Indian', options: indianZones },
-    { label: 'Pacific', options: pacificZones },
-  ];
+  return mapToInfo(zone, timestamp);
 };
+
+export const getTimeZones = memoize((includeInternal = false): TimeZone[] => {
+  const initial: TimeZone[] = [];
+
+  if (includeInternal) {
+    initial.push.apply(initial, [InternalTimeZones.default, InternalTimeZones.localBrowserTime, InternalTimeZones.utc]);
+  }
+
+  return moment.tz.names().reduce((zones: TimeZone[], zone: string) => {
+    const countriesForZone = countriesByTimeZone[zone];
+
+    if (!Array.isArray(countriesForZone) || countriesForZone.length === 0) {
+      return zones;
+    }
+
+    zones.push(zone);
+    return zones;
+  }, initial);
+});
+
+export const getTimeZoneGroups = memoize((includeInternal = false): GroupedTimeZones[] => {
+  const timeZones = getTimeZones(includeInternal);
+
+  const groups = timeZones.reduce((groups: Record<string, TimeZone[]>, zone: TimeZone) => {
+    const delimiter = zone.indexOf('/');
+
+    if (delimiter === -1) {
+      const group = '';
+      groups[group] = groups[group] ?? [];
+      groups[group].push(zone);
+
+      return groups;
+    }
+
+    const group = zone.substr(0, delimiter);
+    groups[group] = groups[group] ?? [];
+    groups[group].push(zone);
+
+    return groups;
+  }, {});
+
+  return Object.keys(groups).map(name => ({
+    name,
+    zones: groups[name],
+  }));
+});
+
+const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined => {
+  switch (zone) {
+    case InternalTimeZones.utc: {
+      return {
+        name: 'Coordinated Universal Time',
+        zone,
+        countries: [],
+        abbreviation: 'UTC, GMT',
+        offsetInMins: 0,
+      };
+    }
+
+    case InternalTimeZones.default: {
+      const tz = getTimeZone();
+      const isInternal = tz === 'browser' || tz === 'utc';
+      const info = (isInternal ? mapInternal(tz, timestamp) : mapToInfo(tz, timestamp)) ?? {};
+
+      return {
+        countries: countriesByTimeZone[tz] ?? [],
+        abbreviation: '',
+        offsetInMins: 0,
+        ...info,
+        name: 'Default',
+        zone,
+      };
+    }
+
+    case InternalTimeZones.localBrowserTime: {
+      const tz = moment.tz.guess(true);
+      const info = mapToInfo(tz, timestamp) ?? {};
+
+      return {
+        countries: countriesByTimeZone[tz] ?? [],
+        abbreviation: 'Your local time',
+        offsetInMins: new Date().getTimezoneOffset(),
+        ...info,
+        name: 'Browser Time',
+        zone,
+      };
+    }
+
+    default:
+      return undefined;
+  }
+};
+
+const abbrevationWithoutOffset = (abbrevation: string): string => {
+  if (/^(\+|\-).+/.test(abbrevation)) {
+    return '';
+  }
+  return abbrevation;
+};
+
+const mapToInfo = (timeZone: TimeZone, timestamp: number): TimeZoneInfo | undefined => {
+  const momentTz = moment.tz.zone(timeZone);
+
+  if (!momentTz) {
+    return undefined;
+  }
+
+  return {
+    name: timeZone,
+    zone: timeZone,
+    countries: countriesByTimeZone[timeZone] ?? [],
+    abbreviation: abbrevationWithoutOffset(momentTz.abbr(timestamp)),
+    offsetInMins: momentTz.utcOffset(timestamp),
+  };
+};
+
+// Country names by ISO 3166-1-alpha-2 code
+const countryByCode: Record<string, string> = {
+  AF: 'Afghanistan',
+  AX: 'Aland Islands',
+  AL: 'Albania',
+  DZ: 'Algeria',
+  AS: 'American Samoa',
+  AD: 'Andorra',
+  AO: 'Angola',
+  AI: 'Anguilla',
+  AQ: 'Antarctica',
+  AG: 'Antigua And Barbuda',
+  AR: 'Argentina',
+  AM: 'Armenia',
+  AW: 'Aruba',
+  AU: 'Australia',
+  AT: 'Austria',
+  AZ: 'Azerbaijan',
+  BS: 'Bahamas',
+  BH: 'Bahrain',
+  BD: 'Bangladesh',
+  BB: 'Barbados',
+  BY: 'Belarus',
+  BE: 'Belgium',
+  BZ: 'Belize',
+  BJ: 'Benin',
+  BM: 'Bermuda',
+  BT: 'Bhutan',
+  BO: 'Bolivia',
+  BA: 'Bosnia And Herzegovina',
+  BW: 'Botswana',
+  BV: 'Bouvet Island',
+  BR: 'Brazil',
+  IO: 'British Indian Ocean Territory',
+  BN: 'Brunei Darussalam',
+  BG: 'Bulgaria',
+  BF: 'Burkina Faso',
+  BI: 'Burundi',
+  KH: 'Cambodia',
+  CM: 'Cameroon',
+  CA: 'Canada',
+  CV: 'Cape Verde',
+  KY: 'Cayman Islands',
+  CF: 'Central African Republic',
+  TD: 'Chad',
+  CL: 'Chile',
+  CN: 'China',
+  CX: 'Christmas Island',
+  CC: 'Cocos (Keeling) Islands',
+  CO: 'Colombia',
+  KM: 'Comoros',
+  CG: 'Congo',
+  CD: 'Congo, Democratic Republic',
+  CK: 'Cook Islands',
+  CR: 'Costa Rica',
+  CI: "Cote D'Ivoire",
+  HR: 'Croatia',
+  CU: 'Cuba',
+  CY: 'Cyprus',
+  CZ: 'Czech Republic',
+  DK: 'Denmark',
+  DJ: 'Djibouti',
+  DM: 'Dominica',
+  DO: 'Dominican Republic',
+  EC: 'Ecuador',
+  EG: 'Egypt',
+  SV: 'El Salvador',
+  GQ: 'Equatorial Guinea',
+  ER: 'Eritrea',
+  EE: 'Estonia',
+  ET: 'Ethiopia',
+  FK: 'Falkland Islands (Malvinas)',
+  FO: 'Faroe Islands',
+  FJ: 'Fiji',
+  FI: 'Finland',
+  FR: 'France',
+  GF: 'French Guiana',
+  PF: 'French Polynesia',
+  TF: 'French Southern Territories',
+  GA: 'Gabon',
+  GM: 'Gambia',
+  GE: 'Georgia',
+  DE: 'Germany',
+  GH: 'Ghana',
+  GI: 'Gibraltar',
+  GR: 'Greece',
+  GL: 'Greenland',
+  GD: 'Grenada',
+  GP: 'Guadeloupe',
+  GU: 'Guam',
+  GT: 'Guatemala',
+  GG: 'Guernsey',
+  GN: 'Guinea',
+  GW: 'Guinea-Bissau',
+  GY: 'Guyana',
+  HT: 'Haiti',
+  HM: 'Heard Island & Mcdonald Islands',
+  VA: 'Holy See (Vatican City State)',
+  HN: 'Honduras',
+  HK: 'Hong Kong',
+  HU: 'Hungary',
+  IS: 'Iceland',
+  IN: 'India',
+  ID: 'Indonesia',
+  IR: 'Iran (Islamic Republic Of)',
+  IQ: 'Iraq',
+  IE: 'Ireland',
+  IM: 'Isle Of Man',
+  IL: 'Israel',
+  IT: 'Italy',
+  JM: 'Jamaica',
+  JP: 'Japan',
+  JE: 'Jersey',
+  JO: 'Jordan',
+  KZ: 'Kazakhstan',
+  KE: 'Kenya',
+  KI: 'Kiribati',
+  KR: 'Korea',
+  KW: 'Kuwait',
+  KG: 'Kyrgyzstan',
+  LA: "Lao People's Democratic Republic",
+  LV: 'Latvia',
+  LB: 'Lebanon',
+  LS: 'Lesotho',
+  LR: 'Liberia',
+  LY: 'Libyan Arab Jamahiriya',
+  LI: 'Liechtenstein',
+  LT: 'Lithuania',
+  LU: 'Luxembourg',
+  MO: 'Macao',
+  MK: 'Macedonia',
+  MG: 'Madagascar',
+  MW: 'Malawi',
+  MY: 'Malaysia',
+  MV: 'Maldives',
+  ML: 'Mali',
+  MT: 'Malta',
+  MH: 'Marshall Islands',
+  MQ: 'Martinique',
+  MR: 'Mauritania',
+  MU: 'Mauritius',
+  YT: 'Mayotte',
+  MX: 'Mexico',
+  FM: 'Micronesia (Federated States Of)',
+  MD: 'Moldova',
+  MC: 'Monaco',
+  MN: 'Mongolia',
+  ME: 'Montenegro',
+  MS: 'Montserrat',
+  MA: 'Morocco',
+  MZ: 'Mozambique',
+  MM: 'Myanmar',
+  NA: 'Namibia',
+  NR: 'Nauru',
+  NP: 'Nepal',
+  NL: 'Netherlands',
+  AN: 'Netherlands Antilles',
+  NC: 'New Caledonia',
+  NZ: 'New Zealand',
+  NI: 'Nicaragua',
+  NE: 'Niger',
+  NG: 'Nigeria',
+  NU: 'Niue',
+  NF: 'Norfolk Island',
+  MP: 'Northern Mariana Islands',
+  NO: 'Norway',
+  OM: 'Oman',
+  PK: 'Pakistan',
+  PW: 'Palau',
+  PS: 'Palestinian Territory (Occupied)',
+  PA: 'Panama',
+  PG: 'Papua New Guinea',
+  PY: 'Paraguay',
+  PE: 'Peru',
+  PH: 'Philippines',
+  PN: 'Pitcairn',
+  PL: 'Poland',
+  PT: 'Portugal',
+  PR: 'Puerto Rico',
+  QA: 'Qatar',
+  RE: 'Reunion',
+  RO: 'Romania',
+  RU: 'Russian Federation',
+  RW: 'Rwanda',
+  BL: 'Saint Barthelemy',
+  SH: 'Saint Helena',
+  KN: 'Saint Kitts And Nevis',
+  LC: 'Saint Lucia',
+  MF: 'Saint Martin',
+  PM: 'Saint Pierre And Miquelon',
+  VC: 'Saint Vincent And Grenadines',
+  WS: 'Samoa',
+  SM: 'San Marino',
+  ST: 'Sao Tome And Principe',
+  SA: 'Saudi Arabia',
+  SN: 'Senegal',
+  RS: 'Serbia',
+  SC: 'Seychelles',
+  SL: 'Sierra Leone',
+  SG: 'Singapore',
+  SK: 'Slovakia',
+  SI: 'Slovenia',
+  SB: 'Solomon Islands',
+  SO: 'Somalia',
+  ZA: 'South Africa',
+  GS: 'South Georgia And Sandwich Isl.',
+  ES: 'Spain',
+  LK: 'Sri Lanka',
+  SD: 'Sudan',
+  SR: 'Suriname',
+  SJ: 'Svalbard And Jan Mayen',
+  SZ: 'Swaziland',
+  SE: 'Sweden',
+  CH: 'Switzerland',
+  SY: 'Syrian Arab Republic',
+  TW: 'Taiwan',
+  TJ: 'Tajikistan',
+  TZ: 'Tanzania',
+  TH: 'Thailand',
+  TL: 'Timor-Leste',
+  TG: 'Togo',
+  TK: 'Tokelau',
+  TO: 'Tonga',
+  TT: 'Trinidad And Tobago',
+  TN: 'Tunisia',
+  TR: 'Turkey',
+  TM: 'Turkmenistan',
+  TC: 'Turks And Caicos Islands',
+  TV: 'Tuvalu',
+  UG: 'Uganda',
+  UA: 'Ukraine',
+  AE: 'United Arab Emirates',
+  GB: 'United Kingdom',
+  US: 'United States',
+  UM: 'United States Outlying Islands',
+  UY: 'Uruguay',
+  UZ: 'Uzbekistan',
+  VU: 'Vanuatu',
+  VE: 'Venezuela',
+  VN: 'Viet Nam',
+  VG: 'Virgin Islands, British',
+  VI: 'Virgin Islands, U.S.',
+  WF: 'Wallis And Futuna',
+  EH: 'Western Sahara',
+  YE: 'Yemen',
+  ZM: 'Zambia',
+  ZW: 'Zimbabwe',
+};
+
+const countriesByTimeZone = ((): Record<string, TimeZoneCountry[]> => {
+  return moment.tz.countries().reduce((all: Record<string, TimeZoneCountry[]>, code) => {
+    const timeZones = moment.tz.zonesForCountry(code);
+    return timeZones.reduce((all: Record<string, TimeZoneCountry[]>, timeZone) => {
+      if (!all[timeZone]) {
+        all[timeZone] = [];
+      }
+
+      const name = countryByCode[code];
+
+      if (!name) {
+        return all;
+      }
+
+      all[timeZone].push({ code, name });
+      return all;
+    }, all);
+  }, {});
+})();

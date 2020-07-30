@@ -89,7 +89,7 @@ func getTimeDurationStringToSeconds(str string) (int64, error) {
 
 	matches := valueFormatRegex.FindAllString(str, 1)
 
-	if len(matches) <= 0 {
+	if len(matches) == 0 {
 		return 0, ErrFrequencyCouldNotBeParsed
 	}
 

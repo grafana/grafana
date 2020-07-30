@@ -28,7 +28,7 @@ import SpanBar from './SpanBar';
 import Ticks from './Ticks';
 
 import { TNil } from '../types';
-import { Span } from '@grafana/data';
+import { TraceSpan } from '@grafana/data';
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 
 const getStyles = createStyle((theme: Theme) => {
@@ -252,7 +252,6 @@ const getStyles = createStyle((theme: Theme) => {
     `,
     errorIcon: css`
       label: errorIcon;
-      background: ${autoColor(theme, '#db2828')};
       border-radius: 6.5px;
       color: ${autoColor(theme, '#fff')};
       font-size: 0.85em;
@@ -304,7 +303,7 @@ type SpanBarRowProps = {
   showErrorIcon: boolean;
   getViewedBounds: ViewedBoundsFunctionType;
   traceStartTime: number;
-  span: Span;
+  span: TraceSpan;
   focusSpan: (spanID: string) => void;
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
@@ -418,7 +417,16 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                   [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
                 })}
               >
-                {showErrorIcon && <IoAlert className={styles.errorIcon} />}
+                {showErrorIcon && (
+                  <IoAlert
+                    style={{
+                      backgroundColor: span.errorIconColor
+                        ? autoColor(theme, span.errorIconColor)
+                        : autoColor(theme, '#db2828'),
+                    }}
+                    className={styles.errorIcon}
+                  />
+                )}
                 {serviceName}{' '}
                 {rpc && (
                   <span>

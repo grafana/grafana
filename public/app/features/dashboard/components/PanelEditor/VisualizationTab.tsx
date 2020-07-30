@@ -11,6 +11,7 @@ import { Field } from '@grafana/ui/src/components/Forms/Field';
 
 interface OwnProps {
   panel: PanelModel;
+  onToggleOptionGroup: (expand: boolean) => void;
 }
 
 interface ConnectedProps {
@@ -24,7 +25,7 @@ interface DispatchProps {
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Props>(
-  ({ panel, plugin, changePanelPlugin }, ref) => {
+  ({ panel, plugin, changePanelPlugin, onToggleOptionGroup }, ref) => {
     const [searchQuery, setSearchQuery] = useState('');
     const theme = useTheme();
     const styles = getStyles(theme);
@@ -32,9 +33,12 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
     if (!plugin) {
       return null;
     }
-
     const onPluginTypeChange = (meta: PanelPluginMeta) => {
-      changePanelPlugin(panel, meta.id);
+      if (meta.id === plugin.meta.id) {
+        onToggleOptionGroup(false);
+      } else {
+        changePanelPlugin(panel, meta.id);
+      }
     };
 
     const onKeyPress = useCallback(

@@ -25,17 +25,18 @@ import {
   applyFieldOverrides,
   DataConfigSource,
   TimeZone,
+  LoadingState,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
-  datasource: string | DataSourceApi<TQuery, TOptions>;
+  datasource: string | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId: number;
   dashboardId?: number;
-  timezone?: string;
+  timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
   maxDataPoints: number;
@@ -57,11 +58,10 @@ export interface GetDataOptions {
 }
 
 export class PanelQueryRunner {
-  private subject?: ReplaySubject<PanelData>;
+  private subject: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
   private dataConfigSource: DataConfigSource;
-  private timeZone?: TimeZone;
 
   constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
@@ -97,7 +97,7 @@ export class PanelQueryRunner {
             processedData = {
               ...processedData,
               series: applyFieldOverrides({
-                timeZone: this.timeZone,
+                timeZone: data.request!.timezone,
                 autoMinMax: true,
                 data: processedData.series,
                 ...fieldConfig,
@@ -125,8 +125,6 @@ export class PanelQueryRunner {
       scopedVars,
       minInterval,
     } = options;
-
-    this.timeZone = timezone;
 
     if (isSharedDashboardQuery(datasource)) {
       this.pipeToSubject(runSharedRequest(options));
@@ -179,7 +177,7 @@ export class PanelQueryRunner {
 
       this.pipeToSubject(runRequest(ds, request));
     } catch (err) {
-      console.log('PanelQueryRunner Error', err);
+      console.error('PanelQueryRunner Error', err);
     }
   }
 
@@ -195,6 +193,22 @@ export class PanelQueryRunner {
         this.subject.next(this.lastResult);
       },
     });
+  }
+
+  cancelQuery() {
+    if (!this.subscription) {
+      return;
+    }
+
+    this.subscription.unsubscribe();
+
+    // If we have an old result with loading state, send it with done state
+    if (this.lastResult && this.lastResult.state === LoadingState.Loading) {
+      this.subject.next({
+        ...this.lastResult,
+        state: LoadingState.Done,
+      });
+    }
   }
 
   resendLastResult = () => {
@@ -226,7 +240,7 @@ export class PanelQueryRunner {
     }
   }
 
-  getLastResult(): PanelData {
+  getLastResult(): PanelData | undefined {
     return this.lastResult;
   }
 }

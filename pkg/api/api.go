@@ -56,6 +56,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/stats", reqGrafanaAdmin, hs.Index)
+	r.Get("/admin/live", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/ldap", reqGrafanaAdmin, hs.Index)
 
 	r.Get("/styleguide", reqSignedIn, hs.Index)
@@ -112,7 +113,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
-
 		// user (signed in)
 		apiRoute.Group("/user", func(userRoute routing.RouteRegister) {
 			userRoute.Get("/", Wrap(GetSignedInUser))
@@ -298,7 +298,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), Wrap(CalculateDashboardDiff))
 
 			dashboardRoute.Post("/db", bind(models.SaveDashboardCommand{}), Wrap(hs.PostDashboard))
-			dashboardRoute.Get("/home", Wrap(GetHomeDashboard))
+			dashboardRoute.Get("/home", Wrap(hs.GetHomeDashboard))
 			dashboardRoute.Get("/tags", GetDashboardTags)
 			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), Wrap(ImportDashboard))
 
@@ -383,21 +383,20 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// error test
 		r.Get("/metrics/error", Wrap(GenerateError))
-
 	}, reqSignedIn)
 
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
-		adminRoute.Get("/settings", AdminGetSettings)
-		adminRoute.Post("/users", bind(dtos.AdminCreateUserForm{}), AdminCreateUser)
-		adminRoute.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), AdminUpdateUserPassword)
-		adminRoute.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), AdminUpdateUserPermissions)
-		adminRoute.Delete("/users/:id", AdminDeleteUser)
+		adminRoute.Get("/settings", Wrap(AdminGetSettings))
+		adminRoute.Post("/users", bind(dtos.AdminCreateUserForm{}), Wrap(AdminCreateUser))
+		adminRoute.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), Wrap(AdminUpdateUserPassword))
+		adminRoute.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), Wrap(AdminUpdateUserPermissions))
+		adminRoute.Delete("/users/:id", Wrap(AdminDeleteUser))
 		adminRoute.Post("/users/:id/disable", Wrap(hs.AdminDisableUser))
 		adminRoute.Post("/users/:id/enable", Wrap(AdminEnableUser))
 		adminRoute.Get("/users/:id/quotas", Wrap(GetUserQuotas))
 		adminRoute.Put("/users/:id/quotas/:target", bind(models.UpdateUserQuotaCmd{}), Wrap(UpdateUserQuota))
-		adminRoute.Get("/stats", AdminGetStats)
+		adminRoute.Get("/stats", Wrap(AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", bind(dtos.PauseAllAlertsCommand{}), Wrap(PauseAllAlerts))
 
 		adminRoute.Post("/users/:id/logout", Wrap(hs.AdminLogoutUser))
@@ -405,6 +404,7 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/users/:id/revoke-auth-token", bind(models.RevokeAuthTokenCmd{}), Wrap(hs.AdminRevokeUserAuthToken))
 
 		adminRoute.Post("/provisioning/dashboards/reload", Wrap(hs.AdminProvisioningReloadDashboards))
+		adminRoute.Post("/provisioning/plugins/reload", Wrap(hs.AdminProvisioningReloadPlugins))
 		adminRoute.Post("/provisioning/datasources/reload", Wrap(hs.AdminProvisioningReloadDatasources))
 		adminRoute.Post("/provisioning/notifications/reload", Wrap(hs.AdminProvisioningReloadNotifications))
 		adminRoute.Post("/ldap/reload", Wrap(hs.ReloadLDAPCfg))
@@ -423,11 +423,10 @@ func (hs *HTTPServer) registerRoutes() {
 	avatarCacheServer := avatar.NewCacheServer()
 	r.Get("/avatar/:hash", avatarCacheServer.Handler)
 
-	// Websocket
-	r.Any("/ws", hs.streamManager.Serve)
-
-	// streams
-	//r.Post("/api/streams/push", reqSignedIn, bind(dtos.StreamMessage{}), liveConn.PushToStream)
+	// Live streaming
+	if hs.Live != nil {
+		r.Any("/live/*", hs.Live.Handler)
+	}
 
 	// Snapshots
 	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, bind(models.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)

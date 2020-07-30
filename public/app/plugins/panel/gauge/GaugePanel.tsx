@@ -5,20 +5,21 @@ import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/Da
 
 import { config } from 'app/core/config';
 import { GaugeOptions } from './types';
+import { clearNameForSingleSeries } from '../bargauge/BarGaugePanel';
 
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   renderComponent = (
     valueProps: VizRepeaterRenderValueProps<FieldDisplay>,
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
-    const { options } = this.props;
-    const { value, width, height } = valueProps;
+    const { options, fieldConfig } = this.props;
+    const { width, height, count, value } = valueProps;
     const { field, display } = value;
     const { openMenu, targetClassName } = menuProps;
 
     return (
       <Gauge
-        value={display}
+        value={clearNameForSingleSeries(count, fieldConfig.defaults, display)}
         width={width}
         height={height}
         field={field}

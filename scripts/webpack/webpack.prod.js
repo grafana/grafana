@@ -66,13 +66,6 @@ module.exports = merge(common, {
               ],
             },
           },
-          {
-            loader: 'eslint-loader',
-            options: {
-              emitError: true,
-              emitWarning: true,
-            },
-          },
         ],
       },
       require('./sass.rule.js')({
@@ -94,8 +87,26 @@ module.exports = merge(common, {
   },
   plugins: [
     new ForkTsCheckerWebpackPlugin({
-      checkSyntacticErrors: true,
-      memoryLimit: 4096,
+      eslint: {
+        enabled: true,
+        files: [
+          'public/app/**/*.{ts,tsx}',
+          // this can't be written like this packages/**/src/**/*.ts because it throws an error
+          'packages/grafana-ui/src/**/*.{ts,tsx}',
+          'packages/grafana-data/src/**/*.{ts,tsx}',
+          'packages/grafana-runtime/src/**/*.{ts,tsx}',
+          'packages/grafana-e2e-selectors/src/**/*.{ts,tsx}',
+          'packages/jaeger-ui-components/src/**/*.{ts,tsx}',
+        ],
+      },
+      typescript: {
+        mode: 'write-references',
+        memoryLimit: 4096,
+        diagnosticOptions: {
+          semantic: true,
+          syntactic: true,
+        },
+      },
     }),
     new MiniCssExtractPlugin({
       filename: 'grafana.[name].[hash].css',

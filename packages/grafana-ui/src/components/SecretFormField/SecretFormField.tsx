@@ -57,7 +57,7 @@ export const SecretFormField: FunctionComponent<Props> = ({
           <>
             <input
               type="text"
-              className={cx(`gf-form-input width-${inputWidth! - 2}`, styles.noRadiusInput)}
+              className={cx(`gf-form-input width-${inputWidth}`, styles.noRadiusInput)}
               disabled={true}
               value="configured"
               {...omit(inputProps, 'value')}

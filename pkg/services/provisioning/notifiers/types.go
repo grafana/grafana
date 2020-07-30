@@ -13,15 +13,15 @@ type notificationsAsConfig struct {
 }
 
 type deleteNotificationConfig struct {
-	Uid     string
+	UID     string
 	Name    string
-	OrgId   int64
+	OrgID   int64
 	OrgName string
 }
 
 type notificationFromConfig struct {
-	Uid                   string
-	OrgId                 int64
+	UID                   string
+	OrgID                 int64
 	OrgName               string
 	Name                  string
 	Type                  string
@@ -30,6 +30,7 @@ type notificationFromConfig struct {
 	Frequency             string
 	IsDefault             bool
 	Settings              map[string]interface{}
+	SecureSettings        map[string]string
 }
 
 // notificationsAsConfigV0 is mapping for zero version configs. This is mapped to its normalised version.
@@ -39,26 +40,27 @@ type notificationsAsConfigV0 struct {
 }
 
 type deleteNotificationConfigV0 struct {
-	Uid     values.StringValue `json:"uid" yaml:"uid"`
+	UID     values.StringValue `json:"uid" yaml:"uid"`
 	Name    values.StringValue `json:"name" yaml:"name"`
-	OrgId   values.Int64Value  `json:"org_id" yaml:"org_id"`
+	OrgID   values.Int64Value  `json:"org_id" yaml:"org_id"`
 	OrgName values.StringValue `json:"org_name" yaml:"org_name"`
 }
 
 type notificationFromConfigV0 struct {
-	Uid                   values.StringValue `json:"uid" yaml:"uid"`
-	OrgId                 values.Int64Value  `json:"org_id" yaml:"org_id"`
-	OrgName               values.StringValue `json:"org_name" yaml:"org_name"`
-	Name                  values.StringValue `json:"name" yaml:"name"`
-	Type                  values.StringValue `json:"type" yaml:"type"`
-	SendReminder          values.BoolValue   `json:"send_reminder" yaml:"send_reminder"`
-	DisableResolveMessage values.BoolValue   `json:"disable_resolve_message" yaml:"disable_resolve_message"`
-	Frequency             values.StringValue `json:"frequency" yaml:"frequency"`
-	IsDefault             values.BoolValue   `json:"is_default" yaml:"is_default"`
-	Settings              values.JSONValue   `json:"settings" yaml:"settings"`
+	UID                   values.StringValue    `json:"uid" yaml:"uid"`
+	OrgID                 values.Int64Value     `json:"org_id" yaml:"org_id"`
+	OrgName               values.StringValue    `json:"org_name" yaml:"org_name"`
+	Name                  values.StringValue    `json:"name" yaml:"name"`
+	Type                  values.StringValue    `json:"type" yaml:"type"`
+	SendReminder          values.BoolValue      `json:"send_reminder" yaml:"send_reminder"`
+	DisableResolveMessage values.BoolValue      `json:"disable_resolve_message" yaml:"disable_resolve_message"`
+	Frequency             values.StringValue    `json:"frequency" yaml:"frequency"`
+	IsDefault             values.BoolValue      `json:"is_default" yaml:"is_default"`
+	Settings              values.JSONValue      `json:"settings" yaml:"settings"`
+	SecureSettings        values.StringMapValue `json:"secure_settings" yaml:"secure_settings"`
 }
 
-func (notification notificationFromConfig) SettingsToJson() *simplejson.Json {
+func (notification notificationFromConfig) SettingsToJSON() *simplejson.Json {
 	settings := simplejson.New()
 	if len(notification.Settings) > 0 {
 		for k, v := range notification.Settings {
@@ -78,8 +80,8 @@ func (cfg *notificationsAsConfigV0) mapToNotificationFromConfig() *notifications
 
 	for _, notification := range cfg.Notifications {
 		r.Notifications = append(r.Notifications, &notificationFromConfig{
-			Uid:                   notification.Uid.Value(),
-			OrgId:                 notification.OrgId.Value(),
+			UID:                   notification.UID.Value(),
+			OrgID:                 notification.OrgID.Value(),
 			OrgName:               notification.OrgName.Value(),
 			Name:                  notification.Name.Value(),
 			Type:                  notification.Type.Value(),
@@ -88,13 +90,14 @@ func (cfg *notificationsAsConfigV0) mapToNotificationFromConfig() *notifications
 			DisableResolveMessage: notification.DisableResolveMessage.Value(),
 			Frequency:             notification.Frequency.Value(),
 			SendReminder:          notification.SendReminder.Value(),
+			SecureSettings:        notification.SecureSettings.Value(),
 		})
 	}
 
 	for _, notification := range cfg.DeleteNotifications {
 		r.DeleteNotifications = append(r.DeleteNotifications, &deleteNotificationConfig{
-			Uid:     notification.Uid.Value(),
-			OrgId:   notification.OrgId.Value(),
+			UID:     notification.UID.Value(),
+			OrgID:   notification.OrgID.Value(),
 			OrgName: notification.OrgName.Value(),
 			Name:    notification.Name.Value(),
 		})

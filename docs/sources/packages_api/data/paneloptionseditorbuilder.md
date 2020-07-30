@@ -30,7 +30,9 @@ import { PanelOptionsEditorBuilder } from '@grafana/data';
 |  [addNumberInput(config)](#addnumberinput-method) |  |  |
 |  [addRadio(config)](#addradio-method) |  |  |
 |  [addSelect(config)](#addselect-method) |  |  |
+|  [addStringArray(config)](#addstringarray-method) |  |  |
 |  [addTextInput(config)](#addtextinput-method) |  |  |
+|  [addTimeZonePicker(config)](#addtimezonepicker-method) |  |  |
 |  [addUnitPicker(config)](#addunitpicker-method) |  |  |
 
 ### addBooleanSwitch method
@@ -118,6 +120,23 @@ addSelect<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(config:
 
 `this`
 
+### addStringArray method
+
+<b>Signature</b>
+
+```typescript
+addStringArray<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings & StringFieldConfigSettings, string[]>): this;
+```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  config | <code>PanelOptionsEditorConfig&lt;TOptions, TSettings &amp; StringFieldConfigSettings, string[]&gt;</code> |  |
+
+<b>Returns:</b>
+
+`this`
+
 ### addTextInput method
 
 <b>Signature</b>
@@ -130,6 +149,23 @@ addTextInput<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings & S
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  config | <code>PanelOptionsEditorConfig&lt;TOptions, TSettings &amp; StringFieldConfigSettings, string&gt;</code> |  |
+
+<b>Returns:</b>
+
+`this`
+
+### addTimeZonePicker method
+
+<b>Signature</b>
+
+```typescript
+addTimeZonePicker<TSettings = any>(config: PanelOptionsEditorConfig<TOptions, TSettings, string>): this;
+```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  config | <code>PanelOptionsEditorConfig&lt;TOptions, TSettings, string&gt;</code> |  |
 
 <b>Returns:</b>
 

@@ -83,7 +83,6 @@ export const MappingRow: React.FC<Props> = ({ valueMapping, updateValueMapping, 
       <>
         <Field label="Value">
           <Input
-            type="number"
             defaultValue={(valueMapping as ValueMap).value}
             onBlur={e => onMappingValueChange(e.currentTarget.value)}
             onKeyDown={onKeyDown(onMappingValueChange)}

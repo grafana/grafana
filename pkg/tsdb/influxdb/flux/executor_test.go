@@ -10,7 +10,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/xorcare/pointer"
+
 	influxdb2 "github.com/influxdata/influxdb-client-go"
+	"github.com/influxdata/influxdb-client-go/api"
 )
 
 //--------------------------------------------------------------
@@ -22,7 +29,7 @@ type MockRunner struct {
 	testDataPath string
 }
 
-func (r *MockRunner) runQuery(ctx context.Context, q string) (*influxdb2.QueryTableResult, error) {
+func (r *MockRunner) runQuery(ctx context.Context, q string) (*api.QueryTableResult, error) {
 	bytes, err := ioutil.ReadFile("./testdata/" + r.testDataPath)
 	if err != nil {
 		return nil, err
@@ -43,15 +50,22 @@ func (r *MockRunner) runQuery(ctx context.Context, q string) (*influxdb2.QueryTa
 	return client.QueryApi("x").Query(ctx, q)
 }
 
+func verifyGoldenResponse(name string) (*backend.DataResponse, error) {
+	runner := &MockRunner{
+		testDataPath: name + ".csv",
+	}
+
+	dr := ExecuteQuery(context.Background(), QueryModel{MaxDataPoints: 100}, runner, 50)
+	err := experimental.CheckGoldenDataResponse("./testdata/"+name+".golden.txt", &dr, true)
+	return &dr, err
+}
+
 func TestExecuteSimple(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("Simple Test", func(t *testing.T) {
-		runner := &MockRunner{
-			testDataPath: "simple.csv",
+		dr, err := verifyGoldenResponse("simple")
+		if err != nil {
+			t.Fatal(err.Error())
 		}
-
-		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
 
 		if dr.Error != nil {
 			t.Fatal(dr.Error)
@@ -80,14 +94,11 @@ func TestExecuteSimple(t *testing.T) {
 }
 
 func TestExecuteMultiple(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("Multiple Test", func(t *testing.T) {
-		runner := &MockRunner{
-			testDataPath: "multiple.csv",
+		dr, err := verifyGoldenResponse("multiple")
+		if err != nil {
+			t.Fatal(err.Error())
 		}
-
-		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
 
 		if dr.Error != nil {
 			t.Fatal(dr.Error)
@@ -116,14 +127,11 @@ func TestExecuteMultiple(t *testing.T) {
 }
 
 func TestExecuteGrouping(t *testing.T) {
-	ctx := context.Background()
-
 	t.Run("Grouping Test", func(t *testing.T) {
-		runner := &MockRunner{
-			testDataPath: "grouping.csv",
+		dr, err := verifyGoldenResponse("grouping")
+		if err != nil {
+			t.Fatal(err.Error())
 		}
-
-		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
 
 		if dr.Error != nil {
 			t.Fatal(dr.Error)
@@ -151,15 +159,98 @@ func TestExecuteGrouping(t *testing.T) {
 	})
 }
 
-func TestBuckets(t *testing.T) {
-	ctx := context.Background()
-
-	t.Run("Buckes", func(t *testing.T) {
-		runner := &MockRunner{
-			testDataPath: "buckets.csv",
+func TestAggregateGrouping(t *testing.T) {
+	t.Run("Grouping Test", func(t *testing.T) {
+		dr, err := verifyGoldenResponse("aggregate")
+		if err != nil {
+			t.Fatal(err.Error())
 		}
 
-		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
+		if len(dr.Frames) != 1 {
+			t.Fatal("Expected one frame")
+		}
+
+		str, _ := dr.Frames[0].StringTable(-1, -1)
+		fmt.Println(str)
+
+		// 	 `Name:
+		// Dimensions: 2 Fields by 3 Rows
+		// +-------------------------------+--------------------------+
+		// | Name: Time                    | Name:                    |
+		// | Labels:                       | Labels: host=hostname.ru |
+		// | Type: []time.Time             | Type: []*float64         |
+		// +-------------------------------+--------------------------+
+		// | 2020-06-05 12:06:00 +0000 UTC | 8.291                    |
+		// | 2020-06-05 12:07:00 +0000 UTC | 0.534                    |
+		// | 2020-06-05 12:08:00 +0000 UTC | 0.667                    |
+		// +-------------------------------+--------------------------+
+		// `
+
+		expectedFrame := data.NewFrame("",
+			data.NewField("Time", nil, []time.Time{
+				time.Date(2020, 6, 5, 12, 6, 0, 0, time.UTC),
+				time.Date(2020, 6, 5, 12, 7, 0, 0, time.UTC),
+				time.Date(2020, 6, 5, 12, 8, 0, 0, time.UTC),
+			}),
+			data.NewField("", map[string]string{"host": "hostname.ru"}, []*float64{
+				pointer.Float64(8.291),
+				pointer.Float64(0.534),
+				pointer.Float64(0.667),
+			}),
+		)
+		expectedFrame.Meta = &data.FrameMeta{}
+
+		if diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+	})
+}
+
+func TestNonStandardTimeColumn(t *testing.T) {
+	t.Run("Time Column", func(t *testing.T) {
+		dr, err := verifyGoldenResponse("non_standard_time_column")
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+
+		if len(dr.Frames) != 1 {
+			t.Fatal("Expected one frame")
+		}
+
+		str, _ := dr.Frames[0].StringTable(-1, -1)
+		fmt.Println(str)
+
+		// Dimensions: 2 Fields by 1 Rows
+		// +-----------------------------------------+------------------+
+		// | Name: _start_water                      | Name:            |
+		// | Labels:                                 | Labels: st=1     |
+		// | Type: []time.Time                       | Type: []*float64 |
+		// +-----------------------------------------+------------------+
+		// | 2020-06-28 17:50:13.012584046 +0000 UTC | 156.304          |
+		// +-----------------------------------------+------------------+
+
+		expectedFrame := data.NewFrame("",
+			data.NewField("_start_water", nil, []time.Time{
+				time.Date(2020, 6, 28, 17, 50, 13, 12584046, time.UTC),
+			}),
+			data.NewField("", map[string]string{"st": "1"}, []*float64{
+				pointer.Float64(156.304),
+			}),
+		)
+		expectedFrame.Meta = &data.FrameMeta{}
+
+		if diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+	})
+}
+
+func TestBuckets(t *testing.T) {
+	t.Run("Buckes", func(t *testing.T) {
+		dr, err := verifyGoldenResponse("buckets")
+		if err != nil {
+			t.Fatal(err.Error())
+		}
 
 		if dr.Error != nil {
 			t.Fatal(dr.Error)
@@ -168,5 +259,14 @@ func TestBuckets(t *testing.T) {
 		st, _ := dr.Frames[0].StringTable(-1, -1)
 		fmt.Println(st)
 		fmt.Println("----------------------")
+	})
+}
+
+func TestGoldenFiles(t *testing.T) {
+	t.Run("Renamed", func(t *testing.T) {
+		_, err := verifyGoldenResponse("renamed")
+		if err != nil {
+			t.Fatal(err.Error())
+		}
 	})
 }

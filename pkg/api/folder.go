@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -127,12 +128,17 @@ func toFolderDto(g guardian.DashboardGuardian, folder *models.Folder) dtos.Folde
 }
 
 func toFolderError(err error) Response {
+	var dashboardErr models.DashboardErr
+	if ok := errors.As(err, &dashboardErr); ok {
+		return Error(dashboardErr.StatusCode, err.Error(), err)
+	}
+
 	if err == models.ErrFolderTitleEmpty ||
 		err == models.ErrFolderSameNameExists ||
 		err == models.ErrFolderWithSameUIDExists ||
 		err == models.ErrDashboardTypeMismatch ||
 		err == models.ErrDashboardInvalidUid ||
-		err == models.ErrDashboardUidToLong {
+		err == models.ErrDashboardUidTooLong {
 		return Error(400, err.Error(), nil)
 	}
 
