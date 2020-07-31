@@ -174,7 +174,7 @@ To ease configuration of a proper JMESPath expression, you can test/evaluate exp
 
 ## Role and organization mapping
 
-Defining role and organization mapping is handled by setting a path to TOML mapping file via `group_mappings_file`, example:
+Defining role and organization mapping is handled by setting a path to a TOML mapping file via `group_mappings_file`, for example:
 
 ```ini
 [auth.generic_oauth]
