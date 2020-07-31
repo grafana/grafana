@@ -223,7 +223,7 @@ Payload:
 ```
 
 Config:
-```bash
+```toml
 [[group_mappings]]
 role_attribute_path = "contains(info.groups[*], 'admin') && 'Admin'"
 org_id = 1
