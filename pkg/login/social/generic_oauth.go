@@ -8,8 +8,10 @@ import (
 	"net/http"
 	"net/mail"
 	"regexp"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/jmespath/go-jmespath"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -94,14 +96,21 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	var data UserInfoJson
 	var err error
 
+	s.log.Debug("Getting user info")
+
 	userInfo := &BasicUserInfo{}
 
-	if s.extractToken(&data, token) {
-		s.fillUserInfo(userInfo, &data)
+	if s.extractToken(token, &data) {
+		s.log.Debug("Filling user info based on OAuth token")
+		if err := s.fillUserInfo(userInfo, &data); err != nil {
+			return nil, err
+		}
 	}
 
-	if s.extractAPI(&data, client) {
-		s.fillUserInfo(userInfo, &data)
+	if s.extractAPI(client, &data) {
+		if err := s.fillUserInfo(userInfo, &data); err != nil {
+			return nil, err
+		}
 	}
 
 	if userInfo.Email == "" {
@@ -127,25 +136,12 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	return userInfo, nil
 }
 
-func (s *SocialGenericOAuth) fillUserInfo(userInfo *BasicUserInfo, data *UserInfoJson) {
+func (s *SocialGenericOAuth) fillUserInfo(userInfo *BasicUserInfo, data *UserInfoJson) error {
 	if userInfo.Email == "" {
 		userInfo.Email = s.extractEmail(data)
 	}
-	if userInfo.Role == "" {
-		role, err := s.extractRole(data)
-		if err != nil {
-			s.log.Error("Failed to extract role", "error", err)
-		} else {
-			userInfo.Role = role
-		}
-	}
-	if userInfo.GroupMappings == nil {
-		groupMappings, err := s.extractGroupMappings(data)
-		if err != nil {
-			s.log.Error("Failed to extract group mappings", "error", err)
-		} else {
-			userInfo.GroupMappings = groupMappings
-		}
+	if err := s.extractOrgMemberships(data, userInfo); err != nil {
+		return err
 	}
 	if userInfo.Name == "" {
 		userInfo.Name = s.extractName(data)
@@ -153,10 +149,12 @@ func (s *SocialGenericOAuth) fillUserInfo(userInfo *BasicUserInfo, data *UserInf
 	if userInfo.Login == "" {
 		userInfo.Login = s.extractLogin(data)
 	}
+
+	return nil
 }
 
-func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Token) bool {
-	var err error
+func (s *SocialGenericOAuth) extractToken(token *oauth2.Token, data *UserInfoJson) bool {
+	s.log.Debug("Extracting user info from OAuth token")
 
 	idToken := token.Extra("id_token")
 	if idToken == nil {
@@ -171,6 +169,7 @@ func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Toke
 		return false
 	}
 
+	var err error
 	data.rawJSON, err = base64.RawURLEncoding.DecodeString(matched[2])
 	if err != nil {
 		s.log.Error("Error base64 decoding id_token", "raw_payload", matched[2], "error", err)
@@ -188,10 +187,11 @@ func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Toke
 	return true
 }
 
-func (s *SocialGenericOAuth) extractAPI(data *UserInfoJson, client *http.Client) bool {
+func (s *SocialGenericOAuth) extractAPI(client *http.Client, data *UserInfoJson) bool {
+	s.log.Debug("Getting user info from API")
 	rawUserInfoResponse, err := HttpGet(client, s.apiUrl)
 	if err != nil {
-		s.log.Debug("Error getting user info", "url", s.apiUrl, "error", err)
+		s.log.Debug("Error getting user info from API", "url", s.apiUrl, "error", err)
 		return false
 	}
 	data.rawJSON = rawUserInfoResponse.Body
@@ -203,7 +203,7 @@ func (s *SocialGenericOAuth) extractAPI(data *UserInfoJson, client *http.Client)
 		return false
 	}
 
-	s.log.Debug("Received user info response", "raw_json", string(data.rawJSON), "data", data)
+	s.log.Debug("Received user info response from API", "raw_json", string(data.rawJSON), "data", data)
 	return true
 }
 
@@ -237,36 +237,104 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 	return ""
 }
 
-func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) (string, error) {
+func (s *SocialGenericOAuth) extractOrgMemberships(data *UserInfoJson, userInfo *BasicUserInfo) error {
+	if userInfo.OrgMemberships == nil {
+		userInfo.OrgMemberships = map[int64]models.RoleType{}
+	}
+
+	s.log.Debug("Extracting organization memberships")
+
+	// TODO: Move unfiltered group mappings to end of list, so we can apply them deterministically
+
+	unfiltered := []int64{}
+	for i, mapping := range s.groupMappings {
+		s.log.Debug("Processing group mapping", "number", i+1, "mapping", mapping)
+		if mapping.Filter != "" {
+			s.log.Debug("Using mapping filter", "filter", mapping.Filter)
+			var val interface{}
+			json.Unmarshal(data.rawJSON, &val)
+			v, err := jmespath.Search(mapping.Filter, val)
+			if err != nil {
+				s.log.Warn("Failed to look up filter in OAuth user info", "filter", mapping.Filter, "error", err)
+				continue
+			}
+
+			if match, ok := v.(bool); !ok || !match {
+				s.log.Debug("Group mapping filter didn't match", "number", i+1, "filter", mapping.Filter)
+				continue
+			}
+		}
+
+		for orgID, roleStr := range mapping.OrgMemberships {
+			role := models.RoleType(strings.Title(roleStr))
+			if !role.IsValid() {
+				s.log.Warn("Invalid role in org_memberships", "role", roleStr)
+				continue
+			}
+			// Ignore this role if the user already has a more important one in the org
+			if r, ok := userInfo.OrgMemberships[orgID]; ok && r != role && r.Includes(role) {
+				s.log.Warn("Ignoring role since the user already has a more important role in org", "role", role,
+					"orgID", orgID)
+				continue
+			}
+
+			userInfo.OrgMemberships[orgID] = role
+			if mapping.Filter == "" {
+				s.log.Debug("Appending unfiltered", "orgID", orgID, "role", role)
+				unfiltered = append(unfiltered, orgID)
+			}
+		}
+
+		if mapping.IsGrafanaAdmin != nil {
+			userInfo.IsGrafanaAdmin = mapping.IsGrafanaAdmin
+		}
+
+		s.log.Debug("Processed group mapping", "number", i+1, "orgMemberships", mapping.OrgMemberships,
+			"isGrafanaAdmin", userInfo.IsGrafanaAdmin)
+	}
+
+	if len(userInfo.OrgMemberships) > len(unfiltered) {
+		// The user has matched filtered mappings, so drop the unfiltered ones
+		for _, orgID := range unfiltered {
+			delete(userInfo.OrgMemberships, orgID)
+		}
+	}
+
 	if s.roleAttributePath == "" {
-		return "", nil
+		return nil
 	}
 
-	role, err := s.searchJSONForAttr(s.roleAttributePath, data.rawJSON)
+	s.log.Debug("Trying to extract OAuth user role", "roleAttrPath", s.roleAttributePath)
+
+	roleStr, err := s.searchJSONForAttr(s.roleAttributePath, data.rawJSON)
 	if err != nil {
-		return "", err
-	}
-	return role, nil
-}
-
-func (s *SocialGenericOAuth) extractGroupMappings(data *UserInfoJson) ([]setting.OAuthGroupMapping, error) {
-	var groupMappings []setting.OAuthGroupMapping
-
-	for _, mapping := range s.groupMappings {
-		role, err := s.searchJSONForAttr(mapping.RoleAttributePath, data.rawJSON)
-		if err != nil {
-			s.log.Error("Failed to get role_attribute_path", "error", err)
-			continue
-		}
-		if role == "" {
-			s.log.Debug("role_attribute_path did not produce a role", "roleAttributePath", mapping.RoleAttributePath)
-			continue
-		}
-		mapping.Role = role
-		groupMappings = append(groupMappings, mapping)
+		s.log.Error("Failed to get role", "error", err)
+		return nil
 	}
 
-	return groupMappings, nil
+	role := models.RoleType(roleStr)
+	if !role.IsValid() {
+		s.log.Debug("The extracted role is invalid", "roleAttrPath", s.roleAttributePath, "role", roleStr)
+		return nil
+	}
+
+	// The user will be assigned a role in either the auto-assigned organization or in the default one
+	var orgID int64
+	if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
+		orgID = int64(setting.AutoAssignOrgId)
+		s.log.Debug("The user has a role assignment and organization membership is auto-assigned",
+			"role", role, "orgId", orgID)
+	} else {
+		orgID = int64(1)
+		s.log.Debug("The user has a role assignment and organization membership is not auto-assigned",
+			"role", role, "orgId", orgID)
+	}
+	if _, ok := userInfo.OrgMemberships[orgID]; !ok {
+		s.log.Debug("Assigning user role in organization", "role", role, "orgID", orgID)
+		userInfo.OrgMemberships[orgID] = role
+	}
+
+	return nil
 }
 
 func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {

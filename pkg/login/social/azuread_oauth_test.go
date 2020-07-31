@@ -2,10 +2,13 @@ package social
 
 import (
 	"net/http"
-	"reflect"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -13,7 +16,6 @@ import (
 
 func TestSocialAzureAD_UserInfo(t *testing.T) {
 	type fields struct {
-		SocialBase    *SocialBase
 		allowedGroups []string
 	}
 	type args struct {
@@ -43,8 +45,10 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Email:   "me@example.com",
 				Login:   "me@example.com",
 				Company: "",
-				Role:    "Viewer",
-				Groups:  []string{},
+				OrgMemberships: map[int64]models.RoleType{
+					1: models.ROLE_VIEWER,
+				},
+				Groups: []string{},
 			},
 		},
 		{
@@ -80,8 +84,10 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Email:   "me@example.com",
 				Login:   "me@example.com",
 				Company: "",
-				Role:    "Viewer",
-				Groups:  []string{},
+				OrgMemberships: map[int64]models.RoleType{
+					1: models.ROLE_VIEWER,
+				},
+				Groups: []string{},
 			},
 		},
 		{
@@ -99,8 +105,10 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Email:   "me@example.com",
 				Login:   "me@example.com",
 				Company: "",
-				Role:    "Admin",
-				Groups:  []string{},
+				OrgMemberships: map[int64]models.RoleType{
+					1: models.ROLE_ADMIN,
+				},
+				Groups: []string{},
 			},
 		},
 		{
@@ -118,8 +126,10 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Email:   "me@example.com",
 				Login:   "me@example.com",
 				Company: "",
-				Role:    "Admin",
-				Groups:  []string{},
+				OrgMemberships: map[int64]models.RoleType{
+					1: models.ROLE_ADMIN,
+				},
+				Groups: []string{},
 			},
 		},
 		{
@@ -137,8 +147,10 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Email:   "me@example.com",
 				Login:   "me@example.com",
 				Company: "",
-				Role:    "Viewer",
-				Groups:  []string{},
+				OrgMemberships: map[int64]models.RoleType{
+					1: models.ROLE_VIEWER,
+				},
+				Groups: []string{},
 			},
 		},
 
@@ -157,8 +169,10 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Email:   "me@example.com",
 				Login:   "me@example.com",
 				Company: "",
-				Role:    "Editor",
-				Groups:  []string{},
+				OrgMemberships: map[int64]models.RoleType{
+					1: models.ROLE_EDITOR,
+				},
+				Groups: []string{},
 			},
 		},
 		{
@@ -176,8 +190,10 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Email:   "me@example.com",
 				Login:   "me@example.com",
 				Company: "",
-				Role:    "Admin",
-				Groups:  []string{},
+				OrgMemberships: map[int64]models.RoleType{
+					1: models.ROLE_ADMIN,
+				},
+				Groups: []string{},
 			},
 		},
 		{
@@ -215,23 +231,25 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Email:   "me@example.com",
 				Login:   "me@example.com",
 				Company: "",
-				Role:    "Viewer",
-				Groups:  []string{"foo"},
+				OrgMemberships: map[int64]models.RoleType{
+					1: models.ROLE_VIEWER,
+				},
+				Groups: []string{"foo"},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SocialAzureAD{
-				SocialBase:    tt.fields.SocialBase,
+				SocialBase: &SocialBase{
+					log: log.New("test"),
+				},
 				allowedGroups: tt.fields.allowedGroups,
 			}
 
 			key := []byte("secret")
 			sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, (&jose.SignerOptions{}).WithType("JWT"))
-			if err != nil {
-				panic(err)
-			}
+			require.NoError(t, err)
 
 			cl := jwt.Claims{
 				Subject:   "subject",
@@ -243,14 +261,10 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			var raw string
 			if tt.claims != nil {
 				raw, err = jwt.Signed(sig).Claims(cl).Claims(tt.claims).CompactSerialize()
-				if err != nil {
-					t.Error(err)
-				}
+				require.NoError(t, err)
 			} else {
 				raw, err = jwt.Signed(sig).Claims(cl).CompactSerialize()
-				if err != nil {
-					t.Error(err)
-				}
+				require.NoError(t, err)
 			}
 
 			token := &oauth2.Token{}
@@ -259,13 +273,11 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			}
 
 			got, err := s.UserInfo(tt.args.client, token)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("UserInfo() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			if tt.wantErr {
+				require.Error(t, err)
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("UserInfo() got = %v, want %v", got, tt.want)
-			}
+
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

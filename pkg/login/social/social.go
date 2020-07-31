@@ -3,6 +3,7 @@ package social
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"context"
@@ -11,20 +12,21 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type BasicUserInfo struct {
-	Id            string
-	Name          string
-	Email         string
-	Login         string
-	Company       string
-	Role          string
-	GroupMappings []setting.OAuthGroupMapping
-	Groups        []string
+	Id             string
+	Name           string
+	Email          string
+	Login          string
+	Company        string
+	OrgMemberships map[int64]models.RoleType
+	Groups         []string
+	IsGrafanaAdmin *bool
 }
 
 type SocialConnector interface {
@@ -110,11 +112,11 @@ func NewOAuthService() {
 
 		groupMappingsFile := sec.Key("group_mappings_file").String()
 		if groupMappingsFile != "" {
-			groupMappingsConfig, err := readConfig(groupMappingsFile)
+			mappings, err := readGroupMappings(groupMappingsFile)
 			if err != nil {
 				oauthLogger.Error("Failed to read group mappings file", "file", groupMappingsFile, "provider", name, "error", err)
 			} else {
-				info.GroupMappings = groupMappingsConfig.GroupMappings
+				info.GroupMappings = mappings
 			}
 		}
 
@@ -241,11 +243,26 @@ var GetOAuthProviders = func(cfg *setting.Cfg) map[string]bool {
 	return result
 }
 
-func readConfig(configFile string) (*setting.OAuthGroupMappingsConfig, error) {
-	result := &setting.OAuthGroupMappingsConfig{}
+type OAuthGroupMapping struct {
+	Filter         string
+	OrgMemberships map[int64]string
+	IsGrafanaAdmin *bool
+}
+
+type OAuthGroupMappingRaw struct {
+	Filter         string            `toml:"filter"`
+	OrgMemberships map[string]string `toml:"org_memberships"`
+	IsGrafanaAdmin *bool             `toml:"grafana_admin"`
+}
+
+func readGroupMappings(configFile string) ([]setting.OAuthGroupMapping, error) {
+	type oauthGroupMappingsConfig struct {
+		GroupMappings []OAuthGroupMappingRaw `toml:"group_mappings"`
+	}
 
 	oauthLogger.Debug("Reading group mapping file", "file", configFile)
 
+	result := &oauthGroupMappingsConfig{}
 	_, err := toml.DecodeFile(configFile, result)
 	if err != nil {
 		return nil, errutil.Wrap("failed to load OAuth group mappings file", err)
@@ -255,12 +272,22 @@ func readConfig(configFile string) (*setting.OAuthGroupMappingsConfig, error) {
 		return nil, fmt.Errorf("OAuth enabled but no group mappings defined in config file")
 	}
 
-	// Validate role_attribute_path is set
-	for _, groupMapping := range result.GroupMappings {
-		if groupMapping.RoleAttributePath == "" {
-			return nil, fmt.Errorf("OAuth group mapping require role_attribute_path to be set")
+	groupMappings := []setting.OAuthGroupMapping{}
+	for _, gm := range result.GroupMappings {
+		memberships := map[int64]string{}
+		for id, role := range gm.OrgMemberships {
+			orgID, err := strconv.ParseInt(id, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("OAuth group mapping has invalid org ID %q", id)
+			}
+			memberships[orgID] = role
 		}
+		groupMappings = append(groupMappings, setting.OAuthGroupMapping{
+			Filter:         gm.Filter,
+			OrgMemberships: memberships,
+			IsGrafanaAdmin: gm.IsGrafanaAdmin,
+		})
 	}
 
-	return result, nil
+	return groupMappings, nil
 }

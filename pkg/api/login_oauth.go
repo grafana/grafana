@@ -204,59 +204,15 @@ func syncUser(ctx *models.ReqContext, token *oauth2.Token, userInfo *social.Basi
 	connect social.SocialConnector) (*models.User, error) {
 	oauthLogger.Debug("Syncing Grafana user with corresponding OAuth profile")
 	extUser := &models.ExternalUserInfo{
-		AuthModule: fmt.Sprintf("oauth_%s", name),
-		OAuthToken: token,
-		AuthId:     userInfo.Id,
-		Name:       userInfo.Name,
-		Login:      userInfo.Login,
-		Email:      userInfo.Email,
-		OrgRoles:   map[int64]models.RoleType{},
-		Groups:     userInfo.Groups,
-	}
-
-	if userInfo.Role != "" {
-		rt := models.RoleType(userInfo.Role)
-		if rt.IsValid() {
-			// The user will be assigned a role in either the auto-assigned organization or in the default one
-			var orgID int64
-			if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
-				orgID = int64(setting.AutoAssignOrgId)
-				logger.Debug("The user has a role assignment and organization membership is auto-assigned",
-					"role", userInfo.Role, "orgId", orgID)
-			} else {
-				orgID = int64(1)
-				logger.Debug("The user has a role assignment and organization membership is not auto-assigned",
-					"role", userInfo.Role, "orgId", orgID)
-			}
-			extUser.OrgRoles[orgID] = rt
-		}
-	}
-
-	for _, groupMapping := range userInfo.GroupMappings {
-		rt := models.RoleType(groupMapping.Role)
-		if !rt.IsValid() {
-			continue
-		}
-
-		orgID := int64(groupMapping.OrgID)
-		if orgID == 0 {
-			if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
-				orgID = int64(setting.AutoAssignOrgId)
-			} else {
-				orgID = 1
-			}
-		}
-
-		if _, ok := extUser.OrgRoles[orgID]; !ok {
-			oauthLogger.Debug("Assign group mapping", "login", extUser.Login, "orgID", orgID, "role", rt)
-			extUser.OrgRoles[orgID] = rt
-		} else {
-			oauthLogger.Debug("Skipping org map, already mapped", "login", extUser.Login, "orgID", orgID, "role", rt)
-		}
-		if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
-			oauthLogger.Debug("Assign GrafanaAdmin", "login", extUser.Login, "orgID", orgID)
-			extUser.IsGrafanaAdmin = groupMapping.IsGrafanaAdmin
-		}
+		AuthModule:     fmt.Sprintf("oauth_%s", name),
+		OAuthToken:     token,
+		AuthId:         userInfo.Id,
+		Name:           userInfo.Name,
+		Login:          userInfo.Login,
+		Email:          userInfo.Email,
+		OrgRoles:       userInfo.OrgMemberships,
+		Groups:         userInfo.Groups,
+		IsGrafanaAdmin: userInfo.IsGrafanaAdmin,
 	}
 
 	// add/update user in Grafana

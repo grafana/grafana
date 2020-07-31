@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -58,12 +59,17 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 
 	parsedToken, err := jwt.ParseSigned(idToken.(string))
 	if err != nil {
-		return nil, errutil.Wrapf(err, "error parsing id token")
+		return nil, errutil.Wrapf(err, "error parsing ID token")
 	}
 
 	var claims OktaClaims
 	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
-		return nil, errutil.Wrapf(err, "error getting claims from id token")
+		return nil, errutil.Wrapf(err, "error getting claims from ID token")
+	}
+
+	var data OktaUserInfoJson
+	if err := s.extractAPI(&data, client); err != nil {
+		return nil, err
 	}
 
 	email := claims.extractEmail()
@@ -71,30 +77,24 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 		return nil, errors.New("error getting user info: no email found in access token")
 	}
 
-	var data OktaUserInfoJson
-	err = s.extractAPI(&data, client)
-	if err != nil {
-		return nil, err
-	}
-
-	role, err := s.extractRole(&data)
-	if err != nil {
-		s.log.Error("Failed to extract role", "error", err)
-	}
-
 	groups := s.GetGroups(&data)
 	if !s.IsGroupMember(groups) {
 		return nil, ErrMissingGroupMembership
 	}
 
-	return &BasicUserInfo{
+	userInfo := &BasicUserInfo{
 		Id:     claims.ID,
 		Name:   claims.Name,
 		Email:  email,
 		Login:  email,
-		Role:   role,
 		Groups: groups,
-	}, nil
+	}
+
+	if err := s.extractOrgMemberships(data, userInfo); err != nil {
+		return nil, err
+	}
+
+	return userInfo, nil
 }
 
 func (s *SocialOkta) extractAPI(data *OktaUserInfoJson, client *http.Client) error {
@@ -116,16 +116,40 @@ func (s *SocialOkta) extractAPI(data *OktaUserInfoJson, client *http.Client) err
 	return nil
 }
 
-func (s *SocialOkta) extractRole(data *OktaUserInfoJson) (string, error) {
-	if s.roleAttributePath == "" {
-		return "", nil
+func (s *SocialOkta) extractOrgMemberships(data OktaUserInfoJson, userInfo *BasicUserInfo) error {
+	userInfo.OrgMemberships = map[int64]models.RoleType{}
+
+	roleStr := ""
+	if s.roleAttributePath != "" {
+		var err error
+		roleStr, err = s.searchJSONForAttr(s.roleAttributePath, data.rawJSON)
+		if err != nil {
+			s.log.Error("failed searching for role")
+			return nil
+		}
 	}
 
-	role, err := s.searchJSONForAttr(s.roleAttributePath, data.rawJSON)
-	if err != nil {
-		return "", err
+	role := models.RoleType(roleStr)
+	if !role.IsValid() {
+		return nil
 	}
-	return role, nil
+
+	var orgID int64
+	if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
+		orgID = int64(setting.AutoAssignOrgId)
+		s.log.Debug("The user has a role assignment and organization membership is auto-assigned",
+			"role", role, "orgId", orgID)
+	} else {
+		orgID = int64(1)
+		s.log.Debug("The user has a role assignment and organization membership is not auto-assigned",
+			"role", role, "orgId", orgID)
+	}
+	if _, ok := userInfo.OrgMemberships[orgID]; !ok {
+		s.log.Debug("Assigning user role in organization", "role", role, "orgID", orgID)
+		userInfo.OrgMemberships[orgID] = role
+	}
+
+	return nil
 }
 
 func (s *SocialOkta) GetGroups(data *OktaUserInfoJson) []string {

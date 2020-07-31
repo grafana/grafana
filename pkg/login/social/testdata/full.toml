@@ -1,10 +1,9 @@
 [[group_mappings]]
-role_attribute_path = "contains(info.groups[*], 'admin') && 'Admin'"
-org_id = 1
+filter = "contains(groups[*], 'admin')"
+org_memberships = { 1 = "admin", 2 = "admin" }
 grafana_admin = true
 [[group_mappings]]
-role_attribute_path = "contains(info.groups[*], 'editor') && 'Editor'"
-org_id = 1
+filter = "contains(groups[*], 'editor')"
+org_memberships = { 2 = "editor" }
 [[group_mappings]]
-role_attribute_path = "contains(info.groups[*], 'admin') && 'Admin' || 'Viewer'"
-org_id = 2
+org_memberships = { 1 = "viewer" }
