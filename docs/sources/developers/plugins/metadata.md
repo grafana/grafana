@@ -49,7 +49,7 @@ Plugin dependencies.
 
 | Property            | Type     | Required | Description                                                                                                                   |
 |---------------------|----------|----------|-------------------------------------------------------------------------------------------------------------------------------|
-| `grafanaDependency` | string   | **Yes**  | Required Grafana version for this plugin, e.g. `>=7.0.0` to denote plugin requires Grafana 7.0.0 or later                     |
+| `grafanaDependency` | string   | **Yes**  | Required Grafana version for this plugin, e.g. `>=7.0.0` to denote plugin requires Grafana 7.0.0 or later.                     |
 | `grafanaVersion`    | string   | No       | (Deprecated) Required Grafana version for this plugin, e.g. `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or v7.x.x. |
 | `plugins`           | string[] | No       | An array of required plugins on which this plugin depends.                                                                    |
 
@@ -183,5 +183,4 @@ For data source plugins. Parameters for the token authentication request.
 | `client_secret` | string | No       | For data source plugins. OAuth client secret. Usually populated by decrypting the secret from the SecureJson blob. |
 | `grant_type`    | string | No       | For data source plugins. OAuth grant type.                                                                         |
 | `resource`      | string | No       | For data source plugins. OAuth resource.                                                                           |
-
 
