@@ -36,6 +36,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 		bus.AddHandler("test", mockUpdate)
 		bus.AddHandler("test", mockGet)
 		bus.AddHandler("test", mockGetAll)
+		bus.AddHandler("test", mockGetOrg)
 
 		Convey("apply default values when missing", func() {
 			dc := newDatasourceProvisioner(logger)
@@ -295,4 +296,8 @@ func mockGet(cmd *models.GetDataSourceByNameQuery) error {
 	}
 
 	return models.ErrDataSourceNotFound
+}
+
+func mockGetOrg(_ *models.GetOrgByIdQuery) error {
+	return nil
 }

@@ -415,8 +415,16 @@ describe('PrometheusDatasource', () => {
       expect(prometheusRegularEscape("looking'glass")).toEqual("looking\\\\'glass");
     });
 
+    it('should escape \\', () => {
+      expect(prometheusRegularEscape('looking\\glass')).toEqual('looking\\\\glass');
+    });
+
     it('should escape multiple characters', () => {
       expect(prometheusRegularEscape("'looking'glass'")).toEqual("\\\\'looking\\\\'glass\\\\'");
+    });
+
+    it('should escape multiple different characters', () => {
+      expect(prometheusRegularEscape("'loo\\king'glass'")).toEqual("\\\\'loo\\\\king\\\\'glass\\\\'");
     });
   });
 
