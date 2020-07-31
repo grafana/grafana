@@ -181,7 +181,7 @@ func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Toke
 func (s *SocialGenericOAuth) extractAPI(data *UserInfoJson, client *http.Client) bool {
 	rawUserInfoResponse, err := HttpGet(client, s.apiUrl)
 	if err != nil {
-		s.log.Debug("Error getting user info response", "url", s.apiUrl, "error", err)
+		s.log.Debug("Error getting user info", "url", s.apiUrl, "error", err)
 		return false
 	}
 	data.rawJSON = rawUserInfoResponse.Body
