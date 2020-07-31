@@ -1,10 +1,10 @@
 package util
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"golang.org/x/xerrors"
 )
 
 func TestParseIPAddress(t *testing.T) {
@@ -28,16 +28,16 @@ func TestParseIPAddress(t *testing.T) {
 
 	Convey("Invalid address", t, func() {
 		_, err := ParseIPAddress("[::1")
-		So(err, ShouldBeError, xerrors.Errorf(
-			"Failed to split network address '[::1' by host and port: Malformed IPv6 address: '[::1'"))
+		So(err, ShouldBeError, fmt.Errorf(
+			`failed to split network address "[::1" by host and port: Malformed IPv6 address: '[::1'`))
 
 		_, err = ParseIPAddress("::1]")
-		So(err, ShouldBeError, xerrors.Errorf(
-			"Failed to split network address '::1]' by host and port: net.SplitHostPort failed for '::1]': address ::1]: too many colons in address"))
+		So(err, ShouldBeError, fmt.Errorf(
+			`failed to split network address "::1]" by host and port: net.SplitHostPort failed for '::1]': address ::1]: too many colons in address`))
 
 		_, err = ParseIPAddress("")
-		So(err, ShouldBeError, xerrors.Errorf(
-			"Failed to split network address '' by host and port: Input is empty"))
+		So(err, ShouldBeError, fmt.Errorf(
+			`failed to split network address "" by host and port: Input is empty`))
 	})
 
 	Convey("Loopback address", t, func() {
