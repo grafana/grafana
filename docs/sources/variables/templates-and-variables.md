@@ -38,13 +38,9 @@ Variable values are always synced to the URL using the syntax `var-<varname>=val
 
 ## Examples of templates and variables
 
-To see variable and template examples, go to any of the dashboards listed below.
+To see variable and template examples, go to any of the dashboards listed in [Variable examples]({{< relref "variable-examples.md" >}}).
 
-- [Elasticsearch Templated dashboard](https://play.grafana.org/dashboard/db/elasticsearch-templated)
-- [Graphite Templated Nested dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested)
-- [InfluxDB Templated dashboard](https://play.grafana.org/dashboard/db/influxdb-templated)
-
-Variables are listed in dropdown lists across the top of the screen. Select different variables to see how the visualizations change. 
+Variables are listed in drop-down lists across the top of the screen. Select different variables to see how the visualizations change. 
 
 To see variable settings, navigate to **Dashboard Settings > Variables**. Click a variable in the list to see its settings.
 
