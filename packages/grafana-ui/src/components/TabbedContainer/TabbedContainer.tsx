@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { css } from 'emotion';
 
 import { SelectableValue, GrafanaTheme } from '@grafana/data';
-import { stylesFactory, withTheme } from '../../themes';
-import { IconName, Themeable, TabsBar, Tab, IconButton, CustomScrollbar, TabContent } from '../..';
+import { stylesFactory, useTheme } from '../../themes';
+import { IconName, TabsBar, Tab, IconButton, CustomScrollbar, TabContent } from '../..';
 
 export interface TabConfig {
   label: string;
@@ -12,7 +12,7 @@ export interface TabConfig {
   icon: IconName;
 }
 
-export interface TabbedContainerProps extends Themeable {
+export interface TabbedContainerProps {
   tabs: TabConfig[];
   defaultTab?: string;
   closeIconTooltip?: string;
@@ -49,7 +49,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-function UnThemedTabbedContainer(props: TabbedContainerProps) {
+export function TabbedContainer(props: TabbedContainerProps) {
   const [activeTab, setActiveTab] = useState(
     props.tabs.some(tab => tab.value === props.defaultTab) ? props.defaultTab : props.tabs?.[0].value
   );
@@ -58,7 +58,8 @@ function UnThemedTabbedContainer(props: TabbedContainerProps) {
     setActiveTab(item.value!);
   };
 
-  const { tabs, theme, onClose, closeIconTooltip } = props;
+  const { tabs, onClose, closeIconTooltip } = props;
+  const theme = useTheme();
   const styles = getStyles(theme);
 
   return (
@@ -81,5 +82,3 @@ function UnThemedTabbedContainer(props: TabbedContainerProps) {
     </div>
   );
 }
-
-export const TabbedContainer = withTheme(UnThemedTabbedContainer);
