@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"golang.org/x/xerrors"
 )
 
 type GrafanaComClient struct {
@@ -78,7 +77,7 @@ func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File
 				client.retryCount = 0
 				failure := fmt.Sprintf("%v", r)
 				if failure == "runtime error: makeslice: len out of range" {
-					err = xerrors.New("Corrupt http response from source. Please try again")
+					err = fmt.Errorf("corrupt HTTP response from source, please try again")
 				} else {
 					panic(r)
 				}
@@ -101,7 +100,7 @@ func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File
 	}
 	w.Flush()
 	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", h.Sum(nil)) {
-		return xerrors.New("Expected MD5 checksum does not match the downloaded archive. Please contact security@grafana.com.")
+		return fmt.Errorf("expected MD5 checksum does not match the downloaded archive - please contact security@grafana.com")
 	}
 	return nil
 }

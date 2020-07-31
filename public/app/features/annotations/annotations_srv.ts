@@ -59,9 +59,14 @@ export class AnnotationsSrv {
         };
       })
       .catch(err => {
+        if (err.cancelled) {
+          return [];
+        }
+
         if (!err.message && err.data && err.data.message) {
           err.message = err.data.message;
         }
+
         console.error('AnnotationSrv.query error', err);
         appEvents.emit(AppEvents.alertError, ['Annotation Query Failed', err.message || err]);
         return [];
