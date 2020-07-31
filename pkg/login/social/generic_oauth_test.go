@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"testing"
@@ -345,26 +346,26 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 		groupMappings := []setting.OAuthGroupMapping{
 			{
 				RoleAttributePath: "contains(groups[*], 'admin') && 'Admin'",
-				OrgId:             1,
+				OrgID:             1,
 				IsGrafanaAdmin:    &grafanaAdminTrue,
 			},
 			{
 				RoleAttributePath: "contains(groups[*], 'editor') && 'Editor'",
-				OrgId:             1,
+				OrgID:             1,
 			},
 			{
 				RoleAttributePath: "contains(groups[*], 'admin') && 'Admin' || 'Viewer'",
-				OrgId:             2,
+				OrgID:             2,
 			},
 		}
 		roleMappings := []setting.OAuthGroupMapping{
 			{
 				RoleAttributePath: "role",
-				OrgId:             1,
+				OrgID:             1,
 			},
 			{
 				RoleAttributePath: "'Viewer'",
-				OrgId:             2,
+				OrgID:             2,
 			},
 		}
 
@@ -405,11 +406,11 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 				ExpectedResult: []setting.OAuthGroupMapping{
 					{
 						Role:  "Admin",
-						OrgId: 1,
+						OrgID: 1,
 					},
 					{
 						Role:  "Viewer",
-						OrgId: 2,
+						OrgID: 2,
 					},
 				},
 			},
@@ -425,11 +426,11 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 				ExpectedResult: []setting.OAuthGroupMapping{
 					{
 						Role:  "Editor",
-						OrgId: 1,
+						OrgID: 1,
 					},
 					{
 						Role:  "Viewer",
-						OrgId: 2,
+						OrgID: 2,
 					},
 				},
 			},
@@ -445,11 +446,11 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 				ExpectedResult: []setting.OAuthGroupMapping{
 					{
 						Role:  "Admin",
-						OrgId: 1,
+						OrgID: 1,
 					},
 					{
 						Role:  "Admin",
-						OrgId: 2,
+						OrgID: 2,
 					},
 				},
 			},
@@ -465,7 +466,7 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 				ExpectedResult: []setting.OAuthGroupMapping{
 					{
 						Role:  "Viewer",
-						OrgId: 2,
+						OrgID: 2,
 					},
 				},
 			},
@@ -474,11 +475,13 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 		for _, test := range tests {
 			provider.groupMappings = test.GroupMappings
 			t.Run(test.Name, func(t *testing.T) {
-				response, _ := json.Marshal(test.APIURLReponse)
+				response, err := json.Marshal(test.APIURLReponse)
+				require.NoError(t, err)
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					w.Header().Set("Content-Type", "application/json")
-					_, _ = io.WriteString(w, string(response))
+					_, err := w.Write(response)
+					require.NoError(t, err)
 				}))
 				provider.apiUrl = ts.URL
 				staticToken := oauth2.Token{
@@ -489,18 +492,17 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 				}
 
 				token := staticToken.WithExtra(test.OAuth2Extra)
-				actualResult, _ := provider.UserInfo(ts.Client(), token)
-				if test.ExpectedResult == nil && actualResult.GroupMappings != nil {
-					t.Errorf("Expected nil, got %v", actualResult)
+				actualResult, err := provider.UserInfo(ts.Client(), token)
+				require.NoError(t, err)
+				if test.ExpectedResult == nil {
+					assert.Nil(t, actualResult.GroupMappings)
 					return
 				}
-				if len(test.ExpectedResult) != len(actualResult.GroupMappings) {
-					t.Errorf("Expected result length is %d, got %d", len(test.ExpectedResult), len(actualResult.GroupMappings))
-					return
-				}
+
+				assert.Equal(t, len(test.ExpectedResult), len(actualResult.GroupMappings))
 				for i, result := range actualResult.GroupMappings {
-					require.Equal(t, test.ExpectedResult[i].Role, result.Role)
-					require.Equal(t, test.ExpectedResult[i].OrgId, result.OrgId)
+					assert.Equal(t, test.ExpectedResult[i].Role, result.Role)
+					assert.Equal(t, test.ExpectedResult[i].OrgID, result.OrgID)
 				}
 			})
 		}

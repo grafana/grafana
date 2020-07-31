@@ -1,6 +1,7 @@
 package social
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -8,7 +9,6 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"golang.org/x/oauth2"
-	"golang.org/x/xerrors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -112,7 +112,7 @@ func NewOAuthService() {
 		if groupMappingsFile != "" {
 			groupMappingsConfig, err := readConfig(groupMappingsFile)
 			if err != nil {
-				oauthLogger.Error("Failed to read group mappings file", "file", groupMappingsFile, "provider", name, "error", err.Error())
+				oauthLogger.Error("Failed to read group mappings file", "file", groupMappingsFile, "provider", name, "error", err)
 			} else {
 				info.GroupMappings = groupMappingsConfig.GroupMappings
 			}
@@ -248,17 +248,17 @@ func readConfig(configFile string) (*setting.OAuthGroupMappingsConfig, error) {
 
 	_, err := toml.DecodeFile(configFile, result)
 	if err != nil {
-		return nil, errutil.Wrap("Failed to load OAuth group mappings file", err)
+		return nil, errutil.Wrap("failed to load OAuth group mappings file", err)
 	}
 
 	if len(result.GroupMappings) == 0 {
-		return nil, xerrors.New("OAuth enabled but no group mappings defined in config file")
+		return nil, fmt.Errorf("OAuth enabled but no group mappings defined in config file")
 	}
 
 	// Validate role_attribute_path is set
 	for _, groupMapping := range result.GroupMappings {
 		if groupMapping.RoleAttributePath == "" {
-			return nil, xerrors.New("OAuth group mapping require role_attribute_path to be set")
+			return nil, fmt.Errorf("OAuth group mapping require role_attribute_path to be set")
 		}
 	}
 

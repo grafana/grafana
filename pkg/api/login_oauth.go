@@ -230,25 +230,28 @@ func syncUser(ctx *models.ReqContext, token *oauth2.Token, userInfo *social.Basi
 
 	for _, groupMapping := range userInfo.GroupMappings {
 		rt := models.RoleType(groupMapping.Role)
-		if rt.IsValid() {
-			if groupMapping.OrgId == 0 {
-				if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
-					groupMapping.OrgId = setting.AutoAssignOrgId
-				} else {
-					groupMapping.OrgId = 1
-				}
-			}
-			orgID := int64(groupMapping.OrgId)
-			if _, ok := extUser.OrgRoles[orgID]; !ok {
-				oauthLogger.Debug("Assign group mapping", "login", extUser.Login, "orgID", orgID, "role", rt)
-				extUser.OrgRoles[orgID] = rt
+		if !rt.IsValid() {
+			continue
+		}
+
+		orgID := int64(groupMapping.OrgID)
+		if orgID == 0 {
+			if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
+				orgID = int64(setting.AutoAssignOrgId)
 			} else {
-				oauthLogger.Debug("Skipping org map, already mapped", "login", extUser.Login, "orgID", orgID, "role", rt)
+				orgID = 1
 			}
-			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
-				oauthLogger.Debug("Assign GrafanaAdmin", "login", extUser.Login, "orgID", orgID)
-				extUser.IsGrafanaAdmin = groupMapping.IsGrafanaAdmin
-			}
+		}
+
+		if _, ok := extUser.OrgRoles[orgID]; !ok {
+			oauthLogger.Debug("Assign group mapping", "login", extUser.Login, "orgID", orgID, "role", rt)
+			extUser.OrgRoles[orgID] = rt
+		} else {
+			oauthLogger.Debug("Skipping org map, already mapped", "login", extUser.Login, "orgID", orgID, "role", rt)
+		}
+		if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
+			oauthLogger.Debug("Assign GrafanaAdmin", "login", extUser.Login, "orgID", orgID)
+			extUser.IsGrafanaAdmin = groupMapping.IsGrafanaAdmin
 		}
 	}
 

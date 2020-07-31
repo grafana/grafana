@@ -24,7 +24,7 @@ type OAuthInfo struct {
 type OAuthGroupMapping struct {
 	RoleAttributePath string `toml:"role_attribute_path"`
 	Role              string
-	OrgId             int   `toml:"org_id"`
+	OrgID             int   `toml:"org_id"`
 	IsGrafanaAdmin    *bool `toml:"grafana_admin"`
 }
 
