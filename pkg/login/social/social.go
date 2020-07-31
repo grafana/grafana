@@ -252,7 +252,7 @@ func readConfig(configFile string) (*setting.OAuthGroupMappingsConfig, error) {
 	}
 
 	if len(result.GroupMappings) == 0 {
-		return nil, xerrors.New("OAuth enabled but no group mappings defined in config file")
+		return nil, fmt.Errorf("OAuth enabled but no group mappings defined in config file")
 	}
 
 	// Validate role_attribute_path is set
