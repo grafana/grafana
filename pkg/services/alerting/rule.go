@@ -66,10 +66,10 @@ func (e ValidationError) Error() string {
 	}
 
 	if e.Err != nil {
-		return fmt.Sprintf("Alert validation error: %s%s", e.Err.Error(), extraInfo)
+		return fmt.Sprintf("alert validation error: %s%s", e.Err.Error(), extraInfo)
 	}
 
-	return fmt.Sprintf("Alert validation error: %s", extraInfo)
+	return fmt.Sprintf("alert validation error: %s", extraInfo)
 }
 
 var (
