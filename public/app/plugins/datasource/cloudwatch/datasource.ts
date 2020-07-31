@@ -234,7 +234,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       };
     });
 
-    const dataFrames = increasingInterval(100, 1000, 300).pipe(
+    const dataFrames = increasingInterval({ startPeriod: 100, endPeriod: 1000, step: 300 }).pipe(
       concatMap(_ => this.makeLogActionRequest('GetQueryResults', queryParams)),
       repeat(),
       share()
