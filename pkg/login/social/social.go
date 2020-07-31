@@ -8,7 +8,6 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"golang.org/x/oauth2"
-	"golang.org/x/xerrors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
