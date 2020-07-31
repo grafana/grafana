@@ -473,8 +473,9 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			provider.groupMappings = test.GroupMappings
 			t.Run(test.Name, func(t *testing.T) {
+				provider.groupMappings = test.GroupMappings
+
 				response, err := json.Marshal(test.APIURLReponse)
 				require.NoError(t, err)
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -494,16 +495,8 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 				token := staticToken.WithExtra(test.OAuth2Extra)
 				actualResult, err := provider.UserInfo(ts.Client(), token)
 				require.NoError(t, err)
-				if test.ExpectedResult == nil {
-					assert.Nil(t, actualResult.GroupMappings)
-					return
-				}
 
-				assert.Equal(t, len(test.ExpectedResult), len(actualResult.GroupMappings))
-				for i, result := range actualResult.GroupMappings {
-					assert.Equal(t, test.ExpectedResult[i].Role, result.Role)
-					assert.Equal(t, test.ExpectedResult[i].OrgID, result.OrgID)
-				}
+				assert.Equal(t, test.ExpectedResult, actualResult.GroupMappings)
 			})
 		}
 	})
