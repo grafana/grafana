@@ -248,7 +248,7 @@ func readConfig(configFile string) (*setting.OAuthGroupMappingsConfig, error) {
 
 	_, err := toml.DecodeFile(configFile, result)
 	if err != nil {
-		return nil, errutil.Wrap("Failed to load OAuth group mappings file", err)
+		return nil, errutil.Wrap("failed to load OAuth group mappings file", err)
 	}
 
 	if len(result.GroupMappings) == 0 {
