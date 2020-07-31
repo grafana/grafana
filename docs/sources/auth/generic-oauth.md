@@ -196,7 +196,7 @@ Payload:
 ```
 
 Config:
-```bash
+```toml
 [[group_mappings]]
 role_attribute_path = "role"
 org_id = 2
