@@ -207,7 +207,7 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 			deleteOrgIds = append(deleteOrgIds, org.OrgId)
 		} else if extRole != org.Role {
 			// update role
-			cmd := &models.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: user.Id, Role: extUser.OrgRoles[org.OrgId]}
+			cmd := &models.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: user.Id, Role: extRole}
 			if err := bus.Dispatch(cmd); err != nil {
 				return err
 			}
