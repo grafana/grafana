@@ -184,7 +184,7 @@ group_mappings_file = /etc/grafana/oauth-mappings.toml
 
 **Basic example:**
 
-In the following example user will get `Editor` as role in OrgID `2` when authenticating. The value of the property `role` will be the resulting role if the role is a proper Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
+In the following example, the user will get `Editor` as role in OrgID `2` when authenticating. The value of the property `role` will be the resulting role if the role is a proper Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
 
 Payload:
 ```json
