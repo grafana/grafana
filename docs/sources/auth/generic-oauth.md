@@ -176,7 +176,7 @@ To ease configuration of a proper JMESPath expression, you can test/evaluate exp
 
 Defining role and organization mapping is handled by setting a path to TOML mapping file via `group_mappings_file`, example:
 
-```bash
+```ini
 [auth.generic_oauth]
 ...
 group_mappings_file = /etc/grafana/oauth-mappings.toml
