@@ -1,6 +1,8 @@
 package login
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -40,7 +42,7 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 	}
 
 	if err := bus.Dispatch(userQuery); err != nil {
-		if err != models.ErrUserNotFound {
+		if !errors.Is(err, models.ErrUserNotFound) {
 			return err
 		}
 		if !cmd.SignupAllowed {
@@ -112,7 +114,7 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 		User:         cmd.Result,
 		ExternalUser: extUser,
 	})
-	if err != nil && err != bus.ErrHandlerNotFound {
+	if err != nil && !errors.Is(err, bus.ErrHandlerNotFound) {
 		return err
 	}
 
@@ -217,7 +219,7 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 		// add role
 		cmd := &models.AddOrgUserCommand{UserId: user.Id, Role: orgRole, OrgId: orgId}
 		err := bus.Dispatch(cmd)
-		if err != nil && err != models.ErrOrgNotFound {
+		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
 			return err
 		}
 	}
@@ -226,7 +228,7 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 	for _, orgId := range deleteOrgIds {
 		cmd := &models.RemoveOrgUserCommand{OrgId: orgId, UserId: user.Id}
 		err := bus.Dispatch(cmd)
-		if err == models.ErrLastOrgAdmin {
+		if errors.Is(err, models.ErrLastOrgAdmin) {
 			logger.Error(err.Error(), "userId", cmd.UserId, "orgId", cmd.OrgId)
 			continue
 		}
