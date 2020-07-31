@@ -427,7 +427,7 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 		}
 	}
 
-	// If there are groups org mappings configured but no matching mappings
+	// If there are group org mappings configured, but no matching mappings,
 	// the user will not be able to login and will be disabled
 	if len(server.Config.Groups) > 0 && len(extUser.OrgRoles) == 0 {
 		extUser.IsDisabled = true
