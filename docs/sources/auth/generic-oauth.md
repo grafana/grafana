@@ -172,7 +172,7 @@ allowed_organizations =
 
 To ease configuration of a proper JMESPath expression, you can test/evaluate expressions with custom payloads at http://jmespath.org/.
 
-### Role and Organization mapping
+## Role and organization mapping
 
 Defining role and organization mapping is handled by setting a path to TOML mapping file via `group_mappings_file`, example:
 
