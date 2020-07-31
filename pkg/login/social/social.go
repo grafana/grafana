@@ -258,7 +258,7 @@ func readConfig(configFile string) (*setting.OAuthGroupMappingsConfig, error) {
 	// Validate role_attribute_path is set
 	for _, groupMapping := range result.GroupMappings {
 		if groupMapping.RoleAttributePath == "" {
-			return nil, xerrors.New("OAuth group mapping require role_attribute_path to be set")
+			return nil, fmt.Errorf("OAuth group mapping require role_attribute_path to be set")
 		}
 	}
 
