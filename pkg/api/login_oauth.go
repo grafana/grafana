@@ -221,8 +221,12 @@ func syncUser(ctx *models.ReqContext, token *oauth2.Token, userInfo *social.Basi
 			var orgID int64
 			if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
 				orgID = int64(setting.AutoAssignOrgId)
+				logger.Debug("The user has a role assignment and organization membership is auto-assigned",
+					"role", userInfo.Role, "orgId", orgID)
 			} else {
 				orgID = int64(1)
+				logger.Debug("The user has a role assignment and organization membership is not auto-assigned",
+					"role", userInfo.Role, "orgId", orgID)
 			}
 			extUser.OrgRoles[orgID] = rt
 		}
