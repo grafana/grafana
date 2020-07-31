@@ -204,7 +204,7 @@ org_id = 2
 
 **Advanced example:**
 
-In the following example user will get `Admin` as role in Orgs `1` and `2` when authenticating since it has a group `admin`. If a user has a group `editor` it will get `Editor` as role for Org `1`, otherwise `Viewer` in Org `2`.
+In the following example, the user will get `Admin` as role in organizations `1` and `2` when authenticating if they have a group `admin`. If, on the other hand, the user has a group `editor`, they will get `Editor` as role for organization `1. If the user isn't in the `admin` group, they will get the `Viewer` role in organization `2`.
 
 Payload:
 ```json
