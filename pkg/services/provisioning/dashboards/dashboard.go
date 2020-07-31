@@ -27,9 +27,10 @@ type DashboardProvisionerFactory func(string, dashboards.Store) (DashboardProvis
 
 // Provisioner is responsible for syncing dashboard from disk to Grafana's database.
 type Provisioner struct {
-	log         log.Logger
-	fileReaders []*FileReader
-	configs     []*config
+	log           log.Logger
+	fileReaders   []*FileReader
+	configs       []*config
+	sanityChecker *sanityChecker
 }
 
 // New returns a new DashboardProvisioner
@@ -41,15 +42,17 @@ func New(configDirectory string, store dashboards.Store) (DashboardProvisioner, 
 		return nil, errutil.Wrap("Failed to read dashboards config", err)
 	}
 
-	fileReaders, err := getFileReaders(configs, logger, store)
+	checker := newSanityChecker()
+	fileReaders, err := getFileReaders(configs, logger, checker)
 	if err != nil {
 		return nil, errutil.Wrap("Failed to initialize file readers", err)
 	}
 
 	d := &Provisioner{
-		log:         logger,
-		fileReaders: fileReaders,
-		configs:     configs,
+		log:           logger,
+		fileReaders:   fileReaders,
+		configs:       configs,
+		sanityChecker: checker,
 	}
 
 	return d, nil
@@ -70,6 +73,7 @@ func (provider *Provisioner) Provision() error {
 		}
 	}
 
+	provider.sanityChecker.logWarnings(provider.log)
 	return nil
 }
 
@@ -92,6 +96,8 @@ func (provider *Provisioner) PollChanges(ctx context.Context) {
 	for _, reader := range provider.fileReaders {
 		go reader.pollChanges(ctx)
 	}
+
+	go provider.sanityChecker.startLogWarningsLoop(ctx, provider.log)
 }
 
 // GetProvisionerResolvedPath returns resolved path for the specified provisioner name. Can be used to generate
@@ -115,14 +121,13 @@ func (provider *Provisioner) GetAllowUIUpdatesFromConfig(name string) bool {
 	return false
 }
 
-func getFileReaders(configs []*config, logger log.Logger, store dashboards.Store) ([]*FileReader, error) {
+func getFileReaders(configs []*config, logger log.Logger) ([]*FileReader, error) {
 	var readers []*FileReader
 
 	for _, config := range configs {
 		switch config.Type {
 		case "file":
-			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name),
-				store)
+			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name))
 			if err != nil {
 				return nil, errutil.Wrapf(err, "Failed to create file reader for config %v", config.Name)
 			}

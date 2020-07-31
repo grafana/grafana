@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -32,11 +33,12 @@ type FileReader struct {
 	Path                         string
 	log                          log.Logger
 	dashboardProvisioningService dashboards.DashboardProvisioningService
+	sanityChecker                *sanityChecker
 	FoldersFromFilesStructure    bool
 }
 
 // NewDashboardFileReader returns a new filereader based on `config`
-func NewDashboardFileReader(cfg *config, log log.Logger, store dboards.Store) (*FileReader, error) {
+func NewDashboardFileReader(cfg *config, log log.Logger, checker *sanityChecker) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -59,6 +61,7 @@ func NewDashboardFileReader(cfg *config, log log.Logger, store dboards.Store) (*
 		log:                          log,
 		dashboardProvisioningService: dashboards.NewProvisioningService(store),
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
+		sanityChecker:                checker,
 	}, nil
 }
 
@@ -99,25 +102,22 @@ func (fr *FileReader) walkDisk() error {
 
 	fr.handleMissingDashboardFiles(provisionedDashboardRefs, filesFoundOnDisk)
 
-	sanityChecker := newProvisioningSanityChecker(fr.Cfg.Name)
-
+	usageTracker := newUsageTracker()
 	if fr.FoldersFromFilesStructure {
-		err = fr.storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk, provisionedDashboardRefs, resolvedPath, &sanityChecker)
+		err = fr.storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk, provisionedDashboardRefs, resolvedPath, usageTracker)
 	} else {
-		err = fr.storeDashboardsInFolder(filesFoundOnDisk, provisionedDashboardRefs, &sanityChecker)
+		err = fr.storeDashboardsInFolder(filesFoundOnDisk, provisionedDashboardRefs, usageTracker)
 	}
 	if err != nil {
 		return err
 	}
 
-	sanityChecker.logWarnings(fr.log)
-
+	fr.sanityChecker.Set(fr.Cfg.Name, usageTracker)
 	return nil
 }
 
 // storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
-func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.FileInfo,
-	dashboardRefs map[string]*models.DashboardProvisioning, sanityChecker *provisioningSanityChecker) error {
+func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.FileInfo, dashboardRefs map[string]*models.DashboardProvisioning, usageTracker *usageTracker) error {
 	folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
 	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 		return err
@@ -126,6 +126,7 @@ func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.Fil
 	// save dashboards based on json files
 	for path, fileInfo := range filesFoundOnDisk {
 		provisioningMetadata, err := fr.saveDashboard(path, folderID, fileInfo, dashboardRefs)
+		usageTracker.track(provisioningMetadata)
 		if err != nil {
 			fr.log.Error("failed to save dashboard", "error", err)
 			continue
@@ -137,9 +138,8 @@ func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.Fil
 }
 
 // storeDashboardsInFoldersFromFilesystemStructure saves dashboards from the filesystem on disk to the same folder
-// in Grafana as they are in on the filesystem.
-func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk map[string]os.FileInfo,
-	dashboardRefs map[string]*models.DashboardProvisioning, resolvedPath string, sanityChecker *provisioningSanityChecker) error {
+// in grafana as they are in on the filesystem
+func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk map[string]os.FileInfo, dashboardRefs map[string]*models.DashboardProvisioning, resolvedPath string, usageTracker *usageTracker) error {
 	for path, fileInfo := range filesFoundOnDisk {
 		folderName := ""
 
@@ -154,7 +154,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk
 		}
 
 		provisioningMetadata, err := fr.saveDashboard(path, folderID, fileInfo, dashboardRefs)
-		sanityChecker.track(provisioningMetadata)
+		usageTracker.track(provisioningMetadata)
 		if err != nil {
 			fr.log.Error("failed to save dashboard", "error", err)
 		}
@@ -423,42 +423,139 @@ type dashboardIdentity struct {
 }
 
 func (d *dashboardIdentity) Exists() bool {
-	return len(d.title) > 0 && d.folderID > 0
+	return len(d.title) > 0
 }
 
-func newProvisioningSanityChecker(provisioningProvider string) provisioningSanityChecker {
-	return provisioningSanityChecker{
-		provisioningProvider: provisioningProvider,
-		uidUsage:             map[string]uint8{},
-		titleUsage:           map[dashboardIdentity]uint8{},
+func newUsageTracker() *usageTracker {
+	return &usageTracker{
+		uidUsage:   map[string]uint8{},
+		titleUsage: map[dashboardIdentity]uint8{},
 	}
 }
 
-type provisioningSanityChecker struct {
-	provisioningProvider string
-	uidUsage             map[string]uint8
-	titleUsage           map[dashboardIdentity]uint8
+type usageTracker struct {
+	uidUsage   map[string]uint8
+	titleUsage map[dashboardIdentity]uint8
 }
 
-func (checker provisioningSanityChecker) track(pm provisioningMetadata) {
+func (t *usageTracker) track(pm provisioningMetadata) {
 	if len(pm.uid) > 0 {
-		checker.uidUsage[pm.uid]++
+		t.uidUsage[pm.uid]++
 	}
 	if pm.identity.Exists() {
-		checker.titleUsage[pm.identity]++
+		t.titleUsage[pm.identity]++
 	}
 }
 
-func (checker provisioningSanityChecker) logWarnings(log log.Logger) {
-	for uid, times := range checker.uidUsage {
-		if times > 1 {
-			log.Error("the same 'uid' is used more than once", "uid", uid, "provider", checker.provisioningProvider)
+type set struct {
+	data map[string]struct{}
+}
+
+func newSet() *set {
+	return &set{make(map[string]struct{})}
+}
+
+func (s *set) Add(entry string) {
+	s.data[entry] = struct{}{}
+}
+
+func (s *set) AsSlice() []string {
+	entries := make([]string, len(s.data))
+	index := 0
+
+	for entry := range s.data {
+		entries[index] = entry
+		index++
+	}
+
+	return entries
+}
+
+type duplicate struct {
+	Readers *set
+	Sum     uint8
+}
+
+func newDuplicate() *duplicate {
+	return &duplicate{Readers: newSet()}
+}
+
+type duplicateEntries struct {
+	Title map[dashboardIdentity]*duplicate
+	UID   map[string]*duplicate
+}
+
+func newDuplicateEntries() *duplicateEntries {
+	return &duplicateEntries{Title: make(map[dashboardIdentity]*duplicate), UID: make(map[string]*duplicate)}
+}
+
+type sanityChecker struct {
+	mux      sync.RWMutex
+	trackers map[string]*usageTracker
+}
+
+func newSanityChecker() *sanityChecker {
+	return &sanityChecker{trackers: make(map[string]*usageTracker)}
+}
+
+func (c *sanityChecker) Set(readerName string, tracker *usageTracker) {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	c.trackers[readerName] = tracker
+}
+
+func (c *sanityChecker) getDuplicates() *duplicateEntries {
+	duplicates := newDuplicateEntries()
+
+	for readerName, tracker := range c.trackers {
+		for uid, times := range tracker.uidUsage {
+			if _, ok := duplicates.UID[uid]; !ok {
+				duplicates.UID[uid] = newDuplicate()
+			}
+			duplicates.UID[uid].Sum += times
+			duplicates.UID[uid].Readers.Add(readerName)
+		}
+
+		for id, times := range tracker.titleUsage {
+			if _, ok := duplicates.Title[id]; !ok {
+				duplicates.Title[id] = newDuplicate()
+			}
+			duplicates.Title[id].Sum += times
+			duplicates.Title[id].Readers.Add(readerName)
 		}
 	}
 
-	for identity, times := range checker.titleUsage {
-		if times > 1 {
-			log.Error("the same 'title' is used more than once", "title", identity.title, "provider", checker.provisioningProvider)
+	return duplicates
+}
+
+func (c *sanityChecker) logWarnings(log log.Logger) {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	duplicates := c.getDuplicates()
+
+	for uid, usage := range duplicates.UID {
+		if usage.Sum > 1 {
+			log.Error("the same 'uid' is used more than once", "uid", uid, "times", usage.Sum, "providers", usage.Readers.AsSlice())
+		}
+	}
+
+	for id, usage := range duplicates.Title {
+		if usage.Sum > 1 {
+			log.Error("the same 'folder/title' is used more than once", "title", id.title, "folderID", id.folderID, "times", usage.Sum, "providers", usage.Readers.AsSlice())
+		}
+	}
+}
+
+func (c *sanityChecker) startLogWarningsLoop(ctx context.Context, log log.Logger) {
+	ticker := time.NewTicker(30 * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			c.logWarnings(log)
+		case <-ctx.Done():
+			return
 		}
 	}
 }
