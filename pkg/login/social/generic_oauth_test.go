@@ -475,7 +475,8 @@ func TestSearchJSONForGroupMapping(t *testing.T) {
 		for _, test := range tests {
 			provider.groupMappings = test.GroupMappings
 			t.Run(test.Name, func(t *testing.T) {
-				response, _ := json.Marshal(test.APIURLReponse)
+				response, err := json.Marshal(test.APIURLReponse)
+				require.NoError(t, err)
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					w.Header().Set("Content-Type", "application/json")
