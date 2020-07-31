@@ -96,9 +96,22 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 
 	frame := data.NewFrame("CloudWatchLogsResponse", newFields...)
 	frame.Meta = &data.FrameMeta{
+		Stats: []data.QueryStat{
+			{
+				FieldConfig: data.FieldConfig{DisplayName: "Bytes scanned"},
+				Value:       *response.Statistics.BytesScanned,
+			},
+			{
+				FieldConfig: data.FieldConfig{DisplayName: "Records scanned"},
+				Value:       *response.Statistics.RecordsScanned,
+			},
+			{
+				FieldConfig: data.FieldConfig{DisplayName: "Records matched"},
+				Value:       *response.Statistics.RecordsMatched,
+			},
+		},
 		Custom: map[string]interface{}{
-			"Status":     *response.Status,
-			"Statistics": *response.Statistics,
+			"Status": *response.Status,
 		},
 	}
 
