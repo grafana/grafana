@@ -1,6 +1,7 @@
 +++
 title = "Add a constant variable"
 type = "docs"
+aliases = ["/docs/grafana/latest/variables/add-constant-variable.md"]
 [menu.docs]
 weight = 500
 +++

@@ -1,6 +1,7 @@
 +++
 title = "Add a custom variable"
 type = "docs"
+aliases = ["/docs/grafana/latest/variables/add-custom-variable.md"]
 [menu.docs]
 weight = 500
 +++

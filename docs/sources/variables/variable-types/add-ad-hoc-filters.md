@@ -1,6 +1,7 @@
 +++
 title = "Add ad hoc filters"
 type = "docs"
+aliases = ["/docs/grafana/latest/variables/add-ad-hoc-filters.md"]
 [menu.docs]
 weight = 500
 +++

@@ -1,6 +1,7 @@
 +++
 title = "Add a query variable"
 type = "docs"
+aliases = ["/docs/grafana/latest/variables/add-query-variable.md"]
 [menu.docs]
 weight = 500
 +++
