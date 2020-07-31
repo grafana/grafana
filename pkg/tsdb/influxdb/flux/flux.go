@@ -29,7 +29,8 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 	if err != nil {
 		return nil, err
 	}
-
+	defer runner.client.Close()
+	
 	for _, query := range tsdbQuery.Queries {
 		qm, err := GetQueryModelTSDB(query, tsdbQuery.TimeRange, dsInfo)
 		if err != nil {
@@ -41,7 +42,6 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 
 		tRes.Results[query.RefId] = backendDataResponseToTSDBResponse(&res, query.RefId)
 	}
-	defer runner.client.Close()
 	return tRes, nil
 }
 
