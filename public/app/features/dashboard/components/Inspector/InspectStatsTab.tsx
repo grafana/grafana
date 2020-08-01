@@ -23,8 +23,12 @@ export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, dashboar
     dataRows += frame.length;
   }
 
-  stats.push({ displayName: 'Total request time', value: requestTime, unit: 'ms' });
-  stats.push({ displayName: 'Data processing time', value: processingTime, unit: 'ms' });
+  if (requestTime > 0) {
+    stats.push({ displayName: 'Total request time', value: requestTime, unit: 'ms' });
+  }
+  if (processingTime > 0) {
+    stats.push({ displayName: 'Data processing time', value: processingTime, unit: 'ms' });
+  }
   stats.push({ displayName: 'Number of queries', value: data.request.targets.length });
   stats.push({ displayName: 'Total number rows', value: dataRows });
 
