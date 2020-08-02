@@ -9,7 +9,7 @@ module.exports = function(grunt) {
 
   // prettier-ignore
   grunt.registerTask('test', [
-    'sasslint',
+    //'sasslint',
     'eslint',
     'typecheck',
     'exec:jest',
