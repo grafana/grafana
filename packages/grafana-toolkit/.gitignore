@@ -1,0 +1,5 @@
+test/fixtures/*/dist
+test/fixtures/*/reports
+test/fixtures/plugin/.prettierrc.js
+test/fixtures/plugin/jest.config.js
+test/fixtures/plugin/tsconfig.json

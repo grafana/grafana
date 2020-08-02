@@ -1,0 +1,22 @@
+{
+  "type": "datasource",
+  "name": "Plugin Fixture",
+  "id": "grafana-plugin-fixture",
+
+  "backend": true,
+  "metrics": true,
+
+  "info": {
+    "description": "A plugin fixture",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "dependencies": {
+    "grafanaVersion": "7.0.x",
+    "plugins": []
+  }
+}
