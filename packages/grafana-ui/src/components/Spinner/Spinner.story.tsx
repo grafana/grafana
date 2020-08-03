@@ -27,12 +27,10 @@ export const withStyle = () => {
   return (
     <div>
       <Spinner
-        className="my-spin-div"
         style={{
           backgroundColor: color('White', 'white'),
           color: color('Red', 'red'),
         }}
-        iconClassName="my-spinner-classname"
         size={number('Size', 34)}
       />
     </div>
