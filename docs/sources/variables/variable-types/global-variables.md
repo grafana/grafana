@@ -2,6 +2,7 @@
 title = "Global variables"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable", "global", "standard"]
 type = "docs"
+aliases = ["/docs/grafana/latest/variables/global-variables.md"]
 [menu.docs]
 name = "global-variables"
 parent = "variables"

@@ -25,7 +25,7 @@ Grafana creates an empty graph panel with your default data source selected.
 
 ## 2. Edit panel settings
 
-While not required, we recommend that you add a helpful title and description to your panel. You can use [variables you have defined]({{< relref "../variables/templates-and-variables.md" >}}) in either field, but not [global variables]({{< relref "../variables/global-variables.md" >}}).
+While not required, we recommend that you add a helpful title and description to your panel. You can use [variables you have defined]({{< relref "../variables/templates-and-variables.md" >}}) in either field, but not [global variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
 
 ![](/img/docs/panels/panel-settings-7-0.png)
 

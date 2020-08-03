@@ -1,6 +1,7 @@
 +++
 title = "Add a constant variable"
 type = "docs"
+aliases = ["/docs/grafana/latest/variables/add-constant-variable.md"]
 [menu.docs]
 weight = 500
 +++
@@ -27,6 +28,6 @@ Constant variables are useful when you have complex values that you need to incl
    
 ## Enter Constant options
 
-1. In the **Value** field, enter the variable value. You can enter letters, numbers, and symbols. You can even use wildcards if you use [raw format]({{< relref "advanced-variable-format-options.md#raw" >}}).
+1. In the **Value** field, enter the variable value. You can enter letters, numbers, and symbols. You can even use wildcards if you use [raw format]({{< relref "../advanced-variable-format-options.md#raw" >}}).
 1. In **Preview of values**, Grafana displays the current variable value. Review it to ensure it matches what you expect.
 1. Click **Add** to add the variable to the dashboard.
