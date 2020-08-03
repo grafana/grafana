@@ -120,7 +120,9 @@ func (hs *HTTPServer) GetAlerts(c *models.ReqContext) Response {
 
 	for _, alert := range query.Result {
 		if alert.DashboardUid == "" && alert.DashboardSlug == "" {
-			alert.Url = ""
+			if hs.Cfg.IsStandaloneAlertsEnabled() {
+				alert.Url = models.GetAlertEditUrl(alert.Id)
+			}
 		} else {
 			alert.Url = models.GetDashboardUrl(alert.DashboardUid, alert.DashboardSlug)
 		}

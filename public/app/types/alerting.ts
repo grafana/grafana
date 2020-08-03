@@ -114,6 +114,12 @@ export interface AlertRulesState {
   notificationChannels: NotificationChannel[];
 }
 
+export interface AlertRuleState {
+  alert: AlertRule;
+  searchQuery: string;
+  notificationChannels: NotificationChannel[];
+}
+
 export interface AlertNotification {
   isDefault: boolean;
   name: string;

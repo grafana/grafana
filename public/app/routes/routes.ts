@@ -513,6 +513,15 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           SafeDynamicImport(import(/* webpackChunkName: "AlertRuleList" */ 'app/features/alerting/AlertRuleList')),
       },
     })
+    .when('/alerting/edit/:id', {
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "EditAlertRule" */ 'app/features/alerting/EditAlertRule')),
+      },
+    })
     .when('/alerting/notifications', {
       template: '<react-container />',
       reloadOnSearch: false,

@@ -3,7 +3,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import { NavIndex } from '@grafana/data';
 
 import { LocationState } from './location';
-import { AlertRulesState } from './alerting';
+import { AlertRuleState, AlertRulesState } from './alerting';
 import { TeamsState, TeamState } from './teams';
 import { FolderState } from './folders';
 import { DashboardState } from './dashboard';
@@ -23,6 +23,7 @@ import { ImportDashboardState } from '../features/manage-dashboards/state/reduce
 export interface StoreState {
   navIndex: NavIndex;
   location: LocationState;
+  alertRule: AlertRuleState;
   alertRules: AlertRulesState;
   teams: TeamsState;
   team: TeamState;

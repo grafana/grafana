@@ -323,6 +323,10 @@ func GetDashboardUrl(uid string, slug string) string {
 	return fmt.Sprintf("%s/d/%s/%s", setting.AppSubUrl, uid, slug)
 }
 
+func GetAlertEditUrl(alertID int64) string {
+	return fmt.Sprintf("%s/alerting/edit/%d", setting.AppSubUrl, alertID)
+}
+
 // GetFullDashboardUrl return the full url for a dashboard
 func GetFullDashboardUrl(uid string, slug string) string {
 	return fmt.Sprintf("%sd/%s/%s", setting.AppUrl, uid, slug)

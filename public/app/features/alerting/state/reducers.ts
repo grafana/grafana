@@ -1,4 +1,4 @@
-import { AlertRule, AlertRuleDTO, AlertRulesState, NotificationChannel } from 'app/types';
+import { AlertRule, AlertRuleDTO, AlertRuleState, AlertRulesState, NotificationChannel } from 'app/types';
 import alertDef from './alertDef';
 import { dateTime } from '@grafana/data';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
@@ -55,8 +55,28 @@ const alertRulesSlice = createSlice({
 
 export const { loadAlertRules, loadedAlertRules, setSearchQuery, setNotificationChannels } = alertRulesSlice.actions;
 
+export const initialAlertState: AlertRuleState = {
+  alert: {} as AlertRule,
+  searchQuery: '',
+  notificationChannels: [],
+};
+
+const alertRuleSlice = createSlice({
+  name: 'alertRule',
+  initialState: initialAlertState,
+  reducers: {
+    alertRuleLoaded: (state, action: PayloadAction<AlertRuleDTO>): AlertRuleState => {
+      return { ...state, alert: convertToAlertRule(action.payload, action.payload.state) };
+    },
+  },
+});
+
+export const { alertRuleLoaded } = alertRuleSlice.actions;
+
 export const alertRulesReducer = alertRulesSlice.reducer;
+export const alertRuleReducer = alertRuleSlice.reducer;
 
 export default {
   alertRules: alertRulesReducer,
+  alertRule: alertRuleReducer,
 };

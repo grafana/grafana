@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
+import config from 'app/core/config';
 import { AlertRule } from '../../types';
 import { Icon, IconName, Button, Tooltip, LinkButton, HorizontalGroup } from '@grafana/ui';
 
@@ -24,7 +25,9 @@ class AlertRuleItem extends PureComponent<Props> {
   render() {
     const { rule, onTogglePause } = this.props;
 
-    const ruleUrl = rule.url ? `${rule.url}?editPanel=${rule.panelId}&tab=alert` : '';
+    const ruleUrl = rule.url.startsWith(`${config.appSubUrl}/d/`)
+      ? `${rule.url}?editPanel=${rule.panelId}&tab=alert`
+      : rule.url;
 
     return (
       <li className="alert-rule-item">
