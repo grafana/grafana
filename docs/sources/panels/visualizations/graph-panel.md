@@ -28,9 +28,10 @@ Use these settings to refine your visualization.
 - **Line width -** The width of the line for a series. (default 1).
 - **Staircase -** Draws adjacent points as staircase.
 - **Area fill -** Amount of color fill for a series. (default 1, 0 is none)
-- **Fill gradient -** XXX
+- **Fill gradient -** Degree of gradient on the area fill. (0 is no gradient, 10 is a steep gradient. Default is 0.)
 - **Points -** Display points for values.
 - **Point radius -** Controls how large the points are.
+- **Alert thresholds -** Display alert thresholds and regions on the panel.
 
 ### Stacking and null value
 
