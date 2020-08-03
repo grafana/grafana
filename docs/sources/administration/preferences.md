@@ -55,4 +55,5 @@ Grafana logs your sessions in each Grafana instance. You can review this section
    - **Logged on -** The date you logged on to the current Grafana instance.
    - **IP address -** The IP address that you logged on from.
    - **Browser & OS -** The web browser and operating system used to log on to Grafana.
+   - If you are a Grafana Admin for the instance, then you can revoke a session by clicking the red signout icon in the session row.
   
