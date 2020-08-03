@@ -140,10 +140,10 @@ You can use a variable in a metric node path or as a parameter to a function.
 There are two syntaxes:
 
 - `$<varname>`  Example: apps.frontend.$server.requests.count
-- `[[varname]]` Example: apps.frontend.[[server]].requests.count
+- `${varname}` Example: apps.frontend.${server}.requests.count
 
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. Use
-the second syntax in expressions like  `my.server[[serverNumber]].count`.
+the second syntax in expressions like  `my.server${serverNumber}.count`.
 
 Example:
 [Graphite Templated Dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested)

@@ -7,6 +7,8 @@
       link: /getting-started/getting-started/
     - name: Intro to time series
       link: /getting-started/timeseries/
+    - name: Time series dimensions
+      link: /getting-started/timeseries-dimensions/
     - name: Intro to histograms
       link: /getting-started/intro-histograms/
     - name: Observability strategies
@@ -77,14 +79,18 @@
           name: Dashboard and Folder
         - link: /permissions/datasource_permissions/
           name: Data source
+    - name: Provisioning
+      link: /administration/provisioning/
     - name: Grafana CLI
       link: /administration/cli/
     - name: Internal metrics
       link: /administration/metrics/
-    - name: Provisioning
-      link: /administration/provisioning/
+    - name: Jaeger instrumentation
+      link: /administration/jaeger-instrumentation/
     - name: Set up Grafana for high availability
       link: /tutorials/ha_setup/
+    - name: Change home dashboard
+      link: /administration/change-home-dashboard/
     - name: Troubleshooting
       link: /installation/troubleshooting/
 - name: Manage users
@@ -247,14 +253,40 @@
   children:
     - link: /variables/templates-and-variables/
       name: Overview
+    - link: /variables/variable-examples/
+      name: Variable examples
+    - link: /variables/add-query-variable/
+      name: Add query variable
+    - link: /variables/add-custom-variable/
+      name: Add custom variable
+    - link: /variables/add-text-box-variable/
+      name: Add text box variable
+    - link: /variables/add-constant-variable/
+      name: Add constant variable
+    - link: /variables/add-data-source-variable/
+      name: Add data source variable
+    - link: /variables/add-interval-variable/
+      name: Add interval variable
+    - link: /variables/add-ad-hoc-filters/
+      name: Add ad hoc filters
+    - name: Selection options
+      link: /variables/variable-selection-options/
+    - name: Value groups/tags
+      link: /variables/variable-value-tags/
     - link: /variables/global-variables/
       name: Global variables
     - link: /variables/url-variables/
       name: URL variables
     - link: /variables/advanced-variable-format-options/
       name: Advanced variable formats
+    - link: /variables/formatting-multi-value-variables/
+      name: Formatting multi-value variables
+    - link: /variables/filter-variables-with-regex/
+      name: Filter variables with regex
     - link: /variables/repeat-panels-or-rows/
       name: Repeat panels or rows
+    - link: /variables/chained-variables/
+      name: Chained variables
 - name: What's new in Grafana
   link: /whatsnew/
   children:
@@ -352,6 +384,8 @@
       link: /http_api/auth/
     - name: Create API Tokens and Dashboards for a Specific Organization
       link: /tutorials/api_org_token_howto/
+    - name: cURL examples
+      link: /http_api/curl-examples/  
     - name: Admin API
       link: /http_api/admin/
     - name: Alerting API
@@ -428,6 +462,8 @@
               name: Plugin protocol
             - link: /developers/plugins/backend/grafana-plugin-sdk-for-go/
               name: Grafana plugin SDK for Go
+        - name: Error handling
+          link: /developers/plugins/error-handling/
         - name: Legacy plugins
           children:
             - link: /developers/plugins/legacy/

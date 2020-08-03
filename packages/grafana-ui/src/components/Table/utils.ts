@@ -91,6 +91,7 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
     case TableCellDisplayMode.ColorBackground:
       return withTableStyles(DefaultCell, getBackgroundColorStyle);
     case TableCellDisplayMode.LcdGauge:
+    case TableCellDisplayMode.BasicGauge:
     case TableCellDisplayMode.GradientGauge:
       return BarGaugeCell;
     case TableCellDisplayMode.JSONView:

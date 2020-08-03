@@ -266,13 +266,13 @@ func putAdminScenario(desc string, url string, routePattern string, role models.
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) {
+		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 			sc.context.OrgId = TestOrgID
 			sc.context.OrgRole = role
 
-			AdminUpdateUserPermissions(c, cmd)
+			return AdminUpdateUserPermissions(c, cmd)
 		})
 
 		sc.m.Put(routePattern, sc.defaultHandler)
@@ -396,11 +396,11 @@ func adminDeleteUserScenario(desc string, url string, routePattern string, fn sc
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) {
+		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 
-			AdminDeleteUser(c)
+			return AdminDeleteUser(c)
 		})
 
 		sc.m.Delete(routePattern, sc.defaultHandler)
@@ -414,11 +414,11 @@ func adminCreateUserScenario(desc string, url string, routePattern string, cmd d
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) {
+		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 
-			AdminCreateUser(c, cmd)
+			return AdminCreateUser(c, cmd)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)

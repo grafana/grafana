@@ -332,7 +332,11 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"title": "Production Overview"}
+{
+  "title": "Production Overview",
+  "message": "Dashboard Production Overview deleted",
+  "id": 2
+}
 ```
 
 Status Codes:
@@ -506,7 +510,11 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"title": "Production Overview"}
+{
+  "title": "Production Overview",
+  "message": "Dashboard Production Overview deleted",
+  "id": 2
+}
 ```
 
 Status Codes:

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Slider } from './Slider';
+import { Slider } from '@grafana/ui';
 import { select, number, boolean } from '@storybook/addon-knobs';
 
 export default {
