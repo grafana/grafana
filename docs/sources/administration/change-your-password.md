@@ -11,11 +11,11 @@ weight = 100
 
 You can change your password in the Change Password tab.
 
-> **Note:** If your Grafana instance uses single sign-on (SSO), then you might not be able to change your password. Contact your Grafana administrator for more information.
+> **Note:** If your Grafana instance uses an external authentication provider, then you might not be able to change your password. Contact your Grafana administrator for more information.
 
 ## Change your password
 
-1. Hover your mouseover your user icon in the lower left corner of the screen.
+1. Hover your mouse over your user icon in the lower left corner of the screen.
 1. Click **Change Password**. Grafana opens the Change Password tab.
 1. Enter your **Old password** to authorize the change.
 1. Enter your **New password** and then **Confirm password**.

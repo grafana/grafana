@@ -31,7 +31,7 @@ Your Grafana preferences include whether uses the dark or light theme, your home
 1. Navigate to the Preferences tab. Hover your cursor over your user icon in the lower left corner of the screen, and then click **Preferences.**
 1. In the Preferences section, you can edit any of the following:
    - **UI Theme -** Click to set the **Dark** or **Light** to select a theme. **Default** is either the dark theme or the theme selected by your Grafana administrator.
-   - **Home Dashboard -** Refer to [Change the default home dashboard]({{< relref "change-home-dashboard.md" >}}) for more information.
+   - **Home Dashboard -** Refer to [Set your personal home dashboard]({{< relref "change-home-dashboard.md#set-your-personal-home-dashboard" >}}) for more information.
    - **Timezone -** Click to select an option in the **Timezone** list. Refer to [Time range controls]({{< relref "../dashboards/time-range-controls.md" >}}) for more information about Grafana time settings.
 1. Click **Save**.
 
@@ -56,4 +56,3 @@ Grafana logs your sessions in each Grafana instance. You can review this section
    - **IP address -** The IP address that you logged on from.
    - **Browser & OS -** The web browser and operating system used to log on to Grafana.
    - If you are a Grafana Admin for the instance, then you can revoke a session by clicking the red signout icon in the session row.
-  
