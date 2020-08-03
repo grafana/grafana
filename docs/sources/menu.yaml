@@ -253,6 +253,8 @@
   children:
     - link: /variables/templates-and-variables/
       name: Overview
+    - link: /variables/variable-examples/
+      name: Variable examples
     - link: /variables/add-query-variable/
       name: Add query variable
     - link: /variables/add-custom-variable/
@@ -460,6 +462,8 @@
               name: Plugin protocol
             - link: /developers/plugins/backend/grafana-plugin-sdk-for-go/
               name: Grafana plugin SDK for Go
+        - name: Error handling
+          link: /developers/plugins/error-handling/
         - name: Legacy plugins
           children:
             - link: /developers/plugins/legacy/

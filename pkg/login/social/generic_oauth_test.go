@@ -2,7 +2,6 @@ package social
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"time"
@@ -311,7 +310,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					w.Header().Set("Content-Type", "application/json")
-					_, err = io.WriteString(w, string(response))
+					_, err = w.Write(response)
 					require.NoError(t, err)
 				}))
 				provider.apiUrl = ts.URL

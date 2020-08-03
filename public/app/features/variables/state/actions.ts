@@ -96,7 +96,7 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
   };
 };
 
-export const completeDashboardTemplating = (dashboard: DashboardModel): ThunkResult<void> => {
+export const addSystemTemplateVariables = (dashboard: DashboardModel): ThunkResult<void> => {
   return (dispatch, getState) => {
     const dashboardModel: DashboardVariableModel = {
       id: '__dashboard',
@@ -552,12 +552,15 @@ export const initVariablesTransaction = (dashboardUid: string, dashboard: Dashbo
       dispatch(cancelVariables());
     }
 
+    // Start init transaction
     dispatch(variablesInitTransaction({ uid: dashboardUid }));
-
+    // Add system variables like __dashboard and __user
+    dispatch(addSystemTemplateVariables(dashboard));
+    // Load all variables into redux store
     dispatch(initDashboardTemplating(dashboard.templating.list));
+    // Process all variable updates
     await dispatch(processVariables());
-    dispatch(completeDashboardTemplating(dashboard));
-
+    // Mark update as complete
     dispatch(variablesCompleteTransaction({ uid: dashboardUid }));
   } catch (err) {
     dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
