@@ -11,7 +11,7 @@ weight = 100
 
 You can change your password in the Change Password tab.
 
-> **Note:** If your Grafana instance uses single sign-on (SSO), then you might not be able to change your password. Contact your Grafana administrator for more information.
+> **Note:** If your Grafana instance uses an external authentication provider, then you might not be able to change your password. Contact your Grafana administrator for more information.
 
 ## Change your password
 
