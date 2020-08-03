@@ -5,7 +5,7 @@ import { PanelData } from './panel';
 import { LogRowModel } from './logs';
 import { AnnotationEvent, KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
-import { RawTimeRange, TimeRange, AbsoluteTimeRange } from './time';
+import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
 import { CoreApp } from './app';
 
@@ -300,7 +300,7 @@ export interface QueryEditorProps<
    * Contains query response filtered by refId of QueryResultBase and possible query error
    */
   data?: PanelData;
-  exploreMode?: ExploreMode;
+  range?: TimeRange;
   exploreId?: any;
   history?: HistoryItem[];
 }
@@ -323,14 +323,11 @@ export interface ExploreQueryFieldProps<
 > extends QueryEditorProps<DSType, TQuery, TOptions> {
   history: any[];
   onBlur?: () => void;
-  absoluteRange?: AbsoluteTimeRange;
-  exploreMode?: ExploreMode;
   exploreId?: any;
 }
 
 export interface ExploreStartPageProps {
   datasource: DataSourceApi;
-  exploreMode: ExploreMode;
   onClickExample: (query: DataQuery) => void;
   exploreId?: any;
 }
@@ -416,11 +413,9 @@ export interface DataQueryError {
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   requestId: string; // Used to identify results and optionally cancel the request in backendSrv
 
-  dashboardId: number;
   interval: string;
-  intervalMs?: number;
+  intervalMs: number;
   maxDataPoints?: number;
-  panelId: number;
   range: TimeRange;
   reverse?: boolean;
   scopedVars: ScopedVars;
@@ -432,10 +427,17 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   exploreMode?: ExploreMode;
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
+  panelId?: number;
+  dashboardId?: number;
 
   // Request Timing
   startTime: number;
   endTime?: number;
+
+  // Explore state used by various datasources
+  liveStreaming?: boolean;
+  showingGraph?: boolean;
+  showingTable?: boolean;
 }
 
 export interface DataQueryTimings {

@@ -253,7 +253,6 @@ export class GraphCtrl extends MetricsPanelCtrl {
               tip: 'Data exists, but is not timeseries',
               actionText: 'Switch to table view',
               action: () => {
-                console.log('Change from graph to table');
                 dispatch(changePanelPlugin(this.panel, 'table'));
               },
             };
@@ -306,6 +305,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
     for (const series of this.seriesList) {
       series.applySeriesOverrides(this.panel.seriesOverrides);
 
+      // Always use the configured field unit
       if (series.unit) {
         this.panel.yaxes[series.yaxis - 1].format = series.unit;
       }
@@ -379,6 +379,7 @@ export const plugin = new PanelPlugin<GraphPanelOptions, GraphFieldConfig>(null)
   .useFieldConfig({
     standardOptions: [
       FieldConfigProperty.DisplayName,
+      FieldConfigProperty.Unit,
       FieldConfigProperty.Links, // previously saved as dataLinks on options
     ],
   })

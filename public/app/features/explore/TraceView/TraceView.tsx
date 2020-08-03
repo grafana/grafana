@@ -33,6 +33,7 @@ export function TraceView(props: Props) {
     detailReferencesToggle,
     detailTagsToggle,
     detailWarningsToggle,
+    detailStackTracesToggle,
   } = useDetailState();
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
@@ -63,6 +64,7 @@ export function TraceView(props: Props) {
       } as ThemeOptions),
     [theme]
   );
+
   const traceTimeline: TTraceTimeline = useMemo(
     () => ({
       childrenHiddenIDs,
@@ -70,10 +72,14 @@ export function TraceView(props: Props) {
       hoverIndentGuideIds,
       shouldScrollToFirstUiFindMatch: false,
       spanNameColumnWidth,
-      traceID: traceProp.traceID,
+      traceID: traceProp?.traceID,
     }),
-    [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp.traceID]
+    [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp?.traceID]
   );
+
+  if (!traceProp) {
+    return null;
+  }
 
   return (
     <ThemeProvider value={traceTheme}>
@@ -121,6 +127,7 @@ export function TraceView(props: Props) {
           detailLogItemToggle={detailLogItemToggle}
           detailLogsToggle={detailLogsToggle}
           detailWarningsToggle={detailWarningsToggle}
+          detailStackTracesToggle={detailStackTracesToggle}
           detailReferencesToggle={detailReferencesToggle}
           detailProcessToggle={detailProcessToggle}
           detailTagsToggle={detailTagsToggle}

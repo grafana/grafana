@@ -228,6 +228,10 @@ export class KeybindingSrv {
 
     // edit panel
     this.bind('e', () => {
+      if (!dashboard.meta.focusPanelId) {
+        return;
+      }
+
       if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
         const search = _.extend(this.$location.search(), { editPanel: dashboard.meta.focusPanelId });
         this.$location.search(search);
@@ -253,7 +257,7 @@ export class KeybindingSrv {
     if (this.contextSrv.hasAccessToExplore()) {
       this.bind('x', async () => {
         if (dashboard.meta.focusPanelId) {
-          const panel = dashboard.getPanelById(dashboard.meta.focusPanelId);
+          const panel = dashboard.getPanelById(dashboard.meta.focusPanelId)!;
           const datasource = await this.datasourceSrv.get(panel.datasource);
           const url = await getExploreUrl({
             panel,
@@ -262,10 +266,12 @@ export class KeybindingSrv {
             datasourceSrv: this.datasourceSrv,
             timeSrv: this.timeSrv,
           });
-          const urlWithoutBase = locationUtil.stripBaseFromUrl(url);
 
-          if (urlWithoutBase) {
-            this.$timeout(() => this.$location.url(urlWithoutBase));
+          if (url) {
+            const urlWithoutBase = locationUtil.stripBaseFromUrl(url);
+            if (urlWithoutBase) {
+              this.$timeout(() => this.$location.url(urlWithoutBase));
+            }
           }
         }
       });
@@ -273,16 +279,20 @@ export class KeybindingSrv {
 
     // delete panel
     this.bind('p r', () => {
-      if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
-        appEvents.emit(CoreEvents.removePanel, dashboard.meta.focusPanelId);
+      const panelId = dashboard.meta.focusPanelId;
+
+      if (panelId && dashboard.canEditPanelById(panelId)) {
+        appEvents.emit(CoreEvents.removePanel, panelId);
         dashboard.meta.focusPanelId = 0;
       }
     });
 
     // duplicate panel
     this.bind('p d', () => {
-      if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
-        const panelIndex = dashboard.getPanelInfoById(dashboard.meta.focusPanelId).index;
+      const panelId = dashboard.meta.focusPanelId;
+
+      if (panelId && dashboard.canEditPanelById(panelId)) {
+        const panelIndex = dashboard.getPanelInfoById(panelId)!.index;
         dashboard.duplicatePanel(dashboard.panels[panelIndex]);
       }
     });
@@ -305,11 +315,11 @@ export class KeybindingSrv {
     // toggle panel legend
     this.bind('p l', () => {
       if (dashboard.meta.focusPanelId) {
-        const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
+        const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId)!;
+
         if (panelInfo.panel.legend) {
-          const panelRef = dashboard.getPanelById(dashboard.meta.focusPanelId);
-          panelRef.legend.show = !panelRef.legend.show;
-          panelRef.render();
+          panelInfo.panel.legend.show = !panelInfo.panel.legend.show;
+          panelInfo.panel.render();
         }
       }
     });

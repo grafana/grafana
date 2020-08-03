@@ -6,10 +6,12 @@ import { PanelProps, renderMarkdown, textUtil } from '@grafana/data';
 import config from 'app/core/config';
 // Types
 import { TextOptions } from './types';
-import { stylesFactory } from '@grafana/ui';
+import { stylesFactory, CustomScrollbar } from '@grafana/ui';
 import { css, cx } from 'emotion';
+import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 
 interface Props extends PanelProps<TextOptions> {}
+
 interface State {
   html: string;
 }
@@ -78,8 +80,11 @@ export class TextPanel extends PureComponent<Props, State> {
   render() {
     const { html } = this.state;
     const styles = getStyles();
-
-    return <div className={cx('markdown-html', styles.content)} dangerouslySetInnerHTML={{ __html: html }} />;
+    return (
+      <CustomScrollbar autoHeightMin="100%">
+        <DangerouslySetHtmlContent html={html} className={cx('markdown-html', styles.content)} />
+      </CustomScrollbar>
+    );
   }
 }
 

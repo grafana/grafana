@@ -129,11 +129,11 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
 
 export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, config, plugin }) => {
   const setDefaultValue = useCallback(
-    (name: string, value: any, custom: boolean) => {
+    (name: string, value: any, isCustom: boolean | undefined) => {
       const defaults = { ...config.defaults };
       const remove = value === undefined || value === null || '';
 
-      if (custom) {
+      if (isCustom) {
         if (defaults.custom) {
           if (remove) {
             defaults.custom = { ...defaults.custom };

@@ -315,7 +315,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         return { status: 'success', message: 'Index OK. Time field name OK.' };
       },
       (err: any) => {
-        console.log(err);
+        console.error(err);
         if (err.data && err.data.error) {
           let message = angular.toJson(err.data.error);
           if (err.data.error.reason) {
@@ -365,7 +365,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       let queryObj;
       if (target.isLogsQuery || queryDef.hasMetricOfType(target, 'logs')) {
         target.bucketAggs = [queryDef.defaultBucketAgg()];
-        target.metrics = [queryDef.defaultMetricAgg()];
+        target.metrics = [];
         // Setting this for metrics queries that are typed as logs
         target.isLogsQuery = true;
         queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, queryString);
