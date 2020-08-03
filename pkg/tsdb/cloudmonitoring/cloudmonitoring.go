@@ -221,7 +221,11 @@ func (e *CloudMonitoringExecutor) executeTimeSeriesQuery(ctx context.Context, ts
 			break
 		}
 		query.Params.Set("resourceType", resourceType)
-		queryRes.Meta.Set("deepLink", query.buildDeepLink())
+		dl := ""
+		if len(resp.TimeSeries) > 0 {
+			dl = query.buildDeepLink()
+		}
+		queryRes.Meta.Set("deepLink", dl)
 	}
 
 	return result, nil
