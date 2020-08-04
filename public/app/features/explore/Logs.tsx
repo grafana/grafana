@@ -84,7 +84,7 @@ export class Logs extends PureComponent<Props, State> {
     logsSortOrder: null,
   };
 
-  onChangelogsSortOrder = () => {
+  onChangeLogsSortOrder = () => {
     this.setState(prevState => {
       if (prevState.logsSortOrder === null || prevState.logsSortOrder === LogsSortOrder.Descending) {
         return { logsSortOrder: LogsSortOrder.Ascending };
@@ -245,7 +245,7 @@ export class Logs extends PureComponent<Props, State> {
                   margin-top: 4px;
                 `
               )}
-              onClick={this.onChangelogsSortOrder}
+              onClick={this.onChangeLogsSortOrder}
             >
               <span className="btn-title">Flip results order</span>
             </button>

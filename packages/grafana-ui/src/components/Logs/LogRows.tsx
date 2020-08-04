@@ -75,6 +75,10 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     return () => orderedRows;
   });
 
+  sortLogs = memoizeOne((logRows: LogRowModel[], logsSortOrder: LogsSortOrder): LogRowModel[] =>
+    sortLogRows(logRows, logsSortOrder)
+  );
+
   render() {
     const {
       dedupStrategy,
@@ -111,7 +115,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
-    const orderedRows = logsSortOrder ? sortLogRows(processedRows, logsSortOrder) : processedRows;
+    const orderedRows = logsSortOrder ? this.sortLogs(processedRows, logsSortOrder) : processedRows;
     const firstRows = orderedRows.slice(0, previewLimit!);
     const rowCount = Math.min(orderedRows.length, rowLimit!);
     const lastRows = orderedRows.slice(previewLimit!, rowCount);
