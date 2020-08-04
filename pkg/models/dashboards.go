@@ -143,9 +143,7 @@ func (d UpdatePluginDashboardError) Error() string {
 }
 
 const (
-	DashTypeJson     = "file"
 	DashTypeDB       = "db"
-	DashTypeScript   = "script"
 	DashTypeSnapshot = "snapshot"
 )
 
@@ -301,8 +299,8 @@ func SlugifyTitle(title string) string {
 }
 
 // GetUrl return the html url for a folder if it's folder, otherwise for a dashboard
-func (d *Dashboard) GetUrl() string {
-	return GetDashboardFolderUrl(d.IsFolder, d.Uid, d.Slug)
+func (dash *Dashboard) GetUrl() string {
+	return GetDashboardFolderUrl(dash.IsFolder, dash.Uid, dash.Slug)
 }
 
 // Return the html url for a dashboard
