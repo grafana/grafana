@@ -2,7 +2,8 @@ import { AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { AlertRuleDTO, NotifierDTO, ThunkResult, AlertRule } from 'app/types';
 import { appEvents } from 'app/core/core';
-import { updateLocation } from 'app/core/actions';
+import { updateLocation, updateNavIndex } from 'app/core/actions';
+import { buildNavModel } from './navModel';
 import { alertRuleLoaded, loadAlertRules, loadedAlertRules, setNotificationChannels } from './reducers';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
@@ -67,7 +68,7 @@ export function loadAlertRule(id: number): ThunkResult<void> {
   return async dispatch => {
     const response = await getBackendSrv().get(`/api/alerts/${id}`);
     dispatch(alertRuleLoaded(response));
-    //dispatch(updateNavIndex(buildNavModel(response)));
+    dispatch(updateNavIndex(buildNavModel(response)));
   };
 }
 

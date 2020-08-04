@@ -6,11 +6,12 @@ import Page from 'app/core/components/Page/Page';
 import { loadAlertRule } from './state/actions';
 import { AlertRule } from 'app/types';
 import { getRouteParamsId } from '../../core/selectors/location';
-import { getAlertRule } from './state/selectors';
 import { contextSrv, User } from 'app/core/services/context_srv';
 import { NavModel, OrgRole } from '@grafana/data';
 import { getNavModel } from 'app/core/selectors/navModel';
 import AlertRuleSettings from './AlertRuleSettings';
+import { getAlertRuleLoadingNav } from './state/navModel';
+import { getAlertRule } from './state/selectors';
 
 export interface Props {
   navModel: NavModel;
@@ -97,7 +98,7 @@ function mapStateToProps(state: any) {
   const alertRule = getAlertRule(state.alertRule, alertId);
 
   return {
-    navModel: getNavModel(state.navIndex, 'alert-edit'),
+    navModel: getNavModel(state.navIndex, `alert-${alertId}`, getAlertRuleLoadingNav()),
     alertId: alertId,
     alertRule,
     signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,

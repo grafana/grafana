@@ -5,6 +5,8 @@ import {
   AlertRuleState,
   AlertRulesState,
   NotificationChannel,
+  NoDataState,
+  ExecutionErrorState,
 } from 'app/types';
 import alertDef from './alertDef';
 import { dateTime } from '@grafana/data';
@@ -18,6 +20,10 @@ function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
   const rule: AlertRule = {
     ...dto,
     orgId: 0,
+    for: 0,
+    frequency: 0,
+    noDataState: {} as NoDataState,
+    executionErrorState: {} as ExecutionErrorState,
     stateText: stateModel.text,
     stateIcon: stateModel.iconClass,
     stateClass: stateModel.stateClass,
@@ -47,6 +53,10 @@ function convertPascalCaseToAlertRule(dto: AlertRulePascalCaseDTO, state: string
     state: dto.State,
     url: dto.Url,
     orgId: dto.OrgId,
+    for: dto.For,
+    frequency: dto.Frequency,
+    noDataState: dto.NoDataState,
+    executionErrorState: dto.ExecutionErrorState,
     stateText: stateModel.text,
     stateIcon: stateModel.iconClass,
     stateClass: stateModel.stateClass,

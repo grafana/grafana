@@ -29,6 +29,10 @@ export interface AlertRulePascalCaseDTO {
   ExecutionError: string;
   Url: string;
   OrgId: number;
+  For: number;
+  Frequency: number;
+  NoDataState: NoDataState;
+  ExecutionErrorState: ExecutionErrorState;
 }
 
 export interface AlertRule {
@@ -50,6 +54,10 @@ export interface AlertRule {
   evalDate?: string;
   evalData?: { noData?: boolean; evalMatches?: any };
   orgId: number;
+  for: number;
+  frequency: number;
+  noDataState: NoDataState;
+  executionErrorState: ExecutionErrorState;
 }
 
 export type NotifierType =
@@ -142,4 +150,16 @@ export interface AlertNotification {
   name: string;
   id: number;
   type: string;
+}
+
+export enum NoDataState {
+  NoDataSetOK = 'ok',
+  NoDataSetNoData = 'no_data',
+  NoDataKeepState = 'keep_state',
+  NoDataSetAlerting = 'alerting',
+}
+
+export enum ExecutionErrorState {
+  ExecutionErrorSetAlerting = 'alerting',
+  ExecutionErrorKeepState = 'keep_state',
 }
