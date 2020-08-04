@@ -37,8 +37,8 @@ export const VerifyEmail: FC = () => {
   }
 
   return (
-    <Form onSubmit={sendEmail}>
-      {({ register, errors }) => (
+    <Form onSubmit={onSubmit}>
+      {({ register, errors: any }) => (
         <>
           <Legend>Verify Email</Legend>
           <Field
