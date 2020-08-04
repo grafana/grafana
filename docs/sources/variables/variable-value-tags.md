@@ -13,6 +13,8 @@ Value groups/tags are a feature you can use to organize variable options. If you
 
 This feature is off by default. Click **Enabled** to turn the feature on.
 
+To see an example, check out [Templating value groups](https://play.grafana.org/d/000000024/templating-value-groups?orgId=1).
+
 ## Tags query
 
 Enter a data source query that should return a list of tags. The tags query returns a list of tags that each represents a group, and the tag values query returns a list of group members. 

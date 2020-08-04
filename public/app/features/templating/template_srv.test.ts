@@ -3,15 +3,16 @@ import { convertToStoreState } from 'test/helpers/convertToStoreState';
 import { getTemplateSrvDependencies } from '../../../test/helpers/getTemplateSrvDependencies';
 import { variableAdapters } from '../variables/adapters';
 import { createQueryVariableAdapter } from '../variables/query/adapter';
+import { dateTime, TimeRange } from '@grafana/data';
 
 describe('templateSrv', () => {
   let _templateSrv: any;
 
-  function initTemplateSrv(variables: any[]) {
+  function initTemplateSrv(variables: any[], timeRange?: TimeRange) {
     const state = convertToStoreState(variables);
 
     _templateSrv = new TemplateSrv(getTemplateSrvDependencies(state));
-    _templateSrv.init(variables);
+    _templateSrv.init(variables, timeRange);
   }
 
   describe('init', () => {
@@ -282,6 +283,25 @@ describe('templateSrv', () => {
     });
   });
 
+  describe('list format', () => {
+    beforeEach(() => {
+      initTemplateSrv([
+        { type: 'query', name: 'var', current: { value: ['replaced?', 'replaced?2'] } },
+        { type: 'query', name: 'var2', current: { value: ['replaced?3', 'replaced?4'] } },
+      ]);
+    });
+
+    it('should properly return all possible values', () => {
+      const target = _templateSrv.replace('prefix-$var-${var2:percentencode}-suffix', {}, 'list');
+      expect(target).toStrictEqual([
+        'prefix-replaced?-replaced%3F3-suffix',
+        'prefix-replaced?-replaced%3F4-suffix',
+        'prefix-replaced?2-replaced%3F3-suffix',
+        'prefix-replaced?2-replaced%3F4-suffix',
+      ]);
+    });
+  });
+
   describe('html format', () => {
     it('should encode values html escape sequences', () => {
       initTemplateSrv([{ type: 'query', name: 'test', current: { value: '<script>alert(asd)</script>' } }]);
@@ -411,7 +431,7 @@ describe('templateSrv', () => {
       expect(result).toBe(true);
     });
 
-    it('should return null if there are no variables in string', () => {
+    it('should return false if there are no variables in string', () => {
       const result = _templateSrv.variableExists('string without variables');
       expect(result).toBe(false);
     });
@@ -594,16 +614,45 @@ describe('templateSrv', () => {
       initTemplateSrv([]);
     });
 
-    it('should be possible to fetch value with getBuilInIntervalValue', () => {
-      const val = _templateSrv.getBuiltInIntervalValue();
-      expect(val).toBe('1s');
-    });
-
     it('should replace $__interval_ms with interval milliseconds', () => {
       const target = _templateSrv.replace('10 * $__interval_ms', {
         __interval_ms: { text: '100', value: '100' },
       });
       expect(target).toBe('10 * 100');
+    });
+  });
+
+  describe('date formating', () => {
+    beforeEach(() => {
+      initTemplateSrv([], {
+        from: dateTime(1594671549254),
+        to: dateTime(1595237229747),
+      } as TimeRange);
+    });
+
+    it('should replace ${__from} with ms epoch value', () => {
+      const target = _templateSrv.replace('${__from}');
+      expect(target).toBe('1594671549254');
+    });
+
+    it('should replace ${__from:date:seconds} with epoch in seconds', () => {
+      const target = _templateSrv.replace('${__from:date:seconds}');
+      expect(target).toBe('1594671549');
+    });
+
+    it('should replace ${__from:date} with iso date', () => {
+      const target = _templateSrv.replace('${__from:date}');
+      expect(target).toBe('2020-07-13T20:19:09.254Z');
+    });
+
+    it('should replace ${__from:date:iso} with iso date', () => {
+      const target = _templateSrv.replace('${__from:date:iso}');
+      expect(target).toBe('2020-07-13T20:19:09.254Z');
+    });
+
+    it('should replace ${__from:date:YYYY-MM} using custom format', () => {
+      const target = _templateSrv.replace('${__from:date:YYYY-MM}');
+      expect(target).toBe('2020-07');
     });
   });
 });

@@ -126,10 +126,18 @@ def pipeline(name, edition, trigger, steps, services=[]):
             'disable': True,
         }
 
+    pipeline['steps'].insert(0, {
+        'name': 'identify-runner',
+        'image': alpine_image,
+        'commands': [
+            'echo $DRONE_RUNNER_NAME',
+        ],
+    })
+
     return pipeline
 
 def init_steps(edition):
-    grabpl_version = '0.4.24'
+    grabpl_version = '0.4.25'
     common_cmds = [
         'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
         'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
@@ -264,7 +272,10 @@ def build_backend_step(edition, variants=None):
         ],
         'commands': [
             'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
-            './bin/grabpl build-backend --edition {} --build-id $DRONE_BUILD_NUMBER{}'.format(edition, variants_str),
+            # TODO: Convert number of jobs to percentage
+            './bin/grabpl build-backend --jobs 8 --edition {} --build-id $DRONE_BUILD_NUMBER{}'.format(
+                edition, variants_str
+            ),
         ],
     }
 
@@ -278,7 +289,8 @@ def build_frontend_step(edition):
         ],
         'commands': [
             restore_yarn_cache,
-            './bin/grabpl build-frontend --no-install-deps --edition {} '.format(edition) +
+            # TODO: Use percentage for num jobs
+            './bin/grabpl build-frontend --jobs 8 --no-install-deps --edition {} '.format(edition) +
                 '--build-id $DRONE_BUILD_NUMBER --no-pull-enterprise',
         ],
     }
@@ -293,7 +305,8 @@ def build_plugins_step(edition):
         ],
         'commands': [
             restore_yarn_cache,
-            './bin/grabpl build-plugins --edition {} --no-install-deps'.format(edition),
+            # TODO: Use percentage for num jobs
+            './bin/grabpl build-plugins --jobs 8 --edition {} --no-install-deps'.format(edition),
         ],
     }
 
@@ -307,7 +320,7 @@ def test_backend_step():
         ],
         'commands': [
             # First execute non-integration tests in parallel, since it should be safe
-            'go test -covermode=atomic ./pkg/...',
+            './bin/grabpl test-backend',
             # Then execute integration tests in serial
             './bin/grabpl integration-tests',
             # Keep the test cache
@@ -322,6 +335,9 @@ def test_frontend_step():
         'depends_on': [
             'initialize',
         ],
+        'environment': {
+            'TEST_MAX_WORKERS': '50%',
+        },
         'commands': [
             restore_yarn_cache,
             'yarn run prettier:check',
@@ -386,7 +402,8 @@ def package_step(edition, variants=None):
             'shellcheck',
         ],
         'commands': [
-            '. scripts/build/gpg-test-vars.sh && ./bin/grabpl package --edition {} '.format(edition) +
+            # TODO: Use percentage for jobs
+            '. scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition {} '.format(edition) +
                 '--build-id $DRONE_BUILD_NUMBER --no-pull-enterprise' + variants_str,
         ],
     }

@@ -10,7 +10,7 @@ import { focusCss } from '../../themes/mixins';
 
 export interface Props {
   onChange: (value: DateTime) => void;
-  value: DateTime;
+  value?: DateTime;
   showHour?: boolean;
   minuteStep?: number;
   size?: FormInputSize;

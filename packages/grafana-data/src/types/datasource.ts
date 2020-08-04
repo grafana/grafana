@@ -5,7 +5,7 @@ import { PanelData } from './panel';
 import { LogRowModel } from './logs';
 import { AnnotationEvent, KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
-import { RawTimeRange, TimeRange, AbsoluteTimeRange } from './time';
+import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
 import { CoreApp } from './app';
 
@@ -300,6 +300,7 @@ export interface QueryEditorProps<
    * Contains query response filtered by refId of QueryResultBase and possible query error
    */
   data?: PanelData;
+  range?: TimeRange;
   exploreId?: any;
   history?: HistoryItem[];
 }
@@ -322,7 +323,6 @@ export interface ExploreQueryFieldProps<
 > extends QueryEditorProps<DSType, TQuery, TOptions> {
   history: any[];
   onBlur?: () => void;
-  absoluteRange?: AbsoluteTimeRange;
   exploreId?: any;
 }
 

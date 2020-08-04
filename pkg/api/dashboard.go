@@ -210,6 +210,7 @@ func deleteDashboard(c *models.ReqContext) Response {
 	return JSON(200, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
+		"id":      dash.Id,
 	})
 }
 
@@ -321,7 +322,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
 			return JSON(200, &dashRedirect)
 		}
-		log.Warn("Failed to get slug from database, %s", err.Error())
+		log.Warnf("Failed to get slug from database, %s", err.Error())
 	}
 
 	filePath := hs.Cfg.DefaultHomeDashboardPath
