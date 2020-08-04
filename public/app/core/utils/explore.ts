@@ -15,6 +15,7 @@ import {
   LogRowModel,
   LogsDedupStrategy,
   LogsModel,
+  LogsSortOrder,
   RawTimeRange,
   TimeFragment,
   TimeRange,
@@ -508,23 +509,16 @@ export const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
   return 0;
 };
 
-export enum SortOrder {
-  Descending = 'Descending',
-  Ascending = 'Ascending',
-  DatasourceAZ = 'Datasource A-Z',
-  DatasourceZA = 'Datasource Z-A',
-}
-
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
-  RefreshPicker.isLive(refreshInterval) ? SortOrder.Ascending : SortOrder.Descending;
+  RefreshPicker.isLive(refreshInterval) ? LogsSortOrder.Ascending : LogsSortOrder.Descending;
 
-export const sortLogsResult = (logsResult: LogsModel | null, sortOrder: SortOrder): LogsModel => {
+export const sortLogsResult = (logsResult: LogsModel | null, sortOrder: LogsSortOrder): LogsModel => {
   const rows = logsResult ? sortLogRows(logsResult.rows, sortOrder) : [];
   return logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
 };
 
-export const sortLogRows = (logRows: LogRowModel[], sortOrder: SortOrder) =>
-  sortOrder === SortOrder.Ascending ? logRows.sort(sortInAscendingOrder) : logRows.sort(sortInDescendingOrder);
+export const sortLogRows = (logRows: LogRowModel[], sortOrder: LogsSortOrder) =>
+  sortOrder === LogsSortOrder.Ascending ? logRows.sort(sortInAscendingOrder) : logRows.sort(sortInDescendingOrder);
 
 export const convertToWebSocketUrl = (url: string) => {
   const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';

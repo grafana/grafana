@@ -2,8 +2,7 @@ import React, { PureComponent } from 'react';
 import { css } from 'emotion';
 
 //Services & Utils
-import { SortOrder } from 'app/core/utils/explore';
-import { RICH_HISTORY_SETTING_KEYS } from 'app/core/utils/richHistory';
+import { RICH_HISTORY_SETTING_KEYS, SortOrder } from 'app/core/utils/richHistory';
 import store from 'app/core/store';
 import { stylesFactory, withTheme } from '@grafana/ui';
 
