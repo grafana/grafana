@@ -35,6 +35,10 @@
 - name: Administration
   link: /administration/
   children:
+    - name: Change password
+      link: /administration/change-your-password/
+    - name: Change preferences
+      link: /administration/preferences/
     - name: Configuration
       link: /administration/configuration/
     - name: Configure Docker image
@@ -255,28 +259,33 @@
       name: Overview
     - link: /variables/variable-examples/
       name: Variable examples
-    - link: /variables/add-query-variable/
-      name: Add query variable
-    - link: /variables/add-custom-variable/
-      name: Add custom variable
-    - link: /variables/add-text-box-variable/
-      name: Add text box variable
-    - link: /variables/add-constant-variable/
-      name: Add constant variable
-    - link: /variables/add-data-source-variable/
-      name: Add data source variable
-    - link: /variables/add-interval-variable/
-      name: Add interval variable
-    - link: /variables/add-ad-hoc-filters/
-      name: Add ad hoc filters
+    - name: Variable types
+      link: /variables/variable-types/
+      children:
+      - link: /variables/variable-types/add-query-variable/
+        name: Add query variable
+      - link: /variables/variable-types/add-custom-variable/
+        name: Add custom variable
+      - link: /variables/variable-types/add-text-box-variable/
+        name: Add text box variable
+      - link: /variables/variable-types/add-constant-variable/
+        name: Add constant variable
+      - link: /variables/variable-types/add-data-source-variable/
+        name: Add data source variable
+      - link: /variables/variable-types/add-interval-variable/
+        name: Add interval variable
+      - link: /variables/variable-types/add-ad-hoc-filters/
+        name: Add ad hoc filters
+      - link: /variables/variable-types/chained-variables/
+        name: Chained variables
+      - link: /variables/variable-types/global-variables/
+        name: Global variables
+      - link: /variables/variable-types/url-variables/
+        name: URL variables
     - name: Selection options
       link: /variables/variable-selection-options/
     - name: Value groups/tags
       link: /variables/variable-value-tags/
-    - link: /variables/global-variables/
-      name: Global variables
-    - link: /variables/url-variables/
-      name: URL variables
     - link: /variables/advanced-variable-format-options/
       name: Advanced variable formats
     - link: /variables/formatting-multi-value-variables/
@@ -285,8 +294,6 @@
       name: Filter variables with regex
     - link: /variables/repeat-panels-or-rows/
       name: Repeat panels or rows
-    - link: /variables/chained-variables/
-      name: Chained variables
 - name: What's new in Grafana
   link: /whatsnew/
   children:

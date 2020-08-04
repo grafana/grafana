@@ -38,13 +38,9 @@ Variable values are always synced to the URL using the syntax `var-<varname>=val
 
 ## Examples of templates and variables
 
-To see variable and template examples, go to any of the dashboards listed below.
+To see variable and template examples, go to any of the dashboards listed in [Variable examples]({{< relref "variable-examples.md" >}}).
 
-- [Elasticsearch Templated dashboard](https://play.grafana.org/dashboard/db/elasticsearch-templated)
-- [Graphite Templated Nested dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested)
-- [InfluxDB Templated dashboard](https://play.grafana.org/dashboard/db/influxdb-templated)
-
-Variables are listed in dropdown lists across the top of the screen. Select different variables to see how the visualizations change. 
+Variables are listed in drop-down lists across the top of the screen. Select different variables to see how the visualizations change. 
 
 To see variable settings, navigate to **Dashboard Settings > Variables**. Click a variable in the list to see its settings.
 
@@ -70,41 +66,20 @@ For advanced syntax to override data source default formatting, refer to [Advanc
 
 ## Variable types
 
-Grafana has global built-in variables that can be used in expressions in the query editor. Refer to [Global variables]({{< relref "global-variables" >}}) for more information.
+Grafana uses the following types of variables.
 
-You can also define the following types of variables in Grafana. 
-
-### Query
-
-Write a data source query that might return a list of metric names, tag values, keys, server names, sensor IDs, data centers, and so on.
-
-For instructions, refer to [Add a query variable]({{< relref "add-query-variable.md" >}}).
-
-Variable queries can contain other variables. For more information, refer to [Chained variables]({{< relref "chained-variables.md" >}}).
-
-### Custom
-
-Define the variable options manually using a comma-separated list. For instructions, refer to [Add a custom variable]({{< relref "add-custom-variable.md" >}}).
-
-### Text box
-
-Display a free text input field with an optional default value. For instructions, refer to [Add a text box variable]({{< relref "add-text-box-variable.md" >}}).
-
-### Constant
-
-Define a hidden constant. For instructions, refer to [Add a constant variable]({{< relref "add-constant-variable.md" >}}).
-
-### Data source
-
-Quickly change the data source for an entire dashboard. For instructions, refer to [Add a data source variable]({{< relref "add-data-source-variable.md" >}}).
-
-### Interval
-
-Interval variables represent time spans. Instead of hard-coding a group by time or date histogram interval, use an interval variable. For instructions, refer to [Add an interval variable]({{< relref "add-interval-variable.md" >}}).
-
-### Ad hoc filters
-
-Add key/value filters that are automatically added to all metric queries that use the specified data source. Ad hoc filter variables only work with  InfluxDB, Prometheus, and Elasticsearch data sources. For instructions, refer to [Add ad hoc filters]({{< relref "add-ad-hoc-filters.md" >}}).
+|  Variable type  | Description   |
+|:---|:---|
+| Query   | Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on. [Add a query variable]({{< relref "variable-types/add-query-variable.md" >}}).   |
+| Custom   | Define the variable options manually using a comma-separated list. [Add a custom variable]({{< relref "variable-types/add-custom-variable.md" >}}).   |
+| Text box   | Display a free text input field with an optional default value. [Add a text box variable]({{< relref "variable-types/add-text-box-variable.md" >}}).   |
+| Constant   | Define a hidden constant. [Add a constant variable]({{< relref "variable-types/add-constant-variable.md" >}}).   |
+| Data source   | Quickly change the data source for an entire dashboard. [Add a data source variable]({{< relref "variable-types/add-data-source-variable.md" >}}).   |
+| Interval   | Interval variables represent time spans. [Add an interval variable]({{< relref "variable-types/add-interval-variable.md" >}}).   |
+| Ad hoc filters   | Key/value filters that are automatically added to all metric queries for a data source (InfluxDB, Prometheus, and Elasticsearch only). [Add ad hoc filters]({{< relref "variable-types/add-ad-hoc-filters.md" >}}).   |
+| Global variables   | Built-in variables that can be used in expressions in the query editor. Refer to [Global variables]({{< relref "variable-types/global-variables" >}}).   |
+| Chained variables   | Variable queries can contain other variables. Refer to [Chained variables]({{< relref "variable-types/chained-variables.md" >}}).   |
+| URL variables   | You can use variables in data links to link to specific portions of your visualizations. Refer to [Data links]({{< relref "../linking/data-links.md" >}}).   |
 
 ## Variable best practices
 

@@ -1,6 +1,7 @@
 +++
 title = "Add a text box variable"
 type = "docs"
+aliases = ["/docs/grafana/latest/variables/add-text-box-variable.md"]
 [menu.docs]
 weight = 500
 +++
