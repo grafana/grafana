@@ -330,7 +330,7 @@ export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchF
     const listOfMatchingQueries = query.queries.filter(query =>
       // Remove fields in which we don't want to be searching
       Object.values(_.omit(query, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some((value: any) =>
-        value.toString().includes(searchFilter)
+        value?.toString().includes(searchFilter)
       )
     );
 
