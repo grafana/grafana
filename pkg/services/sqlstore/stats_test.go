@@ -74,9 +74,9 @@ func TestGetUserStats(t *testing.T) {
 	InitTestDB(t)
 
 	cmd := &models.CreateUserCommand{
-		Email:   fmt.Sprintf("admin@test.com"),
-		Name:    fmt.Sprintf("Admin"),
-		Login:   fmt.Sprintf("admin"),
+		Email:   "admin@test.com",
+		Name:    "Admin",
+		Login:   "admin",
 		OrgName: mainOrgName,
 		IsAdmin: true,
 	}
