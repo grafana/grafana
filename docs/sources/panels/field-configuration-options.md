@@ -149,7 +149,7 @@ Given a field with a name of Temp, and labels of {"Loc"="PBI", "Sensor"="3"}
 | `${__field.name}`            | Same as Syntax          | `Temp`                           | Displays the name of the field (without labels) |
 | `${__field.labels}`          | Same as syntax          | `Loc="PBI", Sensor="3"`          | Displays the labels without the name. |
 | `${__field.labels.X}`        | `${__field.labels.Loc}` | `PBI`                            | Displays the value of the specified label key. |
-| `${__field.labels.__values}` | Same as Syntax          | `PBI, 3`                         | Displays the values of the labels separated by a comma (without label keys) |
+| `${__field.labels.__values}` | Same as Syntax          | `PBI, 3`                         | Displays the values of the labels separated by a comma (without label keys). |
 
 If the value is an empty string after rendering the expression for a particular field, then the default display method is used.
 
