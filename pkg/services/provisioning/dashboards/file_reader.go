@@ -146,7 +146,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk
 
 		folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService, folderName)
 		if err != nil && err != ErrFolderNameMissing {
-			return fmt.Errorf("can't provision %s folder from files structure: %w", folderName, err)
+			return fmt.Errorf("can't provision folder %q from file system structure: %w", folderName, err)
 		}
 
 		provisioningMetadata, err := fr.saveDashboard(path, folderID, fileInfo, dashboardRefs)
