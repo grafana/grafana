@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import memoizeOne from 'memoize-one';
-import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel } from '@grafana/data';
+import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel, LogsSortOrder } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
@@ -23,7 +23,7 @@ export interface Props extends Themeable {
   showTime: boolean;
   wrapLogMessage: boolean;
   timeZone: TimeZone;
-  logsOrder?: any;
+  logsOrder?: LogsSortOrder | null;
   rowLimit?: number;
   allowDetails?: boolean;
   previewLimit?: number;
@@ -144,6 +144,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   getFieldLinks={getFieldLinks}
+                  logsOrder={logsOrder}
                 />
               ))}
             {hasData &&
@@ -164,6 +165,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   getFieldLinks={getFieldLinks}
+                  logsOrder={logsOrder}
                 />
               ))}
             {hasData && !renderAll && (
