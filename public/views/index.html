@@ -34,7 +34,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
     <link rel="mask-icon" href="public/img/grafana_mask_icon.svg" color="#F05A28" />
 
-    <link rel="stylesheet" href="public/build/grafana.[[ .Theme ]].7c51472099752a4d28e0.css" />
+    <link rel="stylesheet" href="public/build/grafana.[[ .Theme ]].7e22ba0b56b155c26d23.css" />
 
     <script>
       performance.mark('css done blocking');
@@ -272,26 +272,13 @@
     <!-- End Google Tag Manager -->
     [[end]]
 
-    <script>
-    if (window.location.pathname == "/") {
-      var host = window.location.host;
-      host = host.replace("3000", "3001");
-      const sqlAtlasCheckConfigURL = "http://" + host + "/status";
-      const getStatus = async () => {
-        const response = await fetch(sqlAtlasCheckConfigURL, {method: 'GET'});
-        const status = await response.json();
-      };
-      if (status['db'] != true || status['ds'] != true || status['lic'] != true) {
-        window.location.pathname = "/sqlatlas";
-      };
-    }
-    </script>
-    <script src="public/build/angular~app.7c51472099752a4d28e0.js" type="text/javascript"></script>
-    <script src="public/build/app.7c51472099752a4d28e0.js" type="text/javascript"></script>
-    <script src="public/build/default~app.7c51472099752a4d28e0.js" type="text/javascript"></script>
-    <script src="public/build/moment~app.7c51472099752a4d28e0.js" type="text/javascript"></script>
-    <script src="public/build/runtime.7c51472099752a4d28e0.js" type="text/javascript"></script>
-    <script src="public/build/vendors~app.7c51472099752a4d28e0.js" type="text/javascript"></script>
+    
+    <script src="public/build/angular~app.7e22ba0b56b155c26d23.js" type="text/javascript"></script>
+    <script src="public/build/app.7e22ba0b56b155c26d23.js" type="text/javascript"></script>
+    <script src="public/build/default~app.7e22ba0b56b155c26d23.js" type="text/javascript"></script>
+    <script src="public/build/moment~app.7e22ba0b56b155c26d23.js" type="text/javascript"></script>
+    <script src="public/build/runtime.7e22ba0b56b155c26d23.js" type="text/javascript"></script>
+    <script src="public/build/vendors~app.7e22ba0b56b155c26d23.js" type="text/javascript"></script>
     <script>
       performance.mark('js done blocking');
     </script>

@@ -14,19 +14,13 @@ export let getFooterLinks = (): FooterLink[] => {
     {
       text: 'Documentation',
       icon: 'document-info',
-      url: '#',
+      url: 'https://doc.sqlatlas.com/',
       target: '_blank',
     },
     {
       text: 'Support',
       icon: 'question-circle',
-      url: '#',
-      target: '_blank',
-    },
-    {
-      text: 'Community',
-      icon: 'comments-alt',
-      url: '#',
+      url: 'https://sqlatlas.com/en/contact-us',
       target: '_blank',
     },
   ];
