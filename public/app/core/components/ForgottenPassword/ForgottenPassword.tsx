@@ -20,6 +20,7 @@ const paragraphStyles = (theme: GrafanaTheme) => css`
 export const ForgottenPassword: FC = () => {
   const [emailSent, setEmailSent] = useState(false);
   const styles = useStyles(paragraphStyles);
+  const loginHref = getConfig().appSubUrl + '/login';
 
   const sendEmail = async (formModel: EmailDTO) => {
     const res = await getBackendSrv().post('/api/user/password/send-reset-email', formModel);
@@ -33,7 +34,7 @@ export const ForgottenPassword: FC = () => {
       <div>
         <p>An email with a reset link has been sent to the email address. You should receive it shortly.</p>
         <Container margin="md" />
-        <LinkButton variant="primary" href={getConfig().appSubUrl + '/login'}>
+        <LinkButton variant="primary" href={loginHref}>
           Back to login
         </LinkButton>
       </div>
@@ -54,7 +55,7 @@ export const ForgottenPassword: FC = () => {
           </Field>
           <HorizontalGroup>
             <Button>Send reset email</Button>
-            <LinkButton variant="link" href={getConfig().appSubUrl + '/login'}>
+            <LinkButton variant="link" href={loginHref}>
               Back to login
             </LinkButton>
           </HorizontalGroup>
