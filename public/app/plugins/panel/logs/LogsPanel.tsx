@@ -34,7 +34,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
         timeZone={timeZone}
         allowDetails={true}
         disableCustomHorizontalScroll={true}
-        logsOrder={sortOrder}
+        logsSortOrder={sortOrder}
       />
     </CustomScrollbar>
   );

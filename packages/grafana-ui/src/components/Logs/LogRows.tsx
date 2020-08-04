@@ -23,7 +23,7 @@ export interface Props extends Themeable {
   showTime: boolean;
   wrapLogMessage: boolean;
   timeZone: TimeZone;
-  logsOrder?: LogsSortOrder | null;
+  logsSortOrder?: LogsSortOrder | null;
   rowLimit?: number;
   allowDetails?: boolean;
   previewLimit?: number;
@@ -94,7 +94,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       previewLimit,
       getFieldLinks,
       disableCustomHorizontalScroll,
-      logsOrder,
+      logsSortOrder,
     } = this.props;
     const { renderAll } = this.state;
     const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
@@ -111,7 +111,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
-    const orderedRows = logsOrder ? sortLogRows(processedRows, logsOrder) : processedRows;
+    const orderedRows = logsSortOrder ? sortLogRows(processedRows, logsSortOrder) : processedRows;
     const firstRows = orderedRows.slice(0, previewLimit!);
     const rowCount = Math.min(orderedRows.length, rowLimit!);
     const lastRows = orderedRows.slice(previewLimit!, rowCount);
@@ -142,7 +142,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   getFieldLinks={getFieldLinks}
-                  logsOrder={logsOrder}
+                  logsSortOrder={logsSortOrder}
                 />
               ))}
             {hasData &&
@@ -163,7 +163,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   getFieldLinks={getFieldLinks}
-                  logsOrder={logsOrder}
+                  logsSortOrder={logsSortOrder}
                 />
               ))}
             {hasData && !renderAll && (

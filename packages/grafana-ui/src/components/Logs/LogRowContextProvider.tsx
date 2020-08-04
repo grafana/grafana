@@ -30,7 +30,7 @@ interface ResultType {
 
 interface LogRowContextProviderProps {
   row: LogRowModel;
-  logsOrder?: LogsSortOrder | null;
+  logsSortOrder?: LogsSortOrder | null;
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   children: (props: {
     result: LogRowContextRows;
@@ -45,7 +45,7 @@ export const getRowContexts = async (
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>,
   row: LogRowModel,
   limit: number,
-  logsOrder?: LogsSortOrder | null
+  logsSortOrder?: LogsSortOrder | null
 ) => {
   const promises = [
     getRowContext(row, {
@@ -105,7 +105,7 @@ export const getRowContexts = async (
       }
     }
 
-    return logsOrder === LogsSortOrder.Ascending ? data.reverse() : data;
+    return logsSortOrder === LogsSortOrder.Ascending ? data.reverse() : data;
   });
 
   const errors = results.map(result => {
@@ -118,8 +118,8 @@ export const getRowContexts = async (
   });
 
   return {
-    data: logsOrder === LogsSortOrder.Ascending ? data.reverse() : data,
-    errors: logsOrder === LogsSortOrder.Ascending ? errors.reverse() : errors,
+    data: logsSortOrder === LogsSortOrder.Ascending ? data.reverse() : data,
+    errors: logsSortOrder === LogsSortOrder.Ascending ? errors.reverse() : errors,
   };
 };
 
@@ -127,7 +127,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   getRowContext,
   row,
   children,
-  logsOrder,
+  logsSortOrder,
 }) => {
   // React Hook that creates a number state value called limit to component state and a setter function called setLimit
   // The initial value for limit is 10
@@ -151,7 +151,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   // First promise fetches limit number of rows backwards in time from a specific point in time
   // Second promise fetches limit number of rows forwards in time from a specific point in time
   const { value } = useAsync(async () => {
-    return await getRowContexts(getRowContext, row, limit, logsOrder); // Moved it to a separate function for debugging purposes
+    return await getRowContexts(getRowContext, row, limit, logsSortOrder); // Moved it to a separate function for debugging purposes
   }, [limit]);
 
   // React Hook that performs a side effect every time the value (from useAsync hook) prop changes

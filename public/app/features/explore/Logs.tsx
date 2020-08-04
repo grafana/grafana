@@ -73,7 +73,7 @@ interface State {
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
-  logsOrder: LogsSortOrder | null;
+  logsSortOrder: LogsSortOrder | null;
 }
 
 export class Logs extends PureComponent<Props, State> {
@@ -81,15 +81,15 @@ export class Logs extends PureComponent<Props, State> {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
     showTime: store.getBool(SETTINGS_KEYS.showTime, true),
     wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
-    logsOrder: null,
+    logsSortOrder: null,
   };
 
-  onChangeLogsOrder = () => {
+  onChangelogsSortOrder = () => {
     this.setState(prevState => {
-      if (prevState.logsOrder === null || prevState.logsOrder === LogsSortOrder.Descending) {
-        return { logsOrder: LogsSortOrder.Ascending };
+      if (prevState.logsSortOrder === null || prevState.logsSortOrder === LogsSortOrder.Descending) {
+        return { logsSortOrder: LogsSortOrder.Ascending };
       }
-      return { logsOrder: LogsSortOrder.Descending };
+      return { logsSortOrder: LogsSortOrder.Descending };
     });
   };
 
@@ -178,7 +178,7 @@ export class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { showLabels, showTime, wrapLogMessage, logsOrder } = this.state;
+    const { showLabels, showTime, wrapLogMessage, logsSortOrder } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -245,7 +245,7 @@ export class Logs extends PureComponent<Props, State> {
                   margin-top: 4px;
                 `
               )}
-              onClick={this.onChangeLogsOrder}
+              onClick={this.onChangelogsSortOrder}
             >
               <span className="btn-title">Flip results order</span>
             </button>
@@ -278,7 +278,7 @@ export class Logs extends PureComponent<Props, State> {
           wrapLogMessage={wrapLogMessage}
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
-          logsOrder={logsOrder}
+          logsSortOrder={logsSortOrder}
         />
 
         {!loading && !hasData && !scanning && (

@@ -109,7 +109,7 @@ describe('LogRows', () => {
         showTime={false}
         wrapLogMessage={true}
         timeZone={'utc'}
-        logsOrder={LogsSortOrder.Ascending}
+        logsSortOrder={LogsSortOrder.Ascending}
       />
     );
 
@@ -147,7 +147,7 @@ describe('LogRows', () => {
         showTime={false}
         wrapLogMessage={true}
         timeZone={'utc'}
-        logsOrder={LogsSortOrder.Descending}
+        logsSortOrder={LogsSortOrder.Descending}
       />
     );
 
