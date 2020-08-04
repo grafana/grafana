@@ -2,7 +2,7 @@ import React from 'react';
 import { range } from 'lodash';
 import { LogRows, PREVIEW_LIMIT } from './LogRows';
 import { mount } from 'enzyme';
-import { LogLevel, LogRowModel, LogsDedupStrategy, MutableDataFrame } from '@grafana/data';
+import { LogLevel, LogRowModel, LogsDedupStrategy, MutableDataFrame, LogsSortOrder } from '@grafana/data';
 import { LogRow } from './LogRow';
 
 describe('LogRows', () => {
@@ -100,7 +100,6 @@ describe('LogRows', () => {
       makeLog({ uid: '2', timeEpochMs: 2 }),
       makeLog({ uid: '3', timeEpochMs: 3 }),
     ];
-    const logsOrder = 'Asc';
     const wrapper = mount(
       <LogRows
         logRows={rows}
@@ -110,8 +109,7 @@ describe('LogRows', () => {
         showTime={false}
         wrapLogMessage={true}
         timeZone={'utc'}
-        logsOrder={logsOrder}
-        orderLogs={sortLogs}
+        logsOrder={LogsSortOrder.Ascending}
       />
     );
 
@@ -140,7 +138,6 @@ describe('LogRows', () => {
       makeLog({ uid: '2', timeEpochMs: 2 }),
       makeLog({ uid: '3', timeEpochMs: 3 }),
     ];
-    const logsOrder = 'Desc';
     const wrapper = mount(
       <LogRows
         logRows={rows}
@@ -150,8 +147,7 @@ describe('LogRows', () => {
         showTime={false}
         wrapLogMessage={true}
         timeZone={'utc'}
-        logsOrder={logsOrder}
-        orderLogs={sortLogs}
+        logsOrder={LogsSortOrder.Descending}
       />
     );
 
@@ -199,16 +195,4 @@ const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
     searchWords: [],
     ...overrides,
   };
-};
-
-const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  return a.timeEpochMs < b.timeEpochMs ? -1 : 1;
-};
-
-const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  return a.timeEpochMs < b.timeEpochMs ? 1 : -1;
-};
-
-const sortLogs = (logRows: LogRowModel[], sort: 'Asc' | 'Desc') => {
-  return sort === 'Asc' ? logRows.sort(sortInAscendingOrder) : logRows.sort(sortInDescendingOrder);
 };

@@ -30,7 +30,7 @@ interface ResultType {
 
 interface LogRowContextProviderProps {
   row: LogRowModel;
-  logsOrder: LogsSortOrder | null;
+  logsOrder?: LogsSortOrder | null;
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   children: (props: {
     result: LogRowContextRows;
@@ -45,7 +45,7 @@ export const getRowContexts = async (
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>,
   row: LogRowModel,
   limit: number,
-  logsOrder: LogsSortOrder | null
+  logsOrder?: LogsSortOrder | null
 ) => {
   const promises = [
     getRowContext(row, {

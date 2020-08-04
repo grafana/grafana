@@ -8,23 +8,12 @@ import {
   hasNonEmptyQuery,
   parseUrlState,
   refreshIntervalToSortOrder,
-  sortLogsResult,
   updateHistory,
   getExploreUrl,
   GetExploreUrlArguments,
 } from './explore';
 import store from 'app/core/store';
-import {
-  DataQueryError,
-  dateTime,
-  LogLevel,
-  LogRowModel,
-  LogsDedupStrategy,
-  LogsModel,
-  MutableDataFrame,
-  ExploreUrlState,
-  LogsSortOrder,
-} from '@grafana/data';
+import { DataQueryError, dateTime, LogsDedupStrategy, ExploreUrlState, LogsSortOrder } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 
@@ -421,97 +410,26 @@ describe('refreshIntervalToSortOrder', () => {
   });
 });
 
-describe('sortLogsResult', () => {
-  const firstRow: LogRowModel = {
-    rowIndex: 0,
-    entryFieldIndex: 0,
-    dataFrame: new MutableDataFrame(),
-    entry: '',
-    hasAnsi: false,
-    labels: {},
-    logLevel: LogLevel.info,
-    raw: '',
-    timeEpochMs: 0,
-    timeEpochNs: '0',
-    timeFromNow: '',
-    timeLocal: '',
-    timeUtc: '',
-    uid: '1',
-  };
-  const sameAsFirstRow = firstRow;
-  const secondRow: LogRowModel = {
-    rowIndex: 1,
-    entryFieldIndex: 0,
-    dataFrame: new MutableDataFrame(),
-    entry: '',
-    hasAnsi: false,
-    labels: {},
-    logLevel: LogLevel.info,
-    raw: '',
-    timeEpochMs: 10,
-    timeEpochNs: '10000000',
-    timeFromNow: '',
-    timeLocal: '',
-    timeUtc: '',
-    uid: '2',
-  };
-
-  describe('when called with LogsSortOrder.Descending', () => {
-    it('then it should sort descending', () => {
-      const logsResult: LogsModel = {
-        rows: [firstRow, sameAsFirstRow, secondRow],
-        hasUniqueLabels: false,
-      };
-      const result = sortLogsResult(logsResult, LogsSortOrder.Descending);
-
-      expect(result).toEqual({
-        rows: [secondRow, firstRow, sameAsFirstRow],
-        hasUniqueLabels: false,
-      });
-    });
+describe('when buildQueryTransaction', () => {
+  it('it should calculate interval based on time range', () => {
+    const queries = [{ refId: 'A' }];
+    const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
+    const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
+    const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+    expect(transaction.request.intervalMs).toEqual(60000);
   });
-
-  describe('when called with LogsSortOrder.Ascending', () => {
-    it('then it should sort ascending', () => {
-      const logsResult: LogsModel = {
-        rows: [secondRow, firstRow, sameAsFirstRow],
-        hasUniqueLabels: false,
-      };
-      const result = sortLogsResult(logsResult, LogsSortOrder.Ascending);
-
-      expect(result).toEqual({
-        rows: [firstRow, sameAsFirstRow, secondRow],
-        hasUniqueLabels: false,
-      });
-    });
+  it('it should calculate interval taking minInterval into account', () => {
+    const queries = [{ refId: 'A' }];
+    const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
+    const range = { from: dateTime().subtract(1, 'm'), to: dateTime(), raw: { from: '1h', to: '1h' } };
+    const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+    expect(transaction.request.intervalMs).toEqual(15000);
   });
-
-  describe('when buildQueryTransaction', () => {
-    it('it should calculate interval based on time range', () => {
-      const queries = [{ refId: 'A' }];
-      const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
-      const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
-      const transaction = buildQueryTransaction(queries, queryOptions, range, false);
-
-      expect(transaction.request.intervalMs).toEqual(60000);
-    });
-
-    it('it should calculate interval taking minInterval into account', () => {
-      const queries = [{ refId: 'A' }];
-      const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
-      const range = { from: dateTime().subtract(1, 'm'), to: dateTime(), raw: { from: '1h', to: '1h' } };
-      const transaction = buildQueryTransaction(queries, queryOptions, range, false);
-
-      expect(transaction.request.intervalMs).toEqual(15000);
-    });
-
-    it('it should calculate interval taking maxDataPoints into account', () => {
-      const queries = [{ refId: 'A' }];
-      const queryOptions = { maxDataPoints: 10, minInterval: '15s' };
-      const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
-      const transaction = buildQueryTransaction(queries, queryOptions, range, false);
-
-      expect(transaction.request.interval).toEqual('2h');
-    });
+  it('it should calculate interval taking maxDataPoints into account', () => {
+    const queries = [{ refId: 'A' }];
+    const queryOptions = { maxDataPoints: 10, minInterval: '15s' };
+    const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
+    const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+    expect(transaction.request.interval).toEqual('2h');
   });
 });

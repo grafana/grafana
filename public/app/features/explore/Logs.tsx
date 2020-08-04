@@ -20,7 +20,6 @@ import {
 import { LegacyForms, LogLabels, ToggleButtonGroup, ToggleButton, LogRows, Button } from '@grafana/ui';
 const { Switch } = LegacyForms;
 import store from 'app/core/store';
-import { sortLogRows } from 'app/core/utils/explore';
 
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { MetaInfoText } from './MetaInfoText';
@@ -279,7 +278,6 @@ export class Logs extends PureComponent<Props, State> {
           wrapLogMessage={wrapLogMessage}
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
-          orderLogs={sortLogRows}
           logsOrder={logsOrder}
         />
 

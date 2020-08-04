@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import memoizeOne from 'memoize-one';
-import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel, LogsSortOrder } from '@grafana/data';
+import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel, LogsSortOrder, sortLogRows } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
@@ -34,7 +34,6 @@ export interface Props extends Themeable {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  orderLogs?: (row: LogRowModel[], logsOrder: any) => LogRowModel[];
 }
 
 interface State {
@@ -95,7 +94,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       previewLimit,
       getFieldLinks,
       disableCustomHorizontalScroll,
-      orderLogs,
       logsOrder,
     } = this.props;
     const { renderAll } = this.state;
@@ -113,7 +111,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
-    const orderedRows = logsOrder && orderLogs ? orderLogs(processedRows, logsOrder) : processedRows;
+    const orderedRows = logsOrder ? sortLogRows(processedRows, logsOrder) : processedRows;
     const firstRows = orderedRows.slice(0, previewLimit!);
     const rowCount = Math.min(orderedRows.length, rowLimit!);
     const lastRows = orderedRows.slice(previewLimit!, rowCount);
