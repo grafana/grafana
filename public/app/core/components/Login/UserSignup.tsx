@@ -4,9 +4,7 @@ import { css } from 'emotion';
 import { getConfig } from 'app/core/config';
 
 export const UserSignup: FC<{}> = () => {
-  let href = getConfig().verifyEmailEnabled ? '/verify' : '/signup';
-  href = getConfig().appSubUrl + href;
-
+  const href = getConfig().verifyEmailEnabled ? `${getConfig().appSubUrl}/verify` : `${getConfig().appSubUrl}/signup`;
   return (
     <VerticalGroup
       className={css`

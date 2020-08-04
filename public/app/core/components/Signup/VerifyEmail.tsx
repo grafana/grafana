@@ -12,7 +12,7 @@ interface EmailDTO {
 export const VerifyEmail: FC = () => {
   const [emailSent, setEmailSent] = useState(false);
 
-  const sendEmail = (formModel: EmailDTO) => {
+  const onSubmit = (formModel: EmailDTO) => {
     getBackendSrv()
       .post('/api/user/signup', formModel)
       .then(() => {
