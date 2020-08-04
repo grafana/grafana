@@ -7,31 +7,45 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"time"
 
+	"cloud.google.com/go/storage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/oauth2/google"
 )
 
 const (
-	tokenUrl  string = "https://www.googleapis.com/auth/devstorage.read_write" // #nosec
-	uploadUrl string = "https://www.googleapis.com/upload/storage/v1/b/%s/o?uploadType=media&name=%s&predefinedAcl=publicRead"
+	tokenUrl         string = "https://www.googleapis.com/auth/devstorage.read_write" // #nosec
+	uploadUrl        string = "https://www.googleapis.com/upload/storage/v1/b/%s/o?uploadType=media&name=%s"
+	publicReadOption string = "&predefinedAcl=publicRead"
 )
 
 type GCSUploader struct {
-	keyFile string
-	bucket  string
-	path    string
-	log     log.Logger
+	keyFile             string
+	bucket              string
+	path                string
+	log                 log.Logger
+	enableSignedUrls    bool
+	signedUrlExpiration time.Duration
 }
 
-func NewGCSUploader(keyFile, bucket, path string) *GCSUploader {
-	return &GCSUploader{
-		keyFile: keyFile,
-		bucket:  bucket,
-		path:    path,
-		log:     log.New("gcsuploader"),
+func NewGCSUploader(keyFile, bucket, path string, enableSignedUrls bool, signedUrlExpiration string) (*GCSUploader, error) {
+	expiration, err := time.ParseDuration(signedUrlExpiration)
+	if err != nil {
+		return nil, err
 	}
+	if expiration <= 0 {
+		return nil, fmt.Errorf("invalid signed url expiration: %q", expiration)
+	}
+	return &GCSUploader{
+		keyFile:             keyFile,
+		bucket:              bucket,
+		path:                path,
+		log:                 log.New("gcsuploader"),
+		enableSignedUrls:    enableSignedUrls,
+		signedUrlExpiration: expiration,
+	}, nil
 }
 
 func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string, error) {
@@ -73,7 +87,31 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 		return "", err
 	}
 
-	return fmt.Sprintf("https://storage.googleapis.com/%s/%s", u.bucket, key), nil
+	if !u.enableSignedUrls {
+		return fmt.Sprintf("https://storage.googleapis.com/%s/%s", u.bucket, key), nil
+	}
+
+	u.log.Debug("Signing GCS URL")
+	jsonKey, err := ioutil.ReadFile(u.keyFile)
+	if err != nil {
+		return "", fmt.Errorf("ioutil.ReadFile: %v", err)
+	}
+	conf, err := google.JWTConfigFromJSON(jsonKey)
+	if err != nil {
+		return "", fmt.Errorf("google.JWTConfigFromJSON: %v", err)
+	}
+	opts := &storage.SignedURLOptions{
+		Scheme:         storage.SigningSchemeV4,
+		Method:         "GET",
+		GoogleAccessID: conf.Email,
+		PrivateKey:     conf.PrivateKey,
+		Expires:        time.Now().Add(15 * time.Minute),
+	}
+	signedUrl, err := storage.SignedURL(u.bucket, key, opts)
+	if err != nil {
+		return "", fmt.Errorf("storage.SignedURL: %v", err)
+	}
+	return signedUrl, nil
 }
 
 func (u *GCSUploader) uploadFile(client *http.Client, imageDiskPath, key string) error {
@@ -86,6 +124,9 @@ func (u *GCSUploader) uploadFile(client *http.Client, imageDiskPath, key string)
 	defer fileReader.Close()
 
 	reqUrl := fmt.Sprintf(uploadUrl, u.bucket, key)
+	if !u.enableSignedUrls {
+		reqUrl += publicReadOption
+	}
 	u.log.Debug("Request URL: ", reqUrl)
 
 	req, err := http.NewRequest("POST", reqUrl, fileReader)
