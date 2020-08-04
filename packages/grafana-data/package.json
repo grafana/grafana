@@ -25,8 +25,8 @@
   "dependencies": {
     "@braintree/sanitize-url": "4.0.0",
     "apache-arrow": "0.16.0",
-    "lodash": "4.17.15",
-    "rxjs": "6.6.0",
+    "lodash": "4.17.19",
+    "rxjs": "6.6.2",
     "xss": "1.0.6"
   },
   "devDependencies": {

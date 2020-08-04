@@ -1,8 +1,8 @@
-import React, { memo, useState, useEffect, useCallback, FormEvent } from 'react';
+import React, { FormEvent, memo, useCallback, useEffect, useState } from 'react';
 import { css } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import { GrafanaTheme, DateTime, TimeZone, dateTimeParse } from '@grafana/data';
-import { useTheme, stylesFactory } from '../../../themes';
+import { dateTime, DateTime, dateTimeParse, GrafanaTheme, TimeZone } from '@grafana/data';
+import { stylesFactory, useTheme } from '../../../themes';
 import { TimePickerTitle } from './TimePickerTitle';
 import { Button } from '../../Button';
 import { Icon } from '../../Icon/Icon';
@@ -285,14 +285,16 @@ const Footer = memo<Props>(({ onClose, onApply }) => {
   );
 });
 
-function inputToValue(from: DateTime, to: DateTime): Date[] {
+export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: Date = new Date()): Date[] {
   const fromAsDate = from.toDate();
   const toAsDate = to.toDate();
+  const fromAsValidDate = dateTime(fromAsDate).isValid() ? fromAsDate : invalidDateDefault;
+  const toAsValidDate = dateTime(toAsDate).isValid() ? toAsDate : invalidDateDefault;
 
-  if (fromAsDate > toAsDate) {
-    return [toAsDate, fromAsDate];
+  if (fromAsValidDate > toAsValidDate) {
+    return [toAsValidDate, fromAsValidDate];
   }
-  return [fromAsDate, toAsDate];
+  return [fromAsValidDate, toAsValidDate];
 }
 
 function useOnCalendarChange(onChange: (from: DateTime, to: DateTime) => void, timeZone?: TimeZone) {
