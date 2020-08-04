@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"time"
 
+	"github.com/inconshreveable/log15"
 	"github.com/stretchr/testify/require"
 
 	"testing"
@@ -18,7 +19,7 @@ func TestSearchJSONForEmail(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: log.New("generic_oauth_test"),
+				log: log.NewWithLevel("generic_oauth_test", log15.LvlDebug),
 			},
 		}
 
@@ -106,7 +107,7 @@ func TestSearchJSONForRole(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: log.New("generic_oauth_test"),
+				log: log.NewWithLevel("generic_oauth_test", log15.LvlDebug),
 			},
 		}
 
@@ -169,7 +170,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: log.New("generic_oauth_test"),
+				log: log.NewWithLevel("generic_oauth_test", log15.LvlDebug),
 			},
 			emailAttributePath: "email",
 		}
@@ -183,7 +184,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 			ExpectedRole      string
 		}{
 			{
-				Name: "Given a valid id_token, a valid role path, no api response, use id_token",
+				Name: "Given a valid id_token, a valid role path, no API response, use id_token",
 				OAuth2Extra: map[string]interface{}{
 					// { "role": "Admin", "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
@@ -193,7 +194,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ExpectedRole:      "Admin",
 			},
 			{
-				Name: "Given a valid id_token, no role path, no api response, use id_token",
+				Name: "Given a valid id_token, no role path, no API response, use id_token",
 				OAuth2Extra: map[string]interface{}{
 					// { "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
@@ -203,7 +204,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ExpectedRole:      "",
 			},
 			{
-				Name: "Given a valid id_token, an invalid role path, no api response, use id_token",
+				Name: "Given a valid id_token, an invalid role path, no API response, use id_token",
 				OAuth2Extra: map[string]interface{}{
 					// { "role": "Admin", "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
@@ -213,7 +214,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ExpectedRole:      "",
 			},
 			{
-				Name: "Given no id_token, a valid role path, a valid api response, use api response",
+				Name: "Given no id_token, a valid role path, a valid API response, use API response",
 				APIURLResponse: map[string]interface{}{
 					"role":  "Admin",
 					"email": "john.doe@example.com",
@@ -223,7 +224,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ExpectedRole:      "Admin",
 			},
 			{
-				Name: "Given no id_token, no role path, a valid api response, use api response",
+				Name: "Given no id_token, no role path, a valid API response, use API response",
 				APIURLResponse: map[string]interface{}{
 					"email": "john.doe@example.com",
 				},
@@ -232,7 +233,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ExpectedRole:      "",
 			},
 			{
-				Name: "Given no id_token, a role path, a valid api response without a role, use api response",
+				Name: "Given no id_token, a role path, a valid API response without a role, use API response",
 				APIURLResponse: map[string]interface{}{
 					"email": "john.doe@example.com",
 				},
@@ -241,13 +242,13 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ExpectedRole:      "",
 			},
 			{
-				Name:              "Given no id_token, a valid role path, no api response, no data",
+				Name:              "Given no id_token, a valid role path, no API response, no data",
 				RoleAttributePath: "role",
 				ExpectedEmail:     "",
 				ExpectedRole:      "",
 			},
 			{
-				Name: "Given a valid id_token, a valid role path, a valid api response, prefer id_token",
+				Name: "Given a valid id_token, a valid role path, a valid API response, prefer id_token",
 				OAuth2Extra: map[string]interface{}{
 					// { "role": "Admin", "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
@@ -261,7 +262,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ExpectedRole:      "Admin",
 			},
 			{
-				Name: "Given a valid id_token, an invalid role path, a valid api response, prefer id_token",
+				Name: "Given a valid id_token, an invalid role path, a valid API response, prefer id_token",
 				OAuth2Extra: map[string]interface{}{
 					// { "role": "Admin", "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
@@ -275,7 +276,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ExpectedRole:      "",
 			},
 			{
-				Name: "Given a valid id_token with no email, a valid role path, a valid api response with no role, merge",
+				Name: "Given a valid id_token with no email, a valid role path, a valid API response with no role, merge",
 				OAuth2Extra: map[string]interface{}{
 					// { "role": "Admin" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4ifQ.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
@@ -288,7 +289,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ExpectedRole:      "Admin",
 			},
 			{
-				Name: "Given a valid id_token with no role, a valid role path, a valid api response with no email, merge",
+				Name: "Given a valid id_token with no role, a valid role path, a valid API response with no email, merge",
 				OAuth2Extra: map[string]interface{}{
 					// { "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
@@ -336,7 +337,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: log.New("generic_oauth_test"),
+				log: log.NewWithLevel("generic_oauth_test", log15.LvlDebug),
 			},
 			loginAttributePath: "login",
 		}
@@ -349,7 +350,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 			ExpectedLogin      string
 		}{
 			{
-				Name: "Given a valid id_token, a valid login path, no api response, use id_token",
+				Name: "Given a valid id_token, a valid login path, no API response, use id_token",
 				OAuth2Extra: map[string]interface{}{
 					// { "login": "johndoe", "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.sg4sRJCNpax_76XMgr277fdxhjjtNSWXKIOFv4_GJN8",
@@ -358,7 +359,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 				ExpectedLogin:      "johndoe",
 			},
 			{
-				Name: "Given a valid id_token, no login path, no api response, use id_token",
+				Name: "Given a valid id_token, no login path, no API response, use id_token",
 				OAuth2Extra: map[string]interface{}{
 					// { "login": "johndoe", "email": "john.doe@example.com" }
 					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.sg4sRJCNpax_76XMgr277fdxhjjtNSWXKIOFv4_GJN8",
@@ -367,7 +368,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 				ExpectedLogin:      "johndoe",
 			},
 			{
-				Name: "Given no id_token, a valid login path, a valid api response, use api response",
+				Name: "Given no id_token, a valid login path, a valid API response, use API response",
 				APIURLResponse: map[string]interface{}{
 					"user_uid": "johndoe",
 					"email":    "john.doe@example.com",
@@ -376,7 +377,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 				ExpectedLogin:      "johndoe",
 			},
 			{
-				Name: "Given no id_token, no login path, a valid api response, use api response",
+				Name: "Given no id_token, no login path, a valid API response, use API response",
 				APIURLResponse: map[string]interface{}{
 					"login": "johndoe",
 				},
@@ -384,7 +385,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 				ExpectedLogin:      "johndoe",
 			},
 			{
-				Name: "Given no id_token, a login path, a valid api response without a login, use api response",
+				Name: "Given no id_token, a login path, a valid API response without a login, use API response",
 				APIURLResponse: map[string]interface{}{
 					"username": "john.doe",
 				},
@@ -392,7 +393,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 				ExpectedLogin:      "john.doe",
 			},
 			{
-				Name:               "Given no id_token, a valid login path, no api response, no data",
+				Name:               "Given no id_token, a valid login path, no API response, no data",
 				LoginAttributePath: "login",
 				ExpectedLogin:      "",
 			},
@@ -401,12 +402,13 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 		for _, test := range tests {
 			provider.loginAttributePath = test.LoginAttributePath
 			t.Run(test.Name, func(t *testing.T) {
-				response, err := json.Marshal(test.APIURLResponse)
+				body, err := json.Marshal(test.APIURLResponse)
 				require.NoError(t, err)
 				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					w.Header().Set("Content-Type", "application/json")
-					_, err = w.Write(response)
+					t.Log("Writing fake API response", "response", test.APIURLResponse)
+					_, err = w.Write(body)
 					require.NoError(t, err)
 				}))
 				provider.apiUrl = ts.URL
