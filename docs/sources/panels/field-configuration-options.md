@@ -145,7 +145,7 @@ Given a field with a name of Temp, and labels of {"Loc"="PBI", "Sensor"="3"}
 
 | Expression syntax            | Example                | Renders to                        | Explanation |
 | ---------------------------- | ---------------------- | --------------------------------- | ----------- |
-| `${__field.displayName}`     | Same as Syntax         | `Temp {Loc="PBI", Sensor="3"}`    | Displays the field's name, and labels in `{}` if they are present. If there is only one label key in the response, for the label portion, only the value of the label will be displayed only without the enclosing braces |
+| `${__field.displayName}`     | Same as syntax         | `Temp {Loc="PBI", Sensor="3"}`    | Displays the field name, and labels in `{}` if they are present. If there is only one label key in the response, then for the label portion, Grafana displays the value of the label without the enclosing braces. |
 | `${__field.name}`            | Same as Syntax          | `Temp`                           | Displays the name of the field (without labels) |
 | `${__field.labels}`          | Same as Syntax          | `Loc="PBI", Sensor="3"`          | Displays the labels without the name |
 | `${__field.labels.X}`        | `${__field.labels.Loc}` | `PBI`                            | Displays the value of the specified label key |
