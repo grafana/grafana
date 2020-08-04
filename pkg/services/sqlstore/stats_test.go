@@ -57,13 +57,16 @@ func TestStatsDataAccess(t *testing.T) {
 		})
 
 		t.Run("Get active user count stats should not result in error", func(t *testing.T) {
-			query := models.GetActiveUserStatsQuery{}
-			err := GetActiveUserStats(&query)
+			query := models.GetUserStatsQuery{
+				MustUpdate: true,
+				Active:     true,
+			}
+			err := GetUserStats(&query)
 			require.NoError(t, err)
-			assert.Equal(t, int64(1), query.Result.ActiveUsers)
-			assert.Equal(t, int64(1), query.Result.ActiveAdmins)
-			assert.Equal(t, int64(0), query.Result.ActiveEditors)
-			assert.Equal(t, int64(0), query.Result.ActiveViewers)
+			assert.Equal(t, int64(1), query.Result.Users)
+			assert.Equal(t, int64(1), query.Result.Admins)
+			assert.Equal(t, int64(0), query.Result.Editors)
+			assert.Equal(t, int64(0), query.Result.Viewers)
 		})
 	})
 }

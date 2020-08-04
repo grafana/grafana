@@ -2,7 +2,11 @@ package sqlstore
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 	"time"
+
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -13,12 +17,12 @@ func init() {
 	bus.AddHandler("sql", GetDataSourceStats)
 	bus.AddHandler("sql", GetDataSourceAccessStats)
 	bus.AddHandler("sql", GetAdminStats)
-	bus.AddHandler("sql", GetActiveUserStats)
+	bus.AddHandler("sql", GetUserStats)
 	bus.AddHandlerCtx("sql", GetAlertNotifiersUsageStats)
 	bus.AddHandlerCtx("sql", GetSystemUserCountStats)
 }
 
-var activeUserTimeLimit = time.Hour * 24 * 30
+const activeUserTimeLimit = time.Hour * 24 * 30
 
 func GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
 	var rawSql = `SELECT COUNT(*) AS count, type FROM ` + dialect.Quote("alert_notification") + ` GROUP BY type`
@@ -80,9 +84,7 @@ func GetSystemStats(query *models.GetSystemStatsQuery) error {
 	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams,`)
 	sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("user_auth_token") + `) AS auth_tokens,`)
 
-	sb.Write(roleCounterSQL("Viewer", "viewers", false)+`,`, activeUserDeadlineDate)
-	sb.Write(roleCounterSQL("Editor", "editors", false)+`,`, activeUserDeadlineDate)
-	sb.Write(roleCounterSQL("Admin", "admins", false)+``, activeUserDeadlineDate)
+	sb.Write(roleCounterSQL())
 
 	var stats models.SystemStats
 	_, err := x.SQL(sb.GetSqlString(), sb.params...).Get(&stats)
@@ -95,22 +97,15 @@ func GetSystemStats(query *models.GetSystemStatsQuery) error {
 	return nil
 }
 
-func roleCounterSQL(role string, alias string, onlyActive bool) string {
-	var sqlQuery = `
-		(
-			SELECT COUNT(DISTINCT u.id)
-			FROM ` + dialect.Quote("user") + ` AS u, org_user
-			WHERE u.last_seen_at > ? AND ( org_user.user_id=u.id AND org_user.role='` + role + `' )
-		) AS active_` + alias
-
-	if !onlyActive {
-		sqlQuery += `,
-		(
-			SELECT COUNT(DISTINCT u.id)
-			FROM ` + dialect.Quote("user") + ` AS u, org_user
-			WHERE ( org_user.user_id=u.id AND org_user.role='` + role + `' )
-		) AS ` + alias
-	}
+func roleCounterSQL() string {
+	_ = updateUserRoleCountsIfNecessary(false)
+	sqlQuery :=
+		strconv.FormatInt(userRoleCount.total.Admins, 10) + ` AS admins, ` +
+			strconv.FormatInt(userRoleCount.total.Editors, 10) + ` AS editors, ` +
+			strconv.FormatInt(userRoleCount.total.Viewers, 10) + ` AS viewers, ` +
+			strconv.FormatInt(userRoleCount.active.Admins, 10) + ` AS active_admins, ` +
+			strconv.FormatInt(userRoleCount.active.Editors, 10) + ` AS active_editors, ` +
+			strconv.FormatInt(userRoleCount.active.Viewers, 10) + ` AS active_viewers`
 
 	return sqlQuery
 }
@@ -159,9 +154,7 @@ func GetAdminStats(query *models.GetAdminStatsQuery) error {
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("user") + ` WHERE last_seen_at > ?
 		) AS active_users,
-		` + roleCounterSQL("Admin", "admins", false) + `,
-		` + roleCounterSQL("Editor", "editors", false) + `,
-		` + roleCounterSQL("Viewer", "viewers", false) + `,
+		` + roleCounterSQL() + `,
 		(
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("user_auth_token") + ` WHERE rotated_at > ?
@@ -192,23 +185,116 @@ func GetSystemUserCountStats(ctx context.Context, query *models.GetSystemUserCou
 	})
 }
 
-func GetActiveUserStats(query *models.GetActiveUserStatsQuery) error {
-	activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
-	sb := &SqlBuilder{}
-
-	sb.Write(`SELECT `)
-	sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE last_seen_at > ?) AS active_users,`, activeUserDeadlineDate)
-	sb.Write(roleCounterSQL("Viewer", "viewers", true)+`,`, activeUserDeadlineDate)
-	sb.Write(roleCounterSQL("Editor", "editors", true)+`,`, activeUserDeadlineDate)
-	sb.Write(roleCounterSQL("Admin", "admins", true)+``, activeUserDeadlineDate)
-
-	var stats models.ActiveUserStats
-	_, err := x.SQL(sb.GetSqlString(), sb.params...).Get(&stats)
+func GetUserStats(query *models.GetUserStatsQuery) error {
+	err := updateUserRoleCountsIfNecessary(query.MustUpdate)
 	if err != nil {
 		return err
 	}
 
-	query.Result = &stats
+	if query.Active {
+		query.Result = userRoleCount.active
+	} else {
+		query.Result = userRoleCount.total
+	}
 
 	return nil
+}
+
+func updateUserRoleCountsIfNecessary(forced bool) error {
+	memoizationPeriod := time.Now().Add(-1 * time.Hour)
+	if forced || userRoleCount.memoized.Before(memoizationPeriod) {
+		err := updateUserRoleCounts()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type memoUserStats struct {
+	active models.UserStats
+	total  models.UserStats
+
+	memoized time.Time
+}
+
+var userRoleCount = memoUserStats{}
+
+func updateUserRoleCounts() error {
+	// 5 million users max cap is arbitrarily chosen to prevent this
+	// from taking far too much time.
+	const pageLimit = 100
+	const perPageLimit = 50000
+
+	type userRoles struct {
+		ID         int64 `xorm:"id"`
+		LastSeenAt time.Time
+		Role       models.RoleType
+	}
+
+	activeUserDeadline := time.Now().Add(-activeUserTimeLimit)
+
+	memo := memoUserStats{memoized: time.Now()}
+
+	_, err := x.Transaction(func(session *xorm.Session) (interface{}, error) {
+		for offset := 0; offset < pageLimit; offset += perPageLimit {
+			usersSlice := make([]userRoles, 0, perPageLimit)
+			err := session.SQL(`SELECT u.id, u.last_seen_at, org_user.role
+    FROM (SELECT id, last_seen_at FROM user LIMIT ? OFFSET ?) AS u LEFT JOIN org_user ON org_user.user_id = u.id
+    GROUP BY u.id, org_user.role;`, perPageLimit, offset).Find(&usersSlice)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(usersSlice) == 0 {
+				break
+			}
+
+			activeMap := make(map[int64]models.RoleType, perPageLimit)
+			totalMap := make(map[int64]models.RoleType, perPageLimit)
+
+			for _, user := range usersSlice {
+				fmt.Println(user)
+				if current, exists := activeMap[user.ID]; exists {
+					if current == models.ROLE_ADMIN {
+						continue
+					} else if current == models.ROLE_EDITOR && user.Role == models.ROLE_VIEWER {
+						continue
+					}
+				}
+
+				if user.LastSeenAt.After(activeUserDeadline) {
+					activeMap[user.ID] = user.Role
+				}
+				totalMap[user.ID] = user.Role
+			}
+
+			memo.active = mapToStats(memo.active, activeMap)
+			memo.total = mapToStats(memo.total, totalMap)
+		}
+		return nil, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	userRoleCount = memo
+	return nil
+}
+
+func mapToStats(base models.UserStats, us map[int64]models.RoleType) models.UserStats {
+	base.Users += int64(len(us))
+
+	for _, role := range us {
+		switch role {
+		case models.ROLE_ADMIN:
+			base.Admins++
+		case models.ROLE_EDITOR:
+			base.Editors++
+		case models.ROLE_VIEWER:
+			base.Viewers++
+		}
+	}
+
+	return base
 }
