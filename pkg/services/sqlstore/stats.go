@@ -2,7 +2,6 @@ package sqlstore
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -100,12 +99,12 @@ func GetSystemStats(query *models.GetSystemStatsQuery) error {
 func roleCounterSQL() string {
 	_ = updateUserRoleCountsIfNecessary(false)
 	sqlQuery :=
-		strconv.FormatInt(userRoleCount.total.Admins, 10) + ` AS admins, ` +
-			strconv.FormatInt(userRoleCount.total.Editors, 10) + ` AS editors, ` +
-			strconv.FormatInt(userRoleCount.total.Viewers, 10) + ` AS viewers, ` +
-			strconv.FormatInt(userRoleCount.active.Admins, 10) + ` AS active_admins, ` +
-			strconv.FormatInt(userRoleCount.active.Editors, 10) + ` AS active_editors, ` +
-			strconv.FormatInt(userRoleCount.active.Viewers, 10) + ` AS active_viewers`
+		strconv.FormatInt(userStatsCache.total.Admins, 10) + ` AS admins, ` +
+			strconv.FormatInt(userStatsCache.total.Editors, 10) + ` AS editors, ` +
+			strconv.FormatInt(userStatsCache.total.Viewers, 10) + ` AS viewers, ` +
+			strconv.FormatInt(userStatsCache.active.Admins, 10) + ` AS active_admins, ` +
+			strconv.FormatInt(userStatsCache.active.Editors, 10) + ` AS active_editors, ` +
+			strconv.FormatInt(userStatsCache.active.Viewers, 10) + ` AS active_viewers`
 
 	return sqlQuery
 }
@@ -192,17 +191,17 @@ func GetUserStats(query *models.GetUserStatsQuery) error {
 	}
 
 	if query.Active {
-		query.Result = userRoleCount.active
+		query.Result = userStatsCache.active
 	} else {
-		query.Result = userRoleCount.total
+		query.Result = userStatsCache.total
 	}
 
 	return nil
 }
 
 func updateUserRoleCountsIfNecessary(forced bool) error {
-	memoizationPeriod := time.Now().Add(-1 * time.Hour)
-	if forced || userRoleCount.memoized.Before(memoizationPeriod) {
+	memoizationPeriod := time.Now().Add(-userStatsCacheLimetime)
+	if forced || userStatsCache.memoized.Before(memoizationPeriod) {
 		err := updateUserRoleCounts()
 		if err != nil {
 			return err
@@ -218,14 +217,17 @@ type memoUserStats struct {
 	memoized time.Time
 }
 
-var userRoleCount = memoUserStats{}
+var (
+	userStatsCache         = memoUserStats{}
+	userStatsCacheLimetime = 5 * time.Minute
 
-func updateUserRoleCounts() error {
 	// 5 million users max cap is arbitrarily chosen to prevent this
 	// from taking far too much time.
-	const pageLimit = 100
-	const perPageLimit = 50000
+	userStatsPageLimit = 100
+	userStatsPageSize  = 50000
+)
 
+func updateUserRoleCounts() error {
 	type userRoles struct {
 		ID         int64 `xorm:"id"`
 		LastSeenAt time.Time
@@ -237,11 +239,11 @@ func updateUserRoleCounts() error {
 	memo := memoUserStats{memoized: time.Now()}
 
 	_, err := x.Transaction(func(session *xorm.Session) (interface{}, error) {
-		for offset := 0; offset < pageLimit; offset += perPageLimit {
-			usersSlice := make([]userRoles, 0, perPageLimit)
+		for offset := 0; offset < userStatsPageLimit; offset += 1 {
+			usersSlice := []userRoles{}
 			err := session.SQL(`SELECT u.id, u.last_seen_at, org_user.role
     FROM (SELECT id, last_seen_at FROM user LIMIT ? OFFSET ?) AS u LEFT JOIN org_user ON org_user.user_id = u.id
-    GROUP BY u.id, org_user.role;`, perPageLimit, offset).Find(&usersSlice)
+    GROUP BY u.id, org_user.role;`, userStatsPageSize, offset*userStatsPageSize).Find(&usersSlice)
 			if err != nil {
 				return nil, err
 			}
@@ -250,12 +252,11 @@ func updateUserRoleCounts() error {
 				break
 			}
 
-			activeMap := make(map[int64]models.RoleType, perPageLimit)
-			totalMap := make(map[int64]models.RoleType, perPageLimit)
+			activeMap := make(map[int64]models.RoleType, userStatsPageSize)
+			totalMap := make(map[int64]models.RoleType, userStatsPageSize)
 
 			for _, user := range usersSlice {
-				fmt.Println(user)
-				if current, exists := activeMap[user.ID]; exists {
+				if current, exists := totalMap[user.ID]; exists {
 					if current == models.ROLE_ADMIN {
 						continue
 					} else if current == models.ROLE_EDITOR && user.Role == models.ROLE_VIEWER {
@@ -278,7 +279,7 @@ func updateUserRoleCounts() error {
 		return err
 	}
 
-	userRoleCount = memo
+	userStatsCache = memo
 	return nil
 }
 

@@ -5,70 +5,129 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestStatsDataAccess(t *testing.T) {
-	t.Run("Testing Stats Data Access", func(t *testing.T) {
-		InitTestDB(t)
+	InitTestDB(t)
+	populateDB(t)
 
-		t.Run("Get system stats should not results in error", func(t *testing.T) {
-			populateDB(t)
-
-			query := models.GetSystemStatsQuery{}
-			err := GetSystemStats(&query)
-			require.NoError(t, err)
-			assert.Equal(t, int64(3), query.Result.Users)
-			assert.Equal(t, 1, query.Result.Editors)
-			assert.Equal(t, 1, query.Result.Viewers)
-			assert.Equal(t, 3, query.Result.Admins)
-		})
-
-		t.Run("Get system user count stats should not results in error", func(t *testing.T) {
-			query := models.GetSystemUserCountStatsQuery{}
-			err := GetSystemUserCountStats(context.Background(), &query)
-			assert.NoError(t, err)
-		})
-
-		t.Run("Get datasource stats should not results in error", func(t *testing.T) {
-			query := models.GetDataSourceStatsQuery{}
-			err := GetDataSourceStats(&query)
-			assert.NoError(t, err)
-		})
-
-		t.Run("Get datasource access stats should not results in error", func(t *testing.T) {
-			query := models.GetDataSourceAccessStatsQuery{}
-			err := GetDataSourceAccessStats(&query)
-			assert.NoError(t, err)
-		})
-
-		t.Run("Get alert notifier stats should not results in error", func(t *testing.T) {
-			query := models.GetAlertNotifierUsageStatsQuery{}
-			err := GetAlertNotifiersUsageStats(context.Background(), &query)
-			assert.NoError(t, err)
-		})
-
-		t.Run("Get admin stats should not result in error", func(t *testing.T) {
-			query := models.GetAdminStatsQuery{}
-			err := GetAdminStats(&query)
-			assert.NoError(t, err)
-		})
-
-		t.Run("Get active user count stats should not result in error", func(t *testing.T) {
-			query := models.GetUserStatsQuery{
-				MustUpdate: true,
-				Active:     true,
-			}
-			err := GetUserStats(&query)
-			require.NoError(t, err)
-			assert.Equal(t, int64(1), query.Result.Users)
-			assert.Equal(t, int64(1), query.Result.Admins)
-			assert.Equal(t, int64(0), query.Result.Editors)
-			assert.Equal(t, int64(0), query.Result.Viewers)
-		})
+	t.Run("Get system stats should not results in error", func(t *testing.T) {
+		query := models.GetSystemStatsQuery{}
+		err := GetSystemStats(&query)
+		require.NoError(t, err)
+		assert.Equal(t, int64(3), query.Result.Users)
+		assert.Equal(t, 0, query.Result.Editors)
+		assert.Equal(t, 0, query.Result.Viewers)
+		assert.Equal(t, 3, query.Result.Admins)
 	})
+
+	t.Run("Get system user count stats should not results in error", func(t *testing.T) {
+		query := models.GetSystemUserCountStatsQuery{}
+		err := GetSystemUserCountStats(context.Background(), &query)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Get datasource stats should not results in error", func(t *testing.T) {
+		query := models.GetDataSourceStatsQuery{}
+		err := GetDataSourceStats(&query)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Get datasource access stats should not results in error", func(t *testing.T) {
+		query := models.GetDataSourceAccessStatsQuery{}
+		err := GetDataSourceAccessStats(&query)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Get alert notifier stats should not results in error", func(t *testing.T) {
+		query := models.GetAlertNotifierUsageStatsQuery{}
+		err := GetAlertNotifiersUsageStats(context.Background(), &query)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Get admin stats should not result in error", func(t *testing.T) {
+		query := models.GetAdminStatsQuery{}
+		err := GetAdminStats(&query)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Get active user count stats should not result in error", func(t *testing.T) {
+		query := models.GetUserStatsQuery{
+			MustUpdate: true,
+			Active:     true,
+		}
+		err := GetUserStats(&query)
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), query.Result.Users)
+		assert.Equal(t, int64(1), query.Result.Admins)
+		assert.Equal(t, int64(0), query.Result.Editors)
+		assert.Equal(t, int64(0), query.Result.Viewers)
+	})
+}
+
+func TestGetUserStats(t *testing.T) {
+	InitTestDB(t)
+
+	cmd := &models.CreateUserCommand{
+		Email:   fmt.Sprintf("admin@test.com"),
+		Name:    fmt.Sprintf("Admin"),
+		Login:   fmt.Sprintf("admin"),
+		OrgName: mainOrgName,
+		IsAdmin: true,
+	}
+	err := CreateUser(context.Background(), cmd)
+	require.NoError(t, err)
+	firstUser := cmd.Result
+
+	{
+		defaultAutoAssign := setting.AutoAssignOrg
+		defaultOrgID := setting.AutoAssignOrgId
+		defaultRole := setting.AutoAssignOrgRole
+		defaultUserPageSize := userStatsPageSize
+
+		setting.AutoAssignOrg = true
+		setting.AutoAssignOrgId = int(firstUser.OrgId)
+		setting.AutoAssignOrgRole = "Editor"
+		userStatsPageSize = 500
+
+		defer func() {
+			setting.AutoAssignOrg = defaultAutoAssign
+			setting.AutoAssignOrgId = defaultOrgID
+			setting.AutoAssignOrgRole = defaultRole
+			userStatsPageSize = defaultUserPageSize
+		}()
+	}
+
+	users := make([]models.User, 2000)
+
+	for i := range users {
+		cmd := &models.CreateUserCommand{
+			Email: fmt.Sprintf("usertest%v@test.com", i),
+			Name:  fmt.Sprintf("user name %v", i),
+			Login: fmt.Sprintf("user_test_%v_login", i),
+			OrgId: firstUser.OrgId,
+		}
+		err := CreateUser(context.Background(), cmd)
+		require.NoError(t, err)
+		users[i] = cmd.Result
+	}
+
+	query := models.GetUserStatsQuery{
+		MustUpdate: true,
+	}
+	err = GetUserStats(&query)
+	require.NoError(t, err)
+	assert.EqualValues(t, models.UserStats{
+		Users:   2001,
+		Admins:  1,
+		Editors: 2000,
+		Viewers: 0,
+	}, query.Result)
 }
 
 func populateDB(t *testing.T) {
@@ -129,5 +188,13 @@ func populateDB(t *testing.T) {
 		UserId: users[0].Id,
 	}
 	err = UpdateUserLastSeenAt(updateUserLastSeenAtCmd)
+	require.NoError(t, err)
+
+	// force renewal of user stats
+	query := models.GetUserStatsQuery{
+		MustUpdate: true,
+		Active:     true,
+	}
+	err = GetUserStats(&query)
 	require.NoError(t, err)
 }
