@@ -59,6 +59,15 @@ Check for the presence of a role using the [JMESPath](http://jmespath.org/exampl
 
 See [JMESPath examples](#jmespath-examples) for more information.
 
+> Only available in Grafana v7.2+.
+
+Customize user login using `login_attribute_path` configuration option. Order of operations is as follows:
+
+1. Grafana evaluates the `login_attribute_path` JMESPath expression against the ID token. 
+1. If Grafana finds no value, then Grafana evaluates expression against the JSON data obtained from UserInfo endpoint. The UserInfo endpoint URL is specified in the `api_url` configuration option.
+
+You can customize the attribute name used to extract the ID token from the returned OAuth token with the `id_token_attribute_name` option.
+
 ## Set up OAuth2 with Auth0
 
 1.  Create a new Client in Auth0
