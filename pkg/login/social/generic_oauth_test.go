@@ -331,3 +331,97 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 		}
 	})
 }
+
+func TestUserInfoSearchesForLogin(t *testing.T) {
+	t.Run("Given a generic OAuth provider", func(t *testing.T) {
+		provider := SocialGenericOAuth{
+			SocialBase: &SocialBase{
+				log: log.New("generic_oauth_test"),
+			},
+			loginAttributePath: "login",
+		}
+
+		tests := []struct {
+			Name               string
+			APIURLResponse     interface{}
+			OAuth2Extra        interface{}
+			LoginAttributePath string
+			ExpectedLogin      string
+		}{
+			{
+				Name: "Given a valid id_token, a valid login path, no api response, use id_token",
+				OAuth2Extra: map[string]interface{}{
+					// { "login": "johndoe", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.sg4sRJCNpax_76XMgr277fdxhjjtNSWXKIOFv4_GJN8",
+				},
+				LoginAttributePath: "role",
+				ExpectedLogin:      "johndoe",
+			},
+			{
+				Name: "Given a valid id_token, no login path, no api response, use id_token",
+				OAuth2Extra: map[string]interface{}{
+					// { "login": "johndoe", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbiI6ImpvaG5kb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.sg4sRJCNpax_76XMgr277fdxhjjtNSWXKIOFv4_GJN8",
+				},
+				LoginAttributePath: "",
+				ExpectedLogin:      "johndoe",
+			},
+			{
+				Name: "Given no id_token, a valid login path, a valid api response, use api response",
+				APIURLResponse: map[string]interface{}{
+					"user_uid": "johndoe",
+					"email":    "john.doe@example.com",
+				},
+				LoginAttributePath: "user_uid",
+				ExpectedLogin:      "johndoe",
+			},
+			{
+				Name: "Given no id_token, no login path, a valid api response, use api response",
+				APIURLResponse: map[string]interface{}{
+					"login": "johndoe",
+				},
+				LoginAttributePath: "",
+				ExpectedLogin:      "johndoe",
+			},
+			{
+				Name: "Given no id_token, a login path, a valid api response without a login, use api response",
+				APIURLResponse: map[string]interface{}{
+					"username": "john.doe",
+				},
+				LoginAttributePath: "login",
+				ExpectedLogin:      "john.doe",
+			},
+			{
+				Name:               "Given no id_token, a valid login path, no api response, no data",
+				LoginAttributePath: "login",
+				ExpectedLogin:      "",
+			},
+		}
+
+		for _, test := range tests {
+			provider.loginAttributePath = test.LoginAttributePath
+			t.Run(test.Name, func(t *testing.T) {
+				response, err := json.Marshal(test.APIURLResponse)
+				require.NoError(t, err)
+				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					w.Header().Set("Content-Type", "application/json")
+					_, err = w.Write(response)
+					require.NoError(t, err)
+				}))
+				provider.apiUrl = ts.URL
+				staticToken := oauth2.Token{
+					AccessToken:  "",
+					TokenType:    "",
+					RefreshToken: "",
+					Expiry:       time.Now(),
+				}
+
+				token := staticToken.WithExtra(test.OAuth2Extra)
+				actualResult, err := provider.UserInfo(ts.Client(), token)
+				require.NoError(t, err)
+				require.Equal(t, test.ExpectedLogin, actualResult.Login)
+			})
+		}
+	})
+}

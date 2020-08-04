@@ -21,7 +21,9 @@ type SocialGenericOAuth struct {
 	apiUrl               string
 	emailAttributeName   string
 	emailAttributePath   string
+	loginAttributePath   string
 	roleAttributePath    string
+	idTokenAttributeName string
 	teamIds              []int
 }
 
@@ -148,7 +150,13 @@ func (s *SocialGenericOAuth) fillUserInfo(userInfo *BasicUserInfo, data *UserInf
 func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Token) bool {
 	var err error
 
-	idToken := token.Extra("id_token")
+	idTokenAttribute := "id_token"
+	if s.idTokenAttributeName != "" {
+		idTokenAttribute = s.idTokenAttributeName
+		s.log.Debug("Using custom id_token attribute name", "attribute_name", idTokenAttribute)
+	}
+
+	idToken := token.Extra(idTokenAttribute)
 	if idToken == nil {
 		s.log.Debug("No id_token found", "token", token)
 		return false
@@ -242,6 +250,15 @@ func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) (string, error) {
 func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {
 	if data.Login != "" {
 		return data.Login
+	}
+
+	if s.loginAttributePath != "" {
+		login, err := s.searchJSONForAttr(s.loginAttributePath, data.rawJSON)
+		if err != nil {
+			s.log.Error("Failed to search JSON for attribute", "error", err)
+		} else if login != "" {
+			return login
+		}
 	}
 
 	if data.Username != "" {
