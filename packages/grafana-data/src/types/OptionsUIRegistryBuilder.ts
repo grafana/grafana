@@ -2,6 +2,11 @@ import { ComponentType } from 'react';
 import { RegistryItem, Registry } from '../utils/Registry';
 import { NumberFieldConfigSettings, SelectFieldConfigSettings, StringFieldConfigSettings } from '../field';
 
+export enum OptionsEditorOverrideBehavior {
+  Replace = 'replace',
+  Append = 'append',
+}
+
 /**
  * Option editor registry item
  */
@@ -34,6 +39,9 @@ export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue> ex
    * Array of strings representing category of the options property.
    */
   category?: string[];
+  /**
+   * Use this value when nothing is configured
+   */
   defaultValue?: TValue;
   /**
    * Function that enables configuration of when option editor should be shown based on current options properties.
@@ -46,6 +54,11 @@ export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue> ex
    * @param value
    */
   getItemsCount?: (value?: TValue) => number;
+  /**
+   * Some values may need special treatment when trying to override the existing value.  For example
+   * An array of links may want to *append* to the list of values rather than replace them
+   */
+  overrideBehavior?: OptionsEditorOverrideBehavior;
 }
 
 /**

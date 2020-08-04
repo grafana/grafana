@@ -35,6 +35,7 @@ import { UnitValueEditor } from '../components/OptionsUI/units';
 import { DataLinksValueEditor } from '../components/OptionsUI/links';
 import { ColorValueEditor } from '../components/OptionsUI/color';
 import { StatsPickerEditor } from '../components/OptionsUI/stats';
+import { OptionsEditorOverrideBehavior } from '@grafana/data/src/types/OptionsUIRegistryBuilder';
 
 /**
  * Returns collection of common field config properties definitions
@@ -198,6 +199,7 @@ export const getStandardFieldConfigs = () => {
     shouldApply: () => true,
     category: ['Data links'],
     getItemsCount: value => (value ? value.length : 0),
+    overrideBehavior: OptionsEditorOverrideBehavior.Append,
   };
 
   // const color: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {

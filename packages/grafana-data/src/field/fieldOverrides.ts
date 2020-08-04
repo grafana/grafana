@@ -36,6 +36,7 @@ import { formatLabels } from '../utils/labels';
 import { getFrameDisplayName, getFieldDisplayName } from './fieldState';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
+import { OptionsEditorOverrideBehavior } from '../types/OptionsUIRegistryBuilder';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -289,17 +290,22 @@ const processFieldConfigValue = (
   fieldConfigProperty: FieldConfigPropertyItem,
   context: FieldOverrideEnv
 ) => {
+  const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
+  if (!item) {
+    return;
+  }
+
   const currentConfig = get(destination, fieldConfigProperty.path);
+  const hasValue = !(currentConfig === null || currentConfig === undefined);
+  const append = item.overrideBehavior === OptionsEditorOverrideBehavior.Append;
 
-  if (currentConfig === null || currentConfig === undefined) {
-    const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
-    if (!item) {
-      return;
-    }
-
-    if (item && item.shouldApply(context.field!)) {
-      const val = item.process(get(source, item.path), context, item.settings);
+  if (!hasValue || append) {
+    if (item.shouldApply(context.field!)) {
+      let val = item.process(get(source, item.path), context, item.settings);
       if (val !== undefined && val !== null) {
+        if (append && hasValue) {
+          val = [...currentConfig, ...val];
+        }
         set(destination, item.path, val);
       }
     }
