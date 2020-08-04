@@ -9,7 +9,6 @@ import {
   parseUrlState,
   refreshIntervalToSortOrder,
   sortLogsResult,
-  SortOrder,
   updateHistory,
   getExploreUrl,
   GetExploreUrlArguments,
@@ -24,6 +23,7 @@ import {
   LogsModel,
   MutableDataFrame,
   ExploreUrlState,
+  LogsSortOrder,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
@@ -392,7 +392,7 @@ describe('refreshIntervalToSortOrder', () => {
     it('then it should return ascending', () => {
       const result = refreshIntervalToSortOrder(RefreshPicker.liveOption.value);
 
-      expect(result).toBe(SortOrder.Ascending);
+      expect(result).toBe(LogsSortOrder.Ascending);
     });
   });
 
@@ -400,7 +400,7 @@ describe('refreshIntervalToSortOrder', () => {
     it('then it should return descending', () => {
       const result = refreshIntervalToSortOrder(RefreshPicker.offOption.value);
 
-      expect(result).toBe(SortOrder.Descending);
+      expect(result).toBe(LogsSortOrder.Descending);
     });
   });
 
@@ -408,7 +408,7 @@ describe('refreshIntervalToSortOrder', () => {
     it('then it should return descending', () => {
       const result = refreshIntervalToSortOrder('5s');
 
-      expect(result).toBe(SortOrder.Descending);
+      expect(result).toBe(LogsSortOrder.Descending);
     });
   });
 
@@ -416,7 +416,7 @@ describe('refreshIntervalToSortOrder', () => {
     it('then it should return descending', () => {
       const result = refreshIntervalToSortOrder(undefined);
 
-      expect(result).toBe(SortOrder.Descending);
+      expect(result).toBe(LogsSortOrder.Descending);
     });
   });
 });
@@ -456,13 +456,13 @@ describe('sortLogsResult', () => {
     uid: '2',
   };
 
-  describe('when called with SortOrder.Descending', () => {
+  describe('when called with LogsSortOrder.Descending', () => {
     it('then it should sort descending', () => {
       const logsResult: LogsModel = {
         rows: [firstRow, sameAsFirstRow, secondRow],
         hasUniqueLabels: false,
       };
-      const result = sortLogsResult(logsResult, SortOrder.Descending);
+      const result = sortLogsResult(logsResult, LogsSortOrder.Descending);
 
       expect(result).toEqual({
         rows: [secondRow, firstRow, sameAsFirstRow],
@@ -471,13 +471,13 @@ describe('sortLogsResult', () => {
     });
   });
 
-  describe('when called with SortOrder.Ascending', () => {
+  describe('when called with LogsSortOrder.Ascending', () => {
     it('then it should sort ascending', () => {
       const logsResult: LogsModel = {
         rows: [secondRow, firstRow, sameAsFirstRow],
         hasUniqueLabels: false,
       };
-      const result = sortLogsResult(logsResult, SortOrder.Ascending);
+      const result = sortLogsResult(logsResult, LogsSortOrder.Ascending);
 
       expect(result).toEqual({
         rows: [firstRow, sameAsFirstRow, secondRow],
