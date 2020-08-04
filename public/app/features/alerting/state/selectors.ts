@@ -10,9 +10,9 @@ export const getAlertRuleItems = (state: AlertRulesState) => {
   });
 };
 
-export const getAlert = (state: AlertRuleState, currentAlertId: any): AlertRule | null => {
-  if (state.alert.id === parseInt(currentAlertId, 10)) {
-    return state.alert;
+export const getAlertRule = (state: AlertRuleState, currentAlertId: any): AlertRule | null => {
+  if (state.alertRule.id === parseInt(currentAlertId, 10)) {
+    return state.alertRule;
   }
 
   return null;

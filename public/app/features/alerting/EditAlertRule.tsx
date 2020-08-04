@@ -2,24 +2,21 @@ import React from 'react';
 import { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import config from 'app/core/config';
 import Page from 'app/core/components/Page/Page';
 import { loadAlertRule } from './state/actions';
 import { AlertRule } from 'app/types';
 import { getRouteParamsId } from '../../core/selectors/location';
-import { getAlert } from './state/selectors';
+import { getAlertRule } from './state/selectors';
 import { contextSrv, User } from 'app/core/services/context_srv';
-import { NavModel } from '@grafana/data';
+import { NavModel, OrgRole } from '@grafana/data';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { OrgRole } from 'app/types/';
 import AlertRuleSettings from './AlertRuleSettings';
 
 export interface Props {
   navModel: NavModel;
-  alert: AlertRule;
+  alertRule: AlertRule;
   loadAlertRule: typeof loadAlertRule;
   alertId: number;
-  editorsCanAdmin: boolean;
   signedInUser: User;
 }
 
@@ -37,7 +34,7 @@ export class EditAlertPage extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    await this.fetchAlert();
+    await this.fetchAlertRule();
   }
 
   /*
@@ -68,25 +65,28 @@ export class EditAlertPage extends PureComponent<Props, State> {
   };
   */
 
-  async fetchAlert() {
+  async fetchAlertRule() {
     const { loadAlertRule, alertId } = this.props;
     this.setState({ isLoading: true });
-    const alert = await loadAlertRule(alertId);
+    const alertRule = await loadAlertRule(alertId);
     this.setState({ isLoading: false });
-    return alert;
+    return alertRule;
   }
 
   renderSettings(): React.ReactNode {
-    return <AlertRuleSettings alertName={alert.name} />;
+    return <AlertRuleSettings />;
   }
 
   render() {
-    const { navModel, alert, editorsCanAdmin, signedInUser } = this.props;
+    const { navModel, alertRule, signedInUser } = this.props;
 
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={this.state.isLoading}>
-          {alert && editorsCanAdmin && signedInUser.orgRole === OrgRole.Viewer && this.renderSettings()}
+          {alertRule &&
+            alertRule.orgId === signedInUser.orgId &&
+            (signedInUser.orgRole === OrgRole.Editor || signedInUser.orgRole === OrgRole.Admin) &&
+            this.renderSettings()}
         </Page.Contents>
       </Page>
     );
@@ -94,13 +94,12 @@ export class EditAlertPage extends PureComponent<Props, State> {
 }
 function mapStateToProps(state: any) {
   const alertId = getRouteParamsId(state.location);
-  const alert = getAlert(state.alertRule, alertId);
+  const alertRule = getAlertRule(state.alertRule, alertId);
 
   return {
     navModel: getNavModel(state.navIndex, 'alert-edit'),
     alertId: alertId,
-    alert,
-    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
+    alertRule,
     signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
   };
 }

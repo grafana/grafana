@@ -1,4 +1,11 @@
-import { AlertRule, AlertRuleDTO, AlertRuleState, AlertRulesState, NotificationChannel } from 'app/types';
+import {
+  AlertRule,
+  AlertRuleDTO,
+  AlertRulePascalCaseDTO,
+  AlertRuleState,
+  AlertRulesState,
+  NotificationChannel,
+} from 'app/types';
 import alertDef from './alertDef';
 import { dateTime } from '@grafana/data';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
@@ -10,10 +17,40 @@ function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
 
   const rule: AlertRule = {
     ...dto,
+    orgId: 0,
     stateText: stateModel.text,
     stateIcon: stateModel.iconClass,
     stateClass: stateModel.stateClass,
     stateAge: dateTime(dto.newStateDate).fromNow(true),
+  };
+
+  if (rule.state !== 'paused') {
+    if (rule.executionError) {
+      rule.info = 'Execution Error: ' + rule.executionError;
+    }
+    if (rule.evalData && rule.evalData.noData) {
+      rule.info = 'Query returned no data';
+    }
+  }
+
+  return rule;
+}
+
+function convertPascalCaseToAlertRule(dto: AlertRulePascalCaseDTO, state: string): AlertRule {
+  const stateModel = alertDef.getStateDisplayModel(state);
+
+  const rule: AlertRule = {
+    id: dto.Id,
+    dashboardId: dto.DashboardId,
+    panelId: dto.PanelId,
+    name: dto.Name,
+    state: dto.State,
+    url: dto.Url,
+    orgId: dto.OrgId,
+    stateText: stateModel.text,
+    stateIcon: stateModel.iconClass,
+    stateClass: stateModel.stateClass,
+    stateAge: dateTime(dto.NewStateDate).fromNow(true),
   };
 
   if (rule.state !== 'paused') {
@@ -56,7 +93,7 @@ const alertRulesSlice = createSlice({
 export const { loadAlertRules, loadedAlertRules, setSearchQuery, setNotificationChannels } = alertRulesSlice.actions;
 
 export const initialAlertState: AlertRuleState = {
-  alert: {} as AlertRule,
+  alertRule: {} as AlertRule,
   searchQuery: '',
   notificationChannels: [],
 };
@@ -65,8 +102,8 @@ const alertRuleSlice = createSlice({
   name: 'alertRule',
   initialState: initialAlertState,
   reducers: {
-    alertRuleLoaded: (state, action: PayloadAction<AlertRuleDTO>): AlertRuleState => {
-      return { ...state, alert: convertToAlertRule(action.payload, action.payload.state) };
+    alertRuleLoaded: (state, action: PayloadAction<AlertRulePascalCaseDTO>): AlertRuleState => {
+      return { ...state, alertRule: convertPascalCaseToAlertRule(action.payload, action.payload.State) };
     },
   },
 });

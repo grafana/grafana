@@ -2,19 +2,19 @@ import React, { FC } from 'react';
 import { connect } from 'react-redux';
 import { Form, Field, Input } from '@grafana/ui';
 import { getRouteParamsId } from '../../core/selectors/location';
-import { getAlert } from './state/selectors';
+import { getAlertRule } from './state/selectors';
 import { updateAlertRule } from './state/actions';
 import { AlertRule } from 'app/types';
 
 export interface Props {
-  alertName: string;
+  alertRule: AlertRule;
   updateAlertRule: typeof updateAlertRule;
 }
 
-const AlertRuleSettings: FC<Props> = ({ alertName, updateAlertRule }) => {
+const AlertRuleSettings: FC<Props> = ({ alertRule, updateAlertRule }) => {
   return (
     <Form
-      defaultValues={{ ...alert }}
+      defaultValues={{ ...alertRule }}
       onSubmit={(formAlert: AlertRule) => {
         updateAlertRule(formAlert);
       }}
@@ -22,7 +22,7 @@ const AlertRuleSettings: FC<Props> = ({ alertName, updateAlertRule }) => {
       {({ register }) => (
         <>
           <Field label="Name">
-            <Input type="text" name="name" value={alertName} placeholder="Name" />
+            <Input name="name" ref={register({ required: true })} />
           </Field>
         </>
       )}
@@ -34,7 +34,7 @@ function mapStateToProps(state: any) {
   const alertId = getRouteParamsId(state.location);
 
   return {
-    alert: getAlert(state.alert, alertId),
+    alertRule: getAlertRule(state.alertRule, alertId),
   };
 }
 

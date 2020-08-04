@@ -15,6 +15,22 @@ export interface AlertRuleDTO {
   url: string;
 }
 
+export interface AlertRulePascalCaseDTO {
+  Id: number;
+  DashboardId: number;
+  DashboardUid: string;
+  DashboardSlug: string;
+  PanelId: number;
+  Name: string;
+  State: string;
+  NewStateDate: string;
+  EvalDate: string;
+  EvalData?: { noData?: boolean; evalMatches?: any };
+  ExecutionError: string;
+  Url: string;
+  OrgId: number;
+}
+
 export interface AlertRule {
   id: number;
   dashboardId: number;
@@ -33,6 +49,7 @@ export interface AlertRule {
   executionError?: string;
   evalDate?: string;
   evalData?: { noData?: boolean; evalMatches?: any };
+  orgId: number;
 }
 
 export type NotifierType =
@@ -115,7 +132,7 @@ export interface AlertRulesState {
 }
 
 export interface AlertRuleState {
-  alert: AlertRule;
+  alertRule: AlertRule;
   searchQuery: string;
   notificationChannels: NotificationChannel[];
 }
