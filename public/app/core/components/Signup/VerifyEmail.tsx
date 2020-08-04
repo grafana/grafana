@@ -38,14 +38,14 @@ export const VerifyEmail: FC = () => {
 
   return (
     <Form onSubmit={onSubmit}>
-      {({ register, errors: any }) => (
+      {({ register, errors }) => (
         <>
           <Legend>Verify Email</Legend>
           <Field
             label="Email"
             description="Enter your email address to get a verification link sent to you"
-            invalid={!!errors.email}
-            error={errors?.email?.message}
+            invalid={!!(errors as any).email}
+            error={(errors as any).email?.message}
           >
             <Input placeholder="Email" name="email" ref={register({ required: true })} />
           </Field>
