@@ -116,7 +116,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
 
   return (
     <>
-      <Tooltip content={isLive ? <>Pause</> : <>Live stream your logs</>} placement="bottom">
+      <Tooltip content={isLive ? <>Pause the live stream</> : <>Live stream your logs</>} placement="bottom">
         <ResponsiveButton
           splitted={splitted}
           buttonClassName={classNames('btn navbar-button', styles.liveButton, {
@@ -143,7 +143,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
         }}
       >
         <div>
-          <Tooltip content={<>Stop</>} placement="bottom">
+          <Tooltip content={<>Stop and exit the live stream</>} placement="bottom">
             <button
               className={`btn navbar-button navbar-button--attached explore-active-button ${styles.isLive}`}
               onClick={stop}
