@@ -268,7 +268,7 @@ Perf
 | order by TimeGenerated asc
 ```
 
-> **Tip**: In the above query, the Kusto syntax `Samples=count()` and `["Avg Value"]=...` is used to rename those columns — the second syntax allowing for the space. This will change the name of the metric that Grafana uses, and as a result, things like series legends and table columns will match what you specify. In this case, `Samples` will be displayed instead of `_count`.
+> **Tip**: In the above query, the Kusto syntax `Samples=count()` and `["Avg Value"]=...` is used to rename those columns — the second syntax allowing for the space. This changes the name of the metric that Grafana uses, and as a result, things like series legends and table columns will match what you specify. Here `Samples` is displayed instead of `_count`.
 
 {{< docs-imagebox img="/img/docs/azuremonitor/logs_multi-value_multi-dim.png" class="docs-image--no-shadow" caption="Azure Logs query with multiple values and multiple dimensions" >}}
 
