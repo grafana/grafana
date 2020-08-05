@@ -58,3 +58,21 @@ For data sources, you need to use the [getTemplateSrv]({{< relref "../../package
      return { data };
    }
    ```
+
+## Add support for variable queries to your data source
+
+[Query variables]({{< relref "../../variables/variable-types/add-query-variable/" >}}) is a type of variable that allows you to query a data source for the values. By adding support for variable queries to your data source plugin, users can create dynamic dashboards based on data from your data source.
+
+For a data source to support query variables you need to override the [`metricFindQuery`]({{< relref "../../packages_api/data/datasourceapi.md#metricfindquery-method" >}}) in your data source class. `metricFindQuery` returns an array of [`MetricFindValue`]({{< relref "../../packages_api/data/metricfindvalue.md" >}}) which has a single property, `text`.
+
+```ts
+async metricFindQuery(query: any, options?: any) {
+  // Retrieve data based on query.
+  const result = await this.doQuery(query);
+
+  // Return the name of each series as the value.
+  const values = result.map(series => ({ text: series.name }));
+
+  return values;
+}
+```
