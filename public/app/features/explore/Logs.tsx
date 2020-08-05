@@ -22,6 +22,7 @@ import store from 'app/core/store';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { MetaInfoText } from './MetaInfoText';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
+import { MAX_CHARACTERS } from '@grafana/ui/src/components/Logs/LogRowMessage';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
@@ -178,6 +179,14 @@ export class Logs extends PureComponent<Props, State> {
         label: 'Dedup count',
         value: dedupCount,
         kind: LogsMetaKind.Number,
+      });
+    }
+
+    if (logRows.some(r => r.entry.length > MAX_CHARACTERS)) {
+      meta.push({
+        label: 'Info',
+        value: 'Logs with more than 100,000 characters could not be parsed and highlighted',
+        kind: LogsMetaKind.String,
       });
     }
 
