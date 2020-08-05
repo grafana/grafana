@@ -238,6 +238,9 @@ export class Logs extends PureComponent<Props, State> {
               </ToggleButtonGroup>
             </div>
             <button
+              title={
+                logsSortOrder === LogsSortOrder.Ascending ? 'Change to descending order' : 'Change to ascending order'
+              }
               aria-label="Flip results order"
               className={cx(
                 'gf-form-label gf-form-label--btn',
