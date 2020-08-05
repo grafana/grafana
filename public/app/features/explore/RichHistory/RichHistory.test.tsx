@@ -4,8 +4,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { ExploreId } from '../../../types/explore';
 import { RichHistory, RichHistoryProps } from './RichHistory';
 import { Tabs } from './RichHistory';
-import { Tab, Slider } from '@grafana/ui';
-import { RichHistoryStarredTab } from './RichHistoryStarredTab';
+import { Tab } from '@grafana/ui';
 
 jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
 

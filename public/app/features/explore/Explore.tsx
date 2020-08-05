@@ -129,9 +129,13 @@ export interface ExploreProps {
   showTrace: boolean;
 }
 
+enum ExploreDrawer {
+  RichHistory,
+  QueryInspector,
+}
+
 interface ExploreState {
-  showRichHistory: boolean;
-  showQueryInspector: boolean;
+  openDrawer?: ExploreDrawer;
 }
 
 /**
@@ -166,8 +170,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     super(props);
     this.exploreEvents = new Emitter();
     this.state = {
-      showRichHistory: false,
-      showQueryInspector: false,
+      openDrawer: undefined,
     };
   }
 
@@ -279,7 +282,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   toggleShowRichHistory = () => {
     this.setState(state => {
       return {
-        showRichHistory: !state.showRichHistory,
+        openDrawer: state.openDrawer === ExploreDrawer.RichHistory ? undefined : ExploreDrawer.RichHistory,
       };
     });
   };
@@ -287,7 +290,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   toggleShowQueryInspector = () => {
     this.setState(state => {
       return {
-        showQueryInspector: !state.showQueryInspector,
+        openDrawer: state.openDrawer === ExploreDrawer.QueryInspector ? undefined : ExploreDrawer.QueryInspector,
       };
     });
   };
@@ -330,7 +333,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       showLogs,
       showTrace,
     } = this.props;
-    const { showRichHistory, showQueryInspector } = this.state;
+    const { openDrawer } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles(theme);
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
@@ -339,6 +342,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     // gets an error without a refID, so non-query-row-related error, like a connection error
     const queryErrors = queryResponse.error ? [queryResponse.error] : undefined;
     const queryError = getFirstNonQueryRowSpecificError(queryErrors);
+
+    const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
+    const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
 
     return (
       <div className={exploreClass} ref={this.getRef} aria-label={selectors.pages.Explore.General.container}>
