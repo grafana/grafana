@@ -127,8 +127,7 @@
 				  ng-model="ctrl.target.stream.type"
 				  class="gf-form-input"
 				  ng-options="type for type in ['signal','logs', 'fetch']"
-				  ng-change="ctrl.streamChanged()" />
-				</select>
+				  ng-change="ctrl.streamChanged()" ></select>
 			</div>
 		</div>
 		<div class="gf-form">
@@ -181,7 +180,7 @@
 				ng-change="ctrl.streamChanged()"
 				ng-model-onblur />
 		</div>
-		<div class="gf-form gf-form--grow" ng-if="ctrl.target.stream.type !== 'fetch'">
+		<div class="gf-form gf-form--grow">
 			<div class="gf-form-label gf-form-label--grow"></div>
 		</div>
 	</div>
@@ -199,6 +198,9 @@
 		<div class="gf-form">
 			<gf-form-switch class="gf-form" label="Level" label-class="query-keyword width-5" checked="ctrl.target.levelColumn" switch-class="max-width-6" on-change="ctrl.refresh()"></gf-form-switch>
 		</div>
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
 	</div>
 
 	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'grafana_api'">
@@ -209,7 +211,7 @@
 				  ng-model="ctrl.target.stringInput"
 				  class="gf-form-input"
 				  ng-options="type for type in ['datasources', 'search', 'annotations']"
-				  ng-change="ctrl.refresh()" />
+				  ng-change="ctrl.refresh()">
 				</select>
 			</div>
 		</div>
@@ -224,7 +226,7 @@
 				placeholder="copy base64 text data from query result"
 				ng-model="ctrl.target.stringInput"
 				ng-change="ctrl.refresh()"
-				ng-model-onblur />
+				ng-model-onblur ></textarea>
 		</div>
 	</div>
 

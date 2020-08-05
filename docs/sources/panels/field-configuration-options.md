@@ -139,7 +139,19 @@ For more information and instructions, refer to [Data links]({{< relref "../link
 
 Lets you set the display title of all fields. You can use [variables]({{< relref "../variables/templates-and-variables.md" >}}) in the field title.
 
-When multiple stats are shown, this field controls the title in each stat. By default this is the series name and field name. You can use expressions like ${__series.name} or ${**field.name} to use only series name or field name in title or \${**cell_2} to refer to other fields (2 being field/column with index 2).
+When multiple stats, fields, or series are shown, this field controls the title in each stat. You can use expressions like `${__field.name}` to use only the series name or the field name in title.
+
+Given a field with a name of Temp, and labels of {"Loc"="PBI", "Sensor"="3"}
+
+| Expression syntax            | Example                | Renders to                        | Explanation |
+| ---------------------------- | ---------------------- | --------------------------------- | ----------- |
+| `${__field.displayName}`     | Same as syntax         | `Temp {Loc="PBI", Sensor="3"}`    | Displays the field name, and labels in `{}` if they are present. If there is only one label key in the response, then for the label portion, Grafana displays the value of the label without the enclosing braces. |
+| `${__field.name}`            | Same as syntax          | `Temp`                           | Displays the name of the field (without labels). |
+| `${__field.labels}`          | Same as syntax          | `Loc="PBI", Sensor="3"`          | Displays the labels without the name. |
+| `${__field.labels.X}`        | `${__field.labels.Loc}` | `PBI`                            | Displays the value of the specified label key. |
+| `${__field.labels.__values}` | Same as Syntax          | `PBI, 3`                         | Displays the values of the labels separated by a comma (without label keys). |
+
+If the value is an empty string after rendering the expression for a particular field, then the default display method is used.
 
 ### Max
 

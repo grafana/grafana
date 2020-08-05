@@ -36,6 +36,13 @@ func New(logger string, ctx ...interface{}) Logger {
 	return Root.New(params...)
 }
 
+// NewWithLevel returns a new logger with a certain level.
+func NewWithLevel(name string, level log15.Lvl) Logger {
+	logger := Root.New("logger", name)
+	logger.SetHandler(log15.LvlFilterHandler(level, log15.StreamHandler(os.Stdout, getLogFormat("console"))))
+	return logger
+}
+
 func Tracef(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
