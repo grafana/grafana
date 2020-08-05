@@ -18,6 +18,7 @@ import {
   TimeRange,
   toDataFrame,
   rangeUtil,
+  DataQueryErrorType,
 } from '@grafana/data';
 import { getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -293,7 +294,10 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
             : LoadingState.Loading,
           error:
             failedAttempts >= MAX_ATTEMPTS
-              ? { message: `error: query timed out after ${MAX_ATTEMPTS} attempts`, cancelled: true }
+              ? {
+                  message: `error: query timed out after ${MAX_ATTEMPTS} attempts`,
+                  type: DataQueryErrorType.Timeout,
+                }
               : undefined,
         };
       }),

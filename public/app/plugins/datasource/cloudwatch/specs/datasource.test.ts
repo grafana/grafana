@@ -1,7 +1,14 @@
 import '../datasource';
 import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
 import * as redux from 'app/store/store';
-import { DataFrame, DataQueryResponse, DataSourceInstanceSettings, dateMath, getFrameDisplayName } from '@grafana/data';
+import {
+  DataFrame,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+  dateMath,
+  getFrameDisplayName,
+  DataQueryErrorType,
+} from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CloudWatchLogsQueryStatus, CloudWatchMetricsQuery, CloudWatchQuery, LogAction } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
