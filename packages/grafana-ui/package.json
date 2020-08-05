@@ -46,7 +46,7 @@
     "emotion": "10.0.27",
     "immutable": "3.8.2",
     "jquery": "3.5.1",
-    "lodash": "4.17.15",
+    "lodash": "4.17.19",
     "moment": "2.24.0",
     "monaco-editor": "0.20.0",
     "papaparse": "4.6.3",
