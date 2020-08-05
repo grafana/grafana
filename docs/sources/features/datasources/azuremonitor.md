@@ -281,15 +281,13 @@ AzureActivity
 | order by TimeGenerated desc
 ```
 
-### Format legend keys with aliases for Log Analytics
+### Format the display name for Log Analytics
 
-The default legend formatting is:
+The default display name format is:
 
 `metricName{dimensionName=dimensionValue,dimensionTwoName=DimensionTwoValue}`
 
 This can be customized by using the [display name field configuration option]({{< relref "../../panels/field-configuration-options.md#display-name" >}}).
-
-In order to change the metric name, you can change your query to specify a specific name. For example, `summarize avg(Active) by...` will return metrics with the name `avg_Active`. This can be changed to `Active` by changing that part of the query to be `summarize ["Active"]=avg(Active) by ...`.
 
 ### Azure Log Analytics macros
 
