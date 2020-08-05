@@ -287,7 +287,7 @@ The default legend formatting is:
 
 `metricName{dimensionName=dimensionValue,dimensionTwoName=DimensionTwoValue}`
 
-This can be customized by using the [display name field configuration option]({{< relref "../../panels/field-configuration-options.md#display-name" >}}).
+You can customize the legend formatting by setting the [display name field configuration option]({{< relref "../../panels/field-configuration-options.md#display-name" >}}).
 
 In order to change the metric name, you can change your query to specify a specific name. For example, `summarize avg(Active) by...` will return metrics with the name `avg_Active`. This can be changed to `Active` by changing that part of the query to be `summarize ["Active"]=avg(Active) by ...`.
 
