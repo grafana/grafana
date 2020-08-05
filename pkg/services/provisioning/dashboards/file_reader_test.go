@@ -375,14 +375,20 @@ func TestDashboardFileReader(t *testing.T) {
 				So(dashCount, ShouldEqual, 2)
 			})
 
-			Convey("Sanity checker should collect info about duplicate uids and folder/title's", func() {
+			Convey("Sanity checker should collect info about duplicate UIDs and titles within folders", func() {
 				folderID, err := getOrCreateFolderID(cfg, fakeService, "sanity-check-folder")
 				So(err, ShouldBeNil)
 
 				identity := dashboardIdentity{folderID: folderID, title: "Grafana"}
 
-				cfg1 := &config{Name: "first", Type: "file", OrgID: 1, Folder: "sanity-check-folder", Options: map[string]interface{}{"path": containingUID}}
-				cfg2 := &config{Name: "second", Type: "file", OrgID: 1, Folder: "sanity-check-folder", Options: map[string]interface{}{"path": containingUID}}
+				cfg1 := &config{
+					Name: "first", Type: "file", OrgID: 1, Folder: "sanity-check-folder", 
+					Options: map[string]interface{}{"path": containingUID},
+				}
+				cfg2 := &config{
+					Name: "second", Type: "file", OrgID: 1, Folder: "sanity-check-folder", 
+					Options: map[string]interface{}{"path": containingUID},
+				}
 
 				bulkSanityChecker := newSanityChecker()
 

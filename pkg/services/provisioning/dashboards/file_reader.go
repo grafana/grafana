@@ -460,12 +460,10 @@ func (s *set) Add(entry string) {
 }
 
 func (s *set) AsSlice() []string {
-	entries := make([]string, len(s.data))
-	index := 0
+	entries := make([]string, 0, len(s.data))
 
 	for entry := range s.data {
-		entries[index] = entry
-		index++
+		entries = append(entries, entry)
 	}
 
 	return entries
@@ -543,7 +541,7 @@ func (c *sanityChecker) logWarnings(log log.Logger) {
 
 	for id, usage := range duplicates.Title {
 		if usage.Sum > 1 {
-			log.Error("the same 'folder/title' is used more than once", "title", id.title, "folderID", id.folderID, "times", usage.Sum, "providers", usage.Readers.AsSlice())
+			log.Error("dashboard title is not unique in folder", "title", id.title, "folderID", id.folderID, "times", usage.Sum, "providers", usage.Readers.AsSlice())
 		}
 	}
 }
