@@ -162,7 +162,9 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signingAdmin }
     }
   });
 
-  // Write a manifest.txt file in the dist folder
+  // Write a MANIFEST.txt file in the dist folder
+  // By using the --signing-admin flag the plugin doesn't need to be in the plugins database to be signed,
+  // however it requires an Admin API key.
   try {
     const grabplCommandFlags = signingAdmin ? ['build-plugin-manifest', 'signing-admin'] : ['build-plugin-manifest'];
     await execa('grabpl', [...grabplCommandFlags, distContentDir]);
