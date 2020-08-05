@@ -263,10 +263,12 @@ You can also select additional number value columns (with, or without multiple d
 ```kusto
 Perf
 | where $__timeFilter(TimeGenerated)
-| summarize Samples=count(), AvgValue=avg(CounterValue)
+| summarize Samples=count(), ["Avg Value"]=avg(CounterValue)
     by bin(TimeGenerated, $__interval), Computer, CounterName, InstanceName
 | order by TimeGenerated asc
 ```
+
+> **Tip**: In the above query, the Kusto syntax `Samples=count()` and `["Avg Value"]=...` is used to rename those columns — the second syntax allowing for the space. This will change the name of the metric that Grafana uses, and as a result, things like series legends and table columns will match what you specify. In this case, `Samples` will be displayed instead of `_count`.
 
 {{< docs-imagebox img="/img/docs/azuremonitor/logs_multi-value_multi-dim.png" class="docs-image--no-shadow" caption="Azure Logs query with multiple values and multiple dimensions" >}}
 
@@ -287,7 +289,7 @@ The default display name format is:
 
 `metricName{dimensionName=dimensionValue,dimensionTwoName=DimensionTwoValue}`
 
-You can customize the legend formatting by setting the [display name field configuration option]({{< relref "../../panels/field-configuration-options.md#display-name" >}}).
+This can be customized by using the [display name field configuration option]({{< relref "../../panels/field-configuration-options.md#display-name" >}}).
 
 ### Azure Log Analytics macros
 
