@@ -243,6 +243,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       case 'date': {
         return this.formatDate(value, args);
       }
+      default:
       case 'glob': {
         if (_.isArray(value) && value.length > 1) {
           return '{' + value.join(',') + '}';
