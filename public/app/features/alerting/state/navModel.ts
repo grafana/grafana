@@ -1,21 +1,21 @@
-import { AlertRulePascalCaseDTO } from 'app/types';
+import { AlertRule } from 'app/types';
 import { NavModel, NavModelItem } from '@grafana/data';
 
-export function buildNavModel(alertRule: AlertRulePascalCaseDTO): NavModelItem {
+export function buildNavModel(alertRule: AlertRule): NavModelItem {
   const navModel = {
     //img: 'bell',
-    id: `alert-${alertRule.Id}`,
+    id: `alert-${alertRule.id}`,
     subTitle: 'Manage alerts',
     url: '',
-    text: alertRule.Name,
+    text: alertRule.name,
     breadcrumbs: [{ title: 'Alerts', url: 'alerting' }],
     children: [
       {
         active: false,
         icon: 'sliders-v-alt',
-        id: `alert-${alertRule.Id}`,
+        id: `alert-${alertRule.id}`,
         text: 'Settings',
-        url: `alerting/edit/${alertRule.Id}/`,
+        url: `alerting/edit/${alertRule.id}/`,
       },
     ],
   };

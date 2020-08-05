@@ -25,9 +25,9 @@ class AlertRuleItem extends PureComponent<Props> {
   render() {
     const { rule, onTogglePause } = this.props;
 
-    const ruleUrl = rule.url.startsWith(`${config.appSubUrl}/d/`)
-      ? `${rule.url}?editPanel=${rule.panelId}&tab=alert`
-      : rule.url;
+    const ruleUrl = rule.url.startsWith(`${config.appSubUrl}/alerting/edit/`)
+      ? rule.url
+      : `${rule.url}?editPanel=${rule.panelId}&tab=alert`;
 
     return (
       <li className="alert-rule-item">

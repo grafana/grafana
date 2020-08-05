@@ -1,6 +1,15 @@
 import { dateTime } from '@grafana/data';
-import { alertRulesReducer, initialState, loadAlertRules, loadedAlertRules, setSearchQuery } from './reducers';
-import { AlertRuleDTO, AlertRulesState } from 'app/types';
+import {
+  alertRuleReducer,
+  alertRuleLoaded,
+  alertRulesReducer,
+  initialAlertState,
+  initialState,
+  loadAlertRules,
+  loadedAlertRules,
+  setSearchQuery,
+} from './reducers';
+import { AlertRule, AlertRuleDTO, AlertRuleState, AlertRulesState } from 'app/types';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 
 describe('Alert rules', () => {
@@ -133,9 +142,12 @@ describe('Alert rules', () => {
               },
               evalDate: '0001-01-01T00:00:00Z',
               executionError: '',
+              for: 0,
+              frequency: 0,
               id: 2,
               name: 'TestData - Always Alerting',
               newStateDate: `${newStateDateFormatted}T10:00:30+02:00`,
+              orgId: 0,
               panelId: 4,
               state: 'alerting',
               stateAge: newStateDateAge,
@@ -151,9 +163,12 @@ describe('Alert rules', () => {
               evalData: {},
               evalDate: '0001-01-01T00:00:00Z',
               executionError: '',
+              for: 0,
+              frequency: 0,
               id: 1,
               name: 'TestData - Always OK',
               newStateDate: `${newStateDateFormatted}T10:01:01+02:00`,
+              orgId: 0,
               panelId: 3,
               state: 'ok',
               stateAge: newStateDateAge,
@@ -169,10 +184,13 @@ describe('Alert rules', () => {
               evalData: {},
               evalDate: '0001-01-01T00:00:00Z',
               executionError: 'error',
+              for: 0,
+              frequency: 0,
               id: 3,
               info: 'Execution Error: error',
               name: 'TestData - ok',
               newStateDate: `${newStateDateFormatted}T10:01:01+02:00`,
+              orgId: 0,
               panelId: 3,
               state: 'ok',
               stateAge: newStateDateAge,
@@ -188,9 +206,12 @@ describe('Alert rules', () => {
               evalData: {},
               evalDate: '0001-01-01T00:00:00Z',
               executionError: 'error',
+              for: 0,
+              frequency: 0,
               id: 4,
               name: 'TestData - Paused',
               newStateDate: `${newStateDateFormatted}T10:01:01+02:00`,
+              orgId: 0,
               panelId: 3,
               state: 'paused',
               stateAge: newStateDateAge,
@@ -208,10 +229,13 @@ describe('Alert rules', () => {
               },
               evalDate: '0001-01-01T00:00:00Z',
               executionError: 'error',
+              for: 0,
+              frequency: 0,
               id: 5,
               info: 'Query returned no data',
               name: 'TestData - Ok',
               newStateDate: `${newStateDateFormatted}T10:01:01+02:00`,
+              orgId: 0,
               panelId: 3,
               state: 'ok',
               stateAge: newStateDateAge,
@@ -221,6 +245,68 @@ describe('Alert rules', () => {
               url: '/d/ggHbN42mk/alerting-with-testdata',
             },
           ],
+        });
+    });
+  });
+
+  describe('when alertRuleLoaded is dispatched', () => {
+    const payload: AlertRule = {
+      id: 2,
+      dashboardId: 7,
+      dashboardUid: 'ggHbN42mk',
+      dashboardSlug: 'alerting-with-testdata',
+      panelId: 4,
+      name: 'TestData - Always Alerting',
+      state: 'alerting',
+      newStateDate: `${newStateDateFormatted}T10:00:30+02:00`,
+      evalDate: '0001-01-01T00:00:00Z',
+      evalData: { evalMatches: [{ metric: 'A-series', tags: null, value: 215 }] },
+      executionError: '',
+      url: '/d/ggHbN42mk/alerting-with-testdata',
+      orgId: 1,
+      for: 1000,
+      frequency: 60,
+      stateAge: '',
+      stateText: '',
+      stateIcon: '',
+      stateClass: '',
+    };
+
+    it('then state should be correct', () => {
+      reducerTester<AlertRuleState>()
+        .givenReducer(alertRuleReducer, { ...initialAlertState })
+        .whenActionIsDispatched(alertRuleLoaded(payload))
+        .thenStateShouldEqual({
+          ...initialAlertState,
+          alertRule: {
+            dashboardId: 7,
+            dashboardSlug: 'alerting-with-testdata',
+            dashboardUid: 'ggHbN42mk',
+            evalData: {
+              evalMatches: [
+                {
+                  metric: 'A-series',
+                  tags: null,
+                  value: 215,
+                },
+              ],
+            },
+            evalDate: '0001-01-01T00:00:00Z',
+            executionError: '',
+            for: 1000,
+            frequency: 60,
+            id: 2,
+            name: 'TestData - Always Alerting',
+            newStateDate: `${newStateDateFormatted}T10:00:30+02:00`,
+            orgId: 1,
+            panelId: 4,
+            state: 'alerting',
+            stateAge: newStateDateAge,
+            stateClass: 'alert-state-critical',
+            stateIcon: 'heart-break',
+            stateText: 'ALERTING',
+            url: '/d/ggHbN42mk/alerting-with-testdata',
+          },
         });
     });
   });

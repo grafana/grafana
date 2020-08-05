@@ -15,26 +15,6 @@ export interface AlertRuleDTO {
   url: string;
 }
 
-export interface AlertRulePascalCaseDTO {
-  Id: number;
-  DashboardId: number;
-  DashboardUid: string;
-  DashboardSlug: string;
-  PanelId: number;
-  Name: string;
-  State: string;
-  NewStateDate: string;
-  EvalDate: string;
-  EvalData?: { noData?: boolean; evalMatches?: any };
-  ExecutionError: string;
-  Url: string;
-  OrgId: number;
-  For: number;
-  Frequency: number;
-  NoDataState: NoDataState;
-  ExecutionErrorState: ExecutionErrorState;
-}
-
 export interface AlertRule {
   id: number;
   dashboardId: number;
@@ -56,8 +36,6 @@ export interface AlertRule {
   orgId: number;
   for: number;
   frequency: number;
-  noDataState: NoDataState;
-  executionErrorState: ExecutionErrorState;
 }
 
 export type NotifierType =

@@ -1,13 +1,4 @@
-import {
-  AlertRule,
-  AlertRuleDTO,
-  AlertRulePascalCaseDTO,
-  AlertRuleState,
-  AlertRulesState,
-  NotificationChannel,
-  NoDataState,
-  ExecutionErrorState,
-} from 'app/types';
+import { AlertRule, AlertRuleDTO, AlertRuleState, AlertRulesState, NotificationChannel } from 'app/types';
 import alertDef from './alertDef';
 import { dateTime } from '@grafana/data';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
@@ -22,8 +13,6 @@ function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
     orgId: 0,
     for: 0,
     frequency: 0,
-    noDataState: {} as NoDataState,
-    executionErrorState: {} as ExecutionErrorState,
     stateText: stateModel.text,
     stateIcon: stateModel.iconClass,
     stateClass: stateModel.stateClass,
@@ -42,37 +31,27 @@ function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
   return rule;
 }
 
-function convertPascalCaseToAlertRule(dto: AlertRulePascalCaseDTO, state: string): AlertRule {
-  const stateModel = alertDef.getStateDisplayModel(state);
+function setAlertRuleStateFields(alertRule: AlertRule): AlertRule {
+  const stateModel = alertDef.getStateDisplayModel(alertRule.state);
 
-  const rule: AlertRule = {
-    id: dto.Id,
-    dashboardId: dto.DashboardId,
-    panelId: dto.PanelId,
-    name: dto.Name,
-    state: dto.State,
-    url: dto.Url,
-    orgId: dto.OrgId,
-    for: dto.For,
-    frequency: dto.Frequency,
-    noDataState: dto.NoDataState,
-    executionErrorState: dto.ExecutionErrorState,
+  alertRule = {
+    ...alertRule,
     stateText: stateModel.text,
     stateIcon: stateModel.iconClass,
     stateClass: stateModel.stateClass,
-    stateAge: dateTime(dto.NewStateDate).fromNow(true),
+    stateAge: dateTime(alertRule.newStateDate).fromNow(true),
   };
 
-  if (rule.state !== 'paused') {
-    if (rule.executionError) {
-      rule.info = 'Execution Error: ' + rule.executionError;
+  if (alertRule.state !== 'paused') {
+    if (alertRule.executionError) {
+      alertRule.info = 'Execution Error: ' + alertRule.executionError;
     }
-    if (rule.evalData && rule.evalData.noData) {
-      rule.info = 'Query returned no data';
+    if (alertRule.evalData && alertRule.evalData.noData) {
+      alertRule.info = 'Query returned no data';
     }
   }
 
-  return rule;
+  return alertRule;
 }
 
 const alertRulesSlice = createSlice({
@@ -112,8 +91,8 @@ const alertRuleSlice = createSlice({
   name: 'alertRule',
   initialState: initialAlertState,
   reducers: {
-    alertRuleLoaded: (state, action: PayloadAction<AlertRulePascalCaseDTO>): AlertRuleState => {
-      return { ...state, alertRule: convertPascalCaseToAlertRule(action.payload, action.payload.State) };
+    alertRuleLoaded: (state, action: PayloadAction<AlertRule>): AlertRuleState => {
+      return { ...state, alertRule: setAlertRuleStateFields(action.payload) };
     },
   },
 });
