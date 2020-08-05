@@ -3,6 +3,8 @@ package imguploader
 import (
 	"context"
 	"fmt"
+	"golang.org/x/oauth2/jwt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -19,6 +21,7 @@ const (
 	tokenUrl         string = "https://www.googleapis.com/auth/devstorage.read_write" // #nosec
 	uploadUrl        string = "https://www.googleapis.com/upload/storage/v1/b/%s/o?uploadType=media&name=%s"
 	publicReadOption string = "&predefinedAcl=publicRead"
+	bodySizeLimit           = 1 << 20
 )
 
 type GCSUploader struct {
@@ -92,13 +95,26 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 	}
 
 	u.log.Debug("Signing GCS URL")
-	jsonKey, err := ioutil.ReadFile(u.keyFile)
-	if err != nil {
-		return "", fmt.Errorf("ioutil.ReadFile: %v", err)
-	}
-	conf, err := google.JWTConfigFromJSON(jsonKey)
-	if err != nil {
-		return "", fmt.Errorf("google.JWTConfigFromJSON: %v", err)
+	var conf *jwt.Config
+	if u.keyFile != "" {
+
+		jsonKey, err := ioutil.ReadFile(u.keyFile)
+		if err != nil {
+			return "", fmt.Errorf("ioutil.ReadFile: %v", err)
+		}
+		conf, err = google.JWTConfigFromJSON(jsonKey)
+		if err != nil {
+			return "", fmt.Errorf("google.JWTConfigFromJSON: %v", err)
+		}
+	} else {
+		creds, err := google.FindDefaultCredentials(ctx, storage.ScopeReadWrite)
+		if err != nil {
+			return "", fmt.Errorf("google.FindDefaultCredentials: %v", err)
+		}
+		conf, err = google.JWTConfigFromJSON(creds.JSON)
+		if err != nil {
+			return "", fmt.Errorf("google.JWTConfigFromJSON: %v", err)
+		}
 	}
 	opts := &storage.SignedURLOptions{
 		Scheme:         storage.SigningSchemeV4,
@@ -138,14 +154,25 @@ func (u *GCSUploader) uploadFile(client *http.Client, imageDiskPath, key string)
 	u.log.Debug("Sending POST request to GCS")
 
 	resp, err := client.Do(req)
+	defer u.closeResponse(resp)
 	if err != nil {
 		return err
 	}
-	resp.Body.Close()
 
 	if resp.StatusCode != 200 {
+		respBody, err := ioutil.ReadAll(io.LimitReader(resp.Body, bodySizeLimit))
+		if err == nil && len(respBody) > 0 {
+			u.log.Error(fmt.Sprintf("GCS response: url=%q status=%d, body=%q", reqUrl, resp.StatusCode, string(respBody)))
+		}
 		return fmt.Errorf("GCS response status code %d", resp.StatusCode)
 	}
 
 	return nil
+}
+
+func (u *GCSUploader) closeResponse(resp *http.Response) {
+	if resp != nil && resp.Body != nil {
+		_, _ = io.Copy(ioutil.Discard, resp.Body)
+		_ = resp.Body.Close()
+	}
 }
