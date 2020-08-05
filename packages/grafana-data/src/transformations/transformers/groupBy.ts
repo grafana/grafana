@@ -122,7 +122,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
           // of the reduceField function, we'll have to loop on the data this way. We will build a few
           // fields (columns) at the time, corresponding the each field we want to make some calculations on.
 
-          let calculationResults = {};
+          let calculationResults: Record<string, any[]> = {};
           for (let calc of calculations) {
             calculationResults[calc] = [];
           }
@@ -158,7 +158,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
               config: {},
             };
 
-            f.type = guessFieldTypeForField(f);
+            f.type = guessFieldTypeForField(f) ?? FieldType.string;
             fields.push(f);
           }
         }
