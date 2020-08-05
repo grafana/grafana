@@ -64,29 +64,29 @@ func (s ExecutionErrorOption) ToAlertState() AlertStateType {
 }
 
 type Alert struct {
-	Id             int64
-	Version        int64
-	OrgId          int64
-	DashboardId    int64
-	PanelId        int64
-	Name           string
-	Message        string
-	Severity       string //Unused
-	State          AlertStateType
-	Handler        int64 //Unused
-	Silenced       bool
-	ExecutionError string
-	Frequency      int64
-	For            time.Duration
+	Id             int64          `json:"id"`
+	Version        int64          `json:"version"`
+	OrgId          int64          `json:"orgId"`
+	DashboardId    int64          `json:"dashboardId"`
+	PanelId        int64          `json:"panelId"`
+	Name           string         `json:"name"`
+	Message        string         `json:"message"`
+	Severity       string         `json:"severity"` //Unused
+	State          AlertStateType `json:"state"`
+	Handler        int64          `json:"handler"` //Unused
+	Silenced       bool           `json:"silenced"`
+	ExecutionError string         `json:"executionError"`
+	Frequency      int64          `json:"frequency"`
+	For            time.Duration  `json:"for"`
 
-	EvalData     *simplejson.Json
-	NewStateDate time.Time
-	StateChanges int64
+	EvalData     *simplejson.Json `json:"evalData"`
+	NewStateDate time.Time        `json:"newStateDate"`
+	StateChanges int64            `json:"stateChanges"`
 
-	Created time.Time
-	Updated time.Time
+	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
 
-	Settings *simplejson.Json
+	Settings *simplejson.Json `json:"settings"`
 }
 
 func (alert *Alert) ValidToSave() bool {
