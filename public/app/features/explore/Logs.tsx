@@ -74,6 +74,7 @@ interface State {
   showTime: boolean;
   wrapLogMessage: boolean;
   logsSortOrder: LogsSortOrder | null;
+  disabledSortButton: boolean;
 }
 
 export class Logs extends PureComponent<Props, State> {
@@ -82,15 +83,21 @@ export class Logs extends PureComponent<Props, State> {
     showTime: store.getBool(SETTINGS_KEYS.showTime, true),
     wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
     logsSortOrder: null,
+    disabledSortButton: false,
   };
 
   onChangeLogsSortOrder = () => {
-    this.setState(prevState => {
-      if (prevState.logsSortOrder === null || prevState.logsSortOrder === LogsSortOrder.Descending) {
-        return { logsSortOrder: LogsSortOrder.Ascending };
-      }
-      return { logsSortOrder: LogsSortOrder.Descending };
-    });
+    this.setState({ disabledSortButton: true });
+    // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
+    setTimeout(() => {
+      this.setState(prevState => {
+        if (prevState.logsSortOrder === null || prevState.logsSortOrder === LogsSortOrder.Descending) {
+          return { logsSortOrder: LogsSortOrder.Ascending };
+        }
+        return { logsSortOrder: LogsSortOrder.Descending };
+      });
+    }, 0);
+    setTimeout(() => this.setState({ disabledSortButton: false }), 1000);
   };
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
@@ -178,7 +185,7 @@ export class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { showLabels, showTime, wrapLogMessage, logsSortOrder } = this.state;
+    const { showLabels, showTime, wrapLogMessage, logsSortOrder, disabledSortButton } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -238,6 +245,7 @@ export class Logs extends PureComponent<Props, State> {
               </ToggleButtonGroup>
             </div>
             <button
+              disabled={disabledSortButton}
               title={
                 logsSortOrder === LogsSortOrder.Ascending ? 'Change to descending order' : 'Change to ascending order'
               }
