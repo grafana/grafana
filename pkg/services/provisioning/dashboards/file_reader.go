@@ -31,14 +31,16 @@ var (
 type FileReader struct {
 	Cfg                          *config
 	Path                         string
+	FoldersFromFilesStructure    bool
 	log                          log.Logger
 	dashboardProvisioningService dashboards.DashboardProvisioningService
-	sanityChecker                *sanityChecker
-	FoldersFromFilesStructure    bool
+
+	mux          sync.RWMutex
+	usageTracker *usageTracker
 }
 
 // NewDashboardFileReader returns a new filereader based on `config`
-func NewDashboardFileReader(cfg *config, log log.Logger, checker *sanityChecker) (*FileReader, error) {
+func NewDashboardFileReader(cfg *config, log log.Logger) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -61,7 +63,7 @@ func NewDashboardFileReader(cfg *config, log log.Logger, checker *sanityChecker)
 		log:                          log,
 		dashboardProvisioningService: dashboards.NewProvisioningService(store),
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
-		sanityChecker:                checker,
+		usageTracker:                 newUsageTracker(),
 	}, nil
 }
 
@@ -112,7 +114,10 @@ func (fr *FileReader) walkDisk() error {
 		return err
 	}
 
-	fr.sanityChecker.Set(fr.Cfg.Name, usageTracker)
+	fr.mux.Lock()
+	defer fr.mux.Unlock()
+
+	fr.usageTracker = usageTracker
 	return nil
 }
 
@@ -412,6 +417,13 @@ func (fr *FileReader) resolvedPath() string {
 	return path
 }
 
+func (fr *FileReader) getUsageTracker() *usageTracker {
+	fr.mux.RLock()
+	defer fr.mux.RUnlock()
+
+	return fr.usageTracker
+}
+
 type provisioningMetadata struct {
 	uid      string
 	identity dashboardIdentity
@@ -444,116 +456,5 @@ func (t *usageTracker) track(pm provisioningMetadata) {
 	}
 	if pm.identity.Exists() {
 		t.titleUsage[pm.identity]++
-	}
-}
-
-type set struct {
-	data map[string]struct{}
-}
-
-func newSet() *set {
-	return &set{make(map[string]struct{})}
-}
-
-func (s *set) Add(entry string) {
-	s.data[entry] = struct{}{}
-}
-
-func (s *set) AsSlice() []string {
-	entries := make([]string, 0, len(s.data))
-
-	for entry := range s.data {
-		entries = append(entries, entry)
-	}
-
-	return entries
-}
-
-type duplicate struct {
-	Readers *set
-	Sum     uint8
-}
-
-func newDuplicate() *duplicate {
-	return &duplicate{Readers: newSet()}
-}
-
-type duplicateEntries struct {
-	Title map[dashboardIdentity]*duplicate
-	UID   map[string]*duplicate
-}
-
-func newDuplicateEntries() *duplicateEntries {
-	return &duplicateEntries{Title: make(map[dashboardIdentity]*duplicate), UID: make(map[string]*duplicate)}
-}
-
-type sanityChecker struct {
-	mux      sync.RWMutex
-	trackers map[string]*usageTracker
-}
-
-func newSanityChecker() *sanityChecker {
-	return &sanityChecker{trackers: make(map[string]*usageTracker)}
-}
-
-func (c *sanityChecker) Set(readerName string, tracker *usageTracker) {
-	c.mux.Lock()
-	defer c.mux.Unlock()
-
-	c.trackers[readerName] = tracker
-}
-
-func (c *sanityChecker) getDuplicates() *duplicateEntries {
-	duplicates := newDuplicateEntries()
-
-	for readerName, tracker := range c.trackers {
-		for uid, times := range tracker.uidUsage {
-			if _, ok := duplicates.UID[uid]; !ok {
-				duplicates.UID[uid] = newDuplicate()
-			}
-			duplicates.UID[uid].Sum += times
-			duplicates.UID[uid].Readers.Add(readerName)
-		}
-
-		for id, times := range tracker.titleUsage {
-			if _, ok := duplicates.Title[id]; !ok {
-				duplicates.Title[id] = newDuplicate()
-			}
-			duplicates.Title[id].Sum += times
-			duplicates.Title[id].Readers.Add(readerName)
-		}
-	}
-
-	return duplicates
-}
-
-func (c *sanityChecker) logWarnings(log log.Logger) {
-	c.mux.Lock()
-	defer c.mux.Unlock()
-
-	duplicates := c.getDuplicates()
-
-	for uid, usage := range duplicates.UID {
-		if usage.Sum > 1 {
-			log.Error("the same 'uid' is used more than once", "uid", uid, "times", usage.Sum, "providers", usage.Readers.AsSlice())
-		}
-	}
-
-	for id, usage := range duplicates.Title {
-		if usage.Sum > 1 {
-			log.Error("dashboard title is not unique in folder", "title", id.title, "folderID", id.folderID, "times", usage.Sum, "providers", usage.Readers.AsSlice())
-		}
-	}
-}
-
-func (c *sanityChecker) startLogWarningsLoop(ctx context.Context, log log.Logger) {
-	ticker := time.NewTicker(30 * time.Second)
-	for {
-		select {
-		case <-ticker.C:
-			c.logWarnings(log)
-		case <-ctx.Done():
-			return
-		}
 	}
 }

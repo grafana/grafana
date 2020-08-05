@@ -27,10 +27,10 @@ type DashboardProvisionerFactory func(string, dashboards.Store) (DashboardProvis
 
 // Provisioner is responsible for syncing dashboard from disk to Grafana's database.
 type Provisioner struct {
-	log           log.Logger
-	fileReaders   []*FileReader
-	configs       []*config
-	sanityChecker *sanityChecker
+	log                log.Logger
+	fileReaders        []*FileReader
+	configs            []*config
+	duplicateValidator *duplicateValidator
 }
 
 // New returns a new DashboardProvisioner
@@ -42,17 +42,16 @@ func New(configDirectory string, store dashboards.Store) (DashboardProvisioner, 
 		return nil, errutil.Wrap("Failed to read dashboards config", err)
 	}
 
-	checker := newSanityChecker()
-	fileReaders, err := getFileReaders(configs, logger, checker)
+	fileReaders, err := getFileReaders(configs, logger)
 	if err != nil {
 		return nil, errutil.Wrap("Failed to initialize file readers", err)
 	}
 
 	d := &Provisioner{
-		log:           logger,
-		fileReaders:   fileReaders,
-		configs:       configs,
-		sanityChecker: checker,
+		log:                logger,
+		fileReaders:        fileReaders,
+		configs:            configs,
+		duplicateValidator: newDuplicateValidator(fileReaders),
 	}
 
 	return d, nil
@@ -73,7 +72,7 @@ func (provider *Provisioner) Provision() error {
 		}
 	}
 
-	provider.sanityChecker.logWarnings(provider.log)
+	provider.duplicateValidator.logWarnings(provider.log)
 	return nil
 }
 
@@ -97,7 +96,7 @@ func (provider *Provisioner) PollChanges(ctx context.Context) {
 		go reader.pollChanges(ctx)
 	}
 
-	go provider.sanityChecker.startLogWarningsLoop(ctx, provider.log)
+	go provider.duplicateValidator.startLogWarningsLoop(ctx, provider.log)
 }
 
 // GetProvisionerResolvedPath returns resolved path for the specified provisioner name. Can be used to generate
