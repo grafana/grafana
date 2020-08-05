@@ -41,14 +41,18 @@ func NewGCSUploader(keyFile, bucket, path string, enableSignedUrls bool, signedU
 	if expiration <= 0 {
 		return nil, fmt.Errorf("invalid signed url expiration: %q", expiration)
 	}
-	return &GCSUploader{
+	uploader := &GCSUploader{
 		keyFile:             keyFile,
 		bucket:              bucket,
 		path:                path,
 		log:                 log.New("gcsuploader"),
 		enableSignedUrls:    enableSignedUrls,
 		signedUrlExpiration: expiration,
-	}, nil
+	}
+
+	uploader.log.Debug(fmt.Sprintf("Created GCSUploader key=%q bucket=%q path=%q, enable_signed_urls=%v signed_url_expiration=%q", keyFile, bucket, path, enableSignedUrls, expiration.String()))
+
+	return uploader, nil
 }
 
 func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string, error) {
