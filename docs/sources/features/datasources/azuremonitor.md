@@ -287,7 +287,7 @@ The default display name format is:
 
 `metricName{dimensionName=dimensionValue,dimensionTwoName=DimensionTwoValue}`
 
-This can be customized by using the [display name field configuration option]({{< relref "../../panels/field-configuration-options.md#display-name" >}}).
+You can customize the legend formatting by setting the [display name field configuration option]({{< relref "../../panels/field-configuration-options.md#display-name" >}}).
 
 ### Azure Log Analytics macros
 
