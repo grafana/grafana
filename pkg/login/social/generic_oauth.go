@@ -26,6 +26,7 @@ type SocialGenericOAuth struct {
 	emailAttributePath   string
 	loginAttributePath   string
 	roleAttributePath    string
+	idTokenAttributeName string
 	groupMappings        []setting.OAuthGroupMapping
 	teamIds              []int
 }
@@ -85,6 +86,7 @@ type UserInfoJson struct {
 	Upn         string              `json:"upn"`
 	Attributes  map[string][]string `json:"attributes"`
 	rawJSON     []byte
+	source      string
 }
 
 func (info *UserInfoJson) String() string {
@@ -94,67 +96,90 @@ func (info *UserInfoJson) String() string {
 }
 
 func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
-	var data UserInfoJson
-	var err error
-
 	s.log.Debug("Getting user info")
+	tokenData := s.extractFromToken(token)
+	apiData := s.extractFromAPI(client)
 
 	userInfo := &BasicUserInfo{}
-
-	if s.extractToken(token, &data) {
-		s.log.Debug("Filling user info based on OAuth token")
-		if err := s.fillUserInfo(userInfo, &data); err != nil {
-			return nil, err
+	for _, data := range []*UserInfoJson{tokenData, apiData} {
+		if data == nil {
+			continue
 		}
-	}
 
-	if s.extractAPI(client, &data) {
-		if err := s.fillUserInfo(userInfo, &data); err != nil {
-			return nil, err
+		s.log.Debug("Processing external user info", "source", data.source, "data", data)
+
+		if userInfo.Name == "" {
+			if data.Name != "" {
+				s.log.Debug("Setting user info name from name field")
+				userInfo.Name = data.Name
+			} else if data.DisplayName != "" {
+				s.log.Debug("Setting user info name from display name field")
+				userInfo.Name = data.DisplayName
+			}
+		}
+
+		if userInfo.Login == "" {
+			if data.Login != "" {
+				s.log.Debug("Setting user info login from login field", "login", data.Login)
+				userInfo.Login = data.Login
+			} else {
+				if s.loginAttributePath != "" {
+					s.log.Debug("Searching for login among JSON", "loginAttributePath", s.loginAttributePath)
+					login, err := s.searchJSONForAttr(s.loginAttributePath, data.rawJSON)
+					if err != nil {
+						s.log.Error("Failed to search JSON for login attribute", "error", err)
+					} else if login != "" {
+						userInfo.Login = login
+						s.log.Debug("Setting user info login from login field", "login", login)
+					}
+				}
+
+				if userInfo.Login == "" && data.Username != "" {
+					s.log.Debug("Setting user info login from username field", "username", data.Username)
+					userInfo.Login = data.Username
+				}
+			}
+		}
+
+		if userInfo.Email == "" {
+			userInfo.Email = s.extractEmail(data)
+			if userInfo.Email != "" {
+				s.log.Debug("Set user info email from extracted email", "email", userInfo.Email)
+			}
+		}
+
+		if err := s.extractOrgMemberships(data, userInfo); err != nil {
+			return nil, errutil.Wrapf(err, "failed to extract organization memberships for OAuth source %s", data.source)
 		}
 	}
 
 	if userInfo.Email == "" {
+		var err error
 		userInfo.Email, err = s.FetchPrivateEmail(client)
 		if err != nil {
 			return nil, err
 		}
+		s.log.Debug("Setting email from fetched private email", "email", userInfo.Email)
 	}
 
 	if userInfo.Login == "" {
+		s.log.Debug("Defaulting to using email for user info login", "email", userInfo.Email)
 		userInfo.Login = userInfo.Email
 	}
 
 	if !s.IsTeamMember(client) {
-		return nil, errors.New("User not a member of one of the required teams")
+		return nil, errors.New("user not a member of one of the required teams")
 	}
 
 	if !s.IsOrganizationMember(client) {
-		return nil, errors.New("User not a member of one of the required organizations")
+		return nil, errors.New("user not a member of one of the required organizations")
 	}
 
 	s.log.Debug("User info result", "result", userInfo)
 	return userInfo, nil
 }
 
-func (s *SocialGenericOAuth) fillUserInfo(userInfo *BasicUserInfo, data *UserInfoJson) error {
-	if userInfo.Email == "" {
-		userInfo.Email = s.extractEmail(data)
-	}
-	if err := s.extractOrgMemberships(data, userInfo); err != nil {
-		return err
-	}
-	if userInfo.Name == "" {
-		userInfo.Name = s.extractName(data)
-	}
-	if userInfo.Login == "" {
-		userInfo.Login = s.extractLogin(data)
-	}
-
-	return nil
-}
-
-func (s *SocialGenericOAuth) extractToken(token *oauth2.Token, data *UserInfoJson) bool {
+func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson {
 	s.log.Debug("Extracting user info from OAuth token")
 
 	idTokenAttribute := "id_token"
@@ -166,52 +191,54 @@ func (s *SocialGenericOAuth) extractToken(token *oauth2.Token, data *UserInfoJso
 	idToken := token.Extra(idTokenAttribute)
 	if idToken == nil {
 		s.log.Debug("No id_token found", "token", token)
-		return false
+		return nil
 	}
 
 	jwtRegexp := regexp.MustCompile("^([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)$")
 	matched := jwtRegexp.FindStringSubmatch(idToken.(string))
 	if matched == nil {
 		s.log.Debug("id_token is not in JWT format", "id_token", idToken.(string))
-		return false
+		return nil
 	}
 
-	var err error
-	data.rawJSON, err = base64.RawURLEncoding.DecodeString(matched[2])
+	rawJSON, err := base64.RawURLEncoding.DecodeString(matched[2])
 	if err != nil {
 		s.log.Error("Error base64 decoding id_token", "raw_payload", matched[2], "error", err)
-		return false
+		return nil
 	}
 
-	err = json.Unmarshal(data.rawJSON, data)
-	if err != nil {
+	var data UserInfoJson
+	if err := json.Unmarshal(rawJSON, &data); err != nil {
 		s.log.Error("Error decoding id_token JSON", "raw_json", string(data.rawJSON), "error", err)
-		data.rawJSON = []byte{}
-		return false
+		return nil
 	}
 
+	data.rawJSON = rawJSON
+	data.source = "token"
 	s.log.Debug("Received id_token", "raw_json", string(data.rawJSON), "data", data)
-	return true
+	return &data
 }
 
-func (s *SocialGenericOAuth) extractAPI(client *http.Client, data *UserInfoJson) bool {
+func (s *SocialGenericOAuth) extractFromAPI(client *http.Client) *UserInfoJson {
 	s.log.Debug("Getting user info from API")
 	rawUserInfoResponse, err := HttpGet(client, s.apiUrl)
 	if err != nil {
 		s.log.Debug("Error getting user info from API", "url", s.apiUrl, "error", err)
-		return false
-	}
-	data.rawJSON = rawUserInfoResponse.Body
-
-	err = json.Unmarshal(data.rawJSON, data)
-	if err != nil {
-		s.log.Error("Error decoding user info response", "raw_json", data.rawJSON, "error", err)
-		data.rawJSON = []byte{}
-		return false
+		return nil
 	}
 
-	s.log.Debug("Received user info response from API", "raw_json", string(data.rawJSON), "data", data)
-	return true
+	rawJSON := rawUserInfoResponse.Body
+
+	var data UserInfoJson
+	if err := json.Unmarshal(rawJSON, &data); err != nil {
+		s.log.Error("Error decoding user info response", "raw_json", rawJSON, "error", err)
+		return nil
+	}
+
+	data.rawJSON = rawJSON
+	data.source = "API"
+	s.log.Debug("Received user info response from API", "raw_json", string(rawJSON), "data", data)
+	return &data
 }
 
 func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
@@ -251,6 +278,11 @@ func (s *SocialGenericOAuth) extractOrgMemberships(data *UserInfoJson, userInfo 
 
 	s.log.Debug("Extracting organization memberships")
 
+	var rawData interface{}
+	if err := json.Unmarshal(data.rawJSON, &rawData); err != nil {
+		return err
+	}
+
 	// TODO: Move unfiltered group mappings to end of list, so we can apply them deterministically
 
 	unfiltered := []int64{}
@@ -258,9 +290,7 @@ func (s *SocialGenericOAuth) extractOrgMemberships(data *UserInfoJson, userInfo 
 		s.log.Debug("Processing group mapping", "number", i+1, "mapping", mapping)
 		if mapping.Filter != "" {
 			s.log.Debug("Using mapping filter", "filter", mapping.Filter)
-			var val interface{}
-			json.Unmarshal(data.rawJSON, &val)
-			v, err := jmespath.Search(mapping.Filter, val)
+			v, err := jmespath.Search(mapping.Filter, rawData)
 			if err != nil {
 				s.log.Warn("Failed to look up filter in OAuth user info", "filter", mapping.Filter, "error", err)
 				continue
@@ -311,12 +341,9 @@ func (s *SocialGenericOAuth) extractOrgMemberships(data *UserInfoJson, userInfo 
 		return nil
 	}
 
-	s.log.Debug("Trying to extract OAuth user role", "roleAttrPath", s.roleAttributePath)
-
 	roleStr, err := s.searchJSONForAttr(s.roleAttributePath, data.rawJSON)
 	if err != nil {
-		s.log.Error("Failed to get role", "error", err)
-		return nil
+		return err
 	}
 
 	role := models.RoleType(roleStr)
@@ -342,39 +369,6 @@ func (s *SocialGenericOAuth) extractOrgMemberships(data *UserInfoJson, userInfo 
 	}
 
 	return nil
-}
-
-func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {
-	if data.Login != "" {
-		return data.Login
-	}
-
-	if s.loginAttributePath != "" {
-		login, err := s.searchJSONForAttr(s.loginAttributePath, data.rawJSON)
-		if err != nil {
-			s.log.Error("Failed to search JSON for attribute", "error", err)
-		} else if login != "" {
-			return login
-		}
-	}
-
-	if data.Username != "" {
-		return data.Username
-	}
-
-	return ""
-}
-
-func (s *SocialGenericOAuth) extractName(data *UserInfoJson) string {
-	if data.Name != "" {
-		return data.Name
-	}
-
-	if data.DisplayName != "" {
-		return data.DisplayName
-	}
-
-	return ""
 }
 
 func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
