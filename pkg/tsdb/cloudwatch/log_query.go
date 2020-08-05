@@ -95,24 +95,45 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 	}
 
 	frame := data.NewFrame("CloudWatchLogsResponse", newFields...)
+
+	bytesScanned := -1.0
+	recordsScanned := -1.0
+	recordsMatched := -1.0
+	if response != nil && response.Statistics != nil {
+		if response.Statistics.BytesScanned != nil {
+			bytesScanned = *response.Statistics.BytesScanned
+		}
+
+		if response.Statistics.RecordsScanned != nil {
+			recordsScanned = *response.Statistics.RecordsScanned
+		}
+
+		if response.Statistics.RecordsMatched != nil {
+			recordsMatched = *response.Statistics.RecordsMatched
+		}
+	}
+
 	frame.Meta = &data.FrameMeta{
 		Stats: []data.QueryStat{
 			{
 				FieldConfig: data.FieldConfig{DisplayName: "Bytes scanned"},
-				Value:       *response.Statistics.BytesScanned,
+				Value:       bytesScanned,
 			},
 			{
 				FieldConfig: data.FieldConfig{DisplayName: "Records scanned"},
-				Value:       *response.Statistics.RecordsScanned,
+				Value:       recordsScanned,
 			},
 			{
 				FieldConfig: data.FieldConfig{DisplayName: "Records matched"},
-				Value:       *response.Statistics.RecordsMatched,
+				Value:       recordsMatched,
 			},
 		},
-		Custom: map[string]interface{}{
+	}
+
+	if response != nil && response.Status != nil {
+		frame.Meta.Custom = map[string]interface{}{
 			"Status": *response.Status,
-		},
+		}
 	}
 
 	// Results aren't guaranteed to come ordered by time (ascending), so we need to sort
