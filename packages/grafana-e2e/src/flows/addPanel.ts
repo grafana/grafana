@@ -13,7 +13,6 @@ export interface AddPanelConfig {
   queriesForm: (config: AddPanelConfig) => void;
   panelTitle: string;
   visualizationName: string;
-  waitForChartData: boolean;
 }
 
 // @todo this actually returns type `Cypress.Chainable`
@@ -29,7 +28,6 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
       panelTitle: `e2e-${Date.now()}`,
       queriesForm: () => {},
       visualizationName: 'Table',
-      waitForChartData: true,
       ...config,
     } as AddPanelConfig;
 
