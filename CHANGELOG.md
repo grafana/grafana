@@ -1,3 +1,8 @@
+# 7.1.3 (2020-08-06)
+
+### Bug Fixes
+  * **Templating**: Templating: Fix undefined result when using raw interpolation format [#26818](https://github.com/grafana/grafana/pull/26818)
+
 # 7.1.2 (2020-08-05)
 
 ### Features / Enhancements
