@@ -20,6 +20,7 @@ import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 //Components
 import { LogDetailsRow } from './LogDetailsRow';
+import { MAX_CHARACTERS } from './LogRowMessage';
 
 type FieldDef = {
   key: string;
@@ -64,6 +65,9 @@ class UnThemedLogDetails extends PureComponent<Props> {
   getParser = memoizeOne(getParser);
 
   parseMessage = memoizeOne((rowEntry): FieldDef[] => {
+    if (rowEntry.length > MAX_CHARACTERS) {
+      return [];
+    }
     const parser = this.getParser(rowEntry);
     if (!parser) {
       return [];

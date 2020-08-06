@@ -62,11 +62,14 @@ export function findUniqueLabels(labels: Labels | undefined, commonLabels: Label
 /**
  * Serializes the given labels to a string.
  */
-export function formatLabels(labels: Labels, defaultValue = ''): string {
+export function formatLabels(labels: Labels, defaultValue = '', withoutBraces?: boolean): string {
   if (!labels || Object.keys(labels).length === 0) {
     return defaultValue;
   }
   const labelKeys = Object.keys(labels).sort();
   const cleanSelector = labelKeys.map(key => `${key}="${labels[key]}"`).join(', ');
+  if (withoutBraces) {
+    return cleanSelector;
+  }
   return ['{', cleanSelector, '}'].join('');
 }

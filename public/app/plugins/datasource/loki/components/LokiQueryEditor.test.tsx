@@ -8,12 +8,8 @@ import { LokiQuery } from '../types';
 
 const createMockRequestRange = (from: string, to: string) => {
   return {
-    request: {
-      range: {
-        from: toUtc(from, 'YYYY-MM-DD'),
-        to: toUtc(to, 'YYYY-MM-DD'),
-      },
-    },
+    from: toUtc(from, 'YYYY-MM-DD'),
+    to: toUtc(to, 'YYYY-MM-DD'),
   };
 };
 
@@ -29,14 +25,14 @@ const setup = (propOverrides?: object) => {
     legendFormat: 'My Legend',
   };
 
-  const data = createMockRequestRange('2020-01-01', '2020-01-02');
+  const range = createMockRequestRange('2020-01-01', '2020-01-02');
 
   const props: any = {
     datasource,
     onChange,
     onRunQuery,
     query,
-    data,
+    range,
   };
 
   Object.assign(props, propOverrides);
@@ -56,10 +52,10 @@ describe('Render LokiQueryEditor with legend', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should update absolute timerange', () => {
+  it('should update timerange', () => {
     const { wrapper } = setup();
     wrapper.setProps({
-      data: createMockRequestRange('2019-01-01', '2020-01-02'),
+      range: createMockRequestRange('2019-01-01', '2020-01-02'),
     });
     expect(wrapper).toMatchSnapshot();
   });

@@ -269,7 +269,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     // Query labels for selector
     if (selector) {
       if (selector === EMPTY_SELECTOR && labelKey) {
-        const labelValuesForKey = await this.getLabelValues(labelKey);
+        const labelValuesForKey = await this.getLabelValues(labelKey, absoluteRange);
         labelValues = { [labelKey]: labelValuesForKey };
       } else {
         labelValues = await this.getSeriesLabels(selector, absoluteRange);
@@ -444,8 +444,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return nanos ? Math.floor(nanos / NS_IN_MS / 1000 / 60 / 5) : 0;
   }
 
-  async getLabelValues(key: string): Promise<string[]> {
-    return await this.fetchLabelValues(key, this.initialRange);
+  async getLabelValues(key: string, absoluteRange = this.initialRange): Promise<string[]> {
+    return await this.fetchLabelValues(key, absoluteRange);
   }
 
   async fetchLabelValues(key: string, absoluteRange: AbsoluteTimeRange): Promise<string[]> {
