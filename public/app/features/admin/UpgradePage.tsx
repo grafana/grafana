@@ -145,7 +145,7 @@ const FeatureListing: React.FC = () => {
           <Item title="Dynatrace" />
           <Item title="New Relic" />
           <Item title="DataDog" />
-          <Item title="AppDynamics" />          
+          <Item title="AppDynamics" />
           <Item title="Amazon Timestream" />
         </List>
       </Item>
