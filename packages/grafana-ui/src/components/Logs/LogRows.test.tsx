@@ -97,8 +97,8 @@ describe('LogRows', () => {
   it('renders asc ordered rows if order and function supplied', () => {
     const rows: LogRowModel[] = [
       makeLog({ uid: '1', timeEpochMs: 1 }),
-      makeLog({ uid: '2', timeEpochMs: 2 }),
       makeLog({ uid: '3', timeEpochMs: 3 }),
+      makeLog({ uid: '2', timeEpochMs: 2 }),
     ];
     const wrapper = mount(
       <LogRows
@@ -135,8 +135,8 @@ describe('LogRows', () => {
   it('renders desc ordered rows if order and function supplied', () => {
     const rows: LogRowModel[] = [
       makeLog({ uid: '1', timeEpochMs: 1 }),
-      makeLog({ uid: '2', timeEpochMs: 2 }),
       makeLog({ uid: '3', timeEpochMs: 3 }),
+      makeLog({ uid: '2', timeEpochMs: 2 }),
     ];
     const wrapper = mount(
       <LogRows
