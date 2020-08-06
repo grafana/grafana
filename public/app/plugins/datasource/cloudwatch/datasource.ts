@@ -241,20 +241,23 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       share()
     );
 
-    let prevRecordsMatched: Record<string, number> = {};
     const consecutiveFailedAttempts = dataFrames.pipe(
-      scan((acc, frames) => {
-        let newAcc = acc + 1;
-        for (const frame of frames) {
-          const recordsMatched = frame.meta?.stats?.find(stat => stat.displayName === 'Records matched')?.value!;
-          if (recordsMatched > (prevRecordsMatched[frame.refId!] ?? 0)) {
-            newAcc = 0;
+      scan(
+        ({ failures, prevRecordsMatched }, frames) => {
+          failures++;
+          for (const frame of frames) {
+            const recordsMatched = frame.meta?.stats?.find(stat => stat.displayName === 'Records matched')?.value!;
+            if (recordsMatched > (prevRecordsMatched[frame.refId!] ?? 0)) {
+              failures = 0;
+            }
+            prevRecordsMatched[frame.refId!] = recordsMatched;
           }
-          prevRecordsMatched[frame.refId!] = recordsMatched;
-        }
 
-        return newAcc;
-      }, 0),
+          return { failures, prevRecordsMatched };
+        },
+        { failures: 0, prevRecordsMatched: {} as Record<string, number> }
+      ),
+      map(({ failures }) => failures),
       share()
     );
 

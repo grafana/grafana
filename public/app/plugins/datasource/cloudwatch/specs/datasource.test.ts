@@ -179,18 +179,19 @@ describe('CloudWatchDatasource', () => {
 
     it('should stop querying when no more data received a number of times in a row', async () => {
       const fakeFrames = genMockFrames(20);
-      const initialRecordsMatched = fakeFrames[0].meta!.stats.find(stat => stat.displayName === 'Records matched')
+      const initialRecordsMatched = fakeFrames[0].meta!.stats!.find(stat => stat.displayName === 'Records matched')!
         .value!;
       for (let i = 1; i < 4; i++) {
         fakeFrames[i].meta!.stats = [
           {
             displayName: 'Records matched',
-            value: intitialRecordsMatched,
+            value: initialRecordsMatched,
           },
         ];
       }
 
-      const finalRecordsMatched = fakeFrames[9].meta!.stats.find(stat => stat.displayName === 'Records matched').value!;
+      const finalRecordsMatched = fakeFrames[9].meta!.stats!.find(stat => stat.displayName === 'Records matched')!
+        .value!;
       for (let i = 10; i < fakeFrames.length; i++) {
         fakeFrames[i].meta!.stats = [
           {
@@ -220,7 +221,7 @@ describe('CloudWatchDatasource', () => {
             custom: {
               Status: 'Cancelled',
             },
-            stats: fakeFrames[14].meta.stats,
+            stats: fakeFrames[14].meta!.stats,
           },
         },
       ];
