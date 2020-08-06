@@ -110,7 +110,7 @@ func (cr *configReader) readConfig() ([]*config, error) {
 
 	for uid, times := range uidUsage {
 		if times > 1 {
-			cr.log.Error("the same folder UID is used more than once", "folderUid", uid)
+			cr.log.Error("the same folderUID is used more than once", "folderUID", uid)
 		}
 	}
 
