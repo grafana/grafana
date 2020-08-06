@@ -223,17 +223,6 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 		return nil, errors.New("Unable to find datasource plugin Azure Monitor")
 	}
 
-	var azureMonitorRoute *plugins.AppPluginRoute
-	for _, route := range plugin.Routes {
-		if route.Path == "azuremonitor" {
-			azureMonitorRoute = route
-			break
-		}
-	}
-
-	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
-	proxyPass := fmt.Sprintf("%s/subscriptions", cloudName)
-
 	u, err := url.Parse(dsInfo.Url)
 	if err != nil {
 		return nil, err
@@ -242,16 +231,40 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
-		azlog.Debug("Failed to create request", "error", err)
+		azlog.Debug("AzureMonitor", "Failed to create request", err)
 		return nil, errutil.Wrap("Failed to create request", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
+	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
+	azlog.Debug("AzureMonitor", "CloudName used for query", cloudName)
+
+	azureMonitorRoute, proxyPass, err := e.getPluginRoute(plugin, cloudName)
+	if err != nil {
+		return nil, err
+	}
+	azlog.Debug("AzureMonitor", "Route for query", azureMonitorRoute, "Proxypass", proxyPass)
+
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, azureMonitorRoute, dsInfo)
 
 	return req, nil
+}
+
+func (e *AzureMonitorDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (*plugins.AppPluginRoute, string, error) {
+	var azureMonitorRoute *plugins.AppPluginRoute
+
+	for _, route := range plugin.Routes {
+		if route.Path == cloudName {
+			azureMonitorRoute = route
+			break
+		}
+	}
+
+	proxyPass := fmt.Sprintf("%s/subscriptions", cloudName)
+
+	return azureMonitorRoute, proxyPass, nil
 }
 
 func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMonitorResponse, error) {
@@ -372,11 +385,11 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 			return []byte(metricName)
 		}
 
-		if metaPartName == "dimensionname" {
+		if metaPartName == "dimensionname" && len(keys) > 0 {
 			return []byte(keys[0])
 		}
 
-		if metaPartName == "dimensionvalue" {
+		if metaPartName == "dimensionvalue" && len(keys) > 0 {
 			return []byte(lowerLabels[keys[0]])
 		}
 

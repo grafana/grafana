@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/require"
 )
@@ -470,6 +471,113 @@ func TestFindClosestAllowIntervalMS(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			interval := findClosestAllowedIntervalMS(tt.inputInterval, tt.allowedTimeGrains)
 			require.Equal(t, tt.expectedInterval, interval)
+		})
+	}
+}
+
+func TestPluginRoutesForAzureMonitor(t *testing.T) {
+	datasource := &AzureMonitorDatasource{}
+	plugin := &plugins.DataSourcePlugin{
+		Routes: []*plugins.AppPluginRoute{
+			{
+				Path:   "azuremonitor",
+				Method: "GET",
+				URL:    "https://management.azure.com",
+				Headers: []plugins.AppPluginRouteHeader{
+					{Name: "x-ms-app", Content: "Grafana"},
+				},
+			},
+			{
+				Path:   "chinaazuremonitor",
+				Method: "GET",
+				URL:    "https://management.chinacloudapi.cn",
+				Headers: []plugins.AppPluginRouteHeader{
+					{Name: "x-ms-app", Content: "Grafana"},
+				},
+			},
+			{
+				Path:   "govazuremonitor",
+				Method: "GET",
+				URL:    "https://management.usgovcloudapi.net",
+				Headers: []plugins.AppPluginRouteHeader{
+					{Name: "x-ms-app", Content: "Grafana"},
+				},
+			},
+			{
+				Path:   "germanyazuremonitor",
+				Method: "GET",
+				URL:    "https://management.microsoftazure.de",
+				Headers: []plugins.AppPluginRouteHeader{
+					{Name: "x-ms-app", Content: "Grafana"},
+				},
+			},
+			{
+				Path:   "azurestackmonitor",
+				Method: "GET",
+				URL:    "https://management.westus.azurestack.com",
+				Headers: []plugins.AppPluginRouteHeader{
+					{Name: "x-ms-app", Content: "Grafana"},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name              string
+		cloudName         string
+		expectedProxypass string
+		expectedRouteURL  string
+		Err               require.ErrorAssertionFunc
+	}{
+		{
+			name:              "plugin proxy route for the Azure public cloud",
+			cloudName:         "azuremonitor",
+			expectedProxypass: "azuremonitor/subscriptions",
+			expectedRouteURL:  "https://management.azure.com",
+			Err:               require.NoError,
+		},
+		{
+			name:              "plugin proxy route for the Azure China cloud",
+			cloudName:         "chinaazuremonitor",
+			expectedProxypass: "chinaazuremonitor/subscriptions",
+			expectedRouteURL:  "https://management.chinacloudapi.cn",
+			Err:               require.NoError,
+		},
+		{
+			name:              "plugin proxy route for the Azure Gov cloud",
+			cloudName:         "govazuremonitor",
+			expectedProxypass: "govazuremonitor/subscriptions",
+			expectedRouteURL:  "https://management.usgovcloudapi.net",
+			Err:               require.NoError,
+		},
+		{
+			name:              "plugin proxy route for the Azure Germany cloud",
+			cloudName:         "germanyazuremonitor",
+			expectedProxypass: "germanyazuremonitor/subscriptions",
+			expectedRouteURL:  "https://management.microsoftazure.de",
+			Err:               require.NoError,
+		},
+		{
+			name:              "plugin proxy route for the Azure Germany cloud",
+			cloudName:         "azurestackmonitor",
+			expectedProxypass: "azurestackmonitor/subscriptions",
+			expectedRouteURL:  "https://management.westus.azurestack.com",
+			Err:               require.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			route, proxypass, err := datasource.getPluginRoute(plugin, tt.cloudName)
+			tt.Err(t, err)
+
+			if diff := cmp.Diff(tt.expectedRouteURL, route.URL, cmpopts.EquateNaNs()); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+
+			if diff := cmp.Diff(tt.expectedProxypass, proxypass, cmpopts.EquateNaNs()); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
 		})
 	}
 }
