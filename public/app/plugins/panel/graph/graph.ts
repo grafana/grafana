@@ -514,6 +514,30 @@ class GraphElement {
         this.addXTableAxis(options);
         break;
       }
+      case 'ordinal': {
+        options.series.bars.barWidth = this.getMinTimeStepOfSeries(this.data) / 1.5;
+        options.series.bars.align = 'center';
+        let ticksMap: any = {};
+        for (const d of this.data) {
+          for (const point of d.data) {
+            ticksMap[point[0]] = true;
+          }
+        }
+
+        const ticks: number[] = Object.keys(ticksMap)
+          .map(Number)
+          .sort();
+
+        this.data = this.data.map((series: any) => {
+          for (const i in series.data) {
+            series.data[i][0] = ticks.indexOf(series.data[i][0]);
+          }
+          return series;
+        });
+
+        this.addOrdinalAxis(options, ticks);
+        break;
+      }
       default: {
         options.series.bars.barWidth = this.getMinTimeStepOfSeries(this.data) / 1.5;
         this.addTimeAxis(options);
@@ -656,6 +680,27 @@ class GraphElement {
       ticks: ticks,
       timeformat: graphTimeFormat(ticks, min, max),
       tickFormatter: graphTickFormatter,
+    };
+  }
+
+  addOrdinalAxis(options: any, ticks: number[]): void {
+    const min = _.isUndefined(this.ctrl.range.from) ? null : this.ctrl.range.from.valueOf();
+    const max = _.isUndefined(this.ctrl.range.to) ? null : this.ctrl.range.to.valueOf();
+
+    const formatter = (epoch: number, axis: any): string => {
+      return graphTickFormatter(ticks[epoch], axis);
+    };
+
+    options.xaxis = {
+      timezone: this.dashboard.getTimezone(),
+      show: this.panel.xaxis.show,
+      mode: null,
+      min: 0,
+      max: ticks.length + 1,
+      label: 'Datetime',
+      ticks: ticks.map((value, index) => index),
+      timeformat: graphTimeFormat(ticks.length, min, max),
+      tickFormatter: formatter,
     };
   }
 
