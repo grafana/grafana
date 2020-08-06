@@ -18,7 +18,7 @@ export function updateOrganization(): ThunkResult<any> {
 
     await getBackendSrv().put('/api/org', { name: organization.name });
 
-    dispatch(loadOrganization());
     dispatch(updateConfigurationSubtitle(organization.name));
+    dispatch(loadOrganization());
   };
 }

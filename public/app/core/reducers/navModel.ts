@@ -44,6 +44,15 @@ export const updateNavIndex = createAction<NavModelItem>('navIndex/updateNavInde
 // Since the configuration subtitle includes the organization name, we include this action to update the org name if it changes.
 export const updateConfigurationSubtitle = createAction<string>('navIndex/updateConfigurationSubtitle');
 
+export const getItemWithNewSubTitle = (item: NavModelItem, subTitle: string): NavModelItem => ({
+  ...item,
+  parentItem: {
+    ...item.parentItem,
+    text: item.parentItem?.text ?? '',
+    subTitle,
+  },
+});
+
 // Redux Toolkit uses ImmerJs as part of their solution to ensure that state objects are not mutated.
 // ImmerJs has an autoFreeze option that freezes objects from change which means this reducer can't be migrated to createSlice
 // because the state would become frozen and during run time we would get errors because Angular would try to mutate
@@ -63,17 +72,17 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
 
     return { ...state, ...newPages };
   } else if (updateConfigurationSubtitle.match(action)) {
-    const newCfgState = { ...state.cfg, subTitle: `Organization: ${action.payload}` };
-    // Update configuration (cfg) and all configuration children navItems
+    const subTitle = `Organization: ${action.payload}`;
+
     return {
       ...state,
-      cfg: newCfgState,
-      datasources: { ...state.datasources, parentItem: newCfgState },
-      users: { ...state.users, parentItem: newCfgState },
-      teams: { ...state.teams, parentItem: newCfgState },
-      plugins: { ...state.plugins, parentItem: newCfgState },
-      'org-settings': { ...state['org-settings'], parentItem: newCfgState },
-      apikeys: { ...state.apikeys, parentItem: newCfgState },
+      cfg: { ...state.cfg, subTitle },
+      datasources: getItemWithNewSubTitle(state.datasources, subTitle),
+      users: getItemWithNewSubTitle(state.users, subTitle),
+      teams: getItemWithNewSubTitle(state.teams, subTitle),
+      plugins: getItemWithNewSubTitle(state.plugins, subTitle),
+      'org-settings': getItemWithNewSubTitle(state['org-settings'], subTitle),
+      apikeys: getItemWithNewSubTitle(state.apikeys, subTitle),
     };
   }
 
