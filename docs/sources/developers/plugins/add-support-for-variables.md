@@ -77,7 +77,7 @@ For a data source to support query variables you need to override the [`metricFi
 ```ts
 async metricFindQuery(query: MyVariableQuery, options?: any) {
   // Retrieve DataQueryResponse based on query.
-  const response = await this.doQuery(query);
+  const response = await this.fetchMetricNames(query.namespace, query.rawQuery);
 
   // Convert query results to a MetricFindValue[]
   const values = response.data.map(frame => ({ text: frame.name }));
