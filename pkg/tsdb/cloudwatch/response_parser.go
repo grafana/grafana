@@ -13,7 +13,8 @@ import (
 )
 
 func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
-	mdr := make(map[string]map[string]*cloudwatch.MetricDataResult)
+	mdrs := make(map[string]map[string]*cloudwatch.MetricDataResult)
+	labels := map[string][]string{}
 	for _, mdo := range metricDataOutputs {
 		requestExceededMaxLimit := false
 		for _, message := range mdo.Messages {
@@ -23,16 +24,18 @@ func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 		}
 
 		for _, r := range mdo.MetricDataResults {
-			if _, exists := mdr[*r.Id]; !exists {
-				mdr[*r.Id] = make(map[string]*cloudwatch.MetricDataResult)
-				mdr[*r.Id][*r.Label] = r
-			} else if _, exists := mdr[*r.Id][*r.Label]; !exists {
-				mdr[*r.Id][*r.Label] = r
+			if _, exists := mdrs[*r.Id]; !exists {
+				mdrs[*r.Id] = make(map[string]*cloudwatch.MetricDataResult)
+				mdrs[*r.Id][*r.Label] = r
+				labels[*r.Id] = append(labels[*r.Id], *r.Label)
+			} else if _, exists := mdrs[*r.Id][*r.Label]; !exists {
+				mdrs[*r.Id][*r.Label] = r
+				labels[*r.Id] = append(labels[*r.Id], *r.Label)
 			} else {
-				mdr[*r.Id][*r.Label].Timestamps = append(mdr[*r.Id][*r.Label].Timestamps, r.Timestamps...)
-				mdr[*r.Id][*r.Label].Values = append(mdr[*r.Id][*r.Label].Values, r.Values...)
+				mdrs[*r.Id][*r.Label].Timestamps = append(mdrs[*r.Id][*r.Label].Timestamps, r.Timestamps...)
+				mdrs[*r.Id][*r.Label].Values = append(mdrs[*r.Id][*r.Label].Values, r.Values...)
 				if *r.StatusCode == "Complete" {
-					mdr[*r.Id][*r.Label].StatusCode = r.StatusCode
+					mdrs[*r.Id][*r.Label].StatusCode = r.StatusCode
 				}
 			}
 			queries[*r.Id].RequestExceededMaxLimit = requestExceededMaxLimit
@@ -40,8 +43,8 @@ func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 	}
 
 	cloudWatchResponses := make([]*cloudwatchResponse, 0)
-	for id, lr := range mdr {
-		series, partialData, err := parseGetMetricDataTimeSeries(lr, queries[id])
+	for id, lr := range mdrs {
+		series, partialData, err := parseGetMetricDataTimeSeries(lr, labels[id], queries[id])
 		if err != nil {
 			return nil, err
 		}
@@ -61,16 +64,11 @@ func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 	return cloudWatchResponses, nil
 }
 
-func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, query *cloudWatchQuery) (*tsdb.TimeSeriesSlice, bool, error) {
-	metricDataResultLabels := make([]string, 0)
-	for k := range metricDataResults {
-		metricDataResultLabels = append(metricDataResultLabels, k)
-	}
-	sort.Strings(metricDataResultLabels)
-
+func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, labels []string,
+	query *cloudWatchQuery) (*tsdb.TimeSeriesSlice, bool, error) {
 	partialData := false
 	result := tsdb.TimeSeriesSlice{}
-	for _, label := range metricDataResultLabels {
+	for _, label := range labels {
 		metricDataResult := metricDataResults[label]
 		if *metricDataResult.StatusCode != "Complete" {
 			partialData = true
