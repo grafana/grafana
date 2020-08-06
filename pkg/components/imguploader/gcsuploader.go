@@ -159,10 +159,10 @@ func (u *GCSUploader) uploadFile(client *http.Client, imageDiskPath, key string)
 	u.log.Debug("Sending POST request to GCS")
 
 	resp, err := client.Do(req)
-	defer resp.Body.Close()
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		respBody, err := ioutil.ReadAll(io.LimitReader(resp.Body, bodySizeLimit))
