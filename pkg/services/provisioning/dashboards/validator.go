@@ -21,10 +21,6 @@ type duplicateEntries struct {
 	UIDs   map[string]*duplicate
 }
 
-func newDuplicateEntries() *duplicateEntries {
-	return &duplicateEntries{Titles: make(map[dashboardIdentity]*duplicate), UIDs: make(map[string]*duplicate)}
-}
-
 type duplicateValidator struct {
 	readers []*FileReader
 }
@@ -34,7 +30,10 @@ func newDuplicateValidator(readers []*FileReader) *duplicateValidator {
 }
 
 func (c *duplicateValidator) getDuplicates() *duplicateEntries {
-	duplicates := newDuplicateEntries()
+	duplicates := duplicateEntries{
+		Titles: make(map[dashboardIdentity]*duplicate),
+		UIDs:   make(map[string]*duplicate),
+	}
 
 	for _, reader := range c.readers {
 		readerName := reader.Cfg.Name
@@ -56,7 +55,7 @@ func (c *duplicateValidator) getDuplicates() *duplicateEntries {
 		}
 	}
 
-	return duplicates
+	return &duplicates
 }
 
 func (c *duplicateValidator) logWarnings(log log.Logger) {
