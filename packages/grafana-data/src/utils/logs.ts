@@ -191,7 +191,7 @@ export const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
     return 1;
   }
 
-  // if milliseonds are equal, compare nanoseconds
+  // if milliseconds are equal, compare nanoseconds
   if (a.timeEpochNs > b.timeEpochNs) {
     return -1;
   }
