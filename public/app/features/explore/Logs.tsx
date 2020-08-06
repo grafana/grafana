@@ -75,22 +75,30 @@ interface State {
   showTime: boolean;
   wrapLogMessage: boolean;
   logsSortOrder: LogsSortOrder | null;
-  disabledSortButton: boolean;
+  isFlipping: boolean;
 }
 
 export class Logs extends PureComponent<Props, State> {
+  flipOrderTimer: NodeJS.Timeout;
+  cancelFlippingTimer: NodeJS.Timeout;
+
   state = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
     showTime: store.getBool(SETTINGS_KEYS.showTime, true),
     wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
     logsSortOrder: null,
-    disabledSortButton: false,
+    isFlipping: false,
   };
 
+  componentWillUnmount() {
+    clearTimeout(this.flipOrderTimer);
+    clearTimeout(this.cancelFlippingTimer);
+  }
+
   onChangeLogsSortOrder = () => {
-    this.setState({ disabledSortButton: true });
+    this.setState({ isFlipping: true });
     // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
-    setTimeout(() => {
+    this.flipOrderTimer = setTimeout(() => {
       this.setState(prevState => {
         if (prevState.logsSortOrder === null || prevState.logsSortOrder === LogsSortOrder.Descending) {
           return { logsSortOrder: LogsSortOrder.Ascending };
@@ -98,7 +106,7 @@ export class Logs extends PureComponent<Props, State> {
         return { logsSortOrder: LogsSortOrder.Descending };
       });
     }, 0);
-    setTimeout(() => this.setState({ disabledSortButton: false }), 1000);
+    this.cancelFlippingTimer = setTimeout(() => this.setState({ isFlipping: false }), 1000);
   };
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
@@ -186,7 +194,7 @@ export class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { showLabels, showTime, wrapLogMessage, logsSortOrder, disabledSortButton } = this.state;
+    const { showLabels, showTime, wrapLogMessage, logsSortOrder, isFlipping } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -254,7 +262,7 @@ export class Logs extends PureComponent<Props, State> {
               </ToggleButtonGroup>
             </div>
             <button
-              disabled={disabledSortButton}
+              disabled={isFlipping}
               title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
               aria-label="Flip results order"
               className={cx(
@@ -265,7 +273,7 @@ export class Logs extends PureComponent<Props, State> {
               )}
               onClick={this.onChangeLogsSortOrder}
             >
-              <span className="btn-title">Flip results order</span>
+              <span className="btn-title">{isFlipping ? 'Flipping...' : 'Flip results order'}</span>
             </button>
           </div>
         </div>
