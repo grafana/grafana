@@ -13,6 +13,7 @@ import { renameFieldsTransformer } from './transformers/rename';
 import { labelsToFieldsTransformer } from './transformers/labelsToFields';
 import { ensureColumnsTransformer } from './transformers/ensureColumns';
 import { mergeTransformer } from './transformers/merge';
+import { filterByValueTransformer } from './transformers/filterByValue';
 
 export const standardTransformers = {
   noopTransformer,
@@ -31,4 +32,5 @@ export const standardTransformers = {
   labelsToFieldsTransformer,
   ensureColumnsTransformer,
   mergeTransformer,
+  filterByValueTransformer,
 };
