@@ -63,7 +63,7 @@ func (c *duplicateValidator) logWarnings(log log.Logger) {
 	duplicates := c.getDuplicates()
 	for uid, usage := range duplicates.UIDs {
 		if usage.Sum > 1 {
-			log.Error("the same uid is used more than once", "uid", uid, "times", usage.Sum, "providers", keysToSlice(usage.InvolvedReaders))
+			log.Error("the same UID is used more than once", "uid", uid, "times", usage.Sum, "providers", keysToSlice(usage.InvolvedReaders))
 		}
 	}
 

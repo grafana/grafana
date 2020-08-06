@@ -57,14 +57,14 @@ func TestDuplicatesValidator(t *testing.T) {
 
 		duplicates := duplicateValidator.getDuplicates()
 
-		require.Equal(t, duplicates.UIDs["Z-phNqGmz"].Sum, uint8(2))
+		require.Equal(t, uint8(2), duplicates.UIDs["Z-phNqGmz"].Sum)
 		uidUsageReaders := keysToSlice(duplicates.UIDs["Z-phNqGmz"].InvolvedReaders)
 		sort.Strings(uidUsageReaders)
-		require.Equal(t, uidUsageReaders, []string{"first", "second"})
+		require.Equal(t, []string{"first", "second"}, uidUsageReaders)
 
-		require.Equal(t, duplicates.Titles[identity].Sum, uint8(2))
+		require.Equal(t, uint8(2), duplicates.Titles[identity].Sum)
 		titleUsageReaders := keysToSlice(duplicates.Titles[identity].InvolvedReaders)
 		sort.Strings(titleUsageReaders)
-		require.Equal(t, titleUsageReaders, []string{"first", "second"})
+		require.Equal(t, []string{"first", "second"}, titleUsageReaders)
 	})
 }
