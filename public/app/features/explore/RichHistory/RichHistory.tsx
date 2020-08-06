@@ -1,8 +1,7 @@
 import React, { PureComponent } from 'react';
 
 //Services & Utils
-import { SortOrder } from 'app/core/utils/explore';
-import { RICH_HISTORY_SETTING_KEYS } from 'app/core/utils/richHistory';
+import { RICH_HISTORY_SETTING_KEYS, SortOrder } from 'app/core/utils/richHistory';
 import store from 'app/core/store';
 import { withTheme, TabbedContainer, TabConfig } from '@grafana/ui';
 
