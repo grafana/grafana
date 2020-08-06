@@ -125,6 +125,7 @@ Options are identical for both Y-axes.
     - **Buckets -** The number of buckets to group the values by. If left empty, then Grafana tries to calculate a suitable number of buckets.
     - **X-Min -** Filters out values from the histogram that are under this minimum limit.
     - **X-Max -** Filters out values that are greater than this maximum limit.
+  - **Ordinal -** The data is represented sequentially on the X-axis and the X values are only labelled as timestamps rather than being on a time scale.
 	
 ## Legend
 
