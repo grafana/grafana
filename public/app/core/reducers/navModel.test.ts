@@ -1,5 +1,5 @@
 import { reducerTester } from '../../../test/core/redux/reducerTester';
-import { getItemWithNewSubTitle, navIndexReducer, updateNavIndex, updateConfigurationSubtitle } from './navModel';
+import { navIndexReducer, updateNavIndex, updateConfigurationSubtitle } from './navModel';
 import { NavIndex } from '@grafana/data';
 
 describe('navModelReducer', () => {
@@ -40,119 +40,40 @@ describe('navModelReducer', () => {
 
   describe('when updateConfigurationSubtitle is dispatched', () => {
     it('then state should be correct', () => {
+      const originalCfg = { id: 'cfg', subTitle: 'Organization: Org 1', text: 'Configuration' };
+      const datasources = { id: 'datasources', text: 'Data Sources' };
+      const users = { id: 'users', text: 'Users' };
+      const teams = { id: 'teams', text: 'Teams' };
+      const plugins = { id: 'plugins', text: 'Plugins' };
+      const orgsettings = { id: 'org-settings', text: 'Preferences' };
+      const apikeys = { id: 'apikeys', text: 'API Keys' };
+
       const initialState = {
-        cfg: {
-          children: [
-            {
-              id: 'datasources',
-              text: 'Data Sources',
-              description: 'Add and configure data sources',
-              icon: 'database',
-              url: '/datasources',
-            },
-            {
-              id: 'users',
-              text: 'Users',
-              description: 'Manage org members',
-              icon: 'user',
-              url: '/org/users',
-            },
-            {
-              id: 'teams',
-              text: 'Teams',
-              description: 'Manage org groups',
-              icon: 'users-alt',
-              url: '/org/teams',
-            },
-            {
-              id: 'plugins',
-              text: 'Plugins',
-              description: 'View and configure plugins',
-              icon: 'plug',
-              url: '/plugins',
-            },
-            {
-              id: 'org-settings',
-              text: 'Preferences',
-              description: 'Organization preferences',
-              icon: 'sliders-v-alt',
-              url: '/org',
-            },
-            {
-              id: 'apikeys',
-              text: 'API Keys',
-              description: 'Create & manage API keys',
-              icon: 'key-skeleton-alt',
-              url: '/org/apikeys',
-            },
-          ],
-          icon: 'cog',
-          id: 'cfg',
-          sortWeight: -1400,
-          subTitle: 'Organization: Jake Org',
-          text: 'Configuration',
-          url: '/datasources',
-        },
-        datasources: {
-          id: 'datasources',
-          text: 'Data Sources',
-          description: 'Add and configure data sources',
-          icon: 'database',
-          url: '/datasources',
-        },
-        users: {
-          id: 'users',
-          text: 'Users',
-          description: 'Manage org members',
-          icon: 'user',
-          url: '/org/users',
-        },
-        teams: {
-          id: 'teams',
-          text: 'Teams',
-          description: 'Manage org groups',
-          icon: 'users-alt',
-          url: '/org/teams',
-        },
-        plugins: {
-          id: 'plugins',
-          text: 'Plugins',
-          description: 'View and configure plugins',
-          icon: 'plug',
-          url: '/plugins',
-        },
-        'org-settings': {
-          id: 'org-settings',
-          text: 'Preferences',
-          description: 'Organization preferences',
-          icon: 'sliders-v-alt',
-          url: '/org',
-        },
-        apikeys: {
-          id: 'apikeys',
-          text: 'API Keys',
-          description: 'Create & manage API keys',
-          icon: 'key-skeleton-alt',
-          url: '/org/apikeys',
-        },
+        cfg: { ...originalCfg, children: [datasources, users, teams, plugins, orgsettings, apikeys] },
+        datasources: { ...datasources, parentItem: originalCfg },
+        users: { ...users, parentItem: originalCfg },
+        teams: { ...teams, parentItem: originalCfg },
+        plugins: { ...plugins, parentItem: originalCfg },
+        'org-settings': { ...orgsettings, parentItem: originalCfg },
+        apikeys: { ...apikeys, parentItem: originalCfg },
       };
 
-      const orgName = 'New Org Name';
-      const subTitle = `Organization: ${orgName}`;
+      const newOrgName = 'Org 2';
+      const subTitle = `Organization: ${newOrgName}`;
+      const newCfg = { ...originalCfg, subTitle };
       const expectedState = {
-        ...initialState,
-        cfg: { ...initialState.cfg, subTitle },
-        datasources: getItemWithNewSubTitle(initialState.datasources, subTitle),
-        users: getItemWithNewSubTitle(initialState.users, subTitle),
-        teams: getItemWithNewSubTitle(initialState.teams, subTitle),
-        plugins: getItemWithNewSubTitle(initialState.plugins, subTitle),
-        'org-settings': getItemWithNewSubTitle(initialState['org-settings'], subTitle),
-        apikeys: getItemWithNewSubTitle(initialState.apikeys, subTitle),
+        cfg: { ...newCfg, children: [datasources, users, teams, plugins, orgsettings, apikeys] },
+        datasources: { ...datasources, parentItem: newCfg },
+        users: { ...users, parentItem: newCfg },
+        teams: { ...teams, parentItem: newCfg },
+        plugins: { ...plugins, parentItem: newCfg },
+        'org-settings': { ...orgsettings, parentItem: newCfg },
+        apikeys: { ...apikeys, parentItem: newCfg },
       };
 
       reducerTester<NavIndex>()
         .givenReducer(navIndexReducer, { ...initialState })
-        .whenActionIsDispatched(updateConfigurationSubtitle(orgName))
+        .whenActionIsDispatched(updateConfigurationSubtitle(newOrgName))
         .thenStateShouldEqual(expectedState);
     });
   });

@@ -2,18 +2,6 @@ import { updateOrganization } from './actions';
 import { updateConfigurationSubtitle } from 'app/core/actions';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-jest.mock('@grafana/runtime', () => {
-  const original = jest.requireActual('@grafana/runtime');
-
-  return {
-    ...original,
-    getBackendSrv: () => ({
-      get: jest.fn().mockResolvedValue({ id: 1, name: 'New Org Name' }),
-      put: jest.fn().mockResolvedValue({ id: 1, name: 'New Org Name' }),
-    }),
-  };
-});
-
 const setup = () => {
   const initialState = {
     organization: {
@@ -31,12 +19,19 @@ const setup = () => {
 
 describe('updateOrganization', () => {
   describe('when updateOrganization thunk is dispatched', () => {
+    const getMock = jest.fn().mockResolvedValue({ id: 1, name: 'New Org Name' });
+    const putMock = jest.fn().mockResolvedValue({ id: 1, name: 'New Org Name' });
+    const backendSrvMock: any = {
+      get: getMock,
+      put: putMock,
+    };
+
     it('then it should dispatch updateConfigurationSubtitle', async () => {
       const { initialState } = setup();
 
       const dispatchedActions = await thunkTester(initialState)
         .givenThunk(updateOrganization)
-        .whenThunkIsDispatched();
+        .whenThunkIsDispatched({ getBackendSrv: () => backendSrvMock });
 
       expect(dispatchedActions[0].type).toEqual(updateConfigurationSubtitle.type);
       expect(dispatchedActions[0].payload).toEqual(initialState.organization.organization.name);
