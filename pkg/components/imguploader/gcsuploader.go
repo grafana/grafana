@@ -3,13 +3,14 @@ package imguploader
 import (
 	"context"
 	"fmt"
-	"golang.org/x/oauth2/jwt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
 	"time"
+
+	"golang.org/x/oauth2/jwt"
 
 	"cloud.google.com/go/storage"
 	"github.com/grafana/grafana/pkg/infra/log"
