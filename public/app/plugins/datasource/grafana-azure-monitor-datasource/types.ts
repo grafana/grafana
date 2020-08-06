@@ -23,6 +23,7 @@ export interface AzureMonitorQuery extends DataQuery {
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
   subscriptionId: string;
   cloudName: string;
+  azureStackUrl?: string;
 
   // monitor
   tenantId?: string;

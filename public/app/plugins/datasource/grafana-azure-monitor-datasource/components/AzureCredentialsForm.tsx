@@ -6,6 +6,7 @@ const { Select, Input } = LegacyForms;
 export interface Props {
   selectedAzureCloud?: string;
   selectedSubscription?: string;
+  azureStackUrl?: string;
   azureCloudOptions?: SelectableValue[];
   tenantId?: string;
   clientId?: string;
@@ -13,6 +14,7 @@ export interface Props {
   clientSecretConfigured?: boolean;
   subscriptionOptions?: SelectableValue[];
   onAzureCloudChange?: (value: SelectableValue<string>) => void;
+  onAzureStackUrlChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   onSubscriptionSelectChange?: (value: SelectableValue<string>) => void;
   onTenantIdChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onClientIdChange: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -25,6 +27,7 @@ export class AzureCredentialsForm extends PureComponent<Props> {
   render() {
     const {
       selectedAzureCloud,
+      azureStackUrl,
       selectedSubscription,
       tenantId,
       clientId,
@@ -33,6 +36,7 @@ export class AzureCredentialsForm extends PureComponent<Props> {
       azureCloudOptions,
       subscriptionOptions,
       onAzureCloudChange,
+      onAzureStackUrlChange,
       onSubscriptionSelectChange,
       onTenantIdChange,
       onClientIdChange,
@@ -59,6 +63,21 @@ export class AzureCredentialsForm extends PureComponent<Props> {
                   defaultValue={selectedAzureCloud}
                   onChange={onAzureCloudChange}
                 />
+              </div>
+            </div>
+          )}
+          {azureCloudOptions && selectedAzureCloud === 'azurestackmonitor' && (
+            <div className="gf-form-inline">
+              <div className="gf-form">
+                <InlineFormLabel className="width-12">Azure Stack url</InlineFormLabel>
+                <div className="width-15">
+                  <Input
+                    className="width-30"
+                    placeholder="https://management.{region}.{Azure Stack Hub domain}/"
+                    value={azureStackUrl || ''}
+                    onChange={onAzureStackUrlChange}
+                  />
+                </div>
               </div>
             </div>
           )}

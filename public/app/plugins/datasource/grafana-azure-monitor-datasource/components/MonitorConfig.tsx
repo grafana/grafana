@@ -8,6 +8,7 @@ const azureClouds = [
   { value: 'govazuremonitor', label: 'Azure US Government' },
   { value: 'germanyazuremonitor', label: 'Azure Germany' },
   { value: 'chinaazuremonitor', label: 'Azure China' },
+  { value: 'azurestackmonitor', label: 'Azure Stack' },
 ] as SelectableValue[];
 
 export interface Props {
@@ -23,6 +24,10 @@ export interface Props {
 export class MonitorConfig extends PureComponent<Props> {
   onAzureCloudSelect = (cloudName: SelectableValue<string>) => {
     this.props.onUpdateJsonDataOption('cloudName', cloudName.value);
+  };
+
+  onAzureStackUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.props.onUpdateJsonDataOption('azureStackUrl', event.target.value);
   };
 
   onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -59,6 +64,7 @@ export class MonitorConfig extends PureComponent<Props> {
         <AzureCredentialsForm
           selectedAzureCloud={options.jsonData.cloudName || 'azuremonitor'}
           azureCloudOptions={azureClouds}
+          azureStackUrl={options.jsonData.azureStackUrl}
           subscriptionOptions={subscriptions}
           selectedSubscription={options.jsonData.subscriptionId}
           tenantId={options.jsonData.tenantId}
@@ -66,6 +72,7 @@ export class MonitorConfig extends PureComponent<Props> {
           clientSecret={options.secureJsonData?.clientSecret}
           clientSecretConfigured={options.secureJsonFields.clientSecret}
           onAzureCloudChange={this.onAzureCloudSelect}
+          onAzureStackUrlChange={this.onAzureStackUrlChange}
           onSubscriptionSelectChange={this.onSubscriptionSelect}
           onTenantIdChange={this.onTenantIdChange}
           onClientIdChange={this.onClientIdChange}
