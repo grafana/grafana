@@ -1199,7 +1199,7 @@ the image uploaded to Google Cloud Storage.
 
 ### signed_url_expiration
 
-Sets the signed url expiration, which defaults to 7 days.
+Sets the signed URL expiration, which defaults to seven days.
 
 ## [external_image_storage.azure_blob]
 
