@@ -10,8 +10,10 @@ export interface AddPanelConfig {
   };
   dashboardUid: string;
   dataSourceName: string;
+  matchScreenshot: boolean;
   queriesForm: (config: AddPanelConfig) => void;
   panelTitle: string;
+  screenshotName: string;
   visualizationName: string;
 }
 
@@ -25,13 +27,24 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
       },
       dashboardUid: lastAddedDashboardUid,
       dataSourceName: lastAddedDataSource,
+      matchScreenshot: false,
       panelTitle: `e2e-${Date.now()}`,
       queriesForm: () => {},
+      screenshotName: 'chart',
       visualizationName: 'Table',
       ...config,
     } as AddPanelConfig;
 
-    const { chartData, dashboardUid, dataSourceName, panelTitle, queriesForm, visualizationName } = fullConfig;
+    const {
+      chartData,
+      dashboardUid,
+      dataSourceName,
+      matchScreenshot,
+      panelTitle,
+      queriesForm,
+      screenshotName,
+      visualizationName,
+    } = fullConfig;
 
     e2e.flows.openDashboard({ uid: dashboardUid });
     e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
@@ -85,6 +98,13 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
 
     // Wait for RxJS
     e2e().wait(500);
+
+    if (matchScreenshot) {
+      e2e.components.Panels.Panel.containerByTitle(panelTitle)
+        .find('.panel-content')
+        .screenshot(screenshotName);
+      e2e().compareScreenshots(screenshotName);
+    }
 
     // @todo remove `wrap` when possible
     return e2e().wrap({ config: fullConfig });
