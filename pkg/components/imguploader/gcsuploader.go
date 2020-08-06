@@ -159,7 +159,7 @@ func (u *GCSUploader) uploadFile(client *http.Client, imageDiskPath, key string)
 	u.log.Debug("Sending POST request to GCS")
 
 	resp, err := client.Do(req)
-	defer u.closeResponse(resp)
+	defer resp.Body.Close()
 	if err != nil {
 		return err
 	}
@@ -173,11 +173,4 @@ func (u *GCSUploader) uploadFile(client *http.Client, imageDiskPath, key string)
 	}
 
 	return nil
-}
-
-func (u *GCSUploader) closeResponse(resp *http.Response) {
-	if resp != nil && resp.Body != nil {
-		_, _ = io.Copy(ioutil.Discard, resp.Body)
-		_ = resp.Body.Close()
-	}
 }
