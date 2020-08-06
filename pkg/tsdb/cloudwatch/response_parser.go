@@ -24,38 +24,42 @@ func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 		}
 
 		for _, r := range mdo.MetricDataResults {
-			if _, exists := mdrs[*r.Id]; !exists {
-				mdrs[*r.Id] = make(map[string]*cloudwatch.MetricDataResult)
-				mdrs[*r.Id][*r.Label] = r
-				labels[*r.Id] = append(labels[*r.Id], *r.Label)
-			} else if _, exists := mdrs[*r.Id][*r.Label]; !exists {
-				mdrs[*r.Id][*r.Label] = r
-				labels[*r.Id] = append(labels[*r.Id], *r.Label)
+			id := *r.Id
+			label := *r.Label
+			if _, exists := mdrs[id]; !exists {
+				mdrs[id] = make(map[string]*cloudwatch.MetricDataResult)
+				mdrs[id][label] = r
+				labels[id] = append(labels[id], label)
+			} else if _, exists := mdrs[id][label]; !exists {
+				mdrs[id][label] = r
+				labels[id] = append(labels[id], label)
 			} else {
-				mdrs[*r.Id][*r.Label].Timestamps = append(mdrs[*r.Id][*r.Label].Timestamps, r.Timestamps...)
-				mdrs[*r.Id][*r.Label].Values = append(mdrs[*r.Id][*r.Label].Values, r.Values...)
+				mdr := mdrs[id][label]
+				mdr.Timestamps = append(mdr.Timestamps, r.Timestamps...)
+				mdr.Values = append(mdr.Values, r.Values...)
 				if *r.StatusCode == "Complete" {
-					mdrs[*r.Id][*r.Label].StatusCode = r.StatusCode
+					mdr.StatusCode = r.StatusCode
 				}
 			}
-			queries[*r.Id].RequestExceededMaxLimit = requestExceededMaxLimit
+			queries[id].RequestExceededMaxLimit = requestExceededMaxLimit
 		}
 	}
 
 	cloudWatchResponses := make([]*cloudwatchResponse, 0)
 	for id, lr := range mdrs {
-		series, partialData, err := parseGetMetricDataTimeSeries(lr, labels[id], queries[id])
+		query := queries[id]
+		series, partialData, err := parseGetMetricDataTimeSeries(lr, labels[id], query)
 		if err != nil {
 			return nil, err
 		}
 
 		response := &cloudwatchResponse{
 			series:                  series,
-			Period:                  queries[id].Period,
-			Expression:              queries[id].UsedExpression,
-			RefId:                   queries[id].RefId,
-			Id:                      queries[id].Id,
-			RequestExceededMaxLimit: queries[id].RequestExceededMaxLimit,
+			Period:                  query.Period,
+			Expression:              query.UsedExpression,
+			RefId:                   query.RefId,
+			Id:                      query.Id,
+			RequestExceededMaxLimit: query.RequestExceededMaxLimit,
 			PartialData:             partialData,
 		}
 		cloudWatchResponses = append(cloudWatchResponses, response)
