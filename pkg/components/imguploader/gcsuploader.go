@@ -102,7 +102,6 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 	u.log.Debug("Signing GCS URL")
 	var conf *jwt.Config
 	if u.keyFile != "" {
-
 		jsonKey, err := ioutil.ReadFile(u.keyFile)
 		if err != nil {
 			return "", fmt.Errorf("ioutil.ReadFile: %v", err)
