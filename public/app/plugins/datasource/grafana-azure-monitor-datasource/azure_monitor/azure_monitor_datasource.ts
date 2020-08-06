@@ -17,7 +17,8 @@ const defaultDropdownValue = 'select';
 
 export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   apiVersion = '2018-01-01';
-  apiPreviewVersion = '2017-12-01-preview';
+  //Can find the latest API version for the metricnamespaces API endpoint here: https://docs.microsoft.com/en-us/rest/api/monitor/metricnamespaces/list
+  apiVersionForMetricNamespaces = '2017-12-01-preview';
   subscriptionId: string;
   baseUrl: string;
   resourceGroup: string;
@@ -38,6 +39,10 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
   isConfigured(): boolean {
     return !!this.subscriptionId && this.subscriptionId.length > 0;
+  }
+
+  hasSupportForCustomMetrics(): boolean {
+    return this.cloudName !== 'azurestackmonitor';
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
@@ -292,7 +297,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       resourceGroup,
       metricDefinition,
       resourceName,
-      this.apiPreviewVersion
+      this.apiVersionForMetricNamespaces
     );
 
     return this.doRequest(url).then((result: any) => {

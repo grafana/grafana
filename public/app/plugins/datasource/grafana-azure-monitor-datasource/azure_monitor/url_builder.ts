@@ -32,23 +32,25 @@ export default class UrlBuilder {
     metricNamespace: string,
     apiVersion: string
   ) {
+    let url = '';
+
     if ((metricDefinition.match(/\//g) || []).length > 1) {
       const rn = resourceName.split('/');
       const service = metricDefinition.substring(metricDefinition.lastIndexOf('/') + 1);
       const md = metricDefinition.substring(0, metricDefinition.lastIndexOf('/'));
-      return (
+      url =
         `${baseUrl}/${subscriptionId}/resourceGroups/${resourceGroup}/providers/${md}/${rn[0]}/${service}/${rn[1]}` +
-        `/providers/microsoft.insights/metricdefinitions?api-version=${apiVersion}&metricnamespace=${encodeURIComponent(
-          metricNamespace
-        )}`
-      );
+        `/providers/microsoft.insights/metricdefinitions?api-version=${apiVersion}`;
+    } else {
+      url =
+        `${baseUrl}/${subscriptionId}/resourceGroups/${resourceGroup}/providers/${metricDefinition}/${resourceName}` +
+        `/providers/microsoft.insights/metricdefinitions?api-version=${apiVersion}`;
     }
 
-    return (
-      `${baseUrl}/${subscriptionId}/resourceGroups/${resourceGroup}/providers/${metricDefinition}/${resourceName}` +
-      `/providers/microsoft.insights/metricdefinitions?api-version=${apiVersion}&metricnamespace=${encodeURIComponent(
-        metricNamespace
-      )}`
-    );
+    if (metricNamespace && metricNamespace !== 'select') {
+      url += `&metricnamespace=${encodeURIComponent(metricNamespace)}`;
+    }
+
+    return url;
   }
 }

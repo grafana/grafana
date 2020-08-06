@@ -233,6 +233,13 @@ export default class SupportedNamespaces {
       'Microsoft.Web/hostingEnvironments/multiRolePools',
       'Microsoft.Web/hostingEnvironments/workerPools',
     ],
+    azurestackmonitor: [
+      'Microsoft.Compute/virtualMachines',
+      'Microsoft.Storage/storageAccounts',
+      'Microsoft.Storage/storageAccounts/blobServices',
+      'Microsoft.Storage/storageAccounts/queueServices',
+      'Microsoft.Storage/storageAccounts/tableServices',
+    ],
   };
 
   constructor(private cloudName: string) {}
