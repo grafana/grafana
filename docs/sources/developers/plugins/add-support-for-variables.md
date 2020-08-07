@@ -61,7 +61,7 @@ For data sources, you need to use the [getTemplateSrv]({{< relref "../../package
 
 ## Add support for variable queries to your data source
 
-[Query variables]({{< relref "../../variables/variable-types/add-query-variable/" >}}) is a type of variable that allows you to query a data source for the values. By adding support for variable queries to your data source plugin, users can create dynamic dashboards based on data from your data source.
+[Query variables]({{< relref "../../variables/variable-types/add-query-variable.md" >}}) is a type of variable that allows you to query a data source for the values. By adding support for variable queries to your data source plugin, users can create dynamic dashboards based on data from your data source.
 
 Let's start by defining a query model for the variable query.
 
@@ -152,3 +152,5 @@ Let's create a custom query editor to allow the user to edit the query model.
      .setQueryEditor(QueryEditor)
      .setVariableQueryEditor(VariableQueryEditor);
    ```
+
+That's it! You can now try out the plugin by adding a [query variable]({{< relref "../../variables/variable-types/add-query-variable.md" >}}) to your dashboard.
