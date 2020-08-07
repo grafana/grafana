@@ -57,11 +57,6 @@ export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> =
 
 export const changeVariableName = (identifier: VariableIdentifier, newName: string): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const variableInState = getVariable(identifier.id, getState());
-    if (newName === variableInState.name) {
-      return;
-    }
-
     let errorText = null;
     if (!newName.match(/^(?!__).*$/)) {
       errorText = "Template names cannot begin with '__', that's reserved for Grafana's global variables";

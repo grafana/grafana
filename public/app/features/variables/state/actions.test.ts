@@ -315,28 +315,6 @@ describe('shared actions', () => {
   });
 
   describe('changeVariableName', () => {
-    describe('when changeVariableName is dispatched with the same name', () => {
-      it('then no actions are dispatched', () => {
-        const textbox = textboxBuilder()
-          .withId('textbox')
-          .withName('textbox')
-          .build();
-        const constant = constantBuilder()
-          .withId('constant')
-          .withName('constant')
-          .build();
-
-        reduxTester<{ templating: TemplatingState }>()
-          .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
-          .whenActionIsDispatched(
-            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
-          )
-          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), constant.name), true)
-          .thenNoActionsWhereDispatched();
-      });
-    });
-
     describe('when changeVariableName is dispatched with an unique name', () => {
       it('then the correct actions are dispatched', () => {
         const textbox = textboxBuilder()
