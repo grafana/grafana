@@ -293,9 +293,11 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 		dataField := frame.Fields[1]
 		dataField.Name = amr.Value[0].Name.LocalizedValue
 		dataField.Labels = labels
-		dataField.SetConfig(&data.FieldConfig{
-			Unit: toGrafanaUnit(amr.Value[0].Unit),
-		})
+		if amr.Value[0].Unit != "Unspecified" {
+			dataField.SetConfig(&data.FieldConfig{
+				Unit: toGrafanaUnit(amr.Value[0].Unit),
+			})
+		}
 		if query.Alias != "" {
 			dataField.Config.DisplayName = formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"],
 				amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID, labels)
