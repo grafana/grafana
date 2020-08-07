@@ -13,6 +13,7 @@ import (
 )
 
 func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
+	// Map from result ID -> label -> result
 	mdrs := make(map[string]map[string]*cloudwatch.MetricDataResult)
 	labels := map[string][]string{}
 	for _, mdo := range metricDataOutputs {
