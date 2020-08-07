@@ -72,7 +72,7 @@ export interface MyVariableQuery {
 }
 ```
 
-For a data source to support query variables you need to override the [`metricFindQuery`]({{< relref "../../packages_api/data/datasourceapi.md#metricfindquery-method" >}}) in your `DataSourceApi` class. `metricFindQuery` returns an array of [`MetricFindValue`]({{< relref "../../packages_api/data/metricfindvalue.md" >}}) which has a single property, `text`.
+For a data source to support query variables, you must override the [`metricFindQuery`]({{< relref "../../packages_api/data/datasourceapi.md#metricfindquery-method" >}}) in your `DataSourceApi` class. `metricFindQuery` returns an array of [`MetricFindValue`]({{< relref "../../packages_api/data/metricfindvalue.md" >}}) which has a single property, `text`:
 
 ```ts
 async metricFindQuery(query: MyVariableQuery, options?: any) {
