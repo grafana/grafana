@@ -5,7 +5,6 @@ import _ from 'lodash';
 import { DataQuery, DataSourceApi, dateTimeFormat, AppEvents, urlUtil, ExploreUrlState } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import store from 'app/core/store';
-import { SortOrder } from './explore';
 import { getExploreDatasources } from '../../features/explore/state/selectors';
 
 // Types
@@ -20,6 +19,13 @@ export const RICH_HISTORY_SETTING_KEYS = {
   activeDatasourceOnly: 'grafana.explore.richHistory.activeDatasourceOnly',
   datasourceFilters: 'grafana.explore.richHistory.datasourceFilters',
 };
+
+export enum SortOrder {
+  Descending = 'Descending',
+  Ascending = 'Ascending',
+  DatasourceAZ = 'Datasource A-Z',
+  DatasourceZA = 'Datasource Z-A',
+}
 
 /*
  * Add queries to rich history. Save only queries within the retention period, or that are starred.

@@ -28,6 +28,7 @@ import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
+import ExploreQueryInspector from './ExploreQueryInspector';
 import {
   addQueryRow,
   changeSize,
@@ -128,8 +129,13 @@ export interface ExploreProps {
   showTrace: boolean;
 }
 
+enum ExploreDrawer {
+  RichHistory,
+  QueryInspector,
+}
+
 interface ExploreState {
-  showRichHistory: boolean;
+  openDrawer?: ExploreDrawer;
 }
 
 /**
@@ -164,7 +170,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     super(props);
     this.exploreEvents = new Emitter();
     this.state = {
-      showRichHistory: false,
+      openDrawer: undefined,
     };
   }
 
@@ -276,7 +282,15 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   toggleShowRichHistory = () => {
     this.setState(state => {
       return {
-        showRichHistory: !state.showRichHistory,
+        openDrawer: state.openDrawer === ExploreDrawer.RichHistory ? undefined : ExploreDrawer.RichHistory,
+      };
+    });
+  };
+
+  toggleShowQueryInspector = () => {
+    this.setState(state => {
+      return {
+        openDrawer: state.openDrawer === ExploreDrawer.QueryInspector ? undefined : ExploreDrawer.QueryInspector,
       };
     });
   };
@@ -319,7 +333,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       showLogs,
       showTrace,
     } = this.props;
-    const { showRichHistory } = this.state;
+    const { openDrawer } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles(theme);
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
@@ -328,6 +342,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     // gets an error without a refID, so non-query-row-related error, like a connection error
     const queryErrors = queryResponse.error ? [queryResponse.error] : undefined;
     const queryError = getFirstNonQueryRowSpecificError(queryErrors);
+
+    const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
+    const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
 
     return (
       <div className={exploreClass} ref={this.getRef} aria-label={selectors.pages.Explore.General.container}>
@@ -343,8 +360,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 //TODO:unification
                 addQueryRowButtonHidden={false}
                 richHistoryButtonActive={showRichHistory}
+                queryInspectorButtonActive={showQueryInspector}
                 onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                 onClickRichHistoryButton={this.toggleShowRichHistory}
+                onClickQueryInspectorButton={this.toggleShowQueryInspector}
               />
             </div>
             <ErrorContainer queryError={queryError} />
@@ -419,6 +438,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           width={width}
                           exploreId={exploreId}
                           onClose={this.toggleShowRichHistory}
+                        />
+                      )}
+                      {showQueryInspector && (
+                        <ExploreQueryInspector
+                          exploreId={exploreId}
+                          width={width}
+                          onClose={this.toggleShowQueryInspector}
                         />
                       )}
                     </ErrorBoundaryAlert>

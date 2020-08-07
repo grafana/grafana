@@ -7,9 +7,10 @@ import {
   getDisplayProcessor,
   PreferredVisualisationType,
   standardTransformers,
+  sortLogsResult,
 } from '@grafana/data';
 import { ExploreItemState } from 'app/types/explore';
-import { sortLogsResult, refreshIntervalToSortOrder } from 'app/core/utils/explore';
+import { refreshIntervalToSortOrder } from 'app/core/utils/explore';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 import { config } from 'app/core/config';
