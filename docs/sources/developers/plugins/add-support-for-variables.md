@@ -86,7 +86,7 @@ async metricFindQuery(query: MyVariableQuery, options?: any) {
 }
 ```
 
-> **Note:** By default, Grafana provides a default query model and editor for simple text queries. If that's all you need, you can leave the query type as `string`.
+> **Note:** By default, Grafana provides a default query model and editor for simple text queries. If that's all you need, then you can leave the query type as `string`.
 >
 > ```ts
 > async metricFindQuery(query: string, options?: any)
