@@ -1,14 +1,14 @@
-import { PanelData, QueryResultMetaStat } from '@grafana/data';
+import { PanelData, QueryResultMetaStat, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { InspectStatsTable } from './InspectStatsTable';
 import React from 'react';
-import { DashboardModel } from 'app/features/dashboard/state';
 
 interface InspectStatsTabProps {
   data: PanelData;
-  dashboard: DashboardModel;
+  timeZone: TimeZone;
 }
-export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, dashboard }) => {
+
+export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, timeZone }) => {
   if (!data.request) {
     return null;
   }
@@ -42,8 +42,8 @@ export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, dashboar
 
   return (
     <div aria-label={selectors.components.PanelInspector.Stats.content}>
-      <InspectStatsTable dashboard={dashboard} name={'Stats'} stats={stats} />
-      <InspectStatsTable dashboard={dashboard} name={'Data source stats'} stats={dataStats} />
+      <InspectStatsTable timeZone={timeZone} name={'Stats'} stats={stats} />
+      <InspectStatsTable timeZone={timeZone} name={'Data source stats'} stats={dataStats} />
     </div>
   );
 };

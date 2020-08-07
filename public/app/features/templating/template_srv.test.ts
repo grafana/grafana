@@ -375,6 +375,11 @@ describe('templateSrv', () => {
       const result = _templateSrv.formatValue(['test', "test'value2"], 'sqlstring');
       expect(result).toBe(`'test','test''value2'`);
     });
+
+    it('raw format should leave value intact and do no escaping', () => {
+      const result = _templateSrv.formatValue("'test\n", 'raw');
+      expect(result).toBe("'test\n");
+    });
   });
 
   describe('can check if variable exists', () => {
