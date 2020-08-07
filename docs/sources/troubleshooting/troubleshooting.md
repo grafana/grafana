@@ -21,7 +21,7 @@ The most common problems are related to the query and response from your data so
 like a bug or visualization issue in Grafana, it is almost always a problem with the data source query or
 the data source response.
 
-To check this you should use query inspector, which was added in Grafana 4.5. The query inspector shows query requests and responses. Refer to the data source page for more information.
+To check this you should use query inspector. The query inspector shows query requests and responses. Refer to the data source page for more information.
 
 For more on the query inspector read the Grafana Community article [Using Grafana’s Query Inspector to troubleshoot issues](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630). For older versions of Grafana, refer to the [How troubleshoot metric query issue](https://community.grafana.com/t/how-to-troubleshoot-metric-query-issues/50/2) article.
 
