@@ -17,13 +17,13 @@ If you encounter an error or problem, then you can check the Grafana server log.
 
 You can enable more logging by changing log level in the Grafana configuration file.
 
-For more information, refer to [Enable debug logging in Grafana CLI]({{< relref "../administration/cli.md#enable-debug-logging >}}") and the [log section in Configuration]({{< relref "../administration/configuration.md#log" >}}).
+For more information, refer to [Enable debug logging in Grafana CLI]({{< relref "../administration/cli.md#enable-debug-logging" >}}) and the [log section in Configuration]({{< relref "../administration/configuration.md#log" >}}).
 
 ## Troubleshoot transformations
 
 Order of transformations matters. If the final data output from multiple transformations looks wrong, try changing the transformation order. Each transformation transforms data returned by the previous transformation, not the original raw data.
 
-For more information, refer to [Debug transformations]({{< relref "panels/transformations.md#debug-transformations" >}}).
+For more information, refer to [Debug transformations]({{< relref "../panels/transformations.md#debug-transformations" >}}).
 
 ## Text missing with server-side image rendering (RPM-based Linux)
 

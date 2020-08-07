@@ -438,7 +438,11 @@
   - name: Overview
     link: /troubleshooting/
   - name: Enable diagnostics
-    link: /troubleshooting/diagnostics/  
+    link: /troubleshooting/diagnostics/
+  - name: Troubleshoot dashboards
+    link: /troubleshooting/troubleshoot-dashboards/
+  - name: Troubleshoot queries
+    link: /troubleshooting/troubleshoot-queries/
 - name: Developers
   children:
     - name: Plugins

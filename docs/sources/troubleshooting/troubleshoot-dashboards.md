@@ -37,11 +37,9 @@ In the picture below we have enabled:
 - Points and 3 point radius to highlight where datapoints are actually present.
 - Null value graphed as connected.
 
-<img src="grafana_null_connected.png" title="Null connected" />
 {{< docs-imagebox img="/img/docs/faq/grafana_null_connected.png" max-width="2000px" >}}
 
 In this graph we have simply set the Null value to graph as zero. There
 is a very big different in the visuals.
 
-<img src="grafana_null_zero.png" title="Null zero" />
 {{< docs-imagebox img="/img/docs/faq/grafana_null_zero.png" max-width="2000px" >}}
