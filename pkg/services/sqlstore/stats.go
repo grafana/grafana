@@ -221,11 +221,7 @@ var (
 )
 
 func updateUserRoleCounts() error {
-	userTable := "user"
-	if x.Dialect().DriverName() == migrator.POSTGRES {
-		userTable = `"user"`
-	}
-	query := fmt.Sprintf(`
+	query := `
 SELECT role AS bitrole, active, COUNT(role) AS count FROM
     (SELECT active, SUM(role) AS role
      FROM (SELECT
@@ -236,13 +232,13 @@ SELECT role AS bitrole, active, COUNT(role) AS count FROM
                    ELSE 1
                    END AS role,
                CASE
-                WHEN u.last_seen_at>? THEN `+dialect.BooleanStr(true)+`
-                ELSE `+dialect.BooleanStr(false)+`
+                WHEN u.last_seen_at>? THEN ` + dialect.BooleanStr(true) + `
+                ELSE ` + dialect.BooleanStr(false) + `
                END AS active
-           FROM %s AS u LEFT JOIN org_user ON org_user.user_id = u.id
+           FROM ` + dialect.Quote("user") + ` AS u LEFT JOIN org_user ON org_user.user_id = u.id
            GROUP BY u.id, u.last_seen_at, org_user.role) AS t2
      GROUP BY active, id) AS t1
-GROUP BY active, role;`, userTable)
+GROUP BY active, role;`
 
 	activeUserDeadline := time.Now().Add(-activeUserTimeLimit)
 
