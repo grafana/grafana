@@ -237,7 +237,7 @@ SELECT role AS bitrole, active, COUNT(role) AS count FROM
                END AS active
            FROM user AS u LEFT JOIN org_user ON org_user.user_id = u.id
            GROUP BY u.id, u.last_seen_at, org_user.role)
-	GROUP BY active, id)
+     GROUP BY active, id)
 GROUP BY active, role;`
 
 	activeUserDeadline := time.Now().Add(-activeUserTimeLimit)
