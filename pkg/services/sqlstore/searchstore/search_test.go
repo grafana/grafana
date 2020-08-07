@@ -1,3 +1,5 @@
+// +build integration
+
 // package search_test contains integration tests for search
 package searchstore_test
 
