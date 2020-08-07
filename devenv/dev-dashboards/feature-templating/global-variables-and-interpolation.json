@@ -34,8 +34,8 @@
       },
       "id": 11,
       "options": {
-        "content": "## Global variables\n\n* `__dashboard` = ${__dashboard}\n* `__dashboard.name` = ${__dashboard.name}\n* `__dashboard.uid` = ${__dashboard.uid}\n* `__org.name` = ${__org.name}\n* `__org.id` = ${__org.id}\n* `__user.id` = ${__user.id}\n* `__user.login` = ${__user.login}\n         \n## Formats\n\n* `Server:raw` = ${Server:raw}\n* `Server:regex` = ${Server:regex}\n* `Server:lucene` = ${Server:lucene}\n* `Server:glob` = ${Server:glob}\n* `Server:pipe` = ${Server:pipe}\n* `Server:distributed` = ${Server:distributed}\n* `Server:csv` = ${Server:csv}\n* `Server:html` = ${Server:html}\n* `Server:json` = ${Server:json}\n* `Server:percentencode` = ${Server:percentencode}\n* `Server:singlequote` = ${Server:singlequote}\n* `Server:doublequote` = ${Server:doublequote}\n* `Server:sqlstring` = ${Server:sqlstring}\n* `Server:date` = ${Server:date}\n\n",
-        "mode": "markdown"
+        "content": "<h2>Global variables</h2>\n\n<ul>\n<li><code>__dashboard</code> = ${__dashboard}</li>\n<li><code>__dashboard.name</code> = ${__dashboard.name}</li>\n<li><code>__dashboard.uid</code> = ${__dashboard.uid}</li>\n<li><code>__org.name</code> = ${__org.name}</li>\n<li><code>__org.id</code> = ${__org.id}</li>\n<li><code>__user.id</code> = ${__user.id}</li>\n<li><code>__user.login</code> = ${__user.login}</li>\n</ul>\n\n<h2>Formats</h2>\n\n<ul>\n<li><code>Server:raw</code> = ${Server:raw}</li>\n<li><code>Server:regex</code> = ${Server:regex}</li>\n<li><code>Server:lucene</code> = ${Server:lucene}</li>\n<li><code>Server:glob</code> = ${Server:glob}</li>\n<li><code>Server:pipe</code> = ${Server:pipe}</li>\n<li><code>Server:distributed</code> = ${Server:distributed}</li>\n<li><code>Server:csv</code> = ${Server:csv}</li>\n<li><code>Server:html</code> = ${Server:html}</li>\n<li><code>Server:json</code> = ${Server:json}</li>\n<li><code>Server:percentencode</code> = ${Server:percentencode}</li>\n<li><code>Server:singlequote</code> = ${Server:singlequote}</li>\n<li><code>Server:doublequote</code> = ${Server:doublequote}</li>\n<li><code>Server:sqlstring</code> = ${Server:sqlstring}</li>\n<li><code>Server:date</code> = ${Server:date}</li>\n</ul>\n",
+        "mode": "html"
       },
       "pluginVersion": "7.1.0",
       "targets": [
@@ -106,5 +106,5 @@
   "timezone": "",
   "title": "Global variables and interpolation",
   "uid": "HYaGDGIMk",
-  "version": 3
+  "version": 4
 }
