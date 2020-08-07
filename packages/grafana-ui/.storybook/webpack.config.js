@@ -7,30 +7,39 @@ module.exports = ({ config, mode }) => {
     ...(config.module.rules || []),
     {
       test: /\.tsx?$/,
-      use: [
-        {
-          loader: require.resolve('ts-loader'),
-          options: {
-            // transpileOnly: true,
-            configFile: path.resolve(__dirname, 'tsconfig.json'),
-          },
-        },
-        {
-          loader: require.resolve('react-docgen-typescript-loader'),
-          options: {
-            tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
-            // https://github.com/styleguidist/react-docgen-typescript#parseroptions
-            // @ts-ignore
-            propFilter: prop => {
-              if (prop.parent) {
-                return !prop.parent.fileName.includes('node_modules/@types/react/');
-              }
-
-              return true;
+      use: isProductionBuild
+        ? [
+            {
+              loader: require.resolve('ts-loader'),
+              options: {
+                // transpileOnly: true,
+                configFile: path.resolve(__dirname, 'tsconfig.json'),
+              },
             },
-          },
-        },
-      ],
+            {
+              loader: require.resolve('c'),
+              options: {
+                tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
+                // https://github.com/styleguidist/react-docgen-typescript#parseroptions
+                // @ts-ignore
+                propFilter: prop => {
+                  if (prop.parent) {
+                    return !prop.parent.fileName.includes('node_modules/@types/react/');
+                  }
+
+                  return true;
+                },
+              },
+            },
+          ]
+        : [
+            {
+              loader: require.resolve('ts-loader'),
+              options: {
+                configFile: path.resolve(__dirname, 'tsconfig.json'),
+              },
+            },
+          ],
     },
   ];
 
@@ -65,16 +74,10 @@ module.exports = ({ config, mode }) => {
 
   config.module.rules.push({
     test: require.resolve('jquery'),
-    use: [
-      {
-        loader: 'expose-loader',
-        query: 'jQuery',
-      },
-      {
-        loader: 'expose-loader',
-        query: '$',
-      },
-    ],
+    loader: 'expose-loader',
+    options: {
+      exposes: ['jQuery', '$'],
+    },
   });
 
   config.optimization = {
@@ -89,7 +92,6 @@ module.exports = ({ config, mode }) => {
           test: /[\\/]node_modules[\\/].*[jt]sx?$/,
           chunks: 'initial',
           priority: -10,
-          reuseExistingChunk: true,
           enforce: true,
         },
         default: {
