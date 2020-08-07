@@ -88,18 +88,15 @@ func TestGetUserStats(t *testing.T) {
 		defaultAutoAssign := setting.AutoAssignOrg
 		defaultOrgID := setting.AutoAssignOrgId
 		defaultRole := setting.AutoAssignOrgRole
-		defaultUserPageSize := userStatsPageSize
 
 		setting.AutoAssignOrg = true
 		setting.AutoAssignOrgId = int(firstUser.OrgId)
 		setting.AutoAssignOrgRole = "Editor"
-		userStatsPageSize = 500
 
 		defer func() {
 			setting.AutoAssignOrg = defaultAutoAssign
 			setting.AutoAssignOrgId = defaultOrgID
 			setting.AutoAssignOrgRole = defaultRole
-			userStatsPageSize = defaultUserPageSize
 		}()
 	}
 

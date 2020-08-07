@@ -5,8 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"xorm.io/xorm"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -220,81 +218,70 @@ type memoUserStats struct {
 var (
 	userStatsCache         = memoUserStats{}
 	userStatsCacheLimetime = 5 * time.Minute
-
-	// 5 million users max cap is arbitrarily chosen to prevent this
-	// from taking far too much time.
-	userStatsPageLimit = 100
-	userStatsPageSize  = 50000
 )
 
 func updateUserRoleCounts() error {
-	type userRoles struct {
-		ID         int64 `xorm:"id"`
-		LastSeenAt time.Time
-		Role       models.RoleType
-	}
+	query := `
+SELECT role AS bitrole, active, COUNT(role) AS count FROM
+    (SELECT active, SUM(temp.role) AS role
+     FROM (SELECT
+               u.id,
+               CASE org_user.role
+                   WHEN 'Admin' THEN 4
+                   WHEN 'Editor' THEN 2
+                   ELSE 1
+                   END AS 'role',
+               CASE
+                WHEN u.last_seen_at>? THEN ` + dialect.BooleanStr(true) + `
+                ELSE ` + dialect.BooleanStr(false) + `
+               END AS active
+           FROM user AS u LEFT JOIN org_user ON org_user.user_id = u.id
+           GROUP BY u.id, u.last_seen_at, org_user.role) AS temp GROUP BY active, temp.id)
+GROUP BY active, role;`
 
 	activeUserDeadline := time.Now().Add(-activeUserTimeLimit)
 
-	memo := memoUserStats{memoized: time.Now()}
+	type rolebitmap struct {
+		Active  bool
+		Bitrole int64
+		Count   int64
+	}
 
-	_, err := x.Transaction(func(session *xorm.Session) (interface{}, error) {
-		for offset := 0; offset < userStatsPageLimit; offset += 1 {
-			usersSlice := []userRoles{}
-			err := session.SQL(`SELECT u.id, u.last_seen_at, org_user.role
-    FROM (SELECT id, last_seen_at FROM user LIMIT ? OFFSET ?) AS u LEFT JOIN org_user ON org_user.user_id = u.id
-    GROUP BY u.id, org_user.role;`, userStatsPageSize, offset*userStatsPageSize).Find(&usersSlice)
-			if err != nil {
-				return nil, err
-			}
-
-			if len(usersSlice) == 0 {
-				break
-			}
-
-			activeMap := make(map[int64]models.RoleType, userStatsPageSize)
-			totalMap := make(map[int64]models.RoleType, userStatsPageSize)
-
-			for _, user := range usersSlice {
-				if current, exists := totalMap[user.ID]; exists {
-					if current == models.ROLE_ADMIN {
-						continue
-					} else if current == models.ROLE_EDITOR && user.Role == models.ROLE_VIEWER {
-						continue
-					}
-				}
-
-				if user.LastSeenAt.After(activeUserDeadline) {
-					activeMap[user.ID] = user.Role
-				}
-				totalMap[user.ID] = user.Role
-			}
-
-			memo.active = mapToStats(memo.active, activeMap)
-			memo.total = mapToStats(memo.total, totalMap)
-		}
-		return nil, nil
-	})
+	bitmap := []rolebitmap{}
+	err := x.SQL(query, activeUserDeadline).Find(&bitmap)
 	if err != nil {
 		return err
+	}
+
+	memo := memoUserStats{memoized: time.Now()}
+	for _, role := range bitmap {
+		roletype := models.ROLE_VIEWER
+		if role.Bitrole&0b100 != 0 {
+			roletype = models.ROLE_ADMIN
+		} else if role.Bitrole&0b10 != 0 {
+			roletype = models.ROLE_EDITOR
+		}
+
+		memo.total = addToStats(memo.total, roletype, role.Count)
+		if role.Active {
+			memo.active = addToStats(memo.active, roletype, role.Count)
+		}
 	}
 
 	userStatsCache = memo
 	return nil
 }
 
-func mapToStats(base models.UserStats, us map[int64]models.RoleType) models.UserStats {
-	base.Users += int64(len(us))
+func addToStats(base models.UserStats, role models.RoleType, count int64) models.UserStats {
+	base.Users += count
 
-	for _, role := range us {
-		switch role {
-		case models.ROLE_ADMIN:
-			base.Admins++
-		case models.ROLE_EDITOR:
-			base.Editors++
-		case models.ROLE_VIEWER:
-			base.Viewers++
-		}
+	switch role {
+	case models.ROLE_ADMIN:
+		base.Admins += count
+	case models.ROLE_EDITOR:
+		base.Editors += count
+	default:
+		base.Viewers += count
 	}
 
 	return base
