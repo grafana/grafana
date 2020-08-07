@@ -166,7 +166,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signingAdmin }
   // By using the --signing-admin flag the plugin doesn't need to be in the plugins database to be signed,
   // however it requires an Admin API key.
   try {
-    const grabplCommandFlags = signingAdmin ? ['build-plugin-manifest', 'signing-admin'] : ['build-plugin-manifest'];
+    const grabplCommandFlags = signingAdmin ? ['build-plugin-manifest', '--signing-admin'] : ['build-plugin-manifest'];
     await execa('grabpl', [...grabplCommandFlags, distContentDir]);
   } catch (err) {
     console.warn(`Error signing manifest: ${distContentDir}`, err);
