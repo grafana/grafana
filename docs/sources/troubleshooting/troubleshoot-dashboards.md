@@ -9,7 +9,7 @@ weight = 100
 
 # Troubleshoot dashboards
 
-This page provides information to solve common dashboard problems
+This page provides information to solve common dashboard problems.
 
 ## Dashboard is slow
 
@@ -35,11 +35,10 @@ default, Grafana graphs connect lines between the data points. This can be very 
 
 In the picture below we have enabled:
 - Points and 3-point radius to highlight where data points are actually present.
-- Null value graphed as connected.
+- **Null value** is set to **connected**.
 
-{{< docs-imagebox img="/img/docs/faq/grafana_null_connected.png" max-width="1200px" >}}
+{{< docs-imagebox img="/img/docs/troubleshooting/grafana_null_connected.png" max-width="1200px" >}}
 
-In this graph we have simply set the Null value to graph as zero. There
-is a very big different in the visuals.
+In this graph, we set graph to show bars instead of lines and set the **Null value** to graph **null as zero**. There is a very big different in the visuals.
 
-{{< docs-imagebox img="/img/docs/faq/grafana_null_zero.png" max-width="1200px" >}}
+{{< docs-imagebox img="/img/docs/troubleshooting/grafana_null_zero.png" max-width="1200px" >}}
