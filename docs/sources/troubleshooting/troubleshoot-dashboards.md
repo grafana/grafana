@@ -34,12 +34,12 @@ Some applications publish data intermittently; for example, they only post a met
 default, Grafana graphs connect lines between the data points. This can be very deceiving.
 
 In the picture below we have enabled:
-- Points and 3 point radius to highlight where datapoints are actually present.
+- Points and 3-point radius to highlight where data points are actually present.
 - Null value graphed as connected.
 
-{{< docs-imagebox img="/img/docs/faq/grafana_null_connected.png" max-width="2000px" >}}
+{{< docs-imagebox img="/img/docs/faq/grafana_null_connected.png" max-width="1200px" >}}
 
 In this graph we have simply set the Null value to graph as zero. There
 is a very big different in the visuals.
 
-{{< docs-imagebox img="/img/docs/faq/grafana_null_zero.png" max-width="2000px" >}}
+{{< docs-imagebox img="/img/docs/faq/grafana_null_zero.png" max-width="1200px" >}}
