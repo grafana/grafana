@@ -1,16 +1,14 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
 
 //Services & Utils
-import { SortOrder } from 'app/core/utils/explore';
-import { RICH_HISTORY_SETTING_KEYS } from 'app/core/utils/richHistory';
+import { RICH_HISTORY_SETTING_KEYS, SortOrder } from 'app/core/utils/richHistory';
 import store from 'app/core/store';
-import { stylesFactory, withTheme } from '@grafana/ui';
+import { withTheme, TabbedContainer, TabConfig } from '@grafana/ui';
 
 //Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
-import { SelectableValue, GrafanaTheme } from '@grafana/data';
-import { TabsBar, Tab, TabContent, Themeable, CustomScrollbar, IconName, IconButton } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { Themeable } from '@grafana/ui';
 
 //Components
 import { RichHistorySettings } from './RichHistorySettings';
@@ -41,7 +39,6 @@ export interface RichHistoryProps extends Themeable {
 }
 
 interface RichHistoryState {
-  activeTab: Tabs;
   sortOrder: SortOrder;
   retentionPeriod: number;
   starredTabAsFirstTab: boolean;
@@ -49,41 +46,10 @@ interface RichHistoryState {
   datasourceFilters: SelectableValue[] | null;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    container: css`
-      height: 100%;
-    `,
-    tabContent: css`
-      padding: ${theme.spacing.md};
-      background-color: ${theme.colors.bodyBg};
-    `,
-    close: css`
-      position: absolute;
-      right: 16px;
-      top: 5px;
-      cursor: pointer;
-      font-size: ${theme.typography.size.lg};
-    `,
-    tabs: css`
-      padding-top: ${theme.spacing.sm};
-      border-color: ${theme.colors.formInputBorder};
-      ul {
-        margin-left: ${theme.spacing.md};
-      }
-    `,
-    scrollbar: css`
-      min-height: 100% !important;
-      background-color: ${theme.colors.panelBg};
-    `,
-  };
-});
-
 class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistoryState> {
   constructor(props: RichHistoryProps) {
     super(props);
     this.state = {
-      activeTab: this.props.firstTab,
       sortOrder: SortOrder.Descending,
       datasourceFilters: store.getObject(RICH_HISTORY_SETTING_KEYS.datasourceFilters, null),
       retentionPeriod: store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7),
@@ -107,7 +73,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     store.set(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, starredTabAsFirstTab);
   };
 
-  toggleactiveDatasourceOnly = () => {
+  toggleActiveDatasourceOnly = () => {
     const activeDatasourceOnly = !this.state.activeDatasourceOnly;
     this.setState({
       activeDatasourceOnly,
@@ -127,10 +93,6 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
     this.setState({ datasourceFilters: value });
   };
 
-  onSelectTab = (item: SelectableValue<Tabs>) => {
-    this.setState({ activeTab: item.value! });
-  };
-
   onChangeSortOrder = (sortOrder: SortOrder) => this.setState({ sortOrder });
 
   /* If user selects activeDatasourceOnly === true, set datasource filter to currently active datasource.
@@ -148,6 +110,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
   componentDidMount() {
     this.updateFilters();
   }
+
   componentDidUpdate(prevProps: RichHistoryProps, prevState: RichHistoryState) {
     if (
       this.props.activeDatasourceInstance !== prevProps.activeDatasourceInstance ||
@@ -158,11 +121,10 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
   }
 
   render() {
-    const { datasourceFilters, sortOrder, activeTab, activeDatasourceOnly, retentionPeriod } = this.state;
-    const { theme, richHistory, height, exploreId, deleteRichHistory, onClose } = this.props;
-    const styles = getStyles(theme);
+    const { datasourceFilters, sortOrder, activeDatasourceOnly, retentionPeriod } = this.state;
+    const { richHistory, height, exploreId, deleteRichHistory, onClose, firstTab } = this.props;
 
-    const QueriesTab = {
+    const QueriesTab: TabConfig = {
       label: 'Query history',
       value: Tabs.RichHistory,
       content: (
@@ -181,7 +143,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       icon: 'history',
     };
 
-    const StarredTab = {
+    const StarredTab: TabConfig = {
       label: 'Starred',
       value: Tabs.Starred,
       content: (
@@ -198,7 +160,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
       icon: 'star',
     };
 
-    const SettingsTab = {
+    const SettingsTab: TabConfig = {
       label: 'Settings',
       value: Tabs.Settings,
       content: (
@@ -208,7 +170,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
           activeDatasourceOnly={this.state.activeDatasourceOnly}
           onChangeRetentionPeriod={this.onChangeRetentionPeriod}
           toggleStarredTabAsFirstTab={this.toggleStarredTabAsFirstTab}
-          toggleactiveDatasourceOnly={this.toggleactiveDatasourceOnly}
+          toggleactiveDatasourceOnly={this.toggleActiveDatasourceOnly}
           deleteRichHistory={deleteRichHistory}
         />
       ),
@@ -217,23 +179,7 @@ class UnThemedRichHistory extends PureComponent<RichHistoryProps, RichHistorySta
 
     let tabs = [QueriesTab, StarredTab, SettingsTab];
     return (
-      <div className={styles.container}>
-        <TabsBar className={styles.tabs}>
-          {tabs.map(t => (
-            <Tab
-              key={t.value}
-              label={t.label}
-              active={t.value === activeTab}
-              onChangeTab={() => this.onSelectTab(t)}
-              icon={t.icon as IconName}
-            />
-          ))}
-          <IconButton className={styles.close} onClick={onClose} name="times" title="Close query history" />
-        </TabsBar>
-        <CustomScrollbar className={styles.scrollbar}>
-          <TabContent className={styles.tabContent}>{tabs.find(t => t.value === activeTab)?.content}</TabContent>
-        </CustomScrollbar>
-      </div>
+      <TabbedContainer tabs={tabs} onClose={onClose} defaultTab={firstTab} closeIconTooltip="Close query history" />
     );
   }
 }
