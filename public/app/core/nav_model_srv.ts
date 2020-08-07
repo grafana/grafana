@@ -53,6 +53,11 @@ export class NavModelSrv {
   }
 }
 
+export function getExceptionNav(error: any): NavModel {
+  console.error(error);
+  return getWarningNav('Exception thrown', 'See console for details');
+}
+
 export function getNotFoundNav(): NavModel {
   return getWarningNav('Page not found', '404 Error');
 }
