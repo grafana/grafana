@@ -3,6 +3,7 @@ import {
   Field,
   LinkModel,
   LogRowModel,
+  LogsSortOrder,
   TimeZone,
   DataQueryResponse,
   GrafanaTheme,
@@ -38,6 +39,7 @@ interface Props extends Themeable {
   wrapLogMessage: boolean;
   timeZone: TimeZone;
   allowDetails?: boolean;
+  logsSortOrder?: LogsSortOrder | null;
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -206,11 +208,16 @@ class UnThemedLogRow extends PureComponent<Props, State> {
 
   render() {
     const { showContext } = this.state;
+    const { logsSortOrder } = this.props;
 
     if (showContext) {
       return (
         <>
-          <LogRowContextProvider row={this.props.row} getRowContext={this.props.getRowContext}>
+          <LogRowContextProvider
+            row={this.props.row}
+            getRowContext={this.props.getRowContext}
+            logsSortOrder={logsSortOrder}
+          >
             {({ result, errors, hasMoreContextRows, updateLimit }) => {
               return <>{this.renderLogRow(result, errors, hasMoreContextRows, updateLimit)}</>;
             }}
