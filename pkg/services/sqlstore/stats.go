@@ -223,7 +223,7 @@ var (
 func updateUserRoleCounts() error {
 	query := `
 SELECT role AS bitrole, active, COUNT(role) AS count FROM
-    (SELECT active, SUM(temp.role) AS role
+    (SELECT active, SUM(role) AS role
      FROM (SELECT
                u.id,
                CASE org_user.role
@@ -236,7 +236,8 @@ SELECT role AS bitrole, active, COUNT(role) AS count FROM
                 ELSE ` + dialect.BooleanStr(false) + `
                END AS active
            FROM user AS u LEFT JOIN org_user ON org_user.user_id = u.id
-           GROUP BY u.id, u.last_seen_at, org_user.role) AS temp GROUP BY active, temp.id)
+           GROUP BY u.id, u.last_seen_at, org_user.role)
+	GROUP BY active, id)
 GROUP BY active, role;`
 
 	activeUserDeadline := time.Now().Add(-activeUserTimeLimit)
