@@ -4,7 +4,6 @@ description = "Guide to troubleshooting Grafana problems"
 keywords = ["grafana", "troubleshooting", "documentation", "guide"]
 type = "docs"
 [menu.docs]
-parent = "admin"
 weight = 100
 +++
 
