@@ -125,7 +125,7 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 		Method:         "GET",
 		GoogleAccessID: conf.Email,
 		PrivateKey:     conf.PrivateKey,
-		Expires:        time.Now().Add(15 * time.Minute),
+		Expires:        time.Now().Add(u.signedUrlExpiration),
 	}
 	signedUrl, err := storage.SignedURL(u.bucket, key, opts)
 	if err != nil {
