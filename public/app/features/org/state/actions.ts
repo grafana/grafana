@@ -3,9 +3,10 @@ import { getBackendSrv } from '@grafana/runtime';
 import { organizationLoaded } from './reducers';
 import { updateConfigurationSubtitle } from 'app/core/actions';
 
-type LoadOrganizationDependencies = { getBackendSrv: typeof getBackendSrv };
+type OrganizationDependencies = { getBackendSrv: typeof getBackendSrv };
+
 export function loadOrganization(
-  dependencies: LoadOrganizationDependencies = { getBackendSrv: getBackendSrv }
+  dependencies: OrganizationDependencies = { getBackendSrv: getBackendSrv }
 ): ThunkResult<any> {
   return async dispatch => {
     const organizationResponse = await dependencies.getBackendSrv().get('/api/org');
@@ -15,9 +16,8 @@ export function loadOrganization(
   };
 }
 
-type UpdateOrganizationDependencies = { getBackendSrv: typeof getBackendSrv };
 export function updateOrganization(
-  dependencies: UpdateOrganizationDependencies = { getBackendSrv: getBackendSrv }
+  dependencies: OrganizationDependencies = { getBackendSrv: getBackendSrv }
 ): ThunkResult<any> {
   return async (dispatch, getStore) => {
     const organization = getStore().organization.organization;
