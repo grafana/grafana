@@ -359,9 +359,13 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
 		msg = evalContext.Rule.Message
 	}
+	isSignedGoogleUrl := strings.Contains(strings.ToLower(evalContext.ImagePublicURL), "x-goog-signedheaders")
+	if isSignedGoogleUrl {
+		sn.log.Debug("Detected signed Google Url:" + evalContext.ImagePublicURL)
+	}
 	imageURL := ""
-	// default to file.upload API method if a token is provided
-	if sn.Token == "" {
+	// default to file.upload API method if a token is provided and it's not a Google signed url
+	if sn.Token == "" || isSignedGoogleUrl {
 		imageURL = evalContext.ImagePublicURL
 	}
 
@@ -435,7 +439,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		sn.log.Error("Failed to send slack notification", "error", err, "webhook", sn.Name)
 		return err
 	}
-	if sn.Token != "" && sn.UploadImage {
+	if !isSignedGoogleUrl && sn.Token != "" && sn.UploadImage {
 		err = slackFileUpload(evalContext, sn.log, "https://slack.com/api/files.upload", sn.Recipient, sn.Token)
 		if err != nil {
 			return err
