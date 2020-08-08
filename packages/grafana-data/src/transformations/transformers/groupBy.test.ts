@@ -5,6 +5,7 @@ import { transformDataFrame } from '../transformDataFrame';
 import { Field, FieldType } from '../../types';
 import { DataTransformerID } from './ids';
 import { ArrayVector } from '../../vector';
+import { ReducerID } from '../fieldReducer';
 
 const testSeries = toDataFrame({
   name: 'A',
@@ -20,11 +21,15 @@ describe('GroupBy Transformer', () => {
     mockTransformationsRegistry([groupByTransformer]);
   });
 
-  it('should calculate the occurrences of each value of the specified field (string values)', () => {
+  it('should group by and compute a few calculations for each group of values', () => {
     const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
       id: DataTransformerID.groupBy,
       options: {
         byField: 'message',
+        calculationsByField: [
+          ['time', [ReducerID.count, ReducerID.last]],
+          ['values', [ReducerID.sum]],
+        ],
       },
     };
 
@@ -35,41 +40,25 @@ describe('GroupBy Transformer', () => {
         name: 'message',
         type: FieldType.string,
         values: new ArrayVector(['one', 'two', 'three']),
-        config: { displayName: 'message' },
+        config: {},
       },
       {
-        name: 'count',
+        name: 'time (count)',
         type: FieldType.number,
         values: new ArrayVector([1, 2, 3]),
-        config: { displayName: 'Number of Occurrences' },
-      },
-    ];
-
-    expect(result[0].fields).toEqual(expected);
-  });
-
-  it('should calculate the occurrences of each value of the specified field (number values)', () => {
-    const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
-      id: DataTransformerID.groupBy,
-      options: {
-        byField: 'values',
-      },
-    };
-
-    const result = transformDataFrame([cfg], [testSeries]);
-
-    const expected: Field[] = [
-      {
-        name: 'values',
-        type: FieldType.string,
-        values: new ArrayVector([1, 2, 3]),
-        config: { displayName: 'values' },
+        config: {},
       },
       {
-        name: 'count',
+        name: 'time (last)',
         type: FieldType.number,
-        values: new ArrayVector([1, 2, 3]),
-        config: { displayName: 'Number of Occurrences' },
+        values: new ArrayVector([3000, 5000, 8000]),
+        config: {},
+      },
+      {
+        name: 'values (sum)',
+        type: FieldType.number,
+        values: new ArrayVector([1, 4, 9]),
+        config: {},
       },
     ];
 
