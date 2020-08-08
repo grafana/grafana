@@ -28,8 +28,11 @@ function FieldCalculationsSelector(props: any) {
           }
           value={config[0]}
           onChange={value => {
-            if (value === null) onConfigChange([null, config[1]]);
-            else onConfigChange([value.value || null, config[1]]);
+            if (value === null) {
+              onConfigChange([null, config[1]]);
+            } else {
+              onConfigChange([value.value || null, config[1]]);
+            }
           }}
           isClearable
           menuPlacement="bottom"
@@ -122,7 +125,7 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
             icon="plus"
             onClick={onAddFieldCalculations}
             variant="secondary"
-            disabled={options.calculationsByField.length == fieldNameOptions.length - 1}
+            disabled={options.calculationsByField.length === fieldNameOptions.length - 1}
           >
             Add Field Calculations
           </Button>

@@ -7,7 +7,7 @@ import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { /*fieldReducers,*/ reduceField, ReducerID } from '../fieldReducer';
 
 export interface GroupByTransformerOptions {
-  byField?: string;
+  byField: string | null;
   reducers: ReducerID[];
   calculationsByField: Array<[string | null, ReducerID[]]>;
 }
@@ -18,6 +18,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
   description: 'Group the data by a field values then process calculations for each group',
   defaultOptions: {
     calculationsByField: [],
+    byField: null,
   },
 
   /**
