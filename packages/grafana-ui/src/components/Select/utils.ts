@@ -20,29 +20,19 @@ export const cleanValue = (value: any, options: SelectOptions): SelectableValue[
   return [];
 };
 
-const _findSelectedValue = (value: string | number, option: SelectableValue): SelectableValue | null => {
-  if ('options' in option) {
-    let found = findSelectedValue(value, option.options);
-    if (found) {
-      return found;
-    }
-  } else if ('value' in option && option.value === value) {
-    return option;
-  }
-
-  return null;
-};
-
 /**
  * Find the label for a string|number value inside array of options or optgroups
  */
 export const findSelectedValue = (value: string | number, options: SelectOptions): SelectableValue | null => {
-  if (Array.isArray(options)) {
-    for (const option of options) {
-      _findSelectedValue(value, option);
+  for (const option of options) {
+    if ('options' in option) {
+      let found = findSelectedValue(value, option.options);
+      if (found) {
+        return found;
+      }
+    } else if ('value' in option && option.value === value) {
+      return option;
     }
-  } else {
-    _findSelectedValue(value, options);
   }
 
   return null;
