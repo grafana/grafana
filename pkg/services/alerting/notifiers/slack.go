@@ -359,6 +359,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
 		msg = evalContext.Rule.Message
 	}
+	// detect google gcs signed header, for example: https://storage.googleapis.com/<project>/alerts/<filename>>?X-Goog-Algorithm=<sha>&X-Goog-Credential=<account>%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=<date>&X-Goog-Expires=<expiration-seconds>&X-Goog-Signature=<signature>&X-Goog-SignedHeaders=<headers>
 	isSignedGoogleUrl := strings.Contains(strings.ToLower(evalContext.ImagePublicURL), "x-goog-signedheaders")
 	if isSignedGoogleUrl {
 		sn.log.Debug("Detected signed Google Url:" + evalContext.ImagePublicURL)
