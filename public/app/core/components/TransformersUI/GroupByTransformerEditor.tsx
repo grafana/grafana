@@ -92,7 +92,6 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
   };
 
   const onConfigChange = (index: number) => (config: [string | any, ReducerID[]]) => {
-    // console.log('onConfigChange', index, config, options);
     options.calculationsByField[index] = config;
     onChange({
       ...options,

@@ -17,7 +17,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
   name: 'Group By',
   description: 'Group the data by a field values then process calculations for each group',
   defaultOptions: {
-    calculationsByField: [[null, [ReducerID.count]]],
+    calculationsByField: [],
   },
 
   /**
@@ -25,7 +25,6 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
    * be applied, just return the input series
    */
   transformer: (options: GroupByTransformerOptions) => {
-    console.log('options:', options);
     const groupByFieldName = options.byField || '';
     const calculationsByField = options.calculationsByField; //.map((val, index) => ({fieldName: val[0], calculations: val[1]}));
 
@@ -97,7 +96,6 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
 
         const fields: Field[] = [];
         const groupByValues = [...groupedData.keys()];
-        console.log('groupByValues', groupByValues);
         let mainField = {
           name: groupByField.name,
           type: groupByField.type,
