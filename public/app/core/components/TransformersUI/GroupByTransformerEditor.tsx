@@ -23,11 +23,13 @@ function FieldCalculationsSelector(props: any) {
         <Select
           className="width-16"
           placeholder="Field Name"
-          options={fieldNameOptions}
+          options={
+            config[0] === null ? fieldNameOptions : [{ label: config[0], value: config[0] }, ...fieldNameOptions]
+          }
           value={config[0]}
           onChange={value => {
-            console.log('onChange', value);
-            console.log(onConfigChange([value.value, config[1]]));
+            if (value === null) onConfigChange([null, config[1]]);
+            else onConfigChange([value.value || null, config[1]]);
           }}
           isClearable
           menuPlacement="bottom"
@@ -62,11 +64,16 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
 }) => {
   const fieldNames = useMemo(() => getAllFieldNamesFromDataFrames(input), [input]);
   const fieldNameOptions = fieldNames.map((item: string) => ({ label: item, value: item }));
+  const usedFieldNames = options.calculationsByField.map(item => item[0]);
+  usedFieldNames.push(options.byField);
+  const unusedFieldNameOptions = fieldNames
+    .filter(name => !usedFieldNames.includes(name))
+    .map((item: string) => ({ label: item, value: item }));
 
   const onSelectField = (value: SelectableValue<string>) => {
     onChange({
       ...options,
-      byField: value.value,
+      byField: (value && value.value) || null,
     });
   };
 
@@ -85,9 +92,8 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
   };
 
   const onConfigChange = (index: number) => (config: [string | any, ReducerID[]]) => {
-    console.log('onConfigChange', index, config, options);
+    // console.log('onConfigChange', index, config, options);
     options.calculationsByField[index] = config;
-    console.log(options);
     onChange({
       ...options,
     });
@@ -100,7 +106,7 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
           <div className="gf-form-label width-8">Group by</div>
           <Select
             className="width-16"
-            options={fieldNameOptions}
+            options={unusedFieldNameOptions}
             value={options.byField}
             onChange={onSelectField}
             isClearable
@@ -109,7 +115,12 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
           />
         </div>
         <div className="gf-form">
-          <Button icon="plus" onClick={onAddFieldCalculations} variant="secondary">
+          <Button
+            icon="plus"
+            onClick={onAddFieldCalculations}
+            variant="secondary"
+            disabled={options.calculationsByField.length == fieldNameOptions.length - 1}
+          >
             Add Field Calculations
           </Button>
         </div>
@@ -119,7 +130,7 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
         <FieldCalculationsSelector
           onConfigChange={onConfigChange(idx)}
           onDelete={onDeleteFieldCalculations(idx)}
-          fieldNameOptions={fieldNameOptions}
+          fieldNameOptions={unusedFieldNameOptions}
           config={val}
         />
       ))}
