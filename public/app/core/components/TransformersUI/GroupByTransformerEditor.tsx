@@ -105,7 +105,11 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
           <div className="gf-form-label width-8">Group by</div>
           <Select
             className="width-16"
-            options={unusedFieldNameOptions}
+            options={
+              options.byField === null
+                ? unusedFieldNameOptions
+                : [{ label: options.byField, value: options.byField }, ...unusedFieldNameOptions]
+            }
             value={options.byField}
             onChange={onSelectField}
             isClearable
