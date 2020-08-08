@@ -18,7 +18,7 @@ function FieldCalculationsSelector(props: any) {
 
   return (
     <div className="gf-form-inline">
-      <div className="gf-form">
+      <div className="gf-form gf-form-spacing">
         <div className="gf-form-label width-8">On field</div>
         <Select
           className="width-16"
@@ -33,7 +33,7 @@ function FieldCalculationsSelector(props: any) {
           menuPlacement="bottom"
         />
       </div>
-      <div className="gf-form gf-form--grow gf-form--offset-1">
+      <div className="gf-form gf-form--grow gf-form-spacing">
         <div className="gf-form-label width-8" aria-label={selectors.components.Transforms.Reduce.calculationsLabel}>
           Calculate
         </div>
@@ -48,7 +48,9 @@ function FieldCalculationsSelector(props: any) {
           menuPlacement="bottom"
         />
       </div>
-      <Button icon="trash-alt" onClick={onDelete} size="sm" variant="secondary" />
+      <div className="gf-form">
+        <Button icon="trash-alt" onClick={onDelete} style={{ height: '100%' }} size="sm" variant="secondary" />
+      </div>
     </div>
   );
 }
@@ -94,7 +96,7 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
   return (
     <div>
       <div className="gf-form-inline">
-        <div className="gf-form">
+        <div className="gf-form gf-form-spacing">
           <div className="gf-form-label width-8">Group by</div>
           <Select
             className="width-16"
@@ -106,6 +108,11 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
             menuPlacement="bottom"
           />
         </div>
+        <div className="gf-form">
+          <Button icon="plus" onClick={onAddFieldCalculations} variant="secondary">
+            Add Field Calculations
+          </Button>
+        </div>
       </div>
 
       {options.calculationsByField.map((val, idx) => (
@@ -116,12 +123,6 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
           config={val}
         />
       ))}
-
-      <div className="gf-form-inline gf-form--offset-1">
-        <Button icon="plus" onClick={onAddFieldCalculations}>
-          Add Field Calculations
-        </Button>
-      </div>
     </div>
   );
 };
