@@ -81,9 +81,12 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
   };
 
   const onAddFieldCalculations = () => {
-    options.calculationsByField.push([null, []]);
+    // let copy = options.calculationsByField.map(i => [i[0], [...i[1]]]); // Deep copy
+    // console.log(copy);
+    // copy.push([null, []]);
     onChange({
       ...options,
+      calculationsByField: [...options.calculationsByField, [null, []]],
     });
   };
 
@@ -95,9 +98,10 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
   };
 
   const onConfigChange = (index: number) => (config: [string | any, ReducerID[]]) => {
-    options.calculationsByField[index] = config;
+    options.calculationsByField[index] = config; // If the calculationsByField in defaultOptions is not empty, we should make a deep copy here
     onChange({
       ...options,
+      calculationsByField: [...options.calculationsByField],
     });
   };
 
@@ -125,7 +129,7 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
             icon="plus"
             onClick={onAddFieldCalculations}
             variant="secondary"
-            disabled={options.calculationsByField.length === fieldNameOptions.length - 1}
+            disabled={options.calculationsByField.length >= fieldNameOptions.length - 1}
           >
             Add Field Calculations
           </Button>
