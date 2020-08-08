@@ -4,11 +4,10 @@ import { DataTransformerInfo } from '../../types/transformations';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { ArrayVector } from '../../vector/ArrayVector';
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
-import { /*fieldReducers,*/ reduceField, ReducerID } from '../fieldReducer';
+import { reduceField, ReducerID } from '../fieldReducer';
 
 export interface GroupByTransformerOptions {
   byField: string | null;
-  reducers: ReducerID[];
   calculationsByField: Array<[string | null, ReducerID[]]>;
 }
 
