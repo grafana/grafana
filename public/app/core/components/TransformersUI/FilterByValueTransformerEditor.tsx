@@ -20,7 +20,7 @@ function FilterSelectorRow(props: any) {
 
   return (
     <div className="gf-form-inline">
-      <div className="gf-form">
+      <div className="gf-form gf-form-spacing">
         <div className="gf-form-label width-8">Filter Type</div>
         <Select
           className="width-8"
@@ -36,7 +36,7 @@ function FilterSelectorRow(props: any) {
           menuPlacement="bottom"
         />
       </div>
-      <div className="gf-form gf-form--offset-1">
+      <div className="gf-form gf-form-spacing">
         <div className="gf-form-label width-8">Filter on Field</div>
         <Select
           className="width-16"
@@ -51,7 +51,7 @@ function FilterSelectorRow(props: any) {
           menuPlacement="bottom"
         />
       </div>
-      <div className="gf-form gf-form--grow gf-form--offset-1">
+      <div className="gf-form gf-form--grow gf-form-spacing ">
         <div className="gf-form-label width-8">Filter Expression</div>
         <Input
           className="flex-grow-1"
@@ -64,8 +64,8 @@ function FilterSelectorRow(props: any) {
           }}
         />
       </div>
-      <div className="gf-form gf-form--offset-1">
-        <Button icon="trash-alt" onClick={onDelete} style={{ margin: 'auto' }} size="sm" variant="secondary" />
+      <div className="gf-form">
+        <Button icon="trash-alt" onClick={onDelete} style={{ height: '100%' }} size="sm" variant="secondary" />
       </div>
     </div>
   );
@@ -80,7 +80,8 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
   const fieldNameOptions = fieldNames.map((item: string) => ({ label: item, value: item }));
 
   const onAddFilter = () => {
-    options.valueFilters.push({
+    let valueFilters = options.valueFilters.map(filter => ({ ...filter })); // Deep copy
+    valueFilters.push({
       type: 'include',
       fieldName: null,
       filterExpression: null,
@@ -88,21 +89,26 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
 
     onChange({
       ...options,
+      valueFilters,
     });
   };
 
   const onDeleteFilter = (index: number) => () => {
-    options.valueFilters.splice(index, 1);
+    let valueFilters = options.valueFilters.map(filter => ({ ...filter })); // Deep copy
+    valueFilters.splice(index, 1);
     onChange({
       ...options,
+      valueFilters,
     });
   };
 
   const onConfigChange = (index: number) => (config: ValueFilter) => {
     console.log('onConfigChange', index, config, options);
-    options.valueFilters[index] = config;
+    let valueFilters = options.valueFilters.map(filter => ({ ...filter })); // Deep copy
+    valueFilters[index] = config;
     onChange({
       ...options,
+      valueFilters,
     });
   };
 
@@ -117,8 +123,8 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
         />
       ))}
 
-      <div className="gf-form-inline gf-form--offset-1">
-        <Button icon="plus" onClick={onAddFilter}>
+      <div className="gf-form-inline">
+        <Button icon="plus" onClick={onAddFilter} variant="secondary">
           Add filter
         </Button>
       </div>
