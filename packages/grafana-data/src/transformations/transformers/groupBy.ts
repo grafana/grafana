@@ -29,6 +29,10 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
     const calculationsByField = options.calculationsByField; //.map((val, index) => ({fieldName: val[0], calculations: val[1]}));
 
     return (data: DataFrame[]) => {
+      if (options.byField === null) {
+        return data;
+      }
+
       const processed: DataFrame[] = [];
 
       //
