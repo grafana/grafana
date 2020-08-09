@@ -18,6 +18,7 @@ import {
   transformDataFrame,
   DataFrame,
   PanelData,
+  DocsId,
 } from '@grafana/data';
 import { TransformationOperationRow } from './TransformationOperationRow';
 import { Card, CardProps } from '../../../../core/components/Card/Card';
@@ -25,6 +26,7 @@ import { css } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from '../../state';
+import { getDocsLink } from 'app/core/utils/docsLinks';
 
 interface Props {
   panel: PanelModel;
@@ -170,11 +172,7 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
     return (
       <VerticalGroup spacing={'lg'}>
         <Container grow={1}>
-          <FeatureInfoBox
-            title="Transformations"
-            featureState={FeatureState.beta}
-            // url={getDocsLink(DocsId.Transformations)}
-          >
+          <FeatureInfoBox title="Transformations" url={getDocsLink(DocsId.Transformations)}>
             <p>
               Transformations allow you to join, calculate, re-order, hide and rename your query results before being
               visualized. <br />
@@ -182,7 +180,6 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
               time series. <br />
               It can help to switch to Table visualization to understand what a transformation is doing. <br />
             </p>
-            <p>Select one of the transformations below to start.</p>
           </FeatureInfoBox>
         </Container>
         <VerticalGroup>

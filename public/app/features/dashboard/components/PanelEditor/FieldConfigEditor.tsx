@@ -8,6 +8,7 @@ import {
   PanelPlugin,
   SelectableValue,
   VariableSuggestionsScope,
+  DocsId,
 } from '@grafana/data';
 import { Container, Counter, FeatureInfoBox, Field, fieldMatchersUI, Label, useTheme, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
@@ -16,6 +17,7 @@ import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
 import { selectors } from '@grafana/e2e-selectors';
 import { css } from 'emotion';
+import { getDocsLink } from 'app/core/utils/docsLinks';
 
 interface Props {
   plugin: PanelPlugin;
@@ -111,13 +113,12 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
       {config.overrides.length === 0 && (
         <FeatureInfoBox
           title="Overrides"
-          featureState={FeatureState.beta}
-          // url={getDocsLink(DocsId.FieldConfigOverrides)}
+          url={getDocsLink(DocsId.FieldConfigOverrides)}
           className={css`
             margin: ${theme.spacing.md};
           `}
         >
-          Field options overrides give you a fine grained control over how your data is displayed.
+          Field override rules give you a fine grained control over how your data is displayed.
         </FeatureInfoBox>
       )}
 
