@@ -7,7 +7,7 @@ import { GrafanaTheme } from '../types/theme';
 import { DisplayProcessor, DisplayValue, DecimalCount, DecimalInfo } from '../types/displayValue';
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
-import { DEFAULT_DATE_TIME_FORMAT } from '../datetime';
+import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
 
@@ -30,24 +30,26 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   if (!options || _.isEmpty(options) || !options.field) {
     return toStringProcessor;
   }
+
   const { field } = options;
   const config = field.config ?? {};
+  let unit = config.unit;
+  let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
 
-  if (field.type === FieldType.time) {
-    if (config.unit && timeFormats[config.unit]) {
-      // Currently selected unit is valid for time fields
-    } else if (config.unit && config.unit.startsWith('time:')) {
-      // Also OK
-    } else {
-      config.unit = `time:${DEFAULT_DATE_TIME_FORMAT}`;
-    }
+  if (field.type === FieldType.time && !hasDateUnit) {
+    unit = `dateTimeAsIso`;
+    hasDateUnit = true;
   }
 
-  const formatFunc = getValueFormat(config.unit || 'none');
+  const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field as Field, options.theme);
 
   return (value: any) => {
     const { mappings } = config;
+
+    if (hasDateUnit && typeof value === 'string') {
+      value = dateTime(value).valueOf();
+    }
 
     let text = _.toString(value);
     let numeric = toNumber(value);
