@@ -280,6 +280,7 @@ describe('ResultProcessor', () => {
               timeField: {
                 name: 'Time',
                 type: 'time',
+                config: {},
                 values: new ArrayVector([0]),
                 index: 0,
                 display: expect.anything(),
