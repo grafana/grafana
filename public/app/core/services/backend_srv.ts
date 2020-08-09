@@ -118,6 +118,11 @@ export class BackendSrv implements BackendService {
       }
     }
 
+    if (options.hideFromInspector === undefined) {
+      // Hide all local non data query calls
+      options.hideFromInspector = isLocalUrl(options.url) && !isDataQuery(options.url);
+    }
+
     return options;
   }
 

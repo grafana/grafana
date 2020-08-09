@@ -145,7 +145,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   // Use this for tab completion features, wont publish response to other components
   metadataRequest(url: string) {
-    return this._request(url, null, { method: 'GET', silent: true });
+    return this._request(url, null, { method: 'GET', hideFromInspector: true });
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {

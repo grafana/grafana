@@ -268,7 +268,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 
   async metadataRequest(url: string, params?: Record<string, string>) {
-    const res = await this._request(url, params, { silent: true }).toPromise();
+    const res = await this._request(url, params, { hideFromInspector: true }).toPromise();
     return res.data.data || res.data.values || [];
   }
 
