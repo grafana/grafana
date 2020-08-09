@@ -1,5 +1,5 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { groupByTransformer } from './groupBy';
+import { groupByTransformer, GroupByTransformerOptions } from './groupBy';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 import { Field, FieldType } from '../../types';
