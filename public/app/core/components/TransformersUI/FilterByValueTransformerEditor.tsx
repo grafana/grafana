@@ -45,7 +45,7 @@ function FilterSelectorRow(props: any) {
           value={config.fieldName}
           onChange={value => {
             console.log('onChange fieldName', value);
-            onConfigChange({ ...config, fieldName: value });
+            onConfigChange({ ...config, fieldName: value.value });
           }}
           isClearable
           menuPlacement="bottom"
@@ -56,10 +56,9 @@ function FilterSelectorRow(props: any) {
         <Input
           className="flex-grow-1"
           // defaultValue={''}
-          value={config.filterExpression}
+          defaultValue={config.filterExpression}
           placeholder={`Regex`}
           onBlur={event => {
-            console.log('onBlur', event.currentTarget.value);
             onConfigChange({ ...config, filterExpression: event.currentTarget.value });
           }}
         />
