@@ -111,8 +111,10 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
         // Then for each calculations configured, compute and add a new field (column)
         //
 
+        let fieldList = frame.fields.map(f => getFieldDisplayName(f)); // Fields that are present in the data
+
         for (let [fieldName, calculations] of calculationsByField) {
-          if (fieldName === null || fieldName === groupByFieldName) {
+          if (fieldName === null || fieldName === groupByFieldName || !fieldList.includes(fieldName)) {
             continue;
           }
 
