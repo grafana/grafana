@@ -11,7 +11,6 @@ import {
 } from '@grafana/ui';
 import {
   DataTransformerConfig,
-  FeatureState,
   GrafanaTheme,
   SelectableValue,
   standardTransformersRegistry,

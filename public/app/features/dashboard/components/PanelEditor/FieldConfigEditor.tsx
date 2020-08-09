@@ -2,7 +2,6 @@ import React, { useCallback, ReactNode } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   DataFrame,
-  FeatureState,
   FieldConfigPropertyItem,
   FieldConfigSource,
   PanelPlugin,
