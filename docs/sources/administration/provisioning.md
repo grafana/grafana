@@ -275,6 +275,8 @@ providers:
 
 When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path every **updateIntervalSeconds** and look for updated json files and update/insert those into the database.
 
+> **Note:** Dashboards are provisioned to the General folder if the `folder` option is missing or empty.
+
 #### Making changes to a provisioned dashboard
 
 It's possible to make changes to a provisioned dashboard in the Grafana UI. However, it is not possible to automatically save the changes back to the provisioning source.
@@ -332,6 +334,8 @@ providers:
 `server` and `application` will become new folders in Grafana menu.
 
 > **Note.** `folder` and `folderUid` options should be empty or missing to make `foldersFromFilesStructure` work.
+
+> **Note:** To provision dashboards to the General folder, store them in the root of your `path`.
 
 ## Alert Notification Channels
 

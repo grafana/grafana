@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	log "github.com/inconshreveable/log15"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -39,9 +40,9 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 }
 
 func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
-	var logOutput string
+	logs := []string{}
 	logger.SetHandler(log.FuncHandler(func(r *log.Record) error {
-		logOutput = r.Msg
+		logs = append(logs, r.Msg)
 		return nil
 	}))
 
@@ -70,7 +71,7 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 
 	err := syncOrgRoles(&user, &externalUser)
 	require.NoError(t, err)
-	require.Equal(t, models.ErrLastOrgAdmin.Error(), logOutput)
+	assert.Contains(t, logs, models.ErrLastOrgAdmin.Error())
 }
 
 func createSimpleUser() models.User {

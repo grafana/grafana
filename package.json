@@ -88,7 +88,7 @@
     "@types/jquery": "3.3.38",
     "@types/lodash": "4.14.149",
     "@types/lru-cache": "^5.1.0",
-    "@types/marked": "0.6.5",
+    "@types/marked": "1.1.0",
     "@types/moment-timezone": "0.5.13",
     "@types/mousetrap": "1.6.3",
     "@types/node": "13.7.0",
@@ -237,9 +237,9 @@
     "is-hotkey": "0.1.6",
     "jquery": "3.5.1",
     "jsurl": "^0.1.5",
-    "lodash": "4.17.15",
+    "lodash": "4.17.19",
     "lru-cache": "^5.1.1",
-    "marked": "0.6.2",
+    "marked": "1.1.1",
     "md5": "^2.2.1",
     "memoize-one": "5.1.1",
     "moment": "2.24.0",
@@ -248,7 +248,7 @@
     "mousetrap-global-bind": "1.1.0",
     "nodemon": "2.0.2",
     "papaparse": "4.6.3",
-    "prismjs": "1.19.0",
+    "prismjs": "1.21.0",
     "prop-types": "15.7.2",
     "rc-cascader": "1.0.1",
     "re-resizable": "^6.2.0",
@@ -271,7 +271,7 @@
     "regenerator-runtime": "0.13.3",
     "reselect": "4.0.0",
     "rst2html": "github:thoward/rst2html#990cb89",
-    "rxjs": "6.6.0",
+    "rxjs": "6.6.2",
     "search-query-parser": "1.5.4",
     "slate": "0.47.8",
     "slate-plain-serializer": "0.7.10",
@@ -302,6 +302,6 @@
     "node": ">=12 <13"
   },
   "volta": {
-    "node": "12.18.0"
+    "node": "12.18.3"
   }
 }

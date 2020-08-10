@@ -29,6 +29,12 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       },
     },
     {
+      id: 'raw',
+      name: 'raw',
+      description: 'Keep value as is',
+      formatter: value => value,
+    },
+    {
       id: 'regex',
       name: 'Regex',
       description: 'Values are regex escaped and multi-valued variables generate a (<value>|<value>) expression',

@@ -26,6 +26,8 @@ import { getDataTimeRange } from './utils';
 import { changePanelPlugin } from 'app/features/dashboard/state/actions';
 import { dispatch } from 'app/store/store';
 
+import { ThresholdMapper } from 'app/features/alerting/state/ThresholdMapper';
+
 export class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
@@ -135,7 +137,10 @@ export class GraphCtrl extends MetricsPanelCtrl {
     seriesOverrides: [],
     thresholds: [],
     timeRegions: [],
-    options: {},
+    options: {
+      // show/hide alert threshold lines and fill
+      alertThreshold: true,
+    },
   };
 
   /** @ngInject */
@@ -301,6 +306,8 @@ export class GraphCtrl extends MetricsPanelCtrl {
     if (!this.seriesList) {
       return;
     }
+
+    ThresholdMapper.alertToGraphThresholds(this.panel);
 
     for (const series of this.seriesList) {
       series.applySeriesOverrides(this.panel.seriesOverrides);

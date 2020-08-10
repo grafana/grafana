@@ -11,7 +11,7 @@ import { TimeRangeForm } from './TimeRangeForm';
 import { TimeRangeList } from './TimeRangeList';
 import { TimePickerFooter } from './TimePickerFooter';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme, isReversed) => {
   const containerBorder = theme.isDark ? theme.palette.dark9 : theme.palette.gray5;
 
   return {
@@ -24,7 +24,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       top: 116%;
       border-radius: 2px;
       border: 1px solid ${containerBorder};
-      right: 0;
+      right: ${isReversed ? 'unset' : 0};
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
         width: 262px;
@@ -37,9 +37,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     leftSide: css`
       display: flex;
       flex-direction: column;
-      border-right: 1px solid ${theme.colors.border1};
+      border-right: ${isReversed ? 'none' : `1px solid ${theme.colors.border1}`};
       width: 60%;
       overflow: hidden;
+      order: ${isReversed ? 1 : 0};
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
         display: none;
@@ -47,6 +48,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     rightSide: css`
       width: 40% !important;
+      border-right: ${isReversed ? `1px solid ${theme.colors.border1}` : 'none'};
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
         width: 100% !important;
@@ -131,6 +133,8 @@ interface Props {
   showHistory?: boolean;
   className?: string;
   hideTimeZone?: boolean;
+  /** Reverse the order of relative and absolute range pickers. Used to left align the picker in forms */
+  isReversed?: boolean;
 }
 
 interface PropsWithScreenSize extends Props {
@@ -144,7 +148,7 @@ interface FormProps extends Omit<Props, 'history'> {
 
 export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = props => {
   const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, props.isReversed);
   const historyOptions = mapToHistoryOptions(props.history, props.timeZone);
   const { quickOptions = [], otherOptions = [], isFullscreen } = props;
 
@@ -247,7 +251,13 @@ const FullScreenForm: React.FC<FormProps> = props => {
         <div aria-label="TimePicker absolute time range" className={styles.title}>
           <TimePickerTitle>Absolute time range</TimePickerTitle>
         </div>
-        <TimeRangeForm value={props.value} timeZone={props.timeZone} onApply={props.onChange} isFullscreen={true} />
+        <TimeRangeForm
+          value={props.value}
+          timeZone={props.timeZone}
+          onApply={props.onChange}
+          isFullscreen={true}
+          isReversed={props.isReversed}
+        />
       </div>
       {props.showHistory && (
         <div className={styles.recent}>
