@@ -6,8 +6,7 @@ ENV OSX_SDK_URL=https://s3.dockerproject.org/darwin/v2 \
     OSX_MIN=10.10 \
     CTNG=1.24.0 \
     OSX_CROSS_REV=542acc2ef6c21aeb3f109c03748b1015a71fed63 \
-    GOLANGCILINT_VERSION=1.24.0 \
-    GOLANGCILINT_CHKSUM=241ca454102e909de04957ff8a5754c757cefa255758b3e1fba8a4533d19d179
+    DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /tmp
 
@@ -33,8 +32,6 @@ WORKDIR /tmp
 
 # might wanna make sure osx cross and the other tarball as well as the packages ends up somewhere other than tmp
 # might also wanna put them as their own layer to not have to unpack them every time?
-
-ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update   && \
     apt-get upgrade -yq && \
@@ -75,6 +72,9 @@ RUN cd /tmp && \
     tar cfJ x86_64-centos6-linux-gnu.tar.xz x86_64-centos6-linux-gnu/ && \
     rm -rf /tmp/x86_64-centos6-linux-gnu/ && \
     rm -rf /tmp/crosstool-ng-${CTNG}
+
+ENV GOLANGCILINT_VERSION=1.30.0 \
+    GOLANGCILINT_CHKSUM=484e0ab3644068585528f0c0d35c6fe97451eade659cb12ff5f14c1d4c5f36ba
 
 RUN curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
 RUN echo ${GOLANGCILINT_CHKSUM} golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
