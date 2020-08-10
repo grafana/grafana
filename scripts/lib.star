@@ -214,6 +214,7 @@ def lint_backend_step(edition):
             'initialize',
         ],
         'commands': [
+            # Use Make targets that don't download the linters
             'make golangci-lint revive revive-strict',
         ],
     }
