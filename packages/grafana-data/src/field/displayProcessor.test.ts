@@ -303,4 +303,36 @@ describe('Date display options', () => {
 
     expect(processor('2020-08-01T08:48:43.783337Z').text).toEqual('2020-08-01 08:48:43');
   });
+
+  describe('number formatting for string values', () => {
+    it('should preserve string unchanged if no unit', () => {
+      const processor = getDisplayProcessor({
+        field: {
+          type: FieldType.string,
+          config: {},
+        },
+      });
+      expect(processor('22.1122334455').text).toEqual('22.1122334455');
+    });
+
+    it('should preserve string unchanged if unit set to none', () => {
+      const processor = getDisplayProcessor({
+        field: {
+          type: FieldType.string,
+          config: { unit: 'none' },
+        },
+      });
+      expect(processor('22.1122334455').text).toEqual('22.1122334455');
+    });
+
+    it('should format string as number if number unit', () => {
+      const processor = getDisplayProcessor({
+        field: {
+          type: FieldType.string,
+          config: { unit: 'short' },
+        },
+      });
+      expect(processor('22.1122334455').text).toEqual('22');
+    });
+  });
 });

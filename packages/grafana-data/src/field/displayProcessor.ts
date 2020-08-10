@@ -43,16 +43,18 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
   const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field as Field, options.theme);
+  const hasUnit = unit && unit !== 'none';
 
   return (value: any) => {
     const { mappings } = config;
+    const valueIsString = typeof value === 'string';
 
-    if (hasDateUnit && typeof value === 'string') {
+    if (hasDateUnit && valueIsString) {
       value = dateTime(value).valueOf();
     }
 
     let text = _.toString(value);
-    let numeric = toNumber(value);
+    let numeric = hasUnit || !valueIsString ? toNumber(value) : NaN;
     let prefix: string | undefined = undefined;
     let suffix: string | undefined = undefined;
     let shouldFormat = true;
