@@ -89,7 +89,6 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 
 		qm.Target = qm.Params.Encode()
 		iaQueries = append(iaQueries, &qm)
-
 	}
 
 	return iaQueries, nil
@@ -105,7 +104,7 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 
 	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
-		queryResultError(err)
+		return queryResultError(err)
 	}
 	req.URL.Path = path.Join(req.URL.Path, "query")
 	req.URL.RawQuery = query.Params.Encode()
@@ -129,30 +128,30 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 	azlog.Debug("ApplicationInsights", "Request URL", req.URL.String())
 	res, err := ctxhttp.Do(ctx, e.httpClient, req)
 	if err != nil {
-		queryResultError(err)
+		return queryResultError(err)
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
 	if err != nil {
-		queryResultError(err)
+		return queryResultError(err)
 	}
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		queryResultError(fmt.Errorf("Request failed status: %v", res.Status))
+		return queryResultError(fmt.Errorf("Request failed status: %v %w", res.Status, fmt.Errorf(string(body))))
 	}
 	var logResponse AzureLogAnalyticsResponse
 	d := json.NewDecoder(bytes.NewReader(body))
 	d.UseNumber()
 	err = d.Decode(&logResponse)
 	if err != nil {
-		queryResultError(err)
+		return queryResultError(err)
 	}
 
 	t, err := logResponse.GetPrimaryResultTable()
 	if err != nil {
-		queryResultError(err)
+		return queryResultError(err)
 	}
 
 	frame, err := LogTableToFrame(t)

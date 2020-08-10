@@ -1,13 +1,13 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, ReactNode } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   DataFrame,
-  FeatureState,
   FieldConfigPropertyItem,
   FieldConfigSource,
   PanelPlugin,
   SelectableValue,
   VariableSuggestionsScope,
+  DocsId,
 } from '@grafana/data';
 import { Container, Counter, FeatureInfoBox, Field, fieldMatchersUI, Label, useTheme, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
@@ -16,6 +16,7 @@ import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
 import { selectors } from '@grafana/e2e-selectors';
 import { css } from 'emotion';
+import { getDocsLink } from 'app/core/utils/docsLinks';
 
 interface Props {
   plugin: PanelPlugin;
@@ -111,13 +112,12 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
       {config.overrides.length === 0 && (
         <FeatureInfoBox
           title="Overrides"
-          featureState={FeatureState.beta}
-          // url={getDocsLink(DocsId.FieldConfigOverrides)}
+          url={getDocsLink(DocsId.FieldConfigOverrides)}
           className={css`
             margin: ${theme.spacing.md};
           `}
         >
-          Field options overrides give you a fine grained control over how your data is displayed.
+          Field override rules give you a fine grained control over how your data is displayed.
         </FeatureInfoBox>
       )}
 
@@ -129,11 +129,11 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
 
 export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, config, plugin }) => {
   const setDefaultValue = useCallback(
-    (name: string, value: any, custom: boolean) => {
+    (name: string, value: any, isCustom: boolean | undefined) => {
       const defaults = { ...config.defaults };
       const remove = value === undefined || value === null || '';
 
-      if (custom) {
+      if (isCustom) {
         if (defaults.custom) {
           if (remove) {
             defaults.custom = { ...defaults.custom };
@@ -171,11 +171,16 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
           : undefined
         : (defaults as any)[item.path];
 
-      const label = (
+      let label: ReactNode | undefined = (
         <Label description={item.description} category={item.category?.slice(1)}>
           {item.name}
         </Label>
       );
+
+      // hide label if there is only one item and category name is same as item, name
+      if (categoryItemCount === 1 && item.category?.[0] === item.name) {
+        label = undefined;
+      }
 
       return (
         <Field label={label} key={`${item.id}/${item.isCustom}`}>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { merge } from 'lodash';
-import { Table } from './Table';
+import { Table } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { number } from '@storybook/addon-knobs';
 import { useTheme } from '../../themes';
@@ -90,6 +90,7 @@ function buildData(theme: GrafanaTheme, config: Record<string, FieldConfig>): Da
     },
     theme,
     replaceVariables: (value: string) => value,
+    getDataSourceSettingsByUid: (value: string) => ({} as any),
   })[0];
 }
 

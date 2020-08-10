@@ -77,7 +77,7 @@ export interface NotificationChannelType {
 
 export interface NotificationChannelDTO {
   [key: string]: string | boolean | number | SelectableValue<string>;
-  id?: number;
+  id: number;
   name: string;
   type: SelectableValue<string>;
   sendReminder: boolean;

@@ -48,11 +48,10 @@ func init() {
 				Label:        "Password",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypePassword,
-				PropertyName: "password",
+				PropertyName: "secureFields.password",
 			},
 		},
 	})
-
 }
 
 // NewWebHookNotifier is the constructor for
@@ -63,11 +62,13 @@ func NewWebHookNotifier(model *models.AlertNotification) (alerting.Notifier, err
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
+	password := model.DecryptedValue("password", model.Settings.Get("password").MustString())
+
 	return &WebhookNotifier{
 		NotifierBase: NewNotifierBase(model),
 		URL:          url,
 		User:         model.Settings.Get("username").MustString(),
-		Password:     model.Settings.Get("password").MustString(),
+		Password:     password,
 		HTTPMethod:   model.Settings.Get("httpMethod").MustString("POST"),
 		log:          log.New("alerting.notifier.webhook"),
 	}, nil

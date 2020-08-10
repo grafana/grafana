@@ -40,7 +40,7 @@ export interface ReduceDataOptions {
 
 // TODO: use built in variables, same as for data links?
 export const VAR_SERIES_NAME = '__series.name';
-export const VAR_FIELD_NAME = '__field.name';
+export const VAR_FIELD_NAME = '__field.displayName'; // Includes the rendered tags and naming strategy
 export const VAR_FIELD_LABELS = '__field.labels';
 export const VAR_CALC = '__calc';
 export const VAR_CELL_PREFIX = '__cell_'; // consistent with existing table templates
@@ -84,7 +84,7 @@ export interface GetFieldDisplayValuesOptions {
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { replaceVariables, reduceOptions, fieldConfig, timeZone } = options;
+  const { replaceVariables, reduceOptions, timeZone } = options;
   const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
@@ -223,9 +223,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   if (values.length === 0) {
     values.push(createNoValuesFieldDisplay(options));
-  } else if (values.length === 1 && !fieldConfig.defaults.displayName) {
-    // Don't show title for single item
-    values[0].display.title = undefined;
   }
 
   return values;

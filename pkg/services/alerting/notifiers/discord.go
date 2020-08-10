@@ -87,7 +87,6 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	fields := make([]map[string]interface{}, 0)
 
 	for _, evt := range evalContext.EvalMatches {
-
 		fields = append(fields, map[string]interface{}{
 			"name":   evt.Metric,
 			"value":  evt.Value.FullString(),

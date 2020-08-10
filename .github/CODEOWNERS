@@ -56,5 +56,5 @@ lerna.json @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/opentsdb @grafana/backend-platform
 /public/app/plugins/datasource/postgres @grafana/backend-platform
 /public/app/plugins/datasource/prometheus @grafana/observability-squad
-/public/app/plugins/datasource/stackdriver @grafana/backend-platform
+/public/app/plugins/datasource/cloud-monitoring @grafana/backend-platform
 /public/app/plugins/datasource/zipkin @grafana/observability-squad

@@ -4,6 +4,7 @@ import { config } from '@grafana/runtime';
 import { NotificationChannelDTO, NotificationChannelType } from 'app/types';
 
 export const defaultValues: NotificationChannelDTO = {
+  id: -1,
   name: '',
   type: { value: 'email', label: 'Email' },
   sendReminder: false,

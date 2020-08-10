@@ -12,8 +12,8 @@ const setup = (spy?: any, propOverrides?: object) => {
       }
     },
     valueMappings: [
-      { id: 1, operator: '', type: MappingType.ValueToText, value: '20', text: 'Ok' },
-      { id: 2, operator: '', type: MappingType.RangeToText, from: '21', to: '30', text: 'Meh' },
+      { id: 1, type: MappingType.ValueToText, value: '20', text: 'Ok' },
+      { id: 2, type: MappingType.RangeToText, from: '21', to: '30', text: 'Meh' },
     ],
   };
 
@@ -35,9 +35,7 @@ describe('On remove mapping', () => {
     const remove = wrapper.find('button[aria-label="ValueMappingsEditor remove button"]');
     remove.at(0).simulate('click');
 
-    expect(onChangeSpy).toBeCalledWith([
-      { id: 2, operator: '', type: MappingType.RangeToText, from: '21', to: '30', text: 'Meh' },
-    ]);
+    expect(onChangeSpy).toBeCalledWith([{ id: 2, type: MappingType.RangeToText, from: '21', to: '30', text: 'Meh' }]);
   });
 
   it('should remove mapping at index 1', () => {
@@ -47,9 +45,7 @@ describe('On remove mapping', () => {
     const remove = wrapper.find('button[aria-label="ValueMappingsEditor remove button"]');
     remove.at(1).simulate('click');
 
-    expect(onChangeSpy).toBeCalledWith([
-      { id: 1, operator: '', type: MappingType.ValueToText, value: '20', text: 'Ok' },
-    ]);
+    expect(onChangeSpy).toBeCalledWith([{ id: 1, type: MappingType.ValueToText, value: '20', text: 'Ok' }]);
   });
 });
 
@@ -62,9 +58,9 @@ describe('Next id to add', () => {
     add.at(0).simulate('click');
 
     expect(onChangeSpy).toBeCalledWith([
-      { id: 1, operator: '', type: MappingType.ValueToText, value: '20', text: 'Ok' },
-      { id: 2, operator: '', type: MappingType.RangeToText, from: '21', to: '30', text: 'Meh' },
-      { id: 3, operator: '', type: MappingType.ValueToText, from: '', to: '', text: '' },
+      { id: 1, type: MappingType.ValueToText, value: '20', text: 'Ok' },
+      { id: 2, type: MappingType.RangeToText, from: '21', to: '30', text: 'Meh' },
+      { id: 3, type: MappingType.ValueToText, from: '', to: '', text: '' },
     ]);
   });
 
@@ -73,8 +69,6 @@ describe('Next id to add', () => {
     const wrapper = setup(onChangeSpy, { valueMappings: [] });
     const add = wrapper.find('*[aria-label="ValueMappingsEditor add mapping button"]');
     add.at(0).simulate('click');
-    expect(onChangeSpy).toBeCalledWith([
-      { id: 0, operator: '', type: MappingType.ValueToText, from: '', to: '', text: '' },
-    ]);
+    expect(onChangeSpy).toBeCalledWith([{ id: 0, type: MappingType.ValueToText, from: '', to: '', text: '' }]);
   });
 });

@@ -40,7 +40,7 @@ func init() {
 				Label:        "Basic Auth Password",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypePassword,
-				PropertyName: "basicAuthPassword",
+				PropertyName: "secureFields.basicAuthPassword",
 			},
 		},
 	})
@@ -61,7 +61,7 @@ func NewAlertmanagerNotifier(model *models.AlertNotification) (alerting.Notifier
 		}
 	}
 	basicAuthUser := model.Settings.Get("basicAuthUser").MustString()
-	basicAuthPassword := model.Settings.Get("basicAuthPassword").MustString()
+	basicAuthPassword := model.DecryptedValue("basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString())
 
 	return &AlertmanagerNotifier{
 		NotifierBase:      NewNotifierBase(model),

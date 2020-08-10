@@ -43,14 +43,16 @@ Currently only Organization Admins can create reports.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-### Layout
+### Layout and orientation
 
 > We're actively working on developing new report layout options. [Contact us](https://grafana.com/contact?about=grafana-enterprise&topic=design-process&value=reporting) if you would like to get involved in the design process.
 
-Name | Support | Description | Preview
----- | ------- | ----------- | -------
-Portrait | v6.4+ | Portrait generates an A4 page in portrait mode with three panels per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
-Landscape | v6.7+ | Landscape generates an A4 page in landscape mode with a single panel per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+Layout | Orientation | Support | Description | Preview
+------ | ----------- | ------- | ----------- | -------
+Simple | Portrait | v6.4+ | Generates an A4 page in portrait mode with three panels per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
+Simple | Landscape | v6.7+ | Generates an A4 page in landscape mode with a single panel per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+Grid | Portrait | v7.2+ | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard. | {{< docs-imagebox img="/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
+Grid | Landscape | v7.2+ | Generates an A4 page in landscape mode with panels arranged in the same way as at the original dashboard. | {{< docs-imagebox img="/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Scheduling
 
@@ -69,7 +71,7 @@ Hourly reports are generated once per hour. All fields are required.
 
 Daily reports are generated once per day. All fields are required.
 
-* **Time -** Time of day in 24 hours format when the report should be sent.
+* **Time -** Time the report is sent, in 24-hour format.
 * **Time zone -** Time zone for the **Time** field.
 
 #### Weekly
@@ -77,7 +79,17 @@ Daily reports are generated once per day. All fields are required.
 Weekly reports are generated once per week. All fields are required.
 
 * **Day -** Weekday which the report should be sent on.
-* **Time -** Time of day in 24 hours format when the report should be sent.
+* **Time -** Time the report is sent, in 24-hour format.
+* **Time zone -** Time zone for the **Time** field.
+
+#### Monthly
+
+> Only available in Grafana Enterprise v7.1+.
+
+Monthly reports are generated once per month. All fields are required.
+
+* **Day in month -** Day of the month when the report should be sent. You can select `last` for reports that should go out on the last day of the month.
+* **Time -** Time the report is sent, in 24-hour format.
 * **Time zone -** Time zone for the **Time** field.
 
 #### Never

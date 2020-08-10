@@ -33,7 +33,7 @@ func init() {
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				Placeholder:  "Slack incoming webhook url",
-				PropertyName: "url",
+				PropertyName: "secureFields.url",
 				Required:     true,
 			},
 			{
@@ -103,7 +103,7 @@ func init() {
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				Description:  "Provide a bot token to use the Slack file.upload API (starts with \"xoxb\"). Specify Recipient for this to work",
-				PropertyName: "token",
+				PropertyName: "secureFields.token",
 			},
 		},
 	})
@@ -113,7 +113,7 @@ var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*
 
 // NewSlackNotifier is the constructor for the Slack notifier
 func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
-	url := model.Settings.Get("url").MustString()
+	url := model.DecryptedValue("url", model.Settings.Get("url").MustString())
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
@@ -128,7 +128,8 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	mentionUsersStr := model.Settings.Get("mentionUsers").MustString()
 	mentionGroupsStr := model.Settings.Get("mentionGroups").MustString()
 	mentionChannel := model.Settings.Get("mentionChannel").MustString()
-	token := model.Settings.Get("token").MustString()
+	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
+
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
 	if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {

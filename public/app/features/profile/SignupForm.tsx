@@ -77,7 +77,7 @@ export const SignupForm: FC<Props> = props => {
             <Field label="Your name">
               <Input name="name" placeholder="(optional)" ref={register} />
             </Field>
-            <Field label="Email" invalid={!!errors.email} error={!!errors.email && errors.email.message}>
+            <Field label="Email" invalid={!!errors.email} error={errors.email?.message}>
               <Input
                 name="email"
                 type="email"
@@ -91,7 +91,7 @@ export const SignupForm: FC<Props> = props => {
                 })}
               />
             </Field>
-            <Field label="Password" invalid={!!errors.password} error={!!errors.password && errors.password.message}>
+            <Field label="Password" invalid={!!errors.password} error={errors.password?.message}>
               <Input
                 name="password"
                 type="password"

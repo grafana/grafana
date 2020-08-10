@@ -8,7 +8,6 @@ import (
 )
 
 func TestUrl(t *testing.T) {
-
 	Convey("When joining two urls where right hand side is empty", t, func() {
 		result := JoinURLFragments("http://localhost:8080", "")
 

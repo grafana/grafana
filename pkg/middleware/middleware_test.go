@@ -46,7 +46,6 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 	setting.ERR_TEMPLATE_NAME = errorTemplate
 
 	Convey("Given the grafana middleware", t, func() {
-
 		middlewareScenario(t, "middleware should get correct x-xss-protection header", func(sc *scenarioContext) {
 			setting.XSSProtectionHeader = true
 			sc.fakeReq("GET", "/api/").exec()

@@ -404,6 +404,13 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           SafeDynamicImport(import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')),
       },
     })
+    .when('/admin/live', {
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () => SafeDynamicImport(import(/* webpackChunkName: "LiveAdmin" */ 'app/features/admin/LiveAdmin')),
+      },
+    })
     .when('/admin/ldap', {
       template: '<react-container />',
       reloadOnSearch: false,
@@ -448,7 +455,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           ),
       },
       // @ts-ignore
-      pageClass: 'sidemenu-hidden',
+      pageClass: 'login-page sidemenu-hidden',
     })
     .when('/user/password/reset', {
       template: '<react-container />',
@@ -461,7 +468,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           ),
       },
       //@ts-ignore
-      pageClass: 'sidemenu-hidden',
+      pageClass: 'login-page sidemenu-hidden',
     })
     .when('/dashboard/snapshots', {
       template: '<react-container />',
@@ -535,9 +542,11 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .otherwise({
-      templateUrl: 'public/app/partials/error.html',
-      controller: 'ErrorCtrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "ErrorPage" */ 'app/core/components/ErrorPage/ErrorPage')),
+      },
     });
 
   applyRouteRegistrationHandlers($routeProvider);

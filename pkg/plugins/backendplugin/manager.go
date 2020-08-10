@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
-	"golang.org/x/xerrors"
 )
 
 var (
@@ -34,11 +33,7 @@ var (
 )
 
 func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "BackendPluginManager",
-		Instance:     &manager{},
-		InitPriority: registry.Low,
-	})
+	registry.RegisterService(&manager{})
 }
 
 // Manager manages backend plugins.
@@ -100,7 +95,11 @@ func (m *manager) Register(pluginID string, factory PluginFactoryFunc) error {
 	}
 
 	if m.License.HasLicense() {
-		hostEnv = append(hostEnv, fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", m.Cfg.EnterpriseLicensePath))
+		hostEnv = append(
+			hostEnv,
+			fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", m.Cfg.EnterpriseLicensePath),
+			fmt.Sprintf("GF_ENTERPRISE_LICENSE_TEXT=%s", m.License.TokenRaw()),
+		)
 	}
 
 	env := pluginSettings.ToEnv("GF_PLUGIN", hostEnv)
@@ -382,7 +381,7 @@ func restartKilledProcess(ctx context.Context, p Plugin) error {
 	for {
 		select {
 		case <-ctx.Done():
-			if err := ctx.Err(); err != nil && !xerrors.Is(err, context.Canceled) {
+			if err := ctx.Err(); err != nil && !errors.Is(err, context.Canceled) {
 				return err
 			}
 			return nil

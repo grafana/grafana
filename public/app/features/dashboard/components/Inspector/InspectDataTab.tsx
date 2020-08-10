@@ -26,6 +26,7 @@ import { GetDataOptions } from '../../state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { PanelModel } from 'app/features/dashboard/state';
 import { DetailText } from './DetailText';
+import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 
 interface Props {
   panel: PanelModel;
@@ -61,9 +62,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     // Replace the time field with a formatted time
     const { timeIndex, timeField } = getTimeField(dataFrame);
+
     if (timeField) {
       // Use the configurd date or standandard time display
-      let processor: DisplayProcessor = timeField.display;
+      let processor: DisplayProcessor | undefined = timeField.display;
       if (!processor) {
         processor = getDisplayProcessor({
           field: timeField,
@@ -77,7 +79,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
       };
 
       const fields = [...dataFrame.fields];
-      fields[timeIndex] = formattedDateField;
+      fields[timeIndex!] = formattedDateField;
+
       dataFrame = {
         ...dataFrame,
         fields,
@@ -86,8 +89,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     const dataFrameCsv = toCSV([dataFrame]);
 
-    const blob = new Blob([dataFrameCsv], {
-      type: 'application/csv;charset=utf-8',
+    const blob = new Blob([String.fromCharCode(0xfeff), dataFrameCsv], {
+      type: 'text/csv;charset=utf-8',
     });
     const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
     const fileName = `${panel.title}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
@@ -99,8 +102,9 @@ export class InspectDataTab extends PureComponent<Props, State> {
       transformId:
         item.value === DataTransformerID.seriesToColumns ? DataTransformerID.seriesToColumns : DataTransformerID.noop,
       dataFrameIndex: typeof item.value === 'number' ? item.value : 0,
-      selectedDataFrame: item.value,
+      selectedDataFrame: item.value!,
     });
+
     this.props.onOptionsChange({
       ...this.props.options,
     });
@@ -126,8 +130,20 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const { options } = this.props;
     let data = this.props.data;
 
+    if (!data) {
+      return [];
+    }
+
     if (this.state.transformId !== DataTransformerID.noop) {
       data = this.getTransformedData();
+    }
+
+    // In case the transform removes the currently selected data frame
+    if (!data[this.state.dataFrameIndex]) {
+      this.setState({
+        dataFrameIndex: 0,
+        selectedDataFrame: 0,
+      });
     }
 
     // We need to apply field config even though it was already applied in the PanelQueryRunner.
@@ -139,18 +155,25 @@ export class InspectDataTab extends PureComponent<Props, State> {
       replaceVariables: (value: string) => {
         return value;
       },
+      getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid,
     });
   }
 
-  getActiveString = () => {
+  getActiveString() {
     const { selectedDataFrame } = this.state;
     const { options, data } = this.props;
     let activeString = '';
+
+    if (!data) {
+      return activeString;
+    }
+
     if (selectedDataFrame === DataTransformerID.seriesToColumns) {
       activeString = 'series joined by time';
     } else {
       activeString = getFrameDisplayName(data[selectedDataFrame as number]);
     }
+
     if (options.withTransforms || options.withFieldConfig) {
       activeString += ' - applied ';
       if (options.withTransforms) {
@@ -165,12 +188,14 @@ export class InspectDataTab extends PureComponent<Props, State> {
         activeString += 'field configuration';
       }
     }
-    return activeString;
-  };
 
-  renderDataOptions = (dataFrames: DataFrame[]) => {
+    return activeString;
+  }
+
+  renderDataOptions(dataFrames: DataFrame[]) {
     const { options, onOptionsChange, panel, data } = this.props;
     const { transformId, transformationOptions, selectedDataFrame } = this.state;
+
     const styles = getPanelInspectorStyles();
 
     const panelTransformations = panel.getTransformations();
@@ -181,7 +206,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     let dataSelect = dataFrames;
     if (selectedDataFrame === DataTransformerID.seriesToColumns) {
-      dataSelect = data;
+      dataSelect = data!;
     }
 
     const choices = dataSelect.map((frame, index) => {
@@ -205,21 +230,21 @@ export class InspectDataTab extends PureComponent<Props, State> {
       >
         <div className={styles.options}>
           <VerticalGroup spacing="lg">
-            {data.length > 1 && (
-              <Field
-                label="Show data frame"
-                className={css`
-                  margin-bottom: 0;
-                `}
-              >
-                <Select
-                  options={selectableOptions}
-                  value={selectedDataFrame}
-                  onChange={this.onDataFrameChange}
-                  width={30}
-                />
-              </Field>
-            )}
+            <Field
+              label="Show data frame"
+              className={css`
+                margin-bottom: 0;
+              `}
+              disabled={data!.length < 2}
+            >
+              <Select
+                options={selectableOptions}
+                value={selectedDataFrame}
+                onChange={this.onDataFrameChange}
+                width={30}
+              />
+            </Field>
+
             <HorizontalGroup>
               {showPanelTransformationsOption && (
                 <Field
@@ -248,7 +273,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
         </div>
       </QueryOperationRow>
     );
-  };
+  }
 
   render() {
     const { isLoading } = this.props;
@@ -267,6 +292,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     if (!dataFrames || !dataFrames.length) {
       return <div>No Data</div>;
+    }
+
+    if (!dataFrames[dataFrameIndex]) {
+      return <div>Could not find the Data Frame</div>;
     }
 
     return (

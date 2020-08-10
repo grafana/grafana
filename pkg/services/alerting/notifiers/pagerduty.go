@@ -26,7 +26,7 @@ func init() {
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				Placeholder:  "Pagerduty Integration Key",
-				PropertyName: "integrationKey",
+				PropertyName: "secureSettings.integrationKey",
 				Required:     true,
 			},
 			{
@@ -58,6 +58,12 @@ func init() {
 				Description:  "Resolve incidents in pagerduty once the alert goes back to ok.",
 				PropertyName: "autoResolve",
 			},
+			{
+				Label:        "Include message in details",
+				Element:      alerting.ElementTypeSwitch,
+				Description:  "Move the alert message from the PD summary into the custom details. This changes the custom details object and may break event rules you have configured",
+				PropertyName: "messageInDetails",
+			},
 		},
 	})
 }
@@ -70,7 +76,7 @@ var (
 func NewPagerdutyNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	severity := model.Settings.Get("severity").MustString("critical")
 	autoResolve := model.Settings.Get("autoResolve").MustBool(false)
-	key := model.Settings.Get("integrationKey").MustString()
+	key := model.DecryptedValue("integrationKey", model.Settings.Get("integrationKey").MustString())
 	messageInDetails := model.Settings.Get("messageInDetails").MustBool(false)
 	if key == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find integration key property in settings"}
@@ -99,7 +105,6 @@ type PagerdutyNotifier struct {
 
 // buildEventPayload is responsible for building the event payload body for sending to Pagerduty v2 API
 func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext) ([]byte, error) {
-
 	eventType := "trigger"
 	if evalContext.Rule.State == models.AlertStateOK {
 		eventType = "resolve"
@@ -206,7 +211,6 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 
 // Notify sends an alert notification to PagerDuty
 func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
-
 	if evalContext.Rule.State == models.AlertStateOK && !pn.AutoResolve {
 		pn.log.Info("Not sending a trigger to Pagerduty", "state", evalContext.Rule.State, "auto resolve", pn.AutoResolve)
 		return nil

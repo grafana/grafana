@@ -3,7 +3,7 @@
   "license": "Apache-2.0",
   "private": true,
   "name": "grafana",
-  "version": "7.1.0-pre",
+  "version": "7.2.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
@@ -13,7 +13,7 @@
     "e2e:debug": "./e2e/start-and-run-suite debug",
     "e2e:dev": "./e2e/start-and-run-suite dev",
     "jest": "jest --notify --watch",
-    "jest-ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit --maxWorkers 2",
+    "jest-ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
     "lint": "eslint public/app e2e/suite1 public/test --ext=.js,.ts,.tsx",
     "lint:fix": "yarn lint --fix",
     "packages:build": "lerna run clean && lerna run build --ignore @grafana-plugins/input-datasource",
@@ -25,6 +25,7 @@
     "packages:publishCanary": "lerna publish from-package --contents dist --dist-tag canary --yes",
     "packages:publishLatest": "lerna publish from-package --contents dist --yes",
     "packages:publishNext": "lerna publish from-package --contents dist --dist-tag next --yes",
+    "packages:publishDev": "lerna publish from-package --contents dist --dist-tag dev --yes --registry http://grafana-npm.local:4873 --force-publish=*",
     "packages:typecheck": "lerna run typecheck",
     "precommit": "grafana-toolkit precommit",
     "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\"",
@@ -43,8 +44,8 @@
     "watch": "yarn start -d watch,start core:start --watchTheme "
   },
   "grafana": {
-    "whatsNewUrl": "https://grafana.com/docs/grafana/latest/guides/whats-new-in-v7-0/",
-    "releaseNotesUrl": "https://community.grafana.com/t/release-notes-v7-0-x/29381"
+    "whatsNewUrl": "https://grafana.com/docs/grafana/latest/guides/whats-new-in-v7-1/",
+    "releaseNotesUrl": "https://community.grafana.com/t/release-notes-v7-1-x/32967"
   },
   "husky": {
     "hooks": {
@@ -87,7 +88,7 @@
     "@types/jquery": "3.3.38",
     "@types/lodash": "4.14.149",
     "@types/lru-cache": "^5.1.0",
-    "@types/marked": "0.6.5",
+    "@types/marked": "1.1.0",
     "@types/moment-timezone": "0.5.13",
     "@types/mousetrap": "1.6.3",
     "@types/node": "13.7.0",
@@ -207,6 +208,7 @@
     "@types/md5": "^2.1.33",
     "@types/react-loadable": "5.5.2",
     "@types/react-virtualized-auto-sizer": "1.0.0",
+    "@types/sockjs-client": "^1.1.1",
     "@welldone-software/why-did-you-render": "4.0.6",
     "abortcontroller-polyfill": "1.4.0",
     "angular": "1.6.9",
@@ -218,12 +220,14 @@
     "baron": "3.0.3",
     "brace": "0.11.1",
     "calculate-size": "1.1.1",
+    "centrifuge": "^2.6.4",
     "classnames": "2.2.6",
     "clipboard": "2.0.4",
     "common-tags": "^1.8.0",
     "core-js": "3.6.4",
     "d3": "5.15.0",
     "d3-scale-chromatic": "1.5.0",
+    "dangerously-set-html-content": "1.0.6",
     "emotion": "10.0.27",
     "eventemitter3": "4.0.0",
     "fast-text-encoding": "^1.0.0",
@@ -233,9 +237,9 @@
     "is-hotkey": "0.1.6",
     "jquery": "3.5.1",
     "jsurl": "^0.1.5",
-    "lodash": "4.17.15",
+    "lodash": "4.17.19",
     "lru-cache": "^5.1.1",
-    "marked": "0.6.2",
+    "marked": "1.1.1",
     "md5": "^2.2.1",
     "memoize-one": "5.1.1",
     "moment": "2.24.0",
@@ -244,7 +248,7 @@
     "mousetrap-global-bind": "1.1.0",
     "nodemon": "2.0.2",
     "papaparse": "4.6.3",
-    "prismjs": "1.19.0",
+    "prismjs": "1.21.0",
     "prop-types": "15.7.2",
     "rc-cascader": "1.0.1",
     "re-resizable": "^6.2.0",
@@ -267,15 +271,16 @@
     "regenerator-runtime": "0.13.3",
     "reselect": "4.0.0",
     "rst2html": "github:thoward/rst2html#990cb89",
-    "rxjs": "6.5.5",
+    "rxjs": "6.6.2",
     "search-query-parser": "1.5.4",
     "slate": "0.47.8",
     "slate-plain-serializer": "0.7.10",
+    "sockjs-client": "^1.4.0",
     "tether": "1.4.7",
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "1.4.1",
     "tti-polyfill": "0.2.2",
-    "whatwg-fetch": "3.0.0"
+    "whatwg-fetch": "3.1.0"
   },
   "resolutions": {
     "caniuse-db": "1.0.30000772"
@@ -297,6 +302,6 @@
     "node": ">=12 <13"
   },
   "volta": {
-    "node": "12.18.0"
+    "node": "12.18.3"
   }
 }

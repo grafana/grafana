@@ -127,7 +127,10 @@ func DeleteDataSourceByName(c *models.ReqContext) Response {
 		return Error(500, "Failed to delete datasource", err)
 	}
 
-	return Success("Data source deleted")
+	return JSON(200, util.DynMap{
+		"message": "Data source deleted",
+		"id":      getCmd.Result.Id,
+	})
 }
 
 func validateURL(tp string, u string) Response {
@@ -225,7 +228,6 @@ func fillWithSecureJSONData(cmd *models.UpdateDataSourceCommand) error {
 
 	secureJSONData := ds.SecureJsonData.Decrypt()
 	for k, v := range secureJSONData {
-
 		if _, ok := cmd.SecureJsonData[k]; !ok {
 			cmd.SecureJsonData[k] = v
 		}

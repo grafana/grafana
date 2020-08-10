@@ -45,7 +45,6 @@ func init() {
 			},
 		},
 	})
-
 }
 
 const (

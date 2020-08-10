@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import memoizeOne from 'memoize-one';
-import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel } from '@grafana/data';
+import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel, LogsSortOrder, sortLogRows } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
@@ -23,6 +23,7 @@ export interface Props extends Themeable {
   showTime: boolean;
   wrapLogMessage: boolean;
   timeZone: TimeZone;
+  logsSortOrder?: LogsSortOrder | null;
   rowLimit?: number;
   allowDetails?: boolean;
   previewLimit?: number;
@@ -70,9 +71,13 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     }
   }
 
-  makeGetRows = memoizeOne((processedRows: LogRowModel[]) => {
-    return () => processedRows;
+  makeGetRows = memoizeOne((orderedRows: LogRowModel[]) => {
+    return () => orderedRows;
   });
+
+  sortLogs = memoizeOne((logRows: LogRowModel[], logsSortOrder: LogsSortOrder): LogRowModel[] =>
+    sortLogRows(logRows, logsSortOrder)
+  );
 
   render() {
     const {
@@ -93,6 +98,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       previewLimit,
       getFieldLinks,
       disableCustomHorizontalScroll,
+      logsSortOrder,
     } = this.props;
     const { renderAll } = this.state;
     const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
@@ -109,12 +115,13 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
-    const firstRows = processedRows.slice(0, previewLimit!);
-    const rowCount = Math.min(processedRows.length, rowLimit!);
-    const lastRows = processedRows.slice(previewLimit!, rowCount);
+    const orderedRows = logsSortOrder ? this.sortLogs(processedRows, logsSortOrder) : processedRows;
+    const firstRows = orderedRows.slice(0, previewLimit!);
+    const rowCount = Math.min(orderedRows.length, rowLimit!);
+    const lastRows = orderedRows.slice(previewLimit!, rowCount);
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
-    const getRows = this.makeGetRows(processedRows);
+    const getRows = this.makeGetRows(orderedRows);
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
 
     return (
@@ -139,6 +146,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   getFieldLinks={getFieldLinks}
+                  logsSortOrder={logsSortOrder}
                 />
               ))}
             {hasData &&
@@ -159,6 +167,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
                   getFieldLinks={getFieldLinks}
+                  logsSortOrder={logsSortOrder}
                 />
               ))}
             {hasData && !renderAll && (

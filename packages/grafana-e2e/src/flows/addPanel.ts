@@ -4,28 +4,47 @@ import { getScenarioContext } from '../support/scenarioContext';
 import { selectOption } from './selectOption';
 
 export interface AddPanelConfig {
+  chartData: {
+    method: string;
+    route: string | RegExp;
+  };
   dashboardUid: string;
   dataSourceName: string;
+  matchScreenshot: boolean;
   queriesForm: (config: AddPanelConfig) => void;
   panelTitle: string;
+  screenshotName: string;
   visualizationName: string;
-  waitForChartData: boolean;
 }
 
 // @todo this actually returns type `Cypress.Chainable`
 export const addPanel = (config?: Partial<AddPanelConfig>): any =>
   getScenarioContext().then(({ lastAddedDashboardUid, lastAddedDataSource }: any) => {
     const fullConfig = {
+      chartData: {
+        method: 'POST',
+        route: '/api/ds/query',
+      },
       dashboardUid: lastAddedDashboardUid,
       dataSourceName: lastAddedDataSource,
+      matchScreenshot: false,
       panelTitle: `e2e-${Date.now()}`,
       queriesForm: () => {},
+      screenshotName: 'chart',
       visualizationName: 'Table',
-      waitForChartData: true,
       ...config,
     } as AddPanelConfig;
 
-    const { dashboardUid, dataSourceName, panelTitle, queriesForm, visualizationName } = fullConfig;
+    const {
+      chartData,
+      dashboardUid,
+      dataSourceName,
+      matchScreenshot,
+      panelTitle,
+      queriesForm,
+      screenshotName,
+      visualizationName,
+    } = fullConfig;
 
     e2e.flows.openDashboard({ uid: dashboardUid });
     e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
@@ -36,7 +55,7 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
     // @todo alias '/**/*.js*' as '@pluginModule' when possible: https://github.com/cypress-io/cypress/issues/1296
 
     e2e()
-      .route('POST', '/api/ds/query')
+      .route(chartData.method, chartData.route)
       .as('chartData');
 
     selectOption(e2e.components.DataSourcePicker.container(), dataSourceName);
@@ -60,6 +79,8 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
       .click();
     closeOptionsGroup('type');
 
+    closeOptions();
+
     queriesForm(fullConfig);
 
     e2e().wait('@chartData');
@@ -69,8 +90,6 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
     //e2e.components.Panels.Panel.containerByTitle(panelTitle).find('.panel-content').contains('No data');
     //e2e.components.QueryEditorRow.actionButton('Disable/enable query').click();
 
-    closeOptions();
-
     e2e()
       .get('button[title="Apply changes and go back to dashboard"]')
       .click();
@@ -79,6 +98,13 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
 
     // Wait for RxJS
     e2e().wait(500);
+
+    if (matchScreenshot) {
+      e2e.components.Panels.Panel.containerByTitle(panelTitle)
+        .find('.panel-content')
+        .screenshot(screenshotName);
+      e2e().compareScreenshots(screenshotName);
+    }
 
     // @todo remove `wrap` when possible
     return e2e().wrap({ config: fullConfig });

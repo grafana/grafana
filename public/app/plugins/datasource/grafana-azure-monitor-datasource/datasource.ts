@@ -13,6 +13,7 @@ import {
 import { Observable, of, from } from 'rxjs';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
+import { migrateMetricsDimensionFilters } from './query_ctrl';
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
@@ -64,6 +65,10 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
         target.queryType = AzureQueryType.AzureMonitor;
       }
 
+      if (target.queryType === AzureQueryType.AzureMonitor) {
+        migrateMetricsDimensionFilters(target.azureMonitor);
+      }
+
       // Check that we have options
       const opts = (target as any)[this.optionsKey[target.queryType]];
 
@@ -113,17 +118,17 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       return Promise.resolve([]);
     }
 
-    const aiResult = this.appInsightsDatasource.metricFindQuery(query);
+    const aiResult = this.appInsightsDatasource.metricFindQueryInternal(query);
     if (aiResult) {
       return aiResult;
     }
 
-    const amResult = this.azureMonitorDatasource.metricFindQuery(query);
+    const amResult = this.azureMonitorDatasource.metricFindQueryInternal(query);
     if (amResult) {
       return amResult;
     }
 
-    const alaResult = this.azureLogAnalyticsDatasource.metricFindQuery(query);
+    const alaResult = this.azureLogAnalyticsDatasource.metricFindQueryInternal(query);
     if (alaResult) {
       return alaResult;
     }

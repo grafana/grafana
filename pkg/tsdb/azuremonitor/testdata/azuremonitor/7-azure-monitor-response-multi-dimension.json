@@ -1,0 +1,119 @@
+{
+    "cost": 0,
+    "timespan": "2020-06-30T09:58:58Z/2020-06-30T12:58:58Z",
+    "interval": "PT1H",
+    "value": [
+      {
+        "id": "/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/danieltest/providers/Microsoft.Storage/storageAccounts/danieltestdiag187/blobServices/default/providers/Microsoft.Insights/metrics/BlobCapacity",
+        "type": "Microsoft.Insights/metrics",
+        "name": {
+          "value": "BlobCapacity",
+          "localizedValue": "Blob Capacity"
+        },
+        "displayDescription": "The amount of storage used by the storage account’s Blob service in bytes.",
+        "unit": "Bytes",
+        "timeseries": [
+          {
+            "metadatavalues": [
+              {
+                "name": {
+                  "value": "blobtype",
+                  "localizedValue": "blobtype"
+                },
+                "value": "PageBlob"
+              },
+              {
+                "name": {
+                  "value": "tier",
+                  "localizedValue": "tier"
+                },
+                "value": "Standard"
+              }
+            ],
+            "data": [
+              {
+                "timeStamp": "2020-06-30T09:58:00Z",
+                "average": 675530
+              },
+              {
+                "timeStamp": "2020-06-30T10:58:00Z",
+                "average": 675530
+              },
+              {
+                "timeStamp": "2020-06-30T11:58:00Z",
+                "average": 675530
+              }
+            ]
+          },
+          {
+            "metadatavalues": [
+              {
+                "name": {
+                  "value": "blobtype",
+                  "localizedValue": "blobtype"
+                },
+                "value": "BlockBlob"
+              },
+              {
+                "name": {
+                  "value": "tier",
+                  "localizedValue": "tier"
+                },
+                "value": "Hot"
+              }
+            ],
+            "data": [
+              {
+                "timeStamp": "2020-06-30T09:58:00Z",
+                "average": 0
+              },
+              {
+                "timeStamp": "2020-06-30T10:58:00Z",
+                "average": 0
+              },
+              {
+                "timeStamp": "2020-06-30T11:58:00Z",
+                "average": 0
+              }
+            ]
+          },
+          {
+            "metadatavalues": [
+              {
+                "name": {
+                  "value": "blobtype",
+                  "localizedValue": "blobtype"
+                },
+                "value": "Azure Data Lake Storage"
+              },
+              {
+                "name": {
+                  "value": "tier",
+                  "localizedValue": "tier"
+                },
+                "value": "Cool"
+              }
+            ],
+            "data": [
+              {
+                "timeStamp": "2020-06-30T09:58:00Z",
+                "average": 0
+              },
+              {
+                "timeStamp": "2020-06-30T10:58:00Z",
+                "average": 0
+              },
+              {
+                "timeStamp": "2020-06-30T11:58:00Z",
+                "average": 0
+              }
+            ]
+          }
+        ],
+        "errorCode": "Success"
+      }
+    ],
+    "namespace": "Microsoft.Storage/storageAccounts/blobServices",
+    "resourceregion": "westeurope"
+}
+  
