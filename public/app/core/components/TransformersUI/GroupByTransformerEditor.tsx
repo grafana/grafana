@@ -8,7 +8,7 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
-import { Select, StatsPicker, Button } from '@grafana/ui';
+import { Select, StatsPicker, Button, IconButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { GroupByTransformerOptions } from '@grafana/data/src/transformations/transformers/groupBy';
@@ -54,7 +54,9 @@ function FieldCalculationsSelector(props: any) {
         />
       </div>
       <div className="gf-form">
-        <Button icon="trash-alt" onClick={onDelete} style={{ height: '100%' }} size="sm" variant="secondary" />
+        <div className="gf-form-label">
+          <IconButton name="times" size="sm" onClick={onDelete} surface="header" />
+        </div>
       </div>
     </div>
   );
@@ -81,9 +83,6 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
   };
 
   const onAddFieldCalculations = () => {
-    // let copy = options.calculationsByField.map(i => [i[0], [...i[1]]]); // Deep copy
-    // console.log(copy);
-    // copy.push([null, []]);
     onChange({
       ...options,
       calculationsByField: [...options.calculationsByField, [null, []]],
@@ -131,7 +130,7 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
             variant="secondary"
             disabled={options.calculationsByField.length >= fieldNameOptions.length - 1}
           >
-            Add Field Calculations
+            Add field aggregation
           </Button>
         </div>
       </div>
