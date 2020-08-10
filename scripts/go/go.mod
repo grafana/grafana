@@ -3,7 +3,7 @@ module github.com/grafana/grafana/scripts/go
 go 1.14
 
 require (
-	github.com/golangci/golangci-lint v1.28.0
+	github.com/golangci/golangci-lint v1.30.0
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mgechev/revive v1.0.2
