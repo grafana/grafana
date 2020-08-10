@@ -170,7 +170,7 @@ Set this to True if you want the display to use line wrapping. If set to False, 
 Log data can be very repetitive and Explore can help by hiding duplicate log lines. There are a few different deduplication algorithms that you can use:
 
 - **exact -** Exact matches are done on the whole line except for date fields.
-- `numbers` Matches on the line after stripping out numbers (durations, IP addresses etc.).
+- **numbers -** Matches on the line after stripping out numbers such as durations, IP addresses, and so on.
 - `signature` The most aggressive deduping - strips all letters and numbers, and matches on the remaining whitespace and punctuation.
 
 #### Flip results order
