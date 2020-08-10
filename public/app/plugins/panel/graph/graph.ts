@@ -515,7 +515,7 @@ class GraphElement {
         break;
       }
       case 'ordinal': {
-        options.series.bars.barWidth = this.getMinTimeStepOfSeries(this.data) / 1.5;
+        options.series.bars.barWidth = 1 / 1.5;
         options.series.bars.align = 'center';
         let ticksMap: any = {};
         for (const d of this.data) {
@@ -691,6 +691,13 @@ class GraphElement {
       return graphTickFormatter(ticks[epoch], axis);
     };
 
+    const tickCount = this.panelWidth / 100;
+    const ratio = Math.floor(ticks.length / tickCount);
+    let showTicks: number[] = [];
+    for (let i = 0; i < ticks.length; i = i + ratio) {
+      showTicks.push(i);
+    }
+
     options.xaxis = {
       timezone: this.dashboard.getTimezone(),
       show: this.panel.xaxis.show,
@@ -698,8 +705,8 @@ class GraphElement {
       min: 0,
       max: ticks.length + 1,
       label: 'Datetime',
-      ticks: ticks.map((value, index) => index),
-      timeformat: graphTimeFormat(ticks.length, min, max),
+      ticks: showTicks,
+      timeformat: graphTimeFormat(showTicks.length, min, max),
       tickFormatter: formatter,
     };
   }
