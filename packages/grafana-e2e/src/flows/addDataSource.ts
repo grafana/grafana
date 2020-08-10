@@ -3,25 +3,43 @@ import { e2e } from '../index';
 import { fromBaseUrl, getDataSourceId } from '../support/url';
 
 export interface AddDataSourceConfig {
+  basicAuth: boolean;
+  basicAuthPassword: string;
+  basicAuthUser: string;
   checkHealth: boolean;
   expectedAlertMessage: string | RegExp;
   form: Function;
   name: string;
+  skipTlsVerify: boolean;
   type: string;
 }
 
 // @todo this actually returns type `Cypress.Chainable`
 export const addDataSource = (config?: Partial<AddDataSourceConfig>): any => {
   const fullConfig = {
+    basicAuth: false,
+    basicAuthPassword: '',
+    basicAuthUser: '',
     checkHealth: false,
     expectedAlertMessage: 'Data source is working',
     form: () => {},
     name: `e2e-${Date.now()}`,
+    skipTlsVerify: false,
     type: 'TestData DB',
     ...config,
   } as AddDataSourceConfig;
 
-  const { checkHealth, expectedAlertMessage, form, name, type } = fullConfig;
+  const {
+    basicAuth,
+    basicAuthPassword,
+    basicAuthUser,
+    checkHealth,
+    expectedAlertMessage,
+    form,
+    name,
+    skipTlsVerify,
+    type,
+  } = fullConfig;
 
   e2e().logToConsole('Adding data source with name:', name);
   e2e.pages.AddDataSource.visit();
@@ -32,7 +50,39 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>): any => {
 
   e2e.pages.DataSource.name().clear();
   e2e.pages.DataSource.name().type(name);
+
+  if (basicAuth) {
+    e2e()
+      .contains('label', 'Basic auth')
+      .scrollIntoView()
+      .click();
+    e2e()
+      .contains('.gf-form-group', 'Basic Auth Details')
+      .should('be.visible')
+      .scrollIntoView()
+      .within(() => {
+        if (basicAuthUser) {
+          e2e()
+            .get('[placeholder=user]')
+            .type(basicAuthUser);
+        }
+        if (basicAuthPassword) {
+          e2e()
+            .get('[placeholder=Password]')
+            .type(basicAuthPassword);
+        }
+      });
+  }
+
+  if (skipTlsVerify) {
+    e2e()
+      .contains('label', 'Skip TLS Verify')
+      .scrollIntoView()
+      .click();
+  }
+
   form();
+
   e2e.pages.DataSource.saveAndTest().click();
   e2e.pages.DataSource.alert().should('exist');
   e2e.pages.DataSource.alertMessage().contains(expectedAlertMessage); // assertion
