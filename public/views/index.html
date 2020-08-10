@@ -215,7 +215,7 @@
       <search-wrapper></search-wrapper>
 
       <div class="main-view">
-				<div ng-view class="scroll-canvas"></div>
+        <div ng-view class="scroll-canvas"></div>
       </div>
     </grafana-app>
 
@@ -277,11 +277,16 @@
         var host = window.location.host;
         host = host.replace("3000", "3001");
         const sqlAtlasCheckConfigURL = "http://" + host + "/status";
-        const getStatus = async () => {
-          const response = await fetch(sqlAtlasCheckConfigURL, {method: 'GET'});
-          const status = await response.json();
-        };
-        if (status['db'] != true || status['ds'] != true || status['lic'] != true) {
+        function getJSON(yourUrl){
+          var Httpreq = new XMLHttpRequest(); // a new request
+          Httpreq.open("GET",yourUrl,false);
+          Httpreq.send(null);
+          return JSON.parse(Httpreq.responseText);          
+        }
+        
+        const status = getJSON(sqlAtlasCheckConfigURL);
+        
+        if (status.db != true || status.ds != true || status.lic != true) {
           window.location.pathname = "/sqlatlas";
         };
       }

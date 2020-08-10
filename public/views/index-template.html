@@ -271,7 +271,25 @@
     </script>
     <!-- End Google Tag Manager -->
     [[end]]
-
+    <script>
+      if (window.location.pathname == "/") {
+        var host = window.location.host;
+        host = host.replace("3000", "3001");
+        const sqlAtlasCheckConfigURL = "http://" + host + "/status";
+        function getJSON(yourUrl){
+          var Httpreq = new XMLHttpRequest(); // a new request
+          Httpreq.open("GET",yourUrl,false);
+          Httpreq.send(null);
+          return JSON.parse(Httpreq.responseText);          
+        }
+        
+        const status = getJSON(sqlAtlasCheckConfigURL);
+        
+        if (status.db != true || status.ds != true || status.lic != true) {
+          window.location.pathname = "/sqlatlas";
+        };
+      }
+    </script>
     <%
     for (key in htmlWebpackPlugin.files.chunks) { %><%
       if (htmlWebpackPlugin.files.jsIntegrity) { %>
