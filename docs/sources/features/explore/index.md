@@ -171,7 +171,7 @@ Log data can be very repetitive and Explore can help by hiding duplicate log lin
 
 - **exact -** Exact matches are done on the whole line except for date fields.
 - **numbers -** Matches on the line after stripping out numbers such as durations, IP addresses, and so on.
-- `signature` The most aggressive deduping - strips all letters and numbers, and matches on the remaining whitespace and punctuation.
+- **signature -** The most aggressive deduping, this strips all letters and numbers and matches on the remaining whitespace and punctuation.
 
 #### Flip results order
 
