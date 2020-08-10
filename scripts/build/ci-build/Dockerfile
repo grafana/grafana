@@ -1,5 +1,5 @@
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20200607 AS toolchain
+FROM debian:stretch-20200803-slim AS toolchain
 
 ENV OSX_SDK_URL=https://s3.dockerproject.org/darwin/v2 \
     OSX_SDK=MacOSX10.10.sdk \
@@ -29,12 +29,10 @@ WORKDIR /tmp
 # created deb depends on rubygem-json but json gem is not build
 # so do by hand
 
-
 # might wanna make sure osx cross and the other tarball as well as the packages ends up somewhere other than tmp
 # might also wanna put them as their own layer to not have to unpack them every time?
 
-RUN apt-get update   && \
-    apt-get upgrade -yq && \
+RUN apt-get update && \
     apt-get install -yq \
         clang patch libxml2-dev \
         ca-certificates \
@@ -54,7 +52,7 @@ RUN rm -rf /tmp/osxcross/target/SDK/${OSX_SDK}/usr/share && \
     cd /tmp                                              && \
     tar cfJ osxcross.tar.xz osxcross/target              && \
     rm -rf /tmp/osxcross
-RUN apt-get install -y                     \
+RUN apt-get install -yq                     \
         unzip libtool-bin bison flex gawk gcc g++ gperf help2man libncurses5-dev make patch python-dev texinfo xz-utils
 RUN curl -fL http://crosstool-ng.org/download/crosstool-ng/crosstool-ng-${CTNG}.tar.xz | tar -xJ -C /tmp/
 RUN cd /tmp/crosstool-ng-${CTNG}        && \
@@ -83,7 +81,7 @@ RUN mv golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64/golangci-lint /tmp/
 
 # Base image to crossbuild grafana.
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20200607
+FROM debian:stretch-20200803
 
 ENV GOVERSION=1.14.7 \
     PATH=/usr/local/go/bin:$PATH \
@@ -91,13 +89,13 @@ ENV GOVERSION=1.14.7 \
     NODEVERSION=12.18.3-1nodesource1 \
     YARNVERSION=1.22.4-1
 
+# Use ARG so as not to persisten environment variable in image
 ARG DEBIAN_FRONTEND=noninteractive
 
 COPY --from=toolchain /tmp/x86_64-centos6-linux-gnu.tar.xz /tmp/osxcross.tar.xz /tmp/
 COPY --from=toolchain /tmp/golangci-lint /usr/local/bin
 
 RUN apt-get update && \
-    apt-get upgrade -yq && \
     apt-get install -yq  \
         build-essential clang gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-mingw-w64-x86-64 \
         apt-transport-https \
@@ -133,6 +131,8 @@ RUN apt-get update && \
 # We build our own musl cross-compilers via the musl-cross-make project, on the same OS as this image's base image,
 # to ensure compatibility. We also make sure to target musl 1.1.x, since musl 1.2.x introduces 64-bit time types
 # that breaks compatibility on some 32-bit architectures (https://github.com/grafana/grafana/issues/23500).
+#
+# Use ARG so as not to persisten environment variable in image
 ARG CHKSUM_ARMV7_MUSL=5db487fb0a4aa61667de45a9cfbf7940360bd7256583b8a1e7810b4d9dd0e02a8aac737ca634b57bf269195e776ef503832ed22a6689a1c8fcdcc956f846bef7
 ARG CHKSUM_ARMV8_MUSL=50f4899cc2f637dbc39470bbe307074ccf7f40da2ab730218d13a9f75d578266311db6a0785919dcdcb5e7ce4517b13ee8d4a56d76e6fca7c6d4c2510d71aa8b
 ARG CHKSUM_AMD64_MUSL=493a79e9e29a1eab3fdff6435bac6509253d2e54ac30ad9098ce5da638bbb8ad18a7ebf3520bcaf2f9588befeff23402d8bbf54fa3809bfe18c984a4ecabcb12
