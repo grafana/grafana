@@ -9,6 +9,7 @@ import {
   ScopedVars,
   toDataFrame,
   TimeRange,
+  FieldNamingStrategy,
 } from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
@@ -140,6 +141,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       // Metrictank metadata
       if (s.meta) {
         frame.meta = {
+          namingStrategy: FieldNamingStrategy.FrameName,
           custom: {
             requestMetaList: result.data.meta, // info for the whole request
             seriesMetaList: s.meta, // Array of metadata

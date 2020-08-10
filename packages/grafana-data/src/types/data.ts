@@ -18,7 +18,7 @@ export enum LoadingState {
 export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';
 
 export enum FieldNamingStrategy {
-  Smart = 'smart',
+  Short = 'short',
   Complete = 'complete',
   FrameName = 'frame-name',
 }
