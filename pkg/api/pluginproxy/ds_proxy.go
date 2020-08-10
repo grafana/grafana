@@ -349,7 +349,7 @@ func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
 	req.Header.Add("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 }
 
-// tokensEq checks for oauth2 token equivalence given the fields of the struct grafana is interested in
+// tokensEq checks for OAuth2 token equivalence given the fields of the struct Grafana is interested in
 func tokensEq(t1, t2 *oauth2.Token) bool {
 	return t1.AccessToken == t2.AccessToken &&
 		t1.RefreshToken == t2.RefreshToken &&
