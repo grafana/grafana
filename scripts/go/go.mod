@@ -4,7 +4,6 @@ go 1.14
 
 require (
 	github.com/golangci/golangci-lint v1.30.0
-	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mgechev/revive v1.0.2
 	github.com/unknwon/bra v0.0.0-20190805204333-bb0929b6cca0
