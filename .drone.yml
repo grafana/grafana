@@ -32,7 +32,9 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.2.23
   commands:
-  - make golangci-lint revive revive-strict
+  - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
+  - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
+  - ./scripts/revive-strict
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -267,7 +269,9 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.2.23
   commands:
-  - make golangci-lint revive revive-strict
+  - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
+  - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
+  - ./scripts/revive-strict
   environment:
     CGO_ENABLED: 1
   depends_on:

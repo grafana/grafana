@@ -202,7 +202,6 @@ def init_steps(edition):
     ]
 
 def lint_backend_step(edition):
-
     return {
         'name': 'lint-backend',
         'image': build_image,
@@ -214,8 +213,10 @@ def lint_backend_step(edition):
             'initialize',
         ],
         'commands': [
-            # Use Make targets that don't download the linters
-            'make golangci-lint revive revive-strict',
+            # Don't use Make since it will re-download the linters
+            'golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...',
+            'revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...',
+            './scripts/revive-strict',
         ],
     }
 

@@ -156,5 +156,6 @@ RUN cd /tmp && \
     rm x86_64-linux-musl-cross.tgz
 
 RUN go get -u github.com/mgechev/revive@v1.0.2
+RUN mv ${GOPATH}/bin/revive /usr/local/bin/
 
 COPY ./bootstrap.sh /tmp/bootstrap.sh

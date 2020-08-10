@@ -81,33 +81,21 @@ revive: scripts/go/bin/revive
 		-config ./scripts/go/configs/revive.toml \
 		$(GO_FILES)
 
-revive-strict:
+revive-strict: scripts/go/bin/revive
 	@echo "lint via revive (strict)"
-	@scripts/go/bin/revive \
-		-formatter stylish \
-		-config ./scripts/go/configs/revive-strict.toml \
-		-exclude ./pkg/plugins/backendplugin/pluginextensionv2/... \
-		./pkg/services/alerting/... \
-		./pkg/services/provisioning/datasources/... \
-		./pkg/services/provisioning/dashboards/... \
-		./pkg/services/provisioning/notifiers/... \
-		./pkg/services/provisioning/values/... \
-		./pkg/plugins/backendplugin/...
+	@scripts/revive-strict scripts/go/bin/revive
 
 scripts/go/bin/golangci-lint: scripts/go/go.mod
 	@cd scripts/go; \
 	$(GO) build -o ./bin/golangci-lint github.com/golangci/golangci-lint/cmd/golangci-lint
 
-golangci-lint:
+golangci-lint: scripts/go/bin/golangci-lint
 	@echo "lint via golangci-lint"
 	@scripts/go/bin/golangci-lint run \
 		--config ./scripts/go/configs/.golangci.toml \
 		$(GO_FILES)
 
-# Run all code checks for backend.
-# Download golangci-lint and revive as a service to the developer, but don't do this for individual targets
-# so CI avoids downloading them.
-lint-go: scripts/go/bin/golangci-lint scripts/go/bin/revive golangci-lint revive revive-strict
+lint-go: golangci-lint revive revive-strict # Run all code checks for backend.
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 shellcheck: $(SH_FILES) ## Run checks for shell scripts.
