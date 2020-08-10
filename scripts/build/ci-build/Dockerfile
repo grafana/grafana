@@ -5,8 +5,10 @@ ENV OSX_SDK_URL=https://s3.dockerproject.org/darwin/v2 \
     OSX_SDK=MacOSX10.10.sdk \
     OSX_MIN=10.10 \
     CTNG=1.24.0 \
-    OSX_CROSS_REV=542acc2ef6c21aeb3f109c03748b1015a71fed63 \
-    DEBIAN_FRONTEND=noninteractive
+    OSX_CROSS_REV=542acc2ef6c21aeb3f109c03748b1015a71fed63
+
+# Use ARG so as not to persist environment variable in image
+ARG DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /tmp
 
@@ -89,7 +91,7 @@ ENV GOVERSION=1.14.7 \
     NODEVERSION=12.18.3-1nodesource1 \
     YARNVERSION=1.22.4-1
 
-# Use ARG so as not to persisten environment variable in image
+# Use ARG so as not to persist environment variable in image
 ARG DEBIAN_FRONTEND=noninteractive
 
 COPY --from=toolchain /tmp/x86_64-centos6-linux-gnu.tar.xz /tmp/osxcross.tar.xz /tmp/
@@ -132,7 +134,7 @@ RUN apt-get update && \
 # to ensure compatibility. We also make sure to target musl 1.1.x, since musl 1.2.x introduces 64-bit time types
 # that breaks compatibility on some 32-bit architectures (https://github.com/grafana/grafana/issues/23500).
 #
-# Use ARG so as not to persisten environment variable in image
+# Use ARG so as not to persist environment variable in image
 ARG CHKSUM_ARMV7_MUSL=5db487fb0a4aa61667de45a9cfbf7940360bd7256583b8a1e7810b4d9dd0e02a8aac737ca634b57bf269195e776ef503832ed22a6689a1c8fcdcc956f846bef7
 ARG CHKSUM_ARMV8_MUSL=50f4899cc2f637dbc39470bbe307074ccf7f40da2ab730218d13a9f75d578266311db6a0785919dcdcb5e7ce4517b13ee8d4a56d76e6fca7c6d4c2510d71aa8b
 ARG CHKSUM_AMD64_MUSL=493a79e9e29a1eab3fdff6435bac6509253d2e54ac30ad9098ce5da638bbb8ad18a7ebf3520bcaf2f9588befeff23402d8bbf54fa3809bfe18c984a4ecabcb12
