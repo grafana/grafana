@@ -1,4 +1,4 @@
-export type TextMode = 'html' | 'markdown' | 'text';
+export type TextMode = 'html' | 'markdown';
 export interface TextOptions {
   mode: TextMode;
   content: string;
