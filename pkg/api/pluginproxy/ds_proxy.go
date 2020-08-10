@@ -327,7 +327,7 @@ func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
 	// TokenSource handles refreshing the token if it has expired
 	token, err := connect.TokenSource(c.Req.Context(), persistedToken).Token()
 	if err != nil {
-		logger.Error("Failed to retrieve access token from oauth provider", "provider", authInfoQuery.Result.AuthModule, "userid", c.UserId, "username", c.Login, "error", err)
+		logger.Error("Failed to retrieve access token from OAuth provider", "provider", authInfoQuery.Result.AuthModule, "userid", c.UserId, "username", c.Login, "error", err)
 		return
 	}
 
