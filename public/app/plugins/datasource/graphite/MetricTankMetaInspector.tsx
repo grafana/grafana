@@ -25,7 +25,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
     let totalSeconds = 0;
 
     for (const bucket of buckets) {
-      totalSeconds += kbn.interval_to_seconds(bucket.retention);
+      totalSeconds += bucket.retention ? kbn.interval_to_seconds(bucket.retention) : 0;
     }
 
     return (
@@ -46,7 +46,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
 
             <div>
               {buckets.map((bucket, index) => {
-                const bucketLength = kbn.interval_to_seconds(bucket.retention);
+                const bucketLength = bucket.retention ? kbn.interval_to_seconds(bucket.retention) : 0;
                 const lengthPercent = (bucketLength / totalSeconds) * 100;
                 const isActive = index === meta['archive-read'];
 
