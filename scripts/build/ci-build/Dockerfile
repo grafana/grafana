@@ -154,4 +154,6 @@ RUN cd /tmp && \
     tar xf x86_64-linux-musl-cross.tgz && \
     rm x86_64-linux-musl-cross.tgz
 
+RUN go get -u github.com/mgechev/revive@v1.0.2
+
 COPY ./bootstrap.sh /tmp/bootstrap.sh

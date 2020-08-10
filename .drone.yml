@@ -32,7 +32,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.2.23
   commands:
-  - make lint-go
+  - make golangci-lint revive revive-strict
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -267,7 +267,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.2.23
   commands:
-  - make lint-go
+  - make golangci-lint revive revive-strict
   environment:
     CGO_ENABLED: 1
   depends_on:

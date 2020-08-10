@@ -202,9 +202,6 @@ def init_steps(edition):
     ]
 
 def lint_backend_step(edition):
-    cmd = 'make lint-go'
-    if edition == 'enterprise':
-        cmd = 'GO_FILES=./pkg/extensions make lint-go'
 
     return {
         'name': 'lint-backend',
@@ -217,7 +214,7 @@ def lint_backend_step(edition):
             'initialize',
         ],
         'commands': [
-            cmd,
+            'make golangci-lint revive revive-strict',
         ],
     }
 
