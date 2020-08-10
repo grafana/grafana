@@ -89,7 +89,8 @@ ENV GOVERSION=1.14.7 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
     NODEVERSION=12.18.3-1nodesource1 \
-    YARNVERSION=1.22.4-1
+    YARNVERSION=1.22.4-1 \
+    GO111MODULE=on
 
 # Use ARG so as not to persist environment variable in image
 ARG DEBIAN_FRONTEND=noninteractive
