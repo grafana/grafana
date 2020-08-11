@@ -77,6 +77,7 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	if err != nil {
 		return nil, err
 	}
+	defer httpClient.CloseIdleConnections()
 
 	resp, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
@@ -106,16 +107,17 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 }
 
 func (e *InfluxDBExecutor) getQuery(dsInfo *models.DataSource, queries []*tsdb.Query, context *tsdb.TsdbQuery) (*Query, error) {
+	if len(queries) == 0 {
+		return nil, fmt.Errorf("query request contains no queries")
+	}
+
 	// The model supports multiple queries, but right now this is only used from
 	// alerting so we only needed to support batch executing 1 query at a time.
-	if len(queries) > 0 {
-		query, err := e.QueryParser.Parse(queries[0].Model, dsInfo)
-		if err != nil {
-			return nil, err
-		}
-		return query, nil
+	query, err := e.QueryParser.Parse(queries[0].Model, dsInfo)
+	if err != nil {
+		return nil, err
 	}
-	return nil, fmt.Errorf("query request contains no queries")
+	return query, nil
 }
 
 func (e *InfluxDBExecutor) createRequest(dsInfo *models.DataSource, query string) (*http.Request, error) {
@@ -123,6 +125,7 @@ func (e *InfluxDBExecutor) createRequest(dsInfo *models.DataSource, query string
 	if err != nil {
 		return nil, err
 	}
+
 	u.Path = path.Join(u.Path, "query")
 	httpMode := dsInfo.JsonData.Get("httpMode").MustString("GET")
 
