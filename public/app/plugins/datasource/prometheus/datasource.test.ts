@@ -1601,7 +1601,22 @@ describe('PrometheusDatasource', () => {
           text: expectedRangeSecond * 1000,
           value: expectedRangeSecond * 1000,
         },
+        __rate_interval: {
+          text: '75s',
+          value: '75s',
+        },
       });
+    });
+  });
+
+  describe('The __rate_interval variable', () => {
+    it('should be 4 times the scrape interval if interval + scrape interval is lower', () => {
+      const { __rate_interval } = ds.getRateIntervalScopedVariable(15, 15);
+      expect(__rate_interval.value).toBe('60s');
+    });
+    it('should fall back to 15s if interval is 0', () => {
+      const { __rate_interval } = ds.getRateIntervalScopedVariable(0, 0);
+      expect(__rate_interval.value).toBe('60s');
     });
   });
 });
