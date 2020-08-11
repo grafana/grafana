@@ -24,6 +24,10 @@ type dataSourceTransport struct {
 	transport *http.Transport
 }
 
+func (d *dataSourceTransport) CloseIdleConnections() {
+	d.transport.CloseIdleConnections()
+}
+
 // RoundTrip executes a single HTTP transaction, returning a Response for the provided Request.
 func (d *dataSourceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	for key, value := range d.headers {
@@ -45,7 +49,6 @@ var ptc = proxyTransportCache{
 
 func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	transport, err := ds.GetHttpTransport()
-
 	if err != nil {
 		return nil, err
 	}
