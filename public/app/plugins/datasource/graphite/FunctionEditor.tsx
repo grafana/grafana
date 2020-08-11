@@ -73,7 +73,7 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
 
   render() {
     return (
-      <PopoverController content={this.renderContent} placement="top" hideAfter={300}>
+      <PopoverController content={this.renderContent} placement="top">
         {(showPopper, hidePopper, popperProps) => {
           return (
             <>
@@ -85,9 +85,7 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
                   className="popper__background"
                   onMouseLeave={() => {
                     this.setState({ showingDescription: false });
-                    hidePopper();
                   }}
-                  onMouseEnter={showPopper}
                   renderArrow={({ arrowProps, placement }) => (
                     <div className="popper__arrow" data-placement={placement} {...arrowProps} />
                   )}
@@ -98,7 +96,6 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
                 ref={this.triggerRef}
                 onClick={popperProps.show ? hidePopper : showPopper}
                 onMouseLeave={() => {
-                  hidePopper();
                   this.setState({ showingDescription: false });
                 }}
                 style={{ cursor: 'pointer' }}
