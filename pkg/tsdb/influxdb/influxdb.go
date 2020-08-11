@@ -91,12 +91,9 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	var response Response
 	dec := json.NewDecoder(resp.Body)
 	dec.UseNumber()
-	err = dec.Decode(&response)
-
-	if err != nil {
+	if err := dec.Decode(&response); err != nil {
 		return nil, err
 	}
-
 	if response.Err != nil {
 		return nil, response.Err
 	}
@@ -129,22 +126,23 @@ func (e *InfluxDBExecutor) createRequest(dsInfo *models.DataSource, query string
 	u.Path = path.Join(u.Path, "query")
 	httpMode := dsInfo.JsonData.Get("httpMode").MustString("GET")
 
-	req, err := func() (*http.Request, error) {
-		switch httpMode {
-		case "GET":
-			return http.NewRequest(http.MethodGet, u.String(), nil)
-		case "POST":
-			bodyValues := url.Values{}
-			bodyValues.Add("q", query)
-			body := bodyValues.Encode()
-			return http.NewRequest(http.MethodPost, u.String(), strings.NewReader(body))
-		default:
-			return nil, ErrInvalidHttpMode
+	var req *http.Request
+	switch httpMode {
+	case "GET":
+		req, err = http.NewRequest(http.MethodGet, u.String(), nil)
+		if err != nil {
+			return nil, err
 		}
-	}()
-
-	if err != nil {
-		return nil, err
+	case "POST":
+		bodyValues := url.Values{}
+		bodyValues.Add("q", query)
+		body := bodyValues.Encode()
+		req, err = http.NewRequest(http.MethodPost, u.String(), strings.NewReader(body))
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, ErrInvalidHttpMode
 	}
 
 	req.Header.Set("User-Agent", "Grafana")
