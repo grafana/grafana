@@ -4,6 +4,7 @@ export * from './addPanel';
 export * from './assertSuccessNotification';
 export * from './deleteDashboard';
 export * from './deleteDataSource';
+export * from './editPanel';
 export * from './login';
 export * from './openDashboard';
 export * from './openPanelMenuItem';
