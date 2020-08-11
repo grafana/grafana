@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { PopoverController, Popover } from '@grafana/ui';
+import { PopoverController, Popover, ClickOutsideWrapper } from '@grafana/ui';
 import { FunctionDescriptor, FunctionEditorControls, FunctionEditorControlsProps } from './FunctionEditorControls';
 
 interface FunctionEditorProps extends FunctionEditorControlsProps {
@@ -73,7 +73,7 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
 
   render() {
     return (
-      <PopoverController content={this.renderContent} placement="top">
+      <PopoverController content={this.renderContent} placement="top" hideAfter={100}>
         {(showPopper, hidePopper, popperProps) => {
           return (
             <>
@@ -91,17 +91,24 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
                   )}
                 />
               )}
-
-              <span
-                ref={this.triggerRef}
-                onClick={popperProps.show ? hidePopper : showPopper}
-                onMouseLeave={() => {
-                  this.setState({ showingDescription: false });
+              <ClickOutsideWrapper
+                onClick={() => {
+                  if (popperProps.show) {
+                    hidePopper();
+                  }
                 }}
-                style={{ cursor: 'pointer' }}
               >
-                {this.props.func.def.name}
-              </span>
+                <span
+                  ref={this.triggerRef}
+                  onClick={popperProps.show ? hidePopper : showPopper}
+                  onMouseLeave={() => {
+                    this.setState({ showingDescription: false });
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {this.props.func.def.name}
+                </span>
+              </ClickOutsideWrapper>
             </>
           );
         }}
