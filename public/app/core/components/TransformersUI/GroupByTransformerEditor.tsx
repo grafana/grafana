@@ -55,7 +55,7 @@ function FieldCalculationsSelector(props: any) {
       </div>
       <div className="gf-form">
         <div className="gf-form-label">
-          <IconButton name="times" size="sm" onClick={onDelete} surface="header" />
+          <IconButton name="times" size="sm" onClick={onDelete} surface="header" style={{ margin: 0 }} />
         </div>
       </div>
     </div>
