@@ -26,7 +26,7 @@ describe('GroupBy Transformer', () => {
     const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
       id: DataTransformerID.groupBy,
       options: {
-        byField: 'message',
+        byFields: ['message'],
         calculationsByField: [
           ['time', [ReducerID.count, ReducerID.last]],
           ['values', [ReducerID.sum]],

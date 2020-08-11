@@ -6,9 +6,16 @@ import { ArrayVector } from '../../vector/ArrayVector';
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { reduceField, ReducerID } from '../fieldReducer';
 
+export interface GroupByFieldOptions {
+  aggregations: ReducerID[];
+  groupBy: boolean;
+}
+
 export interface GroupByTransformerOptions {
   byField: string | null;
   calculationsByField: Array<[string | null, ReducerID[]]>;
+  fields: Record<string, GroupByFieldOptions>;
+  byFields: string[];
 }
 
 export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> = {
@@ -17,7 +24,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
   description: 'Group the data by a field values then process calculations for each group',
   defaultOptions: {
     calculationsByField: [],
-    byField: null,
+    byFields: [],
   },
 
   /**
@@ -25,11 +32,11 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
    * be applied, just return the input series
    */
   transformer: (options: GroupByTransformerOptions) => {
-    const groupByFieldName = options.byField || '';
     const calculationsByField = options.calculationsByField; //.map((val, index) => ({fieldName: val[0], calculations: val[1]}));
+    const groupByFieldNames = options.byFields;
 
     return (data: DataFrame[]) => {
-      if (options.byField === null) {
+      if (options.byFields.length === 0) {
         return data;
       }
 
@@ -39,46 +46,46 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
       // First, group the data in a way we can easily work with
       //
 
-      /*
-        Something like this:
-        {
-          "value1": {fieldName1:Field, fieldname2:Field},
-          "value2": {fieldName1:Field, fieldname2:Field},
-          "value3": {fieldName1:Field, fieldname2:Field},
-          ...
-        }
-
-        where "value1", "value2", ... are the GroupBy field values
-      */
-
       for (let frame of data) {
-        const groupedData = new Map(); // Using map because its key supports multiple format unlike objects
-        let groupByField = null;
-        for (let field of frame.fields) {
-          if (getFieldDisplayName(field) === groupByFieldName) {
-            groupByField = field;
-            break;
+        // Get all the GroupBy fields and put them in the same array
+        const groupByFields: Field[] = [];
+        for (let fieldName of groupByFieldNames) {
+          for (let field of frame.fields) {
+            if (getFieldDisplayName(field) === fieldName) {
+              groupByFields.push(field);
+            }
           }
         }
 
-        if (groupByField === null) {
-          continue; // No group by field in this frame, ignore frame
+        if (groupByFields.length === 0) {
+          continue; // No group by field in this frame, ignore the frame
         }
 
-        for (let rowIndex = 0; rowIndex < groupByField.values.length; rowIndex++) {
-          const value = groupByField.values.get(rowIndex);
+        /*
+         Group together the data (the rows) that have the same values for the GroupBy fields
+         We do that by creating a Map() in which the key will represent the GroupBy values and the object will contain the rows that have this data
+         
+         Something like this :
+        
+          {
+            ["goupByField1Value1","groupByField2Value1", ...] : {fieldName1:Field, fieldname2:Field, ...},
+            ["goupByField1Value2","groupByField2Value2", ...] : {fieldName1:Field, fieldname2:Field, ...},
+            ["goupByField1Value3","groupByField2Value3", ...] : {fieldName1:Field, fieldname2:Field, ...},
+            ...
+          }
+        */
 
-          let rowDataByField = groupedData.get(value);
+        const groupedData = {};
+        for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
+          let key = String(groupByFields.map(field => field.values.get(rowIndex)));
+
+          let rowDataByField = groupedData[key];
           if (!rowDataByField) {
             rowDataByField = {};
-            groupedData.set(value, rowDataByField);
+            groupedData[key] = rowDataByField;
           }
 
           for (let field of frame.fields) {
-            if (field === groupByField) {
-              continue;
-            }
-
             const fieldName = getFieldDisplayName(field);
 
             if (!rowDataByField[fieldName]) {
@@ -86,39 +93,47 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
                 name: getFieldDisplayName(field),
                 type: field.type,
                 config: {},
-                values: [],
+                values: new ArrayVector(),
               };
             }
 
-            rowDataByField[fieldName].values.push(field.values.get(rowIndex));
+            rowDataByField[fieldName].values.add(field.values.get(rowIndex));
           }
         }
 
         //
-        // Create the field (column) for the GroupBy field
+        // Build the new frame
         //
 
-        const fields: Field[] = [];
-        const groupByValues = [...groupedData.keys()];
-        let mainField = {
-          name: groupByField.name,
-          type: groupByField.type,
-          values: new ArrayVector(groupByValues),
-          config: {
-            ...groupByField.config,
-          },
-        };
+        const fields: Field[] = []; // The fields that our new frame will contain
+        const groupedDataKeys = Object.keys(groupedData);
 
-        fields.push(mainField);
+        // Create a field (column) for each GroupBy field
 
-        //
+        for (let field of groupByFields) {
+          let values = new ArrayVector();
+          let fieldName = getFieldDisplayName(field);
+
+          for (let key of groupedDataKeys) {
+            values.add(groupedData[key][fieldName].values.get(0));
+          }
+
+          let newField = {
+            name: field.name,
+            type: field.type,
+            config: {
+              ...field.config,
+            },
+            values: values,
+          };
+          fields.push(newField);
+        }
+
         // Then for each calculations configured, compute and add a new field (column)
-        //
-
-        let fieldList = frame.fields.map(f => getFieldDisplayName(f)); // Fields that are present in the data
+        const fieldList = frame.fields.map(f => getFieldDisplayName(f)); // Fields that are present in the data
 
         for (let [fieldName, calculations] of calculationsByField) {
-          if (fieldName === null || fieldName === groupByFieldName || !fieldList.includes(fieldName)) {
+          if (fieldName === null || !fieldList.includes(fieldName)) {
             continue;
           }
 
@@ -133,14 +148,10 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
 
           // The we need to loop on each group of values to get the result and append each
           // result to the new fields
-          for (let val of groupByValues) {
-            let d = groupedData.get(val)[fieldName];
-
-            // We need a field object to call reduceField
-            let field: Field = {
-              ...d,
-              values: new ArrayVector(d.values),
-            };
+          let fieldType = null;
+          for (let val of groupedDataKeys) {
+            let field = groupedData[val][fieldName];
+            fieldType = field.type;
 
             // reduceField will return an object will all the calculations from the specified list, possibly more
             let results = reduceField({
@@ -162,14 +173,24 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
               config: {},
             };
 
-            f.type = guessFieldTypeForField(f) ?? FieldType.string;
+            if ([ReducerID.allIsNull, ReducerID.allIsNull].includes(calc)) {
+              f.type = FieldType.boolean;
+            } else if (
+              [ReducerID.last, ReducerID.lastNotNull, ReducerID.first, ReducerID.firstNotNull].includes(calc) &&
+              fieldType
+            ) {
+              f.type = fieldType; // Keep same field type (useful for time field type mainly, so it displays properly as time, not as a number)
+            } else {
+              f.type = guessFieldTypeForField(f) ?? FieldType.string;
+            }
+
             fields.push(f);
           }
         }
 
         processed.push({
           fields,
-          length: groupByValues.length,
+          length: groupedDataKeys.length,
         });
       }
 

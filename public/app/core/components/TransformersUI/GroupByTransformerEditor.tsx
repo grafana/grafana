@@ -48,6 +48,7 @@ function FieldCalculationsSelector(props: any) {
           allowMultiple
           stats={config[1]}
           onChange={stats => {
+            console.log('onStatsChange', stats);
             onConfigChange([config[0], stats as ReducerID[]]);
           }}
           menuPlacement="bottom"
@@ -70,15 +71,15 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
   const fieldNames = useMemo(() => getAllFieldNamesFromDataFrames(input), [input]);
   const fieldNameOptions = fieldNames.map((item: string) => ({ label: item, value: item }));
   const usedFieldNames = options.calculationsByField.map(item => item[0]);
-  usedFieldNames.push(options.byField);
   const unusedFieldNameOptions = fieldNames
     .filter(name => !usedFieldNames.includes(name))
     .map((item: string) => ({ label: item, value: item }));
 
   const onSelectField = (value: SelectableValue<string>) => {
+    console.log('onSelectField', value);
     onChange({
       ...options,
-      byField: (value && value.value) || null,
+      byFields: value.map(i => i.value),
     });
   };
 
@@ -111,14 +112,11 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
           <div className="gf-form-label width-8">Group by</div>
           <Select
             className="width-16"
-            options={
-              options.byField === null
-                ? unusedFieldNameOptions
-                : [{ label: options.byField, value: options.byField }, ...unusedFieldNameOptions]
-            }
-            value={options.byField}
+            options={fieldNameOptions}
+            value={options.byFields.map(i => ({ value: i, label: i }))}
             onChange={onSelectField}
             isClearable
+            isMulti
             placeholder="Field Name"
             menuPlacement="bottom"
           />
