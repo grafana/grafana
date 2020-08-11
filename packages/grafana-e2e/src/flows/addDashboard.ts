@@ -10,6 +10,7 @@ export interface AddDashboardConfig {
   title: string;
 }
 
+// @todo improve config input/output: https://stackoverflow.com/a/63507459/923745
 // @todo this actually returns type `Cypress.Chainable`
 export const addDashboard = (config?: Partial<AddDashboardConfig>): any => {
   const fullConfig = {
@@ -35,9 +36,7 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>): any => {
 
   e2e.components.BackButton.backArrow().click();
 
-  if (timeRange) {
-    setDashboardTimeRange(timeRange);
-  }
+  setDashboardTimeRange(timeRange);
 
   e2e.pages.Dashboard.Toolbar.toolbarItems('Save dashboard').click();
 
@@ -62,9 +61,12 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>): any => {
       });
 
       // @todo remove `wrap` when possible
-      return e2e().wrap({
-        config: fullConfig,
-        uid,
-      });
+      return e2e().wrap(
+        {
+          config: fullConfig,
+          uid,
+        },
+        { log: false }
+      );
     });
 };
