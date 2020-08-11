@@ -13,13 +13,12 @@
     "e2e:debug": "./e2e/start-and-run-suite debug",
     "e2e:dev": "./e2e/start-and-run-suite dev",
     "jest": "jest --notify --watch",
+    "lint": "eslint . --ext .js,.tsx,.ts --cache --ignore-path .gitignore --ignore-pattern devenv",
     "jest-ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
-    "lint": "eslint public/app e2e/suite1 public/test --ext=.js,.ts,.tsx",
     "lint:fix": "yarn lint --fix",
     "packages:build": "lerna run clean && lerna run build --ignore @grafana-plugins/input-datasource",
     "packages:docsExtract": "rm -rf ./reports/docs && lerna run docsExtract",
     "packages:docsToMarkdown": "api-documenter markdown --input-folder ./reports/docs/ --output-folder ./docs/sources/packages_api/ --hugo",
-    "packages:lint": "lerna run lint",
     "packages:prepare": "lerna version --no-push --no-git-tag-version --force-publish --exact",
     "packages:publish": "lerna publish from-package --contents dist",
     "packages:publishCanary": "lerna publish from-package --contents dist --dist-tag canary --yes",
@@ -53,7 +52,10 @@
     }
   },
   "lint-staged": {
-    "*.{ts,tsx,json,scss}": [
+    "*.{js,ts,tsx}": [
+      "eslint --ext .js,.tsx,.ts --cache --fix"
+    ],
+    "*.{json,scss}": [
       "prettier --write"
     ],
     "*pkg/**/*.go": [
@@ -70,6 +72,7 @@
     "@babel/preset-typescript": "7.8.3",
     "@emotion/core": "10.0.27",
     "@grafana/api-documenter": "0.9.3",
+    "@grafana/eslint-config": "2.0.0",
     "@microsoft/api-extractor": "7.8.2-pr1796.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@testing-library/react-hooks": "^3.2.1",
@@ -111,8 +114,8 @@
     "@types/slate-react": "0.22.5",
     "@types/testing-library__react-hooks": "^3.2.0",
     "@types/tinycolor2": "1.4.2",
-    "@typescript-eslint/eslint-plugin": "2.19.0",
-    "@typescript-eslint/parser": "2.19.0",
+    "@typescript-eslint/eslint-plugin": "3.6.0",
+    "@typescript-eslint/parser": "3.6.0",
     "angular-mocks": "1.6.6",
     "autoprefixer": "9.7.4",
     "axios": "0.19.2",
@@ -127,11 +130,11 @@
     "enzyme-to-json": "3.4.4",
     "es6-promise": "4.2.8",
     "es6-shim": "0.35.5",
-    "eslint": "6.8.0",
-    "eslint-config-prettier": "6.10.0",
-    "eslint-plugin-jsdoc": "22.1.0",
-    "eslint-plugin-prettier": "3.1.2",
-    "eslint-plugin-react": "7.18.3",
+    "eslint": "7.4.0",
+    "eslint-config-prettier": "6.11.0",
+    "eslint-plugin-jsdoc": "28.6.1",
+    "eslint-plugin-prettier": "3.1.4",
+    "eslint-plugin-react-hooks": "4.0.5",
     "expect.js": "0.3.1",
     "expose-loader": "0.7.5",
     "file-loader": "5.0.2",
