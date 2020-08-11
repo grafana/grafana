@@ -36,37 +36,31 @@ func TestAccountDataAccess(t *testing.T) {
 		})
 
 		Convey("Given we have organizations, we can limit and paginate search", func() {
-			var err error
-			var cmd *models.CreateOrgCommand
-			ids := []int64{}
-
 			for i := 1; i < 4; i++ {
-				cmd = &models.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
-				err = CreateOrg(cmd)
+				cmd := &models.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
+				err := CreateOrg(cmd)
 				So(err, ShouldBeNil)
-
-				ids = append(ids, cmd.Result.Id)
 			}
 
-			Convey("Should be able to limit search", func() {
-				query := &models.SearchOrgsQuery{Limit: 1}
-				err = SearchOrgs(query)
-
-				So(err, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 1)
-			})
-
-			Convey("Should be able to paginate search", func() {
-				query := &models.SearchOrgsQuery{Page: 0}
-				err = SearchOrgs(query)
+			Convey("Should be able to search with defaults", func() {
+				query := &models.SearchOrgsQuery{}
+				err := SearchOrgs(query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 3)
 			})
 
+			Convey("Should be able to limit search", func() {
+				query := &models.SearchOrgsQuery{Limit: 1}
+				err := SearchOrgs(query)
+
+				So(err, ShouldBeNil)
+				So(len(query.Result), ShouldEqual, 1)
+			})
+
 			Convey("Should be able to limit and paginate search", func() {
 				query := &models.SearchOrgsQuery{Limit: 2, Page: 1}
-				err = SearchOrgs(query)
+				err := SearchOrgs(query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 1)
