@@ -166,9 +166,6 @@ func SearchOrgs(c *models.ReqContext) Response {
 	}
 
 	page := c.QueryInt("page")
-	if page < 1 {
-		page = 1
-	}
 
 	query := models.SearchOrgsQuery{
 		Query: c.Query("query"),
