@@ -1,17 +1,18 @@
-import { has } from 'lodash';
 import {
+  DecimalCount,
+  deprecationWarning,
+  formattedValueToString,
   getValueFormat,
-  getValueFormatterIndex,
   getValueFormats,
+  getValueFormatterIndex,
   stringToJsRegex,
   TimeRange,
-  deprecationWarning,
-  DecimalCount,
-  formattedValueToString,
+  ValueFormatterIndex,
 } from '@grafana/data';
+import { has } from 'lodash';
 
 const kbn = {
-  valueFormats: {},
+  valueFormats: {} as ValueFormatterIndex,
   interval_regex: /(\d+(?:\.\d+)?)(ms|[Mwdhmsy])/,
   intervals_in_seconds: {
     y: 31536000,
@@ -23,9 +24,7 @@ const kbn = {
     s: 1,
     ms: 0.001,
   } as { [index: string]: number },
-  regexEscape: (value: string) => {
-    return value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&');
-  },
+  regexEscape: (value: string) => value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&'),
   round_interval: (interval: number) => {
     switch (true) {
       // 0.015s
@@ -154,9 +153,7 @@ const kbn = {
     numSeconds > 9 ? strings.push('' + numSeconds) : strings.push('0' + numSeconds);
     return strings.join(':');
   },
-  to_percent: (nr: number, outOf: number) => {
-    return Math.floor((nr / outOf) * 10000) / 100 + '%';
-  },
+  to_percent: (nr: number, outOf: number) => Math.floor((nr / outOf) * 10000) / 100 + '%',
   addslashes: (str: string) => {
     str = str.replace(/\\/g, '\\\\');
     str = str.replace(/\'/g, "\\'");

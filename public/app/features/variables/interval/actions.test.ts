@@ -99,7 +99,7 @@ describe('interval actions', () => {
         const dependencies: UpdateAutoValueDependencies = {
           kbn: {
             calculateInterval: jest.fn(),
-          },
+          } as any,
           getTimeSrv: () => {
             return ({
               timeRange: jest.fn().mockReturnValue({
@@ -152,7 +152,7 @@ describe('interval actions', () => {
         const dependencies: UpdateAutoValueDependencies = {
           kbn: {
             calculateInterval: jest.fn().mockReturnValue({ interval: '10s' }),
-          },
+          } as any,
           getTimeSrv: () => {
             return ({
               timeRange: timeRangeMock,

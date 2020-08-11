@@ -22,11 +22,10 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
     const runtimeNotice = getRuntimeConsolidationNotice([meta]);
     const normFunc = (meta['consolidator-normfetch'] ?? '').replace('Consolidator', '');
 
-    let totalSeconds = 0;
-
-    for (const bucket of buckets) {
-      totalSeconds += bucket.retention ? kbn.interval_to_seconds(bucket.retention) : 0;
-    }
+    const totalSeconds = buckets.reduce(
+      (acc, bucket) => acc + (bucket.retention ? kbn.interval_to_seconds(bucket.retention) : 0),
+      0
+    );
 
     return (
       <div className={styles.metaItem} key={key}>
