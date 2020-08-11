@@ -69,7 +69,7 @@ func readDataFrames(result *api.QueryTableResult, maxPoints int, maxSeries int) 
 		}
 
 		if builder.frames == nil {
-			dr.Error = fmt.Errorf("Invalid state")
+			dr.Error = fmt.Errorf("invalid state")
 			return dr
 		}
 

@@ -71,7 +71,7 @@ func RunnerFromDataSource(dsInfo *models.DataSource) (*Runner, error) {
 
 	url := dsInfo.Url
 	if url == "" {
-		return nil, fmt.Errorf("missing url from datasource configuration")
+		return nil, fmt.Errorf("missing URL from datasource configuration")
 	}
 	token, found := dsInfo.SecureJsonData.DecryptedValue("token")
 	if !found {
