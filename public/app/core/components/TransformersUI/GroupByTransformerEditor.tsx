@@ -124,7 +124,7 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
             icon="plus"
             onClick={onAddFieldCalculations}
             variant="secondary"
-            disabled={options.calculationsByField.length >= fieldNameOptions.length - 1}
+            disabled={options.calculationsByField.length >= fieldNameOptions.length}
           >
             Add field aggregation
           </Button>
