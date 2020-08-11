@@ -4,7 +4,7 @@
   },
   "overrides": [
     {
-      "files": ["**/*.test.{ts,tsx}"],
+      "files": ["**/*.{test,story}.{ts,tsx}"],
       "rules": {
         "no-restricted-imports": "off"
       }

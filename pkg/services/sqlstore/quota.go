@@ -116,7 +116,8 @@ func UpdateOrgQuota(cmd *models.UpdateOrgQuotaCmd) error {
 			}
 		} else {
 			//update existing quota entry in the DB.
-			if _, err := sess.ID(quota.Id).Update(&quota); err != nil {
+			_, err := sess.ID(quota.Id).Update(&quota)
+			if err != nil {
 				return err
 			}
 		}
@@ -218,7 +219,8 @@ func UpdateUserQuota(cmd *models.UpdateUserQuotaCmd) error {
 			}
 		} else {
 			//update existing quota entry in the DB.
-			if _, err := sess.ID(quota.Id).Update(&quota); err != nil {
+			_, err := sess.ID(quota.Id).Update(&quota)
+			if err != nil {
 				return err
 			}
 		}

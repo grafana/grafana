@@ -27,14 +27,16 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
   query(options: DataQueryRequest<ZipkinQuery>): Observable<DataQueryResponse> {
     const traceId = options.targets[0]?.query;
     if (traceId) {
-      return this.request<ZipkinSpan[]>(`${apiPrefix}/trace/${traceId}`).pipe(map(responseToDataQueryResponse));
+      return this.request<ZipkinSpan[]>(`${apiPrefix}/trace/${encodeURIComponent(traceId)}`).pipe(
+        map(responseToDataQueryResponse)
+      );
     } else {
       return of(emptyDataQueryResponse);
     }
   }
 
   async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
-    const res = await this.request(url, params, { silent: true }).toPromise();
+    const res = await this.request(url, params, { hideFromInspector: true }).toPromise();
     return res.data;
   }
 

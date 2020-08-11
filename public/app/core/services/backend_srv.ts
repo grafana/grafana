@@ -118,6 +118,11 @@ export class BackendSrv implements BackendService {
       }
     }
 
+    if (options.hideFromInspector === undefined) {
+      // Hide all local non data query calls
+      options.hideFromInspector = isLocalUrl(options.url) && !isDataQuery(options.url);
+    }
+
     return options;
   }
 
@@ -219,7 +224,7 @@ export class BackendSrv implements BackendService {
     }
 
     // is showErrorAlert is undefined we only show alerts non data query and local api requests
-    if (config.showErrorAlert === undefined || isDataQuery(config.url) || !isLocalUrl(config.url)) {
+    if (config.showErrorAlert === undefined && (isDataQuery(config.url) || !isLocalUrl(config.url))) {
       return;
     }
 

@@ -1,12 +1,13 @@
 +++
 title = "URL variables"
 keywords = ["grafana", "url variables", "documentation", "variables"]
+aliases = ["/docs/grafana/latest/variables/url-variables.md"]
 type = "docs"
 +++
 
 # URL variables
 
-You can use variables in data links to link to specific portions of your visualizations. For more information about data links, refer to [Data links]({{< relref "../linking/data-links.md" >}}).
+You can use variables in data links to link to specific portions of your visualizations. For more information about data links, refer to [Data links]({{< relref "../../linking/data-links.md" >}}).
 
 > **Note:** These variables changed in 6.4 so if you have an older version of Grafana please use the version picker to select
 docs for an older version of Grafana.

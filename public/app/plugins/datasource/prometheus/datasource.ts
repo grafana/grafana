@@ -145,7 +145,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   // Use this for tab completion features, wont publish response to other components
   metadataRequest(url: string) {
-    return this._request(url, null, { method: 'GET', silent: true });
+    return this._request(url, null, { method: 'GET', hideFromInspector: true });
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {
@@ -159,7 +159,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     }
 
     const escapedValues = value.map(val => prometheusSpecialRegexEscape(val));
-    return escapedValues.join('|');
+    return '(' + escapedValues.join('|') + ')';
   }
 
   targetContainsTemplate(target: PromQuery) {
@@ -205,7 +205,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         continue;
       }
 
-      if (target.showingTable) {
+      if (options.showingTable) {
         // create instant target only if Table is showed in Explore
         const instantTarget: any = cloneDeep(target);
         instantTarget.format = 'table';
@@ -218,7 +218,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         queries.push(this.createQuery(instantTarget, options, start, end));
       }
 
-      if (target.showingGraph) {
+      if (options.showingGraph) {
         // create time series target only if Graph is showed in Explore
         target.format = 'time_series';
         target.instant = false;
@@ -764,11 +764,9 @@ export function extractRuleMappingFromGroups(groups: any[]) {
 }
 
 export function prometheusRegularEscape(value: any) {
-  return typeof value === 'string' ? value.replace(/'/g, "\\\\'") : value;
+  return typeof value === 'string' ? value.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'") : value;
 }
 
 export function prometheusSpecialRegexEscape(value: any) {
-  return typeof value === 'string'
-    ? prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'))
-    : value;
+  return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
 }

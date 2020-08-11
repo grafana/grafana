@@ -32,10 +32,10 @@ import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { DataLinkBuiltInVars, locationUtil } from '../utils';
 import { formattedValueToString } from '../valueFormats';
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
-import { formatLabels } from '../utils/labels';
 import { getFrameDisplayName, getFieldDisplayName } from './fieldState';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
+import { getTemplateProxyForField } from './templateProxies';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -113,11 +113,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
       fieldScopedVars['__field'] = {
         text: 'Field',
-        value: {
-          name: displayName, // Generally appropriate (may include the series name if useful)
-          formattedLabels: formatLabels(field.labels!),
-          labels: field.labels,
-        },
+        value: getTemplateProxyForField(field, frame, options.data),
       };
 
       field.state = {

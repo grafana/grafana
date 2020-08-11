@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from 'emotion';
-import { IconButton } from './IconButton';
+import { IconButton } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { useTheme } from '../../themes/ThemeContext';
 import { GrafanaTheme } from '@grafana/data';

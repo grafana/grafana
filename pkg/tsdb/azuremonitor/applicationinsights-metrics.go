@@ -106,6 +106,15 @@ func InsightsMetricsResultToFrame(mr MetricsResult, metric, agg string, dimensio
 		}
 		rowCounter++
 	}
+
+	if len(frame.Fields) == 1 { // No data, only a time column, no sort
+		return frame, nil
+	}
+
+	if err := data.SortWideFrameFields(frame, dimensions...); err != nil {
+		return nil, err
+	}
+
 	return frame, nil
 }
 
