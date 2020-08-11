@@ -123,7 +123,7 @@ When generating reports, each panel renders separately before being collected in
 
 To modify the panels' clarity you can set a scale factor for the rendered images. A higher scale factor is more legible but will increase the file size of the generated PDF.
 
- These options are available in the [configuration]({{< relref "../administration/configuration.md">}}) file.
+These options are available in the [configuration]({{< relref "../administration/configuration.md">}}) file.
 
 ```ini
 [reporting]
@@ -138,6 +138,8 @@ image_scale_factor = 2
 
 ## Report time range
 
+> Setting custom report time range is available in Grafana Enterprise v7.2+.
+
 By default, reports use the saved time range of the dashboard. Changing the time range of the report can be done by:
 - Saving a modified time range to the dashboard. 
 - Setting a time range via **Time range** field in the report form. If specified, this custom time range will override the one from the report's dashboard.
@@ -146,6 +148,22 @@ The page header of the report displays the time range for the dashboard's data q
 
 If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. We advise always setting the time zone to UTC for dashboards when using a remote renderer to avoid this. 
 
+## Reports settings
+
+> Only available in Grafana Enterprise v7.2+.
+
+Organisation-wide report settings can be set via **Settings** tab on the **Reporting** page. They will be applied to all the reports for current organisation.
+
+Currently customisation is available for the branding options.  
+
+- Report branding:
+1. **Company logo URL** - Company logo, displayed in the report PDF. Defaults to Grafana logo.
+- Email branding:
+1. **Company logo URL** - Company logo, displayed in the report PDF. Defaults to Grafana logo.
+1. **Email footer** - Text for the report email footer: **Sent by** or **None**.
+1. **Footer link text** - Text for the link in the report email footer. Defaults to "Grafana".
+1. **Footer link URL** - Link for the report email footer.  
+  
 ## Troubleshoot reporting
 
 To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration]({{< relref "../administration/configuration.md#filters" >}}) for more information.
