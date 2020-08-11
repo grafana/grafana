@@ -6,15 +6,14 @@ import { ArrayVector } from '../../vector/ArrayVector';
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { reduceField, ReducerID } from '../fieldReducer';
 
-export interface GroupByFieldOptions {
-  aggregations: ReducerID[];
-  groupBy: boolean;
-}
+// export interface GroupByFieldOptions {
+//   aggregations: ReducerID[];
+//   groupBy: boolean;
+// }
 
 export interface GroupByTransformerOptions {
-  byField: string | null;
   calculationsByField: Array<[string | null, ReducerID[]]>;
-  fields: Record<string, GroupByFieldOptions>;
+  // fields: Record<string, GroupByFieldOptions>;
   byFields: string[];
 }
 
