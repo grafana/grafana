@@ -48,7 +48,6 @@ function FieldCalculationsSelector(props: any) {
           allowMultiple
           stats={config[1]}
           onChange={stats => {
-            console.log('onStatsChange', stats);
             onConfigChange([config[0], stats as ReducerID[]]);
           }}
           menuPlacement="bottom"
@@ -76,7 +75,6 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
     .map((item: string) => ({ label: item, value: item }));
 
   const onSelectField = (value: SelectableValue<string>) => {
-    console.log('onSelectField', value);
     onChange({
       ...options,
       byFields: value.map(i => i.value),
