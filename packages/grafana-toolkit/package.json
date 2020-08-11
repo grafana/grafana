@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/toolkit",
-  "version": "7.1.0-pre.0",
+  "version": "7.2.0-pre.0",
   "description": "Grafana Toolkit",
   "keywords": [
     "grafana",
@@ -80,7 +80,7 @@
     "jest-junit": "^6.4.0",
     "less": "^3.11.1",
     "less-loader": "^5.0.0",
-    "lodash": "4.17.15",
+    "lodash": "4.17.19",
     "md5-file": "^4.0.0",
     "mini-css-extract-plugin": "^0.7.0",
     "node-sass": "^4.13.1",
@@ -106,7 +106,7 @@
     "ts-loader": "6.2.1",
     "ts-node": "8.8.1",
     "tslib": "1.10.0",
-    "typescript": "3.7.5",
+    "typescript": "3.9.3",
     "url-loader": "^2.0.1",
     "webpack": "4.41.5"
   },

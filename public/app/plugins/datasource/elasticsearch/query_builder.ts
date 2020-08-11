@@ -55,6 +55,10 @@ export class ElasticQueryBuilder {
 
     if (aggDef.settings.min_doc_count !== void 0) {
       queryNode.terms.min_doc_count = parseInt(aggDef.settings.min_doc_count, 10);
+
+      if (isNaN(queryNode.terms.min_doc_count)) {
+        queryNode.terms.min_doc_count = aggDef.settings.min_doc_count;
+      }
     }
 
     if (aggDef.settings.missing) {
@@ -208,7 +212,8 @@ export class ElasticQueryBuilder {
     // If target doesn't have bucketAggs and type is not raw_document, it is invalid query.
     if (target.bucketAggs.length === 0) {
       metric = target.metrics[0];
-      if (!metric || metric.type !== 'raw_document') {
+
+      if (!metric || !(metric.type === 'raw_document' || metric.type === 'raw_data')) {
         throw { message: 'Invalid query' };
       }
     }
@@ -217,7 +222,7 @@ export class ElasticQueryBuilder {
      * Check if metric type is raw_document. If metric doesn't have size (or size is 0), update size to 500.
      * Otherwise it will not be a valid query and error will be thrown.
      */
-    if (target.metrics[0].type === 'raw_document') {
+    if (target.metrics?.[0]?.type === 'raw_document' || target.metrics?.[0]?.type === 'raw_data') {
       metric = target.metrics[0];
       const size = (metric.settings && metric.settings.size !== 0 && metric.settings.size) || 500;
       return this.documentQuery(query, size);

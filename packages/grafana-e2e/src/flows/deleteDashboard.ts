@@ -2,37 +2,21 @@ import { e2e } from '../index';
 import { fromBaseUrl } from '../support/url';
 
 export interface DeleteDashboardConfig {
+  quick?: boolean;
   title: string;
   uid: string;
 }
 
-export const deleteDashboard = ({ title, uid }: DeleteDashboardConfig) => {
+export const deleteDashboard = ({ quick = false, title, uid }: DeleteDashboardConfig) => {
   e2e().logToConsole('Deleting dashboard with uid:', uid);
 
-  // Avoid dashboard page errors
-  e2e.pages.Home.visit();
-  e2e().request('DELETE', fromBaseUrl(`/api/dashboards/uid/${uid}`));
+  if (quick) {
+    quickDelete(uid);
+  } else {
+    uiDelete(uid, title);
+  }
 
-  /* https://github.com/cypress-io/cypress/issues/2831
-  Flows.openDashboard(title);
-
-  Pages.Dashboard.settings().click();
-
-  Pages.DashboardSettings.deleteDashBoard().click();
-
-  Pages.ConfirmModal.delete().click();
-
-  Flows.assertSuccessNotification();
-
-  Pages.Dashboards.visit();
-  Pages.Dashboards.dashboards().each(item => {
-    const text = item.text();
-    Cypress.log({ message: [text] });
-    if (text && text.indexOf(title) !== -1) {
-      expect(false).equals(true, `Dashboard ${title} was found although it was deleted.`);
-    }
-  });
-  */
+  e2e().logToConsole('Deleted dashboard with uid:', uid);
 
   e2e.getScenarioContext().then(({ addedDashboards }: any) => {
     e2e.setScenarioContext({
@@ -41,4 +25,27 @@ export const deleteDashboard = ({ title, uid }: DeleteDashboardConfig) => {
       }),
     });
   });
+};
+
+const quickDelete = (uid: string) => {
+  e2e().request('DELETE', fromBaseUrl(`/api/dashboards/uid/${uid}`));
+};
+
+const uiDelete = (uid: string, title: string) => {
+  e2e.pages.Dashboard.visit(uid);
+  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+  e2e.pages.Dashboard.Settings.General.deleteDashBoard().click();
+  e2e.pages.ConfirmModal.delete().click();
+  e2e.flows.assertSuccessNotification();
+
+  e2e.pages.Dashboards.visit();
+
+  // @todo replace `e2e.pages.Dashboards.dashboards` with this when argument is empty
+  e2e()
+    .get('[aria-label^="Dashboard search item "]')
+    .each(item =>
+      e2e()
+        .wrap(item)
+        .should('not.contain', title)
+    );
 };

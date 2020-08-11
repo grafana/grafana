@@ -1,16 +1,12 @@
-import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import { deprecationWarning, ScopedVars, textUtil, TimeRange } from '@grafana/data';
+import { deprecationWarning, ScopedVars, TimeRange } from '@grafana/data';
 import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
 import { variableRegex } from '../variables/utils';
 import { isAdHoc } from '../variables/guard';
 import { VariableModel } from '../variables/types';
 import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 import { variableAdapters } from '../variables/adapters';
-
-function luceneEscape(value: string) {
-  return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
-}
+import { formatRegistry } from './formatRegistry';
 
 interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
@@ -33,13 +29,10 @@ export class TemplateSrv implements BaseTemplateSrv {
   private regex = variableRegex;
   private index: any = {};
   private grafanaVariables: any = {};
-  private builtIns: any = {};
   private timeRange?: TimeRange | null = null;
   private fieldAccessorCache: FieldAccessorCache = {};
 
   constructor(private dependencies: TemplateSrvDependencies = runtimeDependencies) {
-    this.builtIns['__interval'] = { text: '1s', value: '1s' };
-    this.builtIns['__interval_ms'] = { text: '100', value: '100' };
     this._variables = [];
   }
 
@@ -47,10 +40,6 @@ export class TemplateSrv implements BaseTemplateSrv {
     this._variables = variables;
     this.timeRange = timeRange;
     this.updateIndex();
-  }
-
-  getBuiltInIntervalValue() {
-    return this.builtIns.__interval.value;
   }
 
   /**
@@ -118,34 +107,6 @@ export class TemplateSrv implements BaseTemplateSrv {
     return filters;
   }
 
-  luceneFormat(value: any) {
-    if (typeof value === 'string') {
-      return luceneEscape(value);
-    }
-    if (value instanceof Array && value.length === 0) {
-      return '__empty__';
-    }
-    const quotedValues = _.map(value, val => {
-      return '"' + luceneEscape(val) + '"';
-    });
-    return '(' + quotedValues.join(' OR ') + ')';
-  }
-
-  // encode string according to RFC 3986; in contrast to encodeURIComponent()
-  // also the sub-delims "!", "'", "(", ")" and "*" are encoded;
-  // unicode handling uses UTF-8 as in ECMA-262.
-  encodeURIComponentStrict(str: string) {
-    return encodeURIComponent(str).replace(/[!'()*]/g, c => {
-      return (
-        '%' +
-        c
-          .charCodeAt(0)
-          .toString(16)
-          .toUpperCase()
-      );
-    });
-  }
-
   formatValue(value: any, format: any, variable: any) {
     // for some scopedVars there is no variable
     variable = variable || {};
@@ -154,93 +115,38 @@ export class TemplateSrv implements BaseTemplateSrv {
       return format(value, variable, this.formatValue);
     }
 
-    switch (format) {
-      case 'regex': {
-        if (typeof value === 'string') {
-          return kbn.regexEscape(value);
-        }
-
-        const escapedValues = _.map(value, kbn.regexEscape);
-        if (escapedValues.length === 1) {
-          return escapedValues[0];
-        }
-        return '(' + escapedValues.join('|') + ')';
-      }
-      case 'lucene': {
-        return this.luceneFormat(value);
-      }
-      case 'pipe': {
-        if (typeof value === 'string') {
-          return value;
-        }
-        return value.join('|');
-      }
-      case 'distributed': {
-        if (typeof value === 'string') {
-          return value;
-        }
-        return this.distributeVariable(value, variable.name);
-      }
-      case 'csv': {
-        if (_.isArray(value)) {
-          return value.join(',');
-        }
-        return value;
-      }
-      case 'html': {
-        if (_.isArray(value)) {
-          return textUtil.escapeHtml(value.join(', '));
-        }
-        return textUtil.escapeHtml(value);
-      }
-      case 'json': {
-        return JSON.stringify(value);
-      }
-      case 'percentencode': {
-        // like glob, but url escaped
-        if (_.isArray(value)) {
-          return this.encodeURIComponentStrict('{' + value.join(',') + '}');
-        }
-        return this.encodeURIComponentStrict(value);
-      }
-      case 'singlequote': {
-        // escape single quotes with backslash
-        const regExp = new RegExp(`'`, 'g');
-        if (_.isArray(value)) {
-          return _.map(value, v => `'${_.replace(v, regExp, `\\'`)}'`).join(',');
-        }
-        return `'${_.replace(value, regExp, `\\'`)}'`;
-      }
-      case 'doublequote': {
-        // escape double quotes with backslash
-        const regExp = new RegExp('"', 'g');
-        if (_.isArray(value)) {
-          return _.map(value, v => `"${_.replace(v, regExp, '\\"')}"`).join(',');
-        }
-        return `"${_.replace(value, regExp, '\\"')}"`;
-      }
-      case 'sqlstring': {
-        // escape single quotes by pairing them
-        const regExp = new RegExp(`'`, 'g');
-        if (_.isArray(value)) {
-          return _.map(value, v => `'${_.replace(v, regExp, "''")}'`).join(',');
-        }
-        return `'${_.replace(value, regExp, "''")}'`;
-      }
-      default: {
-        if (_.isArray(value) && value.length > 1) {
-          return '{' + value.join(',') + '}';
-        }
-        return value;
-      }
+    if (!format) {
+      format = 'glob';
     }
+
+    // some formats have arguments that come after ':' character
+    let args = format.split(':');
+    if (args.length > 1) {
+      format = args[0];
+      args = args.slice(1);
+    } else {
+      args = [];
+    }
+
+    const formatItem = formatRegistry.getIfExists(format);
+    if (!formatItem) {
+      throw new Error(`Variable format ${format} not found`);
+    }
+
+    return formatItem.formatter(value, args, variable);
   }
 
   setGrafanaVariable(name: string, value: any) {
     this.grafanaVariables[name] = value;
   }
 
+  /**
+   * @deprecated: setGlobalVariable function should not be used and will be removed in future releases
+   *
+   * Use addVariable action to add variables to Redux instead
+   */
   setGlobalVariable(name: string, variable: any) {
+    deprecationWarning('template_srv.ts', 'setGlobalVariable', '');
     this.index = {
       ...this.index,
       [name]: {
@@ -259,9 +165,10 @@ export class TemplateSrv implements BaseTemplateSrv {
     return variableName;
   }
 
-  variableExists(expression: string) {
+  variableExists(expression: string): boolean {
     const name = this.getVariableName(expression);
-    return name && this.getVariableAtIndex(name) !== void 0;
+    const variable = name && this.getVariableAtIndex(name);
+    return variable !== null && variable !== undefined;
   }
 
   highlightVariablesAsHtml(str: string) {
@@ -272,7 +179,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     str = _.escape(str);
     this.regex.lastIndex = 0;
     return str.replace(this.regex, (match, var1, var2, fmt2, var3) => {
-      if (this.getVariableAtIndex(var1 || var2 || var3) || this.builtIns[var1 || var2 || var3]) {
+      if (this.getVariableAtIndex(var1 || var2 || var3)) {
         return '<span class="template-variable">' + match + '</span>';
       }
       return match;
@@ -312,9 +219,9 @@ export class TemplateSrv implements BaseTemplateSrv {
     return scopedVar.value;
   }
 
-  replace(target: string, scopedVars?: ScopedVars, format?: string | Function): string {
+  replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
     if (!target) {
-      return target;
+      return target ?? '';
     }
 
     this.regex.lastIndex = 0;
@@ -410,18 +317,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     });
   };
 
-  distributeVariable(value: any, variable: any) {
-    value = _.map(value, (val: any, index: number) => {
-      if (index !== 0) {
-        return variable + '=' + val;
-      } else {
-        return val;
-      }
-    });
-    return value.join(',');
-  }
-
-  private getVariableAtIndex = (name: string): any => {
+  private getVariableAtIndex(name: string) {
     if (!name) {
       return;
     }
@@ -431,11 +327,11 @@ export class TemplateSrv implements BaseTemplateSrv {
     }
 
     return this.index[name];
-  };
+  }
 
-  private getAdHocVariables = (): any[] => {
+  private getAdHocVariables(): any[] {
     return this.dependencies.getFilteredVariables(isAdHoc);
-  };
+  }
 }
 
 // Expose the template srv

@@ -160,7 +160,7 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.Init()
 		require.NoError(t, err)
 
-		assert.Empty(t, pm.scanningErrors)
+		require.Empty(t, pm.scanningErrors)
 		assert.Equal(t, []string{"gel"}, fm.registeredPlugins)
 	})
 }
@@ -189,8 +189,8 @@ type fakeBackendPluginManager struct {
 	registeredPlugins []string
 }
 
-func (f *fakeBackendPluginManager) Register(descriptor backendplugin.PluginDescriptor) error {
-	f.registeredPlugins = append(f.registeredPlugins, descriptor.PluginID())
+func (f *fakeBackendPluginManager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	f.registeredPlugins = append(f.registeredPlugins, pluginID)
 	return nil
 }
 
@@ -198,11 +198,11 @@ func (f *fakeBackendPluginManager) StartPlugin(ctx context.Context, pluginID str
 	return nil
 }
 
-func (f *fakeBackendPluginManager) CollectMetrics(ctx context.Context, pluginID string) (*backendplugin.CollectMetricsResult, error) {
+func (f *fakeBackendPluginManager) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
 	return nil, nil
 }
 
-func (f *fakeBackendPluginManager) CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backendplugin.CheckHealthResult, error) {
+func (f *fakeBackendPluginManager) CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backend.CheckHealthResult, error) {
 	return nil, nil
 }
 

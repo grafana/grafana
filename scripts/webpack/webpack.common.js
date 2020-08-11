@@ -1,5 +1,7 @@
 const path = require('path');
 
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+
 // https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
 function shouldExclude(filename) {
   // There is external js code inside this which needs to be processed by babel.
@@ -15,6 +17,7 @@ function shouldExclude(filename) {
     'react-hook-form',
     'rc-trigger',
     '@iconscout/react-unicons',
+    'monaco-editor',
   ];
   for (const package of packagesToProcessbyBabel) {
     if (filename.indexOf(`node_modules/${package}`) > 0) {
@@ -58,6 +61,55 @@ module.exports = {
   node: {
     fs: 'empty',
   },
+  plugins: [
+    new MonacoWebpackPlugin({
+      // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
+      filename: 'monaco-[name].worker.js',
+      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql'],
+      features: [
+        '!accessibilityHelp',
+        'bracketMatching',
+        'caretOperations',
+        '!clipboard',
+        '!codeAction',
+        '!codelens',
+        '!colorDetector',
+        '!comment',
+        '!contextmenu',
+        '!coreCommands',
+        '!cursorUndo',
+        '!dnd',
+        '!find',
+        'folding',
+        '!fontZoom',
+        '!format',
+        '!gotoError',
+        '!gotoLine',
+        '!gotoSymbol',
+        '!hover',
+        '!iPadShowKeyboard',
+        '!inPlaceReplace',
+        '!inspectTokens',
+        '!linesOperations',
+        '!links',
+        '!multicursor',
+        'parameterHints',
+        '!quickCommand',
+        '!quickOutline',
+        '!referenceSearch',
+        '!rename',
+        '!smartSelect',
+        '!snippets',
+        'suggest',
+        '!toggleHighContrast',
+        '!toggleTabFocusMode',
+        '!transpose',
+        '!wordHighlighter',
+        '!wordOperations',
+        '!wordPartOperations',
+      ],
+    }),
+  ],
   module: {
     rules: [
       /**
@@ -107,6 +159,11 @@ module.exports = {
             },
           },
         ],
+      },
+      {
+        test: /\.css$/,
+        // include: MONACO_DIR, // https://github.com/react-monaco-editor/react-monaco-editor
+        use: ['style-loader', 'css-loader'],
       },
       {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,

@@ -1,22 +1,23 @@
 import React, { useState } from 'react';
-import { Legend } from './Legend';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
-import { Field } from './Field';
-import { Input } from '../Input/Input';
-import { Button } from '../Button';
-import { Form } from './Form';
-import { Switch } from '../Switch/Switch';
-import { Checkbox } from './Checkbox';
-
-import { RadioButtonGroup } from './RadioButtonGroup/RadioButtonGroup';
-import { Select } from '../Select/Select';
-import { InputControl } from '../InputControl';
 import mdx from './Form.mdx';
 import { ValidateResult } from 'react-hook-form';
 import { boolean } from '@storybook/addon-knobs';
-import { TextArea } from '../TextArea/TextArea';
+import {
+  Field,
+  Legend,
+  Input,
+  Button,
+  Form,
+  Switch,
+  Checkbox,
+  Select,
+  InputControl,
+  TextArea,
+  RadioButtonGroup,
+} from '@grafana/ui';
 
 export default {
   title: 'Forms/Example forms',

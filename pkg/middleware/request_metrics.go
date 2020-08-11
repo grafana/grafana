@@ -43,11 +43,12 @@ func RequestMetrics(handler string) macaron.Handler {
 		duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
 		metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))
 
-		if strings.HasPrefix(req.RequestURI, "/api/datasources/proxy") {
+		switch {
+		case strings.HasPrefix(req.RequestURI, "/api/datasources/proxy"):
 			countProxyRequests(status)
-		} else if strings.HasPrefix(req.RequestURI, "/api/") {
+		case strings.HasPrefix(req.RequestURI, "/api/"):
 			countApiRequests(status)
-		} else {
+		default:
 			countPageRequests(status)
 		}
 	}

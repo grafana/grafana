@@ -37,11 +37,25 @@ func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 	if to.IsAbs() {
 		return login.ErrAbsoluteRedirectTo
 	}
+
+	if to.Host != "" {
+		return login.ErrForbiddenRedirectTo
+	}
+
+	// path should have exactly one leading slash
+	if !strings.HasPrefix(to.Path, "/") {
+		return login.ErrForbiddenRedirectTo
+	}
+	if strings.HasPrefix(to.Path, "//") {
+		return login.ErrForbiddenRedirectTo
+	}
+
 	// when using a subUrl, the redirect_to should start with the subUrl (which contains the leading slash), otherwise the redirect
 	// will send the user to the wrong location
 	if hs.Cfg.AppSubUrl != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubUrl+"/") {
 		return login.ErrInvalidRedirectTo
 	}
+
 	return nil
 }
 
@@ -103,7 +117,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 			if err := hs.ValidateRedirectTo(redirectTo); err != nil {
 				// the user is already logged so instead of rendering the login page with error
 				// it should be redirected to the home page.
-				log.Debug("Ignored invalid redirect_to cookie value: %v", redirectTo)
+				log.Debugf("Ignored invalid redirect_to cookie value: %v", redirectTo)
 				redirectTo = hs.Cfg.AppSubUrl + "/"
 			}
 			middleware.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
@@ -124,12 +138,12 @@ func tryOAuthAutoLogin(c *models.ReqContext) bool {
 	}
 	oauthInfos := setting.OAuthService.OAuthInfos
 	if len(oauthInfos) != 1 {
-		log.Warn("Skipping OAuth auto login because multiple OAuth providers are configured")
+		log.Warnf("Skipping OAuth auto login because multiple OAuth providers are configured")
 		return false
 	}
 	for key := range setting.OAuthService.OAuthInfos {
 		redirectUrl := setting.AppSubUrl + "/login/" + key
-		log.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
+		log.Infof("OAuth auto login enabled. Redirecting to " + redirectUrl)
 		c.Redirect(redirectUrl, 307)
 		return true
 	}
@@ -187,7 +201,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
 			result["redirectUrl"] = redirectTo
 		} else {
-			log.Info("Ignored invalid redirect_to cookie value: %v", redirectTo)
+			log.Infof("Ignored invalid redirect_to cookie value: %v", redirectTo)
 		}
 		middleware.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 	}

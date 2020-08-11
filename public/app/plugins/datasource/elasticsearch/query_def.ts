@@ -79,7 +79,8 @@ export const metricAggTypes = [
     supportsMultipleBucketPaths: true,
     minVersion: 2,
   },
-  { text: 'Raw Document', value: 'raw_document', requiresField: false },
+  { text: 'Raw Document (legacy)', value: 'raw_document', requiresField: false },
+  { text: 'Raw Data', value: 'raw_data', requiresField: false },
   { text: 'Logs', value: 'logs', requiresField: false },
 ];
 

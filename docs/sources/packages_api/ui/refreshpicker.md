@@ -15,15 +15,9 @@ type = "docs"
 
 ```typescript
 RefreshPicker: React.FunctionComponent<Pick<Props, "value" | "tooltip" | "intervals" | "onRefresh" | "onIntervalChanged" | "hasLiveOption" | "refreshButton" | "buttonSelectClassName">> & {
-    offOption: {
-        label: string;
-        value: string;
-    };
-    liveOption: {
-        label: string;
-        value: string;
-    };
-    isLive: (refreshInterval?: string | undefined) => boolean;
+    offOption: typeof RefreshPickerBase.offOption;
+    liveOption: typeof RefreshPickerBase.liveOption;
+    isLive: typeof RefreshPickerBase.isLive;
 }
 ```
 <b>Import</b>

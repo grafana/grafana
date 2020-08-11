@@ -60,7 +60,6 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 	targetURL, _ := url.Parse(route.URL)
 
 	director := func(req *http.Request) {
-
 		req.URL.Scheme = targetURL.Scheme
 		req.URL.Host = targetURL.Host
 		req.Host = targetURL.Host
@@ -79,11 +78,9 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 			return
 		}
 
-		req.Header.Add("X-Grafana-Context", string(ctxJSON))
+		req.Header.Set("X-Grafana-Context", string(ctxJSON))
 
-		if cfg.SendUserHeader && !ctx.SignedInUser.IsAnonymous {
-			req.Header.Add("X-Grafana-User", ctx.SignedInUser.Login)
-		}
+		applyUserHeader(cfg.SendUserHeader, req, ctx.SignedInUser)
 
 		if len(route.Headers) > 0 {
 			headers, err := getHeaders(route, ctx.OrgId, appID)
@@ -93,7 +90,7 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 			}
 
 			for key, value := range headers {
-				log.Trace("setting key %v value <redacted>", key)
+				log.Tracef("setting key %v value <redacted>", key)
 				req.Header.Set(key, value[0])
 			}
 		}
@@ -115,7 +112,7 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 		}
 
 		// reqBytes, _ := httputil.DumpRequestOut(req, true);
-		// log.Trace("Proxying plugin request: %s", string(reqBytes))
+		// log.Tracef("Proxying plugin request: %s", string(reqBytes))
 	}
 
 	return &httputil.ReverseProxy{Director: director}

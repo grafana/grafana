@@ -4,7 +4,7 @@ import { SignIn } from './SignIn';
 
 describe('Render', () => {
   it('should render component', () => {
-    const wrapper = shallow(<SignIn url="/" />);
+    const wrapper = shallow(<SignIn url="/whatever" />);
 
     expect(wrapper).toMatchSnapshot();
   });

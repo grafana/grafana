@@ -17,7 +17,7 @@ import (
 const pushoverEndpoint = "https://api.pushover.net/1/messages.json"
 
 func init() {
-	sounds := ` 
+	sounds := `
           'default',
           'pushover',
           'bike',
@@ -42,10 +42,85 @@ func init() {
           'updown',
           'none'`
 
+	soundOptions := []alerting.SelectOption{
+		{
+			Value: "default",
+			Label: "Default",
+		},
+		{
+			Value: "pushover",
+			Label: "Pushover",
+		}, {
+			Value: "bike",
+			Label: "Bike",
+		}, {
+			Value: "bugle",
+			Label: "Bugle",
+		}, {
+			Value: "cashregister",
+			Label: "Cashregister",
+		}, {
+			Value: "classical",
+			Label: "Classical",
+		}, {
+			Value: "cosmic",
+			Label: "Cosmic",
+		}, {
+			Value: "falling",
+			Label: "Falling",
+		}, {
+			Value: "gamelan",
+			Label: "Gamelan",
+		}, {
+			Value: "incoming",
+			Label: "Incoming",
+		}, {
+			Value: "intermission",
+			Label: "Intermission",
+		}, {
+			Value: "magic",
+			Label: "Magic",
+		}, {
+			Value: "mechanical",
+			Label: "Mechanical",
+		}, {
+			Value: "pianobar",
+			Label: "Pianobar",
+		}, {
+			Value: "siren",
+			Label: "Siren",
+		}, {
+			Value: "spacealarm",
+			Label: "Spacealarm",
+		}, {
+			Value: "tugboat",
+			Label: "Tugboat",
+		}, {
+			Value: "alien",
+			Label: "Alien",
+		}, {
+			Value: "climb",
+			Label: "Climb",
+		}, {
+			Value: "persistent",
+			Label: "Persistent",
+		}, {
+			Value: "echo",
+			Label: "Echo",
+		}, {
+			Value: "updown",
+			Label: "Updown",
+		}, {
+			Value: "none",
+			Label: "None",
+		},
+	}
+
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
 		Type:        "pushover",
 		Name:        "Pushover",
 		Description: "Sends HTTP POST request to the Pushover API",
+		Heading:     "Pushover settings",
 		Factory:     NewPushoverNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Pushover settings</h3>
@@ -77,7 +152,7 @@ func init() {
       </div>
       <div class="gf-form" ng-show="ctrl.model.settings.priority == '2'">
         <span class="gf-form-label width-10">Expire</span>
-        <input type="text" class="gf-form-input max-width-14" ng-required="ctrl.model.settings.priority == '2'" placeholder="maximum 86400 seconds" ng-model="ctrl.model.settings.expire" ng-init="ctrl.model.settings.expire=ctrl.model.settings.expire||'3600'"></input>
+         <input type="text" class="gf-form-input max-width-14" ng-required="ctrl.model.settings.priority == '2'" placeholder="maximum 86400 seconds" ng-model="ctrl.model.settings.expire" ng-init="ctrl.model.settings.expire=ctrl.model.settings.expire||'3600'"></input>
       </div>
       <div class="gf-form">
         <span class="gf-form-label width-10">Alerting sound</span>
@@ -92,6 +167,92 @@ func init() {
         ]" ng-init="ctrl.model.settings.okSound=ctrl.model.settings.okSound||'default'"></select>
       </div>
     `,
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "API Token",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "Application token",
+				PropertyName: "apiToken",
+				Required:     true,
+			},
+			{
+				Label:        "User key(s)",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "comma-separated list",
+				PropertyName: "userKey",
+				Required:     true,
+			},
+			{
+				Label:        "Device(s) (optional)",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "comma-separated list; leave empty to send to all devices",
+				PropertyName: "device",
+			},
+			{
+				Label:   "Priority",
+				Element: alerting.ElementTypeSelect,
+				SelectOptions: []alerting.SelectOption{
+					{
+						Value: "2",
+						Label: "Emergency",
+					},
+					{
+						Value: "1",
+						Label: "High",
+					},
+					{
+						Value: "0",
+						Label: "Normal",
+					},
+					{
+						Value: "-1",
+						Label: "Low",
+					},
+					{
+						Value: "-2",
+						Label: "Lowest",
+					},
+				},
+				PropertyName: "priority",
+			},
+			{
+				Label:        "Retry",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "minimum 30 seconds",
+				PropertyName: "retry",
+				ShowWhen: alerting.ShowWhen{
+					Field: "priority",
+					Is:    "2",
+				},
+			},
+			{
+				Label:        "Expire",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "maximum 86400 seconds",
+				PropertyName: "expire",
+				ShowWhen: alerting.ShowWhen{
+					Field: "priority",
+					Is:    "2",
+				},
+			},
+			{
+				Label:         "Alerting sound",
+				Element:       alerting.ElementTypeSelect,
+				SelectOptions: soundOptions,
+				PropertyName:  "sound",
+			},
+			{
+				Label:         "OK sound",
+				Element:       alerting.ElementTypeSelect,
+				SelectOptions: soundOptions,
+				PropertyName:  "okSound",
+			},
+		},
 	})
 }
 

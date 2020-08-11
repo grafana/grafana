@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { action } from '@storybook/addon-actions';
 import { SelectableValue } from '@grafana/data';
-import { SegmentAsync } from './';
-import { Icon } from '../Icon/Icon';
+import { SegmentAsync, Icon } from '@grafana/ui';
 
 const AddButton = (
   <a className="gf-form-label query-part">

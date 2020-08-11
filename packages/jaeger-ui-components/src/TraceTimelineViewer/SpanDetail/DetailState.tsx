@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Log } from '@grafana/data';
+import { TraceLog } from '@grafana/data';
 
 /**
  * Which items of a {@link SpanDetail} component are expanded.
@@ -20,8 +20,9 @@ import { Log } from '@grafana/data';
 export default class DetailState {
   isTagsOpen: boolean;
   isProcessOpen: boolean;
-  logs: { isOpen: boolean; openedItems: Set<Log> };
+  logs: { isOpen: boolean; openedItems: Set<TraceLog> };
   isWarningsOpen: boolean;
+  isStackTracesOpen: boolean;
   isReferencesOpen: boolean;
 
   constructor(oldState?: DetailState) {
@@ -30,12 +31,14 @@ export default class DetailState {
       isProcessOpen,
       isReferencesOpen,
       isWarningsOpen,
+      isStackTracesOpen,
       logs,
     }: DetailState | Record<string, undefined> = oldState || {};
     this.isTagsOpen = Boolean(isTagsOpen);
     this.isProcessOpen = Boolean(isProcessOpen);
     this.isReferencesOpen = Boolean(isReferencesOpen);
     this.isWarningsOpen = Boolean(isWarningsOpen);
+    this.isStackTracesOpen = Boolean(isStackTracesOpen);
     this.logs = {
       isOpen: Boolean(logs && logs.isOpen),
       openedItems: logs && logs.openedItems ? new Set(logs.openedItems) : new Set(),
@@ -66,13 +69,19 @@ export default class DetailState {
     return next;
   }
 
+  toggleStackTraces() {
+    const next = new DetailState(this);
+    next.isStackTracesOpen = !this.isStackTracesOpen;
+    return next;
+  }
+
   toggleLogs() {
     const next = new DetailState(this);
     next.logs.isOpen = !this.logs.isOpen;
     return next;
   }
 
-  toggleLogItem(logItem: Log) {
+  toggleLogItem(logItem: TraceLog) {
     const next = new DetailState(this);
     if (next.logs.openedItems.has(logItem)) {
       next.logs.openedItems.delete(logItem);

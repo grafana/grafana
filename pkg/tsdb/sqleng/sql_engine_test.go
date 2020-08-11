@@ -58,7 +58,6 @@ func TestSqlEngine(t *testing.T) {
 
 				So(sql, ShouldEqual, fmt.Sprintf("select %d", to.Unix()))
 			})
-
 		})
 
 		Convey("Given row values with time.Time as time columns", func() {

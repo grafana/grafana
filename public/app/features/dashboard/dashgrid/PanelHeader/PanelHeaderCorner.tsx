@@ -7,7 +7,7 @@ import { getLocationSrv } from '@grafana/runtime';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { InspectTab } from '../../components/Inspector/PanelInspector';
+import { InspectTab } from '../../components/Inspector/types';
 
 enum InfoMode {
   Error = 'Error',
@@ -74,7 +74,7 @@ export class PanelHeaderCorner extends Component<Props> {
    * Open the Panel Inspector when we click on an error
    */
   onClickError = () => {
-    getLocationSrv().update({ partial: true, query: { inspect: this.props.panel.id, tab: InspectTab.Error } });
+    getLocationSrv().update({ partial: true, query: { inspect: this.props.panel.id, inspectTab: InspectTab.Error } });
   };
 
   renderCornerType(infoMode: InfoMode, content: PopoverContent, onClick?: () => void) {

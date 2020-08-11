@@ -3,8 +3,9 @@ import path from 'path';
 
 import { grafanaDataFrameToArrowTable, arrowTableToDataFrame } from './ArrowDataFrame';
 import { toDataFrameDTO, toDataFrame } from './processDataFrame';
-import { FieldType } from '../types';
+import { FieldType, DataFrame } from '../types';
 import { Table } from 'apache-arrow';
+import { ArrayVector } from '../vector';
 
 describe('Read/Write arrow Table to DataFrame', () => {
   test('should parse output with dataframe', () => {
@@ -57,5 +58,28 @@ describe('Read/Write arrow Table to DataFrame', () => {
     const table = Table.from([arrow]);
     const frame = arrowTableToDataFrame(table);
     expect(toDataFrameDTO(frame)).toMatchSnapshot();
+  });
+
+  test('Export arrow table names', () => {
+    const simple: DataFrame = {
+      name: 'hello',
+      fields: [
+        {
+          name: 'fname',
+          labels: {
+            a: 'AAA',
+            b: 'BBB',
+          },
+          config: {},
+          type: FieldType.number,
+          values: new ArrayVector([1, 2]),
+        },
+      ],
+      length: 2,
+    };
+    const t1 = grafanaDataFrameToArrowTable(simple);
+    const t2 = grafanaDataFrameToArrowTable(simple, true);
+    expect(t1.getColumnAt(0)?.name).toEqual('fname {a="AAA", b="BBB"}');
+    expect(t2.getColumnAt(0)?.name).toEqual('fname');
   });
 });

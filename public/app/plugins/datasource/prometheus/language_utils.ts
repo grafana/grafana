@@ -4,17 +4,16 @@ import { addLabelToQuery } from './add_label_to_query';
 export const RATE_RANGES = ['1m', '5m', '10m', '30m', '1h'];
 
 export const processHistogramLabels = (labels: string[]) => {
-  const result = [];
+  const resultSet: Set<string> = new Set();
   const regexp = new RegExp('_bucket($|:)');
   for (let index = 0; index < labels.length; index++) {
     const label = labels[index];
     const isHistogramValue = regexp.test(label);
     if (isHistogramValue) {
-      if (result.indexOf(label) === -1) {
-        result.push(label);
-      }
+      resultSet.add(label);
     }
   }
+  const result = [...resultSet];
 
   return { values: { __name__: result } };
 };
@@ -120,19 +119,20 @@ export function expandRecordingRules(query: string, mapping: { [name: string]: s
   // Regex that matches occurences of ){ or }{ or ]{ which is a sign of incorrecly added labels.
   const invalidLabelsRegex = /(\)\{|\}\{|\]\{)/;
   const correctlyExpandedQueryArray = queryArray.map(query => {
-    let expression = query;
-    if (expression.match(invalidLabelsRegex)) {
-      expression = addLabelsToExpression(expression, invalidLabelsRegex);
-    }
-    return expression;
+    return addLabelsToExpression(query, invalidLabelsRegex);
   });
 
   return correctlyExpandedQueryArray.join('');
 }
 
 function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
+  const match = expr.match(invalidLabelsRegexp);
+  if (!match) {
+    return expr;
+  }
+
   // Split query into 2 parts - before the invalidLabelsRegex match and after.
-  const indexOfRegexMatch = expr.match(invalidLabelsRegexp).index;
+  const indexOfRegexMatch = match.index ?? 0;
   const exprBeforeRegexMatch = expr.substr(0, indexOfRegexMatch + 1);
   const exprAfterRegexMatch = expr.substr(indexOfRegexMatch + 1);
 

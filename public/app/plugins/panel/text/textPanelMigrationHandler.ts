@@ -11,5 +11,10 @@ export const textPanelMigrationHandler = (panel: PanelModel<TextOptions>): Parti
     return { content, mode };
   }
 
-  return panel.options as TextOptions;
+  // The 'text' mode has been removed so we need to update any panels still using it to markdown
+  if (panel.options.mode !== 'html' && panel.options.mode !== 'markdown') {
+    return { content: panel.options.content, mode: 'markdown' };
+  }
+
+  return panel.options;
 };

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"golang.org/x/xerrors"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func GetGrafanaPluginDir(currentOS string) string {
@@ -23,7 +23,7 @@ func GetGrafanaPluginDir(currentOS string) string {
 func getGrafanaRoot() (string, error) {
 	ex, err := os.Executable()
 	if err != nil {
-		return "", xerrors.New("Failed to get executable path")
+		return "", errutil.Wrap("failed to get executable path", err)
 	}
 	exPath := filepath.Dir(ex)
 	_, last := path.Split(exPath)

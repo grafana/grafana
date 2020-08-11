@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	influxdb2 "github.com/influxdata/influxdb-client-go"
+	"github.com/influxdata/influxdb-client-go/api"
 )
 
 var (
@@ -28,16 +29,16 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 	if err != nil {
 		return nil, err
 	}
+	defer runner.client.Close()
 
 	for _, query := range tsdbQuery.Queries {
-
 		qm, err := GetQueryModelTSDB(query, tsdbQuery.TimeRange, dsInfo)
 		if err != nil {
 			tRes.Results[query.RefId] = &tsdb.QueryResult{Error: err}
 			continue
 		}
 
-		res := ExecuteQuery(context.Background(), *qm, runner, 10)
+		res := ExecuteQuery(context.Background(), *qm, runner, 50)
 
 		tRes.Results[query.RefId] = backendDataResponseToTSDBResponse(&res, query.RefId)
 	}
@@ -53,11 +54,11 @@ type Runner struct {
 
 // This is an interface to help testing
 type queryRunner interface {
-	runQuery(ctx context.Context, q string) (*influxdb2.QueryTableResult, error)
+	runQuery(ctx context.Context, q string) (*api.QueryTableResult, error)
 }
 
 // runQuery executes fluxQuery against the Runner's organization and returns an flux typed result.
-func (r *Runner) runQuery(ctx context.Context, fluxQuery string) (*influxdb2.QueryTableResult, error) {
+func (r *Runner) runQuery(ctx context.Context, fluxQuery string) (*api.QueryTableResult, error) {
 	return r.client.QueryApi(r.org).Query(ctx, fluxQuery)
 }
 
@@ -81,7 +82,6 @@ func RunnerFromDataSource(dsInfo *models.DataSource) (*Runner, error) {
 		client: influxdb2.NewClient(url, token),
 		org:    org,
 	}, nil
-
 }
 
 // backendDataResponseToTSDBResponse takes the SDK's style response and changes it into a
@@ -90,10 +90,7 @@ func RunnerFromDataSource(dsInfo *models.DataSource) (*Runner, error) {
 func backendDataResponseToTSDBResponse(dr *backend.DataResponse, refID string) *tsdb.QueryResult {
 	qr := &tsdb.QueryResult{RefId: refID}
 
-	if dr.Error != nil {
-		qr.Error = dr.Error
-		return qr
-	}
+	qr.Error = dr.Error
 
 	if dr.Frames != nil {
 		qr.Dataframes = tsdb.NewDecodedDataFrames(dr.Frames)

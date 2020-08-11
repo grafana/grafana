@@ -26,7 +26,7 @@ Name | Description
 ------------ | -------------
 *Name* | The data source name. This is how you refer to the data source in panels and queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
-*Host* | The IP address/hostname and optional port of your PostgreSQL instance.
+*Host* | The IP address/hostname and optional port of your PostgreSQL instance. _Do not_ include the database name. The connection string for connecting to Postgres will not be correct and will cause errors.
 *Database* | Name of your PostgreSQL database.
 *User* | Database user's login/username
 *Password* | Database user's password
@@ -337,7 +337,7 @@ Read more about variable formatting options in the [Variables]({{< relref "../..
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
 **Example query using time column with epoch values:**
 
@@ -418,3 +418,7 @@ datasources:
       postgresVersion: 903 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
       timescaledb: false
 ```
+
+If you encounter metric request errors or other issues:
+- Make sure your data source YAML file parameters exactly match the example. This includes parameter names and use of quotation marks.
+- Make sure the `database` name is not included in the `url`.

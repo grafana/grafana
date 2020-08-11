@@ -7,8 +7,12 @@
       link: /getting-started/getting-started/
     - name: Intro to time series
       link: /getting-started/timeseries/
+    - name: Time series dimensions
+      link: /getting-started/timeseries-dimensions/
     - name: Intro to histograms
       link: /getting-started/intro-histograms/
+    - name: Observability strategies
+      link: /getting-started/strategies/
     - name: Glossary
       link: /getting-started/glossary/
 - name: Installation
@@ -31,8 +35,12 @@
 - name: Administration
   link: /administration/
   children:
+    - name: Change password
+      link: /administration/change-your-password/
+    - name: Change preferences
+      link: /administration/preferences/
     - name: Configuration
-      link: /installation/configuration/
+      link: /administration/configuration/
     - name: Configure Docker image
       link: /installation/configure-docker/
     - name: Security
@@ -75,16 +83,18 @@
           name: Dashboard and Folder
         - link: /permissions/datasource_permissions/
           name: Data source
+    - name: Provisioning
+      link: /administration/provisioning/
     - name: Grafana CLI
       link: /administration/cli/
     - name: Internal metrics
       link: /administration/metrics/
-    - name: Provisioning
-      link: /administration/provisioning/
+    - name: Jaeger instrumentation
+      link: /administration/jaeger-instrumentation/
     - name: Set up Grafana for high availability
       link: /tutorials/ha_setup/
-    - name: Troubleshooting
-      link: /installation/troubleshooting/
+    - name: Change home dashboard
+      link: /administration/change-home-dashboard/
 - name: Manage users
   link: /manage-users
   children:
@@ -109,8 +119,8 @@
       name: Azure Monitor
     - link: /features/datasources/elasticsearch/
       name: Elasticsearch
-    - link: /features/datasources/stackdriver/
-      name: Google Stackdriver
+    - link: /features/datasources/cloudmonitoring/
+      name: Google Cloud Monitoring
     - link: /features/datasources/graphite/
       name: Graphite
     - link: /features/datasources/influxdb/
@@ -184,13 +194,13 @@
   children:
     - link: /features/dashboard/dashboards/
       name: Overview
-    - link: /reference/annotations/
+    - link: /dashboards/annotations/
       name: Annotations
-    - link: /reference/dashboard_folders/
+    - link: /dashboards/dashboard_folders/
       name: Folders
-    - link: /reference/playlist/
+    - link: /dashboards/playlist/
       name: Playlist
-    - link: /reference/search/
+    - link: /dashboards/search/
       name: Search
     - link: /reference/share_dashboard/
       name: Sharing a dashboard
@@ -200,7 +210,7 @@
       name: Time range controls
     - link: /reference/export_import/
       name: Export and import
-    - link: /reference/dashboard_history/
+    - link: /dashboards/dashboard_history/
       name: Dashboard version history
     - name: Keyboard Shortcuts
       link: /features/shortcuts/
@@ -245,17 +255,48 @@
   children:
     - link: /variables/templates-and-variables/
       name: Overview
-    - link: /variables/global-variables/
-      name: Global variables
-    - link: /variables/url-variables/
-      name: URL variables
+    - link: /variables/variable-examples/
+      name: Variable examples
+    - name: Variable types
+      link: /variables/variable-types/
+      children:
+      - link: /variables/variable-types/add-query-variable/
+        name: Add query variable
+      - link: /variables/variable-types/add-custom-variable/
+        name: Add custom variable
+      - link: /variables/variable-types/add-text-box-variable/
+        name: Add text box variable
+      - link: /variables/variable-types/add-constant-variable/
+        name: Add constant variable
+      - link: /variables/variable-types/add-data-source-variable/
+        name: Add data source variable
+      - link: /variables/variable-types/add-interval-variable/
+        name: Add interval variable
+      - link: /variables/variable-types/add-ad-hoc-filters/
+        name: Add ad hoc filters
+      - link: /variables/variable-types/chained-variables/
+        name: Chained variables
+      - link: /variables/variable-types/global-variables/
+        name: Global variables
+      - link: /variables/variable-types/url-variables/
+        name: URL variables
+    - name: Selection options
+      link: /variables/variable-selection-options/
+    - name: Value groups/tags
+      link: /variables/variable-value-tags/
     - link: /variables/advanced-variable-format-options/
       name: Advanced variable formats
+    - link: /variables/formatting-multi-value-variables/
+      name: Formatting multi-value variables
+    - link: /variables/filter-variables-with-regex/
+      name: Filter variables with regex
     - link: /variables/repeat-panels-or-rows/
       name: Repeat panels or rows
 - name: What's new in Grafana
   link: /whatsnew/
   children:
+    - name: Version 7.1
+      link: /guides/whats-new-in-v7-1/
     - name: Version 7.0
       link: /guides/whats-new-in-v7-0/
     - name: Version 6.7
@@ -328,6 +369,8 @@
       link: /enterprise/white-labeling/
     - name: Usage insights
       link: /enterprise/usage-insights/
+    - name: Vault integration
+      link: /enterprise/vault/
     - name: License expiration
       link: /enterprise/license-expiration/
 - name: Plugins
@@ -346,6 +389,8 @@
       link: /http_api/auth/
     - name: Create API Tokens and Dashboards for a Specific Organization
       link: /tutorials/api_org_token_howto/
+    - name: cURL examples
+      link: /http_api/curl-examples/  
     - name: Admin API
       link: /http_api/admin/
     - name: Alerting API
@@ -388,6 +433,16 @@
       link: /http_api/team/
     - name: Users API
       link: /http_api/user/
+- name: Troubleshooting
+  children:
+  - name: Overview
+    link: /troubleshooting/
+  - name: Enable diagnostics
+    link: /troubleshooting/diagnostics/
+  - name: Troubleshoot dashboards
+    link: /troubleshooting/troubleshoot-dashboards/
+  - name: Troubleshoot queries
+    link: /troubleshooting/troubleshoot-queries/
 - name: Developers
   children:
     - name: Plugins
@@ -422,6 +477,8 @@
               name: Plugin protocol
             - link: /developers/plugins/backend/grafana-plugin-sdk-for-go/
               name: Grafana plugin SDK for Go
+        - name: Error handling
+          link: /developers/plugins/error-handling/
         - name: Legacy plugins
           children:
             - link: /developers/plugins/legacy/

@@ -35,17 +35,17 @@ export const getMockPlugins = (amount: number): PluginMeta[] => {
   return plugins as any;
 };
 
-export const getPanelPlugin = (
+export function getPanelPlugin(
   options: Partial<PanelPluginMeta>,
   reactPanel?: ComponentType<PanelProps>,
   angularPanel?: any
-): PanelPlugin => {
-  const plugin = new PanelPlugin(reactPanel);
+): PanelPlugin {
+  const plugin = new PanelPlugin(reactPanel!);
   plugin.angularPanelCtrl = angularPanel;
   plugin.meta = {
-    id: options.id,
+    id: options.id!,
     type: PluginType.panel,
-    name: options.id,
+    name: options.id!,
     sort: options.sort || 1,
     info: {
       author: {
@@ -66,7 +66,7 @@ export const getPanelPlugin = (
     baseUrl: '',
   };
   return plugin;
-};
+}
 
 export function getMockPlugin(overrides?: Partial<PluginMeta>): PluginMeta {
   const defaults: PluginMeta = {

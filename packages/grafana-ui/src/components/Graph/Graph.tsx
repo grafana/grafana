@@ -70,7 +70,9 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   }
 
   componentWillUnmount() {
-    this.$element.unbind('plotselected', this.onPlotSelected);
+    if (this.$element) {
+      this.$element.unbind('plotselected', this.onPlotSelected);
+    }
   }
 
   onPlotSelected = (event: JQueryEventObject, ranges: { xaxis: { from: number; to: number } }) => {
@@ -353,7 +355,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         flotOptions
       );
     } catch (err) {
-      console.log('Graph rendering error', err, flotOptions, series);
+      console.error('Graph rendering error', err, flotOptions, series);
       throw new Error('Error rendering panel');
     }
   }

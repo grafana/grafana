@@ -34,3 +34,16 @@
     transition: max-height 250ms ease-in-out;
   }
 }
+
+@keyframes spin-clockwise {
+  0% {
+    transform: rotate(0deg) scaleX(-1); // scaleX flips the `sync` icon so arrows point the correct way
+  }
+  100% {
+    transform: rotate(359deg) scaleX(-1);
+  }
+}
+
+.spin-clockwise {
+  animation: spin-clockwise 3s infinite linear;
+}

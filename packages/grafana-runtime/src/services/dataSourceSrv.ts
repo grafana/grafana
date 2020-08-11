@@ -13,7 +13,7 @@ export interface DataSourceSrv {
    * @param name - name of the datasource plugin you want to use.
    * @param scopedVars - variables used to interpolate a templated passed as name.
    */
-  get(name?: string, scopedVars?: ScopedVars): Promise<DataSourceApi>;
+  get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi>;
 
   /**
    * Returns metadata based on UID.

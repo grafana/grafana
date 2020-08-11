@@ -13,8 +13,8 @@ const FunctionDescription = React.lazy(async () => {
   // @ts-ignore
   const { default: rst2html } = await import(/* webpackChunkName: "rst2html" */ 'rst2html');
   return {
-    default: (props: { description: string }) => (
-      <div dangerouslySetInnerHTML={{ __html: rst2html(props.description) }} />
+    default: (props: { description?: string }) => (
+      <div dangerouslySetInnerHTML={{ __html: rst2html(props.description ?? '') }} />
     ),
   };
 });
@@ -77,7 +77,7 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
         {(showPopper, hidePopper, popperProps) => {
           return (
             <>
-              {this.triggerRef && (
+              {this.triggerRef.current && (
                 <Popover
                   {...popperProps}
                   referenceElement={this.triggerRef.current}

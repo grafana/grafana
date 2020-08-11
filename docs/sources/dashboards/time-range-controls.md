@@ -1,9 +1,9 @@
 +++
 title = "Time range controls"
 keywords = ["grafana", "dashboard", "documentation", "time range"]
+aliases = ["/docs/grafana/latest/reference/timerange/"]
 type = "docs"
 [menu.docs]
-aliases = ["/docs/grafana/latest/reference/timerange/"]
 name = "Time range controls"
 parent = "dashboards"
 weight = 7
@@ -89,7 +89,7 @@ Click and drag to select the time range in the visualization that you want to vi
 
 Click the **Refresh dashboard** icon to immediately run every query on the dashboard and refresh the visualizations.
 
-By default, Grafana does not automatically refresh the dashboard. Queries run on their own schedule according to the panel settings. However, if you want to to regularly refresh the dashboard, then click the down arrow next to the **Refresh dashboard** icon and then select a refresh interval.
+By default, Grafana does not automatically refresh the dashboard. Queries run on their own schedule according to the panel settings. However, if you want to regularly refresh the dashboard, then click the down arrow next to the **Refresh dashboard** icon and then select a refresh interval.
 
 ## Dashboard time settings
 

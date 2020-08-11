@@ -19,7 +19,7 @@ import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import { css } from 'emotion';
 import cx from 'classnames';
 
-import { Span } from '@grafana/data';
+import { TraceSpan } from '@grafana/data';
 import spanAncestorIds from '../utils/span-ancestor-ids';
 
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
@@ -43,7 +43,7 @@ export const getStyles = createStyle((theme: Theme) => {
       /* The size of the indentGuide is based off of the iconWrapper */
       padding-right: calc(0.5rem + 12px);
       height: 100%;
-      border-left: 1px solid transparent;
+      border-left: 3px solid transparent;
       display: inline-flex;
       &::before {
         content: '';
@@ -53,12 +53,9 @@ export const getStyles = createStyle((theme: Theme) => {
     `,
     indentGuideActive: css`
       label: indentGuideActive;
-      padding-right: calc(0.5rem + 11px);
-      border-left: 0px;
+      border-color: ${autoColor(theme, 'darkgrey')};
       &::before {
-        content: '';
-        padding-left: 3px;
-        background-color: ${autoColor(theme, 'darkgrey')};
+        background-color: transparent;
       }
     `,
     iconWrapper: css`
@@ -72,7 +69,7 @@ export const getStyles = createStyle((theme: Theme) => {
 type TProps = {
   childrenVisible?: boolean;
   onClick?: () => void;
-  span: Span;
+  span: TraceSpan;
   showChildrenIcon?: boolean;
 
   hoverIndentGuideIds: Set<string>;

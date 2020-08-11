@@ -54,7 +54,7 @@ All users might want to learn about:
 
 Administrators might want to learn about:
 
-* [Grafana configuration]({{< relref "../installation/configuration.md" >}})
+* [Grafana configuration]({{< relref "../administration/configuration.md" >}})
 * [Authentication]({{< relref "../auth/overview.md" >}})
 * [User permissions and roles]({{< relref "../permissions/overview.md" >}})
 * [Provisioning]({{< relref "../administration/provisioning.md" >}})

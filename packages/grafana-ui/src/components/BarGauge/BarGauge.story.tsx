@@ -1,6 +1,7 @@
 import { number, text } from '@storybook/addon-knobs';
-import { BarGauge, Props, BarGaugeDisplayMode } from './BarGauge';
+import { BarGauge, BarGaugeDisplayMode } from '@grafana/ui';
 import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
+import { Props } from './BarGauge';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 

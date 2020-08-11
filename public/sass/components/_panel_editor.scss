@@ -5,8 +5,6 @@
   &--view {
     flex: 1 1 0;
     height: 90%;
-    margin: 0 $dashboard-padding;
-    padding-top: $dashboard-padding;
   }
 }
 
@@ -26,14 +24,6 @@
 .panel-in-fullscreen {
   .sidemenu {
     display: none;
-  }
-
-  .dashboard-container {
-    padding: 0;
-  }
-
-  .submenu-controls {
-    padding: 0 $dashboard-padding $space-sm $dashboard-padding;
   }
 
   .search-container {

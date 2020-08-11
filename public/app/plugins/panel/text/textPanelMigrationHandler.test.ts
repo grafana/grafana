@@ -1,5 +1,5 @@
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
-import { TextOptions } from './types';
+import { TextMode, TextOptions } from './types';
 import { FieldConfigSource, PanelModel } from '@grafana/data';
 
 describe('textPanelMigrationHandler', () => {
@@ -28,6 +28,31 @@ describe('textPanelMigrationHandler', () => {
         For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
       `,
           mode: 'markdown',
+        },
+      };
+
+      const result = textPanelMigrationHandler(panel);
+
+      expect(result.content).toEqual(`# Title
+
+        For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
+      `);
+      expect(result.mode).toEqual('markdown');
+    });
+  });
+
+  describe('when invoked and previous version was using text mode', () => {
+    it('then should switch to markdown', () => {
+      const mode = ('text' as unknown) as TextMode;
+      const panel: PanelModel<TextOptions> = {
+        id: 1,
+        fieldConfig: ({} as unknown) as FieldConfigSource,
+        options: {
+          content: `# Title
+
+        For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
+      `,
+          mode,
         },
       };
 

@@ -1,6 +1,6 @@
 import { PrometheusDatasource } from './datasource';
 import PrometheusMetricFindQuery from './metric_find_query';
-import { toUtc, DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { PromOptions } from './types';
 
@@ -12,7 +12,7 @@ jest.mock('app/features/templating/template_srv', () => {
 });
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -73,7 +73,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(datasourceRequestMock).toHaveBeenCalledWith({
         method: 'GET',
         url: 'proxied/api/v1/labels',
-        silent: true,
+        hideFromInspector: true,
         headers: {},
       });
     });
@@ -92,7 +92,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(datasourceRequestMock).toHaveBeenCalledWith({
         method: 'GET',
         url: 'proxied/api/v1/label/resource/values',
-        silent: true,
+        hideFromInspector: true,
         headers: {},
       });
     });
@@ -117,7 +117,7 @@ describe('PrometheusMetricFindQuery', () => {
         url: `proxied/api/v1/series?match${encodeURIComponent(
           '[]'
         )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
-        silent: true,
+        hideFromInspector: true,
         headers: {},
       });
     });
@@ -141,7 +141,7 @@ describe('PrometheusMetricFindQuery', () => {
         method: 'GET',
         url:
           'proxied/api/v1/series?match%5B%5D=metric%7Blabel1%3D%22foo%22%2C+label2%3D%22bar%22%2C+label3%3D%22baz%22%7D&start=1524650400&end=1524654000',
-        silent: true,
+        hideFromInspector: true,
         headers: {},
       });
     });
@@ -168,7 +168,7 @@ describe('PrometheusMetricFindQuery', () => {
         url: `proxied/api/v1/series?match${encodeURIComponent(
           '[]'
         )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
-        silent: true,
+        hideFromInspector: true,
         headers: {},
       });
     });
@@ -187,7 +187,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(datasourceRequestMock).toHaveBeenCalledWith({
         method: 'GET',
         url: 'proxied/api/v1/label/__name__/values',
-        silent: true,
+        hideFromInspector: true,
         headers: {},
       });
     });
@@ -243,7 +243,7 @@ describe('PrometheusMetricFindQuery', () => {
         url: `proxied/api/v1/series?match${encodeURIComponent('[]')}=${encodeURIComponent(
           'up{job="job1"}'
         )}&start=${raw.from.unix()}&end=${raw.to.unix()}`,
-        silent: true,
+        hideFromInspector: true,
         headers: {},
       });
     });
