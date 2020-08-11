@@ -148,9 +148,10 @@ describe('DashboardPage', () => {
       });
     });
 
-    it('Should update component state to fullscreen and edit', () => {
+    it('Should update component state to fullscreen and view', () => {
       const state = ctx.wrapper?.state();
-      expect(state?.editPanel).toBe(null);
+      expect(state).not.toBe(null);
+      expect(state?.viewPanel).toBeDefined();
     });
   });
   dashboardPageScenario('When user goes back to dashboard from view panel', ctx => {

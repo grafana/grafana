@@ -114,24 +114,6 @@ export class DashboardPage extends PureComponent<Props, State> {
       return;
     }
 
-    // entering edit mode
-    if (!editPanel && urlEditPanelId) {
-      this.getPanelByIdFromUrlParam(urlEditPanelId, panel => {
-        // if no edit permission show error
-        if (!dashboard.canEditPanel(panel)) {
-          this.props.notifyApp(createErrorNotification('Permission to edit panel denied'));
-          return;
-        }
-
-        this.setState({ editPanel: panel });
-      });
-    }
-
-    // leaving edit mode
-    if (editPanel && !urlEditPanelId) {
-      this.setState({ editPanel: null });
-    }
-
     // entering view mode
     if (!viewPanel && urlViewPanelId) {
       this.getPanelByIdFromUrlParam(urlViewPanelId, panel => {
@@ -152,6 +134,28 @@ export class DashboardPage extends PureComponent<Props, State> {
         { viewPanel: null, updateScrollTop: this.state.rememberScrollTop },
         this.triggerPanelsRendering.bind(this)
       );
+    }
+
+    // entering edit mode
+    if (!editPanel && urlEditPanelId) {
+      this.getPanelByIdFromUrlParam(urlEditPanelId, panel => {
+        // if no edit permission show error
+        if (!dashboard.canEditPanel(panel)) {
+          this.props.notifyApp(createErrorNotification('Permission to edit panel denied'));
+          dashboard.initViewPanel(panel);
+          this.setState({
+            viewPanel: panel,
+            rememberScrollTop: this.state.scrollTop,
+          });
+        } else {
+          this.setState({ editPanel: panel });
+        }
+      });
+    }
+
+    // leaving edit mode
+    if (editPanel && !urlEditPanelId) {
+      this.setState({ editPanel: null });
     }
   }
 
