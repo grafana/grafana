@@ -15,6 +15,7 @@ export const defaultValues: NotificationChannelDTO = {
     autoResolve: true,
     httpMethod: 'POST',
     severity: 'critical',
+    secureSettings: {},
   },
   isDefault: false,
 };
@@ -36,7 +37,7 @@ export const transformSubmitData = (formData: NotificationChannelDTO) => {
   */
   const settings = Object.fromEntries(
     Object.entries(formData.settings).map(([key, value]) => {
-      return [key, value.hasOwnProperty('value') ? value.value : value];
+      return [key, value && value.hasOwnProperty('value') ? value.value : value];
     })
   );
 
@@ -45,6 +46,7 @@ export const transformSubmitData = (formData: NotificationChannelDTO) => {
     ...formData,
     type: formData.type.value,
     settings: { ...defaultValues.settings, ...settings },
+    secureSettings: { ...settings.secureFields },
   };
 };
 
@@ -54,5 +56,6 @@ export const transformTestData = (formData: NotificationChannelDTO) => {
     type: formData.type.value,
     frequency: formData.frequency ?? defaultValues.frequency,
     settings: { ...Object.assign(defaultValues.settings, formData.settings) },
+    secureSettings: { ...formData.settings.secureFields },
   };
 };

@@ -93,6 +93,9 @@ export interface ChannelTypeSettings {
   httpMethod: string;
   severity: string;
   uploadImage: boolean;
+  secureFields: {
+    [key: string]: string;
+  };
 }
 
 export interface Option {

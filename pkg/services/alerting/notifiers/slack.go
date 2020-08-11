@@ -55,14 +55,14 @@ func init() {
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				Description:  "Provide an emoji to use as the icon for the bot's message. Overrides the icon URL.",
-				PropertyName: "icon_emoji",
+				PropertyName: "iconEmoji",
 			},
 			{
 				Label:        "Icon URL",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				Description:  "Provide a URL to an image to use as the icon for the bot's message",
-				PropertyName: "icon_url",
+				PropertyName: "iconUrl",
 			},
 			{
 				Label:        "Mention Users",
