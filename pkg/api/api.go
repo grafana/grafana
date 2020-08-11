@@ -203,10 +203,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Post("/orgs", quota("org"), bind(models.CreateOrgCommand{}), Wrap(CreateOrg))
 
 		// search all orgs
-		apiRoute.Group("/orgs", func(orgsRoute routing.RouteRegister) {
-			orgsRoute.Get("/", Wrap(SearchOrgs))
-			orgsRoute.Get("/search", Wrap(SearchOrgs))
-		}, reqGrafanaAdmin)
+		apiRoute.Get("/orgs", reqGrafanaAdmin, Wrap(SearchOrgs))
 
 		// orgs (admin routes)
 		apiRoute.Group("/orgs/:orgId", func(orgsRoute routing.RouteRegister) {
