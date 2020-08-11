@@ -1,7 +1,18 @@
-import { from, merge, MonoTypeOperatorFunction, Observable, Subject, throwError } from 'rxjs';
-import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
+import { from, merge, MonoTypeOperatorFunction, Observable, Subject, Subscription, throwError } from 'rxjs';
+import {
+  catchError,
+  filter,
+  finalize,
+  map,
+  mergeMap,
+  retryWhen,
+  share,
+  takeUntil,
+  tap,
+  throwIfEmpty,
+} from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
-import { BackendSrv as BackendService, BackendSrvRequest, FetchResponse, FetchError } from '@grafana/runtime';
+import { BackendSrv as BackendService, BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
@@ -22,11 +33,36 @@ export interface BackendSrvDependencies {
   logout: () => void;
 }
 
+interface RequestCounter {
+  id: number;
+  state: FetchQueueState;
+}
+
+interface FetchQueueEntry {
+  id: number;
+  options: BackendSrvRequest;
+}
+
+interface FetchQueueResult<T> {
+  id: number;
+  observable: Observable<FetchResponse<T>>;
+}
+
+enum FetchQueueState {
+  NotStarted,
+  Started,
+  Ended,
+}
+
 export class BackendSrv implements BackendService {
   private inFlightRequests: Subject<string> = new Subject<string>();
   private HTTP_REQUEST_CANCELED = -1;
   private noBackendCache: boolean;
   private inspectorStream: Subject<FetchResponse | FetchError> = new Subject<FetchResponse | FetchError>();
+  private concurrentRequests: Subject<RequestCounter> = new Subject<RequestCounter>();
+  private fetchQueue: Subject<FetchQueueEntry> = new Subject<FetchQueueEntry>();
+  private requestQueue: Subject<FetchQueueEntry> = new Subject<FetchQueueEntry>();
+  private resultQueue: Subject<FetchQueueResult<any>> = new Subject<FetchQueueResult<any>>();
 
   private dependencies: BackendSrvDependencies = {
     fromFetch: fromFetch,
@@ -44,6 +80,72 @@ export class BackendSrv implements BackendService {
         ...deps,
       };
     }
+
+    new Observable(() => {
+      const concurrentRequests: Record<number, FetchQueueState> = {};
+
+      const requestCounterSubscription = this.concurrentRequests.subscribe(entry => {
+        const { id, state } = entry;
+
+        concurrentRequests[id] = state;
+        console.log(`concurrentRequests: ${id} ${state} ${JSON.stringify(concurrentRequests)}`);
+      });
+
+      const fetchSubscription = this.fetchQueue.subscribe(entry => {
+        const { id, options } = entry;
+        const isDataRequest = isDataQuery(options.url);
+
+        if (concurrentRequests[id] === FetchQueueState.Ended) {
+          console.log(`request already ended:${id}`);
+          return;
+        }
+
+        if (!concurrentRequests[id]) {
+          this.concurrentRequests.next({ id, state: FetchQueueState.NotStarted });
+        }
+
+        if (!isDataRequest && concurrentRequests[id] === FetchQueueState.NotStarted) {
+          console.log(`api request started:${id}`);
+          this.concurrentRequests.next({ id, state: FetchQueueState.Started });
+          this.requestQueue.next(entry);
+          return;
+        }
+
+        const noOfStartedRequests = Object.values(concurrentRequests).filter(
+          state => state === FetchQueueState.Started
+        );
+
+        if (isDataRequest && concurrentRequests[id] === FetchQueueState.NotStarted && noOfStartedRequests.length < 5) {
+          console.log(`data request started:${id}`);
+          this.concurrentRequests.next({ id, state: FetchQueueState.Started });
+          this.requestQueue.next(entry);
+          return;
+        }
+
+        console.log(`request delayed for ${id} (${JSON.stringify(concurrentRequests)})`);
+        setTimeout(() => this.fetchQueue.next(entry), 1000);
+      });
+
+      const requestQueueSubscription = this.requestQueue.subscribe(entry => {
+        const { id, options } = entry;
+        this.resultQueue.next({
+          id,
+          observable: this.internalFetch(options).pipe(
+            finalize(() => {
+              console.log(`finalize called for ${id} (${JSON.stringify(concurrentRequests)})`);
+              this.concurrentRequests.next({ id, state: FetchQueueState.Ended });
+            })
+          ),
+        });
+      });
+
+      return function unsubscribe() {
+        console.log(`Queue unsubscribed:${JSON.stringify(concurrentRequests)}`);
+        requestQueueSubscription.unsubscribe();
+        requestCounterSubscription.unsubscribe();
+        fetchSubscription.unsubscribe();
+      };
+    }).subscribe();
   }
 
   async request<T = any>(options: BackendSrvRequest): Promise<T> {
@@ -53,6 +155,30 @@ export class BackendSrv implements BackendService {
   }
 
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
+    return new Observable(observer => {
+      const id = Date.now();
+      const subscriptions: Subscription = new Subscription();
+
+      subscriptions.add(
+        this.resultQueue.subscribe(result => {
+          if (result.id !== id) {
+            return;
+          }
+
+          subscriptions.add(result.observable.subscribe(observer));
+        })
+      );
+
+      this.fetchQueue.next({ id, options });
+
+      return function unsubscribe() {
+        console.log(`Fetch observable unsubscribed id:${id}`);
+        subscriptions.unsubscribe();
+      };
+    });
+  }
+
+  private internalFetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
     if (options.requestId) {
       this.inFlightRequests.next(options.requestId);
     }
