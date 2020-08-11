@@ -101,7 +101,7 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
                   hidePopper();
                   this.setState({ showingDescription: false });
                 }}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: 'pointer', display: 'inline-block' }}
               >
                 {this.props.func.def.name}
               </span>
