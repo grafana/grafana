@@ -31,15 +31,17 @@ Currently only Organization Admins can create reports.
 1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports.
 1. Enter report information. All fields are required unless otherwise indicated.
    * **Name -** Name of the report as you want it to appear in the Reports list.
-   * **Choose dashboard -** Select the dashboard to generate the report from.
+   * **Source dashboard -** Select the dashboard to generate the report from.
    * **Recipients -** Enter the emails of the people or teams that you want to receive the report.
    * **Reply to -** (optional) The address that will appear in the **Reply to** field of the email. 
-   * **Custom message -** (optional) Message body in the email with the report.
-1. **Preview** the report to make sure it appears as you expect. Update if necessary
-1. Select the layout option for generated report: **Portrait** or **Landscape**.  
+   * **Message -** (optional) Message body in the email with the report.
+   * **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
+1. **Preview PDF**to make sure the report appears as you expect. Update if necessary.
 1. Enter scheduling information. Options vary depending on the frequency you select.
+1. Select the orientation option for generated report: **Portrait** or **Landscape**.  
+1. Select the layout option for generated report: **Simple** or **Grid**.  
 1. **Save** the report.
-1. **Send test mail** after saving the report to verify that the whole configuration is working as expected.
+1. **Send test email** to verify that the whole configuration is working as expected.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
@@ -98,11 +100,11 @@ Monthly reports are generated once per month. All fields are required.
 
 Reports which are scheduled to never be sent have no parameter and will not be sent to the scheduler. They may be manually generated from the **Send test email** prompt or via the [Reporting API]({{< relref "../http_api/reporting.md" >}}).
 
-### Send test mail
+### Send test email
 
 > Only available in Grafana Enterprise v7.0+.
 
-1. In the report, click **Send test mail**.
+1. In the report, click **Send test email**.
 1. In the Email field, enter the email address or addresses that you want to test, separated by semicolon.
 If you want to use email addresses from the report, then select the **Use emails from report** check box.
 1. Click **Send**.
