@@ -53,7 +53,7 @@ const state: any = {
     ],
   },
   hiddenLogLevels: undefined,
-  dedupStrategy: LogsDedupStrategy.none,
+  dedupStrategy: LogsDedupStrategy.None,
 };
 
 describe('Deduplication selector', () => {
@@ -66,7 +66,7 @@ describe('Deduplication selector', () => {
   it('should correctly extracts rows and deduplicates them', () => {
     const dedups = deduplicatedRowsSelector({
       ...state,
-      dedupStrategy: LogsDedupStrategy.numbers,
+      dedupStrategy: LogsDedupStrategy.Numbers,
     } as ExploreItemState);
     expect(dedups?.length).toBe(2);
     expect(dedups).not.toBe(state.logsResult.rows);
@@ -82,7 +82,7 @@ describe('Deduplication selector', () => {
 
     dedups = deduplicatedRowsSelector({
       ...state,
-      dedupStrategy: LogsDedupStrategy.numbers,
+      dedupStrategy: LogsDedupStrategy.Numbers,
       hiddenLogLevels: [LogLevel.debug],
     } as ExploreItemState);
 

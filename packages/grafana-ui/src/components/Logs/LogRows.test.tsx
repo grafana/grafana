@@ -11,7 +11,7 @@ describe('LogRows', () => {
     const wrapper = mount(
       <LogRows
         logRows={rows}
-        dedupStrategy={LogsDedupStrategy.none}
+        dedupStrategy={LogsDedupStrategy.None}
         highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
@@ -32,7 +32,7 @@ describe('LogRows', () => {
     const wrapper = mount(
       <LogRows
         logRows={rows}
-        dedupStrategy={LogsDedupStrategy.none}
+        dedupStrategy={LogsDedupStrategy.None}
         highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
@@ -62,7 +62,7 @@ describe('LogRows', () => {
       <LogRows
         logRows={rows}
         deduplicatedRows={dedupedRows}
-        dedupStrategy={LogsDedupStrategy.none}
+        dedupStrategy={LogsDedupStrategy.None}
         highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
@@ -82,7 +82,7 @@ describe('LogRows', () => {
     const wrapper = mount(
       <LogRows
         logRows={rows}
-        dedupStrategy={LogsDedupStrategy.none}
+        dedupStrategy={LogsDedupStrategy.None}
         highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
@@ -103,7 +103,7 @@ describe('LogRows', () => {
     const wrapper = mount(
       <LogRows
         logRows={rows}
-        dedupStrategy={LogsDedupStrategy.none}
+        dedupStrategy={LogsDedupStrategy.None}
         highlighterExpressions={[]}
         showLabels={false}
         showTime={false}
@@ -141,7 +141,7 @@ describe('LogRows', () => {
     const wrapper = mount(
       <LogRows
         logRows={rows}
-        dedupStrategy={LogsDedupStrategy.none}
+        dedupStrategy={LogsDedupStrategy.None}
         highlighterExpressions={[]}
         showLabels={false}
         showTime={false}

@@ -25,7 +25,7 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
     showingGraph: true,
     showingTable: true,
     showingLogs: true,
-    dedupStrategy: LogsDedupStrategy.none,
+    dedupStrategy: LogsDedupStrategy.None,
   },
   originPanelId: undefined,
 };

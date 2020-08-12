@@ -112,7 +112,7 @@ export class Logs extends PureComponent<Props, State> {
   onChangeDedup = (dedup: LogsDedupStrategy) => {
     const { onDedupStrategyChange } = this.props;
     if (this.props.dedupStrategy === dedup) {
-      return onDedupStrategyChange(LogsDedupStrategy.none);
+      return onDedupStrategyChange(LogsDedupStrategy.None);
     }
     return onDedupStrategyChange(dedup);
   };
@@ -202,7 +202,7 @@ export class Logs extends PureComponent<Props, State> {
       : 0;
     const meta = logsMeta ? [...logsMeta] : [];
 
-    if (dedupStrategy !== LogsDedupStrategy.none) {
+    if (dedupStrategy !== LogsDedupStrategy.None) {
       meta.push({
         label: 'Dedup count',
         value: dedupCount,

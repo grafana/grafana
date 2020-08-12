@@ -97,10 +97,10 @@ export interface LogLabelStatsModel {
 }
 
 export enum LogsDedupStrategy {
-  none = 'none',
-  exact = 'exact',
-  numbers = 'numbers',
-  signature = 'signature',
+  None = 'none',
+  Exact = 'exact',
+  Numbers = 'numbers',
+  Signature = 'signature',
 }
 
 export interface LogsParser {

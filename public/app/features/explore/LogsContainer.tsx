@@ -116,6 +116,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
       logsMeta,
       logsSeries,
       dedupedRows,
+      dedupStrategy,
       onClickFilterLabel,
       onClickFilterOutLabel,
       onStartScanning,
@@ -159,7 +160,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
             collapsible
           >
             <Logs
-              dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
+              dedupStrategy={dedupStrategy || LogsDedupStrategy.None}
               logRows={logRows}
               logsMeta={logsMeta}
               logsSeries={logsSeries}
