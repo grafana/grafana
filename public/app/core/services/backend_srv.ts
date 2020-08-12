@@ -1,16 +1,5 @@
 import { from, merge, MonoTypeOperatorFunction, Observable, Subject, Subscription, throwError } from 'rxjs';
-import {
-  catchError,
-  filter,
-  finalize,
-  map,
-  mergeMap,
-  retryWhen,
-  share,
-  takeUntil,
-  tap,
-  throwIfEmpty,
-} from 'rxjs/operators';
+import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { BackendSrv as BackendService, BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
@@ -23,6 +12,11 @@ import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
 import { Emitter } from '../utils/emitter';
 import { parseInitFromOptions, parseUrlFromOptions } from '../utils/fetch';
+import { isDataQuery, isLocalUrl } from '../utils/query';
+import { FetchQueueState } from './FetchQueueState';
+import { FetchResponses } from './FetchResponses';
+import { FetchWorker } from './FetchWorker';
+import { FetchQueueWorker } from './FetchQueueWorker';
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
@@ -33,36 +27,14 @@ export interface BackendSrvDependencies {
   logout: () => void;
 }
 
-interface RequestCounter {
-  id: number;
-  state: FetchQueueState;
-}
-
-interface FetchQueueEntry {
-  id: number;
-  options: BackendSrvRequest;
-}
-
-interface FetchQueueResult<T> {
-  id: number;
-  observable: Observable<FetchResponse<T>>;
-}
-
-enum FetchQueueState {
-  NotStarted,
-  Started,
-  Ended,
-}
-
 export class BackendSrv implements BackendService {
   private inFlightRequests: Subject<string> = new Subject<string>();
   private HTTP_REQUEST_CANCELED = -1;
   private noBackendCache: boolean;
   private inspectorStream: Subject<FetchResponse | FetchError> = new Subject<FetchResponse | FetchError>();
-  private concurrentRequests: Subject<RequestCounter> = new Subject<RequestCounter>();
-  private fetchQueue: Subject<FetchQueueEntry> = new Subject<FetchQueueEntry>();
-  private requestQueue: Subject<FetchQueueEntry> = new Subject<FetchQueueEntry>();
-  private resultQueue: Subject<FetchQueueResult<any>> = new Subject<FetchQueueResult<any>>();
+  private readonly fetchQueueState: FetchQueueState;
+  private readonly fetchResponses: FetchResponses;
+  private readonly fetchWorker: FetchWorker;
 
   private dependencies: BackendSrvDependencies = {
     fromFetch: fromFetch,
@@ -81,71 +53,110 @@ export class BackendSrv implements BackendService {
       };
     }
 
-    new Observable(() => {
-      const concurrentRequests: Record<number, FetchQueueState> = {};
+    this.internalFetch = this.internalFetch.bind(this);
+    this.fetchQueueState = new FetchQueueState();
+    this.fetchResponses = new FetchResponses();
+    this.fetchWorker = new FetchWorker(this.fetchQueueState, this.fetchResponses, this.internalFetch);
+    new FetchQueueWorker(this.fetchQueueState, this.fetchWorker);
 
-      const requestCounterSubscription = this.concurrentRequests.subscribe(entry => {
-        const { id, state } = entry;
+    // of(this.queueState.getNotStarted())
+    //   .pipe(delay(1000), repeat())
+    //   .subscribe(notStarted => {
+    //     console.log('FetchQueueWorker', notStarted);
+    //     for (const entry of notStarted) {
+    //       this.queue.addToQueue(entry.id, entry.options);
+    //     }
+    //   });
 
-        concurrentRequests[id] = state;
-        console.log(`concurrentRequests: ${id} ${state} ${JSON.stringify(concurrentRequests)}`);
-      });
-
-      const fetchSubscription = this.fetchQueue.subscribe(entry => {
-        const { id, options } = entry;
-        const isDataRequest = isDataQuery(options.url);
-
-        if (concurrentRequests[id] === FetchQueueState.Ended) {
-          console.log(`request already ended:${id}`);
-          return;
-        }
-
-        if (!concurrentRequests[id]) {
-          this.concurrentRequests.next({ id, state: FetchQueueState.NotStarted });
-        }
-
-        if (!isDataRequest && concurrentRequests[id] === FetchQueueState.NotStarted) {
-          console.log(`api request started:${id}`);
-          this.concurrentRequests.next({ id, state: FetchQueueState.Started });
-          this.requestQueue.next(entry);
-          return;
-        }
-
-        const noOfStartedRequests = Object.values(concurrentRequests).filter(
-          state => state === FetchQueueState.Started
-        );
-
-        if (isDataRequest && concurrentRequests[id] === FetchQueueState.NotStarted && noOfStartedRequests.length < 5) {
-          console.log(`data request started:${id}`);
-          this.concurrentRequests.next({ id, state: FetchQueueState.Started });
-          this.requestQueue.next(entry);
-          return;
-        }
-
-        console.log(`request delayed for ${id} (${JSON.stringify(concurrentRequests)})`);
-        setTimeout(() => this.fetchQueue.next(entry), 1000);
-      });
-
-      const requestQueueSubscription = this.requestQueue.subscribe(entry => {
-        const { id, options } = entry;
-        this.resultQueue.next({
-          id,
-          observable: this.internalFetch(options).pipe(
-            finalize(() => {
-              console.log(`finalize called for ${id} (${JSON.stringify(concurrentRequests)})`);
-              this.concurrentRequests.next({ id, state: FetchQueueState.Ended });
-            })
-          ),
-        });
-      });
-
-      return function unsubscribe() {
-        console.log(`Queue unsubscribed:${JSON.stringify(concurrentRequests)}`);
-        requestQueueSubscription.unsubscribe();
-        requestCounterSubscription.unsubscribe();
-        fetchSubscription.unsubscribe();
-      };
-    }).subscribe();
+    // new Observable(() => {
+    //   const concurrentRequests: Record<number, { state: FetchQueueState; options: BackendSrvRequest }> = {};
+    //
+    //   const requestCounterSubscription = this.concurrentRequests.subscribe(entry => {
+    //     const { id, state, options } = entry;
+    //
+    //     if (!concurrentRequests[id]) {
+    //       concurrentRequests[id] = { state: FetchQueueState.NotStarted, options };
+    //     }
+    //
+    //     concurrentRequests[id].state = state;
+    //     concurrentRequests[id].options = options;
+    //     console.log(`concurrentRequests: ${id} ${state} ${JSON.stringify(concurrentRequests)}`);
+    //   });
+    //
+    //   const fetchSubscription = this.fetchQueue.subscribe(entry => {
+    //     const { id, options } = entry;
+    //     const isApiRequest = !isDataQuery(options.url);
+    //
+    //     if (!concurrentRequests[id]) {
+    //       this.concurrentRequests.next({ id, options, state: FetchQueueState.NotStarted });
+    //     }
+    //
+    //     if (concurrentRequests[id].state === FetchQueueState.Ended) {
+    //       console.log(`request already ended:${id}`);
+    //       return;
+    //     }
+    //
+    //     if (isApiRequest) {
+    //       console.log(`api request started:${id}`);
+    //       this.requestQueue.next(entry);
+    //       return;
+    //     }
+    //
+    //     const noOfStartedRequests = Object.values(concurrentRequests).filter(
+    //       request => request.state === FetchQueueState.Started
+    //     );
+    //
+    //     if (noOfStartedRequests.length < 5) {
+    //       console.log(`data request started:${id}`);
+    //       this.requestQueue.next(entry);
+    //       return;
+    //     }
+    //
+    //     console.log(`request delayed for ${id} (${JSON.stringify(concurrentRequests)})`);
+    //   });
+    //
+    //   of(concurrentRequests)
+    //     .pipe(delay(1000), repeat())
+    //     .subscribe(requests => {
+    //       for (const key in requests) {
+    //         if (!requests.hasOwnProperty(key)) {
+    //           continue;
+    //         }
+    //
+    //         const id = parseInt(key, 10);
+    //         if (requests[id].state !== FetchQueueState.NotStarted) {
+    //           continue;
+    //         }
+    //
+    //         this.fetchQueue.next({
+    //           id,
+    //           options: requests[id].options,
+    //         });
+    //         break;
+    //       }
+    //     });
+    //
+    //   const requestQueueSubscription = this.requestQueue.subscribe(entry => {
+    //     const { id, options } = entry;
+    //     this.concurrentRequests.next({ id, options, state: FetchQueueState.Started });
+    //     this.resultQueue.next({
+    //       id,
+    //       observable: this.internalFetch(options).pipe(
+    //         finalize(() => {
+    //           console.log(`finalize called for ${id} (${JSON.stringify(concurrentRequests)})`);
+    //           this.concurrentRequests.next({ id, options, state: FetchQueueState.Ended });
+    //         })
+    //       ),
+    //     });
+    //   });
+    //
+    //   return function unsubscribe() {
+    //     console.log(`Queue unsubscribed:${JSON.stringify(concurrentRequests)}`);
+    //     requestQueueSubscription.unsubscribe();
+    //     requestCounterSubscription.unsubscribe();
+    //     fetchSubscription.unsubscribe();
+    //   };
+    // }).subscribe();
   }
 
   async request<T = any>(options: BackendSrvRequest): Promise<T> {
@@ -156,20 +167,16 @@ export class BackendSrv implements BackendService {
 
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
     return new Observable(observer => {
-      const id = Date.now();
+      const id = Date.now().toString(10);
       const subscriptions: Subscription = new Subscription();
 
       subscriptions.add(
-        this.resultQueue.subscribe(result => {
-          if (result.id !== id) {
-            return;
-          }
-
+        this.fetchResponses.getObservable<T>(id).subscribe(result => {
           subscriptions.add(result.observable.subscribe(observer));
         })
       );
 
-      this.fetchQueue.next({ id, options });
+      this.fetchQueueState.addEntry(id, options);
 
       return function unsubscribe() {
         console.log(`Fetch observable unsubscribed id:${id}`);
@@ -482,22 +489,6 @@ export class BackendSrv implements BackendService {
   getFolderByUid(uid: string) {
     return this.get<FolderDTO>(`/api/folders/${uid}`);
   }
-}
-
-function isDataQuery(url: string): boolean {
-  if (
-    url.indexOf('api/datasources/proxy') !== -1 ||
-    url.indexOf('api/tsdb/query') !== -1 ||
-    url.indexOf('api/ds/query') !== -1
-  ) {
-    return true;
-  }
-
-  return false;
-}
-
-function isLocalUrl(url: string) {
-  return !url.match(/^http/);
 }
 
 coreModule.factory('backendSrv', () => backendSrv);
