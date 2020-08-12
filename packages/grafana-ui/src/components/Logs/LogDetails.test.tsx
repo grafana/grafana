@@ -28,6 +28,7 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
     getRows: () => [],
     onClickFilterLabel: () => {},
     onClickFilterOutLabel: () => {},
+    showParsedFields: [],
     ...(propOverrides || {}),
   };
 
