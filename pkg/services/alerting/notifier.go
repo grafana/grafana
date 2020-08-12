@@ -45,6 +45,7 @@ type NotifierOption struct {
 	ShowWhen       ShowWhen       `json:"showWhen"`
 	Required       bool           `json:"required"`
 	ValidationRule string         `json:"validationRule"`
+	Secure         bool           `json:"secure"`
 }
 
 // InputType is the type of input that can be rendered in the frontend.

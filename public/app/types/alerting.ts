@@ -61,7 +61,7 @@ export interface NotifierDTO {
   optionsTemplate: string;
   type: NotifierType;
   heading: string;
-  options: Option[];
+  options: NotificationChannelOption[];
   info?: string;
 }
 
@@ -71,7 +71,7 @@ export interface NotificationChannelType {
   description: string;
   type: NotifierType;
   heading: string;
-  options: Option[];
+  options: NotificationChannelOption[];
   info?: string;
 }
 
@@ -84,6 +84,8 @@ export interface NotificationChannelDTO {
   disableResolveMessage: boolean;
   frequency: string;
   settings: ChannelTypeSettings;
+  secureSettings: { [key: string]: string | number };
+  secureFields: { [key: string]: boolean };
   isDefault: boolean;
 }
 
@@ -93,21 +95,19 @@ export interface ChannelTypeSettings {
   httpMethod: string;
   severity: string;
   uploadImage: boolean;
-  secureFields: {
-    [key: string]: string;
-  };
 }
 
-export interface Option {
+export interface NotificationChannelOption {
   element: 'input' | 'select' | 'switch' | 'textarea';
   inputType: string;
   label: string;
   description: string;
   placeholder: string;
   propertyName: string;
-  selectOptions: Array<SelectableValue<string>>;
-  showWhen: { field: string; is: string };
   required: boolean;
+  secure: boolean;
+  selectOptions?: Array<SelectableValue<string>>;
+  showWhen: { field: string; is: string };
   validationRule: string;
 }
 

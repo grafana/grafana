@@ -14,6 +14,7 @@ import {
 import { getNavModel } from 'app/core/selectors/navModel';
 import { createNotificationChannel, loadNotificationTypes, testNotificationChannel } from './state/actions';
 import { NotificationChannelType, NotificationChannelDTO, StoreState } from '../../types';
+import { resetSecureField } from './state/reducers';
 
 interface OwnProps {}
 
@@ -26,6 +27,7 @@ interface DispatchProps {
   createNotificationChannel: typeof createNotificationChannel;
   loadNotificationTypes: typeof loadNotificationTypes;
   testNotificationChannel: typeof testNotificationChannel;
+  resetSecureField: typeof resetSecureField;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -65,6 +67,7 @@ class NewNotificationChannelPage extends PureComponent<Props> {
                   control={control}
                   watch={watch}
                   imageRendererAvailable={config.rendererAvailable}
+                  resetSecureField={this.props.resetSecureField}
                 />
               );
             }}
@@ -86,6 +89,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   createNotificationChannel,
   loadNotificationTypes,
   testNotificationChannel,
+  resetSecureField,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(NewNotificationChannelPage);

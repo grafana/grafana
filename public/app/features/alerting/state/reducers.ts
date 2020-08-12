@@ -59,6 +59,15 @@ const alertRulesSlice = createSlice({
     notificationChannelLoaded: (state, action: PayloadAction<NotificationChannelDTO>): AlertRulesState => {
       return { ...state, notificationChannel: action.payload };
     },
+    resetSecureField: (state, action: PayloadAction<string>): AlertRulesState => {
+      return {
+        ...state,
+        notificationChannel: {
+          ...state.notificationChannel,
+          secureFields: { ...state.notificationChannel.secureFields, [action.payload]: false },
+        },
+      };
+    },
   },
 });
 
@@ -68,6 +77,7 @@ export const {
   setSearchQuery,
   setNotificationChannels,
   notificationChannelLoaded,
+  resetSecureField,
 } = alertRulesSlice.actions;
 
 export const alertRulesReducer = alertRulesSlice.reducer;

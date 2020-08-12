@@ -21,6 +21,7 @@ interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
   selectableChannels: Array<SelectableValue<string>>;
   selectedChannel?: NotificationChannelType;
   imageRendererAvailable: boolean;
+  resetSecureField: (key: string) => void;
 
   onTestChannel: (data: NotificationChannelDTO) => void;
 }
@@ -35,6 +36,7 @@ export const NotificationChannelForm: FC<Props> = ({
   getValues,
   imageRendererAvailable,
   onTestChannel,
+  resetSecureField,
 }) => {
   const styles = getStyles(useTheme());
 
@@ -101,6 +103,7 @@ export const NotificationChannelForm: FC<Props> = ({
           register={register}
           errors={errors}
           control={control}
+          onResetSecureField={resetSecureField}
         />
       )}
       <HorizontalGroup>
@@ -108,9 +111,11 @@ export const NotificationChannelForm: FC<Props> = ({
         <Button type="button" variant="secondary" onClick={() => onTestChannel(getValues({ nest: true }))}>
           Test
         </Button>
-        <Button type="button" variant="secondary">
-          Back
-        </Button>
+        <a href="/alerting/notifications">
+          <Button type="button" variant="secondary">
+            Back
+          </Button>
+        </a>
       </HorizontalGroup>
     </>
   );

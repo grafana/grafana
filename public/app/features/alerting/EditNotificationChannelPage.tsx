@@ -16,6 +16,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 import { selectableChannels, transformSubmitData, transformTestData } from './utils/notificationChannels';
 import { NotificationChannelType, NotificationChannelDTO, StoreState } from 'app/types';
+import { resetSecureField } from './state/reducers';
 
 interface OwnProps {}
 
@@ -31,6 +32,7 @@ interface DispatchProps {
   loadNotificationChannel: typeof loadNotificationChannel;
   testNotificationChannel: typeof testNotificationChannel;
   updateNotificationChannel: typeof updateNotificationChannel;
+  resetSecureField: typeof resetSecureField;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -81,6 +83,7 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
                     errors={errors}
                     getValues={getValues}
                     control={control}
+                    resetSecureField={this.props.resetSecureField}
                   />
                 );
               }}
@@ -108,6 +111,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   loadNotificationChannel,
   testNotificationChannel,
   updateNotificationChannel,
+  resetSecureField,
 };
 
 export default connectWithCleanUp(

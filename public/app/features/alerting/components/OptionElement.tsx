@@ -1,13 +1,13 @@
 import React, { FC } from 'react';
 import { FormAPI, Input, InputControl, Select, Switch, TextArea } from '@grafana/ui';
-import { Option } from '../../../types';
+import { NotificationChannelOption } from '../../../types';
 
 interface Props extends Pick<FormAPI<any>, 'register' | 'control'> {
-  option: Option;
+  option: NotificationChannelOption;
 }
 
 export const OptionElement: FC<Props> = ({ control, option, register }) => {
-  const modelValue = `settings.${option.propertyName}`;
+  const modelValue = option.secure ? `secureSettings.${option.propertyName}` : `settings.${option.propertyName}`;
   switch (option.element) {
     case 'input':
       return (

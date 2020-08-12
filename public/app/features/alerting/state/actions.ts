@@ -46,8 +46,9 @@ export function updateNotificationChannel(data: any): ThunkResult<void> {
 }
 
 export function testNotificationChannel(data: any): ThunkResult<void> {
-  return async () => {
-    await getBackendSrv().post('/api/alert-notifications/test', data);
+  return async (dispatch, getState) => {
+    const channel = getState().alertRules.notificationChannel;
+    await getBackendSrv().post('/api/alert-notifications/test', { id: channel.id, ...data });
   };
 }
 
@@ -77,7 +78,6 @@ export function loadNotificationTypes(): ThunkResult<void> {
 export function loadNotificationChannel(id: number): ThunkResult<void> {
   return async dispatch => {
     const notificationChannel = await getBackendSrv().get(`/api/alert-notifications/${id}`);
-    // const channel = { ...notificationChannel, type: { value: notificationChannel.type } };
     dispatch(notificationChannelLoaded(notificationChannel));
   };
 }

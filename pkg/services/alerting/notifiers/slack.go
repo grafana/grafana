@@ -33,8 +33,9 @@ func init() {
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				Placeholder:  "Slack incoming webhook url",
-				PropertyName: "secureFields.url",
+				PropertyName: "url",
 				Required:     true,
+				Secure:       true,
 			},
 			{
 				Label:        "Recipient",
@@ -103,7 +104,8 @@ func init() {
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				Description:  "Provide a bot token to use the Slack file.upload API (starts with \"xoxb\"). Specify Recipient for this to work",
-				PropertyName: "secureFields.token",
+				PropertyName: "token",
+				Secure:       true,
 			},
 		},
 	})

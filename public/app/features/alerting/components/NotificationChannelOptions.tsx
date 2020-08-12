@@ -1,12 +1,13 @@
 import React, { FC } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { Field, FormAPI, InfoBox } from '@grafana/ui';
+import { Button, Field, FormAPI, InfoBox, Input } from '@grafana/ui';
 import { OptionElement } from './OptionElement';
-import { NotificationChannelType, NotificationChannelDTO, Option } from '../../../types';
+import { NotificationChannelType, NotificationChannelDTO, NotificationChannelOption } from '../../../types';
 
 interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState' | 'getValues' | 'watch'> {
   selectedChannel: NotificationChannelType;
   currentFormValues: NotificationChannelDTO;
+  onResetSecureField: (key: string) => void;
 }
 
 export const NotificationChannelOptions: FC<Props> = ({
@@ -15,14 +16,14 @@ export const NotificationChannelOptions: FC<Props> = ({
   errors,
   selectedChannel,
   register,
+  onResetSecureField,
 }) => {
   return (
     <>
       <h3>{selectedChannel.heading}</h3>
       {selectedChannel.info !== '' && <InfoBox>{selectedChannel.info}</InfoBox>}
-      {selectedChannel.options.map((option: Option, index: number) => {
+      {selectedChannel.options.map((option: NotificationChannelOption, index: number) => {
         const key = `${option.label}-${index}`;
-
         // Some options can be dependent on other options, this determines what is selected in the dependency options
         // I think this needs more thought.
         const selectedOptionValue =
@@ -41,7 +42,19 @@ export const NotificationChannelOptions: FC<Props> = ({
             invalid={errors.settings && !!errors.settings[option.propertyName]}
             error={errors.settings && errors.settings[option.propertyName]?.message}
           >
-            <OptionElement option={option} register={register} control={control} />
+            {currentFormValues.secureFields && currentFormValues.secureFields[option.propertyName] ? (
+              <Input
+                readOnly={true}
+                value="Configured"
+                addonAfter={
+                  <Button onClick={() => onResetSecureField(option.propertyName)} variant="secondary" type="button">
+                    Reset
+                  </Button>
+                }
+              />
+            ) : (
+              <OptionElement option={option} register={register} control={control} />
+            )}
           </Field>
         );
       })}

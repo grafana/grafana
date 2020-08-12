@@ -40,7 +40,8 @@ func init() {
 				Label:        "Basic Auth Password",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypePassword,
-				PropertyName: "secureFields.basicAuthPassword",
+				PropertyName: "basicAuthPassword",
+				Secure:       true,
 			},
 		},
 	})
