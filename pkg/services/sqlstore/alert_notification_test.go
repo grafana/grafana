@@ -168,7 +168,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				cmd.Frequency = "invalid duration"
 
 				err := CreateAlertNotificationCommand(cmd)
-				So(err.Error(), ShouldEqual, "time: invalid duration invalid duration")
+				So(err.Error(), ShouldEqual, "time: invalid duration \"invalid duration\"")
 			})
 		})
 
@@ -199,7 +199,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 				err := UpdateAlertNotification(updateCmd)
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "time: invalid duration invalid duration")
+				So(err.Error(), ShouldEqual, "time: invalid duration \"invalid duration\"")
 			})
 		})
 
