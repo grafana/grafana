@@ -8,28 +8,63 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUrl(t *testing.T) {
+func TestJoinURLFragments(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
-		base     string
-		path     string
-		expected string
+		description string
+		base        string
+		path        string
+		expected    string
 	}{
-		{base: "http://localhost:8080", path: "", expected: "http://localhost:8080"},
-		{base: "http://localhost:8080/", path: "", expected: "http://localhost:8080/"},
-		{base: "http://localhost:8080", path: "api", expected: "http://localhost:8080/api"},
-		{base: "http://localhost:8080/", path: "api", expected: "http://localhost:8080/api"},
-		{base: "http://localhost:8080/", path: "api/", expected: "http://localhost:8080/api/"},
-		{base: "http://localhost:8080/", path: "/api/", expected: "http://localhost:8080/api/"},
+		{
+			description: "RHS is empty",
+			base:        "http://localhost:8080",
+			path:        "",
+			expected:    "http://localhost:8080",
+		},
+		{
+			description: "RHS is empty and LHS has trailing slash",
+			base:        "http://localhost:8080/",
+			path:        "",
+			expected:    "http://localhost:8080/",
+		},
+		{
+			description: "neither has trailing slash",
+			base:        "http://localhost:8080",
+			path:        "api",
+			expected:    "http://localhost:8080/api",
+		},
+		{
+			description: "LHS has trailing slash",
+			base:        "http://localhost:8080/",
+			path:        "api",
+			expected:    "http://localhost:8080/api",
+		},
+		{
+			description: "LHS and RHS has trailing slash",
+			base:        "http://localhost:8080/",
+			path:        "api/",
+			expected:    "http://localhost:8080/api/",
+		},
+		{
+			description: "LHS has trailing slash and RHS has preceding slash",
+			base:        "http://localhost:8080/",
+			path:        "/api/",
+			expected:    "http://localhost:8080/api/",
+		},
 	}
 	for _, testcase := range tests {
-		assert.Equalf(
-			t,
-			testcase.expected,
-			JoinURLFragments(testcase.base, testcase.path),
-			"base: '%s', path: '%s'",
-			testcase.base,
-			testcase.path,
-		)
+		t.Run("where "+testcase.description, func(t *testing.T) {
+			assert.Equalf(
+				t,
+				testcase.expected,
+				JoinURLFragments(testcase.base, testcase.path),
+				"base: '%s', path: '%s'",
+				testcase.base,
+				testcase.path,
+			)
+		})
 	}
 }
 
