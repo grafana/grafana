@@ -160,11 +160,18 @@ func DeleteOrgByID(c *models.ReqContext) Response {
 }
 
 func SearchOrgs(c *models.ReqContext) Response {
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+
+	page := c.QueryInt("page")
+
 	query := models.SearchOrgsQuery{
 		Query: c.Query("query"),
 		Name:  c.Query("name"),
-		Page:  0,
-		Limit: 1000,
+		Page:  page,
+		Limit: perPage,
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
