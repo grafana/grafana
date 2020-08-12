@@ -131,7 +131,7 @@
         },
         "grafanaDependency": {
           "type": "string",
-          "description": "Required Grafana version for this plugin, e.g. `>=7.0.0` to denote plugin requires Grafana 7.0.0 or later",
+          "description": "Required Grafana version for this plugin, e.g. `>=7.0.0` to denote plugin requires Grafana 7.0.0 or later.",
           "pattern": "^(>=|<|>|<=)?([0-9]+)(\\.[0-9]+)?(\\.[0-9])?$"
         },
         "plugins": {
