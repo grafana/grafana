@@ -1,13 +1,18 @@
 package social
 
 import (
+	"bytes"
+	"compress/flate"
+	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/mail"
 	"regexp"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
 
@@ -207,6 +212,42 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 	if err != nil {
 		s.log.Error("Error base64 decoding id_token", "raw_payload", matched[2], "error", err)
 		return nil
+	}
+
+	var headerBytes []byte
+	headerBytes, err = base64.RawURLEncoding.DecodeString(matched[1])
+	if err != nil {
+		s.log.Error("Error base64 decoding header", "header", matched[1], "error", err)
+		return nil
+	}
+
+	var header map[string]string
+	err = json.Unmarshal(headerBytes, &header)
+	if compression, ok := header["zip"]; ok {
+		if strings.EqualFold(compression, "GZIP") {
+			gr, err := gzip.NewReader(bytes.NewBuffer(rawJSON))
+			if err != nil {
+				s.log.Error("Error creating decompressor", "decoded_payload", string(rawJSON), "error", err)
+				return nil
+			}
+			defer gr.Close()
+			rawJSON, err = ioutil.ReadAll(gr)
+			if err != nil {
+				s.log.Error("Error decompressing payload", "decoded_payload", string(rawJSON), "error", err)
+				return nil
+			}
+		} else if strings.EqualFold(compression, "DEF") {
+			fr := flate.NewReader(bytes.NewReader(rawJSON))
+			defer fr.Close()
+			rawJSON, err = ioutil.ReadAll(fr)
+			if err != nil {
+				s.log.Error("Error decompressing raw_payload", "decoded_payload", string(rawJSON), "error", err)
+				return nil
+			}
+		} else {
+			s.log.Error("Invalid compression type: "+compression, "decoded_payload", string(rawJSON), "error", err)
+			return nil
+		}
 	}
 
 	var data UserInfoJson

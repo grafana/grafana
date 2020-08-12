@@ -194,6 +194,26 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ExpectedRole:      "Admin",
 			},
 			{
+				Name: "Given a valid GZIP compressed id_token, a valid role path, no API response, use id_token",
+				OAuth2Extra: map[string]interface{}{
+					// { "role": "Admin", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInppcCI6IkdaSVAifQ.H4sIAAAAAAAAAKtWSs1NzMxRslLKys_I00vJT3VIrUjMLchJ1UvOz1XSUSrKz0kFyjqm5GbmKdUCANotxTkvAAAA.85AXm3JOF5qflEA0goDFvlbZl2q3eFvqVcehz860W-o",
+				},
+				RoleAttributePath: "role",
+				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "Admin",
+			},
+			{
+				Name: "Given a valid DEFLATE compressed id_token, a valid role path, no API response, use id_token",
+				OAuth2Extra: map[string]interface{}{
+					// { "role": "Admin", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInppcCI6IkdaSVAifQ.H4sIAAAAAAAAAKtWSs1NzMxRslLKys_I00vJT3VIrUjMLchJ1UvOz1XSUSrKz0kFyjqm5GbmKdUCANotxTkvAAAA.85AXm3JOF5qflEA0goDFvlbZl2q3eFvqVcehz860W-o",
+				},
+				RoleAttributePath: "role",
+				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "Admin",
+			},
+			{
 				Name: "Given a valid id_token, no role path, no API response, use id_token",
 				OAuth2Extra: map[string]interface{}{
 					// { "email": "john.doe@example.com" }
