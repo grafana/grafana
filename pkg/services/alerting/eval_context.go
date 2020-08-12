@@ -99,6 +99,10 @@ func (c *EvalContext) GetNotificationTitle() string {
 
 // GetDashboardUID returns the dashboard uid for the alert rule.
 func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
+	if c.IsTestRun {
+		return &models.DashboardRef{Uid: "testUID"}, nil
+	}
+
 	if c.dashboardRef != nil {
 		return c.dashboardRef, nil
 	}

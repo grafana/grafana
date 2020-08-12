@@ -220,7 +220,18 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("routing_key", pn.Key)
 	bodyJSON.Set("event_action", eventType)
-	bodyJSON.Set("dedup_key", "alertId-"+strconv.FormatInt(evalContext.Rule.ID, 10))
+	dedupKey := "alertId-" + strconv.FormatInt(evalContext.Rule.ID, 10) +
+		"-" + strconv.FormatInt(evalContext.Rule.PanelID, 10)
+	dashboardRef, err := evalContext.GetDashboardUID()
+	if err != nil {
+		pn.log.Error("Failed get dashboard reference", "error", err)
+		return []byte{}, err
+	}
+	dedupKey += "-" + dashboardRef.Uid
+	if len(dedupKey) > 255 {
+		dedupKey = dedupKey[0:254]
+	}
+	bodyJSON.Set("dedup_key", dedupKey)
 	bodyJSON.Set("payload", payloadJSON)
 
 	ruleURL, err := evalContext.GetRuleURL()

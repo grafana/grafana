@@ -134,6 +134,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
 					ID:      0,
+					PanelID: 1,
 					Name:    "someRule",
 					Message: "someMessage",
 					State:   models.AlertStateAlerting,
@@ -148,7 +149,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				diff := cmp.Diff(map[string]interface{}{
 					"client":       "Grafana",
 					"client_url":   "",
-					"dedup_key":    "alertId-0",
+					"dedup_key":    "alertId-0-1-testUID",
 					"event_action": "trigger",
 					"links": []interface{}{
 						map[string]interface{}{
@@ -190,6 +191,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
 					ID:      0,
+					PanelID: 1,
 					Name:    "someRule",
 					Message: "someMessage",
 					State:   models.AlertStateAlerting,
@@ -213,7 +215,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				diff := cmp.Diff(map[string]interface{}{
 					"client":       "Grafana",
 					"client_url":   "",
-					"dedup_key":    "alertId-0",
+					"dedup_key":    "alertId-0-1-testUID",
 					"event_action": "trigger",
 					"links": []interface{}{
 						map[string]interface{}{
@@ -260,6 +262,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 
 				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
 					ID:      0,
+					PanelID: 1,
 					Name:    "someRule",
 					Message: "someMessage",
 					State:   models.AlertStateAlerting,
@@ -282,7 +285,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				diff := cmp.Diff(map[string]interface{}{
 					"client":       "Grafana",
 					"client_url":   "",
-					"dedup_key":    "alertId-0",
+					"dedup_key":    "alertId-0-1-testUID",
 					"event_action": "trigger",
 					"links": []interface{}{
 						map[string]interface{}{
@@ -337,6 +340,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 
 				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
 					ID:      0,
+					PanelID: 1,
 					Name:    "someRule",
 					Message: "someMessage",
 					State:   models.AlertStateAlerting,
@@ -359,7 +363,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				diff := cmp.Diff(map[string]interface{}{
 					"client":       "Grafana",
 					"client_url":   "",
-					"dedup_key":    "alertId-0",
+					"dedup_key":    "alertId-0-1-testUID",
 					"event_action": "trigger",
 					"links": []interface{}{
 						map[string]interface{}{
@@ -415,6 +419,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 
 				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
 					ID:      0,
+					PanelID: 1,
 					Name:    "someRule",
 					Message: "someMessage",
 					State:   models.AlertStateAlerting,
@@ -437,7 +442,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				diff := cmp.Diff(map[string]interface{}{
 					"client":       "Grafana",
 					"client_url":   "",
-					"dedup_key":    "alertId-0",
+					"dedup_key":    "alertId-0-1-testUID",
 					"event_action": "trigger",
 					"links": []interface{}{
 						map[string]interface{}{
