@@ -95,6 +95,10 @@ export const completeChangeVariableName = (identifier: VariableIdentifier, newNa
   getState
 ) => {
   const originalVariable = getVariable(identifier.id, getState());
+  if (originalVariable.name === newName) {
+    dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, { newName })));
+    return;
+  }
   const model = { ...cloneDeep(originalVariable), name: newName, id: newName };
   const global = originalVariable.global;
   const index = originalVariable.index;
