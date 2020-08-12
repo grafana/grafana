@@ -36,7 +36,7 @@ func AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) Respon
 		}
 
 		if err == models.ErrUserAlreadyExists {
-			return Error(412, fmt.Sprintf("User with email %s and/or login %s already exists", form.Email, form.Login), err)
+			return Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
 		}
 
 		return Error(500, "failed to create user", err)
