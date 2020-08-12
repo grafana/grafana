@@ -300,7 +300,7 @@ export const setup = (urlStateOverrides?: any) => {
       to: '',
     },
     ui: {
-      dedupStrategy: LogsDedupStrategy.None,
+      dedupStrategy: LogsDedupStrategy.none,
       showingGraph: false,
       showingTable: false,
       showingLogs: false,

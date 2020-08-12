@@ -43,7 +43,7 @@ export const DEFAULT_UI_STATE = {
   showingTable: true,
   showingGraph: true,
   showingLogs: true,
-  dedupStrategy: LogsDedupStrategy.None,
+  dedupStrategy: LogsDedupStrategy.none,
 };
 
 const MAX_HISTORY_ITEMS = 100;

@@ -107,7 +107,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const dedupCount = dedupedRows
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
-    const showDuplicates = dedupStrategy !== LogsDedupStrategy.None && dedupCount > 0;
+    const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
 
     // For horizontal scrolling we can't use CustomScrollbar as it causes the problem with logs context - it is not visible
     // for top log rows. Therefore we use CustomScrollbar only in LogsPanel and for Explore, we use custom css styling.

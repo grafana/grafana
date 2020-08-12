@@ -63,7 +63,7 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
   const exploreId = ExploreId.left;
   const containerWidth = 1920;
   const eventBridge = {} as Emitter;
-  const ui = { dedupStrategy: LogsDedupStrategy.None, showingGraph: false, showingLogs: false, showingTable: false };
+  const ui = { dedupStrategy: LogsDedupStrategy.none, showingGraph: false, showingLogs: false, showingTable: false };
   const timeZone = DefaultTimeZone;
   const range = testRange;
   const urlState: ExploreUrlState = {

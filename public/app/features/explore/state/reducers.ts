@@ -120,7 +120,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   tableResult: null,
   graphResult: null,
   logsResult: null,
-  dedupStrategy: LogsDedupStrategy.None,
+  dedupStrategy: LogsDedupStrategy.none,
   eventBridge: (null as unknown) as Emitter,
 });
 
