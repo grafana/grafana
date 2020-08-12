@@ -18,8 +18,9 @@ export class FetchQueueWorker {
       .getUpdates()
       .pipe(
         filter(({ noOfNotStarted }) => noOfNotStarted > 0),
+        // using concatMap instead of mergeMap so that the order with apiRequests first is preserved
         concatMap(({ state, noOfStarted }) => {
-          const apiCalls = Object.keys(state)
+          const apiRequests = Object.keys(state)
             .filter(k => state[k].state === FetchStatus.NotStarted && !isDataQuery(state[k].options.url))
             .reduce((all, key) => {
               const entry = { id: key, options: state[key].options };
@@ -35,10 +36,12 @@ export class FetchQueueWorker {
               return all;
             }, [] as WorkerEntry[]);
 
-          const noOfAllowedDataRequests = Math.max(MAX_CONCURRENT_DATA_REQUESTS - noOfStarted - apiCalls.length, 0);
+          // apiRequests have precedence over data requests and should always be called
+          // this means we can end up with a negative value so therefore we use Math.max below
+          const noOfAllowedDataRequests = Math.max(MAX_CONCURRENT_DATA_REQUESTS - noOfStarted - apiRequests.length, 0);
           const dataRequestToFetch = dataRequests.slice(0, noOfAllowedDataRequests);
 
-          return apiCalls.concat(dataRequestToFetch);
+          return apiRequests.concat(dataRequestToFetch);
         })
       )
       .subscribe(({ id, options }) => responseQueue.add(id, options));
