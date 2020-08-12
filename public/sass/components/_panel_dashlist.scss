@@ -8,18 +8,24 @@
   padding-top: 3px;
 }
 
-.dashlist-link {
-  @include list-item();
+.dashlist {
+  &-link {
+    @include list-item();
 
-  .fa {
-    padding-top: 3px;
+    .fa {
+      padding-top: 3px;
+    }
+
+    .fa-star {
+      color: $orange;
+    }
   }
 
-  .dashlist-star {
+  &-star {
     float: right;
   }
 
-  .fa-star {
-    color: $orange;
+  &-folder {
+    color: $text-color-weak;
   }
 }
