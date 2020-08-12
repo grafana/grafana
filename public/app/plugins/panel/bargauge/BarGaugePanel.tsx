@@ -103,7 +103,6 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         minVizHeight={10}
         itemSpacing={this.getItemSpacing()}
         orientation={options.orientation}
-        repeaterStyle={{ overflow: 'hidden scroll' }}
       />
     );
   }

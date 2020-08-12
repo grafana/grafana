@@ -24,7 +24,6 @@ interface Props<V, D> {
   itemSpacing?: number;
   /** When orientation is set to auto layout items in a grid */
   autoGrid?: boolean;
-  repeaterStyle?: React.CSSProperties;
   minVizHeight?: number;
 }
 
@@ -153,7 +152,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
 
     const repeaterStyle: React.CSSProperties = {
       display: 'flex',
-      ...this.props.repeaterStyle,
+      overflow: minVizHeight ? 'hidden scroll' : 'visible',
     };
 
     let vizHeight = height;
