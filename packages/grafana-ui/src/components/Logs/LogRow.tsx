@@ -34,7 +34,7 @@ import { LogLabels } from './LogLabels';
 interface Props extends Themeable {
   highlighterExpressions?: string[];
   row: LogRowModel;
-  showParsedFields: Array<string>;
+  showParsedFields: string[];
   showDuplicates: boolean;
   showLabels: boolean;
   showTime: boolean;
@@ -183,7 +183,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             </td>
           )}
           {showParsedFields.length > 0 ? (
-            <LogRowMessageParsed className={hoverBackground} row={row} showParsedFields={showParsedFields} />
+            <LogRowMessageParsed row={row} showParsedFields={showParsedFields} />
           ) : (
             <LogRowMessage
               highlighterExpressions={highlighterExpressions}

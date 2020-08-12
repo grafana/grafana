@@ -41,7 +41,7 @@ export interface Props extends Themeable {
   onClickShowParsedField?: (key: string) => void;
   onClickHideParsedField?: (key: string) => void;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  showParsedFields: Array<string>;
+  showParsedFields: string[];
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {

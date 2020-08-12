@@ -38,7 +38,7 @@ export interface Props extends Themeable {
 
 interface State {
   renderAll: boolean;
-  showParsedFields: Array<string>;
+  showParsedFields: string[];
 }
 
 class UnThemedLogRows extends PureComponent<Props, State> {

@@ -1,13 +1,9 @@
 import React, { PureComponent } from 'react';
 import memoizeOne from 'memoize-one';
-import { css, cx } from 'emotion';
 import { Field, getParser, LinkModel, LogRowModel } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
-
-//Components
-import { LogDetailsRow } from './LogDetailsRow';
 
 type FieldDef = {
   key: string;
@@ -18,7 +14,7 @@ type FieldDef = {
 
 export interface Props extends Themeable {
   row: LogRowModel;
-  showParsedFields: Array<string>;
+  showParsedFields: string[];
 }
 
 class UnThemedLogRowMessageParsed extends PureComponent<Props> {
@@ -41,20 +37,21 @@ class UnThemedLogRowMessageParsed extends PureComponent<Props> {
   });
 
   render() {
-    const { row, theme, showParsedFields } = this.props;
+    const { row, showParsedFields } = this.props;
     const fields = this.parseMessage(row.entry);
 
     return (
       <td>
         {showParsedFields.map(parsedKey => {
           const field = fields.find(field => {
-            const { key, value, links, fieldIndex } = field;
+            const { key } = field;
             return key === parsedKey;
           });
 
           if (field) {
             return `${parsedKey}=${field.value} `;
           }
+          return '';
         })}
       </td>
     );
