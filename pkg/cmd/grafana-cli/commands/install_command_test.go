@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 
@@ -52,28 +53,29 @@ func TestExtractFiles(t *testing.T) {
 		pluginDir, del := setupFakePluginsDir(t)
 		defer del()
 
-		archive := "testdata/grafana-simple-json-datasource-ec18fa4da8096a952608a7e4c7782b4260b41bcf.zip"
+		archive := filepath.Join("testdata", "grafana-simple-json-datasource-ec18fa4da8096a952608a7e4c7782b4260b41bcf.zip")
 		err := extractFiles(archive, "grafana-simple-json-datasource", pluginDir, false)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 
 		//File in zip has permissions 755
-		fileInfo, err := os.Stat(pluginDir + "/grafana-simple-json-datasource/simple-plugin_darwin_amd64")
-		assert.Nil(t, err)
+		fileInfo, err := os.Stat(filepath.Join(pluginDir, "grafana-simple-json-datasource",
+			"simple-plugin_darwin_amd64"))
+		require.NoError(t, err)
 		assert.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
 
 		//File in zip has permission 755
 		fileInfo, err = os.Stat(pluginDir + "/grafana-simple-json-datasource/simple-plugin_linux_amd64")
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
 
 		//File in zip has permission 644
 		fileInfo, err = os.Stat(pluginDir + "/grafana-simple-json-datasource/simple-plugin_windows_amd64.exe")
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, "-rw-r--r--", fileInfo.Mode().String())
 
 		//File in zip has permission 755
 		fileInfo, err = os.Stat(pluginDir + "/grafana-simple-json-datasource/non-plugin-binary")
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
 	})
 
@@ -82,10 +84,10 @@ func TestExtractFiles(t *testing.T) {
 		defer del()
 
 		err := extractFiles("testdata/plugin-with-symlink.zip", "plugin-with-symlink", pluginDir, false)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 
 		_, err = os.Stat(pluginDir + "/plugin-with-symlink/text.txt")
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		_, err = os.Stat(pluginDir + "/plugin-with-symlink/symlink_to_txt")
 		assert.NotNil(t, err)
 	})
@@ -96,10 +98,10 @@ func TestExtractFiles(t *testing.T) {
 		defer del()
 
 		err := extractFiles("testdata/plugin-with-symlink.zip", "plugin-with-symlink", pluginDir, true)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 
 		_, err = os.Stat(pluginDir + "/plugin-with-symlink/symlink_to_txt")
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		fmt.Println(err)
 	})
 }
@@ -199,7 +201,7 @@ func TestSelectVersion(t *testing.T) {
 			),
 			"",
 		)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, "1.0.0", ver.Version)
 	})
 
@@ -208,7 +210,7 @@ func TestSelectVersion(t *testing.T) {
 			makePluginWithVersions(versionArg{Version: "2.0.0"}, versionArg{Version: "1.0.0"}),
 			"",
 		)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, "2.0.0", ver.Version)
 	})
 
@@ -220,7 +222,7 @@ func TestSelectVersion(t *testing.T) {
 			),
 			"1.0.0",
 		)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, "1.0.0", ver.Version)
 	})
 }
@@ -234,8 +236,8 @@ func setupFakePluginsDir(t *testing.T) (string, func()) {
 	require.Nil(t, err)
 
 	return dirname, func() {
-		err = os.RemoveAll(dirname)
-		assert.Nil(t, err)
+		err := os.RemoveAll(dirname)
+		require.NoError(t, err)
 	}
 }
 
