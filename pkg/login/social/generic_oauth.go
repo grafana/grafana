@@ -8,13 +8,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"io/ioutil"
 	"net/http"
 	"net/mail"
 	"regexp"
 	"strings"
-
-	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/models"
 	"golang.org/x/oauth2"
@@ -224,7 +223,8 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 	var header map[string]string
 	err = json.Unmarshal(headerBytes, &header)
 	if compression, ok := header["zip"]; ok {
-		if strings.EqualFold(compression, "GZIP") {
+		switch strings.ToLower(compression) {
+		case "gzip":
 			gr, err := gzip.NewReader(bytes.NewBuffer(rawJSON))
 			if err != nil {
 				s.log.Error("Error creating decompressor", "decoded_payload", string(rawJSON), "error", err)
@@ -236,7 +236,7 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 				s.log.Error("Error decompressing payload", "decoded_payload", string(rawJSON), "error", err)
 				return nil
 			}
-		} else if strings.EqualFold(compression, "DEF") {
+		case "def":
 			fr := flate.NewReader(bytes.NewReader(rawJSON))
 			defer fr.Close()
 			rawJSON, err = ioutil.ReadAll(fr)
@@ -244,7 +244,7 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 				s.log.Error("Error decompressing raw_payload", "decoded_payload", string(rawJSON), "error", err)
 				return nil
 			}
-		} else {
+		default:
 			s.log.Error("Invalid compression type: "+compression, "decoded_payload", string(rawJSON), "error", err)
 			return nil
 		}
