@@ -22,11 +22,13 @@ func init() {
 
 // Query builds flux queries, executes them, and returns the results.
 func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	glog.Debug("Received a query", "query", *tsdbQuery)
 	tRes := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
 	runner, err := RunnerFromDataSource(dsInfo)
 	if err != nil {
+		glog.Debug("Constructing runner failed", "err", err)
 		return nil, err
 	}
 	defer runner.client.Close()
@@ -38,7 +40,7 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 			continue
 		}
 
-		res := ExecuteQuery(context.Background(), *qm, runner, 50)
+		res := executeQuery(context.Background(), *qm, runner, 50)
 
 		tRes.Results[query.RefId] = backendDataResponseToTSDBResponse(&res, query.RefId)
 	}
@@ -57,7 +59,7 @@ type queryRunner interface {
 	runQuery(ctx context.Context, q string) (*api.QueryTableResult, error)
 }
 
-// runQuery executes fluxQuery against the Runner's organization and returns an flux typed result.
+// runQuery executes fluxQuery against the Runner's organization and returns a Flux typed result.
 func (r *Runner) runQuery(ctx context.Context, fluxQuery string) (*api.QueryTableResult, error) {
 	return r.client.QueryApi(r.org).Query(ctx, fluxQuery)
 }
