@@ -233,6 +233,12 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 				return fmt.Errorf(permissionsDeniedMessage, newFile)
 			}
 		} else {
+			// Create needed directories to extract file
+			err := os.MkdirAll(filepath.Dir(newFile), 0755)
+			if err != nil {
+				return errutil.Wrap("failed to create directory to extract plugin files", err)
+			}
+
 			if isSymlink(zf) {
 				if !allowSymlinks {
 					logger.Errorf("%v: plugin archive contains symlink which is not allowed. Skipping \n", zf.Name)
