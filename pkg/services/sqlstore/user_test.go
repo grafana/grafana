@@ -542,7 +542,7 @@ func TestUserDataAccess(t *testing.T) {
 				})
 			})
 
-			Convey("When creating a new user with an already existing email returns error", func() {
+			Convey("When trying to create a new user with an existing email, an error is returned", func() {
 				createUserCmd := &models.CreateUserCommand{
 					Email:        "user2@test.com",
 					Name:         "user2",
