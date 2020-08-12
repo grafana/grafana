@@ -1,29 +1,26 @@
 import { concatMap, filter } from 'rxjs/operators';
 
-import { FetchQueueState, FetchQueueStateStatus } from './FetchQueueState';
-import { FetchWorker } from './FetchWorker';
+import { FetchQueue, FetchStatus } from './FetchQueue';
 import { BackendSrvRequest } from '@grafana/runtime';
 import { isDataQuery } from '../utils/query';
+import { ResponseQueue } from './ResponseQueue';
 
 interface WorkerEntry {
   id: string;
   options: BackendSrvRequest;
 }
 
-export class FetchQueueWorker {
-  constructor(queueState: FetchQueueState, worker: FetchWorker) {
-    queueState
-      .getState()
-      .pipe(
-        filter(
-          state => Object.keys(state).filter(key => state[key].state === FetchQueueStateStatus.NotStarted).length > 0
-        ),
-        concatMap(state => {
-          const noOfStarted = Object.keys(state).filter(key => state[key].state === FetchQueueStateStatus.Started)
-            .length;
+const MAX_CONCURRENT_DATA_REQUESTS = 5;
 
+export class FetchQueueWorker {
+  constructor(fetchQueue: FetchQueue, responseQueue: ResponseQueue) {
+    fetchQueue
+      .getUpdates()
+      .pipe(
+        filter(({ noOfNotStarted }) => noOfNotStarted > 0),
+        concatMap(({ state, noOfStarted }) => {
           const apiCalls = Object.keys(state)
-            .filter(k => state[k].state === FetchQueueStateStatus.NotStarted && !isDataQuery(state[k].options.url))
+            .filter(k => state[k].state === FetchStatus.NotStarted && !isDataQuery(state[k].options.url))
             .reduce((all, key) => {
               const entry = { id: key, options: state[key].options };
               all.push(entry);
@@ -31,21 +28,19 @@ export class FetchQueueWorker {
             }, [] as WorkerEntry[]);
 
           const dataRequests = Object.keys(state)
-            .filter(key => state[key].state === FetchQueueStateStatus.NotStarted && isDataQuery(state[key].options.url))
+            .filter(key => state[key].state === FetchStatus.NotStarted && isDataQuery(state[key].options.url))
             .reduce((all, key) => {
               const entry = { id: key, options: state[key].options };
               all.push(entry);
               return all;
             }, [] as WorkerEntry[]);
 
-          const noOfAllowedDataRequests = 5 - noOfStarted - apiCalls.length;
+          const noOfAllowedDataRequests = Math.max(MAX_CONCURRENT_DATA_REQUESTS - noOfStarted - apiCalls.length, 0);
           const dataRequestToFetch = dataRequests.slice(0, noOfAllowedDataRequests);
 
           return apiCalls.concat(dataRequestToFetch);
         })
       )
-      .subscribe(({ id, options }) => {
-        worker.addToWork(id, options);
-      });
+      .subscribe(({ id, options }) => responseQueue.add(id, options));
   }
 }

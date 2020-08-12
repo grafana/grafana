@@ -13,9 +13,8 @@ import { ContextSrv, contextSrv } from './context_srv';
 import { Emitter } from '../utils/emitter';
 import { parseInitFromOptions, parseUrlFromOptions } from '../utils/fetch';
 import { isDataQuery, isLocalUrl } from '../utils/query';
-import { FetchQueueState } from './FetchQueueState';
-import { FetchResponses } from './FetchResponses';
-import { FetchWorker } from './FetchWorker';
+import { FetchQueue } from './FetchQueue';
+import { ResponseQueue } from './ResponseQueue';
 import { FetchQueueWorker } from './FetchQueueWorker';
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
@@ -32,9 +31,8 @@ export class BackendSrv implements BackendService {
   private HTTP_REQUEST_CANCELED = -1;
   private noBackendCache: boolean;
   private inspectorStream: Subject<FetchResponse | FetchError> = new Subject<FetchResponse | FetchError>();
-  private readonly fetchQueueState: FetchQueueState;
-  private readonly fetchResponses: FetchResponses;
-  private readonly fetchWorker: FetchWorker;
+  private readonly fetchQueue: FetchQueue;
+  private readonly responseQueue: ResponseQueue;
 
   private dependencies: BackendSrvDependencies = {
     fromFetch: fromFetch,
@@ -54,109 +52,9 @@ export class BackendSrv implements BackendService {
     }
 
     this.internalFetch = this.internalFetch.bind(this);
-    this.fetchQueueState = new FetchQueueState();
-    this.fetchResponses = new FetchResponses();
-    this.fetchWorker = new FetchWorker(this.fetchQueueState, this.fetchResponses, this.internalFetch);
-    new FetchQueueWorker(this.fetchQueueState, this.fetchWorker);
-
-    // of(this.queueState.getNotStarted())
-    //   .pipe(delay(1000), repeat())
-    //   .subscribe(notStarted => {
-    //     console.log('FetchQueueWorker', notStarted);
-    //     for (const entry of notStarted) {
-    //       this.queue.addToQueue(entry.id, entry.options);
-    //     }
-    //   });
-
-    // new Observable(() => {
-    //   const concurrentRequests: Record<number, { state: FetchQueueState; options: BackendSrvRequest }> = {};
-    //
-    //   const requestCounterSubscription = this.concurrentRequests.subscribe(entry => {
-    //     const { id, state, options } = entry;
-    //
-    //     if (!concurrentRequests[id]) {
-    //       concurrentRequests[id] = { state: FetchQueueState.NotStarted, options };
-    //     }
-    //
-    //     concurrentRequests[id].state = state;
-    //     concurrentRequests[id].options = options;
-    //     console.log(`concurrentRequests: ${id} ${state} ${JSON.stringify(concurrentRequests)}`);
-    //   });
-    //
-    //   const fetchSubscription = this.fetchQueue.subscribe(entry => {
-    //     const { id, options } = entry;
-    //     const isApiRequest = !isDataQuery(options.url);
-    //
-    //     if (!concurrentRequests[id]) {
-    //       this.concurrentRequests.next({ id, options, state: FetchQueueState.NotStarted });
-    //     }
-    //
-    //     if (concurrentRequests[id].state === FetchQueueState.Ended) {
-    //       console.log(`request already ended:${id}`);
-    //       return;
-    //     }
-    //
-    //     if (isApiRequest) {
-    //       console.log(`api request started:${id}`);
-    //       this.requestQueue.next(entry);
-    //       return;
-    //     }
-    //
-    //     const noOfStartedRequests = Object.values(concurrentRequests).filter(
-    //       request => request.state === FetchQueueState.Started
-    //     );
-    //
-    //     if (noOfStartedRequests.length < 5) {
-    //       console.log(`data request started:${id}`);
-    //       this.requestQueue.next(entry);
-    //       return;
-    //     }
-    //
-    //     console.log(`request delayed for ${id} (${JSON.stringify(concurrentRequests)})`);
-    //   });
-    //
-    //   of(concurrentRequests)
-    //     .pipe(delay(1000), repeat())
-    //     .subscribe(requests => {
-    //       for (const key in requests) {
-    //         if (!requests.hasOwnProperty(key)) {
-    //           continue;
-    //         }
-    //
-    //         const id = parseInt(key, 10);
-    //         if (requests[id].state !== FetchQueueState.NotStarted) {
-    //           continue;
-    //         }
-    //
-    //         this.fetchQueue.next({
-    //           id,
-    //           options: requests[id].options,
-    //         });
-    //         break;
-    //       }
-    //     });
-    //
-    //   const requestQueueSubscription = this.requestQueue.subscribe(entry => {
-    //     const { id, options } = entry;
-    //     this.concurrentRequests.next({ id, options, state: FetchQueueState.Started });
-    //     this.resultQueue.next({
-    //       id,
-    //       observable: this.internalFetch(options).pipe(
-    //         finalize(() => {
-    //           console.log(`finalize called for ${id} (${JSON.stringify(concurrentRequests)})`);
-    //           this.concurrentRequests.next({ id, options, state: FetchQueueState.Ended });
-    //         })
-    //       ),
-    //     });
-    //   });
-    //
-    //   return function unsubscribe() {
-    //     console.log(`Queue unsubscribed:${JSON.stringify(concurrentRequests)}`);
-    //     requestQueueSubscription.unsubscribe();
-    //     requestCounterSubscription.unsubscribe();
-    //     fetchSubscription.unsubscribe();
-    //   };
-    // }).subscribe();
+    this.fetchQueue = new FetchQueue(true);
+    this.responseQueue = new ResponseQueue(this.fetchQueue, this.internalFetch);
+    new FetchQueueWorker(this.fetchQueue, this.responseQueue);
   }
 
   async request<T = any>(options: BackendSrvRequest): Promise<T> {
@@ -171,15 +69,14 @@ export class BackendSrv implements BackendService {
       const subscriptions: Subscription = new Subscription();
 
       subscriptions.add(
-        this.fetchResponses.getObservable<T>(id).subscribe(result => {
+        this.responseQueue.getResponses<T>(id).subscribe(result => {
           subscriptions.add(result.observable.subscribe(observer));
         })
       );
 
-      this.fetchQueueState.addEntry(id, options);
+      this.fetchQueue.add(id, options);
 
       return function unsubscribe() {
-        console.log(`Fetch observable unsubscribed id:${id}`);
         subscriptions.unsubscribe();
       };
     });
@@ -235,10 +132,6 @@ export class BackendSrv implements BackendService {
       if (options.url.startsWith('/')) {
         options.url = options.url.substring(1);
       }
-
-      // if (options.url.endsWith('/')) {
-      //   options.url = options.url.slice(0, -1);
-      // }
 
       if (options.headers?.Authorization) {
         options.headers['X-DS-Authorization'] = options.headers.Authorization;
