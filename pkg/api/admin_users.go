@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -31,11 +32,11 @@ func AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) Respon
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrOrgNotFound {
+		if errors.Is(err, models.ErrOrgNotFound) {
 			return Error(400, models.ErrOrgNotFound.Error(), nil)
 		}
 
-		if err == models.ErrUserAlreadyExists {
+		if errors.Is(err, models.ErrUserAlreadyExists) {
 			return Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
 		}
 
