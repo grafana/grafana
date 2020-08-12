@@ -21,8 +21,8 @@ The main highlights are:
 - [Gauge Panel]({{< relref "#gauge-panel" >}}) - A new standalone panel for gauges.
 - [New Panel Editor UX]({{< relref "#new-panel-editor" >}}) improves panel editing
     and enables easy switching between different visualizations.
-- [Google Stackdriver data source]({{< relref "#google-stackdriver-datasource" >}}) is out of beta and is officially released.
-- [Azure Monitor]({{< relref "#azure-monitor-datasource" >}}) plugin is ported from being an external plugin to being a core data source
+- [Google Stackdriver data source]({{< relref "#google-stackdriver-data-source" >}}) is out of beta and is officially released.
+- [Azure Monitor]({{< relref "#azure-monitor-data-source" >}}) plugin is ported from being an external plugin to being a core data source
 - [React Plugin]({{< relref "#react-panels-query-editors" >}}) support enables an easier way to build plugins.
 - [Named Colors]({{< relref "#named-colors" >}}) in our new improved color picker.
 - [Removal of user session storage]({{< relref "#easier-to-deploy-improved-security" >}}) makes Grafana easier to deploy and improves security.
@@ -116,7 +116,7 @@ will be shared soon.
 
 Built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) is officially released in Grafana 6.0. Beta support was added in Grafana 5.3 and we have added lots of improvements since then.
 
-To get started read the guide: [Using Google Stackdriver in Grafana](/features/datasources/stackdriver/).
+To get started read the guide: [Using Google Stackdriver in Grafana]({{< relref "../features/datasources/cloudmonitoring/" >}}).
 
 ## Azure Monitor data source
 
@@ -124,7 +124,7 @@ One of the goals of the Grafana v6.0 release is to add support for the three maj
 
 The Azure Monitor data source integrates four Azure services with Grafana - Azure Monitor, Azure Log Analytics, Azure Application Insights and Azure Application Insights Analytics.
 
-Please read [Using Azure Monitor in Grafana documentation](/features/datasources/azuremonitor/) for more detailed information on how to get started and use it.
+Please read [Using Azure Monitor in Grafana documentation]({{< relref "../features/datasources/azuremonitor/" >}}) for more detailed information on how to get started and use it.
 
 ## Provisioning support for alert notifiers
 
