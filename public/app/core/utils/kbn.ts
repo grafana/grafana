@@ -13,8 +13,8 @@ import { has } from 'lodash';
 
 const kbn = {
   valueFormats: {} as ValueFormatterIndex,
-  interval_regex: /(\d+(?:\.\d+)?)(ms|[Mwdhmsy])/,
-  intervals_in_seconds: {
+  intervalRegex: /(\d+(?:\.\d+)?)(ms|[Mwdhmsy])/,
+  intervalsInSeconds: {
     y: 31536000,
     M: 2592000,
     w: 604800,
@@ -25,7 +25,7 @@ const kbn = {
     ms: 0.001,
   } as { [index: string]: number },
   regexEscape: (value: string) => value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&'),
-  round_interval: (interval: number) => {
+  roundInterval: (interval: number) => {
     switch (true) {
       // 0.015s
       case interval < 15:
@@ -153,45 +153,45 @@ const kbn = {
     numSeconds > 9 ? strings.push('' + numSeconds) : strings.push('0' + numSeconds);
     return strings.join(':');
   },
-  to_percent: (nr: number, outOf: number) => Math.floor((nr / outOf) * 10000) / 100 + '%',
-  addslashes: (str: string) => {
+  toPercent: (nr: number, outOf: number) => Math.floor((nr / outOf) * 10000) / 100 + '%',
+  addSlashes: (str: string) => {
     str = str.replace(/\\/g, '\\\\');
     str = str.replace(/\'/g, "\\'");
     str = str.replace(/\"/g, '\\"');
     str = str.replace(/\0/g, '\\0');
     return str;
   },
-  describe_interval: (str: string) => {
+  describeInterval: (str: string) => {
     // Default to seconds if no unit is provided
     if (Number(str)) {
       return {
-        sec: kbn.intervals_in_seconds.s,
+        sec: kbn.intervalsInSeconds.s,
         type: 's',
         count: parseInt(str, 10),
       };
     }
 
-    const matches = str.match(kbn.interval_regex);
-    if (!matches || !has(kbn.intervals_in_seconds, matches[2])) {
+    const matches = str.match(kbn.intervalRegex);
+    if (!matches || !has(kbn.intervalsInSeconds, matches[2])) {
       throw new Error(
         `Invalid interval string, has to be either unit-less or end with one of the following units: "${Object.keys(
-          kbn.intervals_in_seconds
+          kbn.intervalsInSeconds
         ).join(', ')}"`
       );
     } else {
       return {
-        sec: kbn.intervals_in_seconds[matches[2]],
+        sec: kbn.intervalsInSeconds[matches[2]],
         type: matches[2],
         count: parseInt(matches[1], 10),
       };
     }
   },
-  interval_to_seconds: (str: string): number => {
-    const info = kbn.describe_interval(str);
+  intervalToSeconds: (str: string): number => {
+    const info = kbn.describeInterval(str);
     return info.sec * info.count;
   },
-  interval_to_ms: (str: string) => {
-    const info = kbn.describe_interval(str);
+  intervalToMs: (str: string) => {
+    const info = kbn.describeInterval(str);
     return info.sec * 1000 * info.count;
   },
   calculateInterval: (range: TimeRange, resolution: number, lowLimitInterval?: string) => {
@@ -202,10 +202,10 @@ const kbn = {
       if (lowLimitInterval[0] === '>') {
         lowLimitInterval = lowLimitInterval.slice(1);
       }
-      lowLimitMs = kbn.interval_to_ms(lowLimitInterval);
+      lowLimitMs = kbn.intervalToMs(lowLimitInterval);
     }
 
-    intervalMs = kbn.round_interval((range.to.valueOf() - range.from.valueOf()) / resolution);
+    intervalMs = kbn.roundInterval((range.to.valueOf() - range.from.valueOf()) / resolution);
     if (lowLimitMs > intervalMs) {
       intervalMs = lowLimitMs;
     }
@@ -215,7 +215,7 @@ const kbn = {
       interval: kbn.secondsToHms(intervalMs / 1000),
     };
   },
-  query_color_dot: (color: string, diameter: string) => {
+  queryColorDot: (color: string, diameter: string) => {
     return (
       '<div class="icon-circle" style="' +
       ['display:inline-block', 'color:' + color, 'font-size:' + diameter + 'px'].join(';') +

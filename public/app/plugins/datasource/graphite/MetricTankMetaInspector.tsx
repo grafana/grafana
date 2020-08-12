@@ -23,7 +23,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
     const normFunc = (meta['consolidator-normfetch'] ?? '').replace('Consolidator', '');
 
     const totalSeconds = buckets.reduce(
-      (acc, bucket) => acc + (bucket.retention ? kbn.interval_to_seconds(bucket.retention) : 0),
+      (acc, bucket) => acc + (bucket.retention ? kbn.intervalToSeconds(bucket.retention) : 0),
       0
     );
 
@@ -45,7 +45,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
 
             <div>
               {buckets.map((bucket, index) => {
-                const bucketLength = bucket.retention ? kbn.interval_to_seconds(bucket.retention) : 0;
+                const bucketLength = bucket.retention ? kbn.intervalToSeconds(bucket.retention) : 0;
                 const lengthPercent = (bucketLength / totalSeconds) * 100;
                 const isActive = index === meta['archive-read'];
 

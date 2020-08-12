@@ -81,7 +81,7 @@ describe('interval actions', () => {
       expect(appEventMock.emit).toHaveBeenCalledWith(AppEvents.alertError, [
         'Templating',
         `Invalid interval string, has to be either unit-less or end with one of the following units: "${Object.keys(
-          kbn.intervals_in_seconds
+          kbn.intervalsInSeconds
         ).join(', ')}"`,
       ]);
       setTimeSrv(originalTimeSrv);
