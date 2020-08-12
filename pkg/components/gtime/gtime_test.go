@@ -23,7 +23,7 @@ func TestParseInterval(t *testing.T) {
 		{interval: "1M", duration: now.Sub(now.AddDate(0, -1, 0))},
 		{interval: "1y", duration: now.Sub(now.AddDate(-1, 0, 0))},
 		{interval: "5y", duration: now.Sub(now.AddDate(-5, 0, 0))},
-		{interval: "invalid-duration", err: regexp.MustCompile(`^time: invalid duration \"invalid-duration\"$`)},
+		{interval: "invalid-duration", err: regexp.MustCompile(`^time: invalid duration "?invalid-duration"?$`)},
 	}
 
 	for i, tc := range tcs {
