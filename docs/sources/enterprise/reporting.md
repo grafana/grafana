@@ -152,13 +152,14 @@ If the time zone is set differently between your Grafana server and its remote i
 
 > Only available in Grafana Enterprise v7.2+.
 
-Organisation-wide report settings can be set via **Settings** tab on the **Reporting** page. They will be applied to all the reports for current organisation.
+Organisation-wide report settings can be configured via **Settings** tab on the **Reporting** page. They will be applied to all the reports for current organisation.
 
 Currently customisation is available for the branding options.  
 
-- Report branding:
+Report branding:
 1. **Company logo URL** - Company logo, displayed in the report PDF. Defaults to Grafana logo.
-- Email branding:
+
+Email branding:
 1. **Company logo URL** - Company logo, displayed in the report PDF. Defaults to Grafana logo.
 1. **Email footer** - Text for the report email footer: **Sent by** or **None**.
 1. **Footer link text** - Text for the link in the report email footer. Defaults to "Grafana".
