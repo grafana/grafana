@@ -541,28 +541,6 @@ func TestUserDataAccess(t *testing.T) {
 					}
 				})
 			})
-
-			Convey("When trying to create a new user with an existing email, an error is returned", func() {
-				createUserCmd := &models.CreateUserCommand{
-					Email:        "user2@test.com",
-					Name:         "user2",
-					Login:        "user2",
-					SkipOrgSetup: true,
-				}
-				err := CreateUser(context.Background(), createUserCmd)
-				So(err, ShouldEqual, models.ErrUserAlreadyExists)
-			})
-
-			Convey("When creating a new user with an already existing login returns error", func() {
-				createUserCmd := &models.CreateUserCommand{
-					Email:        "user-2@test.com",
-					Name:         "user2",
-					Login:        "loginuser2",
-					SkipOrgSetup: true,
-				}
-				err := CreateUser(context.Background(), createUserCmd)
-				So(err, ShouldEqual, models.ErrUserAlreadyExists)
-			})
 		})
 
 		Convey("Given one grafana admin user", func() {
@@ -588,6 +566,39 @@ func TestUserDataAccess(t *testing.T) {
 				So(getUserError, ShouldBeNil)
 
 				So(query.Result.IsAdmin, ShouldEqual, true)
+			})
+		})
+
+		Convey("Given one user", func() {
+			var err error
+			createUserCmd := &models.CreateUserCommand{
+				Email: fmt.Sprint("user", "@test.com"),
+				Name:  "user",
+				Login: "user",
+			}
+			err = CreateUser(context.Background(), createUserCmd)
+			So(err, ShouldBeNil)
+
+			Convey("When trying to create a new user with the same email, an error is returned", func() {
+				createUserCmd := &models.CreateUserCommand{
+					Email:        fmt.Sprint("user", "@test.com"),
+					Name:         "user2",
+					Login:        "user2",
+					SkipOrgSetup: true,
+				}
+				err := CreateUser(context.Background(), createUserCmd)
+				So(err, ShouldEqual, models.ErrUserAlreadyExists)
+			})
+
+			Convey("When trying to create a new user with the same login, an error is returned", func() {
+				createUserCmd := &models.CreateUserCommand{
+					Email:        fmt.Sprint("user2", "@test.com"),
+					Name:         "user2",
+					Login:        "user",
+					SkipOrgSetup: true,
+				}
+				err := CreateUser(context.Background(), createUserCmd)
+				So(err, ShouldEqual, models.ErrUserAlreadyExists)
 			})
 		})
 	})
