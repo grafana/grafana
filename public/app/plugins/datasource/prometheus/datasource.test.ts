@@ -1611,8 +1611,12 @@ describe('PrometheusDatasource', () => {
 
   describe('The __rate_interval variable', () => {
     it('should be 4 times the scrape interval if interval + scrape interval is lower', () => {
-      const { __rate_interval } = ds.getRateIntervalScopedVariable(15, 15);
+      const { __rate_interval } = ds.getRateIntervalScopedVariable(23, 23);
       expect(__rate_interval.value).toBe('60s');
+    });
+    it('should be interval + scrape interval if 4 times the scrape interval is lower', () => {
+      const { __rate_interval } = ds.getRateIntervalScopedVariable(56, 56);
+      expect(__rate_interval.value).toBe('71s');
     });
     it('should fall back to 15s if interval is 0', () => {
       const { __rate_interval } = ds.getRateIntervalScopedVariable(0, 0);
