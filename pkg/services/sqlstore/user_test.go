@@ -541,6 +541,28 @@ func TestUserDataAccess(t *testing.T) {
 					}
 				})
 			})
+
+			Convey("When creating a new user with an already existing email returns error", func() {
+				createUserCmd := &models.CreateUserCommand{
+					Email:        "user2@test.com",
+					Name:         "user2",
+					Login:        "user2",
+					SkipOrgSetup: true,
+				}
+				err := CreateUser(context.Background(), createUserCmd)
+				So(err, ShouldEqual, models.ErrUserAlreadyExists)
+			})
+
+			Convey("When creating a new user with an already existing login returns error", func() {
+				createUserCmd := &models.CreateUserCommand{
+					Email:        "user-2@test.com",
+					Name:         "user2",
+					Login:        "loginuser2",
+					SkipOrgSetup: true,
+				}
+				err := CreateUser(context.Background(), createUserCmd)
+				So(err, ShouldEqual, models.ErrUserAlreadyExists)
+			})
 		})
 
 		Convey("Given one grafana admin user", func() {
