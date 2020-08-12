@@ -127,6 +127,9 @@ const lightTheme: GrafanaTheme = {
     linkHover: textColors.textStrong,
     linkExternal: basicColors.blue85,
     textHeading: basicColors.gray25,
+
+    tabHeaderGradientStart: basicHelmholtzColors.blueBase,
+    tabHeaderGradientEnd: basicHelmholtzColors.blueShade,
   },
   shadows: {
     listItem: 'none',
