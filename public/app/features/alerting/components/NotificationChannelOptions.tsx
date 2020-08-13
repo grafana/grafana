@@ -1,16 +1,11 @@
 import React, { FC } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { Button, Field, FormAPI, InfoBox, Input } from '@grafana/ui';
+import { Button, Field, FormAPI, Input } from '@grafana/ui';
 import { OptionElement } from './OptionElement';
-import {
-  NotificationChannelType,
-  NotificationChannelDTO,
-  NotificationChannelOption,
-  NotificationChannelSecureFields,
-} from '../../../types';
+import { NotificationChannelDTO, NotificationChannelOption, NotificationChannelSecureFields } from '../../../types';
 
 interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState' | 'getValues' | 'watch'> {
-  selectedChannel: NotificationChannelType;
+  selectedChannelOptions: NotificationChannelOption[];
   currentFormValues: NotificationChannelDTO;
   secureFields: NotificationChannelSecureFields;
 
@@ -21,16 +16,14 @@ export const NotificationChannelOptions: FC<Props> = ({
   control,
   currentFormValues,
   errors,
-  selectedChannel,
+  selectedChannelOptions,
   register,
   onResetSecureField,
   secureFields,
 }) => {
   return (
     <>
-      <h3>{selectedChannel.heading}</h3>
-      {selectedChannel.info !== '' && <InfoBox>{selectedChannel.info}</InfoBox>}
-      {selectedChannel.options.map((option: NotificationChannelOption, index: number) => {
+      {selectedChannelOptions.map((option: NotificationChannelOption, index: number) => {
         const key = `${option.label}-${index}`;
         // Some options can be dependent on other options, this determines what is selected in the dependency options
         // I think this needs more thought.
