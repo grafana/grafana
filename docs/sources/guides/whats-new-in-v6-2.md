@@ -37,7 +37,7 @@ To mitigate the risk of sensitive information being cached in browser after a us
 
 ## Official support for Elasticsearch 7
 
-Grafana v6.2 ships with official support for Elasticsearch v7, see [Using Elasticsearch in Grafana](/features/datasources/elasticsearch/#elasticsearch-version) for more information.
+Grafana v6.2 ships with official support for Elasticsearch v7, see [Using Elasticsearch in Grafana]({{< relref "../features/datasources/elasticsearch/#elasticsearch-version" >}}) for more information.
 
 ## Bar Gauge Panel
 

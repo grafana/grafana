@@ -49,7 +49,7 @@ export type BackendSrvRequest = {
   /**
    * Set to to true to not include call in query inspector
    */
-  silent?: boolean;
+  hideFromInspector?: boolean;
 
   /**
    * The data to send

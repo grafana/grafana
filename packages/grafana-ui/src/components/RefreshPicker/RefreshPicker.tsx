@@ -64,6 +64,22 @@ export class RefreshPickerBase extends PureComponent<Props> {
     }
   };
 
+  shouldComponentUpdate(nextProps: Props) {
+    const intervalsDiffer = nextProps.intervals?.some((interval, i) => this.props.intervals?.[i] !== interval);
+
+    return (
+      intervalsDiffer ||
+      this.props.onRefresh !== nextProps.onRefresh ||
+      this.props.onIntervalChanged !== nextProps.onIntervalChanged ||
+      this.props.value !== nextProps.value ||
+      this.props.tooltip !== nextProps.tooltip ||
+      this.props.hasLiveOption !== nextProps.hasLiveOption ||
+      this.props.refreshButton !== nextProps.refreshButton ||
+      this.props.buttonSelectClassName !== nextProps.buttonSelectClassName ||
+      this.props.theme !== nextProps.theme
+    );
+  }
+
   render() {
     const { onRefresh, intervals, tooltip, value, refreshButton, buttonSelectClassName, theme } = this.props;
     const options = this.intervalsToOptions(intervals);
