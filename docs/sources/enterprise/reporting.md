@@ -152,7 +152,7 @@ If the time zone is set differently between your Grafana server and its remote i
 
 > Only available in Grafana Enterprise v7.2+.
 
-Organisation-wide report settings can be configured via **Settings** tab on the **Reporting** page. They will be applied to all the reports for current organisation.
+You can configure organization-wide report settings in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports for current organization.
 
 Currently customisation is available for the branding options.  
 
