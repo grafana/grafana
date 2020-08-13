@@ -49,21 +49,9 @@ export const afterPayloadElem = simplePayloadElemMaker('after');
 export const lastPayloadElem = simplePayloadElemMaker('last');
 
 export const shortPath = [beforePayloadElem, focalPayloadElem];
-export const simplePath = [
-  firstPayloadElem,
-  beforePayloadElem,
-  focalPayloadElem,
-  afterPayloadElem,
-  lastPayloadElem,
-];
+export const simplePath = [firstPayloadElem, beforePayloadElem, focalPayloadElem, afterPayloadElem, lastPayloadElem];
 export const longSimplePath = pathLengthener(simplePath);
-export const noFocalPath = [
-  firstPayloadElem,
-  beforePayloadElem,
-  midPayloadElem,
-  afterPayloadElem,
-  lastPayloadElem,
-];
+export const noFocalPath = [firstPayloadElem, beforePayloadElem, midPayloadElem, afterPayloadElem, lastPayloadElem];
 export const doubleFocalPath = [
   firstPayloadElem,
   beforePayloadElem,

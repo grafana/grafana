@@ -95,8 +95,6 @@
       link: /tutorials/ha_setup/
     - name: Change home dashboard
       link: /administration/change-home-dashboard/
-    - name: Troubleshooting
-      link: /installation/troubleshooting/
 - name: Manage users
   link: /manage-users
   children:
@@ -435,6 +433,16 @@
       link: /http_api/team/
     - name: Users API
       link: /http_api/user/
+- name: Troubleshooting
+  children:
+  - name: Overview
+    link: /troubleshooting/
+  - name: Enable diagnostics
+    link: /troubleshooting/diagnostics/
+  - name: Troubleshoot dashboards
+    link: /troubleshooting/troubleshoot-dashboards/
+  - name: Troubleshoot queries
+    link: /troubleshooting/troubleshoot-queries/
 - name: Developers
   children:
     - name: Plugins
