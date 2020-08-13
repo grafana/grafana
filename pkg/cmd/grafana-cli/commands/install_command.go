@@ -227,33 +227,36 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 		newFile := filepath.Join(filePath, newFileName)
 
 		if zf.FileInfo().IsDir() {
-			err := os.Mkdir(newFile, 0755)
-			if os.IsPermission(err) {
-				return fmt.Errorf(permissionsDeniedMessage, newFile)
-			}
-		} else {
-			// Create needed directories to extract file
-			err := os.MkdirAll(filepath.Dir(newFile), 0755)
-			if err != nil {
-				return errutil.Wrap("failed to create directory to extract plugin files", err)
+			if err := os.MkdirAll(newFile, 0755); err != nil {
+				if os.IsPermission(err) {
+					return fmt.Errorf(permissionsDeniedMessage, newFile)
+				}
+
+				return err
 			}
 
-			if isSymlink(zf) {
-				if !allowSymlinks {
-					logger.Errorf("%v: plugin archive contains symlink which is not allowed. Skipping \n", zf.Name)
-					continue
-				}
-				err = extractSymlink(zf, newFile)
-				if err != nil {
-					logger.Errorf("Failed to extract symlink: %v \n", err)
-					continue
-				}
-			} else {
-				err = extractFile(zf, newFile)
-				if err != nil {
-					return errutil.Wrap("failed to extract file", err)
-				}
+			continue
+		}
+
+		// Create needed directories to extract file
+		if err := os.MkdirAll(filepath.Dir(newFile), 0755); err != nil {
+			return errutil.Wrap("failed to create directory to extract plugin files", err)
+		}
+
+		if isSymlink(zf) {
+			if !allowSymlinks {
+				logger.Warnf("%v: plugin archive contains a symlink, which is not allowed. Skipping \n", zf.Name)
+				continue
 			}
+			if err := extractSymlink(zf, newFile); err != nil {
+				logger.Errorf("Failed to extract symlink: %v \n", err)
+				continue
+			}
+			continue
+		}
+
+		if err := extractFile(zf, newFile); err != nil {
+			return errutil.Wrap("failed to extract file", err)
 		}
 	}
 
