@@ -301,14 +301,18 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       const end = range.to.toISOString();
 
       const curTarget = options.targets.find(target => target.refId === dataFrame.refId) as CloudWatchLogsQuery;
+      const interpolatedGroups =
+        curTarget.logGroupNames?.map((logGroup: string) =>
+          this.replace(logGroup, options.scopedVars, true, 'log groups')
+        ) ?? [];
       const urlProps: AwsUrl = {
         end,
         start,
         timeType: 'ABSOLUTE',
         tz: 'UTC',
-        editorString: curTarget.expression ?? '',
+        editorString: curTarget.expression ? this.replace(curTarget.expression, options.scopedVars, true) : '',
         isLiveTail: false,
-        source: curTarget.logGroupNames ?? [],
+        source: interpolatedGroups,
       };
 
       const encodedUrl = encodeUrl(
@@ -415,7 +419,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       if (/^\d+$/.test(period)) {
         period = parseInt(period, 10);
       } else {
-        period = kbn.interval_to_seconds(period);
+        period = kbn.intervalToSeconds(period);
       }
 
       if (period < 1) {
@@ -830,9 +834,9 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       this.templateSrv.variableExists(target.region) ||
       this.templateSrv.variableExists(target.namespace) ||
       this.templateSrv.variableExists(target.metricName) ||
-      _.find(target.dimensions, (v, k) => {
-        return this.templateSrv.variableExists(k) || this.templateSrv.variableExists(v);
-      })
+      this.templateSrv.variableExists(target.expression!) ||
+      target.logGroupNames?.some((logGroup: string) => this.templateSrv.variableExists(logGroup)) ||
+      _.find(target.dimensions, (v, k) => this.templateSrv.variableExists(k) || this.templateSrv.variableExists(v))
     );
   }
 

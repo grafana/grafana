@@ -24,6 +24,6 @@ export interface SetupStep {
   subheading: string;
   title: string;
   info: string;
-  cards: (Card | TutorialCardType)[];
+  cards: Array<Card | TutorialCardType>;
   done: boolean;
 }

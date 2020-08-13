@@ -3,7 +3,7 @@ import { createClient, createBasicAuthClient } from './modules/client.js';
 import { createTestOrgIfNotExists, createTestdataDatasourceIfNotExists } from './modules/util.js';
 
 export let options = {
-  noCookiesReset: true
+  noCookiesReset: true,
 };
 
 let endpoint = __ENV.URL || 'http://localhost:3000';
@@ -18,35 +18,38 @@ export const setup = () => {
     orgId: orgId,
     datasourceId: datasourceId,
   };
-}
+};
 
-export default (data) => {
-  group("user auth token test", () => {
+export default data => {
+  group('user auth token test', () => {
     if (__ITER === 0) {
-      group("user authenticates thru ui with username and password", () => {
+      group('user authenticates thru ui with username and password', () => {
         let res = client.ui.login('admin', 'admin');
 
         check(res, {
-          'response status is 200': (r) => r.status === 200,
-          'response has cookie \'grafana_session\' with 32 characters': (r) => r.cookies.grafana_session[0].value.length === 32,
+          'response status is 200': r => r.status === 200,
+          "response has cookie 'grafana_session' with 32 characters": r =>
+            r.cookies.grafana_session[0].value.length === 32,
         });
       });
     }
 
     if (__ITER !== 0) {
-      group("batch tsdb requests", () => {
+      group('batch tsdb requests', () => {
         const batchCount = 20;
         const requests = [];
         const payload = {
           from: '1547765247624',
           to: '1547768847624',
-          queries: [{
-            refId: 'A',
-            scenarioId: 'random_walk',
-            intervalMs: 10000,
-            maxDataPoints: 433,
-            datasourceId: data.datasourceId,
-          }]
+          queries: [
+            {
+              refId: 'A',
+              scenarioId: 'random_walk',
+              intervalMs: 10000,
+              maxDataPoints: 433,
+              datasourceId: data.datasourceId,
+            },
+          ],
         };
 
         requests.push({ method: 'GET', url: '/api/annotations?dashboardId=2074&from=1548078832772&to=1548082432772' });
@@ -58,14 +61,14 @@ export default (data) => {
         let responses = client.batch(requests);
         for (let n = 0; n < batchCount; n++) {
           check(responses[n], {
-            'response status is 200': (r) => r.status === 200,
+            'response status is 200': r => r.status === 200,
           });
         }
       });
     }
   });
 
-  sleep(5)
-}
+  sleep(5);
+};
 
-export const teardown = (data) => {}
+export const teardown = data => {};

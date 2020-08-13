@@ -145,7 +145,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   // Use this for tab completion features, wont publish response to other components
   metadataRequest(url: string) {
-    return this._request(url, null, { method: 'GET', silent: true });
+    return this._request(url, null, { method: 'GET', hideFromInspector: true });
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {
@@ -159,7 +159,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     }
 
     const escapedValues = value.map(val => prometheusSpecialRegexEscape(val));
-    return escapedValues.join('|');
+    return '(' + escapedValues.join('|') + ')';
   }
 
   targetContainsTemplate(target: PromQuery) {
@@ -327,9 +327,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const range = Math.ceil(end - start);
 
     // options.interval is the dynamically calculated interval
-    let interval: number = kbn.interval_to_seconds(options.interval);
+    let interval: number = kbn.intervalToSeconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query or datasource. or same as interval otherwise
-    const minInterval = kbn.interval_to_seconds(
+    const minInterval = kbn.intervalToSeconds(
       templateSrv.replace(target.interval || options.interval, options.scopedVars)
     );
     const intervalFactor = target.intervalFactor || 1;
@@ -495,7 +495,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     const scopedVars = {
       __interval: { text: this.interval, value: this.interval },
-      __interval_ms: { text: kbn.interval_to_ms(this.interval), value: kbn.interval_to_ms(this.interval) },
+      __interval_ms: { text: kbn.intervalToMs(this.interval), value: kbn.intervalToMs(this.interval) },
       ...this.getRangeScopedVars(getTimeSrv().timeRange()),
     };
     const interpolated = templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);

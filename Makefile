@@ -83,16 +83,7 @@ revive: scripts/go/bin/revive
 
 revive-strict: scripts/go/bin/revive
 	@echo "lint via revive (strict)"
-	@scripts/go/bin/revive \
-		-formatter stylish \
-		-config ./scripts/go/configs/revive-strict.toml \
-		-exclude ./pkg/plugins/backendplugin/pluginextensionv2/... \
-		./pkg/services/alerting/... \
-		./pkg/services/provisioning/datasources/... \
-		./pkg/services/provisioning/dashboards/... \
-		./pkg/services/provisioning/notifiers/... \
-		./pkg/services/provisioning/values/... \
-		./pkg/plugins/backendplugin/...
+	@scripts/revive-strict scripts/go/bin/revive
 
 scripts/go/bin/golangci-lint: scripts/go/go.mod
 	@cd scripts/go; \
