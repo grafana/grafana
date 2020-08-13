@@ -33,7 +33,7 @@ func AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) Respon
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
-			return Error(400, models.ErrOrgNotFound.Error(), nil)
+			return Error(400, err.Error(), nil)
 		}
 
 		if errors.Is(err, models.ErrUserAlreadyExists) {
