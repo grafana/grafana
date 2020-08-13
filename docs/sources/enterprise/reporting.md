@@ -157,7 +157,7 @@ You can configure organization-wide report settings in the **Settings** tab on t
 You can customize the branding options.  
 
 Report branding:
-1. **Company logo URL** - Company logo, displayed in the report PDF. Defaults to Grafana logo.
+**Company logo URL** - Company logo displayed in the report PDF. Defaults to the Grafana logo.
 
 Email branding:
 1. **Company logo URL** - Company logo, displayed in the report PDF. Defaults to Grafana logo.
