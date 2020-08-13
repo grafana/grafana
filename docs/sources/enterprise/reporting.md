@@ -160,7 +160,7 @@ Report branding:
 **Company logo URL** - Company logo displayed in the report PDF. Defaults to the Grafana logo.
 
 Email branding:
-1. **Company logo URL** - Company logo, displayed in the report PDF. Defaults to Grafana logo.
+- **Company logo URL** - Company logo displayed in the report PDF. Defaults to the Grafana logo.
 1. **Email footer** - Text for the report email footer: **Sent by** or **None**.
 1. **Footer link text** - Text for the link in the report email footer. Defaults to "Grafana".
 1. **Footer link URL** - Link for the report email footer.  
