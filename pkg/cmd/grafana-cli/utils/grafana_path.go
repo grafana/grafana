@@ -2,7 +2,6 @@ package utils
 
 import (
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -26,7 +25,7 @@ func getGrafanaRoot() (string, error) {
 		return "", errutil.Wrap("failed to get executable path", err)
 	}
 	exPath := filepath.Dir(ex)
-	_, last := path.Split(exPath)
+	_, last := filepath.Split(exPath)
 	if last == "bin" {
 		// In dev env the executable for current platform is created in 'bin/' dir
 		return filepath.Join(exPath, ".."), nil

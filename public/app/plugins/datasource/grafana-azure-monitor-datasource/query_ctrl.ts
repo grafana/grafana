@@ -490,7 +490,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     const allowedTimeGrainsMs: number[] = [];
     timeGrains.forEach((tg: any) => {
       if (tg.value !== 'auto') {
-        allowedTimeGrainsMs.push(kbn.interval_to_ms(TimegrainConverter.createKbnUnitFromISO8601Duration(tg.value)));
+        allowedTimeGrainsMs.push(kbn.intervalToMs(TimegrainConverter.createKbnUnitFromISO8601Duration(tg.value)));
       }
     });
     return allowedTimeGrainsMs;
