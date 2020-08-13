@@ -172,7 +172,7 @@ def init_steps(edition, platform):
         ],
     }
 
-    grabpl_version = '0.4.25'
+    grabpl_version = '0.5.0'
     common_cmds = [
         'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
         'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
