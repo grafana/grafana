@@ -8,26 +8,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-// Int64NOOP .....
-var Int64NOOP = data.FieldConverter{
-	OutputFieldType: data.FieldTypeInt64,
-}
-
-// BoolNOOP .....
-var BoolNOOP = data.FieldConverter{
-	OutputFieldType: data.FieldTypeBool,
-}
-
-// Float64NOOP .....
-var Float64NOOP = data.FieldConverter{
-	OutputFieldType: data.FieldTypeFloat64,
-}
-
-// StringNOOP value is already in the proper format
-var StringNOOP = data.FieldConverter{
-	OutputFieldType: data.FieldTypeString,
-}
-
 // AnyToOptionalString any value as a string
 var AnyToOptionalString = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableString,
