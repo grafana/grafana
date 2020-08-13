@@ -26,7 +26,7 @@ export function makeMockLokiDatasource(labelsAndValues: Labels, series?: SeriesF
     metadataRequest: (url: string, params?: { [key: string]: string }) => {
       if (url === lokiLabelsEndpoint) {
         //To test custom time ranges
-        if (Number(params?.start) > 1000001) {
+        if (Number(params?.start) === 2000000) {
           return [labels[0]];
         }
         return labels;
