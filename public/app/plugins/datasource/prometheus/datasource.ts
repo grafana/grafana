@@ -386,9 +386,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   getRateIntervalScopedVariable(interval: number, minInterval: number) {
-    let intervalInSeconds = minInterval === interval ? kbn.interval_to_seconds(this.interval) : minInterval;
+    let intervalInSeconds = minInterval === interval ? kbn.intervalToSeconds(this.interval) : minInterval;
     // if intervalInSeconds === 0 then we should fall back to the default 15 seconds
-    if (!intervalInSeconds) {
+    if (intervalInSeconds === 0) {
       intervalInSeconds = 15;
     }
     const rateInterval = Math.max(interval + intervalInSeconds, 4 * intervalInSeconds);
