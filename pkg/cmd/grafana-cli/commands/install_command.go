@@ -228,10 +228,14 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 
 		if zf.FileInfo().IsDir() {
 			err := os.Mkdir(newFile, 0755)
-			if os.IsPermission(err) {
-				return fmt.Errorf(permissionsDeniedMessage, newFile)
+			if err != nil {
+				if os.IsPermission(err) {
+					return fmt.Errorf(permissionsDeniedMessage, newFile)
+				}
+				return err
 			}
-			return err
+
+			continue
 		}
 
 		if isSymlink(zf) {
