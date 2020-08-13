@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 type InfluxDBExecutor struct {
@@ -68,7 +67,7 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		glog.Debug("Influxdb query", "raw query", rawQuery)
 	}
 
-	req, err := e.createRequest(dsInfo, rawQuery)
+	req, err := e.createRequest(ctx, dsInfo, rawQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +78,7 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	}
 	defer httpClient.CloseIdleConnections()
 
-	resp, err := ctxhttp.Do(ctx, httpClient, req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +119,7 @@ func (e *InfluxDBExecutor) getQuery(dsInfo *models.DataSource, queries []*tsdb.Q
 	return query, nil
 }
 
-func (e *InfluxDBExecutor) createRequest(dsInfo *models.DataSource, query string) (*http.Request, error) {
+func (e *InfluxDBExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, query string) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.Url)
 	if err != nil {
 		return nil, err
@@ -132,7 +131,7 @@ func (e *InfluxDBExecutor) createRequest(dsInfo *models.DataSource, query string
 	var req *http.Request
 	switch httpMode {
 	case "GET":
-		req, err = http.NewRequest(http.MethodGet, u.String(), nil)
+		req, err = http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 		if err != nil {
 			return nil, err
 		}
@@ -140,7 +139,7 @@ func (e *InfluxDBExecutor) createRequest(dsInfo *models.DataSource, query string
 		bodyValues := url.Values{}
 		bodyValues.Add("q", query)
 		body := bodyValues.Encode()
-		req, err = http.NewRequest(http.MethodPost, u.String(), strings.NewReader(body))
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(body))
 		if err != nil {
 			return nil, err
 		}
