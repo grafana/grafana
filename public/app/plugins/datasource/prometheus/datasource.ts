@@ -335,13 +335,18 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
     const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
-    let scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars(options.range) };
+    let scopedVars = {
+      ...options.scopedVars,
+      ...this.getRangeScopedVars(options.range),
+      ...this.getRateIntervalScopedVariable(interval, minInterval),
+    };
     // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
     if (interval !== adjustedInterval) {
       interval = adjustedInterval;
       scopedVars = Object.assign({}, options.scopedVars, {
         __interval: { text: interval + 's', value: interval + 's' },
         __interval_ms: { text: interval * 1000, value: interval * 1000 },
+        ...this.getRateIntervalScopedVariable(interval, minInterval),
         ...this.getRangeScopedVars(options.range),
       });
     }
@@ -378,6 +383,16 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this._addTracingHeaders(query, options);
 
     return query;
+  }
+
+  getRateIntervalScopedVariable(interval: number, minInterval: number) {
+    let intervalInSeconds = minInterval === interval ? kbn.intervalToSeconds(this.interval) : minInterval;
+    // if intervalInSeconds === 0 then we should fall back to the default 15 seconds
+    if (intervalInSeconds === 0) {
+      intervalInSeconds = 15;
+    }
+    const rateInterval = Math.max(interval + intervalInSeconds, 4 * intervalInSeconds);
+    return { __rate_interval: { text: rateInterval + 's', value: rateInterval + 's' } };
   }
 
   adjustInterval(interval: number, minInterval: number, range: number, intervalFactor: number) {
