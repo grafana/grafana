@@ -2,62 +2,58 @@ import { of } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { BackendSrvRequest } from '@grafana/runtime';
 
-import { FetchQueue, FetchQueueUpdate, FetchStatus } from './FetchQueue';
+import { FetchQueue, FetchQueueUpdate } from './FetchQueue';
 import { ResponseQueue } from './ResponseQueue';
 import { subscribeTester } from './FetchQueue.test';
+import { describe, expect } from '../../../test/lib/common';
 
 const getTestContext = () => {
   const id = 'id';
   const options: BackendSrvRequest = { url: 'http://someurl' };
   const expects: FetchQueueUpdate[] = [];
-  const fetchMock = jest.fn().mockReturnValue(
-    of({
-      data: id,
-      status: 200,
-      statusText: 'OK',
-      ok: true,
-      headers: (null as unknown) as Headers,
-      redirected: false,
-      type: (null as unknown) as ResponseType,
-      url: options.url,
-      config: (null as unknown) as BackendSrvRequest,
-    }).pipe(first())
-  );
-  const queue = new FetchQueue();
-  const responseQueue = new ResponseQueue(queue, fetchMock);
 
-  return { id, options, expects, fetchMock, queue, responseQueue };
+  const fetchResult = of({
+    data: id,
+    status: 200,
+    statusText: 'OK',
+    ok: true,
+    headers: (null as unknown) as Headers,
+    redirected: false,
+    type: (null as unknown) as ResponseType,
+    url: options.url,
+    config: (null as unknown) as BackendSrvRequest,
+  });
+
+  const fetchMock = jest.fn().mockReturnValue(fetchResult);
+  const setInProgressMock = jest.fn();
+  const setDoneMock = jest.fn();
+
+  const queueMock: FetchQueue = ({
+    add: jest.fn(),
+    setInProgress: setInProgressMock,
+    setDone: setDoneMock,
+    getUpdates: jest.fn(),
+  } as unknown) as FetchQueue;
+
+  const responseQueue = new ResponseQueue(queueMock, fetchMock);
+
+  return { id, options, expects, fetchMock, setInProgressMock, setDoneMock, responseQueue, fetchResult };
 };
 
 describe('ResponseQueue', () => {
   describe('add', () => {
     describe('when called', () => {
-      it('then the matching fetchQueue entry should be set to inProgress', done => {
-        const { id, options, queue, responseQueue } = getTestContext();
-        const expected = {
-          noOfPending: 0,
-          noOfInProgress: 1,
-          state: {
-            ['id']: { options: { url: 'http://someurl' }, state: FetchStatus.InProgress },
-          },
-        };
-
-        // pushing this before setting up the subscription means this value isn't published on the stream
-        queue.add(id, options);
-
-        subscribeTester({
-          observable: queue.getUpdates().pipe(first()),
-          expectCallback: data => expect(data).toEqual(expected),
-          doneCallback: done,
-        });
+      it('then the matching fetchQueue entry should be set to inProgress', () => {
+        const { id, options, setInProgressMock, setDoneMock, responseQueue } = getTestContext();
 
         responseQueue.add(id, options);
+
+        expect(setInProgressMock.mock.calls).toEqual([['id']]);
+        expect(setDoneMock).not.toHaveBeenCalled();
       });
 
       it('then a response entry with correct id should be published', done => {
-        const { id, options, queue, responseQueue } = getTestContext();
-
-        queue.add(id, options);
+        const { id, options, responseQueue } = getTestContext();
 
         subscribeTester({
           observable: responseQueue.getResponses(id).pipe(first()),
@@ -69,13 +65,11 @@ describe('ResponseQueue', () => {
       });
 
       it('then fetch is called with correct options', done => {
-        const { id, options, queue, responseQueue, fetchMock } = getTestContext();
-
-        queue.add(id, options);
+        const { id, options, responseQueue, fetchMock } = getTestContext();
 
         subscribeTester({
           observable: responseQueue.getResponses(id).pipe(first()),
-          expectCallback: data => {
+          expectCallback: () => {
             expect(fetchMock).toHaveBeenCalledTimes(1);
             expect(fetchMock).toHaveBeenCalledWith({ url: 'http://someurl' });
           },
@@ -83,6 +77,24 @@ describe('ResponseQueue', () => {
         });
 
         responseQueue.add(id, options);
+      });
+
+      describe('and when the fetch Observable is completed', () => {
+        it('then the matching fetchQueue entry should be set to Done', done => {
+          const { id, options, responseQueue, setInProgressMock, setDoneMock } = getTestContext();
+
+          subscribeTester({
+            observable: responseQueue.getResponses(id).pipe(first()),
+            expectCallback: data => {
+              data.observable.subscribe().unsubscribe();
+              expect(setInProgressMock.mock.calls).toEqual([['id']]);
+              expect(setDoneMock.mock.calls).toEqual([['id']]);
+            },
+            doneCallback: done,
+          });
+
+          responseQueue.add(id, options);
+        });
       });
     });
   });
