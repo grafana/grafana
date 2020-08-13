@@ -68,6 +68,11 @@ func CreateUser(ctx context.Context, cmd *models.CreateUserCommand) error {
 			cmd.Email = cmd.Login
 		}
 
+		exists, _ := sess.Where("email=? OR login=?", cmd.Email, cmd.Login).Get(&models.User{})
+		if exists {
+			return models.ErrUserAlreadyExists
+		}
+
 		// create user
 		user := models.User{
 			Email:         cmd.Email,
