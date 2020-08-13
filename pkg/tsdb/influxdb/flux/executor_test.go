@@ -55,7 +55,7 @@ func verifyGoldenResponse(name string) (*backend.DataResponse, error) {
 		testDataPath: name + ".csv",
 	}
 
-	dr := ExecuteQuery(context.Background(), QueryModel{MaxDataPoints: 100}, runner, 50)
+	dr := executeQuery(context.Background(), QueryModel{MaxDataPoints: 100}, runner, 50)
 	err := experimental.CheckGoldenDataResponse("./testdata/"+name+".golden.txt", &dr, true)
 	return &dr, err
 }
