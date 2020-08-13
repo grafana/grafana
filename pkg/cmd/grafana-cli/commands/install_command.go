@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -205,9 +204,10 @@ func SelectVersion(plugin *models.Plugin, version string) (*models.Version, erro
 	return &ver, nil
 }
 
-func RemoveGitBuildFromName(pluginName, filename string) string {
-	r := regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
-	return r.ReplaceAllString(filename, pluginName+"/")
+var reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
+
+func removeGitBuildFromName(pluginName, filename string) string {
+	return reGitBuild.ReplaceAllString(filename, pluginName+"/")
 }
 
 const permissionsDeniedMessage = "could not create %q, permission denied, make sure you have write access to plugin dir"
@@ -220,41 +220,44 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 		return err
 	}
 	for _, zf := range r.File {
-		newFileName := RemoveGitBuildFromName(pluginName, zf.Name)
+		newFileName := removeGitBuildFromName(pluginName, zf.Name)
 		if !isPathSafe(newFileName, filepath.Join(filePath, pluginName)) {
 			return fmt.Errorf("filepath: %q tries to write outside of plugin directory: %q, this can be a security risk",
 				zf.Name, filepath.Join(filePath, pluginName))
 		}
-		newFile := path.Join(filePath, newFileName)
+		newFile := filepath.Join(filePath, newFileName)
 
 		if zf.FileInfo().IsDir() {
-			err := os.Mkdir(newFile, 0755)
-			if os.IsPermission(err) {
-				return fmt.Errorf(permissionsDeniedMessage, newFile)
-			}
-		} else {
-			// Create needed directories to extract file
-			err := os.MkdirAll(filepath.Dir(newFile), 0755)
-			if err != nil {
-				return errutil.Wrap("failed to create directory to extract plugin files", err)
+			if err := os.MkdirAll(newFile, 0755); err != nil {
+				if os.IsPermission(err) {
+					return fmt.Errorf(permissionsDeniedMessage, newFile)
+				}
+
+				return err
 			}
 
-			if isSymlink(zf) {
-				if !allowSymlinks {
-					logger.Errorf("%v: plugin archive contains symlink which is not allowed. Skipping \n", zf.Name)
-					continue
-				}
-				err = extractSymlink(zf, newFile)
-				if err != nil {
-					logger.Errorf("Failed to extract symlink: %v \n", err)
-					continue
-				}
-			} else {
-				err = extractFile(zf, newFile)
-				if err != nil {
-					return errutil.Wrap("failed to extract file", err)
-				}
+			continue
+		}
+
+		// Create needed directories to extract file
+		if err := os.MkdirAll(filepath.Dir(newFile), 0755); err != nil {
+			return errutil.Wrap("failed to create directory to extract plugin files", err)
+		}
+
+		if isSymlink(zf) {
+			if !allowSymlinks {
+				logger.Warnf("%v: plugin archive contains a symlink, which is not allowed. Skipping \n", zf.Name)
+				continue
 			}
+			if err := extractSymlink(zf, newFile); err != nil {
+				logger.Errorf("Failed to extract symlink: %v \n", err)
+				continue
+			}
+			continue
+		}
+
+		if err := extractFile(zf, newFile); err != nil {
+			return errutil.Wrap("failed to extract file", err)
 		}
 	}
 
@@ -272,12 +275,10 @@ func extractSymlink(file *zip.File, filePath string) error {
 		return errutil.Wrap("failed to extract file", err)
 	}
 	buf := new(bytes.Buffer)
-	_, err = io.Copy(buf, src)
-	if err != nil {
+	if _, err := io.Copy(buf, src); err != nil {
 		return errutil.Wrap("failed to copy symlink contents", err)
 	}
-	err = os.Symlink(strings.TrimSpace(buf.String()), filePath)
-	if err != nil {
+	if err := os.Symlink(strings.TrimSpace(buf.String()), filePath); err != nil {
 		return errutil.Wrapf(err, "failed to make symbolic link for %v", filePath)
 	}
 	return nil

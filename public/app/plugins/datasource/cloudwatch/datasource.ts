@@ -419,7 +419,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       if (/^\d+$/.test(period)) {
         period = parseInt(period, 10);
       } else {
-        period = kbn.interval_to_seconds(period);
+        period = kbn.intervalToSeconds(period);
       }
 
       if (period < 1) {
