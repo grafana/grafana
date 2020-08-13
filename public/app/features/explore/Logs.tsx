@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
+import { capitalize } from 'lodash';
 
 import {
   rangeUtil,
@@ -256,7 +257,7 @@ export class Logs extends PureComponent<Props, State> {
                     // @ts-ignore
                     tooltip={LogsDedupDescription[dedupType]}
                   >
-                    {dedupType}
+                    {capitalize(dedupType)}
                   </ToggleButton>
                 ))}
               </ToggleButtonGroup>
