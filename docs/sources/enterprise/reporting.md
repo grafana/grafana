@@ -142,7 +142,7 @@ image_scale_factor = 2
 
 By default, reports use the saved time range of the dashboard. Changing the time range of the report can be done by:
 - Saving a modified time range to the dashboard. 
-- Setting a time range via **Time range** field in the report form. If specified, this custom time range will override the one from the report's dashboard.
+- Setting a time range via **Time range** field in the report form. If specified, then this custom time range overrides the one from the report's dashboard.
 
 The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone will use the time zone on the Grafana server.
 
