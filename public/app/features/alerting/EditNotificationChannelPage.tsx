@@ -84,6 +84,7 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
                     getValues={getValues}
                     control={control}
                     resetSecureField={this.props.resetSecureField}
+                    secureFields={notificationChannel.secureFields}
                   />
                 );
               }}

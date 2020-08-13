@@ -2,11 +2,18 @@ import React, { FC } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Button, Field, FormAPI, InfoBox, Input } from '@grafana/ui';
 import { OptionElement } from './OptionElement';
-import { NotificationChannelType, NotificationChannelDTO, NotificationChannelOption } from '../../../types';
+import {
+  NotificationChannelType,
+  NotificationChannelDTO,
+  NotificationChannelOption,
+  NotificationChannelSecureFields,
+} from '../../../types';
 
 interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState' | 'getValues' | 'watch'> {
   selectedChannel: NotificationChannelType;
   currentFormValues: NotificationChannelDTO;
+  secureFields: NotificationChannelSecureFields;
+
   onResetSecureField: (key: string) => void;
 }
 
@@ -17,6 +24,7 @@ export const NotificationChannelOptions: FC<Props> = ({
   selectedChannel,
   register,
   onResetSecureField,
+  secureFields,
 }) => {
   return (
     <>
@@ -42,7 +50,7 @@ export const NotificationChannelOptions: FC<Props> = ({
             invalid={errors.settings && !!errors.settings[option.propertyName]}
             error={errors.settings && errors.settings[option.propertyName]?.message}
           >
-            {currentFormValues.secureFields && currentFormValues.secureFields[option.propertyName] ? (
+            {secureFields && secureFields[option.propertyName] ? (
               <Input
                 readOnly={true}
                 value="Configured"

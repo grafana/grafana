@@ -68,6 +68,7 @@ class NewNotificationChannelPage extends PureComponent<Props> {
                   watch={watch}
                   imageRendererAvailable={config.rendererAvailable}
                   resetSecureField={this.props.resetSecureField}
+                  secureFields={{}}
                 />
               );
             }}

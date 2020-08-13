@@ -84,9 +84,17 @@ export interface NotificationChannelDTO {
   disableResolveMessage: boolean;
   frequency: string;
   settings: ChannelTypeSettings;
-  secureSettings: { [key: string]: string | number };
-  secureFields: { [key: string]: boolean };
+  secureSettings: NotificationChannelSecureSettings;
+  secureFields: NotificationChannelSecureFields;
   isDefault: boolean;
+}
+
+export interface NotificationChannelSecureSettings {
+  [key: string]: string | number;
+}
+
+export interface NotificationChannelSecureFields {
+  [key: string]: boolean;
 }
 
 export interface ChannelTypeSettings {

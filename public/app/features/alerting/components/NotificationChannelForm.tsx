@@ -14,15 +14,16 @@ import {
   Switch,
   useTheme,
 } from '@grafana/ui';
-import { NotificationChannelType, NotificationChannelDTO } from '../../../types';
+import { NotificationChannelType, NotificationChannelDTO, NotificationChannelSecureFields } from '../../../types';
 import { NotificationChannelOptions } from './NotificationChannelOptions';
 
 interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
   selectableChannels: Array<SelectableValue<string>>;
   selectedChannel?: NotificationChannelType;
   imageRendererAvailable: boolean;
-  resetSecureField: (key: string) => void;
+  secureFields: NotificationChannelSecureFields;
 
+  resetSecureField: (key: string) => void;
   onTestChannel: (data: NotificationChannelDTO) => void;
 }
 
@@ -37,6 +38,7 @@ export const NotificationChannelForm: FC<Props> = ({
   imageRendererAvailable,
   onTestChannel,
   resetSecureField,
+  secureFields,
 }) => {
   const styles = getStyles(useTheme());
 
@@ -104,6 +106,7 @@ export const NotificationChannelForm: FC<Props> = ({
           errors={errors}
           control={control}
           onResetSecureField={resetSecureField}
+          secureFields={secureFields}
         />
       )}
       <HorizontalGroup>
