@@ -8,7 +8,6 @@ import { css, cx } from 'emotion';
 import { withTableStyles } from './withTableStyles';
 import tinycolor from 'tinycolor2';
 import { JSONViewCell } from './JSONViewCell';
-import { TableCell } from './TableCell';
 
 export function getTextAlign(field?: Field): TextAlignProperty {
   if (!field) {
