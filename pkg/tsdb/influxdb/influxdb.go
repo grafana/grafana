@@ -50,6 +50,8 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		return flux.Query(ctx, dsInfo, tsdbQuery)
 	}
 
+	glog.Debug("Making a non-flux type query")
+
 	// NOTE: the following path is currently only called from alerting queries
 	// In dashboards, the request runs through proxy and are managed in the frontend
 
@@ -76,7 +78,6 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	if err != nil {
 		return nil, err
 	}
-	defer httpClient.CloseIdleConnections()
 
 	resp, err := httpClient.Do(req)
 	if err != nil {

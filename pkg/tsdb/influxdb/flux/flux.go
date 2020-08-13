@@ -28,7 +28,6 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 	}
 	runner, err := RunnerFromDataSource(dsInfo)
 	if err != nil {
-		glog.Debug("Constructing runner failed", "err", err)
 		return nil, err
 	}
 	defer runner.client.Close()
@@ -61,7 +60,8 @@ type queryRunner interface {
 
 // runQuery executes fluxQuery against the Runner's organization and returns a Flux typed result.
 func (r *Runner) runQuery(ctx context.Context, fluxQuery string) (*api.QueryTableResult, error) {
-	return r.client.QueryApi(r.org).Query(ctx, fluxQuery)
+	qa := r.client.QueryApi(r.org)
+	return qa.Query(ctx, fluxQuery)
 }
 
 // RunnerFromDataSource creates a runner from the datasource model (the datasource instance's configuration).
