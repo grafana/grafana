@@ -33,7 +33,7 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 	defer r.client.Close()
 
 	for _, query := range tsdbQuery.Queries {
-		qm, err := GetQueryModelTSDB(query, tsdbQuery.TimeRange, dsInfo)
+		qm, err := getQueryModelTSDB(query, tsdbQuery.TimeRange, dsInfo)
 		if err != nil {
 			tRes.Results[query.RefId] = &tsdb.QueryResult{Error: err}
 			continue

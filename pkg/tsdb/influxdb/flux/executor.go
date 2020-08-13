@@ -9,12 +9,12 @@ import (
 	"github.com/influxdata/influxdb-client-go/api"
 )
 
-// executeQuery runs a flux query using the QueryModel to interpolate the query and the runner to execute it.
+// executeQuery runs a flux query using the queryModel to interpolate the query and the runner to execute it.
 // maxSeries somehow limits the response.
-func executeQuery(ctx context.Context, query QueryModel, runner queryRunner, maxSeries int) (dr backend.DataResponse) {
+func executeQuery(ctx context.Context, query queryModel, runner queryRunner, maxSeries int) (dr backend.DataResponse) {
 	dr = backend.DataResponse{}
 
-	flux, err := Interpolate(query)
+	flux, err := interpolate(query)
 	if err != nil {
 		dr.Error = err
 		return
