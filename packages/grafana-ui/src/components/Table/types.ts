@@ -1,3 +1,4 @@
+import React from 'react';
 import { CellProps } from 'react-table';
 import { Field } from '@grafana/data';
 import { TableStyles } from './styles';
@@ -8,6 +9,7 @@ export interface TableFieldOptions {
   align: FieldTextAlignment;
   displayMode: TableCellDisplayMode;
   hidden?: boolean;
+  render?: (props: TableCellProps) => React.ReactNode | null | number | string;
 }
 
 export enum TableCellDisplayMode {
