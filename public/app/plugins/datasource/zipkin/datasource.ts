@@ -36,7 +36,7 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
   }
 
   async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
-    const res = await this.request(url, params, { silent: true }).toPromise();
+    const res = await this.request(url, params, { hideFromInspector: true }).toPromise();
     return res.data;
   }
 

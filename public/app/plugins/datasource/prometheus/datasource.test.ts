@@ -500,7 +500,7 @@ describe('PrometheusDatasource', () => {
       });
 
       it('should return pipe separated values if the value is an array of strings', () => {
-        expect(ds.interpolateQueryExpr(['a|bc', 'de|f'], customVariable)).toEqual('a\\\\|bc|de\\\\|f');
+        expect(ds.interpolateQueryExpr(['a|bc', 'de|f'], customVariable)).toEqual('(a\\\\|bc|de\\\\|f)');
       });
     });
 
@@ -514,7 +514,7 @@ describe('PrometheusDatasource', () => {
       });
 
       it('should return pipe separated values if the value is an array of strings', () => {
-        expect(ds.interpolateQueryExpr(['a|bc', 'de|f'], customVariable)).toEqual('a\\\\|bc|de\\\\|f');
+        expect(ds.interpolateQueryExpr(['a|bc', 'de|f'], customVariable)).toEqual('(a\\\\|bc|de\\\\|f)');
       });
     });
   });
