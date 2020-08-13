@@ -23,11 +23,14 @@ interface QueueStateEntry {
 }
 
 export class FetchQueue {
-  private state: QueueState = {};
-  private queue: Subject<QueueStateEntry> = new Subject<QueueStateEntry>();
-  private stateChanges: Subject<FetchQueueUpdate> = new Subject<FetchQueueUpdate>();
+  private state: QueueState = {}; // internal queue state
+  private queue: Subject<QueueStateEntry> = new Subject<QueueStateEntry>(); // internal stream for requests that are to be queued
+  private updates: Subject<FetchQueueUpdate> = new Subject<FetchQueueUpdate>(); // external stream with updates to the queue state
 
   constructor(debug = false) {
+    // This will create an implicit live subscription for as long as this class lives.
+    // But as FetchQueue is used by the singleton backendSrv that also lives for as long as Grafana app lives
+    // I think this ok. We could add some disposable pattern later if the need arises.
     this.queue.subscribe(entry => {
       const { id, state, options } = entry;
 
@@ -59,7 +62,7 @@ export class FetchQueue {
 
   setEnded = (id: string): void => this.queue.next({ id, state: FetchStatus.Done });
 
-  getUpdates = (): Observable<FetchQueueUpdate> => this.stateChanges.asObservable();
+  getUpdates = (): Observable<FetchQueueUpdate> => this.updates.asObservable();
 
   private getUpdate = (state: QueueState): FetchQueueUpdate => {
     const noOfStarted = Object.keys(state).filter(key => state[key].state === FetchStatus.InProgress).length;
@@ -70,10 +73,10 @@ export class FetchQueue {
 
   private publishUpdate = (update: FetchQueueUpdate, debug: boolean): void => {
     this.printState(update, debug);
-    this.stateChanges.next(update);
+    this.updates.next(update);
   };
 
-  private printState = (update: FetchQueueUpdate, debug: boolean) => {
+  private printState = (update: FetchQueueUpdate, debug: boolean): void => {
     if (!debug) {
       return;
     }

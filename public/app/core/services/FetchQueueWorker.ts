@@ -14,11 +14,15 @@ const MAX_CONCURRENT_DATA_REQUESTS = 5;
 
 export class FetchQueueWorker {
   constructor(fetchQueue: FetchQueue, responseQueue: ResponseQueue) {
+    // This will create an implicit live subscription for as long as this class lives.
+    // But as FetchQueueWorker is used by the singleton backendSrv that also lives for as long as Grafana app lives
+    // I think this ok. We could add some disposable pattern later if the need arises.
     fetchQueue
       .getUpdates()
       .pipe(
-        filter(({ noOfPending }) => noOfPending > 0),
-        // using concatMap instead of mergeMap so that the order with apiRequests first is preserved
+        filter(({ noOfPending }) => noOfPending > 0), // no reason to act if there is nothing to act upon
+        // Using concatMap instead of mergeMap so that the order with apiRequests first is preserved
+        // https://rxjs.dev/api/operators/concatMap
         concatMap(({ state, noOfInProgess }) => {
           const apiRequests = Object.keys(state)
             .filter(k => state[k].state === FetchStatus.Pending && !isDataQuery(state[k].options.url))
@@ -36,8 +40,9 @@ export class FetchQueueWorker {
               return all;
             }, [] as WorkerEntry[]);
 
-          // apiRequests have precedence over data requests and should always be called
-          // this means we can end up with a negative value so therefore we use Math.max below
+          // apiRequests have precedence over data requests and should always be called directly
+          // this means we can end up with a negative value.
+          // Because the way Array.toSlice works with negative numbers we use Math.max below.
           const noOfAllowedDataRequests = Math.max(
             MAX_CONCURRENT_DATA_REQUESTS - noOfInProgess - apiRequests.length,
             0
@@ -47,6 +52,9 @@ export class FetchQueueWorker {
           return apiRequests.concat(dataRequestToFetch);
         })
       )
-      .subscribe(({ id, options }) => responseQueue.add(id, options));
+      .subscribe(({ id, options }) => {
+        // This will add an entry to the responseQueue
+        responseQueue.add(id, options);
+      });
   }
 }

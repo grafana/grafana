@@ -52,7 +52,7 @@ export class BackendSrv implements BackendService {
     }
 
     this.internalFetch = this.internalFetch.bind(this);
-    this.fetchQueue = new FetchQueue(true);
+    this.fetchQueue = new FetchQueue();
     this.responseQueue = new ResponseQueue(this.fetchQueue, this.internalFetch);
     new FetchQueueWorker(this.fetchQueue, this.responseQueue);
   }
@@ -65,18 +65,31 @@ export class BackendSrv implements BackendService {
 
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
     return new Observable(observer => {
+      // We need to match an entry added to the queue stream with the entry that is eventually added to the response stream
+      // using Date.now() as the unique identifier
       const id = Date.now().toString(10);
+
+      // Subscription is an object that is returned whenever you subscribe to an Observable.
+      // You can also use it as a container of many subscriptions and when it is unsubscribed all subscriptions within are also unsubscribed.
       const subscriptions: Subscription = new Subscription();
 
+      // We're using the subscriptions.add function to add the subscription implicitly returned by this.responseQueue.getResponses<T>(id).subscribe below.
       subscriptions.add(
         this.responseQueue.getResponses<T>(id).subscribe(result => {
+          // The one liner below can seem magical if you're not accustomed to RxJs.
+          // Firstly, we're subscribing to the result from the result.observable and we're passing in the outer observer object.
+          // By passing the outer observer object then any updates on result.observable are passed through to any subscriber of the fetch<T> function.
+          // Secondly, we're adding the subscription implicitly returned by result.observable.subscribe(observer).
           subscriptions.add(result.observable.subscribe(observer));
         })
       );
 
+      // Let the fetchQueue know that this id needs to start data fetching.
       this.fetchQueue.add(id, options);
 
+      // This returned function will be called whenever the returned Observable from the fetch<T> function is unsubscribed/errored/completed/canceled.
       return function unsubscribe() {
+        // When subscriptions is unsubscribed all the implicitly added subscriptions above are also unsubscribed.
         subscriptions.unsubscribe();
       };
     });
