@@ -1,8 +1,9 @@
-import { BackendSrvRequest } from '@grafana/runtime';
-import { FetchQueue, FetchQueueUpdate, FetchStatus } from './FetchQueue';
-import { ResponseQueue } from './ResponseQueue';
 import { of } from 'rxjs';
 import { first } from 'rxjs/operators';
+import { BackendSrvRequest } from '@grafana/runtime';
+
+import { FetchQueue, FetchQueueUpdate, FetchStatus } from './FetchQueue';
+import { ResponseQueue } from './ResponseQueue';
 import { subscribeTester } from './FetchQueue.test';
 
 const getTestContext = () => {

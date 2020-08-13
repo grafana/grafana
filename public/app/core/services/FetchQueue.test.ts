@@ -1,7 +1,8 @@
-import { BackendSrvRequest } from '@grafana/runtime';
-import { FetchQueue, FetchQueueUpdate, FetchStatus } from './FetchQueue';
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
+import { BackendSrvRequest } from '@grafana/runtime';
+
+import { FetchQueue, FetchQueueUpdate, FetchStatus } from './FetchQueue';
 
 type SubscribeTesterArgs<T> = {
   observable: Observable<T>;
