@@ -1618,7 +1618,7 @@ describe('PrometheusDatasource', () => {
       const { __rate_interval } = ds.getRateIntervalScopedVariable(56, 56);
       expect(__rate_interval.value).toBe('71s');
     });
-    it('should fall back to 15s if interval is 0', () => {
+    it('should fall back to 60s if interval is 0', () => {
       const { __rate_interval } = ds.getRateIntervalScopedVariable(0, 0);
       expect(__rate_interval.value).toBe('60s');
     });
