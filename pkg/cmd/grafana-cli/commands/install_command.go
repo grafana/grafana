@@ -204,9 +204,10 @@ func SelectVersion(plugin *models.Plugin, version string) (*models.Version, erro
 	return &ver, nil
 }
 
-func RemoveGitBuildFromName(pluginName, filename string) string {
-	r := regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
-	return r.ReplaceAllString(filename, pluginName+"/")
+var reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
+
+func removeGitBuildFromName(pluginName, filename string) string {
+	return reGitBuild.ReplaceAllString(filename, pluginName+"/")
 }
 
 const permissionsDeniedMessage = "could not create %q, permission denied, make sure you have write access to plugin dir"
@@ -219,7 +220,7 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 		return err
 	}
 	for _, zf := range r.File {
-		newFileName := RemoveGitBuildFromName(pluginName, zf.Name)
+		newFileName := removeGitBuildFromName(pluginName, zf.Name)
 		if !isPathSafe(newFileName, filepath.Join(filePath, pluginName)) {
 			return fmt.Errorf("filepath: %q tries to write outside of plugin directory: %q, this can be a security risk",
 				zf.Name, filepath.Join(filePath, pluginName))
