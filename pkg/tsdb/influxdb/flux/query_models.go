@@ -54,9 +54,8 @@ func GetQueryModelTSDB(query *tsdb.Query, timeRange *tsdb.TimeRange, dsInfo *mod
 		return nil, fmt.Errorf("failed to re-encode the flux query into JSON: %w", err)
 	}
 
-	err = json.Unmarshal(queryBytes, &model)
-	if err != nil {
-		return nil, fmt.Errorf("error reading query: %s", err.Error())
+	if err := json.Unmarshal(queryBytes, &model); err != nil {
+		return nil, fmt.Errorf("error reading query: %w", err)
 	}
 	if model.Options.DefaultBucket == "" {
 		model.Options.DefaultBucket = dsInfo.JsonData.Get("defaultBucket").MustString("")
