@@ -50,7 +50,7 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		return flux.Query(ctx, dsInfo, tsdbQuery)
 	}
 
-	glog.Debug("Making a non-flux type query")
+	glog.Debug("Making a non-Flux type query")
 
 	// NOTE: the following path is currently only called from alerting queries
 	// In dashboards, the request runs through proxy and are managed in the frontend

@@ -24,7 +24,7 @@ func executeQuery(ctx context.Context, query QueryModel, runner queryRunner, max
 
 	tables, err := runner.runQuery(ctx, flux)
 	if err != nil {
-		glog.Debug("Flux query failed", "err", err, "query", flux)
+		glog.Warn("Flux query failed", "err", err, "query", flux)
 		dr.Error = err
 		metaFrame := data.NewFrame("meta for error")
 		metaFrame.Meta = &data.FrameMeta{
