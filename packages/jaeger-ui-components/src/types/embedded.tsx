@@ -22,4 +22,4 @@ type EmbeddedStateV0 = {
   };
 };
 
-export type EmbeddedState = EmbeddedStateV0; // eslint-disable-line import/prefer-default-export
+export type EmbeddedState = EmbeddedStateV0;

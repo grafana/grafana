@@ -325,7 +325,7 @@ Content-Type: application/json
 
 ### Search all Organizations
 
-`GET /api/orgs`
+`GET /api/orgs?perpage=10&page=1`
 
 Only works with Basic Authentication (username and password), see [introduction](#admin-organizations-api).
 
@@ -338,6 +338,8 @@ Content-Type: application/json
 ```
 Note: The api will only work when you pass the admin name and password
 to the request HTTP URL, like http://admin:admin@localhost:3000/api/orgs
+
+Default value for the `perpage` parameter is `1000` and for the `page` parameter is `0`.
 
 **Example Response**:
 
