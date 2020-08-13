@@ -3,17 +3,17 @@ import { FetchQueue, FetchQueueUpdate, FetchStatus } from './FetchQueue';
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
 
-type SubscribeTesterArgs = {
+type SubscribeTesterArgs<T> = {
   observable: Observable<T>;
-  expect: (data: T) => void;
-  done: jest.DoneCallback;
+  expectCallback: (data: T) => void;
+  doneCallback: jest.DoneCallback;
 };
 
-const subscribeTester = <T>({ observable, expect, done }: SubscribeTesterArgs) => {
+export const subscribeTester = <T>({ observable, expectCallback, doneCallback }: SubscribeTesterArgs<T>) => {
   observable.subscribe({
-    next: data => expect(data),
+    next: data => expectCallback(data),
     complete: () => {
-      done();
+      doneCallback();
     },
   });
 };
@@ -48,8 +48,8 @@ describe('FetchQueue', () => {
 
         subscribeTester({
           observable: queue.getUpdates().pipe(take(2)),
-          expect: data => expect(data).toEqual(expects[calls++]),
-          done: done,
+          expectCallback: data => expect(data).toEqual(expects[calls++]),
+          doneCallback: done,
         });
 
         queue.add(id, options);
@@ -58,7 +58,7 @@ describe('FetchQueue', () => {
     });
   });
 
-  describe('setStarted', () => {
+  describe('setInProgress', () => {
     describe('when called', () => {
       it('then an update with the correct state should be published', done => {
         const id = 'id';
@@ -95,18 +95,18 @@ describe('FetchQueue', () => {
 
         subscribeTester({
           observable: queue.getUpdates().pipe(take(3)),
-          expect: data => expect(data).toEqual(expects[calls++]),
-          done: done,
+          expectCallback: data => expect(data).toEqual(expects[calls++]),
+          doneCallback: done,
         });
 
         queue.add(id, options);
         queue.add(id2, options2);
-        queue.setStarted(id2);
+        queue.setInProgress(id2);
       });
     });
   });
 
-  describe('setEnded', () => {
+  describe('setDone', () => {
     describe('when called', () => {
       it('then an update with the correct state should be published', done => {
         const id = 'id';
@@ -142,13 +142,13 @@ describe('FetchQueue', () => {
 
         subscribeTester({
           observable: queue.getUpdates().pipe(take(3)),
-          expect: data => expect(data).toEqual(expects[calls++]),
-          done: done,
+          expectCallback: data => expect(data).toEqual(expects[calls++]),
+          doneCallback: done,
         });
 
         queue.add(id, options);
         queue.add(id2, options2);
-        queue.setEnded(id);
+        queue.setDone(id);
       });
     });
   });

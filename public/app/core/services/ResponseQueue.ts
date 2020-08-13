@@ -25,7 +25,7 @@ export class ResponseQueue {
       const { id, options } = entry;
 
       // Let the fetchQueue know that this id has started data fetching.
-      fetchQueue.setStarted(id);
+      fetchQueue.setInProgress(id);
 
       this.responses.next({
         id,
@@ -34,7 +34,7 @@ export class ResponseQueue {
           // https://rxjs.dev/api/operators/finalize
           finalize(() => {
             // Let the fetchQueue know that this id is done.
-            fetchQueue.setEnded(id);
+            fetchQueue.setDone(id);
           })
         ),
       });

@@ -58,9 +58,9 @@ export class FetchQueue {
 
   add = (id: string, options: BackendSrvRequest): void => this.queue.next({ id, options, state: FetchStatus.Pending });
 
-  setStarted = (id: string): void => this.queue.next({ id, state: FetchStatus.InProgress });
+  setInProgress = (id: string): void => this.queue.next({ id, state: FetchStatus.InProgress });
 
-  setEnded = (id: string): void => this.queue.next({ id, state: FetchStatus.Done });
+  setDone = (id: string): void => this.queue.next({ id, state: FetchStatus.Done });
 
   getUpdates = (): Observable<FetchQueueUpdate> => this.updates.asObservable();
 
