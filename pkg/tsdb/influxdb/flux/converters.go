@@ -8,8 +8,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-// AnyToOptionalString any value as a string
-var AnyToOptionalString = data.FieldConverter{
+// anyToOptionalString any value as a string.
+var anyToOptionalString = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableString,
 	Converter: func(v interface{}) (interface{}, error) {
 		if v == nil {
@@ -20,8 +20,8 @@ var AnyToOptionalString = data.FieldConverter{
 	},
 }
 
-// Float64ToOptionalFloat64 optional float value
-var Float64ToOptionalFloat64 = data.FieldConverter{
+// float64ToOptionalFloat64 optional float value
+var float64ToOptionalFloat64 = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableFloat64,
 	Converter: func(v interface{}) (interface{}, error) {
 		if v == nil {
@@ -35,8 +35,8 @@ var Float64ToOptionalFloat64 = data.FieldConverter{
 	},
 }
 
-// Int64ToOptionalInt64 optional int value
-var Int64ToOptionalInt64 = data.FieldConverter{
+// int64ToOptionalInt64 optional int value
+var int64ToOptionalInt64 = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableInt64,
 	Converter: func(v interface{}) (interface{}, error) {
 		if v == nil {
@@ -50,8 +50,8 @@ var Int64ToOptionalInt64 = data.FieldConverter{
 	},
 }
 
-// UInt64ToOptionalUInt64 optional int value
-var UInt64ToOptionalUInt64 = data.FieldConverter{
+// uint64ToOptionalUInt64 optional int value
+var uint64ToOptionalUInt64 = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableUint64,
 	Converter: func(v interface{}) (interface{}, error) {
 		if v == nil {
@@ -65,8 +65,8 @@ var UInt64ToOptionalUInt64 = data.FieldConverter{
 	},
 }
 
-// BoolToOptionalBool optional int value
-var BoolToOptionalBool = data.FieldConverter{
+// boolToOptionalBool optional int value
+var boolToOptionalBool = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableBool,
 	Converter: func(v interface{}) (interface{}, error) {
 		if v == nil {

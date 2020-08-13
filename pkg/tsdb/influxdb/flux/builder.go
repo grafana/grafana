@@ -50,23 +50,23 @@ func isTag(schk string) bool {
 func getConverter(t string) (*data.FieldConverter, error) {
 	switch t {
 	case stringDatatype:
-		return &AnyToOptionalString, nil
+		return &anyToOptionalString, nil
 	case timeDatatypeRFC:
 		return &TimeToOptionalTime, nil
 	case timeDatatypeRFCNano:
 		return &TimeToOptionalTime, nil
 	case durationDatatype:
-		return &Int64ToOptionalInt64, nil
+		return &int64ToOptionalInt64, nil
 	case doubleDatatype:
-		return &Float64ToOptionalFloat64, nil
+		return &float64ToOptionalFloat64, nil
 	case boolDatatype:
-		return &BoolToOptionalBool, nil
+		return &boolToOptionalBool, nil
 	case longDatatype:
-		return &Int64ToOptionalInt64, nil
+		return &int64ToOptionalInt64, nil
 	case uLongDatatype:
-		return &UInt64ToOptionalUInt64, nil
+		return &uint64ToOptionalUInt64, nil
 	case base64BinaryDataType:
-		return &AnyToOptionalString, nil
+		return &anyToOptionalString, nil
 	}
 
 	return nil, fmt.Errorf("no matching converter found for [%v]", t)
