@@ -154,7 +154,7 @@ If the time zone is set differently between your Grafana server and its remote i
 
 You can configure organization-wide report settings in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports for current organization.
 
-Currently customisation is available for the branding options.  
+You can customize the branding options.  
 
 Report branding:
 1. **Company logo URL** - Company logo, displayed in the report PDF. Defaults to Grafana logo.
