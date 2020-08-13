@@ -5,14 +5,14 @@ import { BackendSrvRequest } from '@grafana/runtime';
 export interface QueueState extends Record<string, { state: FetchStatus; options: BackendSrvRequest }> {}
 
 export enum FetchStatus {
-  NotStarted,
-  Started,
-  Ended,
+  Pending,
+  InProgress,
+  Done,
 }
 
 export interface FetchQueueUpdate {
-  noOfStarted: number;
-  noOfNotStarted: number;
+  noOfInProgess: number;
+  noOfPending: number;
   state: QueueState;
 }
 
@@ -32,10 +32,10 @@ export class FetchQueue {
       const { id, state, options } = entry;
 
       if (!this.state[id]) {
-        this.state[id] = { state: FetchStatus.NotStarted, options: {} as BackendSrvRequest };
+        this.state[id] = { state: FetchStatus.Pending, options: {} as BackendSrvRequest };
       }
 
-      if (state === FetchStatus.Ended) {
+      if (state === FetchStatus.Done) {
         delete this.state[id];
         const update = this.getUpdate(this.state);
         this.publishUpdate(update, debug);
@@ -53,20 +53,19 @@ export class FetchQueue {
     });
   }
 
-  add = (id: string, options: BackendSrvRequest): void =>
-    this.queue.next({ id, options, state: FetchStatus.NotStarted });
+  add = (id: string, options: BackendSrvRequest): void => this.queue.next({ id, options, state: FetchStatus.Pending });
 
-  setStarted = (id: string): void => this.queue.next({ id, state: FetchStatus.Started });
+  setStarted = (id: string): void => this.queue.next({ id, state: FetchStatus.InProgress });
 
-  setEnded = (id: string): void => this.queue.next({ id, state: FetchStatus.Ended });
+  setEnded = (id: string): void => this.queue.next({ id, state: FetchStatus.Done });
 
   getUpdates = (): Observable<FetchQueueUpdate> => this.stateChanges.asObservable();
 
   private getUpdate = (state: QueueState): FetchQueueUpdate => {
-    const noOfStarted = Object.keys(state).filter(key => state[key].state === FetchStatus.Started).length;
-    const noOfNotStarted = Object.keys(state).filter(key => state[key].state === FetchStatus.NotStarted).length;
+    const noOfStarted = Object.keys(state).filter(key => state[key].state === FetchStatus.InProgress).length;
+    const noOfNotStarted = Object.keys(state).filter(key => state[key].state === FetchStatus.Pending).length;
 
-    return { noOfNotStarted, noOfStarted, state };
+    return { noOfPending: noOfNotStarted, noOfInProgess: noOfStarted, state };
   };
 
   private publishUpdate = (update: FetchQueueUpdate, debug: boolean): void => {
@@ -85,8 +84,8 @@ export class FetchQueue {
       return all;
     }, [] as Array<{ id: string; state: FetchStatus }>);
 
-    console.log('FetchQueue noOfStarted', update.noOfStarted);
-    console.log('FetchQueue noOfNotStarted', update.noOfNotStarted);
+    console.log('FetchQueue noOfStarted', update.noOfInProgess);
+    console.log('FetchQueue noOfNotStarted', update.noOfPending);
     console.log('FetchQueue state', entriesWithoutOptions);
   };
 }
