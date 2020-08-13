@@ -14,7 +14,9 @@ import {
   ThresholdsConfig,
   ThresholdsMode,
   FieldConfig,
+  formattedValueToString,
 } from '@grafana/data';
+import { TableCellProps } from './types';
 
 export default {
   title: 'Visualizations/Table',
@@ -148,6 +150,33 @@ export const ColoredCells = () => {
       custom: {
         width: 80,
         displayMode: 'color-background',
+      },
+      thresholds: defaultThresholds,
+    },
+  });
+
+  return (
+    <div className="panel-container" style={{ width: 'auto' }}>
+      <Table data={data} height={500} width={width} />
+    </div>
+  );
+};
+
+const CustomCellRenderer = ({ field, cell }: TableCellProps) => {
+  const value = field.display ? formattedValueToString(field.display(cell.value)) : cell.value;
+
+  return <div style={{ backgroundColor: 'red', color: 'white', fontWeight: 'bold' }}>{value}</div>;
+};
+
+export const CustomCells = () => {
+  const theme = useTheme();
+  const width = number('width', 750, {}, 'Props');
+  const data = buildData(theme, {
+    Progress: {
+      custom: {
+        width: 80,
+        // Use a custom component to render the value in the cell
+        render: CustomCellRenderer,
       },
       thresholds: defaultThresholds,
     },
