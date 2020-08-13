@@ -205,7 +205,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     if (this.target.shouldDownsample) {
       try {
         if (this.target.downsampleInterval) {
-          kbn.describe_interval(this.target.downsampleInterval);
+          kbn.describeInterval(this.target.downsampleInterval);
         } else {
           errs.downsampleInterval = "You must supply a downsample interval (e.g. '1m' or '1h').";
         }

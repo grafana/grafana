@@ -253,7 +253,7 @@ export class AlertTabCtrl {
     this.frequencyWarning = '';
 
     try {
-      const frequencySecs = kbn.interval_to_seconds(this.alert.frequency);
+      const frequencySecs = kbn.intervalToSeconds(this.alert.frequency);
       if (frequencySecs < this.alertingMinIntervalSecs) {
         this.frequencyWarning =
           'A minimum evaluation interval of ' +
