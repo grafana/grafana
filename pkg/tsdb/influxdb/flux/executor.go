@@ -51,7 +51,7 @@ func readDataFrames(result *api.QueryTableResult, maxPoints int, maxSeries int) 
 	glog.Debug("Reading data frames from query result", "maxPoints", maxPoints, "maxSeries", maxSeries)
 	dr = backend.DataResponse{}
 
-	builder := &FrameBuilder{
+	builder := &frameBuilder{
 		maxPoints: maxPoints,
 		maxSeries: maxSeries,
 	}
