@@ -570,17 +570,19 @@ func TestUserDataAccess(t *testing.T) {
 		})
 
 		Convey("Given one user", func() {
+			const email = "user@test.com"
+			const username = "user"
 			createUserCmd := &models.CreateUserCommand{
-				Email: "user@test.com",
+				Email: email,
 				Name:  "user",
-				Login: "user",
+				Login: username,
 			}
 			err := CreateUser(context.Background(), createUserCmd)
 			So(err, ShouldBeNil)
 
 			Convey("When trying to create a new user with the same email, an error is returned", func() {
 				createUserCmd := &models.CreateUserCommand{
-					Email:        "user@test.com",
+					Email:        email,
 					Name:         "user2",
 					Login:        "user2",
 					SkipOrgSetup: true,
@@ -593,7 +595,7 @@ func TestUserDataAccess(t *testing.T) {
 				createUserCmd := &models.CreateUserCommand{
 					Email:        "user2@test.com",
 					Name:         "user2",
-					Login:        "user",
+					Login:        username,
 					SkipOrgSetup: true,
 				}
 				err := CreateUser(context.Background(), createUserCmd)

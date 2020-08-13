@@ -260,7 +260,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 		})
 	})
 
-	Convey("When a server admin attempts to create a user with an already existing email / login", t, func() {
+	Convey("When a server admin attempts to create a user with an already existing email/login", t, func() {
 		bus.AddHandler("test", func(cmd *models.CreateUserCommand) error {
 			return models.ErrUserAlreadyExists
 		})
