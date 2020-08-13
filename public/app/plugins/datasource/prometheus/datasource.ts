@@ -159,6 +159,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     }
 
     const escapedValues = value.map(val => prometheusSpecialRegexEscape(val));
+
+    if (escapedValues.length === 1) {
+      return escapedValues[0];
+    }
+
     return '(' + escapedValues.join('|') + ')';
   }
 
