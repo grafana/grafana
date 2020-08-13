@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 type InfluxDBExecutor struct {
@@ -51,6 +50,8 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		return flux.Query(ctx, dsInfo, tsdbQuery)
 	}
 
+	glog.Debug("Making a non-Flux type query")
+
 	// NOTE: the following path is currently only called from alerting queries
 	// In dashboards, the request runs through proxy and are managed in the frontend
 
@@ -68,7 +69,7 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		glog.Debug("Influxdb query", "raw query", rawQuery)
 	}
 
-	req, err := e.createRequest(dsInfo, rawQuery)
+	req, err := e.createRequest(ctx, dsInfo, rawQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +79,7 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		return nil, err
 	}
 
-	resp, err := ctxhttp.Do(ctx, httpClient, req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -91,12 +92,9 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	var response Response
 	dec := json.NewDecoder(resp.Body)
 	dec.UseNumber()
-	err = dec.Decode(&response)
-
-	if err != nil {
+	if err := dec.Decode(&response); err != nil {
 		return nil, err
 	}
-
 	if response.Err != nil {
 		return nil, response.Err
 	}
@@ -109,42 +107,45 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 }
 
 func (e *InfluxDBExecutor) getQuery(dsInfo *models.DataSource, queries []*tsdb.Query, context *tsdb.TsdbQuery) (*Query, error) {
+	if len(queries) == 0 {
+		return nil, fmt.Errorf("query request contains no queries")
+	}
+
 	// The model supports multiple queries, but right now this is only used from
 	// alerting so we only needed to support batch executing 1 query at a time.
-	if len(queries) > 0 {
-		query, err := e.QueryParser.Parse(queries[0].Model, dsInfo)
-		if err != nil {
-			return nil, err
-		}
-		return query, nil
+	query, err := e.QueryParser.Parse(queries[0].Model, dsInfo)
+	if err != nil {
+		return nil, err
 	}
-	return nil, fmt.Errorf("query request contains no queries")
+	return query, nil
 }
 
-func (e *InfluxDBExecutor) createRequest(dsInfo *models.DataSource, query string) (*http.Request, error) {
+func (e *InfluxDBExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, query string) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.Url)
 	if err != nil {
 		return nil, err
 	}
+
 	u.Path = path.Join(u.Path, "query")
 	httpMode := dsInfo.JsonData.Get("httpMode").MustString("GET")
 
-	req, err := func() (*http.Request, error) {
-		switch httpMode {
-		case "GET":
-			return http.NewRequest(http.MethodGet, u.String(), nil)
-		case "POST":
-			bodyValues := url.Values{}
-			bodyValues.Add("q", query)
-			body := bodyValues.Encode()
-			return http.NewRequest(http.MethodPost, u.String(), strings.NewReader(body))
-		default:
-			return nil, ErrInvalidHttpMode
+	var req *http.Request
+	switch httpMode {
+	case "GET":
+		req, err = http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+		if err != nil {
+			return nil, err
 		}
-	}()
-
-	if err != nil {
-		return nil, err
+	case "POST":
+		bodyValues := url.Values{}
+		bodyValues.Add("q", query)
+		body := bodyValues.Encode()
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(body))
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, ErrInvalidHttpMode
 	}
 
 	req.Header.Set("User-Agent", "Grafana")
