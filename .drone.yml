@@ -27,7 +27,7 @@ steps:
   - cp -r $(yarn cache dir) yarn-cache
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.4.25
+    GRABPL_VERSION: 0.5.0
 
 - name: lint-backend
   image: grafana/build-container:1.2.24
@@ -264,7 +264,7 @@ steps:
   - cp -r $(yarn cache dir) yarn-cache
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.4.25
+    GRABPL_VERSION: 0.5.0
 
 - name: lint-backend
   image: grafana/build-container:1.2.24
