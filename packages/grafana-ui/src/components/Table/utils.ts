@@ -8,6 +8,7 @@ import { css, cx } from 'emotion';
 import { withTableStyles } from './withTableStyles';
 import tinycolor from 'tinycolor2';
 import { JSONViewCell } from './JSONViewCell';
+import { TableCell } from './TableCell';
 
 export function getTextAlign(field?: Field): TextAlignProperty {
   if (!field) {
@@ -85,6 +86,12 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
 }
 
 function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
+  // Use a custom renderer if it is explicitly defined
+  if (field.config.custom?.render) {
+    return field.config.custom.render;
+  }
+
+  // Use Field.config.custom.displayMode to determine how to display a Cell
   switch (displayMode) {
     case TableCellDisplayMode.ColorText:
       return withTableStyles(DefaultCell, getTextColorStyle);
@@ -98,10 +105,11 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
       return JSONViewCell;
   }
 
-  // Default or Auto
+  // Display other data as JSON
   if (field.type === FieldType.other) {
     return JSONViewCell;
   }
+
   return DefaultCell;
 }
 

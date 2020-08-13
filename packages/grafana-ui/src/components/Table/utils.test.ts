@@ -45,6 +45,39 @@ describe('Table utils', () => {
       expect(columns[0].width).toBe(450);
       expect(columns[1].width).toBe(100);
     });
+
+    it('Should be possible to use a custom renderer for a cell', () => {
+      const CustomRender = jest.fn();
+      const data = new MutableDataFrame({
+        fields: [
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: [],
+            config: {
+              custom: {
+                width: 100,
+                render: CustomRender,
+              },
+            },
+          },
+          {
+            name: 'Message',
+            type: FieldType.string,
+            values: [],
+            config: {
+              custom: {
+                align: 'center',
+              },
+            },
+          },
+        ],
+      });
+      const columns = getColumns(data, 1000, 120);
+
+      expect(columns[0].Cell).toEqual(CustomRender);
+      expect(columns[1].Cell).not.toEqual(CustomRender);
+    });
   });
 
   describe('getTextAlign', () => {
