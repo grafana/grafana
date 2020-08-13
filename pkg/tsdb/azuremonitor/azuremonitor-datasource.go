@@ -390,7 +390,7 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 }
 
 // Map values from:
-//   https://docs.microsoft.com/en-us/azure/azure-monitor/platform/metrics-supported#microsoftanalysisservicesservers
+//   https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list#unit
 // to
 //   https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/valueFormats/categories.ts#L24
 func toGrafanaUnit(unit string) string {
