@@ -51,8 +51,8 @@
                 "id": "links",
                 "value": [
                   {
-                    "title": "Asd",
-                    "url": "/d/spVR9LSMk/2?var-query=${__value.raw:percentencode}&test"
+                    "title": "Search",
+                    "url": "/d/spVR9LSMk/templating-textbox-and-data-links?var-query=${__value.raw:percentencode}"
                   }
                 ]
               }
