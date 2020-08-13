@@ -12,8 +12,8 @@ e2e.scenario({
 
     const items: any = [];
     const expectedItems: string[] = [
-      '__dashboard = Global variables and interpolation',
-      '__dashboard.name = Global variables and interpolation',
+      '__dashboard = Templating - Global variables and interpolation',
+      '__dashboard.name = Templating - Global variables and interpolation',
       '__dashboard.uid = HYaGDGIMk',
       '__org.name = Main Org.',
       '__org.id = 1',
