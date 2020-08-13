@@ -11,7 +11,7 @@ export enum FetchStatus {
 }
 
 export interface FetchQueueUpdate {
-  noOfInProgess: number;
+  noOfInProgress: number;
   noOfPending: number;
   state: QueueState;
 }
@@ -65,10 +65,10 @@ export class FetchQueue {
   getUpdates = (): Observable<FetchQueueUpdate> => this.updates.asObservable();
 
   private getUpdate = (state: QueueState): FetchQueueUpdate => {
-    const noOfStarted = Object.keys(state).filter(key => state[key].state === FetchStatus.InProgress).length;
-    const noOfNotStarted = Object.keys(state).filter(key => state[key].state === FetchStatus.Pending).length;
+    const noOfInProgress = Object.keys(state).filter(key => state[key].state === FetchStatus.InProgress).length;
+    const noOfPending = Object.keys(state).filter(key => state[key].state === FetchStatus.Pending).length;
 
-    return { noOfPending: noOfNotStarted, noOfInProgess: noOfStarted, state };
+    return { noOfPending, noOfInProgress, state };
   };
 
   private publishUpdate = (update: FetchQueueUpdate, debug: boolean): void => {
@@ -87,7 +87,7 @@ export class FetchQueue {
       return all;
     }, [] as Array<{ id: string; state: FetchStatus }>);
 
-    console.log('FetchQueue noOfStarted', update.noOfInProgess);
+    console.log('FetchQueue noOfStarted', update.noOfInProgress);
     console.log('FetchQueue noOfNotStarted', update.noOfPending);
     console.log('FetchQueue state', entriesWithoutOptions);
   };

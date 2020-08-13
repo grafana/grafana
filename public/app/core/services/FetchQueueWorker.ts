@@ -23,7 +23,7 @@ export class FetchQueueWorker {
         filter(({ noOfPending }) => noOfPending > 0), // no reason to act if there is nothing to act upon
         // Using concatMap instead of mergeMap so that the order with apiRequests first is preserved
         // https://rxjs.dev/api/operators/concatMap
-        concatMap(({ state, noOfInProgess }) => {
+        concatMap(({ state, noOfInProgress }) => {
           const apiRequests = Object.keys(state)
             .filter(k => state[k].state === FetchStatus.Pending && !isDataQuery(state[k].options.url))
             .reduce((all, key) => {
@@ -44,7 +44,7 @@ export class FetchQueueWorker {
           // this means we can end up with a negative value.
           // Because the way Array.toSlice works with negative numbers we use Math.max below.
           const noOfAllowedDataRequests = Math.max(
-            MAX_CONCURRENT_DATA_REQUESTS - noOfInProgess - apiRequests.length,
+            MAX_CONCURRENT_DATA_REQUESTS - noOfInProgress - apiRequests.length,
             0
           );
           const dataRequestToFetch = dataRequests.slice(0, noOfAllowedDataRequests);
