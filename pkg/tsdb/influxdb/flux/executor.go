@@ -9,9 +9,9 @@ import (
 	"github.com/influxdata/influxdb-client-go/api"
 )
 
-// ExecuteQuery runs a flux query using the QueryModel to interpolate the query and the runner to execute it.
+// executeQuery runs a flux query using the QueryModel to interpolate the query and the runner to execute it.
 // maxSeries somehow limits the response.
-func ExecuteQuery(ctx context.Context, query QueryModel, runner queryRunner, maxSeries int) (dr backend.DataResponse) {
+func executeQuery(ctx context.Context, query QueryModel, runner queryRunner, maxSeries int) (dr backend.DataResponse) {
 	dr = backend.DataResponse{}
 
 	flux, err := Interpolate(query)
@@ -20,10 +20,11 @@ func ExecuteQuery(ctx context.Context, query QueryModel, runner queryRunner, max
 		return
 	}
 
-	glog.Debug("Flux", "interpolated query", flux)
+	glog.Debug("Executing Flux query", "interpolated query", flux)
 
 	tables, err := runner.runQuery(ctx, flux)
 	if err != nil {
+		glog.Warn("Flux query failed", "err", err, "query", flux)
 		dr.Error = err
 		metaFrame := data.NewFrame("meta for error")
 		metaFrame.Meta = &data.FrameMeta{
@@ -32,6 +33,7 @@ func ExecuteQuery(ctx context.Context, query QueryModel, runner queryRunner, max
 		dr.Frames = append(dr.Frames, metaFrame)
 		return
 	}
+	defer tables.Close()
 
 	dr = readDataFrames(tables, int(float64(query.MaxDataPoints)*1.5), maxSeries)
 
@@ -46,6 +48,7 @@ func ExecuteQuery(ctx context.Context, query QueryModel, runner queryRunner, max
 }
 
 func readDataFrames(result *api.QueryTableResult, maxPoints int, maxSeries int) (dr backend.DataResponse) {
+	glog.Debug("Reading data frames from query result", "maxPoints", maxPoints, "maxSeries", maxSeries)
 	dr = backend.DataResponse{}
 
 	builder := &FrameBuilder{
@@ -69,7 +72,7 @@ func readDataFrames(result *api.QueryTableResult, maxPoints int, maxSeries int) 
 		}
 
 		if builder.frames == nil {
-			dr.Error = fmt.Errorf("Invalid state")
+			dr.Error = fmt.Errorf("invalid state")
 			return dr
 		}
 
