@@ -9,7 +9,7 @@
           <span class="dashlist-title">
             {{dash.title}}
           </span>
-          <span class="dashlist-folder">
+          <span ng-if="dash.folderTitle" class="dashlist-folder">
             ({{dash.folderTitle}})
           </span>
           <span class="dashlist-star" ng-click="ctrl.starDashboard(dash, $event)">
