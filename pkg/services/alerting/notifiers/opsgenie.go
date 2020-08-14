@@ -37,12 +37,12 @@ func init() {
 			},
 			{
 				Label:        "Auto close incidents",
-				Element:      alerting.ElementTypeSwitch,
+				Element:      alerting.ElementTypeCheckbox,
 				Description:  "Automatically close alerts in OpsGenie once the alert goes back to ok.",
 				PropertyName: "autoClose",
 			}, {
 				Label:        "Override priority",
-				Element:      alerting.ElementTypeSwitch,
+				Element:      alerting.ElementTypeCheckbox,
 				Description:  "Allow the alert priority to be set using the og_priority tag",
 				PropertyName: "overridePriority",
 			},

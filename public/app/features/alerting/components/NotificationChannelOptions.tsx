@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { Button, Field, FormAPI, Input } from '@grafana/ui';
+import { Button, Checkbox, Field, FormAPI, Input } from '@grafana/ui';
 import { OptionElement } from './OptionElement';
 import { NotificationChannelDTO, NotificationChannelOption, NotificationChannelSecureFields } from '../../../types';
 
@@ -35,6 +35,16 @@ export const NotificationChannelOptions: FC<Props> = ({
           return null;
         }
 
+        if (option.element === 'checkbox') {
+          return (
+            <Checkbox
+              name={option.secure ? `secureSettings.${option.propertyName}` : `settings.${option.propertyName}`}
+              ref={register}
+              label={option.label}
+              description={option.description}
+            />
+          );
+        }
         return (
           <Field
             key={key}

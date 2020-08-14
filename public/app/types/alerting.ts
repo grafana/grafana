@@ -106,7 +106,7 @@ export interface ChannelTypeSettings {
 }
 
 export interface NotificationChannelOption {
-  element: 'input' | 'select' | 'switch' | 'textarea';
+  element: 'input' | 'select' | 'checkbox' | 'textarea';
   inputType: string;
   label: string;
   description: string;

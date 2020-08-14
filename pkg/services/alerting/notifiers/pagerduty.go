@@ -54,13 +54,13 @@ func init() {
 			},
 			{
 				Label:        "Auto resolve incidents",
-				Element:      alerting.ElementTypeSwitch,
+				Element:      alerting.ElementTypeCheckbox,
 				Description:  "Resolve incidents in pagerduty once the alert goes back to ok.",
 				PropertyName: "autoResolve",
 			},
 			{
 				Label:        "Include message in details",
-				Element:      alerting.ElementTypeSwitch,
+				Element:      alerting.ElementTypeCheckbox,
 				Description:  "Move the alert message from the PD summary into the custom details. This changes the custom details object and may break event rules you have configured",
 				PropertyName: "messageInDetails",
 			},

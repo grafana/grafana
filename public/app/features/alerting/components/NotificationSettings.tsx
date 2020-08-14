@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { CollapsableSection, Field, InfoBox, Input, Switch } from '@grafana/ui';
+import { Checkbox, CollapsableSection, Field, InfoBox, Input } from '@grafana/ui';
 import { NotificationSettingsProps } from './NotificationChannelForm';
 
 interface Props extends NotificationSettingsProps {
@@ -9,27 +9,31 @@ interface Props extends NotificationSettingsProps {
 export const NotificationSettings: FC<Props> = ({ currentFormValues, imageRendererAvailable, register }) => {
   return (
     <CollapsableSection label="Notification settings" isOpen={false}>
-      <Field label="Default" description="Use this notification for all alerts">
-        <Switch name="isDefault" ref={register} />
-      </Field>
-      <Field label="Include image" description="Captures an image and include it in the notification">
-        <Switch name="settings.uploadImage" ref={register} />
-      </Field>
+      <Checkbox name="isDefault" ref={register} label="Default" description="Use this notification for all alerts" />
+      <Checkbox
+        name="settings.uploadImage"
+        ref={register}
+        label="Include image"
+        description="Captures an image and include it in the notification"
+      />
       {currentFormValues.uploadImage && !imageRendererAvailable && (
         <InfoBox title="No image renderer available/installed">
           Grafana cannot find an image renderer to capture an image for the notification. Please make sure the Grafana
           Image Renderer plugin is installed. Please contact your Grafana administrator to install the plugin.
         </InfoBox>
       )}
-      <Field
+      <Checkbox
+        name="disableResolveMessage"
+        ref={register}
         label="Disable Resolve Message"
         description="Disable the resolve message [OK] that is sent when alerting state returns to false"
-      >
-        <Switch name="disableResolveMessage" ref={register} />
-      </Field>
-      <Field label="Send reminders" description="Send additional notifications for triggered alerts">
-        <Switch name="sendReminder" ref={register} />
-      </Field>
+      />
+      <Checkbox
+        name="sendReminder"
+        ref={register}
+        label="Send reminders"
+        description="Send additional notifications for triggered alerts"
+      />
       {currentFormValues.sendReminder && (
         <>
           <Field

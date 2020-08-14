@@ -67,7 +67,7 @@ const (
 	// ElementTypeSelect will render a select
 	ElementTypeSelect = "select"
 	// ElementTypeSwitch will render a switch
-	ElementTypeSwitch = "switch"
+	ElementTypeCheckbox = "checkbox"
 	// ElementTypeTextArea will render a textarea
 	ElementTypeTextArea = "textarea"
 )

@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { FormAPI, Input, InputControl, Select, Switch, TextArea } from '@grafana/ui';
+import { FormAPI, Input, InputControl, Select, TextArea } from '@grafana/ui';
 import { NotificationChannelOption } from '../../../types';
 
 interface Props extends Pick<FormAPI<any>, 'register' | 'control'> {
@@ -32,16 +32,6 @@ export const OptionElement: FC<Props> = ({ control, option, register }) => {
           ref={register({
             required: option.required ? 'Required' : false,
             validate: v => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
-          })}
-        />
-      );
-
-    case 'switch':
-      return (
-        <Switch
-          name={`${modelValue}`}
-          ref={register({
-            required: option.required ? 'Required' : false,
           })}
         />
       );

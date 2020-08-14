@@ -23,7 +23,7 @@ func init() {
 			{
 				Label:        "Single email",
 				Description:  "Send a single email to all recipients",
-				Element:      alerting.ElementTypeSwitch,
+				Element:      alerting.ElementTypeCheckbox,
 				PropertyName: "singleEmail",
 			},
 			{

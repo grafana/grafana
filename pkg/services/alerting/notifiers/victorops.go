@@ -37,7 +37,7 @@ func init() {
 			{
 				Label:        "Auto resolve incidents",
 				Description:  "Resolve incidents in VictorOps once the alert goes back to ok.",
-				Element:      alerting.ElementTypeSwitch,
+				Element:      alerting.ElementTypeCheckbox,
 				PropertyName: "autoResolve",
 			},
 		},
