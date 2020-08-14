@@ -45,7 +45,7 @@ func TestMissingPath(t *testing.T) {
 
 			cmd := Command{}
 			err = cmd.lsCommand(c)
-			assert.Truef(t, errors.Is(err, tc.error), "expected '%s', got '%s'", tc.error.Error(), err.Error())
+			assert.Equal(t, tc.error, err)
 		})
 	}
 }
