@@ -22,6 +22,12 @@ func TestLogFile(t *testing.T) {
 	fileLogWrite := NewFileWriter()
 	require.NotNil(t, fileLogWrite)
 
+	t.Cleanup(func() {
+		fileLogWrite.Close()
+		err := os.Remove(fileLogWrite.Filename)
+		require.NoError(t, err)
+	})
+
 	fileLogWrite.Filename = "grafana_test.log"
 	err := fileLogWrite.Init()
 	require.NoError(t, err)
@@ -38,8 +44,4 @@ func TestLogFile(t *testing.T) {
 
 		assert.Equal(t, 3, fileLogWrite.maxlines_curlines)
 	})
-
-	fileLogWrite.Close()
-	err = os.Remove(fileLogWrite.Filename)
-	require.NoError(t, err)
 }
