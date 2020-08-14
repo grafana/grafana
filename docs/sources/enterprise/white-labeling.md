@@ -68,7 +68,7 @@ The configuration file in Grafana Enterprise contains the following options. Eac
 ;apple_touch_icon =
 ```
 
-Below is an example for how to replace the default footer and help links with two custom links.
+Below is an example for how to replace the default footer and help links with two custom links.  (This will also update the links in the 'Help' that you can see once you sign into Grafana, which is located via the question mark icon at the the bottom left hand corner of the screen).  
 
 ```ini
 footer_links = support guides
