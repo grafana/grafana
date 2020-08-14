@@ -1,0 +1,36 @@
+---
+name: CI
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build:
+    name: Build a Docker image
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: percona-platform/checkout@v2
+
+      - name: Enable experimental Docker features for --squash flag
+        run: sudo .github/workflows/enable-docker-experimental.sh
+
+      - name: Login to Docker registry
+        run: docker login -u $GITHUB_ACTOR -p ${{ secrets.GITHUB_TOKEN }} docker.pkg.github.com
+
+      - name: Build a Docker image
+        run: docker build --squash --tag docker.pkg.github.com/percona-platform/grafana/grafana:dev .
+
+      - name: Push the Docker image to the registry
+        run: docker push docker.pkg.github.com/percona-platform/grafana/grafana:dev
+
+      - name: Print usefull info on failure
+        if: ${{ failure() }}
+        run: |
+          pwd
+          git status
+          env
