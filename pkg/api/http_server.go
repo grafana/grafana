@@ -386,7 +386,12 @@ func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 		ctx.Resp.WriteHeader(200)
 	}
 
-	dataBytes, _ := data.EncodePretty()
+	dataBytes, err := data.EncodePretty()
+	if err != nil {
+		hs.log.Error("Failed to encode data", "err", err)
+		return
+	}
+
 	if _, err := ctx.Resp.Write(dataBytes); err != nil {
 		hs.log.Error("Failed to write to response", "err", err)
 	}
