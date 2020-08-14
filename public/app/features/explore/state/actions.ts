@@ -1,7 +1,7 @@
 // Libraries
 import { map, throttleTime } from 'rxjs/operators';
 import { identity } from 'rxjs';
-import { ActionCreatorWithPayload, PayloadAction } from '@reduxjs/toolkit';
+import { PayloadAction } from '@reduxjs/toolkit';
 import { DataSourceSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import {
@@ -77,10 +77,6 @@ import {
   splitCloseAction,
   splitOpenAction,
   syncTimesAction,
-  toggleGraphAction,
-  ToggleGraphPayload,
-  toggleTableAction,
-  ToggleTablePayload,
   updateDatasourceInstanceAction,
   updateUIStateAction,
   changeLoadingStateAction,
@@ -753,46 +749,6 @@ export function syncTimes(exploreId: ExploreId): ThunkResult<void> {
     dispatch(stateSave());
   };
 }
-
-/**
- * Creates action to collapse graph/logs/table panel. When panel is collapsed,
- * queries won't be run
- */
-const togglePanelActionCreator = (
-  actionCreator: ActionCreatorWithPayload<ToggleGraphPayload> | ActionCreatorWithPayload<ToggleTablePayload>
-) => (exploreId: ExploreId, isPanelVisible: boolean): ThunkResult<void> => {
-  return dispatch => {
-    let uiFragmentStateUpdate: Partial<ExploreUIState>;
-    const shouldRunQueries = !isPanelVisible;
-
-    switch (actionCreator.type) {
-      case toggleGraphAction.type:
-        uiFragmentStateUpdate = { showingGraph: !isPanelVisible };
-        break;
-      case toggleTableAction.type:
-        uiFragmentStateUpdate = { showingTable: !isPanelVisible };
-        break;
-    }
-
-    dispatch(actionCreator({ exploreId }));
-    // The switch further up is exhaustive so uiFragmentStateUpdate should definitely be initialized
-    dispatch(updateExploreUIState(exploreId, uiFragmentStateUpdate!));
-
-    if (shouldRunQueries) {
-      dispatch(runQueries(exploreId));
-    }
-  };
-};
-
-/**
- * Expand/collapse the graph result viewer. When collapsed, graph queries won't be run.
- */
-export const toggleGraph = togglePanelActionCreator(toggleGraphAction);
-
-/**
- * Expand/collapse the table result viewer. When collapsed, table queries won't be run.
- */
-export const toggleTable = togglePanelActionCreator(toggleTableAction);
 
 /**
  * Change logs deduplication strategy and update URL.

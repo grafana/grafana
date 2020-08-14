@@ -37,7 +37,6 @@ import {
   refreshExplore,
   scanStart,
   setQueries,
-  toggleGraph,
   updateTimeRange,
 } from './state/actions';
 
@@ -118,7 +117,6 @@ export interface ExploreProps {
   showingTable?: boolean;
   timeZone?: TimeZone;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
-  toggleGraph: typeof toggleGraph;
   queryResponse: PanelData;
   originPanelId: number;
   addQueryRow: typeof addQueryRow;
@@ -269,11 +267,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.props.scanStopAction({ exploreId: this.props.exploreId });
   };
 
-  onToggleGraph = (showingGraph: boolean) => {
-    const { toggleGraph, exploreId } = this.props;
-    toggleGraph(exploreId, showingGraph);
-  };
-
   onUpdateTimeRange = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
@@ -398,7 +391,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                               showingGraph={showingGraph}
                               showingTable={showingTable}
                               timeZone={timeZone}
-                              onToggleGraph={this.onToggleGraph}
                               onUpdateTimeRange={this.onUpdateTimeRange}
                               showBars={false}
                               showLines={true}
@@ -535,7 +527,6 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   scanStopAction,
   setQueries,
   updateTimeRange,
-  toggleGraph,
   addQueryRow,
 };
 

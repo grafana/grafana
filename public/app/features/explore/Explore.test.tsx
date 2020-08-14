@@ -5,7 +5,6 @@ import { ExploreId } from 'app/types/explore';
 import { shallow } from 'enzyme';
 import { Explore, ExploreProps } from './Explore';
 import { scanStopAction } from './state/actionTypes';
-import { toggleGraph } from './state/actions';
 import { SecondaryActions } from './SecondaryActions';
 import { getTheme } from '@grafana/ui';
 
@@ -71,7 +70,6 @@ const dummyProps: ExploreProps = {
   showingTable: false,
   timeZone: 'UTC',
   onHiddenSeriesChanged: jest.fn(),
-  toggleGraph: toggleGraph,
   queryResponse: {
     state: LoadingState.NotStarted,
     series: [],

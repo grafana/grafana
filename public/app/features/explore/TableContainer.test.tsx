@@ -2,7 +2,6 @@ import React from 'react';
 import { render, shallow } from 'enzyme';
 import { TableContainer } from './TableContainer';
 import { DataFrame } from '@grafana/data';
-import { toggleTable } from './state/actions';
 import { ExploreId } from 'app/types/explore';
 
 describe('TableContainer', () => {
@@ -14,7 +13,6 @@ describe('TableContainer', () => {
       onCellFilterAdded: jest.fn(),
       showingTable: true,
       tableResult: {} as DataFrame,
-      toggleTable: {} as typeof toggleTable,
       splitOpen: (() => {}) as any,
       range: {} as any,
     };
@@ -35,7 +33,6 @@ describe('TableContainer', () => {
         fields: [],
         length: 0,
       } as DataFrame,
-      toggleTable: {} as typeof toggleTable,
       splitOpen: (() => {}) as any,
       range: {} as any,
     };

@@ -59,9 +59,7 @@ import {
   SplitCloseActionPayload,
   splitOpenAction,
   syncTimesAction,
-  toggleGraphAction,
   toggleLogLevelAction,
-  toggleTableAction,
   updateDatasourceInstanceAction,
   updateUIStateAction,
   cancelQueriesAction,
@@ -406,24 +404,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
 
   if (updateUIStateAction.match(action)) {
     return { ...state, ...action.payload };
-  }
-
-  if (toggleGraphAction.match(action)) {
-    const showingGraph = !state.showingGraph;
-    if (showingGraph) {
-      return { ...state, showingGraph };
-    }
-
-    return { ...state, showingGraph };
-  }
-
-  if (toggleTableAction.match(action)) {
-    const showingTable = !state.showingTable;
-    if (showingTable) {
-      return { ...state, showingTable };
-    }
-
-    return { ...state, showingTable };
   }
 
   if (queriesImportedAction.match(action)) {

@@ -5,7 +5,7 @@ import { DataFrame, TimeRange, ValueLinkConfig } from '@grafana/data';
 import { Collapse, Table } from '@grafana/ui';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
-import { splitOpen, toggleTable } from './state/actions';
+import { splitOpen } from './state/actions';
 import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
 import { MetaInfoText } from './MetaInfoText';
@@ -17,16 +17,26 @@ interface TableContainerProps {
   loading: boolean;
   width: number;
   onCellFilterAdded?: (filter: FilterItem) => void;
-  showingTable: boolean;
   tableResult?: DataFrame;
-  toggleTable: typeof toggleTable;
   splitOpen: typeof splitOpen;
   range: TimeRange;
 }
 
-export class TableContainer extends PureComponent<TableContainerProps> {
-  onClickTableButton = () => {
-    this.props.toggleTable(this.props.exploreId, this.props.showingTable);
+interface TableContainerState {
+  tableContainerOpen: boolean;
+}
+
+export class TableContainer extends PureComponent<TableContainerProps, TableContainerState> {
+  state = {
+    tableContainerOpen: true,
+  };
+
+  onToggleCollapse = () => {
+    this.setState(prevState => {
+      return {
+        tableContainerOpen: !prevState.tableContainerOpen,
+      };
+    });
   };
 
   getTableHeight() {
@@ -41,7 +51,8 @@ export class TableContainer extends PureComponent<TableContainerProps> {
   }
 
   render() {
-    const { loading, onCellFilterAdded, showingTable, tableResult, width, splitOpen, range } = this.props;
+    const { loading, onCellFilterAdded, tableResult, width, splitOpen, range } = this.props;
+    const { tableContainerOpen } = this.state;
 
     const height = this.getTableHeight();
     const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
@@ -59,7 +70,13 @@ export class TableContainer extends PureComponent<TableContainerProps> {
     }
 
     return (
-      <Collapse label="Table" loading={loading} collapsible isOpen={showingTable} onToggle={this.onClickTableButton}>
+      <Collapse
+        label="Table"
+        loading={loading}
+        collapsible
+        isOpen={tableContainerOpen}
+        onToggle={this.onToggleCollapse}
+      >
         {hasTableResult ? (
           <Table data={tableResult!} width={tableWidth} height={height} onCellFilterAdded={onCellFilterAdded} />
         ) : (
@@ -74,13 +91,12 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
-  const { loading: loadingInState, showingTable, tableResult, range } = item;
+  const { loading: loadingInState, tableResult, range } = item;
   const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
-  return { loading, showingTable, tableResult, range };
+  return { loading, tableResult, range };
 }
 
 const mapDispatchToProps = {
-  toggleTable,
   splitOpen,
 };
 

@@ -52,19 +52,20 @@ interface Props extends Themeable {
   showingTable?: boolean;
   timeZone?: TimeZone;
   onUpdateTimeRange: (absoluteRange: AbsoluteTimeRange) => void;
-  onToggleGraph?: (showingGraph: boolean) => void;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
 }
 
 interface State {
   hiddenSeries: string[];
   showAllTimeSeries: boolean;
+  graphContainerOpen: boolean;
 }
 
 class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
   state: State = {
     hiddenSeries: [],
     showAllTimeSeries: false,
+    graphContainerOpen: true,
   };
 
   onShowAllTimeSeries = () => {
@@ -73,11 +74,12 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
     });
   };
 
-  onClickGraphButton = () => {
-    const { onToggleGraph, showingGraph } = this.props;
-    if (onToggleGraph) {
-      onToggleGraph(showingGraph ?? false);
-    }
+  onToggleCollapse = () => {
+    this.setState(prevState => {
+      return {
+        graphContainerOpen: !prevState.graphContainerOpen,
+      };
+    });
   };
 
   onChangeTime = (from: number, to: number) => {
@@ -117,7 +119,6 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
     const height = showPanel === false ? 100 : showingGraph && showingTable ? 200 : 400;
     const lineWidth = showLines ? 1 : 5;
     const seriesToShow = showAllTimeSeries ? series : series.slice(0, MAX_NUMBER_OF_TIME_SERIES);
-
     return (
       <GraphSeriesToggler series={seriesToShow} onHiddenSeriesChanged={onHiddenSeriesChanged}>
         {({ onSeriesToggle, toggledSeries }: GraphSeriesTogglerAPI) => {
@@ -150,8 +151,8 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
   };
 
   render() {
-    const { series, showPanel, showingGraph, loading, theme } = this.props;
-    const { showAllTimeSeries } = this.state;
+    const { series, showPanel, loading, theme } = this.props;
+    const { showAllTimeSeries, graphContainerOpen } = this.state;
     const style = getStyles(theme);
 
     return (
@@ -171,9 +172,9 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
           <Collapse
             label="Graph"
             collapsible
-            isOpen={showingGraph}
+            isOpen={graphContainerOpen}
             loading={loading}
-            onToggle={this.onClickGraphButton}
+            onToggle={this.onToggleCollapse}
           >
             {this.renderGraph()}
           </Collapse>
