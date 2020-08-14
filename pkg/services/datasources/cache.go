@@ -8,10 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type CacheService interface {
-	GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
+	GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool,
+		sqlStore *sqlstore.SqlStore) (*models.DataSource, error)
 }
 
 type CacheServiceImpl struct {
@@ -31,7 +33,8 @@ func (dc *CacheServiceImpl) Init() error {
 	return nil
 }
 
-func (dc *CacheServiceImpl) GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error) {
+func (dc *CacheServiceImpl) GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool,
+	sqlStore *sqlstore.SqlStore) (*models.DataSource, error) {
 	cacheKey := fmt.Sprintf("ds-%d", datasourceID)
 
 	if !skipCache {
@@ -43,11 +46,24 @@ func (dc *CacheServiceImpl) GetDatasource(datasourceID int64, user *models.Signe
 		}
 	}
 
-	query := models.GetDataSourceByIdQuery{Id: datasourceID, OrgId: user.OrgId}
-	if err := dc.Bus.Dispatch(&query); err != nil {
-		return nil, err
+	var ds *models.DataSource
+	if sqlStore == nil {
+		// Legacy way, should migrate away from this
+		plog.Debug("Querying for data source via bus", "id", datasourceID, "orgId", user.OrgId)
+		query := models.GetDataSourceByIdQuery{Id: datasourceID, OrgId: user.OrgId}
+		if err := dc.Bus.Dispatch(&query); err != nil {
+			return nil, err
+		}
+		ds = query.Result
+	} else {
+		plog.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgId)
+		var err error
+		ds, err = sqlStore.GetDataSourceByID(datasourceID, user.OrgId)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	dc.CacheService.Set(cacheKey, query.Result, time.Second*5)
-	return query.Result, nil
+	dc.CacheService.Set(cacheKey, ds, time.Second*5)
+	return ds, nil
 }
