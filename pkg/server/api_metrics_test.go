@@ -289,7 +289,7 @@ func startGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SqlS
 
 	// Wait for Grafana to be ready
 	addr := listener.Addr().String()
-	resp, err := http.Get(fmt.Sprintf("http://%s/healthz", addr))
+	resp, err := http.Get(fmt.Sprintf("http://%s/api/health", addr))
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	resp.Body.Close()

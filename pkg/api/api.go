@@ -436,9 +436,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
 
 	// Health check
-	r.Get("/healthz", func(c *models.ReqContext) {
-		c.JsonOK("OK")
-	})
+	r.Get("/api/health", hs.healthHandler)
 
 	r.Get("/*", reqSignedIn, hs.Index)
 }
