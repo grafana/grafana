@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import { TableCellProps } from './types';
 import { formattedValueToString, LinkModel } from '@grafana/data';
-import { Tooltip } from '../Tooltip/Tooltip';
 
 export const DefaultCell: FC<TableCellProps> = props => {
   const { field, cell, tableStyles, row } = props;
@@ -19,27 +18,25 @@ export const DefaultCell: FC<TableCellProps> = props => {
   return (
     <div className={tableStyles.tableCell}>
       {link ? (
-        <Tooltip content={link.title}>
-          <a
-            href={link.href}
-            onClick={
-              link.onClick
-                ? event => {
-                    // Allow opening in new tab
-                    if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
-                      event.preventDefault();
-                      link!.onClick(event);
-                    }
+        <a
+          href={link.href}
+          onClick={
+            link.onClick
+              ? event => {
+                  // Allow opening in new tab
+                  if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
+                    event.preventDefault();
+                    link!.onClick(event);
                   }
-                : undefined
-            }
-            target={link.target}
-            title={link.title}
-            className={tableStyles.tableCellLink}
-          >
-            {value}
-          </a>
-        </Tooltip>
+                }
+              : undefined
+          }
+          target={link.target}
+          title={link.title}
+          className={tableStyles.tableCellLink}
+        >
+          {value}
+        </a>
       ) : (
         value
       )}
