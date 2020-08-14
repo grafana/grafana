@@ -33,7 +33,6 @@ func executeQuery(ctx context.Context, query QueryModel, runner queryRunner, max
 		dr.Frames = append(dr.Frames, metaFrame)
 		return
 	}
-	defer tables.Close()
 
 	dr = readDataFrames(tables, int(float64(query.MaxDataPoints)*1.5), maxSeries)
 
