@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -314,7 +315,7 @@ func TestDeletingAlerts(t *testing.T) {
 
 	t.Run("No error when deleting non existing alert", func(t *testing.T) { // Is that what we want?
 		err := DeleteAlert(&models.DeleteAlertCommand{Id: 1})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Can delete existing alert", func(t *testing.T) {
@@ -334,40 +335,40 @@ func TestDeletingAlerts(t *testing.T) {
 		}`)
 		var cmd models.CreateAlertCommand
 		err := json.Unmarshal(settings, &cmd)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		cmd.OrgId = 1
 
 		// create a notification
 		notification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
 		err = CreateAlertNotificationCommand(&notification)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		// set the generated notification to the command
 		cmd.Notifications[0].UID = notification.Uid
 
 		err = CreateAlert(&cmd)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// assert tag is associated with the newly created alert
 		alertTags, err := getAlertTags(1)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotEmpty(t, alertTags)
 
 		// assert notitication is associated with the newly created alert
 		notificationIDs, err := getAlertNotificationIDs(1)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotEmpty(t, notificationIDs)
 
 		// actual test starts here
 		err = DeleteAlert(&models.DeleteAlertCommand{Id: 1})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		alertTags, err = getAlertTags(1)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Empty(t, alertTags)
 
 		notificationIDs, err = getAlertNotificationIDs(1)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Empty(t, notificationIDs)
 	})
 }
@@ -383,20 +384,20 @@ func TestCreatingAlerts(t *testing.T) {
 
 		// setup up code
 		cmd, err := loadTestFile("./testdata/1-cloud_monitoring-alert.json")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		cmd.OrgId = 1
 
 		// create a notification
 		notification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
 		err = CreateAlertNotificationCommand(&notification)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		// set the generated notification to the command
 		cmd.Notifications[0].UID = notification.Uid
 
 		// actual test starts here
 		err = CreateAlert(&cmd)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, cmd.Result)
 
 		q := &models.GetAlertByIdQuery{
@@ -404,7 +405,7 @@ func TestCreatingAlerts(t *testing.T) {
 		}
 		err = GetAlertById(q)
 		alert := q.Result
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, int64(1), alert.OrgId)
 		assert.Equal(t, "Test cloud monitoring standalone alert", alert.Name)
 		assert.Equal(t, int64(10), alert.Frequency)
@@ -421,13 +422,13 @@ func TestCreatingAlerts(t *testing.T) {
 			checkTags(sess, t, alert)
 			return nil
 		})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		checkNotifications(t, alert, notification.Uid)
 	})
 
 	t.Run("Fails to create alert with unparsable for", func(t *testing.T) {
 		cmd, err := loadTestFile("./testdata/1-cloud_monitoring-alert.json")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		cmd.OrgId = 1
 		cmd.For = "some text"
 
@@ -464,30 +465,30 @@ func TestUpdatingAlerts(t *testing.T) {
 		}`)
 		var cmd models.CreateAlertCommand
 		err := json.Unmarshal(settings, &cmd)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		cmd.OrgId = 1
 
 		// create a notification
 		notification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
 		err = CreateAlertNotificationCommand(&notification)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		// set the generated notification to the command
 		cmd.Notifications[0].UID = notification.Uid
 
 		err = CreateAlert(&cmd)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// assert tag is associated with the newly created alert
 		alertTags, err := getAlertTags(1)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Len(t, alertTags, 1)
 		assert.Equal(t, alertTags[0].Key, "foo")
 		assert.Equal(t, alertTags[0].Value, "bar")
 
 		// assert notitication is associated with the newly created alert
 		notificationIDs, err := getAlertNotificationIDs(1)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Len(t, alertTags, 1)
 		id := notificationIDs[0]
 		q := models.GetAlertNotificationUidQuery{
@@ -495,7 +496,7 @@ func TestUpdatingAlerts(t *testing.T) {
 			OrgId: 1,
 		}
 		err = db.GetAlertNotificationUidWithId(&q)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, "notifier1", q.Result)
 
 		//actual test starts here
@@ -514,7 +515,7 @@ func TestUpdatingAlerts(t *testing.T) {
 		}`)
 		var updateCMD models.UpdateAlertCommand
 		err = json.Unmarshal(settings, &updateCMD)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		updateCMD.OrgID = 1
 		updateCMD.ID = 1
@@ -522,12 +523,12 @@ func TestUpdatingAlerts(t *testing.T) {
 		// create a notification
 		notification = models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
 		err = CreateAlertNotificationCommand(&notification)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		// set the generated notification to the command
 		cmd.Notifications[0].UID = notification.Uid
 
 		err = UpdateAlert(&updateCMD)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		t.Run("alert fileds have been updated", func(t *testing.T) {
 			qq := &models.GetAlertByIdQuery{
@@ -535,7 +536,7 @@ func TestUpdatingAlerts(t *testing.T) {
 			}
 			err = GetAlertById(qq)
 			alert := qq.Result
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, int64(1), alert.OrgId)
 			assert.Equal(t, "Different alerting title", alert.Name)
 			assert.Equal(t, int64(20), alert.Frequency)
@@ -548,7 +549,7 @@ func TestUpdatingAlerts(t *testing.T) {
 
 		t.Run("alert tags have been updated", func(t *testing.T) {
 			alertTags, err = getAlertTags(1)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Len(t, alertTags, 1)
 			assert.Equal(t, alertTags[0].Key, "something")
 			assert.Equal(t, alertTags[0].Value, "else")
@@ -556,7 +557,7 @@ func TestUpdatingAlerts(t *testing.T) {
 
 		t.Run("alert notifications have been updated", func(t *testing.T) {
 			notificationIDs, err = getAlertNotificationIDs(1)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Len(t, alertTags, 1)
 			id = notificationIDs[0]
 			q = models.GetAlertNotificationUidQuery{
@@ -564,7 +565,7 @@ func TestUpdatingAlerts(t *testing.T) {
 				OrgId: 1,
 			}
 			err = db.GetAlertNotificationUidWithId(&q)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, "notifier2", q.Result)
 		})
 	})
@@ -644,11 +645,11 @@ func checkTags(sess *DBSession, t *testing.T, alert *models.Alert) {
 
 	t.Run("record exists in alert_rule_tag table", func(t *testing.T) {
 		tag, err := getTag(sess, "foo", "bar")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, tag)
 
 		alertTags, err := getAlertTags(alert.Id)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		tagFound := false
 		for _, t := range alertTags {
 			if t.Id == tag.Id {
@@ -669,11 +670,11 @@ func checkNotifications(t *testing.T, alert *models.Alert, uid string) {
 	t.Run("record exists in alert_rule_notification table", func(t *testing.T) {
 		q := models.GetAlertNotificationsWithUidQuery{OrgId: alert.OrgId, Uid: uid}
 		err := GetAlertNotificationsWithUid(&q)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, q.Result)
 
 		notificationIDs, err := getAlertNotificationIDs(alert.Id)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		notificationsFound := false
 		for _, id := range notificationIDs {
 			if id == q.Result.Id {
