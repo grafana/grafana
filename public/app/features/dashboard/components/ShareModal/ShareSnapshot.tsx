@@ -14,6 +14,7 @@ const expireOptions: Array<SelectableValue<number>> = [
   { label: '1 Hour', value: 60 * 60 },
   { label: '1 Day', value: 60 * 60 * 24 },
   { label: '7 Days', value: 60 * 60 * 24 * 7 },
+  { label: '90 Days', value: 60 * 60 * 24 * 90 },
 ];
 
 interface Props {
@@ -44,10 +45,10 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     this.state = {
       isLoading: false,
       step: 1,
-      selectedExpireOption: expireOptions[0],
-      snapshotExpires: expireOptions[0].value,
+      selectedExpireOption: expireOptions[4],
+      snapshotExpires: expireOptions[4].value,
       snapshotName: props.dashboard.title,
-      timeoutSeconds: 4,
+      timeoutSeconds: 30,
       snapshotUrl: '',
       deleteUrl: '',
       externalEnabled: false,
@@ -213,13 +214,33 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       <>
         <div>
           <p className="share-modal-info-text">
-            A snapshot is an instant way to share an interactive dashboard publicly. When created, we{' '}
-            <strong>strip sensitive data</strong> like queries (metric, template and annotation) and panel links,
-            leaving only the visible metric data and series names embedded into your dashboard.
+            A snapshot is a way to securely share your dashboard with Percona. When created, we{' '}
+            <strong>strip sensitive data </strong>
+            like queries (metrics, template variables, and annotations) along with panel links. The shared dashboard
+            will only be available for viewing by Percona Engineers, and the content on the dashboard will assist
+            Percona Engineers in troubleshooting your case.
           </p>
           <p className="share-modal-info-text">
-            Keep in mind, your <strong>snapshot can be viewed by anyone</strong> that has the link and can reach the
-            URL. Share wisely.
+            You can safely leave the defaults set as they are, but for further information:
+          </p>
+          <p className="share-modal-info-text">
+            <ul>
+              <li>
+                <strong>Snapshot Name:</strong> Give the snapshot a name so that Percona can distinguish your dashboard.
+              </li>
+              <li>
+                <strong>Expire:</strong> The time before snapshot expires. Configure lower if required. Percona
+                automatically purge shared dashboards after 90 days.
+              </li>
+              <li>
+                <strong>Timeout (seconds):</strong> Time the dashboard takes to load before the snapshot is generated.
+              </li>
+            </ul>
+          </p>
+          <p className="share-modal-info-text">
+            <strong>What to do next: </strong> Once you click <i>Share with Percona</i>, wait for the dashboard to be
+            generated, and you will be provided with a unique URL that then needs to be communicated to Percona via your
+            ticket.
           </p>
         </div>
         <Field label="Snapshot name">
@@ -268,13 +289,6 @@ export class ShareSnapshot extends PureComponent<Props, State> {
               Copy Link
             </ClipboardButton>
           </div>
-        </div>
-
-        <div className="pull-right" style={{ padding: '5px' }}>
-          Did you make a mistake?{' '}
-          <LinkButton variant="link" target="_blank" onClick={this.deleteSnapshot}>
-            delete snapshot.
-          </LinkButton>
         </div>
       </>
     );
