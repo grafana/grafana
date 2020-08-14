@@ -145,7 +145,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   // Use this for tab completion features, wont publish response to other components
   metadataRequest(url: string) {
-    return this._request(url, null, { method: 'GET', silent: true });
+    return this._request(url, null, { method: 'GET', hideFromInspector: true });
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {
@@ -159,7 +159,12 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     }
 
     const escapedValues = value.map(val => prometheusSpecialRegexEscape(val));
-    return escapedValues.join('|');
+
+    if (escapedValues.length === 1) {
+      return escapedValues[0];
+    }
+
+    return '(' + escapedValues.join('|') + ')';
   }
 
   targetContainsTemplate(target: PromQuery) {
@@ -327,21 +332,26 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const range = Math.ceil(end - start);
 
     // options.interval is the dynamically calculated interval
-    let interval: number = kbn.interval_to_seconds(options.interval);
+    let interval: number = kbn.intervalToSeconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query or datasource. or same as interval otherwise
-    const minInterval = kbn.interval_to_seconds(
+    const minInterval = kbn.intervalToSeconds(
       templateSrv.replace(target.interval || options.interval, options.scopedVars)
     );
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
     const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
-    let scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars(options.range) };
+    let scopedVars = {
+      ...options.scopedVars,
+      ...this.getRangeScopedVars(options.range),
+      ...this.getRateIntervalScopedVariable(interval, minInterval),
+    };
     // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
     if (interval !== adjustedInterval) {
       interval = adjustedInterval;
       scopedVars = Object.assign({}, options.scopedVars, {
         __interval: { text: interval + 's', value: interval + 's' },
         __interval_ms: { text: interval * 1000, value: interval * 1000 },
+        ...this.getRateIntervalScopedVariable(interval, minInterval),
         ...this.getRangeScopedVars(options.range),
       });
     }
@@ -378,6 +388,16 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this._addTracingHeaders(query, options);
 
     return query;
+  }
+
+  getRateIntervalScopedVariable(interval: number, minInterval: number) {
+    let intervalInSeconds = minInterval === interval ? kbn.intervalToSeconds(this.interval) : minInterval;
+    // if intervalInSeconds === 0 then we should fall back to the default 15 seconds
+    if (intervalInSeconds === 0) {
+      intervalInSeconds = 15;
+    }
+    const rateInterval = Math.max(interval + intervalInSeconds, 4 * intervalInSeconds);
+    return { __rate_interval: { text: rateInterval + 's', value: rateInterval + 's' } };
   }
 
   adjustInterval(interval: number, minInterval: number, range: number, intervalFactor: number) {
@@ -495,7 +515,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     const scopedVars = {
       __interval: { text: this.interval, value: this.interval },
-      __interval_ms: { text: kbn.interval_to_ms(this.interval), value: kbn.interval_to_ms(this.interval) },
+      __interval_ms: { text: kbn.intervalToMs(this.interval), value: kbn.intervalToMs(this.interval) },
       ...this.getRangeScopedVars(getTimeSrv().timeRange()),
     };
     const interpolated = templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
@@ -764,11 +784,9 @@ export function extractRuleMappingFromGroups(groups: any[]) {
 }
 
 export function prometheusRegularEscape(value: any) {
-  return typeof value === 'string' ? value.replace(/'/g, "\\\\'") : value;
+  return typeof value === 'string' ? value.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'") : value;
 }
 
 export function prometheusSpecialRegexEscape(value: any) {
-  return typeof value === 'string'
-    ? prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'))
-    : value;
+  return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
 }

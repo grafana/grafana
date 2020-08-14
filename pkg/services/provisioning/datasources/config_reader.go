@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"gopkg.in/yaml.v2"
 )
 
@@ -95,13 +97,8 @@ func (cr *configReader) validateDefaultUniqueness(datasources []*configs) error 
 				ds.OrgID = 1
 			}
 
-			if ds.Access == "" {
-				ds.Access = models.DS_ACCESS_PROXY
-			}
-
-			if ds.Access != models.DS_ACCESS_DIRECT && ds.Access != models.DS_ACCESS_PROXY {
-				cr.log.Warn("invalid access value, will use 'proxy' instead", "value", ds.Access)
-				ds.Access = models.DS_ACCESS_PROXY
+			if err := cr.validateAccessAndOrgID(ds); err != nil {
+				return fmt.Errorf("failed to provision %q data source: %w", ds.Name, err)
 			}
 
 			if ds.IsDefault {
@@ -119,5 +116,21 @@ func (cr *configReader) validateDefaultUniqueness(datasources []*configs) error 
 		}
 	}
 
+	return nil
+}
+
+func (cr *configReader) validateAccessAndOrgID(ds *upsertDataSourceFromConfig) error {
+	if err := utils.CheckOrgExists(ds.OrgID); err != nil {
+		return err
+	}
+
+	if ds.Access == "" {
+		ds.Access = models.DS_ACCESS_PROXY
+	}
+
+	if ds.Access != models.DS_ACCESS_DIRECT && ds.Access != models.DS_ACCESS_PROXY {
+		cr.log.Warn("invalid access value, will use 'proxy' instead", "value", ds.Access)
+		ds.Access = models.DS_ACCESS_PROXY
+	}
 	return nil
 }

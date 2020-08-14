@@ -21,7 +21,6 @@
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled",
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
-    "lint": "eslint .storybook/ src/ --ext=.js,.ts,.tsx",
     "storybook": "start-storybook -p 9001 -c .storybook -s .storybook/static",
     "storybook:build": "build-storybook -o ./dist/storybook -c .storybook -s .storybook/static",
     "typecheck": "tsc --noEmit"
@@ -46,7 +45,7 @@
     "emotion": "10.0.27",
     "immutable": "3.8.2",
     "jquery": "3.5.1",
-    "lodash": "4.17.15",
+    "lodash": "4.17.19",
     "moment": "2.24.0",
     "monaco-editor": "0.20.0",
     "papaparse": "4.6.3",

@@ -69,7 +69,7 @@ func getConverter(t string) (*data.FieldConverter, error) {
 		return &AnyToOptionalString, nil
 	}
 
-	return nil, fmt.Errorf("No matching converter found for [%v]", t)
+	return nil, fmt.Errorf("no matching converter found for [%v]", t)
 }
 
 // Init initializes the frame to be returned
@@ -94,6 +94,7 @@ func (fb *FrameBuilder) Init(metadata *query.FluxTableMetadata) error {
 			if err != nil {
 				return err
 			}
+
 			fb.value = converter
 			fb.isTimeSeries = true
 		case isTag(col.Name()):
@@ -106,6 +107,7 @@ func (fb *FrameBuilder) Init(metadata *query.FluxTableMetadata) error {
 		if col == nil {
 			return fmt.Errorf("no time column in timeSeries")
 		}
+
 		fb.timeColumn = col.Name()
 		fb.timeDisplay = "Time"
 		if "_time" != fb.timeColumn {
@@ -118,6 +120,7 @@ func (fb *FrameBuilder) Init(metadata *query.FluxTableMetadata) error {
 			if err != nil {
 				return err
 			}
+
 			fb.columns = append(fb.columns, columnInfo{
 				name:      col.Name(),
 				converter: converter,
@@ -201,13 +204,14 @@ func (fb *FrameBuilder) Append(record *query.FluxRecord) error {
 	if fb.isTimeSeries {
 		time, ok := record.ValueByKey(fb.timeColumn).(time.Time)
 		if !ok {
-			return fmt.Errorf("unable to get time colum: %s", fb.timeColumn)
+			return fmt.Errorf("unable to get time colum: %q", fb.timeColumn)
 		}
 
 		val, err := fb.value.Converter(record.Value())
 		if err != nil {
 			return err
 		}
+
 		fb.active.Fields[0].Append(time)
 		fb.active.Fields[1].Append(val)
 	} else {
@@ -217,6 +221,7 @@ func (fb *FrameBuilder) Append(record *query.FluxRecord) error {
 			if err != nil {
 				return err
 			}
+
 			fb.active.Fields[idx].Append(val)
 		}
 	}

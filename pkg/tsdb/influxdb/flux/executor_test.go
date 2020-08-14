@@ -47,7 +47,7 @@ func (r *MockRunner) runQuery(ctx context.Context, q string) (*api.QueryTableRes
 	defer server.Close()
 
 	client := influxdb2.NewClient(server.URL, "a")
-	return client.QueryApi("x").Query(ctx, q)
+	return client.QueryAPI("x").Query(ctx, q)
 }
 
 func verifyGoldenResponse(name string) (*backend.DataResponse, error) {
@@ -55,7 +55,7 @@ func verifyGoldenResponse(name string) (*backend.DataResponse, error) {
 		testDataPath: name + ".csv",
 	}
 
-	dr := ExecuteQuery(context.Background(), QueryModel{MaxDataPoints: 100}, runner, 50)
+	dr := executeQuery(context.Background(), QueryModel{MaxDataPoints: 100}, runner, 50)
 	err := experimental.CheckGoldenDataResponse("./testdata/"+name+".golden.txt", &dr, true)
 	return &dr, err
 }

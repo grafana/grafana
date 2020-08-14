@@ -1,4 +1,4 @@
-build_image = 'grafana/build-container:1.2.21'
+build_image = 'grafana/build-container:1.2.24'
 publish_image = 'grafana/grafana-ci-deploy:1.2.5'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.2.0'
 alpine_image = 'alpine:3.12'
@@ -137,7 +137,7 @@ def pipeline(name, edition, trigger, steps, services=[]):
     return pipeline
 
 def init_steps(edition):
-    grabpl_version = '0.4.25'
+    grabpl_version = '0.5.0'
     common_cmds = [
         'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
         'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
@@ -202,10 +202,6 @@ def init_steps(edition):
     ]
 
 def lint_backend_step(edition):
-    cmd = 'make lint-go'
-    if edition == 'enterprise':
-        cmd = 'GO_FILES=./pkg/extensions make lint-go'
-
     return {
         'name': 'lint-backend',
         'image': build_image,
@@ -217,7 +213,10 @@ def lint_backend_step(edition):
             'initialize',
         ],
         'commands': [
-            cmd,
+            # Don't use Make since it will re-download the linters
+            'golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...',
+            'revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...',
+            './scripts/revive-strict',
         ],
     }
 

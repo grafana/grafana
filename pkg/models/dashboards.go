@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const RootFolderName = "General"
+
 // Typed errors
 var (
 	ErrDashboardNotFound = DashboardErr{
@@ -101,7 +103,6 @@ var (
 		Reason:     "Unique identifier needed to be able to get a dashboard",
 		StatusCode: 400,
 	}
-	RootFolderName = "General"
 )
 
 // DashboardErr represents a dashboard error.
@@ -141,10 +142,8 @@ func (d UpdatePluginDashboardError) Error() string {
 	return "Dashboard belong to plugin"
 }
 
-var (
-	DashTypeJson     = "file"
+const (
 	DashTypeDB       = "db"
-	DashTypeScript   = "script"
 	DashTypeSnapshot = "snapshot"
 )
 
@@ -218,8 +217,8 @@ func NewDashboardFolder(title string) *Dashboard {
 }
 
 // GetTags turns the tags in data json into go string array
-func (dash *Dashboard) GetTags() []string {
-	return dash.Data.Get("tags").MustStringArray()
+func (d *Dashboard) GetTags() []string {
+	return d.Data.Get("tags").MustStringArray()
 }
 
 func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
@@ -274,14 +273,14 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 }
 
 // GetString a
-func (dash *Dashboard) GetString(prop string, defaultValue string) string {
-	return dash.Data.Get(prop).MustString(defaultValue)
+func (d *Dashboard) GetString(prop string, defaultValue string) string {
+	return d.Data.Get(prop).MustString(defaultValue)
 }
 
 // UpdateSlug updates the slug
-func (dash *Dashboard) UpdateSlug() {
-	title := dash.Data.Get("title").MustString()
-	dash.Slug = SlugifyTitle(title)
+func (d *Dashboard) UpdateSlug() {
+	title := d.Data.Get("title").MustString()
+	d.Slug = SlugifyTitle(title)
 }
 
 func SlugifyTitle(title string) string {
@@ -305,8 +304,8 @@ func (dash *Dashboard) GetUrl() string {
 }
 
 // Return the html url for a dashboard
-func (dash *Dashboard) GenerateUrl() string {
-	return GetDashboardUrl(dash.Uid, dash.Slug)
+func (d *Dashboard) GenerateUrl() string {
+	return GetDashboardUrl(d.Uid, d.Slug)
 }
 
 // GetDashboardFolderUrl return the html url for a folder if it's folder, otherwise for a dashboard
