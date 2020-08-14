@@ -60,7 +60,7 @@ type queryRunner interface {
 
 // runQuery executes fluxQuery against the Runner's organization and returns a Flux typed result.
 func (r *Runner) runQuery(ctx context.Context, fluxQuery string) (*api.QueryTableResult, error) {
-	qa := r.client.QueryApi(r.org)
+	qa := r.client.QueryAPI(r.org)
 	return qa.Query(ctx, fluxQuery)
 }
 
@@ -80,8 +80,14 @@ func RunnerFromDataSource(dsInfo *models.DataSource) (*Runner, error) {
 		return nil, fmt.Errorf("token is missing from datasource configuration and is needed to use Flux")
 	}
 
+	opts := influxdb2.DefaultOptions()
+	hc, err := dsInfo.GetHttpClient()
+	if err != nil {
+		return nil, err
+	}
+	opts.HTTPOptions().SetHTTPClient(hc)
 	return &Runner{
-		client: influxdb2.NewClient(url, token),
+		client: influxdb2.NewClientWithOptions(url, token, opts),
 		org:    org,
 	}, nil
 }

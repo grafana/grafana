@@ -47,7 +47,7 @@ func (r *MockRunner) runQuery(ctx context.Context, q string) (*api.QueryTableRes
 	defer server.Close()
 
 	client := influxdb2.NewClient(server.URL, "a")
-	return client.QueryApi("x").Query(ctx, q)
+	return client.QueryAPI("x").Query(ctx, q)
 }
 
 func verifyGoldenResponse(name string) (*backend.DataResponse, error) {
