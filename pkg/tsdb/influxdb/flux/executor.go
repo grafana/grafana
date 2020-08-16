@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/influxdata/influxdb-client-go/api"
+	"github.com/influxdata/influxdb-client-go/v2/api"
 )
 
 // executeQuery runs a flux query using the QueryModel to interpolate the query and the runner to execute it.
