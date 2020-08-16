@@ -33,7 +33,7 @@ describe('when rendering table', () => {
       { text: 'Colored' },
       { text: 'Undefined' },
       { text: 'String' },
-      { text: 'United', unit: 'bps' },
+      { text: 'United', unit: 'decbps' },
       { text: 'Sanitized' },
       { text: 'Link' },
       { text: 'Array' },
