@@ -65,7 +65,7 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.2.24
   commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
+  - ./bin/grabpl build-backend --edition oss --build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
   depends_on:
   - initialize
   - lint-backend
@@ -74,7 +74,7 @@ steps:
 - name: build-frontend
   image: grafana/build-container:1.2.24
   commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
+  - ./bin/grabpl build-frontend --no-install-deps --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
   depends_on:
   - initialize
   - test-frontend
@@ -103,7 +103,7 @@ steps:
 - name: build-plugins
   image: grafana/build-container:1.2.24
   commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
+  - ./bin/grabpl build-plugins --edition oss --no-install-deps
   depends_on:
   - initialize
   - lint-backend
@@ -111,7 +111,7 @@ steps:
 - name: package
   image: grafana/build-container:1.2.24
   commands:
-  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64
+  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64
   depends_on:
   - build-backend
   - build-frontend
@@ -292,7 +292,7 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.2.24
   commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER
+  - ./bin/grabpl build-backend --edition oss --build-id $DRONE_BUILD_NUMBER
   depends_on:
   - initialize
   - lint-backend
@@ -301,7 +301,7 @@ steps:
 - name: build-frontend
   image: grafana/build-container:1.2.24
   commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
+  - ./bin/grabpl build-frontend --no-install-deps --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
   depends_on:
   - initialize
   - test-frontend
@@ -330,7 +330,7 @@ steps:
 - name: build-plugins
   image: grafana/build-container:1.2.24
   commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
+  - ./bin/grabpl build-plugins --edition oss --no-install-deps
   depends_on:
   - initialize
   - lint-backend
@@ -338,7 +338,7 @@ steps:
 - name: package
   image: grafana/build-container:1.2.24
   commands:
-  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
+  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
   depends_on:
   - build-backend
   - build-frontend
