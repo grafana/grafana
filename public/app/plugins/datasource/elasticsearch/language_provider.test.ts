@@ -1,23 +1,31 @@
 import LanguageProvider from './language_provider';
 import { PromQuery } from '../prometheus/types';
 import { ElasticDatasource } from './datasource';
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
 import { ElasticsearchOptions } from './types';
 import { TemplateSrv } from '../../../features/templating/template_srv';
-import { TimeSrv } from '../../../features/dashboard/services/TimeSrv';
-const templateSrv: any = {
-  replace: jest.fn(text => {
-    if (text.startsWith('$')) {
-      return `resolvedVariable`;
-    } else {
-      return text;
-    }
+import { getTimeSrv, TimeSrv } from '../../../features/dashboard/services/TimeSrv';
+import { getTemplateSrv } from '@grafana/runtime';
+
+jest.mock('app/features/templating/template_srv', () => {
+  return {
+    getAdhocFilters: jest.fn(() => [] as any[]),
+    replace: jest.fn((a: string) => a),
+  };
+});
+
+jest.mock('app/features/dashboard/services/TimeSrv', () => ({
+  __esModule: true,
+  getTimeSrv: jest.fn().mockReturnValue({
+    timeRange(): any {
+      return {
+        from: dateTime(1531468681),
+        to: dateTime(1531489712),
+      };
+    },
   }),
-  getAdhocFilters: jest.fn(() => []),
-};
-const timeSrv: any = {
-  time: { from: 'now-1h', to: 'now' },
-};
+}));
+
 const dataSource = new ElasticDatasource(
   {
     url: 'http://es.com',
@@ -28,8 +36,8 @@ const dataSource = new ElasticDatasource(
       timeField: '@time',
     },
   } as DataSourceInstanceSettings<ElasticsearchOptions>,
-  templateSrv as TemplateSrv,
-  timeSrv as TimeSrv
+  getTemplateSrv() as TemplateSrv,
+  getTimeSrv() as TimeSrv
 );
 describe('transform prometheus query to elasticsearch query', () => {
   it('Prometheus query with exact equals labels ( 2 labels ) and metric __name__', async () => {
