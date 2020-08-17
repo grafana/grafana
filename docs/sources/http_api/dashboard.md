@@ -47,8 +47,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "version": 0,
     "refresh": "25s"
   },
-  "folderId": 0,
-  "refresh": "25s"
+  "folderId": 0
 }
 ```
 
