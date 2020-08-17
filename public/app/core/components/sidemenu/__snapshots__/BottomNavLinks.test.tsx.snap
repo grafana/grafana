@@ -156,15 +156,6 @@ exports[`Render should render subtitle 1`] = `
     role="menu"
   >
     <li
-      className="sidemenu-subtitle"
-    >
-      <span
-        className="sidemenu-item-text"
-      >
-        subtitle
-      </span>
-    </li>
-    <li
       className="side-menu-header"
     >
       <span
