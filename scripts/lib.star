@@ -5,8 +5,6 @@ alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
 grabpl_version = '0.5.1'
 
-restore_yarn_cache = 'rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)'
-
 def pr_pipelines(edition):
     trigger = {
         'event': ['pull_request',],
@@ -178,8 +176,6 @@ def init_steps(edition, platform):
         'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
         'rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
         'yarn install --frozen-lockfile --no-progress',
-        # Keep the Yarn cache for subsequent steps
-        'cp -r $(yarn cache dir) yarn-cache',
     ]
     if edition == 'enterprise':
         return [
@@ -266,7 +262,6 @@ def build_storybook_step(edition):
             'package',
         ],
         'commands': [
-            restore_yarn_cache,
             'yarn storybook:build',
         ],
     }
@@ -307,7 +302,6 @@ def build_backend_step(edition, variants=None):
             'test-backend',
         ],
         'commands': [
-            'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
             # TODO: Convert number of jobs to percentage
             './bin/grabpl build-backend --jobs 8 --edition {} --build-id $DRONE_BUILD_NUMBER{}'.format(
                 edition, variants_str
@@ -324,7 +318,6 @@ def build_frontend_step(edition):
             'test-frontend',
         ],
         'commands': [
-            restore_yarn_cache,
             # TODO: Use percentage for num jobs
             './bin/grabpl build-frontend --jobs 8 --no-install-deps --edition {} '.format(edition) +
                 '--build-id $DRONE_BUILD_NUMBER --no-pull-enterprise',
@@ -340,7 +333,6 @@ def build_plugins_step(edition):
             'lint-backend',
         ],
         'commands': [
-            restore_yarn_cache,
             # TODO: Use percentage for num jobs
             './bin/grabpl build-plugins --jobs 8 --edition {} --no-install-deps'.format(edition),
         ],
@@ -359,8 +351,6 @@ def test_backend_step():
             './bin/grabpl test-backend',
             # Then execute integration tests in serial
             './bin/grabpl integration-tests',
-            # Keep the test cache
-            'cp -r $(go env GOCACHE) go-cache',
         ],
     }
 
@@ -375,7 +365,6 @@ def test_frontend_step():
             'TEST_MAX_WORKERS': '50%',
         },
         'commands': [
-            restore_yarn_cache,
             'yarn run prettier:check',
             'yarn run packages:typecheck',
             'yarn run typecheck',
@@ -468,7 +457,6 @@ def e2e_tests_step():
             'HOST': 'end-to-end-tests-server',
         },
         'commands': [
-            restore_yarn_cache,
             # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
             # even though the Yarn cache directory is beneath /usr/local/share somewhere
             './node_modules/.bin/cypress install',
@@ -543,7 +531,6 @@ def postgres_integration_tests_step():
             './bin/dockerize -wait tcp://postgres:5432 -timeout 120s',
             'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
                 'devenv/docker/blocks/postgres_tests/setup.sql',
-            'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
             './bin/grabpl integration-tests --database postgres',
@@ -567,7 +554,6 @@ def mysql_integration_tests_step():
             'apt-get install -yq default-mysql-client',
             './bin/dockerize -wait tcp://mysql:3306 -timeout 120s',
             'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
-            'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
             './bin/grabpl integration-tests --database mysql',
