@@ -116,7 +116,7 @@ def master_pipelines(edition):
             name='test-master', edition=edition, trigger=trigger, services=services, steps=steps
         ),
         pipeline(
-            name='windows-installer-master', edition=edition, trigger=trigger, 
+            name='windows-installer-master', edition=edition, trigger=trigger,
             steps=windows_steps, platform='windows', depends_on=['test-master'],
         ),
     ]
@@ -642,7 +642,8 @@ def windows_installer_step(edition):
             },
         },
         'commands': [
-            '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($env:GCP_KEY)) > gcpkey.json',
+            'gcpKey = $env:GCP_KEY)',
+            '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String(gcpKey) > gcpkey.json',
             'gcloud auth activate-service-account --key-file=gcpkey.json',
             'rm gcpkey.json',
             '$ProgressPreference = "SilentlyContinue"',
