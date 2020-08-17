@@ -149,11 +149,11 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
                 <ReactPopper
                   referenceElement={selectionRef}
                   placement="top-end"
-                  modifiers={{
-                    preventOverflow: { enabled: true, boundariesElement: 'window' },
-                    arrow: { enabled: false },
-                    offset: { offset: 250 }, // width of the suggestions menu
-                  }}
+                  // modifiers={{
+                  //   // preventOverflow: { enabled: true, boundariesElement: 'window' },
+                  //   // arrow: { enabled: false },
+                  //   // offset: { offset: 250 }, // width of the suggestions menu
+                  // }}
                 >
                   {({ ref, style, placement }) => {
                     return (

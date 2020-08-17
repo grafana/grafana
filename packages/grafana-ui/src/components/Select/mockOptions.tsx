@@ -1,7 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import { kebabCase } from 'lodash';
 
-export const generateOptions = (desc = false) => {
+export const generateOptions = (desc = false, inputValue?: string) => {
   const values = [
     'Sharilyn Markowitz',
     'Naomi Striplin',
@@ -25,9 +25,14 @@ export const generateOptions = (desc = false) => {
     'Han Harnish',
   ];
 
-  return values.map<SelectableValue<string>>(name => ({
+  const vals = values.map<SelectableValue<string>>(name => ({
     value: kebabCase(name),
     label: name,
     description: desc ? `This is a description of ${name}` : undefined,
   }));
+  if (inputValue) {
+    return vals.filter(v => v.label?.includes(inputValue));
+  }
+
+  return vals;
 };
