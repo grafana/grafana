@@ -1,7 +1,7 @@
 import {
-  DataSourceApi,
   DataQueryRequest,
   DataQueryResponse,
+  DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
 } from '@grafana/data';
@@ -27,7 +27,7 @@ export class MockDataSourceApi extends DataSourceApi {
   result: DataQueryResponse = { data: [] };
   queryResolver: Promise<DataQueryResponse>;
 
-  constructor(name?: string, result?: DataQueryResponse, meta?: any) {
+  constructor(name?: string, result?: DataQueryResponse | string, meta?: any, private throwError = false) {
     super({ name: name ? name : 'MockDataSourceApi' } as DataSourceInstanceSettings);
     if (result) {
       this.result = result;
@@ -40,6 +40,11 @@ export class MockDataSourceApi extends DataSourceApi {
     if (this.queryResolver) {
       return this.queryResolver;
     }
+
+    if (this.throwError) {
+      return Promise.reject(this.result);
+    }
+
     return new Promise(resolver => {
       setTimeout(() => {
         resolver(this.result);
