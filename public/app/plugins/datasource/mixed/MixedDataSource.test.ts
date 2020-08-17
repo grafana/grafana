@@ -5,7 +5,6 @@ import { DataSourceInstanceSettings, LoadingState } from '@grafana/data';
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { MixedDatasource } from './module';
-import { describe } from '../../../../test/lib/common';
 
 const defaultDS = new MockDataSourceApi('DefaultDS', { data: ['DDD'] });
 const datasourceSrv = new DatasourceSrvMock(defaultDS, {
