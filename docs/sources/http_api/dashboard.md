@@ -44,10 +44,11 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "tags": [ "templated" ],
     "timezone": "browser",
     "schemaVersion": 16,
-    "version": 0
+    "version": 0,
+    "refresh": "25s"
   },
   "folderId": 0,
-  "overwrite": false
+  "refresh": "25s"
 }
 ```
 
