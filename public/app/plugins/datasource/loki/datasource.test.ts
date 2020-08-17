@@ -16,6 +16,17 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
+jest.mock('app/features/dashboard/services/TimeSrv', () => {
+  return {
+    getTimeSrv: () => ({
+      timeRange: () => ({
+        from: new Date(0),
+        to: new Date(1),
+      }),
+    }),
+  };
+});
+
 const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
 
 describe('LokiDatasource', () => {
@@ -440,6 +451,19 @@ describe('LokiDatasource', () => {
         const query = 'incorrect_query';
         const res = await ds.metricFindQuery(query);
         expect(res.length).toBe(0);
+      });
+    });
+
+    mocks.forEach((mock, index) => {
+      it(`should return label names according to provided rangefor Loki v${index} `, async () => {
+        ds.getVersion = mock.getVersion;
+        ds.metadataRequest = mock.metadataRequest;
+        const query = 'label_names()';
+        const res = await ds.metricFindQuery(query, {
+          range: { from: new Date(2), to: new Date(3) },
+        });
+        expect(res[0].text).toEqual('label1');
+        expect(res.length).toBe(1);
       });
     });
   });
