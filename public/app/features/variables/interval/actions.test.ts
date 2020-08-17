@@ -81,7 +81,7 @@ describe('interval actions', () => {
       expect(appEventMock.emit).toHaveBeenCalledWith(AppEvents.alertError, [
         'Templating',
         `Invalid interval string, has to be either unit-less or end with one of the following units: "${Object.keys(
-          kbn.intervals_in_seconds
+          kbn.intervalsInSeconds
         ).join(', ')}"`,
       ]);
       setTimeSrv(originalTimeSrv);
@@ -99,7 +99,7 @@ describe('interval actions', () => {
         const dependencies: UpdateAutoValueDependencies = {
           kbn: {
             calculateInterval: jest.fn(),
-          },
+          } as any,
           getTimeSrv: () => {
             return ({
               timeRange: jest.fn().mockReturnValue({
@@ -152,7 +152,7 @@ describe('interval actions', () => {
         const dependencies: UpdateAutoValueDependencies = {
           kbn: {
             calculateInterval: jest.fn().mockReturnValue({ interval: '10s' }),
-          },
+          } as any,
           getTimeSrv: () => {
             return ({
               timeRange: timeRangeMock,

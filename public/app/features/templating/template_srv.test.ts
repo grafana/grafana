@@ -375,6 +375,11 @@ describe('templateSrv', () => {
       const result = _templateSrv.formatValue(['test', "test'value2"], 'sqlstring');
       expect(result).toBe(`'test','test''value2'`);
     });
+
+    it('raw format should leave value intact and do no escaping', () => {
+      const result = _templateSrv.formatValue("'test\n", 'raw');
+      expect(result).toBe("'test\n");
+    });
   });
 
   describe('can check if variable exists', () => {
@@ -593,11 +598,6 @@ describe('templateSrv', () => {
   describe('built in interval variables', () => {
     beforeEach(() => {
       initTemplateSrv([]);
-    });
-
-    it('should be possible to fetch value with getBuilInIntervalValue', () => {
-      const val = _templateSrv.getBuiltInIntervalValue();
-      expect(val).toBe('1s');
     });
 
     it('should replace $__interval_ms with interval milliseconds', () => {

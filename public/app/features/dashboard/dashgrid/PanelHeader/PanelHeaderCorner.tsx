@@ -74,7 +74,7 @@ export class PanelHeaderCorner extends Component<Props> {
    * Open the Panel Inspector when we click on an error
    */
   onClickError = () => {
-    getLocationSrv().update({ partial: true, query: { inspect: this.props.panel.id, tab: InspectTab.Error } });
+    getLocationSrv().update({ partial: true, query: { inspect: this.props.panel.id, inspectTab: InspectTab.Error } });
   };
 
   renderCornerType(infoMode: InfoMode, content: PopoverContent, onClick?: () => void) {

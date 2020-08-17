@@ -3,28 +3,27 @@ package api
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestHTTPServer(t *testing.T) {
-	Convey("Given a HTTPServer", t, func() {
-		ts := &HTTPServer{
-			Cfg: setting.NewCfg(),
-		}
+func TestHTTPServer_MetricsBasicAuth(t *testing.T) {
+	ts := &HTTPServer{
+		Cfg: setting.NewCfg(),
+	}
 
-		Convey("Given that basic auth on the metrics endpoint is enabled", func() {
-			ts.Cfg.MetricsEndpointBasicAuthUsername = "foo"
-			ts.Cfg.MetricsEndpointBasicAuthPassword = "bar"
+	t.Run("enabled", func(t *testing.T) {
+		ts.Cfg.MetricsEndpointBasicAuthUsername = "foo"
+		ts.Cfg.MetricsEndpointBasicAuthPassword = "bar"
 
-			So(ts.metricsEndpointBasicAuthEnabled(), ShouldBeTrue)
-		})
+		assert.True(t, ts.metricsEndpointBasicAuthEnabled())
+	})
 
-		Convey("Given that basic auth on the metrics endpoint is disabled", func() {
-			ts.Cfg.MetricsEndpointBasicAuthUsername = ""
-			ts.Cfg.MetricsEndpointBasicAuthPassword = ""
+	t.Run("disabled", func(t *testing.T) {
+		ts.Cfg.MetricsEndpointBasicAuthUsername = ""
+		ts.Cfg.MetricsEndpointBasicAuthPassword = ""
 
-			So(ts.metricsEndpointBasicAuthEnabled(), ShouldBeFalse)
-		})
+		assert.False(t, ts.metricsEndpointBasicAuthEnabled())
 	})
 }

@@ -172,7 +172,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/ElasticMapReduce":  {"ClusterId", "JobFlowId", "JobId"},
 	"AWS/ElasticTranscoder": {"Operation", "PipelineId"},
 	"AWS/Events":            {"RuleName"},
-	"AWS/FSx":               {},
+	"AWS/FSx":               {"FileSystemId"},
 	"AWS/Firehose":          {"DeliveryStreamName"},
 	"AWS/GameLift":          {"FleetId", "InstanceType", "MatchmakingConfigurationName", "MatchmakingConfigurationName-RuleName", "MetricGroups", "OperatingSystem", "QueueName"},
 	"AWS/Glue":              {"JobName", "JobRunId", "Type"},

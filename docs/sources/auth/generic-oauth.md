@@ -38,9 +38,20 @@ token_url =
 api_url =
 allowed_domains = mycompany.com mycompany.org
 allow_sign_up = true
+tls_skip_verify_insecure = false
+tls_client_cert =
+tls_client_key =
+tls_client_ca =
 ```
 
 Set `api_url` to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
+
+You can also specify the SSL/TLS configuration used by the client. 
+- Set `tls_client_cert` to the path of the certificate. 
+- Set `tls_client_key` to the path containing the key.
+- Set `tls_client_ca` to the path containing a trusted certificate authority list.
+
+`tls_skip_verify_insecure` controls whether a client verifies the server's certificate chain and host name. If it is true, then SSL/TLS accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.
 
 Grafana will attempt to determine the user's e-mail address by querying the OAuth provider as described below in the following order until an e-mail address is found:
 
@@ -58,6 +69,15 @@ Grafana will also attempt to do role mapping through OAuth as described below.
 Check for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
 
 See [JMESPath examples](#jmespath-examples) for more information.
+
+> Only available in Grafana v7.2+.
+
+Customize user login using `login_attribute_path` configuration option. Order of operations is as follows:
+
+1. Grafana evaluates the `login_attribute_path` JMESPath expression against the ID token. 
+1. If Grafana finds no value, then Grafana evaluates expression against the JSON data obtained from UserInfo endpoint. The UserInfo endpoint URL is specified in the `api_url` configuration option.
+
+You can customize the attribute name used to extract the ID token from the returned OAuth token with the `id_token_attribute_name` option.
 
 ## Set up OAuth2 with Auth0
 

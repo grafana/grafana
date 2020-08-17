@@ -24,6 +24,7 @@ interface Props<V, D> {
   itemSpacing?: number;
   /** When orientation is set to auto layout items in a grid */
   autoGrid?: boolean;
+  minVizHeight?: number;
 }
 
 export interface VizRepeaterRenderValueProps<V, D = {}> {
@@ -137,7 +138,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
   }
 
   render() {
-    const { renderValue, height, width, itemSpacing, getAlignmentFactors, autoGrid, orientation } = this
+    const { renderValue, height, width, itemSpacing, getAlignmentFactors, autoGrid, orientation, minVizHeight } = this
       .props as PropsWithDefaults<V, D>;
     const { values } = this.state;
 
@@ -151,6 +152,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
 
     const repeaterStyle: React.CSSProperties = {
       display: 'flex',
+      overflow: minVizHeight ? 'hidden scroll' : 'visible',
     };
 
     let vizHeight = height;
@@ -161,9 +163,10 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
     switch (resolvedOrientation) {
       case VizOrientation.Horizontal:
         repeaterStyle.flexDirection = 'column';
+        repeaterStyle.height = `${height}px`;
         itemStyles.marginBottom = `${itemSpacing}px`;
         vizWidth = width;
-        vizHeight = height / values.length - itemSpacing + itemSpacing / values.length;
+        vizHeight = Math.max(height / values.length - itemSpacing + itemSpacing / values.length, minVizHeight ?? 0);
         break;
       case VizOrientation.Vertical:
         repeaterStyle.flexDirection = 'row';

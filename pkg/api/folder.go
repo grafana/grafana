@@ -93,6 +93,7 @@ func DeleteFolder(c *models.ReqContext) Response {
 	return JSON(200, util.DynMap{
 		"title":   f.Title,
 		"message": fmt.Sprintf("Folder %s deleted", f.Title),
+		"id":      f.Id,
 	})
 }
 

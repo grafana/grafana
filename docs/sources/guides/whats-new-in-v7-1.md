@@ -12,7 +12,7 @@ weight = -16
 
 # What's new in Grafana v7.1
 
-This topic includes the release notes for the Grafana v7.1, which is currently in beta. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+This topic includes the release notes for the Grafana v7.1. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 The main highlights are:
 

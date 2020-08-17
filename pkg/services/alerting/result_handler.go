@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -9,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"golang.org/x/xerrors"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -101,9 +101,9 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 
 	if err := handler.notifier.SendIfNeeded(evalContext); err != nil {
 		switch {
-		case xerrors.Is(err, context.Canceled):
+		case errors.Is(err, context.Canceled):
 			handler.log.Debug("handler.notifier.SendIfNeeded returned context.Canceled")
-		case xerrors.Is(err, context.DeadlineExceeded):
+		case errors.Is(err, context.DeadlineExceeded):
 			handler.log.Debug("handler.notifier.SendIfNeeded returned context.DeadlineExceeded")
 		default:
 			handler.log.Error("handler.notifier.SendIfNeeded failed", "err", err)

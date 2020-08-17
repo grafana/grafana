@@ -4,7 +4,6 @@ const defaultMarkedOptions: MarkedOptions = {
   renderer: new marked.Renderer(),
   pedantic: false,
   gfm: true,
-  tables: true,
   sanitize: true,
   smartLists: true,
   smartypants: false,
