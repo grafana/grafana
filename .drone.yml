@@ -535,11 +535,10 @@ steps:
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.0
   commands:
-  - (New-Object Net.WebClient).DownloadFile("https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/windows/grabpl.exe", "grabpl.exe")
-  - (New-Object Net.WebClient).DownloadFile("https://grafana-downloads.storage.googleapis.com/oss/master/grafana-7.2.0-9fffe273pre.windows-amd64.zip", "grafana.zip")
+  - $ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.1/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/oss/master/grafana-7.2.0-9fffe273pre.windows-amd64.zip -OutFile grafana.zip
   - ./grabpl.exe windows-installer --edition oss grafana.zip
-  environment:
-    GRABPL_VERSION: 0.5.1
 
 trigger:
   branch:
