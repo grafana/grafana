@@ -224,20 +224,20 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 	}
 
 	if compression, ok := header["zip"]; ok {
-		if compression == "DEF" {
-			fr, err := zlib.NewReader(bytes.NewReader(rawJSON))
-			if err != nil {
-				s.log.Error("Error creating zlib reader", "error", err)
-				return nil
-			}
-			defer fr.Close()
-			rawJSON, err = ioutil.ReadAll(fr)
-			if err != nil {
-				s.log.Error("Error decompressing payload", "error", err)
-				return nil
-			}
-		} else {
+		if compression != "DEF" {
 			s.log.Warn("Unknown compression algorithm", "algorithm", compression)
+			return nil
+		}
+
+		fr, err := zlib.NewReader(bytes.NewReader(rawJSON))
+		if err != nil {
+			s.log.Error("Error creating zlib reader", "error", err)
+			return nil
+		}
+		defer fr.Close()
+		rawJSON, err = ioutil.ReadAll(fr)
+		if err != nil {
+			s.log.Error("Error decompressing payload", "error", err)
 			return nil
 		}
 	}
