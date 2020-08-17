@@ -47,6 +47,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: wordBreakAll;
       word-break: break-all;
     `,
+    showingField: css`
+      color: ${theme.palette.blue95};
+    `,
   };
 });
 
@@ -110,9 +113,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const style = getLogRowStyles(theme);
     const toggleFieldButton =
       !isLabel && showParsedFields && showParsedFields.includes(parsedKey) ? (
-        <IconButton name="eye-slash" title="Hide field" onClick={this.hideField} />
+        <IconButton name="eye" className={styles.showingField} title="Hide this field" onClick={this.hideField} />
       ) : (
-        <IconButton name="eye" title="Show field" onClick={this.showField} />
+        <IconButton name="eye" title="Show this field instead of the message" onClick={this.showField} />
       );
 
     return (
