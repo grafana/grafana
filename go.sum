@@ -238,8 +238,8 @@ github.com/igm/sockjs-go/v3 v3.0.0 h1:4wLoB9WCnQ8RI87cmqUH778ACDFVmRpkKRCWBeuc+W
 github.com/igm/sockjs-go/v3 v3.0.0/go.mod h1:UqchsOjeagIBFHvd+RZpLaVRbCwGilEC08EDHsD1jYE=
 github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec h1:CGkYB1Q7DSsH/ku+to+foV4agt2F2miquaLUgF6L178=
 github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec/go.mod h1:cOaXtrgN4ScfRrD9Bre7U1thNq5RtJ8ZoP4iXVGRj6o=
-github.com/influxdata/influxdb-client-go v0.0.0-20200814135139-d68836272a45 h1:UePjGzItJZeZ4a4375kxZ6pc7myUjuqlpegERMzVYmo=
-github.com/influxdata/influxdb-client-go v0.0.0-20200814135139-d68836272a45/go.mod h1:S+oZsPivqbcP1S9ur+T+QqXvrYS3NCZeMQtBoH4D1dw=
+github.com/influxdata/influxdb-client-go/v2 v2.0.1 h1:vRla3taM+zkziP1NUGfN6Y6zJ9ZSSMg0fs/JhCGyX1s=
+github.com/influxdata/influxdb-client-go/v2 v2.0.1/go.mod h1:eyFPc0lhFnNSpyCDb0ZkrB3Hbtqvn1K1JZmjo2BXqeo=
 github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 h1:W9WBk7wlPfJLvMCdtV4zPulc4uCPrlywQOmbFOhgQNU=
 github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839/go.mod h1:xaLFMmpvUxqXtVkUJfg9QmT88cDaCJ3ZKgdZ78oO8Qo=
 github.com/jhump/protoreflect v1.6.0 h1:h5jfMVslIg6l29nsMs0D8Wj17RDVdNYti0vDN/PZZoE=
