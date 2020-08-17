@@ -538,6 +538,7 @@ steps:
   - $ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.1/windows/grabpl.exe -OutFile grabpl.exe
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/oss/master/grafana-7.2.0-9fffe273pre.windows-amd64.zip -OutFile grafana.zip
+  - cp C:\App\nssm-2.24.zip .
   - ./grabpl.exe windows-installer --edition oss grafana.zip
 
 trigger:
