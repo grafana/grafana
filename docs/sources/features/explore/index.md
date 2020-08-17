@@ -274,3 +274,10 @@ Simply clicking the button will return you to the origin dashboard, or, if you'd
 the arrow next to the button to reveal a "Return to panel with changes" menu item.
 
 {{< docs-imagebox img="/img/docs/v64/explore_return_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the expanded explore return dropdown" >}}
+
+## Query Inspector
+
+To help with debugging queries, Explore allows users to investigate query requests and responses, as well as query statistics,
+via the Query Inspector. You can drill down into specific portions of the query, expand or collapse all of it, or copy the data to the clipboard to use in other applications.
+
+{{< docs-imagebox img="/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" caption="Screenshot of the query inspector button in Explore" >}}
