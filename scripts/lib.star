@@ -3,6 +3,7 @@ publish_image = 'grafana/grafana-ci-deploy:1.2.5'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.2.0'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
+grabpl_version = '0.5.1'
 
 restore_yarn_cache = 'rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)'
 
@@ -51,16 +52,9 @@ def pr_pipelines(edition):
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
     ]
-    windows_steps = [
-        windows_installer_step(),
-    ]
     return [
         pipeline(
             name='test-pr', edition=edition, trigger=trigger, services=services, steps=steps,
-        ),
-        pipeline(
-            name='test-pr-windows', edition=edition, trigger=trigger, steps=windows_steps, platform='windows',
-            depends_on=['test-pr',],
         ),
     ]
 
@@ -106,17 +100,24 @@ def master_pipelines(edition):
         build_docker_images_step(edition=edition, ubuntu=True),
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
-        build_windows_installer_step(),
         release_next_npm_packages_step(edition),
         publish_packages_step(edition),
         deploy_to_kubernetes_step(edition),
     ]
+    windows_steps = [
+        windows_installer_step(edition),
+    ]
+    trigger = {
+        'event': ['push',],
+        'branch': 'master',
+    }
     return [
         pipeline(
-            name='test-master', edition=edition, trigger={
-                'event': ['push',],
-                'branch': 'master',
-            }, services=services, steps=steps
+            name='test-master', edition=edition, trigger=trigger, services=services, steps=steps
+        ),
+        pipeline(
+            name='windows-installer-master', edition=edition, trigger=trigger, 
+            steps=windows_steps, platform='windows', depends_on=['test-master'],
         ),
     ]
 
@@ -172,7 +173,6 @@ def init_steps(edition, platform):
         ],
     }
 
-    grabpl_version = '0.5.0'
     common_cmds = [
         'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
         'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
@@ -380,15 +380,6 @@ def test_frontend_step():
             'yarn run packages:typecheck',
             'yarn run typecheck',
             'yarn run test',
-        ],
-    }
-
-def windows_installer_step():
-    return {
-        'name': 'windows-installer',
-        'image': windows_image,
-        'commands': [
-            'echo TODO',
         ],
     }
 
@@ -628,8 +619,6 @@ def publish_packages_step(edition):
         'image': publish_image,
         'depends_on': [
             'package',
-            # TODO
-            # 'build-windows-installer',
             'end-to-end-tests',
             'mysql-integration-tests',
             'postgres-integration-tests',
@@ -640,17 +629,17 @@ def publish_packages_step(edition):
         ],
     }
 
-def build_windows_installer_step():
-    # TODO: Build Windows installer, waiting on Brian to fix the build image
+def windows_installer_step(edition):
     return {
         'name': 'build-windows-installer',
-        # TODO: Need new image that can execute as root
-        'image': 'grafana/wix-toolset-ci:v3',
-        'depends_on': [
-            'package',
-        ],
+        'image': 'grafana/ci-wix:0.1.0',
+        'environment': {
+            'GRABPL_VERSION': grabpl_version,
+        },
         'commands': [
-          # TODO: Enable. Waiting on Brian to fix image.
-          'echo ./scripts/build/ci-msi-build/ci-msi-build-oss.sh',
+            '(New-Object Net.WebClient).DownloadFile("https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/windows/grabpl.exe", "grabpl.exe")',
+            # TODO: Infer correct Grafana version
+            '(New-Object Net.WebClient).DownloadFile("https://grafana-downloads.storage.googleapis.com/{}/master/grafana-7.2.0-9fffe273pre.windows-amd64.zip", "grafana.zip")'.format(edition),
+            './grabpl.exe windows-installer --edition {} grafana.zip'.format(edition),
         ],
     }
