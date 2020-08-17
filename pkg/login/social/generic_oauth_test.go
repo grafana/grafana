@@ -194,26 +194,6 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ExpectedRole:      "Admin",
 			},
 			{
-				Name: "Given a valid GZIP compressed id_token, a valid role path, no API response, use id_token",
-				OAuth2Extra: map[string]interface{}{
-					// { "role": "Admin", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInppcCI6IkdaSVAifQ.H4sIAAAAAAAAAKtWSs1NzMxRslLKys_I00vJT3VIrUjMLchJ1UvOz1XSUSrKz0kFyjqm5GbmKdUCANotxTkvAAAA.85AXm3JOF5qflEA0goDFvlbZl2q3eFvqVcehz860W-o",
-				},
-				RoleAttributePath: "role",
-				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "Admin",
-			},
-			{
-				Name: "Given a valid DEFLATE compressed id_token, a valid role path, no API response, use id_token",
-				OAuth2Extra: map[string]interface{}{
-					// { "role": "Admin", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInppcCI6IkdaSVAifQ.H4sIAAAAAAAAAKtWSs1NzMxRslLKys_I00vJT3VIrUjMLchJ1UvOz1XSUSrKz0kFyjqm5GbmKdUCANotxTkvAAAA.85AXm3JOF5qflEA0goDFvlbZl2q3eFvqVcehz860W-o",
-				},
-				RoleAttributePath: "role",
-				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "Admin",
-			},
-			{
 				Name: "Given a valid id_token, no role path, no API response, use id_token",
 				OAuth2Extra: map[string]interface{}{
 					// { "email": "john.doe@example.com" }
@@ -443,6 +423,71 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 				actualResult, err := provider.UserInfo(ts.Client(), token)
 				require.NoError(t, err)
 				require.Equal(t, test.ExpectedLogin, actualResult.Login)
+			})
+		}
+	})
+}
+
+func TestPayloadCompression(t *testing.T) {
+	t.Run("Given a generic OAuth provider", func(t *testing.T) {
+		provider := SocialGenericOAuth{
+			SocialBase: &SocialBase{
+				log: log.NewWithLevel("generic_oauth_test", log15.LvlDebug),
+			},
+			emailAttributePath: "email",
+		}
+
+		tests := []struct {
+			Name          string
+			OAuth2Extra   interface{}
+			ExpectResult  bool
+			ExpectedEmail string
+		}{
+			{
+				Name: "Given a valid DEFLATE compressed id_token, return userInfo",
+				OAuth2Extra: map[string]interface{}{
+					// { "role": "Admin", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInppcCI6IkRFRiJ9.eJyrVkrNTczMUbJSysrPyNNLyU91SK1IzC3ISdVLzs9V0lEqys9JBco6puRm5inVAgCFRw_6.XrV4ZKhw19dTcnviXanBD8lwjeALCYtDiESMmGzC-ho",
+				},
+				ExpectResult:  true,
+				ExpectedEmail: "john.doe@example.com",
+			},
+			{
+				Name: "Given an invalid DEFLATE compressed id_token, return nil",
+				OAuth2Extra: map[string]interface{}{
+					// { "role": "Admin", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInppcCI6IkRFRiJ9.00eJyrVkrNTczMUbJSysrPyNNLyU91SK1IzC3ISdVLzs9V0lEqys9JBco6puRm5inVAgCFRw_6.XrV4ZKhw19dTcnviXanBD8lwjeALCYtDiESMmGzC-ho",
+				},
+				ExpectResult: false,
+			},
+			{
+				Name: "Given an unsupported GZIP compressed id_token, return nil",
+				OAuth2Extra: map[string]interface{}{
+					// { "role": "Admin", "email": "john.doe@example.com" }
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInppcCI6IkdaSVAifQ.H4sIAAAAAAAAAKtWSs1NzMxRslLKys_I00vJT3VIrUjMLchJ1UvOz1XSUSrKz0kFyjqm5GbmKdUCANotxTkvAAAA.85AXm3JOF5qflEA0goDFvlbZl2q3eFvqVcehz860W-o",
+				},
+				ExpectResult: false,
+			},
+		}
+
+		for _, test := range tests {
+			t.Run(test.Name, func(t *testing.T) {
+				staticToken := oauth2.Token{
+					AccessToken:  "",
+					TokenType:    "",
+					RefreshToken: "",
+					Expiry:       time.Now(),
+				}
+
+				token := staticToken.WithExtra(test.OAuth2Extra)
+				userInfo := provider.extractFromToken(token)
+
+				if test.ExpectResult == true {
+					require.NotNil(t, userInfo, "Testing case %q", test.Name)
+					require.Equal(t, test.ExpectedEmail, userInfo.Email)
+				} else {
+					require.Nil(t, userInfo, "Testing case %q", test.Name)
+				}
 			})
 		}
 	})

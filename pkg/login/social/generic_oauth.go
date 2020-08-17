@@ -2,8 +2,7 @@ package social
 
 import (
 	"bytes"
-	"compress/flate"
-	"compress/gzip"
+	"compress/zlib"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -12,7 +11,6 @@ import (
 	"net/http"
 	"net/mail"
 	"regexp"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -213,8 +211,7 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 		return nil
 	}
 
-	var headerBytes []byte
-	headerBytes, err = base64.RawURLEncoding.DecodeString(matched[1])
+	headerBytes, err := base64.RawURLEncoding.DecodeString(matched[1])
 	if err != nil {
 		s.log.Error("Error base64 decoding header", "header", matched[1], "error", err)
 		return nil
@@ -223,29 +220,20 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 	var header map[string]string
 	err = json.Unmarshal(headerBytes, &header)
 	if compression, ok := header["zip"]; ok {
-		switch strings.ToLower(compression) {
-		case "gzip":
-			gr, err := gzip.NewReader(bytes.NewBuffer(rawJSON))
+		if compression == "DEF" {
+			fr, err := zlib.NewReader(bytes.NewReader(rawJSON))
 			if err != nil {
-				s.log.Error("Error creating decompressor", "decoded_payload", string(rawJSON), "error", err)
+				s.log.Error("Error creating zlib reader", "error", err)
 				return nil
 			}
-			defer gr.Close()
-			rawJSON, err = ioutil.ReadAll(gr)
-			if err != nil {
-				s.log.Error("Error decompressing payload", "decoded_payload", string(rawJSON), "error", err)
-				return nil
-			}
-		case "def":
-			fr := flate.NewReader(bytes.NewReader(rawJSON))
 			defer fr.Close()
 			rawJSON, err = ioutil.ReadAll(fr)
 			if err != nil {
-				s.log.Error("Error decompressing raw_payload", "decoded_payload", string(rawJSON), "error", err)
+				s.log.Error("Error decompressing payload", "error", err)
 				return nil
 			}
-		default:
-			s.log.Error("Invalid compression type: "+compression, "decoded_payload", string(rawJSON), "error", err)
+		} else {
+			s.log.Error("Unknown compression algorithm", "algorithm", compression)
 			return nil
 		}
 	}
