@@ -489,5 +489,4 @@ func TestPayloadCompression(t *testing.T) {
 			}
 		})
 	}
-
 }
