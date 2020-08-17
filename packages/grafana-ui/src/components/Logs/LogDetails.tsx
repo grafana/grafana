@@ -18,16 +18,10 @@ import { getLogRowStyles } from './getLogRowStyles';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
+import { parseMessage, FieldDef } from './logParser';
+
 //Components
 import { LogDetailsRow } from './LogDetailsRow';
-import { MAX_CHARACTERS } from './LogRowMessage';
-
-type FieldDef = {
-  key: string;
-  value: string;
-  links?: Array<LinkModel<Field>>;
-  fieldIndex?: number;
-};
 
 export interface Props extends Themeable {
   row: LogRowModel;
@@ -67,25 +61,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 class UnThemedLogDetails extends PureComponent<Props> {
   getParser = memoizeOne(getParser);
 
-  parseMessage = memoizeOne((rowEntry): FieldDef[] => {
-    if (rowEntry.length > MAX_CHARACTERS) {
-      return [];
-    }
-    const parser = this.getParser(rowEntry);
-    if (!parser) {
-      return [];
-    }
-    // Use parser to highlight detected fields
-    const parsedFields = parser.getFields(rowEntry);
-    const fields = parsedFields.map(field => {
-      const key = parser.getLabelFromField(field);
-      const value = parser.getValueFromField(field);
-      return { key, value };
-    });
-
-    return fields;
-  });
-
   getDerivedFields = memoizeOne((row: LogRowModel): FieldDef[] => {
     return (
       row.dataFrame.fields
@@ -120,7 +95,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
    * setup in data source config.
    */
   getAllFields = memoizeOne((row: LogRowModel) => {
-    const fields = this.parseMessage(row.entry);
+    const fields = parseMessage(row.entry);
     const derivedFields = this.getDerivedFields(row);
     const fieldsMap = [...derivedFields, ...fields].reduce((acc, field) => {
       // Strip enclosing quotes for hashing. When values are parsed from log line the quotes are kept, but if same
