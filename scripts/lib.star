@@ -642,8 +642,8 @@ def windows_installer_step(edition):
             },
         },
         'commands': [
-            'gcpKey = $env:GCP_KEY',
-            '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String(gcpKey)) > gcpkey.json',
+            '$gcpKey = $env:GCP_KEY',
+            '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($gcpKey)) > gcpkey.json',
             'gcloud auth activate-service-account --key-file=gcpkey.json',
             'rm gcpkey.json',
             '$ProgressPreference = "SilentlyContinue"',

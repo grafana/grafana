@@ -535,8 +535,8 @@ steps:
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.0
   commands:
-  - gcpKey = $env:GCP_KEY
-  - "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String(gcpKey)) > gcpkey.json"
+  - $gcpKey = $env:GCP_KEY
+  - "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($gcpKey)) > gcpkey.json"
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - $ProgressPreference = "SilentlyContinue"
