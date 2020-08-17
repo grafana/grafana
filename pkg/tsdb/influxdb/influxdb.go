@@ -21,7 +21,6 @@ type InfluxDBExecutor struct {
 	//*models.DataSource
 	QueryParser    *InfluxdbQueryParser
 	ResponseParser *ResponseParser
-	//HttpClient     *http.Client
 }
 
 func NewInfluxDBExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {

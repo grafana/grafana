@@ -390,23 +390,30 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 }
 
 // Map values from:
-//   https://docs.microsoft.com/en-us/azure/azure-monitor/platform/metrics-supported#microsoftanalysisservicesservers
+//   https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list#unit
 // to
 //   https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/valueFormats/categories.ts#L24
 func toGrafanaUnit(unit string) string {
 	switch unit {
-	case "Percent":
-		return "percent"
-	case "Count":
-		return "short" // this is used for integers
+	case "BitsPerSecond":
+		return "bps"
 	case "Bytes":
 		return "decbytes" // or ICE
 	case "BytesPerSecond":
 		return "Bps"
+	case "Count":
+		return "short" // this is used for integers
 	case "CountPerSecond":
 		return "cps"
+	case "Percent":
+		return "percent"
 	case "Milliseconds":
 		return "ms"
+	case "Seconds":
+		return "s"
 	}
 	return unit // this will become a suffix in the display
+	// "ByteSeconds", "Cores", "MilliCores", and "NanoCores" all both:
+	// 1. Do not have a corresponding unit in Grafana's current list.
+	// 2. Do not have the unit listed in any of Azure Monitor's supported metrics anyways.
 }

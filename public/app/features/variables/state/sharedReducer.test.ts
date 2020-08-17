@@ -290,7 +290,7 @@ describe('sharedReducer', () => {
               { selected: true, text: 'A', value: 'A' },
               { selected: true, text: 'B', value: 'B' },
             ],
-            current: { selected: true, text: 'A + B', value: ['A', 'B'] },
+            current: { selected: true, text: ['A', 'B'], value: ['A', 'B'] },
           } as unknown) as QueryVariableModel,
         });
     });

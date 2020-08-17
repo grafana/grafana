@@ -8,8 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
-	influxdb2 "github.com/influxdata/influxdb-client-go"
-	"github.com/influxdata/influxdb-client-go/api"
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"github.com/influxdata/influxdb-client-go/v2/api"
 )
 
 var (
@@ -60,7 +60,7 @@ type queryRunner interface {
 
 // runQuery executes fluxQuery against the Runner's organization and returns a Flux typed result.
 func (r *runner) runQuery(ctx context.Context, fluxQuery string) (*api.QueryTableResult, error) {
-	qa := r.client.QueryApi(r.org)
+	qa := r.client.QueryAPI(r.org)
 	return qa.Query(ctx, fluxQuery)
 }
 
@@ -80,8 +80,14 @@ func runnerFromDataSource(dsInfo *models.DataSource) (*runner, error) {
 		return nil, fmt.Errorf("token is missing from datasource configuration and is needed to use Flux")
 	}
 
+	opts := influxdb2.DefaultOptions()
+	hc, err := dsInfo.GetHttpClient()
+	if err != nil {
+		return nil, err
+	}
+	opts.HTTPOptions().SetHTTPClient(hc)
 	return &runner{
-		client: influxdb2.NewClient(url, token),
+		client: influxdb2.NewClientWithOptions(url, token, opts),
 		org:    org,
 	}, nil
 }

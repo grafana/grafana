@@ -16,8 +16,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/xorcare/pointer"
 
-	influxdb2 "github.com/influxdata/influxdb-client-go"
-	"github.com/influxdata/influxdb-client-go/api"
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"github.com/influxdata/influxdb-client-go/v2/api"
 )
 
 //--------------------------------------------------------------

@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/influxdata/influxdb-client-go/api"
+	"github.com/influxdata/influxdb-client-go/v2/api"
 )
 
 // executeQuery runs a flux query using the queryModel to interpolate the query and the runner to execute it.
@@ -33,7 +33,6 @@ func executeQuery(ctx context.Context, query queryModel, runner queryRunner, max
 		dr.Frames = append(dr.Frames, metaFrame)
 		return
 	}
-	defer tables.Close()
 
 	dr = readDataFrames(tables, int(float64(query.MaxDataPoints)*1.5), maxSeries)
 

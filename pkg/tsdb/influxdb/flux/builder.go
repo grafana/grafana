@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/influxdata/influxdb-client-go/api/query"
+	"github.com/influxdata/influxdb-client-go/v2/api/query"
 )
 
 // Copied from: (Apache 2 license)
