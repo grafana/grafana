@@ -641,6 +641,7 @@ def windows_installer_step(edition):
             'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
             # TODO: Infer correct Grafana version
             'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/{}/master/grafana{}-7.2.0-9fffe273pre.windows-amd64.zip -OutFile grafana.zip'.format(edition, sfx),
+            'cp C:\\App\\nssm-2.24.zip .',
             './grabpl.exe windows-installer --edition {} grafana.zip'.format(edition),
         ],
     }
