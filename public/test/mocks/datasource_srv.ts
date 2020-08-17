@@ -27,7 +27,7 @@ export class MockDataSourceApi extends DataSourceApi {
   result: DataQueryResponse = { data: [] };
   queryResolver: Promise<DataQueryResponse>;
 
-  constructor(name?: string, result?: DataQueryResponse | string, meta?: any, private throwError = false) {
+  constructor(name?: string, result?: DataQueryResponse, meta?: any, private error: string | null = null) {
     super({ name: name ? name : 'MockDataSourceApi' } as DataSourceInstanceSettings);
     if (result) {
       this.result = result;
@@ -41,8 +41,8 @@ export class MockDataSourceApi extends DataSourceApi {
       return this.queryResolver;
     }
 
-    if (this.throwError) {
-      return Promise.reject(this.result);
+    if (this.error) {
+      return Promise.reject(this.error);
     }
 
     return new Promise(resolver => {

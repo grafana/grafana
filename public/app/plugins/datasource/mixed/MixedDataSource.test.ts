@@ -12,8 +12,8 @@ const datasourceSrv = new DatasourceSrvMock(defaultDS, {
   A: new MockDataSourceApi('DSA', { data: ['AAAA'] }),
   B: new MockDataSourceApi('DSB', { data: ['BBBB'] }),
   C: new MockDataSourceApi('DSC', { data: ['CCCC'] }),
-  D: new MockDataSourceApi('DSD', 'syntax error near FROM', {}, true),
-  E: new MockDataSourceApi('DSE', 'syntax error near WHERE', {}, true),
+  D: new MockDataSourceApi('DSD', { data: [] }, {}, 'syntax error near FROM'),
+  E: new MockDataSourceApi('DSE', { data: [] }, {}, 'syntax error near WHERE'),
 });
 
 jest.mock('@grafana/runtime', () => ({
