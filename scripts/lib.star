@@ -630,6 +630,9 @@ def publish_packages_step(edition):
     }
 
 def windows_installer_step(edition):
+    sfx = ''
+    if edition == 'enterprise':
+        sfx = '-enterprise'
     return {
         'name': 'build-windows-installer',
         'image': 'grafana/ci-wix:0.1.0',
@@ -639,7 +642,7 @@ def windows_installer_step(edition):
         'commands': [
             '(New-Object Net.WebClient).DownloadFile("https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/windows/grabpl.exe", "grabpl.exe")',
             # TODO: Infer correct Grafana version
-            '(New-Object Net.WebClient).DownloadFile("https://grafana-downloads.storage.googleapis.com/{}/master/grafana-7.2.0-9fffe273pre.windows-amd64.zip", "grafana.zip")'.format(edition),
+            '(New-Object Net.WebClient).DownloadFile("https://grafana-downloads.storage.googleapis.com/{}/master/grafana{}-7.2.0-9fffe273pre.windows-amd64.zip", "grafana.zip")'.format(edition, sfx),
             './grabpl.exe windows-installer --edition {} grafana.zip'.format(edition),
         ],
     }
