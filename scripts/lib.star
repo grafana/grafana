@@ -116,7 +116,7 @@ def master_pipelines(edition):
             name='test-master', edition=edition, trigger=trigger, services=services, steps=steps
         ),
         pipeline(
-            name='windows-installer-master', edition=edition, trigger=trigger, 
+            name='windows-installer-master', edition=edition, trigger=trigger,
             steps=windows_steps, platform='windows', depends_on=['test-master'],
         ),
     ]
@@ -636,12 +636,24 @@ def windows_installer_step(edition):
     return {
         'name': 'build-windows-installer',
         'image': 'grafana/ci-wix:0.1.0',
+        'environment': {
+            'GCP_KEY': {
+                'from_secret': 'gcp_key',
+            },
+        },
         'commands': [
+            'gcpKey = $env:GCP_KEY)',
+            '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String(gcpKey) > gcpkey.json',
+            'gcloud auth activate-service-account --key-file=gcpkey.json',
+            'rm gcpkey.json',
             '$ProgressPreference = "SilentlyContinue"',
             'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
             # TODO: Infer correct Grafana version
             'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/{}/master/grafana{}-7.2.0-9fffe273pre.windows-amd64.zip -OutFile grafana.zip'.format(edition, sfx),
             'cp C:\\App\\nssm-2.24.zip .',
             './grabpl.exe windows-installer --edition {} grafana.zip'.format(edition),
+            '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
+            'echo gsutil cp $$fname gs://grafana-downloads/{}/master/'.format(edition),
+            'echo gsutil cp $$fname.sha256 gs://grafana-downloads/{}/master/'.format(edition),
         ],
     }
