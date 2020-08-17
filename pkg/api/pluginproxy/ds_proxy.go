@@ -343,7 +343,7 @@ func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
 			logger.Error("Failed to update auth info during token refresh", "userid", c.UserId, "username", c.Login, "error", err)
 			return
 		}
-		logger.Info("Updated OAuth credentials while proxying an OAuth pass-thru request", "userid", c.UserId, "username", c.Login)
+		logger.Debug("Updated OAuth info while proxying an OAuth pass-thru request", "userid", c.UserId, "username", c.Login)
 	}
 	req.Header.Del("Authorization")
 	req.Header.Add("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
