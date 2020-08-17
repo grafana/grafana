@@ -18,18 +18,18 @@ enable = [
   "errcheck",
   # "gochecknoinits",
   "goconst",
-  # "gocritic",
+  "gocritic",
   "goimports",
   "golint",
-  # "goprintffuncname",
+  "goprintffuncname",
   "gosec",
   "gosimple",
   "govet",
   "ineffassign",
-  # "interfacer",
-  # "misspell",
+  "misspell",
+  "nakedret",
   "rowserrcheck",
-  "scopelint",
+  "exportloopref",
   "staticcheck",
   "structcheck",
   # "stylecheck",
@@ -37,7 +37,7 @@ enable = [
   "unconvert",
   "unused",
   "varcheck",
-  # "whitespace",
+  "whitespace",
 ]
 
 # Disabled linters (might want them later)
@@ -75,3 +75,11 @@ text = "402"
 [[issues.exclude-rules]]
 linters = ["gosec"]
 text = "501"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "404"
+
+[[issues.exclude-rules]]
+linters = ["misspell"]
+text = "Unknwon` is a misspelling of `Unknown"

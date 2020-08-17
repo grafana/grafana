@@ -7,9 +7,11 @@ import {
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   PanelData,
+  DataSourceInstanceSettings,
 } from '@grafana/data';
 import { ComponentClass } from 'react';
 import { PanelQueryRunner } from './PanelQueryRunner';
+import { setDataSourceSrv } from '@grafana/runtime';
 
 class TablePanelCtrl {}
 
@@ -149,6 +151,11 @@ describe('PanelModel', () => {
     });
 
     it('should apply field config defaults', () => {
+      setDataSourceSrv({
+        getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
+          return undefined;
+        },
+      } as any);
       // default unit is overriden by model
       expect(model.getFieldOverrideOptions().fieldConfig.defaults.unit).toBe('mpg');
       // default decimals are aplied

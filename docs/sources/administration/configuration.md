@@ -37,7 +37,7 @@ Refer to [Configure a Grafana Docker image]({{< relref "../installation/configur
 
 `sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
 
-### MacOS
+### macOS
 
 By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. To configure Grafana, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
 
@@ -91,12 +91,14 @@ export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
 
 > Only available in Grafana 7.1+.
 
+> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana.
+
 If any of your options contains the expression `$__<provider>{<argument>}`
 or `${<environment variable>}`, then they will be processed by Grafana's
 variable expander. The expander runs the provider with the provided argument
 to get the final value of the option.
 
-There are two providers: `env` and `file`.
+There are three providers: `env`, `file`, and `vault`.
 
 ### Env provider
 
@@ -108,7 +110,7 @@ Grafana's log directory would be set to the `grafana` directory in the
 directory behind the `LOGDIR` environment variable in the following
 example.
 
-```
+```ini
 [paths]
 logs = $__env{LOGDIR}/grafana
 ```
@@ -120,12 +122,16 @@ beginning and the end of files.
 The database password in the following example would be replaced by
 the content of the `/etc/secrets/gf_sql_password` file:
 
-```
+```ini
 [database]
 password = $__file{/etc/secrets/gf_sql_password}
 ```
 
-> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana for the changes to take effect.
+### Vault provider
+
+The `vault` provider allows you to manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault).
+
+> Vault provider is only available in Grafana Enterprise v7.1+. For more information, refer to [Vault integration]({{< relref "../enterprise/vault.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
 <hr />
 
@@ -267,7 +273,7 @@ Path where the socket should be created when `protocol=socket`. Make sure that G
 ## [database]
 
 Grafana needs a database to store users and dashboards (and other
-things). By default it is configured to use `sqlite3` which is an
+things). By default it is configured to use [`sqlite3`](https://www.sqlite.org/index.html) which is an
 embedded database (included in the main Grafana binary).
 
 ### type
@@ -366,7 +372,7 @@ Example connstr: `addr=127.0.0.1:6379,pool_size=100,db=0,ssl=false`
 
 - `addr` is the host `:` port of the redis server.
 - `pool_size` (optional) is the number of underlying connections that can be made to redis.
-- `db` (optional) is the number indentifer of the redis database you want to use.
+- `db` (optional) is the number identifier of the redis database you want to use.
 - `ssl` (optional) is if SSL should be used to connect to redis server. The value may be `true`, `false`, or `insecure`. Setting the value to `insecure` skips verification of the certificate chain and hostname when making the connection.
 
 #### memcache
@@ -530,6 +536,10 @@ Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 This prevents users from setting the dashboard refresh interval of a lower than given interval. Per default this is 5 seconds.
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
 
+### default_home_dashboard_path
+
+Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json"
+
 <hr />
 
 ## [users]
@@ -642,10 +652,6 @@ Administrators can increase this if they experience OAuth login state mismatch e
 ### api_key_max_seconds_to_live
 
 Limit of API key seconds to live before expiration. Default is -1 (unlimited).
-
-### default_home_dashboard_path
-
-Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json"
 
 <hr />
 
@@ -1173,7 +1179,7 @@ Optional URL to send to users in notifications. If the string contains the seque
 
 ### key_file
 
-Path to JSON key file associated with a Google service account to authenticate and authorize.
+Optional path to JSON key file associated with a Google service account to authenticate and authorize. If no value is provided it tries to use the [application default credentials](https://cloud.google.com/docs/authentication/production#finding_credentials_automatically).
 Service Account keys can be created and downloaded from https://console.developers.google.com/permissions/serviceaccounts.
 
 Service Account should have "Storage Object Writer" role. The access control model of the bucket needs to be "Set object-level and bucket-level permissions". Grafana itself will make the images public readable.
@@ -1343,4 +1349,4 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
+Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`, `standaloneAlerts`

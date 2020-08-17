@@ -14,7 +14,7 @@ export interface Props {
 
 interface State {
   isLoading: boolean;
-  allNodesExpanded: boolean;
+  allNodesExpanded: boolean | null;
   testRuleResponse: {};
 }
 

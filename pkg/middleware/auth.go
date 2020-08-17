@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/url"
+	"strconv"
 	"strings"
 
 	macaron "gopkg.in/macaron.v1"
@@ -87,7 +88,13 @@ func RoleAuth(roles ...models.RoleType) macaron.Handler {
 
 func Auth(options *AuthOptions) macaron.Handler {
 	return func(c *models.ReqContext) {
-		forceLogin := c.AllowAnonymous && c.QueryBool("forceLogin")
+		forceLogin := false
+		if c.AllowAnonymous {
+			forceLoginParam, err := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin"))
+			if err == nil {
+				forceLogin = forceLoginParam
+			}
+		}
 		requireLogin := !c.AllowAnonymous || forceLogin
 		if !c.IsSignedIn && options.ReqSignedIn && requireLogin {
 			notAuthorized(c)

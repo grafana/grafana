@@ -9,29 +9,31 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-type CloudWatchExecutor struct {
-	*models.DataSource
-	ec2Svc  ec2iface.EC2API
-	rgtaSvc resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-
-	logsClientsByRegion map[string](*cloudwatchlogs.CloudWatchLogs)
-	mux                 sync.Mutex
-}
-
-type DatasourceInfo struct {
+type datasourceInfo struct {
 	Profile       string
 	Region        string
 	AuthType      string
 	AssumeRoleArn string
+	ExternalID    string
 	Namespace     string
 
 	AccessKey string
@@ -39,56 +41,109 @@ type DatasourceInfo struct {
 }
 
 const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
+const defaultRegion = "default"
 
 // Constants also defined in datasource/cloudwatch/datasource.ts
 const logIdentifierInternal = "__log__grafana_internal__"
 const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 
-func (e *CloudWatchExecutor) getLogsClient(region string) (*cloudwatchlogs.CloudWatchLogs, error) {
-	e.mux.Lock()
-	defer e.mux.Unlock()
+var plog = log.New("tsdb.cloudwatch")
+var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+
+func init() {
+	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+		return newExecutor(), nil
+	})
+}
+
+func newExecutor() *cloudWatchExecutor {
+	return &cloudWatchExecutor{
+		logsClientsByRegion: map[string]cloudwatchlogsiface.CloudWatchLogsAPI{},
+	}
+}
+
+// cloudWatchExecutor executes CloudWatch requests.
+type cloudWatchExecutor struct {
+	*models.DataSource
+
+	ec2Client           ec2iface.EC2API
+	rgtaClient          resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
+	logsClientsByRegion map[string]cloudwatchlogsiface.CloudWatchLogsAPI
+	mtx                 sync.Mutex
+}
+
+func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
+	dsInfo := e.getDSInfo(region)
+	creds, err := getCredentials(dsInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := &aws.Config{
+		Region:      aws.String(dsInfo.Region),
+		Credentials: creds,
+	}
+	return newSession(cfg)
+}
+
+func (e *cloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWatchAPI, error) {
+	sess, err := e.newSession(region)
+	if err != nil {
+		return nil, err
+	}
+	return newCWClient(sess), nil
+}
+
+func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
+	e.mtx.Lock()
+	defer e.mtx.Unlock()
 
 	if logsClient, ok := e.logsClientsByRegion[region]; ok {
 		return logsClient, nil
 	}
 
-	dsInfo := retrieveDsInfo(e.DataSource, region)
-	newLogsClient, err := retrieveLogsClient(dsInfo)
-
+	sess, err := e.newSession(region)
 	if err != nil {
 		return nil, err
 	}
 
-	e.logsClientsByRegion[region] = newLogsClient
+	logsClient := newCWLogsClient(sess)
+	e.logsClientsByRegion[region] = logsClient
 
-	return newLogsClient, nil
+	return logsClient, nil
 }
 
-func NewCloudWatchExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	dsInfo := retrieveDsInfo(datasource, "default")
-	defaultLogsClient, err := retrieveLogsClient(dsInfo)
+func (e *cloudWatchExecutor) getEC2Client(region string) (ec2iface.EC2API, error) {
+	if e.ec2Client != nil {
+		return e.ec2Client, nil
+	}
 
+	sess, err := e.newSession(region)
 	if err != nil {
 		return nil, err
 	}
+	e.ec2Client = newEC2Client(sess)
 
-	logsClientsByRegion := make(map[string](*cloudwatchlogs.CloudWatchLogs))
-	logsClientsByRegion[dsInfo.Region] = defaultLogsClient
-	logsClientsByRegion["default"] = defaultLogsClient
-
-	return &CloudWatchExecutor{
-		logsClientsByRegion: logsClientsByRegion,
-	}, nil
+	return e.ec2Client, nil
 }
 
-var plog = log.New("tsdb.cloudwatch")
-var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+func (e *cloudWatchExecutor) getRGTAClient(region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,
+	error) {
+	if e.rgtaClient != nil {
+		return e.rgtaClient, nil
+	}
 
-func init() {
-	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", NewCloudWatchExecutor)
+	sess, err := e.newSession(region)
+	if err != nil {
+		return nil, err
+	}
+	e.rgtaClient = newRGTAClient(sess)
+
+	return e.rgtaClient, nil
 }
 
-func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient *cloudwatchlogs.CloudWatchLogs, queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
+	queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	const maxAttempts = 8
 	const pollPeriod = 1000 * time.Millisecond
 
@@ -125,7 +180,8 @@ func (e *CloudWatchExecutor) alertQuery(ctx context.Context, logsClient *cloudwa
 	return nil, nil
 }
 
-func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+// Query executes a CloudWatch query.
+func (e *cloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	e.DataSource = dsInfo
 
 	/*
@@ -162,18 +218,18 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	return result, err
 }
 
-func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	queryParams := queryContext.Queries[0].Model
 	queryParams.Set("subtype", "StartQuery")
 	queryParams.Set("queryString", queryParams.Get("expression").MustString(""))
 
-	region := queryParams.Get("region").MustString("default")
-	if region == "default" {
+	region := queryParams.Get("region").MustString(defaultRegion)
+	if region == defaultRegion {
 		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
 		queryParams.Set("region", region)
 	}
 
-	logsClient, err := e.getLogsClient(region)
+	logsClient, err := e.getCWLogsClient(region)
 	if err != nil {
 		return nil, err
 	}
@@ -226,6 +282,67 @@ func (e *CloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	return response, nil
 }
 
+func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
+	if region == defaultRegion {
+		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
+	}
+
+	authType := e.DataSource.JsonData.Get("authType").MustString()
+	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
+	externalID := e.DataSource.JsonData.Get("externalId").MustString()
+	decrypted := e.DataSource.DecryptedValues()
+	accessKey := decrypted["accessKey"]
+	secretKey := decrypted["secretKey"]
+
+	return &datasourceInfo{
+		Region:        region,
+		Profile:       e.DataSource.Database,
+		AuthType:      authType,
+		AssumeRoleArn: assumeRoleArn,
+		ExternalID:    externalID,
+		AccessKey:     accessKey,
+		SecretKey:     secretKey,
+	}
+}
+
 func isTerminated(queryStatus string) bool {
 	return queryStatus == "Complete" || queryStatus == "Cancelled" || queryStatus == "Failed" || queryStatus == "Timeout"
+}
+
+// CloudWatch client factory.
+//
+// Stubbable by tests.
+var newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+	client := cloudwatch.New(sess)
+	client.Handlers.Send.PushFront(func(r *request.Request) {
+		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+	})
+
+	return client
+}
+
+// CloudWatch logs client factory.
+//
+// Stubbable by tests.
+var newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	client := cloudwatchlogs.New(sess)
+	client.Handlers.Send.PushFront(func(r *request.Request) {
+		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+	})
+
+	return client
+}
+
+// EC2 client factory.
+//
+// Stubbable by tests.
+var newEC2Client = func(provider client.ConfigProvider) ec2iface.EC2API {
+	return ec2.New(provider)
+}
+
+// RGTA client factory.
+//
+// Stubbable by tests.
+var newRGTAClient = func(provider client.ConfigProvider) resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI {
+	return resourcegroupstaggingapi.New(provider)
 }

@@ -221,7 +221,6 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SocialAzureAD{
 				SocialBase:    tt.fields.SocialBase,
@@ -252,7 +251,6 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				if err != nil {
 					t.Error(err)
 				}
-
 			}
 
 			token := &oauth2.Token{}

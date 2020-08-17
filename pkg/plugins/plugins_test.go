@@ -160,7 +160,7 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.Init()
 		require.NoError(t, err)
 
-		assert.Empty(t, pm.scanningErrors)
+		require.Empty(t, pm.scanningErrors)
 		assert.Equal(t, []string{"gel"}, fm.registeredPlugins)
 	})
 }
@@ -177,7 +177,6 @@ func TestPluginManager_IsBackendOnlyPlugin(t *testing.T) {
 		{name: "renderer", isBackendOnly: true},
 		{name: "app", isBackendOnly: false},
 	} {
-		c := c
 		t.Run(fmt.Sprintf("Plugin %s", c.name), func(t *testing.T) {
 			result := pluginScanner.IsBackendOnlyPlugin(c.name)
 

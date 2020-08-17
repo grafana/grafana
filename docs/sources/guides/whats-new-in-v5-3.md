@@ -39,7 +39,7 @@ The Grafana Stackdriver plugin comes with support for automatic unit detection. 
 The data source is still in the `beta` phase, meaning it's currently in active development and is still missing one important feature - templating queries.
 Please try it out, but be aware of that it might be subject to changes and possible bugs. We would love to hear your feedback.
 
-Please read [Using Google Stackdriver in Grafana](/features/datasources/stackdriver/) for more detailed information on how to get started and use it.
+Please read [Using Google Stackdriver in Grafana]({{< relref "../features/datasources/cloudmonitoring/" >}}) for more detailed information on how to get started and use it.
 
 ## TV and Kiosk Mode
 
@@ -52,7 +52,7 @@ We've improved the TV and kiosk mode to make it easier to use. There's now an ic
 3. Hit the escape key to go back to the default view mode.
 
 When switching view modes, the URL will be updated to reflect the view mode selected. This allows a dashboard to be opened with a
-certain view mode enabled. Additionally, this also enables [playlists](/reference/playlist) to be started with a certain view mode enabled.
+certain view mode enabled. Additionally, this also enables [playlists](/dashboards/playlist) to be started with a certain view mode enabled.
 
 <div class="clearfix"></div>
 
@@ -65,7 +65,7 @@ Learn how to enable and configure reminders [here](/alerting/notifications/#send
 
 ## Postgres Query Builder
 
-Grafana 5.3 comes with a new graphical query builder for Postgres. This brings Postgres integration more in line with some of the other data sources and makes it easier for both advanced users and beginners to work with timeseries in Postgres. Learn more about it in the [documentation](/features/datasources/postgres/#query-editor).
+Grafana 5.3 comes with a new graphical query builder for Postgres. This brings Postgres integration more in line with some of the other data sources and makes it easier for both advanced users and beginners to work with timeseries in Postgres. Learn more about it in the [documentation]({{< relref "../features/datasources/postgres/#query-editor" >}}).
 
 {{< docs-imagebox img="/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v53/postgres_query.gif" >}}
 
@@ -76,8 +76,8 @@ Learn how to enable and configure it in the [documentation](/auth/gitlab/).
 
 ## Annotations
 
-Grafana 5.3 brings improved support for [native annotations](/reference/annotations/#native-annotations) and makes it possible to use template variables when filtering by tags.
-Learn more about it in the [documentation](/reference/annotations/#query-by-tag).
+Grafana 5.3 brings improved support for [native annotations](/dashboards/annotations/#native-annotations) and makes it possible to use template variables when filtering by tags.
+Learn more about it in the [documentation](/dashboards/annotations/#query-by-tag).
 
 {{< docs-imagebox img="/img/docs/v53/annotation_tag_filter_variable.png" max-width="600px" >}}
 

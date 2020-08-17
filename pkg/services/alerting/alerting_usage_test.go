@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"testing"
 
@@ -95,8 +96,7 @@ func TestParsingAlertRuleSettings(t *testing.T) {
 			shouldErr: require.NoError,
 		},
 		{
-			name:      "can parse blank content",
-			file:      "testdata/settings/invalid_format.json",
+			name:      "can handle nil content",
 			expected:  []int64{},
 			shouldErr: require.NoError,
 		},
@@ -107,14 +107,17 @@ func TestParsingAlertRuleSettings(t *testing.T) {
 	require.NoError(t, err, "Init should not return an error")
 
 	for _, tc := range tcs {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			content, err := ioutil.ReadFile(tc.file)
-			require.NoError(t, err, "expected to be able to read file")
+			var settings json.Marshaler
+			if tc.file != "" {
+				content, err := ioutil.ReadFile(tc.file)
+				require.NoError(t, err, "expected to be able to read file")
 
-			j, _ := simplejson.NewJson(content)
+				settings, err = simplejson.NewJson(content)
+				require.NoError(t, err)
+			}
 
-			result, err := ae.parseAlertRuleModel(j)
+			result, err := ae.parseAlertRuleModel(settings)
 
 			tc.shouldErr(t, err)
 			diff := cmp.Diff(tc.expected, result)

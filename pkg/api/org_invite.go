@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -81,6 +82,7 @@ func AddOrgInvite(c *models.ReqContext, inviteDto dtos.AddInviteForm) Response {
 			if err == models.ErrSmtpNotEnabled {
 				return Error(412, err.Error(), err)
 			}
+
 			return Error(500, "Failed to send email invite", err)
 		}
 
@@ -181,6 +183,10 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext, completeInvite dtos.C
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if errors.Is(err, models.ErrUserAlreadyExists) {
+			return Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", completeInvite.Email, completeInvite.Username), err)
+		}
+
 		return Error(500, "failed to create user", err)
 	}
 

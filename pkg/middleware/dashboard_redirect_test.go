@@ -80,5 +80,4 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 			})
 		})
 	})
-
 }

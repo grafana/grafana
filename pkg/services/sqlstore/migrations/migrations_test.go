@@ -12,11 +12,10 @@ import (
 
 func TestMigrations(t *testing.T) {
 	testDBs := []sqlutil.TestDB{
-		sqlutil.TestDB_Sqlite3,
+		sqlutil.Sqlite3TestDB(),
 	}
 
 	for _, testDB := range testDBs {
-		testDB := testDB
 		sql := `select count(*) as count from migration_log`
 		r := struct {
 			Count int64

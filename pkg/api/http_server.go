@@ -10,11 +10,11 @@ import (
 	"path"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/search"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
-	"github.com/grafana/grafana/pkg/api/live"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -48,11 +48,11 @@ func init() {
 }
 
 type HTTPServer struct {
-	log           log.Logger
-	macaron       *macaron.Macaron
-	context       context.Context
-	streamManager *live.StreamManager
-	httpSrv       *http.Server
+	log         log.Logger
+	macaron     *macaron.Macaron
+	context     context.Context
+	httpSrv     *http.Server
+	middlewares []macaron.Handler
 
 	RouteRegister        routing.RouteRegister            `inject:""`
 	Bus                  bus.Bus                          `inject:""`
@@ -70,23 +70,39 @@ type HTTPServer struct {
 	BackendPluginManager backendplugin.Manager            `inject:""`
 	PluginManager        *plugins.PluginManager           `inject:""`
 	SearchService        *search.SearchService            `inject:""`
+	Live                 *live.GrafanaLive
 }
 
 func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
 
-	hs.streamManager = live.NewStreamManager()
+	// Set up a websocket broker
+	if hs.Cfg.IsLiveEnabled() { // feature flag
+		node, err := live.InitalizeBroker()
+		if err != nil {
+			return err
+		}
+		hs.Live = node
+
+		// Spit random walk to example
+		go live.RunRandomCSV(hs.Live, "random-2s-stream", 2000, 0)
+		go live.RunRandomCSV(hs.Live, "random-flakey-stream", 400, .6)
+	}
+
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
 
 	return nil
 }
 
+func (hs *HTTPServer) AddMiddleware(middleware macaron.Handler) {
+	hs.middlewares = append(hs.middlewares, middleware)
+}
+
 func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.context = ctx
 
 	hs.applyRoutes()
-	hs.streamManager.Run(ctx)
 
 	hs.httpSrv = &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort),
@@ -323,6 +339,10 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.HandleNoCacheHeader())
+
+	for _, mw := range hs.middlewares {
+		m.Use(mw)
+	}
 }
 
 func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {

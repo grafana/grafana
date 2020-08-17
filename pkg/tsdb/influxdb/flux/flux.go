@@ -8,8 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
-	influxdb2 "github.com/influxdata/influxdb-client-go"
-	"github.com/influxdata/influxdb-client-go/api"
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"github.com/influxdata/influxdb-client-go/v2/api"
 )
 
 var (
@@ -22,6 +22,7 @@ func init() {
 
 // Query builds flux queries, executes them, and returns the results.
 func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	glog.Debug("Received a query", "query", *tsdbQuery)
 	tRes := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
@@ -29,16 +30,16 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 	if err != nil {
 		return nil, err
 	}
+	defer runner.client.Close()
 
 	for _, query := range tsdbQuery.Queries {
-
 		qm, err := GetQueryModelTSDB(query, tsdbQuery.TimeRange, dsInfo)
 		if err != nil {
 			tRes.Results[query.RefId] = &tsdb.QueryResult{Error: err}
 			continue
 		}
 
-		res := ExecuteQuery(context.Background(), *qm, runner, 10)
+		res := executeQuery(context.Background(), *qm, runner, 50)
 
 		tRes.Results[query.RefId] = backendDataResponseToTSDBResponse(&res, query.RefId)
 	}
@@ -57,9 +58,10 @@ type queryRunner interface {
 	runQuery(ctx context.Context, q string) (*api.QueryTableResult, error)
 }
 
-// runQuery executes fluxQuery against the Runner's organization and returns an flux typed result.
+// runQuery executes fluxQuery against the Runner's organization and returns a Flux typed result.
 func (r *Runner) runQuery(ctx context.Context, fluxQuery string) (*api.QueryTableResult, error) {
-	return r.client.QueryApi(r.org).Query(ctx, fluxQuery)
+	qa := r.client.QueryAPI(r.org)
+	return qa.Query(ctx, fluxQuery)
 }
 
 // RunnerFromDataSource creates a runner from the datasource model (the datasource instance's configuration).
@@ -71,18 +73,23 @@ func RunnerFromDataSource(dsInfo *models.DataSource) (*Runner, error) {
 
 	url := dsInfo.Url
 	if url == "" {
-		return nil, fmt.Errorf("missing url from datasource configuration")
+		return nil, fmt.Errorf("missing URL from datasource configuration")
 	}
 	token, found := dsInfo.SecureJsonData.DecryptedValue("token")
 	if !found {
 		return nil, fmt.Errorf("token is missing from datasource configuration and is needed to use Flux")
 	}
 
+	opts := influxdb2.DefaultOptions()
+	hc, err := dsInfo.GetHttpClient()
+	if err != nil {
+		return nil, err
+	}
+	opts.HTTPOptions().SetHTTPClient(hc)
 	return &Runner{
-		client: influxdb2.NewClient(url, token),
+		client: influxdb2.NewClientWithOptions(url, token, opts),
 		org:    org,
 	}, nil
-
 }
 
 // backendDataResponseToTSDBResponse takes the SDK's style response and changes it into a

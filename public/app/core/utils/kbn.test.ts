@@ -53,7 +53,7 @@ describe('Chcek KBN value formats', () => {
 
 describe('describe_interval', () => {
   it('falls back to seconds if input is a number', () => {
-    expect(kbn.describe_interval('123')).toEqual({
+    expect(kbn.describeInterval('123')).toEqual({
       sec: 1,
       type: 's',
       count: 123,
@@ -61,7 +61,7 @@ describe('describe_interval', () => {
   });
 
   it('parses a valid time unt string correctly', () => {
-    expect(kbn.describe_interval('123h')).toEqual({
+    expect(kbn.describeInterval('123h')).toEqual({
       sec: 3600,
       type: 'h',
       count: 123,
@@ -69,7 +69,7 @@ describe('describe_interval', () => {
   });
 
   it('fails if input is invalid', () => {
-    expect(() => kbn.describe_interval('123xyz')).toThrow();
-    expect(() => kbn.describe_interval('xyz')).toThrow();
+    expect(() => kbn.describeInterval('123xyz')).toThrow();
+    expect(() => kbn.describeInterval('xyz')).toThrow();
   });
 });

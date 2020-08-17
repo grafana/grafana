@@ -21,7 +21,6 @@ func TestLogWrapper(t *testing.T) {
 	}
 
 	for i, tc := range tcs {
-		tc := tc
 		t.Run(fmt.Sprintf("formatArgs testcase %d", i), func(t *testing.T) {
 			res := formatArgs(tc.args...)
 			assert.Exactly(t, tc.expectedResult, res)

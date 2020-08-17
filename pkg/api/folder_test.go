@@ -49,7 +49,7 @@ func TestFoldersApiEndpoint(t *testing.T) {
 				{Error: models.ErrFolderTitleEmpty, ExpectedStatusCode: 400},
 				{Error: models.ErrFolderSameNameExists, ExpectedStatusCode: 400},
 				{Error: models.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
-				{Error: models.ErrDashboardUidToLong, ExpectedStatusCode: 400},
+				{Error: models.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
 				{Error: models.ErrFolderAccessDenied, ExpectedStatusCode: 403},
 				{Error: models.ErrFolderNotFound, ExpectedStatusCode: 404},
 				{Error: models.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
@@ -62,7 +62,6 @@ func TestFoldersApiEndpoint(t *testing.T) {
 			}
 
 			for _, tc := range testCases {
-				tc := tc
 				mock := &fakeFolderService{
 					CreateFolderError: tc.Error,
 				}
@@ -108,7 +107,7 @@ func TestFoldersApiEndpoint(t *testing.T) {
 				{Error: models.ErrFolderTitleEmpty, ExpectedStatusCode: 400},
 				{Error: models.ErrFolderSameNameExists, ExpectedStatusCode: 400},
 				{Error: models.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
-				{Error: models.ErrDashboardUidToLong, ExpectedStatusCode: 400},
+				{Error: models.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
 				{Error: models.ErrFolderAccessDenied, ExpectedStatusCode: 403},
 				{Error: models.ErrFolderNotFound, ExpectedStatusCode: 404},
 				{Error: models.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
@@ -120,7 +119,6 @@ func TestFoldersApiEndpoint(t *testing.T) {
 			}
 
 			for _, tc := range testCases {
-				tc := tc
 				mock := &fakeFolderService{
 					UpdateFolderError: tc.Error,
 				}

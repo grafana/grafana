@@ -1,14 +1,14 @@
-import { PanelData, QueryResultMetaStat } from '@grafana/data';
+import { PanelData, QueryResultMetaStat, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { InspectStatsTable } from './InspectStatsTable';
 import React from 'react';
-import { DashboardModel } from 'app/features/dashboard/state';
 
 interface InspectStatsTabProps {
   data: PanelData;
-  dashboard: DashboardModel;
+  timeZone: TimeZone;
 }
-export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, dashboard }) => {
+
+export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, timeZone }) => {
   if (!data.request) {
     return null;
   }
@@ -23,8 +23,12 @@ export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, dashboar
     dataRows += frame.length;
   }
 
-  stats.push({ displayName: 'Total request time', value: requestTime, unit: 'ms' });
-  stats.push({ displayName: 'Data processing time', value: processingTime, unit: 'ms' });
+  if (requestTime > 0) {
+    stats.push({ displayName: 'Total request time', value: requestTime, unit: 'ms' });
+  }
+  if (processingTime > 0) {
+    stats.push({ displayName: 'Data processing time', value: processingTime, unit: 'ms' });
+  }
   stats.push({ displayName: 'Number of queries', value: data.request.targets.length });
   stats.push({ displayName: 'Total number rows', value: dataRows });
 
@@ -38,8 +42,8 @@ export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, dashboar
 
   return (
     <div aria-label={selectors.components.PanelInspector.Stats.content}>
-      <InspectStatsTable dashboard={dashboard} name={'Stats'} stats={stats} />
-      <InspectStatsTable dashboard={dashboard} name={'Data source stats'} stats={dataStats} />
+      <InspectStatsTable timeZone={timeZone} name={'Stats'} stats={stats} />
+      <InspectStatsTable timeZone={timeZone} name={'Data source stats'} stats={dataStats} />
     </div>
   );
 };

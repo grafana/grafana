@@ -21,6 +21,7 @@ import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { VariableHide } from '../../../features/variables/types';
 import { describe } from '../../../../test/lib/common';
+import { QueryOptions } from 'app/types';
 
 const datasourceRequestMock = jest.fn().mockResolvedValue(createDefaultPromResponse());
 
@@ -414,8 +415,16 @@ describe('PrometheusDatasource', () => {
       expect(prometheusRegularEscape("looking'glass")).toEqual("looking\\\\'glass");
     });
 
+    it('should escape \\', () => {
+      expect(prometheusRegularEscape('looking\\glass')).toEqual('looking\\\\glass');
+    });
+
     it('should escape multiple characters', () => {
       expect(prometheusRegularEscape("'looking'glass'")).toEqual("\\\\'looking\\\\'glass\\\\'");
+    });
+
+    it('should escape multiple different characters', () => {
+      expect(prometheusRegularEscape("'loo\\king'glass'")).toEqual("\\\\'loo\\\\king\\\\'glass\\\\'");
     });
   });
 
@@ -491,7 +500,11 @@ describe('PrometheusDatasource', () => {
       });
 
       it('should return pipe separated values if the value is an array of strings', () => {
-        expect(ds.interpolateQueryExpr(['a|bc', 'de|f'], customVariable)).toEqual('a\\\\|bc|de\\\\|f');
+        expect(ds.interpolateQueryExpr(['a|bc', 'de|f'], customVariable)).toEqual('(a\\\\|bc|de\\\\|f)');
+      });
+
+      it('should return 1 regex escaped value if there is just 1 value in an array of strings', () => {
+        expect(ds.interpolateQueryExpr(['looking*glass'], customVariable)).toEqual('looking\\\\*glass');
       });
     });
 
@@ -505,7 +518,11 @@ describe('PrometheusDatasource', () => {
       });
 
       it('should return pipe separated values if the value is an array of strings', () => {
-        expect(ds.interpolateQueryExpr(['a|bc', 'de|f'], customVariable)).toEqual('a\\\\|bc|de\\\\|f');
+        expect(ds.interpolateQueryExpr(['a|bc', 'de|f'], customVariable)).toEqual('(a\\\\|bc|de\\\\|f)');
+      });
+
+      it('should return 1 regex escaped value if there is just 1 value in an array of strings', () => {
+        expect(ds.interpolateQueryExpr(['looking*glass'], customVariable)).toEqual('looking\\\\*glass');
       });
     });
   });
@@ -1295,7 +1312,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=60&end=420&step=10';
 
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
@@ -1336,7 +1353,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=60&end=420&step=10';
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1377,7 +1394,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=0&end=400&step=100';
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1423,7 +1440,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=50&end=400&step=50';
 
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
@@ -1522,7 +1539,7 @@ describe('PrometheusDatasource', () => {
         '&step=' +
         step;
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1572,7 +1589,7 @@ describe('PrometheusDatasource', () => {
         query.targets[0].expr
       )}&start=0&end=3600&step=60`;
 
-      templateSrv.replace = jest.fn(str => str);
+      templateSrv.replace = jest.fn(str => str) as any;
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       ds.query(query as any);
       const res = datasourceRequestMock.mock.calls[0][0];
@@ -1592,7 +1609,26 @@ describe('PrometheusDatasource', () => {
           text: expectedRangeSecond * 1000,
           value: expectedRangeSecond * 1000,
         },
+        __rate_interval: {
+          text: '75s',
+          value: '75s',
+        },
       });
+    });
+  });
+
+  describe('The __rate_interval variable', () => {
+    it('should be 4 times the scrape interval if interval + scrape interval is lower', () => {
+      const { __rate_interval } = ds.getRateIntervalScopedVariable(23, 23);
+      expect(__rate_interval.value).toBe('60s');
+    });
+    it('should be interval + scrape interval if 4 times the scrape interval is lower', () => {
+      const { __rate_interval } = ds.getRateIntervalScopedVariable(56, 56);
+      expect(__rate_interval.value).toBe('71s');
+    });
+    it('should fall back to 60s if interval is 0', () => {
+      const { __rate_interval } = ds.getRateIntervalScopedVariable(0, 0);
+      expect(__rate_interval.value).toBe('60s');
     });
   });
 });
@@ -1683,7 +1719,7 @@ describe('PrometheusDatasource for POST', () => {
   });
 });
 
-const getPrepareTargetsContext = (target: PromQuery, app?: CoreApp) => {
+const getPrepareTargetsContext = (target: PromQuery, app?: CoreApp, queryOptions?: Partial<QueryOptions>) => {
   const instanceSettings = ({
     url: 'proxied',
     directUrl: 'direct',
@@ -1694,7 +1730,9 @@ const getPrepareTargetsContext = (target: PromQuery, app?: CoreApp) => {
   const start = 0;
   const end = 1;
   const panelId = '2';
-  const options = ({ targets: [target], interval: '1s', panelId, app } as any) as DataQueryRequest<PromQuery>;
+  const options = ({ targets: [target], interval: '1s', panelId, app, ...queryOptions } as any) as DataQueryRequest<
+    PromQuery
+  >;
 
   const ds = new PrometheusDatasource(instanceSettings);
   const { queries, activeTargets } = ds.prepareTargets(options, start, end);
@@ -1744,11 +1782,12 @@ describe('prepareTargets', () => {
         const target: PromQuery = {
           refId: 'A',
           expr: 'up',
-          showingGraph: true,
-          showingTable: true,
         };
 
-        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore, {
+          showingGraph: true,
+          showingTable: true,
+        });
 
         expect(queries.length).toBe(2);
         expect(activeTargets.length).toBe(2);
@@ -1817,11 +1856,12 @@ describe('prepareTargets', () => {
         const target: PromQuery = {
           refId: 'A',
           expr: 'up',
-          showingGraph: false,
-          showingTable: true,
         };
 
-        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore, {
+          showingGraph: false,
+          showingTable: true,
+        });
 
         expect(queries.length).toBe(1);
         expect(activeTargets.length).toBe(1);
@@ -1854,11 +1894,12 @@ describe('prepareTargets', () => {
         const target: PromQuery = {
           refId: 'A',
           expr: 'up',
-          showingGraph: true,
-          showingTable: false,
         };
 
-        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore, {
+          showingGraph: true,
+          showingTable: false,
+        });
 
         expect(queries.length).toBe(1);
         expect(activeTargets.length).toBe(1);
@@ -1958,7 +1999,6 @@ function createDataRequest(targets: any[], overrides?: Partial<DataQueryRequest>
         start: dateTime().subtract(5, 'minutes'),
         end: dateTime(),
         expr: 'test',
-        showingGraph: true,
         ...t,
       };
     }),
@@ -1967,6 +2007,7 @@ function createDataRequest(targets: any[], overrides?: Partial<DataQueryRequest>
       to: dateTime(),
     },
     interval: '15s',
+    showingGraph: true,
   };
 
   return Object.assign(defaults, overrides || {}) as DataQueryRequest<PromQuery>;

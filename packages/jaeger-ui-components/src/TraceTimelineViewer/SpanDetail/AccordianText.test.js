@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import React from 'react';
-import { shallow } from 'enzyme';
+import { mount } from 'enzyme';
 import AccordianText from './AccordianText';
 import TextList from './TextList';
 
@@ -32,7 +32,7 @@ describe('<AccordianText>', () => {
   };
 
   beforeEach(() => {
-    wrapper = shallow(<AccordianText {...props} />);
+    wrapper = mount(<AccordianText {...props} />);
   });
 
   it('renders without exploding', () => {

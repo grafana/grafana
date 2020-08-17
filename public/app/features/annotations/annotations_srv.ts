@@ -59,10 +59,15 @@ export class AnnotationsSrv {
         };
       })
       .catch(err => {
+        if (err.cancelled) {
+          return [];
+        }
+
         if (!err.message && err.data && err.data.message) {
           err.message = err.data.message;
         }
-        console.log('AnnotationSrv.query error', err);
+
+        console.error('AnnotationSrv.query error', err);
         appEvents.emit(AppEvents.alertError, ['Annotation Query Failed', err.message || err]);
         return [];
       });
@@ -121,7 +126,10 @@ export class AnnotationsSrv {
       promises.push(
         datasourcePromise
           .then((datasource: DataSourceApi) => {
-            // issue query against data source
+            if (!datasource.annotationQuery) {
+              return [];
+            }
+
             return datasource.annotationQuery({
               range,
               rangeRaw: range.raw,

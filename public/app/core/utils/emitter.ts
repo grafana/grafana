@@ -23,7 +23,7 @@ export class Emitter {
   emit<T>(event: AppEvent<T>, payload: T): void;
   emit<T>(event: AppEvent<T> | string, payload?: T | any): void {
     if (typeof event === 'string') {
-      console.log(`Using strings as events is deprecated and will be removed in a future version. (${event})`);
+      console.warn(`Using strings as events is deprecated and will be removed in a future version. (${event})`);
       this.emitter.emit(event, payload);
     } else {
       this.emitter.emit(event.name, payload);
@@ -47,7 +47,7 @@ export class Emitter {
   on<T>(event: AppEvent<T>, handler: (payload: T) => void, scope?: any): void;
   on<T>(event: AppEvent<T> | string, handler: (payload?: T | any) => void, scope?: any) {
     if (typeof event === 'string') {
-      console.log(`Using strings as events is deprecated and will be removed in a future version. (${event})`);
+      console.warn(`Using strings as events is deprecated and will be removed in a future version. (${event})`);
       this.emitter.on(event, handler);
 
       if (scope) {
@@ -83,7 +83,7 @@ export class Emitter {
   off<T>(event: AppEvent<T>, handler: (payload: T) => void): void;
   off<T>(event: AppEvent<T> | string, handler: (payload?: T | any) => void) {
     if (typeof event === 'string') {
-      console.log(`Using strings as events is deprecated and will be removed in a future version. (${event})`);
+      console.warn(`Using strings as events is deprecated and will be removed in a future version. (${event})`);
       this.emitter.off(event, handler);
       return;
     }

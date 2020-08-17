@@ -9,6 +9,7 @@ import {
   toDurationInSeconds,
   toDurationInHoursMinutesSeconds,
   toDurationInDaysHoursMinutesSeconds,
+  toNanoSeconds,
 } from './dateTimeFormatters';
 import { formattedValueToString } from './valueFormats';
 import { toUtc, dateTime } from '../datetime/moment_wrapper';
@@ -282,5 +283,49 @@ describe('clock', () => {
       const str = toClock(89999999, 2);
       expect(formattedValueToString(str)).toBe('24h:59m:59s');
     });
+  });
+});
+
+describe('to nanoseconds', () => {
+  it('should correctly display as ns', () => {
+    const tenNanoseconds = toNanoSeconds(10);
+    expect(tenNanoseconds.text).toBe('10');
+    expect(tenNanoseconds.suffix).toBe(' ns');
+  });
+
+  it('should correctly display as µs', () => {
+    const threeMicroseconds = toNanoSeconds(3000);
+    expect(threeMicroseconds.text).toBe('3');
+    expect(threeMicroseconds.suffix).toBe(' µs');
+  });
+
+  it('should correctly display as ms', () => {
+    const fourMilliseconds = toNanoSeconds(4000000);
+    expect(fourMilliseconds.text).toBe('4');
+    expect(fourMilliseconds.suffix).toBe(' ms');
+  });
+
+  it('should correctly display as s', () => {
+    const fiveSeconds = toNanoSeconds(5000000000);
+    expect(fiveSeconds.text).toBe('5');
+    expect(fiveSeconds.suffix).toBe(' s');
+  });
+
+  it('should correctly display as minutes', () => {
+    const eightMinutes = toNanoSeconds(480000000000);
+    expect(eightMinutes.text).toBe('8');
+    expect(eightMinutes.suffix).toBe(' min');
+  });
+
+  it('should correctly display as hours', () => {
+    const nineHours = toNanoSeconds(32400000000000);
+    expect(nineHours.text).toBe('9');
+    expect(nineHours.suffix).toBe(' hour');
+  });
+
+  it('should correctly display as days', () => {
+    const tenDays = toNanoSeconds(864000000000000);
+    expect(tenDays.text).toBe('10');
+    expect(tenDays.suffix).toBe(' day');
   });
 });

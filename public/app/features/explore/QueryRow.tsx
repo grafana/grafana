@@ -20,7 +20,6 @@ import {
   TimeRange,
   AbsoluteTimeRange,
   LoadingState,
-  ExploreMode,
 } from '@grafana/data';
 
 import { ExploreItemState, ExploreId } from 'app/types/explore';
@@ -48,7 +47,6 @@ export interface QueryRowProps extends PropsFromParent {
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
   queryResponse: PanelData;
-  mode: ExploreMode;
   latency: number;
 }
 
@@ -78,10 +76,6 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     }
   };
 
-  componentWillUnmount() {
-    console.log('QueryRow will unmount');
-  }
-
   onClickToggleDisabled = () => {
     const { exploreId, index, query } = this.props;
     const newQuery = {
@@ -102,12 +96,13 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   };
 
   setReactQueryEditor = () => {
-    const { mode, datasourceInstance } = this.props;
+    const { datasourceInstance } = this.props;
     let QueryEditor;
 
-    if (mode === ExploreMode.Metrics && datasourceInstance.components?.ExploreMetricsQueryField) {
+    // TODO:unification
+    if (datasourceInstance.components?.ExploreMetricsQueryField) {
       QueryEditor = datasourceInstance.components.ExploreMetricsQueryField;
-    } else if (mode === ExploreMode.Logs && datasourceInstance.components?.ExploreLogsQueryField) {
+    } else if (datasourceInstance.components?.ExploreLogsQueryField) {
       QueryEditor = datasourceInstance.components.ExploreLogsQueryField;
     } else if (datasourceInstance.components?.ExploreQueryField) {
       QueryEditor = datasourceInstance.components.ExploreQueryField;
@@ -118,17 +113,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   };
 
   renderQueryEditor = () => {
-    const {
-      datasourceInstance,
-      history,
-      query,
-      exploreEvents,
-      range,
-      absoluteRange,
-      queryResponse,
-      mode,
-      exploreId,
-    } = this.props;
+    const { datasourceInstance, history, query, exploreEvents, range, queryResponse, exploreId } = this.props;
 
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
 
@@ -144,8 +129,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
           onBlur={noopOnBlur}
           onChange={this.onChange}
           data={queryResponse}
-          absoluteRange={absoluteRange}
-          exploreMode={mode}
+          range={range}
           exploreId={exploreId}
         />
       );
@@ -174,10 +158,9 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   }, 500);
 
   render() {
-    const { datasourceInstance, query, queryResponse, mode, latency } = this.props;
+    const { datasourceInstance, query, queryResponse, latency } = this.props;
 
-    const canToggleEditorModes =
-      mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
+    const canToggleEditorModes = has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
     const isNotStarted = queryResponse.state === LoadingState.NotStarted;
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
 
@@ -204,7 +187,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { datasourceInstance, history, queries, range, absoluteRange, mode, queryResponse, latency } = item;
+  const { datasourceInstance, history, queries, range, absoluteRange, queryResponse, latency } = item;
   const query = queries[index];
 
   return {
@@ -214,7 +197,6 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     range,
     absoluteRange,
     queryResponse,
-    mode,
     latency,
   };
 }

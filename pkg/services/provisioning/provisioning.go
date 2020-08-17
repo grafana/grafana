@@ -25,14 +25,18 @@ type ProvisioningService interface {
 }
 
 func init() {
-	registry.RegisterService(NewProvisioningServiceImpl(
-		func(path string) (dashboards.DashboardProvisioner, error) {
-			return dashboards.New(path)
-		},
-		notifiers.Provision,
-		datasources.Provision,
-		plugins.Provision,
-	))
+	registry.Register(&registry.Descriptor{
+		Name: "ProvisioningService",
+		Instance: NewProvisioningServiceImpl(
+			func(path string) (dashboards.DashboardProvisioner, error) {
+				return dashboards.New(path)
+			},
+			notifiers.Provision,
+			datasources.Provision,
+			plugins.Provision,
+		),
+		InitPriority: registry.Low,
+	})
 }
 
 func NewProvisioningServiceImpl(
@@ -89,7 +93,6 @@ func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 	}
 
 	for {
-
 		// Wait for unlock. This is tied to new dashboardProvisioner to be instantiated before we start polling.
 		ps.mutex.Lock()
 		// Using background here because otherwise if root context was canceled the select later on would

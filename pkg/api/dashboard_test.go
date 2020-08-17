@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -42,7 +43,6 @@ func TestGetHomeDashboard(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			dash := dtos.DashboardFullWithMeta{}
 			dash.Meta.IsHome = true
@@ -717,7 +717,6 @@ func TestDashboardApiEndpoint(t *testing.T) {
 	})
 
 	Convey("Post dashboard response tests", t, func() {
-
 		// This tests that a valid request returns correct response
 
 		Convey("Given a correct request for creating a dashboard", func() {
@@ -789,7 +788,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				{SaveError: models.ErrDashboardFolderNameExists, ExpectedStatusCode: 400},
 				{SaveError: models.ErrDashboardUpdateAccessDenied, ExpectedStatusCode: 403},
 				{SaveError: models.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
-				{SaveError: models.ErrDashboardUidToLong, ExpectedStatusCode: 400},
+				{SaveError: models.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
 				{SaveError: models.ErrDashboardCannotSaveProvisionedDashboard, ExpectedStatusCode: 400},
 				{SaveError: models.UpdatePluginDashboardError{PluginId: "plug"}, ExpectedStatusCode: 412},
 			}
@@ -802,7 +801,6 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			}
 
 			for _, tc := range testCases {
-				tc := tc
 				mock := &dashboards.FakeDashboardService{
 					SaveDashboardError: tc.SaveError,
 				}
@@ -830,7 +828,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		bus.AddHandler("test", func(query *models.GetDashboardVersionQuery) error {
 			query.Result = &models.DashboardVersion{
 				Data: simplejson.NewFromAny(map[string]interface{}{
-					"title": "Dash" + string(query.DashboardId),
+					"title": fmt.Sprintf("Dash%d", query.DashboardId),
 				}),
 			}
 			return nil
@@ -955,7 +953,6 @@ func TestDashboardApiEndpoint(t *testing.T) {
 	})
 
 	Convey("Given provisioned dashboard", t, func() {
-
 		bus.AddHandler("test", func(query *models.GetDashboardsBySlugQuery) error {
 			query.Result = []*models.Dashboard{{}}
 			return nil
@@ -1006,7 +1003,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			dash := GetDashboardShouldReturn200WithConfig(sc, mock)
 
 			Convey("Should return relative path to provisioning file", func() {
-				So(dash.Meta.ProvisionedExternalId, ShouldEqual, "test/dashboard1.json")
+				So(dash.Meta.ProvisionedExternalId, ShouldEqual, filepath.Join("test", "dashboard1.json"))
 			})
 		})
 
@@ -1064,7 +1061,6 @@ func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta
 }
 
 func CallGetDashboard(sc *scenarioContext, hs *HTTPServer) {
-
 	sc.handlerFunc = hs.GetDashboard
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }

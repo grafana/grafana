@@ -327,14 +327,14 @@ This will give you a structure of labels in the sidebar similar to the following
 ```
  - Inbox
  ...
- - Github (mine)
+ - GitHub (mine)
    - activity
    - assigned
    - mentions
- - Github (other)
+ - GitHub (other)
   - Grafana
 ```
 
-* All notifications you’ll need to read/take action on show up as unread in Github (mine) and its sub-labels.
-* All other notifications you don’t need to take action on show up as unread in Github (other) and its sub-labels
+* All notifications you’ll need to read/take action on show up as unread in GitHub (mine) and its sub-labels.
+* All other notifications you don’t need to take action on show up as unread in GitHub (other) and its sub-labels
   * This is convenient for issue triage and to follow the activity in the Grafana project.

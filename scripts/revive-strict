@@ -1,0 +1,15 @@
+#!/bin/bash
+set -eo pipefail
+
+SCRIPT=${1:-revive}
+
+$SCRIPT \
+    -formatter stylish \
+    -config scripts/go/configs/revive-strict.toml \
+		-exclude ./pkg/plugins/backendplugin/pluginextensionv2/... \
+		./pkg/services/alerting/... \
+		./pkg/services/provisioning/datasources/... \
+		./pkg/services/provisioning/dashboards/... \
+		./pkg/services/provisioning/notifiers/... \
+		./pkg/services/provisioning/values/... \
+		./pkg/plugins/backendplugin/...

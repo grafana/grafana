@@ -58,7 +58,7 @@ func TestDashboardImport(t *testing.T) {
 			}
 		],
 		"test": {
-			"prop": "${DS_NAME}"
+			"prop": "${DS_NAME}_${DS_NAME}"
 		}
 		}`))
 
@@ -73,14 +73,13 @@ func TestDashboardImport(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("should render template", func() {
-			So(res.GetPath("test", "prop").MustString(), ShouldEqual, "my-server")
+			So(res.GetPath("test", "prop").MustString(), ShouldEqual, "my-server_my-server")
 		})
 
 		Convey("should not include inputs in output", func() {
 			inputs := res.Get("__inputs")
 			So(inputs.Interface(), ShouldBeNil)
 		})
-
 	})
 }
 

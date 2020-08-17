@@ -23,8 +23,8 @@ export interface Props {
   loadTeams: typeof loadTeams;
   deleteTeam: typeof deleteTeam;
   setSearchQuery: typeof setSearchQuery;
-  editorsCanAdmin?: boolean;
-  signedInUser?: User;
+  editorsCanAdmin: boolean;
+  signedInUser: User;
 }
 
 export class TeamList extends PureComponent<Props, any> {

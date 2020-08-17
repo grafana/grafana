@@ -10,7 +10,7 @@
     "id": {
       "type": "string",
       "description": "Unique name of the plugin. If the plugin is published on grafana.com, then the plugin id has to follow the naming conventions.",
-      "pattern": "^[0-9a-z\\-]+$"
+      "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
     },
     "type": {
       "type": "string",
@@ -117,13 +117,18 @@
     "dependencies": {
       "type": "object",
       "description": "Plugin dependencies.",
-      "required": ["grafanaVersion"],
+      "required": ["grafanaDependency"],
       "additionalProperties": false,
       "properties": {
         "grafanaVersion": {
           "type": "string",
-          "description": "Required Grafana version for this plugin, e.g. `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or v7.x.x.",
-          "pattern": "^([0-9x]+\\.[0-9x]+\\.*[0-9x]*\\s*)+$"
+          "description": "(Deprecated) Required Grafana version for this plugin, e.g. `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or v7.x.x.",
+          "pattern": "^([0-9]+)(\\.[0-9x]+)?(\\.[0-9x])?$"
+        },
+        "grafanaDependency": {
+          "type": "string",
+          "description": "Required Grafana version for this plugin, e.g. `>=7.0.0` to denote plugin requires Grafana 7.0.0 or later",
+          "pattern": "^(>=|<|>|<=)?([0-9]+)(\\.[0-9]+)?(\\.[0-9])?$"
         },
         "plugins": {
           "type": "array",
@@ -270,8 +275,7 @@
           },
           "url": {
             "type": "string",
-            "description": "For data source plugins. Route URL is where the request is proxied to.",
-            "format": "uri"
+            "description": "For data source plugins. Route URL is where the request is proxied to."
           },
           "reqSignedIn": {
             "type": "boolean"

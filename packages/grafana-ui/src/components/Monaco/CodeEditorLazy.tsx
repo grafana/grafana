@@ -1,9 +1,7 @@
 import React from 'react';
 import { useAsyncDependency } from '../../utils/useAsyncDependency';
 import { ErrorWithStack, LoadingPlaceholder } from '..';
-import { CodeEditorProps } from './CodeEditor';
-
-export type CodeEditorChangeHandler = (value: string) => void;
+import { CodeEditorProps } from './types';
 
 export const CodeEditor: React.FC<CodeEditorProps> = props => {
   const { loading, error, dependency } = useAsyncDependency(
@@ -11,7 +9,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = props => {
   );
 
   if (loading) {
-    return <LoadingPlaceholder text={'Loading...'} />;
+    return <LoadingPlaceholder text={''} />;
   }
 
   if (error) {

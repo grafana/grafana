@@ -180,9 +180,9 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     const xBucketSizeByNumber = Math.floor((this.range.to.valueOf() - this.range.from.valueOf()) / xBucketNumber);
 
     // Parse X bucket size (number or interval)
-    const isIntervalString = kbn.interval_regex.test(this.panel.xBucketSize);
+    const isIntervalString = kbn.intervalRegex.test(this.panel.xBucketSize);
     if (isIntervalString) {
-      xBucketSize = kbn.interval_to_ms(this.panel.xBucketSize);
+      xBucketSize = kbn.intervalToMs(this.panel.xBucketSize);
     } else if (
       isNaN(Number(this.panel.xBucketSize)) ||
       this.panel.xBucketSize === '' ||

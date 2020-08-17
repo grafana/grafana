@@ -44,6 +44,14 @@ func convertTSDBTimePoint(point TimePoint) (t *time.Time, f *float64) {
 func FrameToSeriesSlice(frame *data.Frame) (TimeSeriesSlice, error) {
 	tsSchema := frame.TimeSeriesSchema()
 	if tsSchema.Type == data.TimeSeriesTypeNot {
+		// If no fields, or only a time field, create an empty TimeSeriesSlice with a single
+		// time series in order to trigger "no data" in alerting.
+		if len(frame.Fields) == 0 || (len(frame.Fields) == 1 && frame.Fields[0].Type().Time()) {
+			return TimeSeriesSlice{{
+				Name:   frame.Name,
+				Points: make(TimeSeriesPoints, 0),
+			}}, nil
+		}
 		return nil, fmt.Errorf("input frame is not recognized as a time series")
 	}
 	// If Long, make wide
@@ -92,5 +100,4 @@ func FrameToSeriesSlice(frame *data.Frame) (TimeSeriesSlice, error) {
 	}
 
 	return seriesSlice, nil
-
 }
