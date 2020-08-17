@@ -7,6 +7,11 @@
   "required": ["type", "name", "id", "info", "dependencies"],
   "additionalProperties": false,
   "properties": {
+    "$schema": {
+        "type": "string",
+        "description": "Schema definition for the plugin.json file",
+        "enum": ["https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json"]
+    },
     "id": {
       "type": "string",
       "description": "Unique name of the plugin. If the plugin is published on grafana.com, then the plugin id has to follow the naming conventions.",
