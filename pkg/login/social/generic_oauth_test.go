@@ -439,7 +439,6 @@ func TestPayloadCompression(t *testing.T) {
 	tests := []struct {
 		Name          string
 		OAuth2Extra   interface{}
-		ExpectResult  bool
 		ExpectedEmail string
 	}{
 		{
@@ -448,7 +447,6 @@ func TestPayloadCompression(t *testing.T) {
 				// { "role": "Admin", "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInppcCI6IkRFRiJ9.eJyrVkrNTczMUbJSysrPyNNLyU91SK1IzC3ISdVLzs9V0lEqys9JBco6puRm5inVAgCFRw_6.XrV4ZKhw19dTcnviXanBD8lwjeALCYtDiESMmGzC-ho",
 			},
-			ExpectResult:  true,
 			ExpectedEmail: "john.doe@example.com",
 		},
 		{
@@ -457,7 +455,7 @@ func TestPayloadCompression(t *testing.T) {
 				// { "role": "Admin", "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInppcCI6IkRFRiJ9.00eJyrVkrNTczMUbJSysrPyNNLyU91SK1IzC3ISdVLzs9V0lEqys9JBco6puRm5inVAgCFRw_6.XrV4ZKhw19dTcnviXanBD8lwjeALCYtDiESMmGzC-ho",
 			},
-			ExpectResult: false,
+			ExpectedEmail: "",
 		},
 		{
 			Name: "Given an unsupported GZIP compressed id_token, return nil",
@@ -465,7 +463,7 @@ func TestPayloadCompression(t *testing.T) {
 				// { "role": "Admin", "email": "john.doe@example.com" }
 				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInppcCI6IkdaSVAifQ.H4sIAAAAAAAAAKtWSs1NzMxRslLKys_I00vJT3VIrUjMLchJ1UvOz1XSUSrKz0kFyjqm5GbmKdUCANotxTkvAAAA.85AXm3JOF5qflEA0goDFvlbZl2q3eFvqVcehz860W-o",
 			},
-			ExpectResult: false,
+			ExpectedEmail: "",
 		},
 	}
 
@@ -481,11 +479,11 @@ func TestPayloadCompression(t *testing.T) {
 			token := staticToken.WithExtra(test.OAuth2Extra)
 			userInfo := provider.extractFromToken(token)
 
-			if test.ExpectResult == true {
+			if test.ExpectedEmail == "" {
+				require.Nil(t, userInfo, "Testing case %q", test.Name)
+			} else {
 				require.NotNil(t, userInfo, "Testing case %q", test.Name)
 				require.Equal(t, test.ExpectedEmail, userInfo.Email)
-			} else {
-				require.Nil(t, userInfo, "Testing case %q", test.Name)
 			}
 		})
 	}
