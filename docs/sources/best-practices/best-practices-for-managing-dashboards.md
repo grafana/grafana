@@ -1,56 +1,56 @@
 +++
-title = "Best practices for creating dashboards"
-description = "Best practices for creating dashboards in Grafana"
+title = "Best practices for managing dashboards"
+description = "Best practices for managing dashboards in Grafana"
 type = "docs"
 [menu.docs]
 weight = 200
 +++
 
-# Best practices for creating dashboards
+# Best practices for managing dashboards
 
 This page outlines some best practices to adhere to when creating Grafana dashboards.
 
-1. When creating a new dashboard, make sure it has a meaningful name.
-    - If you are creating a dashboard to play/experiment with it is
-      good to put the word `TEST` in the name and, optionally, your
-      name so that people know who owns the dashboard.  You should remove it when done.
-2. Typically one will create many related dashboards.
-   You should cross-reference them for easy navigation. Read the
-   [managing a collection of dashboards](#managing-a-collection-of-dashboards) information.
-3. Grafana retrieves data from MetricTank.  A basic understanding of
-   [MetricTank](#what-is-metrictank-and-graphite) is important.
-5. MetricTank supports a Graphite interface.  The most important
-   Graphite functions are supported natively by MetricTank and you should familiarize
-   yourself with the [function documentation](../metrictank_funcs.md).
-5. [Rollups and run-time consolidation](#rollups-and-selecting-the-runtime-consolidation-function)
-   are critical concepts.  You need to understand them so that your dashboards
-   work correctly with large numbers of timeseries or time ranges.
-6. You can optimize dashboard panels that have many
-   queries by [using wildcards](#avoiding-many-queries-by-using-wildcards)
-7. Avoid unnecessary [dashboard refreshing](#dashboard-refreshing)
-   to reduce the load on the GUTS backend.
-8. Use the left and right Y axis when displaying timeseries with different
-   ranges. 
-9. You should [sort values](#how-do-i-sort-the-values-on-a-graph) on a graph to facilitate readability.
-10. You should [sort labels](#how-do-i-sort-labels) for readability and consistency across panels.
-11. [Aliasing](#how-can-i-modify-the-metric-name-in-my-tables-or-charts) can make your labels readable.
-12. Add documentation to panels - Grafana dashboards are great
-    in many ways.  It allows one to visualize data in ways that
-    allows one to see problems quickly.  However interpreting the
-    meaning of a dashboard which you didn't write or don't have
-    intimate knowledge of the underlying data is not easy.
-    To remedy this you should add documentation to the panels of
-    all our key dashboards.  If you mouse over the small `i` in the top
-    left corner of the panel, you will see a popup of help text.
-13. [Template variables](#template-variables) are a powerful way for
-    you to allow a user to customize/control what is displayed on
-    the dashboard.  It is very important to understand how to use them.
+### Managing a collection of dashboards
+
+1. Periodically review the dashboards in your folder(s) and remove
+   unnecessary ones.  You can go to the [Folder listing]()
+   and can click on the gear icon next to your folder name to get
+   the list of dashboards in your folder.
+2. Copying dashboards with no significant changes is not a good idea.
+   This is especially true for the dashboards maintained by the GUTS team.
+   This is a bad idea for several reasons:
+    - You miss out on updates to the original dashboard, e.g. documentation
+      changes, or bug fixes / additions to metrics.
+    - In many cases copies are being made to simply customize the view
+      by setting template parameters.  This should instead be done by
+      maintaining a link to the master dashboard, see below, and customizing
+      the view via URL parameters.
+3. When you must copy a dashboard, clearly rename it and do not copy the
+   dashboard tags.  Tags are important meta-data for dashboards that are
+   used during search.  Copying the tags results in false matches.
+4. Maintaining a dashboard of dashboards, or cross referencing dashboards
+   can be done in several ways.
+    - Create links at the dashboard level by clicking on the *Settings* gear
+      and then the *Links* menu item.  These links are pretty straightforward to
+      setup, however the only drawback is that you have no control over the layout.
+      They work great when you have a limited number of links, but as your number
+      grows it becomes a bit unwieldy.
+    - Links at the panel level via [drilldown links](https://grafana.com/docs/features/panels/graph/#drilldown-detail-link).
+      These can be nice because you might want different drill-downs on each panel.  However it is not easy for end-users to see these links.
+    - Add a [Dashboard List Panel](https://grafana.com/docs/features/panels/dashlist/) - You
+      can then customize what you see by doing searches.  Typically one might want to do a
+      tag search or folder search.  The [GUTS OS Dashboard]() uses both.
+    - Add a [Text Panel](https://grafana.com/docs/features/panels/text/) - and use Markdown to customize the display.
+      You can see an example of this on the [Machine View]() Dashboard.
+
+
+
 1. A dashboard should tell a story.
 2. Avoid "dashboard sprawl." Dashboard sprawl negatively affects time to find the right dashboard. Duplicating dashboards and changing “one thing” (worse: keeping original tags) is the easiest kind of sprawl
 3. Your dashboarding practices should reduce cognitive load, not add to it.
 
 
-Dashboard maturity levels
+# Dashboard management maturity levels
 
 Low - Default state. No strategy.
 - Sprawl
