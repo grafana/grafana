@@ -28,8 +28,8 @@
     },
     "category": {
       "type": "string",
-      "description": "Plugin category used on the Add data source page. Possible values are: `tsdb`, `logging`, `cloud`, `tracing`, and `sql`.",
-      "enum": ["tsdb", "logging", "cloud", "tracing", "sql"]
+      "description": "Plugin category used on the Add data source page. Possible values are: `tsdb`, `logging`, `cloud`, `tracing`, `sql` and `others`.",
+      "enum": ["tsdb", "logging", "cloud", "tracing", "sql", "others"]
     },
     "annotations": {
       "type": "boolean",
@@ -151,7 +151,7 @@
     "info": {
       "type": "object",
       "description": "Metadata for the plugin. Some fields are used on the plugins page in Grafana and others on grafana.com if the plugin is published.",
-      "required": ["logos", "version", "updated"],
+      "required": ["logos", "version", "updated", "keywords"],
       "additionalProperties": false,
       "properties": {
         "author": {
@@ -182,6 +182,7 @@
         "keywords": {
           "type": "array",
           "description": "Array of plugin keywords. Used for search on grafana.com.",
+          "minItems": 1,
           "items": {
             "type": "string"
           }
