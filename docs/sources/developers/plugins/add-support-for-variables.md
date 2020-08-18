@@ -58,3 +58,99 @@ For data sources, you need to use the [getTemplateSrv]({{< relref "../../package
      return { data };
    }
    ```
+
+## Add support for query variables to your data source
+
+[Query variables]({{< relref "../../variables/variable-types/add-query-variable.md" >}}) is a type of variable that allows you to query a data source for the values. By adding support for query variables to your data source plugin, users can create dynamic dashboards based on data from your data source.
+
+Let's start by defining a query model for the variable query.
+
+```ts
+export interface MyVariableQuery {
+  namespace: string;
+  rawQuery: string;
+}
+```
+
+For a data source to support query variables, you must override the [`metricFindQuery`]({{< relref "../../packages_api/data/datasourceapi.md#metricfindquery-method" >}}) in your `DataSourceApi` class. `metricFindQuery` returns an array of [`MetricFindValue`]({{< relref "../../packages_api/data/metricfindvalue.md" >}}) which has a single property, `text`:
+
+```ts
+async metricFindQuery(query: MyVariableQuery, options?: any) {
+  // Retrieve DataQueryResponse based on query.
+  const response = await this.fetchMetricNames(query.namespace, query.rawQuery);
+
+  // Convert query results to a MetricFindValue[]
+  const values = response.data.map(frame => ({ text: frame.name }));
+
+  return values;
+}
+```
+
+> **Note:** By default, Grafana provides a default query model and editor for simple text queries. If that's all you need, then you can leave the query type as `string`.
+>
+> ```ts
+> async metricFindQuery(query: string, options?: any)
+> ```
+
+Let's create a custom query editor to allow the user to edit the query model.
+
+1. Create a `VariableQueryEditor` component.
+
+   ```ts
+   import React, { useState } from 'react';
+   import { MyVariableQuery } from './types';
+
+   interface VariableQueryProps {
+     query: MyVariableQuery;
+     onChange: (query: MyVariableQuery, definition: string) => void;
+   }
+
+   export const VariableQueryEditor: React.FC<VariableQueryProps> = ({ onChange, query }) => {
+     const [state, setState] = useState(query);
+
+     const saveQuery = () => {
+       onChange(state, `${state.query} (${state.namespace})`);
+     };
+
+     const handleChange = (event: React.FormEvent<HTMLInputElement>) =>
+       setState({
+         ...state,
+         [event.currentTarget.name]: event.currentTarget.value,
+       });
+
+     return (
+       <>
+         <div className="gf-form">
+           <span className="gf-form-label width-10">Namespace</span>
+           <input
+             name="namespace"
+             className="gf-form-input"
+             onBlur={saveQuery}
+             onChange={handleChange}
+             value={state.namespace}
+           />
+         </div>
+         <div className="gf-form">
+           <span className="gf-form-label width-10">Query</span>
+           <input name="rawQuery" className="gf-form-input" onBlur={saveQuery} onChange={handleChange} value={state.rawQuery} />
+         </div>
+       </>
+     );
+   };
+   ```
+
+   Grafana saves the query model whenever one of the text fields loses focus (`onBlur`) and then previews the values returned by `metricFindQuery`.
+
+   The second argument to `onChange` allows you to set a text representation of the query which will appear next to the name of the variable in the variables list.
+
+1. Finally, configure your plugin to use the query editor.
+
+   ```ts
+   import { VariableQueryEditor } from './VariableQueryEditor';
+
+   export const plugin = new DataSourcePlugin<DataSource, MyQuery, MyDataSourceOptions>(DataSource)
+     .setQueryEditor(QueryEditor)
+     .setVariableQueryEditor(VariableQueryEditor);
+   ```
+
+That's it! You can now try out the plugin by adding a [query variable]({{< relref "../../variables/variable-types/add-query-variable.md" >}}) to your dashboard.

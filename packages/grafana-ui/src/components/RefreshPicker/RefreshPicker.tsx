@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import classNames from 'classnames';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
@@ -35,7 +35,7 @@ export interface Props {
   theme: GrafanaTheme;
 }
 
-export class RefreshPickerBase extends PureComponent<Props> {
+export class RefreshPickerBase extends Component<Props> {
   static offOption = { label: 'Off', value: '' };
   static liveOption = { label: 'Live', value: 'LIVE' };
   static isLive = (refreshInterval?: string): boolean => refreshInterval === RefreshPicker.liveOption.value;
