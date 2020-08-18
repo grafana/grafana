@@ -1,7 +1,8 @@
 import React, { memo, useMemo, useCallback } from 'react';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 import { FieldMatcherID, fieldMatchers, getFieldDisplayName, SelectableValue, DataFrame } from '@grafana/data';
-import { Select } from '../Select/Select';
+// import { Select } from '../Select/Select';
+import { SelectNG } from '../SelectNG/SelectNG';
 
 export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>(props => {
   const { data, options } = props;
@@ -9,8 +10,8 @@ export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>(props => {
   const selectOptions = useSelectOptions(names);
 
   const onChange = useCallback(
-    (selection: SelectableValue<string>) => {
-      if (!selection.value || !names.has(selection.value)) {
+    (selection: SelectableValue<string> | null) => {
+      if (!selection || !selection.value || !names.has(selection.value)) {
         return;
       }
       return props.onChange(selection.value);
@@ -19,7 +20,7 @@ export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>(props => {
   );
 
   const selectedOption = selectOptions.find(v => v.value === options);
-  return <Select value={selectedOption} options={selectOptions} onChange={onChange} />;
+  return <SelectNG value={selectedOption} options={selectOptions} onChange={onChange} />;
 });
 
 export const fieldNameMatcherItem: FieldMatcherUIRegistryItem<string> = {

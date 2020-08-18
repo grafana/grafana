@@ -3,12 +3,10 @@ import { boolean, number } from '@storybook/addon-knobs';
 import { css, cx } from 'emotion';
 import { RenderFunction } from '../../types';
 
-const StoryContainer: React.FC<{ width?: number; height?: number; showBoundaries: boolean }> = ({
-  children,
-  width,
-  height,
-  showBoundaries,
-}) => {
+export const StoryContainer = React.forwardRef<
+  HTMLDivElement,
+  { width?: number; height?: number; showBoundaries: boolean; className?: string; children: React.ReactNode }
+>(({ children, width, height, showBoundaries, className }, ref) => {
   const checkColor = '#f0f0f0';
   const finalWidth = width ? `${width}px` : '100%';
   const finalHeight = height !== 0 ? `${height}px` : 'auto';
@@ -30,24 +28,26 @@ const StoryContainer: React.FC<{ width?: number; height?: number; showBoundaries
     `;
   return (
     <div
+      ref={ref}
       className={cx(
         css`
           width: ${finalWidth};
           height: ${finalHeight};
         `,
-        bgStyles
+        bgStyles,
+        className
       )}
     >
       {children}
     </div>
   );
-};
-
+});
+export const CONTAINER_GROUP = 'Container options';
 export const withStoryContainer = (story: RenderFunction) => {
-  const CONTAINER_GROUP = 'Container options';
   // ---
   const containerBoundary = boolean('Show container boundary', false, CONTAINER_GROUP);
   const fullWidthContainer = boolean('Full width container', false, CONTAINER_GROUP);
+
   const containerWidth = number(
     'Container width',
     300,

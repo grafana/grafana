@@ -57,11 +57,10 @@ class Popover extends PureComponent<Props> {
                 <ReactPopper
                   placement={placement}
                   referenceElement={referenceElement}
-                  // eventsEnabled={eventsEnabled}
-                  // TODO: move modifiers config to popper controller
-                  // modifiers={{ preventOverflow: { enabled: true, boundariesElement: 'window' } }}
+                  eventsEnabled={eventsEnabled}
+                  modifiers={[{ name: 'preventOverflow', enabled: true, options: { rootBoundary: 'viewport' } }]}
                 >
-                  {({ ref, style, placement, arrowProps/*, scheduleUpdate*/ }) => {
+                  {({ ref, style, placement, arrowProps, update }) => {
                     return (
                       <div
                         onMouseEnter={onMouseEnter}
@@ -80,7 +79,7 @@ class Popover extends PureComponent<Props> {
                           {React.isValidElement(content) && React.cloneElement(content)}
                           {typeof content === 'function' &&
                             content({
-                              updatePopperPosition: () => {},
+                              updatePopperPosition: update,
                             })}
                           {renderArrow &&
                             renderArrow({

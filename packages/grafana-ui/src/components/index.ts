@@ -1,3 +1,5 @@
+import { SelectNG } from './SelectNG/SelectNG';
+
 export { Icon } from './Icon/Icon';
 export { IconButton } from './IconButton/IconButton';
 export { ConfirmButton } from './ConfirmButton/ConfirmButton';
@@ -191,4 +193,9 @@ const LegacyForms = {
   Input,
   Switch,
 };
+
+// const NGForm = {
+//   Select: SelectNG,
+//   AsyncSelect: SelectNG,
+// };
 export { LegacyForms, LegacyInputStatus };

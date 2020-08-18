@@ -1,5 +1,5 @@
 import { useAsync } from 'react-use';
-import debouncePromise from 'debounce-promise';
+
 type AsyncState<T> =
   | {
       loading: boolean;
@@ -17,13 +17,14 @@ type AsyncState<T> =
       value: T;
     };
 
-interface FetchProps<A, T> {
-  loadData: (args: A) => Promise<T>;
-  args: A;
+interface FetchProps<Q = any, T = any> {
+  loadData: (query?: Q) => Promise<T>;
+  query?: Q;
   debounce?: number;
   children: (state: AsyncState<T>) => JSX.Element;
 }
-export function Fetch<A, T>({ loadData, children, args }: FetchProps<A, T>) {
-  const data = useAsync(async () => await loadData(args), [loadData, args]);
+
+export function Fetch<A, T>({ loadData, children, query }: FetchProps<A, T>) {
+  const data = useAsync(async () => await loadData(query), [loadData, query]);
   return children(data);
 }

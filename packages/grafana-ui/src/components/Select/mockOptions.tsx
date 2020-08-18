@@ -1,7 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import { kebabCase } from 'lodash';
 
-export const generateOptions = (desc = false, inputValue?: string) => {
+export const generateOptions = (desc = false, inputValue?: string | null) => {
   const values = [
     'Sharilyn Markowitz',
     'Naomi Striplin',
