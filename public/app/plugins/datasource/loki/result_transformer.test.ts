@@ -116,11 +116,10 @@ describe('loki result transformer', () => {
   });
   describe('createMetricLabel', () => {
     it('should create correct label based on passed variables', () => {
-      const label = ResultTransformer.createMetricLabel(
-        {},
-        { testLabel: { selected: true, text: 'label1', value: 'label1' } },
-        { legendFormat: '{{$testLabel}}' } as TransformerOptions
-      );
+      const label = ResultTransformer.createMetricLabel({}, ({
+        scopedVars: { testLabel: { selected: true, text: 'label1', value: 'label1' } },
+        legendFormat: '{{$testLabel}}',
+      } as unknown) as TransformerOptions);
       expect(label).toBe('label1');
     });
   });
