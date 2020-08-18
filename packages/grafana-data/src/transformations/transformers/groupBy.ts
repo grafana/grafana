@@ -36,9 +36,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
    * be applied, just return the input series
    */
   transformer: (options: GroupByTransformerOptions) => {
-    const calculationsByField = options.fieldsArray
-      .filter(val => val.operation === GroupByOperationID.aggregate)
-      .map(val => [val.fieldName, val.aggregations]); //.map((val, index) => ({fieldName: val[0], calculations: val[1]}));
+    const calculationsByField = options.fieldsArray.filter(val => val.operation === GroupByOperationID.aggregate);
     const groupByFieldNames = options.fieldsArray
       .filter(val => val.operation === GroupByOperationID.groupBy)
       .map(val => val.fieldName);
@@ -140,8 +138,8 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
         // Then for each calculations configured, compute and add a new field (column)
         const fieldList = frame.fields.map(f => getFieldDisplayName(f)); // Fields that are present in the data
 
-        for (let [fieldName, calculations] of calculationsByField) {
-          if (fieldName === null || !fieldList.includes(fieldName)) {
+        for (let element of calculationsByField) {
+          if (element.fieldName === null || !fieldList.includes(element.fieldName)) {
             continue;
           }
 
@@ -150,7 +148,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
           // fields (columns) at the time, corresponding the each field we want to make some calculations on.
 
           let calculationResults: Record<string, any[]> = {};
-          for (let calc of calculations) {
+          for (let calc of element.aggregations) {
             calculationResults[calc] = [];
           }
 
@@ -158,24 +156,24 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
           // result to the new fields
           let fieldType = null;
           for (let val of groupedDataKeys) {
-            let field = groupedData[val][fieldName];
+            let field = groupedData[val][element.fieldName];
             fieldType = field.type;
 
             // reduceField will return an object will all the calculations from the specified list, possibly more
             let results = reduceField({
               field,
-              reducers: calculations,
+              reducers: element.aggregations,
             });
 
-            for (let calc of calculations) {
+            for (let calc of element.aggregations) {
               calculationResults[calc].push(results[calc]);
             }
           }
 
           // Now we add the fields to the new fields
-          for (let calc of calculations) {
+          for (let calc of element.aggregations) {
             let f = {
-              name: fieldName + ' (' + calc + ')',
+              name: element.fieldName + ' (' + calc + ')',
               values: new ArrayVector(calculationResults[calc]),
               type: FieldType.other,
               config: {},

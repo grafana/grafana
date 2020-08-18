@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import {
   DataTransformerID,
-  SelectableValue,
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
@@ -9,9 +8,12 @@ import {
 } from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
 import { Select, StatsPicker, Button, IconButton } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
 
-import { GroupByTransformerOptions, GroupByOperationID } from '@grafana/data/src/transformations/transformers/groupBy';
+import {
+  GroupByTransformerOptions,
+  GroupByOperationID,
+  GroupByFieldOptions,
+} from '@grafana/data/src/transformations/transformers/groupBy';
 
 function FieldCalculationsSelector(props: any) {
   const { fieldNameOptions, onDelete, onConfigChange, config } = props;
@@ -101,7 +103,7 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
   onChange,
 }) => {
   const fieldNames = useMemo(() => getAllFieldNamesFromDataFrames(input), [input]);
-  const fieldNameOptions = fieldNames.map((item: string) => ({ label: item, value: item }));
+  // const fieldNameOptions = fieldNames.map((item: string) => ({ label: item, value: item }));
   const usedFieldNames = options.fieldsArray.map(item => item.fieldName);
   const unusedFieldNameOptions = fieldNames
     .filter(name => !usedFieldNames.includes(name))
@@ -128,8 +130,11 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
 
     options.fieldsArray.sort((a, b) => {
       if (a.operation !== b.operation) {
-        if (a.operation === GroupByOperationID.groupBy) return -1;
-        else return 1;
+        if (a.operation === GroupByOperationID.groupBy) {
+          return -1;
+        } else {
+          return 1;
+        }
       } else {
         return 0;
       }
