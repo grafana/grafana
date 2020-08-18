@@ -37,7 +37,7 @@ Refer to [Common observability strategies]({{< relref "common-observability-stra
 - If you create many related dashboards, think about how to cross-reference them for easy navigation. Refer to [Best practices for managing dashboards]({{< relref "best-practices-for-managing-dashboards.md" >}}) for more information.
 - Grafana retrieves data from a data source. A basic understanding of [data sources]({{< relref "../features/datasources/data-sources.md" >}}) in general and your specific is important.
 - Avoid unnecessary dashboard refreshing to reduce the load on the network or backend. For example, if your data changes every hour, then you don't need to set the dashboard refresh rate to 30 seconds.
-- Use the left and right Y-axes when displaying timeseries with different ranges. 
+- Use the left and right Y-axes when displaying time series with different ranges. 
 -  Add documentation to dashboards and panels.
    - To add documentation to a dashboard, add a [Text panel visualization]({{< relref "../panels/visualizations/text-panel.md" >}}) to the dashboard. Record things like the purpose of the dashboard, useful resource links, and any instructions users might need to interact with the dashboard. Check out this [Wikimedia example](https://grafana.wikimedia.org/d/000000066/resourceloader?orgId=1).
    - To add documentation to a panel, [edit the panel settings]({{< relref "../panels/add-a-panel.md#edit-panel-settings" >}}) and add a description. Any text you add will appear if you hover your cursor over the small `i` in the top left corner of the panel.
