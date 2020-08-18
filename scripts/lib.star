@@ -641,7 +641,7 @@ def windows_installer_step(edition):
             'cp C:\\App\\nssm-2.24.zip .',
             './grabpl.exe windows-installer --edition {} grafana.zip'.format(edition),
             '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
-            'echo gsutil cp $$fname gs://grafana-downloads/{}/master/'.format(edition),
-            'echo gsutil cp $$fname.sha256 gs://grafana-downloads/{}/master/'.format(edition),
+            'echo "gsutil cp $$fname gs://grafana-downloads/{}/master/"'.format(edition),
+            'echo "gsutil cp $$fname.sha256 gs://grafana-downloads/{}/master/"'.format(edition),
         ],
     }
