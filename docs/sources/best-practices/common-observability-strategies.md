@@ -1,7 +1,8 @@
 +++
-title = "Monitoring strategies"
-description = "Common monitoring strategies"
+title = "Common observability strategies"
+description = "Common observability strategies"
 keywords = ["grafana", "intro", "guide", "concepts", "methods"]
+aliases = ["/docs/grafana/latest/getting-started/strategies/"]
 type = "docs"
 [menu.docs]
 weight = 500
