@@ -116,6 +116,14 @@ func (fb *FrameBuilder) Init(metadata *query.FluxTableMetadata) error {
 	} else {
 		fb.labels = make([]string, 0)
 		for _, col := range columns {
+			// Skip the result column
+			if col.Index() == 0 && col.Name() == "result" && col.DataType() == stringDatatype {
+				continue
+			}
+			if col.Index() == 1 && col.Name() == "table" && col.DataType() == longDatatype {
+				continue
+			}
+
 			converter, err := getConverter(col.DataType())
 			if err != nil {
 				return err

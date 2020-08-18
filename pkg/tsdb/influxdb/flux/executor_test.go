@@ -14,6 +14,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/xorcare/pointer"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
@@ -255,10 +258,6 @@ func TestBuckets(t *testing.T) {
 		if dr.Error != nil {
 			t.Fatal(dr.Error)
 		}
-
-		st, _ := dr.Frames[0].StringTable(-1, -1)
-		fmt.Println(st)
-		fmt.Println("----------------------")
 	})
 }
 
@@ -267,6 +266,37 @@ func TestGoldenFiles(t *testing.T) {
 		_, err := verifyGoldenResponse("renamed")
 		if err != nil {
 			t.Fatal(err.Error())
+		}
+	})
+}
+
+func TestRealBuckets(t *testing.T) {
+	t.Skip()
+
+	t.Run("Buckes Buckets", func(t *testing.T) {
+		json := simplejson.New()
+		json.Set("organization", "test-org")
+
+		dsInfo := &models.DataSource{
+			Url:      "http://localhost:9999", // NOTE! no api/v2
+			JsonData: json,
+			SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{
+				"token": "PjSEcM5oWhqg2eI6IXcqYJFe5UbMM_xt-UNlAL0BRYJqLeVpcdMWidiPfWxGhu4Xrh6wioRR-CiadCg-ady68Q==",
+			}),
+		}
+
+		runner, err := RunnerFromDataSource(dsInfo)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		dr := executeQuery(context.Background(), QueryModel{
+			MaxDataPoints: 100,
+			RawQuery:      "buckets()",
+		}, runner, 50)
+		err = experimental.CheckGoldenDataResponse("./testdata/buckets-real.golden.txt", &dr, true)
+		if err != nil {
+			t.Fatal(err)
 		}
 	})
 }
