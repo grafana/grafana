@@ -124,6 +124,7 @@ describe('Language completion provider', () => {
         {
           items: [
             { label: '$__interval', sortText: '$__interval' }, // TODO: figure out why this row and sortText is needed
+            { label: '$__rate_interval', sortText: '$__rate_interval' },
             { label: '1m', sortText: '00:01:00' },
             { label: '5m', sortText: '00:05:00' },
             { label: '10m', sortText: '00:10:00' },
