@@ -1,12 +1,12 @@
 +++
-title = "Dashboard management maturity levels"
-description = "Explanation of dashboard management maturity levels"
+title = "Dashboard management maturity model"
+description = "Explanation of dashboard management maturity model"
 type = "docs"
 [menu.docs]
 weight = 200
 +++
 
-# Dashboard management maturity levels
+# Dashboard management maturity model
 
 _Dashboard management maturity_ refers to how well-designed and efficient your dashboard ecosystem is. We recommend periodically reviewing your dashboard setup to gauge where you are and how you can improve.
 
