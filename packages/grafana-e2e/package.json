@@ -24,7 +24,6 @@
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled",
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
-    "lint": "eslint cypress/ src/ --ext=.js,.ts,.tsx",
     "open": "cypress open",
     "start": "cypress run --headless --browser chrome",
     "test": "pushd test && node ../dist/bin/grafana-e2e.js run",

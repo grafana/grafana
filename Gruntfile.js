@@ -1,5 +1,5 @@
 'use strict';
-module.exports = function (grunt) {
+module.exports = function(grunt) {
   var os = require('os');
   var config = {
     pkg: grunt.file.readJSON('package.json'),
@@ -47,18 +47,20 @@ module.exports = function (grunt) {
 
   // Utility function to load plugin settings into config
   function loadConfig(config, path) {
-    require('glob').sync('*', {cwd: path}).forEach(function(option) {
-      var key = option.replace(/\.js$/,'');
-      // If key already exists, extend it. It is your responsibility to avoid naming collisions
-      config[key] = config[key] || {};
-      grunt.util._.extend(config[key], require(path + option)(config,grunt));
-    });
+    require('glob')
+      .sync('*', { cwd: path })
+      .forEach(function(option) {
+        var key = option.replace(/\.js$/, '');
+        // If key already exists, extend it. It is your responsibility to avoid naming collisions
+        config[key] = config[key] || {};
+        grunt.util._.extend(config[key], require(path + option)(config, grunt));
+      });
     // technically not required
     return config;
   }
 
   // Merge that object with what with whatever we have here
-  loadConfig(config,'./scripts/grunt/options/');
+  loadConfig(config, './scripts/grunt/options/');
   // pass the config to grunt
   grunt.initConfig(config);
 };

@@ -2,6 +2,7 @@ import { CompletionItem } from '@grafana/ui';
 
 export const RATE_RANGES: CompletionItem[] = [
   { label: '$__interval', sortText: '$__interval' },
+  { label: '$__rate_interval', sortText: '$__rate_interval' },
   { label: '1m', sortText: '00:01:00' },
   { label: '5m', sortText: '00:05:00' },
   { label: '10m', sortText: '00:10:00' },

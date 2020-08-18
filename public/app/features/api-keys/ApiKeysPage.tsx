@@ -37,7 +37,7 @@ const timeRangeValidationEvents: ValidationEvents = {
           return true;
         }
         try {
-          kbn.interval_to_seconds(value);
+          kbn.intervalToSeconds(value);
           return true;
         } catch {
           return false;
@@ -125,7 +125,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
 
     // make sure that secondsToLive is number or null
     const secondsToLive = this.state.newApiKey['secondsToLive'];
-    this.state.newApiKey['secondsToLive'] = secondsToLive ? kbn.interval_to_seconds(secondsToLive) : null;
+    this.state.newApiKey['secondsToLive'] = secondsToLive ? kbn.intervalToSeconds(secondsToLive) : null;
     this.props.addApiKey(this.state.newApiKey, openModal, this.props.includeExpired);
     this.setState((prevState: State) => {
       return {

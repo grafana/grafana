@@ -245,9 +245,9 @@ func getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
 			org.Name = mainOrgName
 			org.Id = int64(setting.AutoAssignOrgId)
 		} else {
-			sqlog.Info("Could not create user: organization id %v does not exist",
+			sqlog.Error("Could not create user: organization ID does not exist", "orgID",
 				setting.AutoAssignOrgId)
-			return 0, fmt.Errorf("Could not create user: organization id %v does not exist",
+			return 0, fmt.Errorf("could not create user: organization ID %d does not exist",
 				setting.AutoAssignOrgId)
 		}
 	} else {

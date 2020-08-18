@@ -110,7 +110,7 @@ You can customize the query history in the Settings tab. Options are described i
 | ------------------------------------------------------------- | --------------------------------------- |
 | Period of time for which Grafana will save your query history | 1 week                                  |
 | Change the default active tab                                 | Query history tab                       |
-| Only show queries for data source currently active in Explore  | True                                    |
+| Only show queries for data source currently active in Explore | True                                    |
 | Clear query history                                           | Permanently deletes all stored queries. |
 
 > Note: Query history settings are global, and applied to both panels in split mode.
@@ -153,14 +153,6 @@ Along with metrics, Explore allows you to investigate your logs with the followi
 
 You can customize how logs are displayed and select which columns are shown.
 
-#### Deduping
-
-Log data can be very repetitive and Explore can help by hiding duplicate log lines. There are a few different deduplication algorithms that you can use:
-
-- `exact` Exact matches are done on the whole line, except for date fields.
-- `numbers` Matches on the line after stripping out numbers (durations, IP addresses etc.).
-- `signature` The most aggressive deduping - strips all letters and numbers, and matches on the remaining whitespace and punctuation.
-
 #### Time
 
 Shows or hides the time column. This is the timestamp associated with the log line as reported from the data source.
@@ -172,6 +164,18 @@ Shows or hides the unique labels column that includes only non-common labels. Al
 #### Wrap lines
 
 Set this to True if you want the display to use line wrapping. If set to False, it will result in horizontal scrolling.
+
+#### Deduping
+
+Log data can be very repetitive and Explore can help by hiding duplicate log lines. There are a few different deduplication algorithms that you can use:
+
+- **Exact -** Exact matches are done on the whole line except for date fields.
+- **Numbers -** Matches on the line after stripping out numbers such as durations, IP addresses, and so on.
+- **Signature -** The most aggressive deduping, this strips all letters and numbers and matches on the remaining whitespace and punctuation.
+
+#### Flip results order
+
+You can change the order of received logs from the default descending order (newest first) to ascending order (oldest first).
 
 ### Labels and parsed fields
 
