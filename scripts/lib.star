@@ -621,7 +621,7 @@ def windows_installer_step(edition):
         sfx = '-enterprise'
     return {
         'name': 'build-windows-installer',
-        'image': 'grafana/ci-wix:0.1.0',
+        'image': 'grafana/ci-wix:0.1.1',
         'environment': {
             'GCP_KEY': {
                 'from_secret': 'gcp_key',
