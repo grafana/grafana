@@ -26,7 +26,7 @@ What is your dashboard maturity level? Analyze your current dashboard setup and 
 
 ## Best practices to follow
 
-- Avoid dashboard sprawl, meaning the uncontrolled growth of dashboards.
+- Avoid dashboard sprawl, meaning the uncontrolled growth of dashboards. Dashboard sprawl negatively affects time to find the right dashboard. Duplicating dashboards and changing “one thing” (worse: keeping original tags) is the easiest kind of sprawl.
   - Periodically review the dashboards and remove unnecessary ones.
   - If you create a temporary dashboard, perhaps to test something, append the name with `-TEST`. Delete the dashboard when you are finished.
 - Copying dashboards with no significant changes is not a good idea.
