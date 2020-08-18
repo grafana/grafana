@@ -1,5 +1,5 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { groupByTransformer, GroupByTransformerOptions } from './groupBy';
+import { groupByTransformer, GroupByTransformerOptions, GroupByOperationID } from './groupBy';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 import { Field, FieldType } from '../../types';
@@ -26,10 +26,14 @@ describe('GroupBy Transformer', () => {
     const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
       id: DataTransformerID.groupBy,
       options: {
-        byFields: ['message'],
-        calculationsByField: [
-          ['time', [ReducerID.count, ReducerID.last]],
-          ['values', [ReducerID.sum]],
+        fieldsArray: [
+          { fieldName: 'message', operation: GroupByOperationID.groupBy, aggregations: [] },
+          {
+            fieldName: 'time',
+            operation: GroupByOperationID.aggregate,
+            aggregations: [ReducerID.count, ReducerID.last],
+          },
+          { fieldName: 'values', operation: GroupByOperationID.aggregate, aggregations: [ReducerID.sum] },
         ],
       },
     };
@@ -51,7 +55,7 @@ describe('GroupBy Transformer', () => {
       },
       {
         name: 'time (last)',
-        type: FieldType.number,
+        type: FieldType.time,
         values: new ArrayVector([3000, 5000, 8000]),
         config: {},
       },
