@@ -6,7 +6,7 @@ import { Select } from '../Select/Select';
 export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>(props => {
   const { data, options } = props;
   const counts = useFieldCounts(data);
-  const selectOptions = useSelectOptions(counts);
+  const selectOptions = useSelectOptions(counts, options);
 
   const onChange = useCallback(
     (selection: SelectableValue<string>) => {
@@ -19,15 +19,22 @@ export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>(props => {
   return <Select value={selectedOption} options={selectOptions} onChange={onChange} />;
 });
 
+const allTypes: Array<SelectableValue<string>> = [
+  { value: FieldType.number, label: 'Numeric fields' },
+  { value: FieldType.string, label: 'String fields' },
+  { value: FieldType.time, label: 'Time fields' },
+  { value: FieldType.boolean, label: 'Boolean fields' },
+  { value: FieldType.trace, label: 'Trace fields' },
+  { value: FieldType.other, label: 'Other fields' },
+  { value: '*', label: 'Any field type' },
+];
+
 const useFieldCounts = (data: DataFrame[]): Map<string, number> => {
   return useMemo(() => {
     const counts: Map<string, number> = new Map();
-    counts.set(FieldType.boolean, 0);
-    counts.set(FieldType.string, 0);
-    counts.set(FieldType.number, 0);
-    counts.set(FieldType.trace, 0);
-    counts.set(FieldType.time, 0);
-    counts.set(FieldType.other, 0);
+    for (const t of allTypes) {
+      counts.set(t.value!, 0);
+    }
 
     let total = 0;
     for (const frame of data) {
@@ -46,27 +53,31 @@ const useFieldCounts = (data: DataFrame[]): Map<string, number> => {
   }, [data]);
 };
 
-const allTypes: Array<SelectableValue<string>> = [
-  { value: FieldType.number, label: 'Numeric fields' },
-  { value: FieldType.string, label: 'String fields' },
-  { value: FieldType.time, label: 'Time fields' },
-  { value: '*', label: 'Any field type' },
-];
-
-// return useMemo(() => {
-//   return Array.from(displayNames).map(n => ({
-//     value: n,
-//     label: n,
-//   }));
-// }, [displayNames]);
-
-const useSelectOptions = (counts: Map<string, number>): Array<SelectableValue<string>> => {
+const useSelectOptions = (counts: Map<string, number>, opt?: string): Array<SelectableValue<string>> => {
   return useMemo(() => {
-    return allTypes.map(orig => ({
-      ...orig,
-      label: `${orig.label} (${counts.get(orig.value!)})`,
-    }));
-  }, [counts]);
+    let found = false;
+    const options: Array<SelectableValue<string>> = [];
+    for (const t of allTypes) {
+      const count = counts.get(t.value!);
+      const match = opt === t.value;
+      if (count || match) {
+        options.push({
+          ...t,
+          label: `${t.label} (${counts.get(t.value!)})`,
+        });
+      }
+      if (match) {
+        found = true;
+      }
+    }
+    if (opt && !found) {
+      options.push({
+        value: opt,
+        label: `${opt} (No matches)`,
+      });
+    }
+    return options;
+  }, [counts, opt]);
 };
 
 export const fieldTypeMatcherItem: FieldMatcherUIRegistryItem<string> = {
