@@ -10,13 +10,26 @@ weight = 200
 
 This page outlines some best practices to follow when creating Grafana dashboards.
 
-### Managing a collection of dashboards
+## Before you begin
 
-1. Periodically review the dashboards in your folder(s) and remove
-   unnecessary ones.  You can go to the [Folder listing]()
-   and can click on the gear icon next to your folder name to get
-   the list of dashboards in your folder.
-2. Copying dashboards with no significant changes is not a good idea.
+Here are some principles to consider before you start managing dashboards.
+
+### Strategic observability
+
+There are several [common observability strategies]({{< relref "common-observability-strategies.md" >}}). You should research them and decide whether one of them works for you or if you want to come up with your own. Either way, have a plan, write it down, and stick to it. 
+
+Adapt your strategy to changing needs as necessary.
+
+### Maturity level
+
+What is your dashboard maturity level? Analyze your current dashboard setup and compare it to the [Dashboard management maturity levels]({{< relref "dashboard-management-maturity-levels.md" >}}). Understanding where you are can help you decide how to get where you want to be.
+
+## Best practices to follow
+
+- Avoid dashboard sprawl.
+  - Periodically review the dashboards and remove unnecessary ones.
+  - If you create a temporary dashboard, perhaps to test something, append the name with `-TEST`. Delete the dashboard when you are finished.
+- Copying dashboards with no significant changes is not a good idea.
    This is especially true for the dashboards maintained by the GUTS team.
    This is a bad idea for several reasons:
     - You miss out on updates to the original dashboard, e.g. documentation
@@ -25,10 +38,9 @@ This page outlines some best practices to follow when creating Grafana dashboard
       by setting template parameters.  This should instead be done by
       maintaining a link to the master dashboard, see below, and customizing
       the view via URL parameters.
-3. When you must copy a dashboard, clearly rename it and do not copy the
-   dashboard tags.  Tags are important meta-data for dashboards that are
-   used during search.  Copying the tags results in false matches.
-4. Maintaining a dashboard of dashboards, or cross referencing dashboards
+- When you must copy a dashboard, clearly rename it and do not copy the dashboard tags. Tags are important meta-data for dashboards that are
+   used during search. Copying tags can result in false matches.
+2. Maintaining a dashboard of dashboards, or cross referencing dashboards
    can be done in several ways.
     - Create links at the dashboard level by clicking on the *Settings* gear
       and then the *Links* menu item.  These links are pretty straightforward to

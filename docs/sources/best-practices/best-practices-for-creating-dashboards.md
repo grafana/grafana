@@ -12,7 +12,7 @@ This page outlines some best practices to follow when creating Grafana dashboard
 
 ## Before you begin
 
-There are three principles to consider before you create a dashboard.
+Here are some principles to consider before you create a dashboard.
 
 ### A dashboard should tell a story
 
