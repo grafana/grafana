@@ -278,7 +278,7 @@ You can now configure data sources using config files with Grafana's provisionin
 
 Here are some provisioning examples for this data source.
 
-### InfluxDB 1.x
+### InfluxDB 1.x example
 ```yaml
 apiVersion: 1
 
@@ -294,7 +294,7 @@ datasources:
       httpMode: GET
 ```
 
-### InfluxDB 2.x
+### InfluxDB 2.x example
 ```yaml
 apiVersion: 1
 
