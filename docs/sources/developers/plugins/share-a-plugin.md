@@ -70,7 +70,7 @@ The next step is to submit the URL to your repository, and the release commit, t
 
 ## Host the plugin yourself
 
-If you want to share your plugin by hosting it yourself, then we recommend that you package it by adding the plugin assets to a ZIP archive. You can then make the archive available by hosting it yourself.
+If you want to share your plugin by hosting it yourself, then we recommend that you package it by adding the plugin assets to a .zip archive. You can then make the archive available by hosting it yourself.
 
 How you package the plugin depends on whether you want to include the source code or not.
 
