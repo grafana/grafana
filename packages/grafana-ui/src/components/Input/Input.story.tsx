@@ -43,6 +43,7 @@ export const simple = () => {
   );
   const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
   const invalid = boolean('Invalid', false, BEHAVIOUR_GROUP);
+  const readonly = boolean('Readonly', false, BEHAVIOUR_GROUP);
   const loading = boolean('Loading', false, BEHAVIOUR_GROUP);
 
   const VISUAL_GROUP = 'Visual options';
@@ -82,6 +83,7 @@ export const simple = () => {
     <div style={{ width: containerWidth }}>
       <Input
         disabled={disabled}
+        readOnly={readonly}
         width={width}
         prefix={prefixEl}
         invalid={invalid}

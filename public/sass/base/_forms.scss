@@ -126,8 +126,9 @@ textarea[disabled],
 input[readonly],
 select[readonly],
 textarea[readonly] {
-  cursor: $cursor-disabled;
-  background-color: $input-bg-disabled;
+  // Temporarily disabling until we decide how it should look like
+  //cursor: $cursor-disabled;
+  //background-color: $input-bg-disabled;
 }
 
 // Explicitly reset the colors here
