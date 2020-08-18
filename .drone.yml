@@ -96,7 +96,7 @@ steps:
   - yarn run typecheck
   - yarn run test
   environment:
-    TEST_MAX_WORKERS: 50%
+    TEST_MAX_WORKERS: 100%
   depends_on:
   - initialize
 
@@ -111,7 +111,7 @@ steps:
 - name: package
   image: grafana/build-container:1.2.24
   commands:
-  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64
+  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64
   depends_on:
   - build-backend
   - build-frontend
@@ -323,7 +323,7 @@ steps:
   - yarn run typecheck
   - yarn run test
   environment:
-    TEST_MAX_WORKERS: 50%
+    TEST_MAX_WORKERS: 100%
   depends_on:
   - initialize
 
@@ -338,7 +338,7 @@ steps:
 - name: package
   image: grafana/build-container:1.2.24
   commands:
-  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
+  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
   depends_on:
   - build-backend
   - build-frontend

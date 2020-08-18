@@ -265,7 +265,6 @@ def build_backend_step(edition, variants=None):
             'test-backend',
         ],
         'commands': [
-            # TODO: Convert number of jobs to percentage
             './bin/grabpl build-backend --jobs 8 --edition {} --build-id $DRONE_BUILD_NUMBER{}'.format(
                 edition, variants_str
             ),
@@ -325,7 +324,7 @@ def test_frontend_step():
             'initialize',
         ],
         'environment': {
-            'TEST_MAX_WORKERS': '50%',
+            'TEST_MAX_WORKERS': '100%',
         },
         'commands': [
             'yarn run prettier:check',
@@ -390,8 +389,7 @@ def package_step(edition, variants=None):
             'shellcheck',
         ],
         'commands': [
-            # TODO: Use percentage for jobs
-            '. scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition {} '.format(edition) +
+            '. scripts/build/gpg-test-vars.sh && ./bin/grabpl package --edition {} '.format(edition) +
                 '--build-id $DRONE_BUILD_NUMBER --no-pull-enterprise' + variants_str,
         ],
     }
