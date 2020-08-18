@@ -16,6 +16,7 @@ import {
   QueryResultMetaStat,
   QueryResultMeta,
   TimeSeriesValue,
+  ScopedVars,
 } from '@grafana/data';
 
 import templateSrv from 'app/features/templating/template_srv';
@@ -143,8 +144,12 @@ function createUid(ts: string, labelsString: string, line: string): string {
   return md5(`${ts}_${labelsString}_${line}`);
 }
 
-function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: TransformerOptions): TimeSeries {
-  const name = createMetricLabel(matrixResult.metric, options);
+function lokiMatrixToTimeSeries(
+  matrixResult: LokiMatrixResult,
+  options: TransformerOptions,
+  scopedVars: ScopedVars
+): TimeSeries {
+  const name = createMetricLabel(matrixResult.metric, scopedVars, options);
   return {
     target: name,
     title: name,
@@ -240,11 +245,11 @@ export function lokiResultsToTableModel(
   return table;
 }
 
-function createMetricLabel(labelData: { [key: string]: string }, options?: TransformerOptions) {
+function createMetricLabel(labelData: { [key: string]: string }, scopedVars: ScopedVars, options?: TransformerOptions) {
   let label =
     options === undefined || _.isEmpty(options.legendFormat)
       ? getOriginalMetricName(labelData)
-      : renderTemplate(templateSrv.replace(options.legendFormat ?? ''), labelData);
+      : renderTemplate(templateSrv.replace(options.legendFormat ?? '', scopedVars), labelData);
 
   if (!label && options) {
     label = options.query;
@@ -415,13 +420,13 @@ export function rangeQueryResponseToTimeSeries(
   response: LokiResponse,
   query: LokiRangeQueryRequest,
   target: LokiQuery,
-  responseListLength: number
+  responseListLength: number,
+  scopedVars: ScopedVars
 ): TimeSeries[] {
   /** Show results of Loki metric queries only in graph */
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'graph',
   };
-
   const transformerOptions: TransformerOptions = {
     format: target.format,
     legendFormat: target.legendFormat ?? '',
@@ -438,10 +443,12 @@ export function rangeQueryResponseToTimeSeries(
   switch (response.data.resultType) {
     case LokiResultType.Vector:
       return response.data.result.map(vecResult =>
-        lokiMatrixToTimeSeries({ metric: vecResult.metric, values: [vecResult.value] }, transformerOptions)
+        lokiMatrixToTimeSeries({ metric: vecResult.metric, values: [vecResult.value] }, transformerOptions, scopedVars)
       );
     case LokiResultType.Matrix:
-      return response.data.result.map(matrixResult => lokiMatrixToTimeSeries(matrixResult, transformerOptions));
+      return response.data.result.map(matrixResult =>
+        lokiMatrixToTimeSeries(matrixResult, transformerOptions, scopedVars)
+      );
     default:
       return [];
   }
@@ -454,6 +461,7 @@ export function processRangeQueryResponse(
   responseListLength: number,
   limit: number,
   config: LokiOptions,
+  scopedVars: ScopedVars,
   reverse = false
 ) {
   switch (response.data.resultType) {
@@ -473,7 +481,8 @@ export function processRangeQueryResponse(
             ...target,
             format: 'time_series',
           },
-          responseListLength
+          responseListLength,
+          scopedVars
         ),
         key: target.refId,
       });
