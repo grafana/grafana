@@ -7,7 +7,7 @@ import (
 	"github.com/magefile/mage/sh"
 )
 
-const imageName = "grafana/ci-wix:0.1.0"
+const imageName = "grafana/ci-wix:0.1.1"
 
 // Build builds the Docker image.
 func Build() error {

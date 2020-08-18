@@ -12,5 +12,7 @@ RUN powershell (New-Object Net.WebClient).DownloadFile(\
 RUN scoop install git@2.28.0.windows.1
 RUN scoop bucket add extras
 RUN scoop install gcloud@305.0.0
+# Installing dos2unix fails if not under PowerShell
+RUN powershell scoop install dos2unix
 
 ENTRYPOINT ["powershell"]

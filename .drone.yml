@@ -515,9 +515,9 @@ steps:
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.0
   commands:
-  - "echo TEST_MAX_WORKERS: $$env:TEST_MAX_WORKERS"
   - $$gcpKey = $$env:GCP_KEY
   - "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json"
+  - dos2unix gcpkey.json
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - $$ProgressPreference = "SilentlyContinue"
@@ -531,7 +531,6 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-    TEST_MAX_WORKERS: 50%
 
 trigger:
   branch:
