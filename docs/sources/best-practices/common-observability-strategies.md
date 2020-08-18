@@ -53,3 +53,5 @@ This method is similar to the RED method, but it includes saturation.
 - **Traffic -** How much demand is placed on your system
 - **Errors -** Rate of requests that are failing
 - **Saturation -** How "full" your system is
+
+[Here's an example from Grafana Play](https://play.grafana.org/d/000000109/the-four-golden-signals?orgId=1).
