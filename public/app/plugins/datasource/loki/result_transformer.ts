@@ -144,12 +144,8 @@ function createUid(ts: string, labelsString: string, line: string): string {
   return md5(`${ts}_${labelsString}_${line}`);
 }
 
-function lokiMatrixToTimeSeries(
-  matrixResult: LokiMatrixResult,
-  options: TransformerOptions,
-  scopedVars: ScopedVars
-): TimeSeries {
-  const name = createMetricLabel(matrixResult.metric, scopedVars, options);
+function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: TransformerOptions): TimeSeries {
+  const name = createMetricLabel(matrixResult.metric, options);
   return {
     target: name,
     title: name,
@@ -245,15 +241,11 @@ export function lokiResultsToTableModel(
   return table;
 }
 
-export function createMetricLabel(
-  labelData: { [key: string]: string },
-  scopedVars: ScopedVars,
-  options?: TransformerOptions
-) {
+export function createMetricLabel(labelData: { [key: string]: string }, options?: TransformerOptions) {
   let label =
     options === undefined || _.isEmpty(options.legendFormat)
       ? getOriginalMetricName(labelData)
-      : renderTemplate(templateSrv.replace(options.legendFormat ?? '', scopedVars), labelData);
+      : renderTemplate(templateSrv.replace(options.legendFormat ?? '', options.scopedVars), labelData);
 
   if (!label && options) {
     label = options.query;
@@ -442,17 +434,16 @@ export function rangeQueryResponseToTimeSeries(
     refId: target.refId,
     meta,
     valueWithRefId: target.valueWithRefId,
+    scopedVars,
   };
 
   switch (response.data.resultType) {
     case LokiResultType.Vector:
       return response.data.result.map(vecResult =>
-        lokiMatrixToTimeSeries({ metric: vecResult.metric, values: [vecResult.value] }, transformerOptions, scopedVars)
+        lokiMatrixToTimeSeries({ metric: vecResult.metric, values: [vecResult.value] }, transformerOptions)
       );
     case LokiResultType.Matrix:
-      return response.data.result.map(matrixResult =>
-        lokiMatrixToTimeSeries(matrixResult, transformerOptions, scopedVars)
-      );
+      return response.data.result.map(matrixResult => lokiMatrixToTimeSeries(matrixResult, transformerOptions));
     default:
       return [];
   }
