@@ -340,7 +340,6 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
-	m.Use(hs.healthHandler)
 	m.Use(hs.metricsEndpoint)
 	m.Use(middleware.GetContextHandler(
 		hs.AuthTokenService,

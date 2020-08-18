@@ -73,6 +73,10 @@
       "type": "boolean",
       "description": "For data source plugins. If the plugin supports logs."
     },
+    "skipDataQuery": {
+      "type": "boolean",
+      "description": "For panel plugins. Hides the query editor."
+    },
     "partials": {
       "type": "object",
       "additionalItems": false,
@@ -127,8 +131,8 @@
         },
         "grafanaDependency": {
           "type": "string",
-          "description": "Required Grafana version for this plugin, e.g. `>=7.0.0` to denote plugin requires Grafana 7.0.0 or later",
-          "pattern": "^(>=|<|>|<=)?([0-9]+)(\\.[0-9]+)?(\\.[0-9])?$"
+          "description": "Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.",
+          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*])?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]))?$"
         },
         "plugins": {
           "type": "array",

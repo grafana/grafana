@@ -4,9 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func createTestableServerLock(t *testing.T) *ServerLockService {
@@ -21,35 +23,36 @@ func createTestableServerLock(t *testing.T) *ServerLockService {
 }
 
 func TestServerLock(t *testing.T) {
-	Convey("Server lock", t, func() {
-		sl := createTestableServerLock(t)
-		operationUID := "test-operation"
+	sl := createTestableServerLock(t)
+	operationUID := "test-operation"
 
-		first, err := sl.getOrCreate(context.Background(), operationUID)
-		So(err, ShouldBeNil)
+	first, err := sl.getOrCreate(context.Background(), operationUID)
+	require.NoError(t, err)
 
-		lastExecution := first.LastExecution
-		Convey("trying to create three new row locks", func() {
-			for i := 0; i < 3; i++ {
-				first, err = sl.getOrCreate(context.Background(), operationUID)
-				So(err, ShouldBeNil)
-				So(first.OperationUid, ShouldEqual, operationUID)
-				So(first.Id, ShouldEqual, 1)
-			}
+	t.Run("trying to create three new row locks", func(t *testing.T) {
+		expectedLastExecution := first.LastExecution
+		var latest *serverLock
 
-			Convey("Should not create new since lock already exist", func() {
-				So(lastExecution, ShouldEqual, first.LastExecution)
-			})
-		})
+		for i := 0; i < 3; i++ {
+			latest, err = sl.getOrCreate(context.Background(), operationUID)
+			require.NoError(t, err)
+			assert.Equal(t, operationUID, first.OperationUid)
+			assert.Equal(t, int64(1), first.Id)
+		}
 
-		Convey("Should be able to create lock on first row", func() {
-			gotLock, err := sl.acquireLock(context.Background(), first)
-			So(err, ShouldBeNil)
-			So(gotLock, ShouldBeTrue)
+		assert.Equal(t,
+			expectedLastExecution,
+			latest.LastExecution,
+			"latest execution should not have changed")
+	})
 
-			gotLock, err = sl.acquireLock(context.Background(), first)
-			So(err, ShouldBeNil)
-			So(gotLock, ShouldBeFalse)
-		})
+	t.Run("create lock on first row", func(t *testing.T) {
+		gotLock, err := sl.acquireLock(context.Background(), first)
+		require.NoError(t, err)
+		assert.True(t, gotLock)
+
+		gotLock, err = sl.acquireLock(context.Background(), first)
+		require.NoError(t, err)
+		assert.False(t, gotLock)
 	})
 }
