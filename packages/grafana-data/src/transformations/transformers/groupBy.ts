@@ -5,7 +5,7 @@ import { getFieldDisplayName } from '../../field/fieldState';
 import { ArrayVector } from '../../vector/ArrayVector';
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { reduceField, ReducerID } from '../fieldReducer';
-
+import { MutableField } from '../../dataframe/MutableDataFrame';
 // export interface GroupByFieldOptions {
 //   aggregations: ReducerID[];
 //   groupBy: boolean;
@@ -74,7 +74,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
           }
         */
 
-        const groupedData = {};
+        const groupedData: Record<string, Record<string, MutableField>> = {};
         for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
           let key = String(groupByFields.map(field => field.values.get(rowIndex)));
 
