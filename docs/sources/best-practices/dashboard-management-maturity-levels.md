@@ -33,18 +33,18 @@ At this stage, you are starting to manage your dashboard use with methodical das
 
 How can you tell you are here?
 
-- Prevent sprawl by using template variables. For example, you don't need a separate dashboard for each node, you can use query variables. Even better, you can make the data source a template variable too, so you can reuse the same dashboard across different clusters and monitoring backends.
-
-  {{< imgbox max-width="90%" img="/img/docs/best-practices/use-variables-example.gif" caption="Example of using variables" >}}
+- Prevent sprawl by using template variables. For example, you don't need a separate dashboard for each node, you can use query variables. Even better, you can make the data source a template variable too, so you can reuse the same dashboard across different clusters and monitoring backends. 
+  
+  Refer to the list of [Variable examples]({{< relref "../variables/variable-examples.md" >}}) if you want some ideas.
 
 - Methodical dashboards according to an [observability strategy]({{< relref "common-observability-strategies.md" >}}).
 - Hierarchical dashboards with drill-downs to the next level.
 
-  {{< imgbox max-width="90%" img="/img/docs/best-practices/drill-down-example.png" caption="Example of using drill-down" >}}
+  {{< imgbox max-width="100%" img="/img/docs/best-practices/drill-down-example.png" caption="Example of using drill-down" >}}
 
 - Dashboard design reflects service hierarchies. The example shown below uses the RED method (request and error rate on the left, latency duration on the right) with one row per service. The row order reflects the data flow.
 
-  {{< imgbox max-width="90%" img="/img/docs/best-practices/service-hierarchy-example.png" caption="Example of a service hierarchy" >}}
+  {{< imgbox max-width="100%" img="/img/docs/best-practices/service-hierarchy-example.png" caption="Example of a service hierarchy" >}}
 
 - Compare like to like: split service dashboards when the magnitude differs. Make sure aggregated metrics don't drown out important information.
 - Expressive charts with meaningful use of color and normalizing axes where you can. 
@@ -70,5 +70,3 @@ At this stage, you have optimized your dashboard management use with a consisten
   - grafanalib (Python)
 - No editing in the browser. Dashboard viewers change views with variables.
 - Browsing for dashboards is the exception, not the rule.
-
-[Fool-Proof Kubernetes Dashboards for Sleep-Deprived Oncalls - David Kaltschmidt, Grafana Labs](https://www.youtube.com/watch?v=YE2aQFiMGfY)
