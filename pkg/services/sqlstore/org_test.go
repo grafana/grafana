@@ -159,7 +159,7 @@ func TestAccountDataAccess(t *testing.T) {
 					So(query.Result.Login, ShouldEqual, "ac2")
 					So(query.Result.OrgRole, ShouldEqual, "Admin")
 					So(query.Result.OrgName, ShouldEqual, "ac2@test.com")
-					So(query.Result.IsGrafanaAdmin, ShouldBeTrue)
+					So(query.Result.IsServerAdmin, ShouldBeTrue)
 				})
 
 				Convey("Can get user organizations", func() {

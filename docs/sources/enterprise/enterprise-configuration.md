@@ -185,7 +185,7 @@ List of comma- or space-separated roles that will be mapped to the Admin role.
 
 ### role_values_grafana_admin
 
-List of comma- or space-separated roles that will be mapped to the Grafana Admin (Super Admin) role.
+List of comma- or space-separated roles that will be mapped to the Server Admin role.
 
 ## [keystore.vault]
 

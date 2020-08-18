@@ -55,7 +55,7 @@ export interface LdapUserInfo {
 }
 
 export interface LdapPermissions {
-  isGrafanaAdmin: boolean;
+  isServerAdmin: boolean;
   isDisabled: boolean;
 }
 

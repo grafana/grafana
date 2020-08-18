@@ -18,15 +18,15 @@ Grafana users have permissions that are determined by their:
 - **Organization Role** (Admin, Editor, Viewer)
 - Via **Team** memberships where the **Team** has been assigned specific permissions.
 - Via permissions assigned directly to user (on folders, dashboards, data sources)
-- The Grafana Admin (i.e. Super Admin) user flag.
+- The Server Admin user flag.
 
 ## Users
 
 Grafana supports a wide variety of internal and external ways for users to authenticate themselves. These include from its own integrated database, from an external SQL server, or from an external LDAP server.
 
-## Grafana Admin
+## Server Admin
 
-This admin flag makes user a `Super Admin`. This means they can access the `Server Admin` views where all users and organizations can be administrated.
+This admin flag makes user a `Server Admin`. This means they can access the `Server Admin` views where all users and organizations can be administrated.
 
 ## Organization Roles
 

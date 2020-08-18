@@ -16,7 +16,7 @@ const setup = (propOverrides?: object) => {
       },
       user: {
         id: 1,
-        isGrafanaAdmin: false,
+        isServerAdmin: false,
         isSignedIn: false,
         orgCount: 2,
         orgRole: '',

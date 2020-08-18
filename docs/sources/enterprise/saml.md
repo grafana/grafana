@@ -59,7 +59,7 @@ The table below describes all SAML configuration options. Continue reading below
 | `org_mapping`                                               | No  | List of comma- or space-separated Organization:OrgId mappings                                  |               |
 | `role_values_editor`                                        | No  | List of comma- or space-separated roles which will be mapped into the Editor role               |               |
 | `role_values_admin`                                         | No  | List of comma- or space-separated roles which will be mapped into the Admin role                |               |
-| `role_values_grafana_admin`                                 | No  | List of comma- or space-separated roles which will be mapped into the Grafana Admin (Super Admin) role |               |
+| `role_values_grafana_admin`                                 | No  | List of comma- or space-separated roles which will be mapped into the Server Admin role |               |
 
 ### Enable SAML authentication
 

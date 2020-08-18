@@ -88,9 +88,9 @@ export class UserAdminPage extends PureComponent<Props, State> {
     this.props.enableUser(userId);
   };
 
-  onGrafanaAdminChange = (isGrafanaAdmin: boolean) => {
+  onGrafanaAdminChange = (isServerAdmin: boolean) => {
     const { userId, updateUserPermissions } = this.props;
-    updateUserPermissions(userId, isGrafanaAdmin);
+    updateUserPermissions(userId, isServerAdmin);
   };
 
   onOrgRemove = (orgId: number) => {
@@ -144,7 +144,7 @@ export class UserAdminPage extends PureComponent<Props, State> {
               {isLDAPUser && config.licenseInfo.hasLicense && ldapSyncInfo && (
                 <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} user={user} onUserSync={this.onUserSync} />
               )}
-              <UserPermissions isGrafanaAdmin={user.isGrafanaAdmin} onGrafanaAdminChange={this.onGrafanaAdminChange} />
+              <UserPermissions isServerAdmin={user.isServerAdmin} onGrafanaAdminChange={this.onGrafanaAdminChange} />
             </>
           )}
 

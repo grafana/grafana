@@ -41,14 +41,14 @@ type LDAPRoleDTO struct {
 
 // LDAPUserDTO is a serializer for users mapped from LDAP
 type LDAPUserDTO struct {
-	Name           *LDAPAttribute           `json:"name"`
-	Surname        *LDAPAttribute           `json:"surname"`
-	Email          *LDAPAttribute           `json:"email"`
-	Username       *LDAPAttribute           `json:"login"`
-	IsGrafanaAdmin *bool                    `json:"isGrafanaAdmin"`
-	IsDisabled     bool                     `json:"isDisabled"`
-	OrgRoles       []LDAPRoleDTO            `json:"roles"`
-	Teams          []models.TeamOrgGroupDTO `json:"teams"`
+	Name          *LDAPAttribute           `json:"name"`
+	Surname       *LDAPAttribute           `json:"surname"`
+	Email         *LDAPAttribute           `json:"email"`
+	Username      *LDAPAttribute           `json:"login"`
+	IsServerAdmin *bool                    `json:"isServerAdmin"`
+	IsDisabled    bool                     `json:"isDisabled"`
+	OrgRoles      []LDAPRoleDTO            `json:"roles"`
+	Teams         []models.TeamOrgGroupDTO `json:"teams"`
 }
 
 // LDAPServerDTO is a serializer for LDAP server statuses
@@ -261,12 +261,12 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 	name, surname := splitName(user.Name)
 
 	u := &LDAPUserDTO{
-		Name:           &LDAPAttribute{serverConfig.Attr.Name, name},
-		Surname:        &LDAPAttribute{serverConfig.Attr.Surname, surname},
-		Email:          &LDAPAttribute{serverConfig.Attr.Email, user.Email},
-		Username:       &LDAPAttribute{serverConfig.Attr.Username, user.Login},
-		IsGrafanaAdmin: user.IsGrafanaAdmin,
-		IsDisabled:     user.IsDisabled,
+		Name:          &LDAPAttribute{serverConfig.Attr.Name, name},
+		Surname:       &LDAPAttribute{serverConfig.Attr.Surname, surname},
+		Email:         &LDAPAttribute{serverConfig.Attr.Email, user.Email},
+		Username:      &LDAPAttribute{serverConfig.Attr.Username, user.Login},
+		IsServerAdmin: user.IsServerAdmin,
+		IsDisabled:    user.IsDisabled,
 	}
 
 	orgRoles := []LDAPRoleDTO{}

@@ -279,7 +279,7 @@ PUT /api/admin/users/2/permissions HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 
-{"isGrafanaAdmin": true}
+{"isServerAdmin": true}
 ```
 
 **Example Response**:

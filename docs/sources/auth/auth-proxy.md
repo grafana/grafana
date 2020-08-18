@@ -66,7 +66,7 @@ curl -H "X-WEBAUTH-USER: anthony" http://localhost:3000/api/user
     "login":"anthony",
     "theme":"",
     "orgId":1,
-    "isGrafanaAdmin":false
+    "isServerAdmin":false
 }
 ```
 

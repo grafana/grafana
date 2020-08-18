@@ -101,7 +101,7 @@ func Auth(options *AuthOptions) macaron.Handler {
 			return
 		}
 
-		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
+		if !c.IsServerAdmin && options.ReqGrafanaAdmin {
 			accessForbidden(c)
 			return
 		}

@@ -555,7 +555,7 @@ func TestUserDataAccess(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("Cannot make themselves a non-admin", func() {
-				updateUserPermsCmd := models.UpdateUserPermissionsCommand{IsGrafanaAdmin: false, UserId: 1}
+				updateUserPermsCmd := models.UpdateUserPermissionsCommand{IsServerAdmin: false, UserId: 1}
 				updatePermsError := UpdateUserPermissions(&updateUserPermsCmd)
 
 				So(updatePermsError, ShouldEqual, models.ErrLastGrafanaAdmin)

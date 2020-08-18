@@ -28,16 +28,16 @@ func TestUserApiEndpoint(t *testing.T) {
 			fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 			bus.AddHandler("test", func(query *models.GetUserProfileQuery) error {
 				query.Result = models.UserProfileDTO{
-					Id:             int64(1),
-					Email:          "daniel@grafana.com",
-					Name:           "Daniel",
-					Login:          "danlee",
-					OrgId:          int64(2),
-					IsGrafanaAdmin: true,
-					IsDisabled:     false,
-					IsExternal:     false,
-					UpdatedAt:      fakeNow,
-					CreatedAt:      fakeNow,
+					Id:            int64(1),
+					Email:         "daniel@grafana.com",
+					Name:          "Daniel",
+					Login:         "danlee",
+					OrgId:         int64(2),
+					IsServerAdmin: true,
+					IsDisabled:    false,
+					IsExternal:    false,
+					UpdatedAt:     fakeNow,
+					CreatedAt:     fakeNow,
 				}
 				return nil
 			})
@@ -61,7 +61,7 @@ func TestUserApiEndpoint(t *testing.T) {
 				"login": "danlee",
 				"theme": "",
 				"orgId": 2,
-				"isGrafanaAdmin": true,
+				"isServerAdmin": true,
 				"isDisabled": false,
 				"isExternal": true,
 				"authLabels": [
@@ -109,7 +109,7 @@ func TestUserApiEndpoint(t *testing.T) {
 				"login": "danlee",
 				"theme": "light",
 				"orgId": 2,
-				"isGrafanaAdmin": true,
+				"isServerAdmin": true,
 				"isDisabled": false,
 				"authLabels": null,
 				"isExternal": false,

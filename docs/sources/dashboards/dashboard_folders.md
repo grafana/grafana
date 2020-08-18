@@ -13,7 +13,7 @@ weight = 3
 
 Folders are a way to organize and group dashboards - very useful if you have a lot of dashboards or multiple teams using the same Grafana instance.
 
-> **Note:** Only Grafana Admins and Super Admins can create, edit, or delete folders. Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information.
+> **Note:** Only Admins and Server Admins can create, edit, or delete folders. Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information.
 
 ## How To Create A Folder
 

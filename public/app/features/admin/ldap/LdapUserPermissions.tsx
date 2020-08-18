@@ -18,9 +18,9 @@ export const LdapUserPermissions: FC<Props> = ({ permissions }) => {
           </thead>
           <tbody>
             <tr>
-              <td className="width-16"> Grafana admin</td>
+              <td className="width-16"> Server admin</td>
               <td>
-                {permissions.isGrafanaAdmin ? (
+                {permissions.isServerAdmin ? (
                   <>
                     <Icon name="shield" /> Yes
                   </>

@@ -22,7 +22,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 	role := models.ROLE_ADMIN
 	Convey("Given a server admin attempts to remove themself as an admin", t, func() {
 		updateCmd := dtos.AdminUpdateUserPermissionsForm{
-			IsGrafanaAdmin: false,
+			IsServerAdmin: false,
 		}
 
 		bus.AddHandler("test", func(cmd *models.UpdateUserPermissionsCommand) error {

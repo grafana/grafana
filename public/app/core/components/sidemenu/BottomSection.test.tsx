@@ -30,7 +30,7 @@ jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     sidemenu: true,
     isSignedIn: false,
-    isGrafanaAdmin: false,
+    isServerAdmin: false,
     hasEditPermissionFolders: false,
   },
 }));

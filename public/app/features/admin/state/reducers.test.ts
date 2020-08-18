@@ -48,7 +48,7 @@ const getTestUserMapping = (): LdapUser => ({
     login: { cfgAttrValue: 'cn', ldapValue: 'user' },
   },
   permissions: {
-    isGrafanaAdmin: false,
+    isServerAdmin: false,
     isDisabled: false,
   },
   roles: [],
@@ -61,7 +61,7 @@ const getTestUser = (): UserDTO => ({
   login: 'user',
   name: 'User',
   avatarUrl: '',
-  isGrafanaAdmin: false,
+  isServerAdmin: false,
   isDisabled: false,
 });
 

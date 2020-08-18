@@ -93,12 +93,12 @@ func TestGetUserFromLDAPApiEndpoint_UserNotFound(t *testing.T) {
 func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
 	isAdmin := true
 	userSearchResult = &models.ExternalUserInfo{
-		Name:           "John Doe",
-		Email:          "john.doe@example.com",
-		Login:          "johndoe",
-		Groups:         []string{"cn=admins,ou=groups,dc=grafana,dc=org"},
-		OrgRoles:       map[int64]models.RoleType{1: models.ROLE_ADMIN, 2: models.ROLE_VIEWER},
-		IsGrafanaAdmin: &isAdmin,
+		Name:          "John Doe",
+		Email:         "john.doe@example.com",
+		Login:         "johndoe",
+		Groups:        []string{"cn=admins,ou=groups,dc=grafana,dc=org"},
+		OrgRoles:      map[int64]models.RoleType{1: models.ROLE_ADMIN, 2: models.ROLE_VIEWER},
+		IsServerAdmin: &isAdmin,
 	}
 
 	userSearchConfig = ldap.ServerConfig{
@@ -155,12 +155,12 @@ func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
 func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 	isAdmin := true
 	userSearchResult = &models.ExternalUserInfo{
-		Name:           "John Doe",
-		Email:          "john.doe@example.com",
-		Login:          "johndoe",
-		Groups:         []string{"cn=admins,ou=groups,dc=grafana,dc=org", "another-group-not-matched"},
-		OrgRoles:       map[int64]models.RoleType{1: models.ROLE_ADMIN},
-		IsGrafanaAdmin: &isAdmin,
+		Name:          "John Doe",
+		Email:         "john.doe@example.com",
+		Login:         "johndoe",
+		Groups:        []string{"cn=admins,ou=groups,dc=grafana,dc=org", "another-group-not-matched"},
+		OrgRoles:      map[int64]models.RoleType{1: models.ROLE_ADMIN},
+		IsServerAdmin: &isAdmin,
 	}
 
 	userSearchConfig = ldap.ServerConfig{
@@ -219,7 +219,7 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 			"login": {
 				"cfgAttrValue": "ldap-username", "ldapValue": "johndoe"
 			},
-			"isGrafanaAdmin": true,
+			"isServerAdmin": true,
 			"isDisabled": false,
 			"roles": [
 				{ "orgId": 1, "orgRole": "Admin", "orgName": "Main Org.", "groupDN": "cn=admins,ou=groups,dc=grafana,dc=org" },
@@ -235,12 +235,12 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 func TestGetUserFromLDAPApiEndpoint_WithTeamHandler(t *testing.T) {
 	isAdmin := true
 	userSearchResult = &models.ExternalUserInfo{
-		Name:           "John Doe",
-		Email:          "john.doe@example.com",
-		Login:          "johndoe",
-		Groups:         []string{"cn=admins,ou=groups,dc=grafana,dc=org"},
-		OrgRoles:       map[int64]models.RoleType{1: models.ROLE_ADMIN},
-		IsGrafanaAdmin: &isAdmin,
+		Name:          "John Doe",
+		Email:         "john.doe@example.com",
+		Login:         "johndoe",
+		Groups:        []string{"cn=admins,ou=groups,dc=grafana,dc=org"},
+		OrgRoles:      map[int64]models.RoleType{1: models.ROLE_ADMIN},
+		IsServerAdmin: &isAdmin,
 	}
 
 	userSearchConfig = ldap.ServerConfig{
@@ -299,7 +299,7 @@ func TestGetUserFromLDAPApiEndpoint_WithTeamHandler(t *testing.T) {
 			"login": {
 				"cfgAttrValue": "ldap-username", "ldapValue": "johndoe"
 			},
-			"isGrafanaAdmin": true,
+			"isServerAdmin": true,
 			"isDisabled": false,
 			"roles": [
 				{ "orgId": 1, "orgRole": "Admin", "orgName": "Main Org.", "groupDN": "cn=admins,ou=groups,dc=grafana,dc=org" }

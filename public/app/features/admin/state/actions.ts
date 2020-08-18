@@ -93,9 +93,9 @@ export function deleteUser(userId: number): ThunkResult<void> {
   };
 }
 
-export function updateUserPermissions(userId: number, isGrafanaAdmin: boolean): ThunkResult<void> {
+export function updateUserPermissions(userId: number, isServerAdmin: boolean): ThunkResult<void> {
   return async dispatch => {
-    const payload = { isGrafanaAdmin };
+    const payload = { isServerAdmin };
     await getBackendSrv().put(`/api/admin/users/${userId}/permissions`, payload);
     dispatch(loadAdminUserPage(userId));
   };
@@ -212,10 +212,10 @@ export function loadUserMapping(username: string): ThunkResult<void> {
   return async dispatch => {
     try {
       const response = await getBackendSrv().get(`/api/admin/ldap/${encodeURIComponent(username)}`);
-      const { name, surname, email, login, isGrafanaAdmin, isDisabled, roles, teams } = response;
+      const { name, surname, email, login, isServerAdmin, isDisabled, roles, teams } = response;
       const userInfo: LdapUser = {
         info: { name, surname, email, login },
-        permissions: { isGrafanaAdmin, isDisabled },
+        permissions: { isServerAdmin, isDisabled },
         roles,
         teams,
       };

@@ -90,8 +90,8 @@ func AdminUpdateUserPermissions(c *models.ReqContext, form dtos.AdminUpdateUserP
 	userID := c.ParamsInt64(":id")
 
 	cmd := models.UpdateUserPermissionsCommand{
-		UserId:         userID,
-		IsGrafanaAdmin: form.IsGrafanaAdmin,
+		UserId:        userID,
+		IsServerAdmin: form.IsServerAdmin,
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {

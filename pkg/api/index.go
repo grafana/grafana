@@ -66,7 +66,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 			OrgName:                    c.OrgName,
 			OrgRole:                    c.OrgRole,
 			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
-			IsGrafanaAdmin:             c.IsGrafanaAdmin,
+			IsServerAdmin:              c.IsServerAdmin,
 			LightTheme:                 prefs.Theme == lightName,
 			Timezone:                   prefs.Timezone,
 			Locale:                     locale,
@@ -334,7 +334,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		})
 	}
 
-	if c.IsGrafanaAdmin {
+	if c.IsServerAdmin {
 		adminNavLinks := []*dtos.NavLink{
 			{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users", Icon: "user"},
 			{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs", Icon: "building"},

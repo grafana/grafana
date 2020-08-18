@@ -52,7 +52,7 @@ export interface PermissionConfig {
 
 export const isPermissionTeamAdmin = (config: PermissionConfig): boolean => {
   const { permission, signedInUser, editorsCanAdmin } = config;
-  const isAdmin = signedInUser.isGrafanaAdmin || signedInUser.orgRole === OrgRole.Admin;
+  const isAdmin = signedInUser.isServerAdmin || signedInUser.orgRole === OrgRole.Admin;
   const userIsTeamAdmin = permission === TeamPermissionLevel.Admin;
   const isSignedInUserTeamAdmin = isAdmin || userIsTeamAdmin;
 

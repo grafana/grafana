@@ -308,16 +308,16 @@ func GetUserProfile(query *models.GetUserProfileQuery) error {
 	}
 
 	query.Result = models.UserProfileDTO{
-		Id:             user.Id,
-		Name:           user.Name,
-		Email:          user.Email,
-		Login:          user.Login,
-		Theme:          user.Theme,
-		IsGrafanaAdmin: user.IsAdmin,
-		IsDisabled:     user.IsDisabled,
-		OrgId:          user.OrgId,
-		UpdatedAt:      user.Updated,
-		CreatedAt:      user.Created,
+		Id:            user.Id,
+		Name:          user.Name,
+		Email:         user.Email,
+		Login:         user.Login,
+		Theme:         user.Theme,
+		IsServerAdmin: user.IsAdmin,
+		IsDisabled:    user.IsDisabled,
+		OrgId:         user.OrgId,
+		UpdatedAt:     user.Updated,
+		CreatedAt:     user.Created,
 	}
 
 	return err
@@ -599,7 +599,7 @@ func UpdateUserPermissions(cmd *models.UpdateUserPermissionsCommand) error {
 			return err
 		}
 
-		user.IsAdmin = cmd.IsGrafanaAdmin
+		user.IsAdmin = cmd.IsServerAdmin
 		sess.UseBool("is_admin")
 
 		_, err := sess.ID(user.Id).Update(&user)

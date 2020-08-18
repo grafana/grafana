@@ -27,7 +27,7 @@ func TestSearch_SortedResults(t *testing.T) {
 	})
 
 	bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
-		query.Result = &models.SignedInUser{IsGrafanaAdmin: true}
+		query.Result = &models.SignedInUser{IsServerAdmin: true}
 		return nil
 	})
 
@@ -36,7 +36,7 @@ func TestSearch_SortedResults(t *testing.T) {
 	query := &Query{
 		Limit: 2000,
 		SignedInUser: &models.SignedInUser{
-			IsGrafanaAdmin: true,
+			IsServerAdmin: true,
 		},
 	}
 

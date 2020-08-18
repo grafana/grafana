@@ -19,7 +19,7 @@ const setup = (propOverrides?: object) => {
     editorsCanAdmin: false,
     signedInUser: {
       id: signedInUserId,
-      isGrafanaAdmin: false,
+      isServerAdmin: false,
       orgRole: OrgRole.Viewer,
     } as User,
   };

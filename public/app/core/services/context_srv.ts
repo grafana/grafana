@@ -5,7 +5,7 @@ import kbn from '../utils/kbn';
 
 export class User {
   id: number;
-  isGrafanaAdmin: any;
+  isServerAdmin: any;
   isSignedIn: any;
   orgRole: any;
   orgId: number;
@@ -29,7 +29,7 @@ export class ContextSrv {
   version: any;
   user: User;
   isSignedIn: any;
-  isGrafanaAdmin: any;
+  isServerAdmin: any;
   isEditor: any;
   sidemenuSmallBreakpoint = false;
   hasEditPermissionInFolders: boolean;
@@ -42,7 +42,7 @@ export class ContextSrv {
 
     this.user = new User();
     this.isSignedIn = this.user.isSignedIn;
-    this.isGrafanaAdmin = this.user.isGrafanaAdmin;
+    this.isServerAdmin = this.user.isServerAdmin;
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
     this.minRefreshInterval = config.minRefreshInterval;

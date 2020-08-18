@@ -32,14 +32,14 @@ type AdminUpdateUserPasswordForm struct {
 }
 
 type AdminUpdateUserPermissionsForm struct {
-	IsGrafanaAdmin bool `json:"isGrafanaAdmin"`
+	IsServerAdmin bool `json:"isServerAdmin"`
 }
 
 type AdminUserListItem struct {
-	Email          string `json:"email"`
-	Name           string `json:"name"`
-	Login          string `json:"login"`
-	IsGrafanaAdmin bool   `json:"isGrafanaAdmin"`
+	Email         string `json:"email"`
+	Name          string `json:"name"`
+	Login         string `json:"login"`
+	IsServerAdmin bool   `json:"isServerAdmin"`
 }
 
 type SendResetPasswordEmailForm struct {

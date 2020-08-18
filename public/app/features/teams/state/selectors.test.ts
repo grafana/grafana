@@ -65,7 +65,7 @@ const setup = (configOverrides?: Partial<Config>) => {
     members: getMockTeamMembers(5, 5),
     signedInUser: {
       id: signedInUserId,
-      isGrafanaAdmin: false,
+      isServerAdmin: false,
       orgRole: OrgRole.Viewer,
     } as User,
   };
@@ -90,7 +90,7 @@ describe('isSignedInUserTeamAdmin', () => {
         editorsCanAdmin: true,
         signedInUser: {
           id: signedInUserId,
-          isGrafanaAdmin: true,
+          isServerAdmin: true,
           orgRole: OrgRole.Viewer,
         } as User,
       });
@@ -105,7 +105,7 @@ describe('isSignedInUserTeamAdmin', () => {
         editorsCanAdmin: true,
         signedInUser: {
           id: signedInUserId,
-          isGrafanaAdmin: false,
+          isServerAdmin: false,
           orgRole: OrgRole.Admin,
         } as User,
       });
@@ -121,7 +121,7 @@ describe('isSignedInUserTeamAdmin', () => {
         editorsCanAdmin: true,
         signedInUser: {
           id: signedInUserId,
-          isGrafanaAdmin: false,
+          isServerAdmin: false,
           orgRole: OrgRole.Viewer,
         } as User,
       });
@@ -136,7 +136,7 @@ describe('isSignedInUserTeamAdmin', () => {
         editorsCanAdmin: true,
         signedInUser: {
           id: signedInUserId,
-          isGrafanaAdmin: false,
+          isServerAdmin: false,
           orgRole: OrgRole.Viewer,
         } as User,
       });

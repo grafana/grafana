@@ -23,7 +23,7 @@ You can change your password in the Change Password tab.
 
 ## Admin user management resources
 
-Grafana admins can use the following tools:
+Server admins can use the following tools:
 
 - Use the [User API]({{< relref "../http_api/user.md" >}}) to change your password programmatically or to manage users.
 - The [Manage users]({{< relref "../manage-users/_index.md" >}}) section explains how to manage users and teams.

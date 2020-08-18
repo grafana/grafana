@@ -29,7 +29,7 @@ func (*OSSLicensingService) StateInfo() string {
 }
 
 func (l *OSSLicensingService) LicenseURL(user *models.SignedInUser) string {
-	if user.IsGrafanaAdmin {
+	if user.IsServerAdmin {
 		return l.Cfg.AppSubUrl + "/admin/upgrading"
 	}
 

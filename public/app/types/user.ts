@@ -28,7 +28,7 @@ export interface UserDTO {
   login: string;
   email: string;
   name: string;
-  isGrafanaAdmin: boolean;
+  isServerAdmin: boolean;
   isDisabled: boolean;
   isAdmin?: boolean;
   isExternal?: boolean;

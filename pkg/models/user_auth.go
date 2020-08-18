@@ -23,17 +23,17 @@ type UserAuth struct {
 }
 
 type ExternalUserInfo struct {
-	OAuthToken     *oauth2.Token
-	AuthModule     string
-	AuthId         string
-	UserId         int64
-	Email          string
-	Login          string
-	Name           string
-	Groups         []string
-	OrgRoles       map[int64]RoleType
-	IsGrafanaAdmin *bool // This is a pointer to know if we should sync this or not (nil = ignore sync)
-	IsDisabled     bool
+	OAuthToken    *oauth2.Token
+	AuthModule    string
+	AuthId        string
+	UserId        int64
+	Email         string
+	Login         string
+	Name          string
+	Groups        []string
+	OrgRoles      map[int64]RoleType
+	IsServerAdmin *bool // This is a pointer to know if we should sync this or not (nil = ignore sync)
+	IsDisabled    bool
 }
 
 // ---------------------
