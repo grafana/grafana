@@ -515,11 +515,12 @@ steps:
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.0
   commands:
-  - $gcpKey = $env:GCP_KEY
-  - "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($gcpKey)) > gcpkey.json"
+  - "echo TEST_MAX_WORKERS: $$env:TEST_MAX_WORKERS"
+  - $$gcpKey = $$env:GCP_KEY
+  - "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json"
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
-  - $ProgressPreference = "SilentlyContinue"
+  - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.1/windows/grabpl.exe -OutFile grabpl.exe
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/oss/master/grafana-7.2.0-9fffe273pre.windows-amd64.zip -OutFile grafana.zip
   - cp C:\App\nssm-2.24.zip .
@@ -530,6 +531,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
+    TEST_MAX_WORKERS: 50%
 
 trigger:
   branch:
