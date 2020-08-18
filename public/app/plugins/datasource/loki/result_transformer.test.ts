@@ -115,7 +115,7 @@ describe('loki result transformer', () => {
     });
   });
   describe('createMetricLabel', () => {
-    it('should create correct labels', () => {
+    it('should create correct label based on passed variables', () => {
       const label = ResultTransformer.createMetricLabel(
         {},
         { testLabel: { selected: true, text: 'label1', value: 'label1' } },
