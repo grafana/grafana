@@ -1,5 +1,5 @@
 import { CircularDataFrame, FieldCache, FieldType, MutableDataFrame } from '@grafana/data';
-import { LokiStreamResult, LokiTailResponse, LokiStreamResponse, LokiResultType } from './types';
+import { LokiStreamResult, LokiTailResponse, LokiStreamResponse, LokiResultType, TransformerOptions } from './types';
 import * as ResultTransformer from './result_transformer';
 import { enhanceDataFrame } from './result_transformer';
 
@@ -112,6 +112,16 @@ describe('loki result transformer', () => {
         labels: { filename: '/var/log/grafana/grafana.log' },
         id: '19e8e093d70122b3b53cb6e24efd6e2d',
       });
+    });
+  });
+  describe('createMetricLabel', () => {
+    it('should create correct labels', () => {
+      const label = ResultTransformer.createMetricLabel(
+        {},
+        { testLabel: { selected: true, text: 'label1', value: 'label1' } },
+        { legendFormat: '{{$testLabel}}' } as TransformerOptions
+      );
+      expect(label).toBe('label1');
     });
   });
 });

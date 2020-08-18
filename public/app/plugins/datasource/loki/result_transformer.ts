@@ -245,7 +245,11 @@ export function lokiResultsToTableModel(
   return table;
 }
 
-function createMetricLabel(labelData: { [key: string]: string }, scopedVars: ScopedVars, options?: TransformerOptions) {
+export function createMetricLabel(
+  labelData: { [key: string]: string },
+  scopedVars: ScopedVars,
+  options?: TransformerOptions
+) {
   let label =
     options === undefined || _.isEmpty(options.legendFormat)
       ? getOriginalMetricName(labelData)
