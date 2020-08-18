@@ -32,7 +32,6 @@ func GetDataSourceById(query *models.GetDataSourceByIdQuery) error {
 
 	datasource := models.DataSource{OrgId: query.OrgId, Id: query.Id}
 	has, err := x.Get(&datasource)
-
 	if err != nil {
 		return err
 	}
