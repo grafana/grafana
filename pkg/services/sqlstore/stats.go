@@ -231,10 +231,7 @@ SELECT role AS bitrole, active, COUNT(role) AS count FROM
                    WHEN 'Editor' THEN 2
                    ELSE 1
                    END AS role,
-               CASE
-                WHEN u.last_seen_at>? THEN ` + dialect.BooleanStr(true) + `
-                ELSE ` + dialect.BooleanStr(false) + `
-               END AS active
+               u.last_seen_at>? AS active
            FROM ` + dialect.Quote("user") + ` AS u LEFT JOIN org_user ON org_user.user_id = u.id
            GROUP BY u.id, u.last_seen_at, org_user.role) AS t2
      GROUP BY active, id) AS t1
