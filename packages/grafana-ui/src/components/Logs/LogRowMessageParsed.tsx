@@ -16,21 +16,23 @@ class UnThemedLogRowMessageParsed extends PureComponent<Props> {
     const { row, showParsedFields } = this.props;
     const fields = parseMessage(row.entry);
 
-    return (
-      <td>
-        {showParsedFields.map(parsedKey => {
-          const field = fields.find(field => {
-            const { key } = field;
-            return key === parsedKey;
-          });
+    const line = showParsedFields
+      .map(parsedKey => {
+        const field = fields.find(field => {
+          const { key } = field;
+          return key === parsedKey;
+        });
 
-          if (field) {
-            return `${parsedKey}=${field.value} `;
-          }
-          return '';
-        })}
-      </td>
-    );
+        if (field) {
+          return `${parsedKey}=${field.value}`;
+        }
+
+        return null;
+      })
+      .filter(s => s !== null)
+      .join(' ');
+
+    return <td>{line}</td>;
   }
 }
 
