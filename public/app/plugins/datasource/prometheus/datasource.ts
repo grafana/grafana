@@ -171,7 +171,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return templateSrv.variableExists(target.expr);
   }
 
-  processResult = (response: any, query: PromQueryRequest, target: PromQuery, responseListLength: number) => {
+  processResult = (
+    response: any,
+    query: PromQueryRequest,
+    target: PromQuery,
+    responseListLength: number,
+    scopedVars?: ScopedVars
+  ) => {
     // Keeping original start/end for transformers
     const transformerOptions = {
       format: target.format,
@@ -181,6 +187,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       end: query.end,
       query: query.expr,
       responseListLength,
+      scopedVars,
       refId: target.refId,
       valueWithRefId: target.valueWithRefId,
       meta: {
@@ -256,7 +263,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       return this.exploreQuery(queries, activeTargets, end);
     }
 
-    return this.panelsQuery(queries, activeTargets, end, options.requestId);
+    return this.panelsQuery(queries, activeTargets, end, options.requestId, options.scopedVars);
   }
 
   private exploreQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number) {
@@ -287,7 +294,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return merge(...subQueries);
   }
 
-  private panelsQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number, requestId: string) {
+  private panelsQuery(
+    queries: PromQueryRequest[],
+    activeTargets: PromQuery[],
+    end: number,
+    requestId: string,
+    scopedVars: ScopedVars
+  ) {
     const observables: Array<Observable<Array<TableModel | TimeSeries>>> = queries.map((query, index) => {
       const target = activeTargets[index];
 
@@ -298,7 +311,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       return observable.pipe(
         filter((response: any) => (response.cancelled ? false : true)),
         map((response: any) => {
-          const data = this.processResult(response, query, target, queries.length);
+          const data = this.processResult(response, query, target, queries.length, scopedVars);
           return data;
         })
       );
