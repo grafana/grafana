@@ -24,7 +24,6 @@ steps:
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  - cp -r $(yarn cache dir) yarn-cache
   environment:
     DOCKERIZE_VERSION: 0.6.1
     GRABPL_VERSION: 0.5.0
@@ -66,7 +65,6 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.2.24
   commands:
-  - rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
   depends_on:
   - initialize
@@ -76,7 +74,6 @@ steps:
 - name: build-frontend
   image: grafana/build-container:1.2.24
   commands:
-  - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
   depends_on:
   - initialize
@@ -87,7 +84,6 @@ steps:
   commands:
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
-  - cp -r $(go env GOCACHE) go-cache
   depends_on:
   - initialize
   - lint-backend
@@ -95,7 +91,6 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.2.24
   commands:
-  - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - yarn run prettier:check
   - yarn run packages:typecheck
   - yarn run typecheck
@@ -108,7 +103,6 @@ steps:
 - name: build-plugins
   image: grafana/build-container:1.2.24
   commands:
-  - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
   depends_on:
   - initialize
@@ -138,7 +132,6 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.18-1
   commands:
-  - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - ./node_modules/.bin/cypress install
   - ./e2e/wait-for-grafana
   - ./e2e/run-suite
@@ -150,7 +143,6 @@ steps:
 - name: build-storybook
   image: grafana/build-container:1.2.24
   commands:
-  - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - yarn storybook:build
   depends_on:
   - package
@@ -187,7 +179,6 @@ steps:
   - apt-get install -yq postgresql-client
   - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   environment:
@@ -205,7 +196,6 @@ steps:
   - apt-get install -yq default-mysql-client
   - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
-  - rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   environment:
@@ -261,7 +251,6 @@ steps:
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - yarn install --frozen-lockfile --no-progress
-  - cp -r $(yarn cache dir) yarn-cache
   environment:
     DOCKERIZE_VERSION: 0.6.1
     GRABPL_VERSION: 0.5.0
@@ -303,7 +292,6 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.2.24
   commands:
-  - rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)
   - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER
   depends_on:
   - initialize
@@ -313,7 +301,6 @@ steps:
 - name: build-frontend
   image: grafana/build-container:1.2.24
   commands:
-  - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
   depends_on:
   - initialize
@@ -324,7 +311,6 @@ steps:
   commands:
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
-  - cp -r $(go env GOCACHE) go-cache
   depends_on:
   - initialize
   - lint-backend
@@ -332,7 +318,6 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.2.24
   commands:
-  - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - yarn run prettier:check
   - yarn run packages:typecheck
   - yarn run typecheck
@@ -345,7 +330,6 @@ steps:
 - name: build-plugins
   image: grafana/build-container:1.2.24
   commands:
-  - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
   depends_on:
   - initialize
@@ -375,7 +359,6 @@ steps:
 - name: end-to-end-tests
   image: grafana/ci-e2e:12.18-1
   commands:
-  - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - ./node_modules/.bin/cypress install
   - ./e2e/wait-for-grafana
   - ./e2e/run-suite
@@ -387,7 +370,6 @@ steps:
 - name: build-storybook
   image: grafana/build-container:1.2.24
   commands:
-  - rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)
   - yarn storybook:build
   depends_on:
   - package
@@ -444,7 +426,6 @@ steps:
   - apt-get install -yq postgresql-client
   - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)
   - go clean -testcache
   - ./bin/grabpl integration-tests --database postgres
   environment:
@@ -462,7 +443,6 @@ steps:
   - apt-get install -yq default-mysql-client
   - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
-  - rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)
   - go clean -testcache
   - ./bin/grabpl integration-tests --database mysql
   environment:

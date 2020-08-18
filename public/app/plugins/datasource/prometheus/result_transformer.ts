@@ -132,7 +132,11 @@ export class ResultTransformer {
             for (j = 0; j < sortedLabels.length; j++) {
               const label = sortedLabels[j];
               if (series.metric.hasOwnProperty(label)) {
-                reordered.push(series.metric[label]);
+                if (label === 'le') {
+                  reordered.push(parseHistogramLabel(series.metric[label]));
+                } else {
+                  reordered.push(series.metric[label]);
+                }
               } else {
                 reordered.push('');
               }
