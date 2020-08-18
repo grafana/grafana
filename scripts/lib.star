@@ -6,9 +6,6 @@ windows_image = 'mcr.microsoft.com/windows:1809'
 grabpl_version = '0.5.1'
 
 def pr_pipelines(edition):
-    trigger = {
-        'event': ['pull_request',],
-    }
     services = [
         {
             'name': 'postgres',
@@ -52,7 +49,9 @@ def pr_pipelines(edition):
     ]
     return [
         pipeline(
-            name='test-pr', edition=edition, trigger=trigger, services=services, steps=steps,
+            name='test-pr', edition=edition, trigger={
+                'event': ['pull_request',],
+            }, services=services, steps=steps
         ),
     ]
 
