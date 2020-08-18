@@ -6,104 +6,69 @@ type = "docs"
 weight = 200
 +++
 
-
-1. A dashboard should tell a story.
-2. Avoid "dashboard sprawl." Dashboard sprawl negatively affects time to find the right dashboard. Duplicating dashboards and changing “one thing” (worse: keeping original tags) is the easiest kind of sprawl
-3. Your dashboarding practices should reduce cognitive load, not add to it.
-
-
 # Dashboard management maturity levels
 
-Low - Default state. No strategy.
-- Sprawl
-Everyone can modify, no reviews
-Duplicate used regularly, tags lose meaning when copied with dashboards that are then altered
-One-off dashboards that get in the way of finding what you need
-A symptom of low maturity is browsing for dashboards
-If you have to flip through a couple of dashboards to get to the right one
-Not having any alerts to direct you to the right dashboard
-Low
-No strategy
-(default state)
+_Dashboard management maturity_ refers to how well-designed and efficient your dashboard ecosystem is. We recommend periodically reviewing your dashboard setup to gauge where you are and how you can improve.
 
-- Everyone can modify
-- Duplicate used regularly
-- One-off dashboards
-- No version control (dashboard json in version control)
-- Lots of browsing for dashboards, searching for the right dashboard. Wasted tie.
+Broadly speaking, dashboard maturity can be defined as low, medium, or high.
 
+Much of the content for this topic was taken from the KubeCon 2019 talk [Fool-Proof Kubernetes Dashboards for Sleep-Deprived Oncalls](https://www.youtube.com/watch?v=YE2aQFiMGfY).
 
+## Low - default state
 
-Medium - Managing use of methodical dashboards.
+At this stage, you have no coherent dashboard management strategy. Almost everyone starts here.
 
-- Prevent sprawl by using template variables.
-The first thing you can do to prevent sprawl of dashboards is to use template variables
-What’s shown is a node dashboard for kubernetes. I don’t need a dashboard for each node, that can be part of a query variable
-Even better, I can make the datasource a template variable too, so I can reuse the same dashboard across different clusters and monitoring backends
-Link to strategies.md or move it to this folder.
-- Hierarchal dashboards
-Summary views with aggregate queries
-Queries have breakdown by next level
-Tree structure reflecting the k8s hierarchies
-Hierarchal dashboards with drill-down to next level
-- Service hierarchies
-RED method example, Request and Error rate on the left, latency duration on the right
-One row per service
-Row order reflects data flow
-- Expressive dashboards: Split service dashboards where magnitude differs
-  - can be worth splitting an app services into different dashboards. Compare like to like. Make sure aggregated metrics don't drown out important info.
-- Expressive charts
-Meaningful use of color (green is good, red is bed)
-Normalize axis where you can.
-Understand the underlying metrics
-- Normalized charts
-  - Example: CPU usage by percentage rather than number, because each CPU might be a different size.
-  - Example reduces cognitive load. Don't have to do math on "how much space do I have left?"
-- Directed browsing
-Template variables make it harder to “just browse” randomly/aimlessly. Cut down on "guessing."
-Most dashboards should be linked to by alerts
-Browsing is directed (drill-down)
-- Managing dashboards
-Version controlled dashboard sources
-Currently by copy/pasting JSON
-RFC in our design doc (provisioning?)
+How can you tell you are here?
 
-Medium
-Managing use of methodical dashboards
-- prevention of sprawl
-- use of template variables to reuse dashboards, reduce sprawl (example: data source variables, instance variables, query variables)
-- methodical dashboards
-- hierarchical dashboards with drill-down to next level (ask Dave Kal for example)
-- expressive charts
-- version control
-- directed browsing
+- Everyone can modify your dashboards.
+- Lots of copied dashboards, little to no dashboard reuse.
+- One-off dashboards that hang around forever.
+- No version control (dashboard JSON in version control).
+- Lots of browsing for dashboards, searching for the right dashboard. This means lots of wasted time trying to find the dashboard you need.
+- Not having any alerts to direct you to the right dashboard.
 
+## Medium - methodical dashboards
 
+At this stage, you are starting to manage your dashboard use with methodical dashboards. You might have laid out a strategy, but there are some things you could improve.
 
-High - Optimizing use. Consistency by design.
-- Optimizing use
-Actively reducing sprawl
-Regularly reviewing existing dashboards
-- Example: Only approved dashboards added to master dashboard list.
-Tracking use (upcoming feature: meta-analytics)
-- Consistency by design
-Use of scripting libraries to generate dashboards, ensure consistency in pattern and style.
-grafonnet (Jsonnet)
-grafanalib (Python)
-Consistent attributes and styles across all dashboards
-Smaller change sets
+How can you tell you are here?
 
-Dashboard as code(?)
+- Prevent sprawl by using template variables. For example, you don't need a separate dashboard for each node, you can use query variables. Even better, you can make the data source a template variable too, so you can reuse the same dashboard across different clusters and monitoring backends.
 
-High
-Optimizing use,
-consistency by design
-- active sprawl reduction
-- use of scripting libraries
-- use of mixins
-- no editing in the browser
-- browsing is the exception
-- Link to mixins? Prometheus, K8, others?
+  {{< imgbox max-width="90%" img="/img/docs/best-practices/use-variables-example.gif" caption="Example of using variables" >}}
 
+- Methodical dashboards according to an [observability strategy]({{< relref "common-observability-strategies.md" >}}).
+- Hierarchical dashboards with drill-downs to the next level.
+
+  {{< imgbox max-width="90%" img="/img/docs/best-practices/drill-down-example.png" caption="Example of using drill-down" >}}
+
+- Dashboard design reflects service hierarchies. The example shown below uses the RED method (request and error rate on the left, latency duration on the right) with one row per service. The row order reflects the data flow.
+
+  {{< imgbox max-width="90%" img="/img/docs/best-practices/service-hierarchy-example.png" caption="Example of a service hierarchy" >}}
+
+- Compare like to like: split service dashboards when the magnitude differs. Make sure aggregated metrics don't drown out important information.
+- Expressive charts with meaningful use of color and normalizing axes where you can. 
+  - Example of meaningful color: Green means it's good, red means it's bad. [Thresholds]({{< relref "../panels/thresholds.md" >}}) can help with that.
+  - Example of normalizing axes: When comparing CPU usage, measure by percentage rather than raw number, because each CPU might be a different size. This reduces cognitive load, because the user doesn't have to compute how much space is left on the CPU.
+- Directed browsing cuts down on "guessing."
+  - Template variables make it harder to “just browse” randomly or aimlessly.
+  - Most dashboards should be linked to by alerts.
+  - Browsing is directed with links. For more information, refer to [Linking]({{< relref "../linking/_index.md" >}}).
+- Version-controlled dashboard JSON.
+
+## High - optimized use
+
+At this stage, you have optimized your dashboard management use with a consistent and thoughtful strategy. It requires maintenance, but the results are worth it. Other IT departments want to grow up and be like you.
+
+- Actively reducing sprawl.
+  - Regularly review existing dashboards to make sure they are still relevant.
+  - Only approved dashboards added to master dashboard list.
+  - Tracking dashboard use. If you're an Enterprise user, you might take advantage of [Usage insights]({{< relref "../enterprise/usage-insights.md" >}}).
+- Consistency by design.
+- Use scripting libraries to generate dashboards, ensure consistency in pattern and style.
+  - grafonnet (Jsonnet)
+  - grafanalib (Python)
+- No editing in the browser. Dashboard viewers change views with variables.
+- Browsing for dashboards is the exception, not the rule.
 
 [Fool-Proof Kubernetes Dashboards for Sleep-Deprived Oncalls - David Kaltschmidt, Grafana Labs](https://www.youtube.com/watch?v=YE2aQFiMGfY)
