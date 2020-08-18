@@ -6,15 +6,23 @@ import { ArrayVector } from '../../vector/ArrayVector';
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { reduceField, ReducerID } from '../fieldReducer';
 import { MutableField } from '../../dataframe/MutableDataFrame';
-// export interface GroupByFieldOptions {
-//   aggregations: ReducerID[];
-//   groupBy: boolean;
-// }
+
+export enum GroupByOperationID {
+  aggregate = 'aggregate',
+  groupBy = 'groupby',
+}
+
+export interface GroupByFieldOptions {
+  fieldName: string | null;
+  aggregations: ReducerID[];
+  operation: GroupByOperationID;
+}
 
 export interface GroupByTransformerOptions {
-  calculationsByField: Array<[string | null, ReducerID[]]>;
-  // fields: Record<string, GroupByFieldOptions>;
+  fields: Record<string, GroupByFieldOptions>;
+  fieldsArray: GroupByFieldOptions[];
   byFields: string[];
+  calculationsByField: Array<[string | null, ReducerID[]]>;
 }
 
 export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> = {
@@ -24,6 +32,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
   defaultOptions: {
     calculationsByField: [],
     byFields: [],
+    fieldsArray: [],
   },
 
   /**
@@ -31,11 +40,15 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
    * be applied, just return the input series
    */
   transformer: (options: GroupByTransformerOptions) => {
-    const calculationsByField = options.calculationsByField; //.map((val, index) => ({fieldName: val[0], calculations: val[1]}));
-    const groupByFieldNames = options.byFields;
+    const calculationsByField = options.fieldsArray
+      .filter(val => val.operation === GroupByOperationID.aggregate)
+      .map(val => [val.fieldName, val.aggregations]); //.map((val, index) => ({fieldName: val[0], calculations: val[1]}));
+    const groupByFieldNames = options.fieldsArray
+      .filter(val => val.operation === GroupByOperationID.groupBy)
+      .map(val => val.fieldName);
 
     return (data: DataFrame[]) => {
-      if (options.byFields.length === 0) {
+      if (groupByFieldNames.length === 0) {
         return data;
       }
 

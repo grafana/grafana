@@ -11,48 +11,81 @@ import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEdito
 import { Select, StatsPicker, Button, IconButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { GroupByTransformerOptions } from '@grafana/data/src/transformations/transformers/groupBy';
+import { GroupByTransformerOptions, GroupByOperationID } from '@grafana/data/src/transformations/transformers/groupBy';
 
 function FieldCalculationsSelector(props: any) {
   const { fieldNameOptions, onDelete, onConfigChange, config } = props;
 
+  let operationSelector = null;
+  let aggregationsSelector = null;
+
+  if (config.fieldName) {
+    operationSelector = (
+      <div className="gf-form gf-form-spacing">
+        <Select
+          className="width-12"
+          placeholder="Group By / Aggregate"
+          options={[
+            { label: 'Group By', value: GroupByOperationID.groupBy },
+            { label: 'Aggregate', value: GroupByOperationID.aggregate },
+          ]}
+          value={config.operation}
+          onChange={value => {
+            onConfigChange({ ...config, operation: value.value });
+          }}
+          menuPlacement="bottom"
+        />
+      </div>
+    );
+
+    if (config.operation === GroupByOperationID.aggregate) {
+      aggregationsSelector = (
+        <div className="gf-form gf-form-spacing gf-form--grow">
+          <div className="gf-form-label width-8">Calculate</div>
+          <StatsPicker
+            className="flex-grow-1"
+            placeholder="Select Calculation"
+            allowMultiple
+            stats={config.aggregations}
+            onChange={stats => {
+              onConfigChange({ ...config, aggregations: stats as ReducerID[] });
+            }}
+            menuPlacement="bottom"
+          />
+        </div>
+      );
+    }
+  }
+
   return (
     <div className="gf-form-inline">
       <div className="gf-form gf-form-spacing">
-        <div className="gf-form-label width-8">On field</div>
+        <div className="gf-form-label width-4">For Field</div>
         <Select
-          className="width-16"
+          className="width-12"
           placeholder="Field Name"
           options={
-            config[0] === null ? fieldNameOptions : [{ label: config[0], value: config[0] }, ...fieldNameOptions]
+            config.fieldName === null
+              ? fieldNameOptions
+              : [{ label: config.fieldName, value: config.fieldName }, ...fieldNameOptions]
           }
-          value={config[0]}
+          value={config.fieldName}
           onChange={value => {
             if (value === null) {
-              onConfigChange([null, config[1]]);
+              onConfigChange({ ...config, fieldName: null });
             } else {
-              onConfigChange([value.value || null, config[1]]);
+              onConfigChange({ ...config, fieldName: value.value || null });
             }
           }}
           isClearable
           menuPlacement="bottom"
         />
       </div>
-      <div className="gf-form gf-form--grow gf-form-spacing">
-        <div className="gf-form-label width-8" aria-label={selectors.components.Transforms.Reduce.calculationsLabel}>
-          Calculate
-        </div>
-        <StatsPicker
-          className="flex-grow-1"
-          placeholder="Choose Stat"
-          allowMultiple
-          stats={config[1]}
-          onChange={stats => {
-            onConfigChange([config[0], stats as ReducerID[]]);
-          }}
-          menuPlacement="bottom"
-        />
-      </div>
+
+      {operationSelector}
+
+      {aggregationsSelector}
+
       <div className="gf-form">
         <div className="gf-form-label">
           <IconButton name="times" size="sm" onClick={onDelete} surface="header" style={{ margin: 0 }} />
@@ -69,69 +102,38 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
 }) => {
   const fieldNames = useMemo(() => getAllFieldNamesFromDataFrames(input), [input]);
   const fieldNameOptions = fieldNames.map((item: string) => ({ label: item, value: item }));
-  const usedFieldNames = options.calculationsByField.map(item => item[0]);
+  const usedFieldNames = options.fieldsArray.map(item => item.fieldName);
   const unusedFieldNameOptions = fieldNames
     .filter(name => !usedFieldNames.includes(name))
     .map((item: string) => ({ label: item, value: item }));
 
-  const onSelectField = (value: SelectableValue<string>) => {
-    onChange({
-      ...options,
-      byFields: value.map(i => i.value),
-    });
-  };
-
   const onAddFieldCalculations = () => {
+    let operation = usedFieldNames.length > 0 ? GroupByOperationID.aggregate : GroupByOperationID.groupBy;
+
     onChange({
       ...options,
-      calculationsByField: [...options.calculationsByField, [null, []]],
+      fieldsArray: [...options.fieldsArray, { fieldName: null, aggregations: [], operation }],
     });
   };
 
   const onDeleteFieldCalculations = (index: number) => () => {
-    options.calculationsByField.splice(index, 1);
+    options.fieldsArray.splice(index, 1);
     onChange({
       ...options,
     });
   };
 
-  const onConfigChange = (index: number) => (config: [string | any, ReducerID[]]) => {
-    options.calculationsByField[index] = config; // If the calculationsByField in defaultOptions is not empty, we should make a deep copy here
+  const onConfigChange = (index: number) => (config: GroupByFieldOptions) => {
+    options.fieldsArray[index] = config;
     onChange({
       ...options,
-      calculationsByField: [...options.calculationsByField],
+      fieldsArray: [...options.fieldsArray],
     });
   };
 
   return (
     <div>
-      <div className="gf-form-inline">
-        <div className="gf-form gf-form-spacing">
-          <div className="gf-form-label width-8">Group by</div>
-          <Select
-            className="width-16"
-            options={fieldNameOptions}
-            value={options.byFields.map(i => ({ value: i, label: i }))}
-            onChange={onSelectField}
-            isClearable
-            isMulti
-            placeholder="Field Name"
-            menuPlacement="bottom"
-          />
-        </div>
-        <div className="gf-form">
-          <Button
-            icon="plus"
-            onClick={onAddFieldCalculations}
-            variant="secondary"
-            disabled={options.calculationsByField.length >= fieldNameOptions.length}
-          >
-            Add field aggregation
-          </Button>
-        </div>
-      </div>
-
-      {options.calculationsByField.map((val, idx) => (
+      {options.fieldsArray.map((val, idx) => (
         <FieldCalculationsSelector
           onConfigChange={onConfigChange(idx)}
           onDelete={onDeleteFieldCalculations(idx)}
@@ -139,6 +141,19 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
           config={val}
         />
       ))}
+
+      <div className="gf-form-inline">
+        <div className="gf-form">
+          <Button
+            icon="plus"
+            onClick={onAddFieldCalculations}
+            variant="secondary"
+            disabled={options.fieldsArray.length >= fieldNames.length}
+          >
+            Add field
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
