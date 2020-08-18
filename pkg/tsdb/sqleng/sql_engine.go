@@ -367,27 +367,28 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.R
 	for elem := cfg.seriesByQueryOrder.Front(); elem != nil; elem = elem.Next() {
 		key := elem.Value.(string)
 		result.Series = append(result.Series, cfg.pointsBySeries[key])
+		if !cfg.fillMissing {
+			continue
+		}
 
-		if cfg.fillMissing {
-			series := cfg.pointsBySeries[key]
-			// fill in values from last fetched value till interval end
-			intervalStart := series.Points[len(series.Points)-1][1].Float64
-			intervalEnd := float64(tsdbQuery.TimeRange.MustGetTo().UnixNano() / 1e6)
+		series := cfg.pointsBySeries[key]
+		// fill in values from last fetched value till interval end
+		intervalStart := series.Points[len(series.Points)-1][1].Float64
+		intervalEnd := float64(tsdbQuery.TimeRange.MustGetTo().UnixNano() / 1e6)
 
-			if cfg.fillPrevious {
-				if len(series.Points) > 0 {
-					cfg.fillValue = series.Points[len(series.Points)-1][0]
-				} else {
-					cfg.fillValue.Valid = false
-				}
+		if cfg.fillPrevious {
+			if len(series.Points) > 0 {
+				cfg.fillValue = series.Points[len(series.Points)-1][0]
+			} else {
+				cfg.fillValue.Valid = false
 			}
+		}
 
-			// align interval start
-			intervalStart = math.Floor(intervalStart/cfg.fillInterval) * cfg.fillInterval
-			for i := intervalStart + cfg.fillInterval; i < intervalEnd; i += cfg.fillInterval {
-				series.Points = append(series.Points, tsdb.TimePoint{cfg.fillValue, null.FloatFrom(i)})
-				cfg.rowCount++
-			}
+		// align interval start
+		intervalStart = math.Floor(intervalStart/cfg.fillInterval) * cfg.fillInterval
+		for i := intervalStart + cfg.fillInterval; i < intervalEnd; i += cfg.fillInterval {
+			series.Points = append(series.Points, tsdb.TimePoint{cfg.fillValue, null.FloatFrom(i)})
+			cfg.rowCount++
 		}
 	}
 

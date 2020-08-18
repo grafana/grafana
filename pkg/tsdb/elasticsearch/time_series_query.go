@@ -34,8 +34,9 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 
 	from := fmt.Sprintf("%d", e.tsdbQuery.TimeRange.GetFromAsMsEpoch())
 	to := fmt.Sprintf("%d", e.tsdbQuery.TimeRange.GetToAsMsEpoch())
-	result := &tsdb.Response{}
-	result.Results = make(map[string]*tsdb.QueryResult)
+	result := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult),
+	}
 	for _, q := range queries {
 		if err := e.processQuery(q, ms, from, to, result); err != nil {
 			return nil, err
