@@ -63,7 +63,7 @@ For data sources, you need to use the [getTemplateSrv]({{< relref "../../package
 
 If the user has selected multiple values, the value of the interpolated variable depends on the [variable format](https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options/).
 
-A data source can define the default format option when no format is specified, by adding a third argument to the interpolation function.
+A data source can define the default format option when no format is specified by adding a third argument to the interpolation function.
 
 Let's change the SQL query to use CSV format by default:
 
