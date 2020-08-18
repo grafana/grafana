@@ -125,6 +125,16 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
 
   const onConfigChange = (index: number) => (config: GroupByFieldOptions) => {
     options.fieldsArray[index] = config;
+
+    options.fieldsArray.sort((a, b) => {
+      if (a.operation !== b.operation) {
+        if (a.operation === GroupByOperationID.groupBy) return -1;
+        else return 1;
+      } else {
+        return 0;
+      }
+    });
+
     onChange({
       ...options,
       fieldsArray: [...options.fieldsArray],
