@@ -226,7 +226,7 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 		return []byte{}, err
 	}
 
-	dedupKey := fmt.Sprintf("alertId-%d-%d-%d", evalContext.Rule.ID, evalContext.Rule.PanelID, dashboardRef.Uid)
+	dedupKey := fmt.Sprintf("alertId-%d-%d-%s", evalContext.Rule.ID, evalContext.Rule.PanelID, dashboardRef.Uid)
 	if len(dedupKey) > 255 {
 		dedupKey = dedupKey[0:254]
 	}
