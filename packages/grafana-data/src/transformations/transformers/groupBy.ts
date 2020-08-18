@@ -21,8 +21,6 @@ export interface GroupByFieldOptions {
 export interface GroupByTransformerOptions {
   fields: Record<string, GroupByFieldOptions>;
   fieldsArray: GroupByFieldOptions[];
-  byFields: string[];
-  calculationsByField: Array<[string | null, ReducerID[]]>;
 }
 
 export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> = {
@@ -30,8 +28,6 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
   name: 'Group By',
   description: 'Group the data by a field values then process calculations for each group',
   defaultOptions: {
-    calculationsByField: [],
-    byFields: [],
     fieldsArray: [],
   },
 
