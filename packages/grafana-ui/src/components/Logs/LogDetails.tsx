@@ -32,10 +32,10 @@ export interface Props extends Themeable {
   onMouseLeave?: () => void;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
+  getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  showParsedFields?: string[];
   onClickShowParsedField?: (key: string) => void;
   onClickHideParsedField?: (key: string) => void;
-  getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  showParsedFields: string[];
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {

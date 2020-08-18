@@ -34,7 +34,6 @@ import { LogLabels } from './LogLabels';
 interface Props extends Themeable {
   highlighterExpressions?: string[];
   row: LogRowModel;
-  showParsedFields: string[];
   showDuplicates: boolean;
   showLabels: boolean;
   showTime: boolean;
@@ -45,12 +44,13 @@ interface Props extends Themeable {
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
-  onClickShowParsedField?: (key: string) => void;
-  onClickHideParsedField?: (key: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
+  showParsedFields?: string[];
+  onClickShowParsedField?: (key: string) => void;
+  onClickHideParsedField?: (key: string) => void;
 }
 
 interface State {
@@ -182,8 +182,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               <LogLabels labels={row.uniqueLabels} />
             </td>
           )}
-          {showParsedFields.length > 0 ? (
-            <LogRowMessageParsed row={row} showParsedFields={showParsedFields} />
+          {showParsedFields && showParsedFields.length > 0 ? (
+            <LogRowMessageParsed row={row} showParsedFields={showParsedFields!} />
           ) : (
             <LogRowMessage
               highlighterExpressions={highlighterExpressions}

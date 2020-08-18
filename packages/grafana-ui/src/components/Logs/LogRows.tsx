@@ -1,37 +1,14 @@
 import React, { PureComponent } from 'react';
 import memoizeOne from 'memoize-one';
-import {
-  TimeZone,
-  LogsDedupStrategy,
-  LogRowModel,
-  Field,
-  LinkModel,
-  LogsSortOrder,
-  sortLogRows,
-  GrafanaTheme,
-} from '@grafana/data';
+import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel, LogsSortOrder, sortLogRows } from '@grafana/data';
 
-import { Button } from '../Button';
 import { Themeable } from '../../types/theme';
-import { stylesFactory } from '../../themes';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
-
-import { css } from 'emotion';
 
 //Components
 import { LogRow } from './LogRow';
 import { RowContextOptions } from './LogRowContextProvider';
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  parsedFieldsInfo: css`
-    color: ${theme.colors.textWeak};
-    font-size: ${theme.typography.size.sm};
-    font-weight: ${theme.typography.weight.semibold};
-    margin-bottom: ${theme.spacing.d};
-    display: flex;
-  `,
-}));
 
 export const PREVIEW_LIMIT = 100;
 export const RENDER_LIMIT = 500;
@@ -57,11 +34,13 @@ export interface Props extends Themeable {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  showParsedFields?: string[];
+  onClickShowParsedField?: (key: string) => void;
+  onClickHideParsedField?: (key: string) => void;
 }
 
 interface State {
   renderAll: boolean;
-  showParsedFields: string[];
 }
 
 class UnThemedLogRows extends PureComponent<Props, State> {
@@ -74,7 +53,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
   state: State = {
     renderAll: false,
-    showParsedFields: [],
   };
 
   componentDidMount() {
@@ -104,36 +82,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     sortLogRows(logRows, logsSortOrder)
   );
 
-  showParsedField = (key: string) => {
-    const index = this.state.showParsedFields.indexOf(key);
-    if (index === -1) {
-      this.setState(state => {
-        return {
-          showParsedFields: state.showParsedFields.concat(key),
-        };
-      });
-    }
-  };
-
-  hideParsedField = (key: string) => {
-    const index = this.state.showParsedFields.indexOf(key);
-    if (index > -1) {
-      this.setState(state => {
-        return {
-          showParsedFields: state.showParsedFields.filter(k => key !== k),
-        };
-      });
-    }
-  };
-
-  clearParsedFields = () => {
-    this.setState(state => {
-      return {
-        showParsedFields: [],
-      };
-    });
-  };
-
   render() {
     const {
       dedupStrategy,
@@ -154,8 +102,11 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       getFieldLinks,
       disableCustomHorizontalScroll,
       logsSortOrder,
+      showParsedFields,
+      onClickShowParsedField,
+      onClickHideParsedField,
     } = this.props;
-    const { renderAll, showParsedFields } = this.state;
+    const { renderAll } = this.state;
     const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const hasData = logRows && logRows.length > 0;
@@ -179,19 +130,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const getRows = this.makeGetRows(orderedRows);
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
 
-    const style = getStyles(theme);
-
     return (
       <div className={horizontalScrollWindow}>
-        {showParsedFields.length > 0 && (
-          <div className={style.parsedFieldsInfo}>
-            You have hidden some parsed fields in your logs output.{' '}
-            <Button variant="secondary" size="sm" onClick={this.clearParsedFields}>
-              Show all parsed fields
-            </Button>
-          </div>
-        )}
-
         <table className={logsRowsTable}>
           <tbody>
             {hasData &&
@@ -212,8 +152,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   allowDetails={allowDetails}
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
-                  onClickShowParsedField={this.showParsedField}
-                  onClickHideParsedField={this.hideParsedField}
+                  onClickShowParsedField={onClickShowParsedField}
+                  onClickHideParsedField={onClickHideParsedField}
                   getFieldLinks={getFieldLinks}
                   logsSortOrder={logsSortOrder}
                 />
@@ -236,8 +176,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   allowDetails={allowDetails}
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
-                  onClickShowParsedField={this.showParsedField}
-                  onClickHideParsedField={this.hideParsedField}
+                  onClickShowParsedField={onClickShowParsedField}
+                  onClickHideParsedField={onClickHideParsedField}
                   getFieldLinks={getFieldLinks}
                   logsSortOrder={logsSortOrder}
                 />
