@@ -16,11 +16,15 @@ There are three principles to consider before you create a dashboard.
 
 ### A dashboard should tell a story
 
-What story are you trying to tell with your dashboard? Try to create a logical progression of data, such as large to small or general to specific.
+What story are you trying to tell with your dashboard? Try to create a logical progression of data, such as large to small or general to specific. What is the goal for this dashboard? (Hint: If the dashboard doesn't have a goal, then ask yourself if you really need the dashboard.)
 
 ### Dashboards should reduce cognitive load, not add to it
 
 _Cognitive load_ is basically how hard you need to think about something in order to figure it out. Make your dashboard easy to interpret. Other users and future you (when you're trying to figure out what broke at 2AM) will appreciate it.
+
+Ask yourself:
+- Can I tell what exactly each graph represents? Is it obvious, or do I have to think about it?
+- If I show this to someone else, how long will it take them to figure it out? Will they get lost?
 
 ### Have a monitoring strategy
 
