@@ -624,13 +624,15 @@ def windows_installer_step(edition):
             'GCP_KEY': {
                 'from_secret': 'gcp_key',
             },
+            'TEST_MAX_WORKERS': '50%',
         },
         'commands': [
-            '$gcpKey = $env:GCP_KEY',
-            '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($gcpKey)) > gcpkey.json',
+            'echo TEST_MAX_WORKERS: $$env:TEST_MAX_WORKERS',
+            '$$gcpKey = $$env:GCP_KEY',
+            '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json',
             'gcloud auth activate-service-account --key-file=gcpkey.json',
             'rm gcpkey.json',
-            '$ProgressPreference = "SilentlyContinue"',
+            '$$ProgressPreference = "SilentlyContinue"',
             'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
             # TODO: Infer correct Grafana version
             'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/{}/master/grafana{}-7.2.0-9fffe273pre.windows-amd64.zip -OutFile grafana.zip'.format(edition, sfx),
