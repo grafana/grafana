@@ -8,7 +8,7 @@ weight = 200
 
 # Best practices for creating dashboards
 
-This page outlines some best practices to adhere to when creating Grafana dashboards.
+This page outlines some best practices to follow when creating Grafana dashboards.
 
 ## Before you begin
 
@@ -31,6 +31,10 @@ Ask yourself:
 It's easy to make new dashboards. It's harder to optimize dashboard creation and adhere to a plan, but it's worth it. This strategy should govern both your overall dashboard scheme and enforce consistency in individual dashboard design.
 
 Refer to [Common observability strategies]({{< relref "common-observability-strategies.md" >}}) and [Dashboard management maturity levels]({{< relref "dashboard-management-maturity-levels.md" >}}) for more information.
+
+### Write it down
+
+Once you have a strategy or design guidelines, write them down to help maintain consistency over time. Check out this [Wikimedia runbook example](https://wikitech.wikimedia.org/wiki/Performance/Runbook/Grafana_best_practices).
 
 ## Best practices to follow
 
