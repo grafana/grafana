@@ -26,10 +26,9 @@ function FieldCalculationsSelector(props: any) {
       <div className="gf-form gf-form-spacing">
         <Select
           className="width-12"
-          placeholder="Group By / Aggregate"
           options={[
             { label: 'Group By', value: GroupByOperationID.groupBy },
-            { label: 'Aggregate', value: GroupByOperationID.aggregate },
+            { label: 'Calculate', value: GroupByOperationID.aggregate },
           ]}
           value={config.operation}
           onChange={value => {
@@ -43,10 +42,9 @@ function FieldCalculationsSelector(props: any) {
     if (config.operation === GroupByOperationID.aggregate) {
       aggregationsSelector = (
         <div className="gf-form gf-form-spacing gf-form--grow">
-          <div className="gf-form-label width-8">Calculate</div>
           <StatsPicker
             className="flex-grow-1"
-            placeholder="Select Calculation"
+            placeholder="Select Stats"
             allowMultiple
             stats={config.aggregations}
             onChange={stats => {
