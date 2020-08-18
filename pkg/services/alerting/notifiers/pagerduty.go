@@ -1,8 +1,8 @@
 package notifiers
 
 import (
+	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -225,7 +225,7 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 		pn.log.Error("Failed get dashboard reference", "error", err)
 		return []byte{}, err
 	}
-	
+
 	dedupKey := fmt.Sprintf("alertId-%d-%d-%d", evalContext.Rule.ID, evalContext.Rule.PanelID, dashboardRef.Uid)
 	if len(dedupKey) > 255 {
 		dedupKey = dedupKey[0:254]
