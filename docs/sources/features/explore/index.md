@@ -275,9 +275,10 @@ the arrow next to the button to reveal a "Return to panel with changes" menu ite
 
 {{< docs-imagebox img="/img/docs/v64/explore_return_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the expanded explore return dropdown" >}}
 
-## Query Inspector
+## Query inspector
 
-To help with debugging queries, Explore allows users to investigate query requests and responses, as well as query statistics,
-via the Query Inspector. You can drill down into specific portions of the query, expand or collapse all of it, or copy the data to the clipboard to use in other applications.
+To help with debugging queries, Explore allows you to investigate query requests and responses, as well as query statistics, via the Query inspector.
+This functionality is similar to the panel inspector [Stats tab]({{< relref "inspect-panel.md#inspect-query-performance" >}}) and
+[Query tab]({{< relref "inspect-panel.md##view-raw-request-and-response-to-data-source" >}}).
 
 {{< docs-imagebox img="/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" caption="Screenshot of the query inspector button in Explore" >}}
