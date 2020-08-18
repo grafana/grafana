@@ -513,7 +513,7 @@ steps:
   - echo $Env:DRONE_RUNNER_NAME
 
 - name: build-windows-installer
-  image: grafana/ci-wix:0.1.0
+  image: grafana/ci-wix:0.1.1
   commands:
   - $$gcpKey = $$env:GCP_KEY
   - "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json"
