@@ -10,14 +10,15 @@ import {
   LoadingState,
   QueryResultMeta,
   MetricFindValue,
-  DataFrame,
+  AnnotationQueryRequest,
+  AnnotationEvent,
 } from '@grafana/data';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
 import { InfluxQuery, InfluxOptions, InfluxVersion } from './types';
-import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
@@ -178,7 +179,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     });
   }
 
-  annotationQuery(options: any) {
+  async annotationQuery(options: AnnotationQueryRequest<InfluxQuery>): Promise<AnnotationEvent[]> {
     if (!options.annotation.query) {
       return Promise.reject({
         message: 'Query missing in annotation definition',
@@ -186,23 +187,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     if (this.isFlux) {
-      console.log('Annotation query from', options);
-      const query: InfluxQuery = {
-        refId: 'Anno',
-        rawQuery: options.query,
-      };
-      return super
-        .query({
-          targets: [query],
-        } as DataQueryRequest)
-        .toPromise()
-        .then(rsp => {
-          console.log('Annotation query with flux', rsp);
-          return [];
-        });
+      return super.annotationQuery(options);
     }
 
-    const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw, timezone: options.timezone });
+    const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw, timezone: options.dashboard.timezone });
     let query = options.annotation.query.replace('$timeFilter', timeFilter);
     query = getTemplateSrv().replace(query, undefined, 'regex');
 
@@ -278,7 +266,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     if (this.isFlux) {
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
-        query,
+        query, // as string?
       };
       return super
         .query({
@@ -289,11 +277,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         .toPromise()
         .then(rsp => {
           if (rsp.data && rsp.data.length) {
-            const frame: DataFrame = rsp.data[0];
-            console.log(
-              'First frame',
-              frame.fields.map(f => f.name)
-            );
+            return frameToMetricFindValue(rsp.data[0]);
           }
           return [];
         });

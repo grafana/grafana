@@ -25,7 +25,7 @@ const defaultAnnotationEventFinder: AnnotationEventNames = {
 };
 
 interface AnnotationEventFieldSetter {
-  key: string;
+  key: keyof AnnotationEventNames;
   field: Field;
 
   regex?: RegExp; // for text
@@ -65,10 +65,10 @@ export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationsF
     const lower = value ? value.toLowerCase() : '';
     if (lower && byName[lower]) {
       const v: AnnotationEventFieldSetter = {
-        key,
+        key: key as keyof AnnotationEventNames,
         field: byName[lower],
       };
-      switch (key) {
+      switch (v.key) {
         case 'time':
           hasTime = true;
           break;
@@ -79,7 +79,7 @@ export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationsF
           v.split = ',';
           break;
       }
-      const regex = (options.regex as any)[key] as string;
+      const regex = options.regex![v.key];
       if (regex) {
         v.regex = new RegExp(regex);
       }
@@ -102,18 +102,15 @@ export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationsF
     if (!field) {
       return []; // no text fields exist
     }
+    const setter: AnnotationEventFieldSetter = {
+      key: 'text',
+      field,
+    };
+
     if (options?.regex?.text) {
-      fields.push({
-        key: 'time',
-        field,
-        regex: new RegExp(options.regex.text),
-      });
-    } else {
-      fields.push({
-        key: 'time',
-        field,
-      });
+      setter.regex = new RegExp(options.regex.text);
     }
+    fields.push(setter);
   }
 
   // Add each value to the string

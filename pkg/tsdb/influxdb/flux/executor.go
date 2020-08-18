@@ -26,23 +26,21 @@ func executeQuery(ctx context.Context, query QueryModel, runner queryRunner, max
 	if err != nil {
 		glog.Warn("Flux query failed", "err", err, "query", flux)
 		dr.Error = err
-		metaFrame := data.NewFrame("meta for error")
-		metaFrame.Meta = &data.FrameMeta{
-			ExecutedQueryString: flux,
-		}
+	} else {
+		dr = readDataFrames(tables, int(float64(query.MaxDataPoints)*1.5), maxSeries)
+	}
+
+	if len(dr.Frames) < 1 {
+		metaFrame := data.NewFrame("")
 		dr.Frames = append(dr.Frames, metaFrame)
-		return
 	}
-
-	dr = readDataFrames(tables, int(float64(query.MaxDataPoints)*1.5), maxSeries)
-
-	for _, frame := range dr.Frames {
-		if frame.Meta == nil {
-			frame.Meta = &data.FrameMeta{}
-		}
-		frame.Meta.ExecutedQueryString = flux
+	firstFrame := dr.Frames[0]
+	if firstFrame.Meta == nil {
+		firstFrame.SetMeta(&data.FrameMeta{})
 	}
+	firstFrame.Meta.ExecutedQueryString = flux
 
+	glog.Debug("done", "dr", dr)
 	return dr
 }
 
