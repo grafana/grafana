@@ -8,7 +8,7 @@ weight = 200
 
 # Best practices for managing dashboards
 
-This page outlines some best practices to adhere to when creating Grafana dashboards.
+This page outlines some best practices to follow when creating Grafana dashboards.
 
 ### Managing a collection of dashboards
 
