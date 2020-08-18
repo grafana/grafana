@@ -626,12 +626,12 @@ def windows_installer_step(edition):
             'GCP_KEY': {
                 'from_secret': 'gcp_key',
             },
-            'TEST_MAX_WORKERS': '50%',
         },
         'commands': [
-            'echo TEST_MAX_WORKERS: $$env:TEST_MAX_WORKERS',
             '$$gcpKey = $$env:GCP_KEY',
             '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json',
+            # gcloud fails to read the file unless converted with dos2unix
+            'dos2unix gcpkey.json',
             'gcloud auth activate-service-account --key-file=gcpkey.json',
             'rm gcpkey.json',
             '$$ProgressPreference = "SilentlyContinue"',
