@@ -327,7 +327,7 @@ export class Logs extends PureComponent<Props, State> {
           <MetaInfoText
             metaItems={[
               {
-                label: 'Showing only parsed labels',
+                label: 'Showing only parsed fields',
                 value: renderMetaItem(showParsedFields, LogsMetaKind.LabelsMap),
               },
               {
