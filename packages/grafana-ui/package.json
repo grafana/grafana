@@ -112,5 +112,5 @@
     "ts-loader": "6.2.1",
     "typescript": "3.9.3"
   },
-  "types": "src/index.pts"
+  "types": "src/index.ts"
 }
