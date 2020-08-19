@@ -260,26 +260,26 @@
     - name: Variable types
       link: /variables/variable-types/
       children:
-      - link: /variables/variable-types/add-query-variable/
-        name: Add query variable
-      - link: /variables/variable-types/add-custom-variable/
-        name: Add custom variable
-      - link: /variables/variable-types/add-text-box-variable/
-        name: Add text box variable
-      - link: /variables/variable-types/add-constant-variable/
-        name: Add constant variable
-      - link: /variables/variable-types/add-data-source-variable/
-        name: Add data source variable
-      - link: /variables/variable-types/add-interval-variable/
-        name: Add interval variable
-      - link: /variables/variable-types/add-ad-hoc-filters/
-        name: Add ad hoc filters
-      - link: /variables/variable-types/chained-variables/
-        name: Chained variables
-      - link: /variables/variable-types/global-variables/
-        name: Global variables
-      - link: /variables/variable-types/url-variables/
-        name: URL variables
+        - link: /variables/variable-types/add-query-variable/
+          name: Add query variable
+        - link: /variables/variable-types/add-custom-variable/
+          name: Add custom variable
+        - link: /variables/variable-types/add-text-box-variable/
+          name: Add text box variable
+        - link: /variables/variable-types/add-constant-variable/
+          name: Add constant variable
+        - link: /variables/variable-types/add-data-source-variable/
+          name: Add data source variable
+        - link: /variables/variable-types/add-interval-variable/
+          name: Add interval variable
+        - link: /variables/variable-types/add-ad-hoc-filters/
+          name: Add ad hoc filters
+        - link: /variables/variable-types/chained-variables/
+          name: Chained variables
+        - link: /variables/variable-types/global-variables/
+          name: Global variables
+        - link: /variables/variable-types/url-variables/
+          name: URL variables
     - name: Selection options
       link: /variables/variable-selection-options/
     - name: Value groups/tags
@@ -390,7 +390,7 @@
     - name: Create API Tokens and Dashboards for a Specific Organization
       link: /tutorials/api_org_token_howto/
     - name: cURL examples
-      link: /http_api/curl-examples/  
+      link: /http_api/curl-examples/
     - name: Admin API
       link: /http_api/admin/
     - name: Alerting API
@@ -435,14 +435,14 @@
       link: /http_api/user/
 - name: Troubleshooting
   children:
-  - name: Overview
-    link: /troubleshooting/
-  - name: Enable diagnostics
-    link: /troubleshooting/diagnostics/
-  - name: Troubleshoot dashboards
-    link: /troubleshooting/troubleshoot-dashboards/
-  - name: Troubleshoot queries
-    link: /troubleshooting/troubleshoot-queries/
+    - name: Overview
+      link: /troubleshooting/
+    - name: Enable diagnostics
+      link: /troubleshooting/diagnostics/
+    - name: Troubleshoot dashboards
+      link: /troubleshooting/troubleshoot-dashboards/
+    - name: Troubleshoot queries
+      link: /troubleshooting/troubleshoot-queries/
 - name: Developers
   children:
     - name: Plugins
@@ -477,6 +477,8 @@
               name: Plugin protocol
             - link: /developers/plugins/backend/grafana-plugin-sdk-for-go/
               name: Grafana plugin SDK for Go
+        - name: Share a plugin
+          link: /developers/plugins/share-a-plugin/
         - name: Error handling
           link: /developers/plugins/error-handling/
         - name: Legacy plugins
