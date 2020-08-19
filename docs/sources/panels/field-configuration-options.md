@@ -95,6 +95,11 @@ Allows you to select a field from the list of all available fields that the over
 
 Allows you to type in a regular expression against which fields to be overridden will be matched.
 
+### Filter field by type
+
+Allows you to select fields by their type (string, numeric, etc).
+
+
 ## Field options
 
 This section explains all available field options. They are listed in alphabetical order.
