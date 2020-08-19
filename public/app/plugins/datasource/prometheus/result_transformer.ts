@@ -160,7 +160,7 @@ export class ResultTransformer {
 
   createLabelInfo(labels: { [key: string]: string }, options: any): { name?: string; labels: Labels; title?: string } {
     if (options?.legendFormat) {
-      const title = this.renderTemplate(this.templateSrv.replace(options.legendFormat), labels);
+      const title = this.renderTemplate(this.templateSrv.replace(options.legendFormat, options?.scopedVars), labels);
       return { name: title, title, labels };
     }
 
