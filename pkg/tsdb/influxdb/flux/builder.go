@@ -27,8 +27,8 @@ type columnInfo struct {
 	converter *data.FieldConverter
 }
 
-// FrameBuilder This is an interface to help testing
-type FrameBuilder struct {
+// frameBuilder is an interface to help testing.
+type frameBuilder struct {
 	tableID      int64
 	active       *data.Frame
 	frames       []*data.Frame
@@ -50,23 +50,23 @@ func isTag(schk string) bool {
 func getConverter(t string) (*data.FieldConverter, error) {
 	switch t {
 	case stringDatatype:
-		return &AnyToOptionalString, nil
+		return &anyToOptionalString, nil
 	case timeDatatypeRFC:
-		return &TimeToOptionalTime, nil
+		return &timeToOptionalTime, nil
 	case timeDatatypeRFCNano:
-		return &TimeToOptionalTime, nil
+		return &timeToOptionalTime, nil
 	case durationDatatype:
-		return &Int64ToOptionalInt64, nil
+		return &int64ToOptionalInt64, nil
 	case doubleDatatype:
-		return &Float64ToOptionalFloat64, nil
+		return &float64ToOptionalFloat64, nil
 	case boolDatatype:
-		return &BoolToOptionalBool, nil
+		return &boolToOptionalBool, nil
 	case longDatatype:
-		return &Int64ToOptionalInt64, nil
+		return &int64ToOptionalInt64, nil
 	case uLongDatatype:
-		return &UInt64ToOptionalUInt64, nil
+		return &uint64ToOptionalUInt64, nil
 	case base64BinaryDataType:
-		return &AnyToOptionalString, nil
+		return &anyToOptionalString, nil
 	}
 
 	return nil, fmt.Errorf("no matching converter found for [%v]", t)
@@ -75,7 +75,7 @@ func getConverter(t string) (*data.FieldConverter, error) {
 // Init initializes the frame to be returned
 // fields points at entries in the frame, and provides easier access
 // names indexes the columns encountered
-func (fb *FrameBuilder) Init(metadata *query.FluxTableMetadata) error {
+func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 	columns := metadata.Columns()
 	fb.frames = make([]*data.Frame, 0)
 	fb.tableID = -1
@@ -153,7 +153,7 @@ func getTimeSeriesTimeColumn(columns []*query.FluxColumn) *query.FluxColumn {
 // Tags are appended as labels
 // _measurement holds the dataframe name
 // _field holds the field name.
-func (fb *FrameBuilder) Append(record *query.FluxRecord) error {
+func (fb *frameBuilder) Append(record *query.FluxRecord) error {
 	table, ok := record.ValueByKey("table").(int64)
 	if ok && table != fb.tableID {
 		fb.totalSeries++
