@@ -10,12 +10,6 @@ const fieldTypeMatcher: FieldMatcherInfo<FieldType> = {
   defaultOptions: FieldType.number,
 
   get: (type: FieldType) => {
-    if ((type as string) === '*') {
-      return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
-        return true; // Match any type
-      };
-    }
-
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
       return type === field.type;
     };

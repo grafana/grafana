@@ -19,19 +19,18 @@ export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>(props => {
   return <Select value={selectedOption} options={selectOptions} onChange={onChange} />;
 });
 
-const allTypes: Array<SelectableValue<string>> = [
+const allTypes: Array<SelectableValue<FieldType>> = [
   { value: FieldType.number, label: 'Numeric' },
   { value: FieldType.string, label: 'String' },
   { value: FieldType.time, label: 'Time' },
   { value: FieldType.boolean, label: 'Boolean' },
   { value: FieldType.trace, label: 'Traces' },
   { value: FieldType.other, label: 'Other' },
-  { value: '*', label: 'Any type' },
 ];
 
-const useFieldCounts = (data: DataFrame[]): Map<string, number> => {
+const useFieldCounts = (data: DataFrame[]): Map<FieldType, number> => {
   return useMemo(() => {
-    const counts: Map<string, number> = new Map();
+    const counts: Map<FieldType, number> = new Map();
     for (const t of allTypes) {
       counts.set(t.value!, 0);
     }
@@ -48,7 +47,6 @@ const useFieldCounts = (data: DataFrame[]): Map<string, number> => {
         total++;
       }
     }
-    counts.set('*', total);
     return counts;
   }, [data]);
 };
