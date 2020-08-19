@@ -32,6 +32,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/auth"
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
 	_ "github.com/grafana/grafana/pkg/services/provisioning"
 	_ "github.com/grafana/grafana/pkg/services/rendering"
@@ -133,9 +134,10 @@ func (s *Server) init(cfg *Config) error {
 					s.log.Debug("Using provided listener for HTTP server")
 					httpS.Listener = cfg.Listener
 				}
+			} else if ss, ok := service.Instance.(datasources.CacheService); ok {
 				if cfg.SQLStore != nil {
-					s.log.Debug("Using provided SQL store for HTTP server")
-					httpS.SQLStore = cfg.SQLStore
+					s.log.Debug("Using provided SQL store for data source cache service")
+					ss.SetSQLStore(cfg.SQLStore)
 				}
 			}
 		}

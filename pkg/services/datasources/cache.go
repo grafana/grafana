@@ -12,13 +12,14 @@ import (
 )
 
 type CacheService interface {
-	GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool,
-		sqlStore *sqlstore.SqlStore) (*models.DataSource, error)
+	GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
+	SetSQLStore(sqlStore *sqlstore.SqlStore)
 }
 
 type CacheServiceImpl struct {
 	Bus          bus.Bus                  `inject:""`
 	CacheService *localcache.CacheService `inject:""`
+	sqlStore     *sqlstore.SqlStore
 }
 
 func init() {
@@ -33,8 +34,8 @@ func (dc *CacheServiceImpl) Init() error {
 	return nil
 }
 
-func (dc *CacheServiceImpl) GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool,
-	sqlStore *sqlstore.SqlStore) (*models.DataSource, error) {
+func (dc *CacheServiceImpl) GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (
+	*models.DataSource, error) {
 	cacheKey := fmt.Sprintf("ds-%d", datasourceID)
 
 	if !skipCache {
@@ -47,7 +48,7 @@ func (dc *CacheServiceImpl) GetDatasource(datasourceID int64, user *models.Signe
 	}
 
 	var ds *models.DataSource
-	if sqlStore == nil {
+	if dc.sqlStore == nil {
 		// Legacy way, should migrate away from this
 		plog.Debug("Querying for data source via bus", "id", datasourceID, "orgId", user.OrgId)
 		query := models.GetDataSourceByIdQuery{Id: datasourceID, OrgId: user.OrgId}
@@ -58,7 +59,7 @@ func (dc *CacheServiceImpl) GetDatasource(datasourceID int64, user *models.Signe
 	} else {
 		plog.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgId)
 		var err error
-		ds, err = sqlStore.GetDataSourceByID(datasourceID, user.OrgId)
+		ds, err = dc.sqlStore.GetDataSourceByID(datasourceID, user.OrgId)
 		if err != nil {
 			return nil, err
 		}
@@ -66,4 +67,8 @@ func (dc *CacheServiceImpl) GetDatasource(datasourceID int64, user *models.Signe
 
 	dc.CacheService.Set(cacheKey, ds, time.Second*5)
 	return ds, nil
+}
+
+func (dc *CacheServiceImpl) SetSQLStore(sqlStore *sqlstore.SqlStore) {
+	dc.sqlStore = sqlStore
 }
