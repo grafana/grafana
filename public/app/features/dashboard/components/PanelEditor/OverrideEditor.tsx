@@ -118,8 +118,14 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
         </HorizontalGroup>
         {!isExpanded && (
           <div className={styles.overrideDetails}>
-            Matcher <Icon name="angle-right" /> {matcherUi.name} <br />
-            {override.properties.length === 0 ? 'No' : override.properties.length} properties overriden
+            Matcher options <Icon name="angle-right" /> {matcherUi.optionsToLabel(override.matcher.options)}
+            <br />
+            Properties overridden <Icon name="angle-right" />
+            {override.properties
+              .map(p => {
+                return registry.get(p.id).name;
+              })
+              .join(', ')}
           </div>
         )}
       </div>
