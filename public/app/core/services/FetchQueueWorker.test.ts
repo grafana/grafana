@@ -4,8 +4,10 @@ import { FetchQueue, FetchQueueUpdate, FetchStatus } from './FetchQueue';
 import { ResponseQueue } from './ResponseQueue';
 import { FetchQueueWorker } from './FetchQueueWorker';
 import { expect } from '../../../test/lib/common';
+import { GrafanaBootConfig } from '@grafana/runtime';
 
-const getTestContext = () => {
+const getTestContext = (http2Enabled = false) => {
+  const config: GrafanaBootConfig = ({ http2Enabled } as unknown) as GrafanaBootConfig;
   const dataUrl = 'http://localhost:3000/api/ds/query?=abc';
   const apiUrl = 'http://localhost:3000/api/alerts?state=all';
   const updates: Subject<FetchQueueUpdate> = new Subject<FetchQueueUpdate>();
@@ -23,7 +25,7 @@ const getTestContext = () => {
     getResponses: jest.fn(),
   } as unknown) as ResponseQueue;
 
-  new FetchQueueWorker(queueMock, responseQueueMock);
+  new FetchQueueWorker(queueMock, responseQueueMock, config);
 
   return { dataUrl, apiUrl, updates, queueMock, addMock };
 };
@@ -65,6 +67,22 @@ describe('FetchQueueWorker', () => {
           updates.next({
             noOfPending: 2,
             noOfInProgress: 5,
+            state: {
+              ['data']: { state: FetchStatus.Pending, options: { url: dataUrl } },
+              ['api']: { state: FetchStatus.Pending, options: { url: apiUrl } },
+            },
+          });
+
+          expect(addMock.mock.calls).toEqual([['api', { url: 'http://localhost:3000/api/alerts?state=all' }]]);
+        });
+      });
+
+      describe('and http2 is enabled and there are max concurrent entries in progress', () => {
+        it('then api request should always pass through but no data requests should pass', () => {
+          const { updates, addMock, dataUrl, apiUrl } = getTestContext(true);
+          updates.next({
+            noOfPending: 2,
+            noOfInProgress: 1000,
             state: {
               ['data']: { state: FetchStatus.Pending, options: { url: dataUrl } },
               ['api']: { state: FetchStatus.Pending, options: { url: apiUrl } },

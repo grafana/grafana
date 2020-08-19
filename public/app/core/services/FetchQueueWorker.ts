@@ -4,16 +4,17 @@ import { FetchQueue, FetchStatus } from './FetchQueue';
 import { BackendSrvRequest } from '@grafana/runtime';
 import { isDataQuery } from '../utils/query';
 import { ResponseQueue } from './ResponseQueue';
+import { getConfig } from '../config';
 
 interface WorkerEntry {
   id: string;
   options: BackendSrvRequest;
 }
 
-const MAX_CONCURRENT_DATA_REQUESTS = 5;
-
 export class FetchQueueWorker {
-  constructor(fetchQueue: FetchQueue, responseQueue: ResponseQueue) {
+  constructor(fetchQueue: FetchQueue, responseQueue: ResponseQueue, config = getConfig()) {
+    const maxParallelRequests = config.http2Enabled ? 1000 : 5; // assuming that 1000 parallel requests are enough for http2
+
     // This will create an implicit live subscription for as long as this class lives.
     // But as FetchQueueWorker is used by the singleton backendSrv that also lives for as long as Grafana app lives
     // I think this ok. We could add some disposable pattern later if the need arises.
@@ -43,10 +44,7 @@ export class FetchQueueWorker {
           // apiRequests have precedence over data requests and should always be called directly
           // this means we can end up with a negative value.
           // Because the way Array.toSlice works with negative numbers we use Math.max below.
-          const noOfAllowedDataRequests = Math.max(
-            MAX_CONCURRENT_DATA_REQUESTS - noOfInProgress - apiRequests.length,
-            0
-          );
+          const noOfAllowedDataRequests = Math.max(maxParallelRequests - noOfInProgress - apiRequests.length, 0);
           const dataRequestToFetch = dataRequests.slice(0, noOfAllowedDataRequests);
 
           return apiRequests.concat(dataRequestToFetch);
