@@ -12,6 +12,10 @@ import (
 )
 
 func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*data.Frame, error) {
+	if response == nil {
+		return nil, fmt.Errorf("response is nil, cannot convert log results to data frames")
+	}
+
 	nonEmptyRows := make([][]*cloudwatchlogs.ResultField, 0)
 	// Sometimes CloudWatch can send empty rows
 	for _, row := range response.Results {
@@ -94,43 +98,41 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 		}
 	}
 
-	frame := data.NewFrame("CloudWatchLogsResponse", newFields...)
-
-	bytesScanned := -1.0
-	recordsScanned := -1.0
-	recordsMatched := -1.0
-	if response != nil && response.Statistics != nil {
+	queryStats := make([]data.QueryStat, 0)
+	if response.Statistics != nil {
 		if response.Statistics.BytesScanned != nil {
-			bytesScanned = *response.Statistics.BytesScanned
+			queryStats = append(queryStats, data.QueryStat{
+				FieldConfig: data.FieldConfig{DisplayName: "Bytes scanned"},
+				Value:       *response.Statistics.BytesScanned,
+			})
 		}
 
 		if response.Statistics.RecordsScanned != nil {
-			recordsScanned = *response.Statistics.RecordsScanned
+			queryStats = append(queryStats, data.QueryStat{
+				FieldConfig: data.FieldConfig{DisplayName: "Records scanned"},
+				Value:       *response.Statistics.RecordsScanned,
+			})
 		}
 
 		if response.Statistics.RecordsMatched != nil {
-			recordsMatched = *response.Statistics.RecordsMatched
+			queryStats = append(queryStats, data.QueryStat{
+				FieldConfig: data.FieldConfig{DisplayName: "Records matched"},
+				Value:       *response.Statistics.RecordsMatched,
+			})
 		}
 	}
 
+	frame := data.NewFrame("CloudWatchLogsResponse", newFields...)
 	frame.Meta = &data.FrameMeta{
-		Stats: []data.QueryStat{
-			{
-				FieldConfig: data.FieldConfig{DisplayName: "Bytes scanned"},
-				Value:       bytesScanned,
-			},
-			{
-				FieldConfig: data.FieldConfig{DisplayName: "Records scanned"},
-				Value:       recordsScanned,
-			},
-			{
-				FieldConfig: data.FieldConfig{DisplayName: "Records matched"},
-				Value:       recordsMatched,
-			},
-		},
+		Stats:  nil,
+		Custom: nil,
 	}
 
-	if response != nil && response.Status != nil {
+	if len(queryStats) > 0 {
+		frame.Meta.Stats = queryStats
+	}
+
+	if response.Status != nil {
 		frame.Meta.Custom = map[string]interface{}{
 			"Status": *response.Status,
 		}
