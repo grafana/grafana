@@ -50,6 +50,7 @@ require (
 	github.com/klauspost/cpuid v1.2.0 // indirect
 	github.com/lib/pq v1.2.0
 	github.com/linkedin/goavro/v2 v2.9.7
+	github.com/magefile/mage v1.9.0
 	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.11.0
