@@ -31,7 +31,8 @@ func (dc *CacheServiceImpl) Init() error {
 	return nil
 }
 
-func (dc *CacheServiceImpl) GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error) {
+func (dc *CacheServiceImpl) GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (
+	*models.DataSource, error) {
 	cacheKey := fmt.Sprintf("ds-%d", datasourceID)
 
 	if !skipCache {

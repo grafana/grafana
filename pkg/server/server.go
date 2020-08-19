@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -16,7 +16,6 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api"
-	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -28,7 +27,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/middleware"
 	_ "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
@@ -43,22 +41,43 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-// NewServer returns a new instance of Server.
-func NewServer(configFile, homePath, pidFile string) *Server {
+// Config contains parameters for the New function.
+type Config struct {
+	ConfigFile  string
+	HomePath    string
+	PidFile     string
+	Version     string
+	Commit      string
+	BuildBranch string
+	Listener    net.Listener
+}
+
+// New returns a new instance of Server.
+func New(cfg Config) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
-	return &Server{
+	s := &Server{
 		context:       childCtx,
 		shutdownFn:    shutdownFn,
 		childRoutines: childRoutines,
 		log:           log.New("server"),
 		cfg:           setting.NewCfg(),
 
-		configFile: configFile,
-		homePath:   homePath,
-		pidFile:    pidFile,
+		configFile:  cfg.ConfigFile,
+		homePath:    cfg.HomePath,
+		pidFile:     cfg.PidFile,
+		version:     cfg.Version,
+		commit:      cfg.Commit,
+		buildBranch: cfg.BuildBranch,
 	}
+	if cfg.Listener != nil {
+		if err := s.init(&cfg); err != nil {
+			return nil, err
+		}
+	}
+
+	return s, nil
 }
 
 // Server is responsible for managing the lifecycle of services.
@@ -70,18 +89,25 @@ type Server struct {
 	cfg                *setting.Cfg
 	shutdownReason     string
 	shutdownInProgress bool
+	isInitialized      bool
 
-	configFile string
-	homePath   string
-	pidFile    string
+	configFile  string
+	homePath    string
+	pidFile     string
+	version     string
+	commit      string
+	buildBranch string
 
-	RouteRegister routing.RouteRegister `inject:""`
-	HTTPServer    *api.HTTPServer       `inject:""`
+	HTTPServer *api.HTTPServer `inject:""`
 }
 
-// Run initializes and starts services. This will block until all services have
-// exited. To initiate shutdown, call the Shutdown method in another goroutine.
-func (s *Server) Run() (err error) {
+// init initializes the server and its services.
+func (s *Server) init(cfg *Config) error {
+	if s.isInitialized {
+		return nil
+	}
+	s.isInitialized = true
+
 	s.loadConfiguration()
 	s.writePIDFile()
 
@@ -89,9 +115,8 @@ func (s *Server) Run() (err error) {
 	social.NewOAuthService()
 
 	services := registry.GetServices()
-
-	if err = s.buildServiceGraph(services); err != nil {
-		return
+	if err := s.buildServiceGraph(services); err != nil {
+		return err
 	}
 
 	// Initialize services.
@@ -100,12 +125,30 @@ func (s *Server) Run() (err error) {
 			continue
 		}
 
-		s.log.Debug("Initializing " + service.Name)
-
+		if cfg != nil {
+			if httpS, ok := service.Instance.(*api.HTTPServer); ok {
+				if cfg.Listener != nil {
+					s.log.Debug("Using provided listener for HTTP server")
+					httpS.Listener = cfg.Listener
+				}
+			}
+		}
 		if err := service.Instance.Init(); err != nil {
 			return errutil.Wrapf(err, "Service init failed")
 		}
 	}
+
+	return nil
+}
+
+// Run initializes and starts services. This will block until all services have
+// exited. To initiate shutdown, call the Shutdown method in another goroutine.
+func (s *Server) Run() (err error) {
+	if err = s.init(nil); err != nil {
+		return
+	}
+
+	services := registry.GetServices()
 
 	// Start background services.
 	for _, svc := range services {
@@ -157,7 +200,7 @@ func (s *Server) Run() (err error) {
 
 	s.notifySystemd("READY=1")
 
-	return err
+	return nil
 }
 
 func (s *Server) Shutdown(reason string) {
@@ -217,7 +260,6 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 	objs := []interface{}{
 		bus.GetBus(),
 		s.cfg,
-		routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing),
 		localcache.New(5*time.Minute, 10*time.Minute),
 		s,
 	}
@@ -257,9 +299,9 @@ func (s *Server) loadConfiguration() {
 	}
 
 	s.log.Info("Starting "+setting.ApplicationName,
-		"version", version,
-		"commit", commit,
-		"branch", buildBranch,
+		"version", s.version,
+		"commit", s.commit,
+		"branch", s.buildBranch,
 		"compiled", time.Unix(setting.BuildStamp, 0),
 	)
 
