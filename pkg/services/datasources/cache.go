@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
@@ -16,7 +15,6 @@ type CacheService interface {
 }
 
 type CacheServiceImpl struct {
-	Bus          bus.Bus                  `inject:""`
 	CacheService *localcache.CacheService `inject:""`
 	SQLStore     *sqlstore.SqlStore       `inject:""`
 }
