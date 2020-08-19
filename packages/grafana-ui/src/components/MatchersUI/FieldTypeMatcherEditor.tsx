@@ -34,8 +34,6 @@ const useFieldCounts = (data: DataFrame[]): Map<FieldType, number> => {
     for (const t of allTypes) {
       counts.set(t.value!, 0);
     }
-
-    let total = 0;
     for (const frame of data) {
       for (const field of frame.fields) {
         const key = field.type || FieldType.other;
@@ -44,7 +42,6 @@ const useFieldCounts = (data: DataFrame[]): Map<FieldType, number> => {
           v = 0;
         }
         counts.set(key, v + 1);
-        total++;
       }
     }
     return counts;
