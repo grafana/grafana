@@ -32,7 +32,7 @@ e2e.scenario({
       `Server:singlequote = 'A\\'A"A','BB\\B','CCC'`,
       `Server:doublequote = "A'A\\"A","BB\\B","CCC"`,
       `Server:sqlstring = 'A''A"A','BB\\\B','CCC'`,
-      `Server:date = null`,
+      `Server:date = ''`,
     ];
 
     e2e()

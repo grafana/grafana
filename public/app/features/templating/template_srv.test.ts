@@ -629,10 +629,15 @@ describe('templateSrv', () => {
 
   describe('date formating', () => {
     beforeEach(() => {
-      initTemplateSrv([], {
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'A\'A"A,BB\\B,CCC' } }], {
         from: dateTime(1594671549254),
         to: dateTime(1595237229747),
       } as TimeRange);
+    });
+
+    it('should replace invalid date with empty string', () => {
+      const target = _templateSrv.replace('${test:date}');
+      expect(target).toBe('');
     });
 
     it('should replace ${__from} with ms epoch value', () => {
