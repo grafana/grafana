@@ -278,7 +278,7 @@ the arrow next to the button to reveal a "Return to panel with changes" menu ite
 ## Query inspector
 
 To help with debugging queries, Explore allows you to investigate query requests and responses, as well as query statistics, via the Query inspector.
-This functionality is similar to the panel inspector [Stats tab]({{< relref "inspect-panel.md#inspect-query-performance" >}}) and
-[Query tab]({{< relref "inspect-panel.md##view-raw-request-and-response-to-data-source" >}}).
+This functionality is similar to the panel inspector [Stats tab]({{< relref "../../panels/inspect-panel.md#inspect-query-performance" >}}) and
+[Query tab]({{< relref "../../panels/inspect-panel.md##view-raw-request-and-response-to-data-source" >}}).
 
 {{< docs-imagebox img="/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" caption="Screenshot of the query inspector button in Explore" >}}
