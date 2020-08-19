@@ -227,6 +227,7 @@ type Cfg struct {
 	AppSubUrl        string
 	ServeFromSubPath bool
 	StaticRootPath   string
+	Protocol         Scheme
 
 	// build
 	BuildVersion string
@@ -672,6 +673,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.ServeFromSubPath = ServeFromSubPath
 
 	Protocol = HTTP
+	cfg.Protocol = Protocol
 	protocolStr, err := valueAsString(server, "protocol", "http")
 	if err != nil {
 		return err

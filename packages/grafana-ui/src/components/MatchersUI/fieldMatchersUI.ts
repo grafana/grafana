@@ -4,5 +4,5 @@ import { fieldNameMatcherItem } from './FieldNameMatcherEditor';
 import { fieldNameByRegexMatcherItem } from './FieldNameByRegexMatcherEditor';
 
 export const fieldMatchersUI = new Registry<FieldMatcherUIRegistryItem<any>>(() => {
-  return [fieldNameMatcherItem, fieldNameByRegexMatcherItem];
+  return [fieldNameMatcherItem, fieldNameByRegexMatcherItem, fieldTypeMatcherItem];
 });
