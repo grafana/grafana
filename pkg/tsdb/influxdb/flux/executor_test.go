@@ -285,12 +285,12 @@ func TestRealQuery(t *testing.T) {
 			}),
 		}
 
-		runner, err := RunnerFromDataSource(dsInfo)
+		runner, err := runnerFromDataSource(dsInfo)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		dr := executeQuery(context.Background(), QueryModel{
+		dr := executeQuery(context.Background(), queryModel{
 			MaxDataPoints: 100,
 			RawQuery:      "buckets()",
 		}, runner, 50)
