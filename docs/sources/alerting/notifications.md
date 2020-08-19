@@ -210,6 +210,10 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 
 > **Caution:** In case of a high-availability setup, do not load balance traffic between Grafana and Alertmanagers to keep coherence between all your Alertmanager instances. Instead, point Grafana to a list of all Alertmanagers, by listing their URLs comma-separated in the notification channel configuration.
 
+### Zenduty
+
+[Zenduty](https://www.zenduty.com) is an incident alerting and response orchestration platform that not alerts the right teams via SMS, Phone(Voice), Email, Slack, Microsoft Teams and Push notifications(Android/iOS) whenever a Grafana alert is triggered, but also helps you rapidly triage and remediate critical, user impacting incidents. Grafana alert are sent to Zenduty through Grafana's native webhook dispatcher. Refer the Zenduty-Grafana [integration documentation](https://docs.zenduty.com/docs/grafana) for configuring the integration.
+
 ## Enable images in notifications {#external-image-store}
 
 Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
