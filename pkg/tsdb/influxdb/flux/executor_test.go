@@ -270,10 +270,10 @@ func TestGoldenFiles(t *testing.T) {
 	})
 }
 
-func TestRealBuckets(t *testing.T) {
-	t.Skip()
+func TestRealQuery(t *testing.T) {
+	t.Skip() // this is used for local testing
 
-	t.Run("Buckes Buckets", func(t *testing.T) {
+	t.Run("Check buckets() query on localhost", func(t *testing.T) {
 		json := simplejson.New()
 		json.Set("organization", "test-org")
 

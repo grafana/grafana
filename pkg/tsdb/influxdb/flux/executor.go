@@ -39,8 +39,6 @@ func executeQuery(ctx context.Context, query queryModel, runner queryRunner, max
 		firstFrame.SetMeta(&data.FrameMeta{})
 	}
 	firstFrame.Meta.ExecutedQueryString = flux
-
-	glog.Debug("done", "dr", dr)
 	return dr
 }
 
