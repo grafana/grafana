@@ -14,9 +14,11 @@ This page outlines some best practices to follow when creating Grafana dashboard
 
 Here are some principles to consider before you create a dashboard.
 
-### A dashboard should tell a story
+### A dashboard should tell a story or answer a question
 
 What story are you trying to tell with your dashboard? Try to create a logical progression of data, such as large to small or general to specific. What is the goal for this dashboard? (Hint: If the dashboard doesn't have a goal, then ask yourself if you really need the dashboard.)
+
+Keep your graphs simple and focussed on answering the question that you are answering. For example, if your question is "which servers are in trouble?", then maybe you don't need to show all the server data. Just show data for the ones in trouble.
 
 ### Dashboards should reduce cognitive load, not add to it
 
@@ -50,3 +52,4 @@ Once you have a strategy or design guidelines, write them down to help maintain 
    - To add documentation to a dashboard, add a [Text panel visualization]({{< relref "../panels/visualizations/text-panel.md" >}}) to the dashboard. Record things like the purpose of the dashboard, useful resource links, and any instructions users might need to interact with the dashboard. Check out this [Wikimedia example](https://grafana.wikimedia.org/d/000000066/resourceloader?orgId=1).
    - To add documentation to a panel, [edit the panel settings]({{< relref "../panels/add-a-panel.md#edit-panel-settings" >}}) and add a description. Any text you add will appear if you hover your cursor over the small `i` in the top left corner of the panel.
 -  Reuse your dashboards and enforce consistency by using [templates and variables]({{< relref "../variables/templates-and-variables.md" >}}).
+-  Be careful with stacking graph data. The visualizations can be misleading, and hide important data. We recommend turning it off in most cases.
