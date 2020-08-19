@@ -48,8 +48,6 @@ interface Props extends Themeable {
   showBars: boolean;
   showLines: boolean;
   isStacked: boolean;
-  showingGraph?: boolean;
-  showingTable?: boolean;
   timeZone?: TimeZone;
   onUpdateTimeRange: (absoluteRange: AbsoluteTimeRange) => void;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
@@ -95,8 +93,6 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
       timeZone,
       absoluteRange,
       showPanel,
-      showingGraph,
-      showingTable,
       showBars,
       showLines,
       isStacked,
@@ -116,7 +112,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
       },
     };
 
-    const height = showPanel === false ? 100 : showingGraph && showingTable ? 200 : 400;
+    const height = showPanel ? 200 : 100;
     const lineWidth = showLines ? 1 : 5;
     const seriesToShow = showAllTimeSeries ? series : series.slice(0, MAX_NUMBER_OF_TIME_SERIES);
     return (

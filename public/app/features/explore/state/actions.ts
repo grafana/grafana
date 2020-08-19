@@ -426,8 +426,6 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       queryResponse,
       querySubscription,
       history,
-      showingGraph,
-      showingTable,
     } = exploreItemState;
 
     if (!hasNonEmptyQuery(queries)) {
@@ -458,8 +456,6 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       // maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
       maxDataPoints: containerWidth,
       liveStreaming: live,
-      showingGraph,
-      showingTable,
     };
 
     const datasourceName = exploreItemState.requestedDatasourceName;
@@ -569,14 +565,16 @@ export const stateSave = (): ThunkResult<void> => {
     const orgId = getState().user.orgId.toString();
     const replace = left && left.urlReplaced === false;
     const urlStates: { [index: string]: string } = { orgId };
+    console.log('left: ', left);
+    console.log('right: ', right);
     const leftUrlState: ExploreUrlState = {
       datasource: left.datasourceInstance!.name,
       queries: left.queries.map(clearQueryKeys),
       range: toRawTimeRange(left.range),
       ui: {
-        showingGraph: left.showingGraph,
+        showingGraph: true,
         showingLogs: true,
-        showingTable: left.showingTable,
+        showingTable: true,
         dedupStrategy: left.dedupStrategy,
       },
     };
@@ -587,9 +585,9 @@ export const stateSave = (): ThunkResult<void> => {
         queries: right.queries.map(clearQueryKeys),
         range: toRawTimeRange(right.range),
         ui: {
-          showingGraph: right.showingGraph,
+          showingGraph: true,
           showingLogs: true,
-          showingTable: right.showingTable,
+          showingTable: true,
           dedupStrategy: right.dedupStrategy,
         },
       };

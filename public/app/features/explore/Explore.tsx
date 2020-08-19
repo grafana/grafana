@@ -113,8 +113,6 @@ export interface ExploreProps {
   logsResult?: LogsModel;
   loading?: boolean;
   absoluteRange: AbsoluteTimeRange;
-  showingGraph?: boolean;
-  showingTable?: boolean;
   timeZone?: TimeZone;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
   queryResponse: PanelData;
@@ -314,8 +312,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       graphResult,
       loading,
       absoluteRange,
-      showingGraph,
-      showingTable,
       timeZone,
       queryResponse,
       syncedTimes,
@@ -388,8 +384,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                               absoluteRange={absoluteRange}
                               isStacked={false}
                               showPanel={true}
-                              showingGraph={showingGraph}
-                              showingTable={showingTable}
                               timeZone={timeZone}
                               onUpdateTimeRange={this.onUpdateTimeRange}
                               showBars={false}
@@ -474,8 +468,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showTable,
     showTrace,
     loading,
-    showingGraph,
-    showingTable,
     absoluteRange,
     queryResponse,
   } = item;
@@ -504,8 +496,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     graphResult: graphResult ?? undefined,
     logsResult: logsResult ?? undefined,
     loading,
-    showingGraph,
-    showingTable,
     absoluteRange,
     queryResponse,
     originPanelId,

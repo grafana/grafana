@@ -436,6 +436,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   // Explore state used by various datasources
   liveStreaming?: boolean;
+  // Deprecated: showingGraph and showingTable are allways set to true and set to true
   showingGraph?: boolean;
   showingTable?: boolean;
 }

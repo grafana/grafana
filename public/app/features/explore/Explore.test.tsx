@@ -66,8 +66,6 @@ const dummyProps: ExploreProps = {
     from: 0,
     to: 0,
   },
-  showingGraph: false,
-  showingTable: false,
   timeZone: 'UTC',
   onHiddenSeriesChanged: jest.fn(),
   queryResponse: {

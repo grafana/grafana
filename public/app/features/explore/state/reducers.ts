@@ -103,8 +103,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
     to: null,
   } as any,
   scanning: false,
-  showingGraph: true,
-  showingTable: true,
   loading: false,
   queryKeys: [],
   urlState: null,

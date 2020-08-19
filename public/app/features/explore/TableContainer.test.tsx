@@ -11,7 +11,6 @@ describe('TableContainer', () => {
       loading: false,
       width: 800,
       onCellFilterAdded: jest.fn(),
-      showingTable: true,
       tableResult: {} as DataFrame,
       splitOpen: (() => {}) as any,
       range: {} as any,
@@ -27,7 +26,6 @@ describe('TableContainer', () => {
       loading: false,
       width: 800,
       onCellFilterAdded: jest.fn(),
-      showingTable: true,
       tableResult: {
         name: 'TableResultName',
         fields: [],
