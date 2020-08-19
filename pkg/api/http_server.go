@@ -54,7 +54,7 @@ type HTTPServer struct {
 	httpSrv     *http.Server
 	middlewares []macaron.Handler
 
-	routeRegister        routing.RouteRegister
+	RouteRegister        routing.RouteRegister            `inject:""`
 	Bus                  bus.Bus                          `inject:""`
 	RenderService        rendering.Service                `inject:""`
 	Cfg                  *setting.Cfg                     `inject:""`
@@ -77,7 +77,6 @@ type HTTPServer struct {
 func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
 
-	hs.routeRegister = routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)
 	// Set up a websocket broker
 	if hs.Cfg.IsLiveEnabled() { // feature flag
 		node, err := live.InitalizeBroker()
@@ -293,7 +292,7 @@ func (hs *HTTPServer) applyRoutes() {
 	// start with middlewares & static routes
 	hs.addMiddlewaresAndStaticRoutes()
 	// then add view routes & api routes
-	hs.routeRegister.Register(hs.macaron)
+	hs.RouteRegister.Register(hs.macaron)
 	// then custom app proxy routes
 	hs.initAppPluginRoutes(hs.macaron)
 	// lastly not found route
