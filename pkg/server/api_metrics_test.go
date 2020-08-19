@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	_ "github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 
 	cwapi "github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/api/dtos"
