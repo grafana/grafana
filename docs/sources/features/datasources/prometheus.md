@@ -110,6 +110,9 @@ Populate a variable with the instances having a certain state over the time rang
 Query: query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
 Regex:
 ```
+### Using `$__rate_interval` variable
+
+The `$__rate_interval` variable is meant to be used in the rate function. It is defined as max( `$__interval` + _Scrape interval_, 4 * _Scrape interval_), where _Scrape interval_ is the Min step setting (AKA query_interval, a setting per PromQL query), if any is set, and otherwise the _Scrape interval_ as set in the Prometheus data source (but ignoring any Min interval setting in the panel, because the latter is modified by the resolution setting).
 
 ### Using variables in queries
 

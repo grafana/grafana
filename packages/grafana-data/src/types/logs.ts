@@ -33,6 +33,11 @@ export enum LogsMetaKind {
   LabelsMap,
 }
 
+export enum LogsSortOrder {
+  Descending = 'Descending',
+  Ascending = 'Ascending',
+}
+
 export interface LogsMetaItem {
   label: string;
   value: string | number | Labels;

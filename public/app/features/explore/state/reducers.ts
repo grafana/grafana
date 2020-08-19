@@ -12,6 +12,7 @@ import {
   toLegacyResponseData,
   ExploreMode,
   LogsDedupStrategy,
+  sortLogsResult,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { LocationUpdate } from '@grafana/runtime';
@@ -23,7 +24,6 @@ import {
   getQueryKeys,
   parseUrlState,
   refreshIntervalToSortOrder,
-  sortLogsResult,
   stopQueryState,
 } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState, ExploreState, ExploreUpdateState } from 'app/types/explore';

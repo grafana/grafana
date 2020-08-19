@@ -21,13 +21,16 @@ const selectorRegexp = /{([^{]*)}/g;
 export function addLabelToQuery(
   query: string,
   key: string,
-  value: string,
+  value: string | number,
   operator?: string,
   hasNoMetrics?: boolean
 ): string {
   if (!key || !value) {
     throw new Error('Need label to add to query.');
   }
+
+  // We need to make sure that we convert the value back to string because it may be a number
+  const transformedValue = value === Infinity ? '+Inf' : value.toString();
 
   // Add empty selectors to bare metric names
   let previousWord: string;
@@ -65,7 +68,7 @@ export function addLabelToQuery(
   while (match) {
     const prefix = query.slice(lastIndex, match.index);
     const selector = match[1];
-    const selectorWithLabel = addLabelToSelector(selector, key, value, operator);
+    const selectorWithLabel = addLabelToSelector(selector, key, transformedValue, operator);
     lastIndex = match.index + match[1].length + 2;
     suffix = query.slice(match.index + match[0].length);
     parts.push(prefix, selectorWithLabel);

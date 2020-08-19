@@ -71,7 +71,6 @@ describe(ReferencesButton, () => {
     // here
     const menuInstance = shallow(
       shallow(dropdown.first().props().overlay).prop('children')({
-        // eslint-disable-next-line react/prop-types
         Menu: ({ children }) => <div>{children}</div>,
       })
     );

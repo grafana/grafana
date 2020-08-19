@@ -41,6 +41,7 @@ In addition to the data sources that you have configured in your Grafana, there 
 - **Mixed -** Select this to query multiple data sources in the same panel. When this data source is selected, Grafana allows you to select a data source for every new query that you add.
   * The first query will use the data source that was selected before you selected **Mixed**.
   * You cannot change an existing query to use the Mixed Data Source.
+  * Grafana Play example: [Mixed data sources](https://play.grafana.org/d/000000100/mixed-datasources?orgId=1)
 - **Dashboard -** Select this to use a result set from another panel in the same dashboard.
 
 ## Data source plugins

@@ -184,10 +184,10 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                     <option label="" value={VariableHide.dontHide}>
                       {''}
                     </option>
-                    <option label="" value={VariableHide.hideLabel}>
+                    <option label="Label" value={VariableHide.hideLabel}>
                       Label
                     </option>
-                    <option label="" value={VariableHide.hideVariable}>
+                    <option label="Variable" value={VariableHide.hideVariable}>
                       Variable
                     </option>
                   </select>

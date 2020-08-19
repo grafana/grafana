@@ -10,7 +10,7 @@ import {
   filterAndSortQueries,
 } from './richHistory';
 import store from 'app/core/store';
-import { SortOrder } from './explore';
+import { SortOrder } from './richHistory';
 import { dateTime, DataQuery } from '@grafana/data';
 
 const mock: any = {
@@ -20,7 +20,7 @@ const mock: any = {
       datasourceId: 'datasource historyId',
       datasourceName: 'datasource history name',
       queries: [
-        { expr: 'query1', refId: '1' },
+        { expr: 'query1', maxLines: null, refId: '1' },
         { expr: 'query2', refId: '2' },
       ],
       sessionName: '',
@@ -96,7 +96,7 @@ describe('addToRichHistory', () => {
       mock.storedHistory,
       mock.storedHistory[0].datasourceId,
       mock.storedHistory[0].datasourceName,
-      [{ expr: 'query1', refId: 'A' } as DataQuery, { expr: 'query2', refId: 'B' } as DataQuery],
+      [{ expr: 'query1', maxLines: null, refId: 'A' } as DataQuery, { expr: 'query2', refId: 'B' } as DataQuery],
       mock.testStarred,
       mock.testComment,
       mock.testSessionName
@@ -110,7 +110,7 @@ describe('addToRichHistory', () => {
       mock.storedHistory,
       mock.storedHistory[0].datasourceId,
       mock.storedHistory[0].datasourceName,
-      [{ expr: 'query1', refId: 'A' } as DataQuery, { expr: 'query2', refId: 'B' } as DataQuery],
+      [{ expr: 'query1', maxLines: null, refId: 'A' } as DataQuery, { expr: 'query2', refId: 'B' } as DataQuery],
       mock.testStarred,
       mock.testComment,
       mock.testSessionName

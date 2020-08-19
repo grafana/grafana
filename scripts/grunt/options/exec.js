@@ -2,10 +2,7 @@ module.exports = function(config, grunt) {
   'use strict';
 
   return {
-    eslintPackages: {
-      command: 'yarn packages:lint',
-    },
-    eslintRoot: {
+    eslint: {
       command: 'yarn lint',
     },
     typecheckPackages: {
