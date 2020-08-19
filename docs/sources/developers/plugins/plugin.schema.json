@@ -9,8 +9,7 @@
   "properties": {
     "$schema": {
         "type": "string",
-        "description": "Schema definition for the plugin.json file",
-        "enum": ["https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json"]
+        "description": "Schema definition for the plugin.json file"
     },
     "id": {
       "type": "string",
@@ -28,8 +27,8 @@
     },
     "category": {
       "type": "string",
-      "description": "Plugin category used on the Add data source page. Possible values are: `tsdb`, `logging`, `cloud`, `tracing`, `sql` and `others`.",
-      "enum": ["tsdb", "logging", "cloud", "tracing", "sql", "others"]
+      "description": "Plugin category used on the Add data source page. Possible values are: `tsdb`, `logging`, `cloud`, `tracing`, `sql`, `enterprise` and `other`.",
+      "enum": ["tsdb", "logging", "cloud", "tracing", "sql", "enterprise", "other"]
     },
     "annotations": {
       "type": "boolean",
