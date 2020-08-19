@@ -18,7 +18,7 @@ Here are some principles to consider before you create a dashboard.
 
 What story are you trying to tell with your dashboard? Try to create a logical progression of data, such as large to small or general to specific. What is the goal for this dashboard? (Hint: If the dashboard doesn't have a goal, then ask yourself if you really need the dashboard.)
 
-Keep your graphs simple and focussed on answering the question that you are answering. For example, if your question is "which servers are in trouble?", then maybe you don't need to show all the server data. Just show data for the ones in trouble.
+Keep your graphs simple and focused on answering the question that you are answering. For example, if your question is "which servers are in trouble?", then maybe you don't need to show all the server data. Just show data for the ones in trouble.
 
 ### Dashboards should reduce cognitive load, not add to it
 
