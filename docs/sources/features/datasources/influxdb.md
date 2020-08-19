@@ -278,11 +278,12 @@ You can now configure data sources using config files with Grafana's provisionin
 
 Here are some provisioning examples for this data source.
 
+### InfluxDB 1.x example
 ```yaml
 apiVersion: 1
 
 datasources:
-  - name: InfluxDB
+  - name: InfluxDB_v1
     type: influxdb
     access: proxy
     database: site
@@ -291,4 +292,22 @@ datasources:
     url: http://localhost:8086
     jsonData:
       httpMode: GET
+```
+
+### InfluxDB 2.x example
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB_v2
+    type: influxdb
+    access: proxy
+    url: http://localhost:8086
+    secureJsonData:
+      token: token
+    jsonData:
+      version: Flux
+      organization: organization
+      defaultBucket: bucket
+      tlsSkipVerify: true
 ```
