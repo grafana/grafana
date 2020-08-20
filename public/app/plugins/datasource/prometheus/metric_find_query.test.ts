@@ -6,6 +6,7 @@ import { PrometheusDatasource } from './datasource';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { PromOptions } from './types';
+import { FetchResponse } from '@grafana/runtime';
 
 jest.mock('app/features/templating/template_srv', () => {
   return {
@@ -57,7 +58,7 @@ describe('PrometheusMetricFindQuery', () => {
   });
 
   const setupMetricFindQuery = (data: any) => {
-    fecthMock.mockImplementation(() => of({ status: 'success', data: data.response }));
+    fecthMock.mockImplementation(() => of(({ status: 'success', data: data.response } as unknown) as FetchResponse));
     return new PrometheusMetricFindQuery(ds, data.query);
   };
 
