@@ -183,7 +183,7 @@ function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
 
   return {
     value: values,
-    text: texts.join(' + '),
+    text: texts,
     tags: picker.tags.filter(t => t.selected),
     selected: true,
   };

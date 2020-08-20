@@ -76,15 +76,29 @@ Field overrides allow you to change the settings for one field (column in tables
 1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
 1. Click the **Overrides** tab.
 1. Click **Add override**.
-1. Select a filter option to choose which fields the override applies to.
-
-   **Note:** Currently you can only match by name, so after you choose the filter, select which field it applies to from the dropdown list.
-
+1. Select a [filter option](#filter-options) to choose which fields the override applies to.
 1. Click **Add override property**.
 1. Select the [field option](#field-options) you want to apply.
 1. Enter options by adding values in the fields. To return options to default values, delete the white text in the fields.
 1. Continue to add overrides to this field by clicking **Add override property**, or you can click **Add override** and select a different field to add overrides to.
 1. When finished, click **Save** to save all panel edits to the dashboard.
+
+## Filter options
+
+This section explains all available filter options for field overrides. They are listed in alphabetical order.
+
+### Filter field by name
+
+Allows you to select a field from the list of all available fields that the override will be applied to.
+
+### Filter field by name using regex
+
+Allows you to type in a regular expression against which fields to be overridden will be matched.
+
+### Filter field by type
+
+Allows you to select fields by their type (string, numeric, etc).
+
 
 ## Field options
 

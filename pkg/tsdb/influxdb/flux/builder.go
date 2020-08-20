@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/influxdata/influxdb-client-go/api/query"
+	"github.com/influxdata/influxdb-client-go/v2/api/query"
 )
 
 // Copied from: (Apache 2 license)
@@ -27,8 +27,8 @@ type columnInfo struct {
 	converter *data.FieldConverter
 }
 
-// FrameBuilder This is an interface to help testing
-type FrameBuilder struct {
+// frameBuilder is an interface to help testing.
+type frameBuilder struct {
 	tableID      int64
 	active       *data.Frame
 	frames       []*data.Frame
@@ -50,32 +50,32 @@ func isTag(schk string) bool {
 func getConverter(t string) (*data.FieldConverter, error) {
 	switch t {
 	case stringDatatype:
-		return &AnyToOptionalString, nil
+		return &anyToOptionalString, nil
 	case timeDatatypeRFC:
-		return &TimeToOptionalTime, nil
+		return &timeToOptionalTime, nil
 	case timeDatatypeRFCNano:
-		return &TimeToOptionalTime, nil
+		return &timeToOptionalTime, nil
 	case durationDatatype:
-		return &Int64ToOptionalInt64, nil
+		return &int64ToOptionalInt64, nil
 	case doubleDatatype:
-		return &Float64ToOptionalFloat64, nil
+		return &float64ToOptionalFloat64, nil
 	case boolDatatype:
-		return &BoolToOptionalBool, nil
+		return &boolToOptionalBool, nil
 	case longDatatype:
-		return &Int64ToOptionalInt64, nil
+		return &int64ToOptionalInt64, nil
 	case uLongDatatype:
-		return &UInt64ToOptionalUInt64, nil
+		return &uint64ToOptionalUInt64, nil
 	case base64BinaryDataType:
-		return &AnyToOptionalString, nil
+		return &anyToOptionalString, nil
 	}
 
-	return nil, fmt.Errorf("No matching converter found for [%v]", t)
+	return nil, fmt.Errorf("no matching converter found for [%v]", t)
 }
 
 // Init initializes the frame to be returned
 // fields points at entries in the frame, and provides easier access
 // names indexes the columns encountered
-func (fb *FrameBuilder) Init(metadata *query.FluxTableMetadata) error {
+func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 	columns := metadata.Columns()
 	fb.frames = make([]*data.Frame, 0)
 	fb.tableID = -1
@@ -94,6 +94,7 @@ func (fb *FrameBuilder) Init(metadata *query.FluxTableMetadata) error {
 			if err != nil {
 				return err
 			}
+
 			fb.value = converter
 			fb.isTimeSeries = true
 		case isTag(col.Name()):
@@ -106,6 +107,7 @@ func (fb *FrameBuilder) Init(metadata *query.FluxTableMetadata) error {
 		if col == nil {
 			return fmt.Errorf("no time column in timeSeries")
 		}
+
 		fb.timeColumn = col.Name()
 		fb.timeDisplay = "Time"
 		if "_time" != fb.timeColumn {
@@ -118,6 +120,7 @@ func (fb *FrameBuilder) Init(metadata *query.FluxTableMetadata) error {
 			if err != nil {
 				return err
 			}
+
 			fb.columns = append(fb.columns, columnInfo{
 				name:      col.Name(),
 				converter: converter,
@@ -150,7 +153,7 @@ func getTimeSeriesTimeColumn(columns []*query.FluxColumn) *query.FluxColumn {
 // Tags are appended as labels
 // _measurement holds the dataframe name
 // _field holds the field name.
-func (fb *FrameBuilder) Append(record *query.FluxRecord) error {
+func (fb *frameBuilder) Append(record *query.FluxRecord) error {
 	table, ok := record.ValueByKey("table").(int64)
 	if ok && table != fb.tableID {
 		fb.totalSeries++
@@ -201,13 +204,14 @@ func (fb *FrameBuilder) Append(record *query.FluxRecord) error {
 	if fb.isTimeSeries {
 		time, ok := record.ValueByKey(fb.timeColumn).(time.Time)
 		if !ok {
-			return fmt.Errorf("unable to get time colum: %s", fb.timeColumn)
+			return fmt.Errorf("unable to get time colum: %q", fb.timeColumn)
 		}
 
 		val, err := fb.value.Converter(record.Value())
 		if err != nil {
 			return err
 		}
+
 		fb.active.Fields[0].Append(time)
 		fb.active.Fields[1].Append(val)
 	} else {
@@ -217,6 +221,7 @@ func (fb *FrameBuilder) Append(record *query.FluxRecord) error {
 			if err != nil {
 				return err
 			}
+
 			fb.active.Fields[idx].Append(val)
 		}
 	}
