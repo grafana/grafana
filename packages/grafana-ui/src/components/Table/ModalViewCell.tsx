@@ -11,11 +11,20 @@ const getJsonObjectFromString = (input: any): any => {
   } catch {} // ignore errors
   return output;
 };
+const getTruncatedString = (input: string, length = 5): string => {
+  input = (input || '').trim();
+  if (input.length > length) {
+    return input.substring(0, length) + '...';
+  }
+  return input;
+};
 
-type ModalViewCellDisplayMode = 'html' | 'json' | 'plain_text';
+type ModalViewCellModalDisplayMode = 'html' | 'json' | 'plain_text';
+type ModalViewCellFieldDisplayMode = 'truncated_text' | 'button';
 
 interface ModalViewCellProps extends TableCellProps {
-  displayMode: ModalViewCellDisplayMode;
+  modalDisplayMode: ModalViewCellModalDisplayMode;
+  fieldDisplayMode: ModalViewCellFieldDisplayMode;
   modalTitle: string;
   modalContent: string;
 }
@@ -32,35 +41,50 @@ export class ModalViewCell extends PureComponent<ModalViewCellProps, State> {
     this.setState({ showCellModal: show });
   }
   render() {
-    const { cell } = this.props;
-    const displayMode: ModalViewCellDisplayMode = this.props.displayMode || 'plain_text';
+    const { cell, tableStyles } = this.props;
+    const modalDisplayMode: ModalViewCellModalDisplayMode = this.props.modalDisplayMode || 'plain_text';
+    const fieldDisplayMode: ModalViewCellFieldDisplayMode = this.props.fieldDisplayMode || 'truncated_text';
     const modalTitle = this.props.modalTitle || 'Show';
-    const modalContent = this.props.modalContent || cell.value || '';
-    let displayContent: any;
-    switch (displayMode) {
-      case 'html':
-        displayContent = <div dangerouslySetInnerHTML={{ __html: modalContent }}></div>;
-        break;
-      case 'json':
-        displayContent = <JSONFormatter json={getJsonObjectFromString(cell.value)} open={4} />;
-        break;
-      case 'plain_text':
-      default:
-        displayContent = <div>{cell.value}</div>;
-    }
-    return (
-      <div>
-        <div>
+    let fieldDisplayContent: any;
+    switch (fieldDisplayMode) {
+      case 'button':
+        fieldDisplayContent = (
           <Button className="btn-small" variant="secondary" onClick={() => this.showCellModal(true)}>
             {modalTitle}
           </Button>
-        </div>
+        );
+        break;
+      case 'truncated_text':
+      default:
+        fieldDisplayContent = (
+          <div className={tableStyles.tableCell} onClick={() => this.showCellModal(true)}>
+            {getTruncatedString(cell.value || '')}
+          </div>
+        );
+        break;
+    }
+    const modalContent = this.props.modalContent || cell.value || '';
+    let modalDisplayContent: any;
+    switch (modalDisplayMode) {
+      case 'html':
+        modalDisplayContent = <div dangerouslySetInnerHTML={{ __html: modalContent }}></div>;
+        break;
+      case 'json':
+        modalDisplayContent = <JSONFormatter json={getJsonObjectFromString(cell.value)} open={4} />;
+        break;
+      case 'plain_text':
+      default:
+        modalDisplayContent = <div>{cell.value}</div>;
+    }
+    return (
+      <div>
+        <div>{fieldDisplayContent}</div>
         <Modal
           title={modalTitle || 'Details'}
           isOpen={this.state.showCellModal}
           onDismiss={() => this.showCellModal(false)}
         >
-          {displayContent}
+          {modalDisplayContent}
         </Modal>
       </div>
     );
