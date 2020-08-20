@@ -295,8 +295,6 @@ func TestRealQuery(t *testing.T) {
 			RawQuery:      "buckets()",
 		}, runner, 50)
 		err = experimental.CheckGoldenDataResponse("./testdata/buckets-real.golden.txt", &dr, true)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	})
 }
