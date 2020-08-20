@@ -283,6 +283,14 @@ describe('templateSrv', () => {
     });
   });
 
+  describe('html format', () => {
+    it('should encode values html escape sequences', () => {
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value: '<script>alert(asd)</script>' } }]);
+      const target = _templateSrv.replace('$test', {}, 'html');
+      expect(target).toBe('&lt;script&gt;alert(asd)&lt;/script&gt;');
+    });
+  });
+
   describe('replaceToList', () => {
     beforeEach(() => {
       initTemplateSrv([
@@ -305,14 +313,6 @@ describe('templateSrv', () => {
         'prefix-replaced?2-replaced%3F4-nested1-suffix',
         'prefix-replaced?2-replaced%3F4-nested2-suffix',
       ]);
-    });
-  });
-
-  describe('html format', () => {
-    it('should encode values html escape sequences', () => {
-      initTemplateSrv([{ type: 'query', name: 'test', current: { value: '<script>alert(asd)</script>' } }]);
-      const target = _templateSrv.replace('$test', {}, 'html');
-      expect(target).toBe('&lt;script&gt;alert(asd)&lt;/script&gt;');
     });
   });
 
