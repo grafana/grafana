@@ -20,7 +20,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
-const fecthMock = jest.spyOn(backendSrv, 'fetch');
+const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
 const instanceSettings = ({
   url: 'proxied',
