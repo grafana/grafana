@@ -304,7 +304,7 @@ steps:
   image: grafana/build-container:1.2.24
   commands:
   - rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
   depends_on:
   - initialize
   - lint-backend
