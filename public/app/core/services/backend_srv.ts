@@ -5,7 +5,7 @@ import { BackendSrv as BackendService, BackendSrvRequest, FetchError, FetchRespo
 import { AppEvents } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
-import config from 'app/core/config';
+import config, { getConfig } from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
@@ -54,7 +54,7 @@ export class BackendSrv implements BackendService {
     this.internalFetch = this.internalFetch.bind(this);
     this.fetchQueue = new FetchQueue();
     this.responseQueue = new ResponseQueue(this.fetchQueue, this.internalFetch);
-    new FetchQueueWorker(this.fetchQueue, this.responseQueue);
+    new FetchQueueWorker(this.fetchQueue, this.responseQueue, getConfig());
   }
 
   async request<T = any>(options: BackendSrvRequest): Promise<T> {

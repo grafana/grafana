@@ -1,10 +1,9 @@
 import { concatMap, filter } from 'rxjs/operators';
 
 import { FetchQueue, FetchStatus } from './FetchQueue';
-import { BackendSrvRequest } from '@grafana/runtime';
+import { BackendSrvRequest, GrafanaBootConfig } from '@grafana/runtime';
 import { isDataQuery } from '../utils/query';
 import { ResponseQueue } from './ResponseQueue';
-import { getConfig } from '../config';
 
 interface WorkerEntry {
   id: string;
@@ -12,8 +11,8 @@ interface WorkerEntry {
 }
 
 export class FetchQueueWorker {
-  constructor(fetchQueue: FetchQueue, responseQueue: ResponseQueue, config = getConfig()) {
-    const maxParallelRequests = config.http2Enabled ? 1000 : 5; // assuming that 1000 parallel requests are enough for http2
+  constructor(fetchQueue: FetchQueue, responseQueue: ResponseQueue, config: GrafanaBootConfig) {
+    const maxParallelRequests = config?.http2Enabled ? 1000 : 5; // for tests that don't mock GrafanaBootConfig the config param will be undefined
 
     // This will create an implicit live subscription for as long as this class lives.
     // But as FetchQueueWorker is used by the singleton backendSrv that also lives for as long as Grafana app lives
