@@ -166,7 +166,7 @@ func (fb *frameBuilder) Append(record *query.FluxRecord) error {
 	if ok && table != fb.tableID {
 		fb.totalSeries++
 		if fb.totalSeries > fb.maxSeries {
-			return fmt.Errorf("Results are truncated, max series reached (%d)", fb.maxSeries)
+			return fmt.Errorf("results are truncated, max series reached (%d)", fb.maxSeries)
 		}
 
 		if fb.isTimeSeries {
