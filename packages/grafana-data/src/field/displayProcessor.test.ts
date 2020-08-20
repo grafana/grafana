@@ -305,34 +305,24 @@ describe('Date display options', () => {
   });
 
   describe('number formatting for string values', () => {
-    it('should preserve string unchanged if no unit', () => {
+    it('should preserve string unchanged if unit is strings', () => {
       const processor = getDisplayProcessor({
         field: {
           type: FieldType.string,
-          config: {},
+          config: { unit: 'string' },
         },
       });
       expect(processor('22.1122334455').text).toEqual('22.1122334455');
     });
 
-    it('should preserve string unchanged if unit set to none', () => {
+    it('should format string as number if no unit', () => {
       const processor = getDisplayProcessor({
         field: {
           type: FieldType.string,
-          config: { unit: 'none' },
+          config: { decimals: 2 },
         },
       });
-      expect(processor('22.1122334455').text).toEqual('22.1122334455');
-    });
-
-    it('should format string as number if number unit', () => {
-      const processor = getDisplayProcessor({
-        field: {
-          type: FieldType.string,
-          config: { unit: 'short' },
-        },
-      });
-      expect(processor('22.1122334455').text).toEqual('22');
+      expect(processor('22.1122334455').text).toEqual('22.11');
     });
   });
 });

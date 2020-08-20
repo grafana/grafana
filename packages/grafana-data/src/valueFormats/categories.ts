@@ -1,4 +1,4 @@
-import { locale, scaledUnits, simpleCountUnit, toFixedUnit, ValueFormatCategory, textFormatter } from './valueFormats';
+import { locale, scaledUnits, simpleCountUnit, toFixedUnit, ValueFormatCategory, stringFormater } from './valueFormats';
 import {
   dateTimeAsIso,
   dateTimeAsUS,
@@ -26,7 +26,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Misc',
     formats: [
       { name: 'none', id: 'none', fn: toFixedUnit('') },
-      { name: 'Text', id: 'text', fn: textFormatter },
+      { name: 'String', id: 'string', fn: stringFormater },
       {
         name: 'short',
         id: 'short',
