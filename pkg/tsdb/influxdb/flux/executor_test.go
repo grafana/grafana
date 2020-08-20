@@ -286,9 +286,7 @@ func TestRealQuery(t *testing.T) {
 		}
 
 		runner, err := runnerFromDataSource(dsInfo)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		dr := executeQuery(context.Background(), queryModel{
 			MaxDataPoints: 100,
