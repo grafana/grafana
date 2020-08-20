@@ -58,7 +58,7 @@ describe('PrometheusMetricFindQuery', () => {
   });
 
   const setupMetricFindQuery = (data: any) => {
-    fecthMock.mockImplementation(() => of(({ status: 'success', data: data.response } as unknown) as FetchResponse));
+    fetchMock.mockImplementation(() => of(({ status: 'success', data: data.response } as unknown) as FetchResponse));
     return new PrometheusMetricFindQuery(ds, data.query);
   };
 
