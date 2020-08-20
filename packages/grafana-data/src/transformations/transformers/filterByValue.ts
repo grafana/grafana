@@ -3,13 +3,13 @@ import { DataFrame, /*FieldType,*/ Field } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { ArrayVector } from '../../vector/ArrayVector';
-import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
-import { ReducerID } from '../fieldReducer';
+import { ValueFilterID, valueFiltersRegistry } from '../valueFilters';
 
 export interface ValueFilter {
   type: string;
   fieldName: string | null; // Corresponding field name
   filterExpression: string | null; // The filter expression / value
+  filterType: ValueFilterID;
 }
 
 export interface FilterByValueTransformerOptions {
@@ -21,7 +21,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
   name: 'Filter by Value',
   description: 'Filter the data points (rows) depending on the value of certain fields',
   defaultOptions: {
-    valueFilters: [{ type: 'include', fieldName: null, filterExpression: null }],
+    valueFilters: [{ type: 'include', fieldName: null, filterExpression: null, filterType: ValueFilterID.regex }],
   },
 
   /**
@@ -44,6 +44,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
         for (let filterIndex = 0; filterIndex < options.valueFilters.length; filterIndex++) {
           let filter = options.valueFilters[filterIndex];
           let includeFlag = filter.type === 'include';
+          let filterTest = valueFiltersRegistry.get(filter.filterType);
 
           // Find the matching field for this filter
           let field = null;
@@ -72,12 +73,12 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
         }
 
         // Create the skeleton of the new data, copy original field attributes
-        let filteredFields: Fields[] = [];
+        let filteredFields: Field[] = [];
         for (let field of frame.fields) {
           filteredFields.push({
             ...field,
             values: new ArrayVector(),
-            configs: {
+            config: {
               ...field.config,
             },
           });

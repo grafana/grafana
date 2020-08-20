@@ -14,6 +14,7 @@ import {
   FilterByValueTransformerOptions,
   ValueFilter,
 } from '@grafana/data/src/transformations/transformers/filterByValue';
+import { valueFiltersRegistry } from '@grafana/data/src/transformations/valueFilters';
 
 function FilterSelectorRow(props: any) {
   const { fieldNameOptions, onDelete, onConfigChange, config } = props;
@@ -48,6 +49,20 @@ function FilterSelectorRow(props: any) {
             onConfigChange({ ...config, fieldName: value.value });
           }}
           isClearable
+          menuPlacement="bottom"
+        />
+      </div>
+      <div className="gf-form gf-form-spacing">
+        <div className="gf-form-label width-4">Test</div>
+        <Select
+          className="width-8"
+          placeholder="Select test"
+          options={valueFiltersRegistry.selectOptions().options}
+          value={config.filterType}
+          onChange={value => {
+            // console.log('onChange test', value);
+            onConfigChange({ ...config, filterType: value.value });
+          }}
           menuPlacement="bottom"
         />
       </div>
@@ -107,7 +122,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
     valueFilters[index] = config;
     onChange({
       ...options,
-      valueFilters,
+      valueFilters: valueFilters as ValueFilter[],
     });
   };
 
