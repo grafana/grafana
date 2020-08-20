@@ -65,7 +65,7 @@ class GrafanaDatasource extends DataSourceApi<any> {
       }
       let tags: string[] = [];
       for (const t of params.tags) {
-        tags = tags.concat(templateSrv.replace(t, {}, 'list'));
+        tags = tags.concat(templateSrv.replaceToList(t, {}));
       }
       params.tags = tags;
     }
