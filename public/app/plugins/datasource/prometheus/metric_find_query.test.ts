@@ -241,8 +241,8 @@ describe('PrometheusMetricFindQuery', () => {
       expect(results[0].text).toBe('up{instance="127.0.0.1:1234",job="job1"}');
       expect(results[1].text).toBe('up{instance="127.0.0.1:5678",job="job1"}');
       expect(results[2].text).toBe('up{instance="127.0.0.1:9102",job="job1"}');
-      expect(fecthMock).toHaveBeenCalledTimes(1);
-      expect(fecthMock).toHaveBeenCalledWith({
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
         url: `proxied/api/v1/series?match${encodeURIComponent('[]')}=${encodeURIComponent(
           'up{job="job1"}'
