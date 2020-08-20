@@ -30,7 +30,11 @@ export interface ValueFilterInfo extends RegistryItem {
 // Test functions
 //
 
-function testRegex(value: any, filterExpression: string): boolean {
+function testRegex(value: any, filterExpression: string | null): boolean {
+  if (!filterExpression) {
+    filterExpression = '';
+  }
+
   let re = new RegExp(filterExpression);
   return re.test(value);
 }

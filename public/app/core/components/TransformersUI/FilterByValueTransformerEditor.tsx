@@ -14,7 +14,8 @@ import {
   FilterByValueTransformerOptions,
   ValueFilter,
 } from '@grafana/data/src/transformations/transformers/filterByValue';
-import { valueFiltersRegistry } from '@grafana/data/src/transformations/valueFilters';
+
+import { valueFiltersRegistry, ValueFilterID } from '@grafana/data/src/transformations/valueFilters';
 
 function FilterSelectorRow(props: any) {
   const { fieldNameOptions, onDelete, onConfigChange, config } = props;
@@ -70,7 +71,6 @@ function FilterSelectorRow(props: any) {
         <div className="gf-form-label width-8">Filter Expression</div>
         <Input
           className="flex-grow-1"
-          // defaultValue={''}
           defaultValue={config.filterExpression}
           placeholder={`Regex`}
           onBlur={event => {
@@ -99,6 +99,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
       type: 'include',
       fieldName: null,
       filterExpression: null,
+      filterType: ValueFilterID.regex,
     });
 
     onChange({

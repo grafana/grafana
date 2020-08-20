@@ -30,21 +30,20 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
    */
   transformer: (options: FilterByValueTransformerOptions) => {
     console.log('options:', options);
-    // const calculationsByField = options.calculationsByField; //.map((val, index) => ({fieldName: val[0], calculations: val[1]}));
 
     return (data: DataFrame[]) => {
       if (options.valueFilters.length == 0) return data;
 
       const processed: DataFrame[] = [];
 
-      let includeThisRow = []; // All data points will be flagged for include (true) or exclude (false)
+      let includeThisRow = []; // All data points will be flagged for include (true) or exclude (false) in this variable
       let defaultIncludeFlag = options.valueFilters[0].type !== 'include';
 
       for (let frame of data) {
         for (let filterIndex = 0; filterIndex < options.valueFilters.length; filterIndex++) {
           let filter = options.valueFilters[filterIndex];
           let includeFlag = filter.type === 'include';
-          let filterTest = valueFiltersRegistry.get(filter.filterType);
+          let filterTest = valueFiltersRegistry.get(filter.filterType).test;
 
           // Find the matching field for this filter
           let field = null;
@@ -60,11 +59,8 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
           }
 
           for (let row = 0; row < frame.length; row++) {
-            // Run the filter on each value
-            let re = new RegExp(filter.filterExpression);
-            console.log('Testing', field.values.get(row), re, re.test(field.values.get(row)));
-            if (re.test(field.values.get(row))) {
-              // What if the value is not a string ??? Cast before using the value.
+            // Run the filter test on each value
+            if (filterTest(field.values.get(row), filter.filterExpression)) {
               includeThisRow[row] = includeFlag;
             } else if (filterIndex == 0) {
               includeThisRow[row] = defaultIncludeFlag;
