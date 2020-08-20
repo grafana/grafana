@@ -8,6 +8,7 @@ import { css, cx } from 'emotion';
 import { withTableStyles } from './withTableStyles';
 import tinycolor from 'tinycolor2';
 import { JSONViewCell } from './JSONViewCell';
+import { ModalViewCell } from './ModalViewCell';
 
 export function getTextAlign(field?: Field): TextAlignProperty {
   if (!field) {
@@ -96,6 +97,8 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
       return BarGaugeCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
+    case TableCellDisplayMode.ModalView:
+      return ModalViewCell;
   }
 
   // Default or Auto
