@@ -140,8 +140,8 @@ describe('PrometheusMetricFindQuery', () => {
       const results = await query.process();
 
       expect(results).toHaveLength(3);
-      expect(fecthMock).toHaveBeenCalledTimes(1);
-      expect(fecthMock).toHaveBeenCalledWith({
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
         url:
           'proxied/api/v1/series?match%5B%5D=metric%7Blabel1%3D%22foo%22%2C+label2%3D%22bar%22%2C+label3%3D%22baz%22%7D&start=1524650400&end=1524654000',
