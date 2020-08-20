@@ -283,7 +283,7 @@ describe('templateSrv', () => {
     });
   });
 
-  describe('list format', () => {
+  describe('replaceToList', () => {
     beforeEach(() => {
       initTemplateSrv([
         { type: 'query', name: 'var', current: { value: ['replaced?', 'replaced?2'] } },
@@ -292,12 +292,18 @@ describe('templateSrv', () => {
     });
 
     it('should properly return all possible values', () => {
-      const target = _templateSrv.replaceToList('prefix-$var-${var2:percentencode}-suffix', {});
+      const target = _templateSrv.replaceToList('prefix-$var-${var2:percentencode}-${series.nested.field}-suffix', {
+        series: { value: { name: 'scoped', nested: { field: ['nested1', 'nested2'] } } },
+      });
       expect(target).toStrictEqual([
-        'prefix-replaced?-replaced%3F3-suffix',
-        'prefix-replaced?-replaced%3F4-suffix',
-        'prefix-replaced?2-replaced%3F3-suffix',
-        'prefix-replaced?2-replaced%3F4-suffix',
+        'prefix-replaced?-replaced%3F3-nested1-suffix',
+        'prefix-replaced?-replaced%3F3-nested2-suffix',
+        'prefix-replaced?-replaced%3F4-nested1-suffix',
+        'prefix-replaced?-replaced%3F4-nested2-suffix',
+        'prefix-replaced?2-replaced%3F3-nested1-suffix',
+        'prefix-replaced?2-replaced%3F3-nested2-suffix',
+        'prefix-replaced?2-replaced%3F4-nested1-suffix',
+        'prefix-replaced?2-replaced%3F4-nested2-suffix',
       ]);
     });
   });
