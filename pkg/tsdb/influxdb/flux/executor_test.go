@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/require"
 	"github.com/xorcare/pointer"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
@@ -270,10 +271,10 @@ func TestGoldenFiles(t *testing.T) {
 	})
 }
 
-func TestRealBuckets(t *testing.T) {
-	t.Skip()
+func TestRealQuery(t *testing.T) {
+	t.Skip() // this is used for local testing
 
-	t.Run("Buckes Buckets", func(t *testing.T) {
+	t.Run("Check buckets() query on localhost", func(t *testing.T) {
 		json := simplejson.New()
 		json.Set("organization", "test-org")
 
@@ -285,18 +286,14 @@ func TestRealBuckets(t *testing.T) {
 			}),
 		}
 
-		runner, err := RunnerFromDataSource(dsInfo)
-		if err != nil {
-			t.Fatal(err)
-		}
+		runner, err := runnerFromDataSource(dsInfo)
+		require.NoError(t, err)
 
-		dr := executeQuery(context.Background(), QueryModel{
+		dr := executeQuery(context.Background(), queryModel{
 			MaxDataPoints: 100,
 			RawQuery:      "buckets()",
 		}, runner, 50)
 		err = experimental.CheckGoldenDataResponse("./testdata/buckets-real.golden.txt", &dr, true)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	})
 }

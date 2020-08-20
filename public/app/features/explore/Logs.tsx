@@ -77,18 +77,20 @@ interface State {
   wrapLogMessage: boolean;
   logsSortOrder: LogsSortOrder | null;
   isFlipping: boolean;
+  showParsedFields: string[];
 }
 
 export class Logs extends PureComponent<Props, State> {
   flipOrderTimer: NodeJS.Timeout;
   cancelFlippingTimer: NodeJS.Timeout;
 
-  state = {
+  state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
     showTime: store.getBool(SETTINGS_KEYS.showTime, true),
     wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
     logsSortOrder: null,
     isFlipping: false,
+    showParsedFields: [],
   };
 
   componentWillUnmount() {
@@ -170,6 +172,37 @@ export class Logs extends PureComponent<Props, State> {
     }
   };
 
+  showParsedField = (key: string) => {
+    const index = this.state.showParsedFields.indexOf(key);
+
+    if (index === -1) {
+      this.setState(state => {
+        return {
+          showParsedFields: state.showParsedFields.concat(key),
+        };
+      });
+    }
+  };
+
+  hideParsedField = (key: string) => {
+    const index = this.state.showParsedFields.indexOf(key);
+    if (index > -1) {
+      this.setState(state => {
+        return {
+          showParsedFields: state.showParsedFields.filter(k => key !== k),
+        };
+      });
+    }
+  };
+
+  clearParsedFields = () => {
+    this.setState(state => {
+      return {
+        showParsedFields: [],
+      };
+    });
+  };
+
   render() {
     const {
       logRows,
@@ -195,7 +228,7 @@ export class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { showLabels, showTime, wrapLogMessage, logsSortOrder, isFlipping } = this.state;
+    const { showLabels, showTime, wrapLogMessage, logsSortOrder, isFlipping, showParsedFields } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -290,6 +323,25 @@ export class Logs extends PureComponent<Props, State> {
           />
         )}
 
+        {showParsedFields && showParsedFields.length > 0 && (
+          <MetaInfoText
+            metaItems={[
+              {
+                label: 'Showing only parsed fields',
+                value: renderMetaItem(showParsedFields, LogsMetaKind.LabelsMap),
+              },
+              {
+                label: '',
+                value: (
+                  <Button variant="secondary" size="sm" onClick={this.clearParsedFields}>
+                    Show all parsed fields
+                  </Button>
+                ),
+              },
+            ]}
+          />
+        )}
+
         <LogRows
           logRows={logRows}
           deduplicatedRows={dedupedRows}
@@ -306,6 +358,9 @@ export class Logs extends PureComponent<Props, State> {
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
           logsSortOrder={logsSortOrder}
+          showParsedFields={showParsedFields}
+          onClickShowParsedField={this.showParsedField}
+          onClickHideParsedField={this.hideParsedField}
         />
 
         {!loading && !hasData && !scanning && (

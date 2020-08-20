@@ -26,7 +26,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.5.1
+    GRABPL_VERSION: 0.5.4
 
 - name: lint-backend
   image: grafana/build-container:1.2.24
@@ -133,8 +133,7 @@ steps:
   image: grafana/ci-e2e:12.18-1
   commands:
   - ./node_modules/.bin/cypress install
-  - ./e2e/wait-for-grafana
-  - ./e2e/run-suite
+  - ./bin/grabpl e2e-tests
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -253,7 +252,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.5.1
+    GRABPL_VERSION: 0.5.4
 
 - name: lint-backend
   image: grafana/build-container:1.2.24
@@ -313,7 +312,7 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.2.24
   commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
   depends_on:
   - initialize
   - lint-backend
@@ -360,8 +359,7 @@ steps:
   image: grafana/ci-e2e:12.18-1
   commands:
   - ./node_modules/.bin/cypress install
-  - ./e2e/wait-for-grafana
-  - ./e2e/run-suite
+  - ./bin/grabpl e2e-tests
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -521,7 +519,7 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.1/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.4/windows/grabpl.exe -OutFile grabpl.exe
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/oss/master/grafana-7.2.0-9fffe273pre.windows-amd64.zip -OutFile grafana.zip
   - cp C:\App\nssm-2.24.zip .
   - ./grabpl.exe windows-installer --edition oss grafana.zip

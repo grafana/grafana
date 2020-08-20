@@ -31,7 +31,7 @@ func executeQuery(ctx context.Context, query queryModel, runner queryRunner, max
 	}
 
 	// Make sure there is at least one frame
-	if len(dr.Frames) < 1 {
+	if len(dr.Frames) == 0 {
 		dr.Frames = append(dr.Frames, data.NewFrame(""))
 	}
 	firstFrame := dr.Frames[0]
@@ -39,8 +39,6 @@ func executeQuery(ctx context.Context, query queryModel, runner queryRunner, max
 		firstFrame.SetMeta(&data.FrameMeta{})
 	}
 	firstFrame.Meta.ExecutedQueryString = flux
-
-	glog.Debug("done", "dr", dr)
 	return dr
 }
 
