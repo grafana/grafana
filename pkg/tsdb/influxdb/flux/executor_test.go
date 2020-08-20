@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/require"
 	"github.com/xorcare/pointer"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
