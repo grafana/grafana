@@ -19,7 +19,6 @@ export interface GroupByFieldOptions {
 }
 
 export interface GroupByTransformerOptions {
-  fields: Record<string, GroupByFieldOptions>;
   fieldsArray: GroupByFieldOptions[];
 }
 
