@@ -122,9 +122,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
             <br />
             Properties overridden <Icon name="angle-right" />
             {override.properties
-              .map(p => {
-                return registry.get(p.id).name;
-              })
+              .map(p => registry.get(p.id).name)
               .join(', ')}
           </div>
         )}
