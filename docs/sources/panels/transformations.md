@@ -226,7 +226,7 @@ After I apply the transformation, my labels appear in the table as fields.
 
 ### Group By
 
-This transformation first groups the data by a specified field value and then processes calculations on each group. The available calculations are the same as the Reduce transformation.
+This transformation groups the data by a specified field (column) value and processes calculations on each group. The available calculations are the same as the Reduce transformation.
 
 Here's an example of original data.
 
@@ -242,7 +242,7 @@ Here's an example of original data.
 | 2020-07-07 09:25:05 | server 2    | 88              | OK
 | 2020-07-07 09:23:07 | server 1    | 86              | OK
 
-You can understand this transformation by illustrating its two steps. First you specify a field name to group the data by. This will group all the same values of this field together, as if you sorted them. For instance if we **Group By** _Server ID_ :
+This transformation goes in two steps. First you specify one or multiple fields to group the data by. This will group all the same values of those fields together, as if you sorted them. For instance if we `Group By` the `Server ID` field, it would group the data this way:
 
 | Time                | Server ID   | CPU Temperature | Server Status
 |---------------------|-------------|-----------------|----------
@@ -258,29 +258,31 @@ You can understand this transformation by illustrating its two steps. First you 
 | 2020-07-07 10:31:22 | ***server 3***    | 55              | OK
 | 2020-07-07 09:30:57 | ***server 3***    | 62              | Rebooting
 
-Then you can apply various calculations on each group. The result is reduced to one line per group.
+All rows with the same value of `Server ID` are grouped together.
 
-For instance, **On Field** *CPU Temperature*, we can **Calculate** the average. We will obtain the average of each server's CPU Temperature as a result :
+After choosing which field you want to group your data by, you can add various calculations on the other fields, and the calculation will be applied on each group of rows. For instance, we could want to calculate the average `CPU temperature` for each of those servers. So we can add the _mean_ calculation applied on the `CPU Temperature` field to get the following:
 
-| Server ID | CPU Temperature (average) 
+| Server ID | CPU Temperature (mean) 
 |-----------|--------------------------
 | server 1  | 82
 | server 2  | 88.6
 | server 3  | 59.6
 
-And we can add more than one of those calculation, for instance :
+And we can add more than one of those calculation. For instance :
 
-- **On Field** *Time*, we can **Calculate** the *Last* value, to know when the last data point was received for each server
-- **On Field** *Server Status*, we can **Calculate** the *Last* value to know what is the last state value for each server
-- **On Field** *Temperature*, we can also **Calculate** the *Last* value to know what is the latest monitored temperature for each server
+- For field `Time`, we can calculate the *Last* value, to know when the last data point was received for each server
+- For field `Server Status`, we can calculate the *Last* value to know what is the last state value for each server
+- For field `Temperature`, we can also calculate the *Last* value to know what is the latest monitored temperature for each server
 
-We would get :
+We would then get :
 
-| Server ID | CPU Temperature (average) | CPU Temperature (last) | Time (last)      | Server Status (last)
+| Server ID | CPU Temperature (mean) | CPU Temperature (last) | Time (last)      | Server Status (last)
 |-----------|-------------------------- |------------------------|------------------|----------------------
 | server 1  | 82                        | 80                     | 2020-07-07 11:34:20 | Shutdown
 | server 2  | 88.6                      | 90                     | 2020-07-07 10:32:20 | Overload
 | server 3  | 59.6                      | 62                     | 2020-07-07 11:34:20 | OK
+
+This transformation allows you to extract some key information out of your time series and display them in a convenient way.
 
 ## Series to rows
 
