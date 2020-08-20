@@ -215,8 +215,8 @@ describe('PrometheusMetricFindQuery', () => {
 
       expect(results).toHaveLength(1);
       expect(results[0].text).toBe('metric{job="testjob"} 3846 1443454528000');
-      expect(fecthMock).toHaveBeenCalledTimes(1);
-      expect(fecthMock).toHaveBeenCalledWith({
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
         url: `proxied/api/v1/query?query=metric&time=${raw.to.unix()}`,
         requestId: undefined,
