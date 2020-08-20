@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -40,7 +41,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"golang.org/x/xerrors"
 )
 
 // NewServer returns a new instance of Server.
@@ -147,7 +147,7 @@ func (s *Server) Run() (err error) {
 
 	defer func() {
 		s.log.Debug("Waiting on services...")
-		if waitErr := s.childRoutines.Wait(); waitErr != nil && !xerrors.Is(waitErr, context.Canceled) {
+		if waitErr := s.childRoutines.Wait(); waitErr != nil && !errors.Is(waitErr, context.Canceled) {
 			s.log.Error("A service failed", "err", waitErr)
 			if err == nil {
 				err = waitErr
@@ -157,7 +157,7 @@ func (s *Server) Run() (err error) {
 
 	s.notifySystemd("READY=1")
 
-	return
+	return err
 }
 
 func (s *Server) Shutdown(reason string) {
@@ -169,7 +169,7 @@ func (s *Server) Shutdown(reason string) {
 	s.shutdownFn()
 
 	// wait for child routines
-	if err := s.childRoutines.Wait(); err != nil && !xerrors.Is(err, context.Canceled) {
+	if err := s.childRoutines.Wait(); err != nil && !errors.Is(err, context.Canceled) {
 		s.log.Error("Failed waiting for services to shutdown", "err", err)
 	}
 }

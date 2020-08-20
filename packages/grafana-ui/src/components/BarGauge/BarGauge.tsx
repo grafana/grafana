@@ -1,7 +1,6 @@
 // Library
 import React, { PureComponent, CSSProperties, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
-import * as d3 from 'd3-scale-chromatic';
 import {
   TimeSeriesValue,
   DisplayValue,
@@ -14,7 +13,7 @@ import {
   FieldColorMode,
 } from '@grafana/data';
 
-// Compontents
+// Components
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 // Utils
@@ -511,30 +510,29 @@ export function getBarGradient(props: Props, maxSize: number): string {
   let gradient = '';
   let lastpos = 0;
 
-  if (field.color && field.color.mode === FieldColorMode.Scheme) {
-    const schemeSet = (d3 as any)[`scheme${field.color.schemeName}`] as any[];
-    if (!schemeSet) {
-      // Error: unknown scheme
-      const color = '#F00';
-      gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
-      gradient += ` ${maxSize}px, ${color}`;
-      return gradient + ')';
-    }
-    // Get the scheme with as many steps as possible
-    const scheme = schemeSet[schemeSet.length - 1] as string[];
-    for (let i = 0; i < scheme.length; i++) {
-      const color = scheme[i];
-      const valuePercent = i / (scheme.length - 1);
-      const pos = valuePercent * maxSize;
-      const offset = Math.round(pos - (pos - lastpos) / 2);
-
-      if (gradient === '') {
-        gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
-      } else {
-        lastpos = pos;
-        gradient += ` ${offset}px, ${color}`;
-      }
-    }
+  if (field.color && field.color.mode === FieldColorMode.SchemeBlues) {
+    /* const schemeSet = (d3 as any)[`scheme${field.color.schemeName}`] as any[]; */
+    /* if (!schemeSet) { */
+    /*   // Error: unknown scheme */
+    /*   const color = '#F00'; */
+    /*   gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`; */
+    /*   gradient += ` ${maxSize}px, ${color}`; */
+    /*   return gradient + ')'; */
+    /* } */
+    /* // Get the scheme with as many steps as possible */
+    /* const scheme = schemeSet[schemeSet.length - 1] as string[]; */
+    /* for (let i = 0; i < scheme.length; i++) { */
+    /*   const color = scheme[i]; */
+    /*   const valuePercent = i / (scheme.length - 1); */
+    /*   const pos = valuePercent * maxSize; */
+    /*   const offset = Math.round(pos - (pos - lastpos) / 2); */
+    /*   if (gradient === '') { */
+    /*     gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`; */
+    /*   } else { */
+    /*     lastpos = pos; */
+    /*     gradient += ` ${offset}px, ${color}`; */
+    /*   } */
+    /* } */
   } else {
     const thresholds = field.thresholds!;
 
@@ -605,9 +603,6 @@ function getValueStyles(
     styles.paddingRight = `${VALUE_LEFT_PADDING}px`;
     // Need to remove the left padding from the text width constraints
     textWidth -= VALUE_LEFT_PADDING;
-
-    // adjust width of title box
-    styles.width = measureText(formattedValueString, styles.fontSize).width + VALUE_LEFT_PADDING * 2;
   }
 
   return styles;

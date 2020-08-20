@@ -214,7 +214,7 @@ export class AlertTabCtrl {
         memo.push(this.buildConditionModel(value));
         return memo;
       },
-      []
+      [] as string[]
     );
 
     ThresholdMapper.alertToGraphThresholds(this.panel);
@@ -253,7 +253,7 @@ export class AlertTabCtrl {
     this.frequencyWarning = '';
 
     try {
-      const frequencySecs = kbn.interval_to_seconds(this.alert.frequency);
+      const frequencySecs = kbn.intervalToSeconds(this.alert.frequency);
       if (frequencySecs < this.alertingMinIntervalSecs) {
         this.frequencyWarning =
           'A minimum evaluation interval of ' +
@@ -282,7 +282,7 @@ export class AlertTabCtrl {
     }
 
     let firstTarget;
-    let foundTarget: DataQuery = null;
+    let foundTarget: DataQuery | null = null;
 
     const promises: Array<Promise<any>> = [];
     for (const condition of this.alert.conditions) {

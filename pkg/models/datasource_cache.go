@@ -45,13 +45,12 @@ var ptc = proxyTransportCache{
 
 func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	transport, err := ds.GetHttpTransport()
-
 	if err != nil {
 		return nil, err
 	}
 
 	return &http.Client{
-		Timeout:   30 * time.Second,
+		Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
 		Transport: transport,
 	}, nil
 }

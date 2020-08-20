@@ -23,8 +23,9 @@ const isLinkedMode = () => {
 };
 
 const entrypoint = () => {
-  const resolvedJsDir = path.resolve(`${__dirname}/../dist/src/cli/index.js`);
-  const resolvedTsDir = path.resolve(`${__dirname}/../src/cli/index.ts`);
+  const entrypointBase = `${__dirname}/../src/cli/index`;
+  const resolvedJsDir = path.resolve(`${entrypointBase}.js`);
+  const resolvedTsDir = path.resolve(`${entrypointBase}.ts`);
 
   // IF we have a toolkit directory AND linked grafana toolkit AND the toolkit dir is a symbolic lik
   // THEN run everything in linked mode
@@ -46,4 +47,3 @@ const entrypoint = () => {
 };
 
 require(entrypoint()).run(includeInternalScripts);
-

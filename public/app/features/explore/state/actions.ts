@@ -16,7 +16,8 @@ import {
   QueryFixAction,
   RawTimeRange,
   TimeRange,
-  ExploreMode,
+  ExploreUrlState,
+  ExploreUIState,
 } from '@grafana/data';
 // Services & Utils
 import store from 'app/core/store';
@@ -34,7 +35,6 @@ import {
   hasNonEmptyQuery,
   lastUsedDatasourceKeyForOrgId,
   parseUrlState,
-  serializeStateToUrlParam,
   stopQueryState,
   updateHistory,
 } from 'app/core/utils/explore';
@@ -47,12 +47,11 @@ import {
   getRichHistory,
 } from 'app/core/utils/richHistory';
 // Types
-import { ExploreItemState, ExploreUrlState, ThunkResult } from 'app/types';
+import { ExploreItemState, ThunkResult } from 'app/types';
 
-import { ExploreId, ExploreUIState, QueryOptions } from 'app/types/explore';
+import { ExploreId, QueryOptions } from 'app/types/explore';
 import {
   addQueryRowAction,
-  changeModeAction,
   changeQueryAction,
   changeRangeAction,
   changeRefreshIntervalAction,
@@ -92,8 +91,9 @@ import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
-import { PanelModel } from 'app/features/dashboard/state';
+import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 import { getExploreDatasources } from './selectors';
+import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 
 /**
  * Updates UI state and save it to the URL
@@ -120,7 +120,11 @@ export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<vo
 /**
  * Loads a new datasource identified by the given name.
  */
-export function changeDatasource(exploreId: ExploreId, datasourceName: string): ThunkResult<void> {
+export function changeDatasource(
+  exploreId: ExploreId,
+  datasourceName: string,
+  options?: { importQueries: boolean }
+): ThunkResult<void> {
   return async (dispatch, getState) => {
     let newDataSourceInstance: DataSourceApi;
 
@@ -135,37 +139,28 @@ export function changeDatasource(exploreId: ExploreId, datasourceName: string): 
     const orgId = getState().user.orgId;
     const datasourceVersion = newDataSourceInstance.getVersion && (await newDataSourceInstance.getVersion());
 
-    // HACK: Switch to logs mode if coming from Prometheus to Loki
-    const prometheusToLoki =
-      currentDataSourceInstance?.meta?.name === 'Prometheus' && newDataSourceInstance?.meta?.name === 'Loki';
-
     dispatch(
       updateDatasourceInstanceAction({
         exploreId,
         datasourceInstance: newDataSourceInstance,
         version: datasourceVersion,
-        mode: prometheusToLoki ? ExploreMode.Logs : undefined,
       })
     );
 
-    await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
+    if (options?.importQueries) {
+      await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
+    }
 
     if (getState().explore[exploreId].isLive) {
       dispatch(changeRefreshInterval(exploreId, RefreshPicker.offOption.value));
     }
 
     await dispatch(loadDatasource(exploreId, newDataSourceInstance, orgId));
-    dispatch(runQueries(exploreId));
-  };
-}
 
-/**
- * Change the display mode in Explore.
- */
-export function changeMode(exploreId: ExploreId, mode: ExploreMode): ThunkResult<void> {
-  return dispatch => {
-    dispatch(changeModeAction({ exploreId, mode }));
-    dispatch(stateSave());
+    // Exception - we only want to run queries on data source change, if the queries were imported
+    if (options?.importQueries) {
+      dispatch(runQueries(exploreId));
+    }
   };
 }
 
@@ -263,11 +258,12 @@ export function loadExploreDatasourcesAndSetDatasource(
   exploreId: ExploreId,
   datasourceName: string
 ): ThunkResult<void> {
-  return dispatch => {
+  return async dispatch => {
     const exploreDatasources = getExploreDatasources();
 
     if (exploreDatasources.length >= 1) {
-      dispatch(changeDatasource(exploreId, datasourceName));
+      await dispatch(changeDatasource(exploreId, datasourceName, { importQueries: true }));
+      dispatch(runQueries(exploreId));
     } else {
       dispatch(loadDatasourceMissingAction({ exploreId }));
     }
@@ -283,11 +279,10 @@ export function initializeExplore(
   datasourceName: string,
   queries: DataQuery[],
   range: TimeRange,
-  mode: ExploreMode,
   containerWidth: number,
   eventBridge: Emitter,
   ui: ExploreUIState,
-  originPanelId: number
+  originPanelId?: number | null
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     dispatch(loadExploreDatasourcesAndSetDatasource(exploreId, datasourceName));
@@ -298,7 +293,6 @@ export function initializeExplore(
         eventBridge,
         queries,
         range,
-        mode,
         ui,
         originPanelId,
       })
@@ -340,7 +334,7 @@ export const loadDatasourceReady = (
 export const importQueries = (
   exploreId: ExploreId,
   queries: DataQuery[],
-  sourceDataSource: DataSourceApi | undefined,
+  sourceDataSource: DataSourceApi | undefined | null,
   targetDataSource: DataSourceApi
 ): ThunkResult<void> => {
   return async dispatch => {
@@ -383,7 +377,7 @@ export const loadDatasource = (exploreId: ExploreId, instance: DataSourceApi, or
       try {
         instance.init();
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     }
 
@@ -436,7 +430,6 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       queryResponse,
       querySubscription,
       history,
-      mode,
       showingGraph,
       showingTable,
     } = exploreItemState;
@@ -447,13 +440,17 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       return;
     }
 
+    if (!datasourceInstance) {
+      return;
+    }
+
     // Some datasource's query builders allow per-query interval limits,
     // but we're using the datasource interval limit for now
-    const minInterval = datasourceInstance.interval;
+    const minInterval = datasourceInstance?.interval;
 
     stopQueryState(querySubscription);
 
-    const datasourceId = datasourceInstance.meta.id;
+    const datasourceId = datasourceInstance?.meta.id;
 
     const queryOptions: QueryOptions = {
       minInterval,
@@ -461,11 +458,12 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
       // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
       // Influx - used to correctly display logs in graph
-      maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
+      // TODO:unification
+      // maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
+      maxDataPoints: containerWidth,
       liveStreaming: live,
       showingGraph,
       showingTable,
-      mode,
     };
 
     const datasourceName = exploreItemState.requestedDatasourceName;
@@ -576,10 +574,9 @@ export const stateSave = (): ThunkResult<void> => {
     const replace = left && left.urlReplaced === false;
     const urlStates: { [index: string]: string } = { orgId };
     const leftUrlState: ExploreUrlState = {
-      datasource: left.datasourceInstance.name,
+      datasource: left.datasourceInstance!.name,
       queries: left.queries.map(clearQueryKeys),
       range: toRawTimeRange(left.range),
-      mode: left.mode,
       ui: {
         showingGraph: left.showingGraph,
         showingLogs: true,
@@ -590,10 +587,9 @@ export const stateSave = (): ThunkResult<void> => {
     urlStates.left = serializeStateToUrlParam(leftUrlState, true);
     if (split) {
       const rightUrlState: ExploreUrlState = {
-        datasource: right.datasourceInstance.name,
+        datasource: right.datasourceInstance!.name,
         queries: right.queries.map(clearQueryKeys),
         range: toRawTimeRange(right.range),
-        mode: right.mode,
         ui: {
           showingGraph: right.showingGraph,
           showingLogs: true,
@@ -638,12 +634,13 @@ export const updateTime = (config: {
     const range = getTimeRange(timeZone, rawRange);
     const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
 
-    getTimeSrv().init({
-      time: range.raw,
-      refresh: false,
-      getTimezone: () => timeZone,
-      timeRangeUpdated: (): any => undefined,
-    });
+    getTimeSrv().init(
+      new DashboardModel({
+        time: range.raw,
+        refresh: false,
+        timeZone,
+      })
+    );
 
     dispatch(changeRangeAction({ exploreId, range, absoluteRange }));
   };
@@ -696,7 +693,7 @@ export function splitClose(itemId: ExploreId): ThunkResult<void> {
  * Otherwise it copies the left state to be the right state. The copy keeps all query modifications but wipes the query
  * results.
  */
-export function splitOpen(options?: { datasourceUid: string; query: string }): ThunkResult<void> {
+export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: string; query: T }): ThunkResult<void> {
   return async (dispatch, getState) => {
     // Clone left state to become the right state
     const leftState: ExploreItemState = getState().explore[ExploreId.left];
@@ -706,24 +703,32 @@ export function splitOpen(options?: { datasourceUid: string; query: string }): T
     const queryState = getState().location.query[ExploreId.left] as string;
     const urlState = parseUrlState(queryState);
 
-    // TODO: Instead of splitting and then setting query/datasource we may probably do it in one action call
-    rightState.queries = leftState.queries.slice();
-    rightState.urlState = urlState;
-    dispatch(splitOpenAction({ itemState: rightState }));
-
     if (options) {
-      // TODO: This is hardcoded for Jaeger right now. Need to be changed so that target datasource can define the
-      //  query shape.
+      rightState.queries = [];
+      rightState.graphResult = null;
+      rightState.logsResult = null;
+      rightState.tableResult = null;
+      rightState.queryKeys = [];
+      urlState.queries = [];
+      rightState.urlState = urlState;
+
+      dispatch(splitOpenAction({ itemState: rightState }));
+
       const queries = [
         {
-          query: options.query,
+          ...options.query,
           refId: 'A',
         } as DataQuery,
       ];
 
       const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.datasourceUid);
-      await dispatch(changeDatasource(ExploreId.right, dataSourceSettings.name));
+      await dispatch(changeDatasource(ExploreId.right, dataSourceSettings!.name));
       await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
+      await dispatch(runQueries(ExploreId.right));
+    } else {
+      rightState.queries = leftState.queries.slice();
+      rightState.urlState = urlState;
+      dispatch(splitOpenAction({ itemState: rightState }));
     }
 
     dispatch(stateSave());
@@ -811,12 +816,19 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
 
     const { urlState, update, containerWidth, eventBridge } = itemState;
-    const { datasource, queries, range: urlRange, mode, ui, originPanelId } = urlState;
+
+    if (!urlState) {
+      return;
+    }
+
+    const { datasource, queries, range: urlRange, ui, originPanelId } = urlState;
     const refreshQueries: DataQuery[] = [];
+
     for (let index = 0; index < queries.length; index++) {
       const query = queries[index];
       refreshQueries.push(generateNewKeyAndAddRefIdIfMissing(query, refreshQueries, index));
     }
+
     const timeZone = getTimeZone(getState().user);
     const range = getTimeRangeFromUrl(urlRange, timeZone);
 
@@ -824,17 +836,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
       dispatch(
-        initializeExplore(
-          exploreId,
-          datasource,
-          initialQueries,
-          range,
-          mode,
-          containerWidth,
-          eventBridge,
-          ui,
-          originPanelId
-        )
+        initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, ui, originPanelId)
       );
       return;
     }
@@ -853,11 +855,6 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
       dispatch(setQueriesAction({ exploreId, queries: refreshQueries }));
     }
 
-    // need to refresh mode
-    if (update.mode) {
-      dispatch(changeModeAction({ exploreId, mode }));
-    }
-
     // always run queries when refresh is needed
     if (update.queries || update.ui || update.range) {
       dispatch(runQueries(exploreId));
@@ -868,7 +865,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
 export interface NavigateToExploreDependencies {
   getDataSourceSrv: () => DataSourceSrv;
   getTimeSrv: () => TimeSrv;
-  getExploreUrl: (args: GetExploreUrlArguments) => Promise<string>;
+  getExploreUrl: (args: GetExploreUrlArguments) => Promise<string | undefined>;
   openInNewWindow?: (url: string) => void;
 }
 
@@ -888,7 +885,7 @@ export const navigateToExplore = (
       timeSrv: getTimeSrv(),
     });
 
-    if (openInNewWindow) {
+    if (openInNewWindow && path) {
       openInNewWindow(path);
       return;
     }

@@ -215,7 +215,6 @@ var (
 	S3TempImageStoreSecretKey string
 
 	ImageUploadProvider string
-	FeatureToggles      map[string]bool
 )
 
 // TODO move all global vars to this struct
@@ -227,6 +226,7 @@ type Cfg struct {
 	AppUrl           string
 	AppSubUrl        string
 	ServeFromSubPath bool
+	StaticRootPath   string
 
 	// build
 	BuildVersion string
@@ -272,6 +272,9 @@ type Cfg struct {
 	DisableSanitizeHtml              bool
 	EnterpriseLicensePath            string
 
+	// Dashboards
+	DefaultHomeDashboardPath string
+
 	// Auth
 	LoginCookieName              string
 	LoginMaxInactiveLifetimeDays int
@@ -305,6 +308,16 @@ func (c Cfg) IsExpressionsEnabled() bool {
 	return c.FeatureToggles["expressions"]
 }
 
+// IsStandaloneAlertsEnabled returns whether the standalone alerts feature is enabled.
+func (c Cfg) IsStandaloneAlertsEnabled() bool {
+	return c.FeatureToggles["standaloneAlerts"]
+}
+
+// IsLiveEnabled returns if grafana live should be enabled
+func (c Cfg) IsLiveEnabled() bool {
+	return c.FeatureToggles["live"]
+}
+
 type CommandLineArgs struct {
 	Config   string
 	HomePath string
@@ -327,7 +340,7 @@ func parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
 	// Check if has app suburl.
 	url, err := url.Parse(appUrl)
 	if err != nil {
-		log.Fatal(4, "Invalid root_url(%s): %s", appUrl, err)
+		log.Fatalf(4, "Invalid root_url(%s): %s", appUrl, err)
 	}
 	appSubUrl := strings.TrimSuffix(url.Path, "/")
 
@@ -435,7 +448,7 @@ func getCommandLineProperties(args []string) map[string]string {
 		trimmed := strings.TrimPrefix(arg, "cfg:")
 		parts := strings.Split(trimmed, "=")
 		if len(parts) != 2 {
-			log.Fatal(3, "Invalid command line argument. argument: %v", arg)
+			log.Fatalf(3, "Invalid command line argument. argument: %v", arg)
 			return nil
 		}
 
@@ -524,7 +537,7 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 		if err2 != nil {
 			return nil, err2
 		}
-		log.Fatal(3, err.Error())
+		log.Fatalf(3, err.Error())
 	}
 
 	// apply environment overrides
@@ -699,6 +712,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	StaticRootPath = makeAbsolute(staticRoot, HomePath)
+	cfg.StaticRootPath = StaticRootPath
 
 	if err := cfg.validateStaticRootPath(); err != nil {
 		return err
@@ -777,6 +791,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+
+	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
@@ -941,7 +957,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		}
 		_, err := url.Parse(cfg.RendererCallbackUrl)
 		if err != nil {
-			log.Fatal(4, "Invalid callback_url(%s): %s", cfg.RendererCallbackUrl, err)
+			log.Fatalf(4, "Invalid callback_url(%s): %s", cfg.RendererCallbackUrl, err)
 		}
 	}
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
@@ -1011,7 +1027,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	for _, feature := range util.SplitString(featuresTogglesStr) {
 		cfg.FeatureToggles[feature] = true
 	}
-	FeatureToggles = cfg.FeatureToggles
 
 	// check old location for this option
 	if panelsSection.Key("enable_alpha").MustBool(false) {
@@ -1024,7 +1039,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.readQuotaSettings()
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
-		log.Warn("require_email_validation is enabled but smtp is disabled")
+		log.Warnf("require_email_validation is enabled but smtp is disabled")
 	}
 
 	// check old key  name
@@ -1178,12 +1193,4 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 // As a side effect, the value of the setting key will be updated if an environment variable is present.
 func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
 	return &DynamicSection{cfg.Raw.Section(s), cfg.Logger}
-}
-
-func IsExpressionsEnabled() bool {
-	v, ok := FeatureToggles["expressions"]
-	if !ok {
-		return false
-	}
-	return v
 }

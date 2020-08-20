@@ -1,7 +1,6 @@
 import React from 'react';
 import { number } from '@storybook/addon-knobs';
-import { InfoBox } from './InfoBox';
-import { FeatureInfoBox } from './FeatureInfoBox';
+import { InfoBox, FeatureInfoBox } from '@grafana/ui';
 import { FeatureState } from '@grafana/data';
 
 export default {
@@ -47,7 +46,7 @@ export const basic = () => {
           The database user should only be granted SELECT permissions on the specified database &amp; tables you want to
           query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
           statements like <code>USE otherdb;</code> and <code>DROP TABLE user;</code> would be executed. To protect
-          against this we <strong>Highly</strong> recommmend you create a specific MySQL user with restricted
+          against this we <strong>Highly</strong> recommend you create a specific MySQL user with restricted
           permissions.
         </p>
       </InfoBox>

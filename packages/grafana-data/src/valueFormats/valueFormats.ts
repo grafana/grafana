@@ -32,7 +32,7 @@ export interface ValueFormatCategory {
   formats: ValueFormat[];
 }
 
-interface ValueFormatterIndex {
+export interface ValueFormatterIndex {
   [id: string]: ValueFormatter;
 }
 
@@ -196,6 +196,10 @@ export function getValueFormat(id?: string | null): ValueFormatter {
 
       if (key === 'prefix') {
         return toFixedUnit(sub, true);
+      }
+
+      if (key === 'suffix') {
+        return toFixedUnit(sub, false);
       }
 
       if (key === 'time') {

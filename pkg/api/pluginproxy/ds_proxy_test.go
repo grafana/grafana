@@ -30,7 +30,6 @@ import (
 )
 
 func TestDSRouteRule(t *testing.T) {
-
 	Convey("DataSourceProxy", t, func() {
 		Convey("Plugin with routes", func() {
 			plugin := &plugins.DataSourcePlugin{

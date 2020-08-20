@@ -17,7 +17,7 @@ import { shallow } from 'enzyme';
 import debounceMock from 'lodash/debounce';
 
 import UiFindInput from './UiFindInput';
-import {UIInput} from "../uiElementsContext";
+import { UIInput } from '../uiElementsContext';
 
 jest.mock('lodash/debounce');
 
@@ -58,8 +58,8 @@ describe('UiFindInput', () => {
     });
 
     it('renders props.uiFind when state.ownInputValue is `undefined`', () => {
-      wrapper.setProps({value: uiFind});
+      wrapper.setProps({ value: uiFind });
       expect(wrapper.find(UIInput).prop('value')).toBe(uiFind);
     });
-  })
+  });
 });

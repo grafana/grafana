@@ -63,12 +63,26 @@ export class LoginCtrl extends PureComponent<Props, State> {
       confirmNew: password,
       oldPassword: 'admin',
     };
+    if (!this.props.routeParams.code) {
+      getBackendSrv()
+        .put('/api/user/password', pw)
+        .then(() => {
+          this.toGrafana();
+        })
+        .catch((err: any) => console.error(err));
+    }
+
+    const resetModel = {
+      code: this.props.routeParams.code,
+      newPassword: password,
+      confirmPassword: password,
+    };
+
     getBackendSrv()
-      .put('/api/user/password', pw)
+      .post('/api/user/password/reset', resetModel)
       .then(() => {
         this.toGrafana();
-      })
-      .catch((err: any) => console.log(err));
+      });
   };
 
   login = (formModel: FormModel) => {

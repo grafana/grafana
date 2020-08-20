@@ -1,5 +1,5 @@
 +++
-title = "Build a plugin"
+title = "Build a plugin."
 type = "docs"
 +++
 
@@ -11,7 +11,7 @@ For more information on the types of plugins you can build, refer to the [Plugin
 
 The easiest way to start developing Grafana plugins is to use the [Grafana Toolkit](https://www.npmjs.com/package/@grafana/toolkit).
 
-Open the terminal, and run the following command in your [plugin directory]({{< relref "../../installation/configuration.md#plugins" >}}):
+Open the terminal, and run the following command in your [plugin directory]({{< relref "../../administration/configuration.md#plugins" >}}):
 
 ```bash
 npx @grafana/toolkit plugin:create my-grafana-plugin
@@ -32,6 +32,7 @@ If you're looking to build your first plugin, check out these introductory tutor
 
 - [Build a panel plugin]({{< relref "../../../../../tutorials/build-a-panel-plugin.md" >}})
 - [Build a data source plugin]({{< relref "../../../../../tutorials/build-a-data-source-plugin.md" >}})
+- [Build a data source backend plugin]({{< relref "../../../../../tutorials/build-a-data-source-backend-plugin.md" >}})
 
 Ready to learn more? Check out our other tutorials:
 
@@ -47,6 +48,7 @@ Improve an existing plugin with one of our guides:
 - [Add support for variables]({{< relref "add-support-for-variables.md" >}})
 - [Build a logs data source plugin]({{< relref "build-a-logs-data-source-plugin.md" >}})
 - [Build a streaming data source plugin]({{< relref "build-a-streaming-data-source-plugin.md" >}})
+- [Error handling]({{< relref "error-handling.md" >}})
 
 ### Concepts
 

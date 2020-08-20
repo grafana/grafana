@@ -7,7 +7,7 @@ import { PrometheusDatasource } from './datasource';
  */
 export const SUM_HINT_THRESHOLD_COUNT = 20;
 
-export function getQueryHints(query: string, series?: any[], datasource?: PrometheusDatasource): QueryHint[] | null {
+export function getQueryHints(query: string, series?: any[], datasource?: PrometheusDatasource): QueryHint[] {
   const hints = [];
 
   // ..._bucket metric needs a histogram_quantile()
@@ -32,27 +32,32 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
     // Use metric metadata for exact types
     const nameMatch = query.match(/\b(\w+_(total|sum|count))\b/);
     let counterNameMetric = nameMatch ? nameMatch[1] : '';
-    const metricsMetadata = datasource?.languageProvider?.metricsMetadata;
+    const metricsMetadata = datasource?.languageProvider?.metricsMetadata ?? {};
+    const metricMetadataKeys = Object.keys(metricsMetadata);
     let certain = false;
-    if (_.size(metricsMetadata) > 0) {
-      counterNameMetric = Object.keys(metricsMetadata).find(metricName => {
-        // Only considering first type information, could be non-deterministic
-        const metadata = metricsMetadata[metricName][0];
-        if (metadata.type.toLowerCase() === 'counter') {
-          const metricRegex = new RegExp(`\\b${metricName}\\b`);
-          if (query.match(metricRegex)) {
-            certain = true;
-            return true;
+
+    if (metricMetadataKeys.length > 0) {
+      counterNameMetric =
+        metricMetadataKeys.find(metricName => {
+          // Only considering first type information, could be non-deterministic
+          const metadata = metricsMetadata[metricName][0];
+          if (metadata.type.toLowerCase() === 'counter') {
+            const metricRegex = new RegExp(`\\b${metricName}\\b`);
+            if (query.match(metricRegex)) {
+              certain = true;
+              return true;
+            }
           }
-        }
-        return false;
-      });
+          return false;
+        }) ?? '';
     }
+
     if (counterNameMetric) {
       const simpleMetric = query.trim().match(/^\w+$/);
       const verb = certain ? 'is' : 'looks like';
       let label = `Metric ${counterNameMetric} ${verb} a counter.`;
-      let fix: QueryFix;
+      let fix: QueryFix | undefined;
+
       if (simpleMetric) {
         fix = {
           label: 'Fix by adding rate().',
@@ -60,10 +65,11 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
             type: 'ADD_RATE',
             query,
           },
-        } as QueryFix;
+        };
       } else {
         label = `${label} Try applying a rate() function.`;
       }
+
       hints.push({
         type: 'APPLY_RATE',
         label,
@@ -119,5 +125,5 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
     }
   }
 
-  return hints.length > 0 ? hints : null;
+  return hints;
 }

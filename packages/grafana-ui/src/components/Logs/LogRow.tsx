@@ -3,6 +3,7 @@ import {
   Field,
   LinkModel,
   LogRowModel,
+  LogsSortOrder,
   TimeZone,
   DataQueryResponse,
   GrafanaTheme,
@@ -38,6 +39,7 @@ interface Props extends Themeable {
   wrapLogMessage: boolean;
   timeZone: TimeZone;
   allowDetails?: boolean;
+  logsSortOrder?: LogsSortOrder | null;
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -91,19 +93,23 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   /**
-   * We are using onMouse events to change background of Log Details Table to hover-state-background when
-   * hovered over Log Row and vice versa. This can't be done with css because we use 2 separate table rows without common parent element.
+   * We are using onMouse events to change background of Log Details Table to hover-state-background when hovered over Log
+   * Row and vice versa, when context is not open. This can't be done with css because we use 2 separate table rows without common parent element.
    */
   addHoverBackground = () => {
-    this.setState({
-      hasHoverBackground: true,
-    });
+    if (!this.state.showContext) {
+      this.setState({
+        hasHoverBackground: true,
+      });
+    }
   };
 
   clearHoverBackground = () => {
-    this.setState({
-      hasHoverBackground: false,
-    });
+    if (!this.state.showContext) {
+      this.setState({
+        hasHoverBackground: false,
+      });
+    }
   };
 
   toggleDetails = () => {
@@ -202,11 +208,16 @@ class UnThemedLogRow extends PureComponent<Props, State> {
 
   render() {
     const { showContext } = this.state;
+    const { logsSortOrder } = this.props;
 
     if (showContext) {
       return (
         <>
-          <LogRowContextProvider row={this.props.row} getRowContext={this.props.getRowContext}>
+          <LogRowContextProvider
+            row={this.props.row}
+            getRowContext={this.props.getRowContext}
+            logsSortOrder={logsSortOrder}
+          >
             {({ result, errors, hasMoreContextRows, updateLimit }) => {
               return <>{this.renderLogRow(result, errors, hasMoreContextRows, updateLimit)}</>;
             }}

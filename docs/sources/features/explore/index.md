@@ -21,7 +21,7 @@ For infrastructure monitoring and incident response, you no longer need to switc
 1. Drill down and examine metrics
 1. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces).
 
-If you just want to explore your data and do not want to create a dashboard then Explore makes this much easier. Explore will show the results as both a graph and a table enabling you to see trends in the data and more detail at the same time (if the data source supports both graph and table data).
+If you just want to explore your data and do not want to create a dashboard, then Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time.
 
 ## Start exploring
 
@@ -35,7 +35,7 @@ If you want to start with an existing query in a panel then choose the Explore o
 
 {{< docs-imagebox img="/img/docs/v65/explore_panel_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
-Choose your data source in the dropdown in the top left. Prometheus has a custom Explore implementation, the other data sources (for now) use their standard query editor.
+Choose your data source from the dropdown in the top left. Prometheus has a custom Explore implementation, the other data sources (for now) use their standard query editor.
 
 The query field is where you can write your query and explore your data. There are three buttons beside the query field, a clear button (X), an add query button (+) and the remove query button (-). Just like the normal query editor, you can add and remove multiple queries.
 
@@ -84,7 +84,7 @@ By default, query history shows you the most recent queries. You can sort your h
 
 Filter query history in Query history and Starred tab by data source name:
 
-1. Click the **Filter queries for specific data source(s)** field
+1. Click the **Filter queries for specific data source(s)** field.
 2. Select the data source for which you would like to filter your history. You can select multiple data sources.
 
 In **Query history** tab it is also possible to filter queries by date using the slider:
@@ -95,6 +95,13 @@ In **Query history** tab it is also possible to filter queries by date using the
 
 > Note: If you are in split mode, filters are applied only to your currently active panel.
 
+### Search in query history
+
+You can search in your history across queries and your comments. Search is possible for queries in the Query history tab and Starred tab.
+
+1. Click the **Search queries** field.
+1. Type the term you are searching for into search field.
+
 ### Query history settings
 
 You can customize the query history in the Settings tab. Options are described in the table below.
@@ -103,7 +110,7 @@ You can customize the query history in the Settings tab. Options are described i
 | ------------------------------------------------------------- | --------------------------------------- |
 | Period of time for which Grafana will save your query history | 1 week                                  |
 | Change the default active tab                                 | Query history tab                       |
-| Only show queries for datasource currently active in Explore  | False                                   |
+| Only show queries for data source currently active in Explore | True                                    |
 | Clear query history                                           | Permanently deletes all stored queries. |
 
 > Note: Query history settings are global, and applied to both panels in split mode.
@@ -114,7 +121,7 @@ The first version of Explore features a custom querying experience for Prometheu
 
 ### Metrics explorer
 
-On the left-hand side of the query field is a `Metrics` button, clicking on this opens the Metric Explorer. This shows a hierarchical menu with metrics grouped by their prefix. For example, all the Alert Manager metrics will be grouped under the `alertmanager` prefix. This is a good starting point if you just want to explore which metrics are available.
+On the left side of the query field, click **Metrics** to open the Metric Explorer. This shows a hierarchical menu with metrics grouped by their prefix. For example, all Alertmanager metrics are grouped under the `alertmanager` prefix. This is a good starting point if you just want to explore which metrics are available.
 
 {{< docs-imagebox img="/img/docs/v65/explore_metric_explorer.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
@@ -146,14 +153,6 @@ Along with metrics, Explore allows you to investigate your logs with the followi
 
 You can customize how logs are displayed and select which columns are shown.
 
-#### Deduping
-
-Log data can be very repetitive and Explore can help by hiding duplicate log lines. There are a few different deduplication algorithms that you can use:
-
-- `exact` Exact matches are done on the whole line, except for date fields.
-- `numbers` Matches on the line after stripping out numbers (durations, IP addresses etc.).
-- `signature` The most aggressive deduping - strips all letters and numbers, and matches on the remaining whitespace and punctuation.
-
 #### Time
 
 Shows or hides the time column. This is the timestamp associated with the log line as reported from the data source.
@@ -165,6 +164,18 @@ Shows or hides the unique labels column that includes only non-common labels. Al
 #### Wrap lines
 
 Set this to True if you want the display to use line wrapping. If set to False, it will result in horizontal scrolling.
+
+#### Deduping
+
+Log data can be very repetitive and Explore can help by hiding duplicate log lines. There are a few different deduplication algorithms that you can use:
+
+- **Exact -** Exact matches are done on the whole line except for date fields.
+- **Numbers -** Matches on the line after stripping out numbers such as durations, IP addresses, and so on.
+- **Signature -** The most aggressive deduping, this strips all letters and numbers and matches on the remaining whitespace and punctuation.
+
+#### Flip results order
+
+You can change the order of received logs from the default descending order (newest first) to ascending order (oldest first).
 
 ### Labels and parsed fields
 
@@ -199,6 +210,7 @@ While in Live tail view new logs will come from the bottom of the screen and wil
 {{< docs-imagebox img="/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}
 
 ## Tracing integration
+
 > Only available in Grafana v7.0+.
 
 You can visualize traces from tracing data sources in explore. Data sources currently supported:
@@ -229,12 +241,13 @@ Shows condensed view or the trace timeline. Drag your mouse over the minimap to 
 {{< docs-imagebox img="/img/docs/v70/explore-trace-view-timeline.png" class="docs-image--no-shadow" caption="Screenshot of the trace view timeline" >}}
 
 Shows list of spans within the trace. Each span row consists of these components:
+
 - Expand children button: Expands or collapses all the children spans of selected span.
 - Service name: Name of the service logged the span.
 - Operation name: Name of the operation that this span represents.
 - Span duration bar: Visual representation of the operation duration within the trace.
 
-Clicking anywhere on the span row will show span details. 
+Clicking anywhere on the span row shows span details.
 
 ##### Span details
 

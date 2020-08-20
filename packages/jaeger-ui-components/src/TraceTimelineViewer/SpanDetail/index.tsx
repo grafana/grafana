@@ -25,11 +25,12 @@ import CopyIcon from '../../common/CopyIcon';
 import LabeledList from '../../common/LabeledList';
 
 import { TNil } from '../../types';
-import { KeyValuePair, Link, Log, Span } from '@grafana/data';
+import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan } from '@grafana/data';
 import AccordianReferences from './AccordianReferences';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { UIDivider } from '../../uiElementsContext';
 import { ubFlex, ubFlexAuto, ubItemsCenter, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
+import { TextArea } from '@grafana/ui';
 
 const getStyles = createStyle((theme: Theme) => {
   return {
@@ -94,19 +95,24 @@ const getStyles = createStyle((theme: Theme) => {
       label: AccordianWarningsLabel;
       color: ${autoColor(theme, '#d36c08')};
     `,
+    Textarea: css`
+      word-break: break-all;
+      white-space: pre;
+    `,
   };
 });
 
 type SpanDetailProps = {
   detailState: DetailState;
-  linksGetter: ((links: KeyValuePair[], index: number) => Link[]) | TNil;
-  logItemToggle: (spanID: string, log: Log) => void;
+  linksGetter: ((links: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
+  logItemToggle: (spanID: string, log: TraceLog) => void;
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
-  span: Span;
+  span: TraceSpan;
   tagsToggle: (spanID: string) => void;
   traceStartTime: number;
   warningsToggle: (spanID: string) => void;
+  stackTracesToggle: (spanID: string) => void;
   referencesToggle: (spanID: string) => void;
   focusSpan: (uiFind: string) => void;
 };
@@ -122,11 +128,30 @@ export default function SpanDetail(props: SpanDetailProps) {
     tagsToggle,
     traceStartTime,
     warningsToggle,
+    stackTracesToggle,
     referencesToggle,
     focusSpan,
   } = props;
-  const { isTagsOpen, isProcessOpen, logs: logsState, isWarningsOpen, isReferencesOpen } = detailState;
-  const { operationName, process, duration, relativeStartTime, spanID, logs, tags, warnings, references } = span;
+  const {
+    isTagsOpen,
+    isProcessOpen,
+    logs: logsState,
+    isWarningsOpen,
+    isReferencesOpen,
+    isStackTracesOpen,
+  } = detailState;
+  const {
+    operationName,
+    process,
+    duration,
+    relativeStartTime,
+    spanID,
+    logs,
+    tags,
+    warnings,
+    references,
+    stackTraces,
+  } = span;
   const overviewItems = [
     {
       key: 'svc',
@@ -193,6 +218,24 @@ export default function SpanDetail(props: SpanDetailProps) {
             data={warnings}
             isOpen={isWarningsOpen}
             onToggle={() => warningsToggle(spanID)}
+          />
+        )}
+        {stackTraces && stackTraces.length && (
+          <AccordianText
+            label="Stack trace"
+            data={stackTraces}
+            isOpen={isStackTracesOpen}
+            TextComponent={textComponentProps => (
+              <TextArea
+                className={styles.Textarea}
+                style={{ cursor: 'unset' }}
+                readOnly
+                cols={10}
+                rows={10}
+                value={textComponentProps.data}
+              />
+            )}
+            onToggle={() => stackTracesToggle(spanID)}
           />
         )}
         {references && references.length > 1 && (

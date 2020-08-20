@@ -122,7 +122,7 @@ function pluginDirectiveLoader(
             'panel-ctrl': 'ctrl',
             datasource: 'ctrl.datasource',
           },
-          Component: ds.components.QueryCtrl,
+          Component: ds.components!.QueryCtrl,
         });
       }
       // Annotations
@@ -189,6 +189,10 @@ function pluginDirectiveLoader(
       case 'app-page': {
         const appModel = scope.ctrl.appModel;
         return importAppPlugin(appModel).then(appPlugin => {
+          if (!appPlugin.angularPages) {
+            throw new Error('Plugin has no page components');
+          }
+
           return {
             baseUrl: appModel.baseUrl,
             name: 'app-page-' + appModel.id + '-' + scope.ctrl.page.slug,
@@ -262,7 +266,7 @@ function pluginDirectiveLoader(
           registerPluginComponent(scope, elem, attrs, componentInfo);
         })
         .catch((err: any) => {
-          console.log('Plugin component error', err);
+          console.error('Plugin component error', err);
         });
     },
   };

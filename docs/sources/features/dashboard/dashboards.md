@@ -43,7 +43,7 @@ The time period for the dashboard can be controlled by the [Time range controls]
 
 Dashboards can use [templating]({{< relref "../../variables/templates-and-variables.md" >}}) to make them more dynamic and interactive.
 
-Dashboards can use [annotations]({{< relref "../../reference/annotations.md" >}}) to display event data across panels. This can help correlate the time series data in the panel with other events.
+Dashboards can use [annotations]({{< relref "../../dashboards/annotations.md" >}}) to display event data across panels. This can help correlate the time series data in the panel with other events.
 
 Dashboards can be [shared]({{< relref "../../reference/share_dashboard.md" >}}) easily in a variety of ways.
 

@@ -15,7 +15,7 @@ In previous versions of Grafana, you could only use the API for provisioning dat
 
 ## Config File
 
-Check out the [configuration]({{< relref "../installation/configuration" >}}) page for more information on what you can configure in `grafana.ini`
+Check out the [configuration]({{< relref "configuration.md" >}}) page for more information on what you can configure in `grafana.ini`
 
 ### Config File Locations
 
@@ -61,17 +61,17 @@ Currently we do not provide any scripts/manifests for configuring Grafana. Rathe
 | Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana) |
 | Jsonnet   | [https://github.com/grafana/grafonnet-lib/](https://github.com/grafana/grafonnet-lib/)                         |
 
-## Datasources
+## Data sources
 
 > This feature is available from v5.0
 
-It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `deleteDatasources`. Grafana will delete datasources listed in `deleteDatasources` before inserting/updating those in the `datasource` list.
+It's possible to manage data sources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/administration/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the data source already exists, then Grafana updates it to match the configuration file. The config file can also contain a list of data sources that should be deleted. That list is called `deleteDatasources`. Grafana will delete data sources listed in `deleteDatasources` before inserting/updating those in the `datasource` list.
 
 ### Running Multiple Grafana Instances
 
 If you are running multiple instances of Grafana you might run into problems if they have different versions of the `datasource.yaml` configuration file. The best way to solve this problem is to add a version number to each datasource in the configuration and increase it when you update the config. Grafana will only update datasources with the same or lower version number than specified in the config. That way, old configs cannot overwrite newer configs if they restart at the same time.
 
-### Example Datasource Config File
+### Example data source Config File
 
 ```yaml
 # config file version
@@ -151,6 +151,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsSkipVerify           | boolean | _All_                                                            | Controls whether a client verifies the server's certificate chain and host name.            |
 | graphiteVersion         | string  | Graphite                                                         | Graphite version                                                                            |
 | timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source                         |
+| httpMode                | string  | Influxdb, Prometheus                                             | HTTP Method. 'GET', 'POST', defaults to GET                 |
 | esVersion               | number  | Elasticsearch                                                    | Elasticsearch version as a number (2/5/56/60/70)                                            |
 | timeField               | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                |
 | interval                | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |
@@ -177,7 +178,7 @@ Since not all datasources have the same configuration settings we only have the 
 
 `{"authType":"keys","defaultRegion":"us-west-2","timeField":"@timestamp"}`
 
-Secure json data is a map of settings that will be encrypted with [secret key]({{< relref "../installation/configuration/#secret-key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
+Secure json data is a map of settings that will be encrypted with [secret key]({{< relref "configuration.md#secret-key" >}}) from the Grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to the request on the server side. All of these settings are optional.
 
 | Name              | Type   | Datasource | Description                             |
 | ----------------- | ------ | ---------- | --------------------------------------- |
@@ -191,7 +192,7 @@ Secure json data is a map of settings that will be encrypted with [secret key]({
 
 #### Custom HTTP headers for datasources
 
-Datasources managed by Grafanas provisioning can be configured to add HTTP headers to all requests
+Data sources managed by Grafanas provisioning can be configured to add HTTP headers to all requests
 going to that datasource. The header name is configured in the `jsonData` field and the header value should be
 configured in `secureJsonData`.
 
@@ -208,9 +209,39 @@ datasources:
       httpHeaderValue2: 'Bearer XXXXXXXXX'
 ```
 
+## Plugins
+
+> This feature is available from v7.1
+
+You can manage plugins in Grafana by adding one or more YAML config files in the [`provisioning/plugins`]({{< relref "configuration.md#provisioning" >}}) directory. Each config file can contain a list of `apps` that will be updated during start up. Grafana updates each app to match the configuration file.
+
+### Example plugin configuration file
+
+```yaml
+apiVersion: 1
+
+apps:
+  # <string> the type of app, plugin identifier. Required
+  - type: raintank-worldping-app
+    # <int> Org ID. Default to 1, unless org_name is specified
+    org_id: 1
+    # <string> Org name. Overrides org_id unless org_id not specified
+    org_name: Main Org.
+    # <bool> disable the app. Default to false.
+    disabled: false
+    # <map> fields that will be converted to json and stored in jsonData. Custom per app.
+    jsonData:
+      # key/value pairs of string to object
+      key: value
+    # <map> fields that will be converted to json, encrypted and stored in secureJsonData. Custom per app.
+    secureJsonData:
+      # key/value pairs of string to string
+      key: value
+```
+
 ## Dashboards
 
-It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`]({{< relref "../installation/configuration.md" >}}) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana from the local filesystem.
+You can manage dashboards in Grafana by adding one or more YAML config files in the [`provisioning/dashboards`]({{< relref "configuration.md" >}}) directory. Each config file can contain a list of `dashboards providers` that load dashboards into Grafana from the local filesystem.
 
 The dashboard provider config file looks somewhat like this:
 
@@ -239,9 +270,13 @@ providers:
     options:
       # <string, required> path to dashboard files on disk. Required when using the 'file' type
       path: /var/lib/grafana/dashboards
+      # <bool> use folder names from filesystem to create folders in Grafana
+      foldersFromFilesStructure: true
 ```
 
 When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path every **updateIntervalSeconds** and look for updated json files and update/insert those into the database.
+
+> **Note:** Dashboards are provisioned to the General folder if the `folder` option is missing or empty.
 
 #### Making changes to a provisioned dashboard
 
@@ -272,9 +307,40 @@ By default Grafana will delete dashboards in the database if the file is removed
 > Be careful not to re-use the same `title` multiple times within a folder
 > or `uid` within the same installation as this will cause weird behaviors.
 
+### Provision folders structure from filesystem to Grafana
+If you already store your dashboards using folders in a git repo or on a filesystem, and also you want to have the same folder names in the Grafana menu, you can use `foldersFromFilesStructure` option.
+
+For example, to replicate these dashboards structure from the filesystem to Grafana,
+```
+/etc/dashboards
+├── /server
+│   ├── /common_dashboard.json
+│   └── /network_dashboard.json
+└── /application
+    ├── /requests_dashboard.json
+    └── /resources_dashboard.json
+```
+you need to specify just this short provision configuration file.
+```yaml
+apiVersion: 1
+
+providers:
+- name: dashboards
+  type: file
+  updateIntervalSeconds: 30
+  options:
+    path: /etc/dashboards
+    foldersFromFilesStructure: true
+```
+`server` and `application` will become new folders in Grafana menu.
+
+> **Note.** `folder` and `folderUid` options should be empty or missing to make `foldersFromFilesStructure` work.
+
+> **Note:** To provision dashboards to the General folder, store them in the root of your `path`.
+
 ## Alert Notification Channels
 
-Alert Notification Channels can be provisioned by adding one or more yaml config files in the [`provisioning/notifiers`](/installation/configuration/#provisioning) directory.
+Alert Notification Channels can be provisioned by adding one or more yaml config files in the [`provisioning/notifiers`](/administration/configuration/#provisioning) directory.
 
 Each config file can contain the following top-level fields:
 
@@ -317,12 +383,16 @@ notifiers:
     send_reminder: true
     frequency: 1h
     disable_resolve_message: false
-    # See `Supported Settings` section for settings supporter for each
+    # See `Supported Settings` section for settings supported for each
     # alert notification type.
     settings:
       recipient: 'XXX'
-      token: 'xoxb'
       uploadImage: true
+      token: 'xoxb' # legacy setting since Grafana v7.2 (stored non-encrypted)
+      url: https://slack.com # legacy setting since Grafana v7.2 (stored non-encrypted)
+    # Secure settings that will be encrypted in the database (supported since Grafana v7.2). See `Supported Settings` section for secure settings supported for each notifier.
+    secure_settings:
+      token: 'xoxb'
       url: https://slack.com
 
 delete_notifiers:
@@ -338,7 +408,9 @@ delete_notifiers:
 
 ### Supported Settings
 
-The following sections detail the supported settings for each alert notification type.
+The following sections detail the supported settings and secure settings for each alert notification type. Secure settings are stored encrypted in the database and you add them to `secure_settings` in the YAML file instead of `settings`.
+
+> **Note**: Secure settings is supported since Grafana v7.2.
 
 #### Alert notification `pushover`
 
@@ -352,18 +424,18 @@ The following sections detail the supported settings for each alert notification
 
 #### Alert notification `slack`
 
-| Name           |
-| -------------- |
-| url            |
-| recipient      |
-| username       |
-| icon_emoji     |
-| icon_url       |
-| uploadImage    |
-| mentionUsers   |
-| mentionGroups  |
-| mentionChannel |
-| token          |
+| Name           | Secure setting |
+| -------------- | -------------- |
+| url            | yes |
+| recipient      | |
+| username       | |
+| icon_emoji     | |
+| icon_url       | |
+| uploadImage    | |
+| mentionUsers   | |
+| mentionGroups  | |
+| mentionChannel | |
+| token          | yes |
 
 #### Alert notification `victorops`
 
@@ -387,10 +459,10 @@ The following sections detail the supported settings for each alert notification
 
 #### Alert notification `pagerduty`
 
-| Name           |
-| -------------- |
-| integrationKey |
-| autoResolve    |
+| Name           | Secure setting |
+| -------------- | - |
+| integrationKey | yes |
+| autoResolve    | |
 
 #### Alert notification `sensu`
 
@@ -404,11 +476,11 @@ The following sections detail the supported settings for each alert notification
 
 #### Alert notification `prometheus-alertmanager`
 
-| Name              |
-| ----------------- |
-| url               |
-| basicAuthUser     |
-| basicAuthPassword |
+| Name              | Secure setting |
+| ----------------- | - |
+| url               | |
+| basicAuthUser     | |
+| basicAuthPassword | yes |
 
 #### Alert notification `teams`
 
@@ -464,11 +536,11 @@ The following sections detail the supported settings for each alert notification
 
 #### Alert notification `webhook`
 
-| Name     |
-| -------- |
-| url      |
-| username |
-| password |
+| Name     | Secure setting |
+| -------- | - |
+| url      | |
+| username | |
+| password | yes |
 
 #### Alert notification `googlechat`
 

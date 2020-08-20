@@ -49,12 +49,12 @@ export class GrafanaBootConfig implements GrafanaConfig {
   theme: GrafanaTheme;
   pluginsToPreload: string[] = [];
   featureToggles: FeatureToggles = {
-    transformations: false,
+    live: false,
     expressions: false,
-    newEdit: false,
     meta: false,
     datasourceInsights: false,
     reportGrid: false,
+    standaloneAlerts: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;

@@ -72,10 +72,8 @@ type routeRegister struct {
 }
 
 func (rr *routeRegister) Insert(pattern string, fn func(RouteRegister), handlers ...macaron.Handler) {
-
 	//loop over all groups at current level
 	for _, g := range rr.groups {
-
 		// apply routes if the prefix matches the pattern
 		if g.prefix == pattern {
 			g.Group("", fn)

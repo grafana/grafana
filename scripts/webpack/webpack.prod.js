@@ -66,13 +66,6 @@ module.exports = merge(common, {
               ],
             },
           },
-          {
-            loader: 'eslint-loader',
-            options: {
-              emitError: true,
-              emitWarning: true,
-            },
-          },
         ],
       },
       require('./sass.rule.js')({
@@ -94,8 +87,18 @@ module.exports = merge(common, {
   },
   plugins: [
     new ForkTsCheckerWebpackPlugin({
-      checkSyntacticErrors: true,
-      memoryLimit: 4096,
+      eslint: {
+        enabled: true,
+        files: ['public/app/**/*.{ts,tsx}', 'packages/*/src/**/*.{ts,tsx}'],
+      },
+      typescript: {
+        mode: 'write-references',
+        memoryLimit: 4096,
+        diagnosticOptions: {
+          semantic: true,
+          syntactic: true,
+        },
+      },
     }),
     new MiniCssExtractPlugin({
       filename: 'grafana.[name].[hash].css',

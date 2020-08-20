@@ -17,7 +17,7 @@ interface Props {
   dashboard: DashboardModel;
   panel: PanelModel;
   plugin?: PanelPlugin | null;
-  defaultTab: InspectTab;
+  defaultTab?: InspectTab;
   tabs: Array<{ label: string; value: InspectTab }>;
   // The last raw response
   data?: PanelData;
@@ -91,7 +91,7 @@ export const InspectContent: React.FC<Props> = ({
             <InspectJSONTab panel={panel} dashboard={dashboard} data={data} onClose={onClose} />
           )}
           {activeTab === InspectTab.Error && <InspectErrorTab error={error} />}
-          {data && activeTab === InspectTab.Stats && <InspectStatsTab data={data} dashboard={dashboard} />}
+          {data && activeTab === InspectTab.Stats && <InspectStatsTab data={data} timeZone={dashboard.getTimezone()} />}
           {data && activeTab === InspectTab.Query && <QueryInspector panel={panel} data={data.series} />}
         </TabContent>
       </CustomScrollbar>

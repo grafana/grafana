@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react-hooks';
 import { useSearch } from './useSearch';
-import { Span } from '@grafana/data';
+import { TraceSpan } from '@grafana/data';
 
 describe('useSearch', () => {
   it('returns matching span IDs', async () => {
@@ -15,7 +15,7 @@ describe('useSearch', () => {
           },
           tags: [],
           logs: [],
-        } as unknown) as Span,
+        } as unknown) as TraceSpan,
 
         ({
           spanID: 'span2',
@@ -26,7 +26,7 @@ describe('useSearch', () => {
           },
           tags: [],
           logs: [],
-        } as unknown) as Span,
+        } as unknown) as TraceSpan,
       ])
     );
 

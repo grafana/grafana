@@ -73,13 +73,6 @@ module.exports = (env = {}) =>
                 ],
               },
             },
-            {
-              loader: 'eslint-loader',
-              options: {
-                emitError: true,
-                emitWarning: true,
-              },
-            },
           ],
         },
         require('./sass.rule.js')({
@@ -94,7 +87,20 @@ module.exports = (env = {}) =>
       env.noTsCheck
         ? new webpack.DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ForkTsCheckerWebpackPlugin({
-            checkSyntacticErrors: true,
+            eslint: {
+              enabled: true,
+              files: ['public/app/**/*.{ts,tsx}', 'packages/*/src/**/*.{ts,tsx}'],
+              options: {
+                cache: true,
+              },
+            },
+            typescript: {
+              mode: 'write-references',
+              diagnosticOptions: {
+                semantic: true,
+                syntactic: true,
+              },
+            },
           }),
       new MiniCssExtractPlugin({
         filename: 'grafana.[name].[hash].css',

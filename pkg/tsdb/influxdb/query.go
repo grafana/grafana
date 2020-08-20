@@ -16,7 +16,6 @@ var (
 
 func (query *Query) Build(queryContext *tsdb.TsdbQuery) (string, error) {
 	var res string
-
 	if query.UseRawQuery && query.RawQuery != "" {
 		res = query.RawQuery
 	} else {
@@ -63,11 +62,12 @@ func (query *Query) renderTags() []string {
 
 		// quote value unless regex or number
 		var textValue string
-		if tag.Operator == "=~" || tag.Operator == "!~" {
+		switch tag.Operator {
+		case "=~", "!~":
 			textValue = tag.Value
-		} else if tag.Operator == "<" || tag.Operator == ">" {
+		case "<", ">":
 			textValue = tag.Value
-		} else {
+		default:
 			textValue = fmt.Sprintf("'%s'", strings.Replace(tag.Value, `\`, `\\`, -1))
 		}
 
@@ -93,7 +93,6 @@ func (query *Query) renderSelectors(queryContext *tsdb.TsdbQuery) string {
 
 	var selectors []string
 	for _, sel := range query.Selects {
-
 		stk := ""
 		for _, s := range *sel {
 			stk = s.Render(query, queryContext, stk)

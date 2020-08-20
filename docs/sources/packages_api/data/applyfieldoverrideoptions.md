@@ -27,6 +27,7 @@ import { ApplyFieldOverrideOptions } from '@grafana/data';
 |  [data](#data-property) | <code>DataFrame[]</code> |  |
 |  [fieldConfig](#fieldconfig-property) | <code>FieldConfigSource</code> |  |
 |  [fieldConfigRegistry](#fieldconfigregistry-property) | <code>FieldConfigOptionsRegistry</code> |  |
+|  [getDataSourceSettingsByUid](#getdatasourcesettingsbyuid-property) | <code>(uid: string) =&gt; DataSourceInstanceSettings &#124; undefined</code> |  |
 |  [replaceVariables](#replacevariables-property) | <code>InterpolateFunction</code> |  |
 |  [theme](#theme-property) | <code>GrafanaTheme</code> |  |
 |  [timeZone](#timezone-property) | <code>TimeZone</code> |  |
@@ -61,6 +62,14 @@ fieldConfig: FieldConfigSource;
 
 ```typescript
 fieldConfigRegistry?: FieldConfigOptionsRegistry;
+```
+
+### getDataSourceSettingsByUid property
+
+<b>Signature</b>
+
+```typescript
+getDataSourceSettingsByUid: (uid: string) => DataSourceInstanceSettings | undefined;
 ```
 
 ### replaceVariables property
