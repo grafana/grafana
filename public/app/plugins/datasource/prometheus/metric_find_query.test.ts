@@ -115,8 +115,8 @@ describe('PrometheusMetricFindQuery', () => {
       const results = await query.process();
 
       expect(results).toHaveLength(3);
-      expect(fecthMock).toHaveBeenCalledTimes(1);
-      expect(fecthMock).toHaveBeenCalledWith({
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
         url: `proxied/api/v1/series?match${encodeURIComponent(
           '[]'
