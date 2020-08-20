@@ -73,6 +73,7 @@ Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
 VictorOps | `victorops` | yes, external only | no
 [Webhook](#webhook) | `webhook` | yes, external only | yes
+[Zenduty](#zenduty) | `webhook` | yes, external only | yes
 
 ### Email
 
