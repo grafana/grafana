@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import appEvents from '../../app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { createFolder } from '../../../features/manage-dashboards/state/actions';
+import { createFolder } from 'app/features/manage-dashboards/state/actions';
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
