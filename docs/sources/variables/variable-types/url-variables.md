@@ -1,24 +1,19 @@
 +++
 title = "URL variables"
-keywords = ["grafana", "url variables", "documentation", "variables"]
+keywords = ["grafana", "url variables", "documentation", "variables", "data link"]
 aliases = ["/docs/grafana/latest/variables/url-variables.md"]
 type = "docs"
 +++
 
-# URL variables
+# Data link (URL) variables
 
-You can use variables in data links to link to specific portions of your visualizations. For more information about data links, refer to [Data links]({{< relref "../../linking/data-links.md" >}}).
+You can use variables in data links to link to specific portions of your visualizations. These variables are only used in the data links feature, but you can also append them to panel URLs. For more information about data links, refer to [Data links]({{< relref "../../linking/data-links.md" >}}).
 
-> **Note:** These variables changed in 6.4 so if you have an older version of Grafana please use the version picker to select
-docs for an older version of Grafana.
+> **Note:** These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
 
-## Typeahead suggestions
+## Time range panel variables
 
-Press Cmd+Space or Ctrl+Space on your keyboard to open the typeahead suggestions to more easily add variables to your URL.
-
-{{< docs-imagebox img="/img/docs/data_link_typeahead.png"  max-width= "800px" >}}
-
-## Time variables
+These variables allow you to set the time range for a panel. For more information about time settings and options in Grafana, refer to [Time range controls]({{< relref "../../dashboards/time-range-controls.md" >}})
 
 * ``__url_time_range`` - current dashboard's time range (i.e. ``?from=now-6h&to=now``)
 * ``__from`` - current dashboard's time range from value
@@ -33,13 +28,13 @@ Series specific variables are available under ``__series`` namespace:
 
 ## Field variables
 
-Field specific variables are available under ``__field`` namespace:
+Field-specific variables are available under ``__field`` namespace:
 
 * ``__field.name`` - field name to the URL
 
 ## Value variables
 
-Value specific variables are available under ``__value`` namespace:
+Value-specific variables are available under ``__value`` namespace:
 
 * ``__value.time`` - value's timestamp (Unix ms epoch) to the URL (i.e. ``?time=1560268814105``)
 * ``__value.raw`` - raw value
@@ -49,5 +44,5 @@ Value specific variables are available under ``__value`` namespace:
 
 ## Template variables
 
-When linking to another dashboard that uses template variables, you can use ``var-myvar=${myvar}`` syntax (where ``myvar`` is a name of template variable)
-to use current dashboard's variable value. If you want to add all of the current dashboard's variables to the URL use  ``__all_variables`` variable.
+When linking to another dashboard that uses template variables, you can use ``var-myvar=${myvar}`` syntax, where ``myvar`` is a name of template variable,
+to use the current dashboard's variable value. If you want to add all of the current dashboard's variables to the URL, then use  ``__all_variables``.

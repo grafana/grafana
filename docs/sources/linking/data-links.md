@@ -14,6 +14,14 @@ Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open th
 
 >**Note:** For stat, gauge, bar gauge, and table visualizations, you add and edit data links on the Field tab. For the graph visualization, you add and edit data links on the Panel tab.
 
+You can use variables in data links to send people to exactly the visualization that you want them to see. For example, you could use variables to specify a time range, series, and variable selection. For more information, refer to [URL variables]({{< relref "../variables/variable-types/url-variables.md" >}}).
+
+## Typeahead suggestions
+
+When creating or updating a data link, press Cmd+Space or Ctrl+Space on your keyboard to open the typeahead suggestions to more easily add variables to your URL.
+
+{{< docs-imagebox img="/img/docs/data_link_typeahead.png"  max-width= "800px" >}}
+
 ## Add a data link
 
 1. Hover your cursor over the panel that you want to add a link to and then press `e`. Or click the dropdown arrow next to the panel title and then click **Edit**.
