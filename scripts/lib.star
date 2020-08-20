@@ -3,7 +3,7 @@ publish_image = 'grafana/grafana-ci-deploy:1.2.5'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.2.0'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
-grabpl_version = '0.5.1'
+grabpl_version = '0.5.2'
 
 def pr_pipelines(edition):
     services = [
@@ -102,7 +102,7 @@ def master_pipelines(edition):
         deploy_to_kubernetes_step(edition),
     ]
     windows_steps = [
-        windows_installer_step(edition),
+        windows_installer_step(edition=edition, version_mode='master'),
     ]
     trigger = {
         'event': ['push',],
@@ -283,7 +283,7 @@ def publish_storybook_step(edition):
         'commands': [
             'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
             'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
-            'echo gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary',
+            'gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary',
         ],
     }
 
@@ -577,8 +577,7 @@ def release_next_npm_packages_step(edition):
         'commands': [
             'npx lerna bootstrap',
             'echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc',
-            # TODO: Enable
-            'echo ./scripts/circle-release-next-packages.sh',
+            './scripts/circle-release-next-packages.sh',
         ],
     }
 
@@ -593,8 +592,7 @@ def deploy_to_kubernetes_step(edition):
             'build-docker-images',
         ],
         'commands': [
-            # TODO: Enable
-            'echo ./bin/grabpl deploy-to-k8s',
+            './bin/grabpl deploy-to-k8s',
         ],
     }
 
@@ -609,12 +607,11 @@ def publish_packages_step(edition):
             'postgres-integration-tests',
         ],
         'commands': [
-            # TODO: Enable
-            'echo ./bin/grabpl publish-packages --edition {}'.format(edition),
+            './bin/grabpl publish-packages --edition {}'.format(edition),
         ],
     }
 
-def windows_installer_step(edition):
+def windows_installer_step(edition, version_mode):
     sfx = ''
     if edition == 'enterprise':
         sfx = '-enterprise'
@@ -635,12 +632,10 @@ def windows_installer_step(edition):
             'rm gcpkey.json',
             '$$ProgressPreference = "SilentlyContinue"',
             'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
-            # TODO: Infer correct Grafana version
-            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/{}/master/grafana{}-7.2.0-9fffe273pre.windows-amd64.zip -OutFile grafana.zip'.format(edition, sfx),
             'cp C:\\App\\nssm-2.24.zip .',
-            './grabpl.exe windows-installer --edition {} grafana.zip'.format(edition),
+            './grabpl.exe windows-installer --edition {} --build-id $DRONE_BUILD_NUMBER'.format(edition),
             '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
-            'echo "gsutil cp $$fname gs://grafana-downloads/{}/master/"'.format(edition),
-            'echo "gsutil cp $$fname.sha256 gs://grafana-downloads/{}/master/"'.format(edition),
+            'gsutil cp $$fname gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
+            'gsutil cp $$fname.sha256 gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
         ],
     }

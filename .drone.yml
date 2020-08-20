@@ -26,7 +26,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.5.1
+    GRABPL_VERSION: 0.5.2
 
 - name: lint-backend
   image: grafana/build-container:1.2.24
@@ -253,7 +253,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.5.1
+    GRABPL_VERSION: 0.5.2
 
 - name: lint-backend
   image: grafana/build-container:1.2.24
@@ -379,7 +379,7 @@ steps:
   commands:
   - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-  - echo gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary
+  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -457,7 +457,7 @@ steps:
   commands:
   - npx lerna bootstrap
   - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
-  - echo ./scripts/circle-release-next-packages.sh
+  - ./scripts/circle-release-next-packages.sh
   environment:
     NPM_TOKEN:
       from_secret: npm_token
@@ -467,7 +467,7 @@ steps:
 - name: publish-packages
   image: grafana/grafana-ci-deploy:1.2.5
   commands:
-  - echo ./bin/grabpl publish-packages --edition oss
+  - ./bin/grabpl publish-packages --edition oss
   depends_on:
   - package
   - end-to-end-tests
@@ -521,13 +521,12 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.1/windows/grabpl.exe -OutFile grabpl.exe
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/oss/master/grafana-7.2.0-9fffe273pre.windows-amd64.zip -OutFile grafana.zip
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.2/windows/grabpl.exe -OutFile grabpl.exe
   - cp C:\App\nssm-2.24.zip .
-  - ./grabpl.exe windows-installer --edition oss grafana.zip
+  - ./grabpl.exe windows-installer --edition oss --build-id $DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - echo "gsutil cp $$fname gs://grafana-downloads/oss/master/"
-  - echo "gsutil cp $$fname.sha256 gs://grafana-downloads/oss/master/"
+  - gsutil cp $$fname gs://grafana-downloads/oss/master/
+  - gsutil cp $$fname.sha256 gs://grafana-downloads/oss/master/
   environment:
     GCP_KEY:
       from_secret: gcp_key
