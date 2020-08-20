@@ -42,7 +42,7 @@ require (
 	github.com/hashicorp/go-plugin v1.2.2
 	github.com/hashicorp/go-version v1.1.0
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
-	github.com/influxdata/influxdb-client-go v0.0.0-20200814135139-d68836272a45
+	github.com/influxdata/influxdb-client-go/v2 v2.0.1
 	github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 	github.com/jung-kurt/gofpdf v1.10.1
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
@@ -50,6 +50,7 @@ require (
 	github.com/klauspost/cpuid v1.2.0 // indirect
 	github.com/lib/pq v1.2.0
 	github.com/linkedin/goavro/v2 v2.9.7
+	github.com/magefile/mage v1.9.0
 	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.11.0

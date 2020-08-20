@@ -16,8 +16,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/xorcare/pointer"
 
-	influxdb2 "github.com/influxdata/influxdb-client-go"
-	"github.com/influxdata/influxdb-client-go/api"
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"github.com/influxdata/influxdb-client-go/v2/api"
 )
 
 //--------------------------------------------------------------
@@ -55,7 +55,7 @@ func verifyGoldenResponse(name string) (*backend.DataResponse, error) {
 		testDataPath: name + ".csv",
 	}
 
-	dr := executeQuery(context.Background(), QueryModel{MaxDataPoints: 100}, runner, 50)
+	dr := executeQuery(context.Background(), queryModel{MaxDataPoints: 100}, runner, 50)
 	err := experimental.CheckGoldenDataResponse("./testdata/"+name+".golden.txt", &dr, true)
 	return &dr, err
 }
