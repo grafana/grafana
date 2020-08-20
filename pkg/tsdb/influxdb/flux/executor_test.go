@@ -68,7 +68,7 @@ func TestExecuteSimple(t *testing.T) {
 			testDataPath: "simple.csv",
 		}
 
-		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
+		dr := executeQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
 
 		if dr.Error != nil {
 			t.Fatal(dr.Error)
@@ -104,7 +104,7 @@ func TestExecuteMultiple(t *testing.T) {
 			testDataPath: "multiple.csv",
 		}
 
-		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
+		dr := executeQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
 
 		if dr.Error != nil {
 			t.Fatal(dr.Error)
@@ -140,7 +140,7 @@ func TestExecuteGrouping(t *testing.T) {
 			testDataPath: "grouping.csv",
 		}
 
-		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
+		dr := executeQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
 
 		if dr.Error != nil {
 			t.Fatal(dr.Error)
@@ -176,7 +176,7 @@ func TestAggregateGrouping(t *testing.T) {
 			testDataPath: "aggregate.csv",
 		}
 
-		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
+		dr := executeQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
 		if dr.Error != nil {
 			t.Fatal(dr.Error)
 		}
@@ -229,7 +229,7 @@ func TestNonStandardTimeColumn(t *testing.T) {
 			testDataPath: "non_standard_time_column.csv",
 		}
 
-		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
+		dr := executeQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
 		if dr.Error != nil {
 			t.Fatal(dr.Error)
 		}
@@ -274,7 +274,7 @@ func TestBuckets(t *testing.T) {
 			testDataPath: "buckets.csv",
 		}
 
-		dr := ExecuteQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
+		dr := executeQuery(ctx, QueryModel{MaxDataPoints: 100}, runner, 50)
 
 		if dr.Error != nil {
 			t.Fatal(dr.Error)
