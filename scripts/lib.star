@@ -459,8 +459,7 @@ def e2e_tests_step():
             # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
             # even though the Yarn cache directory is beneath /usr/local/share somewhere
             './node_modules/.bin/cypress install',
-            './e2e/wait-for-grafana',
-            './e2e/run-suite',
+            './bin/grabpl e2e-tests',
         ],
     }
 

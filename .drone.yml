@@ -133,8 +133,7 @@ steps:
   image: grafana/ci-e2e:12.18-1
   commands:
   - ./node_modules/.bin/cypress install
-  - ./e2e/wait-for-grafana
-  - ./e2e/run-suite
+  - ./bin/grabpl e2e-tests
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -360,8 +359,7 @@ steps:
   image: grafana/ci-e2e:12.18-1
   commands:
   - ./node_modules/.bin/cypress install
-  - ./e2e/wait-for-grafana
-  - ./e2e/run-suite
+  - ./bin/grabpl e2e-tests
   environment:
     HOST: end-to-end-tests-server
   depends_on:
