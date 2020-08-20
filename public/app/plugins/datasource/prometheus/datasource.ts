@@ -18,7 +18,7 @@ import {
   TimeRange,
   TimeSeries,
 } from '@grafana/data';
-import { forkJoin, from, merge, Observable, of, throwError } from 'rxjs';
+import { forkJoin, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 
 import PrometheusMetricFindQuery from './metric_find_query';
@@ -272,8 +272,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       const target = activeTargets[index];
 
       let observable = query.instant
-        ? from(this.performInstantQuery(query, end))
-        : from(this.performTimeSeriesQuery(query, query.start, query.end));
+        ? this.performInstantQuery(query, end)
+        : this.performTimeSeriesQuery(query, query.start, query.end);
 
       return observable.pipe(
         // Decrease the counter here. We assume that each request returns only single value and then completes
@@ -305,8 +305,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       const target = activeTargets[index];
 
       let observable = query.instant
-        ? from(this.performInstantQuery(query, end))
-        : from(this.performTimeSeriesQuery(query, query.start, query.end));
+        ? this.performInstantQuery(query, end)
+        : this.performTimeSeriesQuery(query, query.start, query.end);
 
       return observable.pipe(
         filter((response: any) => (response.cancelled ? false : true)),
