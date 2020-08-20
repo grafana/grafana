@@ -697,10 +697,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   async loadRules() {
     try {
-      const res: any = await this.metadataRequest('/api/v1/rules');
-      const body = res.data || res.json();
+      const res = await this.metadataRequest('/api/v1/rules');
+      const groups = res.data?.data?.groups;
 
-      const groups = body?.data?.groups;
       if (groups) {
         this.ruleMappings = extractRuleMappingFromGroups(groups);
       }

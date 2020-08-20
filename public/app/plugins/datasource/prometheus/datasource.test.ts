@@ -283,7 +283,7 @@ describe('PrometheusDatasource', () => {
         },
       ];
 
-      ds.performTimeSeriesQuery = jest.fn().mockReturnValue([responseMock]);
+      ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of([responseMock]));
       ds.query(query).subscribe((result: any) => {
         const results = result.data;
         return expect(results).toMatchObject(expected);
@@ -325,7 +325,7 @@ describe('PrometheusDatasource', () => {
 
       const expected = ['1', '2', '4', '+Inf'];
 
-      ds.performTimeSeriesQuery = jest.fn().mockReturnValue([responseMock]);
+      ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of([responseMock]));
       ds.query(query).subscribe((result: any) => {
         const seriesLabels = _.map(result.data, 'target');
         return expect(seriesLabels).toEqual(expected);
