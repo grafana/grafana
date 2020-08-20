@@ -289,7 +289,7 @@ def publish_storybook_step(edition):
 
 def build_backend_step(edition, variants=None):
     if variants:
-        variants_str = ' --variants {} --no-pull-enterprise'.format(','.join(variants))
+        variants_str = ' --variants {}'.format(','.join(variants))
     else:
         variants_str = ''
     return {
@@ -302,7 +302,7 @@ def build_backend_step(edition, variants=None):
         ],
         'commands': [
             # TODO: Convert number of jobs to percentage
-            './bin/grabpl build-backend --jobs 8 --edition {} --build-id $DRONE_BUILD_NUMBER{}'.format(
+            './bin/grabpl build-backend --jobs 8 --edition {} --build-id $DRONE_BUILD_NUMBER{} --no-pull-enterprise'.format(
                 edition, variants_str
             ),
         ],

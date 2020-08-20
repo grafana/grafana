@@ -312,7 +312,7 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.2.24
   commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
   depends_on:
   - initialize
   - lint-backend
