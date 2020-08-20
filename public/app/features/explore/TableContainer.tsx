@@ -22,23 +22,7 @@ interface TableContainerProps {
   range: TimeRange;
 }
 
-interface TableContainerState {
-  tableContainerOpen: boolean;
-}
-
-export class TableContainer extends PureComponent<TableContainerProps, TableContainerState> {
-  state = {
-    tableContainerOpen: true,
-  };
-
-  onToggleCollapse = () => {
-    this.setState(prevState => {
-      return {
-        tableContainerOpen: !prevState.tableContainerOpen,
-      };
-    });
-  };
-
+export class TableContainer extends PureComponent<TableContainerProps> {
   getTableHeight() {
     const { tableResult } = this.props;
 
@@ -52,7 +36,6 @@ export class TableContainer extends PureComponent<TableContainerProps, TableCont
 
   render() {
     const { loading, onCellFilterAdded, tableResult, width, splitOpen, range } = this.props;
-    const { tableContainerOpen } = this.state;
 
     const height = this.getTableHeight();
     const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
@@ -70,13 +53,7 @@ export class TableContainer extends PureComponent<TableContainerProps, TableCont
     }
 
     return (
-      <Collapse
-        label="Table"
-        loading={loading}
-        collapsible
-        isOpen={tableContainerOpen}
-        onToggle={this.onToggleCollapse}
-      >
+      <Collapse label="Table" loading={loading} isOpen>
         {hasTableResult ? (
           <Table data={tableResult!} width={tableWidth} height={height} onCellFilterAdded={onCellFilterAdded} />
         ) : (

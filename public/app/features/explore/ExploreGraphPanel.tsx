@@ -72,14 +72,6 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
     });
   };
 
-  onToggleCollapse = () => {
-    this.setState(prevState => {
-      return {
-        graphContainerOpen: !prevState.graphContainerOpen,
-      };
-    });
-  };
-
   onChangeTime = (from: number, to: number) => {
     const { onUpdateTimeRange } = this.props;
     onUpdateTimeRange({ from, to });
@@ -148,7 +140,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
 
   render() {
     const { series, showPanel, loading, theme } = this.props;
-    const { showAllTimeSeries, graphContainerOpen } = this.state;
+    const { showAllTimeSeries } = this.state;
     const style = getStyles(theme);
 
     return (
@@ -165,13 +157,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
         )}
 
         {showPanel && (
-          <Collapse
-            label="Graph"
-            collapsible
-            isOpen={graphContainerOpen}
-            loading={loading}
-            onToggle={this.onToggleCollapse}
-          >
+          <Collapse label="Graph" loading={loading} isOpen>
             {this.renderGraph()}
           </Collapse>
         )}
