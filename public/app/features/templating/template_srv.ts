@@ -225,32 +225,29 @@ export class TemplateSrv implements BaseTemplateSrv {
     return scopedVar.value;
   }
 
-  replace(target: string, scopedVars: ScopedVars, format: 'list'): string[];
-  replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string;
-  replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string | string[] {
-    if (!target) {
-      return target ?? '';
-    }
-    switch (format) {
-      case 'list':
-        return TemplateSrv.cartesianProduct(
-          this.replaceWithoutFormatting(target, scopedVars).map(t => {
-            if (_.isArray(t.value)) {
-              return t.value.map(v => this.formatValue(v, t.format, t.variable));
-            } else {
-              return [this.formatValue(t.value, t.format, t.variable)];
-            }
-          })
-        ).map(t => t.join(''));
-      default:
-        return this.replaceWithoutFormatting(target, scopedVars, format)
-          .map(t => this.formatValue(t.value, t.format, t.variable))
-          .join('');
-    }
+  replaceToList(target: string, scopedVars: ScopedVars): string[] {
+    return TemplateSrv.cartesianProduct(
+      this.replaceWithoutFormatting(target, scopedVars).map(t => {
+        if (_.isArray(t.value)) {
+          return t.value.map(v => this.formatValue(v, t.format, t.variable));
+        } else {
+          return [this.formatValue(t.value, t.format, t.variable)];
+        }
+      })
+    ).map(t => t.join(''));
   }
 
   private static cartesianProduct(arr: any[][]) {
     return arr.reduce((a, b) => a.map(x => b.map(y => x.concat(y))).reduce((a, b) => a.concat(b), []), [[]]);
+  }
+
+  replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
+    if (!target) {
+      return target ?? '';
+    }
+    return this.replaceWithoutFormatting(target, scopedVars, format)
+      .map(t => this.formatValue(t.value, t.format, t.variable))
+      .join('');
   }
 
   private replaceWithoutFormatting(target: string, scopedVars?: ScopedVars, format?: string | Function): TargetToken[] {

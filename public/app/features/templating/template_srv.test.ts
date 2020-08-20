@@ -292,7 +292,7 @@ describe('templateSrv', () => {
     });
 
     it('should properly return all possible values', () => {
-      const target = _templateSrv.replace('prefix-$var-${var2:percentencode}-suffix', {}, 'list');
+      const target = _templateSrv.replaceToList('prefix-$var-${var2:percentencode}-suffix', {});
       expect(target).toStrictEqual([
         'prefix-replaced?-replaced%3F3-suffix',
         'prefix-replaced?-replaced%3F4-suffix',
