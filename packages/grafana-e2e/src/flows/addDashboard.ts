@@ -8,7 +8,7 @@ export interface AddDashboardConfig {
   timeRange: DashboardTimeRangeConfig;
   timezone: string;
   title: string;
-  variables: Partial<AddVariableConfig>[];
+  variables: Array<Partial<AddVariableConfig>>;
 }
 
 export interface AddVariableConfig {
@@ -145,7 +145,7 @@ const addVariable = (config: Partial<AddVariableConfig>, isFirst: boolean): any 
   return fullConfig;
 };
 
-const addVariables = (configs: Partial<AddVariableConfig>[]): any => {
+const addVariables = (configs: Array<Partial<AddVariableConfig>>): any => {
   if (configs.length > 0) {
     e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
   }
