@@ -134,6 +134,8 @@ func (s *Server) init(cfg *Config) error {
 
 		if cfg != nil {
 			if httpS, ok := service.Instance.(*api.HTTPServer); ok {
+				// Configure the api.HTTPServer if necessary
+				// Hopefully we can find a better solution, maybe with a more advanced DI framework, f.ex. Dig?
 				if cfg.Listener != nil {
 					s.log.Debug("Using provided listener for HTTP server")
 					httpS.Listener = cfg.Listener
