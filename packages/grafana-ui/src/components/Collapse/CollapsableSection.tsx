@@ -29,6 +29,7 @@ const collapsableSectionStyles = (theme: GrafanaTheme) => {
   return {
     header: css`
       font-size: ${theme.typography.size.lg};
+      cursor: pointer;
     `,
     content: css`
       padding-top: ${theme.spacing.md};
