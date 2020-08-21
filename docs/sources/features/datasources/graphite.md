@@ -17,14 +17,9 @@ Grafana has an advanced Graphite query editor that lets you quickly navigate the
 change function parameters and much more. The editor can handle all types of graphite queries. It can even handle complex nested
 queries through the use of query references.
 
-## Adding the data source
+ Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana.
 
-1. Open the side menu by clicking the Grafana icon in the top header.
-2. In the side menu under the `Configuration` link you should find a link named `Data Sources`.
-3. Click the `+ Add data source` button in the top header.
-4. Select `Graphite` from the *Type* dropdown.
-
-> NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
+> **Note:** If you do not see the `Data Sources` link in your side menu, then you do not have the `Admin` role for the current organization.
 
 Name | Description
 ------------ | -------------
@@ -70,7 +65,7 @@ Some functions like aliasByNode support an optional second argument. To add this
 {{< docs-imagebox img="/img/docs/v45/graphite_query3_still.png"
                   animated-gif="/img/docs/v45/graphite_query3.gif" >}}
 
-### Nested Queries
+### Nested queries
 
 You can reference queries by the row “letter” that they’re on (similar to  Microsoft Excel). If you add a second query to a graph, you can reference the first query simply by typing in #A. This provides an easy and convenient way to build compounded queries.
 
@@ -87,14 +82,13 @@ this consolidation is done using `avg` function. You can control how Graphite co
 
 ## Templating
 
-Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place.
-Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
+Instead of hard-coding things like server, application, and sensor name in your metric queries, you can use variables in their place.
+Variables are shown as drop-down select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
-types of template variables.
+For more information, refer to [Variables and templates]({{< relref "../../variables/templates-and-variables.md" >}}).
 
-Graphite 1.1 introduced tags and Grafana added support for Graphite queries with tags in version 5.0. To create a variable using tag values, then you need to use the Grafana functions `tags` and `tag_values`.
+Graphite 1.1 introduced tags and Grafana added support for Graphite queries with tags in version 5.0. To create a variable using tag values, use the Grafana functions `tags` and `tag_values`.
 
 Query | Description
 ------------ | -------------
@@ -114,7 +108,7 @@ variable with all possible values that exist in the wildcard position.
 You can also create nested variables that use other variables in their definition. For example
 `apps.$app.servers.*` uses the variable `$app` in its query definition.
 
-#### Using `__searchFilter` to filter results in Query Variable
+#### Using `__searchFilter` to filter query variable results
 > Available from Grafana 6.5 and above
 
 Using `__searchFilter` in the query field will filter the query result based on what the user types in the dropdown select box.
@@ -132,7 +126,7 @@ TagValues
 tag_values(server, server=~${__searchFilter:regex})
 ```
 
-### Variable Usage
+### Variable usage
 
 You can use a variable in a metric node path or as a parameter to a function.
 ![variable](/img/docs/v2/templated_variable_parameter.png)
@@ -148,7 +142,7 @@ the second syntax in expressions like  `my.server${serverNumber}.count`.
 Example:
 [Graphite Templated Dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested)
 
-### Variable Usage in Tag Queries
+### Variable usage in tag queries
 
 Multi-value variables in tag queries use the advanced formatting syntax introduced in Grafana 5.0 for variables: `{var:regex}`. Non-tag queries will use the default glob formatting for multi-value variables.
 
@@ -158,7 +152,7 @@ Example of a tag expression with regex formatting and using the Equal Tilde oper
 server=~${servers:regex}
 ```
 
-Check out the [Advanced Formatting Options section in the Variables]({{< relref "../../variables/templates-and-variables.md#advanced-formatting-options" >}}) documentation for examples and details.
+For more information, refer to [Advanced variable format options]({{< relref "../../variables/advanced-variable-format-options.md" >}}).
 
 ## Annotations
 
