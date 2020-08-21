@@ -1,14 +1,9 @@
 import { DataFrame, DataTransformerInfo, FieldType, Field } from '../../types';
 import { DataTransformerID } from './ids';
 import { ArrayVector } from '../../vector';
-import { filterFieldsTransformer } from './filter';
-import { FieldMatcherID } from '..';
-import { MutableField } from '../../dataframe';
+import { mergeTransformer } from './merge';
 
 export interface LabelsToFieldsOptions {}
-type MapItem = { type: FieldType; values: Record<string, any>; isValue: boolean };
-type SeriesMapItem = Record<string, MapItem>;
-type Map = Record<string, SeriesMapItem>;
 
 export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOptions> = {
   id: DataTransformerID.labelsToFields,
@@ -24,7 +19,7 @@ export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOption
       for (const field of frame.fields) {
         if (field.labels) {
           for (const labelName of Object.keys(field.labels)) {
-            const values = new Array(field.length).fill(field.labels[labelName]);
+            const values = new Array(frame.length).fill(field.labels[labelName]);
             newFields.push({
               name: labelName,
               type: FieldType.string,
@@ -32,7 +27,7 @@ export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOption
               config: {},
             });
           }
-          const newField = { ...field, name: 'Value' };
+          const newField = { ...field };
           delete newField.labels;
           delete newField.config.displayName;
           newFields.push(newField);
@@ -47,7 +42,7 @@ export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOption
       });
     }
 
-    return result;
+    return mergeTransformer.transformer({})(result);
 
     // const framesWithTimeField = filterFieldsTransformer.transformer({ include: { id: FieldMatcherID.time } })(data);
     // if (!framesWithTimeField.length || !framesWithTimeField[0].fields.length) {
@@ -103,104 +98,104 @@ export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOption
   },
 };
 
-function getFramesWithOnlyValueFields(data: DataFrame[]): DataFrame[] {
-  const processed: DataFrame[] = [];
+// function getFramesWithOnlyValueFields(data: DataFrame[]): DataFrame[] {
+//   const processed: DataFrame[] = [];
 
-  for (const series of data) {
-    const fields: Field[] = [];
+//   for (const series of data) {
+//     const fields: Field[] = [];
 
-    for (let i = 0; i < series.fields.length; i++) {
-      const field = series.fields[i];
+//     for (let i = 0; i < series.fields.length; i++) {
+//       const field = series.fields[i];
 
-      if (field.type !== FieldType.number) {
-        continue;
-      }
+//       if (field.type !== FieldType.number) {
+//         continue;
+//       }
 
-      fields.push(field);
-    }
+//       fields.push(field);
+//     }
 
-    if (!fields.length) {
-      continue;
-    }
+//     if (!fields.length) {
+//       continue;
+//     }
 
-    const copy = {
-      ...series, // all the other properties
-      fields, // but a different set of fields
-    };
+//     const copy = {
+//       ...series, // all the other properties
+//       fields, // but a different set of fields
+//     };
 
-    processed.push(copy);
-  }
+//     processed.push(copy);
+//   }
 
-  return processed;
-}
+//   return processed;
+// }
 
-function addOrAppendMapItem(args: { map: Map; series: number; column: string; type: FieldType; isValue?: boolean }) {
-  const { map, column, type, series, isValue = false } = args;
-  // we're using the fact that the series (number) will automatically become a string prop on the object
-  const seriesMapItem: SeriesMapItem = { [series]: { type, values: {}, isValue } };
-  if (!map[column]) {
-    map[column] = seriesMapItem;
-  }
+// function addOrAppendMapItem(args: { map: Map; series: number; column: string; type: FieldType; isValue?: boolean }) {
+//   const { map, column, type, series, isValue = false } = args;
+//   // we're using the fact that the series (number) will automatically become a string prop on the object
+//   const seriesMapItem: SeriesMapItem = { [series]: { type, values: {}, isValue } };
+//   if (!map[column]) {
+//     map[column] = seriesMapItem;
+//   }
 
-  if (!map[column][series]) {
-    map[column] = { ...map[column], ...seriesMapItem };
-  }
-}
+//   if (!map[column][series]) {
+//     map[column] = { ...map[column], ...seriesMapItem };
+//   }
+// }
 
-// this is a naive implementation that does the job, not optimized for performance or speed
-function createColumnsMap(framesWithTimeField: DataFrame[], framesWithoutTimeField: DataFrame[]) {
-  const map: Map = {};
+// // this is a naive implementation that does the job, not optimized for performance or speed
+// function createColumnsMap(framesWithTimeField: DataFrame[], framesWithoutTimeField: DataFrame[]) {
+//   const map: Map = {};
 
-  for (let frameIndex = 0; frameIndex < framesWithTimeField.length; frameIndex++) {
-    const timeFrame = framesWithTimeField[frameIndex];
-    const otherFrame = framesWithoutTimeField[frameIndex];
-    const timeField = timeFrame.fields[0];
+//   for (let frameIndex = 0; frameIndex < framesWithTimeField.length; frameIndex++) {
+//     const timeFrame = framesWithTimeField[frameIndex];
+//     const otherFrame = framesWithoutTimeField[frameIndex];
+//     const timeField = timeFrame.fields[0];
 
-    addOrAppendMapItem({ map, column: timeField.name, series: frameIndex, type: timeField.type });
+//     addOrAppendMapItem({ map, column: timeField.name, series: frameIndex, type: timeField.type });
 
-    for (let valueIndex = 0; valueIndex < timeFrame.length; valueIndex++) {
-      const timeFieldValue = timeField.values.get(valueIndex);
-      map[timeField.name][frameIndex].values[timeFieldValue] = timeFieldValue;
+//     for (let valueIndex = 0; valueIndex < timeFrame.length; valueIndex++) {
+//       const timeFieldValue = timeField.values.get(valueIndex);
+//       map[timeField.name][frameIndex].values[timeFieldValue] = timeFieldValue;
 
-      for (const field of otherFrame.fields) {
-        if (field.labels) {
-          const labels = Object.keys(field.labels);
-          for (const label of labels) {
-            addOrAppendMapItem({ map, column: label, series: frameIndex, type: FieldType.string });
+//       for (const field of otherFrame.fields) {
+//         if (field.labels) {
+//           const labels = Object.keys(field.labels);
+//           for (const label of labels) {
+//             addOrAppendMapItem({ map, column: label, series: frameIndex, type: FieldType.string });
 
-            map[label][frameIndex].values[timeFieldValue] = field.labels[label];
-          }
-        }
+//             map[label][frameIndex].values[timeFieldValue] = field.labels[label];
+//           }
+//         }
 
-        const otherFieldValue = field.values.get(valueIndex);
-        addOrAppendMapItem({ map, column: field.name, series: frameIndex, type: field.type, isValue: true });
+//         const otherFieldValue = field.values.get(valueIndex);
+//         addOrAppendMapItem({ map, column: field.name, series: frameIndex, type: field.type, isValue: true });
 
-        map[field.name][frameIndex].values[timeFieldValue] = otherFieldValue;
-      }
-    }
-  }
+//         map[field.name][frameIndex].values[timeFieldValue] = otherFieldValue;
+//       }
+//     }
+//   }
 
-  return map;
-}
+//   return map;
+// }
 
-function createFields(columnsMap: Map): MutableField[] {
-  const columns = Object.keys(columnsMap);
-  const fields: MutableField[] = [];
-  const valueColumns: string[] = [];
+// function createFields(columnsMap: Map): MutableField[] {
+//   const columns = Object.keys(columnsMap);
+//   const fields: MutableField[] = [];
+//   const valueColumns: string[] = [];
 
-  for (const column of columns) {
-    const columnItem = Object.values<MapItem>(columnsMap[column])[0];
-    if (columnItem.isValue) {
-      valueColumns.push(column);
-      continue;
-    }
-    fields.push({ type: columnItem.type, values: new ArrayVector(), name: column, config: {} });
-  }
+//   for (const column of columns) {
+//     const columnItem = Object.values<MapItem>(columnsMap[column])[0];
+//     if (columnItem.isValue) {
+//       valueColumns.push(column);
+//       continue;
+//     }
+//     fields.push({ type: columnItem.type, values: new ArrayVector(), name: column, config: {} });
+//   }
 
-  for (const column of valueColumns) {
-    const columnItem = Object.values<MapItem>(columnsMap[column])[0];
-    fields.push({ type: columnItem.type, values: new ArrayVector(), name: column, config: {} });
-  }
+//   for (const column of valueColumns) {
+//     const columnItem = Object.values<MapItem>(columnsMap[column])[0];
+//     fields.push({ type: columnItem.type, values: new ArrayVector(), name: column, config: {} });
+//   }
 
-  return fields;
-}
+//   return fields;
+// }

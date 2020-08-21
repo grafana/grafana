@@ -68,10 +68,10 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
         }
       }
 
-      const timeIndex = dataFrame.fields.findIndex(field => field.type === FieldType.time);
-      if (typeof timeIndex === 'number') {
-        return [sortDataFrame(dataFrame, timeIndex, true)];
-      }
+      // const timeIndex = dataFrame.fields.findIndex(field => field.type === FieldType.time);
+      // if (typeof timeIndex === 'number') {
+      //   return [sortDataFrame(dataFrame, timeIndex, true)];
+      // }
       return [dataFrame];
     };
   },
