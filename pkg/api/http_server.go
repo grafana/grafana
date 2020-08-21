@@ -71,6 +71,7 @@ type HTTPServer struct {
 	PluginManager        *plugins.PluginManager           `inject:""`
 	SearchService        *search.SearchService            `inject:""`
 	Live                 *live.GrafanaLive
+	Listener             net.Listener
 }
 
 func (hs *HTTPServer) Init() error {
@@ -119,28 +120,9 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		}
 	}
 
-	var listener net.Listener
-	switch setting.Protocol {
-	case setting.HTTP, setting.HTTPS, setting.HTTP2:
-		var err error
-		listener, err = net.Listen("tcp", hs.httpSrv.Addr)
-		if err != nil {
-			return errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
-		}
-	case setting.SOCKET:
-		var err error
-		listener, err = net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
-		if err != nil {
-			return errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
-		}
-
-		// Make socket writable by group
-		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
-			return errutil.Wrapf(err, "failed to change socket permissions")
-		}
-	default:
-		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
-		return fmt.Errorf("invalid protocol %q", setting.Protocol)
+	listener, err := hs.getListener()
+	if err != nil {
+		return err
 	}
 
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
@@ -183,6 +165,36 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	wg.Wait()
 
 	return nil
+}
+
+func (hs *HTTPServer) getListener() (net.Listener, error) {
+	if hs.Listener != nil {
+		return hs.Listener, nil
+	}
+
+	switch setting.Protocol {
+	case setting.HTTP, setting.HTTPS, setting.HTTP2:
+		listener, err := net.Listen("tcp", hs.httpSrv.Addr)
+		if err != nil {
+			return nil, errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
+		}
+		return listener, nil
+	case setting.SOCKET:
+		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
+		if err != nil {
+			return nil, errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
+		}
+
+		// Make socket writable by group
+		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
+			return nil, errutil.Wrapf(err, "failed to change socket permissions")
+		}
+
+		return listener, nil
+	default:
+		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
+		return nil, fmt.Errorf("invalid protocol %q", setting.Protocol)
+	}
 }
 
 func (hs *HTTPServer) configureHttps() error {

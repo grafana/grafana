@@ -51,13 +51,33 @@ For data sources, you need to use the [getTemplateSrv]({{< relref "../../package
 
    ```ts
    async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
-     const query = getTemplateSrv().replace('SELECT * FROM services WHERE id = "$service"'), options.scopedVars);
+     const query = getTemplateSrv().replace('SELECT * FROM services WHERE id = "$service"', options.scopedVars);
 
      const data = makeDbQuery(query);
 
      return { data };
    }
    ```
+
+## Format multi-value variables
+
+When a user selects multiple values for variable, the value of the interpolated variable depends on the [variable format](https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options/).
+
+A data source can define the default format option when no format is specified by adding a third argument to the interpolation function.
+
+Let's change the SQL query to use CSV format by default:
+
+```ts
+getTemplateSrv().replace('SELECT * FROM services WHERE id IN ($service)', options.scopedVars, "csv");
+```
+
+Now, when users write `$service`, the query looks like this:
+
+```sql
+SELECT * FROM services WHERE id IN (admin,auth,billing)
+```
+
+For more information on the available variable formats, refer to [Advanced variable format options](https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options/).
 
 ## Add support for query variables to your data source
 

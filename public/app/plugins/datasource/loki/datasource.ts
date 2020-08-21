@@ -210,6 +210,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           responseListLength,
           linesLimit,
           this.instanceSettings.jsonData,
+          (options as DataQueryRequest<LokiQuery>).scopedVars,
           (options as DataQueryRequest<LokiQuery>).reverse
         )
       )
