@@ -16,7 +16,7 @@ Grafana includes built-in support for Prometheus. This topic explains options, v
 
 ## Prometheus settings
 
-To access Prometheus settings, click the **Configuration** (gear) icon, then click **Data Sources**, and then click **Prometheus**.
+To access Prometheus settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Prometheus data source.
 
 | Name                      | Description                                                                                                                           |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |

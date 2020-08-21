@@ -17,70 +17,75 @@ Grafana has an advanced Graphite query editor that lets you quickly navigate the
 change function parameters and much more. The editor can handle all types of graphite queries. It can even handle complex nested
 queries through the use of query references.
 
- Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana.
+Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only organization admins can add data sources.
 
-> **Note:** If you do not see the `Data Sources` link in your side menu, then you do not have the `Admin` role for the current organization.
+## Graphite settings
+
+To access Graphite settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Graphite data source.
 
 Name | Description
 ------------ | -------------
-*Name* | The data source name. This is how you refer to the data source in panels and queries.
-*Default* | Default data source means that it will be pre-selected for new panels.
-*Url* | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.
-*Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
+Name | The data source name. This is how you refer to the data source in panels and queries.
+Default | Default data source means that it will be pre-selected for new panels.
+URL | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.
+Access | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
+Auth | Refer to [Authentication]({{< relref "../../auth/_index.md" >}}) for more information.
+Basic Auth  | Enable basic authentication to the data source.
+User | User name for basic authentication.
+Password | Password for basic authentication.
+Custom HTTP Headers | Click **Add header** to add a custom HTTP header.
+Header | Enter the custom header name.
+Value |  Enter the custom header value.
+Graphite details | 
+Version | Select your version of Graphite.
+Type | Select your type of Graphite.
 
-Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
+Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else is stated.
 
-### Server access mode (Default)
+### Server access mode (default)
 
-All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.
+All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the Grafana backend/server if you select this access mode.
 
 ### Browser access mode
 
 All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
 
-## Metric editor
+## Graphite query editor
 
-### Navigate metric segments
+Grafana includes a Graphite-specific query editor to help you build your queries.
 
-Click the ``Select metric`` link to start navigating the metric space. Once you start you can continue using the mouse
-or keyboard arrow keys. You can select a wildcard and still continue.
+### Choose metrics to query
 
-{{< docs-imagebox img="/img/docs/v45/graphite_query1_still.png"
-                  animated-gif="/img/docs/v45/graphite_query1.gif" >}}
+Click **Select metric** to start navigating the metric space. Once you start, you can continue using the mouse or keyboard arrow keys. You can select a wildcard and still continue.
+
+{{< docs-imagebox img="/img/docs/graphite/graphite-query-editor-still.png"
+                  animated-gif="/img/docs/graphite/graphite-query-editor.gif" >}}
 
 ### Functions
 
-Click the plus icon to the right to add a function. You can search for the function or select it from the menu. Once
-a function is selected it will be added and your focus will be in the text box of the first parameter. To later change
-a parameter just click on it and it will turn into a text box. To delete a function click the function name followed
-by the x icon.
+Click the plus icon next to **Function** to add a function. You can search for the function or select it from the menu. Once
+a function is selected, it will be added and your focus will be in the text box of the first parameter.
+- To edit or change a parameter, click on it and it will turn into a text box.
+- To delete a function, click the function name followed by the x icon.
 
-{{< docs-imagebox img="/img/docs/v45/graphite_query2_still.png"
-                  animated-gif="/img/docs/v45/graphite_query2.gif" >}}
+{{< docs-imagebox img="/img/docs/graphite/graphite-functions-still.png"
+                  animated-gif="/img/docs/graphite/graphite-functions-demo.gif" >}}
 
-### Optional parameters
-
-Some functions like aliasByNode support an optional second argument. To add this parameter specify for example 3,-2 as the first parameter and the function editor will adapt and move the -2 to a second parameter. To remove the second optional parameter just click on it and leave it blank and the editor will remove it.
-
-{{< docs-imagebox img="/img/docs/v45/graphite_query3_still.png"
-                  animated-gif="/img/docs/v45/graphite_query3.gif" >}}
+Some functions like aliasByNode support an optional second argument. To add an argument, hover your mouse over the first argument and then click the `+` symbol that appears. To remove the second optional parameter, click on it and leave it blank and the editor will remove it.
 
 ### Nested queries
 
 You can reference queries by the row “letter” that they’re on (similar to  Microsoft Excel). If you add a second query to a graph, you can reference the first query simply by typing in #A. This provides an easy and convenient way to build compounded queries.
-
-{{< docs-imagebox img="/img/docs/v45/graphite_nested_queries_still.png"
-                  animated-gif="/img/docs/v45/graphite_nested_queries.gif" >}}
 
 ## Point consolidation
 
 All Graphite metrics are consolidated so that Graphite doesn't return more data points than there are pixels in the graph. By default,
 this consolidation is done using `avg` function. You can control how Graphite consolidates metrics by adding the Graphite consolidateBy function.
 
-> *Notice* This means that legend summary values (max, min, total) cannot be all correct at the same time. They are calculated
-> client side by Grafana. And depending on your consolidation function only one or two can be correct at the same time.
+> **Note:** This means that legend summary values (max, min, total) cannot all be correct at the same time. They are calculated
+> client-side by Grafana. And depending on your consolidation function, only one or two can be correct at the same time.
 
-## Templating
+## Template variables
 
 Instead of hard-coding things like server, application, and sensor name in your metric queries, you can use variables in their place.
 Variables are shown as drop-down select boxes at the top of the dashboard. These dropdowns make it easy to change the data
@@ -92,11 +97,11 @@ Graphite 1.1 introduced tags and Grafana added support for Graphite queries with
 
 Query | Description
 ------------ | -------------
-*tags()* | Returns all tags.
-*tags(server=~backend\*)* | Returns only tags that occur in series matching the filter expression.
-*tag_values(server)*  | Return tag values for the specified tag.
-*tag_values(server, server=~backend\*)*  | Returns filtered tag values that occur for the specified tag in series matching those expressions.
-*tag_values(server, server=~backend\*, app=~${apps:regex})* | Multiple filter expressions and expressions can contain other variables.
+tags() | Returns all tags.
+tags(server=~backend\*) | Returns only tags that occur in series matching the filter expression.
+tag_values(server)  | Return tag values for the specified tag.
+tag_values(server, server=~backend\*)  | Returns filtered tag values that occur for the specified tag in series matching those expressions.
+tag_values(server, server=~backend\*, app=~${apps:regex}) | Multiple filter expressions and expressions can contain other variables.
 
 For more details, see the [Graphite docs on the autocomplete API for tags](http://graphite.readthedocs.io/en/latest/tags.html#auto-complete-support).
 
@@ -162,7 +167,7 @@ queries via the Dashboard menu / Annotations view.
 Graphite supports two ways to query annotations. A regular metric query, for this you use the `Graphite query` textbox. A Graphite events query, use the `Graphite event tags` textbox,
 specify a tag or wildcard (leave empty should also work)
 
-## Getting Grafana metrics into Graphite
+## Get Grafana metrics into Graphite
 
 Grafana exposes metrics for Graphite on the `/metrics` endpoint. For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../../administration/metrics.md">}}).
 
