@@ -226,6 +226,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		},
 		"featureToggles":    hs.Cfg.FeatureToggles,
 		"rendererAvailable": hs.RenderService.IsAvailable(),
+		"http2Enabled":      hs.Cfg.Protocol == setting.HTTP2,
 	}
 
 	return jsonObj, nil

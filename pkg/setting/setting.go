@@ -227,6 +227,7 @@ type Cfg struct {
 	AppSubUrl        string
 	ServeFromSubPath bool
 	StaticRootPath   string
+	Protocol         Scheme
 
 	// build
 	BuildVersion string
@@ -735,6 +736,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		plug = strings.TrimSpace(plug)
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
+	cfg.Protocol = Protocol
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")

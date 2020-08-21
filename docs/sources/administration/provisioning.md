@@ -511,12 +511,12 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `opsgenie`
 
-| Name             |
-| ---------------- |
-| apiKey           |
-| apiUrl           |
-| autoClose        |
-| overridePriority |
+| Name             | Secure setting |
+| ---------------- | - |
+| apiKey           | yes |
+| apiUrl           | |
+| autoClose        | |
+| overridePriority | |
 
 #### Alert notification `telegram`
 
