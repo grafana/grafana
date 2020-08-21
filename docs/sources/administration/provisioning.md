@@ -520,11 +520,10 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `telegram`
 
-| Name        |
-| ----------- |
-| bottoken    |
-| chatid      |
-| uploadImage |
+| Name        | Secure setting |
+| ----------- | - |
+| bottoken    | yes |
+| chatid      | |
 
 #### Alert notification `threema`
 
