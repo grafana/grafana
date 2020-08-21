@@ -157,7 +157,7 @@ export function simpleCountUnit(symbol: string): ValueFormatter {
 }
 
 export function stringFormater(value: number): FormattedValue {
-  return { text: value as any };
+  return { text: `${value}` };
 }
 
 function buildFormats() {
