@@ -16,7 +16,7 @@ For more information about using variables, refer to [Templates and variables]({
 
 ## Time range panel variables
 
-These variables allow you to set the time range for a panel. For more information about time settings and options in Grafana, refer to [Time range controls]({{< relref "../dashboards/time-range-controls.md" >}})
+These variables allow you to set the time range for a dashboard. For more information about time settings and options in Grafana, refer to [Time range controls]({{< relref "../dashboards/time-range-controls.md" >}})
 
 * ``__url_time_range`` - current dashboard's time range (i.e. ``?from=now-6h&to=now``)
 
