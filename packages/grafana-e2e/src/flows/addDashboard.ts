@@ -1,9 +1,9 @@
-import { v4 as uuidv4 } from 'uuid';
 import { DashboardTimeRangeConfig, setDashboardTimeRange } from './setDashboardTimeRange';
 import { DeleteDashboardConfig } from './deleteDashboard';
 import { e2e } from '../index';
 import { getDashboardUid } from '../support/url';
 import { selectOption } from './selectOption';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface AddDashboardConfig {
   timeRange: DashboardTimeRangeConfig;
@@ -15,7 +15,7 @@ export interface AddDashboardConfig {
 export interface AddVariableConfig {
   constantValue?: string;
   dataSource?: string;
-  hide?: string;
+  hide: string;
   label?: string;
   name: string;
   query?: string;
@@ -87,6 +87,10 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>): any => {
     });
 };
 
+export const VARIABLE_HIDE_LABEL = 'Label';
+export const VARIABLE_HIDE_NOTHING = '';
+export const VARIABLE_HIDE_VARIABLE = 'Variable';
+
 export const VARIABLE_TYPE_AD_HOC_FILTERS = 'Ad hoc filters';
 export const VARIABLE_TYPE_CONSTANT = 'Constant';
 export const VARIABLE_TYPE_DATASOURCE = 'Datasource';
@@ -94,6 +98,7 @@ export const VARIABLE_TYPE_QUERY = 'Query';
 
 const addVariable = (config: Partial<AddVariableConfig>, isFirst: boolean): any => {
   const fullConfig = {
+    hide: VARIABLE_HIDE_NOTHING,
     type: VARIABLE_TYPE_QUERY,
     ...config,
   } as AddVariableConfig;
@@ -106,7 +111,13 @@ const addVariable = (config: Partial<AddVariableConfig>, isFirst: boolean): any 
 
   const { constantValue, dataSource, hide, label, name, query, regex, type } = fullConfig;
 
-  if (hide) {
+  // This field is key to many reactive changes
+  if (type !== VARIABLE_TYPE_QUERY) {
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect().select(type);
+  }
+
+  // Avoid '', which is an accepted value
+  if (hide !== undefined) {
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect().select(hide);
   }
 
@@ -115,10 +126,6 @@ const addVariable = (config: Partial<AddVariableConfig>, isFirst: boolean): any 
   }
 
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().type(name);
-
-  if (type !== VARIABLE_TYPE_QUERY) {
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect().select(type);
-  }
 
   if (
     dataSource &&
@@ -140,6 +147,20 @@ const addVariable = (config: Partial<AddVariableConfig>, isFirst: boolean): any 
       e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput().type(regex);
     }
   }
+
+  // Avoid flakiness
+  e2e()
+    .focused()
+    .blur();
+  e2e()
+    .contains('.gf-form-group', 'Preview of values')
+    .within(() => {
+      if (type === VARIABLE_TYPE_CONSTANT) {
+        e2e()
+          .root()
+          .contains(constantValue as string);
+      }
+    });
 
   e2e.pages.Dashboard.Settings.Variables.Edit.General.addButton().click();
 

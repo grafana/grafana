@@ -20,7 +20,7 @@ export interface ConfigurePanelConfig {
 
 // @todo improve config input/output: https://stackoverflow.com/a/63507459/923745
 // @todo this actually returns type `Cypress.Chainable`
-export const configurePanel = (config: Partial<ConfigurePanelConfig>, edit: boolean): any =>
+export const configurePanel = (config: Partial<ConfigurePanelConfig>, isEdit: boolean): any =>
   getScenarioContext().then(({ lastAddedDashboardUid }: any) => {
     const fullConfig = {
       chartData: {
@@ -51,7 +51,7 @@ export const configurePanel = (config: Partial<ConfigurePanelConfig>, edit: bool
       e2e.flows.openDashboard({ uid: dashboardUid });
     }
 
-    if (edit) {
+    if (isEdit) {
       e2e.components.Panels.Panel.title(panelTitle).click();
       e2e.components.Panels.Panel.headerItems('Edit').click();
     } else {
@@ -77,7 +77,7 @@ export const configurePanel = (config: Partial<ConfigurePanelConfig>, edit: bool
     e2e().wait('@chartData');
 
     // `panelTitle` is needed to edit the panel, and unlikely to have its value changed at that point
-    const changeTitle = panelTitle && !edit;
+    const changeTitle = panelTitle && !isEdit;
 
     if (changeTitle || visualizationName) {
       openOptions();
@@ -89,7 +89,6 @@ export const configurePanel = (config: Partial<ConfigurePanelConfig>, edit: bool
           .scrollIntoView()
           .clear()
           .type(panelTitle);
-        closeOptionsGroup('settings');
       }
 
       if (visualizationName) {
@@ -97,18 +96,24 @@ export const configurePanel = (config: Partial<ConfigurePanelConfig>, edit: bool
         e2e.components.PluginVisualization.item(visualizationName)
           .scrollIntoView()
           .click();
-        closeOptionsGroup('type');
       }
 
+      // Consistently closed
+      closeOptionsGroup('settings');
+      closeOptionsGroup('type');
       closeOptions();
     } else {
-      // Options are consistently closed
+      // Consistently closed
       closeOptions();
     }
 
     if (queriesForm) {
       queriesForm(fullConfig);
       e2e().wait('@chartData');
+
+      // Wait for a possible complex visualization to render (or something related, as this isn't necessary on the dashboard page)
+      // Can't assert that its HTML changed because a new query could produce the same results
+      e2e().wait(1000);
     }
 
     // @todo enable when plugins have this implemented
@@ -121,7 +126,6 @@ export const configurePanel = (config: Partial<ConfigurePanelConfig>, edit: bool
     e2e()
       .get('button[title="Apply changes and go back to dashboard"]')
       .click();
-
     e2e()
       .url()
       .should('include', `/d/${dashboardUid}`);
@@ -134,6 +138,7 @@ export const configurePanel = (config: Partial<ConfigurePanelConfig>, edit: bool
     if (matchScreenshot) {
       e2e.components.Panels.Panel.containerByTitle(panelTitle)
         .find('.panel-content')
+        .scrollIntoView()
         .screenshot(screenshotName);
       e2e().compareScreenshots(screenshotName);
     }
@@ -199,3 +204,20 @@ const toggleOptionsGroup = (name: string) =>
   getOptionsGroup(name)
     .find('.editor-options-group-toggle')
     .click();
+
+export const VISUALIZATION_ALERT_LIST = 'Alert list';
+export const VISUALIZATION_BAR_GAUGE = 'Bar gauge';
+export const VISUALIZATION_CLOCK = 'Clock';
+export const VISUALIZATION_DASHBOARD_LIST = 'Dashboard list';
+export const VISUALIZATION_GAUGE = 'Gauge';
+export const VISUALIZATION_GRAPH = 'Graph';
+export const VISUALIZATION_HEAT_MAP = 'Heatmap';
+export const VISUALIZATION_LOGS = 'Logs';
+export const VISUALIZATION_NEWS = 'News';
+export const VISUALIZATION_PIE_CHART = 'Pie Chart';
+export const VISUALIZATION_PLUGIN_LIST = 'Plugin list';
+export const VISUALIZATION_POLYSTAT = 'Polystat';
+export const VISUALIZATION_STAT = 'Stat';
+export const VISUALIZATION_TABLE = 'Table';
+export const VISUALIZATION_TEXT = 'Text';
+export const VISUALIZATION_WORLD_MAP = 'Worldmap Panel';
