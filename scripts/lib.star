@@ -85,8 +85,8 @@ def master_pipelines(edition):
         test_frontend_step(),
         build_backend_step(edition=edition),
         build_frontend_step(edition=edition),
-        build_plugins_step(edition=edition),
-        package_step(edition=edition),
+        build_plugins_step(edition=edition, sign=True),
+        package_step(edition=edition, sign=True),
         e2e_tests_server_step(),
         e2e_tests_step(),
         build_storybook_step(edition=edition),
@@ -323,7 +323,17 @@ def build_frontend_step(edition):
         ],
     }
 
-def build_plugins_step(edition):
+def build_plugins_step(edition, sign=False):
+    if sign:
+        env = {
+            'GRAFANA_API_KEY': {
+                'from_secret': 'grafana_api_key',
+            },
+        }
+        sign_args = ' --sign --signing-admin'
+    else:
+        env = None
+        sign_args = ''
     return {
         'name': 'build-plugins',
         'image': build_image,
@@ -331,9 +341,10 @@ def build_plugins_step(edition):
             'initialize',
             'lint-backend',
         ],
+        'environment': env,
         'commands': [
             # TODO: Use percentage for num jobs
-            './bin/grabpl build-plugins --jobs 8 --edition {} --no-install-deps'.format(edition),
+            './bin/grabpl build-plugins --jobs 8 --edition {} --no-install-deps{}'.format(edition, sign_args),
         ],
     }
 
@@ -408,11 +419,24 @@ def shellcheck_step():
         ],
     }
 
-def package_step(edition, variants=None):
+def package_step(edition, variants=None, sign=False):
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
     else:
         variants_str = ''
+    if sign:
+        sign_args = ' --sign'
+        env = {
+            'GRAFANA_API_KEY': {
+                'from_secret': 'grafana_api_key',
+            },
+        }
+        test_args = ''
+    else:
+        sign_args = ''
+        env = None
+        test_args = '. scripts/build/gpg-test-vars.sh && '
+
     return {
         'name': 'package',
         'image': build_image,
@@ -425,10 +449,11 @@ def package_step(edition, variants=None):
             'codespell',
             'shellcheck',
         ],
+        'environment': env,
         'commands': [
             # TODO: Use percentage for jobs
-            '. scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition {} '.format(edition) +
-                '--build-id $DRONE_BUILD_NUMBER --no-pull-enterprise' + variants_str,
+            '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) +
+                '--build-id $DRONE_BUILD_NUMBER --no-pull-enterprise{}{}'.format(variants_str, sign_args),
         ],
     }
 

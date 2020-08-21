@@ -329,7 +329,10 @@ steps:
 - name: build-plugins
   image: grafana/build-container:1.2.24
   commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
+  environment:
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
   depends_on:
   - initialize
   - lint-backend
@@ -337,7 +340,10 @@ steps:
 - name: package
   image: grafana/build-container:1.2.24
   commands:
-  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
+  - ./bin/grabpl package --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise --sign
+  environment:
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
   depends_on:
   - build-backend
   - build-frontend
