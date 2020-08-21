@@ -673,7 +673,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.ServeFromSubPath = ServeFromSubPath
 
 	Protocol = HTTP
-	cfg.Protocol = Protocol
 	protocolStr, err := valueAsString(server, "protocol", "http")
 	if err != nil {
 		return err
@@ -692,6 +691,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		Protocol = SOCKET
 		SocketPath = server.Key("socket").String()
 	}
+	cfg.Protocol = Protocol
 
 	Domain, err = valueAsString(server, "domain", "localhost")
 	if err != nil {

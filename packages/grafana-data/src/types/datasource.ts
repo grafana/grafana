@@ -538,8 +538,11 @@ export interface DataSourceSelectItem {
 export interface AnnotationQueryRequest<MoreOptions = {}> {
   range: TimeRange;
   rangeRaw: RawTimeRange;
+
   // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
   dashboard: any;
+
+  // The annotation query, typically extends DataQuery
   annotation: {
     datasource: string;
     enable: boolean;

@@ -116,6 +116,14 @@ func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 	} else {
 		fb.labels = make([]string, 0)
 		for _, col := range columns {
+			// Skip the result column
+			if col.Index() == 0 && col.Name() == "result" && col.DataType() == stringDatatype {
+				continue
+			}
+			if col.Index() == 1 && col.Name() == "table" && col.DataType() == longDatatype {
+				continue
+			}
+
 			converter, err := getConverter(col.DataType())
 			if err != nil {
 				return err
@@ -158,7 +166,7 @@ func (fb *frameBuilder) Append(record *query.FluxRecord) error {
 	if ok && table != fb.tableID {
 		fb.totalSeries++
 		if fb.totalSeries > fb.maxSeries {
-			return fmt.Errorf("reached max series limit (%d)", fb.maxSeries)
+			return fmt.Errorf("results are truncated, max series reached (%d)", fb.maxSeries)
 		}
 
 		if fb.isTimeSeries {
