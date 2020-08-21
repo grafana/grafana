@@ -45,7 +45,14 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
         for (let filterIndex = 0; filterIndex < options.valueFilters.length; filterIndex++) {
           let filter = options.valueFilters[filterIndex];
           let includeFlag = filter.type === 'include';
-          let filterTest = valueFiltersRegistry.get(filter.filterType).test;
+          let filterInstance = valueFiltersRegistry.get(filter.filterType).getInstance({
+            filterExpression: filter.filterExpression,
+          });
+
+          console.log('filterInstance', filterInstance);
+          if (!filterInstance.isValid) {
+            continue;
+          }
 
           // Find the matching field for this filter
           let field = null;
@@ -62,7 +69,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
 
           for (let row = 0; row < frame.length; row++) {
             // Run the filter test on each value
-            if (filterTest(field.values.get(row), filter.filterExpression)) {
+            if (filterInstance.test(field.values.get(row))) {
               includeThisRow[row] = includeFlag;
             } else if (filterIndex === 0) {
               includeThisRow[row] = defaultIncludeFlag;
