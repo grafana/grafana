@@ -1,6 +1,6 @@
 build_image = 'grafana/build-container:1.2.24'
 publish_image = 'grafana/grafana-ci-deploy:1.2.5'
-grafana_docker_image = 'grafana/drone-grafana-docker:0.2.0'
+grafana_docker_image = 'grafana/drone-grafana-docker:0.3.1'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
 grabpl_version = '0.5.2'
@@ -93,8 +93,8 @@ def master_pipelines(edition):
         publish_storybook_step(edition=edition),
         build_docs_website_step(),
         copy_packages_for_docker_step(),
-        build_docker_images_step(edition=edition),
-        build_docker_images_step(edition=edition, ubuntu=True),
+        build_docker_images_step(edition=edition, publish=True),
+        build_docker_images_step(edition=edition, ubuntu=True, publish=True),
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
         release_next_npm_packages_step(edition),
@@ -491,12 +491,12 @@ def copy_packages_for_docker_step():
         ],
     }
 
-def build_docker_images_step(edition, archs=None, ubuntu=False):
+def build_docker_images_step(edition, archs=None, ubuntu=False, publish=False):
     sfx = ''
     if ubuntu:
         sfx = '-ubuntu'
     settings = {
-        'dry_run': True,
+        'dry_run': not publish,
         'edition': edition,
         'ubuntu': ubuntu,
     }
