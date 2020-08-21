@@ -26,7 +26,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.5.4
+    GRABPL_VERSION: 0.5.5
 
 - name: lint-backend
   image: grafana/build-container:1.2.24
@@ -252,7 +252,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.5.4
+    GRABPL_VERSION: 0.5.5
 
 - name: lint-backend
   image: grafana/build-container:1.2.24
@@ -519,7 +519,7 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.4/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.5/windows/grabpl.exe -OutFile grabpl.exe
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/oss/master/grafana-7.2.0-9fffe273pre.windows-amd64.zip -OutFile grafana.zip
   - cp C:\App\nssm-2.24.zip .
   - ./grabpl.exe windows-installer --edition oss grafana.zip
