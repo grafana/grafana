@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/converters"
 	"github.com/influxdata/influxdb-client-go/v2/api/query"
 )
 
@@ -47,26 +48,41 @@ func isTag(schk string) bool {
 	return (schk != "result" && schk != "table" && schk[0] != '_')
 }
 
+// timeToOptionalTime optional int value
+var timeToOptionalTime = data.FieldConverter{
+	OutputFieldType: data.FieldTypeNullableTime,
+	Converter: func(v interface{}) (interface{}, error) {
+		if v == nil {
+			return nil, nil
+		}
+		val, ok := v.(time.Time)
+		if !ok { // or return some default value instead of erroring
+			return nil, fmt.Errorf("[time] expected time input but got type %T", v)
+		}
+		return &val, nil
+	},
+}
+
 func getConverter(t string) (*data.FieldConverter, error) {
 	switch t {
 	case stringDatatype:
-		return &anyToOptionalString, nil
+		return &converters.AnyToNullableString, nil
 	case timeDatatypeRFC:
 		return &timeToOptionalTime, nil
 	case timeDatatypeRFCNano:
 		return &timeToOptionalTime, nil
 	case durationDatatype:
-		return &int64ToOptionalInt64, nil
+		return &converters.Int64ToNullableInt64, nil
 	case doubleDatatype:
-		return &float64ToOptionalFloat64, nil
+		return &converters.Float64ToNullableFloat64, nil
 	case boolDatatype:
-		return &boolToOptionalBool, nil
+		return &converters.BoolToNullableBool, nil
 	case longDatatype:
-		return &int64ToOptionalInt64, nil
+		return &converters.Int64ToNullableInt64, nil
 	case uLongDatatype:
-		return &uint64ToOptionalUInt64, nil
+		return &converters.Uint64ToNullableUInt64, nil
 	case base64BinaryDataType:
-		return &anyToOptionalString, nil
+		return &converters.AnyToNullableString, nil
 	}
 
 	return nil, fmt.Errorf("no matching converter found for [%v]", t)
