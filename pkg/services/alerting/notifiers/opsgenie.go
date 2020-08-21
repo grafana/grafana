@@ -26,6 +26,7 @@ func init() {
 				Placeholder:  "OpsGenie API Key",
 				PropertyName: "apiKey",
 				Required:     true,
+				Secure:       true,
 			},
 			{
 				Label:        "Alert API Url",
@@ -58,7 +59,7 @@ var (
 func NewOpsGenieNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	autoClose := model.Settings.Get("autoClose").MustBool(true)
 	overridePriority := model.Settings.Get("overridePriority").MustBool(true)
-	apiKey := model.Settings.Get("apiKey").MustString()
+	apiKey := model.DecryptedValue("apiKey", model.Settings.Get("apiKey").MustString())
 	apiURL := model.Settings.Get("apiUrl").MustString()
 	if apiKey == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find api key property in settings"}

@@ -159,12 +159,7 @@ describe('<TimelineViewingLayer>', () => {
           .find('[data-test-id="Dragged"]')
           .prop('className')
           .indexOf(
-            cx(
-              styles.dragged,
-              styles.draggedDraggingLeft,
-              styles.draggedDraggingRight,
-              styles.draggedReframeDrag
-            )
+            cx(styles.dragged, styles.draggedDraggingLeft, styles.draggedDraggingRight, styles.draggedReframeDrag)
           ) >= 0
       ).toBe(true);
     });
@@ -178,12 +173,7 @@ describe('<TimelineViewingLayer>', () => {
           .find('[data-test-id="Dragged"]')
           .prop('className')
           .indexOf(
-            cx(
-              styles.dragged,
-              styles.draggedDraggingLeft,
-              styles.draggedDraggingRight,
-              styles.draggedShiftDrag
-            )
+            cx(styles.dragged, styles.draggedDraggingLeft, styles.draggedDraggingRight, styles.draggedShiftDrag)
           ) >= 0
       ).toBe(true);
     });

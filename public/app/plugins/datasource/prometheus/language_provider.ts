@@ -2,14 +2,14 @@ import _ from 'lodash';
 import LRU from 'lru-cache';
 import { Value } from 'slate';
 
-import { dateTime, LanguageProvider, HistoryItem } from '@grafana/data';
-import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
+import { dateTime, HistoryItem, LanguageProvider } from '@grafana/data';
+import { CompletionItem, CompletionItemGroup, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
-import { parseSelector, processLabels, processHistogramLabels, fixSummariesMetadata } from './language_utils';
+import { fixSummariesMetadata, parseSelector, processHistogramLabels, processLabels } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 import { PrometheusDatasource } from './datasource';
-import { PromQuery, PromMetricsMetadata } from './types';
+import { PromMetricsMetadata, PromQuery } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -101,9 +101,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   request = async (url: string, defaultValue: any): Promise<any> => {
     try {
       const res = await this.datasource.metadataRequest(url);
-      const body = await (res.data || res.json());
-
-      return body.data;
+      return res.data.data;
     } catch (error) {
       console.error(error);
     }

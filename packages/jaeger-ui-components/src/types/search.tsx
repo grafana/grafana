@@ -42,7 +42,7 @@ export type TraceSummary = {
   traceID: string;
   numberOfErredSpans: number;
   numberOfSpans: number;
-  services: { name: string; numberOfSpans: number }[];
+  services: Array<{ name: string; numberOfSpans: number }>;
 };
 
 export type TraceSummaries = {
