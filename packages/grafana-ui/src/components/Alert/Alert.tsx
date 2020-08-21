@@ -9,11 +9,14 @@ export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
 export interface Props {
   title: string;
-  buttonText?: string;
-  onButtonClick?: (event: React.MouseEvent) => void;
   onRemove?: (event: React.MouseEvent) => void;
   severity?: AlertVariant;
   children?: ReactNode;
+  removeButtonContent?: ReactNode | string;
+  /** Deprecated. Use onRemove instead */
+  onButtonClick?: (event: React.MouseEvent) => void;
+  /** Deprecated. Use removeButtonContent instead */
+  buttonText?: string;
 }
 
 function getIconFromSeverity(severity: AlertVariant): string {
@@ -30,7 +33,15 @@ function getIconFromSeverity(severity: AlertVariant): string {
   }
 }
 
-export const Alert: FC<Props> = ({ title, buttonText, onButtonClick, onRemove, children, severity = 'error' }) => {
+export const Alert: FC<Props> = ({
+  title,
+  buttonText,
+  onButtonClick,
+  onRemove,
+  children,
+  removeButtonContent,
+  severity = 'error',
+}) => {
   const theme = useTheme();
   const styles = getStyles(theme, severity);
 
@@ -47,7 +58,7 @@ export const Alert: FC<Props> = ({ title, buttonText, onButtonClick, onRemove, c
         {/* If onRemove is specified, giving preference to onRemove */}
         {onRemove && (
           <button type="button" className={styles.close} onClick={onRemove}>
-            <Icon name="times" size="lg" />
+            {removeButtonContent || <Icon name="times" size="lg" />}
           </button>
         )}
         {onButtonClick && (
@@ -114,7 +125,7 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant) => {
       }
     `,
     close: css`
-      padding: 0 0 0 ${theme.spacing.md};
+      margin: 0 0 0 ${theme.spacing.md};
       border: none;
       background: none;
       display: flex;

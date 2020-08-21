@@ -28,14 +28,14 @@ export const withRemove = () => {
   return <Alert title="Some very important message" severity={severity} onRemove={action('Remove button clicked')} />;
 };
 
-export const withButton = () => {
+export const customButtonContent = () => {
   const severity = select('Severity', severities, 'info');
   return (
     <Alert
       title="Some very important message"
       severity={severity}
-      onButtonClick={action('Button clicked')}
-      onRemove={action('remove')}
+      removeButtonContent={<span>Close</span>}
+      onRemove={action('Remove button clicked')}
       buttonText="OK"
     />
   );
