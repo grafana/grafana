@@ -16,57 +16,90 @@ export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOption
   description: 'Groups series by time and return labels as columns',
   defaultOptions: {},
   transformer: options => (data: DataFrame[]) => {
-    const framesWithTimeField = filterFieldsTransformer.transformer({ include: { id: FieldMatcherID.time } })(data);
-    if (!framesWithTimeField.length || !framesWithTimeField[0].fields.length) {
-      return data;
-    }
+    const result: DataFrame[] = [];
 
-    // get frames with only value fields
-    const framesWithoutTimeField = getFramesWithOnlyValueFields(data);
-    if (!framesWithoutTimeField.length || !framesWithoutTimeField[0].fields.length) {
-      return data;
-    }
+    for (const frame of data) {
+      const newFields: Field[] = [];
 
-    const columnsMap = createColumnsMap(framesWithTimeField, framesWithoutTimeField);
-    const fields = createFields(columnsMap);
-    const values: Record<string, any[]> = {};
-
-    const timeColumnItem = columnsMap[fields[0].name];
-    const seriesIndexStrings = Object.keys(timeColumnItem);
-    for (const seriesIndexString of seriesIndexStrings) {
-      const seriesItem = timeColumnItem[seriesIndexString];
-      const timeValueStrings = Object.keys(seriesItem.values);
-
-      for (const timeValueString of timeValueStrings) {
-        if (!values[timeValueString]) {
-          values[timeValueString] = [];
-        }
-        let row = new Array(fields.length);
-        for (let index = 0; index < fields.length; index++) {
-          const field = fields[index];
-          const valueItem = columnsMap[field.name][seriesIndexString];
-          const value = valueItem ? valueItem.values[timeValueString] ?? null : null;
-          row[index] = value;
-        }
-        values[timeValueString].push(row);
-      }
-    }
-
-    const timestamps = Object.values(values);
-    for (const timestamp of timestamps) {
-      for (const row of timestamp) {
-        for (let fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
-          fields[fieldIndex].values.add(row[fieldIndex]);
+      for (const field of frame.fields) {
+        if (field.labels) {
+          for (const labelName of Object.keys(field.labels)) {
+            const values = new Array(field.length).fill(field.labels[labelName]);
+            newFields.push({
+              name: labelName,
+              type: FieldType.string,
+              values: new ArrayVector(values),
+              config: {},
+            });
+          }
+          const newField = { ...field, name: 'Value' };
+          delete newField.labels;
+          delete newField.config.displayName;
+          newFields.push(newField);
+        } else {
+          newFields.push(field);
         }
       }
+
+      result.push({
+        fields: newFields,
+        length: frame.length,
+      });
     }
 
-    return [
-      {
-        fields,
-        length: fields[0].values.length,
-      },
-    ];
+    return result;
+
+    // const framesWithTimeField = filterFieldsTransformer.transformer({ include: { id: FieldMatcherID.time } })(data);
+    // if (!framesWithTimeField.length || !framesWithTimeField[0].fields.length) {
+    //   return data;
+    // }
+
+    // // get frames with only value fields
+    // const framesWithoutTimeField = getFramesWithOnlyValueFields(data);
+    // if (!framesWithoutTimeField.length || !framesWithoutTimeField[0].fields.length) {
+    //   return data;
+    // }
+
+    // const columnsMap = createColumnsMap(framesWithTimeField, framesWithoutTimeField);
+    // const fields = createFields(columnsMap);
+    // const values: Record<string, any[]> = {};
+
+    // const timeColumnItem = columnsMap[fields[0].name];
+    // const seriesIndexStrings = Object.keys(timeColumnItem);
+    // for (const seriesIndexString of seriesIndexStrings) {
+    //   const seriesItem = timeColumnItem[seriesIndexString];
+    //   const timeValueStrings = Object.keys(seriesItem.values);
+
+    //   for (const timeValueString of timeValueStrings) {
+    //     if (!values[timeValueString]) {
+    //       values[timeValueString] = [];
+    //     }
+    //     let row = new Array(fields.length);
+    //     for (let index = 0; index < fields.length; index++) {
+    //       const field = fields[index];
+    //       const valueItem = columnsMap[field.name][seriesIndexString];
+    //       const value = valueItem ? valueItem.values[timeValueString] ?? null : null;
+    //       row[index] = value;
+    //     }
+    //     values[timeValueString].push(row);
+    //   }
+    // }
+
+    // const timestamps = Object.values(values);
+    // for (const timestamp of timestamps) {
+    //   for (const row of timestamp) {
+    //     for (let fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
+    //       fields[fieldIndex].values.add(row[fieldIndex]);
+    //     }
+    //   }
+    // }
+
+    // return [
+    //   {
+    //     fields,
+    //     length: fields[0].values.length,
+    //   },
+    // ];
   },
 };
 
