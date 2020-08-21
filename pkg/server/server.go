@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/facebookgo/inject"
@@ -92,6 +93,7 @@ type Server struct {
 	shutdownReason     string
 	shutdownInProgress bool
 	isInitialized      bool
+	mtx                sync.Mutex
 
 	configFile  string
 	homePath    string
@@ -105,6 +107,9 @@ type Server struct {
 
 // init initializes the server and its services.
 func (s *Server) init(cfg *Config) error {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+
 	if s.isInitialized {
 		return nil
 	}
