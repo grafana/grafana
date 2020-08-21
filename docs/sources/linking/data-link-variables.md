@@ -1,23 +1,24 @@
 +++
 title = "URL variables"
 keywords = ["grafana", "url variables", "documentation", "variables", "data link"]
-aliases = ["/docs/grafana/latest/variables/url-variables.md"]
+aliases = ["/docs/grafana/latest/variables/url-variables.md","/docs/grafana/latest/variables/variable-types/url-variables.md"]
 type = "docs"
+weight = 400
 +++
 
-# Data link (URL) variables
+# Data link variables
 
-You can use variables in data links to link to specific portions of your visualizations. These variables are only used in the data links feature, but you can also append them to panel URLs. For more information about data links, refer to [Data links]({{< relref "../../linking/data-links.md" >}}).
+You can use certain variables in data links to link to specific portions of your visualizations. For more information about data links, refer to [Data links]({{< relref "data-links.md" >}}).
 
 > **Note:** These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
 
+For more information about using variables, refer to [Templates and variables]({{< relref "../variables/templates-and-variables.md" >}})
+
 ## Time range panel variables
 
-These variables allow you to set the time range for a panel. For more information about time settings and options in Grafana, refer to [Time range controls]({{< relref "../../dashboards/time-range-controls.md" >}})
+These variables allow you to set the time range for a panel. For more information about time settings and options in Grafana, refer to [Time range controls]({{< relref "../dashboards/time-range-controls.md" >}})
 
 * ``__url_time_range`` - current dashboard's time range (i.e. ``?from=now-6h&to=now``)
-* ``__from`` - current dashboard's time range from value
-* ``__to`` - current dashboard's time range to value
 
 ## Series variables
 
@@ -44,5 +45,8 @@ Value-specific variables are available under ``__value`` namespace:
 
 ## Template variables
 
-When linking to another dashboard that uses template variables, you can use ``var-myvar=${myvar}`` syntax, where ``myvar`` is a name of template variable,
-to use the current dashboard's variable value. If you want to add all of the current dashboard's variables to the URL, then use  ``__all_variables``.
+When linking to another dashboard that uses template variables, select variable values for whoever clicks the link.
+
+``var-myvar=${myvar}`` - where ``myvar`` is a name of the template variable that matches one in the current dashboard that you want to use. 
+
+If you want to add all of the current dashboard's variables to the URL, then use  ``__all_variables``.

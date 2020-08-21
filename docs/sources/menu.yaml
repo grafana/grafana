@@ -250,6 +250,8 @@
       link: /linking/panel-links/
     - name: Data links
       link: /linking/data-links/
+    - link: /linking/data-link-variables/
+      name: Data link variables
 - name: Templates and variables
   link: /variables/
   children:
@@ -278,8 +280,6 @@
           name: Chained variables
         - link: /variables/variable-types/global-variables/
           name: Global variables
-        - link: /variables/variable-types/url-variables/
-          name: Data link (URL) variables
     - name: Selection options
       link: /variables/variable-selection-options/
     - name: Value groups/tags
