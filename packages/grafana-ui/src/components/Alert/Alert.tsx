@@ -5,7 +5,7 @@ import { IconName } from '../../types/icon';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
-interface AlertProps {
+export interface Props {
   title: string;
   buttonText?: string;
   onButtonClick?: (event: React.MouseEvent) => void;
@@ -33,7 +33,7 @@ function getIconFromSeverity(severity: AlertVariant): string {
   }
 }
 
-export const Alert: FC<AlertProps> = ({ title, buttonText, onButtonClick, onRemove, children, severity = 'error' }) => {
+export const Alert: FC<Props> = ({ title, buttonText, onButtonClick, onRemove, children, severity = 'error' }) => {
   const alertClass = classNames('alert', `alert-${severity}`);
   return (
     <div className="alert-container">
@@ -45,7 +45,7 @@ export const Alert: FC<AlertProps> = ({ title, buttonText, onButtonClick, onRemo
           <div className="alert-title">{title}</div>
           {children && <div className="alert-text">{children}</div>}
         </div>
-        {/* If onRemove is specified , giving preference to onRemove */}
+        {/* If onRemove is specified, giving preference to onRemove */}
         {onRemove && (
           <button type="button" className="alert-close" onClick={onRemove}>
             <Icon name="times" size="lg" />
