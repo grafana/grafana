@@ -54,6 +54,8 @@ All requests will be made from the browser directly to the data source and may b
 
 Grafana includes a Graphite-specific query editor to help you build your queries.
 
+To see the raw text of the query that is sent to Graphite, click the **Toggle text edit mode** (pencil) icon.
+
 ### Choose metrics to query
 
 Click **Select metric** to start navigating the metric space. Once you start, you can continue using the mouse or keyboard arrow keys. You can select a wildcard and still continue.
@@ -73,9 +75,25 @@ a function is selected, it will be added and your focus will be in the text box 
 
 Some functions like aliasByNode support an optional second argument. To add an argument, hover your mouse over the first argument and then click the `+` symbol that appears. To remove the second optional parameter, click on it and leave it blank and the editor will remove it.
 
+### Sort labels
+
+If you want consistent ordering, use sortByName. This can be particularly annoying when you have the same labels on multiple graphs, and they are both sorted differently and using different colors. To fix this, use `sortByName()`.
+
 ### Nested queries
 
 You can reference queries by the row “letter” that they’re on (similar to  Microsoft Excel). If you add a second query to a graph, you can reference the first query simply by typing in #A. This provides an easy and convenient way to build compounded queries.
+
+### Avoiding many queries by using wildcards
+
+Occasionally one would like to see multiple time series plotted on the same graph. For example we might want to see how the CPU is being utilized on a machine. You might
+initially create the graph by adding a query for each time series, such as `cpu.percent.user.g`,
+`cpu.percent.system.g`, and so on.  This results in *n* queries made to the data source, which is inefficent.
+
+To be more efficient one can use wildcards in your search, returning all the time series in one query. For example, `cpu.percent.*.g`.
+
+### Modify the metric name in my tables or charts
+
+Use `alias` functions to change metric names on Grafana tables or graphs For example `aliasByNode()` or `aliasSub()`.
 
 ## Point consolidation
 
@@ -84,6 +102,22 @@ this consolidation is done using `avg` function. You can control how Graphite co
 
 > **Note:** This means that legend summary values (max, min, total) cannot all be correct at the same time. They are calculated
 > client-side by Grafana. And depending on your consolidation function, only one or two can be correct at the same time.
+
+## Combine time series
+
+To combine time series, click **Combine** in the **Functions** list.
+
+## Data exploration and tags
+
+In Graphite, _everything_ is a tag.
+
+When exploring data, previously-selected tags are used to filter the remaining result set. To select data, you use the
+`seriesByTag` function, which takes tag expressions (`=`, `!=`, `=~`, `!=~`) to filter timeseries.
+
+The Grafana query builder does this for you automatically when you select a tag.
+
+> **Tip:** The regular expression search can be quite slow on high-cardinality tags, so try to use other tags to reduce the scope first.
+Starting off with a particular name/namespace can help reduce the results.
 
 ## Template variables
 
