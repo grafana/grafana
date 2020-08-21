@@ -48,18 +48,19 @@ func isTag(schk string) bool {
 	return (schk != "result" && schk != "table" && schk[0] != '_')
 }
 
-// timeToOptionalTime optional int value
 var timeToOptionalTime = data.FieldConverter{
 	OutputFieldType: data.FieldTypeNullableTime,
 	Converter: func(v interface{}) (interface{}, error) {
+		var ptr *time.Time
 		if v == nil {
-			return nil, nil
+			return ptr, nil
 		}
 		val, ok := v.(time.Time)
-		if !ok { // or return some default value instead of erroring
-			return nil, fmt.Errorf("[time] expected time input but got type %T", v)
+		if !ok {
+			return ptr, fmt.Errorf(`expected %s input but got type %T for value "%v"`, "time.Time", v, v)
 		}
-		return &val, nil
+		ptr = &val
+		return ptr, nil
 	},
 }
 
