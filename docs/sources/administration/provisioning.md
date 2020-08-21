@@ -466,13 +466,13 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `sensu`
 
-| Name     |
-| -------- |
-| url      |
-| source   |
-| handler  |
-| username |
-| password |
+| Name     | Secure setting |
+| -------- | - | 
+| url      | |
+| source   | |
+| handler  | |
+| username | |
+| password | yes |
 
 #### Alert notification `prometheus-alertmanager`
 
