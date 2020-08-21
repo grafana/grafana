@@ -1,14 +1,14 @@
 import React, { useMemo } from 'react';
 import {
   DataTransformerID,
-  SelectableValue,
+  // SelectableValue,
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
 } from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
 import { Select, Button, Input } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
+// import { selectors } from '@grafana/e2e-selectors';
 
 import {
   FilterByValueTransformerOptions,

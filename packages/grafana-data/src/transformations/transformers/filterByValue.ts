@@ -13,7 +13,7 @@ export interface ValueFilter {
 }
 
 export interface FilterByValueTransformerOptions {
-  valueFilters: [ValueFilter];
+  valueFilters: ValueFilter[];
 }
 
 export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransformerOptions> = {
@@ -32,7 +32,9 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
     console.log('options:', options);
 
     return (data: DataFrame[]) => {
-      if (options.valueFilters.length == 0) return data;
+      if (options.valueFilters.length === 0) {
+        return data;
+      }
 
       const processed: DataFrame[] = [];
 
@@ -62,7 +64,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
             // Run the filter test on each value
             if (filterTest(field.values.get(row), filter.filterExpression)) {
               includeThisRow[row] = includeFlag;
-            } else if (filterIndex == 0) {
+            } else if (filterIndex === 0) {
               includeThisRow[row] = defaultIncludeFlag;
             }
           }
