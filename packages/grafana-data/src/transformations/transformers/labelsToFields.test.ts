@@ -10,7 +10,7 @@ describe('Labels as Columns', () => {
     mockTransformationsRegistry([labelsToFieldsTransformer]);
   });
 
-  it('data frame two labels', () => {
+  it('data frame with two labels', () => {
     const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
       id: DataTransformerID.labelsToFields,
       options: {},
@@ -35,6 +35,35 @@ describe('Labels as Columns', () => {
       },
       { name: 'feelsLike', type: FieldType.string, values: ['ok', 'ok'], config: {} },
       { name: 'Value', type: FieldType.number, values: [1, 2], config: {} },
+    ];
+
+    expect(result.fields).toEqual(expected);
+  });
+
+  it('data frame with two labels and valueLabel option', () => {
+    const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
+      id: DataTransformerID.labelsToFields,
+      options: { valueLabel: 'name' },
+    };
+
+    const source = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'Value', type: FieldType.number, values: [1, 2], labels: { location: 'inside', name: 'Request' } },
+      ],
+    });
+
+    const result = toDataFrameDTO(transformDataFrame([cfg], [source])[0]);
+    const expected: FieldDTO[] = [
+      { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
+      {
+        name: 'location',
+        type: FieldType.string,
+        values: ['inside', 'inside'],
+        config: {},
+      },
+      { name: 'Request', type: FieldType.number, values: [1, 2], config: {} },
     ];
 
     expect(result.fields).toEqual(expected);
