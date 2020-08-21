@@ -14,6 +14,7 @@ export interface AddDataSourceConfig {
   type: string;
 }
 
+// @todo improve config input/output: https://stackoverflow.com/a/63507459/923745
 // @todo this actually returns type `Cypress.Chainable`
 export const addDataSource = (config?: Partial<AddDataSourceConfig>): any => {
   const fullConfig = {
@@ -110,9 +111,12 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>): any => {
       }
 
       // @todo remove `wrap` when possible
-      return e2e().wrap({
-        config: fullConfig,
-        id,
-      });
+      return e2e().wrap(
+        {
+          config: fullConfig,
+          id,
+        },
+        { log: false }
+      );
     });
 };
