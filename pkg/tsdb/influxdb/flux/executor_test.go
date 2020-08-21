@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -34,7 +35,7 @@ type MockRunner struct {
 }
 
 func (r *MockRunner) runQuery(ctx context.Context, q string) (*api.QueryTableResult, error) {
-	bytes, err := ioutil.ReadFile("./testdata/" + r.testDataPath)
+	bytes, err := ioutil.ReadFile(filepath.Join("testdata", r.testDataPath))
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +64,8 @@ func verifyGoldenResponse(t *testing.T, name string) *backend.DataResponse {
 	}
 
 	dr := executeQuery(context.Background(), queryModel{MaxDataPoints: 100}, runner, 50)
-	err := experimental.CheckGoldenDataResponse("./testdata/"+name+".golden.txt", &dr, true)
+	err := experimental.CheckGoldenDataResponse(filepath.Join("testdata", fmt.Sprintf("%s.golden.txt", name)),
+		&dr, true)
 	require.NoError(t, err)
 	require.NoError(t, dr.Error)
 
@@ -223,7 +225,7 @@ func TestRealQuery(t *testing.T) {
 			MaxDataPoints: 100,
 			RawQuery:      "buckets()",
 		}, runner, 50)
-		err = experimental.CheckGoldenDataResponse("./testdata/buckets-real.golden.txt", &dr, true)
+		err = experimental.CheckGoldenDataResponse(filepath.Join("testdata", "buckets-real.golden.txt"), &dr, true)
 		require.NoError(t, err)
 	})
 }
