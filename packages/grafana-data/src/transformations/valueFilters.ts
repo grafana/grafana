@@ -40,7 +40,12 @@ function testRegexCreator(filterOptions: Record<string, any>): ValueFilterInstan
 
   return {
     isValid: true,
-    test: value => re.test(value),
+    test: value => {
+      if (value === null) {
+        return false;
+      }
+      return re.test(value);
+    },
   };
 }
 
