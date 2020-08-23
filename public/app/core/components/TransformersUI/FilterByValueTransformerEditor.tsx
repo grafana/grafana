@@ -24,10 +24,16 @@ function FilterSelectorRow(props: any) {
   console.log('props', props);
 
   // Find filter types that fit the chosen field type
-  // let filterTypeOptions = valueFiltersRegistry.filter((element) => {
-  //   if(supportedFieldTypes)
-  //   return !element.supportedFieldTypes ? true: element.supportedFieldTypes.includes(fieldType);
-  // }).map( item => { value: item.id, label: item.name, description: item.description });
+  let filterTypeOptions = valueFiltersRegistry
+    .list()
+    .filter(element => {
+      if (element.supportedFieldTypes) {
+        return !element.supportedFieldTypes ? true : element.supportedFieldTypes.includes(fieldType);
+      } else {
+        return true;
+      }
+    })
+    .map(item => ({ value: item.id, label: item.name, description: item.description }));
 
   let filterInfo = valueFiltersRegistry.get(config.filterType);
   let filterValid = filterInfo.getInstance({
@@ -103,7 +109,7 @@ function FilterSelectorRow(props: any) {
           invalid={filterTypeInvalid}
           className="width-8"
           placeholder="Select test"
-          options={valueFiltersRegistry.selectOptions().options}
+          options={filterTypeOptions}
           value={config.filterType}
           onChange={value => {
             // console.log('onChange test', value);
