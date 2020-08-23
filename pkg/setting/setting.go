@@ -278,8 +278,7 @@ type Cfg struct {
 
 	// Auth
 	LoginCookieName                  string
-	LoginMaxInactiveLifetimeDays     int
-	LoginMaxInactiveLifetimeDuration string
+	LoginMaxInactiveLifetimeDuration time.Duration
 	LoginMaxLifetimeDays             int
 	TokenRotationIntervalMinutes     int
 
@@ -861,10 +860,19 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
-	cfg.LoginMaxInactiveLifetimeDays = auth.Key("login_maximum_inactive_lifetime_days").MustInt(7)
-	cfg.LoginMaxInactiveLifetimeDuration, err = valueAsString(auth, "login_maximum_inactive_lifetime_duration", "168h")
+	maxInactiveDaysVal := auth.Key("login_maximum_inactive_lifetime_days").MustInt(7)
+	maxInactiveDurationVal, err := valueAsString(auth, "login_maximum_inactive_lifetime_duration", "168h")
 	if err != nil {
 		return err
+	}
+	if maxInactiveDaysVal != 7 {
+		cfg.LoginMaxInactiveLifetimeDuration = time.Duration(maxInactiveDaysVal) * 24 * time.Hour
+	} else {
+		fmt.Println(auth.Key("login_maximum_inactive_lifetime_duration"))
+		cfg.LoginMaxInactiveLifetimeDuration, err = time.ParseDuration(maxInactiveDurationVal)
+		if err != nil {
+			return err
+		}
 	}
 	LoginMaxLifetimeDays = auth.Key("login_maximum_lifetime_days").MustInt(30)
 	cfg.LoginMaxLifetimeDays = LoginMaxLifetimeDays

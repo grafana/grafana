@@ -12,7 +12,12 @@ import (
 func TestUserAuthTokenCleanup(t *testing.T) {
 	Convey("Test user auth token cleanup", t, func() {
 		ctx := createTestContext(t)
+<<<<<<< HEAD
+		maxInactiveDurationVal, _ := time.ParseDuration("168h")
+		ctx.tokenService.Cfg.LoginMaxInactiveLifetimeDuration = maxInactiveDurationVal
+=======
 		ctx.tokenService.Cfg.LoginMaxInactiveLifetimeDuration = "168h"
+>>>>>>> master
 		ctx.tokenService.Cfg.LoginMaxLifetimeDays = 30
 
 		insertToken := func(token string, prev string, createdAt, rotatedAt int64) {
