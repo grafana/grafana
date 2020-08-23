@@ -3,17 +3,17 @@ import { DataFrame, /*FieldType,*/ Field } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { ArrayVector } from '../../vector/ArrayVector';
-import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
-import { ReducerID } from '../fieldReducer';
+import { ValueFilterID, valueFiltersRegistry } from '../valueFilters';
 
 export interface ValueFilter {
-  type: string;
+  type: string; // include / exclude
   fieldName: string | null; // Corresponding field name
   filterExpression: string | null; // The filter expression / value
+  filterType: ValueFilterID;
 }
 
 export interface FilterByValueTransformerOptions {
-  valueFilters: [ValueFilter];
+  valueFilters: ValueFilter[];
 }
 
 export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransformerOptions> = {
@@ -21,7 +21,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
   name: 'Filter by Value',
   description: 'Filter the data points (rows) depending on the value of certain fields',
   defaultOptions: {
-    valueFilters: [{ type: 'include', fieldName: null, filterExpression: null }],
+    valueFilters: [{ type: 'include', fieldName: null, filterExpression: null, filterType: ValueFilterID.regex }],
   },
 
   /**
@@ -30,14 +30,15 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
    */
   transformer: (options: FilterByValueTransformerOptions) => {
     console.log('options:', options);
-    // const calculationsByField = options.calculationsByField; //.map((val, index) => ({fieldName: val[0], calculations: val[1]}));
 
     return (data: DataFrame[]) => {
-      if (options.valueFilters.length == 0) return data;
+      if (options.valueFilters.length === 0) {
+        return data;
+      }
 
       const processed: DataFrame[] = [];
 
-      let includeThisRow = []; // All data points will be flagged for include (true) or exclude (false)
+      let includeThisRow = []; // All data points will be flagged for include (true) or exclude (false) in this variable
       let defaultIncludeFlag = options.valueFilters[0].type !== 'include';
 
       for (let frame of data) {
@@ -58,33 +59,39 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
             continue; // No field found for for this filter in this frame, ignore
           }
 
+          // This creates the filter instance we need (with the test function) we need to match the rows
+          let filterInstance = valueFiltersRegistry.get(filter.filterType).getInstance({
+            filterExpression: filter.filterExpression,
+            fieldType: field.type,
+          });
+
+          if (!filterInstance.isValid) {
+            continue;
+          }
+
           for (let row = 0; row < frame.length; row++) {
-            // Run the filter on each value
-            let re = new RegExp(filter.filterExpression);
-            console.log('Testing', field.values.get(row), re, re.test(field.values.get(row)));
-            if (re.test(field.values.get(row))) {
-              // What if the value is not a string ??? Cast before using the value.
+            // Run the filter test on each value
+            if (filterInstance.test(field.values.get(row))) {
               includeThisRow[row] = includeFlag;
-            } else if (filterIndex == 0) {
+            } else if (filterIndex === 0) {
               includeThisRow[row] = defaultIncludeFlag;
             }
           }
         }
 
         // Create the skeleton of the new data, copy original field attributes
-        let filteredFields: Fields[] = [];
+        let filteredFields: Field[] = [];
         for (let field of frame.fields) {
           filteredFields.push({
             ...field,
             values: new ArrayVector(),
-            configs: {
+            config: {
               ...field.config,
             },
           });
         }
 
         // Create a copy of the data with the included rows only
-        console.log(includeThisRow.length);
         let dataLength = 0;
         for (let row = 0; row < includeThisRow.length; row++) {
           if (includeThisRow[row]) {
@@ -101,7 +108,11 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
         });
       }
 
-      return processed;
+      if (includeThisRow.length > 0) {
+        return processed;
+      } else {
+        return data;
+      }
     };
   },
 };

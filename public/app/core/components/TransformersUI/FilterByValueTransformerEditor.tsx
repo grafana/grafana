@@ -1,22 +1,36 @@
 import React, { useMemo } from 'react';
-import {
-  DataTransformerID,
-  SelectableValue,
-  standardTransformers,
-  TransformerRegistyItem,
-  TransformerUIProps,
-} from '@grafana/data';
+import { DataTransformerID, standardTransformers, TransformerRegistyItem, TransformerUIProps } from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
 import { Select, Button, Input } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
 
 import {
   FilterByValueTransformerOptions,
   ValueFilter,
 } from '@grafana/data/src/transformations/transformers/filterByValue';
 
+import { valueFiltersRegistry, ValueFilterID } from '@grafana/data/src/transformations/valueFilters';
+
 function FilterSelectorRow(props: any) {
   const { fieldNameOptions, onDelete, onConfigChange, config } = props;
+
+  let filterOptionsInput = null;
+
+  let placeholder = valueFiltersRegistry.get(config.filterType).placeholder || null;
+
+  if (placeholder) {
+    filterOptionsInput = (
+      <>
+        <Input
+          className="flex-grow-1"
+          defaultValue={config.filterExpression}
+          placeholder={placeholder}
+          onBlur={event => {
+            onConfigChange({ ...config, filterExpression: event.currentTarget.value });
+          }}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="gf-form-inline">
@@ -44,27 +58,34 @@ function FilterSelectorRow(props: any) {
           options={fieldNameOptions}
           value={config.fieldName}
           onChange={value => {
-            console.log('onChange fieldName', value);
-            onConfigChange({ ...config, fieldName: value.value });
+            // console.log('onChange fieldName', value);
+            if (value === null) {
+              onConfigChange({ ...config, fieldName: null });
+            } else {
+              onConfigChange({ ...config, fieldName: value.value });
+            }
           }}
           isClearable
           menuPlacement="bottom"
         />
       </div>
-      <div className="gf-form gf-form--grow gf-form-spacing ">
-        <div className="gf-form-label width-8">Filter Expression</div>
-        <Input
-          className="flex-grow-1"
-          // defaultValue={''}
-          defaultValue={config.filterExpression}
-          placeholder={`Regex`}
-          onBlur={event => {
-            onConfigChange({ ...config, filterExpression: event.currentTarget.value });
+      <div className="gf-form gf-form-spacing">
+        <div className="gf-form-label width-4">Test</div>
+        <Select
+          className="width-8"
+          placeholder="Select test"
+          options={valueFiltersRegistry.selectOptions().options}
+          value={config.filterType}
+          onChange={value => {
+            // console.log('onChange test', value);
+            onConfigChange({ ...config, filterType: value.value });
           }}
+          menuPlacement="bottom"
         />
       </div>
+      <div className="gf-form gf-form--grow gf-form-spacing ">{filterOptionsInput}</div>
       <div className="gf-form">
-        <Button icon="trash-alt" onClick={onDelete} style={{ height: '100%' }} size="sm" variant="secondary" />
+        <Button icon="times" onClick={onDelete} style={{ height: '100%' }} size="sm" variant="secondary" />
       </div>
     </div>
   );
@@ -84,6 +105,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
       type: 'include',
       fieldName: null,
       filterExpression: null,
+      filterType: ValueFilterID.regex,
     });
 
     onChange({
@@ -107,7 +129,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
     valueFilters[index] = config;
     onChange({
       ...options,
-      valueFilters,
+      valueFilters: valueFilters as ValueFilter[],
     });
   };
 
