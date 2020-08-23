@@ -59,10 +59,16 @@ function testIsNotNullCreator(filterOptions: Record<string, any>): ValueFilterIn
 }
 
 function testGreaterCreator(filterOptions: Record<string, any>): ValueFilterInstance {
+  let { filterExpression, fieldType } = filterOptions;
+
+  if (filterExpression === '' || filterExpression === null) {
+    return { isValid: false, test: value => true };
+  }
+
   let compare: any = null;
 
   // For a Number, compare as number
-  if (filterOptions.fieldType === FieldType.number) {
+  if (fieldType === FieldType.number) {
     compare = Number(filterOptions.filterExpression);
     if (isNaN(compare)) {
       compare = null;
@@ -76,10 +82,16 @@ function testGreaterCreator(filterOptions: Record<string, any>): ValueFilterInst
 }
 
 function testGreaterOrEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
+  let { filterExpression, fieldType } = filterOptions;
+
+  if (filterExpression === '' || filterExpression === null) {
+    return { isValid: false, test: value => true };
+  }
+
   let compare: any = null;
 
   // For a Number, compare as number
-  if (filterOptions.fieldType === FieldType.number) {
+  if (fieldType === FieldType.number) {
     compare = Number(filterOptions.filterExpression);
     if (isNaN(compare)) {
       compare = null;
@@ -93,10 +105,16 @@ function testGreaterOrEqualCreator(filterOptions: Record<string, any>): ValueFil
 }
 
 function testLowerCreator(filterOptions: Record<string, any>): ValueFilterInstance {
+  let { filterExpression, fieldType } = filterOptions;
+
+  if (filterExpression === '' || filterExpression === null) {
+    return { isValid: false, test: value => true };
+  }
+
   let compare: any = null;
 
   // For a Number, compare as number
-  if (filterOptions.fieldType === FieldType.number) {
+  if (fieldType === FieldType.number) {
     compare = Number(filterOptions.filterExpression);
     if (isNaN(compare)) {
       compare = null;
@@ -110,10 +128,16 @@ function testLowerCreator(filterOptions: Record<string, any>): ValueFilterInstan
 }
 
 function testLowerOrEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
+  let { filterExpression, fieldType } = filterOptions;
+
+  if (filterExpression === '' || filterExpression === null) {
+    return { isValid: false, test: value => true };
+  }
+
   let compare: any = null;
 
   // For a Number, compare as number
-  if (filterOptions.fieldType === FieldType.number) {
+  if (fieldType === FieldType.number) {
     compare = Number(filterOptions.filterExpression);
     if (isNaN(compare)) {
       compare = null;
