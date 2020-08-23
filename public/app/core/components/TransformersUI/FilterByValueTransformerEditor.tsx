@@ -44,7 +44,7 @@ function FilterSelectorRow(props: any) {
           ]}
           value={config.type}
           onChange={option => {
-            console.log('onChange filterType', option.value);
+            // console.log('onChange filterType', option.value);
             onConfigChange({ ...config, type: option.value });
           }}
           menuPlacement="bottom"
@@ -124,7 +124,6 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
   };
 
   const onConfigChange = (index: number) => (config: ValueFilter) => {
-    console.log('onConfigChange', index, config, options);
     let valueFilters = options.valueFilters.map(filter => ({ ...filter })); // Deep copy
     valueFilters[index] = config;
     onChange({
@@ -141,6 +140,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
           onDelete={onDeleteFilter(idx)}
           fieldNameOptions={fieldNameOptions}
           config={val}
+          key={idx}
         />
       ))}
 
