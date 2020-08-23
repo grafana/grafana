@@ -76,6 +76,73 @@ function testGreaterCreator(filterOptions: Record<string, any>): ValueFilterInst
   };
 }
 
+function testGreaterOrEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
+  let compare = null;
+
+  // For a Number, compare as number
+  if (filterOptions.fieldType === FieldType.number) {
+    compare = Number(filterOptions.filterExpression);
+    if (compare === NaN) {
+      compare = null;
+    }
+  }
+
+  return {
+    isValid: compare !== null,
+    test: value => value >= compare,
+  };
+}
+
+function testLowerCreator(filterOptions: Record<string, any>): ValueFilterInstance {
+  let compare = null;
+
+  // For a Number, compare as number
+  if (filterOptions.fieldType === FieldType.number) {
+    compare = Number(filterOptions.filterExpression);
+    if (compare === NaN) {
+      compare = null;
+    }
+  }
+
+  return {
+    isValid: compare !== null,
+    test: value => value < compare,
+  };
+}
+
+function testLowerOrEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
+  let compare = null;
+
+  // For a Number, compare as number
+  if (filterOptions.fieldType === FieldType.number) {
+    compare = Number(filterOptions.filterExpression);
+    if (compare === NaN) {
+      compare = null;
+    }
+  }
+
+  return {
+    isValid: compare !== null,
+    test: value => value <= compare,
+  };
+}
+
+function testEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
+  let compare = filterOptions.filterExpression;
+  return {
+    isValid: compare !== null,
+    test: value => value == compare, // Loose equality so we don't need to bother about types
+  };
+}
+
+function testNotEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
+  let compare = filterOptions.filterExpression;
+  return {
+    isValid: compare !== null,
+    test: value = value != compare, // Loose equality so we don't need to bother about types
+  };
+}
+
 //
 //	List of value filters (Registry)
 //
@@ -112,8 +179,38 @@ export const valueFiltersRegistry = new Registry<ValueFilterInfo>(() => [
   },
   {
     id: ValueFilterID.greater,
-    name: 'Greater Than',
+    name: 'Greater',
     getInstance: testGreaterCreator,
+    placeholder: 'Value',
+  },
+  {
+    id: ValueFilterID.greaterOrEqual,
+    name: 'Greater or Equal',
+    getInstance: testGreaterOrEqualCreator,
+    placeholder: 'Value',
+  },
+  {
+    id: ValueFilterID.lower,
+    name: 'Lower',
+    getInstance: testLowerCreator,
+    placeholder: 'Value',
+  },
+  {
+    id: ValueFilterID.lowerOrEqual,
+    name: 'Lower or Equal',
+    getInstance: testLowerOrEqualCreator,
+    placeholder: 'Value',
+  },
+  {
+    id: ValueFilterID.equal,
+    name: 'Equal',
+    getInstance: testEqualCreator,
+    placeholder: 'Value',
+  },
+  {
+    id: ValueFilterID.notEqual,
+    name: 'Different',
+    getInstance: testNotEqualCreator,
     placeholder: 'Value',
   },
 ]);
