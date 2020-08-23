@@ -259,6 +259,41 @@ Here is the result after applying the `Series to rows` transformation.
 | 2020-07-07 09:30:57 | Humidity    | 33    |
 | 2020-07-07 09:30:05 | Temperature | 19    |
 
+
+## Filter By Value
+
+This transformation allows you to filter your data directly in Grafana. This allows you to remove some of the data points from your query result. You can either include or exclude some of your data points (rows) from a field that match the filter test (`Equal`, `Greater`, `Lower`, `isNull`, `Regex`, `Equal` and a few more).
+
+Consider the following data set:
+
+| Time                | Temperature |
+|---------------------|--------------|
+| 2020-07-07 11:34:23 | 32    |
+| 2020-07-07 11:34:22 | 28    |
+| 2020-07-07 11:34:21 | 26   |
+| 2020-07-07 11:34:20 | 23    |
+| 2020-07-07 10:32:24 | 31    |
+| 2020-07-07 10:31:22 | 20    |
+| 2020-07-07 09:30:57 | 19    |
+
+For instance, you can `Include` all data points that have a **Temperature** lower than 30°C, you would get the following result :
+
+| Time                | Temperature |
+|---------------------|--------------|
+| 2020-07-07 11:34:22 | 28    |
+| 2020-07-07 11:34:21 | 26   |
+| 2020-07-07 11:34:20 | 23    |
+| 2020-07-07 10:31:22 | 20    |
+| 2020-07-07 09:30:57 | 19    |
+
+You can also add more than one filter. For instance you could want to `Exclude` the temperature below 20°C, so you would add the corresponding filter.
+
+It is important to understand how the filtering process works. All the filters added to the transformation are applied on the rows that match and, at the end of the transformation only, the rows marked as excluded are removed. This means one filter may overwrite the behavior of a previous filter if both match the same row. The filters are applied in order they appear in the transformation. You can chain the _Filter By Value_ transformation more than once to achieve the desired filtering if it is hard to achieve within the same transformation.
+
+If your first filter is an `Include` filter, by default all the data is excluded, then the filters are applied. If your first filter is and `Exclude` filter, then by default all you data is included, then the filters are applied.
+
+Filters that are invalid or incompletely configured are ignored in the transformation (will not be applied).
+
 ## Debug transformations
 
 To see the input and the output result sets of the transformation, click the bug icon on the right side of the transformation row.
