@@ -1,5 +1,6 @@
 import isNumber from 'lodash/isNumber';
 import { Registry, RegistryItem } from '../utils/Registry';
+import { FieldType } from '../types/dataFrame';
 
 export enum ValueFilterID {
   regex = 'regex',
@@ -21,8 +22,8 @@ type ValueFilterInstanceCreator = (filterOptions: Record<string, any>) => ValueF
 
 // The instance of the filter, with the test function and some validity info
 export interface ValueFilterInstance {
-  test: ValueFilterTestFunction;
   isValid: boolean;
+  test: ValueFilterTestFunction;
 }
 
 //
@@ -31,7 +32,6 @@ export interface ValueFilterInstance {
 
 function testRegexCreator(filterOptions: Record<string, any>): ValueFilterInstance {
   let { filterExpression } = filterOptions;
-
   if (!filterExpression) {
     filterExpression = '';
   }
@@ -39,28 +39,41 @@ function testRegexCreator(filterOptions: Record<string, any>): ValueFilterInstan
   // The filter configuration
   const re = new RegExp(filterExpression);
 
-  // The test function
-  const test = value => {
-    return re.test(value);
+  return {
+    isValid: true,
+    test: value => re.test(value),
   };
-
-  return { test, isValid: true };
 }
 
-function testIsNull(value: any): boolean {
-  return value === null;
+function testIsNullCreator(filterOptions: Record<string, any>): ValueFilterInstance {
+  return {
+    isValid: true,
+    test: value => value === null,
+  };
 }
 
-function testIsNotNull(value: any): boolean {
-  return !testIsNull(value);
+function testIsNotNullCreator(filterOptions: Record<string, any>): ValueFilterInstance {
+  return {
+    isValid: true,
+    test: value => value !== null,
+  };
 }
 
-function testGreater(value: any): boolean {
-  if (value === null) {
-    return true;
+function testGreaterCreator(filterOptions: Record<string, any>): ValueFilterInstance {
+  let compare = null;
+
+  // For a Number, compare as number
+  if (filterOptions.fieldType === FieldType.number) {
+    compare = Number(filterOptions.filterExpression);
+    if (compare === NaN) {
+      compare = null;
+    }
   }
 
-  return false;
+  return {
+    isValid: compare !== null,
+    test: value => value > compare,
+  };
 }
 
 //
@@ -89,8 +102,18 @@ export const valueFiltersRegistry = new Registry<ValueFilterInfo>(() => [
   },
   {
     id: ValueFilterID.isNull,
+    name: 'Is Null',
+    getInstance: testIsNullCreator,
+  },
+  {
+    id: ValueFilterID.isNotNull,
+    name: 'Is Not Null',
+    getInstance: testIsNotNullCreator,
+  },
+  {
+    id: ValueFilterID.greater,
     name: 'Greater Than',
-    getInstance: testRegexCreator,
+    getInstance: testGreaterCreator,
     placeholder: 'Value',
   },
 ]);
