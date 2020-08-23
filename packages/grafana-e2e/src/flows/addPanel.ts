@@ -16,7 +16,6 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
       {
         dataSourceName: lastAddedDataSource,
         panelTitle: `e2e-${uuidv4()}`,
-        visualizationName: 'Table',
         ...config,
       } as AddPanelConfig,
       false
