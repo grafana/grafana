@@ -59,8 +59,11 @@ function FilterSelectorRow(props: any) {
           value={config.fieldName}
           onChange={value => {
             // console.log('onChange fieldName', value);
-            if (value === null) onConfigChange({ ...config, fieldName: null });
-            else onConfigChange({ ...config, fieldName: value.value });
+            if (value === null) {
+              onConfigChange({ ...config, fieldName: null });
+            } else {
+              onConfigChange({ ...config, fieldName: value.value });
+            }
           }}
           isClearable
           menuPlacement="bottom"

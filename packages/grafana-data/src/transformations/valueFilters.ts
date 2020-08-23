@@ -1,4 +1,3 @@
-import isNumber from 'lodash/isNumber';
 import { Registry, RegistryItem } from '../utils/Registry';
 import { FieldType } from '../types/dataFrame';
 
@@ -60,12 +59,12 @@ function testIsNotNullCreator(filterOptions: Record<string, any>): ValueFilterIn
 }
 
 function testGreaterCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let compare = null;
+  let compare: any = null;
 
   // For a Number, compare as number
   if (filterOptions.fieldType === FieldType.number) {
     compare = Number(filterOptions.filterExpression);
-    if (compare === NaN) {
+    if (isNaN(compare)) {
       compare = null;
     }
   }
@@ -77,12 +76,12 @@ function testGreaterCreator(filterOptions: Record<string, any>): ValueFilterInst
 }
 
 function testGreaterOrEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let compare = null;
+  let compare: any = null;
 
   // For a Number, compare as number
   if (filterOptions.fieldType === FieldType.number) {
     compare = Number(filterOptions.filterExpression);
-    if (compare === NaN) {
+    if (isNaN(compare)) {
       compare = null;
     }
   }
@@ -94,12 +93,12 @@ function testGreaterOrEqualCreator(filterOptions: Record<string, any>): ValueFil
 }
 
 function testLowerCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let compare = null;
+  let compare: any = null;
 
   // For a Number, compare as number
   if (filterOptions.fieldType === FieldType.number) {
     compare = Number(filterOptions.filterExpression);
-    if (compare === NaN) {
+    if (isNaN(compare)) {
       compare = null;
     }
   }
@@ -111,12 +110,12 @@ function testLowerCreator(filterOptions: Record<string, any>): ValueFilterInstan
 }
 
 function testLowerOrEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let compare = null;
+  let compare: any = null;
 
   // For a Number, compare as number
   if (filterOptions.fieldType === FieldType.number) {
     compare = Number(filterOptions.filterExpression);
-    if (compare === NaN) {
+    if (isNaN(compare)) {
       compare = null;
     }
   }
@@ -128,18 +127,20 @@ function testLowerOrEqualCreator(filterOptions: Record<string, any>): ValueFilte
 }
 
 function testEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let compare = filterOptions.filterExpression;
+  let compare: any = filterOptions.filterExpression;
   return {
     isValid: compare !== null,
+    // @ts-ignore
     test: value => value == compare, // Loose equality so we don't need to bother about types
   };
 }
 
 function testNotEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let compare = filterOptions.filterExpression;
+  let compare: any = filterOptions.filterExpression;
   return {
     isValid: compare !== null,
-    test: value = value != compare, // Loose equality so we don't need to bother about types
+    // @ts-ignore
+    test: value => value != compare, // Loose equality so we don't need to bother about types
   };
 }
 
