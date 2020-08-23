@@ -274,11 +274,11 @@ func TestLoadingSettings(t *testing.T) {
 			So(AuthProxySyncTtl, ShouldEqual, 12)
 		})
 
-		Convey("login_maximum_inactive_lifetime_duration should not override login_maximum_inactive_lifetime_days that is different from default value", func() {
+		Convey("login_maximum_inactive_lifetime_duration should not override non-default login_maximum_inactive_lifetime_days", func() {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
-				Args:     []string{"cfg:auth.login_maximum_inactive_lifetime_days=10", "cfg:auth.login_maximum_inactive_lifetime_duration=168h"},
+				Args:     []string{"cfg:auth.login_maximum_inactive_lifetime_days=10", "cfg:auth.login_maximum_inactive_lifetime_duration=824h"},
 			})
 			So(err, ShouldBeNil)
 			maxInactiveDaysVal, _ := time.ParseDuration("240h")
@@ -294,6 +294,28 @@ func TestLoadingSettings(t *testing.T) {
 			So(err, ShouldBeNil)
 			maxInactiveDurationVal, _ := time.ParseDuration("824h")
 			So(cfg.LoginMaxInactiveLifetimeDuration, ShouldEqual, maxInactiveDurationVal)
+		})
+
+		Convey("login_maximum_lifetime_duration should not override non-default login_maximum_lifetime_days", func() {
+			cfg := NewCfg()
+			err := cfg.Load(&CommandLineArgs{
+				HomePath: "../../",
+				Args:     []string{"cfg:auth.login_maximum_lifetime_days=24", "cfg:auth.login_maximum_lifetime_duration=824h"},
+			})
+			So(err, ShouldBeNil)
+			maxLifetimeDaysVal, _ := time.ParseDuration("576h")
+			So(cfg.LoginMaxLifetimeDuration, ShouldEqual, maxLifetimeDaysVal)
+		})
+
+		Convey("login_maximum_lifetime_duration should override default login_maximum_inactive_lifetime_days", func() {
+			cfg := NewCfg()
+			err := cfg.Load(&CommandLineArgs{
+				HomePath: "../../",
+				Args:     []string{"cfg:auth.login_maximum_lifetime_days=30", "cfg:auth.login_maximum_lifetime_duration=824h"},
+			})
+			So(err, ShouldBeNil)
+			maxLifetimeDurationVal, _ := time.ParseDuration("824h")
+			So(cfg.LoginMaxLifetimeDuration, ShouldEqual, maxLifetimeDurationVal)
 		})
 	})
 
