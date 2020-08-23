@@ -1,5 +1,13 @@
 import React, { useMemo } from 'react';
-import { DataTransformerID, standardTransformers, TransformerRegistyItem, TransformerUIProps } from '@grafana/data';
+import {
+  DataTransformerID,
+  standardTransformers,
+  TransformerRegistyItem,
+  TransformerUIProps,
+  getFieldDisplayName,
+  Field,
+  DataFrame,
+} from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
 import { Select, Button, Input } from '@grafana/ui';
 
@@ -11,19 +19,38 @@ import {
 import { valueFiltersRegistry, ValueFilterID } from '@grafana/data/src/transformations/valueFilters';
 
 function FilterSelectorRow(props: any) {
-  const { fieldNameOptions, onDelete, onConfigChange, config } = props;
+  const { fieldNameOptions, onDelete, onConfigChange, config, fieldType } = props;
+
+  console.log('props', props);
+
+  // Find filter types that fit the chosen field type
+  // let filterTypeOptions = valueFiltersRegistry.filter((element) => {
+  //   if(supportedFieldTypes)
+  //   return !element.supportedFieldTypes ? true: element.supportedFieldTypes.includes(fieldType);
+  // }).map( item => { value: item.id, label: item.name, description: item.description });
+
+  let filterInfo = valueFiltersRegistry.get(config.filterType);
+  let filterValid = filterInfo.getInstance({
+    filterExpression: config.filterExpression,
+    fieldType: fieldType,
+  }).isValid;
+
+  let fieldNameInvalid =
+    config.fieldName === null ||
+    fieldNameOptions.filter((item: Record<string, any>) => item.value === config.fieldName).length === 0;
+  let filterTypeInvalid =
+    !fieldNameInvalid && filterInfo.supportedFieldTypes && !filterInfo.supportedFieldTypes.includes(fieldType);
+  let filterExpressionInvalid = !fieldNameInvalid && !filterTypeInvalid && !filterValid;
 
   let filterOptionsInput = null;
-
-  let placeholder = valueFiltersRegistry.get(config.filterType).placeholder || null;
-
-  if (placeholder) {
+  if (filterInfo.placeholder) {
     filterOptionsInput = (
       <>
         <Input
           className="flex-grow-1"
+          invalid={filterExpressionInvalid}
           defaultValue={config.filterExpression}
-          placeholder={placeholder}
+          placeholder={filterInfo.placeholder}
           onBlur={event => {
             onConfigChange({ ...config, filterExpression: event.currentTarget.value });
           }}
@@ -57,6 +84,7 @@ function FilterSelectorRow(props: any) {
           placeholder="Field Name"
           options={fieldNameOptions}
           value={config.fieldName}
+          invalid={fieldNameInvalid}
           onChange={value => {
             // console.log('onChange fieldName', value);
             if (value === null) {
@@ -72,6 +100,7 @@ function FilterSelectorRow(props: any) {
       <div className="gf-form gf-form-spacing">
         <div className="gf-form-label width-4">Test</div>
         <Select
+          invalid={filterTypeInvalid}
           className="width-8"
           placeholder="Select test"
           options={valueFiltersRegistry.selectOptions().options}
@@ -134,15 +163,19 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
 
   return (
     <div>
-      {options.valueFilters.map((val, idx) => (
-        <FilterSelectorRow
-          onConfigChange={onConfigChange(idx)}
-          onDelete={onDeleteFilter(idx)}
-          fieldNameOptions={fieldNameOptions}
-          config={val}
-          key={idx}
-        />
-      ))}
+      {options.valueFilters.map((val, idx) => {
+        let matchingField = getFieldByName(val.fieldName, input);
+        return (
+          <FilterSelectorRow
+            onConfigChange={onConfigChange(idx)}
+            onDelete={onDeleteFilter(idx)}
+            fieldNameOptions={fieldNameOptions}
+            config={val}
+            fieldType={matchingField ? matchingField.type : null}
+            key={idx}
+          />
+        );
+      })}
 
       <div className="gf-form-inline">
         <Button icon="plus" onClick={onAddFilter} variant="secondary">
@@ -159,4 +192,34 @@ export const filterByValueTransformRegistryItem: TransformerRegistyItem<FilterBy
   transformation: standardTransformers.filterByValueTransformer,
   name: standardTransformers.filterByValueTransformer.name,
   description: standardTransformers.filterByValueTransformer.description,
+};
+
+// Utils functions
+
+// Returns an array of fields that match the fieldName
+const getFieldsByName = (fieldName: string, data: DataFrame[]): Field[] => {
+  if (!Array.isArray(data) || fieldName === null) {
+    return [] as Field[];
+  }
+
+  let fieldList = [];
+
+  for (let frame of data) {
+    for (let field of frame.fields) {
+      if (fieldName === getFieldDisplayName(field, frame, data)) {
+        fieldList.push(field);
+      }
+    }
+  }
+
+  return fieldList;
+};
+
+// Returns the first field that matches the fieldName or null if none was found
+const getFieldByName = (fieldName: string | null, data: DataFrame[]): Field | null => {
+  if (fieldName === null) {
+    return null;
+  }
+  let fieldList = getFieldsByName(fieldName, data);
+  return fieldList.length > 0 ? fieldList[0] : null;
 };

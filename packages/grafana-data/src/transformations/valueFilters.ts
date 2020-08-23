@@ -151,7 +151,7 @@ function testLowerOrEqualCreator(filterOptions: Record<string, any>): ValueFilte
 }
 
 function testEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let compare: any = filterOptions.filterExpression;
+  let compare: any = filterOptions.filterExpression || '';
   return {
     isValid: compare !== null,
     // @ts-ignore
@@ -160,7 +160,7 @@ function testEqualCreator(filterOptions: Record<string, any>): ValueFilterInstan
 }
 
 function testNotEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let compare: any = filterOptions.filterExpression;
+  let compare: any = filterOptions.filterExpression || '';
   return {
     isValid: compare !== null,
     // @ts-ignore
@@ -183,6 +183,7 @@ export interface ValueFilterInfo extends RegistryItem {
 
   placeholder?: string; // Place holder for filter expression input
   getInstance: ValueFilterInstanceCreator;
+  supportedFieldTypes?: FieldType[]; // If defined, support only those field types
 }
 
 export const valueFiltersRegistry = new Registry<ValueFilterInfo>(() => [
@@ -206,24 +207,28 @@ export const valueFiltersRegistry = new Registry<ValueFilterInfo>(() => [
     id: ValueFilterID.greater,
     name: 'Greater',
     getInstance: testGreaterCreator,
+    supportedFieldTypes: [FieldType.number],
     placeholder: 'Value',
   },
   {
     id: ValueFilterID.greaterOrEqual,
     name: 'Greater or Equal',
     getInstance: testGreaterOrEqualCreator,
+    supportedFieldTypes: [FieldType.number],
     placeholder: 'Value',
   },
   {
     id: ValueFilterID.lower,
     name: 'Lower',
     getInstance: testLowerCreator,
+    supportedFieldTypes: [FieldType.number],
     placeholder: 'Value',
   },
   {
     id: ValueFilterID.lowerOrEqual,
     name: 'Lower or Equal',
     getInstance: testLowerOrEqualCreator,
+    supportedFieldTypes: [FieldType.number],
     placeholder: 'Value',
   },
   {
