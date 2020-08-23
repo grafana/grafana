@@ -45,7 +45,6 @@ var ptc = proxyTransportCache{
 
 func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	transport, err := ds.GetHttpTransport()
-
 	if err != nil {
 		return nil, err
 	}

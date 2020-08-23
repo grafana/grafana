@@ -39,7 +39,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
 
     if (config.minRefreshInterval) {
       intervals = intervals.filter(rate => {
-        return kbn.interval_to_ms(rate) >= kbn.interval_to_ms(config.minRefreshInterval);
+        return kbn.intervalToMs(rate) >= kbn.intervalToMs(config.minRefreshInterval);
       });
     }
 

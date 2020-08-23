@@ -32,7 +32,7 @@ export interface ValueFormatCategory {
   formats: ValueFormat[];
 }
 
-interface ValueFormatterIndex {
+export interface ValueFormatterIndex {
   [id: string]: ValueFormatter;
 }
 

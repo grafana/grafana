@@ -18,3 +18,19 @@ export function addQuery(queries: DataQuery[], query?: Partial<DataQuery>): Data
   q.refId = getNextRefIdChar(queries);
   return [...queries, q as DataQuery];
 }
+
+export function isDataQuery(url: string): boolean {
+  if (
+    url.indexOf('api/datasources/proxy') !== -1 ||
+    url.indexOf('api/tsdb/query') !== -1 ||
+    url.indexOf('api/ds/query') !== -1
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+export function isLocalUrl(url: string) {
+  return !url.match(/^http/);
+}

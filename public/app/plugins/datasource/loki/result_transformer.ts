@@ -16,6 +16,7 @@ import {
   QueryResultMetaStat,
   QueryResultMeta,
   TimeSeriesValue,
+  ScopedVars,
 } from '@grafana/data';
 
 import templateSrv from 'app/features/templating/template_srv';
@@ -239,11 +240,11 @@ export function lokiResultsToTableModel(
   return table;
 }
 
-function createMetricLabel(labelData: { [key: string]: string }, options?: TransformerOptions) {
+export function createMetricLabel(labelData: { [key: string]: string }, options?: TransformerOptions) {
   let label =
     options === undefined || _.isEmpty(options.legendFormat)
       ? getOriginalMetricName(labelData)
-      : renderTemplate(templateSrv.replace(options.legendFormat ?? ''), labelData);
+      : renderTemplate(templateSrv.replace(options.legendFormat ?? '', options.scopedVars), labelData);
 
   if (!label && options) {
     label = options.query;
@@ -414,13 +415,13 @@ export function rangeQueryResponseToTimeSeries(
   response: LokiResponse,
   query: LokiRangeQueryRequest,
   target: LokiQuery,
-  responseListLength: number
+  responseListLength: number,
+  scopedVars: ScopedVars
 ): TimeSeries[] {
   /** Show results of Loki metric queries only in graph */
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'graph',
   };
-
   const transformerOptions: TransformerOptions = {
     format: target.format,
     legendFormat: target.legendFormat ?? '',
@@ -432,6 +433,7 @@ export function rangeQueryResponseToTimeSeries(
     refId: target.refId,
     meta,
     valueWithRefId: target.valueWithRefId,
+    scopedVars,
   };
 
   switch (response.data.resultType) {
@@ -453,6 +455,7 @@ export function processRangeQueryResponse(
   responseListLength: number,
   limit: number,
   config: LokiOptions,
+  scopedVars: ScopedVars,
   reverse = false
 ) {
   switch (response.data.resultType) {
@@ -472,7 +475,8 @@ export function processRangeQueryResponse(
             ...target,
             format: 'time_series',
           },
-          responseListLength
+          responseListLength,
+          scopedVars
         ),
         key: target.refId,
       });
