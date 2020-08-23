@@ -1,11 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  DataTransformerID,
-  // SelectableValue,
-  standardTransformers,
-  TransformerRegistyItem,
-  TransformerUIProps,
-} from '@grafana/data';
+import { DataTransformerID, standardTransformers, TransformerRegistyItem, TransformerUIProps } from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
 import { Select, Button, Input } from '@grafana/ui';
 
@@ -88,7 +82,7 @@ function FilterSelectorRow(props: any) {
       </div>
       <div className="gf-form gf-form--grow gf-form-spacing ">{filterOptionsInput}</div>
       <div className="gf-form">
-        <Button icon="trash-alt" onClick={onDelete} style={{ height: '100%' }} size="sm" variant="secondary" />
+        <Button icon="times" onClick={onDelete} style={{ height: '100%' }} size="sm" variant="secondary" />
       </div>
     </div>
   );
