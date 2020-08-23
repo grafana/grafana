@@ -38,7 +38,6 @@ function testRegexCreator(filterOptions: Record<string, any>): ValueFilterInstan
 
   // The filter configuration
   const re = new RegExp(filterExpression);
-  console.log(filterOptions, filterExpression, re);
 
   // The test function
   const test = value => {
@@ -48,15 +47,15 @@ function testRegexCreator(filterOptions: Record<string, any>): ValueFilterInstan
   return { test, isValid: true };
 }
 
-function testIsNull(value: any, filterExpression: string | null): boolean {
+function testIsNull(value: any): boolean {
   return value === null;
 }
 
-function testIsNotNull(value: any, filterExpression: string | null): boolean {
-  return !testIsNull(value, filterExpression);
+function testIsNotNull(value: any): boolean {
+  return !testIsNull(value);
 }
 
-function testGreater(value: any, filterExpression: string | null): boolean {
+function testGreater(value: any): boolean {
   if (value === null) {
     return true;
   }
@@ -77,6 +76,7 @@ export interface ValueFilterInfo extends RegistryItem {
   //   aliasIds?: string[]; // when the ID changes, we may want backwards compatibility ('current' => 'last')
   //   excludeFromPicker?: boolean; // Exclude from selector options
 
+  placeholder?: string; // Place holder for filter expression input
   getInstance: ValueFilterInstanceCreator;
 }
 
@@ -85,10 +85,12 @@ export const valueFiltersRegistry = new Registry<ValueFilterInfo>(() => [
     id: ValueFilterID.regex,
     name: 'Regex',
     getInstance: testRegexCreator,
+    placeholder: 'Regular expression',
   },
-  // {
-  //   id: ValueFilterID.isNull,
-  //   name: 'isNull',
-  //   test: testIsNull,
-  // },
+  {
+    id: ValueFilterID.isNull,
+    name: 'Greater Than',
+    getInstance: testRegexCreator,
+    placeholder: 'Value',
+  },
 ]);
