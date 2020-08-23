@@ -9,7 +9,7 @@ import (
 
 func (srv *UserAuthTokenService) Run(ctx context.Context) error {
 	ticker := time.NewTicker(time.Hour)
-	maxInactiveLifetime := time.Duration(srv.Cfg.LoginMaxInactiveLifetimeDays) * 24 * time.Hour
+	maxInactiveLifetime := time.Duration(srv.Cfg.LoginMaxInactiveLifetimeDuration)
 	maxLifetime := time.Duration(srv.Cfg.LoginMaxLifetimeDays) * 24 * time.Hour
 
 	err := srv.ServerLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func() {
