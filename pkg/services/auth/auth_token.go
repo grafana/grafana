@@ -397,8 +397,7 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 }
 
 func (s *UserAuthTokenService) createdAfterParam() int64 {
-	tokenMaxLifetime := time.Duration(s.Cfg.LoginMaxLifetimeDays) * 24 * time.Hour
-	return getTime().Add(-tokenMaxLifetime).Unix()
+	return getTime().Add(-s.Cfg.LoginMaxLifetimeDuration).Unix()
 }
 
 func (s *UserAuthTokenService) rotatedAfterParam() int64 {

@@ -261,7 +261,7 @@ func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.User
 	}
 }
 
-func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays int) {
+func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays float64) {
 	if setting.Env == setting.DEV {
 		ctx.Logger.Info("New token", "unhashed token", value)
 	}

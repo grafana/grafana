@@ -143,7 +143,7 @@ var (
 	AdminUser            string
 	AdminPassword        string
 	LoginCookieName      string
-	LoginMaxLifetimeDays int
+	LoginMaxLifetimeDays float64
 
 	AnonymousEnabled bool
 	AnonymousOrgName string
@@ -279,7 +279,7 @@ type Cfg struct {
 	// Auth
 	LoginCookieName                  string
 	LoginMaxInactiveLifetimeDuration time.Duration
-	LoginMaxLifetimeDays             int
+	LoginMaxLifetimeDuration         time.Duration
 	TokenRotationIntervalMinutes     int
 
 	// OAuth
@@ -868,14 +868,26 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if maxInactiveDaysVal != 7 {
 		cfg.LoginMaxInactiveLifetimeDuration = time.Duration(maxInactiveDaysVal) * 24 * time.Hour
 	} else {
-		fmt.Println(auth.Key("login_maximum_inactive_lifetime_duration"))
 		cfg.LoginMaxInactiveLifetimeDuration, err = time.ParseDuration(maxInactiveDurationVal)
 		if err != nil {
 			return err
 		}
 	}
-	LoginMaxLifetimeDays = auth.Key("login_maximum_lifetime_days").MustInt(30)
-	cfg.LoginMaxLifetimeDays = LoginMaxLifetimeDays
+	maxLifetimeDaysVal := auth.Key("login_maximum_lifetime_days").MustInt(30)
+	maxLifetimeDurationVal, err := valueAsString(auth, "login_maximum_lifetime_duration", "720h")
+	if err != nil {
+		return err
+	}
+	if maxLifetimeDaysVal != 30 {
+		cfg.LoginMaxLifetimeDuration = time.Duration(maxLifetimeDaysVal) * 24 * time.Hour
+		LoginMaxLifetimeDays = float64(maxLifetimeDaysVal)
+	} else {
+		cfg.LoginMaxLifetimeDuration, err = time.ParseDuration(maxLifetimeDurationVal)
+		LoginMaxLifetimeDays = cfg.LoginMaxLifetimeDuration.Hours() / 24
+		if err != nil {
+			return err
+		}
+	}
 	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 
 	cfg.TokenRotationIntervalMinutes = auth.Key("token_rotation_interval_minutes").MustInt(10)

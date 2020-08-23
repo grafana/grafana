@@ -8,22 +8,10 @@ import (
 )
 
 func (srv *UserAuthTokenService) Run(ctx context.Context) error {
-	var maxInactiveLifetime time.Duration
 	var err error
 	ticker := time.NewTicker(time.Hour)
-<<<<<<< HEAD
-	maxInactiveLifetime := time.Duration(srv.Cfg.LoginMaxInactiveLifetimeDuration)
-=======
-	if srv.Cfg.LoginMaxInactiveLifetimeDays != 7 {
-		maxInactiveLifetime = time.Duration(srv.Cfg.LoginMaxInactiveLifetimeDays) * 24 * time.Hour
-	} else {
-		maxInactiveLifetime, err = time.ParseDuration(srv.Cfg.LoginMaxInactiveLifetimeDuration)
-		if err != nil {
-			srv.log.Error("Failed to parse login_maximum_inactive_lifetime_duration", "error", err)
-		}
-	}
->>>>>>> master
-	maxLifetime := time.Duration(srv.Cfg.LoginMaxLifetimeDays) * 24 * time.Hour
+	maxInactiveLifetime := srv.Cfg.LoginMaxInactiveLifetimeDuration
+	maxLifetime := srv.Cfg.LoginMaxLifetimeDuration
 
 	err = srv.ServerLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func() {
 		if _, err := srv.deleteExpiredTokens(ctx, maxInactiveLifetime, maxLifetime); err != nil {
