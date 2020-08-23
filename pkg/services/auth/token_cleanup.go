@@ -8,11 +8,20 @@ import (
 )
 
 func (srv *UserAuthTokenService) Run(ctx context.Context) error {
+	var maxInactiveLifetime time.Duration
+	var err error
 	ticker := time.NewTicker(time.Hour)
-	maxInactiveLifetime := time.Duration(srv.Cfg.LoginMaxInactiveLifetimeDays) * 24 * time.Hour
+	if srv.Cfg.LoginMaxInactiveLifetimeDays != 7 {
+		maxInactiveLifetime = time.Duration(srv.Cfg.LoginMaxInactiveLifetimeDays) * 24 * time.Hour
+	} else {
+		maxInactiveLifetime, err = time.ParseDuration(srv.Cfg.LoginMaxInactiveLifetimeDuration)
+		if err != nil {
+			srv.log.Error("Failed to parse login_maximum_inactive_lifetime_duration", "error", err)
+		}
+	}
 	maxLifetime := time.Duration(srv.Cfg.LoginMaxLifetimeDays) * 24 * time.Hour
 
-	err := srv.ServerLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func() {
+	err = srv.ServerLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func() {
 		if _, err := srv.deleteExpiredTokens(ctx, maxInactiveLifetime, maxLifetime); err != nil {
 			srv.log.Error("An error occurred while deleting expired tokens", "err", err)
 		}
@@ -24,7 +33,7 @@ func (srv *UserAuthTokenService) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ticker.C:
-			err := srv.ServerLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func() {
+			err = srv.ServerLockService.LockAndExecute(ctx, "cleanup expired auth tokens", time.Hour*12, func() {
 				if _, err := srv.deleteExpiredTokens(ctx, maxInactiveLifetime, maxLifetime); err != nil {
 					srv.log.Error("An error occurred while deleting expired tokens", "err", err)
 				}

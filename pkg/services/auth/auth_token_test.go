@@ -499,9 +499,10 @@ func createTestContext(t *testing.T) *testContext {
 	tokenService := &UserAuthTokenService{
 		SQLStore: sqlstore,
 		Cfg: &setting.Cfg{
-			LoginMaxInactiveLifetimeDays: 7,
-			LoginMaxLifetimeDays:         30,
-			TokenRotationIntervalMinutes: 10,
+			LoginMaxInactiveLifetimeDays:     7,
+			LoginMaxInactiveLifetimeDuration: "168h",
+			LoginMaxLifetimeDays:             30,
+			TokenRotationIntervalMinutes:     10,
 		},
 		log: log.New("test-logger"),
 	}
@@ -554,4 +555,41 @@ func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {
 		return false, err
 	}
 	return rowsAffected == 1, nil
+}
+
+func TestInactiveLifetimeValues(t *testing.T) {
+	Convey("Non-default login_maximum_inactive_lifetime_days should override login_maximum_inactive_lifetime_duration", t, func() {
+		t := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
+		getTime = func() time.Time {
+			return t
+		}
+		maxInactiveLifetimeNonDefault := time.Duration(10) * 24 * time.Hour
+		tokenServiceNonDefault := &UserAuthTokenService{
+			Cfg: &setting.Cfg{
+				LoginMaxInactiveLifetimeDays:     10,
+				LoginMaxInactiveLifetimeDuration: "333h",
+			},
+			log: log.New("test-logger"),
+		}
+		userAuthTokenServiceNonDefault := tokenServiceNonDefault
+		So(userAuthTokenServiceNonDefault.rotatedAfterParam(), ShouldEqual, getTime().Add(-maxInactiveLifetimeNonDefault).Unix())
+	})
+
+	Convey("login_maximum_inactive_lifetime_duration should override default login_maximum_inactive_lifetime_days", t, func() {
+		t := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
+		getTime = func() time.Time {
+			return t
+		}
+		maxInactiveLifetimeDurationVal, _ := time.ParseDuration("333h")
+		tokenServiceNonDefault := &UserAuthTokenService{
+			Cfg: &setting.Cfg{
+				LoginMaxInactiveLifetimeDays:     7,
+				LoginMaxInactiveLifetimeDuration: "333h",
+			},
+			log: log.New("test-logger"),
+		}
+		userAuthTokenServiceNonDefault := tokenServiceNonDefault
+		So(userAuthTokenServiceNonDefault.rotatedAfterParam(), ShouldEqual, getTime().Add(-maxInactiveLifetimeDurationVal).Unix())
+	})
+
 }

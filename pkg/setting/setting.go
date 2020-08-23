@@ -277,10 +277,11 @@ type Cfg struct {
 	DefaultHomeDashboardPath string
 
 	// Auth
-	LoginCookieName              string
-	LoginMaxInactiveLifetimeDays int
-	LoginMaxLifetimeDays         int
-	TokenRotationIntervalMinutes int
+	LoginCookieName                  string
+	LoginMaxInactiveLifetimeDays     int
+	LoginMaxInactiveLifetimeDuration string
+	LoginMaxLifetimeDays             int
+	TokenRotationIntervalMinutes     int
 
 	// OAuth
 	OAuthCookieMaxAge int
@@ -861,7 +862,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	cfg.LoginMaxInactiveLifetimeDays = auth.Key("login_maximum_inactive_lifetime_days").MustInt(7)
-
+	cfg.LoginMaxInactiveLifetimeDuration, err = valueAsString(auth, "login_maximum_inactive_lifetime_duration", "168h")
+	if err != nil {
+		return err
+	}
 	LoginMaxLifetimeDays = auth.Key("login_maximum_lifetime_days").MustInt(30)
 	cfg.LoginMaxLifetimeDays = LoginMaxLifetimeDays
 	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)

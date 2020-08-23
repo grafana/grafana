@@ -402,7 +402,16 @@ func (s *UserAuthTokenService) createdAfterParam() int64 {
 }
 
 func (s *UserAuthTokenService) rotatedAfterParam() int64 {
-	tokenMaxInactiveLifetime := time.Duration(s.Cfg.LoginMaxInactiveLifetimeDays) * 24 * time.Hour
+	var tokenMaxInactiveLifetime time.Duration
+	var err error
+	if s.Cfg.LoginMaxInactiveLifetimeDays != 7 {
+		tokenMaxInactiveLifetime = time.Duration(s.Cfg.LoginMaxInactiveLifetimeDays) * 24 * time.Hour
+	} else {
+		tokenMaxInactiveLifetime, err = time.ParseDuration(s.Cfg.LoginMaxInactiveLifetimeDuration)
+		if err != nil {
+			s.log.Error("Failed to parse login_maximum_inactive_lifetime_duration", "error", err)
+		}
+	}
 	return getTime().Add(-tokenMaxInactiveLifetime).Unix()
 }
 
