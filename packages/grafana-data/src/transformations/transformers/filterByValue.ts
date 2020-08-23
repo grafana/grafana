@@ -6,7 +6,7 @@ import { ArrayVector } from '../../vector/ArrayVector';
 import { ValueFilterID, valueFiltersRegistry } from '../valueFilters';
 
 export interface ValueFilter {
-  type: string;
+  type: string; // include / exclude
   fieldName: string | null; // Corresponding field name
   filterExpression: string | null; // The filter expression / value
   filterType: ValueFilterID;
@@ -65,8 +65,6 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
             fieldType: field.type,
           });
 
-          console.log('filterInstance', filterInstance);
-
           if (!filterInstance.isValid) {
             continue;
           }
@@ -94,7 +92,6 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
         }
 
         // Create a copy of the data with the included rows only
-        console.log(includeThisRow.length);
         let dataLength = 0;
         for (let row = 0; row < includeThisRow.length; row++) {
           if (includeThisRow[row]) {
@@ -111,7 +108,11 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
         });
       }
 
-      return processed;
+      if (includeThisRow.length > 0) {
+        return processed;
+      } else {
+        return data;
+      }
     };
   },
 };
