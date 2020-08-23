@@ -29,8 +29,6 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
    * be applied, just return the input series
    */
   transformer: (options: FilterByValueTransformerOptions) => {
-    console.log('options:', options);
-
     return (data: DataFrame[]) => {
       if (options.valueFilters.length === 0) {
         return data;
