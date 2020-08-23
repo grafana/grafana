@@ -45,14 +45,6 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
         for (let filterIndex = 0; filterIndex < options.valueFilters.length; filterIndex++) {
           let filter = options.valueFilters[filterIndex];
           let includeFlag = filter.type === 'include';
-          let filterInstance = valueFiltersRegistry.get(filter.filterType).getInstance({
-            filterExpression: filter.filterExpression,
-          });
-
-          console.log('filterInstance', filterInstance);
-          if (!filterInstance.isValid) {
-            continue;
-          }
 
           // Find the matching field for this filter
           let field = null;
@@ -65,6 +57,18 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
 
           if (field === null) {
             continue; // No field found for for this filter in this frame, ignore
+          }
+
+          // This creates the filter instance we need (with the test function) we need to match the rows
+          let filterInstance = valueFiltersRegistry.get(filter.filterType).getInstance({
+            filterExpression: filter.filterExpression,
+            fieldType: field.type,
+          });
+
+          console.log('filterInstance', filterInstance);
+
+          if (!filterInstance.isValid) {
+            continue;
           }
 
           for (let row = 0; row < frame.length; row++) {
