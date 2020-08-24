@@ -202,9 +202,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       font-weight: ${theme.typography.weight.regular};
     `,
     options: css`
-      white-space: nowrap;
       overflow: hidden;
-      text-overflow: ellipsis;
       padding-right: ${theme.spacing.xl};
     `,
   };
