@@ -20,7 +20,7 @@ export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit =>
     method,
     headers,
     body,
-    credentials: 'same-origin'
+    credentials: 'same-origin',
   };
 };
 
