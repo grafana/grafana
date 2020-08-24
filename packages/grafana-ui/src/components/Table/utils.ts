@@ -34,7 +34,12 @@ export function getTextAlign(field?: Field): TextAlignProperty {
   return 'left';
 }
 
-export function getColumns(data: DataFrame, availableWidth: number, columnMinWidth: number): Column[] {
+export function getColumns(
+  data: DataFrame,
+  availableWidth: number,
+  columnMinWidth: number,
+  filter: Function
+): Column[] {
   const columns: any[] = [];
   let fieldCountWithoutWidth = data.fields.length;
 
@@ -70,6 +75,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
       minWidth: 50,
+      filter,
     });
   }
 

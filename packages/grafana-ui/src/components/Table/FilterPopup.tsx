@@ -115,7 +115,9 @@ const submitChange = (setFilter: (...args: any) => void, options: SelectableValu
   event: React.MouseEvent
 ): void => {
   const values = optionsToValues(options);
-  setFilter(values);
+  const filtered = values.length ? values : undefined;
+
+  setFilter(filtered);
   onHide();
 };
 
