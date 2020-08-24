@@ -45,6 +45,7 @@ import {
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { cleanVariables } from './variablesReducer';
 import isEqual from 'lodash/isEqual';
+import { getCurrentText } from '../utils';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -359,7 +360,8 @@ export const validateVariableSelectionState = (
     let option: VariableOption | undefined | null = null;
 
     // 1. find the current value
-    option = variableInState.options?.find(v => v.text === current.text);
+    const text = getCurrentText(variableInState);
+    option = variableInState.options?.find(v => v.text === text);
     if (option) {
       return setValue(variableInState, option);
     }
