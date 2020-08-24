@@ -7,7 +7,6 @@ import { NotificationChannelSecureFields, NotificationChannelType } from '../../
 interface Props extends NotificationSettingsProps {
   selectedChannel: NotificationChannelType;
   secureFields: NotificationChannelSecureFields;
-
   resetSecureField: (key: string) => void;
 }
 

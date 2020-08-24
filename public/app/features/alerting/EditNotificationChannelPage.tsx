@@ -14,7 +14,7 @@ import {
 } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
-import { selectableChannels, transformSubmitData, transformTestData } from './utils/notificationChannels';
+import { mapChannelsToSelectableValue, transformSubmitData, transformTestData } from './utils/notificationChannels';
 import { NotificationChannelType, NotificationChannelDTO, StoreState } from 'app/types';
 import { resetSecureField } from './state/reducers';
 
@@ -63,7 +63,7 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
     return (
       <Page navModel={navModel}>
         <Page.Contents>
-          <h2>Edit Notification Channel</h2>
+          <h2>Edit notification channel</h2>
           {notificationChannel.id ? (
             <Form
               onSubmit={this.onSubmit}
@@ -74,7 +74,7 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
 
                 return (
                   <NotificationChannelForm
-                    selectableChannels={selectableChannels(notificationChannelTypes)}
+                    selectableChannels={mapChannelsToSelectableValue(notificationChannelTypes)}
                     selectedChannel={selectedChannel}
                     imageRendererAvailable={config.rendererAvailable}
                     onTestChannel={this.onTestChannel}

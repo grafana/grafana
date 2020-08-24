@@ -21,7 +21,7 @@ export const defaultValues: NotificationChannelDTO = {
   isDefault: false,
 };
 
-export const selectableChannels = memoizeOne(
+export const mapChannelsToSelectableValue = memoizeOne(
   (notificationChannels: NotificationChannelType[]): Array<SelectableValue<string>> => {
     return notificationChannels.map(channel => ({
       value: channel.value,
@@ -57,6 +57,6 @@ export const transformTestData = (formData: NotificationChannelDTO) => {
     type: formData.type.value,
     frequency: formData.frequency ?? defaultValues.frequency,
     settings: { ...Object.assign(defaultValues.settings, formData.settings) },
-    secureSettings: { ...formData.settings.secureSettings },
+    secureSettings: { ...formData.secureSettings },
   };
 };

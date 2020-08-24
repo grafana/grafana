@@ -7,7 +7,7 @@ import Page from 'app/core/components/Page/Page';
 import { NotificationChannelForm } from './components/NotificationChannelForm';
 import {
   defaultValues,
-  selectableChannels,
+  mapChannelsToSelectableValue,
   transformSubmitData,
   transformTestData,
 } from './utils/notificationChannels';
@@ -51,14 +51,14 @@ class NewNotificationChannelPage extends PureComponent<Props> {
     return (
       <Page navModel={navModel}>
         <Page.Contents>
-          <h2>New Notification Channel</h2>
+          <h2>New notification channel</h2>
           <Form onSubmit={this.onSubmit} validateOn="onChange" defaultValues={defaultValues}>
             {({ register, errors, control, getValues, watch }) => {
               const selectedChannel = notificationChannelTypes.find(c => c.value === getValues().type.value);
 
               return (
                 <NotificationChannelForm
-                  selectableChannels={selectableChannels(notificationChannelTypes)}
+                  selectableChannels={mapChannelsToSelectableValue(notificationChannelTypes)}
                   selectedChannel={selectedChannel}
                   onTestChannel={this.onTestChannel}
                   register={register}

@@ -4,14 +4,16 @@ import { NotificationChannelOption } from '../../../types';
 
 interface Props extends Pick<FormAPI<any>, 'register' | 'control'> {
   option: NotificationChannelOption;
+  invalid?: boolean;
 }
 
-export const OptionElement: FC<Props> = ({ control, option, register }) => {
+export const OptionElement: FC<Props> = ({ control, option, register, invalid }) => {
   const modelValue = option.secure ? `secureSettings.${option.propertyName}` : `settings.${option.propertyName}`;
   switch (option.element) {
     case 'input':
       return (
         <Input
+          invalid={invalid}
           type={option.inputType}
           name={`${modelValue}`}
           ref={register({

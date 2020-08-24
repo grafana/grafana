@@ -12,7 +12,6 @@ interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
   selectedChannel?: NotificationChannelType;
   imageRendererAvailable: boolean;
   secureFields: NotificationChannelSecureFields;
-
   resetSecureField: (key: string) => void;
   onTestChannel: (data: NotificationChannelDTO) => void;
 }
@@ -47,7 +46,7 @@ export const NotificationChannelForm: FC<Props> = ({
       <div className={styles.basicSettings}>
         <BasicSettings
           selectedChannel={selectedChannel}
-          selectableChannels={selectableChannels}
+          channels={selectableChannels}
           secureFields={secureFields}
           resetSecureField={resetSecureField}
           currentFormValues={currentFormValues}
@@ -55,15 +54,18 @@ export const NotificationChannelForm: FC<Props> = ({
           errors={errors}
           control={control}
         />
-        <ChannelSettings
-          selectedChannel={selectedChannel}
-          secureFields={secureFields}
-          resetSecureField={resetSecureField}
-          currentFormValues={currentFormValues}
-          register={register}
-          errors={errors}
-          control={control}
-        />
+        {/* If there are no non-required fields, don't render this section*/}
+        {selectedChannel.options.filter(o => !o.required).length > 0 && (
+          <ChannelSettings
+            selectedChannel={selectedChannel}
+            secureFields={secureFields}
+            resetSecureField={resetSecureField}
+            currentFormValues={currentFormValues}
+            register={register}
+            errors={errors}
+            control={control}
+          />
+        )}
         <NotificationSettings
           imageRendererAvailable={imageRendererAvailable}
           currentFormValues={currentFormValues}

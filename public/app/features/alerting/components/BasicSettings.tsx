@@ -7,9 +7,8 @@ import { NotificationChannelSecureFields, NotificationChannelType } from '../../
 
 interface Props extends NotificationSettingsProps {
   selectedChannel: NotificationChannelType;
-  selectableChannels: Array<SelectableValue<string>>;
+  channels: Array<SelectableValue<string>>;
   secureFields: NotificationChannelSecureFields;
-
   resetSecureField: (key: string) => void;
 }
 
@@ -19,7 +18,7 @@ export const BasicSettings: FC<Props> = ({
   errors,
   secureFields,
   selectedChannel,
-  selectableChannels,
+  channels,
   register,
   resetSecureField,
 }) => {
@@ -29,13 +28,7 @@ export const BasicSettings: FC<Props> = ({
         <Input name="name" ref={register({ required: 'Name is required' })} />
       </Field>
       <Field label="Type">
-        <InputControl
-          name="type"
-          as={Select}
-          options={selectableChannels}
-          control={control}
-          rules={{ required: true }}
-        />
+        <InputControl name="type" as={Select} options={channels} control={control} rules={{ required: true }} />
       </Field>
       <NotificationChannelOptions
         selectedChannelOptions={selectedChannel.options.filter(o => o.required)}

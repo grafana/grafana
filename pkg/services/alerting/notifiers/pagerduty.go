@@ -26,7 +26,7 @@ func init() {
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				Placeholder:  "Pagerduty Integration Key",
-				PropertyName: "secureSettings.integrationKey",
+				PropertyName: "integrationKey",
 				Required:     true,
 			},
 			{
