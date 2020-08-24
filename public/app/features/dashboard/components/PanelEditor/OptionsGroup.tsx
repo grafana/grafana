@@ -108,7 +108,7 @@ const CollapsibleSection: FC<Omit<OptionsGroupProps, 'persistMe'>> = ({
         <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
           <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
         </div>
-        <div style={{ width: '100%' }}>{renderTitle ? renderTitle(isExpanded) : title}</div>
+        <div className={styles.title}>{renderTitle ? renderTitle(isExpanded) : title}</div>
       </div>
       {isExpanded && <div className={styles.body}>{_.isFunction(children) ? children(toggleExpand) : children}</div>}
     </div>
@@ -130,8 +130,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean, isNes
     ),
     toggle: css`
       color: ${theme.colors.textWeak};
-      font-size: ${theme.typography.size.lg};
       margin-right: ${theme.spacing.sm};
+    `,
+    title: css`
+      flex-grow: 1;
+      overflow: hidden;
     `,
     header: cx(
       css`
