@@ -453,9 +453,9 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `LINE`
 
-| Name  |
-| ----- |
-| token |
+| Name  | Secure setting |
+| ----- | - |
+| token | yes |
 
 #### Alert notification `pagerduty`
 
