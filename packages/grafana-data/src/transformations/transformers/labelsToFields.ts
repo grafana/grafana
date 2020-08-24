@@ -22,32 +22,39 @@ export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOption
       const newFields: Field[] = [];
 
       for (const field of frame.fields) {
-        if (field.labels) {
-          let name = field.name;
+        if (!field.labels) {
+          newFields.push(field);
+          continue;
+        }
 
-          for (const labelName of Object.keys(field.labels)) {
-            // if we should use this label as the value field name store it and skip adding this as a seperate field
-            if (options.valueLabel === labelName) {
-              name = field.labels[labelName];
-              continue;
-            }
+        let name = field.name;
 
-            const values = new Array(frame.length).fill(field.labels[labelName]);
-            newFields.push({
-              name: labelName,
-              type: FieldType.string,
-              values: new ArrayVector(values),
-              config: {},
-            });
+        for (const labelName of Object.keys(field.labels)) {
+          // if we should use this label as the value field name store it and skip adding this as a seperate field
+          if (options.valueLabel === labelName) {
+            name = field.labels[labelName];
+            continue;
           }
 
-          const newField = { ...field, name };
-          delete newField.labels;
-          delete newField.config.displayName;
-          newFields.push(newField);
-        } else {
-          newFields.push(field);
+          const values = new Array(frame.length).fill(field.labels[labelName]);
+          newFields.push({
+            name: labelName,
+            type: FieldType.string,
+            values: new ArrayVector(values),
+            config: {},
+          });
         }
+
+        // add the value field but clear out any labels or displayName
+        newFields.push({
+          ...field,
+          name,
+          config: {
+            ...field.config,
+            displayName: undefined,
+          },
+          labels: undefined,
+        });
       }
 
       result.push({
