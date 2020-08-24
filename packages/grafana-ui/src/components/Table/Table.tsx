@@ -5,6 +5,8 @@ import {
   Column,
   HeaderGroup,
   useAbsoluteLayout,
+  useFilters,
+  UseFiltersState,
   useResizeColumns,
   UseResizeColumnsState,
   useSortBy,
@@ -24,6 +26,7 @@ import { getTableStyles, TableStyles } from './styles';
 import { TableCell } from './TableCell';
 import { Icon } from '../Icon/Icon';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { Filter } from './Filter';
 
 const COLUMN_MIN_WIDTH = 150;
 
@@ -41,7 +44,7 @@ export interface Props {
   onCellFilterAdded?: TableFilterActionCallback;
 }
 
-interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}> {}
+interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}>, UseFiltersState<{}> {}
 
 function useTableStateReducer(props: Props) {
   return useCallback(
@@ -153,6 +156,7 @@ export const Table: FC<Props> = memo((props: Props) => {
 
   const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
     options,
+    useFilters,
     useSortBy,
     useAbsoluteLayout,
     useResizeColumns
@@ -228,12 +232,22 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) 
   return (
     <div className={tableStyles.headerCell} {...headerProps}>
       {column.canSort && (
-        <div {...column.getSortByToggleProps()} className={tableStyles.headerCellLabel} title={column.render('Header')}>
-          {column.render('Header')}
-          {column.isSorted && (column.isSortedDesc ? <Icon name="angle-down" /> : <Icon name="angle-up" />)}
-        </div>
+        <>
+          <div
+            {...column.getSortByToggleProps()}
+            className={tableStyles.headerCellLabel}
+            title={column.render('Header')}
+          >
+            <div>{column.render('Header')}</div>
+            <div>
+              {column.isSorted && (column.isSortedDesc ? <Icon name="arrow-down" /> : <Icon name="arrow-up" />)}
+            </div>
+          </div>
+          {column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
+        </>
       )}
-      {!column.canSort && <div>{column.render('Header')}</div>}
+      {!column.canSort && column.render('Header')}
+      {!column.canSort && column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
       {column.canResize && <div {...column.getResizerProps()} className={tableStyles.resizeHandle} />}
     </div>
   );

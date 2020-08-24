@@ -1,6 +1,6 @@
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, styleMixins } from '../../themes';
+import { styleMixins, stylesFactory } from '../../themes';
 import { getScrollbarWidth } from '../../utils';
 
 export interface TableStyles {
@@ -12,6 +12,7 @@ export interface TableStyles {
   thead: string;
   headerCell: string;
   headerCellLabel: string;
+  headerFilter: string;
   tableCell: string;
   tableCellWrapper: string;
   tableCellLink: string;
@@ -61,6 +62,8 @@ export const getTableStyles = stylesFactory(
         white-space: nowrap;
         color: ${colors.textBlue};
         border-right: 1px solid ${theme.colors.panelBg};
+        display: flex;
+        justify-content: space-between;
 
         &:last-child {
           border-right: none;
@@ -70,6 +73,13 @@ export const getTableStyles = stylesFactory(
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        display: flex;
+        justify-content: space-between;
+        flex-grow: 2;
+      `,
+      headerFilter: css`
+        label: headerFilter;
+        flex-grow: 0;
       `,
       row: css`
         label: row;
