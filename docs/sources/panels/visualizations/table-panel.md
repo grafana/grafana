@@ -31,5 +31,5 @@ Table visualizations allow you to apply:
 
 ### Display original string value
 
-Grafana can sometime be too agressive in parsing strings and displaying them as numbers. To make Grafana show the original
+Grafana can sometime be too aggressive in parsing strings and displaying them as numbers. To make Grafana show the original
 string create a field override and add a unit property with the `string` unit.
