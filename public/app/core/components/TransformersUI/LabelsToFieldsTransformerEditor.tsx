@@ -15,7 +15,7 @@ export const LabelsAsFieldsTransformerEditor: React.FC<TransformerUIProps<Labels
   options,
   onChange,
 }) => {
-  let labelNames: SelectableValue<string> = [];
+  let labelNames: Array<SelectableValue<string>> = [];
   let uniqueLabels: Record<string, boolean> = {};
 
   for (const frame of input) {
