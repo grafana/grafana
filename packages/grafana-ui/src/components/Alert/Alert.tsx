@@ -14,9 +14,9 @@ export interface Props {
   severity?: AlertVariant;
   children?: ReactNode;
   removeButtonContent?: ReactNode | string;
-  /** Deprecated. Use onRemove instead */
+  /** @deprecated use onRemove instead */
   onButtonClick?: (event: React.MouseEvent) => void;
-  /** Deprecated. Use removeButtonContent instead */
+  /** @deprecated use removeButtonContent instead */
   buttonText?: string;
 }
 
