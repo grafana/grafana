@@ -43,11 +43,11 @@ export const Alert: FC<Props> = ({
   severity = 'error',
 }) => {
   const theme = useTheme();
-  const styles = getStyles(theme, severity);
+  const styles = getStyles(theme, severity, !!removeButtonContent);
 
   return (
     <div className={styles.container}>
-      <div className={styles.alert}>
+      <div className={styles.alert} aria-label={`alert-${severity}`}>
         <div className={styles.icon}>
           <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
         </div>
@@ -71,7 +71,7 @@ export const Alert: FC<Props> = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme, severity: AlertVariant) => {
+const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean) => {
   const { redBase, redShade, greenBase, greenShade, blue80, blue77, white } = theme.palette;
   const backgrounds = {
     error: css`
@@ -126,10 +126,10 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant) => {
     `,
     close: css`
       margin: 0 0 0 ${theme.spacing.md};
-      border: none;
       background: none;
       display: flex;
       align-items: center;
+      border: ${outline ? `1px solid ${white}` : 'none'};
     `,
   };
 };
