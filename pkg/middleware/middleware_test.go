@@ -272,7 +272,7 @@ func TestMiddlewareContext(t *testing.T) {
 					Value:    "rotated",
 					Path:     expectedCookiePath,
 					HttpOnly: true,
-					MaxAge:   int(maxAge),
+					MaxAge:   maxAge,
 					Secure:   setting.CookieSecure,
 					SameSite: sameSitePolicy,
 				}
@@ -303,7 +303,7 @@ func TestMiddlewareContext(t *testing.T) {
 					Value:    "rotated",
 					Path:     expectedCookiePath,
 					HttpOnly: true,
-					MaxAge:   int(maxAge),
+					MaxAge:   maxAge,
 					Secure:   setting.CookieSecure,
 				}
 
