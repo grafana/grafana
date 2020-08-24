@@ -7,12 +7,12 @@ export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit =>
   const isAppJson = isContentTypeApplicationJson(headers);
   const body = parseBody(options, isAppJson);
 
-  if (options?.withCredentials) {
+  if (options?.credentials) {
     return {
       method,
       headers,
       body,
-      credentials: 'include',
+      credentials: options.credentials,
     };
   }
 
@@ -20,6 +20,7 @@ export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit =>
     method,
     headers,
     body,
+    credentials: 'same-origin',
   };
 };
 
