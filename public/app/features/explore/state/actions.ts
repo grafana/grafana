@@ -565,8 +565,6 @@ export const stateSave = (): ThunkResult<void> => {
     const orgId = getState().user.orgId.toString();
     const replace = left && left.urlReplaced === false;
     const urlStates: { [index: string]: string } = { orgId };
-    console.log('left: ', left);
-    console.log('right: ', right);
     const leftUrlState: ExploreUrlState = {
       datasource: left.datasourceInstance!.name,
       queries: left.queries.map(clearQueryKeys),

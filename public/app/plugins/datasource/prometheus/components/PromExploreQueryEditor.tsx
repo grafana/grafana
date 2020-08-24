@@ -1,8 +1,8 @@
-import React, { memo, FC } from 'react';
+import React, { memo, FC, useState } from 'react';
 
 // Types
 import { ExploreQueryFieldProps } from '@grafana/data';
-import { ToggleButtonGroup, ToggleButton, Field, RadioButtonGroup } from '@grafana/ui';
+import { RadioButtonGroup } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
@@ -14,6 +14,7 @@ export type Props = ExploreQueryFieldProps<PrometheusDatasource, PromQuery, Prom
 
 export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
   const { query, data, datasource, history, onChange, onRunQuery } = props;
+  const [selected, setSelected] = useState(query.runAll ? 'all' : query.instant ? 'instant' : 'range');
 
   function onChangeQueryStep(value: string) {
     const { query, onChange } = props;
@@ -25,6 +26,20 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
     if (e.currentTarget.value !== query.interval) {
       onChangeQueryStep(e.currentTarget.value);
     }
+  }
+
+  function onQueryTypeChange(value: string) {
+    const { query, onChange } = props;
+    let nextQuery;
+    setSelected(value);
+    if (value === 'instant') {
+      nextQuery = { ...query, instant: true, runAll: false };
+    } else if (value === 'range') {
+      nextQuery = { ...query, instant: false, runAll: false };
+    } else {
+      nextQuery = { ...query, instant: true, runAll: true };
+    }
+    onChange(nextQuery);
   }
 
   function onReturnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -57,17 +72,17 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
         }
       />
       <div style={{ display: 'flex' }}>
-        <button className={`gf-form-label gf-form-label--btn min-width-5`}>
+        <button className={`gf-form-label gf-form-label--btn`} style={{ width: '78px' }}>
           <span className="btn-title">Query type</span>
         </button>
         <RadioButtonGroup
           options={[
-            { value: 'Range', label: 'Range' },
+            { value: 'range', label: 'Range' },
             { value: 'instant', label: 'Instant' },
-            { value: 'Both', label: 'Both' },
+            { value: 'all', label: 'All' },
           ]}
-          value={'Range'}
-          onChange={() => {}}
+          value={selected}
+          onChange={onQueryTypeChange}
         />
       </div>
     </>

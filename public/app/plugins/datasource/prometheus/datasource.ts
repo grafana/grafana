@@ -172,6 +172,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   processResult = (response: any, query: PromQueryRequest, target: PromQuery, responseListLength: number) => {
+    console.log('target', target);
+    console.log('query', query);
     // Keeping original start/end for transformers
     const transformerOptions = {
       format: target.format,
@@ -185,7 +187,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       valueWithRefId: target.valueWithRefId,
       meta: {
         /** Fix for showing of Prometheus results in Explore table. We want to show result of instant query in table and the rest of time series in graph */
-        preferredVisualisationType: query.instant ? 'table' : 'graph',
+        preferredVisualisationType: target.runAll
+          ? target.instant
+            ? 'table'
+            : 'graph'
+          : target.instant
+          ? 'table'
+          : undefined,
       },
     };
     const series = this.resultTransformer.transform(response, transformerOptions);
@@ -209,8 +217,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         queries.push(this.createQuery(target, options, start, end));
         continue;
       }
-
-      if (options.showingTable) {
+      if (target.runAll) {
         // create instant target only if Table is showed in Explore
         const instantTarget: any = cloneDeep(target);
         instantTarget.format = 'table';
@@ -221,15 +228,26 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
         activeTargets.push(instantTarget);
         queries.push(this.createQuery(instantTarget, options, start, end));
-      }
 
-      if (options.showingGraph) {
         // create time series target only if Graph is showed in Explore
         target.format = 'time_series';
         target.instant = false;
 
         activeTargets.push(target);
         queries.push(this.createQuery(target, options, start, end));
+      } else if (target.instant) {
+        activeTargets.push(target);
+        queries.push(this.createQuery(target, options, start, end));
+      } else {
+        const timeSeriesTarget = cloneDeep(target);
+        const tableTarget = cloneDeep(target);
+        timeSeriesTarget.format = 'time_series';
+        tableTarget.format = 'table';
+
+        activeTargets.push(tableTarget);
+        queries.push(this.createQuery(timeSeriesTarget, options, start, end));
+        activeTargets.push(timeSeriesTarget);
+        queries.push(this.createQuery(tableTarget, options, start, end));
       }
     }
 
