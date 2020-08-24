@@ -172,8 +172,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   processResult = (response: any, query: PromQueryRequest, target: PromQuery, responseListLength: number) => {
-    console.log('target', target);
-    console.log('query', query);
     // Keeping original start/end for transformers
     const transformerOptions = {
       format: target.format,
@@ -186,14 +184,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       refId: target.refId,
       valueWithRefId: target.valueWithRefId,
       meta: {
-        /** Fix for showing of Prometheus results in Explore table. We want to show result of instant query in table and the rest of time series in graph */
-        preferredVisualisationType: target.runAll
-          ? target.instant
-            ? 'table'
-            : 'graph'
-          : target.instant
-          ? 'table'
-          : undefined,
+        /** Fix for showing of Prometheus results in Explore table.
+         * We want to show result of instant query always in table and result of range query based on target.runAll;
+         */
+        preferredVisualisationType: target.instant ? 'table' : target.runAll ? 'graph' : undefined,
       },
     };
     const series = this.resultTransformer.transform(response, transformerOptions);
@@ -217,8 +211,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         queries.push(this.createQuery(target, options, start, end));
         continue;
       }
+
+      // Preparing targets for Explore
       if (target.runAll) {
-        // create instant target only if Table is showed in Explore
+        // If running both - instant and range query, prepare both targets
+        // Create instant target
         const instantTarget: any = cloneDeep(target);
         instantTarget.format = 'table';
         instantTarget.instant = true;
@@ -226,28 +223,20 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         delete instantTarget.maxDataPoints;
         instantTarget.requestId += '_instant';
 
-        activeTargets.push(instantTarget);
-        queries.push(this.createQuery(instantTarget, options, start, end));
+        // Create range target
+        const rangeTarget: any = cloneDeep(target);
+        rangeTarget.format = 'time_series';
+        rangeTarget.instant = false;
 
-        // create time series target only if Graph is showed in Explore
-        target.format = 'time_series';
-        target.instant = false;
-
-        activeTargets.push(target);
-        queries.push(this.createQuery(target, options, start, end));
-      } else if (target.instant) {
-        activeTargets.push(target);
-        queries.push(this.createQuery(target, options, start, end));
+        // Add both targets to activeTargets and queries arrays
+        activeTargets.push(instantTarget, rangeTarget);
+        queries.push(
+          this.createQuery(instantTarget, options, start, end),
+          this.createQuery(rangeTarget, options, start, end)
+        );
       } else {
-        const timeSeriesTarget = cloneDeep(target);
-        const tableTarget = cloneDeep(target);
-        timeSeriesTarget.format = 'time_series';
-        tableTarget.format = 'table';
-
-        activeTargets.push(tableTarget);
-        queries.push(this.createQuery(timeSeriesTarget, options, start, end));
-        activeTargets.push(timeSeriesTarget);
-        queries.push(this.createQuery(tableTarget, options, start, end));
+        queries.push(this.createQuery(target, options, start, end));
+        activeTargets.push(target);
       }
     }
 

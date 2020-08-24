@@ -1,4 +1,5 @@
 import React, { memo, FC, useState } from 'react';
+import { css } from 'emotion';
 
 // Types
 import { ExploreQueryFieldProps } from '@grafana/data';
@@ -48,6 +49,12 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
     }
   }
 
+  const rangeOptions = [
+    { value: 'range', label: 'Range' },
+    { value: 'instant', label: 'Instant' },
+    { value: 'all', label: 'All' },
+  ];
+
   return (
     <>
       <PromQueryField
@@ -71,19 +78,19 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
           />
         }
       />
-      <div style={{ display: 'flex' }}>
-        <button className={`gf-form-label gf-form-label--btn`} style={{ width: '78px' }}>
+      <div
+        className={css`
+          display: flex;
+        `}
+      >
+        <button
+          className={`gf-form-label gf-form-label--btn ${css`
+            width: 78px;
+          `}`}
+        >
           <span className="btn-title">Query type</span>
         </button>
-        <RadioButtonGroup
-          options={[
-            { value: 'range', label: 'Range' },
-            { value: 'instant', label: 'Instant' },
-            { value: 'all', label: 'All' },
-          ]}
-          value={selected}
-          onChange={onQueryTypeChange}
-        />
+        <RadioButtonGroup options={rangeOptions} value={selected} onChange={onQueryTypeChange} />
       </div>
     </>
   );
