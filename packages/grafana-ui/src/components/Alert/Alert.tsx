@@ -115,13 +115,11 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
       font-weight: ${theme.typography.weight.semibold};
     `,
     body: css`
-      .alert-body {
-        flex-grow: 1;
+      flex-grow: 1;
 
-        a {
-          color: ${white};
-          text-decoration: underline;
-        }
+      a {
+        color: ${white};
+        text-decoration: underline;
       }
     `,
     close: css`
