@@ -30,6 +30,7 @@ export const TimeZonePicker: React.FC<Props> = props => {
   const filterBySearchIndex = useFilterBySearchIndex();
   const TimeZoneOption = width && width <= 45 ? CompactTimeZoneOption : WideTimeZoneOption;
 
+  console.log(groupedTimeZones);
   const onChangeTz = useCallback(
     (selectable: SelectableValue<string>) => {
       if (!selectable || !isString(selectable.value)) {

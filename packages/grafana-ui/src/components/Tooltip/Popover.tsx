@@ -26,14 +26,9 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
   referenceElement: PopperJS.ReferenceObject;
   wrapperClassName?: string;
   renderArrow?: RenderPopperArrowFn;
-  eventsEnabled?: boolean;
 }
 
 class Popover extends PureComponent<Props> {
-  static defaultProps: Partial<Props> = {
-    eventsEnabled: true,
-  };
-
   render() {
     const {
       content,
@@ -45,7 +40,6 @@ class Popover extends PureComponent<Props> {
       wrapperClassName,
       renderArrow,
       referenceElement,
-      eventsEnabled,
     } = this.props;
 
     return (
@@ -57,8 +51,13 @@ class Popover extends PureComponent<Props> {
                 <ReactPopper
                   placement={placement}
                   referenceElement={referenceElement}
-                  eventsEnabled={eventsEnabled}
-                  modifiers={[{ name: 'preventOverflow', enabled: true, options: { rootBoundary: 'viewport' } }]}
+                  modifiers={[
+                    { name: 'preventOverflow', enabled: true, options: { rootBoundary: 'viewport' } },
+                    {
+                      name: 'eventListeners',
+                      options: { scroll: true, resize: true },
+                    },
+                  ]}
                 >
                   {({ ref, style, placement, arrowProps, update }) => {
                     return (

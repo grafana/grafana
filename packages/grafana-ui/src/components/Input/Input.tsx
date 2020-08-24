@@ -7,8 +7,11 @@ import { Icon } from '../Icon/Icon';
 import { useClientRect } from '../../utils/useClientRect';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'size'> {
-  /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
-  width?: number;
+  /**
+   * Sets the width of the input. When provided as number final width becomes width* 8px.
+   * Should only be used with inline forms. Setting width of the container is preferred in other cases.
+   **/
+  width?: number | string;
   /** Show an invalid state around the input */
   invalid?: boolean;
   /** Show an icon as a prefix in the input */
@@ -26,13 +29,14 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
 interface StyleDeps {
   theme: GrafanaTheme;
   invalid: boolean;
-  width?: number;
+  width?: number | string;
 }
 
 export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: StyleDeps) => {
   const { palette, colors } = theme;
   const borderRadius = theme.border.radius.sm;
   const height = theme.spacing.formInputHeight;
+  const finalWidth = width ? (typeof width === 'number' ? `${8 * width}px` : width) : '100%;';
 
   const prefixSuffixStaticWidth = '28px';
   const prefixSuffix = css`
@@ -57,7 +61,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       css`
         label: input-wrapper;
         display: flex;
-        width: ${width ? `${8 * width}px` : '100%'};
+        width: ${finalWidth};
         height: ${height}px;
         border-radius: ${borderRadius};
         &:hover {

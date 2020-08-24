@@ -19,9 +19,10 @@ interface LoadAsyncOptionsOpts {
   noOptions?: boolean;
   timeout?: number;
   withDescriptions?: boolean;
+  groupedOptions?: boolean;
 }
 
-const getLoadAsyncOptions = ({ timeout, error, noOptions, withDescriptions }: LoadAsyncOptionsOpts) => (
+const getLoadAsyncOptions = ({ timeout, error, noOptions, withDescriptions, groupedOptions }: LoadAsyncOptionsOpts) => (
   inputValue: string | null | undefined
 ) => {
   return new Promise<Array<SelectableValue<string>>>((resolve, reject) => {
@@ -31,7 +32,7 @@ const getLoadAsyncOptions = ({ timeout, error, noOptions, withDescriptions }: Lo
         return;
       }
 
-      resolve(noOptions ? [] : generateOptions(!!withDescriptions, inputValue));
+      resolve(noOptions ? [] : generateOptions(!!withDescriptions, inputValue, groupedOptions));
     }, timeout);
   });
 };
@@ -40,8 +41,10 @@ const getCommonSelectKnobs = () => {
   const disabled = boolean('Disabled', false);
   const clearable = boolean('Clearable', true);
   const filterable = boolean('Filterable', true);
+  const allowCustomValue = boolean('Allow custom value', true);
+  const removeValueWithBackspace = boolean('Remove value with backspace', true);
   const optionsWithDescriptions = boolean('Options with descriptions', false);
-  const nestedOptions = boolean('Nested options', false);
+  const groupedOptions = boolean('Grouped options', false);
   const placement = select<Placement>(
     'Popover placement',
     [
@@ -63,20 +66,37 @@ const getCommonSelectKnobs = () => {
     ],
     'auto-start'
   );
-  return { disabled, clearable, filterable, optionsWithDescriptions, nestedOptions, placement };
+  return {
+    disabled,
+    clearable,
+    filterable,
+    allowCustomValue,
+    removeValueWithBackspace,
+    optionsWithDescriptions,
+    groupedOptions,
+    placement,
+  };
 };
 
 export const basic = () => {
+  const { optionsWithDescriptions, groupedOptions, ...otherKnobs } = getCommonSelectKnobs();
   const [selectedOption, setSelectedOption] = useState<SelectableValue<string> | null>();
-  const { optionsWithDescriptions, nestedOptions, ...otherKnobs } = getCommonSelectKnobs();
+  const [options, setOptions] = useState<Array<SelectableValue<string>>>(
+    generateOptions(optionsWithDescriptions, '', groupedOptions)
+  );
+
   return (
     <>
       <SelectNG
         value={selectedOption}
         onChange={v => {
-          setSelectedOption(v || undefined);
+          console.log(v);
+          setSelectedOption(v);
         }}
-        options={generateOptions(optionsWithDescriptions)}
+        onOptionCreate={newOption => {
+          setOptions(options => [...options, newOption]);
+        }}
+        options={options}
         {...otherKnobs}
       />
     </>

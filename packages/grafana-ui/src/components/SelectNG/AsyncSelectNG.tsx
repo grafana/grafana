@@ -2,32 +2,33 @@ import React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Fetch } from './Fetch';
 import Downshift from 'downshift';
-import { AsyncSelectNGProps } from './types';
+import { AsyncSelectNGProps, SelectNGProps } from './types';
 import { SelectMenu, SelectMenuMessage } from './SelectMenu';
 import {
   DEFAULT_ERROR_MESSAGE,
   DEFAULT_LOADING_MESSAGE,
   DEFAULT_NO_OPTIONS_MESSAGE,
-  DEFAULT_PLACEHOLDER,
   itemToString,
   renderClearButton,
-  renderDefaultTrigger,
+  renderDefaultToggle,
   renderDropdownButton,
 } from './utils';
-import { useAsyncSelect } from './hooks';
+import { useAsyncSelect, useSelectKeyboardEvents } from './hooks';
 
-export function AsyncSelectNG<T>({
-  onChange,
-  loadOptions,
-  clearable,
-  disabled,
-  filterable,
-  placeholder = DEFAULT_PLACEHOLDER,
-  noOptionsMessage = DEFAULT_NO_OPTIONS_MESSAGE,
-  loadingMessage = DEFAULT_LOADING_MESSAGE,
-  errorMessage = DEFAULT_ERROR_MESSAGE,
-  placement = 'auto-start',
-}: AsyncSelectNGProps<T>) {
+export function AsyncSelectNG<T>(props: AsyncSelectNGProps<T>) {
+  const {
+    onChange,
+    loadOptions,
+    clearable,
+    filterable,
+    noOptionsMessage = DEFAULT_NO_OPTIONS_MESSAGE,
+    loadingMessage = DEFAULT_LOADING_MESSAGE,
+    errorMessage = DEFAULT_ERROR_MESSAGE,
+    placement = 'auto-start',
+    onOptionCreate,
+    allowCustomValue,
+    removeValueWithBackspace,
+  } = props;
   const {
     triggerRef,
     popperProps,
@@ -36,10 +37,16 @@ export function AsyncSelectNG<T>({
     setPopperRef,
     setPopperElement,
     setCurrentValue,
+    options,
+    filterOptions,
+    setOptions,
   } = useAsyncSelect<T>({
     placement,
     loadOptions,
   });
+
+  const onInputKeyDown = useSelectKeyboardEvents(onChange, onOptionCreate, allowCustomValue, removeValueWithBackspace);
+
   return (
     <>
       <Downshift
@@ -61,18 +68,27 @@ export function AsyncSelectNG<T>({
           closeMenu,
           openMenu,
         }) => {
-          const dropdownButton = renderDropdownButton(triggerRef, isOpen, !!disabled, getToggleButtonProps);
-          const clearButton = clearable && selectedItem && renderClearButton(!!disabled, clearSelection);
-          const triggerElement = renderDefaultTrigger(
+          const finalOptions = filterable && options ? filterOptions(options, currentValue) : options;
+
+          const dropdownButton = renderDropdownButton(
             triggerRef,
-            placeholder,
-            isOpen,
-            !!disabled,
-            !!clearable,
-            !!filterable,
+            (props as unknown) as SelectNGProps<any>,
+            getToggleButtonProps
+          );
+          const clearButton =
+            clearable && selectedItem && renderClearButton((props as unknown) as SelectNGProps<any>, clearSelection);
+          const triggerElement = renderDefaultToggle(
+            triggerRef,
+            (props as unknown) as SelectNGProps<any>,
             dropdownButton,
             clearButton,
-            getInputProps,
+            (options: any) => {
+              const inputProps = getInputProps(options);
+              return {
+                ...inputProps,
+                onKeyDown: onInputKeyDown(finalOptions || [], selectedItem, highlightedIndex, inputProps.onKeyDown),
+              };
+            },
             {
               openMenu,
               closeMenu,
@@ -95,7 +111,11 @@ export function AsyncSelectNG<T>({
                     }}
                     {...popperProps}
                   >
-                    <Fetch<any, Array<SelectableValue<T>>> loadData={onLoadOptions.current} query={currentValue}>
+                    <Fetch<any, Array<SelectableValue<T>>>
+                      loadData={onLoadOptions.current}
+                      query={currentValue}
+                      onDataLoad={setOptions}
+                    >
                       {data => {
                         if (data.error) {
                           return <SelectMenuMessage text={errorMessage} />;
@@ -104,23 +124,23 @@ export function AsyncSelectNG<T>({
                           return <SelectMenuMessage text={loadingMessage} />;
                         }
 
-                        if (data.value && data.value.length === 0) {
-                          return <SelectMenuMessage text={noOptionsMessage} />;
-                        }
-
-                        if (data.value) {
-                          return (
-                            <SelectMenu
-                              {...getMenuProps()}
-                              options={data.value}
-                              highlightedIndex={highlightedIndex}
-                              selectedItem={selectedItem}
-                              getItemProps={getItemProps}
-                            />
-                          );
-                        }
-
-                        return <></>;
+                        return (
+                          <>
+                            {options && options.length === 0 && <SelectMenuMessage text={noOptionsMessage} />}
+                            {options && (
+                              <SelectMenu
+                                {...getMenuProps()}
+                                options={options}
+                                highlightedIndex={highlightedIndex}
+                                selectedItem={selectedItem}
+                                getItemProps={getItemProps}
+                                inputValue={currentValue}
+                                enableOptionCreation={allowCustomValue}
+                                onOptionCreate={onOptionCreate}
+                              />
+                            )}
+                          </>
+                        );
                       }}
                     </Fetch>
                   </div>

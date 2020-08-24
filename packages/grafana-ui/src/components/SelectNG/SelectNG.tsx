@@ -1,43 +1,39 @@
 import React from 'react';
-import Downshift from 'downshift';
+import Downshift, { DownshiftProps } from 'downshift';
 
 import { SelectNGProps } from './types';
 import {
   itemToString,
   renderDropdownButton,
-  DEFAULT_NO_OPTIONS_MESSAGE,
   renderClearButton,
-  renderDefaultTrigger,
-  DEFAULT_PLACEHOLDER,
+  renderDefaultToggle,
+  DEFAULT_NO_OPTIONS_MESSAGE,
+  renderDefaultMenu,
 } from './utils';
-import { SelectMenu, SelectMenuMessage } from './SelectMenu';
-import { useSelect } from './hooks';
+import { SelectMenuMessage } from './SelectMenu';
+import { useSelect, useSelectKeyboardEvents } from './hooks';
+import { SelectableValue } from '@grafana/data';
 
-export function SelectNG<T>({
-  value,
-  onChange,
-  options,
-  placement = 'auto-start',
-  noOptionsMessage = DEFAULT_NO_OPTIONS_MESSAGE,
-  disabled,
-  clearable,
-  filterable,
-  placeholder = DEFAULT_PLACEHOLDER,
-}: SelectNGProps<T>) {
-  const { setPopperElement, triggerRef, filterOptions, popperProps, setPopperRef } = useSelect<T>({
+export function SelectNG<T>(props: SelectNGProps<T>) {
+  const {
     options,
+    clearable,
+    filterable,
+    placement = 'auto-start',
+    noOptionsMessage = DEFAULT_NO_OPTIONS_MESSAGE,
+    allowCustomValue,
+    removeValueWithBackspace,
+    onOptionCreate,
+    onChange,
+  } = props;
+  const { setPopperElement, triggerRef, filterOptions, popperProps, setPopperRef } = useSelect<T>({
     placement,
   });
+  const onInputKeyDown = useSelectKeyboardEvents(onChange, onOptionCreate, allowCustomValue, removeValueWithBackspace);
 
   return (
     <>
-      <Downshift
-        initialSelectedItem={value === null ? undefined : value}
-        itemToString={itemToString}
-        onSelect={item => {
-          onChange(item);
-        }}
-      >
+      <Downshift {...prepareDownshiftProps(props)}>
         {({
           getInputProps,
           getToggleButtonProps,
@@ -51,23 +47,28 @@ export function SelectNG<T>({
           closeMenu,
           clearSelection,
         }) => {
-          const dropdownButton = renderDropdownButton(triggerRef, isOpen, !!disabled, getToggleButtonProps);
-          const clearButton = clearable && selectedItem && renderClearButton(!!disabled, clearSelection);
-          const triggerElement = renderDefaultTrigger(
+          const finalOptions = filterable ? filterOptions(options, inputValue) : options;
+          const dropdownButton = renderDropdownButton(triggerRef, props, getToggleButtonProps);
+          const clearButton = clearable && selectedItem && renderClearButton(props, clearSelection);
+          const triggerElement = renderDefaultToggle(
             triggerRef,
-            placeholder,
-            isOpen,
-            !!disabled,
-            !!clearable,
-            !!filterable,
+            props,
             dropdownButton,
             clearButton,
-            getInputProps,
+            (options: any) => {
+              const inputProps = getInputProps(options);
+              return {
+                ...inputProps,
+                onKeyDown: onInputKeyDown(finalOptions, selectedItem, highlightedIndex, inputProps.onKeyDown),
+              };
+            },
             {
               openMenu,
               closeMenu,
             }
           );
+
+          const renderMenu = props.renderMenu || renderDefaultMenu;
 
           return (
             <div>
@@ -84,14 +85,16 @@ export function SelectNG<T>({
                     }}
                     {...popperProps}
                   >
-                    {options.length === 0 && <SelectMenuMessage text={noOptionsMessage} />}
-                    <SelectMenu
-                      {...getMenuProps()}
-                      options={filterable ? filterOptions(inputValue) : options}
-                      highlightedIndex={highlightedIndex}
-                      selectedItem={selectedItem}
-                      getItemProps={getItemProps}
-                    />
+                    {finalOptions.length === 0 && <SelectMenuMessage text={noOptionsMessage} />}
+                    {renderMenu(
+                      finalOptions,
+                      props,
+                      getMenuProps,
+                      getItemProps,
+                      highlightedIndex,
+                      selectedItem,
+                      inputValue
+                    )}
                   </div>
                 ) : null}
               </div>
@@ -101,4 +104,17 @@ export function SelectNG<T>({
       </Downshift>
     </>
   );
+}
+
+function prepareDownshiftProps<T>(props: SelectNGProps<T>): DownshiftProps<SelectableValue<T>> {
+  return {
+    // Downshift is used in a controlled way in our implementation
+    isOpen: props.isOpen,
+    selectedItem: props.value === undefined ? null : props.value,
+    onChange: item => {
+      props.onChange(item);
+    },
+
+    itemToString: itemToString,
+  };
 }

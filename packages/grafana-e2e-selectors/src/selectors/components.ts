@@ -121,6 +121,9 @@ export const Components = {
     option: 'Select option',
     input: () => 'input[id*="react-select-"]',
     singleValue: () => 'div[class*="-singleValue"]',
+    optionDescription: 'Select option description',
+    menu: 'Select options menu',
+    trigger: 'Select trigger',
   },
   FieldConfigEditor: {
     content: 'Field config editor content',

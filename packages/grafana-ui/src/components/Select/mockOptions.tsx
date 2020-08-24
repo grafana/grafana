@@ -1,7 +1,8 @@
 import { SelectableValue } from '@grafana/data';
 import { kebabCase } from 'lodash';
 
-export const generateOptions = (desc = false, inputValue?: string | null) => {
+export const generateOptions = (desc = false, inputValue?: string | null, groupedOptions?: boolean) => {
+  const groups = ['Team Asia', 'Team Europe', 'Team North America', 'Team South America', 'Team Africa'];
   const values = [
     'Sharilyn Markowitz',
     'Naomi Striplin',
@@ -25,13 +26,32 @@ export const generateOptions = (desc = false, inputValue?: string | null) => {
     'Han Harnish',
   ];
 
-  const vals = values.map<SelectableValue<string>>(name => ({
-    value: kebabCase(name),
-    label: name,
-    description: desc ? `This is a description of ${name}` : undefined,
-  }));
-  if (inputValue) {
-    return vals.filter(v => v.label?.includes(inputValue));
+  let vals = [];
+  const getOptionsChunk = (chunkNumber: number, chunkSize = 4): Array<SelectableValue<string>> => {
+    // console.log(chunkNumber, chunkSize, chunkNumber * chunkSize, chunkNumber * chunkSize + chunkSize - 1);
+    return values
+      .slice(chunkNumber * chunkSize, chunkNumber * chunkSize + chunkSize)
+      .map(v => ({ value: kebabCase(v), label: v }));
+  };
+  if (groupedOptions) {
+    console.log(groupedOptions);
+    vals = groups.map((g, index) => {
+      return {
+        label: g,
+        options: getOptionsChunk(index),
+      };
+    });
+
+    return vals;
+  } else {
+    vals = values.map<SelectableValue<string>>(name => ({
+      value: kebabCase(name),
+      label: name,
+      description: desc ? `This is a description of ${name}` : undefined,
+    }));
+    if (inputValue) {
+      return vals.filter(v => v.label?.includes(inputValue));
+    }
   }
 
   return vals;

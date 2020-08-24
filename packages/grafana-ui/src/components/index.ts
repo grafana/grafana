@@ -194,8 +194,9 @@ const LegacyForms = {
   Switch,
 };
 
-// const NGForm = {
-//   Select: SelectNG,
-//   AsyncSelect: SelectNG,
-// };
-export { LegacyForms, LegacyInputStatus };
+const NGForm = {
+  Select: SelectNG,
+  AsyncSelect: SelectNG,
+};
+
+export { LegacyForms, LegacyInputStatus, NGForm };
