@@ -414,13 +414,13 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `pushover`
 
-| Name     |
-| -------- |
-| apiToken |
-| userKey  |
-| device   |
-| retry    |
-| expire   |
+| Name     | Secure setting |
+| -------- | -------------- |
+| apiToken | yes |
+| userKey  | yes |
+| device   | |
+| retry    | |
+| expire   | |
 
 #### Alert notification `slack`
 
