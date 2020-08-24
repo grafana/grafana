@@ -1,6 +1,7 @@
 import React, { FC, ReactNode } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { useTheme } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types/icon';
@@ -47,7 +48,7 @@ export const Alert: FC<Props> = ({
 
   return (
     <div className={styles.container}>
-      <div className={styles.alert} aria-label={`alert-${severity}`}>
+      <div className={styles.alert} aria-label={selectors.components.Alert.alert(severity)}>
         <div className={styles.icon}>
           <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
         </div>
