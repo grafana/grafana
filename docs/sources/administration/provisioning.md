@@ -528,11 +528,11 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `threema`
 
-| Name         |
-| ------------ |
-| gateway_id   |
-| recipient_id |
-| api_secret   |
+| Name         | Secure setting |
+| ------------ | - |
+| gateway_id   | |
+| recipient_id | |
+| api_secret   | yes |
 
 #### Alert notification `webhook`
 
