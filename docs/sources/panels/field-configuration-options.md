@@ -99,7 +99,6 @@ Allows you to type in a regular expression against which fields to be overridden
 
 Allows you to select fields by their type (string, numeric, etc).
 
-
 ## Field options
 
 This section explains all available field options. They are listed in alphabetical order.
