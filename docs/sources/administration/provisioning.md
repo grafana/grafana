@@ -524,6 +524,7 @@ The following sections detail the supported settings and secure settings for eac
 | ----------- | - |
 | bottoken    | yes |
 | chatid      | |
+| uploadImage | |
 
 #### Alert notification `threema`
 
