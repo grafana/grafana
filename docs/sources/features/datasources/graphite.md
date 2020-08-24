@@ -87,7 +87,7 @@ You can reference queries by the row “letter” that they’re on (similar to 
 
 Occasionally one would like to see multiple time series plotted on the same graph. For example we might want to see how the CPU is being utilized on a machine. You might
 initially create the graph by adding a query for each time series, such as `cpu.percent.user.g`,
-`cpu.percent.system.g`, and so on.  This results in *n* queries made to the data source, which is inefficent.
+`cpu.percent.system.g`, and so on.  This results in *n* queries made to the data source, which is inefficient.
 
 To be more efficient one can use wildcards in your search, returning all the time series in one query. For example, `cpu.percent.*.g`.
 
