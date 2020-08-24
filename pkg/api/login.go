@@ -221,7 +221,7 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 	}
 
 	hs.log.Info("Successful Login", "User", user.Email)
-	middleware.WriteSessionCookie(c, userToken.UnhashedToken, hs.Cfg.LoginMaxLifetimeDuration.Hours()/24)
+	middleware.WriteSessionCookie(c, userToken.UnhashedToken, hs.Cfg.LoginMaxLifetimeDuration.Hours())
 	return nil
 }
 

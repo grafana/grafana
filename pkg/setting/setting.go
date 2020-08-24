@@ -880,10 +880,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 	if maxLifetimeDaysVal != 30 {
 		cfg.LoginMaxLifetimeDuration = time.Duration(maxLifetimeDaysVal) * 24 * time.Hour
-		LoginMaxLifetimeDays = float64(maxLifetimeDaysVal)
+		LoginMaxLifetimeDays = float64(maxLifetimeDaysVal * 24)
 	} else {
 		cfg.LoginMaxLifetimeDuration, err = time.ParseDuration(maxLifetimeDurationVal)
-		LoginMaxLifetimeDays = cfg.LoginMaxLifetimeDuration.Hours() / 24
+		LoginMaxLifetimeDays = cfg.LoginMaxLifetimeDuration.Hours()
 		if err != nil {
 			return err
 		}

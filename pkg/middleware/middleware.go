@@ -270,7 +270,7 @@ func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays fl
 	if maxLifetimeDays <= 0 {
 		maxAge = -1
 	} else {
-		maxAgeHours := (time.Duration(setting.LoginMaxLifetimeDays) * 24 * time.Hour) + time.Hour
+		maxAgeHours := time.Duration(maxLifetimeDays) * time.Hour
 		maxAge = int(maxAgeHours.Seconds())
 	}
 
