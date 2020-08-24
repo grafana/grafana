@@ -356,7 +356,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     let scopedVars = {
       ...options.scopedVars,
       ...this.getRangeScopedVars(options.range),
-      ...this.getRateIntervalScopedVariable(interval, minInterval),
+      ...this.getRateIntervalScopedVariable({
+        interval: adjustedInterval,
+        minInterval,
+        isMinIntervalSet: Boolean(target.interval),
+      }),
     };
     // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
     if (interval !== adjustedInterval) {
@@ -364,7 +368,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       scopedVars = Object.assign({}, options.scopedVars, {
         __interval: { text: interval + 's', value: interval + 's' },
         __interval_ms: { text: interval * 1000, value: interval * 1000 },
-        ...this.getRateIntervalScopedVariable(interval, minInterval),
+        ...this.getRateIntervalScopedVariable({ interval, minInterval, isMinIntervalSet: Boolean(target.interval) }),
         ...this.getRangeScopedVars(options.range),
       });
     }
@@ -403,13 +407,23 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return query;
   }
 
-  getRateIntervalScopedVariable(interval: number, minInterval: number) {
-    let intervalInSeconds = minInterval === interval ? kbn.intervalToSeconds(this.interval) : minInterval;
-    // if intervalInSeconds === 0 then we should fall back to the default 15 seconds
-    if (intervalInSeconds === 0) {
-      intervalInSeconds = 15;
+  getRateIntervalScopedVariable({
+    interval,
+    minInterval,
+    isMinIntervalSet,
+  }: {
+    interval: number;
+    minInterval: number;
+    isMinIntervalSet: boolean;
+  }) {
+    // If min step is set use that as scrape interval
+    let scrapeInterval = isMinIntervalSet ? minInterval : kbn.intervalToSeconds(this.interval);
+    // if intervalInSeconds === 0 then we should fall back to the default 15 seconds.
+    // This can be 0 when set to 0 in the data source settings.
+    if (scrapeInterval === 0) {
+      scrapeInterval = 15;
     }
-    const rateInterval = Math.max(interval + intervalInSeconds, 4 * intervalInSeconds);
+    const rateInterval = Math.max(interval + scrapeInterval, 4 * scrapeInterval);
     return { __rate_interval: { text: rateInterval + 's', value: rateInterval + 's' } };
   }
 
