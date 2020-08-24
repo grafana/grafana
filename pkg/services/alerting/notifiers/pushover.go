@@ -283,8 +283,8 @@ func init() {
 
 // NewPushoverNotifier is the constructor for the Pushover Notifier
 func NewPushoverNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
-	userKey := model.DecryptedValue("userKey", model.Settings.Get("apiKey").MustString())
-	APIToken := model.DecryptedValue("apiKey", model.Settings.Get("apiKey").MustString())
+	userKey := model.DecryptedValue("userKey", model.Settings.Get("userKey").MustString())
+	APIToken := model.DecryptedValue("apiToken", model.Settings.Get("apiToken").MustString())
 	device := model.Settings.Get("device").MustString()
 	priority, _ := strconv.Atoi(model.Settings.Get("priority").MustString())
 	retry, _ := strconv.Atoi(model.Settings.Get("retry").MustString())
