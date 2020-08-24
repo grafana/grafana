@@ -4,9 +4,11 @@ import { AsyncSelect } from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
+
 import appEvents from '../../app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
+import { createFolder } from 'app/features/manage-dashboards/state/actions';
 
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
@@ -89,7 +91,7 @@ export class FolderPicker extends PureComponent<Props, State> {
 
   createNewFolder = async (folderName: string) => {
     // @ts-ignore
-    const newFolder = await getBackendSrv().createFolder({ title: folderName });
+    const newFolder = await createFolder({ title: folderName });
     let folder = { value: -1, label: 'Not created' };
     if (newFolder.id > -1) {
       appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);

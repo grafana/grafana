@@ -8,8 +8,8 @@
   "additionalProperties": false,
   "properties": {
     "$schema": {
-        "type": "string",
-        "description": "Schema definition for the plugin.json file"
+      "type": "string",
+      "description": "Schema definition for the plugin.json file"
     },
     "id": {
       "type": "string",

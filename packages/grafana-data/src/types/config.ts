@@ -99,4 +99,5 @@ export interface GrafanaConfig {
   pluginsToPreload: string[];
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
+  http2Enabled: boolean;
 }
