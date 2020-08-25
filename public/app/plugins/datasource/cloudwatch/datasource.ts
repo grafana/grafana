@@ -248,7 +248,8 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
                 map(frames => {
                   let moreRecordsMatched = false;
                   for (const frame of frames) {
-                    const recordsMatched = frame.meta?.custom?.['Statistics']['RecordsMatched'];
+                    const recordsMatched = frame.meta?.stats?.find(stat => stat.displayName === 'Records matched')
+                      ?.value!;
                     if (recordsMatched > (prevRecordsMatched[frame.refId!] ?? 0)) {
                       moreRecordsMatched = true;
                     }
