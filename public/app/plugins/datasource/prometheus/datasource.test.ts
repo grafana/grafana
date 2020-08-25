@@ -1633,7 +1633,7 @@ describe('PrometheusDatasource', () => {
       ds.createQuery(target, { interval: '5m' } as any, 0, 10080);
       expect((templateSrv.replace as any).mock.calls[1][1]['__rate_interval'].value).toBe('315s');
     });
-    it('should fall back to 60s if interval and scrapeInterval is 0', () => {
+    it('should fall back to a scrape interval of 15s if min step is set to 0, resulting in 4*15s = 60s', () => {
       ds.createQuery({ ...target, interval: '' }, { interval: '15s' } as any, 0, 300);
       expect((templateSrv.replace as any).mock.calls[1][1]['__rate_interval'].value).toBe('60s');
     });
@@ -1649,12 +1649,12 @@ describe('PrometheusDatasource', () => {
     });
     it('should be interval + scrape interval if resolution is set to 1/2 and interval is 10m', () => {
       // For a 7d graph, $__interval is 10m
-      ds.createQuery({ ...target, intervalFactor: 0.5 }, { interval: '10m' } as any, 0, 10080);
-      expect((templateSrv.replace as any).mock.calls[1][1]['__rate_interval'].value).toBe('615s');
+      ds.createQuery({ ...target, intervalFactor: 2 }, { interval: '10m' } as any, 0, 10080);
+      expect((templateSrv.replace as any).mock.calls[1][1]['__rate_interval'].value).toBe('1215s');
     });
     it('should be 4 times the scrape interval if resolution is set to 1/2 and interval is 15s', () => {
       // For a 5m graph, $__interval is 15s
-      ds.createQuery({ ...target, intervalFactor: 0.5 }, { interval: '15s' } as any, 0, 300);
+      ds.createQuery({ ...target, intervalFactor: 2 }, { interval: '15s' } as any, 0, 300);
       expect((templateSrv.replace as any).mock.calls[1][1]['__rate_interval'].value).toBe('60s');
     });
   });
