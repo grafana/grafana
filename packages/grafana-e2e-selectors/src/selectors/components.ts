@@ -1,5 +1,4 @@
 import { Pages } from './pages';
-import { AlertVariant } from '@grafana/ui';
 
 export const Components = {
   DataSource: {
@@ -97,7 +96,7 @@ export const Components = {
     content: 'Alert editor tab content',
   },
   Alert: {
-    alert: (severity: AlertVariant) => `alert-${severity}`,
+    alert: (severity: string) => `Alert ${severity}`,
   },
   TransformTab: {
     content: 'Transform editor tab content',
