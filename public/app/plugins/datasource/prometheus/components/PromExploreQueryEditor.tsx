@@ -99,11 +99,7 @@ const PromExploreRadioButton: React.FunctionComponent<PromExploreRadioButtonProp
         display: flex;
       `}
     >
-      <button
-        className={`gf-form-label gf-form-label--btn ${css`
-          width: 78px;
-        `}`}
-      >
+      <button className={`gf-form-label gf-form-label--btn width-5`}>
         <span className="btn-title">Query type</span>
       </button>
       <RadioButtonGroup options={rangeOptions} value={selected} onChange={onQueryTypeChange} />

@@ -1835,7 +1835,7 @@ describe('prepareTargets', () => {
     });
 
     describe('when query type Instant is selected', () => {
-      it('then it should return only instant related objects', () => {
+      it('then it should just add targets', () => {
         const target: PromQuery = {
           refId: 'A',
           expr: 'up',
@@ -1866,7 +1866,7 @@ describe('prepareTargets', () => {
   });
 
   describe('when query type Range is selected', () => {
-    it('then it should return only time series related objects', () => {
+    it('then it should just add targets', () => {
       const target: PromQuery = {
         refId: 'A',
         expr: 'up',

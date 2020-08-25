@@ -213,15 +213,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
       target.requestId = options.panelId + target.refId;
 
-      if (options.app !== CoreApp.Explore) {
-        activeTargets.push(target);
+      if (!target.runAll) {
         queries.push(this.createQuery(target, options, start, end));
-        continue;
-      }
-
-      // Preparing targets for Explore
-      if (target.runAll) {
-        // If running both - instant and range query, prepare both targets
+        activeTargets.push(target);
+      } else {
+        // If running both (only available in Explore) - instant and range query, prepare both targets
         // Create instant target
         const instantTarget: any = cloneDeep(target);
         instantTarget.format = 'table';
@@ -241,9 +237,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           this.createQuery(instantTarget, options, start, end),
           this.createQuery(rangeTarget, options, start, end)
         );
-      } else {
-        queries.push(this.createQuery(target, options, start, end));
-        activeTargets.push(target);
       }
     }
 

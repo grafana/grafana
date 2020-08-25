@@ -56,14 +56,12 @@ interface Props extends Themeable {
 interface State {
   hiddenSeries: string[];
   showAllTimeSeries: boolean;
-  graphContainerOpen: boolean;
 }
 
 class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
   state: State = {
     hiddenSeries: [],
     showAllTimeSeries: false,
-    graphContainerOpen: true,
   };
 
   onShowAllTimeSeries = () => {
