@@ -25,6 +25,7 @@ func init() {
 				Placeholder:  "LINE notify token key",
 				PropertyName: "token",
 				Required:     true,
+				Secure:       true,
 			}},
 	})
 }
@@ -35,7 +36,7 @@ const (
 
 // NewLINENotifier is the constructor for the LINE notifier
 func NewLINENotifier(model *models.AlertNotification) (alerting.Notifier, error) {
-	token := model.Settings.Get("token").MustString()
+	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
 	if token == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find token in settings"}
 	}

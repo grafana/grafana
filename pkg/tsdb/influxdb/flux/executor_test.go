@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strings"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xorcare/pointer"
 
@@ -34,7 +35,7 @@ type MockRunner struct {
 }
 
 func (r *MockRunner) runQuery(ctx context.Context, q string) (*api.QueryTableResult, error) {
-	bytes, err := ioutil.ReadFile("./testdata/" + r.testDataPath)
+	bytes, err := ioutil.ReadFile(filepath.Join("testdata", r.testDataPath))
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +44,10 @@ func (r *MockRunner) runQuery(ctx context.Context, q string) (*api.QueryTableRes
 		time.Sleep(100 * time.Millisecond)
 		if r.Method == http.MethodPost {
 			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write(bytes)
+			_, err := w.Write(bytes)
+			if err != nil {
+				panic(fmt.Sprintf("Failed to write response: %s", err))
+			}
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -54,44 +58,30 @@ func (r *MockRunner) runQuery(ctx context.Context, q string) (*api.QueryTableRes
 	return client.QueryAPI("x").Query(ctx, q)
 }
 
-func verifyGoldenResponse(name string) (*backend.DataResponse, error) {
+func verifyGoldenResponse(t *testing.T, name string) *backend.DataResponse {
 	runner := &MockRunner{
 		testDataPath: name + ".csv",
 	}
 
 	dr := executeQuery(context.Background(), queryModel{MaxDataPoints: 100}, runner, 50)
-	err := experimental.CheckGoldenDataResponse("./testdata/"+name+".golden.txt", &dr, true)
-	return &dr, err
+	err := experimental.CheckGoldenDataResponse(filepath.Join("testdata", fmt.Sprintf("%s.golden.txt", name)),
+		&dr, true)
+	require.NoError(t, err)
+	require.NoError(t, dr.Error)
+
+	return &dr
 }
 
 func TestExecuteSimple(t *testing.T) {
 	t.Run("Simple Test", func(t *testing.T) {
-		dr, err := verifyGoldenResponse("simple")
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		dr := verifyGoldenResponse(t, "simple")
+		require.Len(t, dr.Frames, 1)
+		require.Contains(t, dr.Frames[0].Name, "test")
+		require.Len(t, dr.Frames[0].Fields[1].Labels, 2)
+		require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
 
-		if dr.Error != nil {
-			t.Fatal(dr.Error)
-		}
-
-		if len(dr.Frames) != 1 {
-			t.Fatalf("Expected 1 frame, received [%d] frames", len(dr.Frames))
-		}
-
-		if !strings.Contains(dr.Frames[0].Name, "test") {
-			t.Fatalf("Frame must match _measurement column. Expected [%s] Got [%s]", "test", dr.Frames[0].Name)
-		}
-
-		if len(dr.Frames[0].Fields[1].Labels) != 2 {
-			t.Fatalf("Error parsing labels. Expected [%d] Got [%d]", 2, len(dr.Frames[0].Fields[1].Labels))
-		}
-
-		if dr.Frames[0].Fields[0].Name != "Time" {
-			t.Fatalf("Error parsing fields. Field 1 should always be time. Got name [%s]", dr.Frames[0].Fields[0].Name)
-		}
-
-		st, _ := dr.Frames[0].StringTable(-1, -1)
+		st, err := dr.Frames[0].StringTable(-1, -1)
+		require.NoError(t, err)
 		fmt.Println(st)
 		fmt.Println("----------------------")
 	})
@@ -99,32 +89,14 @@ func TestExecuteSimple(t *testing.T) {
 
 func TestExecuteMultiple(t *testing.T) {
 	t.Run("Multiple Test", func(t *testing.T) {
-		dr, err := verifyGoldenResponse("multiple")
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		dr := verifyGoldenResponse(t, "multiple")
+		require.Len(t, dr.Frames, 4)
+		require.Contains(t, dr.Frames[0].Name, "test")
+		require.Len(t, dr.Frames[0].Fields[1].Labels, 2)
+		require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
 
-		if dr.Error != nil {
-			t.Fatal(dr.Error)
-		}
-
-		if len(dr.Frames) != 4 {
-			t.Fatalf("Expected 4 frames, received [%d] frames", len(dr.Frames))
-		}
-
-		if !strings.Contains(dr.Frames[0].Name, "test") {
-			t.Fatalf("Frame must include _measurement column. Expected [%s] Got [%s]", "test", dr.Frames[0].Name)
-		}
-
-		if len(dr.Frames[0].Fields[1].Labels) != 2 {
-			t.Fatalf("Error parsing labels. Expected [%d] Got [%d]", 2, len(dr.Frames[0].Fields[1].Labels))
-		}
-
-		if dr.Frames[0].Fields[0].Name != "Time" {
-			t.Fatalf("Error parsing fields. Field 1 should always be time. Got name [%s]", dr.Frames[0].Fields[0].Name)
-		}
-
-		st, _ := dr.Frames[0].StringTable(-1, -1)
+		st, err := dr.Frames[0].StringTable(-1, -1)
+		require.NoError(t, err)
 		fmt.Println(st)
 		fmt.Println("----------------------")
 	})
@@ -132,32 +104,14 @@ func TestExecuteMultiple(t *testing.T) {
 
 func TestExecuteGrouping(t *testing.T) {
 	t.Run("Grouping Test", func(t *testing.T) {
-		dr, err := verifyGoldenResponse("grouping")
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		dr := verifyGoldenResponse(t, "grouping")
+		require.Len(t, dr.Frames, 3)
+		require.Contains(t, dr.Frames[0].Name, "system")
+		require.Len(t, dr.Frames[0].Fields[1].Labels, 1)
+		require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
 
-		if dr.Error != nil {
-			t.Fatal(dr.Error)
-		}
-
-		if len(dr.Frames) != 3 {
-			t.Fatalf("Expected 3 frames, received [%d] frames", len(dr.Frames))
-		}
-
-		if !strings.Contains(dr.Frames[0].Name, "system") {
-			t.Fatalf("Frame must match _measurement column. Expected [%s] Got [%s]", "test", dr.Frames[0].Name)
-		}
-
-		if len(dr.Frames[0].Fields[1].Labels) != 1 {
-			t.Fatalf("Error parsing labels. Expected [%d] Got [%d]", 1, len(dr.Frames[0].Fields[1].Labels))
-		}
-
-		if dr.Frames[0].Fields[0].Name != "Time" {
-			t.Fatalf("Error parsing fields. Field 1 should always be time. Got name [%s]", dr.Frames[0].Fields[0].Name)
-		}
-
-		st, _ := dr.Frames[0].StringTable(-1, -1)
+		st, err := dr.Frames[0].StringTable(-1, -1)
+		require.NoError(t, err)
 		fmt.Println(st)
 		fmt.Println("----------------------")
 	})
@@ -165,16 +119,11 @@ func TestExecuteGrouping(t *testing.T) {
 
 func TestAggregateGrouping(t *testing.T) {
 	t.Run("Grouping Test", func(t *testing.T) {
-		dr, err := verifyGoldenResponse("aggregate")
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		dr := verifyGoldenResponse(t, "aggregate")
+		require.Len(t, dr.Frames, 1)
 
-		if len(dr.Frames) != 1 {
-			t.Fatal("Expected one frame")
-		}
-
-		str, _ := dr.Frames[0].StringTable(-1, -1)
+		str, err := dr.Frames[0].StringTable(-1, -1)
+		require.NoError(t, err)
 		fmt.Println(str)
 
 		// 	 `Name:
@@ -204,24 +153,18 @@ func TestAggregateGrouping(t *testing.T) {
 		)
 		expectedFrame.Meta = &data.FrameMeta{}
 
-		if diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
+		diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...)
+		assert.Empty(t, diff)
 	})
 }
 
 func TestNonStandardTimeColumn(t *testing.T) {
 	t.Run("Time Column", func(t *testing.T) {
-		dr, err := verifyGoldenResponse("non_standard_time_column")
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		dr := verifyGoldenResponse(t, "non_standard_time_column")
+		require.Len(t, dr.Frames, 1)
 
-		if len(dr.Frames) != 1 {
-			t.Fatal("Expected one frame")
-		}
-
-		str, _ := dr.Frames[0].StringTable(-1, -1)
+		str, err := dr.Frames[0].StringTable(-1, -1)
+		require.NoError(t, err)
 		fmt.Println(str)
 
 		// Dimensions: 2 Fields by 1 Rows
@@ -243,31 +186,20 @@ func TestNonStandardTimeColumn(t *testing.T) {
 		)
 		expectedFrame.Meta = &data.FrameMeta{}
 
-		if diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
+		diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...)
+		assert.Empty(t, diff)
 	})
 }
 
 func TestBuckets(t *testing.T) {
 	t.Run("Buckes", func(t *testing.T) {
-		dr, err := verifyGoldenResponse("buckets")
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-
-		if dr.Error != nil {
-			t.Fatal(dr.Error)
-		}
+		verifyGoldenResponse(t, "buckets")
 	})
 }
 
 func TestGoldenFiles(t *testing.T) {
 	t.Run("Renamed", func(t *testing.T) {
-		_, err := verifyGoldenResponse("renamed")
-		if err != nil {
-			t.Fatal(err.Error())
-		}
+		verifyGoldenResponse(t, "renamed")
 	})
 }
 
@@ -293,7 +225,7 @@ func TestRealQuery(t *testing.T) {
 			MaxDataPoints: 100,
 			RawQuery:      "buckets()",
 		}, runner, 50)
-		err = experimental.CheckGoldenDataResponse("./testdata/buckets-real.golden.txt", &dr, true)
+		err = experimental.CheckGoldenDataResponse(filepath.Join("testdata", "buckets-real.golden.txt"), &dr, true)
 		require.NoError(t, err)
 	})
 }

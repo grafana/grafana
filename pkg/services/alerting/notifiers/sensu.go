@@ -52,6 +52,7 @@ func init() {
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypePassword,
 				PropertyName: "passsword ",
+				Secure:       true,
 			},
 		},
 	})
@@ -69,7 +70,7 @@ func NewSensuNotifier(model *models.AlertNotification) (alerting.Notifier, error
 		URL:          url,
 		User:         model.Settings.Get("username").MustString(),
 		Source:       model.Settings.Get("source").MustString(),
-		Password:     model.Settings.Get("password").MustString(),
+		Password:     model.DecryptedValue("password", model.Settings.Get("password").MustString()),
 		Handler:      model.Settings.Get("handler").MustString(),
 		log:          log.New("alerting.notifier.sensu"),
 	}, nil

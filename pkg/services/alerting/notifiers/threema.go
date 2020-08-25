@@ -52,6 +52,7 @@ func init() {
 				Description:  "Your Threema Gateway API secret.",
 				PropertyName: "api_secret",
 				Required:     true,
+				Secure:       true,
 			},
 		},
 	})
@@ -75,7 +76,7 @@ func NewThreemaNotifier(model *models.AlertNotification) (alerting.Notifier, err
 
 	gatewayID := model.Settings.Get("gateway_id").MustString()
 	recipientID := model.Settings.Get("recipient_id").MustString()
-	apiSecret := model.Settings.Get("api_secret").MustString()
+	apiSecret := model.DecryptedValue("api_secret", model.Settings.Get("api_secret").MustString())
 
 	// Validation
 	if gatewayID == "" {
