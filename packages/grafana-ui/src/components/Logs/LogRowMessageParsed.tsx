@@ -1,20 +1,21 @@
 import React, { PureComponent } from 'react';
-import { LogRowModel } from '@grafana/data';
+import { LogRowModel, Field, LinkModel } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 
-import { parseMessage } from './logParser';
+import { getAllFields } from './logParser';
 
 export interface Props extends Themeable {
   row: LogRowModel;
   showParsedFields: string[];
+  getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
 class UnThemedLogRowMessageParsed extends PureComponent<Props> {
   render() {
-    const { row, showParsedFields } = this.props;
-    const fields = parseMessage(row.entry);
+    const { row, showParsedFields, getFieldLinks } = this.props;
+    const fields = getAllFields(row, getFieldLinks);
 
     const line = showParsedFields
       .map(parsedKey => {
