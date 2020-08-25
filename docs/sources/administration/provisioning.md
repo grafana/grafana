@@ -414,13 +414,13 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `pushover`
 
-| Name     |
-| -------- |
-| apiToken |
-| userKey  |
-| device   |
-| retry    |
-| expire   |
+| Name     | Secure setting |
+| -------- | -------------- |
+| apiToken | yes |
+| userKey  | yes |
+| device   | |
+| retry    | |
+| expire   | |
 
 #### Alert notification `slack`
 
@@ -453,9 +453,9 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `LINE`
 
-| Name  |
-| ----- |
-| token |
+| Name  | Secure setting |
+| ----- | - |
+| token | yes |
 
 #### Alert notification `pagerduty`
 
@@ -466,13 +466,13 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `sensu`
 
-| Name     |
-| -------- |
-| url      |
-| source   |
-| handler  |
-| username |
-| password |
+| Name     | Secure setting |
+| -------- | - | 
+| url      | |
+| source   | |
+| handler  | |
+| username | |
+| password | yes |
 
 #### Alert notification `prometheus-alertmanager`
 
@@ -528,11 +528,11 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `threema`
 
-| Name         |
-| ------------ |
-| gateway_id   |
-| recipient_id |
-| api_secret   |
+| Name         | Secure setting |
+| ------------ | - |
+| gateway_id   | |
+| recipient_id | |
+| api_secret   | yes |
 
 #### Alert notification `webhook`
 

@@ -22,4 +22,5 @@ export const fieldNameByRegexMatcherItem: FieldMatcherUIRegistryItem<string> = {
   matcher: fieldMatchers.get(FieldMatcherID.byRegexp),
   name: 'Filter by field using regex',
   description: 'Set properties for fields with names matching provided regex',
+  optionsToLabel: options => options,
 };
