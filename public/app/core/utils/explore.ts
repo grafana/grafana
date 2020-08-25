@@ -14,7 +14,7 @@ import {
   IntervalValues,
   LogRowModel,
   LogsDedupStrategy,
-  LogsModel,
+  LogsSortOrder,
   RawTimeRange,
   TimeFragment,
   TimeRange,
@@ -464,67 +464,8 @@ export const getRefIds = (value: any): string[] => {
   return _.uniq(_.flatten(refIds));
 };
 
-export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  // compare milliseconds
-  if (a.timeEpochMs < b.timeEpochMs) {
-    return -1;
-  }
-
-  if (a.timeEpochMs > b.timeEpochMs) {
-    return 1;
-  }
-
-  // if milliseonds are equal, compare nanoseconds
-  if (a.timeEpochNs < b.timeEpochNs) {
-    return -1;
-  }
-
-  if (a.timeEpochNs > b.timeEpochNs) {
-    return 1;
-  }
-
-  return 0;
-};
-
-const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  // compare milliseconds
-  if (a.timeEpochMs > b.timeEpochMs) {
-    return -1;
-  }
-
-  if (a.timeEpochMs < b.timeEpochMs) {
-    return 1;
-  }
-
-  // if milliseonds are equal, compare nanoseconds
-  if (a.timeEpochNs > b.timeEpochNs) {
-    return -1;
-  }
-
-  if (a.timeEpochNs < b.timeEpochNs) {
-    return 1;
-  }
-
-  return 0;
-};
-
-export enum SortOrder {
-  Descending = 'Descending',
-  Ascending = 'Ascending',
-  DatasourceAZ = 'Datasource A-Z',
-  DatasourceZA = 'Datasource Z-A',
-}
-
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
-  RefreshPicker.isLive(refreshInterval) ? SortOrder.Ascending : SortOrder.Descending;
-
-export const sortLogsResult = (logsResult: LogsModel | null, sortOrder: SortOrder): LogsModel => {
-  const rows = logsResult ? logsResult.rows : [];
-  sortOrder === SortOrder.Ascending ? rows.sort(sortInAscendingOrder) : rows.sort(sortInDescendingOrder);
-  const result: LogsModel = logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
-
-  return result;
-};
+  RefreshPicker.isLive(refreshInterval) ? LogsSortOrder.Ascending : LogsSortOrder.Descending;
 
 export const convertToWebSocketUrl = (url: string) => {
   const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';

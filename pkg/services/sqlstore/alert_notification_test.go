@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"context"
+	"regexp"
 	"testing"
 	"time"
 
@@ -168,7 +169,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				cmd.Frequency = "invalid duration"
 
 				err := CreateAlertNotificationCommand(cmd)
-				So(err.Error(), ShouldEqual, "time: invalid duration invalid duration")
+				So(regexp.MustCompile(`^time: invalid duration "?invalid duration"?$`).MatchString(
+					err.Error()), ShouldBeTrue)
 			})
 		})
 
@@ -199,7 +201,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 				err := UpdateAlertNotification(updateCmd)
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "time: invalid duration invalid duration")
+				So(regexp.MustCompile(`^time: invalid duration "?invalid duration"?$`).MatchString(
+					err.Error()), ShouldBeTrue)
 			})
 		})
 

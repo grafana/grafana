@@ -5,7 +5,6 @@ package setting
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -227,6 +226,7 @@ type Cfg struct {
 	AppSubUrl        string
 	ServeFromSubPath bool
 	StaticRootPath   string
+	Protocol         Scheme
 
 	// build
 	BuildVersion string
@@ -690,6 +690,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		Protocol = SOCKET
 		SocketPath = server.Key("socket").String()
 	}
+	cfg.Protocol = Protocol
 
 	Domain, err = valueAsString(server, "domain", "localhost")
 	if err != nil {
@@ -1084,12 +1085,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 }
 
 func valueAsString(section *ini.Section, keyName string, defaultValue string) (value string, err error) {
-	defer func() {
-		if err_ := recover(); err_ != nil {
-			err = errors.New("Invalid value for key '" + keyName + "' in configuration file")
-		}
-	}()
-
 	return section.Key(keyName).MustString(defaultValue), nil
 }
 

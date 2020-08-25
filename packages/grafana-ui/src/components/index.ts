@@ -7,6 +7,7 @@ export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
 export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
+export { TabbedContainer, TabConfig } from './TabbedContainer/TabbedContainer';
 
 export { ClipboardButton } from './ClipboardButton/ClipboardButton';
 export { Cascader, CascaderOption } from './Cascader/Cascader';

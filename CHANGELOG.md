@@ -1,3 +1,57 @@
+
+# 7.1.5 (2020-08-25)
+
+### Features / Enhancements
+* **Stats**: Stop counting the same user multiple times. [#26777](https://github.com/grafana/grafana/pull/26777), [@sakjur](https://github.com/sakjur)
+
+### Bug Fixes
+* **Alerting**: remove LongToWide call in alerting. [#27140](https://github.com/grafana/grafana/pull/27140), [@kylebrandt](https://github.com/kylebrandt)
+* **AzureMonitor**: fix panic introduced in 7.1.4 when unit was unspecified and alias was used. [#27113](https://github.com/grafana/grafana/pull/27113), [@kylebrandt](https://github.com/kylebrandt)
+* **Variables**: Fixes issue with All variable not being resolved. [#27151](https://github.com/grafana/grafana/pull/27151), [@hugohaggmark](https://github.com/hugohaggmark)
+
+# 7.1.4 (2020-08-20)
+
+### Features / Enhancements
+* **Azure App Insights Alert error - tsdb.HandleRequest() failed to convert dataframe "" to tsdb.TimeSeriesSlice**. [#26897](https://github.com/grafana/grafana/issues/26897)
+* **AzureMonitor**: map more units. [#26990](https://github.com/grafana/grafana/pull/26990), [@kylebrandt](https://github.com/kylebrandt)
+* **Azuremonitor**: do not set unit if literal "Unspecified". [#26839](https://github.com/grafana/grafana/pull/26839), [@kylebrandt](https://github.com/kylebrandt)
+* **Dataframe/Alerting**: to tsdb.TimeSeriesSlice - accept "empty" time series. [#26903](https://github.com/grafana/grafana/pull/26903), [@kylebrandt](https://github.com/kylebrandt)
+* **Field overrides**: Filter by field name using regex. [#27070](https://github.com/grafana/grafana/pull/27070), [@dprokop](https://github.com/dprokop)
+* **Overrides**: expose byType matcher UI. [#27056](https://github.com/grafana/grafana/pull/27056), [@ryantxu](https://github.com/ryantxu)
+
+### Bug Fixes
+* **CloudWatch**: Add FreeStorageCapacity metric. [#26503](https://github.com/grafana/grafana/pull/26503), [@waqark3389](https://github.com/waqark3389)
+* **CloudWatch**: Fix sorting of metrics results. [#26835](https://github.com/grafana/grafana/pull/26835), [@aknuds1](https://github.com/aknuds1)
+* **Cloudwatch**: Add FileSystemId as a dimension key for the AWS/FSx namespace. [#26662](https://github.com/grafana/grafana/pull/26662), [@waqark3389](https://github.com/waqark3389)
+* **InfluxDB**: Update Flux placeholder URL with respect to latest Go client. [#27086](https://github.com/grafana/grafana/pull/27086), [@aknuds1](https://github.com/aknuds1)
+* **InfluxDB**: Upgrade Go client, use data source HTTP client. [#27012](https://github.com/grafana/grafana/pull/27012), [@aknuds1](https://github.com/aknuds1)
+* **Proxy**: Fix updating refresh token in OAuth pass-thru. [#26885](https://github.com/grafana/grafana/pull/26885), [@seanlaff](https://github.com/seanlaff)
+* **Templating**: Fixes so texts show in picker not the values. [#27002](https://github.com/grafana/grafana/pull/27002), [@hugohaggmark](https://github.com/hugohaggmark)
+
+# 7.1.3 (2020-08-06)
+
+### Bug Fixes
+  * **Templating**: Templating: Fix undefined result when using raw interpolation format [#26818](https://github.com/grafana/grafana/pull/26818)
+
+# 7.1.2 (2020-08-05)
+
+### Features / Enhancements
+  * **Explore**: Don't run queries on datasource change. [#26033](https://github.com/grafana/grafana/pull/26033), [@davkal](https://github.com/davkal)
+  * **TemplateSrv**: Formatting options for ${__from} and ${__to}, unix seconds epoch, ISO 8601/RFC 3339. [#26466](https://github.com/grafana/grafana/pull/26466), [@torkelo](https://github.com/torkelo)
+  * **Toolkit/Plugin**: throw an Error instead of a string. [#26618](https://github.com/grafana/grafana/pull/26618), [@leventebalogh](https://github.com/leventebalogh)
+
+  ### Bug Fixes
+  * **Dashbard**: Fix refresh interval settings to allow setting it to equal min_refresh_interval. [#26615](https://github.com/grafana/grafana/pull/26615), [@torkelo](https://github.com/torkelo)
+  * **Flux**: Ensure connections to InfluxDB are closed. [#26735](https://github.com/grafana/grafana/pull/26735), [@sneddrs](https://github.com/sneddrs)
+  * **Query history**: Fix search filtering if null value. [#26768](https://github.com/grafana/grafana/pull/26768), [@ivanahuckova](https://github.com/ivanahuckova)
+  * **QueryOptions**: Fix not being able to change cache timeout setting. [#26614](https://github.com/grafana/grafana/pull/26614), [@torkelo](https://github.com/torkelo)
+  * **StatPanel**: Fix stat panel display name not showing when explicitly set. [#26616](https://github.com/grafana/grafana/pull/26616), [@torkelo](https://github.com/torkelo)
+  * **Templating**: Fixed access to system variables like __dashboard, __user & __org during dashboard load & variable queries. [#26637](https://github.com/grafana/grafana/pull/26637), [@torkelo](https://github.com/torkelo)
+  * **TextPanel**: Fix content overflowing panel boundaries. [#26612](https://github.com/grafana/grafana/pull/26612), [@torkelo](https://github.com/torkelo)
+  * **TimePicker**: Fix position and responsive behavior. [#26570](https://github.com/grafana/grafana/pull/26570), [@torkelo](https://github.com/torkelo)
+  * **TimePicker**: Fixes app crash when changing custom range to nothing. [#26775](https://github.com/grafana/grafana/pull/26775), [@hugohaggmark](https://github.com/hugohaggmark)
+  * **Units**: Remove duplicate SI prefix from mSv and µSv. [#26598](https://github.com/grafana/grafana/pull/26598), [@tofurky](https://github.com/tofurky)
+
 # 7.1.1 (2020-07-24)
 
 ### Features / Enhancements
@@ -117,6 +171,7 @@
 * **Stackdriver**: Rename Stackdriver to Google Cloud Monitoring. [#25807](https://github.com/grafana/grafana/pull/25807), [@papagian](https://github.com/papagian)
 * **StatPanel**: Option showing name instead of value and more. [#25676](https://github.com/grafana/grafana/pull/25676), [@torkelo](https://github.com/torkelo)
 * **Switch**: Deprecate checked prop in favor of value. [#25862](https://github.com/grafana/grafana/pull/25862), [@tskarhed](https://github.com/tskarhed)
+* **Tab**: Make active tab clickable and add hyperlink functionality. [#25546](https://github.com/grafana/grafana/pull/25546), [@tskarhed](https://github.com/tskarhed)
 * **Table**: Adds adhoc filtering. [#25467](https://github.com/grafana/grafana/pull/25467), [@hugohaggmark](https://github.com/hugohaggmark)
 * **Teams**: Add index for permission check. [#25736](https://github.com/grafana/grafana/pull/25736), [@sakjur](https://github.com/sakjur)
 * **Template variable filters**: Hide overflowing text. [#25801](https://github.com/grafana/grafana/pull/25801), [@tskarhed](https://github.com/tskarhed)

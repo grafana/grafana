@@ -113,16 +113,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   };
 
   renderQueryEditor = () => {
-    const {
-      datasourceInstance,
-      history,
-      query,
-      exploreEvents,
-      range,
-      absoluteRange,
-      queryResponse,
-      exploreId,
-    } = this.props;
+    const { datasourceInstance, history, query, exploreEvents, range, queryResponse, exploreId } = this.props;
 
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
 
@@ -138,7 +129,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
           onBlur={noopOnBlur}
           onChange={this.onChange}
           data={queryResponse}
-          absoluteRange={absoluteRange}
+          range={range}
           exploreId={exploreId}
         />
       );
