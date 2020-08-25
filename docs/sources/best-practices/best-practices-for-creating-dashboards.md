@@ -18,7 +18,7 @@ Here are some principles to consider before you create a dashboard.
 
 What story are you trying to tell with your dashboard? Try to create a logical progression of data, such as large to small or general to specific. What is the goal for this dashboard? (Hint: If the dashboard doesn't have a goal, then ask yourself if you really need the dashboard.)
 
-Keep your graphs simple and focused on answering the question that you are answering. For example, if your question is "which servers are in trouble?", then maybe you don't need to show all the server data. Just show data for the ones in trouble.
+Keep your graphs simple and focused on answering the question that you are asking. For example, if your question is "which servers are in trouble?", then maybe you don't need to show all the server data. Just show data for the ones in trouble.
 
 ### Dashboards should reduce cognitive load, not add to it
 
@@ -41,7 +41,7 @@ Once you have a strategy or design guidelines, write them down to help maintain 
 ## Best practices to follow
 
 - When creating a new dashboard, make sure it has a meaningful name.
-  - If you are creating a dashboard to play or experiment, then put the word `TEST` in the name.
+  - If you are creating a dashboard to play or experiment, then put the word `TEST` or `TMP` in the name.
   - Consider including your name or initials in the dashboard name so that people know who owns the dashboard.
   - Remove temporary experiment dashboards when you are done with them.
 - If you create many related dashboards, think about how to cross-reference them for easy navigation. Refer to [Best practices for managing dashboards]({{< relref "best-practices-for-managing-dashboards.md" >}}) for more information.

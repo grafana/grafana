@@ -49,7 +49,7 @@ How can you tell you are here?
 - Compare like to like: split service dashboards when the magnitude differs. Make sure aggregated metrics don't drown out important information.
 - Expressive charts with meaningful use of color and normalizing axes where you can. 
   - Example of meaningful color: Blue means it's good, red means it's bad. [Thresholds]({{< relref "../panels/thresholds.md" >}}) can help with that.
-  - Example of normalizing axes: When comparing CPU usage, measure by percentage rather than raw number, because each CPU might be a different size. This reduces cognitive load, because the user doesn't have to compute how much space is left on the CPU.
+  - Example of normalizing axes: When comparing CPU usage, measure by percentage rather than raw number, because machines can have a different number of cores. Normalizing CPU usage by the number of cores reduces cognitive load because the viewer can trust that at 100% all cores are being used, without having to know the number of CPUs.
 - Directed browsing cuts down on "guessing."
   - Template variables make it harder to “just browse” randomly or aimlessly.
   - Most dashboards should be linked to by alerts.
@@ -70,3 +70,4 @@ At this stage, you have optimized your dashboard management use with a consisten
   - grafanalib (Python)
 - No editing in the browser. Dashboard viewers change views with variables.
 - Browsing for dashboards is the exception, not the rule.
+- Perform experimentation and testing in a separate Grafana instance dedicated to that purpose, not your production instance. When a dashboard in the test environment is proven useful, then add that dashboard to your main Grafana instance.
