@@ -5,6 +5,7 @@ export * from './assertSuccessNotification';
 export * from './deleteDashboard';
 export * from './deleteDataSource';
 export * from './editPanel';
+export * from './explore';
 export * from './login';
 export * from './openDashboard';
 export * from './openPanelMenuItem';

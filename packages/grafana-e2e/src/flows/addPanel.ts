@@ -2,6 +2,7 @@ import { configurePanel, ConfigurePanelConfig } from './configurePanel';
 import { getScenarioContext } from '../support/scenarioContext';
 import { v4 as uuidv4 } from 'uuid';
 
+// @todo `Omit` 'isExplore'
 export interface AddPanelConfig extends ConfigurePanelConfig {
   dataSourceName: string;
   queriesForm: (config: AddPanelConfig) => void;
