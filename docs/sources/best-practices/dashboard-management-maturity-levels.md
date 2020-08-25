@@ -58,7 +58,7 @@ How can you tell you are here?
 
 ## High - optimized use
 
-At this stage, you have optimized your dashboard management use with a consistent and thoughtful strategy. It requires maintenance, but the results are worth it. Other IT departments want to grow up and be like you.
+At this stage, you have optimized your dashboard management use with a consistent and thoughtful strategy. It requires maintenance, but the results are worth it.
 
 - Actively reducing sprawl.
   - Regularly review existing dashboards to make sure they are still relevant.
