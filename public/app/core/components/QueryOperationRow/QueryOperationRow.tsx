@@ -3,8 +3,11 @@ import { HorizontalGroup, Icon, renderOrCallToRender, stylesFactory, useTheme } 
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import { useUpdateEffect } from 'react-use';
+import { Draggable } from 'react-beautiful-dnd';
 
 interface QueryOperationRowProps {
+  index: number;
+  id: string;
   title?: ((props: { isOpen: boolean }) => React.ReactNode) | React.ReactNode;
   headerElement?: React.ReactNode;
   actions?:
@@ -14,6 +17,7 @@ interface QueryOperationRowProps {
   onClose?: () => void;
   children: React.ReactNode;
   isOpen?: boolean;
+  draggable?: boolean;
 }
 
 export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
@@ -24,6 +28,9 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   onClose,
   onOpen,
   isOpen,
+  draggable,
+  index,
+  id,
 }: QueryOperationRowProps) => {
   const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
   const theme = useTheme();
@@ -54,8 +61,8 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
       },
     });
 
-  return (
-    <div className={styles.wrapper}>
+  const rowContent = (
+    <>
       <div className={styles.header}>
         <HorizontalGroup justify="space-between">
           <div
@@ -65,6 +72,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
             }}
             aria-label="Query operation row title"
           >
+            {draggable && <Icon name="ellipsis-v" className={styles.dragIcon} />}
             <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
             {title && <span className={styles.title}>{titleElement}</span>}
             {headerElement}
@@ -73,7 +81,25 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
         </HorizontalGroup>
       </div>
       {isContentVisible && <div className={styles.content}>{children}</div>}
-    </div>
+    </>
+  );
+  return draggable ? (
+    <Draggable draggableId={id} index={index}>
+      {provided => {
+        return (
+          <div
+            ref={provided.innerRef}
+            className={styles.wrapper}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+          >
+            {rowContent}
+          </div>
+        );
+      }}
+    </Draggable>
+  ) : (
+    <div className={styles.wrapper}>{rowContent}</div>
   );
 };
 
@@ -91,6 +117,10 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       align-items: center;
       justify-content: space-between;
+    `,
+    dragIcon: css`
+      opacity: 0.4;
+      cursor: hand;
     `,
     collapseIcon: css`
       color: ${theme.colors.textWeak};
