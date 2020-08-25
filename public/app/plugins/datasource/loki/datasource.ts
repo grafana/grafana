@@ -91,7 +91,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         expr: this.templateSrv.replace(target.expr, options.scopedVars, this.interpolateQueryExpr),
       }));
 
-    filteredTargets.forEach(target => subQueries.push(this.runRangeQuery(target, options, filteredTargets.length)));
+    filteredTargets.forEach(target =>
+      subQueries.push(
+        this.runInstantQuery(target, options, filteredTargets.length),
+        this.runRangeQuery(target, options, filteredTargets.length)
+      )
+    );
 
     // No valid targets, return the empty result to save a round trip.
     if (isEmpty(subQueries)) {
