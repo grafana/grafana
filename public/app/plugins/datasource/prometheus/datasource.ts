@@ -346,21 +346,19 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     // options.interval is the dynamically calculated interval
     let interval: number = kbn.intervalToSeconds(options.interval);
-    // Minimum interval ("Min step"), if specified for the query or datasource. or same as interval otherwise
+    // Minimum interval ("Min step"), if specified for the query, or same as interval otherwise.
     const minInterval = kbn.intervalToSeconds(
       templateSrv.replace(target.interval || options.interval, options.scopedVars)
     );
+    // Scrape interval as specified for the query ("Min step") or otherwise taken from the datasource.
+    const scrapeInterval = kbn.intervalToSeconds(target.interval || this.interval);
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
     const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
     let scopedVars = {
       ...options.scopedVars,
       ...this.getRangeScopedVars(options.range),
-      ...this.getRateIntervalScopedVariable({
-        interval: adjustedInterval,
-        minInterval,
-        isMinIntervalSet: Boolean(target.interval),
-      }),
+      ...this.getRateIntervalScopedVariable(adjustedInterval, scrapeInterval),
     };
     // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
     if (interval !== adjustedInterval) {
@@ -368,7 +366,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       scopedVars = Object.assign({}, options.scopedVars, {
         __interval: { text: interval + 's', value: interval + 's' },
         __interval_ms: { text: interval * 1000, value: interval * 1000 },
-        ...this.getRateIntervalScopedVariable({ interval, minInterval, isMinIntervalSet: Boolean(target.interval) }),
+        ...this.getRateIntervalScopedVariable(interval, scrapeInterval),
         ...this.getRangeScopedVars(options.range),
       });
     }
@@ -407,19 +405,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return query;
   }
 
-  getRateIntervalScopedVariable({
-    interval,
-    minInterval,
-    isMinIntervalSet,
-  }: {
-    interval: number;
-    minInterval: number;
-    isMinIntervalSet: boolean;
-  }) {
-    // If min step is set use that as scrape interval
-    let scrapeInterval = isMinIntervalSet ? minInterval : kbn.intervalToSeconds(this.interval);
-    // if intervalInSeconds === 0 then we should fall back to the default 15 seconds.
-    // This can be 0 when set to 0 in the data source settings.
+  getRateIntervalScopedVariable(interval: number, scrapeInterval: number) {
+    // Fall back to the default scrape interval of 15s if scrapeInterval is 0 for some reason.
     if (scrapeInterval === 0) {
       scrapeInterval = 15;
     }
