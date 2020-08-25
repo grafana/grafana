@@ -1,4 +1,4 @@
-import React, { memo, FC, useState } from 'react';
+import React, { memo, FC } from 'react';
 import { css } from 'emotion';
 
 // Types
@@ -15,7 +15,6 @@ export type Props = ExploreQueryFieldProps<PrometheusDatasource, PromQuery, Prom
 
 export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
   const { query, data, datasource, history, onChange, onRunQuery } = props;
-  const [selected, setSelected] = useState(query.runAll ? 'all' : query.instant ? 'instant' : 'range');
 
   function onChangeQueryStep(value: string) {
     const { query, onChange } = props;
@@ -32,7 +31,6 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
   function onQueryTypeChange(value: string) {
     const { query, onChange } = props;
     let nextQuery;
-    setSelected(value);
     if (value === 'instant') {
       nextQuery = { ...query, instant: true, runAll: false };
     } else if (value === 'range') {
@@ -48,12 +46,6 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
       onRunQuery();
     }
   }
-
-  const rangeOptions = [
-    { value: 'range', label: 'Range' },
-    { value: 'instant', label: 'Instant' },
-    { value: 'all', label: 'All' },
-  ];
 
   return (
     <>
@@ -78,21 +70,44 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
           />
         }
       />
-      <div
-        className={css`
-          display: flex;
-        `}
-      >
-        <button
-          className={`gf-form-label gf-form-label--btn ${css`
-            width: 78px;
-          `}`}
-        >
-          <span className="btn-title">Query type</span>
-        </button>
-        <RadioButtonGroup options={rangeOptions} value={selected} onChange={onQueryTypeChange} />
-      </div>
+      <PromExploreRadioButton
+        selected={query.runAll ? 'all' : query.instant ? 'instant' : 'range'}
+        onQueryTypeChange={onQueryTypeChange}
+      />
     </>
+  );
+};
+
+type PromExploreRadioButtonProps = {
+  selected: string;
+  onQueryTypeChange: (value: string) => void;
+};
+
+const PromExploreRadioButton: React.FunctionComponent<PromExploreRadioButtonProps> = ({
+  selected,
+  onQueryTypeChange,
+}) => {
+  const rangeOptions = [
+    { value: 'range', label: 'Range' },
+    { value: 'instant', label: 'Instant' },
+    { value: 'all', label: 'All' },
+  ];
+
+  return (
+    <div
+      className={css`
+        display: flex;
+      `}
+    >
+      <button
+        className={`gf-form-label gf-form-label--btn ${css`
+          width: 78px;
+        `}`}
+      >
+        <span className="btn-title">Query type</span>
+      </button>
+      <RadioButtonGroup options={rangeOptions} value={selected} onChange={onQueryTypeChange} />
+    </div>
   );
 };
 
