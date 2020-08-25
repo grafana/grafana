@@ -34,9 +34,8 @@ export const customButtonContent = () => {
     <Alert
       title="Some very important message"
       severity={severity}
-      removeButtonContent={<span>Close</span>}
+      buttonContent={<span>Close</span>}
       onRemove={action('Remove button clicked')}
-      buttonText="OK"
     />
   );
 };

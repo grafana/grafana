@@ -10,13 +10,17 @@ export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
 export interface Props {
   title: string;
+  /** On click handler for alert button, mostly used for dismissing the alert */
   onRemove?: (event: React.MouseEvent) => void;
   severity?: AlertVariant;
   children?: ReactNode;
-  removeButtonContent?: ReactNode | string;
-  /** @deprecated use onRemove instead */
+  /** Custom component or text for alert button */
+  buttonContent?: ReactNode | string;
+  /** @deprecated */
+  /** Deprecated use onRemove instead */
   onButtonClick?: (event: React.MouseEvent) => void;
-  /** @deprecated use removeButtonContent instead */
+  /** @deprecated */
+  /** Deprecated use buttonContent instead */
   buttonText?: string;
 }
 
@@ -40,11 +44,11 @@ export const Alert: FC<Props> = ({
   onButtonClick,
   onRemove,
   children,
-  removeButtonContent,
+  buttonContent,
   severity = 'error',
 }) => {
   const theme = useTheme();
-  const styles = getStyles(theme, severity, !!removeButtonContent);
+  const styles = getStyles(theme, severity, !!buttonContent);
 
   return (
     <div className={styles.container}>
@@ -57,16 +61,15 @@ export const Alert: FC<Props> = ({
           {children && <div>{children}</div>}
         </div>
         {/* If onRemove is specified, giving preference to onRemove */}
-        {onRemove && (
+        {onRemove ? (
           <button type="button" className={styles.close} onClick={onRemove}>
-            {removeButtonContent || <Icon name="times" size="lg" />}
+            {buttonContent || <Icon name="times" size="lg" />}
           </button>
-        )}
-        {onButtonClick && (
+        ) : onButtonClick ? (
           <button type="button" className="btn btn-outline-danger" onClick={onButtonClick}>
             {buttonText}
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -117,6 +120,7 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
     `,
     body: css`
       flex-grow: 1;
+      margin: 0 ${theme.spacing.md} 0 0;
 
       a {
         color: ${white};
@@ -124,11 +128,11 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
       }
     `,
     close: css`
-      margin: 0 0 0 ${theme.spacing.md};
       background: none;
       display: flex;
       align-items: center;
       border: ${outline ? `1px solid ${white}` : 'none'};
+      border-radius: ${theme.border.radius.sm};
     `,
   };
 };
