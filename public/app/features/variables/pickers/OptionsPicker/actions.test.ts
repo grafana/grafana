@@ -258,7 +258,7 @@ describe('options picker actions', () => {
       const option = {
         ...createOption([]),
         selected: true,
-        value: [],
+        value: [] as string[],
         tags: [] as any[],
       };
 
@@ -290,7 +290,7 @@ describe('options picker actions', () => {
       const option = {
         ...createOption([]),
         selected: true,
-        value: [],
+        value: [] as string[],
         tags: [] as any[],
       };
 
