@@ -114,6 +114,17 @@ describe('Prometheus Result Transformer', () => {
         { text: 'Value' },
       ]);
     });
+
+    it('should return table model with le label values parsed as numbers', () => {
+      const table = ctx.resultTransformer.transformMetricDataToTable([
+        {
+          metric: { le: '102' },
+          value: [1594908838, '0'],
+        },
+      ]);
+      expect(table.type).toBe('table');
+      expect(table.rows).toEqual([[1594908838000, 102, 0]]);
+    });
   });
 
   describe('When resultFormat is time series and instant = true', () => {

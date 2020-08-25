@@ -227,6 +227,7 @@ type Cfg struct {
 	AppSubUrl        string
 	ServeFromSubPath bool
 	StaticRootPath   string
+	Protocol         Scheme
 
 	// build
 	BuildVersion string
@@ -690,6 +691,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		Protocol = SOCKET
 		SocketPath = server.Key("socket").String()
 	}
+	cfg.Protocol = Protocol
 
 	Domain, err = valueAsString(server, "domain", "localhost")
 	if err != nil {

@@ -292,4 +292,15 @@ describe('Date display options', () => {
     });
     expect(processor(0).text).toEqual('1970');
   });
+
+  it('should handle ISO string dates', () => {
+    const processor = getDisplayProcessor({
+      timeZone: 'utc',
+      field: {
+        type: FieldType.time,
+      },
+    });
+
+    expect(processor('2020-08-01T08:48:43.783337Z').text).toEqual('2020-08-01 08:48:43');
+  });
 });
