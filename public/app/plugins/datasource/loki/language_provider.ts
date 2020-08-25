@@ -28,7 +28,7 @@ const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 const NS_IN_MS = 1000000;
 export const LABEL_REFRESH_INTERVAL = 1000 * 30; // 30sec
 
-const wrapLabel = (label: string) => ({ label });
+const wrapLabel = (label: string) => ({ label, filterText: `\"${label}\"` });
 export const rangeToParams = (range: AbsoluteTimeRange) => ({ start: range.from * NS_IN_MS, end: range.to * NS_IN_MS });
 
 export type LokiHistoryItem = HistoryItem<LokiQuery>;
@@ -196,13 +196,13 @@ export default class LokiLanguageProvider extends LanguageProvider {
         .take(HISTORY_ITEM_COUNT)
         .map(wrapLabel)
         .map((item: CompletionItem) => addHistoryMetadata(item, history))
-        .value();
+        .value() as unknown;
 
       suggestions.push({
         prefixMatch: true,
         skipSort: true,
         label: 'History',
-        items: historyItems,
+        items: historyItems as CompletionItem[],
       });
     }
 
