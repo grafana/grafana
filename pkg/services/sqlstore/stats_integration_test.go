@@ -13,6 +13,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestIntegration_GetAdminStats(t *testing.T) {
+	InitTestDB(t)
+
+	query := models.GetAdminStatsQuery{}
+	err := GetAdminStats(&query)
+	require.NoError(t, err)
+}
+
 func TestIntegration_GetUserStats(t *testing.T) {
 	InitTestDB(t)
 
