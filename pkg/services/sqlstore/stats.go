@@ -158,7 +158,7 @@ func GetAdminStats(query *models.GetAdminStatsQuery) error {
 		) AS active_sessions`
 
 	var stats models.AdminStats
-	_, err := x.SQL(rawSql, activeEndDate, activeEndDate, activeEndDate, activeEndDate, activeEndDate.Unix()).Get(&stats)
+	_, err := x.SQL(rawSql, activeEndDate, activeEndDate.Unix()).Get(&stats)
 	if err != nil {
 		return err
 	}
