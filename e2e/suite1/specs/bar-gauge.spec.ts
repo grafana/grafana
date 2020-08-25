@@ -11,7 +11,7 @@ e2e.scenario({
     e2e.flows.openDashboard({ uid: 'O6f11TZWk' });
 
     e2e()
-      .get('#panel-6 .bar-gauge__value')
+      .get('#panel-6 [aria-label^="Bar gauge value"]')
       .should('have.css', 'color', 'rgb(242, 73, 92)')
       .contains('100');
   },
