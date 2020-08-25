@@ -6,7 +6,7 @@
  * @param fallback default format if Intl API is not present
  */
 export const localTimeFormat = (
-  locale: string | 'default',
+  locale: string | string[],
   options: Intl.DateTimeFormatOptions,
   fallback: string
 ): string => {
@@ -36,7 +36,7 @@ export const DEFAULT_DATE_TIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 export const MS_DATE_TIME_FORMAT = 'YYYY-MM-DD HH:mm:ss.SSS';
 
 /* export const DEFAULT_DATE_TIME_FORMAT = localTimeFormat(
-  'default',
+  [...navigator.languages],
   {
     year: 'numeric',
     month: '2-digit',
@@ -49,7 +49,7 @@ export const MS_DATE_TIME_FORMAT = 'YYYY-MM-DD HH:mm:ss.SSS';
   'YYYY-MM-DD HH:mm:ss'
 );
 export const MS_DATE_TIME_FORMAT = localTimeFormat(
-  'default',
+  [...navigator.languages],
   {
     year: 'numeric',
     month: '2-digit',
