@@ -48,7 +48,15 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
   onSubmit = (formData: NotificationChannelDTO) => {
     const { notificationChannel } = this.props;
 
-    this.props.updateNotificationChannel({ ...transformSubmitData(formData), id: notificationChannel.id });
+    this.props.updateNotificationChannel({
+      /*
+       Some settings which lives in a collapsed section will not be registered since
+       the section will not be rendered if a user doesn't expand it. Therefore we need to
+       merge the initialData with any changes from the form.
+      */
+      ...transformSubmitData({ ...notificationChannel, ...formData }),
+      id: notificationChannel.id,
+    });
   };
 
   onTestChannel = (formData: NotificationChannelDTO) => {
@@ -58,16 +66,19 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
   render() {
     const { navModel, notificationChannel, notificationChannelTypes } = this.props;
 
-    const defaultNotificationChannelType = notificationChannelTypes.find(n => n.value === notificationChannel.type);
+    console.log(notificationChannel.id);
 
     return (
       <Page navModel={navModel}>
         <Page.Contents>
           <h2>Edit notification channel</h2>
-          {notificationChannel.id ? (
+          {notificationChannel.id > 0 ? (
             <Form
               onSubmit={this.onSubmit}
-              defaultValues={{ ...notificationChannel, type: defaultNotificationChannelType }}
+              defaultValues={{
+                ...notificationChannel,
+                type: notificationChannelTypes.find(n => n.value === notificationChannel.type),
+              }}
             >
               {({ control, errors, getValues, register, watch }) => {
                 const selectedChannel = notificationChannelTypes.find(c => c.value === getValues().type.value);
@@ -90,7 +101,10 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
               }}
             </Form>
           ) : (
-            <Spinner />
+            <div>
+              Loading notification channel
+              <Spinner />
+            </div>
           )}
         </Page.Contents>
       </Page>
