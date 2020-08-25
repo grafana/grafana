@@ -54,6 +54,15 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		return nil, err
 	}
 
+	settings["dateFormat"] = "YYYY-MM-DD h:mm:ss"
+	settings["dateFormatIntervals"] = map[string]interface{}{
+		"PT1S": "HH:mm:ss",
+		"PT1M": "HH:mm",
+		"PT1H": "MM-DD HH:mm",
+		"PT1D": "YYYY-MM-DD",
+		"P1YT": "YYYY-MM",
+	}
+
 	var data = dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:                         c.UserId,

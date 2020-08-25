@@ -100,4 +100,12 @@ export interface GrafanaConfig {
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
+  dateFormat: string;
+  dateFormatIntervals: {
+    PT1S: string;
+    PT1M: string;
+    PT1H: string;
+    PT1D: string;
+    P1YT: string;
+  };
 }

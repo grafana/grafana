@@ -34,30 +34,3 @@ export const localTimeFormat = (
 
 export const DEFAULT_DATE_TIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 export const MS_DATE_TIME_FORMAT = 'YYYY-MM-DD HH:mm:ss.SSS';
-
-/* export const DEFAULT_DATE_TIME_FORMAT = localTimeFormat(
-  'default',
-  {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  },
-  'YYYY-MM-DD HH:mm:ss'
-);
-export const MS_DATE_TIME_FORMAT = localTimeFormat(
-  'default',
-  {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  },
-  'YYYY-MM-DD HH:mm:ss'
-).replace('ss', 'ss.SSS'); */
