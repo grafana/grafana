@@ -368,7 +368,7 @@ export const dateTimeAsLocal = toDateTimeValueFormatter(
     { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' },
     'YYYY-MM-DD HH:mm:ss'
   ),
-  localTimeFormat('default', { hour: 'numeric', minute: '2-digit', second: '2-digit' }, 'h:mm:ss')
+  localTimeFormat('default', { hour: 'numeric', minute: '2-digit', second: '2-digit' }, 'HH:mm:ss')
 );
 
 export function dateTimeFromNow(
