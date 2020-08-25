@@ -95,7 +95,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   ];
 
   if (timeSeries.title) {
-    (fields[1].config as FieldConfig).displayName = timeSeries.title;
+    (fields[1].config as FieldConfig).useFrameName = true;
   }
 
   return {

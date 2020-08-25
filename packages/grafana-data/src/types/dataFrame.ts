@@ -23,7 +23,21 @@ export enum FieldType {
  * Plugins may extend this with additional properties. Something like series overrides
  */
 export interface FieldConfig<TOptions extends object = any> {
-  displayName?: string; // The display value for this field.  This supports template variables blank is auto
+  /**
+   * The display value for this field.  This supports template variables blank is auto
+   */
+  displayName?: string;
+
+  /**
+   * This can be used by data sources that return time series with labels to indicate that frame name contains the
+   * full series name.  Useful for data sources that have custom legend formats and naming schemes and want to
+   * control naming, but still return labels and allow for user override of name via default displayName option.
+   */
+  useFrameName?: boolean;
+
+  /**
+   * True if data source field supports ad-hoc filters
+   */
   filterable?: boolean;
 
   // Numeric Options
