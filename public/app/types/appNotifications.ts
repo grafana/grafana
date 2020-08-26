@@ -1,5 +1,5 @@
 export interface AppNotification {
-  id: number;
+  id: string;
   severity: AppNotificationSeverity;
   icon: string;
   title: string;
