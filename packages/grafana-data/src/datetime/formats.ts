@@ -1,3 +1,36 @@
+export interface SystemDateFormatSettings {
+  fullDate: string;
+  intervals: {
+    PT1S: string;
+    PT1M: string;
+    PT1H: string;
+    PT1D: string;
+    P1YT: string;
+  };
+}
+
+export class SystemDateFormatsState {
+  fullDate = 'YYYY-MM-DD HH:mm:ss';
+  fullDateMS = 'YYYY-MM-DD HH:mm:ss.SSS';
+  intervals = {
+    PT1S: 'HH:mm:ss',
+    PT1M: 'HH:mm',
+    PT1H: 'MM-DD HH:mm',
+    PT1D: 'YYYY-MM-DD',
+    P1YT: 'YYYY-MM',
+  };
+
+  update(settings: SystemDateFormatSettings) {
+    this.fullDate = settings.fullDate;
+    this.fullDateMS = `${settings.fullDate}.SSS`;
+    this.intervals = settings.intervals;
+  }
+
+  getTimeFieldUnit(useMsResolution?: boolean) {
+    return `time:${useMsResolution ? this.fullDateMS : this.fullDate}`;
+  }
+}
+
 /**
  * localTimeFormat helps to generate date formats for momentjs based on browser's locale
  *
@@ -32,5 +65,4 @@ export const localTimeFormat = (
   return parts.map(part => mapping[part.type] || part.value).join('');
 };
 
-export const DEFAULT_DATE_TIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';
-export const MS_DATE_TIME_FORMAT = 'YYYY-MM-DD HH:mm:ss.SSS';
+export const defaultDateFormats = new SystemDateFormatsState();

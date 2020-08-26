@@ -1,6 +1,7 @@
 import { DataSourceInstanceSettings } from './datasource';
 import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
+import { SystemDateFormatSettings } from '../datetime';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -100,12 +101,5 @@ export interface GrafanaConfig {
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
-  dateFormat: string;
-  dateFormatIntervals: {
-    PT1S: string;
-    PT1M: string;
-    PT1H: string;
-    PT1D: string;
-    P1YT: string;
-  };
+  dateFormats: SystemDateFormatSettings;
 }
