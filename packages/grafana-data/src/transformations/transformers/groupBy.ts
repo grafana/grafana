@@ -13,13 +13,25 @@ export enum GroupByOperationID {
 }
 
 export interface GroupByFieldOptions {
-  fieldName: string | null;
   aggregations: ReducerID[];
-  operation: GroupByOperationID;
+  operation: GroupByOperationID | null;
 }
 
 export interface GroupByTransformerOptions {
-  fieldsArray: GroupByFieldOptions[];
+  fields: Record<string, GroupByFieldOptions>;
+}
+
+function toFieldArray(fields: Record<string, GroupByFieldOptions>) {
+  let fieldNames = Object.keys(fields).sort();
+  let fieldsArray = [];
+  for (let f of fieldNames) {
+    fieldsArray.push({
+      fieldName: f,
+      aggregations: fields[f].aggregations,
+      operation: fields[f].operation,
+    });
+  }
+  return fieldsArray;
 }
 
 export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> = {
@@ -27,7 +39,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
   name: 'Group By',
   description: 'Group the data by a field values then process calculations for each group',
   defaultOptions: {
-    fieldsArray: [],
+    fields: {},
   },
 
   /**
@@ -35,8 +47,9 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
    * be applied, just return the input series
    */
   transformer: (options: GroupByTransformerOptions) => {
-    const calculationsByField = options.fieldsArray.filter(val => val.operation === GroupByOperationID.aggregate);
-    const groupByFieldNames = options.fieldsArray
+    let fieldsArray: Array<Record<string, any>> = toFieldArray(options.fields);
+    const calculationsByField = fieldsArray.filter(val => val.operation === GroupByOperationID.aggregate);
+    const groupByFieldNames = fieldsArray
       .filter(val => val.operation === GroupByOperationID.groupBy)
       .map(val => val.fieldName);
 

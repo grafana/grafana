@@ -7,7 +7,7 @@ import {
   ReducerID,
 } from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
-import { Select, StatsPicker, Button, IconButton } from '@grafana/ui';
+import { Select, StatsPicker, IconButton } from '@grafana/ui';
 
 import {
   GroupByTransformerOptions,
@@ -16,13 +16,44 @@ import {
 } from '@grafana/data/src/transformations/transformers/groupBy';
 
 function FieldCalculationsSelector(props: any) {
-  const { fieldNameOptions, onDelete, onConfigChange, config } = props;
+  const { onDelete, onConfigChange, config, fieldName, existsInData } = props;
 
-  let operationSelector = null;
   let aggregationsSelector = null;
 
-  if (config.fieldName) {
-    operationSelector = (
+  if (config.operation === GroupByOperationID.aggregate) {
+    aggregationsSelector = (
+      <div className="gf-form gf-form-spacing gf-form--grow">
+        <StatsPicker
+          className="flex-grow-1"
+          placeholder="Select Stats"
+          allowMultiple
+          stats={config.aggregations}
+          onChange={stats => {
+            onConfigChange({ ...config, aggregations: stats as ReducerID[] });
+          }}
+          menuPlacement="bottom"
+        />
+      </div>
+    );
+  }
+
+  let removeButton = null;
+  if (!existsInData) {
+    removeButton = (
+      <div className="gf-form">
+        <div className="gf-form-label">
+          <IconButton name="times" size="sm" onClick={onDelete} surface="header" style={{ margin: 0 }} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="gf-form-inline">
+      <div className="gf-form gf-form-spacing">
+        <div className="gf-form-label width-16">{fieldName}</div>
+      </div>
+
       <div className="gf-form gf-form-spacing">
         <Select
           className="width-12"
@@ -31,50 +62,12 @@ function FieldCalculationsSelector(props: any) {
             { label: 'Calculate', value: GroupByOperationID.aggregate },
           ]}
           value={config.operation}
-          onChange={value => {
-            onConfigChange({ ...config, operation: value.value });
-          }}
-          menuPlacement="bottom"
-        />
-      </div>
-    );
-
-    if (config.operation === GroupByOperationID.aggregate) {
-      aggregationsSelector = (
-        <div className="gf-form gf-form-spacing gf-form--grow">
-          <StatsPicker
-            className="flex-grow-1"
-            placeholder="Select Stats"
-            allowMultiple
-            stats={config.aggregations}
-            onChange={stats => {
-              onConfigChange({ ...config, aggregations: stats as ReducerID[] });
-            }}
-            menuPlacement="bottom"
-          />
-        </div>
-      );
-    }
-  }
-
-  return (
-    <div className="gf-form-inline">
-      <div className="gf-form gf-form-spacing">
-        <div className="gf-form-label width-4">For Field</div>
-        <Select
-          className="width-12"
-          placeholder="Field Name"
-          options={
-            config.fieldName === null
-              ? fieldNameOptions
-              : [{ label: config.fieldName, value: config.fieldName }, ...fieldNameOptions]
-          }
-          value={config.fieldName}
+          placeholder="Ignored"
           onChange={value => {
             if (value === null) {
-              onConfigChange({ ...config, fieldName: null });
+              onConfigChange({ ...config, operation: null });
             } else {
-              onConfigChange({ ...config, fieldName: value.value || null });
+              onConfigChange({ ...config, operation: value.value });
             }
           }}
           isClearable
@@ -82,15 +75,9 @@ function FieldCalculationsSelector(props: any) {
         />
       </div>
 
-      {operationSelector}
-
       {aggregationsSelector}
 
-      <div className="gf-form">
-        <div className="gf-form-label">
-          <IconButton name="times" size="sm" onClick={onDelete} surface="header" style={{ margin: 0 }} />
-        </div>
-      </div>
+      {removeButton}
     </div>
   );
 }
@@ -101,72 +88,66 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
   onChange,
 }) => {
   const fieldNames = useMemo(() => getAllFieldNamesFromDataFrames(input), [input]);
-  // const fieldNameOptions = fieldNames.map((item: string) => ({ label: item, value: item }));
-  const usedFieldNames = options.fieldsArray.map(item => item.fieldName);
-  const unusedFieldNameOptions = fieldNames
-    .filter(name => !usedFieldNames.includes(name))
-    .map((item: string) => ({ label: item, value: item }));
 
-  const onAddFieldCalculations = () => {
-    let operation = usedFieldNames.length > 0 ? GroupByOperationID.aggregate : GroupByOperationID.groupBy;
+  let fields = { ...options.fields }; // Current configuration
+  // fields = fields.filter((val) => fieldNames.include()) // Remove the fields that are not present anymore
 
+  for (let n of fieldNames) {
+    if (!(n in fields)) {
+      // If there is a new field in the data, we add it to the configuration
+      fields[n] = {
+        aggregations: [],
+        operation: null,
+      };
+    }
+  }
+
+  const onDeleteFieldCalculations = (fieldName: string) => () => {
+    delete fields[fieldName];
     onChange({
       ...options,
-      fieldsArray: [...options.fieldsArray, { fieldName: null, aggregations: [], operation }],
+      fields: {
+        ...fields,
+      },
     });
   };
 
-  const onDeleteFieldCalculations = (index: number) => () => {
-    options.fieldsArray.splice(index, 1);
+  const onConfigChange = (fieldName: string) => (config: GroupByFieldOptions) => {
     onChange({
       ...options,
-    });
-  };
-
-  const onConfigChange = (index: number) => (config: GroupByFieldOptions) => {
-    options.fieldsArray[index] = config;
-
-    options.fieldsArray.sort((a, b) => {
-      if (a.operation !== b.operation) {
-        if (a.operation === GroupByOperationID.groupBy) {
-          return -1;
-        } else {
-          return 1;
-        }
-      } else {
-        return 0;
-      }
-    });
-
-    onChange({
-      ...options,
-      fieldsArray: [...options.fieldsArray],
+      fields: {
+        ...options.fields,
+        [fieldName]: config,
+      },
     });
   };
 
   return (
     <div>
-      {options.fieldsArray.map((val, idx) => (
-        <FieldCalculationsSelector
-          onConfigChange={onConfigChange(idx)}
-          onDelete={onDeleteFieldCalculations(idx)}
-          fieldNameOptions={unusedFieldNameOptions}
-          config={val}
-        />
-      ))}
-
       <div className="gf-form-inline">
-        <div className="gf-form">
-          <Button
-            icon="plus"
-            onClick={onAddFieldCalculations}
-            variant="secondary"
-            disabled={options.fieldsArray.length >= fieldNames.length}
-          >
-            Add field
-          </Button>
+        <div className="gf-form gf-form-spacing">
+          <div className="gf-form-label width-16">Field Name</div>
+        </div>
+        <div className="gf-form gf-form-spacing">
+          <div className="gf-form-label width-12">Operation</div>
+        </div>
+        <div className="gf-form gf-form-spacing gf-form--grow">
+          <div className="gf-form-label flex-grow-1">Calculations</div>
         </div>
       </div>
+
+      {Object.keys(fields)
+        .sort()
+        .map((key: string) => (
+          <FieldCalculationsSelector
+            onConfigChange={onConfigChange(key)}
+            onDelete={onDeleteFieldCalculations(key)}
+            existsInData={fieldNames.includes(key)}
+            fieldName={key}
+            config={fields[key]}
+            key={key}
+          />
+        ))}
     </div>
   );
 };
