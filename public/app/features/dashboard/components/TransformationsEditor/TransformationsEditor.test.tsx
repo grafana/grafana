@@ -1,13 +1,13 @@
 import React from 'react';
 import { DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { TransformationsEditor, TransformationsEditorProps } from './TransformationsEditor';
+import { TransformationsEditor } from './TransformationsEditor';
 import { PanelModel } from '../../state';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
 import { selectors } from '@grafana/e2e-selectors';
 
 const setup = (transformations: DataTransformerConfig[] = []) => {
-  const panel = new PanelModel();
+  const panel = new PanelModel({});
   panel.setTransformations(transformations);
   render(<TransformationsEditor panel={panel} />);
 };

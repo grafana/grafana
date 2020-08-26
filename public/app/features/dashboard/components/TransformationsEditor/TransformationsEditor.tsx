@@ -36,6 +36,7 @@ interface TransformationsEditorTransformation {
   transformation: DataTransformerConfig;
   id: string;
 }
+
 interface State {
   data: DataFrame[];
   transformations: TransformationsEditorTransformation[];
