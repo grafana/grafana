@@ -55,6 +55,11 @@ export const Pages = {
         timezone: 'Time zone picker select container',
         title: 'Dashboard settings page title',
       },
+      Annotations: {
+        List: {
+          addAnnotationCTA: 'Call to action button Add Annotation Query',
+        },
+      },
       Variables: {
         List: {
           addVariableCTA: 'Call to action button Add variable',
