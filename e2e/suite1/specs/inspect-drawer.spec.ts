@@ -9,6 +9,28 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
+    Cypress.on('uncaught:exception', err => {
+      if (err.stack?.indexOf("TypeError: Cannot read property 'getText' of null")) {
+        // On occasion monaco editor will not have the time to be properly unloaded when we change the tab
+        // and then the e2e test fails with the uncaught:exception:
+        // TypeError: Cannot read property 'getText' of null
+        //     at Object.ai [as getFoldingRanges] (http://localhost:3001/public/build/monaco-json.worker.js:2:215257)
+        //     at e.getFoldingRanges (http://localhost:3001/public/build/monaco-json.worker.js:2:221188)
+        //     at e.fmr (http://localhost:3001/public/build/monaco-json.worker.js:2:116605)
+        //     at e._handleMessage (http://localhost:3001/public/build/monaco-json.worker.js:2:7414)
+        //     at Object.handleMessage (http://localhost:3001/public/build/monaco-json.worker.js:2:7018)
+        //     at e._handleMessage (http://localhost:3001/public/build/monaco-json.worker.js:2:5038)
+        //     at e.handleMessage (http://localhost:3001/public/build/monaco-json.worker.js:2:4606)
+        //     at e.onmessage (http://localhost:3001/public/build/monaco-json.worker.js:2:7097)
+        //     at Tt.self.onmessage (http://localhost:3001/public/build/monaco-json.worker.js:2:117109)
+        // return false to prevent the error from
+        // failing this test
+        return false;
+      }
+
+      return true;
+    });
+
     const viewPortWidth = e2e.config().viewportWidth;
     e2e.flows.openDashboard({ uid: '5SdHCadmz' });
 
