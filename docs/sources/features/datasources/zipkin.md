@@ -49,4 +49,4 @@ Zipkin annotations are shown in the trace view as logs with annotation value sho
 
 ## Linking Trace ID from logs
 
-You can link to Zipkin trace from logs in Loki by configuring a derived field with internal link. See [Loki documentation]([Explore]({{< relref "./loki#derived-fields" >}})) for details.
+You can link to Zipkin trace from logs in Loki by configuring a derived field with internal link. See [Loki documentation]({{< relref "./loki#derived-fields" >}}) for details.

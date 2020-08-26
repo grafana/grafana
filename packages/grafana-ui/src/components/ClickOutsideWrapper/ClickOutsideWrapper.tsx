@@ -31,17 +31,16 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
   };
 
   componentDidMount() {
-    document.addEventListener('click', this.onOutsideClick, this.props.useCapture);
+    document.addEventListener('mousedown', this.onOutsideClick, this.props.useCapture);
     if (this.props.includeButtonPress) {
-      // Use keyup since keydown already has an eventlistener on window
-      document.addEventListener('keyup', this.onOutsideClick, this.props.useCapture);
+      document.addEventListener('keydown', this.onOutsideClick, this.props.useCapture);
     }
   }
 
   componentWillUnmount() {
-    document.removeEventListener('click', this.onOutsideClick, this.props.useCapture);
+    document.removeEventListener('mousedown', this.onOutsideClick, this.props.useCapture);
     if (this.props.includeButtonPress) {
-      document.removeEventListener('keyup', this.onOutsideClick, this.props.useCapture);
+      document.removeEventListener('keydown', this.onOutsideClick, this.props.useCapture);
     }
   }
 

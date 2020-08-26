@@ -83,7 +83,7 @@ If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is po
 
 1. First of all, you need to create a Service Account that can be used by the GCE virtual machine. See detailed instructions on how to do that [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#createanewserviceaccount).
 2. Make sure the GCE virtual machine instance is being run as the service account that you just created. See instructions [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#using).
-3. Allow access to the `Cloud Monitoring Monitoring API` scope.
+3. Allow access to the `Cloud Monitoring API` scope.
 
 Read more about creating and enabling service accounts for GCE VM instances [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances).
 

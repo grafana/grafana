@@ -481,6 +481,8 @@
           link: /developers/plugins/share-a-plugin/
         - name: Error handling
           link: /developers/plugins/error-handling/
+        - name: Plugin migration guide
+          link: /developers/plugins/migration-guide/
         - name: Legacy plugins
           children:
             - link: /developers/plugins/legacy/
