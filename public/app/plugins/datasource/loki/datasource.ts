@@ -138,7 +138,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           data: [lokiResultsToTableModel(response.data.data.result, responseListLength, target.refId, meta, true)],
           key: `${target.refId}_instant`,
         };
-      })
+      }),
+      catchError((err: any) => this.throwUnless(err, err.status === 404, target))
     );
   };
 

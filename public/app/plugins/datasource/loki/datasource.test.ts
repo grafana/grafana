@@ -49,16 +49,6 @@ describe('LokiDatasource', () => {
     },
   };
 
-  const testInstantResp: { data: LokiResponse } = {
-    data: {
-      data: {
-        resultType: LokiResultType.Stream,
-        result: [],
-      },
-      status: 'success',
-    },
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
     datasourceRequestMock.mockImplementation(() => Promise.resolve());
@@ -195,18 +185,15 @@ describe('LokiDatasource', () => {
       const ds = new LokiDatasource(customSettings, templateSrvMock);
 
       datasourceRequestMock.mockImplementation(
-        jest
-          .fn()
-          .mockReturnValueOnce(Promise.resolve(testInstantResp))
-          .mockReturnValueOnce(
-            Promise.reject({
-              data: {
-                message: 'parse error at line 1, col 6: invalid char escape',
-              },
-              status: 400,
-              statusText: 'Bad Request',
-            })
-          )
+        jest.fn().mockReturnValue(
+          Promise.reject({
+            data: {
+              message: 'parse error at line 1, col 6: invalid char escape',
+            },
+            status: 400,
+            statusText: 'Bad Request',
+          })
+        )
       );
       const options = getQueryOptions<LokiQuery>({
         targets: [{ expr: '{job="gra\\fana"}', refId: 'B' }],
