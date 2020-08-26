@@ -167,8 +167,11 @@ describe('CloudWatchDatasource', () => {
     it('should stop querying when no more data retrieved past max attempts', async () => {
       const fakeFrames = genMockFrames(10);
       for (let i = 7; i < fakeFrames.length; i++) {
-        fakeFrames[i].meta!.custom!['Statistics']['RecordsMatched'] = fakeFrames[6].meta!.custom!['Statistics'][
-          'RecordsMatched'
+        fakeFrames[i].meta!.stats = [
+          {
+            displayName: 'Records matched',
+            value: fakeFrames[6].meta!.stats?.find(stat => stat.displayName === 'Records matched')?.value!,
+          },
         ];
       }
 
@@ -193,6 +196,7 @@ describe('CloudWatchDatasource', () => {
               ...fakeFrames[MAX_ATTEMPTS - 1].meta!.custom,
               Status: 'Complete',
             },
+            stats: fakeFrames[MAX_ATTEMPTS - 1].meta!.stats,
           },
         },
       ];
@@ -1101,10 +1105,13 @@ function genMockFrames(numResponses: number): DataFrame[] {
       meta: {
         custom: {
           Status: i === numResponses - 1 ? CloudWatchLogsQueryStatus.Complete : CloudWatchLogsQueryStatus.Running,
-          Statistics: {
-            RecordsMatched: (i + 1) * recordIncrement,
-          },
         },
+        stats: [
+          {
+            displayName: 'Records matched',
+            value: (i + 1) * recordIncrement,
+          },
+        ],
       },
       length: 0,
     });

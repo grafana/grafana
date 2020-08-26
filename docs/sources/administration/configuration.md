@@ -273,7 +273,7 @@ Path where the socket should be created when `protocol=socket`. Make sure that G
 ## [database]
 
 Grafana needs a database to store users and dashboards (and other
-things). By default it is configured to use `sqlite3` which is an
+things). By default it is configured to use [`sqlite3`](https://www.sqlite.org/index.html) which is an
 embedded database (included in the main Grafana binary).
 
 ### type

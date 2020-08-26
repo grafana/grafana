@@ -4,10 +4,13 @@ import { stylesFactory, Icon } from '@grafana/ui';
 
 type Props = {
   addQueryRowButtonDisabled?: boolean;
-  richHistoryButtonActive?: boolean;
   addQueryRowButtonHidden?: boolean;
+  richHistoryButtonActive?: boolean;
+  queryInspectorButtonActive?: boolean;
+
   onClickAddQueryRowButton: () => void;
   onClickRichHistoryButton: () => void;
+  onClickQueryInspectorButton: () => void;
 };
 
 const getStyles = stylesFactory(() => {
@@ -41,6 +44,16 @@ export function SecondaryActions(props: Props) {
       >
         <Icon className="icon-margin-right" name="history" size="sm" />
         <span className="btn-title">{'\xA0' + 'Query history'}</span>
+      </button>
+      <button
+        aria-label="Query inspector button"
+        className={cx(`gf-form-label gf-form-label--btn ${styles.button}`, {
+          ['explore-active-button']: props.queryInspectorButtonActive,
+        })}
+        onClick={props.onClickQueryInspectorButton}
+      >
+        <Icon className="icon-margin-right" name="info-circle" size="sm" />
+        <span className="btn-title">{'\xA0' + 'Query inspector'}</span>
       </button>
     </div>
   );
