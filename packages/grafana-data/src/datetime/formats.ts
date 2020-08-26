@@ -24,6 +24,23 @@ export class SystemDateFormatsState {
     this.fullDate = settings.fullDate;
     this.fullDateMS = `${settings.fullDate}.SSS`;
     this.intervals = settings.intervals;
+
+    // if (locale) ↓{
+    //   export const timeScale = {
+    // seconds: localTimeFormat(
+    // [...navigator.languages],
+    // { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false },
+    // 'HH:mm:ss'
+    // ),
+    // minutes: localTimeFormat([...navigator.languages], { hour: '2-digit', minute: '2-digit', hour12: false }, 'HH:mm'),
+    // daysMinutes: localTimeFormat(
+    // [...navigator.languages],
+    // { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false },
+    // 'HH:mm'
+    // ),
+    // days: localTimeFormat([...navigator.languages], { month: '2-digit', day: '2-digit', hour12: false }, 'MM/DD'),
+    // months: localTimeFormat([...navigator.languages], { year: 'numeric', month: '2-digit', hour12: false }, 'YYYY-MM'),
+    // };
   }
 
   getTimeFieldUnit(useMsResolution?: boolean) {

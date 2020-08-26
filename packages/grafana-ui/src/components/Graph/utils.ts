@@ -6,7 +6,7 @@ import {
   getFieldDisplayName,
   TimeZone,
   dateTimeFormat,
-  localTimeFormat,
+  defaultDateFormats,
 } from '@grafana/data';
 
 /**
@@ -121,35 +121,19 @@ export const graphTimeFormat = (ticks: number | null, min: number | null, max: n
     const oneYear = 31536000000;
 
     if (secPerTick <= 45) {
-      return timeScale.seconds;
+      return defaultDateFormats.intervals.PT1S;
     }
     if (secPerTick <= 7200 || range <= oneDay) {
-      return timeScale.minutes;
+      return defaultDateFormats.intervals.PT1M;
     }
     if (secPerTick <= 80000) {
-      return timeScale.daysMinutes;
+      return defaultDateFormats.intervals.PT1H;
     }
     if (secPerTick <= 2419200 || range <= oneYear) {
-      return timeScale.days;
+      return defaultDateFormats.intervals.PT1D;
     }
-    return timeScale.months;
+    return defaultDateFormats.intervals.P1YT;
   }
 
-  return timeScale.minutes;
-};
-
-export const timeScale = {
-  seconds: localTimeFormat(
-    [...navigator.languages],
-    { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false },
-    'HH:mm:ss'
-  ),
-  minutes: localTimeFormat([...navigator.languages], { hour: '2-digit', minute: '2-digit', hour12: false }, 'HH:mm'),
-  daysMinutes: localTimeFormat(
-    [...navigator.languages],
-    { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false },
-    'HH:mm'
-  ),
-  days: localTimeFormat([...navigator.languages], { month: '2-digit', day: '2-digit', hour12: false }, 'MM/DD'),
-  months: localTimeFormat([...navigator.languages], { year: 'numeric', month: '2-digit', hour12: false }, 'YYYY-MM'),
+  return defaultDateFormats.intervals.PT1M;
 };
