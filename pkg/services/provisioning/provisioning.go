@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"path"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -115,26 +114,22 @@ func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 }
 
 func (ps *provisioningServiceImpl) ProvisionDatasources() error {
-	datasourcePath := path.Join(ps.Cfg.ProvisioningPath, "datasources")
-	err := ps.provisionDatasources(datasourcePath)
+	err := ps.provisionDatasources(ps.Cfg.ProvisioningDatasourcesPath)
 	return errutil.Wrap("Datasource provisioning error", err)
 }
 
 func (ps *provisioningServiceImpl) ProvisionPlugins() error {
-	appPath := path.Join(ps.Cfg.ProvisioningPath, "plugins")
-	err := ps.provisionPlugins(appPath)
+	err := ps.provisionPlugins(ps.Cfg.ProvisioningPluginsPath)
 	return errutil.Wrap("app provisioning error", err)
 }
 
 func (ps *provisioningServiceImpl) ProvisionNotifications() error {
-	alertNotificationsPath := path.Join(ps.Cfg.ProvisioningPath, "notifiers")
-	err := ps.provisionNotifiers(alertNotificationsPath)
+	err := ps.provisionNotifiers(ps.Cfg.ProvisioningNotifiersPath)
 	return errutil.Wrap("Alert notification provisioning error", err)
 }
 
 func (ps *provisioningServiceImpl) ProvisionDashboards() error {
-	dashboardPath := path.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(dashboardPath)
+	dashProvisioner, err := ps.newDashboardProvisioner(ps.Cfg.ProvisioningDashboardsPath)
 	if err != nil {
 		return errutil.Wrap("Failed to create provisioner", err)
 	}
