@@ -158,12 +158,20 @@ function getBackgroundColorStyle(props: TableCellProps) {
   };
 }
 
-function filterByValue(rows: Row[], id: string, filterValues?: string[]) {
+export function filterByValue(rows: Row[], id: string, filterValues?: string[]) {
+  if (rows.length === 0) {
+    return rows;
+  }
+
   if (!filterValues) {
     return rows;
   }
 
   return rows.filter(row => {
+    if (!row.values.hasOwnProperty(id)) {
+      return false;
+    }
+
     const rowValue = row.values[id];
     return filterValues.indexOf(rowValue) !== -1;
   });

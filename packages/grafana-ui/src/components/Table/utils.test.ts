@@ -1,5 +1,5 @@
-import { MutableDataFrame, FieldType } from '@grafana/data';
-import { getColumns, getTextAlign } from './utils';
+import { FieldType, MutableDataFrame } from '@grafana/data';
+import { filterByValue, getColumns, getTextAlign } from './utils';
 
 function getData() {
   const data = new MutableDataFrame({
@@ -60,5 +60,23 @@ describe('Table utils', () => {
       const textAlign = getTextAlign(data.fields[1]);
       expect(textAlign).toBe('right');
     });
+  });
+
+  describe('filterByValue', () => {
+    it.each`
+      rows                                                                        | id     | filterValues  | expected
+      ${[]}                                                                       | ${'0'} | ${['a']}      | ${[]}
+      ${[{ values: { 0: 'a' } }]}                                                 | ${'0'} | ${null}       | ${[{ values: { 0: 'a' } }]}
+      ${[{ values: { 0: 'a' } }]}                                                 | ${'0'} | ${undefined}  | ${[{ values: { 0: 'a' } }]}
+      ${[{ values: { 0: 'a' } }]}                                                 | ${'1'} | ${['b']}      | ${[]}
+      ${[{ values: { 0: 'a' } }]}                                                 | ${'0'} | ${['a']}      | ${[{ values: { 0: 'a' } }]}
+      ${[{ values: { 0: 'a' } }, { values: { 1: 'a' } }]}                         | ${'0'} | ${['a']}      | ${[{ values: { 0: 'a' } }]}
+      ${[{ values: { 0: 'a' } }, { values: { 0: 'b' } }, { values: { 0: 'c' } }]} | ${'0'} | ${['a', 'b']} | ${[{ values: { 0: 'a' } }, { values: { 0: 'b' } }]}
+    `(
+      "when called with rows: '$rows', id: '$id' and filterValues: '$filterValues' then result should be '$expected'",
+      ({ rows, id, filterValues, expected }) => {
+        expect(filterByValue(rows, id, filterValues)).toEqual(expected);
+      }
+    );
   });
 });
