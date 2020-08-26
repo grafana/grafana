@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import { DeleteDataSourceConfig } from './deleteDataSource';
 import { e2e } from '../index';
 import { fromBaseUrl, getDataSourceId } from '../support/url';
@@ -24,7 +25,7 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>): any => {
     checkHealth: false,
     expectedAlertMessage: 'Data source is working',
     form: () => {},
-    name: `e2e-${Date.now()}`,
+    name: `e2e-${uuidv4()}`,
     skipTlsVerify: false,
     type: 'TestData DB',
     ...config,

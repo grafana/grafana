@@ -95,6 +95,9 @@ export const Components = {
   AlertTab: {
     content: 'Alert editor tab content',
   },
+  Alert: {
+    alert: (severity: string) => `Alert ${severity}`,
+  },
   TransformTab: {
     content: 'Transform editor tab content',
     newTransform: (title: string) => `New transform ${title}`,
