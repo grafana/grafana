@@ -1,6 +1,6 @@
 import { TextAlignProperty } from 'csstype';
 import { DataFrame, Field, FieldType, getFieldDisplayName } from '@grafana/data';
-import { Column } from 'react-table';
+import { Column, Row } from 'react-table';
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types';
@@ -34,12 +34,7 @@ export function getTextAlign(field?: Field): TextAlignProperty {
   return 'left';
 }
 
-export function getColumns(
-  data: DataFrame,
-  availableWidth: number,
-  columnMinWidth: number,
-  filter: Function
-): Column[] {
+export function getColumns(data: DataFrame, availableWidth: number, columnMinWidth: number): Column[] {
   const columns: any[] = [];
   let fieldCountWithoutWidth = data.fields.length;
 
@@ -75,7 +70,7 @@ export function getColumns(
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
       minWidth: 50,
-      filter,
+      filter: filterByValue,
     });
   }
 
@@ -161,4 +156,15 @@ function getBackgroundColorStyle(props: TableCellProps) {
     ...tableStyles,
     tableCell: cx(tableStyles.tableCell, extendedStyle),
   };
+}
+
+function filterByValue(rows: Row[], id: string, filterValues?: string[]) {
+  if (!filterValues) {
+    return rows;
+  }
+
+  return rows.filter(row => {
+    const rowValue = row.values[id];
+    return filterValues.indexOf(rowValue) !== -1;
+  });
 }

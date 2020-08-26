@@ -4,7 +4,6 @@ import {
   Cell,
   Column,
   HeaderGroup,
-  Row,
   useAbsoluteLayout,
   useFilters,
   UseFiltersState,
@@ -138,26 +137,8 @@ export const Table: FC<Props> = memo((props: Props) => {
     return Array(data.length).fill(0);
   }, [data]);
 
-  const filterByValue = useCallback(
-    (rows: Row[], id: string, filterValues?: string[]) => {
-      if (!filterValues) {
-        return rows;
-      }
-
-      return rows.filter(row => {
-        const rowValue = row.values[id];
-        return filterValues.indexOf(rowValue) !== -1;
-      });
-    },
-    [data]
-  );
-
   // React-table column definitions
-  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth, filterByValue), [
-    data,
-    width,
-    columnMinWidth,
-  ]);
+  const memoizedColumns = useMemo(() => getColumns(data, width, columnMinWidth), [data, width, columnMinWidth]);
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer(props);
