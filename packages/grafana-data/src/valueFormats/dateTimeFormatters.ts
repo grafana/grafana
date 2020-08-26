@@ -364,11 +364,11 @@ export const dateTimeAsIso = toDateTimeValueFormatter('YYYY-MM-DD HH:mm:ss', 'HH
 export const dateTimeAsUS = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a', 'h:mm:ss a');
 export const dateTimeAsLocal = toDateTimeValueFormatter(
   localTimeFormat(
-    'default',
+    [...navigator.languages],
     { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' },
     'YYYY-MM-DD HH:mm:ss'
   ),
-  localTimeFormat('default', { hour: 'numeric', minute: '2-digit', second: '2-digit' }, 'HH:mm:ss')
+  localTimeFormat([...navigator.languages], { hour: 'numeric', minute: '2-digit', second: '2-digit' }, 'HH:mm:ss')
 );
 
 export function dateTimeFromNow(

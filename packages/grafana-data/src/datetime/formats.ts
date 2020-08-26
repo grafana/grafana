@@ -6,7 +6,7 @@
  * @param fallback default format if Intl API is not present
  */
 export const localTimeFormat = (
-  locale: string | 'default',
+  locale: string | string[],
   options: Intl.DateTimeFormatOptions,
   fallback: string
 ): string => {

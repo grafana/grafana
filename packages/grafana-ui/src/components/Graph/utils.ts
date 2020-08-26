@@ -140,16 +140,16 @@ export const graphTimeFormat = (ticks: number | null, min: number | null, max: n
 
 export const timeScale = {
   seconds: localTimeFormat(
-    'default',
+    [...navigator.languages],
     { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false },
     'HH:mm:ss'
   ),
-  minutes: localTimeFormat('default', { hour: '2-digit', minute: '2-digit', hour12: false }, 'HH:mm'),
+  minutes: localTimeFormat([...navigator.languages], { hour: '2-digit', minute: '2-digit', hour12: false }, 'HH:mm'),
   daysMinutes: localTimeFormat(
-    'default',
+    [...navigator.languages],
     { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false },
     'HH:mm'
   ),
-  days: localTimeFormat('default', { month: '2-digit', day: '2-digit', hour12: false }, 'MM/DD'),
-  months: localTimeFormat('default', { year: 'numeric', month: '2-digit', hour12: false }, 'YYYY-MM'),
+  days: localTimeFormat([...navigator.languages], { month: '2-digit', day: '2-digit', hour12: false }, 'MM/DD'),
+  months: localTimeFormat([...navigator.languages], { year: 'numeric', month: '2-digit', hour12: false }, 'YYYY-MM'),
 };
