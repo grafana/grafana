@@ -6,7 +6,7 @@ import { getTextAlign } from './utils';
 import { TableFilterActionCallback } from './types';
 import { TableStyles } from './styles';
 import { FilterableTableCell } from './FilterableTableCell';
-import { DataLinkModal } from './../Modal/DataLinkModal';
+import { DataLinkModal } from './../DataLinkModal/DataLinkModal';
 
 export interface Props {
   row: Row;
@@ -46,12 +46,7 @@ export const TableCell: FC<Props> = ({ cell, row, field, tableStyles, onCellFilt
   let wrappedCell = <> {renderCell(cell, field, tableStyles)} </>;
   if (link && link.mode === 'modal') {
     wrappedCell = (
-      <DataLinkModal
-        modalDisplayMode="html"
-        fieldDisplayMode="truncated_text"
-        modalTitle={link.title}
-        modalContent={link.modalTemplate || ''}
-      >
+      <DataLinkModal modalDisplayMode="html" modalTitle={link.title} modalContent={link.modalTemplate || ''}>
         {renderCell(cell, field, tableStyles)}
       </DataLinkModal>
     );

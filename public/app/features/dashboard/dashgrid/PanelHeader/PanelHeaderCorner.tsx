@@ -63,7 +63,6 @@ export class PanelHeaderCorner extends Component<Props> {
                       modalTitle={link.title || 'More details'}
                       modalContent={link.modalTemplate || ''}
                       modalDisplayMode={link.modalContentType || 'plain_text'}
-                      fieldDisplayMode="truncated_text"
                     ></DataLinkModal>
                   ) : (
                     <a className="panel-info-corner-links__item" href={link.href} target={link.target}>

@@ -7,7 +7,7 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { Portal, List } from '../index';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
-import { DataLinkModal } from '../Modal/DataLinkModal';
+import { DataLinkModal } from '../DataLinkModal/DataLinkModal';
 import { LinkTarget } from '@grafana/data';
 
 export interface ContextMenuItem {
@@ -222,7 +222,6 @@ const ContextMenuItem: React.FC<ContextMenuItemProps> = React.memo(
       return (
         <div className={styles.item}>
           <DataLinkModal
-            fieldDisplayMode={'truncated_text'}
             modalTitle={label || 'More details'}
             modalContent={modalTemplate || ''}
             modalDisplayMode={modalContentType || 'plain_text'}
