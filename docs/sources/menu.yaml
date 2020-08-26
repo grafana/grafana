@@ -15,6 +15,17 @@
       link: /getting-started/strategies/
     - name: Glossary
       link: /getting-started/glossary/
+- name: Best practices
+  link: /best-practices/
+  children:
+    - name: Best practices for creating dashboards
+      link: /best-practices/best-practices-for-creating-dashboards/
+    - name: Best practices for managing dashboards
+      link: /best-practices/best-practices-for-managing-dashboards/
+    - name: Observability strategies
+      link: /best-practices/common-observability-strategies/
+    - name: Dashboard management maturity model
+      link: /best-practices/dashboard-management-maturity-model/
 - name: Installation
   link: /installation/
   children:
