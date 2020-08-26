@@ -1,4 +1,4 @@
-import React, { FC, useMemo, useState } from 'react';
+import React, { FC, useCallback, useMemo, useState } from 'react';
 import { Field, formattedValueToString, GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css, cx } from 'emotion';
 
@@ -10,19 +10,42 @@ interface Props {
   column: any;
   tableStyles: TableStyles;
   field?: Field;
-  onHide: () => void;
+  onClose: () => void;
 }
 
-export const FilterPopup: FC<Props> = ({ onHide, column, field }) => {
-  const unique = useMemo(() => calculateUniqueFieldValues(field), [field]);
-  const options = useMemo(() => getOptions(unique), [unique]);
-  const filterValues = useMemo(() => getValues(options, column.filterValue), [options, column.filterValue]);
-  const [values, setValues] = useState<SelectableValue[]>(filterValues ?? []);
+export const FilterPopup: FC<Props> = ({ onClose, column, field }) => {
+  const uniqueValues = useMemo(() => calculateUniqueFieldValues(field), [field]);
+  const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
+  const filteredOptions = useMemo(() => getFilteredOptions(options, column.filterValue), [options, column.filterValue]);
+  const [values, setValues] = useState<SelectableValue[]>(filteredOptions ?? []);
+
+  const onCancel = useCallback((event?: React.MouseEvent) => onClose(), [onClose]);
+
+  const onFilter = useCallback(
+    (event: React.MouseEvent) => {
+      const filtered = values.length ? values : undefined;
+
+      column.setFilter(filtered);
+      onClose();
+    },
+    [column.setFilter, values, onClose]
+  );
+
+  const onClearFilters = useCallback(
+    (event: React.MouseEvent) => {
+      column.setFilter(undefined);
+      onClose();
+    },
+    [column.setFilter, onClose]
+  );
+
+  const clearFiltersDisabled = useMemo(() => column.filterValue === undefined, [column.filterValue]);
+
   const theme = useTheme();
   const styles = getStyles(theme);
 
   return (
-    <ClickOutsideWrapper onClick={onHide} useCapture={true}>
+    <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
       <div className={cx(styles.filterContainer)} onClick={stopPropagation}>
         <VerticalGroup spacing="lg">
           <VerticalGroup spacing="xs">
@@ -31,23 +54,15 @@ export const FilterPopup: FC<Props> = ({ onHide, column, field }) => {
           </VerticalGroup>
           <HorizontalGroup spacing="lg">
             <HorizontalGroup>
-              <Button size="sm" onClick={submitChange(column.setFilter, values, onHide)}>
+              <Button size="sm" onClick={onFilter}>
                 Ok
               </Button>
-              <Button size="sm" variant="secondary" onClick={() => onHide()}>
+              <Button size="sm" variant="secondary" onClick={onCancel}>
                 Cancel
               </Button>
             </HorizontalGroup>
             <HorizontalGroup>
-              <Button
-                variant="link"
-                size="sm"
-                onClick={() => {
-                  column.setFilter(undefined);
-                  onHide();
-                }}
-                disabled={column.filterValue === undefined}
-              >
+              <Button variant="link" size="sm" onClick={onClearFilters} disabled={clearFiltersDisabled}>
                 Clear filter
               </Button>
             </HorizontalGroup>
@@ -99,9 +114,9 @@ const calculateUniqueFieldValues = (field?: Field) => {
   return field.state.calcs.unique;
 };
 
-const getOptions = (unique: Record<string, any>): Array<SelectableValue<string>> =>
+const valuesToOptions = (unique: Record<string, any>): SelectableValue[] =>
   Object.keys(unique)
-    .reduce((all, key) => all.concat({ value: unique[key], label: key }), [] as Array<SelectableValue<string>>)
+    .reduce((all, key) => all.concat({ value: unique[key], label: key }), [] as SelectableValue[])
     .sort(sortOption);
 
 const sortOption = (a: SelectableValue, b: SelectableValue): number => {
@@ -128,27 +143,12 @@ const sortOption = (a: SelectableValue, b: SelectableValue): number => {
   return 0;
 };
 
-const getValues = (options: SelectableValue[], filterValues?: SelectableValue[]) => {
+const getFilteredOptions = (options: SelectableValue[], filterValues?: SelectableValue[]) => {
   if (!filterValues) {
     return null;
   }
 
-  return options.filter(option => filterValues.some(filtered => filtered === option.value));
-};
-
-const optionsToValues = (options: SelectableValue[]): any[] => {
-  const filter = options.reduce((all, option) => all.concat(option.value), [] as any[]);
-  return filter;
-};
-
-const submitChange = (setFilter: (...args: any) => void, options: SelectableValue[], onHide: () => void) => (
-  event: React.MouseEvent
-): void => {
-  const values = optionsToValues(options);
-  const filtered = values.length ? values : undefined;
-
-  setFilter(filtered);
-  onHide();
+  return options.filter(option => filterValues.some(filtered => filtered.value === option.value));
 };
 
 const stopPropagation = (event: React.MouseEvent) => {

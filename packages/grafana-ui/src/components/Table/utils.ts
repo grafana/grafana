@@ -1,5 +1,5 @@
 import { TextAlignProperty } from 'csstype';
-import { DataFrame, Field, FieldType, getFieldDisplayName } from '@grafana/data';
+import { DataFrame, Field, FieldType, getFieldDisplayName, SelectableValue } from '@grafana/data';
 import { Column, Row } from 'react-table';
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
@@ -158,7 +158,7 @@ function getBackgroundColorStyle(props: TableCellProps) {
   };
 }
 
-export function filterByValue(rows: Row[], id: string, filterValues?: string[]) {
+export function filterByValue(rows: Row[], id: string, filterValues?: SelectableValue[]) {
   if (rows.length === 0) {
     return rows;
   }
@@ -172,7 +172,7 @@ export function filterByValue(rows: Row[], id: string, filterValues?: string[]) 
       return false;
     }
 
-    const rowValue = row.values[id];
-    return filterValues.indexOf(rowValue) !== -1;
+    const value = row.values[id];
+    return filterValues.find(filter => filter.value === value) !== undefined;
   });
 }

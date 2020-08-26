@@ -1,4 +1,4 @@
-import React, { FC, useMemo, useRef, useState } from 'react';
+import React, { FC, useCallback, useMemo, useRef, useState } from 'react';
 import { css, cx } from 'emotion';
 import { Field, GrafanaTheme } from '@grafana/data';
 
@@ -15,11 +15,13 @@ interface Props {
 }
 
 export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
-  const [isPopupVisible, setPopupVisible] = useState<boolean>(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
   const theme = useTheme();
   const styles = getStyles(theme);
   const filterEnabled = useMemo(() => !!column.filterValue, [column.filterValue]);
-  const ref = useRef<HTMLDivElement>(null);
+  const onShowPopover = useCallback(() => setPopoverVisible(true), [setPopoverVisible]);
+  const onClosePopover = useCallback(() => setPopoverVisible(false), [setPopoverVisible]);
 
   if (!field) {
     return null;
@@ -29,19 +31,12 @@ export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
     <div
       className={cx(tableStyles.headerFilter, filterEnabled ? styles.filterIconEnabled : styles.filterIconDisabled)}
       ref={ref}
-      onClick={() => setPopupVisible(true)}
+      onClick={onShowPopover}
     >
       <Icon name="filter" />
-      {isPopupVisible && ref.current && (
+      {isPopoverVisible && ref.current && (
         <Popover
-          content={
-            <FilterPopup
-              column={column}
-              tableStyles={tableStyles}
-              field={field}
-              onHide={() => setPopupVisible(false)}
-            />
-          }
+          content={<FilterPopup column={column} tableStyles={tableStyles} field={field} onClose={onClosePopover} />}
           placement="bottom-start"
           referenceElement={ref.current}
           show
