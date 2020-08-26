@@ -26,15 +26,20 @@ describe('GroupBy Transformer', () => {
     const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
       id: DataTransformerID.groupBy,
       options: {
-        fieldsArray: [
-          { fieldName: 'message', operation: GroupByOperationID.groupBy, aggregations: [] },
-          {
-            fieldName: 'time',
+        fields: {
+          message: {
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+          time: {
             operation: GroupByOperationID.aggregate,
             aggregations: [ReducerID.count, ReducerID.last],
           },
-          { fieldName: 'values', operation: GroupByOperationID.aggregate, aggregations: [ReducerID.sum] },
-        ],
+          values: {
+            operation: GroupByOperationID.aggregate,
+            aggregations: [ReducerID.sum],
+          },
+        },
       },
     };
 
