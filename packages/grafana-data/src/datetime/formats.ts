@@ -9,9 +9,10 @@ export interface SystemDateFormatSettings {
   };
 }
 
+const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
+
 export class SystemDateFormatsState {
-  fullDate = 'YYYY-MM-DD HH:mm:ss';
-  fullDateMS = 'YYYY-MM-DD HH:mm:ss.SSS';
+  fullDate = DEFAULT_DATE_FORMAT;
   intervals = {
     PT1S: 'HH:mm:ss',
     PT1M: 'HH:mm',
@@ -21,26 +22,53 @@ export class SystemDateFormatsState {
   };
 
   update(settings: SystemDateFormatSettings) {
-    this.fullDate = settings.fullDate;
-    this.fullDateMS = `${settings.fullDate}.SSS`;
-    this.intervals = settings.intervals;
+    if (settings.fullDate === 'browser') {
+      this.useLocalFormat();
+    } else {
+      this.fullDate = settings.fullDate;
+      this.intervals = settings.intervals;
+    }
+  }
 
-    // if (locale) ↓{
-    //   export const timeScale = {
-    // seconds: localTimeFormat(
-    // [...navigator.languages],
-    // { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false },
-    // 'HH:mm:ss'
-    // ),
-    // minutes: localTimeFormat([...navigator.languages], { hour: '2-digit', minute: '2-digit', hour12: false }, 'HH:mm'),
-    // daysMinutes: localTimeFormat(
-    // [...navigator.languages],
-    // { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false },
-    // 'HH:mm'
-    // ),
-    // days: localTimeFormat([...navigator.languages], { month: '2-digit', day: '2-digit', hour12: false }, 'MM/DD'),
-    // months: localTimeFormat([...navigator.languages], { year: 'numeric', month: '2-digit', hour12: false }, 'YYYY-MM'),
-    // };
+  get fullDateMS() {
+    return `${this.fullDate}.SSS`;
+  }
+
+  useLocalFormat() {
+    this.fullDate = localTimeFormat({
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+
+    this.intervals.PT1S = localTimeFormat(
+      { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false },
+      null,
+      this.intervals.PT1S
+    );
+    this.intervals.PT1M = localTimeFormat(
+      { hour: '2-digit', minute: '2-digit', hour12: false },
+      null,
+      this.intervals.PT1M
+    );
+    this.intervals.PT1H = localTimeFormat(
+      { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false },
+      null,
+      this.intervals.PT1H
+    );
+    this.intervals.PT1D = localTimeFormat(
+      { month: '2-digit', day: '2-digit', hour12: false },
+      null,
+      this.intervals.PT1D
+    );
+    this.intervals.P1YT = localTimeFormat(
+      { year: 'numeric', month: '2-digit', hour12: false },
+      null,
+      this.intervals.P1YT
+    );
   }
 
   getTimeFieldUnit(useMsResolution?: boolean) {
@@ -55,13 +83,17 @@ export class SystemDateFormatsState {
  * @param options DateTimeFormatOptions to format date
  * @param fallback default format if Intl API is not present
  */
-export const localTimeFormat = (
-  locale: string | string[],
+export function localTimeFormat(
   options: Intl.DateTimeFormatOptions,
-  fallback: string
-): string => {
+  locale?: string | string[] | null,
+  fallback?: string
+): string {
   if (!window.Intl) {
-    return fallback;
+    return fallback ?? DEFAULT_DATE_FORMAT;
+  }
+
+  if (!locale) {
+    locale = [...navigator.languages];
   }
 
   // https://momentjs.com/docs/#/displaying/format/
@@ -80,6 +112,6 @@ export const localTimeFormat = (
   };
 
   return parts.map(part => mapping[part.type] || part.value).join('');
-};
+}
 
 export const defaultDateFormats = new SystemDateFormatsState();

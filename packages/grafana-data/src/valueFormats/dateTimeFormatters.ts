@@ -363,12 +363,14 @@ export function toDateTimeValueFormatter(pattern: string, todayPattern?: string)
 export const dateTimeAsIso = toDateTimeValueFormatter('YYYY-MM-DD HH:mm:ss', 'HH:mm:ss');
 export const dateTimeAsUS = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a', 'h:mm:ss a');
 export const dateTimeAsLocal = toDateTimeValueFormatter(
-  localTimeFormat(
-    [...navigator.languages],
-    { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' },
-    'YYYY-MM-DD HH:mm:ss'
-  ),
-  localTimeFormat([...navigator.languages], { hour: 'numeric', minute: '2-digit', second: '2-digit' }, 'HH:mm:ss')
+  localTimeFormat({
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
 );
 
 export function dateTimeFromNow(
