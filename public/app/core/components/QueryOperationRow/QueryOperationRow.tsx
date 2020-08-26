@@ -72,7 +72,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
             }}
             aria-label="Query operation row title"
           >
-            {draggable && <Icon name="ellipsis-v" className={styles.dragIcon} />}
+            {draggable && <Icon name="draggabledots" size="lg" className={styles.dragIcon} />}
             <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
             {title && <span className={styles.title}>{titleElement}</span>}
             {headerElement}

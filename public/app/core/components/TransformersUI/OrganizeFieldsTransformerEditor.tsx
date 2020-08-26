@@ -10,7 +10,7 @@ import {
   TransformerUIProps,
   getFieldDisplayName,
 } from '@grafana/data';
-import { stylesFactory, useTheme, Input, IconButton } from '@grafana/ui';
+import { stylesFactory, useTheme, Input, IconButton, Icon } from '@grafana/ui';
 
 import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
 import { createOrderFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
@@ -135,7 +135,7 @@ const DraggableFieldName: React.FC<DraggableFieldProps> = ({
         >
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--justify-left width-30">
-              <i className={cx('fa fa-ellipsis-v', styles.draggable)} />
+              <Icon name="draggabledots" size="xl" className={styles.draggable} />
               <IconButton
                 className={styles.toggle}
                 size="md"
@@ -169,7 +169,6 @@ const getFieldNameStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   draggable: css`
     padding: 0 ${theme.spacing.xs};
-    font-size: ${theme.typography.size.md};
     opacity: 0.4;
     &:hover {
       color: ${theme.colors.textStrong};
