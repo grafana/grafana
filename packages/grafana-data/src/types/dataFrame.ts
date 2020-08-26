@@ -29,11 +29,10 @@ export interface FieldConfig<TOptions extends object = any> {
   displayName?: string;
 
   /**
-   * This can be used by data sources that return time series with labels to indicate that frame name contains the
-   * full series name.  Useful for data sources that have custom legend formats and naming schemes and want to
-   * control naming, but still return labels and allow for user override of name via default displayName option.
+   * This can be used by data sources that return time series with labels that want to control
+   * series naming and disable the default naming scheme.
    */
-  useFrameName?: boolean;
+  displayNameDS?: string;
 
   /**
    * True if data source field supports ad-hoc filters

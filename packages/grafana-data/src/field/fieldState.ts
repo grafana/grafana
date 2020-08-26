@@ -58,8 +58,8 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
     return displayName;
   }
 
-  if (frame && field.config?.useFrameName) {
-    return frame.name ?? 'missing name';
+  if (frame && field.config?.displayNameDS) {
+    return field.config.displayNameDS;
   }
 
   // This is an ugly exception for time field
