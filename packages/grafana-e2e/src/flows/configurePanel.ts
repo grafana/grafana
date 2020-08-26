@@ -30,7 +30,7 @@ export const configurePanel = (config: Partial<ConfigurePanelConfig>, isEdit: bo
       dashboardUid: lastAddedDashboardUid,
       matchScreenshot: false,
       saveDashboard: true,
-      screenshotName: 'chart',
+      screenshotName: 'panel-visualization',
       visitDashboardAtStart: true,
       ...config,
     } as ConfigurePanelConfig;
