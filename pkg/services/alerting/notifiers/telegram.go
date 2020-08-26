@@ -36,6 +36,7 @@ func init() {
 				Placeholder:  "Telegram BOT API Token",
 				PropertyName: "bottoken",
 				Required:     true,
+				Secure:       true,
 			},
 			{
 				Label:        "Chat ID",
@@ -65,7 +66,7 @@ func NewTelegramNotifier(model *models.AlertNotification) (alerting.Notifier, er
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
 
-	botToken := model.Settings.Get("bottoken").MustString()
+	botToken := model.DecryptedValue("bottoken", model.Settings.Get("bottoken").MustString())
 	chatID := model.Settings.Get("chatid").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool()
 

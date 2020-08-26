@@ -5,7 +5,6 @@ package setting
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -1086,12 +1085,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 }
 
 func valueAsString(section *ini.Section, keyName string, defaultValue string) (value string, err error) {
-	defer func() {
-		if err_ := recover(); err_ != nil {
-			err = errors.New("Invalid value for key '" + keyName + "' in configuration file")
-		}
-	}()
-
 	return section.Key(keyName).MustString(defaultValue), nil
 }
 
