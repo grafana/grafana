@@ -170,6 +170,7 @@ export const Table: FC<Props> = memo((props: Props) => {
               field={data.fields[index]}
               tableStyles={tableStyles}
               cell={cell}
+              row={row}
               onCellFilterAdded={onCellFilterAdded}
             />
           ))}

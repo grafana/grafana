@@ -46,6 +46,7 @@ export function mapInternalLinkToExplore(
 
   const interpolatedQuery = interpolateQuery(link, scopedVars, replaceVariables);
   return {
+    mode: 'link',
     title: link.title
       ? replaceVariables(link.title || '', scopedVars)
       : getDataSourceSettingsByUid(link.internal.datasourceUid)?.name || 'Unknown datasource',
@@ -66,6 +67,8 @@ export function mapInternalLinkToExplore(
         }
       : undefined,
     target: '_self',
+    modalTemplate: '',
+    modalContentType: 'plain_text',
     origin: field,
   };
 }

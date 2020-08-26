@@ -10,6 +10,9 @@ export interface DataLinkClickEvent<T = any> {
   e?: any; // mouse|react event
 }
 
+export type LinkMode = 'modal' | 'link';
+export type LinkModalContentType = 'html' | 'json' | 'plain_text';
+
 /**
  * Link configuration. The values may contain variables that need to be
  * processed before showing the link to user.
@@ -18,6 +21,7 @@ export interface DataLinkClickEvent<T = any> {
  *  data source defined queries extend this so this is more for documentation.
  */
 export interface DataLink<T extends DataQuery = any> {
+  mode?: LinkMode;
   title: string;
   targetBlank?: boolean;
 
@@ -31,6 +35,9 @@ export interface DataLink<T extends DataQuery = any> {
   // 1: If exists, handle click directly
   // Not saved in JSON/DTO
   onClick?: (event: DataLinkClickEvent) => void;
+
+  modalTemplate?: string;
+  modalContentType?: LinkModalContentType;
 
   // If dataLink represents internal link this has to be filled. Internal link is defined as a query in a particular
   // datas ource that we want to show to the user. Usually this results in a link to explore but can also lead to
@@ -48,10 +55,13 @@ export type LinkTarget = '_blank' | '_self' | undefined;
  * Processed Link Model. The values are ready to use
  */
 export interface LinkModel<T = any> {
+  mode?: LinkMode;
   href: string;
   title: string;
   target: LinkTarget;
   origin: T;
+  modalTemplate?: string;
+  modalContentType?: LinkModalContentType;
 
   // When a click callback exists, this is passed the raw mouse|react event
   onClick?: (e: any) => void;

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 
 import { renderMarkdown, LinkModelSupplier, ScopedVars } from '@grafana/data';
-import { Tooltip, PopoverContent } from '@grafana/ui';
+import { Tooltip, PopoverContent, DataLinkModal } from '@grafana/ui';
 import { getLocationSrv } from '@grafana/runtime';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -58,9 +58,18 @@ export class PanelHeaderCorner extends Component<Props> {
             {links.map((link, idx) => {
               return (
                 <li key={idx}>
-                  <a className="panel-info-corner-links__item" href={link.href} target={link.target}>
-                    {link.title}
-                  </a>
+                  {link.mode === 'modal' ? (
+                    <DataLinkModal
+                      modalTitle={link.title || 'More details'}
+                      modalContent={link.modalTemplate || ''}
+                      modalDisplayMode={link.modalContentType || 'plain_text'}
+                      fieldDisplayMode="truncated_text"
+                    ></DataLinkModal>
+                  ) : (
+                    <a className="panel-info-corner-links__item" href={link.href} target={link.target}>
+                      {link.title}
+                    </a>
+                  )}
                 </li>
               );
             })}
