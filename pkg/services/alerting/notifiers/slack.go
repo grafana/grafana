@@ -359,14 +359,9 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
 		msg = evalContext.Rule.Message
 	}
-	// detect google gcs signed header, for example: https://storage.googleapis.com/<project>/alerts/<filename>>?X-Goog-Algorithm=<sha>&X-Goog-Credential=<account>%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=<date>&X-Goog-Expires=<expiration-seconds>&X-Goog-Signature=<signature>&X-Goog-SignedHeaders=<headers>
-	isSignedGoogleURL := strings.Contains(strings.ToLower(evalContext.ImagePublicURL), "x-goog-signedheaders")
-	if isSignedGoogleURL {
-		sn.log.Debug("Detected signed Google Url:" + evalContext.ImagePublicURL)
-	}
 	imageURL := ""
-	// default to file.upload API method if a token is provided and it's not a Google signed url
-	if sn.Token == "" || isSignedGoogleURL {
+	// default to file.upload API method if a token is provided
+	if sn.Token == "" {
 		imageURL = evalContext.ImagePublicURL
 	}
 
@@ -440,7 +435,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		sn.log.Error("Failed to send slack notification", "error", err, "webhook", sn.Name)
 		return err
 	}
-	if !isSignedGoogleURL && sn.Token != "" && sn.UploadImage {
+	if sn.Token != "" && sn.UploadImage {
 		err = slackFileUpload(evalContext, sn.log, "https://slack.com/api/files.upload", sn.Recipient, sn.Token)
 		if err != nil {
 			return err
