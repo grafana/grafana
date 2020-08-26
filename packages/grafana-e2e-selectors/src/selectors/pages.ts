@@ -122,5 +122,8 @@ export const Pages = {
       container: 'Explore',
       runButton: 'Run button',
     },
+    Toolbar: {
+      navBar: '.explore-toolbar',
+    },
   },
 };
