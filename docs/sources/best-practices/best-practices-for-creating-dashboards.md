@@ -42,7 +42,7 @@ Once you have a strategy or design guidelines, write them down to help maintain 
 
 - When creating a new dashboard, make sure it has a meaningful name.
   - If you are creating a dashboard to play or experiment, then put the word `TEST` or `TMP` in the name.
-  - Consider including your name or initials in the dashboard name so that people know who owns the dashboard.
+  - Consider including your name or initials in the dashboard name or as a tag so that people know who owns the dashboard.
   - Remove temporary experiment dashboards when you are done with them.
 - If you create many related dashboards, think about how to cross-reference them for easy navigation. Refer to [Best practices for managing dashboards]({{< relref "best-practices-for-managing-dashboards.md" >}}) for more information.
 - Grafana retrieves data from a data source. A basic understanding of [data sources]({{< relref "../features/datasources/data-sources.md" >}}) in general and your specific is important.
