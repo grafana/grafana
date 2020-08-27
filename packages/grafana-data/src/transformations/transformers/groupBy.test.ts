@@ -36,7 +36,7 @@ describe('GroupBy transformer', () => {
     };
 
     const result = transformDataFrame([cfg], [testSeries]);
-    expect(result[0].fields).toEqual(testSeries);
+    expect(result[0]).toBe(testSeries);
   });
 
   it('should group values by message', () => {
