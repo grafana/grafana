@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
+import { css, cx } from 'emotion';
 import {
   DataTransformerID,
   standardTransformers,
@@ -8,7 +9,7 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
-import { Select, StatsPicker } from '@grafana/ui';
+import { Select, StatsPicker, stylesFactory } from '@grafana/ui';
 
 import {
   GroupByTransformerOptions,
@@ -62,6 +63,8 @@ const options = [
 ];
 
 export const GroupByFieldConfiguration: React.FC<FieldProps> = ({ fieldName, config, onConfigChange }) => {
+  const styles = getStyling();
+
   const onChange = useCallback(
     (value: SelectableValue<GroupByOperationID | null>) => {
       onConfigChange({
@@ -73,27 +76,29 @@ export const GroupByFieldConfiguration: React.FC<FieldProps> = ({ fieldName, con
   );
 
   return (
-    <div className="gf-form-inline">
-      <div className="gf-form">
-        <div className="gf-form-label width-30">{fieldName}</div>
+    <div className={cx('gf-form-inline', styles.row)}>
+      <div className={cx('gf-form', styles.fieldName)}>
+        <div className={cx('gf-form-label', styles.rowSpacing)}>{fieldName}</div>
       </div>
 
-      <div className="gf-form gf-form-spacing">
-        <Select
-          className="width-12"
-          options={options}
-          value={config?.operation}
-          placeholder="Ignored"
-          onChange={onChange}
-          isClearable
-          menuPlacement="bottom"
-        />
+      <div className={cx('gf-form', styles.cell)}>
+        <div className={cx('gf-form-spacing', styles.rowSpacing)}>
+          <Select
+            className="width-12"
+            options={options}
+            value={config?.operation}
+            placeholder="Ignored"
+            onChange={onChange}
+            isClearable
+            menuPlacement="bottom"
+          />
+        </div>
       </div>
 
       {config?.operation === GroupByOperationID.aggregate && (
-        <div className="gf-form gf-form-spacing gf-form--grow">
+        <div className={cx('gf-form', 'gf-form--grow', styles.calculations)}>
           <StatsPicker
-            className="flex-grow-1"
+            className={cx('flex-grow-1', styles.rowSpacing)}
             placeholder="Select Stats"
             allowMultiple
             stats={config.aggregations}
@@ -107,6 +112,30 @@ export const GroupByFieldConfiguration: React.FC<FieldProps> = ({ fieldName, con
     </div>
   );
 };
+
+const getStyling = stylesFactory(() => {
+  const cell = css`
+    display: table-cell;
+  `;
+
+  return {
+    row: css`
+      display: table-row;
+    `,
+    cell: cell,
+    rowSpacing: css`
+      margin-bottom: 4px;
+    `,
+    fieldName: css`
+      ${cell}
+      min-width: 250px;
+    `,
+    calculations: css`
+      ${cell}
+      width: 100%;
+    `,
+  };
+});
 
 export const groupByTransformRegistryItem: TransformerRegistyItem<GroupByTransformerOptions> = {
   id: DataTransformerID.groupBy,
