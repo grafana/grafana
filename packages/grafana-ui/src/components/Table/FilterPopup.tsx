@@ -8,13 +8,18 @@ import { Button, ClickOutsideWrapper, HorizontalGroup, Label, MultiSelect, Verti
 
 interface Props {
   column: any;
+  noOfColumnFilters: number;
   tableStyles: TableStyles;
-  field?: Field;
   onClose: () => void;
+  field?: Field;
 }
 
-export const FilterPopup: FC<Props> = ({ onClose, column, field }) => {
-  const uniqueValues = useMemo(() => calculateUniqueFieldValues(field), [field]);
+export const FilterPopup: FC<Props> = ({ column, noOfColumnFilters, onClose, field }) => {
+  const uniqueValues = useMemo(() => calculateUniqueFieldValues(column, noOfColumnFilters, field), [
+    column,
+    noOfColumnFilters,
+    field,
+  ]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
   const filteredOptions = useMemo(() => getFilteredOptions(options, column.filterValue), [options, column.filterValue]);
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions ?? []);
@@ -90,32 +95,23 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-const calculateUniqueFieldValues = (field?: Field) => {
+const calculateUniqueFieldValues = (column: any, noOfColumnFilters: number, field?: Field) => {
   if (!field) {
-    return null;
+    return {};
   }
 
-  if (!field.state) {
-    field.state = {};
+  const set: Record<string, any> = {};
+  const rows = noOfColumnFilters > 1 ? column.filteredRows : column.preFilteredRows;
+
+  for (let index = 0; index < rows.length; index++) {
+    const fieldIndex = parseInt(rows[index].id, 10);
+    const fieldValue = field.values.get(fieldIndex);
+    const displayValue = field.display ? field.display(fieldValue) : fieldValue;
+    const value = field.display ? formattedValueToString(displayValue) : displayValue;
+    set[value] = fieldValue;
   }
 
-  if (!field.state.calcs) {
-    field.state.calcs = {};
-  }
-
-  if (!field.state.calcs.unique) {
-    const set: Record<string, any> = {};
-    for (let index = 0; index < field.values.length; index++) {
-      const fieldValue = field.values.get(index);
-      const displayValue = field.display ? field.display(fieldValue) : fieldValue;
-      const value = field.display ? formattedValueToString(displayValue) : displayValue;
-      set[value] = fieldValue;
-    }
-
-    field.state.calcs.unique = set;
-  }
-
-  return field.state.calcs.unique;
+  return set;
 };
 
 const valuesToOptions = (unique: Record<string, any>): SelectableValue[] =>
