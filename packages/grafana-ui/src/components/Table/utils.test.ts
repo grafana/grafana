@@ -64,16 +64,16 @@ describe('Table utils', () => {
 
   describe('filterByValue', () => {
     it.each`
-      rows                                                                        | id     | filterValues  | expected
-      ${[]}                                                                       | ${'0'} | ${['a']}      | ${[]}
-      ${[{ values: { 0: 'a' } }]}                                                 | ${'0'} | ${null}       | ${[{ values: { 0: 'a' } }]}
-      ${[{ values: { 0: 'a' } }]}                                                 | ${'0'} | ${undefined}  | ${[{ values: { 0: 'a' } }]}
-      ${[{ values: { 0: 'a' } }]}                                                 | ${'1'} | ${['b']}      | ${[]}
-      ${[{ values: { 0: 'a' } }]}                                                 | ${'0'} | ${['a']}      | ${[{ values: { 0: 'a' } }]}
-      ${[{ values: { 0: 'a' } }, { values: { 1: 'a' } }]}                         | ${'0'} | ${['a']}      | ${[{ values: { 0: 'a' } }]}
-      ${[{ values: { 0: 'a' } }, { values: { 0: 'b' } }, { values: { 0: 'c' } }]} | ${'0'} | ${['a', 'b']} | ${[{ values: { 0: 'a' } }, { values: { 0: 'b' } }]}
+      rows                                                                        | id     | filterValues                        | expected
+      ${[]}                                                                       | ${'0'} | ${[{ value: 'a' }]}                 | ${[]}
+      ${[{ values: { 0: 'a' } }]}                                                 | ${'0'} | ${null}                             | ${[{ values: { 0: 'a' } }]}
+      ${[{ values: { 0: 'a' } }]}                                                 | ${'0'} | ${undefined}                        | ${[{ values: { 0: 'a' } }]}
+      ${[{ values: { 0: 'a' } }]}                                                 | ${'1'} | ${[{ value: 'b' }]}                 | ${[]}
+      ${[{ values: { 0: 'a' } }]}                                                 | ${'0'} | ${[{ value: 'a' }]}                 | ${[{ values: { 0: 'a' } }]}
+      ${[{ values: { 0: 'a' } }, { values: { 1: 'a' } }]}                         | ${'0'} | ${[{ value: 'a' }]}                 | ${[{ values: { 0: 'a' } }]}
+      ${[{ values: { 0: 'a' } }, { values: { 0: 'b' } }, { values: { 0: 'c' } }]} | ${'0'} | ${[{ value: 'a' }, { value: 'b' }]} | ${[{ values: { 0: 'a' } }, { values: { 0: 'b' } }]}
     `(
-      "when called with rows: '$rows', id: '$id' and filterValues: '$filterValues' then result should be '$expected'",
+      "when called with rows: '$rows.toString()', id: '$id' and filterValues: '$filterValues' then result should be '$expected'",
       ({ rows, id, filterValues, expected }) => {
         expect(filterByValue(rows, id, filterValues)).toEqual(expected);
       }
