@@ -24,7 +24,7 @@ export const Filter: FC<Props> = ({ column, noOfColumnFilters, field, tableStyle
   const onShowPopover = useCallback(() => setPopoverVisible(true), [setPopoverVisible]);
   const onClosePopover = useCallback(() => setPopoverVisible(false), [setPopoverVisible]);
 
-  if (!field) {
+  if (!field || !field.config.custom.filterable) {
     return null;
   }
 
