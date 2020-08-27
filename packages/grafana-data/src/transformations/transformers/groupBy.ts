@@ -1,12 +1,11 @@
 import { DataTransformerID } from './ids';
-import { DataFrame, FieldType, Field, FieldCalcs } from '../../types/dataFrame';
+import { DataFrame, FieldType, Field } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { ArrayVector } from '../../vector/ArrayVector';
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { reduceField, ReducerID } from '../fieldReducer';
 import { MutableField } from '../../dataframe/MutableDataFrame';
-import { string } from 'prop-types';
 
 export enum GroupByOperationID {
   aggregate = 'aggregate',
