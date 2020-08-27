@@ -195,7 +195,7 @@ export const Table: FC<Props> = memo((props: Props) => {
                 return (
                   <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()}>
                     {headerGroup.headers.map((column: Column, index: number) =>
-                      renderHeaderCell(column, headerGroup.headers, tableStyles, data.fields[index])
+                      renderHeaderCell(column, tableStyles, data.fields[index])
                     )}
                   </div>
                 );
@@ -219,7 +219,7 @@ export const Table: FC<Props> = memo((props: Props) => {
 
 Table.displayName = 'Table';
 
-function renderHeaderCell(column: any, columns: any[], tableStyles: TableStyles, field?: Field) {
+function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) {
   const headerProps = column.getHeaderProps();
 
   if (column.canResize) {
@@ -243,25 +243,11 @@ function renderHeaderCell(column: any, columns: any[], tableStyles: TableStyles,
               {column.isSorted && (column.isSortedDesc ? <Icon name="arrow-down" /> : <Icon name="arrow-up" />)}
             </div>
           </div>
-          {column.canFilter && (
-            <Filter
-              column={column}
-              noOfColumnFilters={columns.filter(col => Boolean(col.filterValue)).length}
-              tableStyles={tableStyles}
-              field={field}
-            />
-          )}
+          {column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
         </>
       )}
       {!column.canSort && column.render('Header')}
-      {!column.canSort && column.canFilter && (
-        <Filter
-          column={column}
-          noOfColumnFilters={columns.filter(col => Boolean(col.filterValue)).length}
-          tableStyles={tableStyles}
-          field={field}
-        />
-      )}
+      {!column.canSort && column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
       {column.canResize && <div {...column.getResizerProps()} className={tableStyles.resizeHandle} />}
     </div>
   );

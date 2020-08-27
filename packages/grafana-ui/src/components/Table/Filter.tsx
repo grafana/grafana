@@ -10,12 +10,11 @@ import { Popover } from '..';
 
 interface Props {
   column: any;
-  noOfColumnFilters: number;
   tableStyles: TableStyles;
   field?: Field;
 }
 
-export const Filter: FC<Props> = ({ column, noOfColumnFilters, field, tableStyles }) => {
+export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
   const theme = useTheme();
@@ -37,15 +36,7 @@ export const Filter: FC<Props> = ({ column, noOfColumnFilters, field, tableStyle
       <Icon name="filter" />
       {isPopoverVisible && ref.current && (
         <Popover
-          content={
-            <FilterPopup
-              column={column}
-              noOfColumnFilters={noOfColumnFilters}
-              tableStyles={tableStyles}
-              field={field}
-              onClose={onClosePopover}
-            />
-          }
+          content={<FilterPopup column={column} tableStyles={tableStyles} field={field} onClose={onClosePopover} />}
           placement="bottom-start"
           referenceElement={ref.current}
           show

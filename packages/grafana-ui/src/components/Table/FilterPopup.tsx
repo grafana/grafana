@@ -9,20 +9,15 @@ import { FilterList } from './FilterList';
 
 interface Props {
   column: any;
-  noOfColumnFilters: number;
   tableStyles: TableStyles;
   onClose: () => void;
   field?: Field;
 }
 
-export const FilterPopup: FC<Props> = ({ column, noOfColumnFilters, onClose, field }) => {
-  const uniqueValues = useMemo(() => calculateUniqueFieldValues(column, noOfColumnFilters, field), [
-    column,
-    noOfColumnFilters,
-    field,
-  ]);
+export const FilterPopup: FC<Props> = ({ column: { preFilteredRows, filterValue, setFilter }, onClose, field }) => {
+  const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
-  const filteredOptions = useMemo(() => getFilteredOptions(options, column.filterValue), [options, column.filterValue]);
+  const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions ?? []);
 
   const onCancel = useCallback((event?: React.MouseEvent) => onClose(), [onClose]);
@@ -31,21 +26,21 @@ export const FilterPopup: FC<Props> = ({ column, noOfColumnFilters, onClose, fie
     (event: React.MouseEvent) => {
       const filtered = values.length ? values : undefined;
 
-      column.setFilter(filtered);
+      setFilter(filtered);
       onClose();
     },
-    [column.setFilter, values, onClose]
+    [setFilter, values, onClose]
   );
 
   const onClearFilter = useCallback(
     (event: React.MouseEvent) => {
-      column.setFilter(undefined);
+      setFilter(undefined);
       onClose();
     },
-    [column.setFilter, onClose]
+    [setFilter, onClose]
   );
 
-  const clearFilterVisible = useMemo(() => column.filterValue !== undefined, [column.filterValue]);
+  const clearFilterVisible = useMemo(() => filterValue !== undefined, [filterValue]);
 
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -104,13 +99,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-const calculateUniqueFieldValues = (column: any, noOfColumnFilters: number, field?: Field) => {
-  if (!field) {
+const calculateUniqueFieldValues = (rows: any[], field?: Field) => {
+  if (!field || rows.length === 0) {
     return {};
   }
 
   const set: Record<string, any> = {};
-  const rows = noOfColumnFilters > 1 ? column.filteredRows : column.preFilteredRows;
 
   for (let index = 0; index < rows.length; index++) {
     const fieldIndex = parseInt(rows[index].id, 10);
