@@ -117,7 +117,7 @@ const calculateUniqueFieldValues = (column: any, noOfColumnFilters: number, fiel
     const fieldValue = field.values.get(fieldIndex);
     const displayValue = field.display ? field.display(fieldValue) : fieldValue;
     const value = field.display ? formattedValueToString(displayValue) : displayValue;
-    set[value] = fieldValue;
+    set[value || '(Blanks)'] = fieldValue;
   }
 
   return set;
