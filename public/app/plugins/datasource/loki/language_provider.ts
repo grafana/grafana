@@ -188,21 +188,21 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const history = context?.history;
     const suggestions = [];
 
-    if (history && history.length) {
+    if (history?.length) {
       const historyItems = _.chain(history)
         .map(h => h.query.expr)
         .filter()
         .uniq()
         .take(HISTORY_ITEM_COUNT)
         .map(wrapLabel)
-        .map((item: CompletionItem) => addHistoryMetadata(item, history))
-        .value() as unknown;
+        .map(item => addHistoryMetadata(item, history))
+        .value();
 
       suggestions.push({
         prefixMatch: true,
         skipSort: true,
         label: 'History',
-        items: historyItems as CompletionItem[],
+        items: historyItems,
       });
     }
 
