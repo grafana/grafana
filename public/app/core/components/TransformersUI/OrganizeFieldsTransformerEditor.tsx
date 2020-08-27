@@ -135,7 +135,7 @@ const DraggableFieldName: React.FC<DraggableFieldProps> = ({
         >
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--justify-left width-30">
-              <Icon name="draggabledots" size="xl" className={styles.draggable} />
+              <Icon name="draggabledots" title="Drag and drop to reorder" size="lg" className={styles.draggable} />
               <IconButton
                 className={styles.toggle}
                 size="md"
@@ -168,7 +168,6 @@ const getFieldNameStyles = stylesFactory((theme: GrafanaTheme) => ({
     color: ${theme.colors.textWeak};
   `,
   draggable: css`
-    padding: 0 ${theme.spacing.xs};
     opacity: 0.4;
     &:hover {
       color: ${theme.colors.textStrong};

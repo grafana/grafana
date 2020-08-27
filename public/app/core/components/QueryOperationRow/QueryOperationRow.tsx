@@ -61,45 +61,45 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
       },
     });
 
-  const rowContent = (
-    <>
-      <div className={styles.header}>
-        <HorizontalGroup justify="space-between">
-          <div
-            className={styles.titleWrapper}
-            onClick={() => {
-              setIsContentVisible(!isContentVisible);
-            }}
-            aria-label="Query operation row title"
-          >
-            {draggable && <Icon name="draggabledots" size="lg" className={styles.dragIcon} />}
-            <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
-            {title && <span className={styles.title}>{titleElement}</span>}
-            {headerElement}
-          </div>
-          {actions && actionsElement}
-        </HorizontalGroup>
-      </div>
-      {isContentVisible && <div className={styles.content}>{children}</div>}
-    </>
+  const rowHeader = (
+    <div className={styles.header}>
+      <HorizontalGroup justify="space-between">
+        <div
+          className={styles.titleWrapper}
+          onClick={() => {
+            setIsContentVisible(!isContentVisible);
+          }}
+          aria-label="Query operation row title"
+        >
+          {draggable && (
+            <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
+          )}
+          <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
+          {title && <span className={styles.title}>{titleElement}</span>}
+          {headerElement}
+        </div>
+        {actions && actionsElement}
+      </HorizontalGroup>
+    </div>
   );
   return draggable ? (
     <Draggable draggableId={id} index={index}>
       {provided => {
         return (
-          <div
-            ref={provided.innerRef}
-            className={styles.wrapper}
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
-          >
-            {rowContent}
-          </div>
+          <>
+            <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
+              <div {...provided.dragHandleProps}>{rowHeader}</div>
+              {isContentVisible && <div className={styles.content}>{children}</div>}
+            </div>
+          </>
         );
       }}
     </Draggable>
   ) : (
-    <div className={styles.wrapper}>{rowContent}</div>
+    <div className={styles.wrapper}>
+      {rowHeader}
+      {isContentVisible && <div className={styles.content}>{children}</div>}
+    </div>
   );
 };
 
@@ -120,7 +120,7 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     dragIcon: css`
       opacity: 0.4;
-      cursor: hand;
+      cursor: drag;
     `,
     collapseIcon: css`
       color: ${theme.colors.textWeak};
