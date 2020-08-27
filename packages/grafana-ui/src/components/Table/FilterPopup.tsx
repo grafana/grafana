@@ -31,7 +31,7 @@ export const FilterPopup: FC<Props> = ({ onClose, column, field }) => {
     [column.setFilter, values, onClose]
   );
 
-  const onClearFilters = useCallback(
+  const onClearFilter = useCallback(
     (event: React.MouseEvent) => {
       column.setFilter(undefined);
       onClose();
@@ -39,7 +39,7 @@ export const FilterPopup: FC<Props> = ({ onClose, column, field }) => {
     [column.setFilter, onClose]
   );
 
-  const clearFiltersDisabled = useMemo(() => column.filterValue === undefined, [column.filterValue]);
+  const clearFilterVisible = useMemo(() => column.filterValue !== undefined, [column.filterValue]);
 
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -61,11 +61,13 @@ export const FilterPopup: FC<Props> = ({ onClose, column, field }) => {
                 Cancel
               </Button>
             </HorizontalGroup>
-            <HorizontalGroup>
-              <Button variant="link" size="sm" onClick={onClearFilters} disabled={clearFiltersDisabled}>
-                Clear filter
-              </Button>
-            </HorizontalGroup>
+            {clearFilterVisible && (
+              <HorizontalGroup>
+                <Button variant="link" size="sm" onClick={onClearFilter}>
+                  Clear filter
+                </Button>
+              </HorizontalGroup>
+            )}
           </HorizontalGroup>
         </VerticalGroup>
       </div>
