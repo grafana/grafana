@@ -7,6 +7,7 @@ export interface SystemDateFormatSettings {
     PT1D: string;
     P1YT: string;
   };
+  useBrowserLocale: boolean;
 }
 
 const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
@@ -18,15 +19,15 @@ export class SystemDateFormatsState {
     PT1M: 'HH:mm',
     PT1H: 'MM-DD HH:mm',
     PT1D: 'YYYY-MM-DD',
-    P1YT: 'YYYY-MM',
+    P1YT: 'YYYY',
   };
 
   update(settings: SystemDateFormatSettings) {
-    if (settings.fullDate === 'browser') {
-      this.useLocalFormat();
-    } else {
-      this.fullDate = settings.fullDate;
-      this.intervals = settings.intervals;
+    this.fullDate = settings.fullDate;
+    this.intervals = settings.intervals;
+
+    if (settings.useBrowserLocale) {
+      this.useBrowserLocale();
     }
   }
 
@@ -34,7 +35,7 @@ export class SystemDateFormatsState {
     return `${this.fullDate}.SSS`;
   }
 
-  useLocalFormat() {
+  useBrowserLocale() {
     this.fullDate = localTimeFormat({
       year: 'numeric',
       month: '2-digit',

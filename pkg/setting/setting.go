@@ -298,9 +298,15 @@ type Cfg struct {
 	ApiKeyMaxSecondsToLive int64
 
 	// Use to enable new features which may still be in alpha/beta stage.
-	FeatureToggles map[string]bool
-
+	FeatureToggles       map[string]bool
 	AnonymousHideVersion bool
+
+	DateFormat             string
+	DateFormatIntervalPT1S string
+	DateFormatIntervalPT1M string
+	DateFormatIntervalPT1H string
+	DateFormatIntervalPT1D string
+	DateFormatIntervalP1YT string
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.
@@ -1072,14 +1078,24 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+
 	connStr, err := valueAsString(cacheServer, "connstr", "")
 	if err != nil {
 		return err
 	}
+
 	cfg.RemoteCacheOptions = &RemoteCacheOptions{
 		Name:    dbName,
 		ConnStr: connStr,
 	}
+
+	// preferences := iniFile.Section("preferences")
+	// cfg.DateFormat = valueAsString(preferences, "date_format", "YYYY-MM-DD HH:mm:ss")
+	// cfg.DateFormatIntervalPT1S = valueAsString(preferences, "date_format_interval_PT1S", "HH:mm:ss")
+	// cfg.DateFormatIntervalPT1M = valueAsString(preferences, "date_format_interval_PT1M", "HH:mm")
+	// cfg.DateFormatIntervalPT1H = valueAsString(preferences, "date_format_interval_PT1M", "MM-DD HH:mm")
+	// cfg.DateFormatIntervalPT1D = valueAsString(preferences, "date_format_interval_PT1D", "YYYY-MM-DD")
+	// cfg.DateFormatIntervalP1YT = valueAsString(preferences, "date_format_interval_P1YT", "YYYY-MM")
 
 	return nil
 }

@@ -55,8 +55,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	}
 
 	settings["dateFormats"] = map[string]interface{}{
-		// "fullDate": "YYYY-MM-DD HH:mm:ss",
-		"fullDate": "browser",
+		"fullDate": "YYYY-MM-DD HH:mm:ss",
 		"intervals": map[string]interface{}{
 			"PT1S": "HH:mm:ss",
 			"PT1M": "HH:mm",
