@@ -99,7 +99,7 @@ getLocationSrv().update({
 });
 ```
 
-**Note:** Grafana queries your data source whenever you update a variable. Excessive updates to variables can lead to a poor user experience.
+> **Note:** Grafana queries your data source whenever you update a variable. Excessive updates to variables can slow down Grafana and lead to a poor user experience.
 
 ## Add support for query variables to your data source
 
