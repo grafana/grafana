@@ -1,10 +1,10 @@
-import React, { FC, useCallback, useMemo } from 'react';
+import React, { FC, useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import { css, cx } from 'emotion';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 import { stylesFactory, useTheme } from '../../themes';
-import { Checkbox } from '..';
+import { Checkbox, Input, Label, VerticalGroup } from '..';
 
 interface Props {
   values: SelectableValue[];
@@ -12,13 +12,27 @@ interface Props {
   onChange: (options: SelectableValue[]) => void;
 }
 
+const ITEM_HEIGHT = 28;
+const MIN_HEIGHT = ITEM_HEIGHT * 5;
+
 export const FilterList: FC<Props> = ({ options, values, onChange }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
-  const itemHeight = 28;
-  const minHeight = itemHeight * 5;
+  const [searchFilter, setSearchFilter] = useState('');
+  const items = useMemo(() => options.filter(option => option.label?.indexOf(searchFilter) !== -1), [
+    options,
+    searchFilter,
+  ]);
   const gutter = parseInt(theme.spacing.sm, 10);
-  const height = useMemo(() => Math.min(options.length * itemHeight, minHeight) + gutter, [options]);
+  const height = useMemo(() => Math.min(items.length * ITEM_HEIGHT, MIN_HEIGHT) + gutter, [items]);
+
+  const onInputChange = useCallback(
+    (event: React.FormEvent<HTMLInputElement>) => {
+      setSearchFilter(event.currentTarget.value);
+    },
+    [setSearchFilter]
+  );
+
   const onCheckedChanged = useCallback(
     (option: SelectableValue) => (event: React.FormEvent<HTMLInputElement>) => {
       const newChecked = event.currentTarget.checked
@@ -31,25 +45,36 @@ export const FilterList: FC<Props> = ({ options, values, onChange }) => {
   );
 
   return (
-    <List
-      height={height}
-      itemCount={options.length}
-      itemSize={itemHeight}
-      width="100%"
-      className={cx(styles.filterList)}
-    >
-      {({ index, style }) => {
-        const option = options[index];
-        const { value, label } = option;
-        const isChecked = values.find(s => s.value === value) !== undefined;
+    <VerticalGroup spacing="md">
+      <Input
+        placeholder="filter values"
+        className={styles.filterListInput}
+        onChange={onInputChange}
+        value={searchFilter}
+      />
+      {!items.length && <Label>No values</Label>}
+      {items.length && (
+        <List
+          height={height}
+          itemCount={items.length}
+          itemSize={ITEM_HEIGHT}
+          width="100%"
+          className={cx(styles.filterList)}
+        >
+          {({ index, style }) => {
+            const option = items[index];
+            const { value, label } = option;
+            const isChecked = values.find(s => s.value === value) !== undefined;
 
-        return (
-          <div className={cx(styles.filterListRow)} style={style} title={label}>
-            <Checkbox value={isChecked} label={label} onChange={onCheckedChanged(option)} />
-          </div>
-        );
-      }}
-    </List>
+            return (
+              <div className={cx(styles.filterListRow)} style={style} title={label}>
+                <Checkbox value={isChecked} label={label} onChange={onCheckedChanged(option)} />
+              </div>
+            );
+          }}
+        </List>
+      )}
+    </VerticalGroup>
   );
 };
 
@@ -67,5 +92,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     :hover {
       background-color: ${theme.colors.bg3};
     }
+  `,
+  filterListInput: css`
+    label: filterListInput;
   `,
 }));
