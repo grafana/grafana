@@ -65,6 +65,14 @@ type DeleteAuthInfoCommand struct {
 	UserAuth *UserAuth
 }
 
+type SendLoginLogCommand struct {
+	ReqContext   *ReqContext
+	LogAction    string
+	User         *User
+	ExternalUser *ExternalUserInfo
+	Error        error
+}
+
 // ----------------------
 // QUERIES
 
