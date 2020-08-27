@@ -104,28 +104,24 @@ export default class ElasticsearchLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  async importQueries(queries: DataQuery[], datasourceType: string): Promise<ElasticsearchQuery[]> {
+  importQueries(queries: DataQuery[], datasourceType: string): ElasticsearchQuery[] {
     if (datasourceType === 'prometheus' || datasourceType === 'loki') {
-      return Promise.all(
-        queries.map(async query => {
-          let prometheusQuery: PromQuery = query as PromQuery;
-          const expr = getElasticsearchQuery(extractPrometheusLabels(prometheusQuery.expr));
-          return {
-            isLogsQuery: true,
-            query: expr,
-            refId: query.refId,
-          };
-        })
-      );
-    }
-    return Promise.all(
-      queries.map(async query => {
+      return queries.map(query => {
+        let prometheusQuery: PromQuery = query as PromQuery;
+        const expr = getElasticsearchQuery(extractPrometheusLabels(prometheusQuery.expr));
         return {
           isLogsQuery: true,
-          query: '',
+          query: expr,
           refId: query.refId,
         };
-      })
-    );
+      });
+    }
+    return queries.map(query => {
+      return {
+        isLogsQuery: true,
+        query: '',
+        refId: query.refId,
+      };
+    });
   }
 }
