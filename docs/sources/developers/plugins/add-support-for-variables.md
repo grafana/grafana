@@ -83,7 +83,11 @@ For more information on the available variable formats, refer to [Advanced varia
 
 Not only can you read the value of a variable, you can also update the variable from your plugin. Use [LocationSrv.update()]({{< relref "../../packages_api/runtime/locationsrv.md/#update-method" >}}) to update a variable using query parameters.
 
-The following example updates the current value of a variable called `service` to `billing`. By setting `partial` to `true`, you leave the other query parameters unchanged. `replace` determines whether to update the current URL state, or to create a new history entry. We recommend setting both to `true` when updating variables.
+The following example updates the current value of a variable called `service` to `billing`.
+
+- `query` contains the query parameters you want to update. Query parameters controlling variables are prefixed with `var-`.
+- `partial: true` makes the update only affect the query parameters listed in `query`, and leaves the other query parameters unchanged.
+- `replace: true` tells Grafana to update the current URL state, rather than creating a new history entry.
 
 ```ts
 import { getLocationSrv } from '@grafana/runtime';
