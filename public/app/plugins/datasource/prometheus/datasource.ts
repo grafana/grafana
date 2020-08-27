@@ -179,9 +179,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     scopedVars?: ScopedVars,
     mixedQueries?: boolean
   ) => {
-    console.log('instant', target.instant);
-    console.log('range', target.range);
-    console.log('mixed', mixedQueries);
     // Keeping original start/end for transformers
     const transformerOptions = {
       format: target.format,
