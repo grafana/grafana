@@ -3,7 +3,8 @@ import moment, { MomentInput } from 'moment-timezone';
 import { DateTimeInput, DateTime, isDateTime } from './moment_wrapper';
 import { DateTimeOptions, getTimeZone } from './common';
 import { parse, isValid } from './datemath';
-import { lowerCase } from 'lodash';
+import { lowerCase, isArray } from 'lodash';
+import { defaultDateFormats } from './formats';
 
 /**
  * The type that describes options that can be passed when parsing a date and time value.
@@ -67,14 +68,29 @@ const parseOthers = (value: DateTimeInput, options?: DateTimeOptionsWhenParsing)
   const timeZone = getTimeZone(options);
   const zone = moment.tz.zone(timeZone);
 
+  // When value is an array (which is what calendar clicks generate) we should not pass in the
+  // date format when trying to parse the date
+  if (isArray(value)) {
+    if (zone && zone.name) {
+      return moment.tz(date, zone.name) as DateTime;
+    }
+
+    switch (lowerCase(timeZone)) {
+      case 'utc':
+        return moment.utc(date) as DateTime;
+      default:
+        return moment(date) as DateTime;
+    }
+  }
+
   if (zone && zone.name) {
-    return moment.tz(date, zone.name) as DateTime;
+    return moment.tz(date, defaultDateFormats.fullDate, zone.name) as DateTime;
   }
 
   switch (lowerCase(timeZone)) {
     case 'utc':
-      return moment.utc(date) as DateTime;
+      return moment.utc(date, defaultDateFormats.fullDate) as DateTime;
     default:
-      return moment(date) as DateTime;
+      return moment(date, defaultDateFormats.fullDate) as DateTime;
   }
 };

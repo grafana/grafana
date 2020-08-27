@@ -3,7 +3,6 @@ import { localTimeFormat } from './formats';
 describe('Date Formats', () => {
   it('localTimeFormat', () => {
     const format = localTimeFormat(
-      'default',
       {
         year: '2-digit',
         month: '2-digit',
