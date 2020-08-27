@@ -85,4 +85,3 @@ This is used in several places, including:
 - Log Analytics queries in the Azure Monitor data source.
 - SQL queries in MySQL, Postgres, and MSSQL
 - The `$__timeFilter` variable is used in the MySQL data source.
-

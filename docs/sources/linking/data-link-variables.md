@@ -10,6 +10,8 @@ weight = 400
 
 You can use certain variables in data links to link to specific portions of your visualizations. For more information about data links, refer to [Data links]({{< relref "data-links.md" >}}).
 
+To see a list of available variables, type `$` in the data link **URL** field to see a list of variables that you can use.
+
 > **Note:** These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
 
 For more information about using variables, refer to [Templates and variables]({{< relref "../variables/templates-and-variables.md" >}})
@@ -19,6 +21,7 @@ For more information about using variables, refer to [Templates and variables]({
 These variables allow you to set the time range for a dashboard. For more information about time settings and options in Grafana, refer to [Time range controls]({{< relref "../dashboards/time-range-controls.md" >}})
 
 * ``__url_time_range`` - current dashboard's time range (i.e. ``?from=now-6h&to=now``)
+* `$__from and $__to` - For more information, refer to [Global variables]({{< relref "../variables/variable-types/global-variables.md#__from-and-__to" >}}).
 
 ## Series variables
 
