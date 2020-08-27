@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -159,8 +161,16 @@ func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) Response {
 }
 
 func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Response {
+	action := "login"
 	if setting.DisableLoginForm {
-		return Error(401, "Login is disabled", nil)
+		errMsg := "Login is disabled"
+		hs.SendLoginLog(&models.SendLoginLogCommand{
+			ReqContext: c,
+			LogAction:  action,
+			HTTPStatus: http.StatusUnauthorized,
+			Error:      errors.New(errMsg),
+		})
+		return Error(http.StatusUnauthorized, errMsg, nil)
 	}
 
 	authQuery := &models.LoginUserQuery{
@@ -171,26 +181,49 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 	}
 
 	if err := bus.Dispatch(authQuery); err != nil {
-		e401 := Error(401, "Invalid username or password", err)
-		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts {
-			return e401
+		if authQuery.AuthModule != "" {
+			action += fmt.Sprintf("-%s", authQuery.AuthModule)
+		}
+		var errResp *NormalResponse
+		e401 := Error(http.StatusUnauthorized, "Invalid username or password", err)
+
+		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts || err == models.ErrUserNotFound {
+			errResp = e401
 		}
 
 		// Do not expose disabled status,
 		// just show incorrect user credentials error (see #17947)
 		if err == login.ErrUserDisabled {
 			hs.log.Warn("User is disabled", "user", cmd.User)
-			return e401
+			errResp = e401
 		}
 
-		return Error(500, "Error while trying to authenticate user", err)
+		if errResp == nil {
+			errResp = Error(http.StatusInternalServerError, "Error while trying to authenticate user", err)
+		}
+
+		hs.SendLoginLog(&models.SendLoginLogCommand{
+			ReqContext: c,
+			LogAction:  action,
+			User:       authQuery.User,
+			HTTPStatus: errResp.status,
+			Error:      err,
+		})
+		return errResp
 	}
 
 	user := authQuery.User
 
 	err := hs.loginUserWithUser(user, c)
 	if err != nil {
-		return Error(500, "Error while signing in user", err)
+		hs.SendLoginLog(&models.SendLoginLogCommand{
+			ReqContext: c,
+			LogAction:  action,
+			User:       user,
+			HTTPStatus: http.StatusInternalServerError,
+			Error:      err,
+		})
+		return Error(http.StatusInternalServerError, "Error while signing in user", err)
 	}
 
 	result := map[string]interface{}{
@@ -206,8 +239,15 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 		middleware.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 	}
 
+	hs.SendLoginLog(&models.SendLoginLogCommand{
+		ReqContext: c,
+		LogAction:  action,
+		User:       user,
+		HTTPStatus: http.StatusOK,
+	})
+
 	metrics.MApiLoginPost.Inc()
-	return JSON(200, result)
+	return JSON(http.StatusOK, result)
 }
 
 func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext) error {
@@ -282,4 +322,12 @@ func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err erro
 	}
 
 	return Redirect(setting.AppSubUrl + "/login")
+}
+
+func (hs *HTTPServer) SendLoginLog(cmd *models.SendLoginLogCommand) {
+	if err := bus.Dispatch(cmd); err != nil {
+		if err != bus.ErrHandlerNotFound {
+			hs.log.Warn("Error while sending login log", "err", err)
+		}
+	}
 }

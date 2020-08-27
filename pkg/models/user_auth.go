@@ -70,6 +70,7 @@ type SendLoginLogCommand struct {
 	LogAction    string
 	User         *User
 	ExternalUser *ExternalUserInfo
+	HTTPStatus   int
 	Error        error
 }
 
@@ -82,6 +83,7 @@ type LoginUserQuery struct {
 	Password   string
 	User       *User
 	IpAddress  string
+	AuthModule string
 }
 
 type GetUserByAuthInfoQuery struct {
