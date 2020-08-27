@@ -3,15 +3,16 @@ import { convertToStoreState } from 'test/helpers/convertToStoreState';
 import { getTemplateSrvDependencies } from '../../../test/helpers/getTemplateSrvDependencies';
 import { variableAdapters } from '../variables/adapters';
 import { createQueryVariableAdapter } from '../variables/query/adapter';
+import { dateTime, TimeRange } from '@grafana/data';
 
 describe('templateSrv', () => {
   let _templateSrv: any;
 
-  function initTemplateSrv(variables: any[]) {
+  function initTemplateSrv(variables: any[], timeRange?: TimeRange) {
     const state = convertToStoreState(variables);
 
     _templateSrv = new TemplateSrv(getTemplateSrvDependencies(state));
-    _templateSrv.init(variables);
+    _templateSrv.init(variables, timeRange);
   }
 
   describe('init', () => {
@@ -374,6 +375,11 @@ describe('templateSrv', () => {
       const result = _templateSrv.formatValue(['test', "test'value2"], 'sqlstring');
       expect(result).toBe(`'test','test''value2'`);
     });
+
+    it('raw format should leave value intact and do no escaping', () => {
+      const result = _templateSrv.formatValue("'test\n", 'raw');
+      expect(result).toBe("'test\n");
+    });
   });
 
   describe('can check if variable exists', () => {
@@ -594,16 +600,45 @@ describe('templateSrv', () => {
       initTemplateSrv([]);
     });
 
-    it('should be possible to fetch value with getBuilInIntervalValue', () => {
-      const val = _templateSrv.getBuiltInIntervalValue();
-      expect(val).toBe('1s');
-    });
-
     it('should replace $__interval_ms with interval milliseconds', () => {
       const target = _templateSrv.replace('10 * $__interval_ms', {
         __interval_ms: { text: '100', value: '100' },
       });
       expect(target).toBe('10 * 100');
+    });
+  });
+
+  describe('date formating', () => {
+    beforeEach(() => {
+      initTemplateSrv([], {
+        from: dateTime(1594671549254),
+        to: dateTime(1595237229747),
+      } as TimeRange);
+    });
+
+    it('should replace ${__from} with ms epoch value', () => {
+      const target = _templateSrv.replace('${__from}');
+      expect(target).toBe('1594671549254');
+    });
+
+    it('should replace ${__from:date:seconds} with epoch in seconds', () => {
+      const target = _templateSrv.replace('${__from:date:seconds}');
+      expect(target).toBe('1594671549');
+    });
+
+    it('should replace ${__from:date} with iso date', () => {
+      const target = _templateSrv.replace('${__from:date}');
+      expect(target).toBe('2020-07-13T20:19:09.254Z');
+    });
+
+    it('should replace ${__from:date:iso} with iso date', () => {
+      const target = _templateSrv.replace('${__from:date:iso}');
+      expect(target).toBe('2020-07-13T20:19:09.254Z');
+    });
+
+    it('should replace ${__from:date:YYYY-MM} using custom format', () => {
+      const target = _templateSrv.replace('${__from:date:YYYY-MM}');
+      expect(target).toBe('2020-07');
     });
   });
 });

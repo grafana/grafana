@@ -16,7 +16,7 @@ This visualization is the most-used in the Grafana ecosystem. It can render as a
 
 Graph visualizations allow you to apply:
 - [Data transformations]({{< relref "../transformations.md" >}})
-- [Alerts](../../alerting/alerts-overview.md) - This is the only type of visualization that allows you to set alerts.
+- [Alerts]({{< relref "../../alerting/alerts-overview.md" >}}) - This is the only type of visualization that allows you to set alerts.
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options
@@ -28,9 +28,10 @@ Use these settings to refine your visualization.
 - **Line width -** The width of the line for a series. (default 1).
 - **Staircase -** Draws adjacent points as staircase.
 - **Area fill -** Amount of color fill for a series. (default 1, 0 is none)
-- **Fill gradient -** XXX
+- **Fill gradient -** Degree of gradient on the area fill. (0 is no gradient, 10 is a steep gradient. Default is 0.)
 - **Points -** Display points for values.
 - **Point radius -** Controls how large the points are.
+- **Alert thresholds -** Display alert thresholds and regions on the panel.
 
 ### Stacking and null value
 
@@ -50,7 +51,7 @@ Use these settings to change the appearance of the tooltip that appears when you
 - **Mode**
   - **All series -** The hover tooltip shows all series in the graph. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
   - **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the graph.
-- **Sort order -** Sorts the order of series in the hover tooltip if you have selected *All series* mode.
+- **Sort order -** Sorts the order of series in the hover tooltip if you have selected **All series** mode. When you hover your cursor on a graph, Grafana displays the values associated with the lines. Generally users are most interested in the highest or lowest values. Sorting these values can make it much easier to find the data of interest.
   - **None -** The order of the series in the tooltip is determined by the sort order in your query. For example, they could be alphabetically sorted by series name.
   - **Increasing -** The series in the hover tooltip are sorted by value and in increasing order, with the lowest value at the top of the list.
   - **Decreasing -** The series in the hover tooltip are sorted by value and in decreasing order, with the highest value at the top of the list.
@@ -160,4 +161,4 @@ Hide series when all values of a series from a metric query are of a specific va
 
 ### Time regions
 
-Time regions allow you to highlight certain time regions of the graph to make it easier to see for example weekends, business hours and/or off work hours.
+Time regions allow you to highlight certain time regions of the graph to make it easier to see for example weekends, business hours and/or off work hours. All configured time regions refer to UTC time.

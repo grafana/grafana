@@ -16,7 +16,6 @@ var (
 
 func (query *Query) Build(queryContext *tsdb.TsdbQuery) (string, error) {
 	var res string
-
 	if query.UseRawQuery && query.RawQuery != "" {
 		res = query.RawQuery
 	} else {

@@ -24,10 +24,7 @@ export const getSpanTimestamp = span => span.startTime;
 export const getSpanProcessId = span => span.processID;
 export const getSpanReferences = span => span.references || [];
 export const getSpanReferenceByType = createSelector(
-  createSelector(
-    ({ span }) => span,
-    getSpanReferences
-  ),
+  createSelector(({ span }) => span, getSpanReferences),
   ({ type }) => type,
   (references, type) => references.find(ref => ref.refType === type)
 );
@@ -49,10 +46,7 @@ export const getSpanProcess = span => {
   return span.process;
 };
 
-export const getSpanServiceName = createSelector(
-  getSpanProcess,
-  getProcessServiceName
-);
+export const getSpanServiceName = createSelector(getSpanProcess, getProcessServiceName);
 
 export const filterSpansForTimestamps = createSelector(
   ({ spans }) => spans,
@@ -73,16 +67,14 @@ export const filterSpansForText = createSelector(
       .map(({ original }) => original)
 );
 
-const getTextFilterdSpansAsMap = createSelector(
-  filterSpansForText,
-  matchingSpans =>
-    matchingSpans.reduce(
-      (obj, span) => ({
-        ...obj,
-        [getSpanId(span)]: span,
-      }),
-      {}
-    )
+const getTextFilterdSpansAsMap = createSelector(filterSpansForText, matchingSpans =>
+  matchingSpans.reduce(
+    (obj, span) => ({
+      ...obj,
+      [getSpanId(span)]: span,
+    }),
+    {}
+  )
 );
 
 export const highlightSpansForTextFilter = createSelector(

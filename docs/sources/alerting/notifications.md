@@ -73,14 +73,17 @@ Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
 VictorOps | `victorops` | yes, external only | no
 [Webhook](#webhook) | `webhook` | yes, external only | yes
+[Zenduty](#zenduty) | `webhook` | yes, external only | yes
 
 ### Email
 
-To enable email notifications you have to setup [SMTP settings]({{< relref "../administration/configuration/#smtp" >}})
+To enable email notifications you have to set up [SMTP settings]({{< relref "../administration/configuration/#smtp" >}})
 in the Grafana config. Email notifications will upload an image of the alert graph to an
 external image destination if available or fallback to attaching the image to the email.
 Be aware that if you use the `local` image storage email servers and clients might not be
 able to access the image.
+
+> **Note:** Template variables are not supported in email alerts.
 
 Setting | Description
 ---------- | -----------
@@ -207,6 +210,10 @@ Squadcast helps you get alerted via Phone call, SMS, Email and Push notification
 Alertmanager handles alerts sent by client applications such as Prometheus server or Grafana. It takes care of deduplicating, grouping, and routing them to the correct receiver. Grafana notifications can be sent to Alertmanager via a simple incoming webhook. Refer to the official [Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/alertmanager) for configuration information.
 
 > **Caution:** In case of a high-availability setup, do not load balance traffic between Grafana and Alertmanagers to keep coherence between all your Alertmanager instances. Instead, point Grafana to a list of all Alertmanagers, by listing their URLs comma-separated in the notification channel configuration.
+
+### Zenduty
+
+[Zenduty](https://www.zenduty.com) is an incident alerting and response orchestration platform that not alerts the right teams via SMS, Phone(Voice), Email, Slack, Microsoft Teams and Push notifications(Android/iOS) whenever a Grafana alert is triggered, but also helps you rapidly triage and remediate critical, user impacting incidents. Grafana alert are sent to Zenduty through Grafana's native webhook dispatcher. Refer the Zenduty-Grafana [integration documentation](https://docs.zenduty.com/docs/grafana) for configuring the integration.
 
 ## Enable images in notifications {#external-image-store}
 

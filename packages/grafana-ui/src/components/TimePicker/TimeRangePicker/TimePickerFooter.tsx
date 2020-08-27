@@ -45,7 +45,7 @@ export const TimePickerFooter: FC<Props> = props => {
   if (isEditing) {
     return (
       <div className={cx(style.container, style.editContainer)}>
-        <div className={style.timeZoneContainer}>
+        <div aria-label="Time zone picker select container" className={style.timeZoneContainer}>
           <TimeZonePicker
             includeInternal={true}
             onChange={timeZone => {

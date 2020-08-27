@@ -316,7 +316,7 @@ describe('shared actions', () => {
 
   describe('changeVariableName', () => {
     describe('when changeVariableName is dispatched with the same name', () => {
-      it('then no actions are dispatched', () => {
+      it('then the correct actions are dispatched', () => {
         const textbox = textboxBuilder()
           .withId('textbox')
           .withName('textbox')
@@ -333,10 +333,11 @@ describe('shared actions', () => {
             addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
           )
           .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), constant.name), true)
-          .thenNoActionsWhereDispatched();
+          .thenDispatchedActionsShouldEqual(
+            changeVariableNameSucceeded({ type: 'constant', id: 'constant', data: { newName: 'constant' } })
+          );
       });
     });
-
     describe('when changeVariableName is dispatched with an unique name', () => {
       it('then the correct actions are dispatched', () => {
         const textbox = textboxBuilder()
@@ -568,18 +569,19 @@ describe('shared actions', () => {
 
         tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
           expect(dispatchedActions[0]).toEqual(variablesInitTransaction({ uid }));
-          expect(dispatchedActions[1]).toEqual(
+          expect(dispatchedActions[1].type).toEqual(addVariable.type);
+          expect(dispatchedActions[1].payload.id).toEqual('__dashboard');
+          expect(dispatchedActions[2].type).toEqual(addVariable.type);
+          expect(dispatchedActions[2].payload.id).toEqual('__org');
+          expect(dispatchedActions[3].type).toEqual(addVariable.type);
+          expect(dispatchedActions[3].payload.id).toEqual('__user');
+          expect(dispatchedActions[4]).toEqual(
             addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
           );
-          expect(dispatchedActions[2]).toEqual(addInitLock(toVariablePayload(constant)));
-          expect(dispatchedActions[3]).toEqual(resolveInitLock(toVariablePayload(constant)));
-          expect(dispatchedActions[4]).toEqual(removeInitLock(toVariablePayload(constant)));
-          expect(dispatchedActions[5].type).toEqual(addVariable.type);
-          expect(dispatchedActions[5].payload.id).toEqual('__dashboard');
-          expect(dispatchedActions[6].type).toEqual(addVariable.type);
-          expect(dispatchedActions[6].payload.id).toEqual('__org');
-          expect(dispatchedActions[7].type).toEqual(addVariable.type);
-          expect(dispatchedActions[7].payload.id).toEqual('__user');
+          expect(dispatchedActions[5]).toEqual(addInitLock(toVariablePayload(constant)));
+          expect(dispatchedActions[6]).toEqual(resolveInitLock(toVariablePayload(constant)));
+          expect(dispatchedActions[7]).toEqual(removeInitLock(toVariablePayload(constant)));
+
           expect(dispatchedActions[8]).toEqual(variablesCompleteTransaction({ uid }));
           return dispatchedActions.length === 9;
         });
@@ -607,18 +609,18 @@ describe('shared actions', () => {
           expect(dispatchedActions[0]).toEqual(cleanVariables());
           expect(dispatchedActions[1]).toEqual(variablesClearTransaction());
           expect(dispatchedActions[2]).toEqual(variablesInitTransaction({ uid }));
-          expect(dispatchedActions[3]).toEqual(
+          expect(dispatchedActions[3].type).toEqual(addVariable.type);
+          expect(dispatchedActions[3].payload.id).toEqual('__dashboard');
+          expect(dispatchedActions[4].type).toEqual(addVariable.type);
+          expect(dispatchedActions[4].payload.id).toEqual('__org');
+          expect(dispatchedActions[5].type).toEqual(addVariable.type);
+          expect(dispatchedActions[5].payload.id).toEqual('__user');
+          expect(dispatchedActions[6]).toEqual(
             addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
           );
-          expect(dispatchedActions[4]).toEqual(addInitLock(toVariablePayload(constant)));
-          expect(dispatchedActions[5]).toEqual(resolveInitLock(toVariablePayload(constant)));
-          expect(dispatchedActions[6]).toEqual(removeInitLock(toVariablePayload(constant)));
-          expect(dispatchedActions[7].type).toEqual(addVariable.type);
-          expect(dispatchedActions[7].payload.id).toEqual('__dashboard');
-          expect(dispatchedActions[8].type).toEqual(addVariable.type);
-          expect(dispatchedActions[8].payload.id).toEqual('__org');
-          expect(dispatchedActions[9].type).toEqual(addVariable.type);
-          expect(dispatchedActions[9].payload.id).toEqual('__user');
+          expect(dispatchedActions[7]).toEqual(addInitLock(toVariablePayload(constant)));
+          expect(dispatchedActions[8]).toEqual(resolveInitLock(toVariablePayload(constant)));
+          expect(dispatchedActions[9]).toEqual(removeInitLock(toVariablePayload(constant)));
           expect(dispatchedActions[10]).toEqual(variablesCompleteTransaction({ uid }));
           return dispatchedActions.length === 11;
         });

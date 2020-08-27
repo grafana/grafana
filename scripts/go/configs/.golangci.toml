@@ -21,13 +21,13 @@ enable = [
   "gocritic",
   "goimports",
   "golint",
-  # "goprintffuncname",
+  "goprintffuncname",
   "gosec",
   "gosimple",
   "govet",
   "ineffassign",
-  # "interfacer",
   "misspell",
+  "nakedret",
   "rowserrcheck",
   "exportloopref",
   "staticcheck",
@@ -75,6 +75,10 @@ text = "402"
 [[issues.exclude-rules]]
 linters = ["gosec"]
 text = "501"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "404"
 
 [[issues.exclude-rules]]
 linters = ["misspell"]

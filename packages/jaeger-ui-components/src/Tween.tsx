@@ -16,12 +16,12 @@ import ease from 'tween-functions';
 
 import { TNil } from './types';
 
-interface ITweenState {
+interface TweenState {
   done: boolean;
   value: number;
 }
 
-type TTweenCallback = (state: ITweenState) => void;
+type TTweenCallback = (state: TweenState) => void;
 
 type TTweenOptions = {
   delay?: number;
@@ -98,7 +98,7 @@ export default class Tween {
     this.callbackUpdate = undefined;
   }
 
-  getCurrent(): ITweenState {
+  getCurrent(): TweenState {
     const t = Date.now() - this.startTime;
     if (t <= 0) {
       // still in the delay period
