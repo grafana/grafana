@@ -83,7 +83,7 @@ For more information on the available variable formats, refer to [Advanced varia
 
 Not only can you read the value of a variable, you can also update the variable from your plugin. Use [LocationSrv.update()]({{< relref "../../packages_api/runtime/locationsrv.md/#update-method" >}}) to update a variable using query parameters.
 
-The following example updates the current value of a variable called `service` to `billing`.
+The following example shows how to update a variable called `service`.
 
 - `query` contains the query parameters you want to update. Query parameters controlling variables are prefixed with `var-`.
 - `partial: true` makes the update only affect the query parameters listed in `query`, and leaves the other query parameters unchanged.
