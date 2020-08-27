@@ -83,6 +83,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     border: ${theme.border.width.sm} solid ${theme.colors.border2};
     padding: ${theme.spacing.md};
     margin: ${theme.spacing.sm} 0px;
+    box-shadow: 0px 0px 20px ${theme.colors.dropdownShadow};
+    border-radius: ${theme.spacing.xs};
   `,
 }));
 
