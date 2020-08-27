@@ -91,7 +91,7 @@ func TestAuthenticateUser(t *testing.T) {
 			err := AuthenticateUser(sc.loginUserQuery)
 
 			Convey("it should result in", func() {
-				So(err, ShouldEqual, ErrInvalidCredentials)
+				So(err, ShouldEqual, models.ErrUserNotFound)
 				So(sc.loginAttemptValidationWasCalled, ShouldBeTrue)
 				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
 				So(sc.ldapLoginWasCalled, ShouldBeTrue)
