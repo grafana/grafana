@@ -28,6 +28,9 @@ executors:
   go:
     docker:
       - image: cimg/go:1.14
+  e2e:
+    docker:
+      - image: srclosson/grafana-plugin-ci-e2e:latest
   grafana-build:
     docker:
       - image: grafana/build-container:1.2.24
@@ -668,8 +671,7 @@ jobs:
           when: on_success
 
   end-to-end-tests:
-    docker:
-      - image: circleci/node:12-browsers
+    executor: e2e
     steps:
       - attach_workspace:
           at: /tmp/workspace
