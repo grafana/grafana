@@ -25,7 +25,7 @@
     - name: Observability strategies
       link: /best-practices/common-observability-strategies/
     - name: Dashboard management maturity model
-      link: /best-practices/dashboard-management-maturity-model/
+      link: /best-practices/dashboard-management-maturity-levels/
 - name: Installation
   link: /installation/
   children:

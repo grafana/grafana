@@ -22,7 +22,7 @@ Adapt your strategy to changing needs as necessary.
 
 ### Maturity level
 
-What is your dashboard maturity level? Analyze your current dashboard setup and compare it to the [Dashboard management maturity levels]({{< relref "dashboard-management-maturity-levels.md" >}}). Understanding where you are can help you decide how to get to where you want to be.
+What is your dashboard maturity level? Analyze your current dashboard setup and compare it to the [Dashboard management maturity model]({{< relref "dashboard-management-maturity-levels.md" >}}). Understanding where you are can help you decide how to get to where you want to be.
 
 ## Best practices to follow
 
