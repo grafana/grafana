@@ -1,11 +1,12 @@
 import { DataTransformerID } from './ids';
-import { DataFrame, FieldType, Field } from '../../types/dataFrame';
+import { DataFrame, FieldType, Field, FieldCalcs } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { ArrayVector } from '../../vector/ArrayVector';
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { reduceField, ReducerID } from '../fieldReducer';
 import { MutableField } from '../../dataframe/MutableDataFrame';
+import { string } from 'prop-types';
 
 export enum GroupByOperationID {
   aggregate = 'aggregate',
@@ -21,19 +22,6 @@ export interface GroupByTransformerOptions {
   fields: Record<string, GroupByFieldOptions>;
 }
 
-function toFieldArray(fields: Record<string, GroupByFieldOptions>) {
-  let fieldNames = Object.keys(fields).sort();
-  let fieldsArray = [];
-  for (let f of fieldNames) {
-    fieldsArray.push({
-      fieldName: f,
-      aggregations: fields[f].aggregations,
-      operation: fields[f].operation,
-    });
-  }
-  return fieldsArray;
-}
-
 export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> = {
   id: DataTransformerID.groupBy,
   name: 'Group By',
@@ -47,31 +35,22 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
    * be applied, just return the input series
    */
   transformer: (options: GroupByTransformerOptions) => {
-    let fieldsArray: Array<Record<string, any>> = toFieldArray(options.fields);
-    const calculationsByField = fieldsArray.filter(val => val.operation === GroupByOperationID.aggregate);
-    const groupByFieldNames = fieldsArray
-      .filter(val => val.operation === GroupByOperationID.groupBy)
-      .map(val => val.fieldName);
+    const calculationsByField = Object.keys(options.fields)
+      .map(f => ({
+        fieldName: f,
+        ...options.fields[f],
+      }))
+      .filter(val => val.operation === GroupByOperationID.aggregate);
 
     return (data: DataFrame[]) => {
-      if (groupByFieldNames.length === 0) {
-        return data;
-      }
-
       const processed: DataFrame[] = [];
 
-      //
-      // First, group the data in a way we can easily work with
-      //
-
-      for (let frame of data) {
-        // Get all the GroupBy fields and put them in the same array
+      for (const frame of data) {
         const groupByFields: Field[] = [];
-        for (let fieldName of groupByFieldNames) {
-          for (let field of frame.fields) {
-            if (getFieldDisplayName(field) === fieldName) {
-              groupByFields.push(field);
-            }
+
+        for (const field of frame.fields) {
+          if (shouldGroupOnField(field, options)) {
+            groupByFields.push(field);
           }
         }
 
@@ -79,140 +58,128 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
           continue; // No group by field in this frame, ignore the frame
         }
 
-        /*
-         Group together the data (the rows) that have the same values for the GroupBy fields
-         We do that by creating a Map() in which the key will represent the GroupBy values and the object will contain the rows that have this data
-         
-         Something like this :
-        
-          {
-            ["goupByField1Value1","groupByField2Value1", ...] : {fieldName1:Field, fieldname2:Field, ...},
-            ["goupByField1Value2","groupByField2Value2", ...] : {fieldName1:Field, fieldname2:Field, ...},
-            ["goupByField1Value3","groupByField2Value3", ...] : {fieldName1:Field, fieldname2:Field, ...},
-            ...
-          }
-        */
+        // Group the values by fields and groups so we can get all values for a
+        // group for a given field.
+        const valuesByGroupKey: Record<string, Record<string, MutableField>> = {};
+        for (const rowIndex = 0; rowIndex < frame.length; rowIndex++) {
+          const groupKey = String(groupByFields.map(field => field.values.get(rowIndex)));
+          const valuesByField = valuesByGroupKey[groupKey] ?? {};
 
-        const groupedData: Record<string, Record<string, MutableField>> = {};
-        for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
-          let key = String(groupByFields.map(field => field.values.get(rowIndex)));
-
-          let rowDataByField = groupedData[key];
-          if (!rowDataByField) {
-            rowDataByField = {};
-            groupedData[key] = rowDataByField;
+          if (!valuesByGroupKey[groupKey]) {
+            valuesByGroupKey[groupKey] = valuesByField;
           }
 
           for (let field of frame.fields) {
             const fieldName = getFieldDisplayName(field);
 
-            if (!rowDataByField[fieldName]) {
-              rowDataByField[fieldName] = {
-                name: getFieldDisplayName(field),
+            if (!valuesByField[fieldName]) {
+              valuesByField[fieldName] = {
+                name: fieldName,
                 type: field.type,
-                config: {},
+                config: { ...field.config },
                 values: new ArrayVector(),
               };
             }
 
-            rowDataByField[fieldName].values.add(field.values.get(rowIndex));
+            valuesByField[fieldName].values.add(field.values.get(rowIndex));
           }
         }
 
-        //
-        // Build the new frame
-        //
+        const fields: Field[] = [];
+        const groupKeys = Object.keys(valuesByGroupKey);
 
-        const fields: Field[] = []; // The fields that our new frame will contain
-        const groupedDataKeys = Object.keys(groupedData);
+        for (const field of groupByFields) {
+          const values = new ArrayVector();
+          const fieldName = getFieldDisplayName(field);
 
-        // Create a field (column) for each GroupBy field
-
-        for (let field of groupByFields) {
-          let values = new ArrayVector();
-          let fieldName = getFieldDisplayName(field);
-
-          for (let key of groupedDataKeys) {
-            values.add(groupedData[key][fieldName].values.get(0));
+          for (let key of groupKeys) {
+            const valuesByField = valuesByGroupKey[key];
+            values.add(valuesByField[fieldName].values.get(0));
           }
 
-          let newField = {
+          fields.push({
             name: field.name,
             type: field.type,
             config: {
               ...field.config,
             },
             values: values,
-          };
-          fields.push(newField);
+          });
         }
 
         // Then for each calculations configured, compute and add a new field (column)
-        const fieldList = frame.fields.map(f => getFieldDisplayName(f)); // Fields that are present in the data
-
-        for (let element of calculationsByField) {
-          if (element.fieldName === null || !fieldList.includes(element.fieldName)) {
+        for (const field of frame.fields) {
+          if (!shouldCalculateField(field, options)) {
             continue;
           }
 
-          // This won't be so intuitive as way to build the result, but if we want to take advantage
-          // of the reduceField function, we'll have to loop on the data this way. We will build a few
-          // fields (columns) at the time, corresponding the each field we want to make some calculations on.
+          const fieldName = getFieldDisplayName(field);
+          const aggregations = options.fields[fieldName].aggregations;
+          const valuesByAggregation: Record<string, any[]> = {};
 
-          let calculationResults: Record<string, any[]> = {};
-          for (let calc of element.aggregations) {
-            calculationResults[calc] = [];
-          }
-
-          // The we need to loop on each group of values to get the result and append each
-          // result to the new fields
-          let fieldType = null;
-          for (let val of groupedDataKeys) {
-            let field = groupedData[val][element.fieldName];
-            fieldType = field.type;
-
-            // reduceField will return an object will all the calculations from the specified list, possibly more
-            let results = reduceField({
-              field,
-              reducers: element.aggregations,
+          for (const groupKey of groupKeys) {
+            const fieldWithValuesForGroup = valuesByGroupKey[groupKey][fieldName];
+            const results = reduceField({
+              field: fieldWithValuesForGroup,
+              reducers: aggregations,
             });
 
-            for (let calc of element.aggregations) {
-              calculationResults[calc].push(results[calc]);
+            for (const aggregation of aggregations) {
+              if (!Array.isArray(valuesByAggregation[aggregation])) {
+                valuesByAggregation[aggregation] = [];
+              }
+              valuesByAggregation[aggregation].push(results[aggregation]);
             }
           }
 
-          // Now we add the fields to the new fields
-          for (let calc of element.aggregations) {
-            let f = {
-              name: element.fieldName + ' (' + calc + ')',
-              values: new ArrayVector(calculationResults[calc]),
+          for (const aggregation of aggregations) {
+            const aggregationField: Field = {
+              name: fieldName + ' (' + aggregation + ')',
+              values: new ArrayVector(valuesByAggregation[aggregation]),
               type: FieldType.other,
               config: {},
             };
 
-            if ([ReducerID.allIsNull, ReducerID.allIsNull].includes(calc)) {
-              f.type = FieldType.boolean;
-            } else if (
-              [ReducerID.last, ReducerID.lastNotNull, ReducerID.first, ReducerID.firstNotNull].includes(calc) &&
-              fieldType
-            ) {
-              f.type = fieldType; // Keep same field type (useful for time field type mainly, so it displays properly as time, not as a number)
-            } else {
-              f.type = guessFieldTypeForField(f) ?? FieldType.string;
-            }
-
-            fields.push(f);
+            aggregationField.type = detectFieldType(aggregation, field, aggregationField);
+            fields.push(aggregationField);
           }
         }
 
         processed.push({
           fields,
-          length: groupedDataKeys.length,
+          length: groupKeys.length,
         });
       }
 
       return processed;
     };
   },
+};
+
+const shouldGroupOnField = (field: Field, options: GroupByTransformerOptions): boolean => {
+  const fieldName = getFieldDisplayName(field);
+  return options?.fields[fieldName]?.operation === GroupByOperationID.groupBy;
+};
+
+const shouldCalculateField = (field: Field, options: GroupByTransformerOptions): boolean => {
+  const fieldName = getFieldDisplayName(field);
+  return (
+    options?.fields[fieldName]?.operation === GroupByOperationID.aggregate &&
+    Array.isArray(options?.fields[fieldName].aggregations) &&
+    options?.fields[fieldName].aggregations.length > 0
+  );
+};
+
+const detectFieldType = (aggregation: string, sourceField: Field, targetField: Field): FieldType => {
+  switch (aggregation) {
+    case ReducerID.allIsNull:
+      return FieldType.boolean;
+    case ReducerID.last:
+    case ReducerID.lastNotNull:
+    case ReducerID.first:
+    case ReducerID.firstNotNull:
+      return sourceField.type;
+    default:
+      return guessFieldTypeForField(targetField) ?? FieldType.string;
+  }
 };
