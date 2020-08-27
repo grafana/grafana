@@ -1,13 +1,14 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
   DataTransformerID,
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
   ReducerID,
+  SelectableValue,
 } from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
-import { Select, StatsPicker, IconButton } from '@grafana/ui';
+import { Select, StatsPicker } from '@grafana/ui';
 
 import {
   GroupByTransformerOptions,
@@ -15,71 +16,10 @@ import {
   GroupByFieldOptions,
 } from '@grafana/data/src/transformations/transformers/groupBy';
 
-function FieldCalculationsSelector(props: any) {
-  const { onDelete, onConfigChange, config, fieldName, existsInData } = props;
-
-  let aggregationsSelector = null;
-
-  if (config.operation === GroupByOperationID.aggregate) {
-    aggregationsSelector = (
-      <div className="gf-form gf-form-spacing gf-form--grow">
-        <StatsPicker
-          className="flex-grow-1"
-          placeholder="Select Stats"
-          allowMultiple
-          stats={config.aggregations}
-          onChange={stats => {
-            onConfigChange({ ...config, aggregations: stats as ReducerID[] });
-          }}
-          menuPlacement="bottom"
-        />
-      </div>
-    );
-  }
-
-  let removeButton = null;
-  if (!existsInData) {
-    removeButton = (
-      <div className="gf-form">
-        <div className="gf-form-label">
-          <IconButton name="times" size="sm" onClick={onDelete} surface="header" style={{ margin: 0 }} />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="gf-form-inline">
-      <div className="gf-form gf-form-spacing">
-        <div className="gf-form-label width-16">{fieldName}</div>
-      </div>
-
-      <div className="gf-form gf-form-spacing">
-        <Select
-          className="width-12"
-          options={[
-            { label: 'Group By', value: GroupByOperationID.groupBy },
-            { label: 'Calculate', value: GroupByOperationID.aggregate },
-          ]}
-          value={config.operation}
-          placeholder="Ignored"
-          onChange={value => {
-            if (value === null) {
-              onConfigChange({ ...config, operation: null });
-            } else {
-              onConfigChange({ ...config, operation: value.value });
-            }
-          }}
-          isClearable
-          menuPlacement="bottom"
-        />
-      </div>
-
-      {aggregationsSelector}
-
-      {removeButton}
-    </div>
-  );
+interface FieldProps {
+  fieldName: string;
+  config?: GroupByFieldOptions;
+  onConfigChange: (config: GroupByFieldOptions) => void;
 }
 
 export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransformerOptions>> = ({
@@ -89,65 +29,81 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
 }) => {
   const fieldNames = useMemo(() => getAllFieldNamesFromDataFrames(input), [input]);
 
-  let fields = { ...options.fields }; // Current configuration
-  // fields = fields.filter((val) => fieldNames.include()) // Remove the fields that are not present anymore
-
-  for (let n of fieldNames) {
-    if (!(n in fields)) {
-      // If there is a new field in the data, we add it to the configuration
-      fields[n] = {
-        aggregations: [],
-        operation: null,
-      };
-    }
-  }
-
-  const onDeleteFieldCalculations = (fieldName: string) => () => {
-    delete fields[fieldName];
-    onChange({
-      ...options,
-      fields: {
-        ...fields,
-      },
-    });
-  };
-
-  const onConfigChange = (fieldName: string) => (config: GroupByFieldOptions) => {
-    onChange({
-      ...options,
-      fields: {
-        ...options.fields,
-        [fieldName]: config,
-      },
-    });
-  };
+  const onConfigChange = useCallback(
+    (fieldName: string) => (config: GroupByFieldOptions) => {
+      onChange({
+        ...options,
+        fields: {
+          ...options.fields,
+          [fieldName]: config,
+        },
+      });
+    },
+    [options]
+  );
 
   return (
     <div>
-      <div className="gf-form-inline">
-        <div className="gf-form gf-form-spacing">
-          <div className="gf-form-label width-16">Field Name</div>
-        </div>
-        <div className="gf-form gf-form-spacing">
-          <div className="gf-form-label width-12">Operation</div>
-        </div>
-        <div className="gf-form gf-form-spacing gf-form--grow">
-          <div className="gf-form-label flex-grow-1">Calculations</div>
-        </div>
+      {fieldNames.map((key: string) => (
+        <GroupByFieldConfiguration
+          onConfigChange={onConfigChange(key)}
+          fieldName={key}
+          config={options.fields[key]}
+          key={key}
+        />
+      ))}
+    </div>
+  );
+};
+
+const options = [
+  { label: 'Group By', value: GroupByOperationID.groupBy },
+  { label: 'Calculate', value: GroupByOperationID.aggregate },
+];
+
+export const GroupByFieldConfiguration: React.FC<FieldProps> = ({ fieldName, config, onConfigChange }) => {
+  const onChange = useCallback(
+    (value: SelectableValue<GroupByOperationID | null>) => {
+      onConfigChange({
+        aggregations: config?.aggregations ?? [],
+        operation: value?.value ?? null,
+      });
+    },
+    [config, onConfigChange]
+  );
+
+  return (
+    <div className="gf-form-inline">
+      <div className="gf-form">
+        <div className="gf-form-label width-30">{fieldName}</div>
       </div>
 
-      {Object.keys(fields)
-        .sort()
-        .map((key: string) => (
-          <FieldCalculationsSelector
-            onConfigChange={onConfigChange(key)}
-            onDelete={onDeleteFieldCalculations(key)}
-            existsInData={fieldNames.includes(key)}
-            fieldName={key}
-            config={fields[key]}
-            key={key}
+      <div className="gf-form gf-form-spacing">
+        <Select
+          className="width-12"
+          options={options}
+          value={config?.operation}
+          placeholder="Ignored"
+          onChange={onChange}
+          isClearable
+          menuPlacement="bottom"
+        />
+      </div>
+
+      {config?.operation === GroupByOperationID.aggregate && (
+        <div className="gf-form gf-form-spacing gf-form--grow">
+          <StatsPicker
+            className="flex-grow-1"
+            placeholder="Select Stats"
+            allowMultiple
+            stats={config.aggregations}
+            onChange={stats => {
+              onConfigChange({ ...config, aggregations: stats as ReducerID[] });
+            }}
+            menuPlacement="bottom"
           />
-        ))}
+        </div>
+      )}
     </div>
   );
 };
