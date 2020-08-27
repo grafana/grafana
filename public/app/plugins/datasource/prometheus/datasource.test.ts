@@ -1778,12 +1778,13 @@ describe('prepareTargets', () => {
   });
 
   describe('when run from Explore', () => {
-    describe('when query type All is selected', () => {
+    describe('when query type Both is selected', () => {
       it('then it should return both instant and time series related objects', () => {
         const target: PromQuery = {
           refId: 'A',
           expr: 'up',
-          runAll: true,
+          range: true,
+          instant: true,
         };
 
         const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
@@ -1840,6 +1841,7 @@ describe('prepareTargets', () => {
           refId: 'A',
           expr: 'up',
           instant: true,
+          range: false,
         };
 
         const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
@@ -1870,6 +1872,8 @@ describe('prepareTargets', () => {
       const target: PromQuery = {
         refId: 'A',
         expr: 'up',
+        range: true,
+        instant: false,
       };
 
       const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
@@ -1884,7 +1888,7 @@ describe('prepareTargets', () => {
           'X-Panel-Id': panelId,
         },
         hinting: undefined,
-        instant: undefined,
+        instant: false,
         refId: target.refId,
         requestId: panelId + target.refId,
         start,

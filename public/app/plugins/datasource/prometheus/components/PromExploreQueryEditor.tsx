@@ -32,11 +32,11 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
     const { query, onChange } = props;
     let nextQuery;
     if (value === 'instant') {
-      nextQuery = { ...query, instant: true, runAll: false };
+      nextQuery = { ...query, instant: true, range: false };
     } else if (value === 'range') {
-      nextQuery = { ...query, instant: false, runAll: false };
+      nextQuery = { ...query, instant: false, range: true };
     } else {
-      nextQuery = { ...query, instant: true, runAll: true };
+      nextQuery = { ...query, instant: true, range: true };
     }
     onChange(nextQuery);
   }
@@ -71,7 +71,7 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
         }
       />
       <PromExploreRadioButton
-        selected={query.runAll ? 'all' : query.instant ? 'instant' : 'range'}
+        selected={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
         onQueryTypeChange={onQueryTypeChange}
       />
     </>
@@ -90,7 +90,7 @@ const PromExploreRadioButton: React.FunctionComponent<PromExploreRadioButtonProp
   const rangeOptions = [
     { value: 'range', label: 'Range' },
     { value: 'instant', label: 'Instant' },
-    { value: 'all', label: 'All' },
+    { value: 'both', label: 'Both' },
   ];
 
   return (
