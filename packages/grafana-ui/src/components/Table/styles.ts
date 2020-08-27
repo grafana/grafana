@@ -57,29 +57,27 @@ export const getTableStyles = stylesFactory(
       `,
       headerCell: css`
         padding: ${padding}px;
-        cursor: pointer;
         overflow: hidden;
         white-space: nowrap;
         color: ${colors.textBlue};
         border-right: 1px solid ${theme.colors.panelBg};
         display: flex;
-        justify-content: space-between;
 
         &:last-child {
           border-right: none;
         }
       `,
       headerCellLabel: css`
+        cursor: pointer;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         display: flex;
-        justify-content: space-between;
-        flex-grow: 2;
+        margin-right: ${theme.spacing.xs};
       `,
       headerFilter: css`
         label: headerFilter;
-        flex-grow: 0;
+        cursor: pointer;
       `,
       row: css`
         label: row;

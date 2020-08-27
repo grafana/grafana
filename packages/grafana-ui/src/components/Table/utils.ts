@@ -1,4 +1,4 @@
-import { TextAlignProperty } from 'csstype';
+import { ContentPosition, TextAlignProperty } from 'csstype';
 import { DataFrame, Field, FieldType, getFieldDisplayName, SelectableValue } from '@grafana/data';
 import { Column, Row } from 'react-table';
 import { DefaultCell } from './DefaultCell';
@@ -175,4 +175,18 @@ export function filterByValue(rows: Row[], id: string, filterValues?: Selectable
     const value = row.values[id];
     return filterValues.find(filter => filter.value === value) !== undefined;
   });
+}
+
+export function getHeaderAlign(field?: Field): ContentPosition {
+  const align = getTextAlign(field);
+
+  if (align === 'right') {
+    return 'flex-end';
+  }
+
+  if (align === 'center') {
+    return align;
+  }
+
+  return 'flex-start';
 }

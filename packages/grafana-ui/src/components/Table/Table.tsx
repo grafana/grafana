@@ -14,7 +14,7 @@ import {
   useTable,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import { getColumns, getTextAlign } from './utils';
+import { getColumns, getHeaderAlign } from './utils';
 import { useTheme } from '../../themes';
 import {
   TableColumnResizeActionCallback,
@@ -227,7 +227,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) 
   }
 
   headerProps.style.position = 'absolute';
-  headerProps.style.textAlign = getTextAlign(field);
+  headerProps.style.justifyContent = getHeaderAlign(field);
 
   return (
     <div className={tableStyles.headerCell} {...headerProps}>

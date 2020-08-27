@@ -28,7 +28,7 @@ export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
   }
 
   return (
-    <div
+    <span
       className={cx(tableStyles.headerFilter, filterEnabled ? styles.filterIconEnabled : styles.filterIconDisabled)}
       ref={ref}
       onClick={onShowPopover}
@@ -42,7 +42,7 @@ export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
           show
         />
       )}
-    </div>
+    </span>
   );
 };
 
