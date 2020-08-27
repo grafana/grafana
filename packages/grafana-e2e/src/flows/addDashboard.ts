@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import { DashboardTimeRangeConfig, setDashboardTimeRange } from './setDashboardTimeRange';
 import { DeleteDashboardConfig } from './deleteDashboard';
 import { e2e } from '../index';
@@ -31,7 +32,7 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>): any => {
       to: '2020-01-01 06:00:00',
     },
     timezone: 'Coordinated Universal Time',
-    title: `e2e-${Date.now()}`,
+    title: `e2e-${uuidv4()}`,
     variables: [],
     ...config,
   } as AddDashboardConfig;

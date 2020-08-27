@@ -1,6 +1,7 @@
 import { from, merge, MonoTypeOperatorFunction, Observable, Subject, Subscription, throwError } from 'rxjs';
 import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
+import { v4 as uuidv4 } from 'uuid';
 import { BackendSrv as BackendService, BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 
@@ -66,8 +67,7 @@ export class BackendSrv implements BackendService {
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
     return new Observable(observer => {
       // We need to match an entry added to the queue stream with the entry that is eventually added to the response stream
-      // using Date.now() as the unique identifier
-      const id = Date.now().toString(10);
+      const id = uuidv4();
 
       // Subscription is an object that is returned whenever you subscribe to an Observable.
       // You can also use it as a container of many subscriptions and when it is unsubscribed all subscriptions within are also unsubscribed.

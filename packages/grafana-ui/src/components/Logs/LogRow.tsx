@@ -183,7 +183,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             </td>
           )}
           {showParsedFields && showParsedFields.length > 0 ? (
-            <LogRowMessageParsed row={row} showParsedFields={showParsedFields!} />
+            <LogRowMessageParsed row={row} showParsedFields={showParsedFields!} getFieldLinks={getFieldLinks} />
           ) : (
             <LogRowMessage
               highlighterExpressions={highlighterExpressions}

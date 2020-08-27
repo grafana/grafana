@@ -1,9 +1,9 @@
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
+import { DataFrame, Field } from '../../types/dataFrame';
 import { omit } from 'lodash';
 import { ArrayVector } from '../../vector/ArrayVector';
-import { MutableDataFrame, sortDataFrame } from '../../dataframe';
+import { MutableDataFrame } from '../../dataframe';
 
 type MergeDetailsKeyFactory = (existing: Record<string, any>, value: Record<string, any>) => string;
 
@@ -68,10 +68,10 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
         }
       }
 
-      const timeIndex = dataFrame.fields.findIndex(field => field.type === FieldType.time);
-      if (typeof timeIndex === 'number') {
-        return [sortDataFrame(dataFrame, timeIndex, true)];
-      }
+      // const timeIndex = dataFrame.fields.findIndex(field => field.type === FieldType.time);
+      // if (typeof timeIndex === 'number') {
+      //   return [sortDataFrame(dataFrame, timeIndex, true)];
+      // }
       return [dataFrame];
     };
   },

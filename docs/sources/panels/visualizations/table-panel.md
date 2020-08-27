@@ -26,3 +26,10 @@ Table visualizations allow you to apply:
 ## Display options
 
 - **Show header -** Show or hide column names imported from your data source..
+
+## Tips
+
+### Display original string value
+
+Grafana can sometime be too aggressive in parsing strings and displaying them as numbers. To make Grafana show the original
+string create a field override and add a unit property with the `string` unit.
