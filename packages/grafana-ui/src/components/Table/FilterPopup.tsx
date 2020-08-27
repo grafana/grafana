@@ -4,7 +4,8 @@ import { css, cx } from 'emotion';
 
 import { TableStyles } from './styles';
 import { stylesFactory, useTheme } from '../../themes';
-import { Button, ClickOutsideWrapper, HorizontalGroup, Label, MultiSelect, VerticalGroup } from '..';
+import { Button, ClickOutsideWrapper, HorizontalGroup, Label, VerticalGroup } from '..';
+import { FilterList } from './FilterList';
 
 interface Props {
   column: any;
@@ -55,7 +56,8 @@ export const FilterPopup: FC<Props> = ({ column, noOfColumnFilters, onClose, fie
         <VerticalGroup spacing="lg">
           <VerticalGroup spacing="xs">
             <Label>Filter by values:</Label>
-            <MultiSelect onChange={setValues} value={values} options={options} />
+            <div className={cx(styles.listDivider)} />
+            <FilterList onChange={setValues} values={values} options={options} />
           </VerticalGroup>
           <HorizontalGroup spacing="lg">
             <HorizontalGroup>
@@ -84,14 +86,21 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   filterContainer: css`
     label: filterContainer;
     width: 100%;
-    min-width: 200px;
-    height: 140px;
+    min-width: 250px;
+    height: 100%;
+    max-height: 400px;
     background-color: ${theme.colors.bg1};
     border: ${theme.border.width.sm} solid ${theme.colors.border2};
     padding: ${theme.spacing.md};
-    margin: ${theme.spacing.sm} 0px;
+    margin: ${theme.spacing.sm} 0;
     box-shadow: 0px 0px 20px ${theme.colors.dropdownShadow};
     border-radius: ${theme.spacing.xs};
+  `,
+  listDivider: css`
+    label: listDivider;
+    width: 100%;
+    border-top: ${theme.border.width.sm} solid ${theme.colors.border2};
+    padding: ${theme.spacing.xs} ${theme.spacing.md};
   `,
 }));
 
