@@ -46,13 +46,14 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
   return (value: any) => {
     const { mappings } = config;
+    const isStringUnit = unit === 'string';
 
     if (hasDateUnit && typeof value === 'string') {
       value = dateTime(value).valueOf();
     }
 
     let text = _.toString(value);
-    let numeric = toNumber(value);
+    let numeric = isStringUnit ? NaN : toNumber(value);
     let prefix: string | undefined = undefined;
     let suffix: string | undefined = undefined;
     let shouldFormat = true;
@@ -62,7 +63,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
       if (mappedValue) {
         text = mappedValue.text;
-        const v = toNumber(text);
+        const v = isStringUnit ? NaN : toNumber(text);
 
         if (!isNaN(v)) {
           numeric = v;

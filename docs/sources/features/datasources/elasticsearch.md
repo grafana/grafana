@@ -98,7 +98,7 @@ Data links create a link from a specified field that can be accessed in logs vie
 Each data link configuration consists of: 
 - **Field -** Name of the field used by the data link.
 - **URL/query -** If the link is external, then enter the full link URL. If the link is internal link, then this input serves as query for the target data source. In both cases, you can interpolate the value from the field with `${__value.raw }` macro.
-- **Internal link -** Select if the link is internal or external. In case of internal link, a data source selectorallows you to select the target data source. Only tracing data sources are supported.
+- **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.
 
 ## Metric Query editor
 

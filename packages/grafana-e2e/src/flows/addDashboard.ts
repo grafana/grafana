@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import { DashboardTimeRangeConfig, setDashboardTimeRange } from './setDashboardTimeRange';
 import { DeleteDashboardConfig } from './deleteDashboard';
 import { e2e } from '../index';
@@ -8,7 +9,7 @@ export interface AddDashboardConfig {
   timeRange: DashboardTimeRangeConfig;
   timezone: string;
   title: string;
-  variables: Partial<AddVariableConfig>[];
+  variables: Array<Partial<AddVariableConfig>>;
 }
 
 export interface AddVariableConfig {
@@ -31,7 +32,7 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>): any => {
       to: '2020-01-01 06:00:00',
     },
     timezone: 'Coordinated Universal Time',
-    title: `e2e-${Date.now()}`,
+    title: `e2e-${uuidv4()}`,
     variables: [],
     ...config,
   } as AddDashboardConfig;
@@ -145,7 +146,7 @@ const addVariable = (config: Partial<AddVariableConfig>, isFirst: boolean): any 
   return fullConfig;
 };
 
-const addVariables = (configs: Partial<AddVariableConfig>[]): any => {
+const addVariables = (configs: Array<Partial<AddVariableConfig>>): any => {
   if (configs.length > 0) {
     e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
   }
