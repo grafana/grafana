@@ -13,6 +13,32 @@ describe('GroupBy transformer', () => {
     mockTransformationsRegistry([groupByTransformer]);
   });
 
+  it('should not apply transformation if config is missing group by fields', () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000, 7000, 8000] },
+        { name: 'message', type: FieldType.string, values: ['one', 'two', 'two', 'three', 'three', 'three'] },
+        { name: 'values', type: FieldType.string, values: [1, 2, 2, 3, 3, 3] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
+      id: DataTransformerID.groupBy,
+      options: {
+        fields: {
+          message: {
+            operation: GroupByOperationID.aggregate,
+            aggregations: [ReducerID.count],
+          },
+        },
+      },
+    };
+
+    const result = transformDataFrame([cfg], [testSeries]);
+    expect(result[0].fields).toEqual(testSeries);
+  });
+
   it('should group values by message', () => {
     const testSeries = toDataFrame({
       name: 'A',

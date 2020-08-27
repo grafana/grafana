@@ -34,14 +34,15 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
    * be applied, just return the input series
    */
   transformer: (options: GroupByTransformerOptions) => {
-    const calculationsByField = Object.keys(options.fields)
-      .map(f => ({
-        fieldName: f,
-        ...options.fields[f],
-      }))
-      .filter(val => val.operation === GroupByOperationID.aggregate);
+    const hasValidConfig = Object.keys(options.fields).find(
+      name => options.fields[name].operation === GroupByOperationID.groupBy
+    );
 
     return (data: DataFrame[]) => {
+      if (!hasValidConfig) {
+        return data;
+      }
+
       const processed: DataFrame[] = [];
 
       for (const frame of data) {
@@ -60,7 +61,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
         // Group the values by fields and groups so we can get all values for a
         // group for a given field.
         const valuesByGroupKey: Record<string, Record<string, MutableField>> = {};
-        for (const rowIndex = 0; rowIndex < frame.length; rowIndex++) {
+        for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
           const groupKey = String(groupByFields.map(field => field.values.get(rowIndex)));
           const valuesByField = valuesByGroupKey[groupKey] ?? {};
 
