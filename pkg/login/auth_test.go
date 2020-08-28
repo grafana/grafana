@@ -27,6 +27,7 @@ func TestAuthenticateUser(t *testing.T) {
 				So(sc.grafanaLoginWasCalled, ShouldBeFalse)
 				So(sc.ldapLoginWasCalled, ShouldBeFalse)
 				So(err, ShouldEqual, ErrPasswordEmpty)
+				So(sc.loginUserQuery.AuthModule, ShouldEqual, "")
 			})
 		})
 
@@ -44,6 +45,7 @@ func TestAuthenticateUser(t *testing.T) {
 				So(sc.grafanaLoginWasCalled, ShouldBeFalse)
 				So(sc.ldapLoginWasCalled, ShouldBeFalse)
 				So(sc.saveInvalidLoginAttemptWasCalled, ShouldBeFalse)
+				So(sc.loginUserQuery.AuthModule, ShouldEqual, "")
 			})
 		})
 
@@ -61,6 +63,7 @@ func TestAuthenticateUser(t *testing.T) {
 				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
 				So(sc.ldapLoginWasCalled, ShouldBeFalse)
 				So(sc.saveInvalidLoginAttemptWasCalled, ShouldBeFalse)
+				So(sc.loginUserQuery.AuthModule, ShouldEqual, "grafana")
 			})
 		})
 
@@ -79,6 +82,7 @@ func TestAuthenticateUser(t *testing.T) {
 				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
 				So(sc.ldapLoginWasCalled, ShouldBeFalse)
 				So(sc.saveInvalidLoginAttemptWasCalled, ShouldBeFalse)
+				So(sc.loginUserQuery.AuthModule, ShouldEqual, "grafana")
 			})
 		})
 
@@ -96,6 +100,7 @@ func TestAuthenticateUser(t *testing.T) {
 				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
 				So(sc.ldapLoginWasCalled, ShouldBeTrue)
 				So(sc.saveInvalidLoginAttemptWasCalled, ShouldBeFalse)
+				So(sc.loginUserQuery.AuthModule, ShouldEqual, "")
 			})
 		})
 
@@ -113,6 +118,7 @@ func TestAuthenticateUser(t *testing.T) {
 				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
 				So(sc.ldapLoginWasCalled, ShouldBeTrue)
 				So(sc.saveInvalidLoginAttemptWasCalled, ShouldBeTrue)
+				So(sc.loginUserQuery.AuthModule, ShouldEqual, "ldap")
 			})
 		})
 
@@ -130,6 +136,7 @@ func TestAuthenticateUser(t *testing.T) {
 				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
 				So(sc.ldapLoginWasCalled, ShouldBeTrue)
 				So(sc.saveInvalidLoginAttemptWasCalled, ShouldBeFalse)
+				So(sc.loginUserQuery.AuthModule, ShouldEqual, "ldap")
 			})
 		})
 
@@ -148,6 +155,7 @@ func TestAuthenticateUser(t *testing.T) {
 				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
 				So(sc.ldapLoginWasCalled, ShouldBeTrue)
 				So(sc.saveInvalidLoginAttemptWasCalled, ShouldBeFalse)
+				So(sc.loginUserQuery.AuthModule, ShouldEqual, "ldap")
 			})
 		})
 
