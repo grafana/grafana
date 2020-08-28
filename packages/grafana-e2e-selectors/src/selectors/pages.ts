@@ -125,7 +125,9 @@ export const Pages = {
     url: '/explore',
     General: {
       container: 'Explore',
+      graph: 'Explore Graph',
       runButton: 'Run button',
+      table: 'Explore Table',
     },
     Toolbar: {
       navBar: '.explore-toolbar',

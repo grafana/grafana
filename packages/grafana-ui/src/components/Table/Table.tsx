@@ -28,6 +28,7 @@ import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 const COLUMN_MIN_WIDTH = 150;
 
 export interface Props {
+  ariaLabel?: string;
   data: DataFrame;
   width: number;
   height: number;
@@ -111,6 +112,7 @@ function getInitialState(props: Props, columns: Column[]): Partial<ReactTableInt
 
 export const Table: FC<Props> = memo((props: Props) => {
   const {
+    ariaLabel,
     data,
     height,
     onCellFilterAdded,
@@ -182,7 +184,7 @@ export const Table: FC<Props> = memo((props: Props) => {
   const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
 
   return (
-    <div {...getTableProps()} className={tableStyles.table}>
+    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel}>
       <CustomScrollbar hideVerticalTrack={true}>
         <div style={{ width: `${totalColumnsWidth}px` }}>
           {!noHeader && (
