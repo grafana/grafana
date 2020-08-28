@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
 import { Select, Button, Input } from '@grafana/ui';
-
+import cloneDeep from 'lodash/cloneDeep';
 import {
   FilterByValueTransformerOptions,
   ValueFilter,
@@ -156,7 +156,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
 
   const onDeleteFilter = useCallback(
     (index: number) => () => {
-      let valueFilters = options.valueFilters.map(filter => ({ ...filter })); // Deep copy
+      let valueFilters = cloneDeep(options.valueFilters);
       valueFilters.splice(index, 1);
       onChange({
         ...options,
@@ -168,7 +168,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
 
   const onConfigChange = useCallback(
     (index: number) => (config: ValueFilter) => {
-      let valueFilters = options.valueFilters.map(filter => ({ ...filter })); // Deep copy
+      let valueFilters = cloneDeep(options.valueFilters);
       valueFilters[index] = config;
       onChange({
         ...options,
