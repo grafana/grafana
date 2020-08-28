@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import 'uplot/dist/uPlot.min.css';
 
 import {
   DataFrame,
@@ -11,15 +12,17 @@ import {
   TimeZone,
   RawTimeRange,
   rangeUtil,
+  transformDataFrame,
 } from '@grafana/data';
 
 import uPlot from 'uplot';
 import { colors } from '../../utils';
 import { Themeable } from '../../types';
 import { GraphCustomFieldConfig } from './types';
+import { renderPlugin } from './renderPlugin';
 
 interface Props extends Themeable {
-  data: DataFrame; // assume applyFieldOverrides has been set
+  data: DataFrame[]; // assume applyFieldOverrides has been set
   width: number;
   height: number;
 
@@ -44,7 +47,11 @@ export class MicroPlot extends PureComponent<Props, State> {
   // Refresh updates
   renderInterval = -1;
   renderTimeout: any = false;
+  canvasRef = React.createRef();
 
+  constructor(props: Props) {
+    super(props);
+  }
   componentDidMount() {
     this.updateRenderInterval();
   }
@@ -55,32 +62,49 @@ export class MicroPlot extends PureComponent<Props, State> {
       return;
     }
     const rtChanged = this.props.realTimeUpdates !== oldProps.realTimeUpdates;
+
     const update: NeedsUpdate = {
       timeRange: rtChanged || this.props.timeRange !== oldProps.timeRange,
       data: this.props.data !== oldProps.data,
     };
+
     if (update.timeRange) {
       this.updateRenderInterval();
     }
 
     let hasRedrawn = false;
+
     if (update.data) {
       // TODO: chcek if structure changed
-      const { uData } = getUPlotStuff(this.props, [0, 1]);
-      this.plot.setData(uData);
-      hasRedrawn = true;
+
+      console.log('UPDATE', uData, scales, axes);
+      this.plot.setData(uData, false);
+
+      // this.
+      // // this.plot.setScales(scales);
+      // // this.plot.
     }
 
     if (width !== oldProps.width || height !== oldProps.height) {
       this.updateRenderInterval();
       this.plot.setSize({ width, height });
-      hasRedrawn = true;
     }
 
     // Force an update
     if (rtChanged && !hasRedrawn) {
       this.renderSoon();
     }
+  }
+
+  plotRedraw() {
+    if (this.plot) {
+      this.plot.destroy();
+    }
+    const { series, uData, scales, axes } = getUPlotStuff(this.props, [0, 1]);
+    const opts = this.prepareOptions(series, scales, axes);
+
+    console.log(udata, opts);
+    this.plot = new uPlot(opts, uData, this.canvasRef);
   }
 
   /**
@@ -112,11 +136,8 @@ export class MicroPlot extends PureComponent<Props, State> {
     return rangeToMinMax(this.props.timeRange.raw);
   };
 
-  init = (element: any) => {
+  prepareOptions = (series: uPlot.Series[], scales: KeyValue<uPlot.Scale>, axes: uPlot.Axis[]) => {
     const { width, height } = this.props;
-    //  const tz = getTimeZoneInfo(timeZone || InternalTimeZones.localBrowserTime, Date.now());
-
-    const { series, uData, scales, axes } = getUPlotStuff(this.props, this.getTimeRange);
 
     const opts: uPlot.Options = {
       width,
@@ -171,22 +192,40 @@ export class MicroPlot extends PureComponent<Props, State> {
           u => {
             const { left, top, idx } = u.cursor;
             if (idx) {
-              // const x = u.data[0][idx];
-              // const y = u.data[1][idx];
+              // console.log(u);
+              const x = u.data[0][idx];
+              const y = u.data[1][idx];
               console.log('CURSOR', { left, top, idx });
             }
           },
         ],
+
+        setSeries: [
+          () => {
+            debugger;
+          },
+        ],
       },
-      // plugins: [
-      //   // List the plugins
-      //   renderPlugin({ spikes: 6 }),
-      // ],
+      plugins: [
+        // List the plugins
+        // renderPlugin({ spikes: 6 }),
+      ],
     };
+
+    return opts;
+  };
+
+  init = (element: any) => {
+    this.canvasRef = element;
+
+    //  const tz = getTimeZoneInfo(timeZone || InternalTimeZones.localBrowserTime, Date.now());
+    const { series, uData, scales, axes } = getUPlotStuff(this.props, this.getTimeRange);
+    const opts = this.prepareOptions(series, scales, axes, uData);
 
     // Should only happen once!
     console.log('INIT Plot', series, scales, uData);
-    this.plot = new uPlot(opts, uData, element);
+
+    this.plot = new uPlot(opts, uData, this.canvasRef);
 
     if (this.updateRenderInterval()) {
       this.renderSoon();
@@ -223,9 +262,28 @@ function rangeToMinMax(timeRange: RawTimeRange) {
 
 export function getUPlotStuff(props: Props, range: any) {
   const { data, theme } = props;
-
   const series: uPlot.Series[] = [];
   const uData: any[] = [];
+
+  const dataFramesToPlot = data.filter(f => {
+    let { timeIndex } = getTimeField(f);
+    // filter out series without time index or if the time column is the only one (i.e. after transformations)
+    // won't live long as we gona move out from assuming x === time
+    return timeIndex !== undefined ? f.fields.length > 1 : false;
+  });
+
+  // uPlot data needs to be aligned on x-axis (ref. https://github.com/leeoniya/uPlot/issues/108)
+  // For experimentation just assuming alignment on time field, needs to change
+  const mergedDF = transformDataFrame(
+    [
+      {
+        id: 'seriesToColumns',
+        options: { byField: 'Time' },
+      },
+    ],
+    dataFramesToPlot
+  )[0];
+
   const scales: KeyValue<uPlot.Scale> = {
     x: {
       time: true,
@@ -233,15 +291,19 @@ export function getUPlotStuff(props: Props, range: any) {
     },
   };
 
-  let { timeIndex } = getTimeField(data);
+  let { timeIndex } = getTimeField(mergedDF);
+
   if (isNaN(timeIndex!)) {
     timeIndex = 0; // not really time, but just a value
     scales.x.time = false;
   }
-  let xvals = data.fields[timeIndex!].values.toArray();
+
+  let xvals = mergedDF.fields[timeIndex!].values.toArray();
+
   if (scales.x.time) {
     xvals = xvals.map(v => v / 1000); // Convert to second precision timestamp
   }
+
   uData.push(xvals); // make all numbers floating point
   series.push({});
 
@@ -259,11 +321,11 @@ export function getUPlotStuff(props: Props, range: any) {
   ];
 
   let sidx = 0;
-  for (let i = 0; i < data.fields.length; i++) {
+  for (let i = 0; i < mergedDF.fields.length; i++) {
     if (i === timeIndex) {
       continue; // already handled time
     }
-    const field = data.fields[i];
+    const field = mergedDF.fields[i];
     if (field.type !== FieldType.number) {
       continue; // only numbers for now...
     }
@@ -275,6 +337,7 @@ export function getUPlotStuff(props: Props, range: any) {
     };
 
     const sid = field.config.unit || '__fixed';
+
     if (!scales[sid]) {
       const isRight = axes.length > 1;
 
@@ -299,7 +362,7 @@ export function getUPlotStuff(props: Props, range: any) {
     let color = colors[sidx++];
 
     series.push({
-      label: getFieldDisplayName(field, data),
+      label: getFieldDisplayName(field, mergedDF),
       stroke: color, // The line color
 
       scale: sid, // lookup to the scale

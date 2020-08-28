@@ -33,7 +33,7 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
       realTimeUpdates={options.graph.realTimeUpdates}
       width={width}
       height={height}
-      data={data.series[0]}
+      data={data.series}
       theme={config.theme}
     />
   );
