@@ -58,7 +58,7 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
 };
 
 const options = [
-  { label: 'Group By', value: GroupByOperationID.groupBy },
+  { label: 'Group by', value: GroupByOperationID.groupBy },
   { label: 'Calculate', value: GroupByOperationID.aggregate },
 ];
 
