@@ -7,6 +7,8 @@ import {
   getFieldDisplayName,
   Field,
   DataFrame,
+  SelectableValue,
+  FieldType,
 } from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
 import { Select, Button, Input } from '@grafana/ui';
@@ -29,10 +31,8 @@ interface RowProps {
 const FilterSelectorRow: React.FC<RowProps> = props => {
   const { fieldNameOptions, onDelete, onConfigChange, config, fieldType } = props;
 
-  console.log('props', props);
-
   // Find filter types that fit the chosen field type
-const filterTypeOptions = useMemo(() => {
+  const filterTypeOptions = useMemo(() => {
     return valueFiltersRegistry
       .list()
       .filter(element => {
@@ -48,33 +48,16 @@ const filterTypeOptions = useMemo(() => {
       }));
   }, [fieldType]);
 
-  let filterInfo = valueFiltersRegistry.get(config.filterType);
-  let filterValid = filterInfo.getInstance({
+  const filterInfo = valueFiltersRegistry.get(config.filterType);
+  const filterValid = filterInfo.getInstance({
     filterExpression: config.filterExpression,
     fieldType: fieldType,
   }).isValid;
 
-const fieldNameInvalid = config.fieldName === null || !fieldNameOptions.find(item => item.value === config.fieldName);
-  let filterTypeInvalid =
+  const fieldNameInvalid = config.fieldName === null || !fieldNameOptions.find(item => item.value === config.fieldName);
+  const filterTypeInvalid =
     !fieldNameInvalid && filterInfo.supportedFieldTypes && !filterInfo.supportedFieldTypes.includes(fieldType);
   const filterExpressionInvalid = !fieldNameInvalid && !filterTypeInvalid && !filterValid;
-
-  let filterOptionsInput = null;
-  if (filterInfo.placeholder) {
-    filterOptionsInput = (
-      <>
-        <Input
-          className="flex-grow-1"
-          invalid={filterExpressionInvalid}
-          defaultValue={config.filterExpression}
-          placeholder={filterInfo.placeholder}
-          onBlur={event => {
-            onConfigChange({ ...config, filterExpression: event.currentTarget.value });
-          }}
-        />
-      </>
-    );
-  }
 
   return (
     <div className="gf-form-inline">
@@ -89,7 +72,7 @@ const fieldNameInvalid = config.fieldName === null || !fieldNameOptions.find(ite
           value={config.type}
           onChange={option => {
             // console.log('onChange filterType', option.value);
-            onConfigChange({ ...config, type: option.value });
+            onConfigChange({ ...config, type: option.value || 'include' });
           }}
           menuPlacement="bottom"
         />
@@ -103,10 +86,10 @@ const fieldNameInvalid = config.fieldName === null || !fieldNameOptions.find(ite
           value={config.fieldName}
           invalid={fieldNameInvalid}
           onChange={value => {
-           onConfigChange({
+            onConfigChange({
               ...config,
               fieldName: value?.value ?? null,
-            })
+            });
           }}
           isClearable
           menuPlacement="bottom"
@@ -121,8 +104,7 @@ const fieldNameInvalid = config.fieldName === null || !fieldNameOptions.find(ite
           options={filterTypeOptions}
           value={config.filterType}
           onChange={value => {
-            // console.log('onChange test', value);
-            onConfigChange({ ...config, filterType: value.value });
+            onConfigChange({ ...config, filterType: (value.value as ValueFilterID) ?? ValueFilterID.regex });
           }}
           menuPlacement="bottom"
         />
@@ -132,7 +114,7 @@ const fieldNameInvalid = config.fieldName === null || !fieldNameOptions.find(ite
           <Input
             className="flex-grow-1"
             invalid={filterExpressionInvalid}
-            defaultValue={config.filterExpression}
+            defaultValue={config.filterExpression || undefined}
             placeholder={filterInfo.placeholder}
             onBlur={event => {
               onConfigChange({ ...config, filterExpression: event.currentTarget.value });
@@ -145,7 +127,7 @@ const fieldNameInvalid = config.fieldName === null || !fieldNameOptions.find(ite
       </div>
     </div>
   );
-}
+};
 
 export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterByValueTransformerOptions>> = ({
   input,
@@ -191,14 +173,14 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
   return (
     <div>
       {options.valueFilters.map((val, idx) => {
-        let matchingField = getFieldByName(val.fieldName, input);
+        const matchingField = getFieldByName(val.fieldName, input);
         return (
           <FilterSelectorRow
             onConfigChange={onConfigChange(idx)}
             onDelete={onDeleteFilter(idx)}
             fieldNameOptions={fieldNameOptions}
             config={val}
-            fieldType={matchingField ? matchingField.type : null}
+            fieldType={matchingField?.type || FieldType.other}
             key={idx}
           />
         );
