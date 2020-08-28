@@ -1,4 +1,11 @@
-import { AlertRule, AlertRuleDTO, AlertRulesState, NotificationChannelType, NotificationChannelDTO } from 'app/types';
+import {
+  AlertRule,
+  AlertRuleDTO,
+  AlertRulesState,
+  NotificationChannelOption,
+  NotificationChannelState,
+  NotifierDTO,
+} from 'app/types';
 import alertDef from './alertDef';
 import { dateTime } from '@grafana/data';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
@@ -7,6 +14,9 @@ export const initialState: AlertRulesState = {
   items: [],
   searchQuery: '',
   isLoading: false,
+};
+
+export const initialChannelState: NotificationChannelState = {
   notificationChannelTypes: [],
   notificationChannel: {},
 };
@@ -53,13 +63,26 @@ const alertRulesSlice = createSlice({
     setSearchQuery: (state, action: PayloadAction<string>): AlertRulesState => {
       return { ...state, searchQuery: action.payload };
     },
-    setNotificationChannels: (state, action: PayloadAction<NotificationChannelType[]>): AlertRulesState => {
+  },
+});
+
+const notificationChannelSlice = createSlice({
+  name: 'notificationChannel',
+  initialState: initialChannelState,
+  reducers: {
+    setNotificationChannels: (state, action: PayloadAction<NotifierDTO[]>): NotificationChannelState => {
       return { ...state, notificationChannelTypes: action.payload };
     },
-    notificationChannelLoaded: (state, action: PayloadAction<NotificationChannelDTO>): AlertRulesState => {
+    notificationChannelLoaded: (state, action: PayloadAction<any>): NotificationChannelState => {
+      const selectedType: NotifierDTO = state.notificationChannelTypes.filter(t => t.name === action.payload.type);
+      const secureFields = selectedType.options.filter((o: NotificationChannelOption) => o.secure);
+
+      if (secureFields.length > 0) {
+      }
+
       return { ...state, notificationChannel: action.payload };
     },
-    resetSecureField: (state, action: PayloadAction<string>): AlertRulesState => {
+    resetSecureField: (state, action: PayloadAction<string>): NotificationChannelState => {
       return {
         ...state,
         notificationChannel: {
@@ -71,17 +94,18 @@ const alertRulesSlice = createSlice({
   },
 });
 
+export const { loadAlertRules, loadedAlertRules, setSearchQuery } = alertRulesSlice.actions;
+
 export const {
-  loadAlertRules,
-  loadedAlertRules,
-  setSearchQuery,
   setNotificationChannels,
   notificationChannelLoaded,
   resetSecureField,
-} = alertRulesSlice.actions;
+} = notificationChannelSlice.actions;
 
 export const alertRulesReducer = alertRulesSlice.reducer;
+export const notificationChannelReducer = notificationChannelSlice.reducer;
 
 export default {
   alertRules: alertRulesReducer,
+  notificationChannel: notificationChannelReducer,
 };

@@ -116,8 +116,8 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = s
   return {
     navModel: getNavModel(state.navIndex, 'channels'),
     channelId: getRouteParamsId(state.location) as number,
-    notificationChannel: state.alertRules.notificationChannel,
-    notificationChannelTypes: state.alertRules.notificationChannelTypes,
+    notificationChannel: state.notificationChannel.notificationChannel,
+    notificationChannelTypes: state.notificationChannel.notificationChannelTypes,
   };
 };
 

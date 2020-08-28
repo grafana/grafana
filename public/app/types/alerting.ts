@@ -119,12 +119,15 @@ export interface NotificationChannelOption {
   validationRule: string;
 }
 
+export interface NotificationChannelState {
+  notificationChannelTypes: NotifierDTO[];
+  notificationChannel: any;
+}
+
 export interface AlertRulesState {
   items: AlertRule[];
   searchQuery: string;
   isLoading: boolean;
-  notificationChannelTypes: NotificationChannelType[];
-  notificationChannel: any;
 }
 
 export interface AlertNotification {

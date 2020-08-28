@@ -1,6 +1,15 @@
 import { dateTime } from '@grafana/data';
-import { alertRulesReducer, initialState, loadAlertRules, loadedAlertRules, setSearchQuery } from './reducers';
-import { AlertRuleDTO, AlertRulesState } from 'app/types';
+import {
+  alertRulesReducer,
+  initialChannelState,
+  initialState,
+  loadAlertRules,
+  loadedAlertRules,
+  notificationChannelReducer,
+  setSearchQuery,
+  notificationChannelLoaded,
+} from './reducers';
+import { AlertRuleDTO, AlertRulesState, NotificationChannelState } from 'app/types';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 
 describe('Alert rules', () => {
@@ -221,6 +230,67 @@ describe('Alert rules', () => {
               url: '/d/ggHbN42mk/alerting-with-testdata',
             },
           ],
+        });
+    });
+  });
+});
+
+describe('Notification channel', () => {
+  const payload = {
+    id: 2,
+    uid: '9L3FrrHGk',
+    name: 'Webhook test',
+    type: 'webhook',
+    isDefault: false,
+    sendReminder: false,
+    disableResolveMessage: false,
+    frequency: '',
+    created: '2020-08-28T08:49:24Z',
+    updated: '2020-08-28T08:49:24Z',
+    settings: {
+      autoResolve: true,
+      httpMethod: 'POST',
+      password: 'asdf',
+      severity: 'critical',
+      uploadImage: true,
+      url: 'http://localhost.webhook',
+      username: 'asdf',
+    },
+  };
+
+  const expected = {
+    id: 2,
+    uid: '9L3FrrHGk',
+    name: 'Webhook test',
+    type: 'webhook',
+    isDefault: false,
+    sendReminder: false,
+    disableResolveMessage: false,
+    frequency: '',
+    created: '2020-08-28T08:49:24Z',
+    updated: '2020-08-28T08:49:24Z',
+    secureFields: {
+      password: true,
+    },
+    settings: {
+      autoResolve: true,
+      httpMethod: 'POST',
+      password: '',
+      severity: 'critical',
+      uploadImage: true,
+      url: 'http://localhost.webhook',
+      username: 'asdf',
+    },
+  };
+
+  describe('Load notification channel', () => {
+    it('should load basic case', () => {
+      reducerTester<NotificationChannelState>()
+        .givenReducer(notificationChannelReducer, { ...initialChannelState })
+        .whenActionIsDispatched(notificationChannelLoaded(payload))
+        .thenStateShouldEqual({
+          ...initialChannelState,
+          notificationChannel: expected,
         });
     });
   });

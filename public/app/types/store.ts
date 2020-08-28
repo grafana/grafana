@@ -3,7 +3,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import { NavIndex } from '@grafana/data';
 
 import { LocationState } from './location';
-import { AlertRulesState } from './alerting';
+import { AlertRulesState, NotificationChannelState } from './alerting';
 import { TeamsState, TeamState } from './teams';
 import { FolderState } from './folders';
 import { DashboardState } from './dashboard';
@@ -44,6 +44,7 @@ export interface StoreState {
   userListAdmin: UserListAdminState;
   templating: TemplatingState;
   importDashboard: ImportDashboardState;
+  notificationChannel: NotificationChannelState;
 }
 
 /*

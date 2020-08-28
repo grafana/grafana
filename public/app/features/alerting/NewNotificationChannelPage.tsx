@@ -82,7 +82,7 @@ class NewNotificationChannelPage extends PureComponent<Props> {
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
   return {
     navModel: getNavModel(state.navIndex, 'channels'),
-    notificationChannelTypes: state.alertRules.notificationChannelTypes,
+    notificationChannelTypes: state.notificationChannel.notificationChannelTypes,
   };
 };
 

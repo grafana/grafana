@@ -47,7 +47,7 @@ export function updateNotificationChannel(data: any): ThunkResult<void> {
 
 export function testNotificationChannel(data: any): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const channel = getState().alertRules.notificationChannel;
+    const channel = getState().notificationChannel.notificationChannel;
     await getBackendSrv().post('/api/alert-notifications/test', { id: channel.id, ...data });
   };
 }
@@ -56,20 +56,12 @@ export function loadNotificationTypes(): ThunkResult<void> {
   return async dispatch => {
     const alertNotifiers: NotifierDTO[] = await getBackendSrv().get(`/api/alert-notifiers`);
 
-    const notificationTypes = alertNotifiers
-      .map((notifier: NotifierDTO) => {
-        return {
-          value: notifier.type,
-          label: notifier.name,
-          ...notifier,
-        };
-      })
-      .sort((o1, o2) => {
-        if (o1.name > o2.name) {
-          return 1;
-        }
-        return -1;
-      });
+    const notificationTypes = alertNotifiers.sort((o1, o2) => {
+      if (o1.name > o2.name) {
+        return 1;
+      }
+      return -1;
+    });
 
     dispatch(setNotificationChannels(notificationTypes));
   };
