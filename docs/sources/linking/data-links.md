@@ -14,7 +14,7 @@ Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open th
 
 >**Note:** For stat, gauge, bar gauge, and table visualizations, you add and edit data links on the Field tab. For the graph visualization, you add and edit data links on the Panel tab.
 
-You can use variables in data links to send people to exactly the visualization that you want them to see. For example, you could use variables to specify a time range, series, and variable selection. For more information, refer to [Data link variables]({{< relref "data-link-variables.md" >}}).
+You can use variables in data links to send people to a detailed dashboard with preserved data filters. For example, you could use variables to specify a time range, series, and variable selection. For more information, refer to [Data link variables]({{< relref "data-link-variables.md" >}}).
 
 ## Typeahead suggestions
 
