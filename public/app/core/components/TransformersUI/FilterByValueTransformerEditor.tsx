@@ -18,7 +18,15 @@ import {
 
 import { valueFiltersRegistry, ValueFilterID } from '@grafana/data/src/transformations/valueFilters';
 
-function FilterSelectorRow(props: any) {
+interface RowProps {
+  fieldNameOptions: Array<SelectableValue<string>>;
+  onDelete: () => void;
+  onConfigChange: (config: ValueFilter) => void;
+  config: ValueFilter;
+  fieldType: FieldType;
+}
+
+const FilterSelectorRow: React.FC<RowProps> = props => {
   const { fieldNameOptions, onDelete, onConfigChange, config, fieldType } = props;
 
   console.log('props', props);
