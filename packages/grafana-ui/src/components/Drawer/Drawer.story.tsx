@@ -17,7 +17,7 @@ export default {
 };
 
 export const global = () => {
-  const drawerTitle = text('title', 'Storybook');
+  const drawerTitle = text('title', 'Drawer title');
 
   return (
     <UseState initialState={{ isOpen: false }}>
@@ -38,15 +38,17 @@ export const global = () => {
                   updateValue({ isOpen: !state.isOpen });
                 }}
               >
-                <ul>
-                  <li>this</li>
-                  <li>is</li>
-                  <li>a</li>
-                  <li>list</li>
-                  <li>of</li>
-                  <li>menu</li>
-                  <li>items</li>
-                </ul>
+                <div style={{ padding: '10px' }}>
+                  <ul>
+                    <li>this</li>
+                    <li>is</li>
+                    <li>a</li>
+                    <li>list</li>
+                    <li>of</li>
+                    <li>menu</li>
+                    <li>items</li>
+                  </ul>
+                </div>
               </Drawer>
             )}
           </>
