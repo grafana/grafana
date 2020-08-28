@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { PopoverController, Popover } from '@grafana/ui';
+import { PopoverController, Popover, ClickOutsideWrapper } from '@grafana/ui';
 import { FunctionDescriptor, FunctionEditorControls, FunctionEditorControlsProps } from './FunctionEditorControls';
 
 interface FunctionEditorProps extends FunctionEditorControlsProps {
@@ -13,8 +13,8 @@ const FunctionDescription = React.lazy(async () => {
   // @ts-ignore
   const { default: rst2html } = await import(/* webpackChunkName: "rst2html" */ 'rst2html');
   return {
-    default: (props: { description: string }) => (
-      <div dangerouslySetInnerHTML={{ __html: rst2html(props.description) }} />
+    default: (props: { description?: string }) => (
+      <div dangerouslySetInnerHTML={{ __html: rst2html(props.description ?? '') }} />
     ),
   };
 });
@@ -73,11 +73,11 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
 
   render() {
     return (
-      <PopoverController content={this.renderContent} placement="top" hideAfter={300}>
+      <PopoverController content={this.renderContent} placement="top" hideAfter={100}>
         {(showPopper, hidePopper, popperProps) => {
           return (
             <>
-              {this.triggerRef && (
+              {this.triggerRef.current && (
                 <Popover
                   {...popperProps}
                   referenceElement={this.triggerRef.current}
@@ -85,26 +85,30 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
                   className="popper__background"
                   onMouseLeave={() => {
                     this.setState({ showingDescription: false });
-                    hidePopper();
                   }}
-                  onMouseEnter={showPopper}
                   renderArrow={({ arrowProps, placement }) => (
                     <div className="popper__arrow" data-placement={placement} {...arrowProps} />
                   )}
                 />
               )}
-
-              <span
-                ref={this.triggerRef}
-                onClick={popperProps.show ? hidePopper : showPopper}
-                onMouseLeave={() => {
-                  hidePopper();
-                  this.setState({ showingDescription: false });
+              <ClickOutsideWrapper
+                onClick={() => {
+                  if (popperProps.show) {
+                    hidePopper();
+                  }
                 }}
-                style={{ cursor: 'pointer' }}
               >
-                {this.props.func.def.name}
-              </span>
+                <span
+                  ref={this.triggerRef}
+                  onClick={popperProps.show ? hidePopper : showPopper}
+                  onMouseLeave={() => {
+                    this.setState({ showingDescription: false });
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {this.props.func.def.name}
+                </span>
+              </ClickOutsideWrapper>
             </>
           );
         }}

@@ -8,10 +8,11 @@ import { filterFramesByRefIdTransformer } from './transformers/filterByRefId';
 import { orderFieldsTransformer } from './transformers/order';
 import { organizeFieldsTransformer } from './transformers/organize';
 import { seriesToColumnsTransformer } from './transformers/seriesToColumns';
+import { seriesToRowsTransformer } from './transformers/seriesToRows';
 import { renameFieldsTransformer } from './transformers/rename';
 import { labelsToFieldsTransformer } from './transformers/labelsToFields';
 import { ensureColumnsTransformer } from './transformers/ensureColumns';
-import { mergeTransformer } from './transformers/merge/merge';
+import { mergeTransformer } from './transformers/merge';
 
 export const standardTransformers = {
   noopTransformer,
@@ -25,6 +26,7 @@ export const standardTransformers = {
   reduceTransformer,
   calculateFieldTransformer,
   seriesToColumnsTransformer,
+  seriesToRowsTransformer,
   renameFieldsTransformer,
   labelsToFieldsTransformer,
   ensureColumnsTransformer,

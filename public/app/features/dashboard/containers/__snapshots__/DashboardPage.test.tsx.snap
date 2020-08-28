@@ -211,6 +211,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "version": 0,
             }
           }
+          links={Array []}
         />
         <DashboardGrid
           dashboard={
@@ -569,6 +570,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "version": 0,
             }
           }
+          links={Array []}
         />
         <DashboardGrid
           dashboard={

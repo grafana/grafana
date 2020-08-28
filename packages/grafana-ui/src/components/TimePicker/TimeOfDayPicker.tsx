@@ -10,7 +10,7 @@ import { focusCss } from '../../themes/mixins';
 
 export interface Props {
   onChange: (value: DateTime) => void;
-  value: DateTime;
+  value?: DateTime;
   showHour?: boolean;
   minuteStep?: number;
   size?: FormInputSize;
@@ -30,7 +30,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       transform: translateY(-50%);
       display: inline-block;
       text-align: right;
-      z-index: 1071;
+      color: ${theme.colors.textWeak};
     `,
     picker: css`
       .rc-time-picker-panel-select {

@@ -33,6 +33,9 @@ export const Components = {
           labels: () => 'div.flot-x-axis > div.flot-tick-label',
         },
       },
+      BarGauge: {
+        value: 'Bar gauge value',
+      },
     },
   },
   Drawer: {
@@ -94,6 +97,9 @@ export const Components = {
   },
   AlertTab: {
     content: 'Alert editor tab content',
+  },
+  Alert: {
+    alert: (severity: string) => `Alert ${severity}`,
   },
   TransformTab: {
     content: 'Transform editor tab content',

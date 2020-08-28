@@ -24,6 +24,7 @@ interface Props<V, D> {
   itemSpacing?: number;
   /** When orientation is set to auto layout items in a grid */
   autoGrid?: boolean;
+  minVizHeight?: number;
 }
 
 export interface VizRepeaterRenderValueProps<V, D = {}> {
@@ -32,6 +33,10 @@ export interface VizRepeaterRenderValueProps<V, D = {}> {
   height: number;
   orientation: VizOrientation;
   alignmentFactors: D;
+  /**
+   * Total number of values being shown in repeater
+   */
+  count: number;
 }
 
 interface DefaultProps {
@@ -110,7 +115,14 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
 
       items.push(
         <div key={i} style={itemStyles}>
-          {renderValue({ value, width: itemWidth, height: itemHeight, alignmentFactors, orientation })}
+          {renderValue({
+            value,
+            width: itemWidth,
+            height: itemHeight,
+            alignmentFactors,
+            orientation,
+            count: values.length,
+          })}
         </div>
       );
 
@@ -126,7 +138,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
   }
 
   render() {
-    const { renderValue, height, width, itemSpacing, getAlignmentFactors, autoGrid, orientation } = this
+    const { renderValue, height, width, itemSpacing, getAlignmentFactors, autoGrid, orientation, minVizHeight } = this
       .props as PropsWithDefaults<V, D>;
     const { values } = this.state;
 
@@ -140,6 +152,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
 
     const repeaterStyle: React.CSSProperties = {
       display: 'flex',
+      overflow: minVizHeight ? 'hidden scroll' : 'visible',
     };
 
     let vizHeight = height;
@@ -150,9 +163,10 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
     switch (resolvedOrientation) {
       case VizOrientation.Horizontal:
         repeaterStyle.flexDirection = 'column';
+        repeaterStyle.height = `${height}px`;
         itemStyles.marginBottom = `${itemSpacing}px`;
         vizWidth = width;
-        vizHeight = height / values.length - itemSpacing + itemSpacing / values.length;
+        vizHeight = Math.max(height / values.length - itemSpacing + itemSpacing / values.length, minVizHeight ?? 0);
         break;
       case VizOrientation.Vertical:
         repeaterStyle.flexDirection = 'row';
@@ -178,6 +192,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
                 height: vizHeight,
                 alignmentFactors,
                 orientation: resolvedOrientation,
+                count: values.length,
               })}
             </div>
           );

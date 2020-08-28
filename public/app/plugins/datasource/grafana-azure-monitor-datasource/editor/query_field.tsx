@@ -103,13 +103,6 @@ class QueryField extends React.Component<any, any> {
     });
   };
 
-  request = (url?: string) => {
-    if (this.props.request) {
-      return this.props.request(url);
-    }
-    return fetch(url);
-  };
-
   onChangeQuery = () => {
     // Send text change to parent
     const { onQueryChange } = this.props;
@@ -256,12 +249,13 @@ class QueryField extends React.Component<any, any> {
     const { suggestions } = this.state;
     const menu = this.menuEl;
     const selection = window.getSelection();
-    const node = selection.anchorNode;
 
     // No menu, nothing to do
-    if (!menu) {
+    if (!menu || !selection) {
       return;
     }
+
+    const node = selection.anchorNode;
 
     // No suggestions or blur, remove menu
     const hasSuggesstions = suggestions && suggestions.length > 0;

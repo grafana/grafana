@@ -87,10 +87,16 @@ export class PanelHeader extends Component<Props, State> {
     });
   };
 
+  onCancelQuery = () => {
+    this.props.panel.getQueryRunner().cancelQuery();
+  };
+
   private renderLoadingState(): JSX.Element {
     return (
-      <div className="panel-loading">
-        <Icon className="fa-spin" name="fa fa-spinner" />
+      <div className="panel-loading" onClick={this.onCancelQuery}>
+        <Tooltip content="Cancel query">
+          <Icon className="panel-loading__spinner spin-clockwise" name="sync" />
+        </Tooltip>
       </div>
     );
   }
@@ -172,7 +178,7 @@ export class PanelHeader extends Component<Props, State> {
               )}
               <span className="panel-title-text">{title}</span>
               {this.state.panelMenuOpen && (
-                <ClickOutsideWrapper onClick={this.closeMenu}>
+                <ClickOutsideWrapper onClick={this.closeMenu} parent={document}>
                   <PanelHeaderMenu items={menuItems} />
                 </ClickOutsideWrapper>
               )}

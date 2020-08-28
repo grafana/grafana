@@ -10,10 +10,17 @@ weight = 400
 
 # Repeat panels or rows
 
-Grafana lets you create dynamic dashboards using _template variables_. Any variables in your queries expand to the current value of the variable before the query is sent to the database. Variables let you reuse a single dashboard for all your services.
+Grafana lets you create dynamic dashboards using _template variables_. All variables in your queries expand to the current value of the variable before the query is sent to the database. Variables let you reuse a single dashboard for all your services.
 
 Template variables can be very useful to dynamically change your queries across a whole dashboard. If you want
 Grafana to dynamically create new panels or rows based on what values you have selected, you can use the *Repeat* feature.
+
+## Grafana Play examples
+
+You can see examples in the following dashboards:
+
+- [Prometheus repeat](https://play.grafana.org/d/000000036/prometheus-repeat)
+- [Repeated Rows Dashboard](https://play.grafana.org/dashboard/db/repeated-rows)
 
 ## Repeating panels
 
@@ -45,5 +52,3 @@ clicking on the cog button, you will access the `Row Options` configuration pane
 you want to repeat the row for.
 
 It may be a good idea to use a variable in the row title as well.
-
-Example: [Repeated Rows Dashboard](https://play.grafana.org/dashboard/db/repeated-rows)

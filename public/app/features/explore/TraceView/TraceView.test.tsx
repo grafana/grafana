@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { TraceView } from './TraceView';
 import { TracePageHeader, TraceTimelineViewer } from '@jaegertracing/jaeger-ui-components';
-import { SpanData, TraceData } from '@grafana/data';
+import { TraceSpanData, TraceData } from '@grafana/data';
 
 function renderTraceView() {
   const wrapper = shallow(<TraceView trace={response} />);
@@ -123,7 +123,7 @@ describe('TraceView', () => {
   });
 });
 
-const response: TraceData & { spans: SpanData[] } = {
+const response: TraceData & { spans: TraceSpanData[] } = {
   traceID: '1ed38015486087ca',
   spans: [
     {

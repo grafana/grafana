@@ -25,6 +25,7 @@ import { GetVariables, getVariables } from 'app/features/variables/state/selecto
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
+import { isAllVariable } from '../../variables/utils';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -72,7 +73,7 @@ export class DashboardModel {
   gnetId: any;
   panels: PanelModel[];
   panelInEdit?: PanelModel;
-  panelInView: PanelModel;
+  panelInView?: PanelModel;
 
   // ------------------
   // not persisted
@@ -158,7 +159,7 @@ export class DashboardModel {
     });
   }
 
-  private initMeta(meta: DashboardMeta) {
+  private initMeta(meta?: DashboardMeta) {
     meta = meta || {};
 
     meta.canShare = meta.canShare !== false;
@@ -312,7 +313,7 @@ export class DashboardModel {
   }
 
   exitPanelEditor() {
-    this.panelInEdit.destroy();
+    this.panelInEdit!.destroy();
     this.panelInEdit = undefined;
   }
 
@@ -352,7 +353,7 @@ export class DashboardModel {
     }
   }
 
-  getPanelById(id: number): PanelModel {
+  getPanelById(id: number): PanelModel | null {
     if (this.panelInEdit && this.panelInEdit.id === id) {
       return this.panelInEdit;
     }
@@ -362,14 +363,15 @@ export class DashboardModel {
         return panel;
       }
     }
+
     return null;
   }
 
-  canEditPanel(panel?: PanelModel): boolean {
+  canEditPanel(panel?: PanelModel | null): boolean | undefined | null {
     return this.meta.canEdit && panel && !panel.repeatPanelId;
   }
 
-  canEditPanelById(id: number): boolean {
+  canEditPanelById(id: number): boolean | undefined | null {
     return this.canEditPanel(this.getPanelById(id));
   }
 
@@ -490,7 +492,8 @@ export class DashboardModel {
 
     clone.repeatIteration = this.iteration;
     clone.repeatPanelId = sourcePanel.id;
-    clone.repeat = null;
+    clone.repeat = undefined;
+
     return clone;
   }
 
@@ -642,14 +645,14 @@ export class DashboardModel {
     if (repeatedByRow) {
       panel.repeatedByRow = true;
     } else {
-      panel.repeat = null;
+      panel.repeat = undefined;
     }
     return panel;
   }
 
   getSelectedVariableOptions(variable: any) {
     let selectedOptions: any[];
-    if (variable.current.text === 'All') {
+    if (isAllVariable(variable)) {
       selectedOptions = variable.options.slice(1, variable.options.length);
     } else {
       selectedOptions = _.filter(variable.options, { selected: true });
@@ -878,7 +881,7 @@ export class DashboardModel {
     this.events.on(event, callback);
   }
 
-  off<T>(event: AppEvent<T>, callback?: (payload?: T) => void) {
+  off<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
     this.events.off(event, callback);
   }
 
@@ -991,12 +994,12 @@ export class DashboardModel {
     });
 
     // determine if more panels are displaying legends or not
-    const onCount = panelsWithLegends.filter(panel => panel.legend.show).length;
+    const onCount = panelsWithLegends.filter(panel => panel.legend!.show).length;
     const offCount = panelsWithLegends.length - onCount;
     const panelLegendsOn = onCount >= offCount;
 
     for (const panel of panelsWithLegends) {
-      panel.legend.show = !panelLegendsOn;
+      panel.legend!.show = !panelLegendsOn;
       panel.render();
     }
   }

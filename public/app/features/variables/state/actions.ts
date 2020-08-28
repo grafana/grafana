@@ -3,7 +3,11 @@ import { AppEvents, TimeRange, UrlQueryMap, UrlQueryValue } from '@grafana/data'
 import angular from 'angular';
 
 import {
+  DashboardVariableModel,
+  OrgVariableModel,
   QueryVariableModel,
+  UserVariableModel,
+  VariableHide,
   VariableModel,
   VariableOption,
   VariableRefresh,
@@ -41,6 +45,7 @@ import {
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { cleanVariables } from './variablesReducer';
 import isEqual from 'lodash/isEqual';
+import { getCurrentText } from '../utils';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -92,35 +97,79 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
   };
 };
 
-export const completeDashboardTemplating = (dashboard: DashboardModel): ThunkResult<void> => {
+export const addSystemTemplateVariables = (dashboard: DashboardModel): ThunkResult<void> => {
   return (dispatch, getState) => {
-    templateSrv.setGlobalVariable('__dashboard', {
-      value: {
-        name: dashboard.title,
-        uid: dashboard.uid,
-        toString: function() {
-          return this.uid;
+    const dashboardModel: DashboardVariableModel = {
+      id: '__dashboard',
+      name: '__dashboard',
+      label: null,
+      type: 'system',
+      index: -3,
+      skipUrlSync: true,
+      hide: VariableHide.hideVariable,
+      global: false,
+      current: {
+        value: {
+          name: dashboard.title,
+          uid: dashboard.uid,
+          toString: () => dashboard.title,
         },
       },
-    });
-    templateSrv.setGlobalVariable('__org', {
-      value: {
-        name: contextSrv.user.orgName,
-        id: contextSrv.user.orgId,
-        toString: function() {
-          return this.id;
+    };
+
+    dispatch(
+      addVariable(
+        toVariablePayload(dashboardModel, {
+          global: dashboardModel.global,
+          index: dashboardModel.index,
+          model: dashboardModel,
+        })
+      )
+    );
+
+    const orgModel: OrgVariableModel = {
+      id: '__org',
+      name: '__org',
+      label: null,
+      type: 'system',
+      index: -2,
+      skipUrlSync: true,
+      hide: VariableHide.hideVariable,
+      global: false,
+      current: {
+        value: {
+          name: contextSrv.user.orgName,
+          id: contextSrv.user.orgId,
+          toString: () => contextSrv.user.orgId.toString(),
         },
       },
-    });
-    templateSrv.setGlobalVariable('__user', {
-      value: {
-        login: contextSrv.user.login,
-        id: contextSrv.user.id,
-        toString: function() {
-          return this.id;
+    };
+
+    dispatch(
+      addVariable(toVariablePayload(orgModel, { global: orgModel.global, index: orgModel.index, model: orgModel }))
+    );
+
+    const userModel: UserVariableModel = {
+      id: '__user',
+      name: '__user',
+      label: null,
+      type: 'system',
+      index: -1,
+      skipUrlSync: true,
+      hide: VariableHide.hideVariable,
+      global: false,
+      current: {
+        value: {
+          login: contextSrv.user.login,
+          id: contextSrv.user.id,
+          toString: () => contextSrv.user.id.toString(),
         },
       },
-    });
+    };
+
+    dispatch(
+      addVariable(toVariablePayload(userModel, { global: userModel.global, index: userModel.index, model: userModel }))
+    );
   };
 };
 
@@ -311,7 +360,8 @@ export const validateVariableSelectionState = (
     let option: VariableOption | undefined | null = null;
 
     // 1. find the current value
-    option = variableInState.options?.find(v => v.text === current.text);
+    const text = getCurrentText(variableInState);
+    option = variableInState.options?.find(v => v.text === text);
     if (option) {
       return setValue(variableInState, option);
     }
@@ -504,16 +554,19 @@ export const initVariablesTransaction = (dashboardUid: string, dashboard: Dashbo
       dispatch(cancelVariables());
     }
 
+    // Start init transaction
     dispatch(variablesInitTransaction({ uid: dashboardUid }));
-
+    // Add system variables like __dashboard and __user
+    dispatch(addSystemTemplateVariables(dashboard));
+    // Load all variables into redux store
     dispatch(initDashboardTemplating(dashboard.templating.list));
+    // Process all variable updates
     await dispatch(processVariables());
-    dispatch(completeDashboardTemplating(dashboard));
-
+    // Mark update as complete
     dispatch(variablesCompleteTransaction({ uid: dashboardUid }));
   } catch (err) {
     dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
-    console.log(err);
+    console.error(err);
   }
 };
 

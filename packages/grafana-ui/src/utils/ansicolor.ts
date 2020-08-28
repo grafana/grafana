@@ -357,6 +357,7 @@ export default class Colors {
     let bgColor: Color;
 
     function reset() {
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       (color = new Color()),
         (bgColor = new Color(true /* background */)),
         (brightness = undefined),

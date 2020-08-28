@@ -52,7 +52,13 @@ export const Pages = {
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
         saveDashBoard: 'Dashboard settings aside actions Save button',
         saveAsDashBoard: 'Dashboard settings aside actions Save As button',
+        timezone: 'Time zone picker select container',
         title: 'Dashboard settings page title',
+      },
+      Annotations: {
+        List: {
+          addAnnotationCTA: 'Call to action button Add Annotation Query',
+        },
       },
       Variables: {
         List: {
@@ -120,6 +126,9 @@ export const Pages = {
     General: {
       container: 'Explore',
       runButton: 'Run button',
+    },
+    Toolbar: {
+      navBar: '.explore-toolbar',
     },
   },
 };

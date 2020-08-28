@@ -15,7 +15,7 @@ export class SignUpCtrl {
 
     // validate email is semi ok
     if (params.email && !params.email.match(/^\S+@\S+$/)) {
-      console.log('invalid email');
+      console.error('invalid email');
       return;
     }
 

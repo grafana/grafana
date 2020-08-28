@@ -279,7 +279,6 @@ func TestAnnotations(t *testing.T) {
 					So(len(items), ShouldEqual, 0)
 				})
 			})
-
 		})
 	})
 }

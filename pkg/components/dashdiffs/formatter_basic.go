@@ -162,7 +162,6 @@ func (b *BasicDiff) Basic(lines []*JSONLine) []*BasicBlock {
 				// know there's a change somewhere in the JSON tree, but we
 				// don't know exactly where, so we go deeper.
 			} else {
-
 				// if the change is anything but unchanged, continue processing
 				//
 				// we keep "narrowing" the key as we go deeper, in order to
@@ -213,12 +212,10 @@ func (b *BasicDiff) Basic(lines []*JSONLine) []*BasicBlock {
 					// - if we're not recording a change, then we do nothing,
 					// since the BasicDiff doesn't report on unchanged JSON
 					// values.
-				} else {
-					if b.writing {
-						b.writing = false
-						b.Summary.LineEnd = line.LineNum
-						b.Block.Summaries = append(b.Block.Summaries, b.Summary)
-					}
+				} else if b.writing {
+					b.writing = false
+					b.Summary.LineEnd = line.LineNum
+					b.Block.Summaries = append(b.Block.Summaries, b.Summary)
 				}
 			}
 		}

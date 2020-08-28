@@ -134,9 +134,8 @@ func (r QueryDefinition) Render(query *Query, queryContext *tsdb.TsdbQuery, part
 
 func NewQueryPart(typ string, params []string) (*QueryPart, error) {
 	def, exist := renders[typ]
-
 	if !exist {
-		return nil, fmt.Errorf("Missing query definition for %s", typ)
+		return nil, fmt.Errorf("missing query definition for %q", typ)
 	}
 
 	return &QueryPart{

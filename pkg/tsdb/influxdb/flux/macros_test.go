@@ -6,6 +6,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestInterpolate(t *testing.T) {
@@ -17,7 +19,7 @@ func TestInterpolate(t *testing.T) {
 		To:   time.Unix(0, 0),
 	}
 
-	options := QueryOptions{
+	options := queryOptions{
 		Organization:  "grafana1",
 		Bucket:        "grafana2",
 		DefaultBucket: "grafana3",
@@ -36,21 +38,17 @@ func TestInterpolate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			query := QueryModel{
+			query := queryModel{
 				RawQuery:      tt.before,
 				Options:       options,
 				TimeRange:     timeRange,
 				MaxDataPoints: 1,
 				Interval:      1000 * 1000 * 1000,
 			}
-			interpolatedQuery, err := Interpolate(query)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if diff := cmp.Diff(tt.after, interpolatedQuery); diff != "" {
-				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
-			}
+			interpolatedQuery, err := interpolate(query)
+			require.NoError(t, err)
+			diff := cmp.Diff(tt.after, interpolatedQuery)
+			assert.Equal(t, "", diff)
 		})
 	}
 }

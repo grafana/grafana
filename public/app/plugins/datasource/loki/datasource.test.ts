@@ -1,15 +1,7 @@
-import LokiDatasource, { RangeQueryOptions } from './datasource';
+import LokiDatasource from './datasource';
 import { LokiQuery, LokiResponse, LokiResultType } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import {
-  AnnotationQueryRequest,
-  DataFrame,
-  DataSourceApi,
-  dateTime,
-  ExploreMode,
-  FieldCache,
-  TimeRange,
-} from '@grafana/data';
+import { AnnotationQueryRequest, DataFrame, DataSourceApi, dateTime, FieldCache, TimeRange } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { makeMockLokiDatasource } from './mocks';
 import { of } from 'rxjs';
@@ -19,9 +11,21 @@ import { CustomVariableModel } from '../../../features/variables/types';
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer'; // will use the version in __mocks__
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  //@ts-ignore
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
+
+jest.mock('app/features/dashboard/services/TimeSrv', () => {
+  return {
+    getTimeSrv: () => ({
+      timeRange: () => ({
+        from: new Date(0),
+        to: new Date(1),
+      }),
+    }),
+  };
+});
 
 const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
 
@@ -73,7 +77,7 @@ describe('LokiDatasource', () => {
         range,
       };
 
-      const req = ds.createRangeQuery(target, options);
+      const req = ds.createRangeQuery(target, options as any);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
       expect(adjustIntervalSpy).toHaveBeenCalledWith(1000, expect.anything());
@@ -88,7 +92,7 @@ describe('LokiDatasource', () => {
         intervalMs: 2000,
       };
 
-      const req = ds.createRangeQuery(target, options);
+      const req = ds.createRangeQuery(target, options as any);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
       expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything());
@@ -110,10 +114,9 @@ describe('LokiDatasource', () => {
       datasourceRequestMock.mockImplementation(() => Promise.resolve(testResp));
     });
 
-    test('should run instant query and range query when in metrics mode', async () => {
+    test('should run range and instant query', async () => {
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: 'rate({job="grafana"}[5m])', refId: 'A' }],
-        exploreMode: ExploreMode.Metrics,
+        targets: [{ expr: '{job="grafana"}', refId: 'B' }],
       });
 
       ds.runInstantQuery = jest.fn(() => of({ data: [] }));
@@ -121,20 +124,6 @@ describe('LokiDatasource', () => {
       await ds.query(options).toPromise();
 
       expect(ds.runInstantQuery).toBeCalled();
-      expect(ds.runRangeQuery).toBeCalled();
-    });
-
-    test('should just run range query when in logs mode', async () => {
-      const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: '{job="grafana"}', refId: 'B' }],
-        exploreMode: ExploreMode.Logs,
-      });
-
-      ds.runInstantQuery = jest.fn(() => of({ data: [] }));
-      ds.runRangeQuery = jest.fn(() => of({ data: [] }));
-      await ds.query(options).toPromise();
-
-      expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
@@ -188,6 +177,35 @@ describe('LokiDatasource', () => {
       expect(fieldCache.getFieldByName('line')?.values.get(0)).toBe('hello');
       expect(dataFrame.meta?.limit).toBe(20);
       expect(dataFrame.meta?.searchWords).toEqual(['foo']);
+    });
+
+    test('should return custom error message when Loki returns escaping error', async () => {
+      const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
+      const customSettings = { ...instanceSettings, jsonData: customData };
+      const ds = new LokiDatasource(customSettings, templateSrvMock);
+
+      datasourceRequestMock.mockImplementation(
+        jest.fn().mockReturnValue(
+          Promise.reject({
+            data: {
+              message: 'parse error at line 1, col 6: invalid char escape',
+            },
+            status: 400,
+            statusText: 'Bad Request',
+          })
+        )
+      );
+      const options = getQueryOptions<LokiQuery>({
+        targets: [{ expr: '{job="gra\\fana"}', refId: 'B' }],
+      });
+
+      try {
+        await ds.query(options).toPromise();
+      } catch (err) {
+        expect(err.data.message).toBe(
+          'Error: parse error at line 1, col 6: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://github.com/grafana/loki/blob/master/docs/logql.md.'
+        );
+      }
     });
   });
 
@@ -338,8 +356,8 @@ describe('LokiDatasource', () => {
         raw: { from: '0', to: '1000000001' },
       };
       // Odd timerange/interval combination that would lead to a float step
-      const options: RangeQueryOptions = { range, intervalMs: 2000 };
-      expect(Number.isInteger(ds.createRangeQuery(query, options).step!)).toBeTruthy();
+      const options = { range, intervalMs: 2000 };
+      expect(Number.isInteger(ds.createRangeQuery(query, options as any).step!)).toBeTruthy();
     });
   });
 
@@ -435,6 +453,19 @@ describe('LokiDatasource', () => {
         expect(res.length).toBe(0);
       });
     });
+
+    mocks.forEach((mock, index) => {
+      it(`should return label names according to provided rangefor Loki v${index} `, async () => {
+        ds.getVersion = mock.getVersion;
+        ds.metadataRequest = mock.metadataRequest;
+        const query = 'label_names()';
+        const res = await ds.metricFindQuery(query, {
+          range: { from: new Date(2), to: new Date(3) },
+        });
+        expect(res[0].text).toEqual('label1');
+        expect(res.length).toBe(1);
+      });
+    });
   });
 });
 
@@ -463,7 +494,7 @@ function makeLimitTest(instanceSettings: any, datasourceRequestMock: any, templa
 
     ds.query(options);
 
-    expect(datasourceRequestMock.mock.calls.length).toBe(1);
+    expect(datasourceRequestMock.mock.calls.length).toBe(2);
     expect(datasourceRequestMock.mock.calls[0][0].url).toContain(`limit=${expectedLimit}`);
   };
 }

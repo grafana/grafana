@@ -73,14 +73,17 @@ Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
 VictorOps | `victorops` | yes, external only | no
 [Webhook](#webhook) | `webhook` | yes, external only | yes
+[Zenduty](#zenduty) | `webhook` | yes, external only | yes
 
 ### Email
 
-To enable email notifications you have to setup [SMTP settings]({{< relref "../installation/configuration/#smtp" >}})
+To enable email notifications you have to set up [SMTP settings]({{< relref "../administration/configuration/#smtp" >}})
 in the Grafana config. Email notifications will upload an image of the alert graph to an
 external image destination if available or fallback to attaching the image to the email.
 Be aware that if you use the `local` image storage email servers and clients might not be
 able to access the image.
+
+> **Note:** Template variables are not supported in email alerts.
 
 Setting | Description
 ---------- | -----------
@@ -99,15 +102,15 @@ provided, which starts with "xoxb".
 
 Setting | Description
 ---------- | -----------
-Url | Slack incoming webhook URL.
+Url | Slack incoming webhook URL, or eventually the [chat.postMessage](https://api.slack.com/methods/chat.postMessage) Slack API endpoint.
 Username | Set the username for the bot's message.
-Recipient | Allows you to override the Slack recipient. You must either provide a channel Slack ID, a user Slack ID, a username reference (@&lt;user&gt;, all lowercase, no whitespace), or a channel reference (#&lt;channel&gt;, all lowercase, no whitespace).
+Recipient | Allows you to override the Slack recipient. You must either provide a channel Slack ID, a user Slack ID, a username reference (@&lt;user&gt;, all lowercase, no whitespace), or a channel reference (#&lt;channel&gt;, all lowercase, no whitespace). If you use the `chat.postMessage` Slack API endpoint, this is required.
 Icon emoji | Provide an emoji to use as the icon for the bot's message. Ex :smile:
 Icon URL | Provide a URL to an image to use as the icon for the bot's message.
 Mention Users | Optionally mention one or more users in the Slack notification sent by Grafana. You have to refer to users, comma-separated, via their corresponding Slack IDs (which you can find by clicking the overflow button on each user's Slack profile).
 Mention Groups | Optionally mention one or more groups in the Slack notification sent by Grafana. You have to refer to groups, comma-separated, via their corresponding Slack IDs (which you can get from each group's Slack profile URL).
 Mention Channel | Optionally mention either all channel members or just active ones.
-Token | If provided, Grafana will upload the generated image via Slack's file.upload API method, not the external image destination.
+Token | If provided, Grafana will upload the generated image via Slack's file.upload API method, not the external image destination. If you use the `chat.postMessage` Slack API endpoint, this is required.
 
 If you are using the token for a slack bot, then you have to invite the bot to the channel you want to send notifications and add the channel to the recipient field.
 
@@ -208,16 +211,20 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 
 > **Caution:** In case of a high-availability setup, do not load balance traffic between Grafana and Alertmanagers to keep coherence between all your Alertmanager instances. Instead, point Grafana to a list of all Alertmanagers, by listing their URLs comma-separated in the notification channel configuration.
 
+### Zenduty
+
+[Zenduty](https://www.zenduty.com) is an incident alerting and response orchestration platform that not alerts the right teams via SMS, Phone(Voice), Email, Slack, Microsoft Teams and Push notifications(Android/iOS) whenever a Grafana alert is triggered, but also helps you rapidly triage and remediate critical, user impacting incidents. Grafana alert are sent to Zenduty through Grafana's native webhook dispatcher. Refer the Zenduty-Grafana [integration documentation](https://docs.zenduty.com/docs/grafana) for configuring the integration.
+
 ## Enable images in notifications {#external-image-store}
 
 Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
 [image rendering]({{< relref "../administration/image_rendering/" >}}).
 
-You must configure an [external image storage provider]({{< relref "../installation/configuration/#external-image-storage" >}}) in order to receive images in alert notifications. If your notification channel requires that the image be publicly accessible (e.g. Slack, PagerDuty), configure a provider which uploads the image to a remote image store like Amazon S3, Webdav, Google Cloud Storage, or Azure Blob Storage. Otherwise, the local provider can be used to serve the image directly from Grafana.
+You must configure an [external image storage provider]({{< relref "../administration/configuration/#external-image-storage" >}}) in order to receive images in alert notifications. If your notification channel requires that the image be publicly accessible (e.g. Slack, PagerDuty), configure a provider which uploads the image to a remote image store like Amazon S3, Webdav, Google Cloud Storage, or Azure Blob Storage. Otherwise, the local provider can be used to serve the image directly from Grafana.
 
 Notification services which need public image access are marked as 'external only'.
 
 ## Configure the link back to Grafana from alert notifications
 
 All alert notifications contain a link back to the triggered alert in the Grafana instance.
-This URL is based on the [domain]({{< relref "../installation/configuration/#domain" >}}) setting in Grafana.
+This URL is based on the [domain]({{< relref "../administration/configuration/#domain" >}}) setting in Grafana.

@@ -1,6 +1,6 @@
 // Libaries
 import React, { Component } from 'react';
-import { dateMath, GrafanaTheme } from '@grafana/data';
+import { dateMath, GrafanaTheme, TimeZone } from '@grafana/data';
 import { css } from 'emotion';
 
 // Types
@@ -10,6 +10,7 @@ import { TimeRange, TimeOption, RawTimeRange } from '@grafana/data';
 
 // State
 import { updateLocation } from 'app/core/actions';
+import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 
 // Components
 import { RefreshPicker, withTheme, stylesFactory, Themeable } from '@grafana/ui';
@@ -34,6 +35,7 @@ export interface Props extends Themeable {
   dashboard: DashboardModel;
   updateLocation: typeof updateLocation;
   location: LocationState;
+  onChangeTimeZone: typeof updateTimeZoneForSession;
 }
 class UnthemedDashNavTimeControls extends Component<Props> {
   componentDidMount() {
@@ -86,6 +88,12 @@ class UnthemedDashNavTimeControls extends Component<Props> {
     };
 
     getTimeSrv().setTime(nextRange);
+  };
+
+  onChangeTimeZone = (timeZone: TimeZone) => {
+    this.props.dashboard.timezone = timeZone;
+    this.props.onChangeTimeZone(timeZone);
+    this.onRefresh();
   };
 
   onZoom = () => {

@@ -2,14 +2,14 @@ import _ from 'lodash';
 import LRU from 'lru-cache';
 import { Value } from 'slate';
 
-import { dateTime, LanguageProvider, HistoryItem } from '@grafana/data';
-import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
+import { dateTime, HistoryItem, LanguageProvider } from '@grafana/data';
+import { CompletionItem, CompletionItemGroup, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
-import { parseSelector, processLabels, processHistogramLabels, fixSummariesMetadata } from './language_utils';
+import { fixSummariesMetadata, parseSelector, processHistogramLabels, processLabels } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 import { PrometheusDatasource } from './datasource';
-import { PromQuery, PromMetricsMetadata } from './types';
+import { PromMetricsMetadata, PromQuery } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -54,9 +54,9 @@ function addMetricsMetadata(metric: string, metadata?: PromMetricsMetadata): Com
 const PREFIX_DELIMITER_REGEX = /(="|!="|=~"|!~"|\{|\[|\(|\+|-|\/|\*|%|\^|\band\b|\bor\b|\bunless\b|==|>=|!=|<=|>|<|=|~|,)/;
 
 export default class PromQlLanguageProvider extends LanguageProvider {
-  histogramMetrics?: string[];
+  histogramMetrics: string[];
   timeRange?: { start: number; end: number };
-  metrics?: string[];
+  metrics: string[];
   metricsMetadata?: PromMetricsMetadata;
   startTask: Promise<any>;
   datasource: PrometheusDatasource;
@@ -87,7 +87,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   // Strip syntax chars so that typeahead suggestions can work on clean inputs
   cleanText(s: string) {
     const parts = s.split(PREFIX_DELIMITER_REGEX);
-    const last = parts.pop();
+    const last = parts.pop()!;
     return last
       .trimLeft()
       .replace(/"$/, '')
@@ -101,9 +101,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   request = async (url: string, defaultValue: any): Promise<any> => {
     try {
       const res = await this.datasource.metadataRequest(url);
-      const body = await (res.data || res.json());
-
-      return body.data;
+      return res.data.data;
     } catch (error) {
       console.error(error);
     }
@@ -136,6 +134,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     { prefix, text, value, labelKey, wrapperClasses }: TypeaheadInput,
     context: { history: Array<HistoryItem<PromQuery>> } = { history: [] }
   ): Promise<TypeaheadOutput> => {
+    const emptyResult: TypeaheadOutput = { suggestions: [] };
+
+    if (!value) {
+      return emptyResult;
+    }
+
     // Local text properties
     const empty = value.document.text.length === 0;
     const selectedLines = value.document.getTextsAtRange(value.selection);
@@ -179,9 +183,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       return this.getTermCompletionItems();
     }
 
-    return {
-      suggestions: [],
-    };
+    return emptyResult;
   };
 
   getBeginningCompletionItems = (context: { history: Array<HistoryItem<PromQuery>> }): TypeaheadOutput => {
@@ -253,7 +255,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // Stitch all query lines together to support multi-line queries
     let queryOffset;
     const queryText = value.document.getBlocks().reduce((text: string, block) => {
-      const blockText = block.getText();
+      if (!block) {
+        return text;
+      }
+
+      const blockText = block?.getText();
+
       if (value.anchorBlock.key === block.key) {
         // Newline characters are not accounted for but this is irrelevant
         // for the purpose of extracting the selector string
@@ -305,6 +312,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     labelKey,
     value,
   }: TypeaheadInput): Promise<TypeaheadOutput> => {
+    if (!value) {
+      return { suggestions: [] };
+    }
+
     const suggestions: CompletionItemGroup[] = [];
     const line = value.anchorBlock.getText();
     const cursorOffset = value.selection.anchor.offset;
@@ -346,7 +357,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       return { suggestions };
     }
 
-    let context: string;
+    let context: string | undefined;
+
     if ((text && isValueStart) || wrapperClasses.includes('attr-value')) {
       // Label values
       if (labelKey && labelValues[labelKey]) {

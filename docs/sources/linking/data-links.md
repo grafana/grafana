@@ -22,7 +22,7 @@ Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open th
 1. Enter a **Title**. **Title** is a human-readable label for the link that will be displayed in the UI.
 1. Enter the **URL** you want to link to.
    
-   You can even add one of the template variables defined in the dashboard. Press Ctrl+Space or Cmd+Space and click in the **URL** field to see the available variables. By adding template variables to your panel link, the link sends the user to the right context, with the relevant variables already set. For more information, refer to [URL variables]({{< relref "../variables/url-variables.md" >}}).
+   You can even add one of the template variables defined in the dashboard. Press Ctrl+Space or Cmd+Space and click in the **URL** field to see the available variables. By adding template variables to your panel link, the link sends the user to the right context, with the relevant variables already set. For more information, refer to [URL variables]({{< relref "../variables/variable-types/url-variables.md" >}}).
    
 1. If you want the link to open in a new tab, then select **Open in a new tab**.
 1. Click **Save** to save changes and close the window.
@@ -36,7 +36,7 @@ Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open th
 1. Click **Save** to save changes and close the window.
 1. Click **Save** in the upper right to save your changes to the dashboard.
 
-## Delete a panel link
+## Delete a data link
 
 1. On the Field tab, find the link that you want to delete. (Panel tab for graph visualizations.)
 1. Click the **X** icon next to the link you want to delete. 

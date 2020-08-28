@@ -1,0 +1,55 @@
+{
+  "name": "Google Cloud Monitoring",
+  "type": "datasource",
+  "id": "stackdriver",
+  "category": "cloud",
+
+  "metrics": true,
+  "alerting": true,
+  "annotations": true,
+  "queryOptions": {
+    "maxDataPoints": true,
+    "cacheTimeout": true
+  },
+
+  "info": {
+    "description": "Data source for Google's monitoring service (formerly named Stackdriver)",
+    "version": "1.0.0",
+    "logos": {
+      "small": "img/cloud_monitoring_logo.svg",
+      "large": "img/cloud_monitoring_logo.svg"
+    },
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    }
+  },
+  "routes": [
+    {
+      "path": "cloudmonitoring",
+      "method": "GET",
+      "url": "https://content-monitoring.googleapis.com",
+      "jwtTokenAuth": {
+        "scopes": ["https://www.googleapis.com/auth/monitoring.read"],
+        "params": {
+          "token_uri": "{{.JsonData.tokenUri}}",
+          "client_email": "{{.JsonData.clientEmail}}",
+          "private_key": "{{.SecureJsonData.privateKey}}"
+        }
+      }
+    },
+    {
+      "path": "cloudresourcemanager",
+      "method": "GET",
+      "url": "https://cloudresourcemanager.googleapis.com",
+      "jwtTokenAuth": {
+        "scopes": ["https://www.googleapis.com/auth/cloudplatformprojects.readonly"],
+        "params": {
+          "token_uri": "{{.JsonData.tokenUri}}",
+          "client_email": "{{.JsonData.clientEmail}}",
+          "private_key": "{{.SecureJsonData.privateKey}}"
+        }
+      }
+    }
+  ]
+}

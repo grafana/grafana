@@ -49,7 +49,6 @@ func TestEngineProcessJob(t *testing.T) {
 		job := &Job{running: true, Rule: &Rule{}}
 
 		Convey("Should trigger retry if needed", func() {
-
 			Convey("error + not last attempt -> retry", func() {
 				engine.evalHandler = NewFakeEvalHandler(0)
 
@@ -94,7 +93,6 @@ func TestEngineProcessJob(t *testing.T) {
 		})
 
 		Convey("Should trigger as many retries as needed", func() {
-
 			Convey("never success -> max retries number", func() {
 				expectedAttempts := setting.AlertingMaxAttempts
 				evalHandler := NewFakeEvalHandler(0)

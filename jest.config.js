@@ -1,4 +1,4 @@
-const esModule = '@iconscout/react-unicons';
+const esModule = '@iconscout/react-unicons|monaco-editor/esm/vs';
 
 module.exports = {
   verbose: false,
@@ -12,9 +12,11 @@ module.exports = {
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   setupFiles: ['jest-canvas-mock', './public/test/jest-shim.ts', './public/test/jest-setup.ts'],
+  setupFilesAfterEnv: ['./public/test/setupTests.ts'],
   snapshotSerializers: ['enzyme-to-json/serializer'],
   globals: { 'ts-jest': { isolatedModules: true } },
   moduleNameMapper: {
     '\\.svg': '<rootDir>/public/test/mocks/svg.ts',
+    '\\.css': '<rootDir>/public/test/mocks/style.ts',
   },
 };

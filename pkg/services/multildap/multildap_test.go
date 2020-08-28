@@ -469,14 +469,13 @@ type mockLDAP struct {
 
 // Login test fn
 func (mock *mockLDAP) Login(*models.LoginUserQuery) (*models.ExternalUserInfo, error) {
-
-	mock.loginCalledTimes = mock.loginCalledTimes + 1
+	mock.loginCalledTimes++
 	return mock.loginReturn, mock.loginErrReturn
 }
 
 // Users test fn
 func (mock *mockLDAP) Users([]string) ([]*models.ExternalUserInfo, error) {
-	mock.usersCalledTimes = mock.usersCalledTimes + 1
+	mock.usersCalledTimes++
 
 	if mock.usersCalledTimes == 1 {
 		return mock.usersFirstReturn, mock.usersErrReturn
@@ -492,13 +491,13 @@ func (mock *mockLDAP) UserBind(string, string) error {
 
 // Dial test fn
 func (mock *mockLDAP) Dial() error {
-	mock.dialCalledTimes = mock.dialCalledTimes + 1
+	mock.dialCalledTimes++
 	return mock.dialErrReturn
 }
 
 // Close test fn
 func (mock *mockLDAP) Close() {
-	mock.closeCalledTimes = mock.closeCalledTimes + 1
+	mock.closeCalledTimes++
 }
 
 func (mock *mockLDAP) Bind() error {

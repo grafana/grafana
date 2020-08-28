@@ -95,7 +95,7 @@ $text-shadow-faint: none;
 // gradients
 $brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
 $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
-$page-gradient: ${theme.colors.white};
+$page-gradient: ${theme.palette.white};
 $edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 
 // Links
@@ -128,8 +128,8 @@ $page-header-border-color: ${theme.colors.pageHeaderBorder};
 $divider-border-color: $gray-2;
 
 // Graphite Target Editor
-$tight-form-func-bg: $gray-5;
-$tight-form-func-highlight-bg: $gray-6;
+$tight-form-func-bg: ${theme.colors.bg2};
+$tight-form-func-highlight-bg: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
 
 $modal-backdrop-bg: ${theme.colors.bg1};
 $code-tag-bg: $gray-6;
@@ -300,7 +300,11 @@ $graph-tooltip-bg: $white;
 $tooltipBackground: $white;
 $tooltipColor: #333;
 $tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
+$tooltipShadow: 0 0 5px $gray60;
 $tooltipBackgroundError: $brand-danger;
+
+$popover-code-bg: ${theme.colors.bg1};
+$popover-code-boxshadow: 0 0 5px $gray60;
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';

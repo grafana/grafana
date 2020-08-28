@@ -8,6 +8,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { ValidationSrv } from 'app/features/manage-dashboards';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
+import { createFolder } from 'app/features/manage-dashboards/state/actions';
 
 export class FolderPickerCtrl {
   initialTitle: string;
@@ -111,7 +112,7 @@ export class FolderPickerCtrl {
     }
 
     return promiseToDigest(this.$scope)(
-      backendSrv.createFolder({ title: this.newFolderName }).then((result: { title: string; id: number }) => {
+      createFolder({ title: this.newFolderName }).then((result: { title: string; id: number }) => {
         appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
 
         this.closeCreateFolder();
@@ -145,7 +146,8 @@ export class FolderPickerCtrl {
     const rootFolder: { text: string; value: any } = { text: this.rootName, value: 0 };
 
     this.getOptions('').then((result: any[]) => {
-      let folder: { text: string; value: any };
+      let folder: { text: string; value: any } | undefined;
+
       if (this.initialFolderId) {
         // @ts-ignore
         folder = _.find(result, { value: this.initialFolderId });

@@ -97,6 +97,8 @@ $text-shadow-faint: none;
 // gradients
 $brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
 $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
+$page-gradient: #ffffff;
+$edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 
 // Links
 // -------------------------
@@ -115,9 +117,9 @@ $hr-border-color: $gray-4 !default;
 
 // Panel
 // -------------------------
-$panel-bg: #ffffff;
-$panel-border: 1px solid #dce1e6;
-$panel-header-hover-bg: #f1f5f9;
+$panel-bg: $white;
+$panel-border: solid 1px $gray-5;
+$panel-header-hover-bg: $white;
 $panel-corner: $gray-4;
 
 // Page header
@@ -128,8 +130,8 @@ $page-header-border-color: #dce1e6;
 $divider-border-color: $gray-2;
 
 // Graphite Target Editor
-$tight-form-func-bg: $gray-5;
-$tight-form-func-highlight-bg: $gray-6;
+$tight-form-func-bg: #f1f5f9;
+$tight-form-func-highlight-bg: #eaf0f6;
 
 $modal-backdrop-bg: #ffffff;
 $code-tag-bg: $gray-6;
@@ -234,10 +236,14 @@ $horizontalComponentOffset: 180px;
 // Navbar
 // -------------------------
 $navbarHeight: 52px;
+
+$navbarBackground: $white;
 $navbarBorder: 1px solid $gray-5;
 
-$navbarButtonBackground: $panel-bg;
-$navbar-button-border: $gray-4;
+$navbarButtonBackground: #ffffff;
+$navbarButtonBackgroundHighlight: #ffffff;
+
+$navbar-button-border: #dfdfdf;
 
 // Sidemenu
 // -------------------------
@@ -252,9 +258,9 @@ $side-menu-header-color: #e9edf2;
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: $panel-bg;
-$menu-dropdown-hover-bg: $gray-6;
-$menu-dropdown-shadow: 5px 5px 10px -5px $gray-1;
+$menu-dropdown-bg: $gray-7;
+$menu-dropdown-hover-bg: #ffffff;
+$menu-dropdown-shadow: 0px 0px 0px 0px #ffffff;
 
 // Tabs
 // -------------------------
@@ -274,26 +280,33 @@ $alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
 $alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
 $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
-// Tooltips and popovers
-$tooltipBackground: $gray-1;
-$tooltipColor: $gray-7;
-$tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
-$tooltipBackgroundError: $brand-danger;
-$tooltipShadow: 0 0 5px $gray60;
-$graph-tooltip-bg: $gray-5;
-
-$tooltipArrowWidth: 5px;
-$tooltipLinkColor: lighten($tooltipColor, 5%);
-
+// popover
 $popover-bg: $page-bg;
 $popover-color: $text-color;
 $popover-border-color: $gray-5;
 $popover-header-bg: $gray-5;
 $popover-shadow: 0 0 20px $white;
 
+$popover-help-bg: $btn-secondary-bg;
+$popover-help-color: $gray-6;
+
 $popover-error-bg: $btn-danger-bg;
-$popover-help-bg: $tooltipBackground;
-$popover-help-color: $tooltipColor;
+
+// Tooltips and popovers
+// -------------------------
+$tooltipColor: #333;
+$tooltipArrowWidth: 5px;
+$tooltipLinkColor: lighten($popover-help-color, 5%);
+$graph-tooltip-bg: $white;
+
+$tooltipBackground: $white;
+$tooltipColor: #333;
+$tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
+$tooltipShadow: 0 0 5px $gray60;
+$tooltipBackgroundError: $brand-danger;
+
+$popover-code-bg: #ffffff;
+$popover-code-boxshadow: 0 0 5px $gray60;
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';

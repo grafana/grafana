@@ -20,7 +20,7 @@ export class ResultTransformer {
         ),
       ];
     } else if (prometheusResult && options.format === 'heatmap') {
-      let seriesList = [];
+      let seriesList: TimeSeries[] = [];
       for (const metricData of prometheusResult) {
         seriesList.push(this.transformMetricData(metricData, options, options.start, options.end));
       }
@@ -28,7 +28,7 @@ export class ResultTransformer {
       seriesList = this.transformToHistogramOverTime(seriesList);
       return seriesList;
     } else if (prometheusResult) {
-      const seriesList = [];
+      const seriesList: TimeSeries[] = [];
       for (const metricData of prometheusResult) {
         if (response.data.data.resultType === 'matrix') {
           seriesList.push(this.transformMetricData(metricData, options, options.start, options.end));
@@ -41,7 +41,7 @@ export class ResultTransformer {
     return [];
   }
 
-  transformMetricData(metricData: any, options: any, start: number, end: number) {
+  transformMetricData(metricData: any, options: any, start: number, end: number): TimeSeries {
     const dps = [];
     const { name, labels, title } = this.createLabelInfo(metricData.metric, options);
 
@@ -53,7 +53,8 @@ export class ResultTransformer {
     }
 
     for (const value of metricData.values) {
-      let dpValue = parseFloat(value[1]);
+      let dpValue: number | null = parseFloat(value[1]);
+
       if (_.isNaN(dpValue)) {
         dpValue = null;
       }
@@ -73,9 +74,8 @@ export class ResultTransformer {
 
     return {
       datapoints: dps,
-      query: options.query,
       refId: options.refId,
-      target: name,
+      target: name ?? '',
       tags: labels,
       title,
       meta: options.meta,
@@ -132,7 +132,11 @@ export class ResultTransformer {
             for (j = 0; j < sortedLabels.length; j++) {
               const label = sortedLabels[j];
               if (series.metric.hasOwnProperty(label)) {
-                reordered.push(series.metric[label]);
+                if (label === 'le') {
+                  reordered.push(parseHistogramLabel(series.metric[label]));
+                } else {
+                  reordered.push(series.metric[label]);
+                }
               } else {
                 reordered.push('');
               }
@@ -147,16 +151,16 @@ export class ResultTransformer {
     return table;
   }
 
-  transformInstantMetricData(md: any, options: any) {
+  transformInstantMetricData(md: any, options: any): TimeSeries {
     const dps = [];
     const { name, labels } = this.createLabelInfo(md.metric, options);
     dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
-    return { target: name, title: name, datapoints: dps, tags: labels, refId: options.refId, meta: options.meta };
+    return { target: name ?? '', title: name, datapoints: dps, tags: labels, refId: options.refId, meta: options.meta };
   }
 
   createLabelInfo(labels: { [key: string]: string }, options: any): { name?: string; labels: Labels; title?: string } {
     if (options?.legendFormat) {
-      const title = this.renderTemplate(this.templateSrv.replace(options.legendFormat), labels);
+      const title = this.renderTemplate(this.templateSrv.replace(options.legendFormat, options?.scopedVars), labels);
       return { name: title, title, labels };
     }
 
@@ -210,7 +214,7 @@ export class ResultTransformer {
 
       for (let j = 0; j < topSeries.length; j++) {
         const bottomPoint = bottomSeries[j] || [0];
-        topSeries[j][0] -= bottomPoint[0];
+        topSeries[j][0]! -= bottomPoint[0]!;
       }
     }
 
@@ -226,7 +230,7 @@ function sortSeriesByLabel(s1: TimeSeries, s2: TimeSeries): number {
     le1 = parseHistogramLabel(s1.target);
     le2 = parseHistogramLabel(s2.target);
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return 0;
   }
 

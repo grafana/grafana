@@ -17,62 +17,64 @@
  */
 
 // TODO: Everett Tech Debt: Fix KeyValuePair types
-export type KeyValuePair = {
+export type TraceKeyValuePair = {
   key: string;
   type?: string;
   value: any;
 };
 
-export type Link = {
+export type TraceLink = {
   url: string;
   text: string;
 };
 
-export type Log = {
+export type TraceLog = {
   timestamp: number;
-  fields: KeyValuePair[];
+  fields: TraceKeyValuePair[];
 };
 
-export type Process = {
+export type TraceProcess = {
   serviceName: string;
-  tags: KeyValuePair[];
+  tags: TraceKeyValuePair[];
 };
 
-export type SpanReference = {
+export type TraceSpanReference = {
   refType: 'CHILD_OF' | 'FOLLOWS_FROM';
   // eslint-disable-next-line no-use-before-define
-  span?: Span | null | undefined;
+  span?: TraceSpan | null | undefined;
   spanID: string;
   traceID: string;
 };
 
-export type SpanData = {
+export type TraceSpanData = {
   spanID: string;
   traceID: string;
   processID: string;
   operationName: string;
   startTime: number;
   duration: number;
-  logs: Log[];
-  tags?: KeyValuePair[];
-  references?: SpanReference[];
+  logs: TraceLog[];
+  tags?: TraceKeyValuePair[];
+  references?: TraceSpanReference[];
   warnings?: string[] | null;
+  stackTraces?: string[];
   flags: number;
+  errorIconColor?: string;
 };
 
-export type Span = SpanData & {
+export type TraceSpan = TraceSpanData & {
   depth: number;
   hasChildren: boolean;
-  process: Process;
+  process: TraceProcess;
   relativeStartTime: number;
-  tags: NonNullable<SpanData['tags']>;
-  references: NonNullable<SpanData['references']>;
-  warnings: NonNullable<SpanData['warnings']>;
-  subsidiarilyReferencedBy: SpanReference[];
+  tags: NonNullable<TraceSpanData['tags']>;
+  references: NonNullable<TraceSpanData['references']>;
+  warnings: NonNullable<TraceSpanData['warnings']>;
+  subsidiarilyReferencedBy: TraceSpanReference[];
 };
 
 export type TraceData = {
-  processes: Record<string, Process>;
+  processes: Record<string, TraceProcess>;
   traceID: string;
   warnings?: string[] | null;
 };
@@ -80,7 +82,7 @@ export type TraceData = {
 export type Trace = TraceData & {
   duration: number;
   endTime: number;
-  spans: Span[];
+  spans: TraceSpan[];
   startTime: number;
   traceName: string;
   services: Array<{ name: string; numberOfSpans: number }>;

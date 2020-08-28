@@ -32,6 +32,7 @@ import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } f
 import { AppEvent, AppEvents, locationUtil } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { auto } from 'angular';
+import { initGrafanaLive } from 'app/features/live/live';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
@@ -75,6 +76,11 @@ export class GrafanaCtrl {
       },
     });
 
+    // Initalize websocket event streaming
+    if (config.featureToggles.live) {
+      initGrafanaLive();
+    }
+
     $scope.init = () => {
       $scope.contextSrv = contextSrv;
       $scope.appSubUrl = config.appSubUrl;
@@ -101,7 +107,7 @@ export class GrafanaCtrl {
 
       let callerScope = this;
       if (callerScope.$id === 1 && !localScope) {
-        console.log('warning rootScope onAppEvent called without localscope');
+        console.warn('warning rootScope onAppEvent called without localscope');
       }
       if (localScope) {
         callerScope = localScope;
