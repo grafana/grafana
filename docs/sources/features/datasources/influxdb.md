@@ -97,7 +97,7 @@ specify an asterix `*` to select all fields.
 
 ### Group By
 To group by a tag click the plus icon at the end of the GROUP BY row. Pick a tag from the dropdown that appears.
-You can remove the group by by clicking on the `tag` and then click on the x icon.
+You can remove the "Group By" by clicking on the `tag` and then click on the x icon.
 
 ### Text Editor Mode (RAW)
 You can switch to raw query mode by clicking hamburger icon and then `Switch editor mode`.

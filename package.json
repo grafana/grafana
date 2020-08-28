@@ -215,6 +215,7 @@
     "@types/react-loadable": "5.5.2",
     "@types/react-virtualized-auto-sizer": "1.0.0",
     "@types/sockjs-client": "^1.1.1",
+    "@types/uuid": "8.3.0",
     "@welldone-software/why-did-you-render": "4.0.6",
     "abortcontroller-polyfill": "1.4.0",
     "angular": "1.6.9",
@@ -286,6 +287,7 @@
     "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "1.4.1",
     "tti-polyfill": "0.2.2",
+    "uuid": "8.3.0",
     "whatwg-fetch": "3.1.0"
   },
   "resolutions": {

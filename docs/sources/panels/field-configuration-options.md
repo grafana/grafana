@@ -156,13 +156,13 @@ When multiple stats, fields, or series are shown, this field controls the title 
 
 Given a field with a name of Temp, and labels of {"Loc"="PBI", "Sensor"="3"}
 
-| Expression syntax            | Example                | Renders to                        | Explanation |
-| ---------------------------- | ---------------------- | --------------------------------- | ----------- |
-| `${__field.displayName}`     | Same as syntax         | `Temp {Loc="PBI", Sensor="3"}`    | Displays the field name, and labels in `{}` if they are present. If there is only one label key in the response, then for the label portion, Grafana displays the value of the label without the enclosing braces. |
-| `${__field.name}`            | Same as syntax          | `Temp`                           | Displays the name of the field (without labels). |
-| `${__field.labels}`          | Same as syntax          | `Loc="PBI", Sensor="3"`          | Displays the labels without the name. |
-| `${__field.labels.X}`        | `${__field.labels.Loc}` | `PBI`                            | Displays the value of the specified label key. |
-| `${__field.labels.__values}` | Same as Syntax          | `PBI, 3`                         | Displays the values of the labels separated by a comma (without label keys). |
+| Expression syntax            | Example                 | Renders to                     | Explanation                                                                                                                                                                                                        |
+| ---------------------------- | ----------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `${__field.displayName}`     | Same as syntax          | `Temp {Loc="PBI", Sensor="3"}` | Displays the field name, and labels in `{}` if they are present. If there is only one label key in the response, then for the label portion, Grafana displays the value of the label without the enclosing braces. |
+| `${__field.name}`            | Same as syntax          | `Temp`                         | Displays the name of the field (without labels).                                                                                                                                                                   |
+| `${__field.labels}`          | Same as syntax          | `Loc="PBI", Sensor="3"`        | Displays the labels without the name.                                                                                                                                                                              |
+| `${__field.labels.X}`        | `${__field.labels.Loc}` | `PBI`                          | Displays the value of the specified label key.                                                                                                                                                                     |
+| `${__field.labels.__values}` | Same as Syntax          | `PBI, 3`                       | Displays the values of the labels separated by a comma (without label keys).                                                                                                                                       |
 
 If the value is an empty string after rendering the expression for a particular field, then the default display method is used.
 
@@ -200,6 +200,11 @@ To select a custom unit enter the unit and select the last `Custom: xxx` option 
 You can also paste a native emoji in the unit picker and pick it as a custom unit:
 
 {{< docs-imagebox img="/img/docs/v66/custom_unit_burger2.png" max-width="600px" caption="Custom unit emoji" >}}
+
+#### String unit
+
+Grafana can sometime be too aggressive in parsing strings and displaying them as numbers. To make Grafana show the original
+string create a field override and add a unit property with the `string` unit.
 
 ### Thresholds
 

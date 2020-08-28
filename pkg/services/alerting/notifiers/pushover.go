@@ -123,15 +123,40 @@ func init() {
 		Heading:     "Pushover settings",
 		Factory:     NewPushoverNotifier,
 		OptionsTemplate: `
-      <h3 class="page-heading">Pushover settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">API Token</span>
-        <input type="text" class="gf-form-input" required placeholder="Application token" ng-model="ctrl.model.settings.apiToken"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">User key(s)</span>
-        <input type="text" class="gf-form-input" required placeholder="comma-separated list" ng-model="ctrl.model.settings.userKey"></input>
-      </div>
+		<h3 class="page-heading">Pushover settings</h3>
+		<div class="gf-form">
+			<label class="gf-form-label width-10">API Token</label>
+			<div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.apiToken">
+				<input type="text"
+					required
+					class="gf-form-input"
+					ng-init="ctrl.model.secureSettings.apiToken = ctrl.model.settings.apiToken || null; ctrl.model.settings.apiToken = null;"
+					ng-model="ctrl.model.secureSettings.apiToken"
+					data-placement="right">
+				</input>
+			</div>
+			<div class="gf-form" ng-if="ctrl.model.secureFields.apiToken">
+			  <input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
+			  <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.apiToken = false">reset</a>
+			</div>
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label max-width-10">User Key(s)</label>
+			<div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.userKey">
+				<input type="text"
+					required
+					class="gf-form-input"
+					ng-init="ctrl.model.secureSettings.userKey = ctrl.model.settings.userKey || null; ctrl.model.settings.userKey = null;"
+					ng-model="ctrl.model.secureSettings.userKey"
+					placeholder="comma-separated list"
+					data-placement="right">
+				</input>
+			</div>
+			<div class="gf-form" ng-if="ctrl.model.secureFields.userKey">
+			  <input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
+			  <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.userKey = false">reset</a>
+			</div>
+		</div>
       <div class="gf-form">
         <span class="gf-form-label width-10">Device(s) (optional)</span>
         <input type="text" class="gf-form-input" placeholder="comma-separated list; leave empty to send to all devices" ng-model="ctrl.model.settings.device"></input>
@@ -258,8 +283,8 @@ func init() {
 
 // NewPushoverNotifier is the constructor for the Pushover Notifier
 func NewPushoverNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
-	userKey := model.Settings.Get("userKey").MustString()
-	APIToken := model.Settings.Get("apiToken").MustString()
+	userKey := model.DecryptedValue("userKey", model.Settings.Get("userKey").MustString())
+	APIToken := model.DecryptedValue("apiToken", model.Settings.Get("apiToken").MustString())
 	device := model.Settings.Get("device").MustString()
 	priority, _ := strconv.Atoi(model.Settings.Get("priority").MustString())
 	retry, _ := strconv.Atoi(model.Settings.Get("retry").MustString())
