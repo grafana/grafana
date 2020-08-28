@@ -7,10 +7,14 @@
   "required": ["type", "name", "id", "info", "dependencies"],
   "additionalProperties": false,
   "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Schema definition for the plugin.json file"
+    },
     "id": {
       "type": "string",
       "description": "Unique name of the plugin. If the plugin is published on grafana.com, then the plugin id has to follow the naming conventions.",
-      "pattern": "^[0-9a-z\\-]+$"
+      "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
     },
     "type": {
       "type": "string",
@@ -23,8 +27,8 @@
     },
     "category": {
       "type": "string",
-      "description": "Plugin category used on the Add data source page. Possible values are: `tsdb`, `logging`, `cloud`, `tracing`, and `sql`.",
-      "enum": ["tsdb", "logging", "cloud", "tracing", "sql"]
+      "description": "Plugin category used on the Add data source page. Possible values are: `tsdb`, `logging`, `cloud`, `tracing`, `sql`, `enterprise` and `other`.",
+      "enum": ["tsdb", "logging", "cloud", "tracing", "sql", "enterprise", "other"]
     },
     "annotations": {
       "type": "boolean",
@@ -73,6 +77,10 @@
       "type": "boolean",
       "description": "For data source plugins. If the plugin supports logs."
     },
+    "skipDataQuery": {
+      "type": "boolean",
+      "description": "For panel plugins. Hides the query editor."
+    },
     "partials": {
       "type": "object",
       "additionalItems": false,
@@ -117,13 +125,18 @@
     "dependencies": {
       "type": "object",
       "description": "Plugin dependencies.",
-      "required": ["grafanaVersion"],
+      "required": ["grafanaDependency"],
       "additionalProperties": false,
       "properties": {
         "grafanaVersion": {
           "type": "string",
-          "description": "Required Grafana version for this plugin, e.g. `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or v7.x.x.",
-          "pattern": "^([0-9x]+\\.[0-9x]+\\.*[0-9x]*\\s*)+$"
+          "description": "(Deprecated) Required Grafana version for this plugin, e.g. `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or v7.x.x.",
+          "pattern": "^([0-9]+)(\\.[0-9x]+)?(\\.[0-9x])?$"
+        },
+        "grafanaDependency": {
+          "type": "string",
+          "description": "Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.",
+          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*])?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]))?$"
         },
         "plugins": {
           "type": "array",
@@ -137,7 +150,7 @@
     "info": {
       "type": "object",
       "description": "Metadata for the plugin. Some fields are used on the plugins page in Grafana and others on grafana.com if the plugin is published.",
-      "required": ["logos", "version", "updated"],
+      "required": ["logos", "version", "updated", "keywords"],
       "additionalProperties": false,
       "properties": {
         "author": {
@@ -168,6 +181,7 @@
         "keywords": {
           "type": "array",
           "description": "Array of plugin keywords. Used for search on grafana.com.",
+          "minItems": 1,
           "items": {
             "type": "string"
           }
@@ -270,8 +284,7 @@
           },
           "url": {
             "type": "string",
-            "description": "For data source plugins. Route URL is where the request is proxied to.",
-            "format": "uri"
+            "description": "For data source plugins. Route URL is where the request is proxied to."
           },
           "reqSignedIn": {
             "type": "boolean"

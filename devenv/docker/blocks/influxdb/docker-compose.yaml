@@ -1,5 +1,5 @@
   influxdb:
-    image: influxdb:1.7.6
+    image: influxdb:${influxdb_version}
     container_name: influxdb
     ports:
       - '2004:2004'

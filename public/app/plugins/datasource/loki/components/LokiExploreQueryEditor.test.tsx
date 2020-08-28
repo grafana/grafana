@@ -5,7 +5,7 @@ import LokiExploreQueryEditor from './LokiExploreQueryEditor';
 import { LokiExploreExtraField } from './LokiExploreExtraField';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
-import { ExploreMode, LoadingState, PanelData, toUtc } from '@grafana/data';
+import { ExploreMode, LoadingState, PanelData, toUtc, TimeRange } from '@grafana/data';
 import { makeMockLokiDatasource } from '../mocks';
 import LokiLanguageProvider from '../language_provider';
 
@@ -15,6 +15,14 @@ const setup = (renderMethod: any, propOverrides?: object) => {
   const onRunQuery = jest.fn();
   const onChange = jest.fn();
   const query: LokiQuery = { expr: '', refId: 'A', maxLines: 0 };
+  const range: TimeRange = {
+    from: toUtc('2020-01-01', 'YYYY-MM-DD'),
+    to: toUtc('2020-01-02', 'YYYY-MM-DD'),
+    raw: {
+      from: toUtc('2020-01-01', 'YYYY-MM-DD'),
+      to: toUtc('2020-01-02', 'YYYY-MM-DD'),
+    },
+  };
   const data: PanelData = {
     state: LoadingState.NotStarted,
     series: [],
@@ -53,6 +61,7 @@ const setup = (renderMethod: any, propOverrides?: object) => {
   const props: any = {
     query,
     data,
+    range,
     datasource,
     exploreMode,
     history,

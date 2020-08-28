@@ -115,7 +115,7 @@ export class TimeSrv {
       // when time window specified in ms
       timeWindowMs = parseInt(timeWindow, 10);
     } else {
-      timeWindowMs = kbn.interval_to_ms(timeWindow);
+      timeWindowMs = kbn.intervalToMs(timeWindow);
     }
 
     return {
@@ -181,7 +181,7 @@ export class TimeSrv {
 
     if (interval) {
       const validInterval = this.contextSrv.getValidInterval(interval);
-      const intervalMs = kbn.interval_to_ms(validInterval);
+      const intervalMs = kbn.intervalToMs(validInterval);
 
       this.refreshTimer = this.timer.register(
         this.$timeout(() => {

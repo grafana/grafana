@@ -2,14 +2,13 @@ import React, { PureComponent, ReactNode } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from 'app/types';
 import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/types';
-import { SegmentAsync } from '@grafana/ui';
 import { VariablePickerProps } from '../../pickers/types';
-import { OperatorSegment } from './OperatorSegment';
-import { MetricFindValue, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { AdHocFilterBuilder } from './AdHocFilterBuilder';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ConditionSegment } from './ConditionSegment';
 import { addFilter, changeFilter, removeFilter } from '../actions';
+import { REMOVE_FILTER_KEY } from './AdHocFilterKey';
+import { AdHocFilterRenderer } from './AdHocFilterRenderer';
 
 interface OwnProps extends VariablePickerProps<AdHocVariableModel> {}
 
@@ -23,8 +22,6 @@ interface DispatchProps {
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-const REMOVE_FILTER_KEY = '-- remove filter --';
-const REMOVE_VALUE = { label: REMOVE_FILTER_KEY, value: REMOVE_FILTER_KEY };
 export class AdHocPickerUnconnected extends PureComponent<Props> {
   onChange = (index: number, prop: string) => (key: SelectableValue<string>) => {
     const { id, filters } = this.props.variable;
@@ -48,35 +45,6 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
     this.props.addFilter(id, filter);
   };
 
-  fetchFilterKeys = async () => {
-    const { variable } = this.props;
-    const ds = await getDatasourceSrv().get(variable.datasource!);
-
-    if (!ds || !ds.getTagKeys) {
-      return [];
-    }
-
-    const metrics = await ds.getTagKeys();
-    return metrics.map(m => ({ label: m.text, value: m.text }));
-  };
-
-  fetchFilterKeysWithRemove = async () => {
-    const keys = await this.fetchFilterKeys();
-    return [REMOVE_VALUE, ...keys];
-  };
-
-  fetchFilterValues = async (key: string) => {
-    const { variable } = this.props;
-    const ds = await getDatasourceSrv().get(variable.datasource!);
-
-    if (!ds || !ds.getTagValues) {
-      return [];
-    }
-
-    const metrics = await ds.getTagValues({ key });
-    return metrics.map((m: MetricFindValue) => ({ label: m.text, value: m.text }));
-  };
-
   render() {
     const { filters } = this.props.variable;
 
@@ -84,9 +52,8 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
       <div className="gf-form-inline">
         {this.renderFilters(filters)}
         <AdHocFilterBuilder
+          datasource={this.props.variable.datasource!}
           appendBefore={filters.length > 0 ? <ConditionSegment label="AND" /> : null}
-          onLoadKeys={this.fetchFilterKeys}
-          onLoadValues={this.fetchFilterValues}
           onCompleted={this.appendFilterToVariable}
         />
       </div>
@@ -96,7 +63,7 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
   renderFilters(filters: AdHocVariableFilter[]) {
     return filters.reduce((segments: ReactNode[], filter, index) => {
       if (segments.length > 0) {
-        segments.push(<ConditionSegment label="AND" />);
+        segments.push(<ConditionSegment label="AND" key={`condition-${index}`} />);
       }
       segments.push(this.renderFilterSegments(filter, index));
       return segments;
@@ -106,25 +73,13 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
   renderFilterSegments(filter: AdHocVariableFilter, index: number) {
     return (
       <React.Fragment key={`filter-${index}`}>
-        <div className="gf-form">
-          <SegmentAsync
-            className="query-segment-key"
-            value={filter.key}
-            onChange={this.onChange(index, 'key')}
-            loadOptions={this.fetchFilterKeysWithRemove}
-          />
-        </div>
-        <div className="gf-form">
-          <OperatorSegment value={filter.operator} onChange={this.onChange(index, 'operator')} />
-        </div>
-        <div className="gf-form">
-          <SegmentAsync
-            className="query-segment-value"
-            value={filter.value}
-            onChange={this.onChange(index, 'value')}
-            loadOptions={() => this.fetchFilterValues(filter.key)}
-          />
-        </div>
+        <AdHocFilterRenderer
+          datasource={this.props.variable.datasource!}
+          filter={filter}
+          onKeyChange={this.onChange(index, 'key')}
+          onOperatorChange={this.onChange(index, 'operator')}
+          onValueChange={this.onChange(index, 'value')}
+        />
       </React.Fragment>
     );
   }

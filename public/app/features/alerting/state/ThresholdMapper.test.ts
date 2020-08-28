@@ -7,6 +7,7 @@ describe('ThresholdMapper', () => {
     it('can map query conditions to thresholds', () => {
       const panel: any = {
         type: 'graph',
+        options: { alertThresholds: true },
         alert: {
           conditions: [
             {
@@ -28,6 +29,7 @@ describe('ThresholdMapper', () => {
     it('can map query conditions to thresholds', () => {
       const panel: any = {
         type: 'graph',
+        options: { alertThresholds: true },
         alert: {
           conditions: [
             {
@@ -52,6 +54,7 @@ describe('ThresholdMapper', () => {
     it('can map query conditions to thresholds', () => {
       const panel: any = {
         type: 'graph',
+        options: { alertThresholds: true },
         alert: {
           conditions: [
             {

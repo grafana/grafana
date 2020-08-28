@@ -14,7 +14,7 @@ import {
   IntervalValues,
   LogRowModel,
   LogsDedupStrategy,
-  LogsModel,
+  LogsSortOrder,
   RawTimeRange,
   TimeFragment,
   TimeRange,
@@ -25,6 +25,7 @@ import {
 } from '@grafana/data';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
+import { v4 as uuidv4 } from 'uuid';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
@@ -124,7 +125,6 @@ export function buildQueryTransaction(
   scanning: boolean,
   timeZone?: TimeZone
 ): QueryTransaction {
-  const configuredQueries = queries.map(query => ({ ...query, ...queryOptions }));
   const key = queries.reduce((combinedKey, query) => {
     combinedKey += query.key;
     return combinedKey;
@@ -149,7 +149,7 @@ export function buildQueryTransaction(
     // TODO: the query request expects number and we are using string here. Seems like it works so far but can create
     // issues down the road.
     panelId: panelId as any,
-    targets: configuredQueries, // Datasources rely on DataQueries being passed under the targets key.
+    targets: queries, // Datasources rely on DataQueries being passed under the targets key.
     range,
     requestId: 'explore',
     rangeRaw: range.raw,
@@ -159,6 +159,9 @@ export function buildQueryTransaction(
     },
     maxDataPoints: queryOptions.maxDataPoints,
     exploreMode: queryOptions.mode,
+    liveStreaming: queryOptions.liveStreaming,
+    showingGraph: queryOptions.showingGraph,
+    showingTable: queryOptions.showingTable,
   };
 
   return {
@@ -246,8 +249,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const metricProperties = ['expr', 'expression', 'target', 'datasource', 'query'];
-  const queries = parsedSegments.filter(segment => isSegment(segment, ...metricProperties));
+  const queries = parsedSegments.filter(segment => !isSegment(segment, 'ui', 'originPanelId'));
 
   const uiState = parsedSegments.filter(segment => isSegment(segment, 'ui'))[0];
   const ui = uiState
@@ -264,7 +266,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
 }
 
 export function generateKey(index = 0): string {
-  return `Q-${Date.now()}-${Math.random()}-${index}`;
+  return `Q-${uuidv4()}-${index}`;
 }
 
 export function generateEmptyQuery(queries: DataQuery[], index = 0): DataQuery {
@@ -463,67 +465,8 @@ export const getRefIds = (value: any): string[] => {
   return _.uniq(_.flatten(refIds));
 };
 
-export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  // compare milliseconds
-  if (a.timeEpochMs < b.timeEpochMs) {
-    return -1;
-  }
-
-  if (a.timeEpochMs > b.timeEpochMs) {
-    return 1;
-  }
-
-  // if milliseonds are equal, compare nanoseconds
-  if (a.timeEpochNs < b.timeEpochNs) {
-    return -1;
-  }
-
-  if (a.timeEpochNs > b.timeEpochNs) {
-    return 1;
-  }
-
-  return 0;
-};
-
-const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  // compare milliseconds
-  if (a.timeEpochMs > b.timeEpochMs) {
-    return -1;
-  }
-
-  if (a.timeEpochMs < b.timeEpochMs) {
-    return 1;
-  }
-
-  // if milliseonds are equal, compare nanoseconds
-  if (a.timeEpochNs > b.timeEpochNs) {
-    return -1;
-  }
-
-  if (a.timeEpochNs < b.timeEpochNs) {
-    return 1;
-  }
-
-  return 0;
-};
-
-export enum SortOrder {
-  Descending = 'Descending',
-  Ascending = 'Ascending',
-  DatasourceAZ = 'Datasource A-Z',
-  DatasourceZA = 'Datasource Z-A',
-}
-
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
-  RefreshPicker.isLive(refreshInterval) ? SortOrder.Ascending : SortOrder.Descending;
-
-export const sortLogsResult = (logsResult: LogsModel | null, sortOrder: SortOrder): LogsModel => {
-  const rows = logsResult ? logsResult.rows : [];
-  sortOrder === SortOrder.Ascending ? rows.sort(sortInAscendingOrder) : rows.sort(sortInDescendingOrder);
-  const result: LogsModel = logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
-
-  return result;
-};
+  RefreshPicker.isLive(refreshInterval) ? LogsSortOrder.Ascending : LogsSortOrder.Descending;
 
 export const convertToWebSocketUrl = (url: string) => {
   const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';

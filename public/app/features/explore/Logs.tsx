@@ -1,4 +1,6 @@
 import React, { PureComponent } from 'react';
+import { css, cx } from 'emotion';
+import { capitalize } from 'lodash';
 
 import {
   rangeUtil,
@@ -11,6 +13,7 @@ import {
   LogRowModel,
   LogsDedupDescription,
   LogsMetaItem,
+  LogsSortOrder,
   GraphSeriesXY,
   LinkModel,
   Field,
@@ -22,6 +25,7 @@ import store from 'app/core/store';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { MetaInfoText } from './MetaInfoText';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
+import { MAX_CHARACTERS } from '@grafana/ui/src/components/Logs/LogRowMessage';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
@@ -71,13 +75,41 @@ interface State {
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
+  logsSortOrder: LogsSortOrder | null;
+  isFlipping: boolean;
+  showParsedFields: string[];
 }
 
 export class Logs extends PureComponent<Props, State> {
-  state = {
+  flipOrderTimer: NodeJS.Timeout;
+  cancelFlippingTimer: NodeJS.Timeout;
+
+  state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
     showTime: store.getBool(SETTINGS_KEYS.showTime, true),
     wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
+    logsSortOrder: null,
+    isFlipping: false,
+    showParsedFields: [],
+  };
+
+  componentWillUnmount() {
+    clearTimeout(this.flipOrderTimer);
+    clearTimeout(this.cancelFlippingTimer);
+  }
+
+  onChangeLogsSortOrder = () => {
+    this.setState({ isFlipping: true });
+    // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
+    this.flipOrderTimer = setTimeout(() => {
+      this.setState(prevState => {
+        if (prevState.logsSortOrder === null || prevState.logsSortOrder === LogsSortOrder.Descending) {
+          return { logsSortOrder: LogsSortOrder.Ascending };
+        }
+        return { logsSortOrder: LogsSortOrder.Descending };
+      });
+    }, 0);
+    this.cancelFlippingTimer = setTimeout(() => this.setState({ isFlipping: false }), 1000);
   };
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
@@ -140,6 +172,37 @@ export class Logs extends PureComponent<Props, State> {
     }
   };
 
+  showParsedField = (key: string) => {
+    const index = this.state.showParsedFields.indexOf(key);
+
+    if (index === -1) {
+      this.setState(state => {
+        return {
+          showParsedFields: state.showParsedFields.concat(key),
+        };
+      });
+    }
+  };
+
+  hideParsedField = (key: string) => {
+    const index = this.state.showParsedFields.indexOf(key);
+    if (index > -1) {
+      this.setState(state => {
+        return {
+          showParsedFields: state.showParsedFields.filter(k => key !== k),
+        };
+      });
+    }
+  };
+
+  clearParsedFields = () => {
+    this.setState(state => {
+      return {
+        showParsedFields: [],
+      };
+    });
+  };
+
   render() {
     const {
       logRows,
@@ -165,7 +228,7 @@ export class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { showLabels, showTime, wrapLogMessage } = this.state;
+    const { showLabels, showTime, wrapLogMessage, logsSortOrder, isFlipping, showParsedFields } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -178,6 +241,14 @@ export class Logs extends PureComponent<Props, State> {
         label: 'Dedup count',
         value: dedupCount,
         kind: LogsMetaKind.Number,
+      });
+    }
+
+    if (logRows.some(r => r.entry.length > MAX_CHARACTERS)) {
+      meta.push({
+        label: 'Info',
+        value: 'Logs with more than 100,000 characters could not be parsed and highlighted',
+        kind: LogsMetaKind.String,
       });
     }
 
@@ -205,27 +276,43 @@ export class Logs extends PureComponent<Props, State> {
         </div>
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
-            <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
-            <Switch label="Unique labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
-            <Switch label="Wrap lines" checked={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
-            <ToggleButtonGroup label="Dedup" transparent={true}>
-              {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
-                <ToggleButton
-                  key={i}
-                  value={dedupType}
-                  onChange={this.onChangeDedup}
-                  selected={dedupStrategy === dedupType}
-                  // @ts-ignore
-                  tooltip={LogsDedupDescription[dedupType]}
-                >
-                  {dedupType}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
+            <div className="logs-panel-controls-main">
+              <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
+              <Switch label="Unique labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
+              <Switch label="Wrap lines" checked={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
+              <ToggleButtonGroup label="Dedup" transparent={true}>
+                {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
+                  <ToggleButton
+                    key={i}
+                    value={dedupType}
+                    onChange={this.onChangeDedup}
+                    selected={dedupStrategy === dedupType}
+                    // @ts-ignore
+                    tooltip={LogsDedupDescription[dedupType]}
+                  >
+                    {capitalize(dedupType)}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
+            </div>
+            <button
+              disabled={isFlipping}
+              title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
+              aria-label="Flip results order"
+              className={cx(
+                'gf-form-label gf-form-label--btn',
+                css`
+                  margin-top: 4px;
+                `
+              )}
+              onClick={this.onChangeLogsSortOrder}
+            >
+              <span className="btn-title">{isFlipping ? 'Flipping...' : 'Flip results order'}</span>
+            </button>
           </div>
         </div>
 
-        {hasData && meta && (
+        {meta && (
           <MetaInfoText
             metaItems={meta.map(item => {
               return {
@@ -233,6 +320,25 @@ export class Logs extends PureComponent<Props, State> {
                 value: renderMetaItem(item.value, item.kind),
               };
             })}
+          />
+        )}
+
+        {showParsedFields && showParsedFields.length > 0 && (
+          <MetaInfoText
+            metaItems={[
+              {
+                label: 'Showing only parsed fields',
+                value: renderMetaItem(showParsedFields, LogsMetaKind.LabelsMap),
+              },
+              {
+                label: '',
+                value: (
+                  <Button variant="secondary" size="sm" onClick={this.clearParsedFields}>
+                    Show all parsed fields
+                  </Button>
+                ),
+              },
+            ]}
           />
         )}
 
@@ -251,6 +357,10 @@ export class Logs extends PureComponent<Props, State> {
           wrapLogMessage={wrapLogMessage}
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
+          logsSortOrder={logsSortOrder}
+          showParsedFields={showParsedFields}
+          onClickShowParsedField={this.showParsedField}
+          onClickHideParsedField={this.hideParsedField}
         />
 
         {!loading && !hasData && !scanning && (

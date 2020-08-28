@@ -5,10 +5,17 @@ import { SecondaryActions } from './SecondaryActions';
 
 const addQueryRowButtonSelector = '[aria-label="Add row button"]';
 const richHistoryButtonSelector = '[aria-label="Rich history button"]';
+const queryInspectorButtonSelector = '[aria-label="Query inspector button"]';
 
 describe('SecondaryActions', () => {
   it('should render component two buttons', () => {
-    const wrapper = shallow(<SecondaryActions onClickAddQueryRowButton={noop} onClickRichHistoryButton={noop} />);
+    const wrapper = shallow(
+      <SecondaryActions
+        onClickAddQueryRowButton={noop}
+        onClickRichHistoryButton={noop}
+        onClickQueryInspectorButton={noop}
+      />
+    );
     expect(wrapper.find(addQueryRowButtonSelector)).toHaveLength(1);
     expect(wrapper.find(richHistoryButtonSelector)).toHaveLength(1);
   });
@@ -19,6 +26,7 @@ describe('SecondaryActions', () => {
         addQueryRowButtonHidden={true}
         onClickAddQueryRowButton={noop}
         onClickRichHistoryButton={noop}
+        onClickQueryInspectorButton={noop}
       />
     );
     expect(wrapper.find(addQueryRowButtonSelector)).toHaveLength(0);
@@ -31,6 +39,7 @@ describe('SecondaryActions', () => {
         addQueryRowButtonDisabled={true}
         onClickAddQueryRowButton={noop}
         onClickRichHistoryButton={noop}
+        onClickQueryInspectorButton={noop}
       />
     );
     expect(wrapper.find(addQueryRowButtonSelector).props().disabled).toBe(true);
@@ -39,13 +48,22 @@ describe('SecondaryActions', () => {
   it('should map click handlers correctly', () => {
     const onClickAddRow = jest.fn();
     const onClickHistory = jest.fn();
+    const onClickQueryInspector = jest.fn();
     const wrapper = shallow(
-      <SecondaryActions onClickAddQueryRowButton={onClickAddRow} onClickRichHistoryButton={onClickHistory} />
+      <SecondaryActions
+        onClickAddQueryRowButton={onClickAddRow}
+        onClickRichHistoryButton={onClickHistory}
+        onClickQueryInspectorButton={onClickQueryInspector}
+      />
     );
+
     wrapper.find(addQueryRowButtonSelector).simulate('click');
     expect(onClickAddRow).toBeCalled();
 
     wrapper.find(richHistoryButtonSelector).simulate('click');
     expect(onClickHistory).toBeCalled();
+
+    wrapper.find(queryInspectorButtonSelector).simulate('click');
+    expect(onClickQueryInspector).toBeCalled();
   });
 });

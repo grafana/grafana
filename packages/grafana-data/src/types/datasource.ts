@@ -5,7 +5,7 @@ import { PanelData } from './panel';
 import { LogRowModel } from './logs';
 import { AnnotationEvent, KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
-import { RawTimeRange, TimeRange, AbsoluteTimeRange } from './time';
+import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
 import { CoreApp } from './app';
 
@@ -300,6 +300,7 @@ export interface QueryEditorProps<
    * Contains query response filtered by refId of QueryResultBase and possible query error
    */
   data?: PanelData;
+  range?: TimeRange;
   exploreId?: any;
   history?: HistoryItem[];
 }
@@ -322,7 +323,6 @@ export interface ExploreQueryFieldProps<
 > extends QueryEditorProps<DSType, TQuery, TOptions> {
   history: any[];
   onBlur?: () => void;
-  absoluteRange?: AbsoluteTimeRange;
   exploreId?: any;
 }
 
@@ -433,6 +433,11 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   // Request Timing
   startTime: number;
   endTime?: number;
+
+  // Explore state used by various datasources
+  liveStreaming?: boolean;
+  showingGraph?: boolean;
+  showingTable?: boolean;
 }
 
 export interface DataQueryTimings {
@@ -533,8 +538,11 @@ export interface DataSourceSelectItem {
 export interface AnnotationQueryRequest<MoreOptions = {}> {
   range: TimeRange;
   rangeRaw: RawTimeRange;
+
   // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
   dashboard: any;
+
+  // The annotation query, typically extends DataQuery
   annotation: {
     datasource: string;
     enable: boolean;

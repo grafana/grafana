@@ -1,4 +1,4 @@
-import LokiDatasource, { RangeQueryOptions } from './datasource';
+import LokiDatasource from './datasource';
 import { LokiQuery, LokiResponse, LokiResultType } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { AnnotationQueryRequest, DataFrame, DataSourceApi, dateTime, FieldCache, TimeRange } from '@grafana/data';
@@ -15,6 +15,17 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
+
+jest.mock('app/features/dashboard/services/TimeSrv', () => {
+  return {
+    getTimeSrv: () => ({
+      timeRange: () => ({
+        from: new Date(0),
+        to: new Date(1),
+      }),
+    }),
+  };
+});
 
 const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
 
@@ -81,7 +92,7 @@ describe('LokiDatasource', () => {
         intervalMs: 2000,
       };
 
-      const req = ds.createRangeQuery(target, options);
+      const req = ds.createRangeQuery(target, options as any);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
       expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything());
@@ -103,7 +114,7 @@ describe('LokiDatasource', () => {
       datasourceRequestMock.mockImplementation(() => Promise.resolve(testResp));
     });
 
-    test('should just run range query when in logs mode', async () => {
+    test('should run range and instant query', async () => {
       const options = getQueryOptions<LokiQuery>({
         targets: [{ expr: '{job="grafana"}', refId: 'B' }],
       });
@@ -112,7 +123,7 @@ describe('LokiDatasource', () => {
       ds.runRangeQuery = jest.fn(() => of({ data: [] }));
       await ds.query(options).toPromise();
 
-      expect(ds.runInstantQuery).not.toBeCalled();
+      expect(ds.runInstantQuery).toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
@@ -174,9 +185,11 @@ describe('LokiDatasource', () => {
       const ds = new LokiDatasource(customSettings, templateSrvMock);
 
       datasourceRequestMock.mockImplementation(
-        jest.fn().mockReturnValueOnce(
+        jest.fn().mockReturnValue(
           Promise.reject({
-            data: 'parse error at line 1, col 6: invalid char escape',
+            data: {
+              message: 'parse error at line 1, col 6: invalid char escape',
+            },
             status: 400,
             statusText: 'Bad Request',
           })
@@ -189,7 +202,7 @@ describe('LokiDatasource', () => {
       try {
         await ds.query(options).toPromise();
       } catch (err) {
-        expect(err.message).toBe(
+        expect(err.data.message).toBe(
           'Error: parse error at line 1, col 6: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://github.com/grafana/loki/blob/master/docs/logql.md.'
         );
       }
@@ -343,8 +356,8 @@ describe('LokiDatasource', () => {
         raw: { from: '0', to: '1000000001' },
       };
       // Odd timerange/interval combination that would lead to a float step
-      const options: RangeQueryOptions = { range, intervalMs: 2000 };
-      expect(Number.isInteger(ds.createRangeQuery(query, options).step!)).toBeTruthy();
+      const options = { range, intervalMs: 2000 };
+      expect(Number.isInteger(ds.createRangeQuery(query, options as any).step!)).toBeTruthy();
     });
   });
 
@@ -440,6 +453,19 @@ describe('LokiDatasource', () => {
         expect(res.length).toBe(0);
       });
     });
+
+    mocks.forEach((mock, index) => {
+      it(`should return label names according to provided rangefor Loki v${index} `, async () => {
+        ds.getVersion = mock.getVersion;
+        ds.metadataRequest = mock.metadataRequest;
+        const query = 'label_names()';
+        const res = await ds.metricFindQuery(query, {
+          range: { from: new Date(2), to: new Date(3) },
+        });
+        expect(res[0].text).toEqual('label1');
+        expect(res.length).toBe(1);
+      });
+    });
   });
 });
 
@@ -468,7 +494,7 @@ function makeLimitTest(instanceSettings: any, datasourceRequestMock: any, templa
 
     ds.query(options);
 
-    expect(datasourceRequestMock.mock.calls.length).toBe(1);
+    expect(datasourceRequestMock.mock.calls.length).toBe(2);
     expect(datasourceRequestMock.mock.calls[0][0].url).toContain(`limit=${expectedLimit}`);
   };
 }

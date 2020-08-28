@@ -10,6 +10,7 @@ import {
   LoadingState,
   QueryResultMeta,
 } from '@grafana/data';
+import { v4 as uuidv4 } from 'uuid';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
@@ -311,7 +312,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       // TODO: eventually use the real /health endpoint
       const request: DataQueryRequest<InfluxQuery> = {
         targets: [{ refId: 'test', query: 'buckets()' }],
-        requestId: `${this.id}-health-${Date.now()}`,
+        requestId: `${this.id}-health-${uuidv4()}`,
         dashboardId: 0,
         panelId: 0,
         interval: '1m',

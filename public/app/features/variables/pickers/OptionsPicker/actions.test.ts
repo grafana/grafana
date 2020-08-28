@@ -4,12 +4,12 @@ import { TemplatingState } from '../../state/reducers';
 import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../types';
 import {
   hideOptions,
+  moveOptionsHighlight,
   showOptions,
   toggleOption,
   toggleTag,
   updateOptionsAndFilter,
   updateSearchQuery,
-  moveOptionsHighlight,
 } from './reducer';
 import {
   commitChangesToVariable,
@@ -45,7 +45,10 @@ describe('options picker actions', () => {
 
   describe('when navigateOptions is dispatched with navigation key cancel', () => {
     it('then correct actions are dispatched', async () => {
-      const variable = createVariable({ options: [createOption('A', 'A', true)] });
+      const variable = createMultiVariable({
+        options: [createOption('A', 'A', true)],
+        current: createOption(['A'], ['A'], true),
+      });
 
       const clearOthers = false;
       const key = NavigationKey.cancel;
@@ -57,33 +60,28 @@ describe('options picker actions', () => {
         .whenAsyncActionIsDispatched(navigateOptions(key, clearOthers), true);
 
       const option = {
-        ...createOption('A'),
+        ...createOption(['A']),
         selected: true,
         value: ['A'],
         tags: [] as any[],
       };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [setCurrentValue, changeQueryValue, updateOption, locationAction, hideAction] = actions;
-        const expectedNumberOfActions = 5;
-
-        expect(setCurrentValue).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        expect(changeQueryValue).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' }))
-        );
-        expect(updateOption).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        expect(locationAction).toEqual(updateLocation({ query: { 'var-Constant': ['A'] } }));
-        expect(hideAction).toEqual(hideOptions());
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' })),
+        hideOptions()
+      );
     });
   });
 
   describe('when navigateOptions is dispatched with navigation key select without clearOthers', () => {
     it('then correct actions are dispatched', async () => {
       const option = createOption('A', 'A', true);
-      const variable = createVariable({ options: [option], includeAll: false });
+      const variable = createMultiVariable({
+        options: [option],
+        current: createOption(['A'], ['A'], true),
+        includeAll: false,
+      });
 
       const clearOthers = false;
       const key = NavigationKey.select;
@@ -95,20 +93,18 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(navigateOptions(NavigationKey.moveDown, false))
         .whenAsyncActionIsDispatched(navigateOptions(key, clearOthers), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [toggleOptionAction] = actions;
-        const expectedNumberOfActions = 1;
-
-        expect(toggleOptionAction).toEqual(toggleOption({ option, forceSelect: false, clearOthers }));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(toggleOption({ option, forceSelect: false, clearOthers }));
     });
   });
 
   describe('when navigateOptions is dispatched with navigation key select with clearOthers', () => {
     it('then correct actions are dispatched', async () => {
       const option = createOption('A', 'A', true);
-      const variable = createVariable({ options: [option], includeAll: false });
+      const variable = createMultiVariable({
+        options: [option],
+        current: createOption(['A'], ['A'], true),
+        includeAll: false,
+      });
 
       const clearOthers = true;
       const key = NavigationKey.select;
@@ -120,20 +116,14 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(navigateOptions(NavigationKey.moveDown, clearOthers))
         .whenAsyncActionIsDispatched(navigateOptions(key, clearOthers), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [toggleOptionAction] = actions;
-        const expectedNumberOfActions = 1;
-
-        expect(toggleOptionAction).toEqual(toggleOption({ option, forceSelect: false, clearOthers }));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(toggleOption({ option, forceSelect: false, clearOthers }));
     });
   });
 
   describe('when navigateOptions is dispatched with navigation key select after highlighting the third option', () => {
     it('then correct actions are dispatched', async () => {
       const options = [createOption('A'), createOption('B'), createOption('C')];
-      const variable = createVariable({ options, includeAll: false });
+      const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
 
       const clearOthers = true;
       const key = NavigationKey.select;
@@ -147,20 +137,14 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(navigateOptions(NavigationKey.moveDown, clearOthers))
         .whenAsyncActionIsDispatched(navigateOptions(key, clearOthers), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [toggleOptionAction] = actions;
-        const expectedNumberOfActions = 1;
-
-        expect(toggleOptionAction).toEqual(toggleOption({ option: options[2], forceSelect: false, clearOthers }));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(toggleOption({ option: options[2], forceSelect: false, clearOthers }));
     });
   });
 
   describe('when navigateOptions is dispatched with navigation key select after highlighting the second option', () => {
     it('then correct actions are dispatched', async () => {
       const options = [createOption('A'), createOption('B'), createOption('C')];
-      const variable = createVariable({ options, includeAll: false });
+      const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
 
       const clearOthers = true;
       const key = NavigationKey.select;
@@ -175,20 +159,14 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(navigateOptions(NavigationKey.moveUp, clearOthers))
         .whenAsyncActionIsDispatched(navigateOptions(key, clearOthers), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [toggleOptionAction] = actions;
-        const expectedNumberOfActions = 1;
-
-        expect(toggleOptionAction).toEqual(toggleOption({ option: options[1], forceSelect: false, clearOthers }));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(toggleOption({ option: options[1], forceSelect: false, clearOthers }));
     });
   });
 
   describe('when navigateOptions is dispatched with navigation key selectAndClose after highlighting the second option', () => {
     it('then correct actions are dispatched', async () => {
       const options = [createOption('A'), createOption('B'), createOption('C')];
-      const variable = createVariable({ options, includeAll: false });
+      const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
 
       const clearOthers = false;
       const key = NavigationKey.selectAndClose;
@@ -204,41 +182,27 @@ describe('options picker actions', () => {
         .whenAsyncActionIsDispatched(navigateOptions(key, clearOthers), true);
 
       const option = {
-        ...createOption('B'),
+        ...createOption(['B']),
         selected: true,
         value: ['B'],
         tags: [] as any[],
       };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [
-          toggleOptionAction,
-          setCurrentValue,
-          changeQueryValue,
-          updateOption,
-          locationAction,
-          hideAction,
-        ] = actions;
-        const expectedNumberOfActions = 6;
-
-        expect(toggleOptionAction).toEqual(toggleOption({ option: options[1], forceSelect: true, clearOthers }));
-        expect(setCurrentValue).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        expect(changeQueryValue).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' }))
-        );
-        expect(updateOption).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        expect(locationAction).toEqual(updateLocation({ query: { 'var-Constant': ['B'] } }));
-        expect(hideAction).toEqual(hideOptions());
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        toggleOption({ option: options[1], forceSelect: true, clearOthers }),
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' })),
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        updateLocation({ query: { 'var-Constant': ['B'] } }),
+        hideOptions()
+      );
     });
   });
 
   describe('when filterOrSearchOptions is dispatched with simple filter', () => {
     it('then correct actions are dispatched', async () => {
       const options = [createOption('A'), createOption('B'), createOption('C')];
-      const variable = createVariable({ options, includeAll: false });
+      const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
       const filter = 'A';
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
@@ -247,22 +211,14 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(showOptions(variable))
         .whenAsyncActionIsDispatched(filterOrSearchOptions(filter), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [updateQueryValue, updateAndFilter] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(updateQueryValue).toEqual(updateSearchQuery(filter));
-        expect(updateAndFilter).toEqual(updateOptionsAndFilter(variable.options));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(updateSearchQuery(filter), updateOptionsAndFilter(variable.options));
     });
   });
 
   describe('when commitChangesToVariable is dispatched with no changes', () => {
     it('then correct actions are dispatched', async () => {
-      const options = [createOption('A'), createOption('B'), createOption('C')];
-      const variable = createVariable({ options, includeAll: false });
+      const options = [createOption('A', 'A', true), createOption('B'), createOption('C')];
+      const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
@@ -271,31 +227,24 @@ describe('options picker actions', () => {
         .whenAsyncActionIsDispatched(commitChangesToVariable(), true);
 
       const option = {
-        ...createOption(''),
+        ...createOption(['A']),
         selected: true,
-        value: [] as any[],
+        value: ['A'] as any[],
         tags: [] as any[],
       };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [setCurrentValue, changeQueryValue, hideAction] = actions;
-        const expectedNumberOfActions = 3;
-
-        expect(setCurrentValue).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        expect(changeQueryValue).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' }))
-        );
-        expect(hideAction).toEqual(hideOptions());
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' })),
+        hideOptions()
+      );
     });
   });
 
   describe('when commitChangesToVariable is dispatched with changes', () => {
     it('then correct actions are dispatched', async () => {
-      const options = [createOption('A'), createOption('B'), createOption('C')];
-      const variable = createVariable({ options, includeAll: false });
+      const options = [createOption('A', 'A', true), createOption('B'), createOption('C')];
+      const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
       const clearOthers = false;
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
@@ -307,33 +256,26 @@ describe('options picker actions', () => {
         .whenAsyncActionIsDispatched(commitChangesToVariable(), true);
 
       const option = {
-        ...createOption('A'),
+        ...createOption([]),
         selected: true,
-        value: ['A'],
+        value: [],
         tags: [] as any[],
       };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [setCurrentValue, changeQueryValue, updateOption, locationAction, hideAction] = actions;
-        const expectedNumberOfActions = 5;
-
-        expect(setCurrentValue).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        expect(changeQueryValue).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' }))
-        );
-        expect(updateOption).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        expect(locationAction).toEqual(updateLocation({ query: { 'var-Constant': ['A'] } }));
-        expect(hideAction).toEqual(hideOptions());
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' })),
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        updateLocation({ query: { 'var-Constant': [] } }),
+        hideOptions()
+      );
     });
   });
 
   describe('when commitChangesToVariable is dispatched with changes and list of options is filtered', () => {
     it('then correct actions are dispatched', async () => {
-      const options = [createOption('A'), createOption('B'), createOption('C')];
-      const variable = createVariable({ options, includeAll: false });
+      const options = [createOption('A', 'A', true), createOption('B'), createOption('C')];
+      const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
       const clearOthers = false;
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
@@ -346,33 +288,26 @@ describe('options picker actions', () => {
         .whenAsyncActionIsDispatched(commitChangesToVariable(), true);
 
       const option = {
-        ...createOption('A'),
+        ...createOption([]),
         selected: true,
-        value: ['A'],
+        value: [],
         tags: [] as any[],
       };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [setCurrentValue, changeQueryValue, updateOption, locationAction, hideAction] = actions;
-        const expectedNumberOfActions = 5;
-
-        expect(setCurrentValue).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        expect(changeQueryValue).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: 'C' }))
-        );
-        expect(updateOption).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        expect(locationAction).toEqual(updateLocation({ query: { 'var-Constant': ['A'] } }));
-        expect(hideAction).toEqual(hideOptions());
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: 'C' })),
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        updateLocation({ query: { 'var-Constant': [] } }),
+        hideOptions()
+      );
     });
   });
 
   describe('when toggleOptionByHighlight is dispatched with changes', () => {
     it('then correct actions are dispatched', async () => {
       const options = [createOption('A'), createOption('B'), createOption('C')];
-      const variable = createVariable({ options, includeAll: false });
+      const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
       const clearOthers = false;
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
@@ -384,20 +319,14 @@ describe('options picker actions', () => {
 
       const option = createOption('A');
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [toggleOptionAction] = actions;
-        const expectedNumberOfActions = 1;
-
-        expect(toggleOptionAction).toEqual(toggleOption({ option, forceSelect: false, clearOthers }));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(toggleOption({ option, forceSelect: false, clearOthers }));
     });
   });
 
   describe('when toggleOptionByHighlight is dispatched with changes selected from a filtered options list', () => {
     it('then correct actions are dispatched', async () => {
       const options = [createOption('A'), createOption('B'), createOption('BC'), createOption('BD')];
-      const variable = createVariable({ options, includeAll: false });
+      const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
       const clearOthers = false;
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
@@ -414,19 +343,14 @@ describe('options picker actions', () => {
       const optionA = createOption('A');
       const optionBC = createOption('BD');
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [toggleOptionA, filterOnB, updateAndFilter, firstMoveDown, secondMoveDown, toggleOptionBC] = actions;
-        const expectedNumberOfActions = 6;
-
-        expect(toggleOptionA).toEqual(toggleOption({ option: optionA, forceSelect: false, clearOthers }));
-        expect(filterOnB).toEqual(updateSearchQuery('B'));
-        expect(updateAndFilter).toEqual(updateOptionsAndFilter(variable.options));
-        expect(firstMoveDown).toEqual(moveOptionsHighlight(1));
-        expect(secondMoveDown).toEqual(moveOptionsHighlight(1));
-        expect(toggleOptionBC).toEqual(toggleOption({ option: optionBC, forceSelect: false, clearOthers }));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        toggleOption({ option: optionA, forceSelect: false, clearOthers }),
+        updateSearchQuery('B'),
+        updateOptionsAndFilter(variable.options),
+        moveOptionsHighlight(1),
+        moveOptionsHighlight(1),
+        toggleOption({ option: optionBC, forceSelect: false, clearOthers })
+      );
     });
   });
 
@@ -434,7 +358,12 @@ describe('options picker actions', () => {
     it('then correct actions are dispatched', async () => {
       const options = [createOption('A'), createOption('B'), createOption('C')];
       const tag = createTag('tag', []);
-      const variable = createVariable({ options, includeAll: false, tags: [tag] });
+      const variable = createMultiVariable({
+        options,
+        current: createOption(['A'], ['A'], true),
+        includeAll: false,
+        tags: [tag],
+      });
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
@@ -442,13 +371,7 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(showOptions(variable))
         .whenAsyncActionIsDispatched(toggleAndFetchTag(tag), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [toggleTagAction] = actions;
-        const expectedNumberOfActions = 1;
-
-        expect(toggleTagAction).toEqual(toggleTag(tag));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(toggleTag(tag));
     });
   });
 
@@ -457,7 +380,12 @@ describe('options picker actions', () => {
       const options = [createOption('A'), createOption('B'), createOption('C')];
       const tag = createTag('tag');
       const values = [createMetric('b')];
-      const variable = createVariable({ options, includeAll: false, tags: [tag] });
+      const variable = createMultiVariable({
+        options,
+        current: createOption(['A'], ['A'], true),
+        includeAll: false,
+        tags: [tag],
+      });
 
       datasource.metricFindQuery.mockReset();
       // @ts-ignore strict null error TS2345: Argument of type '() => Promise<{ value: string; text: string; }[]>' is not assignable to parameter of type '() => Promise<never[]>'
@@ -469,23 +397,17 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(showOptions(variable))
         .whenAsyncActionIsDispatched(toggleAndFetchTag(tag), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [toggleTagAction] = actions;
-        const expectedNumberOfActions = 1;
-
-        expect(toggleTagAction).toEqual(toggleTag({ ...tag, values: ['b'] }));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(toggleTag({ ...tag, values: ['b'] }));
     });
   });
 });
 
-function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableModel {
+function createMultiVariable(extend?: Partial<QueryVariableModel>): QueryVariableModel {
   return {
     type: 'query',
     id: '0',
     global: false,
-    current: createOption(''),
+    current: createOption([]),
     options: [],
     query: 'options-query',
     name: 'Constant',
@@ -508,7 +430,7 @@ function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableMode
   };
 }
 
-function createOption(text: string, value?: string, selected?: boolean) {
+function createOption(text: string | string[], value?: string | string[], selected?: boolean) {
   const metric = createMetric(text);
   return {
     ...metric,
@@ -517,7 +439,7 @@ function createOption(text: string, value?: string, selected?: boolean) {
   };
 }
 
-function createMetric(value: string) {
+function createMetric(value: string | string[]) {
   return {
     value: value,
     text: value,
