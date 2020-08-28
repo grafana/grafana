@@ -233,9 +233,9 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     }
 
     if (seriesList[0].hasMsResolution) {
-      tooltipFormat = defaultDateFormats.fullDate;
-    } else {
       tooltipFormat = defaultDateFormats.fullDateMS;
+    } else {
+      tooltipFormat = defaultDateFormats.fullDate;
     }
 
     if (allSeriesMode) {
