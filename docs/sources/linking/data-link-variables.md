@@ -34,7 +34,7 @@ Series specific variables are available under ``__series`` namespace:
 
 Field-specific variables are available under ``__field`` namespace:
 
-* ``__field.name`` - field name to the URL
+* ``__field.name`` - the name of the field
 
 ## Value variables
 
