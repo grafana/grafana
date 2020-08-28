@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
   DataTransformerID,
   standardTransformers,
@@ -135,9 +135,11 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
   onChange,
 }) => {
   const fieldNames = useMemo(() => getAllFieldNamesFromDataFrames(input), [input]);
-  const fieldNameOptions = fieldNames.map((item: string) => ({ label: item, value: item }));
+  const fieldNameOptions = useMemo(() => fieldNames.map((item: string) => ({ label: item, value: item })), [
+    fieldNames,
+  ]);
 
-  const onAddFilter = () => {
+  const onAddFilter = useCallback(() => {
     let valueFilters = options.valueFilters.map(filter => ({ ...filter })); // Deep copy
     valueFilters.push({
       type: 'include',
@@ -150,25 +152,31 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
       ...options,
       valueFilters,
     });
-  };
+  }, [options]);
 
-  const onDeleteFilter = (index: number) => () => {
-    let valueFilters = options.valueFilters.map(filter => ({ ...filter })); // Deep copy
-    valueFilters.splice(index, 1);
-    onChange({
-      ...options,
-      valueFilters,
-    });
-  };
+  const onDeleteFilter = useCallback(
+    (index: number) => () => {
+      let valueFilters = options.valueFilters.map(filter => ({ ...filter })); // Deep copy
+      valueFilters.splice(index, 1);
+      onChange({
+        ...options,
+        valueFilters,
+      });
+    },
+    [options]
+  );
 
-  const onConfigChange = (index: number) => (config: ValueFilter) => {
-    let valueFilters = options.valueFilters.map(filter => ({ ...filter })); // Deep copy
-    valueFilters[index] = config;
-    onChange({
-      ...options,
-      valueFilters: valueFilters as ValueFilter[],
-    });
-  };
+  const onConfigChange = useCallback(
+    (index: number) => (config: ValueFilter) => {
+      let valueFilters = options.valueFilters.map(filter => ({ ...filter })); // Deep copy
+      valueFilters[index] = config;
+      onChange({
+        ...options,
+        valueFilters: valueFilters as ValueFilter[],
+      });
+    },
+    [options]
+  );
 
   return (
     <div>
