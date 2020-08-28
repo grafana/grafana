@@ -18,7 +18,7 @@ You can also use template variables in your data links URLs, refer to [Templates
 
 ## Time range panel variables
 
-These variables allow you to set the time range for a dashboard. For more information about time settings and options in Grafana, refer to [Time range controls]({{< relref "../dashboards/time-range-controls.md" >}})
+These variables allow you to include the current time range in the data link URL.
 
 * ``__url_time_range`` - current dashboard's time range (i.e. ``?from=now-6h&to=now``)
 * `$__from and $__to` - For more information, refer to [Global variables]({{< relref "../variables/variable-types/global-variables.md#__from-and-__to" >}}).
