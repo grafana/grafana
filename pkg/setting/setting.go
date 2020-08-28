@@ -407,24 +407,21 @@ func (cfg *Cfg) readAnnotationSettings() {
 	apiIAnnotation := cfg.Raw.Section("annotations.api")
 	alertingSection := cfg.Raw.Section("alerting")
 
-	cfg.AlertingAnnotationCleanupSetting = AnnotationCleanupSettings{
-		MaxAge:   alertingSection.Key("max_annotation_age").MustDuration(0),
-		MaxCount: alertingSection.Key("max_annotations_to_keep").MustInt64(0),
-	}
-	cfg.DashboardAnnotationCleanupSettings = newAnnotationCleanupSettings(dashboardAnnotation)
-	cfg.APIAnnotationCleanupSettings = newAnnotationCleanupSettings(apiIAnnotation)
-}
+	var newAnnotationCleanupSettings = func(section *ini.Section, maxAgeField string) AnnotationCleanupSettings {
+		maxAge, err := gtime.ParseInterval(section.Key(maxAgeField).MustString(""))
+		if err != nil {
+			maxAge = 0
+		}
 
-func newAnnotationCleanupSettings(section *ini.Section) AnnotationCleanupSettings {
-	maxAge, err := gtime.ParseInterval(section.Key("max_age").MustString(""))
-	if err != nil {
-		maxAge = 0
+		return AnnotationCleanupSettings{
+			MaxAge:   maxAge,
+			MaxCount: section.Key("max_annotations_to_keep").MustInt64(0),
+		}
 	}
 
-	return AnnotationCleanupSettings{
-		MaxAge:   maxAge,
-		MaxCount: section.Key("max_annotations_to_keep").MustInt64(0),
-	}
+	cfg.AlertingAnnotationCleanupSetting = newAnnotationCleanupSettings(alertingSection, "max_annotation_age")
+	cfg.DashboardAnnotationCleanupSettings = newAnnotationCleanupSettings(dashboardAnnotation, "max_age")
+	cfg.APIAnnotationCleanupSettings = newAnnotationCleanupSettings(apiIAnnotation, "max_age")
 }
 
 type AnnotationCleanupSettings struct {
