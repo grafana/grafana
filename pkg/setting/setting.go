@@ -1089,13 +1089,13 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		ConnStr: connStr,
 	}
 
-	// preferences := iniFile.Section("preferences")
-	// cfg.DateFormat = valueAsString(preferences, "date_format", "YYYY-MM-DD HH:mm:ss")
-	// cfg.DateFormatIntervalPT1S = valueAsString(preferences, "date_format_interval_PT1S", "HH:mm:ss")
-	// cfg.DateFormatIntervalPT1M = valueAsString(preferences, "date_format_interval_PT1M", "HH:mm")
-	// cfg.DateFormatIntervalPT1H = valueAsString(preferences, "date_format_interval_PT1M", "MM-DD HH:mm")
-	// cfg.DateFormatIntervalPT1D = valueAsString(preferences, "date_format_interval_PT1D", "YYYY-MM-DD")
-	// cfg.DateFormatIntervalP1YT = valueAsString(preferences, "date_format_interval_P1YT", "YYYY-MM")
+	preferences := iniFile.Section("preferences")
+	cfg.DateFormat, _ = valueAsString(preferences, "date_format", "YYYY-MM-DD HH:mm:ss")
+	cfg.DateFormatIntervalPT1S, _ = valueAsString(preferences, "date_format_interval_PT1S", "HH:mm:ss")
+	cfg.DateFormatIntervalPT1M, _ = valueAsString(preferences, "date_format_interval_PT1M", "HH:mm")
+	cfg.DateFormatIntervalPT1H, _ = valueAsString(preferences, "date_format_interval_PT1M", "MM-DD HH:mm")
+	cfg.DateFormatIntervalPT1D, _ = valueAsString(preferences, "date_format_interval_PT1D", "YYYY-MM-DD")
+	cfg.DateFormatIntervalP1YT, _ = valueAsString(preferences, "date_format_interval_P1YT", "YYYY-MM")
 
 	return nil
 }

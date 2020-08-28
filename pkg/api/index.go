@@ -55,13 +55,13 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	}
 
 	settings["dateFormats"] = map[string]interface{}{
-		"fullDate": "YYYY-MM-DD HH:mm:ss",
+		"fullDate": hs.Cfg.DateFormat,
 		"intervals": map[string]interface{}{
-			"PT1S": "HH:mm:ss",
-			"PT1M": "HH:mm",
-			"PT1H": "MM-DD HH:mm",
-			"PT1D": "YYYY-MM-DD",
-			"P1YT": "YYYY-MM",
+			"PT1S": hs.Cfg.DateFormatIntervalPT1S,
+			"PT1M": hs.Cfg.DateFormatIntervalPT1M,
+			"PT1H": hs.Cfg.DateFormatIntervalPT1H,
+			"PT1D": hs.Cfg.DateFormatIntervalPT1D,
+			"P1YT": hs.Cfg.DateFormatIntervalP1YT,
 		},
 	}
 

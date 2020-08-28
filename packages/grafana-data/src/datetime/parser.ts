@@ -3,7 +3,7 @@ import moment, { MomentInput } from 'moment-timezone';
 import { DateTimeInput, DateTime, isDateTime } from './moment_wrapper';
 import { DateTimeOptions, getTimeZone } from './common';
 import { parse, isValid } from './datemath';
-import { lowerCase, isArray } from 'lodash';
+import { lowerCase } from 'lodash';
 import { defaultDateFormats } from './formats';
 
 /**
@@ -60,7 +60,19 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
     return parsed || (moment() as DateTime);
   }
 
-  return parseOthers(value, options);
+  const timeZone = getTimeZone(options);
+  const zone = moment.tz.zone(timeZone);
+
+  if (zone && zone.name) {
+    return moment.tz(value, defaultDateFormats.fullDate, zone.name) as DateTime;
+  }
+
+  switch (lowerCase(timeZone)) {
+    case 'utc':
+      return moment.utc(value, defaultDateFormats.fullDate) as DateTime;
+    default:
+      return moment(value, defaultDateFormats.fullDate) as DateTime;
+  }
 };
 
 const parseOthers = (value: DateTimeInput, options?: DateTimeOptionsWhenParsing): DateTime => {
@@ -68,29 +80,14 @@ const parseOthers = (value: DateTimeInput, options?: DateTimeOptionsWhenParsing)
   const timeZone = getTimeZone(options);
   const zone = moment.tz.zone(timeZone);
 
-  // When value is an array (which is what calendar clicks generate) we should not pass in the
-  // date format when trying to parse the date
-  if (isArray(value)) {
-    if (zone && zone.name) {
-      return moment.tz(date, zone.name) as DateTime;
-    }
-
-    switch (lowerCase(timeZone)) {
-      case 'utc':
-        return moment.utc(date) as DateTime;
-      default:
-        return moment(date) as DateTime;
-    }
-  }
-
   if (zone && zone.name) {
-    return moment.tz(date, defaultDateFormats.fullDate, zone.name) as DateTime;
+    return moment.tz(date, zone.name) as DateTime;
   }
 
   switch (lowerCase(timeZone)) {
     case 'utc':
-      return moment.utc(date, defaultDateFormats.fullDate) as DateTime;
+      return moment.utc(date) as DateTime;
     default:
-      return moment(date, defaultDateFormats.fullDate) as DateTime;
+      return moment(date) as DateTime;
   }
 };
