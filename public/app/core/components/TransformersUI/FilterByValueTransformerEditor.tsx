@@ -10,7 +10,6 @@ import {
   SelectableValue,
   FieldType,
 } from '@grafana/data';
-import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
 import { Select, Button, Input } from '@grafana/ui';
 import cloneDeep from 'lodash/cloneDeep';
 import {
@@ -134,10 +133,14 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
   options,
   onChange,
 }) => {
-  const fieldNames = useMemo(() => getAllFieldNamesFromDataFrames(input), [input]);
-  const fieldNameOptions = useMemo(() => fieldNames.map((item: string) => ({ label: item, value: item })), [
-    fieldNames,
-  ]);
+  const fieldsInfo = useMemo(() => getAllFieldInfoFromDataFrames(input), [input]);
+  const fieldNameOptions = useMemo(
+    () =>
+      fieldsInfo
+        .filter((item: Record<string, any>) => item.type !== FieldType.time)
+        .map((item: Record<string, any>) => ({ label: item.name, value: item.name })),
+    [fieldsInfo]
+  );
 
   const onAddFilter = useCallback(() => {
     let valueFilters = options.valueFilters.map(filter => ({ ...filter })); // Deep copy
@@ -239,4 +242,22 @@ const getFieldByName = (fieldName: string | null, data: DataFrame[]): Field | nu
   }
   let fieldList = getFieldsByName(fieldName, data);
   return fieldList.length > 0 ? fieldList[0] : null;
+};
+
+const getAllFieldInfoFromDataFrames = (input: DataFrame[]): Array<Record<string, any>> => {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  let fieldList = [];
+  for (let frame of input) {
+    for (let field of frame.fields) {
+      fieldList.push({
+        name: field.name,
+        type: field.type,
+      });
+    }
+  }
+
+  return fieldList;
 };
