@@ -1,7 +1,7 @@
-import { v4 as uuidv4 } from 'uuid';
 import { DeleteDataSourceConfig } from './deleteDataSource';
 import { e2e } from '../index';
 import { fromBaseUrl, getDataSourceId } from '../support/url';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface AddDataSourceConfig {
   basicAuth: boolean;
