@@ -130,7 +130,7 @@ export const Pages = {
       table: 'Explore Table',
     },
     Toolbar: {
-      navBar: '.explore-toolbar',
+      navBar: () => '.explore-toolbar',
     },
   },
 };
