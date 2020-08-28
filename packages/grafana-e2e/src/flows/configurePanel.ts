@@ -2,6 +2,8 @@ import { e2e } from '../index';
 import { getLocalStorage, requireLocalStorage } from '../support/localStorage';
 import { getScenarioContext } from '../support/scenarioContext';
 import { selectOption } from './selectOption';
+import { setDashboardTimeRange } from './setDashboardTimeRange';
+import { setTimeRange, TimeRangeConfig } from './setTimeRange';
 
 export interface ConfigurePanelConfig {
   chartData: {
@@ -10,17 +12,19 @@ export interface ConfigurePanelConfig {
   };
   dashboardUid: string;
   dataSourceName?: string;
+  isExplore: boolean;
   matchScreenshot: boolean;
   queriesForm?: (config: any) => void;
   panelTitle: string;
   screenshotName: string;
+  timeRange?: TimeRangeConfig;
   visitDashboardAtStart: boolean; // @todo remove when possible
   visualizationName?: string;
 }
 
 // @todo improve config input/output: https://stackoverflow.com/a/63507459/923745
 // @todo this actually returns type `Cypress.Chainable`
-export const configurePanel = (config: Partial<ConfigurePanelConfig>, edit: boolean): any =>
+export const configurePanel = (config: Partial<ConfigurePanelConfig>, isEdit: boolean): any =>
   getScenarioContext().then(({ lastAddedDashboardUid }: any) => {
     const fullConfig = {
       chartData: {
@@ -28,9 +32,10 @@ export const configurePanel = (config: Partial<ConfigurePanelConfig>, edit: bool
         route: '/api/ds/query',
       },
       dashboardUid: lastAddedDashboardUid,
+      isExplore: false,
       matchScreenshot: false,
       saveDashboard: true,
-      screenshotName: 'chart',
+      screenshotName: 'panel-visualization',
       visitDashboardAtStart: true,
       ...config,
     } as ConfigurePanelConfig;
@@ -39,24 +44,38 @@ export const configurePanel = (config: Partial<ConfigurePanelConfig>, edit: bool
       chartData,
       dashboardUid,
       dataSourceName,
+      isExplore,
       matchScreenshot,
       panelTitle,
       queriesForm,
       screenshotName,
+      timeRange,
       visitDashboardAtStart,
       visualizationName,
     } = fullConfig;
 
-    if (visitDashboardAtStart) {
-      e2e.flows.openDashboard({ uid: dashboardUid });
+    if (isExplore) {
+      e2e.pages.Explore.visit();
+    } else {
+      if (visitDashboardAtStart) {
+        e2e.flows.openDashboard({ uid: dashboardUid });
+      }
+
+      if (isEdit) {
+        e2e.components.Panels.Panel.title(panelTitle).click();
+        e2e.components.Panels.Panel.headerItems('Edit').click();
+      } else {
+        e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
+        e2e.pages.AddDashboard.addNewPanel().click();
+      }
     }
 
-    if (edit) {
-      e2e.components.Panels.Panel.title(panelTitle).click();
-      e2e.components.Panels.Panel.headerItems('Edit').click();
-    } else {
-      e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
-      e2e.pages.AddDashboard.addNewPanel().click();
+    if (timeRange) {
+      if (isExplore) {
+        e2e.pages.Explore.Toolbar.navBar().within(() => setTimeRange(timeRange));
+      } else {
+        setDashboardTimeRange(timeRange);
+      }
     }
 
     e2e().server();
@@ -76,39 +95,46 @@ export const configurePanel = (config: Partial<ConfigurePanelConfig>, edit: bool
 
     e2e().wait('@chartData');
 
-    // `panelTitle` is needed to edit the panel, and unlikely to have its value changed at that point
-    const changeTitle = panelTitle && !edit;
+    if (!isExplore) {
+      // `panelTitle` is needed to edit the panel, and unlikely to have its value changed at that point
+      const changeTitle = panelTitle && !isEdit;
 
-    if (changeTitle || visualizationName) {
-      openOptions();
+      if (changeTitle || visualizationName) {
+        openOptions();
 
-      if (changeTitle) {
-        openOptionsGroup('settings');
-        getOptionsGroup('settings')
-          .find('[value="Panel Title"]')
-          .scrollIntoView()
-          .clear()
-          .type(panelTitle);
+        if (changeTitle) {
+          openOptionsGroup('settings');
+          getOptionsGroup('settings')
+            .find('[value="Panel Title"]')
+            .scrollIntoView()
+            .clear()
+            .type(panelTitle);
+        }
+
+        if (visualizationName) {
+          openOptionsGroup('type');
+          e2e.components.PluginVisualization.item(visualizationName)
+            .scrollIntoView()
+            .click();
+        }
+
+        // Consistently closed
         closeOptionsGroup('settings');
-      }
-
-      if (visualizationName) {
-        openOptionsGroup('type');
-        e2e.components.PluginVisualization.item(visualizationName)
-          .scrollIntoView()
-          .click();
         closeOptionsGroup('type');
+        closeOptions();
+      } else {
+        // Consistently closed
+        closeOptions();
       }
-
-      closeOptions();
-    } else {
-      // Options are consistently closed
-      closeOptions();
     }
 
     if (queriesForm) {
       queriesForm(fullConfig);
       e2e().wait('@chartData');
+
+      // Wait for a possible complex visualization to render (or something related, as this isn't necessary on the dashboard page)
+      // Can't assert that its HTML changed because a new query could produce the same results
+      e2e().wait(1000);
     }
 
     // @todo enable when plugins have this implemented
@@ -118,13 +144,20 @@ export const configurePanel = (config: Partial<ConfigurePanelConfig>, edit: bool
     //e2e.components.QueryEditorRow.actionButton('Disable/enable query').click();
     //e2e().wait('@chartData');
 
-    e2e()
-      .get('button[title="Apply changes and go back to dashboard"]')
-      .click();
+    if (!isExplore) {
+      e2e()
+        .get('button[title="Apply changes and go back to dashboard"]')
+        .click();
+      e2e()
+        .url()
+        .should('include', `/d/${dashboardUid}`);
+    }
 
+    // Avoid annotations flakiness
     e2e()
-      .url()
-      .should('include', `/d/${dashboardUid}`);
+      .get('.refresh-picker-buttons .btn')
+      .first()
+      .click();
 
     e2e().wait('@chartData');
 
@@ -132,9 +165,15 @@ export const configurePanel = (config: Partial<ConfigurePanelConfig>, edit: bool
     e2e().wait(500);
 
     if (matchScreenshot) {
-      e2e.components.Panels.Panel.containerByTitle(panelTitle)
-        .find('.panel-content')
-        .screenshot(screenshotName);
+      let visualization;
+
+      if (isExplore) {
+        visualization = e2e.pages.Explore.General.graph();
+      } else {
+        visualization = e2e.components.Panels.Panel.containerByTitle(panelTitle).find('.panel-content');
+      }
+
+      visualization.scrollIntoView().screenshot(screenshotName);
       e2e().compareScreenshots(screenshotName);
     }
 
@@ -199,3 +238,20 @@ const toggleOptionsGroup = (name: string) =>
   getOptionsGroup(name)
     .find('.editor-options-group-toggle')
     .click();
+
+export const VISUALIZATION_ALERT_LIST = 'Alert list';
+export const VISUALIZATION_BAR_GAUGE = 'Bar gauge';
+export const VISUALIZATION_CLOCK = 'Clock';
+export const VISUALIZATION_DASHBOARD_LIST = 'Dashboard list';
+export const VISUALIZATION_GAUGE = 'Gauge';
+export const VISUALIZATION_GRAPH = 'Graph';
+export const VISUALIZATION_HEAT_MAP = 'Heatmap';
+export const VISUALIZATION_LOGS = 'Logs';
+export const VISUALIZATION_NEWS = 'News';
+export const VISUALIZATION_PIE_CHART = 'Pie Chart';
+export const VISUALIZATION_PLUGIN_LIST = 'Plugin list';
+export const VISUALIZATION_POLYSTAT = 'Polystat';
+export const VISUALIZATION_STAT = 'Stat';
+export const VISUALIZATION_TABLE = 'Table';
+export const VISUALIZATION_TEXT = 'Text';
+export const VISUALIZATION_WORLD_MAP = 'Worldmap Panel';

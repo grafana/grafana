@@ -1,11 +1,11 @@
-import { v4 as uuidv4 } from 'uuid';
 import { configurePanel, ConfigurePanelConfig } from './configurePanel';
 import { getScenarioContext } from '../support/scenarioContext';
+import { v4 as uuidv4 } from 'uuid';
 
+// @todo `Omit` 'isExplore'
 export interface AddPanelConfig extends ConfigurePanelConfig {
   dataSourceName: string;
   queriesForm: (config: AddPanelConfig) => void;
-  panelTitle: string;
   visualizationName: string;
 }
 
@@ -17,7 +17,6 @@ export const addPanel = (config?: Partial<AddPanelConfig>): any =>
       {
         dataSourceName: lastAddedDataSource,
         panelTitle: `e2e-${uuidv4()}`,
-        visualizationName: 'Table',
         ...config,
       } as AddPanelConfig,
       false
