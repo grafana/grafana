@@ -32,7 +32,8 @@ export class SystemDateFormatsState {
   }
 
   get fullDateMS() {
-    return `${this.fullDate}.SSS`;
+    // Add millisecond to seconds part
+    return this.fullDate.replace('ss', 'ss.SSS');
   }
 
   useBrowserLocale() {
