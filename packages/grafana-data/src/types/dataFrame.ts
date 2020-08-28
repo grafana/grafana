@@ -29,8 +29,8 @@ export interface FieldConfig<TOptions extends object = any> {
   displayName?: string;
 
   /**
-   * This can be used by data sources that return time series with labels that want to control
-   * series naming and disable the default naming scheme.
+   * This can be used by data sources that return and explicit naming structure for values and labels 
+   * When this property is configured, this value is used rather than the default naming strategy.  
    */
   displayNameDS?: string;
 
