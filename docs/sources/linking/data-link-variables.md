@@ -8,7 +8,7 @@ weight = 400
 
 # Data link variables
 
-You can use certain variables in data links to link to specific portions of your visualizations. For more information about data links, refer to [Data links]({{< relref "data-links.md" >}}).
+You can use variables in data links to refer to series fields, labels, and values. For more information about data links, refer to [Data links]({{< relref "data-links.md" >}}).
 
 To see a list of available variables, type `$` in the data link **URL** field to see a list of variables that you can use.
 
