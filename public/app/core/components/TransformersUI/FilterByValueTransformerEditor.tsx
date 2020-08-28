@@ -32,16 +32,21 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
   console.log('props', props);
 
   // Find filter types that fit the chosen field type
-  let filterTypeOptions = valueFiltersRegistry
-    .list()
-    .filter(element => {
-      if (element.supportedFieldTypes) {
-        return !element.supportedFieldTypes ? true : element.supportedFieldTypes.includes(fieldType);
-      } else {
-        return true;
-      }
-    })
-    .map(item => ({ value: item.id, label: item.name, description: item.description }));
+const filterTypeOptions = useMemo(() => {
+    return valueFiltersRegistry
+      .list()
+      .filter(element => {
+        if (!Array.isArray(element?.supportedFieldTypes)) {
+          return true;
+        }
+        return element.supportedFieldTypes.includes(fieldType);
+      })
+      .map(item => ({
+        value: item.id,
+        label: item.name,
+        description: item.description,
+      }));
+  }, [fieldType]);
 
   let filterInfo = valueFiltersRegistry.get(config.filterType);
   let filterValid = filterInfo.getInstance({
