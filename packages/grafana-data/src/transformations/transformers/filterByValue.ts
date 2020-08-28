@@ -18,7 +18,7 @@ export interface FilterByValueTransformerOptions {
 
 export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransformerOptions> = {
   id: DataTransformerID.filterByValue,
-  name: 'Filter by Value',
+  name: 'Filter by value',
   description: 'Filter the data points (rows) depending on the value of certain fields',
   defaultOptions: {
     valueFilters: [{ type: 'include', fieldName: null, filterExpression: null, filterType: ValueFilterID.regex }],

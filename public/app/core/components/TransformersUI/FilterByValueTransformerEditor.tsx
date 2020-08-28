@@ -62,7 +62,7 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
   return (
     <div className="gf-form-inline">
       <div className="gf-form gf-form-spacing">
-        <div className="gf-form-label width-8">Filter Type</div>
+        <div className="gf-form-label width-8">Filter type</div>
         <Select
           className="width-8"
           options={[
@@ -78,7 +78,7 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
         />
       </div>
       <div className="gf-form gf-form-spacing">
-        <div className="gf-form-label width-8">Filter on Field</div>
+        <div className="gf-form-label width-8">Rows with</div>
         <Select
           className="width-16"
           placeholder="Field Name"
@@ -96,7 +96,7 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
         />
       </div>
       <div className="gf-form gf-form-spacing">
-        <div className="gf-form-label width-4">Test</div>
+        <div className="gf-form-label width-8">Matching</div>
         <Select
           invalid={filterTypeInvalid}
           className="width-8"
