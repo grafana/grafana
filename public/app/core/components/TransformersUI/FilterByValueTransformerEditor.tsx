@@ -54,7 +54,7 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
     fieldType: fieldType,
   }).isValid;
 
-  const fieldNameInvalid = config.fieldName === null || !fieldNameOptions.find(item => item.value === config.fieldName);
+  const fieldNameInvalid = config.fieldName !== null && !fieldNameOptions.find(item => item.value === config.fieldName);
   const filterTypeInvalid =
     !fieldNameInvalid && filterInfo.supportedFieldTypes && !filterInfo.supportedFieldTypes.includes(fieldType);
   const filterExpressionInvalid = !fieldNameInvalid && !filterTypeInvalid && !filterValid;
