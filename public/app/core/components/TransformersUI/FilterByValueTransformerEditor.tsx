@@ -54,12 +54,10 @@ const filterTypeOptions = useMemo(() => {
     fieldType: fieldType,
   }).isValid;
 
-  let fieldNameInvalid =
-    config.fieldName === null ||
-    fieldNameOptions.filter((item: Record<string, any>) => item.value === config.fieldName).length === 0;
+const fieldNameInvalid = config.fieldName === null || !fieldNameOptions.find(item => item.value === config.fieldName);
   let filterTypeInvalid =
     !fieldNameInvalid && filterInfo.supportedFieldTypes && !filterInfo.supportedFieldTypes.includes(fieldType);
-  let filterExpressionInvalid = !fieldNameInvalid && !filterTypeInvalid && !filterValid;
+  const filterExpressionInvalid = !fieldNameInvalid && !filterTypeInvalid && !filterValid;
 
   let filterOptionsInput = null;
   if (filterInfo.placeholder) {
@@ -105,12 +103,10 @@ const filterTypeOptions = useMemo(() => {
           value={config.fieldName}
           invalid={fieldNameInvalid}
           onChange={value => {
-            // console.log('onChange fieldName', value);
-            if (value === null) {
-              onConfigChange({ ...config, fieldName: null });
-            } else {
-              onConfigChange({ ...config, fieldName: value.value });
-            }
+           onConfigChange({
+              ...config,
+              fieldName: value?.value ?? null,
+            })
           }}
           isClearable
           menuPlacement="bottom"
