@@ -1,4 +1,4 @@
-import { locale, scaledUnits, simpleCountUnit, toFixedUnit, ValueFormatCategory } from './valueFormats';
+import { locale, scaledUnits, simpleCountUnit, toFixedUnit, ValueFormatCategory, stringFormater } from './valueFormats';
 import {
   dateTimeAsIso,
   dateTimeAsUS,
@@ -26,19 +26,20 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Misc',
     formats: [
       { name: 'none', id: 'none', fn: toFixedUnit('') },
+      { name: 'String', id: 'string', fn: stringFormater },
       {
         name: 'short',
         id: 'short',
         fn: scaledUnits(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']),
       },
-      { name: 'percent (0-100)', id: 'percent', fn: toPercent },
-      { name: 'percent (0.0-1.0)', id: 'percentunit', fn: toPercentUnit },
+      { name: 'Percent (0-100)', id: 'percent', fn: toPercent },
+      { name: 'Percent (0.0-1.0)', id: 'percentunit', fn: toPercentUnit },
       { name: 'Humidity (%H)', id: 'humidity', fn: toFixedUnit('%H') },
-      { name: 'decibel', id: 'dB', fn: toFixedUnit('dB') },
-      { name: 'hexadecimal (0x)', id: 'hex0x', fn: toHex0x },
-      { name: 'hexadecimal', id: 'hex', fn: toHex },
-      { name: 'scientific notation', id: 'sci', fn: sci },
-      { name: 'locale format', id: 'locale', fn: locale },
+      { name: 'Decibel', id: 'dB', fn: toFixedUnit('dB') },
+      { name: 'Hexadecimal (0x)', id: 'hex0x', fn: toHex0x },
+      { name: 'Hexadecimal', id: 'hex', fn: toHex },
+      { name: 'Scientific notation', id: 'sci', fn: sci },
+      { name: 'Locale format', id: 'locale', fn: locale },
       { name: 'Pixels', id: 'pixel', fn: toFixedUnit('px') },
     ],
   },

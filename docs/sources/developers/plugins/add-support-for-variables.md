@@ -51,13 +51,59 @@ For data sources, you need to use the [getTemplateSrv]({{< relref "../../package
 
    ```ts
    async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
-     const query = getTemplateSrv().replace('SELECT * FROM services WHERE id = "$service"'), options.scopedVars);
+     const query = getTemplateSrv().replace('SELECT * FROM services WHERE id = "$service"', options.scopedVars);
 
      const data = makeDbQuery(query);
 
      return { data };
    }
    ```
+
+## Format multi-value variables
+
+When a user selects multiple values for variable, the value of the interpolated variable depends on the [variable format](https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options/).
+
+A data source can define the default format option when no format is specified by adding a third argument to the interpolation function.
+
+Let's change the SQL query to use CSV format by default:
+
+```ts
+getTemplateSrv().replace('SELECT * FROM services WHERE id IN ($service)', options.scopedVars, "csv");
+```
+
+Now, when users write `$service`, the query looks like this:
+
+```sql
+SELECT * FROM services WHERE id IN (admin,auth,billing)
+```
+
+For more information on the available variable formats, refer to [Advanced variable format options](https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options/).
+
+## Set a variable from your plugin
+
+Not only can you read the value of a variable, you can also update the variable from your plugin. Use [LocationSrv.update()]({{< relref "../../packages_api/runtime/locationsrv.md/#update-method" >}}) to update a variable using query parameters.
+
+The following example shows how to update a variable called `service`.
+
+- `query` contains the query parameters you want to update. Query parameters controlling variables are prefixed with `var-`.
+- `partial: true` makes the update only affect the query parameters listed in `query`, and leaves the other query parameters unchanged.
+- `replace: true` tells Grafana to update the current URL state, rather than creating a new history entry.
+
+```ts
+import { getLocationSrv } from '@grafana/runtime';
+```
+
+```ts
+getLocationSrv().update({
+  query: {
+    'var-service': 'billing',
+  },
+  partial: true,
+  replace: true,
+});
+```
+
+> **Note:** Grafana queries your data source whenever you update a variable. Excessive updates to variables can slow down Grafana and lead to a poor user experience.
 
 ## Add support for query variables to your data source
 

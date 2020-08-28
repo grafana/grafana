@@ -7,6 +7,7 @@ export interface OpenDashboardConfig {
   uid: string;
 }
 
+// @todo improve config input/output: https://stackoverflow.com/a/63507459/923745
 export const openDashboard = (config?: Partial<OpenDashboardConfig>) =>
   getScenarioContext().then(({ lastAddedDashboardUid }: any) => {
     const fullConfig = {
@@ -23,5 +24,5 @@ export const openDashboard = (config?: Partial<OpenDashboardConfig>) =>
     }
 
     // @todo remove `wrap` when possible
-    return e2e().wrap({ config: fullConfig });
+    return e2e().wrap({ config: fullConfig }, { log: false });
   });

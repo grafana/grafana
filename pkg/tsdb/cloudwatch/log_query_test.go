@@ -195,10 +195,19 @@ func TestLogsResultsToDataframes(t *testing.T) {
 		Meta: &data.FrameMeta{
 			Custom: map[string]interface{}{
 				"Status": "ok",
-				"Statistics": cloudwatchlogs.QueryStatistics{
-					BytesScanned:   aws.Float64(2000),
-					RecordsMatched: aws.Float64(3),
-					RecordsScanned: aws.Float64(5000),
+			},
+			Stats: []data.QueryStat{
+				{
+					FieldConfig: data.FieldConfig{DisplayName: "Bytes scanned"},
+					Value:       2000,
+				},
+				{
+					FieldConfig: data.FieldConfig{DisplayName: "Records scanned"},
+					Value:       5000,
+				},
+				{
+					FieldConfig: data.FieldConfig{DisplayName: "Records matched"},
+					Value:       3,
 				},
 			},
 		},
