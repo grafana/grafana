@@ -126,7 +126,19 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
           menuPlacement="bottom"
         />
       </div>
-      <div className="gf-form gf-form--grow gf-form-spacing ">{filterOptionsInput}</div>
+      <div className="gf-form gf-form--grow gf-form-spacing ">
+        {filterInfo.placeholder && (
+          <Input
+            className="flex-grow-1"
+            invalid={filterExpressionInvalid}
+            defaultValue={config.filterExpression}
+            placeholder={filterInfo.placeholder}
+            onBlur={event => {
+              onConfigChange({ ...config, filterExpression: event.currentTarget.value });
+            }}
+          />
+        )}
+      </div>
       <div className="gf-form">
         <Button icon="times" onClick={onDelete} style={{ height: '100%' }} size="sm" variant="secondary" />
       </div>
