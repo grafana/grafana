@@ -114,7 +114,7 @@ describe('LokiDatasource', () => {
       datasourceRequestMock.mockImplementation(() => Promise.resolve(testResp));
     });
 
-    test('should just run range query when in logs mode', async () => {
+    test('should run range and instant query', async () => {
       const options = getQueryOptions<LokiQuery>({
         targets: [{ expr: '{job="grafana"}', refId: 'B' }],
       });
@@ -123,7 +123,7 @@ describe('LokiDatasource', () => {
       ds.runRangeQuery = jest.fn(() => of({ data: [] }));
       await ds.query(options).toPromise();
 
-      expect(ds.runInstantQuery).not.toBeCalled();
+      expect(ds.runInstantQuery).toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
@@ -185,7 +185,7 @@ describe('LokiDatasource', () => {
       const ds = new LokiDatasource(customSettings, templateSrvMock);
 
       datasourceRequestMock.mockImplementation(
-        jest.fn().mockReturnValueOnce(
+        jest.fn().mockReturnValue(
           Promise.reject({
             data: {
               message: 'parse error at line 1, col 6: invalid char escape',
@@ -494,7 +494,7 @@ function makeLimitTest(instanceSettings: any, datasourceRequestMock: any, templa
 
     ds.query(options);
 
-    expect(datasourceRequestMock.mock.calls.length).toBe(1);
+    expect(datasourceRequestMock.mock.calls.length).toBe(2);
     expect(datasourceRequestMock.mock.calls[0][0].url).toContain(`limit=${expectedLimit}`);
   };
 }

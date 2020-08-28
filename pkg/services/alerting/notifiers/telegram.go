@@ -29,25 +29,35 @@ func init() {
 		Heading:     "Telegram API settings",
 		Factory:     NewTelegramNotifier,
 		OptionsTemplate: `
-      <h3 class="page-heading">Telegram API settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-9">BOT API Token</span>
-        <input type="text" required
-					class="gf-form-input"
-					ng-model="ctrl.model.settings.bottoken"
-					placeholder="Telegram BOT API Token"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-9">Chat ID</span>
-        <input type="text" required
-					class="gf-form-input"
-					ng-model="ctrl.model.settings.chatid"
+		<h3 class="page-heading">Telegram API settings</h3>
+		<div class="gf-form max-width-30">
+			<label class="gf-form-label width-10">BOT API Token</label>
+			<div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.bottoken">
+				<input type="text"
+					required
+					class="gf-form-input max-width-30"
+					ng-init="ctrl.model.secureSettings.bottoken = ctrl.model.settings.bottoken || null; ctrl.model.settings.bottoken = null;"
+					ng-model="ctrl.model.secureSettings.bottoken"
+					placeholder="Telegram BOT API Token"
 					data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-					Integer Telegram Chat Identifier
-        </info-popover>
-      </div>
+				</input>
+			</div>
+			<div class="gf-form" ng-if="ctrl.model.secureFields.bottoken">
+			  <input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
+			  <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.bottoken = false">reset</a>
+			</div>
+		</div>
+		<div class="gf-form max-width-30">
+			<label class="gf-form-label width-10">Chat ID</label>
+			<input type="text"
+				required
+				class="gf-form-input max-width-30"
+				ng-model="ctrl.model.settings.chatid"
+				placeholder="Telegram Chat ID"
+				data-placement="right">
+			</input>
+			<info-popover mode="right-absolute">Integer Telegram Chat Identifier</info-popover>
+		</div>
     `,
 		Options: []alerting.NotifierOption{
 			{
@@ -86,7 +96,7 @@ func NewTelegramNotifier(model *models.AlertNotification) (alerting.Notifier, er
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
 
-	botToken := model.Settings.Get("bottoken").MustString()
+	botToken := model.DecryptedValue("bottoken", model.Settings.Get("bottoken").MustString())
 	chatID := model.Settings.Get("chatid").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool()
 
