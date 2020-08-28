@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { HorizontalGroup, Icon, renderOrCallToRender, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
@@ -35,6 +35,9 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
   const theme = useTheme();
   const styles = getQueryOperationRowStyles(theme);
+  const onRowToggle = useCallback(() => {
+    setIsContentVisible(!isContentVisible);
+  }, [isContentVisible, setIsContentVisible]);
 
   useUpdateEffect(() => {
     if (isContentVisible) {
@@ -64,13 +67,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   const rowHeader = (
     <div className={styles.header}>
       <HorizontalGroup justify="space-between">
-        <div
-          className={styles.titleWrapper}
-          onClick={() => {
-            setIsContentVisible(!isContentVisible);
-          }}
-          aria-label="Query operation row title"
-        >
+        <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">
           {draggable && (
             <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
           )}
