@@ -213,7 +213,7 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 
 ### Zenduty
 
-[Zenduty](https://www.zenduty.com) is an incident alerting and response orchestration platform that not alerts the right teams via SMS, Phone(Voice), Email, Slack, Microsoft Teams and Push notifications(Android/iOS) whenever a Grafana alert is triggered, but also helps you rapidly triage and remediate critical, user impacting incidents. Grafana alert are sent to Zenduty through Grafana's native webhook dispatcher. Refer the Zenduty-Grafana [integration documentation](https://docs.zenduty.com/docs/grafana) for configuring the integration.
+[Zenduty](https://www.zenduty.com) is an end-to-end incident alerting and response orchestration platform that not only alerts the right on-call teams via SMS, Phone(Voice), Email, Slack, Microsoft Teams and Push notifications(Android/iOS) whenever a Grafana alert is triggered, but also helps you rapidly triage and remediate critical, user impacting incidents. Grafana alerts are sent to Zenduty through Grafana's native webhook dispatcher. Refer to the Zenduty-Grafana [integration documentation](https://docs.zenduty.com/docs/grafana) for configuring the integration.
 
 ## Enable images in notifications {#external-image-store}
 
