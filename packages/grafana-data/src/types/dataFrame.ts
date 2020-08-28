@@ -29,10 +29,10 @@ export interface FieldConfig<TOptions extends object = any> {
   displayName?: string;
 
   /**
-   * This can be used by data sources that return and explicit naming structure for values and labels 
-   * When this property is configured, this value is used rather than the default naming strategy.  
+   * This can be used by data sources that return and explicit naming structure for values and labels
+   * When this property is configured, this value is used rather than the default naming strategy.
    */
-  displayNameDS?: string;
+  displayNameFromDS?: string;
 
   /**
    * True if data source field supports ad-hoc filters
