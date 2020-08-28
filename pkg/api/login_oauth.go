@@ -41,24 +41,24 @@ func GenStateString() (string, error) {
 }
 
 func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
-	loginInfo := loginInformation{
-		action: "login-oauth",
+	loginInfo := LoginInformation{
+		Action: "login-oauth",
 	}
 	if setting.OAuthService == nil {
-		hs.handleOAuthLoginError(ctx, loginInfo, loginError{
-			httpStatus:    http.StatusNotFound,
-			publicMessage: "OAuth not enabled",
+		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+			HttpStatus:    http.StatusNotFound,
+			PublicMessage: "OAuth not enabled",
 		})
 		return
 	}
 
 	name := ctx.Params(":name")
-	loginInfo.action += fmt.Sprintf("-%s", name)
+	loginInfo.Action += fmt.Sprintf("-%s", name)
 	connect, ok := social.SocialMap[name]
 	if !ok {
-		hs.handleOAuthLoginError(ctx, loginInfo, loginError{
-			httpStatus:    http.StatusNotFound,
-			publicMessage: fmt.Sprintf("No OAuth with name %s configured", name),
+		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+			HttpStatus:    http.StatusNotFound,
+			PublicMessage: fmt.Sprintf("No OAuth with name %s configured", name),
 		})
 		return
 	}
@@ -76,9 +76,9 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		state, err := GenStateString()
 		if err != nil {
 			ctx.Logger.Error("Generating state string failed", "err", err)
-			hs.handleOAuthLoginError(ctx, loginInfo, loginError{
-				httpStatus:    http.StatusInternalServerError,
-				publicMessage: "An internal error occurred",
+			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+				HttpStatus:    http.StatusInternalServerError,
+				PublicMessage: "An internal error occurred",
 			})
 			return
 		}
@@ -99,9 +99,9 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	middleware.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.CookieOptionsFromCfg)
 
 	if cookieState == "" {
-		hs.handleOAuthLoginError(ctx, loginInfo, loginError{
-			httpStatus:    http.StatusInternalServerError,
-			publicMessage: "login.OAuthLogin(missing saved state)",
+		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+			HttpStatus:    http.StatusInternalServerError,
+			PublicMessage: "login.OAuthLogin(missing saved state)",
 		})
 		return
 	}
@@ -109,9 +109,9 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	queryState := hashStatecode(ctx.Query("state"), setting.OAuthService.OAuthInfos[name].ClientSecret)
 	oauthLogger.Info("state check", "queryState", queryState, "cookieState", cookieState)
 	if cookieState != queryState {
-		hs.handleOAuthLoginError(ctx, loginInfo, loginError{
-			httpStatus:    http.StatusInternalServerError,
-			publicMessage: "login.OAuthLogin(state mismatch)",
+		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+			HttpStatus:    http.StatusInternalServerError,
+			PublicMessage: "login.OAuthLogin(state mismatch)",
 		})
 		return
 	}
@@ -131,9 +131,9 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		cert, err := tls.LoadX509KeyPair(setting.OAuthService.OAuthInfos[name].TlsClientCert, setting.OAuthService.OAuthInfos[name].TlsClientKey)
 		if err != nil {
 			ctx.Logger.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
-			hs.handleOAuthLoginError(ctx, loginInfo, loginError{
-				httpStatus:    http.StatusInternalServerError,
-				publicMessage: "login.OAuthLogin(Failed to setup TlsClientCert)",
+			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+				HttpStatus:    http.StatusInternalServerError,
+				PublicMessage: "login.OAuthLogin(Failed to setup TlsClientCert)",
 			})
 			return
 		}
@@ -145,9 +145,9 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		caCert, err := ioutil.ReadFile(setting.OAuthService.OAuthInfos[name].TlsClientCa)
 		if err != nil {
 			ctx.Logger.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
-			hs.handleOAuthLoginError(ctx, loginInfo, loginError{
-				httpStatus:    http.StatusInternalServerError,
-				publicMessage: "login.OAuthLogin(Failed to setup TlsClientCa)",
+			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+				HttpStatus:    http.StatusInternalServerError,
+				PublicMessage: "login.OAuthLogin(Failed to setup TlsClientCa)",
 			})
 			return
 		}
@@ -163,10 +163,10 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	// get token from provider
 	token, err := connect.Exchange(oauthCtx, code)
 	if err != nil {
-		hs.handleOAuthLoginError(ctx, loginInfo, loginError{
-			httpStatus:    http.StatusInternalServerError,
-			publicMessage: "login.OAuthLogin(NewTransportWithCode)",
-			err:           err,
+		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+			HttpStatus:    http.StatusInternalServerError,
+			PublicMessage: "login.OAuthLogin(NewTransportWithCode)",
+			Err:           err,
 		})
 		return
 	}
@@ -184,10 +184,10 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		if sErr, ok := err.(*social.Error); ok {
 			hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, sErr)
 		} else {
-			hs.handleOAuthLoginError(ctx, loginInfo, loginError{
-				httpStatus:    http.StatusInternalServerError,
-				publicMessage: fmt.Sprintf("login.OAuthLogin(get info from %s)", name),
-				err:           err,
+			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+				HttpStatus:    http.StatusInternalServerError,
+				PublicMessage: fmt.Sprintf("login.OAuthLogin(get info from %s)", name),
+				Err:           err,
 			})
 		}
 		return
@@ -207,24 +207,24 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		return
 	}
 
-	loginInfo.extUserInfo = buildExternalUserInfo(token, userInfo, name)
-	loginInfo.user, err = syncUser(ctx, loginInfo.extUserInfo, connect)
+	loginInfo.ExtUserInfo = buildExternalUserInfo(token, userInfo, name)
+	loginInfo.User, err = syncUser(ctx, loginInfo.ExtUserInfo, connect)
 	if err != nil {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, err)
 		return
 	}
 
 	// login
-	if err := hs.loginUserWithUser(loginInfo.user, ctx); err != nil {
+	if err := hs.loginUserWithUser(loginInfo.User, ctx); err != nil {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, err)
 		return
 	}
 
 	hs.SendLoginLog(&models.SendLoginLogCommand{
 		ReqContext:   ctx,
-		LogAction:    loginInfo.action,
-		User:         loginInfo.user,
-		ExternalUser: loginInfo.extUserInfo,
+		LogAction:    loginInfo.Action,
+		User:         loginInfo.User,
+		ExternalUser: loginInfo.ExtUserInfo,
 		HTTPStatus:   http.StatusOK,
 	})
 	metrics.MApiLoginOAuth.Inc()
@@ -306,42 +306,42 @@ func hashStatecode(code, seed string) string {
 	return hex.EncodeToString(hashBytes[:])
 }
 
-type loginError struct {
-	httpStatus    int
-	publicMessage string
-	err           error
+type LoginError struct {
+	HttpStatus    int
+	PublicMessage string
+	Err           error
 }
 
-type loginInformation struct {
-	action      string
-	user        *models.User
-	extUserInfo *models.ExternalUserInfo
+type LoginInformation struct {
+	Action      string
+	User        *models.User
+	ExtUserInfo *models.ExternalUserInfo
 }
 
-func (hs *HTTPServer) handleOAuthLoginError(ctx *models.ReqContext, info loginInformation, err loginError) {
-	ctx.Handle(err.httpStatus, err.publicMessage, err.err)
+func (hs *HTTPServer) handleOAuthLoginError(ctx *models.ReqContext, info LoginInformation, err LoginError) {
+	ctx.Handle(err.HttpStatus, err.PublicMessage, err.Err)
 
-	logErr := err.err
+	logErr := err.Err
 	if logErr == nil {
-		logErr = errors.New(err.publicMessage)
+		logErr = errors.New(err.PublicMessage)
 	}
 
 	hs.SendLoginLog(&models.SendLoginLogCommand{
 		ReqContext: ctx,
-		LogAction:  info.action,
-		HTTPStatus: err.httpStatus,
+		LogAction:  info.Action,
+		HTTPStatus: err.HttpStatus,
 		Error:      logErr,
 	})
 }
 
-func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *models.ReqContext, info loginInformation, err error, v ...interface{}) {
+func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *models.ReqContext, info LoginInformation, err error, v ...interface{}) {
 	hs.redirectWithError(ctx, err, v...)
 
 	hs.SendLoginLog(&models.SendLoginLogCommand{
 		ReqContext:   ctx,
-		LogAction:    info.action,
-		User:         info.user,
-		ExternalUser: info.extUserInfo,
+		LogAction:    info.Action,
+		User:         info.User,
+		ExternalUser: info.ExtUserInfo,
 		Error:        err,
 	})
 }
