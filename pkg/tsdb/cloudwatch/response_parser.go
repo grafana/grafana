@@ -7,7 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
+	"github.com/gigawattio/awsarn"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -49,7 +52,7 @@ func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 	cloudWatchResponses := make([]*cloudwatchResponse, 0)
 	for id, lr := range mdrs {
 		query := queries[id]
-		series, partialData, err := parseGetMetricDataTimeSeries(lr, labels[id], query)
+		series, partialData, err := e.parseGetMetricDataTimeSeries(lr, labels[id], query)
 		if err != nil {
 			return nil, err
 		}
@@ -69,10 +72,89 @@ func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 	return cloudWatchResponses, nil
 }
 
-func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, labels []string,
+/* See https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_actions-resources-contextkeys.html for service resource type tables.
+ * See https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/aws-services-cloudwatch-metrics.html for CloudWatch namespaces.
+ */
+var resourceTypesMap = map[string]map[string][]string{
+	"AWS/EC2":				{"InstanceId":				{"ec2:instance"}},
+	"AWS/CloudFront":		{"DistributionId":			{"cloudfront:distribution"}},
+	"AWS/ApplicationELB":	{"LoadBalancer":			{"elasticloadbalancing:loadbalancer/app", "elasticloadbalancing:targetgroup"},
+							 "TargetGroup":				{"elasticloadbalancing:loadbalancer/app", "elasticloadbalancing:targetgroup"}},
+	"AWS/ECS":				{"ClusterName":				{"ecs:cluster", "ecs:service"},
+							 "ServiceName":				{"ecs:cluster", "ecs:service"}},
+	"AWS/RDS":				{"DBInstanceIdentifier":	{"rds:db"}},
+	"AWS/S3":				{"BucketName":				{"s3"}},
+}
+
+var resourcePrefixesMap = map[string]string{
+	"elasticloadbalancing:targetgroup": "targetgroup/", /* ELBv2 target groups have 'targetgroup/' prepended in the label but not the resource. */
+}
+
+var resourceComponentMap = map[string]int{
+	"ecs:service": 1, /* ECS services have the cluster name prepended in the resource but not the label. */
+}
+
+func (e *cloudWatchExecutor) parseGetMetricResourceTags(query *cloudWatchQuery, labels []string) (map[string]map[string]string, error) {
+	resourceTypes := []string{}
+	if namespace, ok := resourceTypesMap[query.Namespace]; ok {
+		for key := range query.Dimensions {
+			if resources, ok := namespace[key]; ok {
+				resourceTypes = append(resourceTypes, resources...)
+			}
+		}
+	}
+
+	tags := map[string]map[string]string{}
+	queried := map[string]bool{}
+	for _, resourceType := range resourceTypes {
+		if queried[resourceType] {
+			continue
+		}
+
+		tagFilters := []*resourcegroupstaggingapi.TagFilter{}
+		typeFilters := []*string{aws.String(resourceType)}
+		resources, err := e.resourceGroupsGetResources(query.Region, tagFilters, typeFilters)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to get resources for type %s: %s", resourceType, err)
+		}
+
+		for _, resource := range resources.ResourceTagMappingList {
+			parsedARN, err := awsarn.Parse(*resource.ResourceARN)
+			if err != nil {
+				continue
+			}
+
+			/* CloudWatch inconsistently prepends part of the resource type to the label, so we replicate that here. */
+			resourceID := parsedARN.Resource
+			if prefix, ok := resourcePrefixesMap[resourceType]; ok {
+				resourceID = prefix + resourceID
+			}
+			if component, ok := resourceComponentMap[resourceType]; ok {
+				resourceID = strings.Split(resourceID, "/")[component]
+			}
+
+			tags[resourceID] = map[string]string{}
+			for _, tag := range resource.Tags {
+				tags[resourceID][*tag.Key] = *tag.Value
+			}
+		}
+
+		queried[resourceType] = true
+	}
+
+	return tags, nil
+}
+
+func (e *cloudWatchExecutor) parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, labels []string,
 	query *cloudWatchQuery) (*tsdb.TimeSeriesSlice, bool, error) {
 	partialData := false
 	result := tsdb.TimeSeriesSlice{}
+
+	resource_tags, err := e.parseGetMetricResourceTags(query, labels)
+	if err != nil {
+		return nil, false, err
+	}
+
 	for _, label := range labels {
 		metricDataResult := metricDataResults[label]
 		if *metricDataResult.StatusCode != "Complete" {
@@ -108,7 +190,7 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 					}
 				}
 
-				emptySeries.Name = formatAlias(query, query.Stats, emptySeries.Tags, label)
+				emptySeries.Name = e.formatAlias(query, query.Stats, emptySeries.Tags, label, resource_tags)
 				result = append(result, &emptySeries)
 			}
 		} else {
@@ -138,7 +220,7 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 				}
 			}
 
-			series.Name = formatAlias(query, query.Stats, series.Tags, label)
+			series.Name = e.formatAlias(query, query.Stats, series.Tags, label, resource_tags)
 
 			for j, t := range metricDataResult.Timestamps {
 				if j > 0 {
@@ -156,7 +238,8 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 	return &result, partialData, nil
 }
 
-func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]string, label string) string {
+func (e *cloudWatchExecutor) formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]string, label string,
+																			  resource_tags map[string]map[string]string) string {
 	region := query.Region
 	namespace := query.Namespace
 	metricName := query.MetricName
@@ -188,6 +271,17 @@ func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]stri
 	}
 	for k, v := range dimensions {
 		data[k] = v
+	}
+
+	/* CloudWatch labels for resource dimensions are space separated lists of the resource IDs.
+	 * A caller might want to access tags for any of the resources in the label, so we inject the tags with a unique prefix per part.
+	 */
+	for i, part := range strings.Split(label, " ") {
+		if _, ok := resource_tags[part]; ok {
+			for key, value := range resource_tags[part] {
+				data["tags."+strconv.Itoa(i)+"."+key] = value
+			}
+		}
 	}
 
 	result := aliasFormat.ReplaceAllFunc([]byte(query.Alias), func(in []byte) []byte {
