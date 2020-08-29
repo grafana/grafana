@@ -15,75 +15,18 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
-	// Map from result ID -> label -> result
-	mdrs := make(map[string]map[string]*cloudwatch.MetricDataResult)
-	labels := map[string][]string{}
-	for _, mdo := range metricDataOutputs {
-		requestExceededMaxLimit := false
-		for _, message := range mdo.Messages {
-			if *message.Code == "MaxMetricsExceeded" {
-				requestExceededMaxLimit = true
-			}
-		}
-
-		for _, r := range mdo.MetricDataResults {
-			id := *r.Id
-			label := *r.Label
-			if _, exists := mdrs[id]; !exists {
-				mdrs[id] = make(map[string]*cloudwatch.MetricDataResult)
-				mdrs[id][label] = r
-				labels[id] = append(labels[id], label)
-			} else if _, exists := mdrs[id][label]; !exists {
-				mdrs[id][label] = r
-				labels[id] = append(labels[id], label)
-			} else {
-				mdr := mdrs[id][label]
-				mdr.Timestamps = append(mdr.Timestamps, r.Timestamps...)
-				mdr.Values = append(mdr.Values, r.Values...)
-				if *r.StatusCode == "Complete" {
-					mdr.StatusCode = r.StatusCode
-				}
-			}
-			queries[id].RequestExceededMaxLimit = requestExceededMaxLimit
-		}
-	}
-
-	cloudWatchResponses := make([]*cloudwatchResponse, 0)
-	for id, lr := range mdrs {
-		query := queries[id]
-		series, partialData, err := e.parseGetMetricDataTimeSeries(lr, labels[id], query)
-		if err != nil {
-			return nil, err
-		}
-
-		response := &cloudwatchResponse{
-			series:                  series,
-			Period:                  query.Period,
-			Expression:              query.UsedExpression,
-			RefId:                   query.RefId,
-			Id:                      query.Id,
-			RequestExceededMaxLimit: query.RequestExceededMaxLimit,
-			PartialData:             partialData,
-		}
-		cloudWatchResponses = append(cloudWatchResponses, response)
-	}
-
-	return cloudWatchResponses, nil
-}
-
 /* See https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_actions-resources-contextkeys.html for service resource type tables.
  * See https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/aws-services-cloudwatch-metrics.html for CloudWatch namespaces.
  */
 var resourceTypesMap = map[string]map[string][]string{
-	"AWS/EC2":				{"InstanceId":				{"ec2:instance"}},
-	"AWS/CloudFront":		{"DistributionId":			{"cloudfront:distribution"}},
-	"AWS/ApplicationELB":	{"LoadBalancer":			{"elasticloadbalancing:loadbalancer/app", "elasticloadbalancing:targetgroup"},
-							 "TargetGroup":				{"elasticloadbalancing:loadbalancer/app", "elasticloadbalancing:targetgroup"}},
-	"AWS/ECS":				{"ClusterName":				{"ecs:cluster", "ecs:service"},
-							 "ServiceName":				{"ecs:cluster", "ecs:service"}},
-	"AWS/RDS":				{"DBInstanceIdentifier":	{"rds:db"}},
-	"AWS/S3":				{"BucketName":				{"s3"}},
+	"AWS/EC2":        {"InstanceId": {"ec2:instance"}},
+	"AWS/CloudFront": {"DistributionId": {"cloudfront:distribution"}},
+	"AWS/ApplicationELB": {"LoadBalancer": {"elasticloadbalancing:loadbalancer/app", "elasticloadbalancing:targetgroup"},
+		"TargetGroup": {"elasticloadbalancing:loadbalancer/app", "elasticloadbalancing:targetgroup"}},
+	"AWS/ECS": {"ClusterName": {"ecs:cluster", "ecs:service"},
+		"ServiceName": {"ecs:cluster", "ecs:service"}},
+	"AWS/RDS": {"DBInstanceIdentifier": {"rds:db"}},
+	"AWS/S3":  {"BucketName": {"s3"}},
 }
 
 var resourcePrefixesMap = map[string]string{
@@ -94,7 +37,7 @@ var resourceComponentMap = map[string]int{
 	"ecs:service": 1, /* ECS services have the cluster name prepended in the resource but not the label. */
 }
 
-func (e *cloudWatchExecutor) parseGetMetricResourceTags(query *cloudWatchQuery, labels []string) (map[string]map[string]string, error) {
+func (e *cloudWatchExecutor) parseGetMetricResourceTags(query *cloudWatchQuery) (map[string]map[string]string, error) {
 	resourceTypes := []string{}
 	if namespace, ok := resourceTypesMap[query.Namespace]; ok {
 		for key := range query.Dimensions {
@@ -145,15 +88,73 @@ func (e *cloudWatchExecutor) parseGetMetricResourceTags(query *cloudWatchQuery, 
 	return tags, nil
 }
 
-func (e *cloudWatchExecutor) parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, labels []string,
-	query *cloudWatchQuery) (*tsdb.TimeSeriesSlice, bool, error) {
+func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
+	// Map from result ID -> label -> result
+	mdrs := make(map[string]map[string]*cloudwatch.MetricDataResult)
+	labels := map[string][]string{}
+	for _, mdo := range metricDataOutputs {
+		requestExceededMaxLimit := false
+		for _, message := range mdo.Messages {
+			if *message.Code == "MaxMetricsExceeded" {
+				requestExceededMaxLimit = true
+			}
+		}
+
+		for _, r := range mdo.MetricDataResults {
+			id := *r.Id
+			label := *r.Label
+			if _, exists := mdrs[id]; !exists {
+				mdrs[id] = make(map[string]*cloudwatch.MetricDataResult)
+				mdrs[id][label] = r
+				labels[id] = append(labels[id], label)
+			} else if _, exists := mdrs[id][label]; !exists {
+				mdrs[id][label] = r
+				labels[id] = append(labels[id], label)
+			} else {
+				mdr := mdrs[id][label]
+				mdr.Timestamps = append(mdr.Timestamps, r.Timestamps...)
+				mdr.Values = append(mdr.Values, r.Values...)
+				if *r.StatusCode == "Complete" {
+					mdr.StatusCode = r.StatusCode
+				}
+			}
+			queries[id].RequestExceededMaxLimit = requestExceededMaxLimit
+		}
+	}
+
+	cloudWatchResponses := make([]*cloudwatchResponse, 0)
+	for id, lr := range mdrs {
+		query := queries[id]
+
+		resource_tags, err := e.parseGetMetricResourceTags(query)
+		if err != nil {
+			return nil, err
+		}
+
+		series, partialData, err := parseGetMetricDataTimeSeries(lr, labels[id], query, resource_tags)
+		if err != nil {
+			return nil, err
+		}
+
+		response := &cloudwatchResponse{
+			series:                  series,
+			Period:                  query.Period,
+			Expression:              query.UsedExpression,
+			RefId:                   query.RefId,
+			Id:                      query.Id,
+			RequestExceededMaxLimit: query.RequestExceededMaxLimit,
+			PartialData:             partialData,
+		}
+		cloudWatchResponses = append(cloudWatchResponses, response)
+	}
+
+	return cloudWatchResponses, nil
+}
+
+func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, labels []string,
+	query *cloudWatchQuery, resource_tags map[string]map[string]string) (*tsdb.TimeSeriesSlice, bool, error) {
 	partialData := false
 	result := tsdb.TimeSeriesSlice{}
-
-	resource_tags, err := e.parseGetMetricResourceTags(query, labels)
-	if err != nil {
-		return nil, false, err
-	}
 
 	for _, label := range labels {
 		metricDataResult := metricDataResults[label]
@@ -190,7 +191,7 @@ func (e *cloudWatchExecutor) parseGetMetricDataTimeSeries(metricDataResults map[
 					}
 				}
 
-				emptySeries.Name = e.formatAlias(query, query.Stats, emptySeries.Tags, label, resource_tags)
+				emptySeries.Name = formatAlias(query, query.Stats, emptySeries.Tags, label, resource_tags)
 				result = append(result, &emptySeries)
 			}
 		} else {
@@ -220,7 +221,7 @@ func (e *cloudWatchExecutor) parseGetMetricDataTimeSeries(metricDataResults map[
 				}
 			}
 
-			series.Name = e.formatAlias(query, query.Stats, series.Tags, label, resource_tags)
+			series.Name = formatAlias(query, query.Stats, series.Tags, label, resource_tags)
 
 			for j, t := range metricDataResult.Timestamps {
 				if j > 0 {
@@ -238,8 +239,7 @@ func (e *cloudWatchExecutor) parseGetMetricDataTimeSeries(metricDataResults map[
 	return &result, partialData, nil
 }
 
-func (e *cloudWatchExecutor) formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]string, label string,
-																			  resource_tags map[string]map[string]string) string {
+func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]string, label string, resource_tags map[string]map[string]string) string {
 	region := query.Region
 	namespace := query.Namespace
 	metricName := query.MetricName

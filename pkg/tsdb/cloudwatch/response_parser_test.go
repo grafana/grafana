@@ -61,7 +61,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded",
 			}
-			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+			resource_tags := map[string]map[string]string{}
+			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query, resource_tags)
 			timeSeries := (*series)[0]
 
 			So(err, ShouldBeNil)
@@ -123,7 +124,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded",
 			}
-			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+			resource_tags := map[string]map[string]string{}
+			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query, resource_tags)
 			timeSeries := (*series)[0]
 			So(err, ShouldBeNil)
 			So(partialData, ShouldBeFalse)
@@ -184,7 +186,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded",
 			}
-			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+			resource_tags := map[string]map[string]string{}
+			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query, resource_tags)
 
 			So(err, ShouldBeNil)
 			So(partialData, ShouldBeFalse)
@@ -221,7 +224,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded",
 			}
-			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+			resource_tags := map[string]map[string]string{}
+			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query, resource_tags)
 
 			So(err, ShouldBeNil)
 			So(partialData, ShouldBeFalse)
@@ -261,7 +265,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded {{InstanceType}} - {{Resource}}",
 			}
-			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+			resource_tags := map[string]map[string]string{}
+			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query, resource_tags)
 
 			So(err, ShouldBeNil)
 			So(partialData, ShouldBeFalse)
@@ -304,7 +309,8 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{namespace}}_{{metric}}_{{stat}}",
 			}
-			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+			resource_tags := map[string]map[string]string{}
+			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query, resource_tags)
 			timeSeries := (*series)[0]
 
 			So(err, ShouldBeNil)
