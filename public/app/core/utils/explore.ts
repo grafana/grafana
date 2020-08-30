@@ -160,9 +160,9 @@ export function buildQueryTransaction(
     maxDataPoints: queryOptions.maxDataPoints,
     exploreMode: queryOptions.mode,
     liveStreaming: queryOptions.liveStreaming,
-  /**
-   * @deprecated (external API) showingGraph and showingTable are always set to true and set to true
-   */
+    /**
+     * @deprecated (external API) showingGraph and showingTable are always set to true and set to true
+     */
     showingGraph: true,
     showingTable: true,
   };
