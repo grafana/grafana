@@ -378,6 +378,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                         <>
                           {showMetrics && (
                             <ExploreGraphPanel
+                              ariaLabel={selectors.pages.Explore.General.graph}
                               series={graphResult}
                               width={width}
                               loading={loading}
@@ -392,6 +393,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           )}
                           {showTable && (
                             <TableContainer
+                              ariaLabel={selectors.pages.Explore.General.table}
                               width={width}
                               exploreId={exploreId}
                               onCellFilterAdded={
