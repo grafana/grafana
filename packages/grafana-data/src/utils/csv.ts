@@ -256,6 +256,14 @@ function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string 
   return '';
 }
 
+function getLocaleDelimiter(): string {
+  const arr = ['x', 'y'];
+  if (arr.toLocaleString) {
+    return arr.toLocaleString().charAt(1);
+  }
+  return ',';
+}
+
 export function toCSV(data: DataFrame[], config?: CSVConfig): string {
   if (!data) {
     return '';
@@ -263,7 +271,7 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
 
   let csv = '';
   config = defaults(config, {
-    delimiter: ',',
+    delimiter: getLocaleDelimiter(),
     newline: '\r\n',
     quoteChar: '"',
     encoding: '',
