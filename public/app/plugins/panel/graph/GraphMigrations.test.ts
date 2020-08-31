@@ -128,7 +128,7 @@ describe('Graph Panel Migrations', () => {
   });
 
   it('from 7.1 it should preserve existing fieldConfig', () => {
-    const panel = {
+    const panel = ({
       id: 1,
       fieldConfig: {
         defaults: {
@@ -141,7 +141,7 @@ describe('Graph Panel Migrations', () => {
         },
         overrides: [],
       },
-    } as PanelModel;
+    } as unknown) as PanelModel;
 
     graphPanelMigrationHandler(panel as PanelModel);
     const fieldConfig = (panel as any).fieldConfig as FieldConfigSource;
