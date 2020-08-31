@@ -203,6 +203,7 @@ export class PanelModel implements DataConfigSource {
   getOptions() {
     return this.options;
   }
+
   getFieldConfig() {
     return this.fieldConfig;
   }
@@ -309,6 +310,7 @@ export class PanelModel implements DataConfigSource {
     if (plugin.angularConfigCtrl) {
       return;
     }
+
     this.options = _.mergeWith({}, plugin.defaults, this.options || {}, (objValue: any, srcValue: any): any => {
       if (_.isArray(srcValue)) {
         return srcValue;
