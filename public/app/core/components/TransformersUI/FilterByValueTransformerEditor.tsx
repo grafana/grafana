@@ -127,7 +127,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
   );
 
   const onAddFilter = useCallback(() => {
-    let valueFilters = options.valueFilters.map(filter => ({ ...filter })); // Deep copy
+    let valueFilters = cloneDeep(options.valueFilters);
     valueFilters.push({
       fieldName: null,
       filterExpression: null,
@@ -268,7 +268,7 @@ const getAllFieldInfoFromDataFrames = (input: DataFrame[]): Array<Record<string,
   for (let frame of input) {
     for (let field of frame.fields) {
       fieldList.push({
-        name: field.name,
+        name: getFieldDisplayName(field, frame, input),
         type: field.type,
       });
     }
