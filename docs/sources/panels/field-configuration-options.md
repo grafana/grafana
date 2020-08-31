@@ -136,6 +136,12 @@ By default, Grafana automatically calculates the column width based on the cell 
 
 For example, if you enter `100` in the field, then when you click outside the field, all the columns will be set to 100 pixels wide.
 
+### Column filter
+
+This custom field option applies only to table visualizations.
+
+Turning on this field option will enable filtering the table by values in each field. 
+
 ### Decimals
 
 Number of decimals to render value with. Leave empty for Grafana to use the number of decimals provided by the data source.
