@@ -19,6 +19,7 @@ export const initialState: AlertRulesState = {
 export const initialChannelState: NotificationChannelState = {
   notificationChannelTypes: [],
   notificationChannel: {},
+  notifiers: [],
 };
 
 function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
@@ -71,16 +72,29 @@ const notificationChannelSlice = createSlice({
   initialState: initialChannelState,
   reducers: {
     setNotificationChannels: (state, action: PayloadAction<NotifierDTO[]>): NotificationChannelState => {
-      return { ...state, notificationChannelTypes: action.payload };
+      return {
+        ...state,
+        notificationChannelTypes: transformNotifiers(action.payload),
+        notifiers: action.payload,
+      };
     },
     notificationChannelLoaded: (state, action: PayloadAction<any>): NotificationChannelState => {
-      const selectedType: NotifierDTO = state.notificationChannelTypes.filter(t => t.name === action.payload.type);
-      const secureFields = selectedType.options.filter((o: NotificationChannelOption) => o.secure);
-
-      if (secureFields.length > 0) {
+      const notificationChannel = action.payload;
+      const selectedType: NotifierDTO = state.notifiers.find(t => t.type === notificationChannel.type)!;
+      const secureChannelOptions = selectedType.options.filter((o: NotificationChannelOption) => o.secure);
+      /*
+        If any secure field is in plain text we need to migrate it to use secure field instead.
+       */
+      if (
+        secureChannelOptions.length > 0 &&
+        secureChannelOptions.some((o: NotificationChannelOption) => {
+          return notificationChannel.settings[o.propertyName] !== '';
+        })
+      ) {
+        return migrateSecureFields(state, action, secureChannelOptions);
       }
 
-      return { ...state, notificationChannel: action.payload };
+      return { ...state, notificationChannel: notificationChannel };
     },
     resetSecureField: (state, action: PayloadAction<string>): NotificationChannelState => {
       return {
@@ -109,3 +123,44 @@ export default {
   alertRules: alertRulesReducer,
   notificationChannel: notificationChannelReducer,
 };
+
+function migrateSecureFields(
+  state: NotificationChannelState,
+  action: PayloadAction<any>,
+  secureChannelOptions: NotificationChannelOption[]
+) {
+  const secureFields: { [key: string]: boolean } = {};
+  const cleanedSettings: { [key: string]: string } = {};
+
+  secureChannelOptions.forEach(option => {
+    secureFields[option.propertyName] = true;
+    cleanedSettings[option.propertyName] = '';
+  });
+
+  return {
+    ...state,
+    notificationChannel: {
+      ...action.payload,
+      secureFields: secureFields,
+      settings: { ...action.payload.settings, ...cleanedSettings },
+    },
+  };
+}
+
+function transformNotifiers(notifiers: NotifierDTO[]) {
+  return notifiers
+    .map((option: NotifierDTO) => {
+      return {
+        value: option.type,
+        label: option.name,
+        ...option,
+        typeName: option.type,
+      };
+    })
+    .sort((o1, o2) => {
+      if (o1.name > o2.name) {
+        return 1;
+      }
+      return -1;
+    });
+}

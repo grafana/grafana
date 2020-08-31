@@ -63,6 +63,7 @@ export interface NotifierDTO {
   heading: string;
   options: NotificationChannelOption[];
   info?: string;
+  secure?: boolean;
 }
 
 export interface NotificationChannelType {
@@ -120,7 +121,8 @@ export interface NotificationChannelOption {
 }
 
 export interface NotificationChannelState {
-  notificationChannelTypes: NotifierDTO[];
+  notificationChannelTypes: NotificationChannelType[];
+  notifiers: NotifierDTO[];
   notificationChannel: any;
 }
 

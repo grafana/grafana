@@ -66,8 +66,6 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
   render() {
     const { navModel, notificationChannel, notificationChannelTypes } = this.props;
 
-    console.log(notificationChannel.id);
-
     return (
       <Page navModel={navModel}>
         <Page.Contents>

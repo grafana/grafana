@@ -9,7 +9,7 @@ import {
   setSearchQuery,
   notificationChannelLoaded,
 } from './reducers';
-import { AlertRuleDTO, AlertRulesState, NotificationChannelState } from 'app/types';
+import { AlertRuleDTO, AlertRulesState, NotificationChannelState, NotifierDTO } from 'app/types';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 
 describe('Alert rules', () => {
@@ -236,28 +236,6 @@ describe('Alert rules', () => {
 });
 
 describe('Notification channel', () => {
-  const payload = {
-    id: 2,
-    uid: '9L3FrrHGk',
-    name: 'Webhook test',
-    type: 'webhook',
-    isDefault: false,
-    sendReminder: false,
-    disableResolveMessage: false,
-    frequency: '',
-    created: '2020-08-28T08:49:24Z',
-    updated: '2020-08-28T08:49:24Z',
-    settings: {
-      autoResolve: true,
-      httpMethod: 'POST',
-      password: 'asdf',
-      severity: 'critical',
-      uploadImage: true,
-      url: 'http://localhost.webhook',
-      username: 'asdf',
-    },
-  };
-
   const expected = {
     id: 2,
     uid: '9L3FrrHGk',
@@ -283,13 +261,137 @@ describe('Notification channel', () => {
     },
   };
 
+  const notifiers: NotifierDTO[] = [
+    {
+      type: 'webhook',
+      name: 'webhook',
+      heading: 'Webhook settings',
+      description: 'Sends HTTP POST request to a URL',
+      info: '',
+      optionsTemplate: '',
+      options: [
+        {
+          element: 'input',
+          inputType: 'text',
+          label: 'Url',
+          description: '',
+          placeholder: '',
+          propertyName: 'url',
+          showWhen: { field: '', is: '' },
+          required: true,
+          validationRule: '',
+          secure: false,
+        },
+        {
+          element: 'select',
+          inputType: '',
+          label: 'Http Method',
+          description: '',
+          placeholder: '',
+          propertyName: 'httpMethod',
+          selectOptions: [
+            { value: 'POST', label: 'POST' },
+            { value: 'PUT', label: 'PUT' },
+          ],
+          showWhen: { field: '', is: '' },
+          required: false,
+          validationRule: '',
+          secure: false,
+        },
+        {
+          element: 'input',
+          inputType: 'text',
+          label: 'Username',
+          description: '',
+          placeholder: '',
+          propertyName: 'username',
+          showWhen: { field: '', is: '' },
+          required: false,
+          validationRule: '',
+          secure: false,
+        },
+        {
+          element: 'input',
+          inputType: 'password',
+          label: 'Password',
+          description: '',
+          placeholder: '',
+          propertyName: 'password',
+          showWhen: { field: '', is: '' },
+          required: false,
+          validationRule: '',
+          secure: true,
+        },
+      ],
+    },
+  ];
+
   describe('Load notification channel', () => {
-    it('should load basic case', () => {
+    it('should migrate non secure settings to secure fields', () => {
+      const payload = {
+        id: 2,
+        uid: '9L3FrrHGk',
+        name: 'Webhook test',
+        type: 'webhook',
+        isDefault: false,
+        sendReminder: false,
+        disableResolveMessage: false,
+        frequency: '',
+        created: '2020-08-28T08:49:24Z',
+        updated: '2020-08-28T08:49:24Z',
+        settings: {
+          autoResolve: true,
+          httpMethod: 'POST',
+          password: 'asdf',
+          severity: 'critical',
+          uploadImage: true,
+          url: 'http://localhost.webhook',
+          username: 'asdf',
+        },
+      };
+
       reducerTester<NotificationChannelState>()
-        .givenReducer(notificationChannelReducer, { ...initialChannelState })
+        .givenReducer(notificationChannelReducer, { ...initialChannelState, notifiers: notifiers })
         .whenActionIsDispatched(notificationChannelLoaded(payload))
         .thenStateShouldEqual({
           ...initialChannelState,
+          notifiers: notifiers,
+          notificationChannel: expected,
+        });
+    });
+
+    it('should handle already secure field', () => {
+      const payload = {
+        id: 2,
+        uid: '9L3FrrHGk',
+        name: 'Webhook test',
+        type: 'webhook',
+        isDefault: false,
+        sendReminder: false,
+        disableResolveMessage: false,
+        frequency: '',
+        created: '2020-08-28T08:49:24Z',
+        updated: '2020-08-28T08:49:24Z',
+        secureFields: {
+          password: true,
+        },
+        settings: {
+          autoResolve: true,
+          httpMethod: 'POST',
+          password: '',
+          severity: 'critical',
+          uploadImage: true,
+          url: 'http://localhost.webhook',
+          username: 'asdf',
+        },
+      };
+
+      reducerTester<NotificationChannelState>()
+        .givenReducer(notificationChannelReducer, { ...initialChannelState, notifiers: notifiers })
+        .whenActionIsDispatched(notificationChannelLoaded(payload))
+        .thenStateShouldEqual({
+          ...initialChannelState,
+          notifiers: notifiers,
           notificationChannel: expected,
         });
     });
