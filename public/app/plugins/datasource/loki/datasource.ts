@@ -3,7 +3,6 @@ import { cloneDeep, isEmpty, map as lodashMap } from 'lodash';
 import { merge, Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
-// Services & Utils
 // Types
 import {
   AnnotationEvent,
