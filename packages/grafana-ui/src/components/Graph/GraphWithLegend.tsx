@@ -73,6 +73,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     onHorizontalRegionSelected,
     timeZone,
     children,
+    ariaLabel,
   } = props;
   const { graphContainer, wrapper, legendContainer } = getGraphWithLegendStyles(props);
 
@@ -91,7 +92,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
   }, []);
 
   return (
-    <div className={wrapper}>
+    <div className={wrapper} aria-label={ariaLabel}>
       <div className={graphContainer}>
         <Graph
           series={series}

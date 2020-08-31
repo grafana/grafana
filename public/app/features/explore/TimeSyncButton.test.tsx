@@ -8,10 +8,6 @@ const setup = (isSynced: boolean) => {
 };
 
 describe('TimeSyncButton', () => {
-  it('should render component', () => {
-    const wrapper = setup(true);
-    expect(wrapper).toMatchSnapshot();
-  });
   it('should change style when synced', () => {
     const wrapper = setup(true);
     expect(wrapper.find('button').props()['aria-label']).toEqual('Synced times');

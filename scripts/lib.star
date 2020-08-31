@@ -1,9 +1,9 @@
-build_image = 'grafana/build-container:1.2.21'
+build_image = 'grafana/build-container:1.2.24'
 publish_image = 'grafana/grafana-ci-deploy:1.2.5'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.2.0'
 alpine_image = 'alpine:3.12'
-
-restore_yarn_cache = 'rm -rf $(yarn cache dir) && cp -r yarn-cache $(yarn cache dir)'
+windows_image = 'mcr.microsoft.com/windows:1809'
+grabpl_version = '0.5.5'
 
 def pr_pipelines(edition):
     services = [
@@ -32,10 +32,10 @@ def pr_pipelines(edition):
         lint_backend_step(edition),
         codespell_step(),
         shellcheck_step(),
-        build_backend_step(edition=edition, variants=variants),
-        build_frontend_step(edition=edition),
         test_backend_step(),
         test_frontend_step(),
+        build_backend_step(edition=edition, variants=variants),
+        build_frontend_step(edition=edition),
         build_plugins_step(edition=edition),
         package_step(edition=edition, variants=variants),
         e2e_tests_server_step(),
@@ -81,10 +81,10 @@ def master_pipelines(edition):
         lint_backend_step(edition),
         codespell_step(),
         shellcheck_step(),
-        build_backend_step(edition=edition),
-        build_frontend_step(edition=edition),
         test_backend_step(),
         test_frontend_step(),
+        build_backend_step(edition=edition),
+        build_frontend_step(edition=edition),
         build_plugins_step(edition=edition),
         package_step(edition=edition),
         e2e_tests_server_step(),
@@ -97,57 +97,88 @@ def master_pipelines(edition):
         build_docker_images_step(edition=edition, ubuntu=True),
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
-        build_windows_installer_step(),
         release_next_npm_packages_step(edition),
         publish_packages_step(edition),
         deploy_to_kubernetes_step(edition),
     ]
+    windows_steps = [
+        windows_installer_step(edition),
+    ]
+    trigger = {
+        'event': ['push',],
+        'branch': 'master',
+    }
     return [
         pipeline(
-            name='test-master', edition=edition, trigger={
-                'event': ['push',],
-                'branch': 'master',
-            }, services=services, steps=steps
+            name='test-master', edition=edition, trigger=trigger, services=services, steps=steps
+        ),
+        pipeline(
+            name='windows-installer-master', edition=edition, trigger=trigger,
+            steps=windows_steps, platform='windows', depends_on=['test-master'],
         ),
     ]
 
-def pipeline(name, edition, trigger, steps, services=[]):
+def pipeline(name, edition, trigger, steps, services=[], platform='linux', depends_on=[]):
+    if platform != 'windows':
+        platform_conf = {
+            'os': 'linux',
+            'arch': 'amd64',
+        }
+    else:
+        platform_conf = {
+            'os': 'windows',
+            'arch': 'amd64',
+            'version': '1809',
+        }
+
     pipeline = {
         'kind': 'pipeline',
         'type': 'docker',
+        'platform': platform_conf,
         'name': name,
         'trigger': trigger,
         'services': services,
-        'steps': init_steps(edition) + steps,
+        'steps': init_steps(edition, platform) + steps,
+        'depends_on': depends_on,
     }
+
     if edition == 'enterprise':
         # We have a custom clone step for enterprise
         pipeline['clone'] = {
             'disable': True,
         }
 
-    pipeline['steps'].insert(0, {
+    return pipeline
+
+def init_steps(edition, platform):
+    if platform == 'windows':
+        return [
+            {
+                'name': 'identify-runner',
+                'image': windows_image,
+                'commands': [
+                    'echo $Env:DRONE_RUNNER_NAME',
+                ],
+            },
+        ]
+
+    identify_runner_step = {
         'name': 'identify-runner',
         'image': alpine_image,
         'commands': [
             'echo $DRONE_RUNNER_NAME',
         ],
-    })
+    }
 
-    return pipeline
-
-def init_steps(edition):
-    grabpl_version = '0.4.25'
     common_cmds = [
         'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
         'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
         'rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
         'yarn install --frozen-lockfile --no-progress',
-        # Keep the Yarn cache for subsequent steps
-        'cp -r $(yarn cache dir) yarn-cache',
     ]
     if edition == 'enterprise':
         return [
+            identify_runner_step,
             {
                 'name': 'clone',
                 'image': 'alpine/git:v2.26.2',
@@ -185,6 +216,7 @@ def init_steps(edition):
         ]
 
     return [
+        identify_runner_step,
         {
             'name': 'initialize',
             'image': build_image,
@@ -202,10 +234,6 @@ def init_steps(edition):
     ]
 
 def lint_backend_step(edition):
-    cmd = 'make lint-go'
-    if edition == 'enterprise':
-        cmd = 'GO_FILES=./pkg/extensions make lint-go'
-
     return {
         'name': 'lint-backend',
         'image': build_image,
@@ -217,7 +245,10 @@ def lint_backend_step(edition):
             'initialize',
         ],
         'commands': [
-            cmd,
+            # Don't use Make since it will re-download the linters
+            'golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...',
+            'revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...',
+            './scripts/revive-strict',
         ],
     }
 
@@ -230,7 +261,6 @@ def build_storybook_step(edition):
             'package',
         ],
         'commands': [
-            restore_yarn_cache,
             'yarn storybook:build',
         ],
     }
@@ -259,7 +289,7 @@ def publish_storybook_step(edition):
 
 def build_backend_step(edition, variants=None):
     if variants:
-        variants_str = ' --variants {} --no-pull-enterprise'.format(','.join(variants))
+        variants_str = ' --variants {}'.format(','.join(variants))
     else:
         variants_str = ''
     return {
@@ -271,9 +301,8 @@ def build_backend_step(edition, variants=None):
             'test-backend',
         ],
         'commands': [
-            'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
             # TODO: Convert number of jobs to percentage
-            './bin/grabpl build-backend --jobs 8 --edition {} --build-id $DRONE_BUILD_NUMBER{}'.format(
+            './bin/grabpl build-backend --jobs 8 --edition {} --build-id $DRONE_BUILD_NUMBER{} --no-pull-enterprise'.format(
                 edition, variants_str
             ),
         ],
@@ -288,7 +317,6 @@ def build_frontend_step(edition):
             'test-frontend',
         ],
         'commands': [
-            restore_yarn_cache,
             # TODO: Use percentage for num jobs
             './bin/grabpl build-frontend --jobs 8 --no-install-deps --edition {} '.format(edition) +
                 '--build-id $DRONE_BUILD_NUMBER --no-pull-enterprise',
@@ -304,7 +332,6 @@ def build_plugins_step(edition):
             'lint-backend',
         ],
         'commands': [
-            restore_yarn_cache,
             # TODO: Use percentage for num jobs
             './bin/grabpl build-plugins --jobs 8 --edition {} --no-install-deps'.format(edition),
         ],
@@ -323,8 +350,6 @@ def test_backend_step():
             './bin/grabpl test-backend',
             # Then execute integration tests in serial
             './bin/grabpl integration-tests',
-            # Keep the test cache
-            'cp -r $(go env GOCACHE) go-cache',
         ],
     }
 
@@ -339,7 +364,6 @@ def test_frontend_step():
             'TEST_MAX_WORKERS': '50%',
         },
         'commands': [
-            restore_yarn_cache,
             'yarn run prettier:check',
             'yarn run packages:typecheck',
             'yarn run typecheck',
@@ -432,12 +456,10 @@ def e2e_tests_step():
             'HOST': 'end-to-end-tests-server',
         },
         'commands': [
-            restore_yarn_cache,
             # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
             # even though the Yarn cache directory is beneath /usr/local/share somewhere
             './node_modules/.bin/cypress install',
-            './e2e/wait-for-grafana',
-            './e2e/run-suite',
+            './bin/grabpl e2e-tests',
         ],
     }
 
@@ -507,7 +529,6 @@ def postgres_integration_tests_step():
             './bin/dockerize -wait tcp://postgres:5432 -timeout 120s',
             'psql -p 5432 -h postgres -U grafanatest -d grafanatest -f ' +
                 'devenv/docker/blocks/postgres_tests/setup.sql',
-            'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
             './bin/grabpl integration-tests --database postgres',
@@ -531,7 +552,6 @@ def mysql_integration_tests_step():
             'apt-get install -yq default-mysql-client',
             './bin/dockerize -wait tcp://mysql:3306 -timeout 120s',
             'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
-            'rm -rf $(go env GOCACHE) && cp -r go-cache $(go env GOCACHE)',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
             './bin/grabpl integration-tests --database mysql',
@@ -583,8 +603,6 @@ def publish_packages_step(edition):
         'image': publish_image,
         'depends_on': [
             'package',
-            # TODO
-            # 'build-windows-installer',
             'end-to-end-tests',
             'mysql-integration-tests',
             'postgres-integration-tests',
@@ -595,17 +613,33 @@ def publish_packages_step(edition):
         ],
     }
 
-def build_windows_installer_step():
-    # TODO: Build Windows installer, waiting on Brian to fix the build image
+def windows_installer_step(edition):
+    sfx = ''
+    if edition == 'enterprise':
+        sfx = '-enterprise'
     return {
         'name': 'build-windows-installer',
-        # TODO: Need new image that can execute as root
-        'image': 'grafana/wix-toolset-ci:v3',
-        'depends_on': [
-            'package',
-        ],
+        'image': 'grafana/ci-wix:0.1.1',
+        'environment': {
+            'GCP_KEY': {
+                'from_secret': 'gcp_key',
+            },
+        },
         'commands': [
-          # TODO: Enable. Waiting on Brian to fix image.
-          'echo ./scripts/build/ci-msi-build/ci-msi-build-oss.sh',
+            '$$gcpKey = $$env:GCP_KEY',
+            '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json',
+            # gcloud fails to read the file unless converted with dos2unix
+            'dos2unix gcpkey.json',
+            'gcloud auth activate-service-account --key-file=gcpkey.json',
+            'rm gcpkey.json',
+            '$$ProgressPreference = "SilentlyContinue"',
+            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
+            # TODO: Infer correct Grafana version
+            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/{}/master/grafana{}-7.2.0-9fffe273pre.windows-amd64.zip -OutFile grafana.zip'.format(edition, sfx),
+            'cp C:\\App\\nssm-2.24.zip .',
+            './grabpl.exe windows-installer --edition {} grafana.zip'.format(edition),
+            '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
+            'echo "gsutil cp $$fname gs://grafana-downloads/{}/master/"'.format(edition),
+            'echo "gsutil cp $$fname.sha256 gs://grafana-downloads/{}/master/"'.format(edition),
         ],
     }

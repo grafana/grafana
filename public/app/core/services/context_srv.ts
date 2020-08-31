@@ -61,7 +61,7 @@ export class ContextSrv {
     if (!config.minRefreshInterval) {
       return true;
     }
-    return kbn.interval_to_ms(interval) >= kbn.interval_to_ms(config.minRefreshInterval);
+    return kbn.intervalToMs(interval) >= kbn.intervalToMs(config.minRefreshInterval);
   }
 
   getValidInterval(interval: string) {

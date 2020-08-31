@@ -1,4 +1,5 @@
 // Generated from ScrollQLParser.g4 by ANTLR 4.8
+/* eslint-disable */
 // jshint ignore: start
 // @ts-nocheck
 var antlr4 = require('antlr4/index');
