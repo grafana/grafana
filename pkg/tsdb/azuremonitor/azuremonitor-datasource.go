@@ -226,7 +226,7 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 	var azureMonitorRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
-		if strings.Contains(route.Path, cloudName) {
+		if route.Path == cloudName {
 			azureMonitorRoute = route
 			break
 		}
