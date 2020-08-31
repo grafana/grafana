@@ -18,15 +18,13 @@ import (
 /* See https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_actions-resources-contextkeys.html for service resource type tables.
  * See https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/aws-services-cloudwatch-metrics.html for CloudWatch namespaces.
  */
-var resourceTypesMap = map[string]map[string][]string{
-	"AWS/EC2":        {"InstanceId": {"ec2:instance"}},
-	"AWS/CloudFront": {"DistributionId": {"cloudfront:distribution"}},
-	"AWS/ApplicationELB": {"LoadBalancer": {"elasticloadbalancing:loadbalancer/app", "elasticloadbalancing:targetgroup"},
-		"TargetGroup": {"elasticloadbalancing:loadbalancer/app", "elasticloadbalancing:targetgroup"}},
-	"AWS/ECS": {"ClusterName": {"ecs:cluster", "ecs:service"},
-		"ServiceName": {"ecs:cluster", "ecs:service"}},
-	"AWS/RDS": {"DBInstanceIdentifier": {"rds:db"}},
-	"AWS/S3":  {"BucketName": {"s3"}},
+var resourceTypesMap = map[string][]string{
+	"AWS/EC2":            {"ec2:instance"},
+	"AWS/CloudFront":     {"cloudfront:distribution"},
+	"AWS/ApplicationELB": {"elasticloadbalancing:loadbalancer/app", "elasticloadbalancing:targetgroup"},
+	"AWS/ECS":            {"ecs:cluster", "ecs:service"},
+	"AWS/RDS":            {"rds:db"},
+	"AWS/S3":             {"s3"},
 }
 
 var resourcePrefixesMap = map[string]string{
@@ -37,28 +35,36 @@ var resourceComponentMap = map[string]int{
 	"ecs:service": 1, /* ECS services have the cluster name prepended in the resource but not the label. */
 }
 
-func (e *cloudWatchExecutor) parseGetMetricResourceTags(query *cloudWatchQuery) (map[string]map[string]string, error) {
-	resourceTypes := []string{}
-	if namespace, ok := resourceTypesMap[query.Namespace]; ok {
-		for key := range query.Dimensions {
-			if resources, ok := namespace[key]; ok {
-				resourceTypes = append(resourceTypes, resources...)
+func (e *cloudWatchExecutor) parseGetMetricResourceTags(queries map[string]*cloudWatchQuery) (map[string]map[string]string, error) {
+	/* We can query multiple resources types simultaneously, but only one region at a time, so we collect all query resource types into
+	 * regional buckets.
+	 */
+	resourceTypesByRegion := map[string][]string{}
+	for _, query := range queries {
+		if resources, ok := resourceTypesMap[query.Namespace]; ok {
+			if _, ok := resourceTypesByRegion[query.Region]; !ok {
+				resourceTypesByRegion[query.Region] = []string{}
 			}
+
+			resourceTypesByRegion[query.Region] = append(resourceTypesByRegion[query.Region], resources...)
 		}
 	}
 
 	tags := map[string]map[string]string{}
-	queried := map[string]bool{}
-	for _, resourceType := range resourceTypes {
-		if queried[resourceType] {
-			continue
+	for region, resourceTypes := range resourceTypesByRegion {
+		tagFilters := []*resourcegroupstaggingapi.TagFilter{}
+		typeFilters := []*string{}
+		typeFiltersAdded := map[string]bool{}
+		for _, type_ := range resourceTypes {
+			if _, ok := typeFiltersAdded[type_]; !ok {
+				typeFilters = append(typeFilters, aws.String(type_))
+				typeFiltersAdded[type_] = true
+			}
 		}
 
-		tagFilters := []*resourcegroupstaggingapi.TagFilter{}
-		typeFilters := []*string{aws.String(resourceType)}
-		resources, err := e.resourceGroupsGetResources(query.Region, tagFilters, typeFilters)
+		resources, err := e.resourceGroupsGetResources(region, tagFilters, typeFilters)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to get resources for type %s: %s", resourceType, err)
+			return nil, fmt.Errorf("Failed to get resources for region %s: %s", region, err)
 		}
 
 		for _, resource := range resources.ResourceTagMappingList {
@@ -69,10 +75,10 @@ func (e *cloudWatchExecutor) parseGetMetricResourceTags(query *cloudWatchQuery) 
 
 			/* CloudWatch inconsistently prepends part of the resource type to the label, so we replicate that here. */
 			resourceID := parsedARN.Resource
-			if prefix, ok := resourcePrefixesMap[resourceType]; ok {
+			if prefix, ok := resourcePrefixesMap[parsedARN.Service+":"+parsedARN.ResourceType]; ok {
 				resourceID = prefix + resourceID
 			}
-			if component, ok := resourceComponentMap[resourceType]; ok {
+			if component, ok := resourceComponentMap[parsedARN.Service+":"+parsedARN.ResourceType]; ok {
 				resourceID = strings.Split(resourceID, "/")[component]
 			}
 
@@ -81,8 +87,6 @@ func (e *cloudWatchExecutor) parseGetMetricResourceTags(query *cloudWatchQuery) 
 				tags[resourceID][*tag.Key] = *tag.Value
 			}
 		}
-
-		queried[resourceType] = true
 	}
 
 	return tags, nil
@@ -122,14 +126,14 @@ func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 		}
 	}
 
+	resource_tags, err := e.parseGetMetricResourceTags(queries)
+	if err != nil {
+		return nil, err
+	}
+
 	cloudWatchResponses := make([]*cloudwatchResponse, 0)
 	for id, lr := range mdrs {
 		query := queries[id]
-
-		resource_tags, err := e.parseGetMetricResourceTags(query)
-		if err != nil {
-			return nil, err
-		}
 
 		series, partialData, err := parseGetMetricDataTimeSeries(lr, labels[id], query, resource_tags)
 		if err != nil {
