@@ -56,7 +56,8 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
   const fieldNameInvalid = config.fieldName !== null && !fieldNameOptions.find(item => item.value === config.fieldName);
   const filterTypeInvalid =
     !fieldNameInvalid && filterInfo.supportedFieldTypes && !filterInfo.supportedFieldTypes.includes(fieldType);
-  const filterExpressionInvalid = !fieldNameInvalid && !filterTypeInvalid && !filterValid;
+  const filterExpressionInvalid =
+    config.filterExpression !== '' && !fieldNameInvalid && !filterTypeInvalid && !filterValid;
 
   return (
     <div className="gf-form-inline">
