@@ -17,4 +17,5 @@ export enum DataTransformerID {
   filterByRefId = 'filterByRefId',
   noop = 'noop',
   ensureColumns = 'ensureColumns',
+  groupBy = 'groupBy',
 }
