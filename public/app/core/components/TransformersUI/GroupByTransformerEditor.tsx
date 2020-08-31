@@ -129,10 +129,11 @@ const getStyling = stylesFactory(() => {
     fieldName: css`
       ${cell}
       min-width: 250px;
+      white-space: nowrap;
     `,
     calculations: css`
       ${cell}
-      width: 100%;
+      width: 99%;
     `,
   };
 });
