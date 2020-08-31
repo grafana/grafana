@@ -2,10 +2,8 @@ import merge from 'lodash/merge';
 import { getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
-import { ThresholdsMode } from '../types/thresholds';
 import { GrafanaTheme } from '../types/theme';
-import { FieldConfig, MappingType } from '../types';
-import { validateFieldConfig } from './fieldOverrides';
+import { MappingType } from '../types';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
 describe('FieldDisplay', () => {
