@@ -74,27 +74,6 @@ describe('FieldDisplay', () => {
     expect(display.map(v => v.display.numeric)).toEqual([1, 3]); // First 2 are from the first field
   });
 
-  it('should restore -Infinity value for base threshold', () => {
-    const config: FieldConfig = {
-      thresholds: {
-        mode: ThresholdsMode.Absolute,
-        steps: [
-          {
-            color: '#73BF69',
-            value: (null as any) as number, // -Infinity becomes null in JSON
-          },
-          {
-            color: '#F2495C',
-            value: 50,
-          },
-        ],
-      },
-    };
-    validateFieldConfig(config);
-    expect(config.thresholds!.steps.length).toEqual(2);
-    expect(config.thresholds!.steps[0].value).toBe(-Infinity);
-  });
-
   it('Should return field thresholds when there is no data', () => {
     const options = createEmptyDisplayOptions({
       fieldConfig: {

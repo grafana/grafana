@@ -501,7 +501,7 @@ function applyFieldConfigDefaults(fieldConfig: FieldConfigSource, defaults: Fiel
         }
       }
     ),
-    overrides: [...defaults.overrides, ...(fieldConfig && fieldConfig.overrides ? fieldConfig.overrides : [])],
+    overrides: fieldConfig?.overrides ?? [],
   };
 
   // Thresholds base values are null in JSON but need to be converted to -Infinity
