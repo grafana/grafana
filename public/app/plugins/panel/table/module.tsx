@@ -53,6 +53,7 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
         .addBooleanSwitch({
           path: 'filterable',
           name: 'Column filter',
+          description: 'Enables/disables field filters in table',
           defaultValue: false,
         });
     },

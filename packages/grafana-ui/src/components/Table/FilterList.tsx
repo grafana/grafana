@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 import { stylesFactory, useTheme } from '../../themes';
@@ -35,11 +35,11 @@ export const FilterList: FC<Props> = ({ options, values, onChange }) => {
 
   const onCheckedChanged = useCallback(
     (option: SelectableValue) => (event: React.FormEvent<HTMLInputElement>) => {
-      const newChecked = event.currentTarget.checked
+      const newValues = event.currentTarget.checked
         ? values.concat(option)
         : values.filter(c => c.value !== option.value);
 
-      onChange(newChecked);
+      onChange(newValues);
     },
     [onChange, values]
   );
@@ -59,7 +59,7 @@ export const FilterList: FC<Props> = ({ options, values, onChange }) => {
           itemCount={items.length}
           itemSize={ITEM_HEIGHT}
           width="100%"
-          className={cx(styles.filterList)}
+          className={styles.filterList}
         >
           {({ index, style }) => {
             const option = items[index];
@@ -67,7 +67,7 @@ export const FilterList: FC<Props> = ({ options, values, onChange }) => {
             const isChecked = values.find(s => s.value === value) !== undefined;
 
             return (
-              <div className={cx(styles.filterListRow)} style={style} title={label}>
+              <div className={styles.filterListRow} style={style} title={label}>
                 <Checkbox value={isChecked} label={label} onChange={onCheckedChanged(option)} />
               </div>
             );

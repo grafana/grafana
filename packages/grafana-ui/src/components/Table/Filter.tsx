@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 import { Field, GrafanaTheme } from '@grafana/data';
 
 import { TableStyles } from './styles';
-import { stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useStyles } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { FilterPopup } from './FilterPopup';
 import { Popover } from '..';
@@ -17,8 +17,7 @@ interface Props {
 export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
   const filterEnabled = useMemo(() => Boolean(column.filterValue), [column.filterValue]);
   const onShowPopover = useCallback(() => setPopoverVisible(true), [setPopoverVisible]);
   const onClosePopover = useCallback(() => setPopoverVisible(false), [setPopoverVisible]);

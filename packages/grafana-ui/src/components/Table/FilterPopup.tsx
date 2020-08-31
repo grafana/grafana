@@ -3,7 +3,7 @@ import { Field, formattedValueToString, GrafanaTheme, SelectableValue } from '@g
 import { css, cx } from 'emotion';
 
 import { TableStyles } from './styles';
-import { stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useStyles } from '../../themes';
 import { Button, ClickOutsideWrapper, HorizontalGroup, Label, VerticalGroup } from '..';
 import { FilterList } from './FilterList';
 
@@ -41,9 +41,7 @@ export const FilterPopup: FC<Props> = ({ column: { preFilteredRows, filterValue,
   );
 
   const clearFilterVisible = useMemo(() => filterValue !== undefined, [filterValue]);
-
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
 
   return (
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
