@@ -94,6 +94,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     multiValueRemove: css`
       margin: 0 ${theme.spacing.xs};
+      cursor: pointer;
     `,
   };
 });
