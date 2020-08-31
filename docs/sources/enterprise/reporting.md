@@ -165,6 +165,8 @@ Email branding:
 - **Footer link text** - Text for the link in the report email footer. Defaults to "Grafana".
 - **Footer link URL** - Link for the report email footer.  
   
+{{< docs-imagebox img="/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" >}}
+
 ## Troubleshoot reporting
 
 To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration]({{< relref "../administration/configuration.md#filters" >}}) for more information.
