@@ -4,7 +4,7 @@ import { default as lodashDefaults } from 'lodash/defaults';
 
 import { VariableType } from '@grafana/data';
 import { VariableModel, VariableOption, VariableWithOptions } from '../types';
-import { AddVariable, ALL_VARIABLE_VALUE, getInstanceState, NEW_VARIABLE_ID, VariablePayload } from './types';
+import { AddVariable, getInstanceState, NEW_VARIABLE_ID, VariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { Deferred } from '../../../core/utils/deferred';
@@ -123,12 +123,6 @@ const sharedReducerSlice = createSlice({
 
       const instanceState = getInstanceState<VariableWithOptions>(state, action.payload.id);
       const current = { ...action.payload.data.option };
-
-      if (Array.isArray(current.text) && current.text.length > 0) {
-        current.text = current.text.join(' + ');
-      } else if (Array.isArray(current.value) && current.value[0] !== ALL_VARIABLE_VALUE) {
-        current.text = current.value.join(' + ');
-      }
 
       instanceState.current = current;
       instanceState.options = instanceState.options.map(option => {

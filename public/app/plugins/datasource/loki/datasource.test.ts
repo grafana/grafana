@@ -16,6 +16,17 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
+jest.mock('app/features/dashboard/services/TimeSrv', () => {
+  return {
+    getTimeSrv: () => ({
+      timeRange: () => ({
+        from: new Date(0),
+        to: new Date(1),
+      }),
+    }),
+  };
+});
+
 const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
 
 describe('LokiDatasource', () => {
@@ -103,7 +114,7 @@ describe('LokiDatasource', () => {
       datasourceRequestMock.mockImplementation(() => Promise.resolve(testResp));
     });
 
-    test('should just run range query when in logs mode', async () => {
+    test('should run range and instant query', async () => {
       const options = getQueryOptions<LokiQuery>({
         targets: [{ expr: '{job="grafana"}', refId: 'B' }],
       });
@@ -112,7 +123,7 @@ describe('LokiDatasource', () => {
       ds.runRangeQuery = jest.fn(() => of({ data: [] }));
       await ds.query(options).toPromise();
 
-      expect(ds.runInstantQuery).not.toBeCalled();
+      expect(ds.runInstantQuery).toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
@@ -174,7 +185,7 @@ describe('LokiDatasource', () => {
       const ds = new LokiDatasource(customSettings, templateSrvMock);
 
       datasourceRequestMock.mockImplementation(
-        jest.fn().mockReturnValueOnce(
+        jest.fn().mockReturnValue(
           Promise.reject({
             data: {
               message: 'parse error at line 1, col 6: invalid char escape',
@@ -442,6 +453,19 @@ describe('LokiDatasource', () => {
         expect(res.length).toBe(0);
       });
     });
+
+    mocks.forEach((mock, index) => {
+      it(`should return label names according to provided rangefor Loki v${index} `, async () => {
+        ds.getVersion = mock.getVersion;
+        ds.metadataRequest = mock.metadataRequest;
+        const query = 'label_names()';
+        const res = await ds.metricFindQuery(query, {
+          range: { from: new Date(2), to: new Date(3) },
+        });
+        expect(res[0].text).toEqual('label1');
+        expect(res.length).toBe(1);
+      });
+    });
   });
 });
 
@@ -470,7 +494,7 @@ function makeLimitTest(instanceSettings: any, datasourceRequestMock: any, templa
 
     ds.query(options);
 
-    expect(datasourceRequestMock.mock.calls.length).toBe(1);
+    expect(datasourceRequestMock.mock.calls.length).toBe(2);
     expect(datasourceRequestMock.mock.calls[0][0].url).toContain(`limit=${expectedLimit}`);
   };
 }

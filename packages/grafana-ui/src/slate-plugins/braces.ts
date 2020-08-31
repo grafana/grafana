@@ -1,5 +1,6 @@
 import { Plugin } from '@grafana/slate-react';
 import { Editor as CoreEditor, Annotation } from 'slate';
+import { v4 as uuidv4 } from 'uuid';
 
 const BRACES: any = {
   '[': ']',
@@ -43,7 +44,7 @@ export function BracesPlugin(): Plugin {
             keyEvent.preventDefault();
             const complement = BRACES[keyEvent.key];
             const matchAnnotation = {
-              key: `${MATCH_MARK}-${Date.now()}`,
+              key: `${MATCH_MARK}-${uuidv4()}`,
               type: `${MATCH_MARK}-${complement}`,
               anchor: {
                 key: startKey,
