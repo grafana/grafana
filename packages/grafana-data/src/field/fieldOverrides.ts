@@ -4,7 +4,6 @@ import {
   DataFrame,
   Field,
   FieldType,
-  ThresholdsMode,
   FieldColorMode,
   ColorScheme,
   FieldOverrideContext,
@@ -308,18 +307,6 @@ const processFieldConfigValue = (
  */
 export function validateFieldConfig(config: FieldConfig) {
   const { thresholds } = config;
-  if (thresholds) {
-    if (!thresholds.mode) {
-      thresholds.mode = ThresholdsMode.Absolute;
-    }
-    if (!thresholds.steps) {
-      thresholds.steps = [];
-    } else if (thresholds.steps.length) {
-      // First value is always -Infinity
-      // JSON saves it as null
-      thresholds.steps[0].value = -Infinity;
-    }
-  }
 
   if (!config.color) {
     if (thresholds) {

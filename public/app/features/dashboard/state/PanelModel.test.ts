@@ -164,6 +164,11 @@ describe('PanelModel', () => {
       expect(model.getOptions().showThresholds).toBeTruthy();
     });
 
+    it('should change null thresholds to negative infinity', () => {
+      expect(model.fieldConfig.defaults.thresholds.steps[0].value).toBe(-Infinity);
+      expect(model.fieldConfig.overrides[0].properties[0].value.steps[0].value).toBe(-Infinity);
+    });
+
     it('should apply option defaults but not override if array is changed', () => {
       expect(model.getOptions().arrayWith2Values.length).toBe(1);
     });
