@@ -85,6 +85,6 @@ In this case the labels that represent the dimensions will have two keys based o
 
 ### Multiple values
 
-In the case SQL-like data sources, more than one numeric column cab be selected, without or without additional string columns to be used as dimensions. For example, ` AVG(Temperature) AS AvgTemp,  MAX(Temperature) AS MaxTemp`. This, if combined with multiple dimensions can result in a lot of series. Selecting multiple values is currently only designed to be used with visualization.
+In the case SQL-like data sources, more than one numeric column can be selected, without or without additional string columns to be used as dimensions. For example, ` AVG(Temperature) AS AvgTemp,  MAX(Temperature) AS MaxTemp`. This, if combined with multiple dimensions can result in a lot of series. Selecting multiple values is currently only designed to be used with visualization.
 
 Additional technical information on tabular time series formats and how dimensions are extracted can be found in [the developer documentation on data frames as time series]({{< relref "../developers/plugins/data-frames.md#data-frames-as-time-series" >}}).
