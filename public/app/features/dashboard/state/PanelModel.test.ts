@@ -96,6 +96,13 @@ describe('PanelModel', () => {
         fieldConfig: {
           defaults: {
             unit: 'mpg',
+            thresholds: {
+              mode: 'absolute',
+              steps: [
+                { color: 'green', value: null },
+                { color: 'red', value: 80 },
+              ],
+            },
           },
           overrides: [
             {
@@ -103,7 +110,18 @@ describe('PanelModel', () => {
                 id: '1',
                 options: {},
               },
-              properties: [],
+              properties: [
+                {
+                  id: 'thresholds',
+                  value: {
+                    mode: 'absolute',
+                    steps: [
+                      { color: 'green', value: null },
+                      { color: 'red', value: 80 },
+                    ],
+                  },
+                },
+              ],
             },
           ],
         },
