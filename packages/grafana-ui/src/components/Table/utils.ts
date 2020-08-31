@@ -1,3 +1,7 @@
+import { Column, Row } from 'react-table';
+import memoizeOne from 'memoize-one';
+import { css, cx } from 'emotion';
+import tinycolor from 'tinycolor2';
 import { ContentPosition, TextAlignProperty } from 'csstype';
 import {
   DataFrame,
@@ -7,13 +11,11 @@ import {
   getFieldDisplayName,
   SelectableValue,
 } from '@grafana/data';
-import { Column, Row } from 'react-table';
+
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types';
-import { css, cx } from 'emotion';
 import { withTableStyles } from './withTableStyles';
-import tinycolor from 'tinycolor2';
 import { JSONViewCell } from './JSONViewCell';
 
 export function getTextAlign(field?: Field): TextAlignProperty {
@@ -77,7 +79,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
       minWidth: 50,
-      filter: filterByValue,
+      filter: memoizeOne(filterByValue),
     });
   }
 
