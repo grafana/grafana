@@ -22,7 +22,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
   name: 'Filter by value',
   description: 'Filter the data points (rows) depending on the value of certain fields',
   defaultOptions: {
-    valueFilters: [{ type: 'include', fieldName: null, filterExpression: null, filterType: ValueFilterID.regex }],
+    valueFilters: [{ fieldName: null, filterExpression: null, filterType: ValueFilterID.regex }],
     type: 'include',
     match: 'all',
   },
