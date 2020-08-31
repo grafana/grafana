@@ -82,10 +82,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-interface Props {
+export interface Props {
   isOpen?: boolean;
   label: string;
   loading?: boolean;
+  /** Toggle collapsed header icon */
   collapsible?: boolean;
   onToggle?: (isOpen: boolean) => void;
 }

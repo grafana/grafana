@@ -1,0 +1,18 @@
+import { Meta, Preview, Props } from '@storybook/addon-docs/blocks';
+import {Collapse} from "./Collapse";
+
+# Collapse
+
+A component that allows users to toggle the display of sections of content.
+
+## Usage
+
+```jsx
+const [isOpen, setIsOpen] = useState(false);
+
+<Collapse label="Collapse panel" isOpen={isOpen} onToggle={() => setIsOpen(!isOpen)}>
+  <p>Panel data</p>
+</Collapse>
+```
+
+<Props of={Collapse}/>
