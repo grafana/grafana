@@ -1,11 +1,12 @@
 import React, { FC, useCallback, useMemo, useState } from 'react';
-import { Field, formattedValueToString, GrafanaTheme, SelectableValue } from '@grafana/data';
+import { Field, GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css, cx } from 'emotion';
 
 import { TableStyles } from './styles';
 import { stylesFactory, useStyles } from '../../themes';
 import { Button, ClickOutsideWrapper, HorizontalGroup, Label, VerticalGroup } from '..';
 import { FilterList } from './FilterList';
+import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from './utils';
 
 interface Props {
   column: any;
@@ -18,7 +19,7 @@ export const FilterPopup: FC<Props> = ({ column: { preFilteredRows, filterValue,
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
   const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
-  const [values, setValues] = useState<SelectableValue[]>(filteredOptions ?? []);
+  const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
 
   const onCancel = useCallback((event?: React.MouseEvent) => onClose(), [onClose]);
 
@@ -96,61 +97,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     padding: ${theme.spacing.xs} ${theme.spacing.md};
   `,
 }));
-
-const calculateUniqueFieldValues = (rows: any[], field?: Field) => {
-  if (!field || rows.length === 0) {
-    return {};
-  }
-
-  const set: Record<string, any> = {};
-
-  for (let index = 0; index < rows.length; index++) {
-    const fieldIndex = parseInt(rows[index].id, 10);
-    const fieldValue = field.values.get(fieldIndex);
-    const displayValue = field.display ? field.display(fieldValue) : fieldValue;
-    const value = field.display ? formattedValueToString(displayValue) : displayValue;
-    set[value || '(Blanks)'] = fieldValue;
-  }
-
-  return set;
-};
-
-const valuesToOptions = (unique: Record<string, any>): SelectableValue[] =>
-  Object.keys(unique)
-    .reduce((all, key) => all.concat({ value: unique[key], label: key }), [] as SelectableValue[])
-    .sort(sortOption);
-
-const sortOption = (a: SelectableValue, b: SelectableValue): number => {
-  if (a.label === undefined && b.label === undefined) {
-    return 0;
-  }
-
-  if (a.label === undefined && b.label !== undefined) {
-    return -1;
-  }
-
-  if (a.label !== undefined && b.label === undefined) {
-    return 1;
-  }
-
-  if (a.label! < b.label!) {
-    return -1;
-  }
-
-  if (a.label! > b.label!) {
-    return 1;
-  }
-
-  return 0;
-};
-
-const getFilteredOptions = (options: SelectableValue[], filterValues?: SelectableValue[]) => {
-  if (!filterValues) {
-    return null;
-  }
-
-  return options.filter(option => filterValues.some(filtered => filtered.value === option.value));
-};
 
 const stopPropagation = (event: React.MouseEvent) => {
   event.stopPropagation();

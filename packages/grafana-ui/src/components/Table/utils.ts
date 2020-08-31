@@ -1,5 +1,12 @@
 import { ContentPosition, TextAlignProperty } from 'csstype';
-import { DataFrame, Field, FieldType, getFieldDisplayName, SelectableValue } from '@grafana/data';
+import {
+  DataFrame,
+  Field,
+  FieldType,
+  formattedValueToString,
+  getFieldDisplayName,
+  SelectableValue,
+} from '@grafana/data';
 import { Column, Row } from 'react-table';
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
@@ -189,4 +196,60 @@ export function getHeaderAlign(field?: Field): ContentPosition {
   }
 
   return 'flex-start';
+}
+
+export function calculateUniqueFieldValues(rows: any[], field?: Field) {
+  if (!field || rows.length === 0) {
+    return {};
+  }
+
+  const set: Record<string, any> = {};
+
+  for (let index = 0; index < rows.length; index++) {
+    const fieldIndex = parseInt(rows[index].id, 10);
+    const fieldValue = field.values.get(fieldIndex);
+    const displayValue = field.display ? field.display(fieldValue) : fieldValue;
+    const value = field.display ? formattedValueToString(displayValue) : displayValue;
+    set[value || '(Blanks)'] = fieldValue;
+  }
+
+  return set;
+}
+
+export function valuesToOptions(unique: Record<string, any>): SelectableValue[] {
+  return Object.keys(unique)
+    .reduce((all, key) => all.concat({ value: unique[key], label: key }), [] as SelectableValue[])
+    .sort(sortOptions);
+}
+
+export function sortOptions(a: SelectableValue, b: SelectableValue): number {
+  if (a.label === undefined && b.label === undefined) {
+    return 0;
+  }
+
+  if (a.label === undefined && b.label !== undefined) {
+    return -1;
+  }
+
+  if (a.label !== undefined && b.label === undefined) {
+    return 1;
+  }
+
+  if (a.label! < b.label!) {
+    return -1;
+  }
+
+  if (a.label! > b.label!) {
+    return 1;
+  }
+
+  return 0;
+}
+
+export function getFilteredOptions(options: SelectableValue[], filterValues?: SelectableValue[]): SelectableValue[] {
+  if (!filterValues) {
+    return [];
+  }
+
+  return options.filter(option => filterValues.some(filtered => filtered.value === option.value));
 }
