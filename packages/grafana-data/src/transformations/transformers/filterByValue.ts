@@ -6,7 +6,6 @@ import { ArrayVector } from '../../vector/ArrayVector';
 import { ValueFilterID, valueFiltersRegistry } from '../valueFilters';
 
 export interface ValueFilter {
-  type: string; // include / exclude
   fieldName: string | null; // Corresponding field name
   filterExpression: string | null; // The filter expression / value
   filterType: ValueFilterID;
@@ -14,6 +13,8 @@ export interface ValueFilter {
 
 export interface FilterByValueTransformerOptions {
   valueFilters: ValueFilter[];
+  type: string; // 'include' or 'exclude'
+  match: string; // 'all' or 'any'
 }
 
 export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransformerOptions> = {
@@ -22,6 +23,8 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
   description: 'Filter the data points (rows) depending on the value of certain fields',
   defaultOptions: {
     valueFilters: [{ type: 'include', fieldName: null, filterExpression: null, filterType: ValueFilterID.regex }],
+    type: 'include',
+    match: 'all',
   },
 
   /**
@@ -29,6 +32,9 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
    * be applied, just return the input series
    */
   transformer: (options: FilterByValueTransformerOptions) => {
+    const includeRow = options.type === 'include';
+    const matchAll = options.match === 'all';
+
     return (data: DataFrame[]) => {
       if (options.valueFilters.length === 0) {
         return data;
@@ -37,12 +43,10 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
       const processed: DataFrame[] = [];
 
       let includeThisRow = []; // All data points will be flagged for include (true) or exclude (false) in this variable
-      let defaultIncludeFlag = options.valueFilters[0].type !== 'include';
 
       for (let frame of data) {
         for (let filterIndex = 0; filterIndex < options.valueFilters.length; filterIndex++) {
           let filter = options.valueFilters[filterIndex];
-          let includeFlag = filter.type === 'include';
 
           // Find the matching field for this filter
           let field = null;
@@ -67,12 +71,23 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
             continue;
           }
 
-          for (let row = 0; row < frame.length; row++) {
-            // Run the filter test on each value
-            if (filterInstance.test(field.values.get(row))) {
-              includeThisRow[row] = includeFlag;
-            } else if (filterIndex === 0) {
-              includeThisRow[row] = defaultIncludeFlag;
+          if (matchAll) {
+            // Run the test on each row
+            for (let row = 0; row < frame.length; row++) {
+              if (!filterInstance.test(field.values.get(row))) {
+                includeThisRow[row] = !includeRow;
+              } else if (filterIndex === 0) {
+                includeThisRow[row] = includeRow;
+              }
+            }
+          } else {
+            // Run the test on each row
+            for (let row = 0; row < frame.length; row++) {
+              if (filterInstance.test(field.values.get(row))) {
+                includeThisRow[row] = includeRow;
+              } else if (filterIndex === 0) {
+                includeThisRow[row] = !includeRow;
+              }
             }
           }
         }

@@ -61,25 +61,9 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
   return (
     <div className="gf-form-inline">
       <div className="gf-form gf-form-spacing">
-        <div className="gf-form-label width-8">Filter type</div>
-        <Select
-          className="width-8"
-          options={[
-            { label: 'Include', value: 'include' },
-            { label: 'Exclude', value: 'exclude' },
-          ]}
-          value={config.type}
-          onChange={option => {
-            // console.log('onChange filterType', option.value);
-            onConfigChange({ ...config, type: option.value || 'include' });
-          }}
-          menuPlacement="bottom"
-        />
-      </div>
-      <div className="gf-form gf-form-spacing">
         <div className="gf-form-label width-8">Rows with</div>
         <Select
-          className="width-16"
+          className="width-24"
           placeholder="Field Name"
           options={fieldNameOptions}
           value={config.fieldName}
@@ -145,7 +129,6 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
   const onAddFilter = useCallback(() => {
     let valueFilters = options.valueFilters.map(filter => ({ ...filter })); // Deep copy
     valueFilters.push({
-      type: 'include',
       fieldName: null,
       filterExpression: null,
       filterType: ValueFilterID.regex,
@@ -155,7 +138,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
       ...options,
       valueFilters,
     });
-  }, [onChange , options]);
+  }, [onChange, options]);
 
   const onDeleteFilter = useCallback(
     (index: number) => () => {
@@ -183,6 +166,38 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
 
   return (
     <div>
+      <div className="gf-form-inline">
+        <div className="gf-form gf-form-spacing">
+          <Select
+            className="width-12"
+            options={[
+              { label: 'Include', value: 'include' },
+              { label: 'Exclude', value: 'exclude' },
+            ]}
+            value={options.type}
+            onChange={option => {
+              onChange({ ...options, type: option.value || 'include' });
+            }}
+            menuPlacement="bottom"
+          />
+        </div>
+        <div className="gf-form-label width-4">rows</div>
+        <div className="gf-form gf-form-spacing">
+          <Select
+            className="width-12"
+            options={[
+              { label: 'Matching all', value: 'all' },
+              { label: 'Matching any', value: 'any' },
+            ]}
+            value={options.match}
+            onChange={option => {
+              onChange({ ...options, match: option.value || 'all' });
+            }}
+            menuPlacement="bottom"
+          />
+        </div>
+        <div className="gf-form-label width-8">conditions</div>
+      </div>
       {options.valueFilters.map((val, idx) => {
         const matchingField = getFieldByName(val.fieldName, input);
         return (
@@ -199,7 +214,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
 
       <div className="gf-form-inline">
         <Button icon="plus" onClick={onAddFilter} variant="secondary">
-          Add filter
+          Add condition
         </Button>
       </div>
     </div>

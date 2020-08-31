@@ -159,7 +159,6 @@ function testEqualCreator(filterOptions: Record<string, any>): ValueFilterInstan
   let compare: any = filterOptions.filterExpression || '';
   return {
     isValid: compare !== null,
-    // @ts-ignore
     // eslint-disable-next-line eqeqeq
     test: value => value == compare, // Loose equality so we don't need to bother about types
   };
@@ -169,7 +168,6 @@ function testNotEqualCreator(filterOptions: Record<string, any>): ValueFilterIns
   let compare: any = filterOptions.filterExpression || '';
   return {
     isValid: compare !== null,
-    // @ts-ignore
     // eslint-disable-next-line eqeqeq
     test: value => value != compare, // Loose equality so we don't need to bother about types
   };
