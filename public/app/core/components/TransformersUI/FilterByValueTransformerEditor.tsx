@@ -155,7 +155,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
       ...options,
       valueFilters,
     });
-  }, [options]);
+  }, [onChange , options]);
 
   const onDeleteFilter = useCallback(
     (index: number) => () => {
@@ -166,7 +166,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
         valueFilters,
       });
     },
-    [options]
+    [options, onChange]
   );
 
   const onConfigChange = useCallback(
@@ -178,7 +178,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
         valueFilters: valueFilters as ValueFilter[],
       });
     },
-    [options]
+    [options, onChange]
   );
 
   return (
