@@ -172,9 +172,9 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Date & time',
     formats: [
       { name: 'Datetime ISO', id: 'dateTimeAsIso', fn: dateTimeAsIso },
-      { name: 'Datetime ISO - Smart', id: 'dateTimeAsIsoSmart', fn: dateTimeAsIsoNoDateIfToday },
+      { name: 'Datetime ISO (No date if today)', id: 'dateTimeAsIsoNoDateIfToday', fn: dateTimeAsIsoNoDateIfToday },
       { name: 'Datetime US', id: 'dateTimeAsUS', fn: dateTimeAsUS },
-      { name: 'Datetime US - Smart', id: 'dateTimeAsUSSmart', fn: dateTimeAsUSNoDateIfToday },
+      { name: 'Datetime US (No date if today)', id: 'dateTimeAsUSNoDateIfToday', fn: dateTimeAsUSNoDateIfToday },
       { name: 'From Now', id: 'dateTimeFromNow', fn: dateTimeFromNow },
     ],
   },
