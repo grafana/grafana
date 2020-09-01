@@ -52,7 +52,6 @@ func (acs *AnnotationCleanupService) cleanAnnotations(ctx context.Context, cfg s
 	if cfg.MaxCount > 0 {
 		deleteQuery := `DELETE FROM annotation WHERE id IN (SELECT id FROM (SELECT id FROM annotation WHERE %s ORDER BY id DESC %s) a)`
 		sql := fmt.Sprintf(deleteQuery, annotationType, dialect.LimitOffset(acs.batchSize, cfg.MaxCount))
-		fmt.Println("deleteQuery", "q", sql)
 		return acs.executeUntilDoneOrCancelled(ctx, sql)
 	}
 
