@@ -87,6 +87,13 @@ func TestExecuteSimple(t *testing.T) {
 	})
 }
 
+func TestExecuteSingle(t *testing.T) {
+	t.Run("Single value", func(t *testing.T) {
+		dr := verifyGoldenResponse(t, "single")
+		require.Len(t, dr.Frames, 1)
+	})
+}
+
 func TestExecuteMultiple(t *testing.T) {
 	t.Run("Multiple Test", func(t *testing.T) {
 		dr := verifyGoldenResponse(t, "multiple")

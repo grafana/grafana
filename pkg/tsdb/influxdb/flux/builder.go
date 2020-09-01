@@ -119,40 +119,42 @@ func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 		}
 	}
 
+	// Timeseries has a "_value" and a time
 	if fb.isTimeSeries {
 		col := getTimeSeriesTimeColumn(columns)
-		if col == nil {
-			return fmt.Errorf("no time column in timeSeries")
-		}
-
-		fb.timeColumn = col.Name()
-		fb.timeDisplay = "Time"
-		if "_time" != fb.timeColumn {
-			fb.timeDisplay = col.Name()
-		}
-	} else {
-		fb.labels = make([]string, 0)
-		for _, col := range columns {
-			// Skip the result column
-			if col.Index() == 0 && col.Name() == "result" && col.DataType() == stringDatatype {
-				continue
+		if col != nil {
+			fb.timeColumn = col.Name()
+			fb.timeDisplay = "Time"
+			if "_time" != fb.timeColumn {
+				fb.timeDisplay = col.Name()
 			}
-			if col.Index() == 1 && col.Name() == "table" && col.DataType() == longDatatype {
-				continue
-			}
-
-			converter, err := getConverter(col.DataType())
-			if err != nil {
-				return err
-			}
-
-			fb.columns = append(fb.columns, columnInfo{
-				name:      col.Name(),
-				converter: converter,
-			})
+			return nil
 		}
 	}
 
+	// reset any timeseries properties
+	fb.value = nil
+	fb.isTimeSeries = false
+	fb.labels = make([]string, 0)
+	for _, col := range columns {
+		// Skip the result column
+		if col.Index() == 0 && col.Name() == "result" && col.DataType() == stringDatatype {
+			continue
+		}
+		if col.Index() == 1 && col.Name() == "table" && col.DataType() == longDatatype {
+			continue
+		}
+
+		converter, err := getConverter(col.DataType())
+		if err != nil {
+			return err
+		}
+
+		fb.columns = append(fb.columns, columnInfo{
+			name:      col.Name(),
+			converter: converter,
+		})
+	}
 	return nil
 }
 
