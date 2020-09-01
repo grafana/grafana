@@ -1,6 +1,6 @@
 import React from 'react';
 import { text } from '@storybook/addon-knobs';
-import { Drawer } from '@grafana/ui';
+import { Button, Drawer } from '@grafana/ui';
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './Drawer.mdx';
@@ -24,12 +24,7 @@ export const global = () => {
       {(state, updateValue) => {
         return (
           <>
-            <div
-              style={{ border: '1px solid gray', borderRadius: '4px', padding: '10px', cursor: 'pointer' }}
-              onClick={() => updateValue({ isOpen: !state.isOpen })}
-            >
-              Open drawer
-            </div>
+            <Button onClick={() => updateValue({ isOpen: !state.isOpen })}>Open drawer</Button>
             {state.isOpen && (
               <Drawer
                 title={drawerTitle}
@@ -64,12 +59,7 @@ export const longContent = () => {
       {(state, updateValue) => {
         return (
           <>
-            <div
-              style={{ border: '1px solid gray', borderRadius: '4px', padding: '10px', cursor: 'pointer' }}
-              onClick={() => updateValue({ isOpen: !state.isOpen })}
-            >
-              Open drawer
-            </div>
+            <Button onClick={() => updateValue({ isOpen: !state.isOpen })}>Open drawer</Button>
             {state.isOpen && (
               <Drawer
                 scrollableContent
@@ -176,12 +166,7 @@ export const inLine = () => {
                 overflow: 'hidden',
               }}
             >
-              <div
-                style={{ border: '1px solid gray', borderRadius: '4px', padding: '10px', cursor: 'pointer' }}
-                onClick={() => updateValue({ isOpen: !state.isOpen })}
-              >
-                Open drawer
-              </div>
+              <Button onClick={() => updateValue({ isOpen: !state.isOpen })}>Open drawer</Button>
               {state.isOpen && (
                 <Drawer
                   inline={true}
