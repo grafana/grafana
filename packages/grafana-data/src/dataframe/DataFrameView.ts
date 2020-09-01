@@ -20,8 +20,8 @@ interface FieldAndValue {
  */
 export class DataFrameView<T = any> extends FunctionalVector<T> {
   private index = 0;
-  private obj: T;
-  readonly fields: FieldAndValue[];
+  private obj: T; // This object constructed with properties that look like T
+  private readonly fields: FieldAndValue[];
 
   constructor(private data: DataFrame) {
     super();
