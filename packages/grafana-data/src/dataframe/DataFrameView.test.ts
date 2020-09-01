@@ -82,13 +82,22 @@ describe('dataFrameView', () => {
     });
   });
 
-  it('functional(ish) approach', () => {
+  it('functional approach to rows', () => {
     const vals = view.rows.map((fields, index) => {
       return fields.map(f => {
         return f.value;
       });
     });
 
+    const vals2: any[] = [];
+    for (const fields of view.rows) {
+      vals2.push(
+        fields.map(f => {
+          return f.value;
+        })
+      );
+    }
+    expect(vals).toEqual(vals2);
     expect(vals).toMatchInlineSnapshot(`
       Array [
         Array [
