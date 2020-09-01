@@ -81,6 +81,7 @@ export const getTableStyles = stylesFactory(
       `,
       tableCellWrapper: css`
         border-right: 1px solid ${borderColor};
+        height: 100%;
 
         &:last-child {
           border-right: none;
