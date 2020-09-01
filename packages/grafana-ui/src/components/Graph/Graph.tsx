@@ -13,6 +13,7 @@ import { GraphDimensions } from './GraphTooltip/types';
 import { graphTimeFormat, graphTickFormatter } from './utils';
 
 export interface GraphProps {
+  ariaLabel?: string;
   children?: JSX.Element | JSX.Element[];
   series: GraphSeriesXY[];
   timeRange: TimeRange; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
@@ -361,12 +362,12 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   }
 
   render() {
-    const { height, width, series } = this.props;
+    const { ariaLabel, height, width, series } = this.props;
     const noDataToBeDisplayed = series.length === 0;
     const tooltip = this.renderTooltip();
     const context = this.renderContextMenu();
     return (
-      <div className="graph-panel">
+      <div className="graph-panel" aria-label={ariaLabel}>
         <div
           className="graph-panel__chart"
           ref={e => (this.element = e)}

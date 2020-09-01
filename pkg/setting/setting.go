@@ -1009,7 +1009,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) error {
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
-	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(60)
+	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
 	SignoutRedirectUrl, err = valueAsString(auth, "signout_redirect_url", "")
 	if err != nil {
 		return err
