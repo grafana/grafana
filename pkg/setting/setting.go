@@ -302,6 +302,9 @@ type Cfg struct {
 	FeatureToggles map[string]bool
 
 	AnonymousHideVersion bool
+
+	// User
+	UserInviteMaxLifetimeDays int
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.

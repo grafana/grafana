@@ -2,6 +2,7 @@ package cleanup
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"io/ioutil"
 	"os"
 	"path"
@@ -19,6 +20,7 @@ type CleanUpService struct {
 	log               log.Logger
 	Cfg               *setting.Cfg                  `inject:""`
 	ServerLockService *serverlock.ServerLockService `inject:""`
+	SQLStore          *sqlstore.SqlStore            `inject:""`
 }
 
 func init() {
@@ -40,6 +42,7 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 			srv.cleanUpTmpFiles()
 			srv.deleteExpiredSnapshots()
 			srv.deleteExpiredDashboardVersions()
+			srv.deleteExpiredUserInvites(ctx)
 			err := srv.ServerLockService.LockAndExecute(ctx, "delete old login attempts",
 				time.Minute*10, func() {
 					srv.deleteOldLoginAttempts()
@@ -123,4 +126,33 @@ func (srv *CleanUpService) deleteOldLoginAttempts() {
 	} else {
 		srv.log.Debug("Deleted expired login attempts", "rows affected", cmd.DeletedRows)
 	}
+}
+
+func (srv *CleanUpService) deleteExpiredUserInvites(ctx context.Context) (int64, error) {
+	maxInviteLifetime := time.Duration(srv.Cfg.UserInviteMaxLifetimeDays) * 24 * time.Hour
+
+	var affected int64
+	err := srv.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sql := `DELETE from temp_user WHERE created_at <= ?`
+		createdBefore := time.Now().Add(-maxInviteLifetime)
+
+		srv.log.Debug("starting cleanup of expired user invites", "createdBefore", createdBefore)
+
+		res, err := dbSession.Exec(sql, createdBefore.Unix())
+		if err != nil {
+			return err
+		}
+
+		affected, err = res.RowsAffected()
+		if err != nil {
+			srv.log.Error("failed to cleanup expired user invites", "error", err)
+			return nil
+		}
+
+		srv.log.Debug("cleanup of expired user invites done", "count", affected)
+
+		return nil
+	})
+
+	return affected, err
 }
