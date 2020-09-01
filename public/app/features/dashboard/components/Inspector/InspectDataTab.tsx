@@ -8,13 +8,8 @@ import {
   SelectableValue,
   toCSV,
   transformDataFrame,
-  getTimeField,
-  FieldType,
-  FormattedVector,
-  DisplayProcessor,
-  getDisplayProcessor,
 } from '@grafana/data';
-import { Button, Field, Icon, Switch, Select, Table, VerticalGroup, Container, HorizontalGroup } from '@grafana/ui';
+import { Button, Container, Field, HorizontalGroup, Icon, Select, Switch, Table, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -59,33 +54,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
   exportCsv = (dataFrame: DataFrame) => {
     const { panel } = this.props;
     const { transformId } = this.state;
-
-    // Replace the time field with a formatted time
-    const { timeIndex, timeField } = getTimeField(dataFrame);
-
-    if (timeField) {
-      // Use the configured date or standard time display
-      let processor: DisplayProcessor | undefined = timeField.display;
-      if (!processor) {
-        processor = getDisplayProcessor({
-          field: timeField,
-        });
-      }
-
-      const formattedDateField = {
-        ...timeField,
-        type: FieldType.string,
-        values: new FormattedVector(timeField.values, processor),
-      };
-
-      const fields = [...dataFrame.fields];
-      fields[timeIndex!] = formattedDateField;
-
-      dataFrame = {
-        ...dataFrame,
-        fields,
-      };
-    }
 
     const dataFrameCsv = toCSV([dataFrame]);
 
