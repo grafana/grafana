@@ -19,12 +19,12 @@ describe('dataFrameView', () => {
     ],
   };
   const ext = new MutableDataFrame(frame);
-  const vector = new DataFrameView<MySpecialObject>(ext);
+  const view = new DataFrameView<MySpecialObject>(ext);
 
   it('Should get a typed vector', () => {
-    expect(vector.length).toEqual(3);
+    expect(view.length).toEqual(3);
 
-    const first = vector.get(0);
+    const first = view.get(0);
     expect(first.time).toEqual(100);
     expect(first.name).toEqual('a');
     expect(first.value).toEqual(1);
@@ -32,9 +32,9 @@ describe('dataFrameView', () => {
   });
 
   it('Should support the spread operator', () => {
-    expect(vector.length).toEqual(3);
+    expect(view.length).toEqual(3);
 
-    const first = vector.get(0);
+    const first = view.get(0);
     const copy = { ...first };
     expect(copy.time).toEqual(100);
     expect(copy.name).toEqual('a');
@@ -43,9 +43,9 @@ describe('dataFrameView', () => {
   });
 
   it('Should support array indexes', () => {
-    expect(vector.length).toEqual(3);
+    expect(view.length).toEqual(3);
 
-    const first = vector.get(0) as any;
+    const first = view.get(0) as any;
     expect(first[0]).toEqual(100);
     expect(first[1]).toEqual('a');
     expect(first[2]).toEqual(1);
@@ -53,21 +53,21 @@ describe('dataFrameView', () => {
   });
 
   it('Should advertise the property names for each field', () => {
-    expect(vector.length).toEqual(3);
-    const first = vector.get(0);
+    expect(view.length).toEqual(3);
+    const first = view.get(0);
     const keys = Object.keys(first);
     expect(keys).toEqual(['time', 'name', 'value']);
   });
 
   it('has a weird side effect that the object values change after interaction', () => {
-    expect(vector.length).toEqual(3);
+    expect(view.length).toEqual(3);
 
     // Get the first value
-    const first = vector.get(0);
+    const first = view.get(0);
     expect(first.name).toEqual('a');
 
     // Then get the second one
-    const second = vector.get(1);
+    const second = view.get(1);
 
     // the values for 'first' have changed
     expect(first.name).toEqual('b');
@@ -75,10 +75,38 @@ describe('dataFrameView', () => {
   });
 
   it('toJSON returns plain object', () => {
-    expect(vector.toJSON()[0]).toEqual({
+    expect(view.toJSON()[0]).toEqual({
       time: 100,
       name: 'a',
       value: 1,
     });
+  });
+
+  it('functional(ish) approach', () => {
+    const vals = view.rows.map((fields, index) => {
+      return fields.map(f => {
+        return f.value;
+      });
+    });
+
+    expect(vals).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          100,
+          "a",
+          1,
+        ],
+        Array [
+          200,
+          "b",
+          2,
+        ],
+        Array [
+          300,
+          "c",
+          3,
+        ],
+      ]
+    `);
   });
 });

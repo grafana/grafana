@@ -1,6 +1,11 @@
-import { DataFrame } from '../types/dataFrame';
+import { DataFrame, Field } from '../types/dataFrame';
 import { DisplayProcessor } from '../types';
 import { FunctionalVector } from '../vector/FunctionalVector';
+
+interface FieldAndValue {
+  field: Field;
+  value: any;
+}
 
 /**
  * This abstraction will present the contents of a DataFrame as if
@@ -16,6 +21,7 @@ import { FunctionalVector } from '../vector/FunctionalVector';
 export class DataFrameView<T = any> extends FunctionalVector<T> {
   private index = 0;
   private obj: T;
+  readonly fields: FieldAndValue[];
 
   constructor(private data: DataFrame) {
     super();
@@ -39,6 +45,17 @@ export class DataFrameView<T = any> extends FunctionalVector<T> {
     }
 
     this.obj = obj;
+
+    // Field iterator
+    const indexGetter = () => this.index;
+    this.fields = data.fields.map((f, idx) => {
+      return {
+        field: f,
+        get value() {
+          return f.values.get(indexGetter());
+        },
+      };
+    });
   }
 
   get dataFrame() {
@@ -47,6 +64,29 @@ export class DataFrameView<T = any> extends FunctionalVector<T> {
 
   get length() {
     return this.data.length;
+  }
+
+  get rows() {
+    const count = this.data.length;
+    const setIndex = (idx: number) => (this.index = idx);
+    const fieldArray = this.fields;
+    return {
+      *[Symbol.iterator]() {
+        for (let i = 0; i < count; i++) {
+          setIndex(i);
+          yield fieldArray;
+        }
+      },
+
+      map<V>(transform: (item: FieldAndValue[], index: number) => V) {
+        const result: V[] = [];
+        for (let i = 0; i < count; i++) {
+          setIndex(i);
+          result.push(transform(fieldArray, i));
+        }
+        return result;
+      },
+    };
   }
 
   /**
