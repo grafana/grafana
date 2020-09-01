@@ -642,7 +642,6 @@ func TestLoginPostSendLoginLog(t *testing.T) {
 	for _, c := range testCases {
 		t.Run(c.desc, func(t *testing.T) {
 			bus.AddHandler("grafana-auth", func(query *models.LoginUserQuery) error {
-				fmt.Println("in hander, auth module: ", c.authModule)
 				query.User = &c.authUser
 				query.AuthModule = c.authModule
 				return c.authErr
