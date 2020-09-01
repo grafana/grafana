@@ -21,7 +21,7 @@ interface FieldAndValue {
 export class DataFrameView<T = any> extends FunctionalVector<T> {
   private index = 0;
   private obj: T; // This object constructed with properties that look like T
-  private readonly fields: FieldAndValue[];
+  private readonly columns: FieldAndValue[];
 
   constructor(private data: DataFrame) {
     super();
@@ -48,7 +48,7 @@ export class DataFrameView<T = any> extends FunctionalVector<T> {
 
     // Field iterator
     const indexGetter = () => this.index;
-    this.fields = data.fields.map((f, idx) => {
+    this.columns = data.fields.map((f, idx) => {
       return {
         field: f,
         get value() {
@@ -66,15 +66,18 @@ export class DataFrameView<T = any> extends FunctionalVector<T> {
     return this.data.length;
   }
 
+  /**
+   * returns an iterable/mappable list of rows, each with an array of columns
+   */
   get rows() {
     const count = this.data.length;
     const setIndex = (idx: number) => (this.index = idx);
-    const fieldArray = this.fields;
+    const cols = this.columns;
     return {
       *[Symbol.iterator]() {
         for (let i = 0; i < count; i++) {
           setIndex(i);
-          yield fieldArray;
+          yield cols;
         }
       },
 
@@ -82,7 +85,7 @@ export class DataFrameView<T = any> extends FunctionalVector<T> {
         const result: V[] = [];
         for (let i = 0; i < count; i++) {
           setIndex(i);
-          result.push(transform(fieldArray, i));
+          result.push(transform(cols, i));
         }
         return result;
       },
