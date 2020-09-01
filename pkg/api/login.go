@@ -180,10 +180,11 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 		IpAddress:  c.Req.RemoteAddr,
 	}
 
-	if err := bus.Dispatch(authQuery); err != nil {
-		if authQuery.AuthModule != "" {
-			action += fmt.Sprintf("-%s", authQuery.AuthModule)
-		}
+	err := bus.Dispatch(authQuery)
+	if authQuery.AuthModule != "" {
+		action += fmt.Sprintf("-%s", authQuery.AuthModule)
+	}
+	if err != nil {
 		var errResp *NormalResponse
 		e401 := Error(http.StatusUnauthorized, "Invalid username or password", err)
 
@@ -214,7 +215,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 
 	user := authQuery.User
 
-	err := hs.loginUserWithUser(user, c)
+	err = hs.loginUserWithUser(user, c)
 	if err != nil {
 		hs.SendLoginLog(&models.SendLoginLogCommand{
 			ReqContext: c,
