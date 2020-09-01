@@ -979,7 +979,7 @@ Sets the minimum interval between rule evaluations. Default value is `1`.
 ### max_annotation_age =
 
 Configures for how long alert annotations are stored. Default is 0, which keeps them forever.
-This setting should be expressed as an duration. Ex 6h (hours), 10d (days), 2w (weeks), 1M (month).
+This setting should be expressed as a duration. Examples: 6h (hours), 10d (days), 2w (weeks), 1M (month).
 
 ### max_annotations_to_keep =
 
@@ -994,7 +994,7 @@ Dashboard annotations means that annotations are associated with the dashboard t
 ### max_age
 
 Configures how long dashboard annotations are stored. Default is 0, which keeps them forever.
-This setting should be expressed as an duration. Ex 6h (hours), 10d (days), 2w (weeks), 1M (month).
+This setting should be expressed as a duration. Examples: 6h (hours), 10d (days), 2w (weeks), 1M (month).
 
 ### max_annotations_to_keep
 
@@ -1007,7 +1007,7 @@ API annotations means that the annotations have been created using the API witho
 ### max_age
 
 Configures how long Grafana stores API annotations. Default is 0, which keeps them forever.
-This setting should be expressed as an duration. Ex 6h (hours), 10d (days), 2w (weeks), 1M (month).
+This setting should be expressed as a duration. Examples: 6h (hours), 10d (days), 2w (weeks), 1M (month).
 
 ### max_annotations_to_keep
 
