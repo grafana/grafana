@@ -587,13 +587,13 @@ func TestLoginPostSendLoginLog(t *testing.T) {
 
 	type sendLoginLogCase struct {
 		desc       string
-		authUser   models.User
+		authUser   *models.User
 		authModule string
 		authErr    error
 		cmd        models.SendLoginLogCommand
 	}
 
-	testUser := models.User{
+	testUser := &models.User{
 		Id:    42,
 		Email: "",
 	}
@@ -623,7 +623,7 @@ func TestLoginPostSendLoginLog(t *testing.T) {
 			authModule: "grafana",
 			cmd: models.SendLoginLogCommand{
 				LogAction:  "login-grafana",
-				User:       &testUser,
+				User:       testUser,
 				HTTPStatus: 200,
 			},
 		},
@@ -633,7 +633,7 @@ func TestLoginPostSendLoginLog(t *testing.T) {
 			authModule: "ldap",
 			cmd: models.SendLoginLogCommand{
 				LogAction:  "login-ldap",
-				User:       &testUser,
+				User:       testUser,
 				HTTPStatus: 200,
 			},
 		},
@@ -642,7 +642,7 @@ func TestLoginPostSendLoginLog(t *testing.T) {
 	for _, c := range testCases {
 		t.Run(c.desc, func(t *testing.T) {
 			bus.AddHandler("grafana-auth", func(query *models.LoginUserQuery) error {
-				query.User = &c.authUser
+				query.User = c.authUser
 				query.AuthModule = c.authModule
 				return c.authErr
 			})
