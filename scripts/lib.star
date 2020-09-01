@@ -3,7 +3,7 @@ publish_image = 'grafana/grafana-ci-deploy:1.2.5'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.2.0'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
-grabpl_version = '0.5.4'
+grabpl_version = '0.5.5'
 
 def pr_pipelines(edition):
     services = [

@@ -156,6 +156,10 @@ export function simpleCountUnit(symbol: string): ValueFormatter {
   };
 }
 
+export function stringFormater(value: number): FormattedValue {
+  return { text: `${value}` };
+}
+
 function buildFormats() {
   categories = getCategories();
 

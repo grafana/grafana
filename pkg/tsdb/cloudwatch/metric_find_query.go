@@ -694,7 +694,7 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 			resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, page.ResourceTagMappingList...)
 			return !lastPage
 		}); err != nil {
-		return nil, fmt.Errorf("failed to call tags:GetResources, %w", err)
+		return nil, fmt.Errorf("failed to call tag:GetResources, %w", err)
 	}
 
 	return &resp, nil
