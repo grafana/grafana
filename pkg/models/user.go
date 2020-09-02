@@ -88,7 +88,7 @@ type ChangeUserPasswordCommand struct {
 }
 
 type UpdateUserPermissionsCommand struct {
-	IsServerAdmin bool
+	IsServerAdmin        bool `json:"isGrafanaAdmin"`
 	UserId        int64 `json:"-"`
 }
 
