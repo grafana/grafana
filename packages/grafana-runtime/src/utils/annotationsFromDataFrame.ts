@@ -1,6 +1,6 @@
 import { AnnotationEvent, DataFrame, FieldType, Field, KeyValue } from '@grafana/data';
 
-interface AnnotationEventNames {
+export interface AnnotationEventNames {
   userId?: string;
   login?: string;
   email?: string;

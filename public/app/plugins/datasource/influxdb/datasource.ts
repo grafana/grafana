@@ -181,14 +181,15 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   async annotationQuery(options: AnnotationQueryRequest<InfluxQuery>): Promise<AnnotationEvent[]> {
+    if (this.isFlux) {
+      return super.annotationQuery(options);
+    }
+
+    // InfluxQL puts a query string on the annotation
     if (!options.annotation.query) {
       return Promise.reject({
         message: 'Query missing in annotation definition',
       });
-    }
-
-    if (this.isFlux) {
-      return super.annotationQuery(options);
     }
 
     const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw, timezone: options.dashboard.timezone });

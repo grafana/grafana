@@ -154,7 +154,10 @@ export class DataSourceWithBackend<
    * replaced with an observable solution
    */
   async annotationQuery(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]> {
-    let query = (this.prepareAnnotationQuery ? this.prepareAnnotationQuery(options) : options.annotation) as TQuery;
+    const query = this.prepareAnnotationQuery
+      ? this.prepareAnnotationQuery(options)
+      : ((options.annotation as any).annotation as TQuery); // not sure why options.annotation.annotation!!!
+
     if (!query || !!!options.annotation.enable) {
       return Promise.resolve([]); // nothing
     }
@@ -173,7 +176,7 @@ export class DataSourceWithBackend<
       targets: [query],
     })
       .toPromise()
-      .then(rsp => {
+      .then((rsp: any) => {
         if (rsp.data?.length) {
           return getAnnotationsFromFrame(rsp.data[0]);
         }
