@@ -29,7 +29,7 @@ var resourceTypesMap = map[string][]string{
 
 var resourcePrefixesMap = map[string]string{
 	// ELBv2 target groups have 'targetgroup/' prepended in the label but not the resource.
-	"elasticloadbalancing:targetgroup": "targetgroup/", 
+	"elasticloadbalancing:targetgroup": "targetgroup/",
 }
 
 var resourceComponentMap = map[string]int{
@@ -43,7 +43,7 @@ func (e *cloudWatchExecutor) parseGetMetricResourceTags(queries map[string]*clou
 	 */
 	resourceTypesByRegion := map[string][]string{}
 	for _, query := range queries {
-		if resources, ok := resourceTypesMap[query.Namespace]; ok {	
+		if resources, ok := resourceTypesMap[query.Namespace]; ok {
 			resourceTypesByRegion[query.Region] = append(resourceTypesByRegion[query.Region], resources...)
 		}
 	}
@@ -55,7 +55,7 @@ func (e *cloudWatchExecutor) parseGetMetricResourceTags(queries map[string]*clou
 		typeFiltersAdded := map[string]bool{}
 		for _, tp := range resourceTypes {
 			if _, ok := typeFiltersAdded[tp]; !ok {
-				typeFilters = append(typeFilters, aws.String(type_))
+				typeFilters = append(typeFilters, aws.String(tp))
 				typeFiltersAdded[tp] = true
 			}
 		}
@@ -133,7 +133,7 @@ func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 	for id, lr := range mdrs {
 		query := queries[id]
 
-		series, partialData, err := parseGetMetricDataTimeSeries(lr, labels[id], query, resource_tags)
+		series, partialData, err := parseGetMetricDataTimeSeries(lr, labels[id], query, resourceTags)
 		if err != nil {
 			return nil, err
 		}
@@ -193,7 +193,7 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 					}
 				}
 
-				emptySeries.Name = formatAlias(query, query.Stats, emptySeries.Tags, label, resource_tags)
+				emptySeries.Name = formatAlias(query, query.Stats, emptySeries.Tags, label, resourceTags)
 				result = append(result, &emptySeries)
 			}
 		} else {
@@ -223,7 +223,7 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 				}
 			}
 
-			series.Name = formatAlias(query, query.Stats, series.Tags, label, resource_tags)
+			series.Name = formatAlias(query, query.Stats, series.Tags, label, resourceTags)
 
 			for j, t := range metricDataResult.Timestamps {
 				if j > 0 {
@@ -282,9 +282,9 @@ func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]stri
 		if _, ok := resourceTags[part]; !ok {
 			continue
 		}
-		
-		for key, value := range resource_tags[part] {
-			data[fmt.Sprintf("tags.%d.%s", i, key] = value
+
+		for key, value := range resourceTags[part] {
+			data[fmt.Sprintf("tags.%d.%s", i, key)] = value
 		}
 	}
 
