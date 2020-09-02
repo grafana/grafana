@@ -147,13 +147,13 @@ export class DataSourceWithBackend<
    *
    * @virtual
    */
-  prepareAnnotationQuery?(options: AnnotationQueryRequest<TQuery>): TQuery | undefined;
+  prepareAnnotationQuery?(options: AnnotationQueryRequest<any>): TQuery | undefined;
 
   /**
    * This is a standard way to implement annotations in 7.2+, note that this path should eventually be
    * replaced with an observable solution
    */
-  async annotationQuery(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]> {
+  async annotationQuery(options: AnnotationQueryRequest<any>): Promise<AnnotationEvent[]> {
     const query = this.prepareAnnotationQuery
       ? this.prepareAnnotationQuery(options)
       : ((options.annotation as any).annotation as TQuery); // not sure why options.annotation.annotation!!!
@@ -167,8 +167,8 @@ export class DataSourceWithBackend<
       requestId: `anno-${startTime}`,
       range: options.range,
       rangeRaw: options.rangeRaw,
-      interval: '1m', // TODO??? get from the rangeRaw?
-      intervalMs: 60000, // TODO!!!
+      interval: (options as any).interval || '1m',
+      intervalMs: (options as any).intervalMs || 60000,
       startTime,
       scopedVars: {},
       app: 'dash-anno',
@@ -178,7 +178,12 @@ export class DataSourceWithBackend<
       .toPromise()
       .then((rsp: any) => {
         if (rsp.data?.length) {
-          return getAnnotationsFromFrame(rsp.data[0]);
+          const info = getAnnotationsFromFrame(rsp.data[0]);
+          if ((options as any).isEditor) {
+            // @ts-ignore
+            window.lastAnnotationQuery = info;
+          }
+          return info.events;
         }
         return [];
       });

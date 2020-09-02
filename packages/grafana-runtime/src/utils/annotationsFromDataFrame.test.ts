@@ -12,7 +12,7 @@ describe('DataFrame to annotations', () => {
     });
 
     const annos = getAnnotationsFromFrame(frame);
-    expect(annos).toMatchInlineSnapshot(`
+    expect(annos.events).toMatchInlineSnapshot(`
       Array [
         Object {
           "tags": Array [
@@ -59,7 +59,7 @@ describe('DataFrame to annotations', () => {
         title: 'aaaaa',
       },
     });
-    expect(annos).toMatchInlineSnapshot(`
+    expect(annos.events).toMatchInlineSnapshot(`
       Array [
         Object {
           "text": "b1",

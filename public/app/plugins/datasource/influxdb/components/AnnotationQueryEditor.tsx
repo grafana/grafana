@@ -1,53 +1,94 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import coreModule from 'app/core/core_module';
 
-import { AnnotationQueryRequest, DataSourceApi } from '@grafana/data';
+import { DataSourceApi } from '@grafana/data';
 import { AnnotationFieldMapper, AnnotationsFromFrameOptions } from '@grafana/runtime';
 
-import { InfluxQuery } from '../types';
+import { InfluxQuery, InfluxAnnotation } from '../types';
 import { FluxQueryEditor } from './FluxQueryEditor';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import kbn from 'app/core/utils/kbn';
+import { AnnotationResults } from '@grafana/runtime/src/utils/annotationsFromDataFrame';
 
 interface Props {
   datasource: DataSourceApi;
-  annotation: AnnotationQueryRequest<InfluxQuery>;
-  change: (query: AnnotationQueryRequest<InfluxQuery>) => void;
+  annotation: InfluxAnnotation;
+  change: (query: InfluxAnnotation) => void;
 }
 
-export class AnnotationQueryEditor extends Component<Props> {
-  onChange = (query: InfluxQuery) => {
-    const { annotation } = this.props;
+interface State {
+  info?: AnnotationResults;
+}
+
+export class AnnotationQueryEditor extends PureComponent<Props, State> {
+  state = {} as State;
+
+  componentDidMount() {
+    this.runQuery();
+  }
+
+  runQuery = async () => {
+    const { datasource, annotation } = this.props;
+    console.log('RUN query');
+
+    // No more points than pixels
+    const maxDataPoints = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+
+    const range = getTimeSrv().timeRange();
+
+    // Add interval to annotation queries
+    const interval = kbn.calculateInterval(range, maxDataPoints, datasource.interval);
+
+    const annoRequest = {
+      ...interval,
+      range,
+      rangeRaw: range.raw,
+      annotation: annotation,
+      dashboard: getDashboardSrv().getCurrent(),
+      isEditor: true, // flag to set global metadata
+    };
+    console.log('Test query', annoRequest);
+    await datasource.annotationQuery!(annoRequest);
+
+    // @ts-ignore
+    const info = window.lastAnnotationQuery as AnnotationResults;
+    // @ts-ignore
+    window.lastAnnotationQuery = undefined;
+    this.setState({ info });
+  };
+
+  onQueryChange = (query: InfluxQuery) => {
     this.props.change({
-      ...annotation,
-      annotation: {
-        ...annotation.annotation,
-        ...query,
-      } as any,
+      ...this.props.annotation,
+      query,
     });
+    this.runQuery();
   };
 
-  onRefresh = () => {
-    // noop?
-  };
-
-  onMappingChange = (options: AnnotationsFromFrameOptions) => {
-    console.log('TODO... upddate', options);
+  onMappingChange = (mapping: AnnotationsFromFrameOptions) => {
+    this.props.change({
+      ...this.props.annotation,
+      mapping,
+    });
+    this.runQuery();
   };
 
   render() {
     const { annotation } = this.props;
-
-    const mapping: AnnotationsFromFrameOptions = {};
+    const { info } = this.state;
 
     const query = {
       rawQuery: true,
-      ...annotation.annotation,
-    };
+      ...annotation.query,
+    } as InfluxQuery;
+
     return (
       <>
-        <FluxQueryEditor target={query} change={this.onChange} refresh={this.onRefresh} />
+        <FluxQueryEditor target={query} change={this.onQueryChange} refresh={this.runQuery} />
         <br />
+        <AnnotationFieldMapper data={info?.frame} options={annotation.mapping} change={this.onMappingChange} />
         <br />
-        <AnnotationFieldMapper data={undefined} options={mapping} change={this.onMappingChange} />
       </>
     );
   }

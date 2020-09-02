@@ -270,7 +270,7 @@ export abstract class DataSourceApi<
    * Can be optionally implemented to allow datasource to be a source of annotations for dashboard. To be visible
    * in the annotation editor `annotations` capability also needs to be enabled in plugin.json.
    */
-  annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
+  annotationQuery?(options: AnnotationQueryRequest<any>): Promise<AnnotationEvent[]>;
 
   interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
 }

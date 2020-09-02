@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { DataFrame, SelectableValue } from '@grafana/data';
+import { DataFrame, SelectableValue, getFieldDisplayName } from '@grafana/data';
 import { css } from 'emotion';
 
 import { AnnotationsFromFrameOptions, AnnotationEventNames } from '../utils/annotationsFromDataFrame';
@@ -44,6 +44,41 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
     this.state = {
       fieldNames: [],
     };
+  }
+
+  updateFields = () => {
+    const { data } = this.props;
+    if (data && data.fields) {
+      const fieldNames = data.fields.map(f => {
+        const name = getFieldDisplayName(f, data);
+
+        let description = '';
+        for (let i = 0; i < 3 && i < data.length; i++) {
+          description += f.values.get(i) + ', ';
+        }
+        description += '...';
+        if (description.length > 50) {
+          description = description.substring(0, 50) + '...';
+        }
+
+        return {
+          label: `${name} (${f.type})`,
+          value: name,
+          description,
+        };
+      });
+      this.setState({ fieldNames });
+    }
+  };
+
+  componentDidMount() {
+    this.updateFields();
+  }
+
+  componentDidUpdate(oldProps: Props) {
+    if (oldProps.data !== this.props.data) {
+      this.updateFields();
+    }
   }
 
   onFieldNameChange = (k: keyof AnnotationEventNames, v: SelectableValue<string>) => {
@@ -107,15 +142,17 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
       <>
         <table>
           <thead>
-            <th>Field</th>
-            <th
-              className={css`
-                min-width: 200px;
-              `}
-            >
-              Name
-            </th>
-            {firstValues && <th>Values</th>}
+            <tr>
+              <th>Field</th>
+              <th
+                className={css`
+                  min-width: 200px;
+                `}
+              >
+                Name
+              </th>
+              {firstValues && <th>Values</th>}
+            </tr>
           </thead>
           <tbody>
             {names.map(k => {

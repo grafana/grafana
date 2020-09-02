@@ -1,9 +1,8 @@
-import { AnnotationQueryRequest } from '@grafana/data';
-import { InfluxQuery } from './types';
+import { InfluxAnnotation } from './types';
 
 export class InfluxAnnotationsQueryCtrl {
   // @ts-ignore
-  annotation: AnnotationQueryRequest<InfluxQuery>;
+  annotation: any;
 
   // @ts-ignore
   private datasource?: DataSource;
@@ -18,7 +17,7 @@ export class InfluxAnnotationsQueryCtrl {
     //this.annotation.datasourceId = this.datasource.id;
   }
 
-  onChange = (query: AnnotationQueryRequest<InfluxQuery>) => {
-    this.annotation.annotation = query.annotation;
+  onChange = (anno: InfluxAnnotation) => {
+    this.annotation = anno;
   };
 }

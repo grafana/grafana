@@ -37,10 +37,19 @@ export interface AnnotationsFromFrameOptions {
   regex?: AnnotationEventNames;
 }
 
-export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationsFromFrameOptions): AnnotationEvent[] {
-  const events: AnnotationEvent[] = [];
-  if (!frame || !frame.length) {
-    return events;
+export interface AnnotationResults {
+  events: AnnotationEvent[];
+  frame: DataFrame;
+  warning?: string;
+}
+
+export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationsFromFrameOptions): AnnotationResults {
+  const info: AnnotationResults = {
+    events: [],
+    frame,
+  };
+  if (!frame?.length) {
+    return info;
   }
 
   let hasTime = false;
@@ -89,7 +98,8 @@ export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationsF
   if (!hasTime) {
     const field = frame.fields.find(f => f.type === FieldType.time);
     if (!field) {
-      return []; // no time fields exist
+      info.warning = 'No time field';
+      return info;
     }
     fields.push({
       key: 'time',
@@ -100,8 +110,10 @@ export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationsF
   if (!hasText) {
     const field = frame.fields.find(f => f.type === FieldType.string);
     if (!field) {
-      return []; // no text fields exist
+      info.warning = 'No text field exists';
+      return info;
     }
+
     const setter: AnnotationEventFieldSetter = {
       key: 'text',
       field,
@@ -129,8 +141,8 @@ export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationsF
       }
       (anno as any)[f.key] = v;
     }
-    events.push(anno);
+    info.events.push(anno);
   }
 
-  return events;
+  return info;
 }

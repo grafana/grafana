@@ -18,7 +18,7 @@ import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
-import { InfluxQuery, InfluxOptions, InfluxVersion } from './types';
+import { InfluxQuery, InfluxOptions, InfluxVersion, InfluxAnnotation } from './types';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 
@@ -180,7 +180,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     });
   }
 
-  async annotationQuery(options: AnnotationQueryRequest<InfluxQuery>): Promise<AnnotationEvent[]> {
+  prepareAnnotationQuery(options: AnnotationQueryRequest<InfluxAnnotation>): InfluxQuery | undefined {
+    return options.annotation.query as InfluxQuery;
+  }
+
+  async annotationQuery(options: AnnotationQueryRequest<any>): Promise<AnnotationEvent[]> {
     if (this.isFlux) {
       return super.annotationQuery(options);
     }
