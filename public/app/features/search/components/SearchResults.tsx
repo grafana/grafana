@@ -38,9 +38,13 @@ export const SearchResults: FC<Props> = ({
           return (
             <div aria-label="Search section" className={styles.section} key={section.id || section.title}>
               <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
-              <div aria-label="Search items" className={styles.sectionItems}>
-                {section.expanded && section.items.map(item => <SearchItem key={item.id} {...itemProps} item={item} />)}
-              </div>
+              {section.expanded && (
+                <div aria-label="Search items" className={styles.sectionItems}>
+                  {section.items.map(item => (
+                    <SearchItem key={item.id} {...itemProps} item={item} />
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}

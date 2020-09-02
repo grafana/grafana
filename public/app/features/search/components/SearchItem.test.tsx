@@ -3,6 +3,10 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { SearchItem, Props } from './SearchItem';
 import { DashboardSearchItemType } from '../types';
 
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
 const data = {
   id: 1,
   uid: 'lBdLINUWk',

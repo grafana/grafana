@@ -80,7 +80,7 @@ describe('DashboardSearch', () => {
     setup();
     const section = await screen.findAllByLabelText('Search section');
     expect(section).toHaveLength(2);
-    expect(screen.getAllByLabelText('Search items')).toHaveLength(2);
+    expect(screen.getAllByLabelText('Search items')).toHaveLength(1);
   });
 
   it('should call search with selected tags', async () => {
