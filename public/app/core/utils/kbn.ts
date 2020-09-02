@@ -161,7 +161,10 @@ const kbn = {
     str = str.replace(/\0/g, '\\0');
     return str;
   },
+  /** deprecated since 7.2, use grafana/data */
   describeInterval: (str: string) => {
+    deprecationWarning('kbn.ts', 'kbn.stringToJsRegex()', '@grafana/data');
+
     // Default to seconds if no unit is provided
     if (Number(str)) {
       return {
