@@ -95,7 +95,7 @@ export function deleteUser(userId: number): ThunkResult<void> {
 
 export function updateUserPermissions(userId: number, isServerAdmin: boolean): ThunkResult<void> {
   return async dispatch => {
-    const payload = { isServerAdmin };
+    const payload = { isGrafanaAdmin: isServerAdmin };
     await getBackendSrv().put(`/api/admin/users/${userId}/permissions`, payload);
     dispatch(loadAdminUserPage(userId));
   };
