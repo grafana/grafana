@@ -215,7 +215,7 @@ export function loadUserMapping(username: string): ThunkResult<void> {
       const { name, surname, email, login, isGrafanaAdmin, isDisabled, roles, teams } = response;
       const userInfo: LdapUser = {
         info: { name, surname, email, login },
-        permissions: { isServerAdmin, isDisabled },
+        permissions: { isServerAdmin: isGrafanaAdmin, isDisabled },
         roles,
         teams,
       };
