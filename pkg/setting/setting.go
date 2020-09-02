@@ -19,6 +19,7 @@ import (
 	"github.com/go-macaron/session"
 	ini "gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -302,6 +303,11 @@ type Cfg struct {
 	FeatureToggles map[string]bool
 
 	AnonymousHideVersion bool
+
+	// Annotations
+	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
+	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
+	APIAnnotationCleanupSettings       AnnotationCleanupSettings
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.
@@ -394,6 +400,33 @@ func applyEnvVariableOverrides(file *ini.File) error {
 	}
 
 	return nil
+}
+
+func (cfg *Cfg) readAnnotationSettings() {
+	dashboardAnnotation := cfg.Raw.Section("annotations.dashboard")
+	apiIAnnotation := cfg.Raw.Section("annotations.api")
+	alertingSection := cfg.Raw.Section("alerting")
+
+	var newAnnotationCleanupSettings = func(section *ini.Section, maxAgeField string) AnnotationCleanupSettings {
+		maxAge, err := gtime.ParseInterval(section.Key(maxAgeField).MustString(""))
+		if err != nil {
+			maxAge = 0
+		}
+
+		return AnnotationCleanupSettings{
+			MaxAge:   maxAge,
+			MaxCount: section.Key("max_annotations_to_keep").MustInt64(0),
+		}
+	}
+
+	cfg.AlertingAnnotationCleanupSetting = newAnnotationCleanupSettings(alertingSection, "max_annotation_age")
+	cfg.DashboardAnnotationCleanupSettings = newAnnotationCleanupSettings(dashboardAnnotation, "max_age")
+	cfg.APIAnnotationCleanupSettings = newAnnotationCleanupSettings(apiIAnnotation, "max_age")
+}
+
+type AnnotationCleanupSettings struct {
+	MaxAge   time.Duration
+	MaxCount int64
 }
 
 func envKey(sectionName string, keyName string) string {
@@ -758,6 +791,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
+	cfg.readAnnotationSettings()
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		log.Warnf("require_email_validation is enabled but smtp is disabled")
