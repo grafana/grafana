@@ -23,6 +23,7 @@ func init() {
 				InputType:    alerting.InputTypeText,
 				Placeholder:  "Teams incoming webhook url",
 				PropertyName: "url",
+				Required:     true,
 			},
 		},
 	})

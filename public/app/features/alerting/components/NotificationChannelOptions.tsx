@@ -37,13 +37,15 @@ export const NotificationChannelOptions: FC<Props> = ({
 
         if (option.element === 'checkbox') {
           return (
-            <Checkbox
-              key={key}
-              name={option.secure ? `secureSettings.${option.propertyName}` : `settings.${option.propertyName}`}
-              ref={register}
-              label={option.label}
-              description={option.description}
-            />
+            <Field>
+              <Checkbox
+                key={key}
+                name={option.secure ? `secureSettings.${option.propertyName}` : `settings.${option.propertyName}`}
+                ref={register}
+                label={option.label}
+                description={option.description}
+              />
+            </Field>
           );
         }
         return (
