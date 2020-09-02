@@ -195,6 +195,196 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			So((*series)[1].Name, ShouldEqual, "lb4 Expanded")
 		})
 
+		Convey("can expand resource tags", func() {
+			timestamp := time.Unix(0, 0)
+			labels := []string{"lb1 Sum", "lb2 Average"}
+			mdrs := map[string]*cloudwatch.MetricDataResult{
+				"lb1 Sum": {
+					Id:    aws.String("id1"),
+					Label: aws.String("lb1 Sum"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(60 * time.Second)),
+						aws.Time(timestamp.Add(180 * time.Second)),
+					},
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
+					},
+					StatusCode: aws.String("Complete"),
+				},
+				"lb2 Average": {
+					Id:    aws.String("id2"),
+					Label: aws.String("lb2 Average"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(60 * time.Second)),
+						aws.Time(timestamp.Add(180 * time.Second)),
+					},
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
+					},
+					StatusCode: aws.String("Complete"),
+				},
+			}
+
+			query := &cloudWatchQuery{
+				RefId:      "refId1",
+				Region:     "us-east-1",
+				Namespace:  "AWS/ApplicationELB",
+				MetricName: "TargetResponseTime",
+				Dimensions: map[string][]string{
+					"LoadBalancer": {"lb1", "lb2"},
+					"TargetGroup":  {"tg"},
+				},
+				Stats:  "Average",
+				Period: 60,
+				Alias:  "{{tags.0.PlatformName}} Expanded",
+			}
+			resourceTags := map[string]map[string]string{"lb1": {"PlatformName": "grafana.com"}, "lb2": {"PlatformName": "example.com"}}
+			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query, resourceTags)
+			timeSeries := (*series)[0]
+			So(err, ShouldBeNil)
+			So(partialData, ShouldBeFalse)
+			So(timeSeries.Name, ShouldEqual, "grafana.com Expanded")
+			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb1")
+
+			timeSeries2 := (*series)[1]
+			So(timeSeries2.Name, ShouldEqual, "example.com Expanded")
+			So(timeSeries2.Tags["LoadBalancer"], ShouldEqual, "lb2")
+		})
+
+		Convey("can expand resource tags with multiple elements", func() {
+			timestamp := time.Unix(0, 0)
+			labels := []string{"lb1 tg1 Average", "lb1 tg2 Average"}
+			mdrs := map[string]*cloudwatch.MetricDataResult{
+				"lb1 tg1 Average": {
+					Id:    aws.String("id1"),
+					Label: aws.String("lb1 tg1 Average"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(60 * time.Second)),
+						aws.Time(timestamp.Add(180 * time.Second)),
+					},
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
+					},
+					StatusCode: aws.String("Complete"),
+				},
+				"lb1 tg2 Average": {
+					Id:    aws.String("id2"),
+					Label: aws.String("lb1 tg2 Average"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(60 * time.Second)),
+						aws.Time(timestamp.Add(180 * time.Second)),
+					},
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
+					},
+					StatusCode: aws.String("Complete"),
+				},
+			}
+
+			query := &cloudWatchQuery{
+				RefId:      "refId1",
+				Region:     "us-east-1",
+				Namespace:  "AWS/ApplicationELB",
+				MetricName: "TargetResponseTime",
+				Dimensions: map[string][]string{
+					"LoadBalancer": {"lb1"},
+					"TargetGroup":  {"tg1", "tg2"},
+				},
+				Stats:  "Average",
+				Period: 60,
+				Alias:  "{{tags.0.PlatformName}} {{tags.1.TargetName}} Expanded",
+			}
+			resourceTags := map[string]map[string]string{
+				"lb1": {"PlatformName": "grafana.com"},
+				"tg1": {"TargetName": "PrimaryTarget"},
+				"tg2": {"TargetName": "BackupTarget"},
+			}
+			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query, resourceTags)
+			timeSeries := (*series)[0]
+			So(err, ShouldBeNil)
+			So(partialData, ShouldBeFalse)
+			So(timeSeries.Name, ShouldEqual, "grafana.com PrimaryTarget Expanded")
+			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb1")
+
+			timeSeries2 := (*series)[1]
+			So(timeSeries2.Name, ShouldEqual, "grafana.com BackupTarget Expanded")
+			So(timeSeries2.Tags["LoadBalancer"], ShouldEqual, "lb1")
+		})
+
+		Convey("can expand resource tags with missing tags", func() {
+			timestamp := time.Unix(0, 0)
+			labels := []string{"lb1 Sum", "lb2 Average"}
+			mdrs := map[string]*cloudwatch.MetricDataResult{
+				"lb1 Sum": {
+					Id:    aws.String("id1"),
+					Label: aws.String("lb1 Sum"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(60 * time.Second)),
+						aws.Time(timestamp.Add(180 * time.Second)),
+					},
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
+					},
+					StatusCode: aws.String("Complete"),
+				},
+				"lb2 Average": {
+					Id:    aws.String("id2"),
+					Label: aws.String("lb2 Average"),
+					Timestamps: []*time.Time{
+						aws.Time(timestamp),
+						aws.Time(timestamp.Add(60 * time.Second)),
+						aws.Time(timestamp.Add(180 * time.Second)),
+					},
+					Values: []*float64{
+						aws.Float64(10),
+						aws.Float64(20),
+						aws.Float64(30),
+					},
+					StatusCode: aws.String("Complete"),
+				},
+			}
+
+			query := &cloudWatchQuery{
+				RefId:      "refId1",
+				Region:     "us-east-1",
+				Namespace:  "AWS/ApplicationELB",
+				MetricName: "TargetResponseTime",
+				Dimensions: map[string][]string{
+					"LoadBalancer": {"lb1", "lb2"},
+					"TargetGroup":  {"tg"},
+				},
+				Stats:  "Average",
+				Period: 60,
+				Alias:  "{{tags.0.PlatformName}} Expanded",
+			}
+			resourceTags := map[string]map[string]string{"lb1": {"PlatformName": "grafana.com"}}
+			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query, resourceTags)
+			timeSeries := (*series)[0]
+			So(err, ShouldBeNil)
+			So(partialData, ShouldBeFalse)
+			So(timeSeries.Name, ShouldEqual, "grafana.com Expanded")
+			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb1")
+
+			timeSeries2 := (*series)[1]
+			So(timeSeries2.Name, ShouldEqual, "{{tags.0.PlatformName}} Expanded")
+			So(timeSeries2.Tags["LoadBalancer"], ShouldEqual, "lb2")
+		})
+
 		Convey("can expand dimension value when no values are returned and a multi-valued template variable is used", func() {
 			timestamp := time.Unix(0, 0)
 			labels := []string{"lb3"}
