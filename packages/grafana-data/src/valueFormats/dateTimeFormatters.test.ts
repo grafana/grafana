@@ -1,6 +1,8 @@
 import {
   dateTimeAsIso,
+  dateTimeAsIsoNoDateIfToday,
   dateTimeAsUS,
+  dateTimeAsUSNoDateIfToday,
   dateTimeFromNow,
   Interval,
   toClock,
@@ -34,14 +36,14 @@ describe('date time formats', () => {
   it('should format as iso date and skip date when today', () => {
     const now = dateTime();
     const expected = now.format('HH:mm:ss');
-    const actual = dateTimeAsIso(now.valueOf(), 0, 0);
+    const actual = dateTimeAsIsoNoDateIfToday(now.valueOf(), 0, 0);
     expect(actual.text).toBe(expected);
   });
 
   it('should format as iso date (in UTC) and skip date when today', () => {
     const now = toUtc();
     const expected = now.format('HH:mm:ss');
-    const actual = dateTimeAsIso(now.valueOf(), 0, 0, 'utc');
+    const actual = dateTimeAsIsoNoDateIfToday(now.valueOf(), 0, 0, 'utc');
     expect(actual.text).toBe(expected);
   });
 
@@ -60,14 +62,14 @@ describe('date time formats', () => {
   it('should format as US date and skip date when today', () => {
     const now = dateTime();
     const expected = now.format('h:mm:ss a');
-    const actual = dateTimeAsUS(now.valueOf(), 0, 0);
+    const actual = dateTimeAsUSNoDateIfToday(now.valueOf(), 0, 0);
     expect(actual.text).toBe(expected);
   });
 
   it('should format as US date (in UTC) and skip date when today', () => {
     const now = toUtc();
     const expected = now.format('h:mm:ss a');
-    const actual = dateTimeAsUS(now.valueOf(), 0, 0, 'utc');
+    const actual = dateTimeAsUSNoDateIfToday(now.valueOf(), 0, 0, 'utc');
     expect(actual.text).toBe(expected);
   });
 
