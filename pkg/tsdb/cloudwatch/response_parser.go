@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/gigawattio/awsarn"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -37,7 +36,7 @@ var resourceComponentMap = map[string]int{
 	"ecs:service": 1,
 }
 
-func (e *cloudWatchExecutor) parseGetMetricResourceTags(queries map[string]*cloudWatchQuery) (map[string]map[string]string, error) {
+func (e *cloudWatchExecutor) getMetricResourceTags(queries map[string]*cloudWatchQuery) (map[string]map[string]string, error) {
 	/* We can query multiple resources types simultaneously, but only one region at a time, so we collect all query resource types into
 	 * regional buckets.
 	 */
@@ -121,7 +120,7 @@ func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 		}
 	}
 
-	resourceTags, err := e.parseGetMetricResourceTags(queries)
+	resourceTags, err := e.getMetricResourceTags(queries)
 	if err != nil {
 		return nil, err
 	}
