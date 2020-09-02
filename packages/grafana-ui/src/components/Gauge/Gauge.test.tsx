@@ -11,8 +11,8 @@ jest.mock('jquery', () => ({
 
 const setup = (propOverrides?: FieldConfig) => {
   const field: FieldConfig = {
-    min: 0,
-    max: 100,
+    globalMin: 0,
+    globalMax: 100,
     thresholds: {
       mode: ThresholdsMode.Absolute,
       steps: [{ value: -Infinity, color: '#7EB26D' }],

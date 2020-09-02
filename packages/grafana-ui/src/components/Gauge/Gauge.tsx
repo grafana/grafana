@@ -32,8 +32,8 @@ export class Gauge extends PureComponent<Props> {
     showThresholdMarkers: true,
     showThresholdLabels: false,
     field: {
-      min: 0,
-      max: 100,
+      globalMin: 0,
+      globalMax: 100,
       thresholds: {
         mode: ThresholdsMode.Absolute,
         steps: [
@@ -57,8 +57,8 @@ export class Gauge extends PureComponent<Props> {
     const thresholds = field.thresholds ?? Gauge.defaultProps.field?.thresholds!;
     const isPercent = thresholds.mode === ThresholdsMode.Percentage;
     const steps = thresholds.steps;
-    let min = field.min!;
-    let max = field.max!;
+    let min = field.globalMin!;
+    let max = field.globalMax!;
     if (isPercent) {
       min = 0;
       max = 100;
@@ -116,8 +116,8 @@ export class Gauge extends PureComponent<Props> {
 
     const thresholdLabelFontSize = fontSize / 2.5;
 
-    let min = field.min!;
-    let max = field.max!;
+    let min = field.globalMin!;
+    let max = field.globalMax!;
     let numeric = value.numeric;
     if (field.thresholds?.mode === ThresholdsMode.Percentage) {
       min = 0;

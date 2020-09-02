@@ -66,8 +66,8 @@ export class BarGauge extends PureComponent<Props> {
     displayMode: BarGaugeDisplayMode.Gradient,
     orientation: VizOrientation.Horizontal,
     field: {
-      min: 0,
-      max: 100,
+      globalMin: 0,
+      globalMax: 100,
       thresholds: {
         mode: ThresholdsMode.Absolute,
         steps: [],
@@ -180,8 +180,8 @@ export class BarGauge extends PureComponent<Props> {
       wrapperWidth,
       wrapperHeight,
     } = calculateBarAndValueDimensions(this.props);
-    const minValue = field.min!;
-    const maxValue = field.max!;
+    const minValue = field.globalMin!;
+    const maxValue = field.globalMax!;
 
     const isVert = isVertical(orientation);
     const valueRange = maxValue - minValue;
@@ -422,7 +422,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   const { displayMode, field, value, alignmentFactors, orientation, theme } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
-  const valuePercent = getValuePercent(value.numeric, field.min!, field.max!);
+  const valuePercent = getValuePercent(value.numeric, field.globalMin!, field.globalMax!);
   const valueColor = getValueColor(props);
 
   const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
@@ -514,8 +514,8 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 export function getBarGradient(props: Props, maxSize: number): string {
   const { field, value, orientation } = props;
   const cssDirection = isVertical(orientation) ? '0deg' : '90deg';
-  const minValue = field.min!;
-  const maxValue = field.max!;
+  const minValue = field.globalMin!;
+  const maxValue = field.globalMax!;
 
   let gradient = '';
   let lastpos = 0;

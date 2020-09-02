@@ -194,8 +194,8 @@ describe('sharedSingleStatMigrationHandler', () => {
     const panel = {} as PanelModel;
     sharedSingleStatPanelChangedHandler(panel, 'singlestat', old);
     expect(panel.fieldConfig.defaults.unit).toBe('ms');
-    expect(panel.fieldConfig.defaults.min).toBe(undefined);
-    expect(panel.fieldConfig.defaults.max).toBe(undefined);
+    expect(panel.fieldConfig.defaults.globalMin).toBe(undefined);
+    expect(panel.fieldConfig.defaults.globalMax).toBe(undefined);
   });
 
   it('change from angular singlestat with tableColumn set', () => {
@@ -226,7 +226,7 @@ describe('sharedSingleStatMigrationHandler', () => {
     const panel = {} as PanelModel;
     sharedSingleStatPanelChangedHandler(panel, 'singlestat', old);
     expect(panel.fieldConfig.defaults.unit).toBe('ms');
-    expect(panel.fieldConfig.defaults.min).toBe(undefined);
-    expect(panel.fieldConfig.defaults.max).toBe(undefined);
+    expect(panel.fieldConfig.defaults.globalMin).toBe(undefined);
+    expect(panel.fieldConfig.defaults.globalMax).toBe(undefined);
   });
 });

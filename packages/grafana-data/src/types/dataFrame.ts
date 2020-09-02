@@ -42,8 +42,8 @@ export interface FieldConfig<TOptions extends object = any> {
   // Numeric Options
   unit?: string;
   decimals?: number | null; // Significant digits (for display)
-  min?: number | null;
-  max?: number | null;
+  globalMin?: number | null;
+  globalMax?: number | null;
 
   // Convert input values into a display string
   mappings?: ValueMapping[];

@@ -4,8 +4,8 @@ import { supportsDataQuery } from './utils';
 describe('standardFieldConfigEditorRegistry', () => {
   const dummyConfig: FieldConfig = {
     displayName: 'Hello',
-    min: 10,
-    max: 10,
+    globalMin: 10,
+    globalMax: 10,
     decimals: 10,
     thresholds: {} as any,
     noValue: 'no value',

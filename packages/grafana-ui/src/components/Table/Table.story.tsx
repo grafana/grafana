@@ -58,8 +58,8 @@ function buildData(theme: GrafanaTheme, config: Record<string, FieldConfig>): Da
         values: [],
         config: {
           unit: 'percent',
-          min: 0,
-          max: 100,
+          globalMin: 0,
+          globalMax: 100,
           custom: {
             width: 150,
           },

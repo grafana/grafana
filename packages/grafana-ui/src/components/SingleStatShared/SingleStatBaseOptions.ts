@@ -113,8 +113,8 @@ function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOp
   }
 
   if (prevPanel.gauge && prevPanel.gauge.show) {
-    defaults.min = prevPanel.gauge.minValue;
-    defaults.max = prevPanel.gauge.maxValue;
+    defaults.globalMin = prevPanel.gauge.minValue;
+    defaults.globalMax = prevPanel.gauge.maxValue;
   }
 
   panel.fieldConfig.defaults = defaults;

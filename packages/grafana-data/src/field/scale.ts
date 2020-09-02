@@ -33,8 +33,8 @@ export function getScaleCalculator(field: Field, theme?: GrafanaTheme): ScaleCal
 
   if (percentThresholds || useColorScheme) {
     // Calculate min/max if required
-    let min = config.min;
-    let max = config.max;
+    let min = config.globalMin;
+    let max = config.globalMax;
 
     if (!isNumber(min) || !isNumber(max)) {
       if (field.values && field.values.length) {

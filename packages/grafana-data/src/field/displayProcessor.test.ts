@@ -44,7 +44,7 @@ describe('Process simple display values', () => {
     getDisplayProcessor(),
 
     // Add a simple option that is not used (uses a different base class)
-    getDisplayProcessorFromConfig({ min: 0, max: 100 }),
+    getDisplayProcessorFromConfig({ globalMin: 0, globalMax: 100 }),
 
     // Add a simple option that is not used (uses a different base class)
     getDisplayProcessorFromConfig({ unit: 'locale' }),

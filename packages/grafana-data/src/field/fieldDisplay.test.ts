@@ -146,8 +146,8 @@ describe('FieldDisplay', () => {
     });
 
     const display = getFieldDisplayValues(options);
-    expect(display[0].field.min).toEqual(0);
-    expect(display[0].field.max).toEqual(0);
+    expect(display[0].field.globalMin).toEqual(0);
+    expect(display[0].field.globalMax).toEqual(0);
   });
 
   describe('Value mapping', () => {

@@ -36,8 +36,8 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         data: value.sparkline,
         xMin: timeRange.from.valueOf(),
         xMax: timeRange.to.valueOf(),
-        yMin: value.field.min,
-        yMax: value.field.max,
+        yMin: value.field.globalMin,
+        yMax: value.field.globalMax,
       };
 
       const calc = options.reduceOptions.calcs[0];

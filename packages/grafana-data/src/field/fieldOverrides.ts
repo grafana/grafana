@@ -156,32 +156,32 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
       // Some units have an implied range
       if (config.unit === 'percent') {
-        if (!isNumber(config.min)) {
-          config.min = 0;
+        if (!isNumber(config.globalMin)) {
+          config.globalMin = 0;
         }
-        if (!isNumber(config.max)) {
-          config.max = 100;
+        if (!isNumber(config.globalMax)) {
+          config.globalMax = 100;
         }
       } else if (config.unit === 'percentunit') {
-        if (!isNumber(config.min)) {
-          config.min = 0;
+        if (!isNumber(config.globalMin)) {
+          config.globalMin = 0;
         }
-        if (!isNumber(config.max)) {
-          config.max = 1;
+        if (!isNumber(config.globalMax)) {
+          config.globalMax = 1;
         }
       }
 
       // Set the Min/Max value automatically
       if (options.autoMinMax && field.type === FieldType.number) {
-        if (!isNumber(config.min) || !isNumber(config.max)) {
+        if (!isNumber(config.globalMin) || !isNumber(config.globalMax)) {
           if (!range) {
             range = findNumericFieldMinMax(options.data!); // Global value
           }
-          if (!isNumber(config.min)) {
-            config.min = range.min;
+          if (!isNumber(config.globalMin)) {
+            config.globalMin = range.min;
           }
-          if (!isNumber(config.max)) {
-            config.max = range.max;
+          if (!isNumber(config.globalMax)) {
+            config.globalMax = range.max;
           }
         }
       }
@@ -330,10 +330,10 @@ export function validateFieldConfig(config: FieldConfig) {
   }
 
   // Verify that max > min (swap if necessary)
-  if (config.hasOwnProperty('min') && config.hasOwnProperty('max') && config.min! > config.max!) {
-    const tmp = config.max;
-    config.max = config.min;
-    config.min = tmp;
+  if (config.hasOwnProperty('min') && config.hasOwnProperty('max') && config.globalMin! > config.globalMax!) {
+    const tmp = config.globalMax;
+    config.globalMax = config.globalMin;
+    config.globalMin = tmp;
   }
 }
 

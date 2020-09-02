@@ -157,8 +157,8 @@ describe('Gauge Panel Migrations', () => {
     const panel = {} as PanelModel;
     const newOptions = gaugePanelChangedHandler(panel, 'singlestat', old);
     expect(panel.fieldConfig.defaults.unit).toBe('ms');
-    expect(panel.fieldConfig.defaults.min).toBe(-10);
-    expect(panel.fieldConfig.defaults.max).toBe(150);
+    expect(panel.fieldConfig.defaults.globalMin).toBe(-10);
+    expect(panel.fieldConfig.defaults.globalMax).toBe(150);
     expect(panel.fieldConfig.defaults.decimals).toBe(7);
     expect(newOptions.showThresholdMarkers).toBe(true);
     expect(newOptions.showThresholdLabels).toBe(true);

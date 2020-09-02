@@ -20,8 +20,8 @@ function getProps(propOverrides?: Partial<Props>): Props {
   const field: Partial<Field> = {
     type: FieldType.number,
     config: {
-      min: 0,
-      max: 100,
+      globalMin: 0,
+      globalMax: 100,
       thresholds: {
         mode: ThresholdsMode.Absolute,
         steps: [

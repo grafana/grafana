@@ -45,8 +45,8 @@ function addBarGaugeStory(overrides: Partial<Props>) {
   const field: Partial<Field> = {
     type: FieldType.number,
     config: {
-      min: minValue,
-      max: maxValue,
+      globalMin: minValue,
+      globalMax: maxValue,
       thresholds: {
         mode: ThresholdsMode.Absolute,
         steps: [

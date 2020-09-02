@@ -61,8 +61,8 @@ describe('scale', () => {
       name: 'test',
       type: FieldType.number,
       config: {
-        min: -100, // explicit range
-        max: 100, // note less then range of actual data
+        globalMin: -100, // explicit range
+        globalMax: 100, // note less then range of actual data
         thresholds,
         color: {
           mode: FieldColorMode.Scheme,

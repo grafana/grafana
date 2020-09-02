@@ -81,7 +81,7 @@ describe('applyFieldOverrides', () => {
   expect(f0.length).toEqual(3);
 
   // Hardcode the max value
-  f0.fields[1].config.max = 0;
+  f0.fields[1].config.globalMax = 0;
   f0.fields[1].config.decimals = 6;
 
   const src: FieldConfigSource = {
@@ -157,8 +157,8 @@ describe('applyFieldOverrides', () => {
 
   it('will merge FieldConfig with default values', () => {
     const field: FieldConfig = {
-      min: 0,
-      max: 100,
+      globalMin: 0,
+      globalMax: 100,
     };
 
     const f1 = {
@@ -187,8 +187,8 @@ describe('applyFieldOverrides', () => {
 
     const outField = processed.fields[0];
 
-    expect(outField.config.min).toEqual(0);
-    expect(outField.config.max).toEqual(100);
+    expect(outField.config.globalMin).toEqual(0);
+    expect(outField.config.globalMax).toEqual(100);
     expect(outField.config.unit).toEqual('ms');
     expect(getFieldDisplayName(outField, f)).toEqual('newTitle');
   });
@@ -206,10 +206,10 @@ describe('applyFieldOverrides', () => {
     const config = valueColumn.config;
 
     // Keep max from the original setting
-    expect(config.max).toEqual(0);
+    expect(config.globalMax).toEqual(0);
 
     // Don't Automatically pick the min value
-    expect(config.min).toEqual(undefined);
+    expect(config.globalMin).toEqual(undefined);
 
     // The default value applied
     expect(config.unit).toEqual('xyz');
@@ -234,10 +234,10 @@ describe('applyFieldOverrides', () => {
     const config = valueColumn.config;
 
     // Keep max from the original setting
-    expect(config.max).toEqual(0);
+    expect(config.globalMax).toEqual(0);
 
     // Don't Automatically pick the min value
-    expect(config.min).toEqual(-20);
+    expect(config.globalMin).toEqual(-20);
   });
 });
 
@@ -245,14 +245,14 @@ describe('setFieldConfigDefaults', () => {
   it('applies field config defaults', () => {
     const dsFieldConfig: FieldConfig = {
       decimals: 2,
-      min: 0,
-      max: 100,
+      globalMin: 0,
+      globalMax: 100,
     };
 
     const panelFieldConfig: FieldConfig = {
       decimals: 1,
-      min: 10,
-      max: 50,
+      globalMin: 10,
+      globalMax: 50,
       unit: 'km',
     };
 
