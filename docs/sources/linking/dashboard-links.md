@@ -10,7 +10,7 @@ weight = 200
 
 # Dashboard links
 
-When you create a dashboard link, you can include the time range and current template variables to directly jump to the same context in another dashboard. This way, you don’t have to worry whether the person you send the link to is looking at the right data. For more information about specifying links, refer to [URL variables]({{< relref "../variables/variable-types/url-variables.md" >}}).
+When you create a dashboard link, you can include the time range and current template variables to directly jump to the same context in another dashboard. This way, you don’t have to worry whether the person you send the link to is looking at the right data. For other types of links, refer to [Data link variables]({{< relref "data-link-variables.md" >}}).
 
 Dashboard links can also be used as shortcuts to external systems, such as submitting [a GitHub issue with the current dashboard name](https://github.com/grafana/grafana/issues/new?title=Dashboard%3A%20HTTP%20Requests).
 
