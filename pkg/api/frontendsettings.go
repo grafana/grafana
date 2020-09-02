@@ -142,7 +142,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	defaultDS := "-- Grafana --"
 	for n, ds := range dataSources {
 		dsM := ds.(map[string]interface{})
-		if dsM["isDefault"].(bool) {
+		if isDefault, _ := dsM["isDefault"].(bool); isDefault {
 			defaultDS = n
 		}
 		delete(dsM, "isDefault")
