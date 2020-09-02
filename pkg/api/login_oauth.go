@@ -278,8 +278,11 @@ func buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, 
 }
 
 // syncUser syncs a Grafana user profile with the corresponding OAuth profile.
-func syncUser(ctx *models.ReqContext, extUser *models.ExternalUserInfo,
-	connect social.SocialConnector) (*models.User, error) {
+func syncUser(
+	ctx *models.ReqContext,
+	extUser *models.ExternalUserInfo,
+	connect social.SocialConnector,
+) (*models.User, error) {
 	oauthLogger.Debug("Syncing Grafana user with corresponding OAuth profile")
 	// add/update user in Grafana
 	cmd := &models.UpsertUserCommand{
