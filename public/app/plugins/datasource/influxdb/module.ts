@@ -6,7 +6,7 @@ import VariableQueryEditor from './components/VariableQueryEditor';
 import { DataSourcePlugin } from '@grafana/data';
 import ConfigEditor from './components/ConfigEditor';
 
-// This adds a directive that is used in the query editor
+// This will register the angular directive that is used in the query editor
 import './components/FluxQueryEditor';
 import './components/AnnotationQueryEditor';
 
