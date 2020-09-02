@@ -1,5 +1,4 @@
-import { DataQuery, DataSourceJsonData, BaseAnnotationQuery } from '@grafana/data';
-import { AnnotationsFromFrameOptions } from '@grafana/runtime';
+import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export enum InfluxVersion {
   InfluxQL = 'InfluxQL',
@@ -54,13 +53,3 @@ export interface InfluxQuery extends DataQuery {
   rawQuery?: boolean;
   query?: string;
 }
-
-export interface AnnotationQuery<T = DataQuery> extends BaseAnnotationQuery {
-  // Generic query
-  query: Partial<T>;
-
-  // Transform DataFrame into annotations
-  mapping: AnnotationsFromFrameOptions;
-}
-
-export interface InfluxAnnotation extends AnnotationQuery<InfluxQuery> {}
