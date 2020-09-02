@@ -2,7 +2,7 @@
 source "./deploy-common.sh"
 
 # Install Go
-filename="go1.14.linux-amd64.tar.gz"
+filename="go1.15.1.linux-amd64.tar.gz"
 get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "08df79b46b0adf498ea9f320a0f23d6ec59e9003660b4c9c1ce8e5e2c6f823ca"
 untar_file "/tmp/$filename"
 

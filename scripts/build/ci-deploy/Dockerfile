@@ -1,4 +1,4 @@
-FROM cimg/go:1.14
+FROM cimg/go:1.15.1
 
 RUN git clone https://github.com/aptly-dev/aptly $GOPATH/src/github.com/aptly-dev/aptly
 RUN cd $GOPATH/src/github.com/aptly-dev/aptly && \
