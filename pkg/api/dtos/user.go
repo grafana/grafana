@@ -39,7 +39,7 @@ type AdminUserListItem struct {
 	Email         string `json:"email"`
 	Name          string `json:"name"`
 	Login         string `json:"login"`
-	IsServerAdmin bool   `json:"isServerAdmin"`
+	IsServerAdmin bool   `json:"isGrafanaAdmin"`
 }
 
 type SendResetPasswordEmailForm struct {
