@@ -234,11 +234,11 @@ export function isRelativeTimeRange(raw: RawTimeRange): boolean {
   return isRelativeTime(raw.from) || isRelativeTime(raw.to);
 }
 
-export function calculateIntervalMS(range: TimeRange, resolution: number, lowLimitInterval?: string) {
+export function calculateIntervalMS(range: TimeRange, resolution: number, lowLimitInterval?: string): number {
   let lowLimitMs = 1; // 1 millisecond default low limit
 
   if (lowLimitInterval) {
-    lowLimitMs = interval_to_ms(lowLimitInterval);
+    lowLimitMs = intervalToMS(lowLimitInterval);
   }
 
   const intervalMs = round_interval((range.to.valueOf() - range.from.valueOf()) / resolution);
@@ -286,10 +286,10 @@ export function describeInterval(str: string) {
   };
 }
 
-const interval_to_ms = (str: string) => {
+export function intervalToMS(str: string) {
   const info = describeInterval(str);
   return info.sec * 1000 * info.count;
-};
+}
 
 const round_interval = (interval: number) => {
   switch (true) {
