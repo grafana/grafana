@@ -25,6 +25,7 @@ import {
 } from '@grafana/data';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
+import { v4 as uuidv4 } from 'uuid';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
@@ -265,7 +266,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
 }
 
 export function generateKey(index = 0): string {
-  return `Q-${Date.now()}-${Math.random()}-${index}`;
+  return `Q-${uuidv4()}-${index}`;
 }
 
 export function generateEmptyQuery(queries: DataQuery[], index = 0): DataQuery {
