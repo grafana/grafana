@@ -50,7 +50,6 @@ func (e *cloudWatchExecutor) parseGetMetricResourceTags(queries map[string]*clou
 
 	tags := map[string]map[string]string{}
 	for region, resourceTypes := range resourceTypesByRegion {
-		tagFilters := []*resourcegroupstaggingapi.TagFilter{}
 		typeFilters := []*string{}
 		typeFiltersAdded := map[string]bool{}
 		for _, tp := range resourceTypes {
@@ -60,7 +59,7 @@ func (e *cloudWatchExecutor) parseGetMetricResourceTags(queries map[string]*clou
 			}
 		}
 
-		resources, err := e.resourceGroupsGetResources(region, tagFilters, typeFilters)
+		resources, err := e.resourceGroupsGetResources(region, nil, typeFilters)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get resources for region %s: %w", region, err)
 		}
@@ -72,10 +71,8 @@ func (e *cloudWatchExecutor) parseGetMetricResourceTags(queries map[string]*clou
 			}
 
 			// CloudWatch inconsistently prepends part of the resource type to the label, so we replicate that here.
-			resourceID := parsedARN.Resource
-			if prefix, ok := resourcePrefixesMap[parsedARN.Service+":"+parsedARN.ResourceType]; ok {
-				resourceID = prefix + resourceID
-			}
+			prefix := resourcePrefixesMap[parsedARN.Service+":"+parsedARN.ResourceType]
+			resourceID := prefix + parsedARN.Resource
 			if component, ok := resourceComponentMap[parsedARN.Service+":"+parsedARN.ResourceType]; ok {
 				resourceID = strings.Split(resourceID, "/")[component]
 			}
@@ -278,12 +275,9 @@ func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]stri
 	/* CloudWatch labels for resource dimensions are space separated lists of the resource IDs.
 	 * A caller might want to access tags for any of the resources in the label, so we inject the tags with a unique prefix per part.
 	 */
-	for i, part := range strings.Split(label, " ") {
-		if _, ok := resourceTags[part]; !ok {
-			continue
-		}
-
-		for key, value := range resourceTags[part] {
+	for i, resource := range strings.Split(label, " ") {
+		tags := resourceTags[resource]
+		for key, value := range tags {
 			data[fmt.Sprintf("tags.%d.%s", i, key)] = value
 		}
 	}
