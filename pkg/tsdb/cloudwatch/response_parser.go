@@ -28,11 +28,13 @@ var resourceTypesMap = map[string][]string{
 }
 
 var resourcePrefixesMap = map[string]string{
-	"elasticloadbalancing:targetgroup": "targetgroup/", /* ELBv2 target groups have 'targetgroup/' prepended in the label but not the resource. */
+	// ELBv2 target groups have 'targetgroup/' prepended in the label but not the resource.
+	"elasticloadbalancing:targetgroup": "targetgroup/", 
 }
 
 var resourceComponentMap = map[string]int{
-	"ecs:service": 1, /* ECS services have the cluster name prepended in the resource but not the label. */
+	// ECS services have the cluster name prepended in the resource but not the label.
+	"ecs:service": 1,
 }
 
 func (e *cloudWatchExecutor) parseGetMetricResourceTags(queries map[string]*cloudWatchQuery) (map[string]map[string]string, error) {
@@ -41,11 +43,7 @@ func (e *cloudWatchExecutor) parseGetMetricResourceTags(queries map[string]*clou
 	 */
 	resourceTypesByRegion := map[string][]string{}
 	for _, query := range queries {
-		if resources, ok := resourceTypesMap[query.Namespace]; ok {
-			if _, ok := resourceTypesByRegion[query.Region]; !ok {
-				resourceTypesByRegion[query.Region] = []string{}
-			}
-
+		if resources, ok := resourceTypesMap[query.Namespace]; ok {	
 			resourceTypesByRegion[query.Region] = append(resourceTypesByRegion[query.Region], resources...)
 		}
 	}
@@ -55,16 +53,16 @@ func (e *cloudWatchExecutor) parseGetMetricResourceTags(queries map[string]*clou
 		tagFilters := []*resourcegroupstaggingapi.TagFilter{}
 		typeFilters := []*string{}
 		typeFiltersAdded := map[string]bool{}
-		for _, type_ := range resourceTypes {
-			if _, ok := typeFiltersAdded[type_]; !ok {
+		for _, tp := range resourceTypes {
+			if _, ok := typeFiltersAdded[tp]; !ok {
 				typeFilters = append(typeFilters, aws.String(type_))
-				typeFiltersAdded[type_] = true
+				typeFiltersAdded[tp] = true
 			}
 		}
 
 		resources, err := e.resourceGroupsGetResources(region, tagFilters, typeFilters)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to get resources for region %s: %s", region, err)
+			return nil, fmt.Errorf("failed to get resources for region %s: %w", region, err)
 		}
 
 		for _, resource := range resources.ResourceTagMappingList {
@@ -73,7 +71,7 @@ func (e *cloudWatchExecutor) parseGetMetricResourceTags(queries map[string]*clou
 				continue
 			}
 
-			/* CloudWatch inconsistently prepends part of the resource type to the label, so we replicate that here. */
+			// CloudWatch inconsistently prepends part of the resource type to the label, so we replicate that here.
 			resourceID := parsedARN.Resource
 			if prefix, ok := resourcePrefixesMap[parsedARN.Service+":"+parsedARN.ResourceType]; ok {
 				resourceID = prefix + resourceID
@@ -126,7 +124,7 @@ func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 		}
 	}
 
-	resource_tags, err := e.parseGetMetricResourceTags(queries)
+	resourceTags, err := e.parseGetMetricResourceTags(queries)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +154,7 @@ func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 }
 
 func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, labels []string,
-	query *cloudWatchQuery, resource_tags map[string]map[string]string) (*tsdb.TimeSeriesSlice, bool, error) {
+	query *cloudWatchQuery, resourceTags map[string]map[string]string) (*tsdb.TimeSeriesSlice, bool, error) {
 	partialData := false
 	result := tsdb.TimeSeriesSlice{}
 
@@ -243,7 +241,7 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 	return &result, partialData, nil
 }
 
-func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]string, label string, resource_tags map[string]map[string]string) string {
+func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]string, label string, resourceTags map[string]map[string]string) string {
 	region := query.Region
 	namespace := query.Namespace
 	metricName := query.MetricName
@@ -281,10 +279,12 @@ func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]stri
 	 * A caller might want to access tags for any of the resources in the label, so we inject the tags with a unique prefix per part.
 	 */
 	for i, part := range strings.Split(label, " ") {
-		if _, ok := resource_tags[part]; ok {
-			for key, value := range resource_tags[part] {
-				data["tags."+strconv.Itoa(i)+"."+key] = value
-			}
+		if _, ok := resourceTags[part]; !ok {
+			continue
+		}
+		
+		for key, value := range resource_tags[part] {
+			data[fmt.Sprintf("tags.%d.%s", i, key] = value
 		}
 	}
 
