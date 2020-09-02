@@ -26,7 +26,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { toVariablePayload } from '../../state/types';
-import { containsSearchFilter } from '../../utils';
+import { containsSearchFilter, getCurrentText } from '../../utils';
 
 export const navigateOptions = (key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
   return async (dispatch, getState) => {
@@ -83,7 +83,7 @@ export const commitChangesToVariable = (): ThunkResult<void> => {
     dispatch(changeVariableProp(toVariablePayload(existing, searchQueryPayload)));
     const updated = getVariable<VariableWithMultiSupport>(picker.id, getState());
 
-    if (existing.current.text === updated.current.text) {
+    if (getCurrentText(existing) === getCurrentText(updated)) {
       return dispatch(hideOptions());
     }
 
@@ -183,7 +183,7 @@ function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
 
   return {
     value: values,
-    text: texts.join(' + '),
+    text: texts,
     tags: picker.tags.filter(t => t.selected),
     selected: true,
   };

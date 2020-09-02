@@ -94,7 +94,7 @@ Panel data source query options:
 
   This automatic interval is calculated based on the width of the graph. If the user zooms out a lot then the interval becomes greater, resulting in a more coarse grained aggregation whereas if the user zooms in then the interval decreases resulting in a more fine grained aggregation.
 
-  For more information, refer to [Global variables]({{< relref "../variables/global-variables.md" >}}).
+  For more information, refer to [Global variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
 
 - **Relative time -** You can override the relative time range for individual panels, causing them to be different than what is selected in the dashboard time picker in the top right corner of the dashboard. This allows you to show metrics from different time periods or days on the same dashboard.
   

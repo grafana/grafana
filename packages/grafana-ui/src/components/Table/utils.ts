@@ -1,12 +1,21 @@
-import { TextAlignProperty } from 'csstype';
-import { DataFrame, Field, FieldType, getFieldDisplayName } from '@grafana/data';
-import { Column } from 'react-table';
+import { Column, Row } from 'react-table';
+import memoizeOne from 'memoize-one';
+import { css, cx } from 'emotion';
+import tinycolor from 'tinycolor2';
+import { ContentPosition, TextAlignProperty } from 'csstype';
+import {
+  DataFrame,
+  Field,
+  FieldType,
+  formattedValueToString,
+  getFieldDisplayName,
+  SelectableValue,
+} from '@grafana/data';
+
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
 import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types';
-import { css, cx } from 'emotion';
 import { withTableStyles } from './withTableStyles';
-import tinycolor from 'tinycolor2';
 import { JSONViewCell } from './JSONViewCell';
 
 export function getTextAlign(field?: Field): TextAlignProperty {
@@ -70,6 +79,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
       minWidth: 50,
+      filter: memoizeOne(filterByValue),
     });
   }
 
@@ -91,6 +101,7 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
     case TableCellDisplayMode.ColorBackground:
       return withTableStyles(DefaultCell, getBackgroundColorStyle);
     case TableCellDisplayMode.LcdGauge:
+    case TableCellDisplayMode.BasicGauge:
     case TableCellDisplayMode.GradientGauge:
       return BarGaugeCell;
     case TableCellDisplayMode.JSONView:
@@ -154,4 +165,93 @@ function getBackgroundColorStyle(props: TableCellProps) {
     ...tableStyles,
     tableCell: cx(tableStyles.tableCell, extendedStyle),
   };
+}
+
+export function filterByValue(rows: Row[], id: string, filterValues?: SelectableValue[]) {
+  if (rows.length === 0) {
+    return rows;
+  }
+
+  if (!filterValues) {
+    return rows;
+  }
+
+  return rows.filter(row => {
+    if (!row.values.hasOwnProperty(id)) {
+      return false;
+    }
+
+    const value = row.values[id];
+    return filterValues.find(filter => filter.value === value) !== undefined;
+  });
+}
+
+export function getHeaderAlign(field?: Field): ContentPosition {
+  const align = getTextAlign(field);
+
+  if (align === 'right') {
+    return 'flex-end';
+  }
+
+  if (align === 'center') {
+    return align;
+  }
+
+  return 'flex-start';
+}
+
+export function calculateUniqueFieldValues(rows: any[], field?: Field) {
+  if (!field || rows.length === 0) {
+    return {};
+  }
+
+  const set: Record<string, any> = {};
+
+  for (let index = 0; index < rows.length; index++) {
+    const fieldIndex = parseInt(rows[index].id, 10);
+    const fieldValue = field.values.get(fieldIndex);
+    const displayValue = field.display ? field.display(fieldValue) : fieldValue;
+    const value = field.display ? formattedValueToString(displayValue) : displayValue;
+    set[value || '(Blanks)'] = fieldValue;
+  }
+
+  return set;
+}
+
+export function valuesToOptions(unique: Record<string, any>): SelectableValue[] {
+  return Object.keys(unique)
+    .reduce((all, key) => all.concat({ value: unique[key], label: key }), [] as SelectableValue[])
+    .sort(sortOptions);
+}
+
+export function sortOptions(a: SelectableValue, b: SelectableValue): number {
+  if (a.label === undefined && b.label === undefined) {
+    return 0;
+  }
+
+  if (a.label === undefined && b.label !== undefined) {
+    return -1;
+  }
+
+  if (a.label !== undefined && b.label === undefined) {
+    return 1;
+  }
+
+  if (a.label! < b.label!) {
+    return -1;
+  }
+
+  if (a.label! > b.label!) {
+    return 1;
+  }
+
+  return 0;
+}
+
+export function getFilteredOptions(options: SelectableValue[], filterValues?: SelectableValue[]): SelectableValue[] {
+  if (!filterValues) {
+    return [];
+  }
+
+  return options.filter(option => filterValues.some(filtered => filtered.value === option.value));
 }

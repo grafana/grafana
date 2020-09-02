@@ -95,7 +95,7 @@ export class PanelHeader extends Component<Props, State> {
     return (
       <div className="panel-loading" onClick={this.onCancelQuery}>
         <Tooltip content="Cancel query">
-          <Icon className="panel-loading__spinner spin-counter-clock" name="sync" />
+          <Icon className="panel-loading__spinner spin-clockwise" name="sync" />
         </Tooltip>
       </div>
     );
@@ -177,12 +177,10 @@ export class PanelHeader extends Component<Props, State> {
                   size="sm"
                 />
               )}
-              <span className="panel-title-text">
-                {title}
-                <Icon name="angle-down" className="panel-menu-toggle" />
-              </span>
+              <span className="panel-title-text">{title}</span>
+              <Icon name="angle-down" className="panel-menu-toggle" />
               {this.state.panelMenuOpen && (
-                <ClickOutsideWrapper onClick={this.closeMenu}>
+                <ClickOutsideWrapper onClick={this.closeMenu} parent={document}>
                   <PanelHeaderMenu items={menuItems} />
                 </ClickOutsideWrapper>
               )}

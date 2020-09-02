@@ -139,7 +139,7 @@ export function useLoadOptions(datasource: ZipkinDatasource) {
           const newTraces = traces.length
             ? fromPairs(
                 traces.map(trace => {
-                  const rootSpan = trace.find(span => !span.parentId);
+                  const rootSpan = trace.find(span => !span.parentId)!;
 
                   return [`${rootSpan.name} [${Math.floor(rootSpan.duration / 1000)} ms]`, rootSpan.traceId];
                 })
@@ -186,7 +186,8 @@ export function useLoadOptions(datasource: ZipkinDatasource) {
 
 function useMapToCascaderOptions(services: AsyncState<CascaderOption[]>, allOptions: OptionsState) {
   return useMemo(() => {
-    let cascaderOptions: CascaderOption[];
+    let cascaderOptions: CascaderOption[] = [];
+
     if (services.value && services.value.length) {
       cascaderOptions = services.value.map(services => {
         return {

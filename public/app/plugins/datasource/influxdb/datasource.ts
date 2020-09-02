@@ -10,6 +10,7 @@ import {
   LoadingState,
   QueryResultMeta,
 } from '@grafana/data';
+import { v4 as uuidv4 } from 'uuid';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
@@ -34,8 +35,9 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   constructor(instanceSettings: DataSourceInstanceSettings<InfluxOptions>) {
     super(instanceSettings);
+
     this.type = 'influxdb';
-    this.urls = _.map(instanceSettings.url.split(','), url => {
+    this.urls = (instanceSettings.url ?? '').split(',').map(url => {
       return url.trim();
     });
 
@@ -61,13 +63,20 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return from(this.classicQuery(request));
   }
 
+  getQueryDisplayText(query: InfluxQuery) {
+    if (this.is2x) {
+      return query.query;
+    }
+    return new InfluxQueryModel(query).render(false);
+  }
+
   /**
    * Only applied on flux queries
    */
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): Record<string, any> {
     return {
       ...query,
-      query: getTemplateSrv().replace(query.query, scopedVars), // The raw query text
+      query: getTemplateSrv().replace(query.query ?? '', scopedVars), // The raw query text
     };
   }
 
@@ -79,7 +88,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     const scopedVars = options.scopedVars;
     const targets = _.cloneDeep(options.targets);
     const queryTargets: any[] = [];
-    let queryModel: InfluxQueryModel;
+
     let i, y;
     const templateSrv = getTemplateSrv();
 
@@ -93,8 +102,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       // backward compatibility
       scopedVars.interval = scopedVars.__interval;
 
-      queryModel = new InfluxQueryModel(target, templateSrv, scopedVars);
-      return queryModel.render(true);
+      return new InfluxQueryModel(target, templateSrv, scopedVars).render(true);
     }).reduce((acc, current) => {
       if (current !== '') {
         acc += ';' + current;
@@ -109,7 +117,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // add global adhoc filters to timeFilter
     const adhocFilters = (templateSrv as any).getAdhocFilters(this.name);
     if (adhocFilters.length > 0) {
-      timeFilter += ' AND ' + queryModel.renderAdhocFilters(adhocFilters);
+      const tmpQuery = new InfluxQueryModel({ refId: 'A' }, templateSrv, scopedVars);
+      timeFilter += ' AND ' + tmpQuery.renderAdhocFilters(adhocFilters);
     }
 
     // replace grafana variables
@@ -148,6 +157,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         });
 
         switch (target.resultFormat) {
+          case 'logs':
+            meta.preferredVisualisationType = 'logs';
           case 'table': {
             seriesList.push(influxSeries.getTable());
             break;
@@ -175,7 +186,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw, timezone: options.timezone });
     let query = options.annotation.query.replace('$timeFilter', timeFilter);
-    query = getTemplateSrv().replace(query, null, 'regex');
+    query = getTemplateSrv().replace(query, undefined, 'regex');
 
     return this._seriesQuery(query, options).then((data: any) => {
       if (!data || !data.results || !data.results[0]) {
@@ -233,7 +244,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           const expandedTags = query.tags.map(tag => {
             const expandedTag = {
               ...tag,
-              value: templateSrv.replace(tag.value, null, 'regex'),
+              value: templateSrv.replace(tag.value, undefined, 'regex'),
             };
             return expandedTag;
           });
@@ -246,7 +257,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   metricFindQuery(query: string, options?: any) {
-    const interpolated = getTemplateSrv().replace(query, null, 'regex');
+    const interpolated = getTemplateSrv().replace(query, undefined, 'regex');
 
     return this._seriesQuery(interpolated, options).then(resp => {
       return this.responseParser.parse(query, resp);
@@ -292,7 +303,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         memo.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
         return memo;
       },
-      []
+      [] as string[]
     ).join('&');
   }
 
@@ -301,7 +312,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       // TODO: eventually use the real /health endpoint
       const request: DataQueryRequest<InfluxQuery> = {
         targets: [{ refId: 'test', query: 'buckets()' }],
-        requestId: `${this.id}-health-${Date.now()}`,
+        requestId: `${this.id}-health-${uuidv4()}`,
         dashboardId: 0,
         panelId: 0,
         interval: '1m',
@@ -318,18 +329,18 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         .toPromise()
         .then((res: DataQueryResponse) => {
           if (!res || !res.data || res.state !== LoadingState.Done) {
-            console.log('InfluxDB Error', res);
+            console.error('InfluxDB Error', res);
             return { status: 'error', message: 'Error reading InfluxDB' };
           }
           const first = res.data[0];
           if (first && first.length) {
             return { status: 'success', message: `${first.length} buckets found` };
           }
-          console.log('InfluxDB Error', res);
+          console.error('InfluxDB Error', res);
           return { status: 'error', message: 'Error reading buckets' };
         })
         .catch((err: any) => {
-          console.log('InfluxDB Error', err);
+          console.error('InfluxDB Error', err);
           return { status: 'error', message: err.message };
         });
     }
@@ -351,7 +362,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   _influxRequest(method: string, url: string, data: any, options?: any) {
-    const currentUrl = this.urls.shift();
+    const currentUrl = this.urls.shift()!;
     this.urls.push(currentUrl);
 
     const params: any = {};

@@ -5,7 +5,6 @@ import (
 )
 
 func TestColumnIdentification(t *testing.T) {
-
 	t.Run("Test Tag Identification", func(t *testing.T) {
 		tagNames := []string{"header", "value", "tag"}
 		for _, item := range tagNames {

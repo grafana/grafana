@@ -31,26 +31,30 @@ Currently only Organization Admins can create reports.
 1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports.
 1. Enter report information. All fields are required unless otherwise indicated.
    * **Name -** Name of the report as you want it to appear in the Reports list.
-   * **Choose dashboard -** Select the dashboard to generate the report from.
+   * **Source dashboard -** Select the dashboard to generate the report from.
    * **Recipients -** Enter the emails of the people or teams that you want to receive the report.
    * **Reply to -** (optional) The address that will appear in the **Reply to** field of the email. 
-   * **Custom message -** (optional) Message body in the email with the report.
-1. **Preview** the report to make sure it appears as you expect. Update if necessary
-1. Select the layout option for generated report: **Portrait** or **Landscape**.  
+   * **Message -** (optional) Message body in the email with the report.
+   * **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
+1. **Preview PDF**to make sure the report appears as you expect. Update if necessary.
 1. Enter scheduling information. Options vary depending on the frequency you select.
+1. Select the orientation option for generated report: **Portrait** or **Landscape**.  
+1. Select the layout option for generated report: **Simple** or **Grid**.  
 1. **Save** the report.
-1. **Send test mail** after saving the report to verify that the whole configuration is working as expected.
+1. **Send test email** to verify that the whole configuration is working as expected.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
-### Layout
+### Layout and orientation
 
 > We're actively working on developing new report layout options. [Contact us](https://grafana.com/contact?about=grafana-enterprise&topic=design-process&value=reporting) if you would like to get involved in the design process.
 
-Name | Support | Description | Preview
----- | ------- | ----------- | -------
-Portrait | v6.4+ | Portrait generates an A4 page in portrait mode with three panels per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
-Landscape | v6.7+ | Landscape generates an A4 page in landscape mode with a single panel per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+Layout | Orientation | Support | Description | Preview
+------ | ----------- | ------- | ----------- | -------
+Simple | Portrait | v6.4+ | Generates an A4 page in portrait mode with three panels per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
+Simple | Landscape | v6.7+ | Generates an A4 page in landscape mode with a single panel per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+Grid | Portrait | v7.2+ | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard. | {{< docs-imagebox img="/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
+Grid | Landscape | v7.2+ | Generates an A4 page in landscape mode with panels arranged in the same way as at the original dashboard. | {{< docs-imagebox img="/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Scheduling
 
@@ -69,7 +73,7 @@ Hourly reports are generated once per hour. All fields are required.
 
 Daily reports are generated once per day. All fields are required.
 
-* **Time -** Time of day in 24 hours format when the report should be sent.
+* **Time -** Time the report is sent, in 24-hour format.
 * **Time zone -** Time zone for the **Time** field.
 
 #### Weekly
@@ -77,7 +81,17 @@ Daily reports are generated once per day. All fields are required.
 Weekly reports are generated once per week. All fields are required.
 
 * **Day -** Weekday which the report should be sent on.
-* **Time -** Time of day in 24 hours format when the report should be sent.
+* **Time -** Time the report is sent, in 24-hour format.
+* **Time zone -** Time zone for the **Time** field.
+
+#### Monthly
+
+> Only available in Grafana Enterprise v7.1+.
+
+Monthly reports are generated once per month. All fields are required.
+
+* **Day in month -** Day of the month when the report should be sent. You can select `last` for reports that should go out on the last day of the month.
+* **Time -** Time the report is sent, in 24-hour format.
 * **Time zone -** Time zone for the **Time** field.
 
 #### Never
@@ -86,11 +100,11 @@ Weekly reports are generated once per week. All fields are required.
 
 Reports which are scheduled to never be sent have no parameter and will not be sent to the scheduler. They may be manually generated from the **Send test email** prompt or via the [Reporting API]({{< relref "../http_api/reporting.md" >}}).
 
-### Send test mail
+### Send test email
 
 > Only available in Grafana Enterprise v7.0+.
 
-1. In the report, click **Send test mail**.
+1. In the report, click **Send test email**.
 1. In the Email field, enter the email address or addresses that you want to test, separated by semicolon.
 If you want to use email addresses from the report, then select the **Use emails from report** check box.
 1. Click **Send**.
@@ -109,7 +123,7 @@ When generating reports, each panel renders separately before being collected in
 
 To modify the panels' clarity you can set a scale factor for the rendered images. A higher scale factor is more legible but will increase the file size of the generated PDF.
 
- These options are available in the [configuration]({{< relref "../administration/configuration.md">}}) file.
+These options are available in the [configuration]({{< relref "../administration/configuration.md">}}) file.
 
 ```ini
 [reporting]
@@ -124,11 +138,34 @@ image_scale_factor = 2
 
 ## Report time range
 
-Reports use the saved time range of the dashboard. Changing the time range of the report is done by saving a modified time range to the dashboard.
+> Setting custom report time range is available in Grafana Enterprise v7.2+.
+
+By default, reports use the saved time range of the dashboard. Changing the time range of the report can be done by:
+- Saving a modified time range to the dashboard. 
+- Setting a time range via **Time range** field in the report form. If specified, then this custom time range overrides the one from the report's dashboard.
 
 The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone will use the time zone on the Grafana server.
 
 If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. We advise always setting the time zone to UTC for dashboards when using a remote renderer to avoid this. 
+
+## Reports settings
+
+> Only available in Grafana Enterprise v7.2+.
+
+You can configure organization-wide report settings in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports for current organization.
+
+You can customize the branding options.  
+
+Report branding:
+**Company logo URL** - Company logo displayed in the report PDF. Defaults to the Grafana logo.
+
+Email branding:
+- **Company logo URL** - Company logo displayed in the report PDF. Defaults to the Grafana logo.
+- **Email footer** - Toggle to enable report email footer. Select **Sent by** or **None**.
+- **Footer link text** - Text for the link in the report email footer. Defaults to "Grafana".
+- **Footer link URL** - Link for the report email footer.  
+  
+{{< docs-imagebox img="/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ## Troubleshoot reporting
 

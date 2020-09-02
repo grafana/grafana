@@ -1,12 +1,13 @@
-import { DashboardTimeRangeConfig, setDashboardTimeRange } from './setDashboardTimeRange';
 import { e2e } from '../index';
 import { getScenarioContext } from '../support/scenarioContext';
+import { setDashboardTimeRange, TimeRangeConfig } from './setDashboardTimeRange';
 
 export interface OpenDashboardConfig {
-  timeRange?: DashboardTimeRangeConfig;
+  timeRange?: TimeRangeConfig;
   uid: string;
 }
 
+// @todo improve config input/output: https://stackoverflow.com/a/63507459/923745
 export const openDashboard = (config?: Partial<OpenDashboardConfig>) =>
   getScenarioContext().then(({ lastAddedDashboardUid }: any) => {
     const fullConfig = {
@@ -23,5 +24,5 @@ export const openDashboard = (config?: Partial<OpenDashboardConfig>) =>
     }
 
     // @todo remove `wrap` when possible
-    return e2e().wrap({ config: fullConfig });
+    return e2e().wrap({ config: fullConfig }, { log: false });
   });

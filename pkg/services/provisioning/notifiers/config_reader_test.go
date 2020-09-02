@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -30,6 +31,12 @@ func TestNotificationAsConfig(t *testing.T) {
 
 	Convey("Testing notification as configuration", t, func() {
 		sqlstore.InitTestDB(t)
+
+		for i := 1; i < 5; i++ {
+			orgCommand := models.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", i)}
+			err := sqlstore.CreateOrg(&orgCommand)
+			So(err, ShouldBeNil)
+		}
 
 		alerting.RegisterNotifier(&alerting.NotifierPlugin{
 			Type:    "slack",
@@ -65,6 +72,9 @@ func TestNotificationAsConfig(t *testing.T) {
 			So(nt.IsDefault, ShouldBeTrue)
 			So(nt.Settings, ShouldResemble, map[string]interface{}{
 				"recipient": "XXX", "token": "xoxb", "uploadImage": true, "url": "https://slack.com",
+			})
+			So(nt.SecureSettings, ShouldResemble, map[string]string{
+				"token": "xoxbsecure", "url": "https://slack.com/secure",
 			})
 			So(nt.SendReminder, ShouldBeTrue)
 			So(nt.Frequency, ShouldEqual, "1h")
@@ -224,12 +234,12 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		Convey("Can read correct properties with orgName instead of orgId", func() {
-			existingOrg1 := models.CreateOrgCommand{Name: "Main Org. 1"}
-			err := sqlstore.CreateOrg(&existingOrg1)
+			existingOrg1 := models.GetOrgByNameQuery{Name: "Main Org. 1"}
+			err := sqlstore.GetOrgByName(&existingOrg1)
 			So(err, ShouldBeNil)
 			So(existingOrg1.Result, ShouldNotBeNil)
-			existingOrg2 := models.CreateOrgCommand{Name: "Main Org. 2"}
-			err = sqlstore.CreateOrg(&existingOrg2)
+			existingOrg2 := models.GetOrgByNameQuery{Name: "Main Org. 2"}
+			err = sqlstore.GetOrgByName(&existingOrg2)
 			So(err, ShouldBeNil)
 			So(existingOrg2.Result, ShouldNotBeNil)
 
@@ -257,7 +267,6 @@ func TestNotificationAsConfig(t *testing.T) {
 			nt := notificationsQuery.Result[0]
 			So(nt.Name, ShouldEqual, "default-notification-create")
 			So(nt.OrgId, ShouldEqual, existingOrg2.Result.Id)
-
 		})
 
 		Convey("Config doesn't contain required field", func() {
@@ -312,7 +321,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			cfgProvider := &configReader{log: log.New("test logger")}
 			_, err := cfgProvider.readConfig(incorrectSettings)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldEqual, "Alert validation error: Could not find url property in settings")
+			So(err.Error(), ShouldEqual, "alert validation error: Could not find url property in settings")
 		})
 	})
 }

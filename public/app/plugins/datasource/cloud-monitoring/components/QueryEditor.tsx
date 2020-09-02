@@ -63,11 +63,11 @@ export class QueryEditor extends PureComponent<Props, State> {
 
   render() {
     const { datasource, query, onRunQuery, onChange } = this.props;
-    const metricQuery = { ...defaultQuery, projectName: datasource.getDefaultProject(), ...query.metricQuery };
-    const sloQuery = { ...defaultSLOQuery, projectName: datasource.getDefaultProject(), ...query.sloQuery };
+    const metricQuery = { ...defaultQuery, ...query.metricQuery, projectName: datasource.getDefaultProject() };
+    const sloQuery = { ...defaultSLOQuery, ...query.sloQuery, projectName: datasource.getDefaultProject() };
     const queryType = query.queryType || QueryType.METRICS;
     const meta = this.props.data?.series.length ? this.props.data?.series[0].meta : {};
-    const usedAlignmentPeriod = meta?.alignmentPeriod as string;
+    const usedAlignmentPeriod = meta?.alignmentPeriod;
     const variableOptionGroup = {
       label: 'Template Variables',
       expanded: false,

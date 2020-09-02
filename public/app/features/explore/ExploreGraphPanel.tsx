@@ -40,7 +40,8 @@ const getStyles = (theme: GrafanaTheme) => ({
 });
 
 interface Props extends Themeable {
-  series?: GraphSeriesXY[];
+  ariaLabel?: string;
+  series?: GraphSeriesXY[] | null;
   width: number;
   absoluteRange: AbsoluteTimeRange;
   loading?: boolean;
@@ -87,6 +88,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
 
   renderGraph = () => {
     const {
+      ariaLabel,
       width,
       series,
       onHiddenSeriesChanged,
@@ -123,6 +125,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
         {({ onSeriesToggle, toggledSeries }: GraphSeriesTogglerAPI) => {
           return (
             <GraphWithLegend
+              ariaLabel={ariaLabel}
               displayMode={LegendDisplayMode.List}
               height={height}
               isLegendVisible={true}

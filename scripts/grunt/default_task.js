@@ -19,8 +19,7 @@ module.exports = function(grunt) {
 
   // prettier-ignore
   grunt.registerTask('eslint', [
-    'newer:exec:eslintPackages',
-    'newer:exec:eslintRoot'
+    'newer:exec:eslint'
   ]);
 
   // prettier-ignore

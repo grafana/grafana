@@ -13,6 +13,7 @@ import { FilterItem } from '@grafana/ui/src/components/Table/types';
 import { getFieldLinksForExplore } from './utils/links';
 
 interface TableContainerProps {
+  ariaLabel?: string;
   exploreId: ExploreId;
   loading: boolean;
   width: number;
@@ -41,19 +42,19 @@ export class TableContainer extends PureComponent<TableContainerProps> {
   }
 
   render() {
-    const { loading, onCellFilterAdded, showingTable, tableResult, width, splitOpen, range } = this.props;
+    const { loading, onCellFilterAdded, showingTable, tableResult, width, splitOpen, range, ariaLabel } = this.props;
 
     const height = this.getTableHeight();
     const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
     const hasTableResult = tableResult?.length;
 
-    if (hasTableResult) {
+    if (tableResult && tableResult.length) {
       // Bit of code smell here. We need to add links here to the frame modifying the frame on every render.
       // Should work fine in essence but still not the ideal way to pass props. In logs container we do this
       // differently and sidestep this getLinks API on a dataframe
       for (const field of tableResult.fields) {
         field.getLinks = (config: ValueLinkConfig) => {
-          return getFieldLinksForExplore(field, config.valueRowIndex, splitOpen, range);
+          return getFieldLinksForExplore(field, config.valueRowIndex!, splitOpen, range);
         };
       }
     }
@@ -61,7 +62,13 @@ export class TableContainer extends PureComponent<TableContainerProps> {
     return (
       <Collapse label="Table" loading={loading} collapsible isOpen={showingTable} onToggle={this.onClickTableButton}>
         {hasTableResult ? (
-          <Table data={tableResult!} width={tableWidth} height={height} onCellFilterAdded={onCellFilterAdded} />
+          <Table
+            ariaLabel={ariaLabel}
+            data={tableResult!}
+            width={tableWidth}
+            height={height}
+            onCellFilterAdded={onCellFilterAdded}
+          />
         ) : (
           <MetaInfoText metaItems={[{ value: '0 series returned' }]} />
         )}

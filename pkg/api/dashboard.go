@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -195,15 +196,21 @@ func deleteDashboard(c *models.ReqContext) Response {
 	}
 
 	err := dashboards.NewService().DeleteDashboard(dash.Id, c.OrgId)
-	if err == models.ErrDashboardCannotDeleteProvisionedDashboard {
-		return Error(400, "Dashboard cannot be deleted because it was provisioned", err)
-	} else if err != nil {
+	if err != nil {
+		var dashboardErr models.DashboardErr
+		if ok := errors.As(err, &dashboardErr); ok {
+			if errors.Is(err, models.ErrDashboardCannotDeleteProvisionedDashboard) {
+				return Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
+			}
+		}
+
 		return Error(500, "Failed to delete dashboard", err)
 	}
 
 	return JSON(200, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
+		"id":      dash.Id,
 	})
 }
 
@@ -267,48 +274,34 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 }
 
 func dashboardSaveErrorToApiResponse(err error) Response {
-	if err == models.ErrDashboardTitleEmpty ||
-		err == models.ErrDashboardWithSameNameAsFolder ||
-		err == models.ErrDashboardFolderWithSameNameAsDashboard ||
-		err == models.ErrDashboardTypeMismatch ||
-		err == models.ErrDashboardInvalidUid ||
-		err == models.ErrDashboardUidToLong ||
-		err == models.ErrDashboardWithSameUIDExists ||
-		err == models.ErrFolderNotFound ||
-		err == models.ErrDashboardFolderCannotHaveParent ||
-		err == models.ErrDashboardFolderNameExists ||
-		err == models.ErrDashboardRefreshIntervalTooShort ||
-		err == models.ErrDashboardCannotSaveProvisionedDashboard {
+	var dashboardErr models.DashboardErr
+	if ok := errors.As(err, &dashboardErr); ok {
+		if body := dashboardErr.Body(); body != nil {
+			return JSON(dashboardErr.StatusCode, body)
+		}
+		if errors.Is(dashboardErr, models.ErrDashboardUpdateAccessDenied) {
+			return Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
+		}
+		return Error(dashboardErr.StatusCode, dashboardErr.Error(), nil)
+	}
+
+	if errors.Is(err, models.ErrFolderNotFound) {
 		return Error(400, err.Error(), nil)
 	}
 
-	if err == models.ErrDashboardUpdateAccessDenied {
-		return Error(403, err.Error(), err)
-	}
-
-	if validationErr, ok := err.(alerting.ValidationError); ok {
+	var validationErr alerting.ValidationError
+	if ok := errors.As(err, &validationErr); ok {
 		return Error(422, validationErr.Error(), nil)
 	}
 
-	if err == models.ErrDashboardWithSameNameInFolderExists {
-		return JSON(412, util.DynMap{"status": "name-exists", "message": err.Error()})
-	}
-
-	if err == models.ErrDashboardVersionMismatch {
-		return JSON(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
-	}
-
-	if pluginErr, ok := err.(models.UpdatePluginDashboardError); ok {
-		message := "The dashboard belongs to plugin " + pluginErr.PluginId + "."
+	var pluginErr models.UpdatePluginDashboardError
+	if ok := errors.As(err, &pluginErr); ok {
+		message := fmt.Sprintf("The dashboard belongs to plugin %s.", pluginErr.PluginId)
 		// look up plugin name
 		if pluginDef, exist := plugins.Plugins[pluginErr.PluginId]; exist {
-			message = "The dashboard belongs to plugin " + pluginDef.Name + "."
+			message = fmt.Sprintf("The dashboard belongs to plugin %s.", pluginDef.Name)
 		}
 		return JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})
-	}
-
-	if err == models.ErrDashboardNotFound {
-		return JSON(404, util.DynMap{"status": "not-found", "message": err.Error()})
 	}
 
 	return Error(500, "Failed to save dashboard", err)
@@ -329,7 +322,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
 			return JSON(200, &dashRedirect)
 		}
-		log.Warn("Failed to get slug from database, %s", err.Error())
+		log.Warnf("Failed to get slug from database, %s", err.Error())
 	}
 
 	filePath := hs.Cfg.DefaultHomeDashboardPath
@@ -458,7 +451,6 @@ func GetDashboardVersion(c *models.ReqContext) Response {
 
 // POST /api/dashboards/calculate-diff performs diffs on two dashboards
 func CalculateDashboardDiff(c *models.ReqContext, apiOptions dtos.CalculateDiffOptions) Response {
-
 	guardianBase := guardian.New(apiOptions.Base.DashboardId, c.OrgId, c.SignedInUser)
 	if canSave, err := guardianBase.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)

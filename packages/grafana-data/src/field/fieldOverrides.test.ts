@@ -127,11 +127,7 @@ describe('applyFieldOverrides', () => {
         Object {
           "__field": Object {
             "text": "Field",
-            "value": Object {
-              "formattedLabels": "",
-              "labels": undefined,
-              "name": "A message",
-            },
+            "value": Object {},
           },
           "__series": Object {
             "text": "Series",
@@ -146,11 +142,7 @@ describe('applyFieldOverrides', () => {
         Object {
           "__field": Object {
             "text": "Field",
-            "value": Object {
-              "formattedLabels": "",
-              "labels": undefined,
-              "name": "B info",
-            },
+            "value": Object {},
           },
           "__series": Object {
             "text": "Series",
@@ -545,7 +537,7 @@ describe('getLinksSupplier', () => {
       expect.objectContaining({
         title: 'testDS',
         href:
-          '/explore?left={"datasource":"testDS","queries":["12345"],"mode":"Metrics","ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}',
+          '/explore?left={"datasource":"testDS","queries":["12345"],"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}',
         onClick: undefined,
       })
     );

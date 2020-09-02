@@ -9,6 +9,30 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
+    // @ts-ignore some typing issue
+    e2e().on('uncaught:exception', err => {
+      if (err.stack?.indexOf("TypeError: Cannot read property 'getText' of null") !== -1) {
+        // On occasion monaco editor will not have the time to be properly unloaded when we change the tab
+        // and then the e2e test fails with the uncaught:exception:
+        // TypeError: Cannot read property 'getText' of null
+        //     at Object.ai [as getFoldingRanges] (http://localhost:3001/public/build/monaco-json.worker.js:2:215257)
+        //     at e.getFoldingRanges (http://localhost:3001/public/build/monaco-json.worker.js:2:221188)
+        //     at e.fmr (http://localhost:3001/public/build/monaco-json.worker.js:2:116605)
+        //     at e._handleMessage (http://localhost:3001/public/build/monaco-json.worker.js:2:7414)
+        //     at Object.handleMessage (http://localhost:3001/public/build/monaco-json.worker.js:2:7018)
+        //     at e._handleMessage (http://localhost:3001/public/build/monaco-json.worker.js:2:5038)
+        //     at e.handleMessage (http://localhost:3001/public/build/monaco-json.worker.js:2:4606)
+        //     at e.onmessage (http://localhost:3001/public/build/monaco-json.worker.js:2:7097)
+        //     at Tt.self.onmessage (http://localhost:3001/public/build/monaco-json.worker.js:2:117109)
+
+        // return false to prevent the error from
+        // failing this test
+        return false;
+      }
+
+      return true;
+    });
+
     const viewPortWidth = e2e.config().viewportWidth;
     e2e.flows.openDashboard({ uid: '5SdHCadmz' });
 
@@ -73,20 +97,6 @@ const expectDrawerTabsAndContent = () => {
       e2e.components.PanelInspector.Data.content().should('not.be.visible');
       e2e.components.PanelInspector.Stats.content().should('not.be.visible');
       e2e.components.PanelInspector.Query.content().should('not.be.visible');
-
-      e2e().wait(250);
-      /* Monaco Editor specific wait that fixes error below https://github.com/microsoft/monaco-editor/issues/354
-        TypeError: Cannot read property 'getText' of null
-          at Object.getFoldingRanges (http://localhost:3001/public/build/json.worker.js:18829:102)
-          at JSONWorker.getFoldingRanges (http://localhost:3001/public/build/json.worker.js:23818:40)
-          at EditorSimpleWorker.fmr (http://localhost:3001/public/build/json.worker.js:10407:58)
-          at SimpleWorkerServer._handleMessage (http://localhost:3001/public/build/json.worker.js:6939:59)
-          at Object.handleMessage (http://localhost:3001/public/build/json.worker.js:6920:22)
-          at SimpleWorkerProtocol._handleMessage (http://localhost:3001/public/build/json.worker.js:6757:32)
-          at SimpleWorkerProtocol.handleMessage (http://localhost:3001/public/build/json.worker.js:6719:10)
-          at SimpleWorkerServer.onmessage (http://localhost:3001/public/build/json.worker.js:6926:20)
-          at self.onmessage (http://localhost:3001/public/build/json.worker.js:12050:18)
-      */
 
       e2e.components.Tab.title('Query')
         .should('be.visible')

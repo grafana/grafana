@@ -1,5 +1,6 @@
 import { AppNotification, AppNotificationSeverity, AppNotificationTimeout } from 'app/types';
 import { getMessageFromError } from 'app/core/utils/errors';
+import { v4 as uuidv4 } from 'uuid';
 
 const defaultSuccessNotification = {
   title: '',
@@ -29,7 +30,7 @@ export const createSuccessNotification = (title: string, text = ''): AppNotifica
   ...defaultSuccessNotification,
   title: title,
   text: text,
-  id: Date.now(),
+  id: uuidv4(),
 });
 
 export const createErrorNotification = (
@@ -41,7 +42,7 @@ export const createErrorNotification = (
     ...defaultErrorNotification,
     text: getMessageFromError(text),
     title,
-    id: Date.now(),
+    id: uuidv4(),
     component,
   };
 };
@@ -50,5 +51,5 @@ export const createWarningNotification = (title: string, text = ''): AppNotifica
   ...defaultWarningNotification,
   title: title,
   text: text,
-  id: Date.now(),
+  id: uuidv4(),
 });

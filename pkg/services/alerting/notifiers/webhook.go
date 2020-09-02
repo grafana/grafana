@@ -16,26 +16,37 @@ func init() {
 		Heading:     "Webhook settings",
 		Factory:     NewWebHookNotifier,
 		OptionsTemplate: `
-      <h3 class="page-heading">Webhook settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Url</span>
-        <input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Http Method</span>
-        <div class="gf-form-select-wrapper width-14">
-          <select class="gf-form-input" ng-model="ctrl.model.settings.httpMethod" ng-options="t for t in ['POST', 'PUT']">
-          </select>
-        </div>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Username</span>
-        <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.username"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Password</span>
-        <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.password"></input>
-      </div>
+			<h3 class="page-heading">Webhook settings</h3>
+			<div class="gf-form max-width-30">
+				<span class="gf-form-label width-8">Url</span>
+				<input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url"></input>
+			</div>
+			<div class="gf-form max-width-30">
+				<span class="gf-form-label width-8">Http Method</span>
+				<div class="gf-form-select-wrapper max-width-30">
+					<select class="gf-form-input" ng-model="ctrl.model.settings.httpMethod" ng-options="t for t in ['POST', 'PUT']">
+					</select>
+				</div>
+			</div>
+			<div class="gf-form max-width-30">
+				<span class="gf-form-label width-8">Username</span>
+				<input type="text" class="gf-form-input max-width-30" ng-model="ctrl.model.settings.username"></input>
+			</div>
+			<div class="gf-form max-width-30">
+				<div class="gf-form gf-form--v-stretch"><label class="gf-form-label width-8">Password</label></div>
+				<div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.password">
+					<input type="text"
+						class="gf-form-input max-width-30"
+						ng-init="ctrl.model.secureSettings.password = ctrl.model.settings.password || null; ctrl.model.settings.password = null;"
+						ng-model="ctrl.model.secureSettings.password"
+						data-placement="right">
+					</input>
+				</div>
+				<div class="gf-form" ng-if="ctrl.model.secureFields.password">
+					<input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
+					<a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.password = false">reset</a>
+				</div>
+			</div>
     `,
 		Options: []alerting.NotifierOption{
 			{
@@ -74,7 +85,6 @@ func init() {
 			},
 		},
 	})
-
 }
 
 // NewWebHookNotifier is the constructor for
@@ -85,11 +95,13 @@ func NewWebHookNotifier(model *models.AlertNotification) (alerting.Notifier, err
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
+	password := model.DecryptedValue("password", model.Settings.Get("password").MustString())
+
 	return &WebhookNotifier{
 		NotifierBase: NewNotifierBase(model),
 		URL:          url,
 		User:         model.Settings.Get("username").MustString(),
-		Password:     model.Settings.Get("password").MustString(),
+		Password:     password,
 		HTTPMethod:   model.Settings.Get("httpMethod").MustString("POST"),
 		log:          log.New("alerting.notifier.webhook"),
 	}, nil

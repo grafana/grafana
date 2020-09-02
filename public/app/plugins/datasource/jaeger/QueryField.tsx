@@ -124,7 +124,7 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
       this.setState(state => {
         // Place new traces into the correct service/operation sub-tree
         const serviceOptions = state.serviceOptions.map(serviceOption => {
-          if (serviceOption.value === service) {
+          if (serviceOption.value === service && serviceOption.children) {
             const operationOptions = serviceOption.children.map(operationOption => {
               if (operationOption.value === operationValue) {
                 return {
@@ -148,7 +148,7 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
 
   findOperations = async (service: string) => {
     const { datasource } = this.props;
-    const url = `/api/services/${service}/operations`;
+    const url = `/api/services/${encodeURIComponent(service)}/operations`;
     try {
       return await datasource.metadataRequest(url);
     } catch (error) {

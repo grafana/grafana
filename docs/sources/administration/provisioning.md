@@ -151,6 +151,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsSkipVerify           | boolean | _All_                                                            | Controls whether a client verifies the server's certificate chain and host name.            |
 | graphiteVersion         | string  | Graphite                                                         | Graphite version                                                                            |
 | timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source                         |
+| httpMode                | string  | Influxdb, Prometheus                                             | HTTP Method. 'GET', 'POST', defaults to GET                 |
 | esVersion               | number  | Elasticsearch                                                    | Elasticsearch version as a number (2/5/56/60/70)                                            |
 | timeField               | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                |
 | interval                | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |
@@ -275,6 +276,8 @@ providers:
 
 When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path every **updateIntervalSeconds** and look for updated json files and update/insert those into the database.
 
+> **Note:** Dashboards are provisioned to the General folder if the `folder` option is missing or empty.
+
 #### Making changes to a provisioned dashboard
 
 It's possible to make changes to a provisioned dashboard in the Grafana UI. However, it is not possible to automatically save the changes back to the provisioning source.
@@ -307,7 +310,7 @@ By default Grafana will delete dashboards in the database if the file is removed
 ### Provision folders structure from filesystem to Grafana
 If you already store your dashboards using folders in a git repo or on a filesystem, and also you want to have the same folder names in the Grafana menu, you can use `foldersFromFilesStructure` option.
 
-For example, to replicate these dashboards structure from the filesystem to Grafana, 
+For example, to replicate these dashboards structure from the filesystem to Grafana,
 ```
 /etc/dashboards
 ├── /server
@@ -320,18 +323,20 @@ For example, to replicate these dashboards structure from the filesystem to Graf
 you need to specify just this short provision configuration file.
 ```yaml
 apiVersion: 1
-    
+
 providers:
 - name: dashboards
   type: file
   updateIntervalSeconds: 30
   options:
     path: /etc/dashboards
-    foldersFromFileStructure: true
+    foldersFromFilesStructure: true
 ```
 `server` and `application` will become new folders in Grafana menu.
 
-> **Note.** `folder` and `folderUid` options should be empty or missing to make `foldersFromFileStructure` works.
+> **Note.** `folder` and `folderUid` options should be empty or missing to make `foldersFromFilesStructure` work.
+
+> **Note:** To provision dashboards to the General folder, store them in the root of your `path`.
 
 ## Alert Notification Channels
 
@@ -378,12 +383,16 @@ notifiers:
     send_reminder: true
     frequency: 1h
     disable_resolve_message: false
-    # See `Supported Settings` section for settings supporter for each
+    # See `Supported Settings` section for settings supported for each
     # alert notification type.
     settings:
       recipient: 'XXX'
-      token: 'xoxb'
       uploadImage: true
+      token: 'xoxb' # legacy setting since Grafana v7.2 (stored non-encrypted)
+      url: https://slack.com # legacy setting since Grafana v7.2 (stored non-encrypted)
+    # Secure settings that will be encrypted in the database (supported since Grafana v7.2). See `Supported Settings` section for secure settings supported for each notifier.
+    secure_settings:
+      token: 'xoxb'
       url: https://slack.com
 
 delete_notifiers:
@@ -399,32 +408,34 @@ delete_notifiers:
 
 ### Supported Settings
 
-The following sections detail the supported settings for each alert notification type.
+The following sections detail the supported settings and secure settings for each alert notification type. Secure settings are stored encrypted in the database and you add them to `secure_settings` in the YAML file instead of `settings`.
+
+> **Note**: Secure settings is supported since Grafana v7.2.
 
 #### Alert notification `pushover`
 
-| Name     |
-| -------- |
-| apiToken |
-| userKey  |
-| device   |
-| retry    |
-| expire   |
+| Name     | Secure setting |
+| -------- | -------------- |
+| apiToken | yes |
+| userKey  | yes |
+| device   | |
+| retry    | |
+| expire   | |
 
 #### Alert notification `slack`
 
-| Name           |
-| -------------- |
-| url            |
-| recipient      |
-| username       |
-| icon_emoji     |
-| icon_url       |
-| uploadImage    |
-| mentionUsers   |
-| mentionGroups  |
-| mentionChannel |
-| token          |
+| Name           | Secure setting |
+| -------------- | -------------- |
+| url            | yes |
+| recipient      | |
+| username       | |
+| icon_emoji     | |
+| icon_url       | |
+| uploadImage    | |
+| mentionUsers   | |
+| mentionGroups  | |
+| mentionChannel | |
+| token          | yes |
 
 #### Alert notification `victorops`
 
@@ -442,34 +453,34 @@ The following sections detail the supported settings for each alert notification
 
 #### Alert notification `LINE`
 
-| Name  |
-| ----- |
-| token |
+| Name  | Secure setting |
+| ----- | - |
+| token | yes |
 
 #### Alert notification `pagerduty`
 
-| Name           |
-| -------------- |
-| integrationKey |
-| autoResolve    |
+| Name           | Secure setting |
+| -------------- | - |
+| integrationKey | yes |
+| autoResolve    | |
 
 #### Alert notification `sensu`
 
-| Name     |
-| -------- |
-| url      |
-| source   |
-| handler  |
-| username |
-| password |
+| Name     | Secure setting |
+| -------- | - | 
+| url      | |
+| source   | |
+| handler  | |
+| username | |
+| password | yes |
 
 #### Alert notification `prometheus-alertmanager`
 
-| Name              |
-| ----------------- |
-| url               |
-| basicAuthUser     |
-| basicAuthPassword |
+| Name              | Secure setting |
+| ----------------- | - |
+| url               | |
+| basicAuthUser     | |
+| basicAuthPassword | yes |
 
 #### Alert notification `teams`
 
@@ -500,36 +511,36 @@ The following sections detail the supported settings for each alert notification
 
 #### Alert notification `opsgenie`
 
-| Name             |
-| ---------------- |
-| apiKey           |
-| apiUrl           |
-| autoClose        |
-| overridePriority |
+| Name             | Secure setting |
+| ---------------- | - |
+| apiKey           | yes |
+| apiUrl           | |
+| autoClose        | |
+| overridePriority | |
 
 #### Alert notification `telegram`
 
-| Name        |
-| ----------- |
-| bottoken    |
-| chatid      |
-| uploadImage |
+| Name        | Secure setting |
+| ----------- | - |
+| bottoken    | yes |
+| chatid      | |
+| uploadImage | |
 
 #### Alert notification `threema`
 
-| Name         |
-| ------------ |
-| gateway_id   |
-| recipient_id |
-| api_secret   |
+| Name         | Secure setting |
+| ------------ | - |
+| gateway_id   | |
+| recipient_id | |
+| api_secret   | yes |
 
 #### Alert notification `webhook`
 
-| Name     |
-| -------- |
-| url      |
-| username |
-| password |
+| Name     | Secure setting |
+| -------- | - |
+| url      | |
+| username | |
+| password | yes |
 
 #### Alert notification `googlechat`
 

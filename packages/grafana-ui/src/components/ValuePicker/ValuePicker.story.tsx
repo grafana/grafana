@@ -1,6 +1,6 @@
 import { text } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { ValuePicker } from './ValuePicker';
+import { ValuePicker } from '@grafana/ui';
 import React from 'react';
 import { generateOptions } from '../Select/mockOptions';
 

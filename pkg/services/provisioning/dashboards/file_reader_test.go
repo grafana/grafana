@@ -96,7 +96,6 @@ func TestDashboardFileReader(t *testing.T) {
 		logger := log.New("test.logger")
 
 		Convey("Reading dashboards from disk", func() {
-
 			cfg := &config{
 				Name:    "Default",
 				Type:    "file",
@@ -342,7 +341,6 @@ func TestDashboardFileReader(t *testing.T) {
 
 				So(len(fakeService.provisioned["Default"]), ShouldEqual, 1)
 				So(fakeService.provisioned["Default"][0].ExternalId, ShouldEqual, absPath1)
-
 			})
 
 			Convey("Missing dashboard should be deleted if DisableDeletion = false", func() {

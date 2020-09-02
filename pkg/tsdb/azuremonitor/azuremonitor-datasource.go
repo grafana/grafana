@@ -223,15 +223,15 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 		return nil, errors.New("Unable to find datasource plugin Azure Monitor")
 	}
 
+	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 	var azureMonitorRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
-		if route.Path == "azuremonitor" {
+		if route.Path == cloudName {
 			azureMonitorRoute = route
 			break
 		}
 	}
 
-	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 	proxyPass := fmt.Sprintf("%s/subscriptions", cloudName)
 
 	u, err := url.Parse(dsInfo.Url)
@@ -293,12 +293,22 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 		dataField := frame.Fields[1]
 		dataField.Name = amr.Value[0].Name.LocalizedValue
 		dataField.Labels = labels
-		dataField.SetConfig(&data.FieldConfig{
-			Unit: amr.Value[0].Unit,
-		})
+		if amr.Value[0].Unit != "Unspecified" {
+			dataField.SetConfig(&data.FieldConfig{
+				Unit: toGrafanaUnit(amr.Value[0].Unit),
+			})
+		}
 		if query.Alias != "" {
-			dataField.Config.DisplayName = formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"],
+			displayName := formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"],
 				amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID, labels)
+
+			if dataField.Config != nil {
+				dataField.Config.DisplayName = displayName
+			} else {
+				dataField.SetConfig(&data.FieldConfig{
+					DisplayName: displayName,
+				})
+			}
 		}
 
 		requestedAgg := query.Params.Get("aggregation")
@@ -338,6 +348,17 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 	endIndex := strings.Index(seriesID, "/providers")
 	resourceGroup := seriesID[startIndex:endIndex]
 
+	// Could be a collision problem if there were two keys that varied only in case, but I don't think that would happen in azure.
+	lowerLabels := data.Labels{}
+	for k, v := range labels {
+		lowerLabels[strings.ToLower(k)] = v
+	}
+	keys := make([]string, 0, len(labels))
+	for k := range lowerLabels {
+		keys = append(keys, k)
+	}
+	keys = sort.StringSlice(keys)
+
 	result := legendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {
 		metaPartName := strings.Replace(string(in), "{{", "", 1)
 		metaPartName = strings.Replace(metaPartName, "}}", "", 1)
@@ -359,27 +380,48 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 			return []byte(metricName)
 		}
 
-		keys := make([]string, 0, len(labels))
-		if metaPartName == "dimensionname" || metaPartName == "dimensionvalue" {
-			for k := range labels {
-				keys = append(keys, k)
-			}
-			keys = sort.StringSlice(keys)
-		}
-
 		if metaPartName == "dimensionname" {
 			return []byte(keys[0])
 		}
 
 		if metaPartName == "dimensionvalue" {
-			return []byte(labels[keys[0]])
+			return []byte(lowerLabels[keys[0]])
 		}
 
-		if v, ok := labels[metaPartName]; ok {
+		if v, ok := lowerLabels[metaPartName]; ok {
 			return []byte(v)
 		}
 		return in
 	})
 
 	return string(result)
+}
+
+// Map values from:
+//   https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list#unit
+// to
+//   https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/valueFormats/categories.ts#L24
+func toGrafanaUnit(unit string) string {
+	switch unit {
+	case "BitsPerSecond":
+		return "bps"
+	case "Bytes":
+		return "decbytes" // or ICE
+	case "BytesPerSecond":
+		return "Bps"
+	case "Count":
+		return "short" // this is used for integers
+	case "CountPerSecond":
+		return "cps"
+	case "Percent":
+		return "percent"
+	case "Milliseconds":
+		return "ms"
+	case "Seconds":
+		return "s"
+	}
+	return unit // this will become a suffix in the display
+	// "ByteSeconds", "Cores", "MilliCores", and "NanoCores" all both:
+	// 1. Do not have a corresponding unit in Grafana's current list.
+	// 2. Do not have the unit listed in any of Azure Monitor's supported metrics anyways.
 }

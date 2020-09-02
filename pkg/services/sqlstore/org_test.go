@@ -35,6 +35,38 @@ func TestAccountDataAccess(t *testing.T) {
 			So(len(query.Result), ShouldEqual, 3)
 		})
 
+		Convey("Given we have organizations, we can limit and paginate search", func() {
+			for i := 1; i < 4; i++ {
+				cmd := &models.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
+				err := CreateOrg(cmd)
+				So(err, ShouldBeNil)
+			}
+
+			Convey("Should be able to search with defaults", func() {
+				query := &models.SearchOrgsQuery{}
+				err := SearchOrgs(query)
+
+				So(err, ShouldBeNil)
+				So(len(query.Result), ShouldEqual, 3)
+			})
+
+			Convey("Should be able to limit search", func() {
+				query := &models.SearchOrgsQuery{Limit: 1}
+				err := SearchOrgs(query)
+
+				So(err, ShouldBeNil)
+				So(len(query.Result), ShouldEqual, 1)
+			})
+
+			Convey("Should be able to limit and paginate search", func() {
+				query := &models.SearchOrgsQuery{Limit: 2, Page: 1}
+				err := SearchOrgs(query)
+
+				So(err, ShouldBeNil)
+				So(len(query.Result), ShouldEqual, 1)
+			})
+		})
+
 		Convey("Given single org mode", func() {
 			setting.AutoAssignOrg = true
 			setting.AutoAssignOrgId = 1
@@ -114,7 +146,6 @@ func TestAccountDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					So(orgUsersQuery.Result[1].Role, ShouldEqual, models.ROLE_ADMIN)
-
 				})
 
 				Convey("Can get logged in user projection", func() {
@@ -282,7 +313,6 @@ func TestAccountDataAccess(t *testing.T) {
 							So(permQuery.Result[0].OrgId, ShouldEqual, ac3.OrgId)
 							So(permQuery.Result[0].UserId, ShouldEqual, ac3.Id)
 						})
-
 					})
 				})
 			})

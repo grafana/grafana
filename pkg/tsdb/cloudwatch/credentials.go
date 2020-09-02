@@ -7,41 +7,58 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/aws/aws-sdk-go/service/sts/stsiface"
 )
 
-type cache struct {
-	credential *credentials.Credentials
-	expiration *time.Time
+type envelope struct {
+	credentials *credentials.Credentials
+	expiration  *time.Time
 }
 
-var awsCredentialCache = make(map[string]cache)
-var credentialCacheLock sync.RWMutex
+var awsCredsCache = map[string]envelope{}
+var credsCacheLock sync.RWMutex
 
-func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
+// Session factory.
+// Stubbable by tests.
+//nolint:gocritic
+var newSession = func(cfgs ...*aws.Config) (*session.Session, error) {
+	return session.NewSession(cfgs...)
+}
+
+// STS service factory.
+// Stubbable by tests.
+//nolint:gocritic
+var newSTSService = func(p client.ConfigProvider, cfgs ...*aws.Config) stsiface.STSAPI {
+	return sts.New(p, cfgs...)
+}
+
+// EC2Metadata service factory.
+// Stubbable by tests.
+//nolint:gocritic
+var newEC2Metadata = func(p client.ConfigProvider, cfgs ...*aws.Config) *ec2metadata.EC2Metadata {
+	return ec2metadata.New(p, cfgs...)
+}
+
+func getCredentials(dsInfo *datasourceInfo) (*credentials.Credentials, error) {
 	cacheKey := fmt.Sprintf("%s:%s:%s:%s", dsInfo.AuthType, dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleArn)
-	credentialCacheLock.RLock()
-	if _, ok := awsCredentialCache[cacheKey]; ok {
-		if awsCredentialCache[cacheKey].expiration != nil &&
-			awsCredentialCache[cacheKey].expiration.After(time.Now().UTC()) {
-			result := awsCredentialCache[cacheKey].credential
-			credentialCacheLock.RUnlock()
+	credsCacheLock.RLock()
+	if env, ok := awsCredsCache[cacheKey]; ok {
+		if env.expiration != nil && env.expiration.After(time.Now().UTC()) {
+			result := env.credentials
+			credsCacheLock.RUnlock()
 			return result, nil
 		}
 	}
-	credentialCacheLock.RUnlock()
+	credsCacheLock.RUnlock()
 
 	accessKeyID := ""
 	secretAccessKey := ""
@@ -53,8 +70,11 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 			RoleSessionName: aws.String("GrafanaSession"),
 			DurationSeconds: aws.Int64(900),
 		}
+		if dsInfo.ExternalID != "" {
+			params.ExternalId = aws.String(dsInfo.ExternalID)
+		}
 
-		stsSess, err := session.NewSession()
+		stsSess, err := newSession()
 		if err != nil {
 			return nil, err
 		}
@@ -70,11 +90,11 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 			Credentials: stsCreds,
 		}
 
-		sess, err := session.NewSession(stsConfig)
+		sess, err := newSession(stsConfig)
 		if err != nil {
 			return nil, err
 		}
-		svc := sts.New(sess, stsConfig)
+		svc := newSTSService(sess, stsConfig)
 		resp, err := svc.AssumeRole(params)
 		if err != nil {
 			return nil, err
@@ -91,7 +111,7 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 		expiration = &e
 	}
 
-	sess, err := session.NewSession()
+	sess, err := newSession()
 	if err != nil {
 		return nil, err
 	}
@@ -112,18 +132,18 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 			remoteCredProvider(sess),
 		})
 
-	credentialCacheLock.Lock()
-	awsCredentialCache[cacheKey] = cache{
-		credential: creds,
-		expiration: expiration,
+	credsCacheLock.Lock()
+	awsCredsCache[cacheKey] = envelope{
+		credentials: creds,
+		expiration:  expiration,
 	}
-	credentialCacheLock.Unlock()
+	credsCacheLock.Unlock()
 
 	return creds, nil
 }
 
-func webIdentityProvider(sess *session.Session) credentials.Provider {
-	svc := sts.New(sess)
+func webIdentityProvider(sess client.ConfigProvider) credentials.Provider {
+	svc := newSTSService(sess)
 
 	roleARN := os.Getenv("AWS_ROLE_ARN")
 	tokenFilepath := os.Getenv("AWS_WEB_IDENTITY_TOKEN_FILE")
@@ -151,89 +171,6 @@ func ecsCredProvider(sess *session.Session, uri string) credentials.Provider {
 		func(p *endpointcreds.Provider) { p.ExpiryWindow = 5 * time.Minute })
 }
 
-func ec2RoleProvider(sess *session.Session) credentials.Provider {
-	return &ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute}
-}
-
-func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
-	return retrieveDsInfo(e.DataSource, region)
-}
-
-func retrieveDsInfo(datasource *models.DataSource, region string) *DatasourceInfo {
-	defaultRegion := datasource.JsonData.Get("defaultRegion").MustString()
-	if region == "default" {
-		region = defaultRegion
-	}
-
-	authType := datasource.JsonData.Get("authType").MustString()
-	assumeRoleArn := datasource.JsonData.Get("assumeRoleArn").MustString()
-	decrypted := datasource.DecryptedValues()
-	accessKey := decrypted["accessKey"]
-	secretKey := decrypted["secretKey"]
-
-	datasourceInfo := &DatasourceInfo{
-		Region:        region,
-		Profile:       datasource.Database,
-		AuthType:      authType,
-		AssumeRoleArn: assumeRoleArn,
-		AccessKey:     accessKey,
-		SecretKey:     secretKey,
-	}
-
-	return datasourceInfo
-}
-
-func getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, error) {
-	creds, err := GetCredentials(dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := &aws.Config{
-		Region:      aws.String(dsInfo.Region),
-		Credentials: creds,
-	}
-
-	return cfg, nil
-}
-
-func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, error) {
-	datasourceInfo := e.getDsInfo(region)
-	cfg, err := getAwsConfig(datasourceInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	client := cloudwatch.New(sess, cfg)
-
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
-
-	return client, nil
-}
-
-func retrieveLogsClient(datasourceInfo *DatasourceInfo) (*cloudwatchlogs.CloudWatchLogs, error) {
-	cfg, err := getAwsConfig(datasourceInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	client := cloudwatchlogs.New(sess, cfg)
-
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
-
-	return client, nil
+func ec2RoleProvider(sess client.ConfigProvider) credentials.Provider {
+	return &ec2rolecreds.EC2RoleProvider{Client: newEC2Metadata(sess), ExpiryWindow: 5 * time.Minute}
 }

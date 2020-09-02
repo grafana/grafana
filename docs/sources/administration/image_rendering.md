@@ -162,6 +162,12 @@ On Debian 9 (Stretch) the following dependencies have been confirmed as needed f
 libx11 libcairo bcairo2 libcairo2 libxtst6 libxcomposite1 libx11-xcb1 libxcursor1 libxdamage1 libnss3 libcups libcups2 libXss libXss1 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libgtk-3-0
 ```
 
+On Debian 10 (Buster) the following dependencies have been confirmed as needed for the image rendering to function.
+
+```bash
+libxdamage1 libxext6 libxi6 libxtst6 libnss3 libnss3 libcups2 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libpango-1.0-0 libcairo2 libatspi2.0-0 libgtk3.0-cil libgdk3.0-cil libx11-xcb-dev
+```
+
 **Centos:**
 
 On a minimal Centos installation, the following dependencies have been confirmed as needed for the image rendering to function:

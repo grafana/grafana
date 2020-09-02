@@ -76,15 +76,28 @@ Field overrides allow you to change the settings for one field (column in tables
 1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
 1. Click the **Overrides** tab.
 1. Click **Add override**.
-1. Select a filter option to choose which fields the override applies to.
-
-   **Note:** Currently you can only match by name, so after you choose the filter, select which field it applies to from the dropdown list.
-
+1. Select a [filter option](#filter-options) to choose which fields the override applies to.
 1. Click **Add override property**.
 1. Select the [field option](#field-options) you want to apply.
 1. Enter options by adding values in the fields. To return options to default values, delete the white text in the fields.
 1. Continue to add overrides to this field by clicking **Add override property**, or you can click **Add override** and select a different field to add overrides to.
 1. When finished, click **Save** to save all panel edits to the dashboard.
+
+## Filter options
+
+This section explains all available filter options for field overrides. They are listed in alphabetical order.
+
+### Filter field by name
+
+Allows you to select a field from the list of all available fields that the override will be applied to.
+
+### Filter field by name using regex
+
+Allows you to type in a regular expression against which fields to be overridden will be matched.
+
+### Filter field by type
+
+Allows you to select fields by their type (string, numeric, etc).
 
 ## Field options
 
@@ -139,7 +152,19 @@ For more information and instructions, refer to [Data links]({{< relref "../link
 
 Lets you set the display title of all fields. You can use [variables]({{< relref "../variables/templates-and-variables.md" >}}) in the field title.
 
-When multiple stats are shown, this field controls the title in each stat. By default this is the series name and field name. You can use expressions like ${__series.name} or ${**field.name} to use only series name or field name in title or \${**cell_2} to refer to other fields (2 being field/column with index 2).
+When multiple stats, fields, or series are shown, this field controls the title in each stat. You can use expressions like `${__field.name}` to use only the series name or the field name in title.
+
+Given a field with a name of Temp, and labels of {"Loc"="PBI", "Sensor"="3"}
+
+| Expression syntax            | Example                 | Renders to                     | Explanation                                                                                                                                                                                                        |
+| ---------------------------- | ----------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `${__field.displayName}`     | Same as syntax          | `Temp {Loc="PBI", Sensor="3"}` | Displays the field name, and labels in `{}` if they are present. If there is only one label key in the response, then for the label portion, Grafana displays the value of the label without the enclosing braces. |
+| `${__field.name}`            | Same as syntax          | `Temp`                         | Displays the name of the field (without labels).                                                                                                                                                                   |
+| `${__field.labels}`          | Same as syntax          | `Loc="PBI", Sensor="3"`        | Displays the labels without the name.                                                                                                                                                                              |
+| `${__field.labels.X}`        | `${__field.labels.Loc}` | `PBI`                          | Displays the value of the specified label key.                                                                                                                                                                     |
+| `${__field.labels.__values}` | Same as Syntax          | `PBI, 3`                       | Displays the values of the labels separated by a comma (without label keys).                                                                                                                                       |
+
+If the value is an empty string after rendering the expression for a particular field, then the default display method is used.
 
 ### Max
 
@@ -175,6 +200,11 @@ To select a custom unit enter the unit and select the last `Custom: xxx` option 
 You can also paste a native emoji in the unit picker and pick it as a custom unit:
 
 {{< docs-imagebox img="/img/docs/v66/custom_unit_burger2.png" max-width="600px" caption="Custom unit emoji" >}}
+
+#### String unit
+
+Grafana can sometime be too aggressive in parsing strings and displaying them as numbers. To make Grafana show the original
+string create a field override and add a unit property with the `string` unit.
 
 ### Thresholds
 

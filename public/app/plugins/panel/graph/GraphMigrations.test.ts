@@ -123,7 +123,28 @@ describe('Graph Panel Migrations', () => {
     expect(result.dataLinks).toBeUndefined();
     expect(fieldSource.defaults.links).toHaveLength(1);
 
-    const link = fieldSource.defaults.links[0];
+    const link = fieldSource.defaults.links![0];
     expect(link.url).toEqual('THE DRILLDOWN URL');
+  });
+
+  it('from 7.1 it should preserve existing fieldConfig', () => {
+    const panel = ({
+      id: 1,
+      fieldConfig: {
+        defaults: {
+          links: [
+            {
+              title: 'Details',
+              url: '/link',
+            },
+          ],
+        },
+        overrides: [],
+      },
+    } as unknown) as PanelModel;
+
+    graphPanelMigrationHandler(panel as PanelModel);
+    const fieldConfig = (panel as any).fieldConfig as FieldConfigSource;
+    expect(fieldConfig.defaults.links).toHaveLength(1);
   });
 });

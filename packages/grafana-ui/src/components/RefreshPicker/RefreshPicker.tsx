@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import classNames from 'classnames';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
@@ -35,7 +35,7 @@ export interface Props {
   theme: GrafanaTheme;
 }
 
-export class RefreshPickerBase extends PureComponent<Props> {
+export class RefreshPickerBase extends Component<Props> {
   static offOption = { label: 'Off', value: '' };
   static liveOption = { label: 'Live', value: 'LIVE' };
   static isLive = (refreshInterval?: string): boolean => refreshInterval === RefreshPicker.liveOption.value;
@@ -63,6 +63,22 @@ export class RefreshPickerBase extends PureComponent<Props> {
       onIntervalChanged(item.value);
     }
   };
+
+  shouldComponentUpdate(nextProps: Props) {
+    const intervalsDiffer = nextProps.intervals?.some((interval, i) => this.props.intervals?.[i] !== interval);
+
+    return (
+      intervalsDiffer ||
+      this.props.onRefresh !== nextProps.onRefresh ||
+      this.props.onIntervalChanged !== nextProps.onIntervalChanged ||
+      this.props.value !== nextProps.value ||
+      this.props.tooltip !== nextProps.tooltip ||
+      this.props.hasLiveOption !== nextProps.hasLiveOption ||
+      this.props.refreshButton !== nextProps.refreshButton ||
+      this.props.buttonSelectClassName !== nextProps.buttonSelectClassName ||
+      this.props.theme !== nextProps.theme
+    );
+  }
 
   render() {
     const { onRefresh, intervals, tooltip, value, refreshButton, buttonSelectClassName, theme } = this.props;

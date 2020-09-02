@@ -281,6 +281,11 @@ func CreateAlertNotification(c *models.ReqContext, cmd models.CreateAlertNotific
 func UpdateAlertNotification(c *models.ReqContext, cmd models.UpdateAlertNotificationCommand) Response {
 	cmd.OrgId = c.OrgId
 
+	err := fillWithSecureSettingsData(&cmd)
+	if err != nil {
+		return Error(500, "Failed to update alert notification", err)
+	}
+
 	if err := bus.Dispatch(&cmd); err != nil {
 		return Error(500, "Failed to update alert notification", err)
 	}
@@ -289,13 +294,27 @@ func UpdateAlertNotification(c *models.ReqContext, cmd models.UpdateAlertNotific
 		return Error(404, "Alert notification not found", nil)
 	}
 
-	return JSON(200, dtos.NewAlertNotification(cmd.Result))
+	query := models.GetAlertNotificationsQuery{
+		OrgId: c.OrgId,
+		Id:    cmd.Id,
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return Error(500, "Failed to get alert notification", err)
+	}
+
+	return JSON(200, dtos.NewAlertNotification(query.Result))
 }
 
 func UpdateAlertNotificationByUID(c *models.ReqContext, cmd models.UpdateAlertNotificationWithUidCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Uid = c.Params("uid")
 
+	err := fillWithSecureSettingsDataByUID(&cmd)
+	if err != nil {
+		return Error(500, "Failed to update alert notification", err)
+	}
+
 	if err := bus.Dispatch(&cmd); err != nil {
 		return Error(500, "Failed to update alert notification", err)
 	}
@@ -304,7 +323,64 @@ func UpdateAlertNotificationByUID(c *models.ReqContext, cmd models.UpdateAlertNo
 		return Error(404, "Alert notification not found", nil)
 	}
 
-	return JSON(200, dtos.NewAlertNotification(cmd.Result))
+	query := models.GetAlertNotificationsWithUidQuery{
+		OrgId: cmd.OrgId,
+		Uid:   cmd.Uid,
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return Error(500, "Failed to get alert notification", err)
+	}
+
+	return JSON(200, dtos.NewAlertNotification(query.Result))
+}
+
+func fillWithSecureSettingsData(cmd *models.UpdateAlertNotificationCommand) error {
+	if len(cmd.SecureSettings) == 0 {
+		return nil
+	}
+
+	query := &models.GetAlertNotificationsQuery{
+		OrgId: cmd.OrgId,
+		Id:    cmd.Id,
+	}
+
+	if err := bus.Dispatch(query); err != nil {
+		return err
+	}
+
+	secureSettings := query.Result.SecureSettings.Decrypt()
+	for k, v := range secureSettings {
+		if _, ok := cmd.SecureSettings[k]; !ok {
+			cmd.SecureSettings[k] = v
+		}
+	}
+
+	return nil
+}
+
+func fillWithSecureSettingsDataByUID(cmd *models.UpdateAlertNotificationWithUidCommand) error {
+	if len(cmd.SecureSettings) == 0 {
+		return nil
+	}
+
+	query := &models.GetAlertNotificationsWithUidQuery{
+		OrgId: cmd.OrgId,
+		Uid:   cmd.Uid,
+	}
+
+	if err := bus.Dispatch(query); err != nil {
+		return err
+	}
+
+	secureSettings := query.Result.SecureSettings.Decrypt()
+	for k, v := range secureSettings {
+		if _, ok := cmd.SecureSettings[k]; !ok {
+			cmd.SecureSettings[k] = v
+		}
+	}
+
+	return nil
 }
 
 func DeleteAlertNotification(c *models.ReqContext) Response {
@@ -336,9 +412,12 @@ func DeleteAlertNotificationByUID(c *models.ReqContext) Response {
 //POST /api/alert-notifications/test
 func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) Response {
 	cmd := &alerting.NotificationTestCommand{
-		Name:     dto.Name,
-		Type:     dto.Type,
-		Settings: dto.Settings,
+		OrgID:          c.OrgId,
+		ID:             dto.ID,
+		Name:           dto.Name,
+		Type:           dto.Type,
+		Settings:       dto.Settings,
+		SecureSettings: dto.SecureSettings,
 	}
 
 	if err := bus.Dispatch(cmd); err != nil {

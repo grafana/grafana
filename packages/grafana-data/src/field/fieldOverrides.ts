@@ -4,7 +4,6 @@ import {
   DataFrame,
   Field,
   FieldType,
-  ThresholdsMode,
   FieldColorMode,
   ColorScheme,
   FieldOverrideContext,
@@ -32,10 +31,10 @@ import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { DataLinkBuiltInVars, locationUtil } from '../utils';
 import { formattedValueToString } from '../valueFormats';
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
-import { formatLabels } from '../utils/labels';
 import { getFrameDisplayName, getFieldDisplayName } from './fieldState';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
+import { getTemplateProxyForField } from './templateProxies';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -113,11 +112,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
       fieldScopedVars['__field'] = {
         text: 'Field',
-        value: {
-          name: displayName, // Generally appropriate (may include the series name if useful)
-          formattedLabels: formatLabels(field.labels!),
-          labels: field.labels,
-        },
+        value: getTemplateProxyForField(field, frame, options.data),
       };
 
       field.state = {
@@ -312,18 +307,6 @@ const processFieldConfigValue = (
  */
 export function validateFieldConfig(config: FieldConfig) {
   const { thresholds } = config;
-  if (thresholds) {
-    if (!thresholds.mode) {
-      thresholds.mode = ThresholdsMode.Absolute;
-    }
-    if (!thresholds.steps) {
-      thresholds.steps = [];
-    } else if (thresholds.steps.length) {
-      // First value is always -Infinity
-      // JSON saves it as null
-      thresholds.steps[0].value = -Infinity;
-    }
-  }
 
   if (!config.color) {
     if (thresholds) {

@@ -10,14 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/bus"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -65,7 +63,6 @@ func NewDashboardFileReader(cfg *config, log log.Logger) (*FileReader, error) {
 
 // pollChanges periodically runs startWalkingDisk based on interval specified in the config.
 func (fr *FileReader) pollChanges(ctx context.Context) {
-
 	ticker := time.NewTicker(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
 	for {
 		select {
@@ -149,7 +146,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk
 
 		folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService, folderName)
 		if err != nil && err != ErrFolderNameMissing {
-			return err
+			return fmt.Errorf("can't provision folder %q from file system structure: %w", folderName, err)
 		}
 
 		provisioningMetadata, err := fr.saveDashboard(path, folderID, fileInfo, dashboardRefs)
