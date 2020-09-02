@@ -22,7 +22,9 @@ interface DisplayProcessorOptions {
 // Reasonable units for time
 const timeFormats: KeyValue<boolean> = {
   dateTimeAsIso: true,
+  dateTimeAsIsoSmart: true,
   dateTimeAsUS: true,
+  dateTimeAsUSSmart: true,
   dateTimeFromNow: true,
 };
 
