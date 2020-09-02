@@ -32,7 +32,7 @@ type AdminUpdateUserPasswordForm struct {
 }
 
 type AdminUpdateUserPermissionsForm struct {
-	IsServerAdmin bool `json:"isServerAdmin"`
+	IsServerAdmin bool `json:"isGrafanaAdmin"`
 }
 
 type AdminUserListItem struct {
