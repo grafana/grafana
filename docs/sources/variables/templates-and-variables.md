@@ -79,7 +79,6 @@ Grafana uses the following types of variables.
 | Ad hoc filters   | Key/value filters that are automatically added to all metric queries for a data source (InfluxDB, Prometheus, and Elasticsearch only). [Add ad hoc filters]({{< relref "variable-types/add-ad-hoc-filters.md" >}}).   |
 | Global variables   | Built-in variables that can be used in expressions in the query editor. Refer to [Global variables]({{< relref "variable-types/global-variables" >}}).   |
 | Chained variables   | Variable queries can contain other variables. Refer to [Chained variables]({{< relref "variable-types/chained-variables.md" >}}).   |
-| URL variables   | You can use variables in data links to link to specific portions of your visualizations. Refer to [Data links]({{< relref "../linking/data-links.md" >}}).   |
 
 ## Variable best practices
 
