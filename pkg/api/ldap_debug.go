@@ -45,7 +45,7 @@ type LDAPUserDTO struct {
 	Surname       *LDAPAttribute           `json:"surname"`
 	Email         *LDAPAttribute           `json:"email"`
 	Username      *LDAPAttribute           `json:"login"`
-	IsServerAdmin *bool                    `json:"isServerAdmin"`
+	IsServerAdmin *bool                    `json:"isGrafanaAdmin"`
 	IsDisabled    bool                     `json:"isDisabled"`
 	OrgRoles      []LDAPRoleDTO            `json:"roles"`
 	Teams         []models.TeamOrgGroupDTO `json:"teams"`
