@@ -1,0 +1,5 @@
+#group,false,false,true,false
+#datatype,string,long,string,long
+#default,_result,,,
+,result,table,_field,_value
+,,0,summary_serial_number,6
