@@ -1,5 +1,6 @@
 import { configurePanel, ConfigurePanelConfig } from './configurePanel';
 
+// @todo `Omit` 'isExplore'
 export interface EditPanelConfig extends ConfigurePanelConfig {
   queriesForm?: (config: EditPanelConfig) => void;
 }

@@ -1,9 +1,9 @@
-import { DashboardTimeRangeConfig, setDashboardTimeRange } from './setDashboardTimeRange';
 import { e2e } from '../index';
 import { getScenarioContext } from '../support/scenarioContext';
+import { setDashboardTimeRange, TimeRangeConfig } from './setDashboardTimeRange';
 
 export interface OpenDashboardConfig {
-  timeRange?: DashboardTimeRangeConfig;
+  timeRange?: TimeRangeConfig;
   uid: string;
 }
 

@@ -646,7 +646,7 @@ This setting is ignored if multiple OAuth providers are configured. Default is `
 
 ### oauth_state_cookie_max_age
 
-How long the OAuth state cookie lives before being deleted. Default is `60` (seconds)
+How many seconds the OAuth state cookie lives before being deleted. Default is `600` (seconds)
 Administrators can increase this if they experience OAuth login state mismatch errors.
 
 ### api_key_max_seconds_to_live
