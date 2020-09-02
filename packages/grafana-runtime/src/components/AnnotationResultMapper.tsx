@@ -1,24 +1,31 @@
 import React, { PureComponent } from 'react';
 
-import { DataFrame, SelectableValue, getFieldDisplayName } from '@grafana/data';
-import { css } from 'emotion';
+import {
+  DataFrame,
+  SelectableValue,
+  getFieldDisplayName,
+  AnnotationEvent,
+  formattedValueToString,
+  getValueFormat,
+} from '@grafana/data';
 
 import { AnnotationsFromFrameOptions, AnnotationEventNames } from '../utils/annotationsFromDataFrame';
 import { Select } from '@grafana/ui';
 
 interface Props {
-  data?: DataFrame;
+  frame?: DataFrame;
+
+  events?: AnnotationEvent[];
 
   options: AnnotationsFromFrameOptions;
 
   // The default behavior (placeholder)
   defaults?: AnnotationsFromFrameOptions;
 
-  // Any value will be hidden
-  hide?: AnnotationsFromFrameOptions;
-
   change: (options: AnnotationsFromFrameOptions) => void;
 }
+
+const REMOVE_KEY = '-- Remove field mapping --';
 
 const names: Array<keyof AnnotationEventNames> = [
   'time',
@@ -35,7 +42,6 @@ const names: Array<keyof AnnotationEventNames> = [
 
 interface State {
   fieldNames: Array<SelectableValue<string>>;
-  firstValues?: Record<keyof AnnotationEventNames, string>;
 }
 
 export class AnnotationFieldMapper extends PureComponent<Props, State> {
@@ -47,16 +53,24 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
   }
 
   updateFields = () => {
-    const { data } = this.props;
-    if (data && data.fields) {
-      const fieldNames = data.fields.map(f => {
-        const name = getFieldDisplayName(f, data);
+    const { frame } = this.props;
+
+    if (frame && frame.fields) {
+      const fieldNames = frame.fields.map(f => {
+        const name = getFieldDisplayName(f, frame);
 
         let description = '';
-        for (let i = 0; i < 3 && i < data.length; i++) {
-          description += f.values.get(i) + ', ';
+        for (let i = 0; i < frame.length; i++) {
+          if (i > 0) {
+            description += ', ';
+          }
+          if (i > 2) {
+            description += '...';
+            break;
+          }
+          description += f.values.get(i);
         }
-        description += '...';
+
         if (description.length > 50) {
           description = description.substring(0, 50) + '...';
         }
@@ -76,21 +90,31 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(oldProps: Props) {
-    if (oldProps.data !== this.props.data) {
+    if (oldProps.frame !== this.props.frame) {
       this.updateFields();
     }
   }
 
   onFieldNameChange = (k: keyof AnnotationEventNames, v: SelectableValue<string>) => {
-    console.log('TODO.....', k, v);
+    const options = this.props.options || {};
+    const field = { ...options.field } as AnnotationEventNames;
+    if (v.value === REMOVE_KEY) {
+      delete field[k];
+    } else {
+      field[k] = v.value;
+    }
+
+    console.log('UPDATE Field mapping', field);
+
+    this.props.change({
+      ...options,
+      field,
+    });
   };
 
   renderRow(k: keyof AnnotationEventNames) {
-    const { defaults, hide, options } = this.props;
-    if (hide?.field?.[k]) {
-      return null; // nothing
-    }
-    const { fieldNames, firstValues } = this.state;
+    const { defaults, options, events } = this.props;
+    const { fieldNames } = this.state;
 
     let defaultField = defaults?.field?.[k];
     if (!defaultField) {
@@ -106,14 +130,30 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
     let picker = fieldNames;
     const current = options?.field?.[k];
     let currentValue = fieldNames.find(f => current === f.value);
-    if (current && !currentValue) {
+    if (current) {
       picker = [
         {
-          label: current,
-          value: current,
+          label: REMOVE_KEY,
+          value: REMOVE_KEY,
+          description: 'Remove the current field settings',
         },
         ...fieldNames,
       ];
+      if (!currentValue) {
+        picker.push({
+          label: current,
+          value: current,
+        });
+      }
+    }
+
+    let value = events?.length ? events[0][k] : '';
+    if (value && k.startsWith('time')) {
+      const fmt = getValueFormat('dateTimeAsIso');
+      value = formattedValueToString(fmt(value as number));
+    }
+    if (value === null || value === undefined) {
+      value = ''; // empty string
     }
 
     return (
@@ -121,48 +161,41 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
         <td>{k}</td>
         <td>
           <Select
-            value={currentValue}
+            value={
+              currentValue || {
+                label: `default: ${defaultField}`,
+              }
+            }
             options={picker}
-            placeholder={defaultField}
+            placeholder={defaultField} // not used because we always force a value so remove is not managed
             onChange={(v: SelectableValue<string>) => {
               this.onFieldNameChange(k, v);
             }}
+            noOptionsMessage="Unknown field names"
             allowCustomValue={true}
           />
         </td>
-        {firstValues && <td>{firstValues[k]}</td>}
+        <td>{`${value}`}</td>
       </tr>
     );
   }
 
   render() {
-    const { firstValues } = this.state;
-
     return (
-      <>
-        <table>
-          <thead>
-            <tr>
-              <th>Field</th>
-              <th
-                className={css`
-                  min-width: 200px;
-                `}
-              >
-                Name
-              </th>
-              {firstValues && <th>Values</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {names.map(k => {
-              return this.renderRow(k);
-            })}
-          </tbody>
-        </table>
-        <br />
-        <br />
-      </>
+      <table className="filter-table">
+        <thead>
+          <tr>
+            <th>Annotation</th>
+            <th>Use result field:</th>
+            <th>First Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {names.map(k => {
+            return this.renderRow(k);
+          })}
+        </tbody>
+      </table>
     );
   }
 }

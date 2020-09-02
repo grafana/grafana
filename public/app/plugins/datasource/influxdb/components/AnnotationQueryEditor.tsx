@@ -1,15 +1,14 @@
 import React, { PureComponent } from 'react';
 import coreModule from 'app/core/core_module';
+import kbn from 'app/core/utils/kbn';
 
-import { DataSourceApi } from '@grafana/data';
+import { DataSourceApi, AnnotationEvent, DataQueryResponse } from '@grafana/data';
 import { AnnotationFieldMapper, AnnotationsFromFrameOptions } from '@grafana/runtime';
 
 import { InfluxQuery, InfluxAnnotation } from '../types';
 import { FluxQueryEditor } from './FluxQueryEditor';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import kbn from 'app/core/utils/kbn';
-import { AnnotationResults } from '@grafana/runtime/src/utils/annotationsFromDataFrame';
 
 interface Props {
   datasource: DataSourceApi;
@@ -18,7 +17,9 @@ interface Props {
 }
 
 interface State {
-  info?: AnnotationResults;
+  running?: boolean;
+  rsp?: DataQueryResponse;
+  events?: AnnotationEvent[];
 }
 
 export class AnnotationQueryEditor extends PureComponent<Props, State> {
@@ -26,6 +27,12 @@ export class AnnotationQueryEditor extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.runQuery();
+  }
+
+  componentDidUpdate(oldProps: Props) {
+    if (this.props.annotation !== oldProps.annotation) {
+      this.runQuery();
+    }
   }
 
   runQuery = async () => {
@@ -42,20 +49,24 @@ export class AnnotationQueryEditor extends PureComponent<Props, State> {
 
     const annoRequest = {
       ...interval,
+      app: 'editor',
       range,
       rangeRaw: range.raw,
-      annotation: annotation,
+      annotation,
       dashboard: getDashboardSrv().getCurrent(),
-      isEditor: true, // flag to set global metadata
     };
-    console.log('Test query', annoRequest);
-    await datasource.annotationQuery!(annoRequest);
+    this.setState({
+      running: true,
+    });
+
+    // @ts-ignore generic annotation is composite ¯\_(ツ)_/¯
+    const events = await datasource.annotationQuery!(annoRequest);
 
     // @ts-ignore
-    const info = window.lastAnnotationQuery as AnnotationResults;
+    const rsp = window.lastAnnotationResponse as DataQueryResponse;
     // @ts-ignore
-    window.lastAnnotationQuery = undefined;
-    this.setState({ info });
+    window.lastAnnotationResponse = undefined;
+    this.setState({ running: false, events, rsp });
   };
 
   onQueryChange = (query: InfluxQuery) => {
@@ -63,7 +74,6 @@ export class AnnotationQueryEditor extends PureComponent<Props, State> {
       ...this.props.annotation,
       query,
     });
-    this.runQuery();
   };
 
   onMappingChange = (mapping: AnnotationsFromFrameOptions) => {
@@ -71,12 +81,11 @@ export class AnnotationQueryEditor extends PureComponent<Props, State> {
       ...this.props.annotation,
       mapping,
     });
-    this.runQuery();
   };
 
   render() {
     const { annotation } = this.props;
-    const { info } = this.state;
+    const { rsp, running, events } = this.state;
 
     const query = {
       rawQuery: true,
@@ -87,7 +96,14 @@ export class AnnotationQueryEditor extends PureComponent<Props, State> {
       <>
         <FluxQueryEditor target={query} change={this.onQueryChange} refresh={this.runQuery} />
         <br />
-        <AnnotationFieldMapper data={info?.frame} options={annotation.mapping} change={this.onMappingChange} />
+        {running ? <div>Running...</div> : <div>FOUND: {events?.length}</div>}
+        <br />
+        <AnnotationFieldMapper
+          frame={rsp?.data[0]}
+          options={annotation.mapping}
+          change={this.onMappingChange}
+          events={events}
+        />
         <br />
       </>
     );
@@ -100,7 +116,3 @@ coreModule.directive('fluxAnnotationEditor', [
     return reactDirective(AnnotationQueryEditor, ['annotation', 'datasource', 'change']);
   },
 ]);
-
-// target: InfluxQuery;
-// change: (target: InfluxQuery) => void;
-// refresh: () => void;

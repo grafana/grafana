@@ -49,8 +49,9 @@ export interface HealthCheckResult {
  */
 export class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
-> extends DataSourceApi<TQuery, TOptions> {
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
+  TAnno = TQuery
+> extends DataSourceApi<TQuery, TOptions, TAnno> {
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     super(instanceSettings);
   }
@@ -147,43 +148,41 @@ export class DataSourceWithBackend<
    *
    * @virtual
    */
-  prepareAnnotationQuery?(options: AnnotationQueryRequest<any>): TQuery | undefined;
+  prepareAnnotationQuery?(
+    options: AnnotationQueryRequest<TAnno>
+  ): { query: TQuery; processor?: (rsp: DataQueryResponse) => AnnotationEvent[] };
 
   /**
    * This is a standard way to implement annotations in 7.2+, note that this path should eventually be
    * replaced with an observable solution
    */
-  async annotationQuery(options: AnnotationQueryRequest<any>): Promise<AnnotationEvent[]> {
-    const query = this.prepareAnnotationQuery
-      ? this.prepareAnnotationQuery(options)
-      : ((options.annotation as any).annotation as TQuery); // not sure why options.annotation.annotation!!!
+  async annotationQuery(options: AnnotationQueryRequest<TAnno>): Promise<AnnotationEvent[]> {
+    if (!this.prepareAnnotationQuery || !!!options.annotation.enable) {
+      return Promise.resolve([]); // not definedprepareAnnotationQuery
+    }
 
-    if (!query || !!!options.annotation.enable) {
+    const { query, processor } = this.prepareAnnotationQuery(options);
+    if (!query) {
       return Promise.resolve([]); // nothing
     }
 
+    const { annotation, ...rest } = options;
     const startTime = Date.now();
     return this.query({
+      ...rest,
       requestId: `anno-${startTime}`,
-      range: options.range,
-      rangeRaw: options.rangeRaw,
-      interval: (options as any).interval || '1m',
-      intervalMs: (options as any).intervalMs || 60000,
       startTime,
       scopedVars: {},
-      app: 'dash-anno',
       timezone: options.dashboard.timezone,
       targets: [query],
     })
       .toPromise()
-      .then((rsp: any) => {
+      .then(rsp => {
         if (rsp.data?.length) {
-          const info = getAnnotationsFromFrame(rsp.data[0]);
-          if ((options as any).isEditor) {
-            // @ts-ignore
-            window.lastAnnotationQuery = info;
+          if (processor) {
+            return processor(rsp);
           }
-          return info.events;
+          return getAnnotationsFromFrame(rsp.data[0]).events;
         }
         return [];
       });

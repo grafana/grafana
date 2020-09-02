@@ -12,6 +12,7 @@ import {
   MetricFindValue,
   AnnotationQueryRequest,
   AnnotationEvent,
+  DataFrame,
 } from '@grafana/data';
 import { v4 as uuidv4 } from 'uuid';
 import InfluxSeries from './influx_series';
@@ -19,10 +20,16 @@ import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
 import { InfluxQuery, InfluxOptions, InfluxVersion, InfluxAnnotation } from './types';
-import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
+import {
+  getBackendSrv,
+  getTemplateSrv,
+  DataSourceWithBackend,
+  frameToMetricFindValue,
+  getAnnotationsFromFrame,
+} from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 
-export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
+export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions, InfluxAnnotation> {
   type: string;
   urls: string[];
   username: string;
@@ -180,8 +187,22 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     });
   }
 
-  prepareAnnotationQuery(options: AnnotationQueryRequest<InfluxAnnotation>): InfluxQuery | undefined {
-    return options.annotation.query as InfluxQuery;
+  // Only called for flux!!!!
+  prepareAnnotationQuery(options: AnnotationQueryRequest<InfluxAnnotation>) {
+    const query = options.annotation.query;
+    const processor = (rsp: DataQueryResponse) => {
+      if (options.app === 'editor') {
+        // HACK so we have access in the editor
+        // @ts-ignore
+        window.lastAnnotationResponse = rsp;
+      }
+      const info = getAnnotationsFromFrame(rsp.data[0] as DataFrame, options.annotation.mapping);
+      if (info.warning && !rsp.error) {
+        rsp.error = { message: info.warning }; // mutate
+      }
+      return info.events;
+    };
+    return { query: query as InfluxQuery, processor };
   }
 
   async annotationQuery(options: AnnotationQueryRequest<any>): Promise<AnnotationEvent[]> {

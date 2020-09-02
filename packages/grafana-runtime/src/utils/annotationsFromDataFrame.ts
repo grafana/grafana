@@ -37,16 +37,14 @@ export interface AnnotationsFromFrameOptions {
   regex?: AnnotationEventNames;
 }
 
-export interface AnnotationResults {
+interface AnnotationResults {
   events: AnnotationEvent[];
-  frame: DataFrame;
   warning?: string;
 }
 
 export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationsFromFrameOptions): AnnotationResults {
   const info: AnnotationResults = {
     events: [],
-    frame,
   };
   if (!frame?.length) {
     return info;

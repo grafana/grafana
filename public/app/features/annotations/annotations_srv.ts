@@ -8,7 +8,7 @@ import coreModule from 'app/core/core_module';
 import { dedupAnnotations } from './events_processing';
 // Types
 import { DashboardModel, PanelModel } from '../dashboard/state';
-import { AnnotationEvent, AppEvents, DataSourceApi, PanelEvents, TimeRange } from '@grafana/data';
+import { AnnotationEvent, AppEvents, DataSourceApi, PanelEvents, TimeRange, CoreApp } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
@@ -139,6 +139,7 @@ export class AnnotationsSrv {
 
             return datasource.annotationQuery({
               ...interval,
+              app: CoreApp.Dashboard,
               range,
               rangeRaw: range.raw,
               annotation: annotation,
