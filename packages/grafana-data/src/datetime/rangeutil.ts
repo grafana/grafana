@@ -234,7 +234,36 @@ export function isRelativeTimeRange(raw: RawTimeRange): boolean {
   return isRelativeTime(raw.from) || isRelativeTime(raw.to);
 }
 
-export function calculateIntervalMS(range: TimeRange, resolution: number, lowLimitInterval?: string): number {
+export function secondsToHms(seconds: number): string {
+  const numYears = Math.floor(seconds / 31536000);
+  if (numYears) {
+    return numYears + 'y';
+  }
+  const numDays = Math.floor((seconds % 31536000) / 86400);
+  if (numDays) {
+    return numDays + 'd';
+  }
+  const numHours = Math.floor(((seconds % 31536000) % 86400) / 3600);
+  if (numHours) {
+    return numHours + 'h';
+  }
+  const numMinutes = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
+  if (numMinutes) {
+    return numMinutes + 'm';
+  }
+  const numSeconds = Math.floor((((seconds % 31536000) % 86400) % 3600) % 60);
+  if (numSeconds) {
+    return numSeconds + 's';
+  }
+  const numMilliseconds = Math.floor(seconds * 1000.0);
+  if (numMilliseconds) {
+    return numMilliseconds + 'ms';
+  }
+
+  return 'less than a millisecond'; //'just now' //or other string you like;
+}
+
+export function calculateInterval(range: TimeRange, resolution: number, lowLimitInterval?: string) {
   let lowLimitMs = 1; // 1 millisecond default low limit
 
   if (lowLimitInterval) {
@@ -245,7 +274,10 @@ export function calculateIntervalMS(range: TimeRange, resolution: number, lowLim
   if (lowLimitMs > intervalMs) {
     return lowLimitMs;
   }
-  return intervalMs;
+  return {
+    intervalMs: intervalMs,
+    interval: secondsToHms(intervalMs / 1000),
+  };
 }
 
 const interval_regex = /(\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
@@ -284,6 +316,11 @@ export function describeInterval(str: string) {
     type: matches[2],
     count: parseInt(matches[1], 10),
   };
+}
+
+export function intervalToSeconds(str: string) {
+  const info = describeInterval(str);
+  return info.sec * info.count;
 }
 
 export function intervalToMS(str: string) {

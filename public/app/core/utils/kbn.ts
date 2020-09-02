@@ -8,6 +8,7 @@ import {
   stringToJsRegex,
   TimeRange,
   ValueFormatterIndex,
+  rangeUtil,
 } from '@grafana/data';
 import { has } from 'lodash';
 
@@ -115,33 +116,10 @@ const kbn = {
         return 31536000000; // 1y
     }
   },
-  secondsToHms: (seconds: number) => {
-    const numYears = Math.floor(seconds / 31536000);
-    if (numYears) {
-      return numYears + 'y';
-    }
-    const numDays = Math.floor((seconds % 31536000) / 86400);
-    if (numDays) {
-      return numDays + 'd';
-    }
-    const numHours = Math.floor(((seconds % 31536000) % 86400) / 3600);
-    if (numHours) {
-      return numHours + 'h';
-    }
-    const numMinutes = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
-    if (numMinutes) {
-      return numMinutes + 'm';
-    }
-    const numSeconds = Math.floor((((seconds % 31536000) % 86400) % 3600) % 60);
-    if (numSeconds) {
-      return numSeconds + 's';
-    }
-    const numMilliseconds = Math.floor(seconds * 1000.0);
-    if (numMilliseconds) {
-      return numMilliseconds + 'ms';
-    }
-
-    return 'less than a millisecond'; //'just now' //or other string you like;
+  /** deprecated since 7.2, use grafana/data */
+  secondsToHms: (s: number) => {
+    deprecationWarning('kbn.ts', 'kbn.secondsToHms()', '@grafana/data');
+    return rangeUtil.secondsToHms(s);
   },
   secondsToHhmmss: (seconds: number) => {
     const strings: string[] = [];
@@ -189,34 +167,20 @@ const kbn = {
       };
     }
   },
-  intervalToSeconds: (str: string): number => {
-    const info = kbn.describeInterval(str);
-    return info.sec * info.count;
+  /** deprecated since 7.2, use grafana/data */
+  intervalToSeconds: (str: string) => {
+    deprecationWarning('kbn.ts', 'kbn.intervalToSeconds()', '@grafana/data');
+    return rangeUtil.intervalToSeconds(str);
   },
+  /** deprecated since 7.2, use grafana/data */
   intervalToMs: (str: string) => {
-    const info = kbn.describeInterval(str);
-    return info.sec * 1000 * info.count;
+    deprecationWarning('kbn.ts', 'kbn.intervalToMs()', '@grafana/data');
+    return rangeUtil.intervalToMS(str);
   },
+  /** deprecated since 7.2, use grafana/data */
   calculateInterval: (range: TimeRange, resolution: number, lowLimitInterval?: string) => {
-    let lowLimitMs = 1; // 1 millisecond default low limit
-    let intervalMs;
-
-    if (lowLimitInterval) {
-      if (lowLimitInterval[0] === '>') {
-        lowLimitInterval = lowLimitInterval.slice(1);
-      }
-      lowLimitMs = kbn.intervalToMs(lowLimitInterval);
-    }
-
-    intervalMs = kbn.roundInterval((range.to.valueOf() - range.from.valueOf()) / resolution);
-    if (lowLimitMs > intervalMs) {
-      intervalMs = lowLimitMs;
-    }
-
-    return {
-      intervalMs: intervalMs,
-      interval: kbn.secondsToHms(intervalMs / 1000),
-    };
+    deprecationWarning('kbn.ts', 'kbn.calculateInterval()', '@grafana/data');
+    return rangeUtil.calculateInterval(range, resolution, lowLimitInterval);
   },
   queryColorDot: (color: string, diameter: string) => {
     return (
