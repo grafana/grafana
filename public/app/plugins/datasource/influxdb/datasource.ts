@@ -293,17 +293,16 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     if (this.isFlux) {
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
-        query, // as string?
+        query,
       };
       return super
         .query({
+          ...options, // includes 'range'
           targets: [target],
-          range: options.range,
-          rangeRaw: options.range.raw,
         } as DataQueryRequest)
         .toPromise()
         .then(rsp => {
-          if (rsp.data && rsp.data.length) {
+          if (rsp.data?.length) {
             return frameToMetricFindValue(rsp.data[0]);
           }
           return [];
