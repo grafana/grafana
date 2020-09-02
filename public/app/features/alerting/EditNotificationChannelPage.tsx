@@ -69,7 +69,7 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
     return (
       <Page navModel={navModel}>
         <Page.Contents>
-          <h2>Edit notification channel</h2>
+          <h2 className="page-sub-heading">Edit notification channel</h2>
           {notificationChannel.id > 0 ? (
             <Form
               onSubmit={this.onSubmit}

@@ -17,7 +17,7 @@ export const CollapsableSection: FC<Props> = ({ label, isOpen, children }) => {
   return (
     <div>
       <div onClick={() => toggleOpen(!open)} className={styles.header}>
-        <Icon name={open ? 'angle-down' : 'angle-right'} size="lg" />
+        <Icon name={open ? 'angle-down' : 'angle-right'} size="xl" />
         {label}
       </div>
       <div className={styles.content}>{open && children}</div>
@@ -32,8 +32,7 @@ const collapsableSectionStyles = (theme: GrafanaTheme) => {
       cursor: pointer;
     `,
     content: css`
-      padding-top: ${theme.spacing.md};
-      padding-left: ${theme.spacing.md};
+      padding: ${theme.spacing.md} 0 ${theme.spacing.md} ${theme.spacing.md};
     `,
   };
 };

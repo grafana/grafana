@@ -21,7 +21,7 @@ export function Form<T>({
   validateFieldsOnMount,
   children,
   validateOn = 'onSubmit',
-  maxWidth = 400,
+  maxWidth = 500,
 }: FormProps<T>) {
   const { handleSubmit, register, errors, control, triggerValidation, getValues, formState, watch } = useForm<T>({
     mode: validateOn,
