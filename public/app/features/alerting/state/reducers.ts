@@ -91,7 +91,7 @@ const notificationChannelSlice = createSlice({
           return notificationChannel.settings[o.propertyName] !== '';
         })
       ) {
-        return migrateSecureFields(state, action, secureChannelOptions);
+        return migrateSecureFields(state, action.payload, secureChannelOptions);
       }
 
       return { ...state, notificationChannel: notificationChannel };
@@ -126,23 +126,26 @@ export default {
 
 function migrateSecureFields(
   state: NotificationChannelState,
-  action: PayloadAction<any>,
+  notificationChannel: any,
   secureChannelOptions: NotificationChannelOption[]
 ) {
   const secureFields: { [key: string]: boolean } = {};
   const cleanedSettings: { [key: string]: string } = {};
+  const secureSettings: { [key: string]: string } = {};
 
   secureChannelOptions.forEach(option => {
     secureFields[option.propertyName] = true;
+    secureSettings[option.propertyName] = notificationChannel.settings[option.propertyName];
     cleanedSettings[option.propertyName] = '';
   });
 
   return {
     ...state,
     notificationChannel: {
-      ...action.payload,
-      secureFields: secureFields,
-      settings: { ...action.payload.settings, ...cleanedSettings },
+      ...notificationChannel,
+      secureFields: { ...secureFields },
+      settings: { ...notificationChannel.settings, ...cleanedSettings },
+      secureSettings: { ...secureSettings },
     },
   };
 }

@@ -236,31 +236,6 @@ describe('Alert rules', () => {
 });
 
 describe('Notification channel', () => {
-  const expected = {
-    id: 2,
-    uid: '9L3FrrHGk',
-    name: 'Webhook test',
-    type: 'webhook',
-    isDefault: false,
-    sendReminder: false,
-    disableResolveMessage: false,
-    frequency: '',
-    created: '2020-08-28T08:49:24Z',
-    updated: '2020-08-28T08:49:24Z',
-    secureFields: {
-      password: true,
-    },
-    settings: {
-      autoResolve: true,
-      httpMethod: 'POST',
-      password: '',
-      severity: 'critical',
-      uploadImage: true,
-      url: 'http://localhost.webhook',
-      username: 'asdf',
-    },
-  };
-
   const notifiers: NotifierDTO[] = [
     {
       type: 'webhook',
@@ -350,6 +325,34 @@ describe('Notification channel', () => {
         },
       };
 
+      const expected = {
+        id: 2,
+        uid: '9L3FrrHGk',
+        name: 'Webhook test',
+        type: 'webhook',
+        isDefault: false,
+        sendReminder: false,
+        disableResolveMessage: false,
+        frequency: '',
+        created: '2020-08-28T08:49:24Z',
+        updated: '2020-08-28T08:49:24Z',
+        secureFields: {
+          password: true,
+        },
+        secureSettings: {
+          password: 'asdf',
+        },
+        settings: {
+          autoResolve: true,
+          httpMethod: 'POST',
+          password: '',
+          severity: 'critical',
+          uploadImage: true,
+          url: 'http://localhost.webhook',
+          username: 'asdf',
+        },
+      };
+
       reducerTester<NotificationChannelState>()
         .givenReducer(notificationChannelReducer, { ...initialChannelState, notifiers: notifiers })
         .whenActionIsDispatched(notificationChannelLoaded(payload))
@@ -362,6 +365,31 @@ describe('Notification channel', () => {
 
     it('should handle already secure field', () => {
       const payload = {
+        id: 2,
+        uid: '9L3FrrHGk',
+        name: 'Webhook test',
+        type: 'webhook',
+        isDefault: false,
+        sendReminder: false,
+        disableResolveMessage: false,
+        frequency: '',
+        created: '2020-08-28T08:49:24Z',
+        updated: '2020-08-28T08:49:24Z',
+        secureFields: {
+          password: true,
+        },
+        settings: {
+          autoResolve: true,
+          httpMethod: 'POST',
+          password: '',
+          severity: 'critical',
+          uploadImage: true,
+          url: 'http://localhost.webhook',
+          username: 'asdf',
+        },
+      };
+
+      const expected = {
         id: 2,
         uid: '9L3FrrHGk',
         name: 'Webhook test',
