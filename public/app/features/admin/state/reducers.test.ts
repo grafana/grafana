@@ -61,7 +61,7 @@ const getTestUser = (): UserDTO => ({
   login: 'user',
   name: 'User',
   avatarUrl: '',
-  isServerAdmin: false,
+  isGrafanaAdmin: false,
   isDisabled: false,
 });
 
