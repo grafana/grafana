@@ -96,7 +96,7 @@ export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationsF
   if (!hasTime) {
     const field = frame.fields.find(f => f.type === FieldType.time);
     if (!field) {
-      info.warning = 'No time field';
+      info.warning = 'Results do not contain a time field';
       return info;
     }
     fields.push({
@@ -108,7 +108,7 @@ export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationsF
   if (!hasText) {
     const field = frame.fields.find(f => f.type === FieldType.string);
     if (!field) {
-      info.warning = 'No text field exists';
+      info.warning = 'Results do not contain a text field';
       return info;
     }
 

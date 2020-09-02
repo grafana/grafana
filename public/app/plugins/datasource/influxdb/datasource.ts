@@ -189,7 +189,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   // Only called for flux!!!!
   prepareAnnotationQuery(options: AnnotationQueryRequest<InfluxAnnotation>) {
-    const query = options.annotation.query;
+    let query: any = options.annotation.query;
+    if (!query || !query.query) {
+      query = undefined; // don't execute empty queries
+    }
+
     const processor = (rsp: DataQueryResponse) => {
       if (options.app === 'editor') {
         // HACK so we have access in the editor

@@ -2,13 +2,15 @@ import React, { PureComponent } from 'react';
 import coreModule from 'app/core/core_module';
 import kbn from 'app/core/utils/kbn';
 
-import { DataSourceApi, AnnotationEvent, DataQueryResponse } from '@grafana/data';
+import { DataSourceApi, AnnotationEvent, DataQueryResponse, LoadingState } from '@grafana/data';
 import { AnnotationFieldMapper, AnnotationsFromFrameOptions } from '@grafana/runtime';
+import { Spinner, Icon } from '@grafana/ui';
 
 import { InfluxQuery, InfluxAnnotation } from '../types';
 import { FluxQueryEditor } from './FluxQueryEditor';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { cx, css } from 'emotion';
 
 interface Props {
   datasource: DataSourceApi;
@@ -51,7 +53,6 @@ export class AnnotationQueryEditor extends PureComponent<Props, State> {
       ...interval,
       app: 'editor',
       range,
-      rangeRaw: range.raw,
       annotation,
       dashboard: getDashboardSrv().getCurrent(),
     };
@@ -83,9 +84,40 @@ export class AnnotationQueryEditor extends PureComponent<Props, State> {
     });
   };
 
+  renderStatus() {
+    const { rsp, running, events } = this.state;
+    if (running || rsp?.state === LoadingState.Loading) {
+      return (
+        <div>
+          <Spinner />
+          Loading...
+        </div>
+      );
+    }
+    if (rsp?.error) {
+      return (
+        <div
+          className={cx(
+            'alert-warning',
+            css`
+              padding: 5px;
+            `
+          )}
+        >
+          <Icon name="exclamation-triangle" /> &nbsp;
+          {rsp.error.message}
+        </div>
+      );
+    }
+    if (events?.length) {
+      return <div>No annottions found</div>;
+    }
+    return <div>Found: {events?.length} annotations</div>;
+  }
+
   render() {
     const { annotation } = this.props;
-    const { rsp, running, events } = this.state;
+    const { rsp, events } = this.state;
 
     const query = {
       rawQuery: true,
@@ -96,7 +128,7 @@ export class AnnotationQueryEditor extends PureComponent<Props, State> {
       <>
         <FluxQueryEditor target={query} change={this.onQueryChange} refresh={this.runQuery} />
         <br />
-        {running ? <div>Running...</div> : <div>FOUND: {events?.length}</div>}
+        {this.renderStatus()}
         <br />
         <AnnotationFieldMapper
           frame={rsp?.data[0]}
