@@ -1,25 +1,27 @@
 export interface SystemDateFormatSettings {
   fullDate: string;
   intervals: {
-    PT1S: string;
-    PT1M: string;
-    PT1H: string;
-    PT1D: string;
-    P1YT: string;
+    seconds: string;
+    minutes: string;
+    hours: string;
+    days: string;
+    months: string;
+    years: string;
   };
   useBrowserLocale: boolean;
 }
 
-const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
+const DEFAULT_SYSTEM_DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 
 export class SystemDateFormatsState {
-  fullDate = DEFAULT_DATE_FORMAT;
+  fullDate = DEFAULT_SYSTEM_DATE_FORMAT;
   intervals = {
-    PT1S: 'HH:mm:ss',
-    PT1M: 'HH:mm',
-    PT1H: 'MM-DD HH:mm',
-    PT1D: 'YYYY-MM-DD',
-    P1YT: 'YYYY',
+    seconds: 'HH:mm:ss',
+    minutes: 'HH:mm',
+    hours: 'MM-DD HH:mm',
+    days: 'MM-DD',
+    months: 'YYYY-MM',
+    years: 'YYYY',
   };
 
   update(settings: SystemDateFormatSettings) {
@@ -46,30 +48,30 @@ export class SystemDateFormatsState {
       second: '2-digit',
     });
 
-    this.intervals.PT1S = localTimeFormat(
+    this.intervals.seconds = localTimeFormat(
       { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false },
       null,
-      this.intervals.PT1S
+      this.intervals.seconds
     );
-    this.intervals.PT1M = localTimeFormat(
+    this.intervals.minutes = localTimeFormat(
       { hour: '2-digit', minute: '2-digit', hour12: false },
       null,
-      this.intervals.PT1M
+      this.intervals.minutes
     );
-    this.intervals.PT1H = localTimeFormat(
+    this.intervals.hours = localTimeFormat(
       { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false },
       null,
-      this.intervals.PT1H
+      this.intervals.hours
     );
-    this.intervals.PT1D = localTimeFormat(
+    this.intervals.days = localTimeFormat(
       { month: '2-digit', day: '2-digit', hour12: false },
       null,
-      this.intervals.PT1D
+      this.intervals.days
     );
-    this.intervals.P1YT = localTimeFormat(
+    this.intervals.months = localTimeFormat(
       { year: 'numeric', month: '2-digit', hour12: false },
       null,
-      this.intervals.P1YT
+      this.intervals.months
     );
   }
 
@@ -91,7 +93,7 @@ export function localTimeFormat(
   fallback?: string
 ): string {
   if (!window.Intl) {
-    return fallback ?? DEFAULT_DATE_FORMAT;
+    return fallback ?? DEFAULT_SYSTEM_DATE_FORMAT;
   }
 
   if (!locale) {
