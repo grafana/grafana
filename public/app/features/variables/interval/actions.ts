@@ -1,4 +1,4 @@
-import { AppEvents } from '@grafana/data';
+import { AppEvents, rangeUtil } from '@grafana/data';
 
 import { toVariablePayload, VariableIdentifier } from '../state/types';
 import { ThunkResult } from '../../../types';
@@ -44,7 +44,7 @@ export const updateAutoValue = (
 ): ThunkResult<void> => (dispatch, getState) => {
   const variableInState = getVariable<IntervalVariableModel>(identifier.id, getState());
   if (variableInState.auto) {
-    const res = dependencies.kbn.calculateInterval(
+    const res = rangeUtil.calculateInterval(
       dependencies.getTimeSrv().timeRange(),
       variableInState.auto_count,
       variableInState.auto_min

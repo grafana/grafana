@@ -2,7 +2,7 @@ import each from 'lodash/each';
 import groupBy from 'lodash/groupBy';
 import has from 'lodash/has';
 
-import { RawTimeRange, TimeRange, TimeZone } from '../types/time';
+import { RawTimeRange, TimeRange, TimeZone, IntervalValues } from '../types/time';
 
 import * as dateMath from './datemath';
 import { isDateTime, DateTime } from './moment_wrapper';
@@ -263,16 +263,15 @@ export function secondsToHms(seconds: number): string {
   return 'less than a millisecond'; //'just now' //or other string you like;
 }
 
-export function calculateInterval(range: TimeRange, resolution: number, lowLimitInterval?: string) {
+export function calculateInterval(range: TimeRange, resolution: number, lowLimitInterval?: string): IntervalValues {
   let lowLimitMs = 1; // 1 millisecond default low limit
-
   if (lowLimitInterval) {
     lowLimitMs = intervalToMS(lowLimitInterval);
   }
 
-  const intervalMs = round_interval((range.to.valueOf() - range.from.valueOf()) / resolution);
+  let intervalMs = roundInterval((range.to.valueOf() - range.from.valueOf()) / resolution);
   if (lowLimitMs > intervalMs) {
-    return lowLimitMs;
+    intervalMs = lowLimitMs;
   }
   return {
     intervalMs: intervalMs,
@@ -328,7 +327,7 @@ export function intervalToMS(str: string) {
   return info.sec * 1000 * info.count;
 }
 
-const round_interval = (interval: number) => {
+export function roundInterval(interval: number) {
   switch (true) {
     // 0.015s
     case interval < 15:
@@ -417,4 +416,4 @@ const round_interval = (interval: number) => {
     default:
       return 31536000000; // 1y
   }
-};
+}
