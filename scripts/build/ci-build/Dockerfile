@@ -1,11 +1,12 @@
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
 FROM debian:stretch-20200803-slim AS toolchain
 
-ENV OSX_SDK_URL=https://s3.dockerproject.org/darwin/v2 \
-    OSX_SDK=MacOSX10.10.sdk \
+ENV OSX_SDK_URL=https://storage.googleapis.com/grafana-downloads/ci-dependencies \
+    OSX_SDK=MacOSX10.15.sdk \
     OSX_MIN=10.10 \
     CTNG=1.24.0 \
-    OSX_CROSS_REV=542acc2ef6c21aeb3f109c03748b1015a71fed63
+    # This is the last revision that builds on Debian Stretch
+    OSX_CROSS_REV=a1d7d7a8d569f9f0b8c3140b8b32848dbcd62afa
 
 # Use ARG so as not to persist environment variable in image
 ARG DEBIAN_FRONTEND=noninteractive
@@ -37,6 +38,7 @@ WORKDIR /tmp
 RUN apt-get update && \
     apt-get install -yq \
         clang patch libxml2-dev \
+        build-essential \
         ca-certificates \
         curl            \
         git             \
@@ -49,7 +51,7 @@ RUN git clone https://github.com/tpoechtrager/osxcross.git /tmp/osxcross && \
       cd /tmp/osxcross && git reset --hard $OSX_CROSS_REV
 RUN curl -fL ${OSX_SDK_URL}/${OSX_SDK}.tar.xz -o /tmp/osxcross/tarballs/${OSX_SDK}.tar.xz
 RUN ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil
-RUN UNATTENDED=yes OSX_VERSION_MIN=${OSX_MIN} /tmp/osxcross/build.sh
+RUN UNATTENDED=1 OSX_VERSION_MIN=${OSX_MIN} /tmp/osxcross/build.sh
 RUN rm -rf /tmp/osxcross/target/SDK/${OSX_SDK}/usr/share && \
     cd /tmp                                              && \
     tar cfJ osxcross.tar.xz osxcross/target              && \

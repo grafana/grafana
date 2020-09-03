@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eo pipefail
 
-_version="1.2.25"
+_version="1.2.26"
 _tag="grafana/build-container:${_version}"
 
 _dpath=$(dirname "${BASH_SOURCE[0]}")
