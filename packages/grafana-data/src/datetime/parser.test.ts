@@ -1,5 +1,5 @@
 import { dateTimeParse } from './parser';
-import { defaultDateFormats } from './formats';
+import { systemDateFormats } from './formats';
 
 describe('dateTimeParse', () => {
   it('should be able to parse using default format', () => {
@@ -8,7 +8,7 @@ describe('dateTimeParse', () => {
   });
 
   it('should be able to parse using default format', () => {
-    defaultDateFormats.update({
+    systemDateFormats.update({
       fullDate: 'MMMM D, YYYY, h:mm:ss a',
       intervals: {} as any,
     });

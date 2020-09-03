@@ -2,7 +2,7 @@
 import moment, { MomentInput, Moment } from 'moment-timezone';
 import { TimeZone } from '../types';
 import { DateTimeInput } from './moment_wrapper';
-import { defaultDateFormats } from './formats';
+import { systemDateFormats } from './formats';
 import { DateTimeOptions, getTimeZone } from './common';
 
 /**
@@ -13,13 +13,6 @@ import { DateTimeOptions, getTimeZone } from './common';
  * @public
  */
 export interface DateTimeOptionsWithFormat extends DateTimeOptions {
-  /**
-   * Specify a {@link https://momentjs.com/docs/#/displaying/format | momentjs} format to
-   * use a custom formatting pattern of the date and time value. If no format is set,
-   * then system configured default format is used.
-   */
-  format?: string;
-
   /**
    * Set this value to `true` if you want to include milliseconds when formatting date and time
    */
@@ -76,7 +69,7 @@ export const dateTimeFormatTimeAgo: DateTimeFormatter = (dateInUtc, options?) =>
  * @public
  */
 export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, options?) =>
-  toTz(dateInUtc, getTimeZone(options)).format(`${defaultDateFormats.fullDate} z`);
+  toTz(dateInUtc, getTimeZone(options)).format(`${systemDateFormats.fullDate} z`);
 
 /**
  * Helper function to return only the time zone abbreviation for a given date and time value. If no options
@@ -92,9 +85,9 @@ export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc, options?) =>
 
 const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => {
   if (options?.defaultWithMS) {
-    return options?.format ?? defaultDateFormats.fullDateMS;
+    return options?.format ?? systemDateFormats.fullDateMS;
   }
-  return options?.format ?? defaultDateFormats.fullDate;
+  return options?.format ?? systemDateFormats.fullDate;
 };
 
 const toTz = (dateInUtc: DateTimeInput, timeZone: TimeZone): Moment => {

@@ -9,7 +9,7 @@ import {
   GrafanaThemeType,
   LicenseInfo,
   PanelPluginMeta,
-  defaultDateFormats,
+  systemDateFormats,
   SystemDateFormatSettings,
 } from '@grafana/data';
 
@@ -88,7 +88,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
     merge(this, defaults, options);
 
-    defaultDateFormats.update(this.dateFormats);
+    systemDateFormats.update(this.dateFormats);
   }
 }
 

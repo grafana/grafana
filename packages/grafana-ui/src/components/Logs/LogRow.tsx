@@ -8,7 +8,7 @@ import {
   DataQueryResponse,
   GrafanaTheme,
   dateTimeFormat,
-  defaultDateFormats,
+  systemDateFormats,
 } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { cx, css } from 'emotion';
@@ -131,7 +131,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   renderTimeStamp(epochMs: number) {
     return dateTimeFormat(epochMs, {
       timeZone: this.props.timeZone,
-      format: defaultDateFormats.fullDate,
+      format: systemDateFormats.fullDate,
     });
   }
 

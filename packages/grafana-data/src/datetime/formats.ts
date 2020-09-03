@@ -116,4 +116,4 @@ export function localTimeFormat(
   return parts.map(part => mapping[part.type] || part.value).join('');
 }
 
-export const defaultDateFormats = new SystemDateFormatsState();
+export const systemDateFormats = new SystemDateFormatsState();

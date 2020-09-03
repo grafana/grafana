@@ -6,7 +6,7 @@ import {
   getFieldDisplayName,
   TimeZone,
   dateTimeFormat,
-  defaultDateFormats,
+  systemDateFormats,
 } from '@grafana/data';
 
 /**
@@ -121,19 +121,19 @@ export const graphTimeFormat = (ticks: number | null, min: number | null, max: n
     const oneYear = 31536000000;
 
     if (secPerTick <= 45) {
-      return defaultDateFormats.intervals.PT1S;
+      return systemDateFormats.intervals.PT1S;
     }
     if (secPerTick <= 7200 || range <= oneDay) {
-      return defaultDateFormats.intervals.PT1M;
+      return systemDateFormats.intervals.PT1M;
     }
     if (secPerTick <= 80000) {
-      return defaultDateFormats.intervals.PT1H;
+      return systemDateFormats.intervals.PT1H;
     }
     if (secPerTick <= 2419200 || range <= oneYear) {
-      return defaultDateFormats.intervals.PT1D;
+      return systemDateFormats.intervals.PT1D;
     }
-    return defaultDateFormats.intervals.P1YT;
+    return systemDateFormats.intervals.P1YT;
   }
 
-  return defaultDateFormats.intervals.PT1M;
+  return systemDateFormats.intervals.PT1M;
 };
