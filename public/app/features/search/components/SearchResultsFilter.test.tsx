@@ -1,6 +1,7 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { SearchResultsFilter, Props } from './SearchResultsFilter';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { Props, SearchResultsFilter } from './SearchResultsFilter';
+import { SearchLayout } from '../types';
 
 jest.mock('app/core/services/search_srv');
 
@@ -9,6 +10,17 @@ const noop = jest.fn();
 beforeEach(() => {
   jest.clearAllMocks();
 });
+
+const searchQuery = {
+  starred: false,
+  sort: null,
+  tag: ['tag'],
+  query: '',
+  skipRecent: true,
+  skipStarred: true,
+  folderIds: [],
+  layout: SearchLayout.Folders,
+};
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
@@ -20,7 +32,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     onStarredFilterChange: noop,
     onTagFilterChange: noop,
     onToggleAllChecked: noop,
-    query: { starred: false, sort: null, tag: ['tag'] },
+    query: searchQuery,
     onSortChange: noop,
     editable: true,
   };
@@ -38,48 +50,39 @@ describe('SearchResultsFilter', () => {
     expect(screen.queryByText('Delete')).not.toBeInTheDocument();
   });
 
-  it('should render Move and Delete buttons when canDelete is true', async () => {
+  it('should render Move and Delete buttons when canDelete is true', () => {
     setup({ canDelete: true });
     expect(screen.getAllByRole('checkbox')).toHaveLength(1);
     expect(screen.queryByText('Move')).toBeInTheDocument();
     expect(screen.queryByText('Delete')).toBeInTheDocument();
   });
 
-  // it('should render Move and Delete buttons when canMove is true', () => {
-  //   const { wrapper } = setup({ canMove: true });
-  //   expect(wrapper.find('Checkbox')).toHaveLength(1);
-  //   expect(findBtnByText(wrapper, 'Move')).toHaveLength(1);
-  //   expect(findBtnByText(wrapper, 'Delete')).toHaveLength(1);
-  // });
-  //
-  // it('should be called with proper filter option when "filter by starred" is changed', () => {
-  //   const mockFilterStarred = jest.fn();
-  //   const option = { value: true, label: 'Yes' };
-  //   //@ts-ignore
-  //   const { wrapper } = setup({ onStarredFilterChange: mockFilterStarred }, mount);
-  //   //@ts-ignore
-  //   wrapper
-  //     .find('Checkbox')
-  //     .at(1)
-  //     .prop('onChange')(option as any);
-  //
-  //   expect(mockFilterStarred).toHaveBeenCalledTimes(1);
-  //   expect(mockFilterStarred).toHaveBeenCalledWith(option);
-  // });
-  //
-  // it('should be called with proper filter option when "filter by tags" is changed', () => {
-  //   const mockFilterByTags = jest.fn();
-  //   const tags = [
-  //     { value: 'tag1', label: 'Tag 1' },
-  //     { value: 'tag2', label: 'Tag 2' },
-  //   ];
-  //   //@ts-ignore
-  //   const { wrapper } = setup({ onTagFilterChange: mockFilterByTags }, mount);
-  //   wrapper
-  //     .find({ placeholder: 'Filter by tag' })
-  //     .at(0)
-  //     .prop('onChange')([tags[0]]);
-  //   expect(mockFilterByTags).toHaveBeenCalledTimes(1);
-  //   expect(mockFilterByTags).toHaveBeenCalledWith(['tag1']);
-  // });
+  it('should render Move and Delete buttons when canMove is true', () => {
+    setup({ canMove: true });
+    expect(screen.getAllByRole('checkbox')).toHaveLength(1);
+    expect(screen.queryByText('Move')).toBeInTheDocument();
+    expect(screen.queryByText('Delete')).toBeInTheDocument();
+  });
+
+  it('should call onStarredFilterChange when "filter by starred" is changed', async () => {
+    const mockFilterStarred = jest.fn();
+    setup({ onStarredFilterChange: mockFilterStarred });
+    const checkbox = await screen.findByLabelText(/filter by starred/i);
+    fireEvent.click(checkbox);
+    expect(mockFilterStarred).toHaveBeenCalledTimes(1);
+  });
+
+  it('should be called with proper filter option when "filter by tags" is changed', async () => {
+    const mockFilterByTags = jest.fn();
+    setup({
+      onTagFilterChange: mockFilterByTags,
+      query: { ...searchQuery, tag: [] },
+    });
+    const tagComponent = await screen.findByLabelText('Tag filter');
+
+    fireEvent.keyDown(tagComponent.querySelector('div') as Node, { keyCode: 40 });
+    fireEvent.click(await screen.findByText('tag1'));
+    expect(mockFilterByTags).toHaveBeenCalledTimes(1);
+    expect(mockFilterByTags).toHaveBeenCalledWith(['tag1']);
+  });
 });
