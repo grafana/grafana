@@ -155,7 +155,8 @@ export interface DataSourceConstructor<
  */
 export abstract class DataSourceApi<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
+  TAnno = TQuery // defatult to direct query
 > {
   /**
    *  Set in constructor
@@ -270,7 +271,7 @@ export abstract class DataSourceApi<
    * Can be optionally implemented to allow datasource to be a source of annotations for dashboard. To be visible
    * in the annotation editor `annotations` capability also needs to be enabled in plugin.json.
    */
-  annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
+  annotationQuery?(options: AnnotationQueryRequest<TAnno>): Promise<AnnotationEvent[]>;
 
   interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
 }
@@ -466,6 +467,12 @@ export interface MetricFindValue {
   expandable?: boolean;
 }
 
+export interface BaseAnnotationQuery {
+  datasource: string;
+  enable: boolean;
+  name: string;
+}
+
 export interface DataSourceJsonData {
   authType?: string;
   defaultRegion?: string;
@@ -535,19 +542,19 @@ export interface DataSourceSelectItem {
 /**
  * Options passed to the datasource.annotationQuery method. See docs/plugins/developing/datasource.md
  */
-export interface AnnotationQueryRequest<MoreOptions = {}> {
+export interface AnnotationQueryRequest<TAnno = {}> {
   range: TimeRange;
   rangeRaw: RawTimeRange;
+  interval: string;
+  intervalMs: number;
+  maxDataPoints?: number;
+  app: CoreApp | string;
 
   // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
   dashboard: any;
 
-  // The annotation query, typically extends DataQuery
-  annotation: {
-    datasource: string;
-    enable: boolean;
-    name: string;
-  } & MoreOptions;
+  // The annotation query and common properties
+  annotation: BaseAnnotationQuery & TAnno;
 }
 
 export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
