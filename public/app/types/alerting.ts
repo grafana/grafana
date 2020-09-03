@@ -89,13 +89,8 @@ export interface NotificationChannelDTO {
   isDefault: boolean;
 }
 
-export interface NotificationChannelSecureSettings {
-  [key: string]: string | number;
-}
-
-export interface NotificationChannelSecureFields {
-  [key: string]: boolean;
-}
+export type NotificationChannelSecureSettings = Record<string, string | number>;
+export type NotificationChannelSecureFields = Record<string, boolean>;
 
 export interface ChannelTypeSettings {
   [key: string]: any;
