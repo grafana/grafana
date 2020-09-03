@@ -199,13 +199,13 @@ export class PanelQueryRunner {
     if (!this.subscription) {
       return;
     }
-
     this.subscription.unsubscribe();
 
     // If we have an old result with loading state, send it with done state
-    if (this.lastResult && this.lastResult.state === LoadingState.Loading) {
+    const state = this.lastResult?.state;
+    if (state && !(state === LoadingState.Done || state === LoadingState.Error)) {
       this.subject.next({
-        ...this.lastResult,
+        ...this.lastResult!,
         state: LoadingState.Done,
       });
     }
