@@ -446,6 +446,7 @@ class GraphElement {
     this.prepareXAxis(options, this.panel);
     this.configureYAxisOptions(this.data, options);
     this.thresholdManager.addFlotOptions(options, this.panel);
+    this.thresholdManager.updateThresholds(this.panel);
     this.timeRegionManager.addFlotOptions(options, this.panel);
     this.eventManager.addFlotEvents(this.annotations, options);
     this.sortedSeries = this.sortSeries(this.data, this.panel);
