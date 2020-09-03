@@ -95,7 +95,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
     filteredTargets.forEach(target =>
       subQueries.push(
-        this.runInstantQuery(target, options, filteredTargets.length),
+        this.runInstantQuery(target, options, filteredTargets.length).pipe(
+          map(response => {
+            // Let rangeQuery finish the loading
+            return { ...response, state: LoadingState.Loading };
+          })
+        ),
         this.runRangeQuery(target, options, filteredTargets.length)
       )
     );

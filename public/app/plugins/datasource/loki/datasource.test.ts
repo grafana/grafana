@@ -206,6 +206,7 @@ describe('LokiDatasource', () => {
           expect(res).toEqual({
             data: [],
             key: 'B_instant',
+            state: 'Loading',
           });
         },
         done,
