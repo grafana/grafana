@@ -28,7 +28,7 @@ export const updateIntervalVariableOptions = (
 };
 
 export interface UpdateAutoValueDependencies {
-  calculateInterval: typeof calculateInterval;
+  calculateInterval: typeof rangeUtil.calculateInterval;
   getTimeSrv: typeof getTimeSrv;
   templateSrv: typeof templateSrv;
 }
@@ -36,14 +36,14 @@ export interface UpdateAutoValueDependencies {
 export const updateAutoValue = (
   identifier: VariableIdentifier,
   dependencies: UpdateAutoValueDependencies = {
-    rangeUtil: rangeUtil,
+    calculateInterval: rangeUtil.calculateInterval,
     getTimeSrv: getTimeSrv,
     templateSrv: templateSrv,
   }
 ): ThunkResult<void> => (dispatch, getState) => {
   const variableInState = getVariable<IntervalVariableModel>(identifier.id, getState());
   if (variableInState.auto) {
-    const res = dependencies.rangeUtil.calculateInterval(
+    const res = dependencies.calculateInterval(
       dependencies.getTimeSrv().timeRange(),
       variableInState.auto_count,
       variableInState.auto_min
