@@ -553,7 +553,7 @@ export interface AnnotationQueryRequest<TAnno = {}> {
   // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
   dashboard: any;
 
-  // The annotation query, typically extends DataQuery
+  // The annotation query and common properties
   annotation: BaseAnnotationQuery & TAnno;
 }
 
