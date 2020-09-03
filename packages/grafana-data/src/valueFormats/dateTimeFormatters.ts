@@ -360,8 +360,10 @@ export function toDateTimeValueFormatter(pattern: string, todayPattern?: string)
   };
 }
 
-export const dateTimeAsIso = toDateTimeValueFormatter('YYYY-MM-DD HH:mm:ss', 'HH:mm:ss');
-export const dateTimeAsUS = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a', 'h:mm:ss a');
+export const dateTimeAsIso = toDateTimeValueFormatter('YYYY-MM-DD HH:mm:ss');
+export const dateTimeAsIsoNoDateIfToday = toDateTimeValueFormatter('YYYY-MM-DD HH:mm:ss', 'HH:mm:ss');
+export const dateTimeAsUS = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a');
+export const dateTimeAsUSNoDateIfToday = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a', 'h:mm:ss a');
 
 export function dateTimeFromNow(
   value: number,
