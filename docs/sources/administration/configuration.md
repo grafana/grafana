@@ -1377,4 +1377,8 @@ interval_month = YYYY-MM
 interval_year = YYYY
 ```
 
+### use_browser_locale
+
+Set this to `true` to have date formats be automatically be derived from browser locale. Defaults to `false`. This
+is an experimental feature right now with a few problems that remain unsolved.
 
