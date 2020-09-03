@@ -10,7 +10,7 @@ describe('dateTimeParse', () => {
   it('should be able to parse using default format', () => {
     systemDateFormats.update({
       fullDate: 'MMMM D, YYYY, h:mm:ss a',
-      intervals: {} as any,
+      interval: {} as any,
     });
 
     const date = dateTimeParse('Aug 20, 2020 10:30:20 am', { timeZone: 'utc' });
