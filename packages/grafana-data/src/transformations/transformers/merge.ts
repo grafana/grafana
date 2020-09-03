@@ -5,7 +5,10 @@ import { omit } from 'lodash';
 import { ArrayVector } from '../../vector/ArrayVector';
 import { MutableDataFrame } from '../../dataframe';
 
-type MergeDetailsKeyFactory = (existing: Record<string, any>, value: Record<string, any>) => string;
+interface ValuePointer {
+  key: string;
+  index: number;
+}
 
 export interface MergeTransformerOptions {}
 
@@ -20,7 +23,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
         return data;
       }
 
-      const fieldByName = new Set<string>();
+      const fieldNames = new Set<string>();
       const fieldIndexByName: Record<string, Record<number, number>> = {};
       const fieldNamesForKey: string[] = [];
       const dataFrame = new MutableDataFrame();
@@ -31,9 +34,9 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
         for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
           const field = frame.fields[fieldIndex];
 
-          if (!fieldByName.has(field.name)) {
+          if (!fieldNames.has(field.name)) {
             dataFrame.addField(copyFieldStructure(field));
-            fieldByName.add(field.name);
+            fieldNames.add(field.name);
           }
 
           fieldIndexByName[field.name] = fieldIndexByName[field.name] || {};
@@ -43,7 +46,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
             continue;
           }
 
-          if (Object.keys(fieldIndexByName[field.name]).length === data.length) {
+          if (fieldExistsInAllFrames(fieldIndexByName, field, data)) {
             fieldNamesForKey.push(field.name);
           }
         }
@@ -53,10 +56,10 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
         return data;
       }
 
-      const dataFrameIndexByKey: Record<string, number> = {};
+      const valuesByKey: Record<string, Array<Record<string, any>>> = {};
+      const valuesInOrder: ValuePointer[] = [];
       const keyFactory = createKeyFactory(data, fieldIndexByName, fieldNamesForKey);
-      const detailsKeyFactory = createDetailsKeyFactory(fieldByName, fieldNamesForKey);
-      const valueMapper = createValueMapper(data, fieldByName, fieldIndexByName);
+      const valueMapper = createValueMapper(data, fieldNames, fieldIndexByName);
 
       for (let frameIndex = 0; frameIndex < data.length; frameIndex++) {
         const frame = data[frameIndex];
@@ -64,7 +67,35 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
         for (let valueIndex = 0; valueIndex < frame.length; valueIndex++) {
           const key = keyFactory(frameIndex, valueIndex);
           const value = valueMapper(frameIndex, valueIndex);
-          mergeOrAdd(key, value, dataFrame, dataFrameIndexByKey, detailsKeyFactory);
+
+          if (!Array.isArray(valuesByKey[key])) {
+            valuesByKey[key] = [value];
+            valuesInOrder.push(createPointer(key, valuesByKey));
+            continue;
+          }
+
+          let valueWasMerged = false;
+
+          valuesByKey[key] = valuesByKey[key].map(existing => {
+            if (!isMergable(existing, value)) {
+              return existing;
+            }
+            valueWasMerged = true;
+            return { ...existing, ...value };
+          });
+
+          if (!valueWasMerged) {
+            valuesByKey[key].push(value);
+            valuesInOrder.push(createPointer(key, valuesByKey));
+          }
+        }
+      }
+
+      for (const pointer of valuesInOrder) {
+        const value = valuesByKey[pointer.key][pointer.index];
+
+        if (value) {
+          dataFrame.add(value, false);
         }
       }
 
@@ -99,30 +130,6 @@ const createKeyFactory = (
   return (frameIndex: number, valueIndex: number): string => {
     return factoryIndex[frameIndex].reduce((key: string, fieldIndex: number) => {
       return key + data[frameIndex].fields[fieldIndex].values.get(valueIndex);
-    }, '');
-  };
-};
-
-const createDetailsKeyFactory = (fieldByName: Set<string>, fieldNamesForKey: string[]): MergeDetailsKeyFactory => {
-  const fieldNamesToExclude = fieldNamesForKey.reduce((exclude: Record<string, boolean>, fieldName: string) => {
-    exclude[fieldName] = true;
-    return exclude;
-  }, {});
-
-  const checkOrder = Array.from(fieldByName).filter(fieldName => !fieldNamesToExclude[fieldName]);
-
-  return (existing: Record<string, any>, value: Record<string, any>) => {
-    return checkOrder.reduce((key: string, fieldName: string) => {
-      if (typeof existing[fieldName] === 'undefined') {
-        return key;
-      }
-      if (typeof value[fieldName] === 'undefined') {
-        return key;
-      }
-      if (existing[fieldName] === value[fieldName]) {
-        return key;
-      }
-      return key + value[fieldName];
     }, '');
   };
 };
@@ -185,35 +192,17 @@ const isMergable = (existing: Record<string, any>, value: Record<string, any>): 
   return mergable;
 };
 
-const mergeOrAdd = (
-  key: string,
-  value: Record<string, any>,
-  dataFrame: MutableDataFrame,
-  dataFrameIndexByKey: Record<string, number>,
-  detailsKeyFactory: MergeDetailsKeyFactory
+const fieldExistsInAllFrames = (
+  fieldIndexByName: Record<string, Record<number, number>>,
+  field: Field,
+  data: DataFrame[]
 ) => {
-  if (typeof dataFrameIndexByKey[key] === 'undefined') {
-    dataFrame.add(value);
-    dataFrameIndexByKey[key] = dataFrame.length - 1;
-    return;
-  }
+  return Object.keys(fieldIndexByName[field.name]).length === data.length;
+};
 
-  const dataFrameIndex = dataFrameIndexByKey[key];
-  const existing = dataFrame.get(dataFrameIndex);
-
-  if (isMergable(existing, value)) {
-    console.log('key', key);
-    console.log('value', value);
-    const merged = { ...existing, ...value };
-    dataFrame.set(dataFrameIndex, merged);
-    return;
-  }
-
-  console.log('key', key);
-  console.log('value', value);
-  console.log('existing', existing);
-
-  const nextKey = key + detailsKeyFactory(existing, value);
-  console.log('nextKey', nextKey);
-  mergeOrAdd(nextKey, value, dataFrame, dataFrameIndexByKey, detailsKeyFactory);
+const createPointer = (key: string, valuesByKey: Record<string, Array<Record<string, any>>>): ValuePointer => {
+  return {
+    key,
+    index: valuesByKey[key].length - 1,
+  };
 };

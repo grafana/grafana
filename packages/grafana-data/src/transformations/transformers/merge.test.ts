@@ -196,7 +196,7 @@ describe('Merge multipe to single', () => {
     expect(unwrap(result[0].fields)).toEqual(expected);
   });
 
-  it('combine two tables with partial overlapping result into one', () => {
+  it('combine two tables, where first is partial overlapping, into one', () => {
     const cfg: DataTransformerConfig<MergeTransformerOptions> = {
       id: DataTransformerID.merge,
       options: {},
@@ -222,7 +222,7 @@ describe('Merge multipe to single', () => {
     const tableB = toDataFrame({
       name: 'B',
       fields: [
-        { name: 'AgeGroup', type: FieldType.time, values: ['0 - 17', '18 - 24', '25 - 34', '35 - 49', '50 or over'] },
+        { name: 'AgeGroup', type: FieldType.string, values: ['0 - 17', '18 - 24', '25 - 34', '35 - 49', '50 or over'] },
         { name: 'Count', type: FieldType.number, values: [1, 3, 2, 4, 2] },
       ],
     });
@@ -236,10 +236,82 @@ describe('Merge multipe to single', () => {
         'Germany',
         'Canada',
         'Canada',
+        null,
       ]),
-      createField('AgeGroup', FieldType.string, ['50 or over', '35 - 49', '0 - 17', '35 - 49', '35 - 49', '25 - 34']),
-      createField('Sum', FieldType.number, [998, 1193, 1675, 146, 166, 219]),
-      createField('Count', FieldType.number, [2, 4, 1, 4, 4, 2]),
+      createField('AgeGroup', FieldType.string, [
+        '50 or over',
+        '35 - 49',
+        '0 - 17',
+        '35 - 49',
+        '35 - 49',
+        '25 - 34',
+        '18 - 24',
+      ]),
+      createField('Sum', FieldType.number, [998, 1193, 1675, 146, 166, 219, null]),
+      createField('Count', FieldType.number, [2, 4, 1, 4, 4, 2, 3]),
+    ];
+
+    expect(unwrap(result[0].fields)).toEqual(expected);
+  });
+
+  it('combine two tables, where second is partial overlapping, into one', () => {
+    /**
+     * This behavior feels wrong. I would expect the same behavior regardless of the order
+     * of the frames. But when testing the old table panel it had this behavior so I am
+     * sticking with it.
+     */
+    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
+      id: DataTransformerID.merge,
+      options: {},
+    };
+
+    const tableA = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'AgeGroup', type: FieldType.string, values: ['0 - 17', '18 - 24', '25 - 34', '35 - 49', '50 or over'] },
+        { name: 'Count', type: FieldType.number, values: [1, 3, 2, 4, 2] },
+      ],
+    });
+
+    const tableB = toDataFrame({
+      name: 'B',
+      fields: [
+        {
+          name: 'Country',
+          type: FieldType.string,
+          values: ['United States', 'United States', 'Mexico', 'Germany', 'Canada', 'Canada'],
+        },
+        {
+          name: 'AgeGroup',
+          type: FieldType.string,
+          values: ['50 or over', '35 - 49', '0 - 17', '35 - 49', '35 - 49', '25 - 34'],
+        },
+        { name: 'Sum', type: FieldType.number, values: [998, 1193, 1675, 146, 166, 219] },
+      ],
+    });
+
+    const result = transformDataFrame([cfg], [tableA, tableB]);
+    const expected: Field[] = [
+      createField('AgeGroup', FieldType.string, [
+        '0 - 17',
+        '18 - 24',
+        '25 - 34',
+        '35 - 49',
+        '50 or over',
+        '35 - 49',
+        '35 - 49',
+      ]),
+      createField('Count', FieldType.number, [1, 3, 2, 4, 2, null, null]),
+      createField('Country', FieldType.string, [
+        'Mexico',
+        null,
+        'Canada',
+        'United States',
+        'United States',
+        'Germany',
+        'Canada',
+      ]),
+      createField('Sum', FieldType.number, [1675, null, 219, 1193, 998, 146, 166]),
     ];
 
     expect(unwrap(result[0].fields)).toEqual(expected);
