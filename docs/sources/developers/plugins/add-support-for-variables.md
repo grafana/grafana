@@ -79,6 +79,32 @@ SELECT * FROM services WHERE id IN (admin,auth,billing)
 
 For more information on the available variable formats, refer to [Advanced variable format options](https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options/).
 
+## Set a variable from your plugin
+
+Not only can you read the value of a variable, you can also update the variable from your plugin. Use [LocationSrv.update()]({{< relref "../../packages_api/runtime/locationsrv.md/#update-method" >}}) to update a variable using query parameters.
+
+The following example shows how to update a variable called `service`.
+
+- `query` contains the query parameters you want to update. Query parameters controlling variables are prefixed with `var-`.
+- `partial: true` makes the update only affect the query parameters listed in `query`, and leaves the other query parameters unchanged.
+- `replace: true` tells Grafana to update the current URL state, rather than creating a new history entry.
+
+```ts
+import { getLocationSrv } from '@grafana/runtime';
+```
+
+```ts
+getLocationSrv().update({
+  query: {
+    'var-service': 'billing',
+  },
+  partial: true,
+  replace: true,
+});
+```
+
+> **Note:** Grafana queries your data source whenever you update a variable. Excessive updates to variables can slow down Grafana and lead to a poor user experience.
+
 ## Add support for query variables to your data source
 
 [Query variables]({{< relref "../../variables/variable-types/add-query-variable.md" >}}) is a type of variable that allows you to query a data source for the values. By adding support for query variables to your data source plugin, users can create dynamic dashboards based on data from your data source.

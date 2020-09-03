@@ -64,7 +64,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const { timeIndex, timeField } = getTimeField(dataFrame);
 
     if (timeField) {
-      // Use the configurd date or standandard time display
+      // Use the configured date or standard time display
       let processor: DisplayProcessor | undefined = timeField.display;
       if (!processor) {
         processor = getDisplayProcessor({
@@ -224,6 +224,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     return (
       <QueryOperationRow
+        id="Table data options"
+        index={0}
         title="Table data options"
         headerElement={<DetailText>{this.getActiveString()}</DetailText>}
         isOpen={false}

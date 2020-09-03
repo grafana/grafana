@@ -3430,6 +3430,13 @@
   resolved "https://registry.yarnpkg.com/@icons/material/-/material-0.2.4.tgz#e90c9f71768b3736e76d7dd6783fc6c2afa88bc8"
   integrity sha512-QPcGmICAPbGLGb6F/yNf/KzKqvFx8z5qx3D1yFqVAjoFmXK35EgyW+cJ57Te3CNsmzblwtzakLGFqHPqrfb4Tw==
 
+"@iconscout/react-unicons@1.1.4":
+  version "1.1.4"
+  resolved "https://registry.yarnpkg.com/@iconscout/react-unicons/-/react-unicons-1.1.4.tgz#30731707e1baa49ab1c3198a5e0121be86b8928a"
+  integrity sha512-lhTSU3nKvzt1OwsRfFyK194QcQbE1Q4rRm6d5BOnKyZB+SN4qRv7tS4wLQgwk/pQyzn14Qw70nGA+tuKLRqcJg==
+  dependencies:
+    react ">=15.0.0 <17.0.0"
+
 "@iconscout/react-unicons@^1.0.0":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@iconscout/react-unicons/-/react-unicons-1.0.1.tgz#b5309fac3b0cc27014da1e48edf29dd3d54a672f"
@@ -7411,11 +7418,6 @@ angular-bindonce@0.3.1:
   version "0.3.1"
   resolved "https://registry.yarnpkg.com/angular-bindonce/-/angular-bindonce-0.3.1.tgz#af19574abd43f608b9236a302cc5ce49d71dc9c6"
   integrity sha1-rxlXSr1D9gi5I2owLMXOSdcdycY=
-
-angular-mocks@1.6.6:
-  version "1.6.6"
-  resolved "https://registry.yarnpkg.com/angular-mocks/-/angular-mocks-1.6.6.tgz#c93018e7838c6dc5ceaf1a6bcf9be13c830ea515"
-  integrity sha1-yTAY54OMbcXOrxprz5vhPIMOpRU=
 
 angular-native-dragdrop@1.2.2:
   version "1.2.2"

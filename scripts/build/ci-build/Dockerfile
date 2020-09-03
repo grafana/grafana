@@ -85,7 +85,7 @@ RUN mv golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64/golangci-lint /tmp/
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
 FROM debian:stretch-20200803
 
-ENV GOVERSION=1.14.7 \
+ENV GOVERSION=1.15.1 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
     NODEVERSION=12.18.3-1nodesource1 \

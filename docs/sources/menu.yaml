@@ -15,6 +15,17 @@
       link: /getting-started/strategies/
     - name: Glossary
       link: /getting-started/glossary/
+- name: Best practices
+  link: /best-practices/
+  children:
+    - name: Best practices for creating dashboards
+      link: /best-practices/best-practices-for-creating-dashboards/
+    - name: Best practices for managing dashboards
+      link: /best-practices/best-practices-for-managing-dashboards/
+    - name: Observability strategies
+      link: /best-practices/common-observability-strategies/
+    - name: Dashboard management maturity model
+      link: /best-practices/dashboard-management-maturity-levels/
 - name: Installation
   link: /installation/
   children:
@@ -250,6 +261,8 @@
       link: /linking/panel-links/
     - name: Data links
       link: /linking/data-links/
+    - link: /linking/data-link-variables/
+      name: Data link variables
 - name: Templates and variables
   link: /variables/
   children:
@@ -278,8 +291,6 @@
           name: Chained variables
         - link: /variables/variable-types/global-variables/
           name: Global variables
-        - link: /variables/variable-types/url-variables/
-          name: URL variables
     - name: Selection options
       link: /variables/variable-selection-options/
     - name: Value groups/tags

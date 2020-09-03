@@ -26,7 +26,7 @@ Grafana ships with built-in support for Google Cloud Monitoring. Just add it as 
 4. Select `Google Cloud Monitoring` from the _Type_ dropdown.
 5. Upload or paste in the Service Account Key file. See below for steps on how to create a Service Account Key file.
 
-> NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
+> **Note:** If you're not seeing the `Data Sources` link in your side menu, then your current user account does not have the `Admin` role for the current organization.
 
 | Name                  | Description                                                                           |
 | --------------------- | ------------------------------------------------------------------------------------- |
