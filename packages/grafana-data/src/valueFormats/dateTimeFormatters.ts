@@ -102,6 +102,9 @@ export function toSeconds(size: number, decimals?: DecimalCount, scaledDecimals?
   if (size === null) {
     return { text: '' };
   }
+  if (size === 0) {
+    return { text: '0 s' };
+  }
 
   // Less than 1 µs, divide in ns
   if (Math.abs(size) < 0.000001) {
