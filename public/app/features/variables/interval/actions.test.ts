@@ -97,7 +97,7 @@ describe('interval actions', () => {
           .build();
 
         const dependencies: UpdateAutoValueDependencies = {
-          kbn: {
+          rangeUtil: {
             calculateInterval: jest.fn(),
           } as any,
           getTimeSrv: () => {
@@ -124,7 +124,7 @@ describe('interval actions', () => {
           )
           .whenAsyncActionIsDispatched(updateAutoValue(toVariableIdentifier(interval), dependencies), true);
 
-        expect(dependencies.kbn.calculateInterval).toHaveBeenCalledTimes(0);
+        expect(dependencies.rangeUtil.calculateInterval).toHaveBeenCalledTimes(0);
         expect(dependencies.getTimeSrv().timeRange).toHaveBeenCalledTimes(0);
         expect(dependencies.templateSrv.setGrafanaVariable).toHaveBeenCalledTimes(0);
       });
@@ -150,7 +150,7 @@ describe('interval actions', () => {
         });
         const setGrafanaVariableMock = jest.fn();
         const dependencies: UpdateAutoValueDependencies = {
-          kbn: {
+          rangeUtil: {
             calculateInterval: jest.fn().mockReturnValue({ interval: '10s' }),
           } as any,
           getTimeSrv: () => {

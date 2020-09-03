@@ -28,7 +28,7 @@ export const updateIntervalVariableOptions = (
 };
 
 export interface UpdateAutoValueDependencies {
-  rangeUtil: typeof rangeUtil;
+  rangeUtil: any; // typeof rangeUtil?
   getTimeSrv: typeof getTimeSrv;
   templateSrv: typeof templateSrv;
 }
