@@ -1,11 +1,15 @@
 import React from 'react';
 import { render, fireEvent, screen, waitFor, act } from '@testing-library/react';
-import { mockSearch } from 'app/core/services/search_srv';
+import * as SearchSrv from 'app/core/services/search_srv';
+import * as MockSearchSrv from 'app/core/services/__mocks__/search_srv';
 import { DashboardSearch, Props } from './DashboardSearch';
 import { searchResults } from '../testData';
 import { SearchLayout } from '../types';
 
 jest.mock('app/core/services/search_srv');
+// Typecast the mock search so the mock import is correctly recognised by TS
+// https://stackoverflow.com/a/53222290
+const { mockSearch } = SearchSrv as typeof MockSearchSrv;
 
 beforeEach(() => {
   jest.useFakeTimers();

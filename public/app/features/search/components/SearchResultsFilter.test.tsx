@@ -32,6 +32,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     onStarredFilterChange: noop,
     onTagFilterChange: noop,
     onToggleAllChecked: noop,
+    onLayoutChange: noop,
     query: searchQuery,
     onSortChange: noop,
     editable: true,

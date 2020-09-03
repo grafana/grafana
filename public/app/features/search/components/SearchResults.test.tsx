@@ -45,7 +45,7 @@ describe('SearchResults', () => {
     expect(screen.getAllByRole('checkbox')).toHaveLength(4);
   });
 
-  it('should collapse folder item list on header click', async () => {
+  it('should collapse folder item list on header click', () => {
     const mockOnToggleSection = jest.fn();
     setup({ onToggleSection: mockOnToggleSection });
 
