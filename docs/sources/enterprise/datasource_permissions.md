@@ -33,7 +33,7 @@ When permissions are enabled for a data source in an organization, you restrict 
 
 <div class="clearfix"></div>
 
-> **Caution:** Enabling permissions for the default data source makes users not listed in the permissions unable to invoke queries. Panels using default data source will return `Access denied to datasource` error for that users.
+> **Caution:** Enabling permissions for the default data source makes users not listed in the permissions unable to invoke queries. Panels using default data source will return `Access denied to datasource` error for those users.
 
 ## Allow users and teams to query a data source
 
