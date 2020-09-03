@@ -167,7 +167,7 @@ export function getDecimalsForValue(value: number, decimalOverride?: DecimalCoun
 
 export function getRawDisplayProcessor(): DisplayProcessor {
   return (value: any) => ({
-    text: value,
+    text: `${value}`,
     numeric: (null as unknown) as number,
   });
 }
