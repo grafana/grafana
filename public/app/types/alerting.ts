@@ -58,7 +58,6 @@ export type NotifierType =
 export interface NotifierDTO {
   name: string;
   description: string;
-  optionsTemplate: string;
   type: NotifierType;
   heading: string;
   options: NotificationChannelOption[];

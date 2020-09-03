@@ -23,14 +23,13 @@ var newImageUploaderProvider = func() (imguploader.ImageUploader, error) {
 
 // NotifierPlugin holds meta information about a notifier.
 type NotifierPlugin struct {
-	Type            string           `json:"type"`
-	Name            string           `json:"name"`
-	Heading         string           `json:"heading"`
-	Description     string           `json:"description"`
-	Info            string           `json:"info"`
-	OptionsTemplate string           `json:"optionsTemplate"`
-	Factory         NotifierFactory  `json:"-"`
-	Options         []NotifierOption `json:"options"`
+	Type        string           `json:"type"`
+	Name        string           `json:"name"`
+	Heading     string           `json:"heading"`
+	Description string           `json:"description"`
+	Info        string           `json:"info"`
+	Factory     NotifierFactory  `json:"-"`
+	Options     []NotifierOption `json:"options"`
 }
 
 // NotifierOption holds information about options specific for the NotifierPlugin.

@@ -54,7 +54,11 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
        the section will not be rendered if a user doesn't expand it. Therefore we need to
        merge the initialData with any changes from the form.
       */
-      ...transformSubmitData({ ...notificationChannel, ...formData }),
+      ...transformSubmitData({
+        ...notificationChannel,
+        ...formData,
+        settings: { ...notificationChannel.settings, ...formData.settings },
+      }),
       id: notificationChannel.id,
     });
   };
@@ -70,8 +74,9 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
       <Page navModel={navModel}>
         <Page.Contents>
           <h2 className="page-sub-heading">Edit notification channel</h2>
-          {notificationChannel.id > 0 ? (
+          {notificationChannel && notificationChannel.id > 0 ? (
             <Form
+              width={600}
               onSubmit={this.onSubmit}
               defaultValues={{
                 ...notificationChannel,
@@ -111,9 +116,10 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
 }
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
+  const channelId = getRouteParamsId(state.location) as number;
   return {
     navModel: getNavModel(state.navIndex, 'channels'),
-    channelId: getRouteParamsId(state.location) as number,
+    channelId,
     notificationChannel: state.notificationChannel.notificationChannel,
     notificationChannelTypes: state.notificationChannel.notificationChannelTypes,
   };
@@ -130,5 +136,5 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
 export default connectWithCleanUp(
   mapStateToProps,
   mapDispatchToProps,
-  state => state.alertRules
+  state => state.notificationChannel
 )(EditNotificationChannelPage);
