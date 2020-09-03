@@ -4,7 +4,9 @@ import {
   DataFrame,
   DataTransformerID,
   dateTimeFormat,
+  FormattedVector,
   getFrameDisplayName,
+  getRawDisplayProcessor,
   SelectableValue,
   toCSV,
   transformDataFrame,
@@ -114,17 +116,46 @@ export class InspectDataTab extends PureComponent<Props, State> {
       });
     }
 
+    if (!options.withFieldConfig) {
+      return this.getRawData(data);
+    }
+
     // We need to apply field config even though it was already applied in the PanelQueryRunner.
     // That's because transformers create new fields and data frames, so i.e. display processor is no longer there
     return applyFieldOverrides({
       data,
       theme: config.theme,
-      fieldConfig: options.withFieldConfig ? this.props.panel.fieldConfig : { defaults: {}, overrides: [] },
+      fieldConfig: this.props.panel.fieldConfig,
       replaceVariables: (value: string) => {
         return value;
       },
       getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid,
     });
+  }
+
+  getRawData(data: DataFrame[]) {
+    const newData = [...data];
+    const processor = getRawDisplayProcessor();
+
+    for (let frameIndex = 0; frameIndex < newData.length; frameIndex++) {
+      const newFrame = { ...newData[frameIndex] };
+      const newFields = [...newFrame.fields];
+
+      for (let fieldIndex = 0; fieldIndex < newFields.length; fieldIndex++) {
+        newFields[fieldIndex] = {
+          ...newFields[fieldIndex],
+          display: processor,
+          values: new FormattedVector(newFields[fieldIndex].values, processor),
+        };
+      }
+
+      newData[frameIndex] = {
+        ...newFrame,
+        fields: newFields,
+      };
+    }
+
+    return newData;
   }
 
   getActiveString() {

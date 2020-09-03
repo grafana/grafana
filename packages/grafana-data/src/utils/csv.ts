@@ -1,7 +1,6 @@
 // Libraries
 import Papa, { ParseConfig, Parser, ParseResult } from 'papaparse';
 import defaults from 'lodash/defaults';
-import isNumber from 'lodash/isNumber';
 
 // Types
 import { DataFrame, Field, FieldConfig, FieldType } from '../types';
@@ -211,23 +210,6 @@ function makeFieldWriter(field: Field, config: CSVConfig): FieldWriter {
       const displayValue = field.display!(value);
       return writeValue(formattedValueToString(displayValue), config);
     };
-  }
-
-  if (field.type) {
-    if (field.type === FieldType.boolean) {
-      return (value: any) => {
-        return value ? 'true' : 'false';
-      };
-    }
-
-    if (field.type === FieldType.number) {
-      return (value: any) => {
-        if (isNumber(value)) {
-          return value.toString();
-        }
-        return writeValue(value, config);
-      };
-    }
   }
 
   return (value: any) => writeValue(value, config);
