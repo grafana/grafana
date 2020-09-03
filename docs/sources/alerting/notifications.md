@@ -132,7 +132,7 @@ This might break custom event rules in your PagerDuty rules if you rely on the f
 Move any existing rules using `custom_details.myMetric` to `custom_details.queries.myMetric`.
 This behavior will become the default in a future version of Grafana.
 
->Using `dedup_key` tag will override grafana generated `dedup_key` with a custom key.
+> Using `dedup_key` tag will override grafana generated `dedup_key` with a custom key.
 ### Webhook
 
 The webhook notification is a simple way to send information about a state change over HTTP to a custom endpoint.
