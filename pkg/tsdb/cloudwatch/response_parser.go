@@ -127,7 +127,7 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 			}
 			sort.Strings(dims)
 
-			tags := map[string]string{}
+			tags := data.Labels{}
 			for _, dim := range dims {
 				plog.Debug("Handling dimension", "dimension", dim)
 				values := query.Dimensions[dim]
