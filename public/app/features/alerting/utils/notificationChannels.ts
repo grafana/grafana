@@ -45,6 +45,7 @@ export const transformSubmitData = (formData: NotificationChannelDTO) => {
   return {
     ...defaultValues,
     ...formData,
+    frequency: formData.frequency === '' ? defaultValues.frequency : formData.frequency,
     type: formData.type.value,
     settings: { ...defaultValues.settings, ...settings },
     secureSettings: { ...formData.secureSettings },
