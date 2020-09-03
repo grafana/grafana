@@ -1,4 +1,6 @@
 import coreModule from 'app/core/core_module';
+import templateSrv from 'app/features/templating/template_srv';
+import { store } from 'app/store/store';
 import config from 'app/core/config';
 import tinycolor from 'tinycolor2';
 export class ThresholdFormCtrl {
@@ -49,6 +51,17 @@ export class ThresholdFormCtrl {
       this.panel.thresholds[index].fillColor = newColor;
       this.render();
     };
+  }
+
+  handleValueChange(index: number) {
+    const inputValue = this.panel.thresholds[index].inputValue;
+
+    if (isNaN(inputValue)) {
+      this.panel.thresholds[index].value = +templateSrv.replace(inputValue);
+    } else {
+      this.panel.thresholds[index].value = +this.panel.thresholds[index].inputValue;
+    }
+    this.render();
   }
 
   onLineColorChange(index: number) {

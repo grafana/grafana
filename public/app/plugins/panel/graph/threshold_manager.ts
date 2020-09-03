@@ -3,6 +3,7 @@ import $ from 'jquery';
 import _ from 'lodash';
 import { getColorFromHexRgbOrName } from '@grafana/data';
 import { CoreEvents } from 'app/types';
+import templateSrv from 'app/features/templating/template_srv';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 
 export class ThresholdManager {
@@ -155,11 +156,20 @@ export class ThresholdManager {
     this.needsCleanup = true;
   }
 
+  updateThresholds(panel: any) {
+    if (panel.thresholds) {
+      for (const index in panel.thresholds) {
+        if (panel.thresholds[index].inputValue) {
+          panel.thresholds[index].value = +templateSrv.replace(panel.thresholds[index].inputValue);
+        }
+      }
+    }
+  }
+
   addFlotOptions(options: any, panel: any) {
     if (!panel.thresholds || panel.thresholds.length === 0) {
       return;
     }
-
     let gtLimit = Infinity;
     let ltLimit = -Infinity;
     let i, threshold, other;
