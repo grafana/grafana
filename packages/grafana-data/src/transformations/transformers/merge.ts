@@ -68,10 +68,6 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
         }
       }
 
-      // const timeIndex = dataFrame.fields.findIndex(field => field.type === FieldType.time);
-      // if (typeof timeIndex === 'number') {
-      //   return [sortDataFrame(dataFrame, timeIndex, true)];
-      // }
       return [dataFrame];
     };
   },
@@ -206,11 +202,18 @@ const mergeOrAdd = (
   const existing = dataFrame.get(dataFrameIndex);
 
   if (isMergable(existing, value)) {
+    console.log('key', key);
+    console.log('value', value);
     const merged = { ...existing, ...value };
     dataFrame.set(dataFrameIndex, merged);
     return;
   }
 
+  console.log('key', key);
+  console.log('value', value);
+  console.log('existing', existing);
+
   const nextKey = key + detailsKeyFactory(existing, value);
+  console.log('nextKey', nextKey);
   mergeOrAdd(nextKey, value, dataFrame, dataFrameIndexByKey, detailsKeyFactory);
 };

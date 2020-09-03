@@ -196,6 +196,55 @@ describe('Merge multipe to single', () => {
     expect(unwrap(result[0].fields)).toEqual(expected);
   });
 
+  it('combine two tables with partial overlapping result into one', () => {
+    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
+      id: DataTransformerID.merge,
+      options: {},
+    };
+
+    const tableA = toDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'Country',
+          type: FieldType.string,
+          values: ['United States', 'United States', 'Mexico', 'Germany', 'Canada', 'Canada'],
+        },
+        {
+          name: 'AgeGroup',
+          type: FieldType.string,
+          values: ['50 or over', '35 - 49', '0 - 17', '35 - 49', '35 - 49', '25 - 34'],
+        },
+        { name: 'Sum', type: FieldType.number, values: [998, 1193, 1675, 146, 166, 219] },
+      ],
+    });
+
+    const tableB = toDataFrame({
+      name: 'B',
+      fields: [
+        { name: 'AgeGroup', type: FieldType.time, values: ['0 - 17', '18 - 24', '25 - 34', '35 - 49', '50 or over'] },
+        { name: 'Count', type: FieldType.number, values: [1, 3, 2, 4, 2] },
+      ],
+    });
+
+    const result = transformDataFrame([cfg], [tableA, tableB]);
+    const expected: Field[] = [
+      createField('Country', FieldType.string, [
+        'United States',
+        'United States',
+        'Mexico',
+        'Germany',
+        'Canada',
+        'Canada',
+      ]),
+      createField('AgeGroup', FieldType.string, ['50 or over', '35 - 49', '0 - 17', '35 - 49', '35 - 49', '25 - 34']),
+      createField('Sum', FieldType.number, [998, 1193, 1675, 146, 166, 219]),
+      createField('Count', FieldType.number, [2, 4, 1, 4, 4, 2]),
+    ];
+
+    expect(unwrap(result[0].fields)).toEqual(expected);
+  });
+
   it('combine three tables with multiple values into one', () => {
     const cfg: DataTransformerConfig<MergeTransformerOptions> = {
       id: DataTransformerID.merge,
@@ -335,6 +384,37 @@ describe('Merge multipe to single', () => {
     const expected: Field[] = [
       createField('Time', FieldType.time, [100, 150, 200, 100, 125, 126]),
       createField('Temp', FieldType.number, [1, 4, 5, -1, 2, 3]),
+    ];
+
+    const fields = unwrap(result[0].fields);
+
+    expect(fields[1].config).toEqual({});
+    expect(fields).toEqual(expected);
+  });
+
+  it('combine one regular serie with an empty serie should return the regular serie', () => {
+    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
+      id: DataTransformerID.merge,
+      options: {},
+    };
+
+    const serieA = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [100, 150, 200] },
+        { name: 'Temp', type: FieldType.number, values: [1, 4, 5] },
+      ],
+    });
+
+    const serieB = toDataFrame({
+      name: 'B',
+      fields: [],
+    });
+
+    const result = transformDataFrame([cfg], [serieA, serieB]);
+    const expected: Field[] = [
+      createField('Time', FieldType.time, [100, 150, 200]),
+      createField('Temp', FieldType.number, [1, 4, 5]),
     ];
 
     const fields = unwrap(result[0].fields);
