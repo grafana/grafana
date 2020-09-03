@@ -1,9 +1,11 @@
 import React from 'react';
 import { render, fireEvent, screen, waitFor, act } from '@testing-library/react';
-import { mockSearch } from './mocks';
+import { mockSearch } from 'app/core/services/search_srv';
 import { DashboardSearch, Props } from './DashboardSearch';
 import { searchResults } from '../testData';
 import { SearchLayout } from '../types';
+
+jest.mock('app/core/services/search_srv');
 
 beforeEach(() => {
   jest.useFakeTimers();
