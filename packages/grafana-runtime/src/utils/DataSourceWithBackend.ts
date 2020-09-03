@@ -6,15 +6,12 @@ import {
   DataQuery,
   DataSourceJsonData,
   ScopedVars,
-  AnnotationQueryRequest,
-  AnnotationEvent,
 } from '@grafana/data';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { config } from '..';
 import { getBackendSrv } from '../services';
 import { toDataQueryResponse } from './queryResponse';
-import { getAnnotationsFromFrame } from './annotationsFromDataFrame';
 
 const ExpressionDatasourceID = '__expr__';
 
@@ -141,51 +138,6 @@ export class DataSourceWithBackend<
    */
   applyTemplateVariables(query: TQuery, scopedVars: ScopedVars): Record<string, any> {
     return query;
-  }
-
-  /**
-   * Given query configuration, find the standard query model
-   *
-   * @virtual
-   */
-  prepareAnnotationQuery?(
-    options: AnnotationQueryRequest<TAnno>
-  ): { query: TQuery; processor?: (rsp: DataQueryResponse) => AnnotationEvent[] };
-
-  /**
-   * This is a standard way to implement annotations in 7.2+, note that this path should eventually be
-   * replaced with an observable solution
-   */
-  async annotationQuery(options: AnnotationQueryRequest<TAnno>): Promise<AnnotationEvent[]> {
-    if (!this.prepareAnnotationQuery || !!!options.annotation.enable) {
-      return Promise.resolve([]); // not definedprepareAnnotationQuery
-    }
-
-    const { query, processor } = this.prepareAnnotationQuery(options);
-    if (!query) {
-      return Promise.resolve([]); // nothing
-    }
-
-    const { annotation, ...rest } = options;
-    const startTime = Date.now();
-    return this.query({
-      ...rest,
-      requestId: `anno-${startTime}`,
-      startTime,
-      scopedVars: {},
-      timezone: options.dashboard.timezone,
-      targets: [query],
-    })
-      .toPromise()
-      .then(rsp => {
-        if (rsp.data?.length) {
-          if (processor) {
-            return processor(rsp);
-          }
-          return getAnnotationsFromFrame(rsp.data[0]).events;
-        }
-        return [];
-      });
   }
 
   /**

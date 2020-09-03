@@ -12,24 +12,17 @@ import {
   MetricFindValue,
   AnnotationQueryRequest,
   AnnotationEvent,
-  DataFrame,
 } from '@grafana/data';
 import { v4 as uuidv4 } from 'uuid';
 import InfluxSeries from './influx_series';
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
-import { InfluxQuery, InfluxOptions, InfluxVersion, InfluxAnnotation } from './types';
-import {
-  getBackendSrv,
-  getTemplateSrv,
-  DataSourceWithBackend,
-  frameToMetricFindValue,
-  getAnnotationsFromFrame,
-} from '@grafana/runtime';
+import { InfluxQuery, InfluxOptions, InfluxVersion } from './types';
+import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 
-export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions, InfluxAnnotation> {
+export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
   type: string;
   urls: string[];
   username: string;
@@ -187,31 +180,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     });
   }
 
-  // Only called for flux!!!!
-  prepareAnnotationQuery(options: AnnotationQueryRequest<InfluxAnnotation>) {
-    let query: any = options.annotation.query;
-    if (!query || !query.query) {
-      query = undefined; // don't execute empty queries
-    }
-
-    const processor = (rsp: DataQueryResponse) => {
-      if (options.app === 'editor') {
-        // HACK so we have access in the editor
-        // @ts-ignore
-        window.lastAnnotationResponse = rsp;
-      }
-      const info = getAnnotationsFromFrame(rsp.data[0] as DataFrame, options.annotation.mapping);
-      if (info.warning && !rsp.error) {
-        rsp.error = { message: info.warning }; // mutate
-      }
-      return info.events;
-    };
-    return { query: query as InfluxQuery, processor };
-  }
-
   async annotationQuery(options: AnnotationQueryRequest<any>): Promise<AnnotationEvent[]> {
     if (this.isFlux) {
-      return super.annotationQuery(options);
+      return Promise.reject({
+        message: 'Annotations are not yet supported with flux queries',
+      });
     }
 
     // InfluxQL puts a query string on the annotation
