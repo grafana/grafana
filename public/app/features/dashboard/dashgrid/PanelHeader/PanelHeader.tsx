@@ -91,14 +91,26 @@ export class PanelHeader extends Component<Props, State> {
     this.props.panel.getQueryRunner().cancelQuery();
   };
 
-  private renderLoadingState(): JSX.Element {
-    return (
-      <div className="panel-loading" onClick={this.onCancelQuery}>
-        <Tooltip content="Cancel query">
-          <Icon className="panel-loading__spinner spin-clockwise" name="sync" />
-        </Tooltip>
-      </div>
-    );
+  private renderLoadingState(state: LoadingState): JSX.Element {
+    if (state === LoadingState.Loading) {
+      return (
+        <div className="panel-loading" onClick={this.onCancelQuery}>
+          <Tooltip content="Cancel query">
+            <Icon className="panel-loading__spinner spin-clockwise" name="sync" />
+          </Tooltip>
+        </div>
+      );
+    }
+    if (state === LoadingState.Streaming) {
+      return (
+        <div className="panel-loading" onClick={this.onCancelQuery}>
+          <Tooltip content="Streaming (unsubscribe)">
+            <Icon name="circle" />
+          </Tooltip>
+        </div>
+      );
+    }
+    return <></>;
   }
 
   openInspect = (e: React.SyntheticEvent, tab: string) => {
@@ -151,7 +163,7 @@ export class PanelHeader extends Component<Props, State> {
 
     return (
       <>
-        {data.state === LoadingState.Loading && this.renderLoadingState()}
+        {this.renderLoadingState(data?.state)}
         <div className={panelHeaderClass}>
           <PanelHeaderCorner
             panel={panel}

@@ -41,7 +41,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
         continue;
       }
       if (target.scenarioId === 'streaming_client') {
-        streams.push(runStream(target, options));
+        streams.push(runStream(target, options, this.id));
       } else if (target.scenarioId === 'grafana_api') {
         streams.push(runGrafanaAPI(target, options));
       } else if (target.scenarioId === 'arrow') {
