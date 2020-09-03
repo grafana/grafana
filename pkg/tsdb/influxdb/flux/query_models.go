@@ -66,14 +66,15 @@ func getQueryModelTSDB(query *tsdb.Query, timeRange *tsdb.TimeRange, dsInfo *mod
 	if model.Options.Organization == "" {
 		model.Options.Organization = dsInfo.JsonData.Get("organization").MustString("")
 	}
+
 	startTime, err := timeRange.ParseFrom()
-	if err != nil {
-		return nil, err
+	if err != nil && timeRange.From != "" {
+		return nil, fmt.Errorf("error reading startTime: %w", err)
 	}
 
 	endTime, err := timeRange.ParseTo()
-	if err != nil {
-		return nil, err
+	if err != nil && timeRange.To != "" {
+		return nil, fmt.Errorf("error reading endTime: %w", err)
 	}
 
 	// Copy directly from the well typed query

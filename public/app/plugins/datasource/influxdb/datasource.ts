@@ -9,6 +9,9 @@ import {
   dateTime,
   LoadingState,
   QueryResultMeta,
+  MetricFindValue,
+  AnnotationQueryRequest,
+  AnnotationEvent,
 } from '@grafana/data';
 import { v4 as uuidv4 } from 'uuid';
 import InfluxSeries from './influx_series';
@@ -16,7 +19,7 @@ import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
 import { InfluxQuery, InfluxOptions, InfluxVersion } from './types';
-import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
@@ -31,7 +34,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   interval: any;
   responseParser: any;
   httpMode: string;
-  is2x: boolean;
+  isFlux: boolean;
 
   constructor(instanceSettings: DataSourceInstanceSettings<InfluxOptions>) {
     super(instanceSettings);
@@ -51,11 +54,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.interval = settingsData.timeInterval;
     this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
-    this.is2x = settingsData.version === InfluxVersion.Flux;
+    this.isFlux = settingsData.version === InfluxVersion.Flux;
   }
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
-    if (this.is2x) {
+    if (this.isFlux) {
       return super.query(request);
     }
 
@@ -64,7 +67,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   getQueryDisplayText(query: InfluxQuery) {
-    if (this.is2x) {
+    if (this.isFlux) {
       return query.query;
     }
     return new InfluxQueryModel(query).render(false);
@@ -177,14 +180,21 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     });
   }
 
-  annotationQuery(options: any) {
+  async annotationQuery(options: AnnotationQueryRequest<any>): Promise<AnnotationEvent[]> {
+    if (this.isFlux) {
+      return Promise.reject({
+        message: 'Annotations are not yet supported with flux queries',
+      });
+    }
+
+    // InfluxQL puts a query string on the annotation
     if (!options.annotation.query) {
       return Promise.reject({
         message: 'Query missing in annotation definition',
       });
     }
 
-    const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw, timezone: options.timezone });
+    const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw, timezone: options.dashboard.timezone });
     let query = options.annotation.query.replace('$timeFilter', timeFilter);
     query = getTemplateSrv().replace(query, undefined, 'regex');
 
@@ -256,7 +266,26 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return expandedQueries;
   }
 
-  metricFindQuery(query: string, options?: any) {
+  async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
+    if (this.isFlux) {
+      const target: InfluxQuery = {
+        refId: 'metricFindQuery',
+        query,
+      };
+      return super
+        .query({
+          ...options, // includes 'range'
+          targets: [target],
+        } as DataQueryRequest)
+        .toPromise()
+        .then(rsp => {
+          if (rsp.data?.length) {
+            return frameToMetricFindValue(rsp.data[0]);
+          }
+          return [];
+        });
+    }
+
     const interpolated = getTemplateSrv().replace(query, undefined, 'regex');
 
     return this._seriesQuery(interpolated, options).then(resp => {
@@ -308,7 +337,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   testDatasource() {
-    if (this.is2x) {
+    if (this.isFlux) {
       // TODO: eventually use the real /health endpoint
       const request: DataQueryRequest<InfluxQuery> = {
         targets: [{ refId: 'test', query: 'buckets()' }],
