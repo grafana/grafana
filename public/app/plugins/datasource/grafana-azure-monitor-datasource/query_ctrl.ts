@@ -3,11 +3,10 @@ import { QueryCtrl } from 'app/plugins/sdk';
 // import './css/query_editor.css';
 import TimegrainConverter from './time_grain_converter';
 import './editor/editor_component';
-import kbn from 'app/core/utils/kbn';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { auto, IPromise } from 'angular';
-import { DataFrame, PanelEvents } from '@grafana/data';
+import { DataFrame, PanelEvents, rangeUtil } from '@grafana/data';
 import { AzureQueryType, AzureMetricQuery } from './types';
 
 export interface ResultFormat {

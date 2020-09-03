@@ -1,7 +1,7 @@
 import config from '../../core/config';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
-import kbn from '../utils/kbn';
+import { rangeUtil } from '@grafana/data';
 
 export class User {
   id: number;

@@ -61,7 +61,7 @@ const kbn = {
   },
   /** deprecated since 7.2, use grafana/data */
   intervalToSeconds: (str: string) => {
-    deprecationWarning('kbn.ts', 'kbn.intervalToSeconds()', '@grafana/data');
+    deprecationWarning('kbn.ts', 'rangeUtil.intervalToSeconds()', '@grafana/data');
     return rangeUtil.intervalToSeconds(str);
   },
   /** deprecated since 7.2, use grafana/data */

@@ -3,7 +3,6 @@ import { TimeZonePicker, Input, Tooltip, LegacyForms } from '@grafana/ui';
 import { DashboardModel } from '../../state/DashboardModel';
 import { TimeZone, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import kbn from 'app/core/utils/kbn';
 import isEmpty from 'lodash/isEmpty';
 import { selectors } from '@grafana/e2e-selectors';
 

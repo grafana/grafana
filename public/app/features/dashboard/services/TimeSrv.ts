@@ -1,10 +1,18 @@
 // Libraries
 import _ from 'lodash';
 // Utils
-import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
 // Types
-import { dateMath, DefaultTimeRange, TimeRange, RawTimeRange, toUtc, dateTime, isDateTime } from '@grafana/data';
+import {
+  dateMath,
+  DefaultTimeRange,
+  TimeRange,
+  RawTimeRange,
+  toUtc,
+  dateTime,
+  isDateTime,
+  rangeUtil,
+} from '@grafana/data';
 import { ITimeoutService, ILocationService } from 'angular';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';

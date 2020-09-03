@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
+import { rangeUtil } from '@grafana/data';
 
 export default class TimeGrainConverter {
   static createISO8601Duration(timeGrain: string | number, timeGrainUnit: any) {

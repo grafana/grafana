@@ -12,7 +12,6 @@ import { DataQuery, DataSourceApi, rangeUtil } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getDefaultCondition } from './getAlertingValidationMessage';
 import { CoreEvents } from 'app/types';
-import kbn from 'app/core/utils/kbn';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 export class AlertTabCtrl {
@@ -253,7 +252,7 @@ export class AlertTabCtrl {
     this.frequencyWarning = '';
 
     try {
-      const frequencySecs = kbn.intervalToSeconds(this.alert.frequency);
+      const frequencySecs = rangeUtil.intervalToSeconds(this.alert.frequency);
       if (frequencySecs < this.alertingMinIntervalSecs) {
         this.frequencyWarning =
           'A minimum evaluation interval of ' +
