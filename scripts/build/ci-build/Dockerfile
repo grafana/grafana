@@ -36,7 +36,7 @@ WORKDIR /tmp
 # might also wanna put them as their own layer to not have to unpack them every time?
 
 RUN apt-get update && \
-    apt-get install -yq \
+    apt-get --no-install-recommends install -yq \
         clang patch libxml2-dev \
         build-essential \
         ca-certificates \
@@ -56,7 +56,8 @@ RUN rm -rf /tmp/osxcross/target/SDK/*/usr/share && \
     cd /tmp                                              && \
     tar cfJ osxcross.tar.xz osxcross/target              && \
     rm -rf /tmp/osxcross
-RUN apt-get install -yq                     \
+
+RUN apt-get --no-install-recommends install -yq                     \
         unzip libtool-bin bison flex gawk gcc g++ gperf help2man libncurses5-dev make patch python-dev texinfo xz-utils
 RUN curl -fL http://crosstool-ng.org/download/crosstool-ng/crosstool-ng-${CTNG}.tar.xz | tar -xJ -C /tmp/
 RUN cd /tmp/crosstool-ng-${CTNG}        && \
@@ -101,7 +102,7 @@ COPY --from=toolchain /tmp/x86_64-centos6-linux-gnu.tar.xz /tmp/osxcross.tar.xz 
 COPY --from=toolchain /tmp/golangci-lint /usr/local/bin
 
 RUN apt-get update && \
-    apt-get install -yq  \
+    apt-get --no-install-recommends install -yq  \
         build-essential clang gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-mingw-w64-x86-64 \
         apt-transport-https \
         python-pip      \

@@ -4,7 +4,7 @@ ARG REPO_CONFIG=grafana.list.oss
 ARG PACKAGE=grafana
 
 RUN apt update && \
-    apt install -y curl                \
+    apt-get --no-install-recommends install -y curl                \
                    apt-transport-https \
                    ca-certificates     \
                    gnupg               && \
@@ -12,4 +12,4 @@ RUN apt update && \
 
 COPY "./$REPO_CONFIG" /etc/apt/sources.list.d/grafana.list
 RUN apt update && \
-    apt install -y $PACKAGE
+    apt-get --no-install-recommends install -y $PACKAGE

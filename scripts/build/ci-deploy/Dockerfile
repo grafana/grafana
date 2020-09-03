@@ -14,7 +14,7 @@ RUN pip install -U awscli crcmod && \
     curl https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-222.0.0-linux-x86_64.tar.gz | \
       tar xvzf - -C /opt && \
     apt update && \
-    apt install -y createrepo expect && \
+    apt-get --no-install-recommends install -y createrepo expect && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
     ln -s /opt/google-cloud-sdk/bin/gsutil /usr/bin/gsutil && \
