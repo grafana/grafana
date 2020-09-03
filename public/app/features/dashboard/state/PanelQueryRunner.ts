@@ -5,7 +5,6 @@ import { map } from 'rxjs/operators';
 
 // Services & Utils
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
 import { runRequest, preProcessPanelData } from './runRequest';
 import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
@@ -26,6 +25,7 @@ import {
   DataConfigSource,
   TimeZone,
   LoadingState,
+  rangeUtil,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
@@ -163,7 +163,7 @@ export class PanelQueryRunner {
       });
 
       const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
-      const norm = kbn.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
+      const norm = rangeUtil.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,
       // and add built in variables interval and interval_ms

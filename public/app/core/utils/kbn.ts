@@ -8,8 +8,8 @@ import {
   stringToJsRegex,
   TimeRange,
   ValueFormatterIndex,
+  rangeUtil,
 } from '@grafana/data';
-import { has } from 'lodash';
 
 const kbn = {
   valueFormats: {} as ValueFormatterIndex,
@@ -25,123 +25,16 @@ const kbn = {
     ms: 0.001,
   } as { [index: string]: number },
   regexEscape: (value: string) => value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&'),
-  roundInterval: (interval: number) => {
-    switch (true) {
-      // 0.015s
-      case interval < 15:
-        return 10; // 0.01s
-      // 0.035s
-      case interval < 35:
-        return 20; // 0.02s
-      // 0.075s
-      case interval < 75:
-        return 50; // 0.05s
-      // 0.15s
-      case interval < 150:
-        return 100; // 0.1s
-      // 0.35s
-      case interval < 350:
-        return 200; // 0.2s
-      // 0.75s
-      case interval < 750:
-        return 500; // 0.5s
-      // 1.5s
-      case interval < 1500:
-        return 1000; // 1s
-      // 3.5s
-      case interval < 3500:
-        return 2000; // 2s
-      // 7.5s
-      case interval < 7500:
-        return 5000; // 5s
-      // 12.5s
-      case interval < 12500:
-        return 10000; // 10s
-      // 17.5s
-      case interval < 17500:
-        return 15000; // 15s
-      // 25s
-      case interval < 25000:
-        return 20000; // 20s
-      // 45s
-      case interval < 45000:
-        return 30000; // 30s
-      // 1.5m
-      case interval < 90000:
-        return 60000; // 1m
-      // 3.5m
-      case interval < 210000:
-        return 120000; // 2m
-      // 7.5m
-      case interval < 450000:
-        return 300000; // 5m
-      // 12.5m
-      case interval < 750000:
-        return 600000; // 10m
-      // 12.5m
-      case interval < 1050000:
-        return 900000; // 15m
-      // 25m
-      case interval < 1500000:
-        return 1200000; // 20m
-      // 45m
-      case interval < 2700000:
-        return 1800000; // 30m
-      // 1.5h
-      case interval < 5400000:
-        return 3600000; // 1h
-      // 2.5h
-      case interval < 9000000:
-        return 7200000; // 2h
-      // 4.5h
-      case interval < 16200000:
-        return 10800000; // 3h
-      // 9h
-      case interval < 32400000:
-        return 21600000; // 6h
-      // 1d
-      case interval < 86400000:
-        return 43200000; // 12h
-      // 1w
-      case interval < 604800000:
-        return 86400000; // 1d
-      // 3w
-      case interval < 1814400000:
-        return 604800000; // 1w
-      // 6w
-      case interval < 3628800000:
-        return 2592000000; // 30d
-      default:
-        return 31536000000; // 1y
-    }
-  },
-  secondsToHms: (seconds: number) => {
-    const numYears = Math.floor(seconds / 31536000);
-    if (numYears) {
-      return numYears + 'y';
-    }
-    const numDays = Math.floor((seconds % 31536000) / 86400);
-    if (numDays) {
-      return numDays + 'd';
-    }
-    const numHours = Math.floor(((seconds % 31536000) % 86400) / 3600);
-    if (numHours) {
-      return numHours + 'h';
-    }
-    const numMinutes = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
-    if (numMinutes) {
-      return numMinutes + 'm';
-    }
-    const numSeconds = Math.floor((((seconds % 31536000) % 86400) % 3600) % 60);
-    if (numSeconds) {
-      return numSeconds + 's';
-    }
-    const numMilliseconds = Math.floor(seconds * 1000.0);
-    if (numMilliseconds) {
-      return numMilliseconds + 'ms';
-    }
 
-    return 'less than a millisecond'; //'just now' //or other string you like;
+  /** @deprecated since 7.2, use grafana/data */
+  roundInterval: (interval: number) => {
+    deprecationWarning('kbn.ts', 'kbn.roundInterval()', '@grafana/data');
+    return rangeUtil.roundInterval(interval);
+  },
+  /** @deprecated since 7.2, use grafana/data */
+  secondsToHms: (s: number) => {
+    deprecationWarning('kbn.ts', 'kbn.secondsToHms()', '@grafana/data');
+    return rangeUtil.secondsToHms(s);
   },
   secondsToHhmmss: (seconds: number) => {
     const strings: string[] = [];
@@ -161,59 +54,25 @@ const kbn = {
     str = str.replace(/\0/g, '\\0');
     return str;
   },
+  /** @deprecated since 7.2, use grafana/data */
   describeInterval: (str: string) => {
-    // Default to seconds if no unit is provided
-    if (Number(str)) {
-      return {
-        sec: kbn.intervalsInSeconds.s,
-        type: 's',
-        count: parseInt(str, 10),
-      };
-    }
-
-    const matches = str.match(kbn.intervalRegex);
-    if (!matches || !has(kbn.intervalsInSeconds, matches[2])) {
-      throw new Error(
-        `Invalid interval string, has to be either unit-less or end with one of the following units: "${Object.keys(
-          kbn.intervalsInSeconds
-        ).join(', ')}"`
-      );
-    } else {
-      return {
-        sec: kbn.intervalsInSeconds[matches[2]],
-        type: matches[2],
-        count: parseInt(matches[1], 10),
-      };
-    }
+    deprecationWarning('kbn.ts', 'kbn.stringToJsRegex()', '@grafana/data');
+    return rangeUtil.describeInterval(str);
   },
-  intervalToSeconds: (str: string): number => {
-    const info = kbn.describeInterval(str);
-    return info.sec * info.count;
+  /** @deprecated since 7.2, use grafana/data */
+  intervalToSeconds: (str: string) => {
+    deprecationWarning('kbn.ts', 'rangeUtil.intervalToSeconds()', '@grafana/data');
+    return rangeUtil.intervalToSeconds(str);
   },
+  /** @deprecated since 7.2, use grafana/data */
   intervalToMs: (str: string) => {
-    const info = kbn.describeInterval(str);
-    return info.sec * 1000 * info.count;
+    deprecationWarning('kbn.ts', 'rangeUtil.intervalToMs()', '@grafana/data');
+    return rangeUtil.intervalToMs(str);
   },
+  /** @deprecated since 7.2, use grafana/data */
   calculateInterval: (range: TimeRange, resolution: number, lowLimitInterval?: string) => {
-    let lowLimitMs = 1; // 1 millisecond default low limit
-    let intervalMs;
-
-    if (lowLimitInterval) {
-      if (lowLimitInterval[0] === '>') {
-        lowLimitInterval = lowLimitInterval.slice(1);
-      }
-      lowLimitMs = kbn.intervalToMs(lowLimitInterval);
-    }
-
-    intervalMs = kbn.roundInterval((range.to.valueOf() - range.from.valueOf()) / resolution);
-    if (lowLimitMs > intervalMs) {
-      intervalMs = lowLimitMs;
-    }
-
-    return {
-      intervalMs: intervalMs,
-      interval: kbn.secondsToHms(intervalMs / 1000),
-    };
+    deprecationWarning('kbn.ts', 'kbn.calculateInterval()', '@grafana/data');
+    return rangeUtil.calculateInterval(range, resolution, lowLimitInterval);
   },
   queryColorDot: (color: string, diameter: string) => {
     return (
@@ -228,7 +87,7 @@ const kbn = {
       .replace(/[^\w ]+/g, '')
       .replace(/ +/g, '-');
   },
-  /** deprecated since 6.1, use grafana/data */
+  /** @deprecated since 6.1, use grafana/data */
   stringToJsRegex: (str: string) => {
     deprecationWarning('kbn.ts', 'kbn.stringToJsRegex()', '@grafana/data');
     return stringToJsRegex(str);

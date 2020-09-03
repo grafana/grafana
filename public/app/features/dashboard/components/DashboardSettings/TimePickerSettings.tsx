@@ -3,7 +3,6 @@ import { TimeZonePicker, Input, Tooltip, LegacyForms } from '@grafana/ui';
 import { DashboardModel } from '../../state/DashboardModel';
 import { TimeZone, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import kbn from 'app/core/utils/kbn';
 import isEmpty from 'lodash/isEmpty';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -39,7 +38,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
 
     if (config.minRefreshInterval) {
       intervals = intervals.filter(rate => {
-        return kbn.intervalToMs(rate) >= kbn.intervalToMs(config.minRefreshInterval);
+        return rangeUtil.intervalToMs(rate) >= rangeUtil.intervalToMs(config.minRefreshInterval);
       });
     }
 

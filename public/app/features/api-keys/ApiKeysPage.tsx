@@ -22,10 +22,9 @@ import {
   IconButton,
 } from '@grafana/ui';
 const { Input, Switch } = LegacyForms;
-import { NavModel, dateTimeFormat } from '@grafana/data';
+import { NavModel, dateTimeFormat, rangeUtil } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { store } from 'app/store/store';
-import kbn from 'app/core/utils/kbn';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { setSearchQuery } from './state/reducers';
 
@@ -37,7 +36,7 @@ const timeRangeValidationEvents: ValidationEvents = {
           return true;
         }
         try {
-          kbn.intervalToSeconds(value);
+          rangeUtil.intervalToSeconds(value);
           return true;
         } catch {
           return false;
@@ -125,7 +124,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
 
     // make sure that secondsToLive is number or null
     const secondsToLive = this.state.newApiKey['secondsToLive'];
-    this.state.newApiKey['secondsToLive'] = secondsToLive ? kbn.intervalToSeconds(secondsToLive) : null;
+    this.state.newApiKey['secondsToLive'] = secondsToLive ? rangeUtil.intervalToSeconds(secondsToLive) : null;
     this.props.addApiKey(this.state.newApiKey, openModal, this.props.includeExpired);
     this.setState((prevState: State) => {
       return {

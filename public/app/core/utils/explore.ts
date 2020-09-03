@@ -22,9 +22,9 @@ import {
   toUtc,
   urlUtil,
   ExploreUrlState,
+  rangeUtil,
 } from '@grafana/data';
 import store from 'app/core/store';
-import kbn from 'app/core/utils/kbn';
 import { v4 as uuidv4 } from 'uuid';
 import { getNextRefIdChar } from './query';
 // Types
@@ -488,7 +488,7 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
     return { interval: '1s', intervalMs: 1000 };
   }
 
-  return kbn.calculateInterval(range, resolution, lowLimit);
+  return rangeUtil.calculateInterval(range, resolution, lowLimit);
 }
 
 export function deduplicateLogRowsById(rows: LogRowModel[]) {

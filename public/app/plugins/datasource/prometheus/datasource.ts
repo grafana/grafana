@@ -1,7 +1,6 @@
 // Libraries
 import cloneDeep from 'lodash/cloneDeep';
 // Services & Utils
-import kbn from 'app/core/utils/kbn';
 import {
   AnnotationEvent,
   CoreApp,
@@ -17,6 +16,7 @@ import {
   ScopedVars,
   TimeRange,
   TimeSeries,
+  rangeUtil,
 } from '@grafana/data';
 import { forkJoin, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
@@ -345,13 +345,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const range = Math.ceil(end - start);
 
     // options.interval is the dynamically calculated interval
-    let interval: number = kbn.intervalToSeconds(options.interval);
+    let interval: number = rangeUtil.intervalToSeconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query, or same as interval otherwise.
-    const minInterval = kbn.intervalToSeconds(
+    const minInterval = rangeUtil.intervalToSeconds(
       templateSrv.replace(target.interval || options.interval, options.scopedVars)
     );
     // Scrape interval as specified for the query ("Min step") or otherwise taken from the datasource.
-    const scrapeInterval = kbn.intervalToSeconds(target.interval || this.interval);
+    const scrapeInterval = rangeUtil.intervalToSeconds(target.interval || this.interval);
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
     const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
@@ -533,7 +533,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     const scopedVars = {
       __interval: { text: this.interval, value: this.interval },
-      __interval_ms: { text: kbn.intervalToMs(this.interval), value: kbn.intervalToMs(this.interval) },
+      __interval_ms: { text: rangeUtil.intervalToMs(this.interval), value: rangeUtil.intervalToMs(this.interval) },
       ...this.getRangeScopedVars(getTimeSrv().timeRange()),
     };
     const interpolated = templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
