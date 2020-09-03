@@ -243,7 +243,6 @@ describe('Notification channel', () => {
       heading: 'Webhook settings',
       description: 'Sends HTTP POST request to a URL',
       info: '',
-      optionsTemplate: '',
       options: [
         {
           element: 'input',
