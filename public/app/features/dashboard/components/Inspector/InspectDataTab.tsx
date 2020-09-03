@@ -1,12 +1,11 @@
 import React, { PureComponent } from 'react';
 import {
   applyFieldOverrides,
+  applyRawFieldOverrides,
   DataFrame,
   DataTransformerID,
   dateTimeFormat,
-  FormattedVector,
   getFrameDisplayName,
-  getRawDisplayProcessor,
   SelectableValue,
   toCSV,
   transformDataFrame,
@@ -117,7 +116,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
 
     if (!options.withFieldConfig) {
-      return this.getRawData(data);
+      return applyRawFieldOverrides(data);
     }
 
     // We need to apply field config even though it was already applied in the PanelQueryRunner.
@@ -131,31 +130,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
       },
       getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid,
     });
-  }
-
-  getRawData(data: DataFrame[]) {
-    const newData = [...data];
-    const processor = getRawDisplayProcessor();
-
-    for (let frameIndex = 0; frameIndex < newData.length; frameIndex++) {
-      const newFrame = { ...newData[frameIndex] };
-      const newFields = [...newFrame.fields];
-
-      for (let fieldIndex = 0; fieldIndex < newFields.length; fieldIndex++) {
-        newFields[fieldIndex] = {
-          ...newFields[fieldIndex],
-          display: processor,
-          values: new FormattedVector(newFields[fieldIndex].values, processor),
-        };
-      }
-
-      newData[frameIndex] = {
-        ...newFrame,
-        fields: newFields,
-      };
-    }
-
-    return newData;
   }
 
   getActiveString() {
@@ -184,7 +158,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       }
 
       if (options.withFieldConfig) {
-        activeString += 'field configuration';
+        activeString += 'formatted data';
       }
     }
 
@@ -260,8 +234,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
               )}
               {showFieldConfigsOption && (
                 <Field
-                  label="Apply field configuration"
-                  description="Table data is displayed with options defined in the Field and Override tabs."
+                  label="Formatted data"
+                  description="Table data is formatted with options defined in the Field and Override tabs."
                 >
                   <Switch
                     value={!!options.withFieldConfig}
