@@ -79,6 +79,7 @@ const buildCjsPackage = ({ env }) => {
             'Cell',
             'useResizeColumns',
             'useAbsoluteLayout',
+            'useFilters',
           ],
           '../../node_modules/react-is/index.js': ['isValidElementType', 'isContextConsumer'],
         },
