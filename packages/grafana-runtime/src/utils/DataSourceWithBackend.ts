@@ -46,9 +46,8 @@ export interface HealthCheckResult {
  */
 export class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData,
-  TAnno = TQuery
-> extends DataSourceApi<TQuery, TOptions, TAnno> {
+  TOptions extends DataSourceJsonData = DataSourceJsonData
+> extends DataSourceApi<TQuery, TOptions> {
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     super(instanceSettings);
   }
