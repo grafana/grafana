@@ -6,7 +6,6 @@ import { createIntervalOptions } from './reducer';
 import { validateVariableSelectionState } from '../state/actions';
 import { getVariable } from '../state/selectors';
 import { IntervalVariableModel } from '../types';
-import kbn from '../../../core/utils/kbn';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import templateSrv from '../../templating/template_srv';
 import appEvents from '../../../core/app_events';
@@ -29,7 +28,7 @@ export const updateIntervalVariableOptions = (
 };
 
 export interface UpdateAutoValueDependencies {
-  kbn: typeof kbn;
+  rangeUtil: typeof rangeUtil;
   getTimeSrv: typeof getTimeSrv;
   templateSrv: typeof templateSrv;
 }
@@ -37,14 +36,14 @@ export interface UpdateAutoValueDependencies {
 export const updateAutoValue = (
   identifier: VariableIdentifier,
   dependencies: UpdateAutoValueDependencies = {
-    kbn: kbn,
+    rangeUtil: rangeUtil,
     getTimeSrv: getTimeSrv,
     templateSrv: templateSrv,
   }
 ): ThunkResult<void> => (dispatch, getState) => {
   const variableInState = getVariable<IntervalVariableModel>(identifier.id, getState());
   if (variableInState.auto) {
-    const res = rangeUtil.calculateInterval(
+    const res = dependencies.rangeUtil.calculateInterval(
       dependencies.getTimeSrv().timeRange(),
       variableInState.auto_count,
       variableInState.auto_min

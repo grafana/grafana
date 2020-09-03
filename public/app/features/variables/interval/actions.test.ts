@@ -170,8 +170,8 @@ describe('interval actions', () => {
           )
           .whenAsyncActionIsDispatched(updateAutoValue(toVariableIdentifier(interval), dependencies), true);
 
-        expect(dependencies.kbn.calculateInterval).toHaveBeenCalledTimes(1);
-        expect(dependencies.kbn.calculateInterval).toHaveBeenCalledWith(
+        expect(dependencies.rangeUtil.calculateInterval).toHaveBeenCalledTimes(1);
+        expect(dependencies.rangeUtil.calculateInterval).toHaveBeenCalledWith(
           {
             from: '2001-01-01',
             to: '2001-01-02',
