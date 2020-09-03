@@ -959,6 +959,10 @@
               "value": "flowcms"
             },
             {
+              "text": "Cubic meters/hour (m³/h)",
+              "value": "flowcmh"
+            },
+            {
               "text": "Cubic feet/sec (cfs)",
               "value": "flowcfs"
             },
@@ -2058,6 +2062,10 @@
               "value": "flowcms"
             },
             {
+              "text": "Cubic meters/hour (m³/h)",
+              "value": "flowcmh"
+            },
+            {
               "text": "Cubic feet/sec (cfs)",
               "value": "flowcfs"
             },
@@ -3135,6 +3143,10 @@
             {
               "text": "Cubic meters/sec (cms)",
               "value": "flowcms"
+            },
+            {
+              "text": "Cubic meters/hour (m³/h)",
+              "value": "flowcmh"
             },
             {
               "text": "Cubic feet/sec (cfs)",

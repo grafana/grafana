@@ -226,6 +226,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     formats: [
       { name: 'Gallons/min (gpm)', id: 'flowgpm', fn: toFixedUnit('gpm') },
       { name: 'Cubic meters/sec (cms)', id: 'flowcms', fn: toFixedUnit('cms') },
+      { name: 'Cubic meters/hour (m³/h)', id: 'flowcmh', fn: toFixedUnit('m³/h') },
       { name: 'Cubic feet/sec (cfs)', id: 'flowcfs', fn: toFixedUnit('cfs') },
       { name: 'Cubic feet/min (cfm)', id: 'flowcfm', fn: toFixedUnit('cfm') },
       { name: 'Litre/hour', id: 'litreh', fn: toFixedUnit('L/h') },
