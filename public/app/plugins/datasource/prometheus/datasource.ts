@@ -533,7 +533,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     const scopedVars = {
       __interval: { text: this.interval, value: this.interval },
-      __interval_ms: { text: kbn.intervalToMs(this.interval), value: kbn.intervalToMs(this.interval) },
+      __interval_ms: { text: rangeUtil.intervalToMs(this.interval), value: rangeUtil.intervalToMs(this.interval) },
       ...this.getRangeScopedVars(getTimeSrv().timeRange()),
     };
     const interpolated = templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);

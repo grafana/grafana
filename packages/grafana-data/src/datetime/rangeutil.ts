@@ -266,7 +266,7 @@ export function secondsToHms(seconds: number): string {
 export function calculateInterval(range: TimeRange, resolution: number, lowLimitInterval?: string): IntervalValues {
   let lowLimitMs = 1; // 1 millisecond default low limit
   if (lowLimitInterval) {
-    lowLimitMs = intervalToMS(lowLimitInterval);
+    lowLimitMs = intervalToMs(lowLimitInterval);
   }
 
   let intervalMs = roundInterval((range.to.valueOf() - range.from.valueOf()) / resolution);
@@ -317,12 +317,12 @@ export function describeInterval(str: string) {
   };
 }
 
-export function intervalToSeconds(str: string) {
+export function intervalToSeconds(str: string): number {
   const info = describeInterval(str);
   return info.sec * info.count;
 }
 
-export function intervalToMS(str: string) {
+export function intervalToMs(str: string): number {
   const info = describeInterval(str);
   return info.sec * 1000 * info.count;
 }

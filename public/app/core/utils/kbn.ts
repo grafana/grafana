@@ -66,8 +66,8 @@ const kbn = {
   },
   /** deprecated since 7.2, use grafana/data */
   intervalToMs: (str: string) => {
-    deprecationWarning('kbn.ts', 'kbn.intervalToMs()', '@grafana/data');
-    return rangeUtil.intervalToMS(str);
+    deprecationWarning('kbn.ts', 'rangeUtil.intervalToMs()', '@grafana/data');
+    return rangeUtil.intervalToMs(str);
   },
   /** deprecated since 7.2, use grafana/data */
   calculateInterval: (range: TimeRange, resolution: number, lowLimitInterval?: string) => {

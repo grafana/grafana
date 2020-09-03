@@ -97,7 +97,7 @@ export class PlaylistSrv {
           .get(`/api/playlists/${playlistId}/dashboards`)
           .then((dashboards: any) => {
             this.dashboards = dashboards;
-            this.interval = kbn.intervalToMs(playlist.interval);
+            this.interval = rangeUtil.intervalToMs(playlist.interval);
             this.next();
           });
       });
