@@ -121,22 +121,22 @@ export const graphTimeFormat = (ticks: number | null, min: number | null, max: n
     const oneYear = 31536000000;
 
     if (secPerTick <= 45) {
-      return systemDateFormats.intervals.seconds;
+      return systemDateFormats.interval.second;
     }
     if (secPerTick <= 7200 || range <= oneDay) {
-      return systemDateFormats.intervals.minutes;
+      return systemDateFormats.interval.minute;
     }
     if (secPerTick <= 80000) {
-      return systemDateFormats.intervals.hours;
+      return systemDateFormats.interval.hour;
     }
     if (secPerTick <= 2419200 || range <= oneYear) {
-      return systemDateFormats.intervals.days;
+      return systemDateFormats.interval.day;
     }
     if (secPerTick <= 31536000) {
-      return systemDateFormats.intervals.months;
+      return systemDateFormats.interval.month;
     }
-    return systemDateFormats.intervals.years;
+    return systemDateFormats.interval.year;
   }
 
-  return systemDateFormats.intervals.minutes;
+  return systemDateFormats.interval.minute;
 };

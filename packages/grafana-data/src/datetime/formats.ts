@@ -1,12 +1,12 @@
 export interface SystemDateFormatSettings {
   fullDate: string;
-  intervals: {
-    seconds: string;
-    minutes: string;
-    hours: string;
-    days: string;
-    months: string;
-    years: string;
+  interval: {
+    second: string;
+    minute: string;
+    hour: string;
+    day: string;
+    month: string;
+    year: string;
   };
   useBrowserLocale: boolean;
 }
@@ -15,18 +15,18 @@ const DEFAULT_SYSTEM_DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 
 export class SystemDateFormatsState {
   fullDate = DEFAULT_SYSTEM_DATE_FORMAT;
-  intervals = {
-    seconds: 'HH:mm:ss',
-    minutes: 'HH:mm',
-    hours: 'MM-DD HH:mm',
-    days: 'MM-DD',
-    months: 'YYYY-MM',
-    years: 'YYYY',
+  interval = {
+    second: 'HH:mm:ss',
+    minute: 'HH:mm',
+    hour: 'MM-DD HH:mm',
+    day: 'MM-DD',
+    month: 'YYYY-MM',
+    year: 'YYYY',
   };
 
   update(settings: SystemDateFormatSettings) {
     this.fullDate = settings.fullDate;
-    this.intervals = settings.intervals;
+    this.interval = settings.interval;
 
     if (settings.useBrowserLocale) {
       this.useBrowserLocale();
@@ -48,30 +48,26 @@ export class SystemDateFormatsState {
       second: '2-digit',
     });
 
-    this.intervals.seconds = localTimeFormat(
+    this.interval.second = localTimeFormat(
       { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false },
       null,
-      this.intervals.seconds
+      this.interval.second
     );
-    this.intervals.minutes = localTimeFormat(
+    this.interval.minute = localTimeFormat(
       { hour: '2-digit', minute: '2-digit', hour12: false },
       null,
-      this.intervals.minutes
+      this.interval.minute
     );
-    this.intervals.hours = localTimeFormat(
+    this.interval.hour = localTimeFormat(
       { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false },
       null,
-      this.intervals.hours
+      this.interval.hour
     );
-    this.intervals.days = localTimeFormat(
-      { month: '2-digit', day: '2-digit', hour12: false },
-      null,
-      this.intervals.days
-    );
-    this.intervals.months = localTimeFormat(
+    this.interval.day = localTimeFormat({ month: '2-digit', day: '2-digit', hour12: false }, null, this.interval.day);
+    this.interval.month = localTimeFormat(
       { year: 'numeric', month: '2-digit', hour12: false },
       null,
-      this.intervals.months
+      this.interval.month
     );
   }
 
