@@ -1350,3 +1350,31 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 ### enable
 
 Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`, `standaloneAlerts`
+
+## [date_formats]
+
+This section controls system wide defaults for date formats used in time ranges, graphs and date input boxes.
+
+The format patterns use [Moment.js](https://momentjs.com/docs/#/displaying/) formatting tokens.
+
+### full_date
+
+Full date format used by time range picker and in other places where a full date is rendered.
+
+### intervals
+
+These intervals formats are used in the graph to show only a partial date or time. For example if there are only
+minutes between y-axis tick labels then the `interval_minute` format is used.
+
+Defaults
+
+```
+interval_second = HH:mm:ss
+interval_minute = HH:mm
+interval_hour = MM-DD HH:mm
+interval_day = MM-DD
+interval_month = YYYY-MM
+interval_year = YYYY
+```
+
+
