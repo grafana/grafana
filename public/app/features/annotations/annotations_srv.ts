@@ -27,7 +27,10 @@ import { AnnotationQueryResponse, AnnotationQueryOptions } from './types';
 import { standardAnnotationProcessor, singleFrameFromPanelData } from './standardAnnotationProcessor';
 import { runRequest } from '../dashboard/state/runRequest';
 
-let queryCount = 100;
+let counter = 100;
+function getNextRequestId() {
+  return 'AQ' + counter++;
+}
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -81,7 +84,7 @@ export class AnnotationsSrv {
 
     const queryRequest: DataQueryRequest = {
       startTime: Date.now(),
-      requestId: `AQ${queryCount++}`,
+      requestId: getNextRequestId(),
       range: options.range,
       maxDataPoints,
       scopedVars,
