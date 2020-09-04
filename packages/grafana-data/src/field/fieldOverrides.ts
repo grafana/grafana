@@ -1,37 +1,37 @@
 import {
-  DynamicConfigValue,
-  FieldConfig,
-  DataFrame,
-  Field,
-  FieldType,
-  FieldColorMode,
-  ColorScheme,
-  FieldOverrideContext,
-  ScopedVars,
   ApplyFieldOverrideOptions,
-  FieldConfigPropertyItem,
-  LinkModel,
-  InterpolateFunction,
-  ValueLinkConfig,
-  GrafanaTheme,
-  TimeZone,
+  ColorScheme,
+  DataFrame,
   DataLink,
   DataSourceInstanceSettings,
+  DynamicConfigValue,
+  Field,
+  FieldColorMode,
+  FieldConfig,
+  FieldConfigPropertyItem,
+  FieldOverrideContext,
+  FieldType,
+  GrafanaTheme,
+  InterpolateFunction,
+  LinkModel,
+  ScopedVars,
+  TimeZone,
+  ValueLinkConfig,
 } from '../types';
-import { fieldMatchers, ReducerID, reduceField } from '../transformations';
+import { fieldMatchers, reduceField, ReducerID } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
 import set from 'lodash/set';
 import unset from 'lodash/unset';
 import get from 'lodash/get';
-import { getDisplayProcessor } from './displayProcessor';
+import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 import { guessFieldTypeForField } from '../dataframe';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { DataLinkBuiltInVars, locationUtil } from '../utils';
 import { formattedValueToString } from '../valueFormats';
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
-import { getFrameDisplayName, getFieldDisplayName } from './fieldState';
+import { getFieldDisplayName, getFrameDisplayName } from './fieldState';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
 import { getTemplateProxyForField } from './templateProxies';
@@ -427,3 +427,34 @@ export const getLinksSupplier = (
     }
   });
 };
+
+/**
+ * Return a copy of the DataFrame with raw data
+ */
+export function applyRawFieldOverrides(data: DataFrame[]): DataFrame[] {
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  const newData = [...data];
+  const processor = getRawDisplayProcessor();
+
+  for (let frameIndex = 0; frameIndex < newData.length; frameIndex++) {
+    const newFrame = { ...newData[frameIndex] };
+    const newFields = [...newFrame.fields];
+
+    for (let fieldIndex = 0; fieldIndex < newFields.length; fieldIndex++) {
+      newFields[fieldIndex] = {
+        ...newFields[fieldIndex],
+        display: processor,
+      };
+    }
+
+    newData[frameIndex] = {
+      ...newFrame,
+      fields: newFields,
+    };
+  }
+
+  return newData;
+}

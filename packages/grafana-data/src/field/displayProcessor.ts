@@ -4,7 +4,7 @@ import _ from 'lodash';
 // Types
 import { Field, FieldType } from '../types/dataFrame';
 import { GrafanaTheme } from '../types/theme';
-import { DisplayProcessor, DisplayValue, DecimalCount, DecimalInfo } from '../types/displayValue';
+import { DecimalCount, DecimalInfo, DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
@@ -165,4 +165,11 @@ export function getDecimalsForValue(value: number, decimalOverride?: DecimalCoun
   const scaledDecimals = decimals - Math.floor(Math.log(size) / Math.LN10) + 2;
 
   return { decimals, scaledDecimals };
+}
+
+export function getRawDisplayProcessor(): DisplayProcessor {
+  return (value: any) => ({
+    text: `${value}`,
+    numeric: (null as unknown) as number,
+  });
 }
