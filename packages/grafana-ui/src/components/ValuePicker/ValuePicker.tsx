@@ -5,6 +5,7 @@ import { Button, ButtonVariant } from '../Button';
 import { Select } from '../Select/Select';
 import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 import { ComponentSize } from '../../types/size';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface ValuePickerProps<T> {
   /** Label to display on the picker button */
@@ -42,18 +43,20 @@ export function ValuePicker<T>({
       {!isPicking && (isFullWidth ? <FullWidthButtonContainer>{buttonEl}</FullWidthButtonContainer> : buttonEl)}
 
       {isPicking && (
-        <Select
-          placeholder={label}
-          options={options}
-          isOpen
-          onCloseMenu={() => setIsPicking(false)}
-          autoFocus={true}
-          onChange={value => {
-            setIsPicking(false);
-            onChange(value);
-          }}
-          menuPlacement={menuPlacement}
-        />
+        <span aria-label={selectors.components.ValuePicker.select(label)}>
+          <Select
+            placeholder={label}
+            options={options}
+            isOpen
+            onCloseMenu={() => setIsPicking(false)}
+            autoFocus={true}
+            onChange={value => {
+              setIsPicking(false);
+              onChange(value);
+            }}
+            menuPlacement={menuPlacement}
+          />
+        </span>
       )}
     </>
   );

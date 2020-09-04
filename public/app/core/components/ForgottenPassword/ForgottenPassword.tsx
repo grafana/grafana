@@ -4,6 +4,8 @@ import { getBackendSrv } from '@grafana/runtime';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
+import config from 'app/core/config';
+
 interface EmailDTO {
   userOrEmail: string;
 }
@@ -53,7 +55,7 @@ export const ForgottenPassword: FC = () => {
           </Field>
           <HorizontalGroup>
             <Button>Send reset email</Button>
-            <LinkButton variant="link" href="/login">
+            <LinkButton variant="link" href={`${config.appSubUrl}/login`}>
               Back to login
             </LinkButton>
           </HorizontalGroup>

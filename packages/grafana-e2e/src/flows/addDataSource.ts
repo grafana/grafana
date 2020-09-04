@@ -1,7 +1,7 @@
-import { v4 as uuidv4 } from 'uuid';
 import { DeleteDataSourceConfig } from './deleteDataSource';
 import { e2e } from '../index';
 import { fromBaseUrl, getDataSourceId } from '../support/url';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface AddDataSourceConfig {
   basicAuth: boolean;
@@ -9,16 +9,15 @@ export interface AddDataSourceConfig {
   basicAuthUser: string;
   checkHealth: boolean;
   expectedAlertMessage: string | RegExp;
-  form: Function;
+  form: () => void;
   name: string;
   skipTlsVerify: boolean;
   type: string;
 }
 
-// @todo improve config input/output: https://stackoverflow.com/a/63507459/923745
-// @todo this actually returns type `Cypress.Chainable`
-export const addDataSource = (config?: Partial<AddDataSourceConfig>): any => {
-  const fullConfig = {
+// @todo this actually returns type `Cypress.Chainable<AddDaaSourceConfig>`
+export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
+  const fullConfig: AddDataSourceConfig = {
     basicAuth: false,
     basicAuthPassword: '',
     basicAuthUser: '',
@@ -29,7 +28,7 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>): any => {
     skipTlsVerify: false,
     type: 'TestData DB',
     ...config,
-  } as AddDataSourceConfig;
+  };
 
   const {
     basicAuth,
