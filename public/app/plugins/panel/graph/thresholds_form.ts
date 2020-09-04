@@ -54,7 +54,6 @@ export class ThresholdFormCtrl {
 
   handleValueChange(index: number) {
     const inputValue = this.panel.thresholds[index].inputValue;
-
     if (isNaN(inputValue)) {
       this.panel.thresholds[index].value = +templateSrv.replace(inputValue);
     } else {
