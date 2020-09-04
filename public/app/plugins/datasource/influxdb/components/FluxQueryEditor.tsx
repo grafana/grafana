@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import coreModule from 'app/core/core_module';
 import { InfluxQuery } from '../types';
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, QueryEditorProps } from '@grafana/data';
 import { cx, css } from 'emotion';
 import {
   InlineFormLabel,
@@ -12,12 +12,9 @@ import {
   CodeEditorSuggestionItemKind,
 } from '@grafana/ui';
 import { getTemplateSrv } from '@grafana/runtime';
+import InfluxDatasource from '../datasource';
 
-interface Props {
-  target: InfluxQuery;
-  change: (target: InfluxQuery) => void;
-  refresh: () => void;
-}
+type Props = QueryEditorProps<InfluxDatasource, InfluxQuery>;
 
 const samples: Array<SelectableValue<string>> = [
   { label: 'Show buckets', description: 'List the avaliable buckets (table)', value: 'buckets()' },

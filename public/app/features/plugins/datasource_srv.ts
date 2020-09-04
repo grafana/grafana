@@ -114,6 +114,9 @@ export class DatasourceSrv implements DataSourceService {
     this.addDataSourceVariables(sources);
 
     Object.values(config.datasources).forEach(value => {
+      // if (value.meta?.annotations) {
+      //   sources.push(value);
+      // }
       sources.push(value);
     });
 

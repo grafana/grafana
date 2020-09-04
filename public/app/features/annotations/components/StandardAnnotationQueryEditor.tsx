@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 
 import { AnnotationEventMappings, DataQuery, LoadingState } from '@grafana/data';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { Spinner, Icon } from '@grafana/ui';
 
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -12,7 +11,6 @@ import { standardAnnotationProcessor } from '../standardAnnotationProcessor';
 import { executeAnnotationQuery } from '../annotations_srv';
 import { PanelModel } from 'app/features/dashboard/state';
 import { AnnotationQueryResponse } from '../types';
-import { AngularQueryComponentScope } from '../../dashboard/panel_editor/QueryEditorRow';
 
 interface State {
   running?: boolean;
@@ -20,10 +18,6 @@ interface State {
 }
 
 export default class StandardAnnotationQueryEditor extends PureComponent<Props, State> {
-  element: HTMLElement | null = null;
-  angularScope: AngularQueryComponentScope | null;
-  angularQueryEditor: AngularComponent | null = null;
-
   state = {} as State;
 
   componentDidMount() {
@@ -123,43 +117,8 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     return <div>Found: {events?.length} annotations</div>;
   }
 
-  getAngularQueryComponentScope(): AngularQueryComponentScope {
-    const { datasource, annotation } = this.props;
-    const target = annotation.query ?? { refId: 'Anno' };
-
-    return ({
-      datasource: datasource,
-      target,
-      //   panel: {},
-      dashboard: getDashboardSrv().getCurrent(),
-      refresh: () => this.onRunQuery,
-      render: () => {},
-      // events: panel.events,
-      range: getTimeSrv().timeRange(),
-    } as unknown) as AngularQueryComponentScope;
-  }
-
-  renderAngularQueryEditor = () => {
-    if (!this.element) {
-      return;
-    }
-    if (this.angularQueryEditor) {
-      this.angularQueryEditor.destroy();
-      this.angularQueryEditor = null;
-    }
-    const loader = getAngularLoader();
-    const template = '<plugin-component type="query-ctrl" />';
-    const scopeProps = { ctrl: this.getAngularQueryComponentScope() };
-    this.angularQueryEditor = loader.load(this.element, scopeProps, template);
-    this.angularScope = scopeProps.ctrl;
-  };
-
   renderPluginEditor = () => {
     const { datasource, annotation } = this.props;
-
-    if (datasource?.components?.QueryCtrl) {
-      return <div ref={element => (this.element = element)} />;
-    }
 
     if (datasource?.components?.QueryEditor) {
       const QueryEditor = datasource.components.QueryEditor;
@@ -179,11 +138,11 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       );
     }
 
-    return <div>Data source plugin does not export any Query Editor component</div>;
+    return <div>Data source plugin does not export any Query Editor or Annotation Editor</div>;
   };
 
   render() {
-    const { annotation } = this.props;
+    // const { annotation } = this.props;
 
     // datasource: DSType;
     // query: TQuery;
@@ -195,8 +154,9 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
 
     return (
       <div>
-        <div>HELLO!!!! {JSON.stringify(annotation)}</div>
+        <div>STANDARD/EDITOR</div>
         {this.renderPluginEditor()}
+        <div>AFTER</div>
       </div>
     );
     // const { response } = this.state;

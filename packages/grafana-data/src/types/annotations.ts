@@ -1,6 +1,7 @@
-import { DataQuery } from './datasource';
+import { DataQuery, QueryEditorProps } from './datasource';
 import { TimeRange, RawTimeRange } from './time';
 import { DataFrame } from './dataFrame';
+import { ComponentType } from 'react';
 
 export interface StandardAnnotationQuery<TQuery extends DataQuery = DataQuery> {
   datasource: string;
@@ -89,4 +90,9 @@ export interface AnnotationProcessor<TQuery extends DataQuery = DataQuery, TAnno
    * When the standard frame > event processing is insufficient, this allows explicit control of the mappings
    */
   processEvents?(anno: TAnno, data: DataFrame): AnnotationEvent[] | undefined;
+
+  /**
+   * Specify a custom QueryEditor for the annotaiton page.  If not specified, the standard one will be used
+   */
+  QueryEditor?: ComponentType<QueryEditorProps<any, TQuery>>;
 }

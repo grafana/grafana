@@ -12,6 +12,7 @@ import {
   MetricFindValue,
   AnnotationQueryRequest,
   AnnotationEvent,
+  StandardAnnotationQuery,
 } from '@grafana/data';
 import { v4 as uuidv4 } from 'uuid';
 import InfluxSeries from './influx_series';
@@ -21,6 +22,7 @@ import { InfluxQueryBuilder } from './query_builder';
 import { InfluxQuery, InfluxOptions, InfluxVersion } from './types';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
+import { FluxQueryEditor } from './components/FluxQueryEditor';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
   type: string;
@@ -55,6 +57,20 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
     this.isFlux = settingsData.version === InfluxVersion.Flux;
+
+    if (this.isFlux) {
+      // When flux, attach an annotation processor
+      this.annotationProcessor = {
+        QueryEditor: FluxQueryEditor,
+
+        prepareQuery: (anno: StandardAnnotationQuery<InfluxQuery>) => {
+          if (!anno.query?.query) {
+            return undefined;
+          }
+          return anno.query;
+        },
+      };
+    }
   }
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
