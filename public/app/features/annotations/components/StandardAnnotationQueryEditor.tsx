@@ -70,10 +70,10 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     });
   };
 
-  onQueryChange = (query: DataQuery) => {
+  onQueryChange = (target: DataQuery) => {
     this.props.change({
       ...this.props.annotation,
-      query,
+      target,
     });
   };
 
@@ -86,7 +86,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
 
   renderStatus() {
     const { response, running } = this.state;
-    if (running || response?.state === LoadingState.Loading) {
+    if (running || response?.panelData?.state === LoadingState.Loading) {
       return (
         <div>
           <Spinner />
@@ -94,9 +94,9 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
         </div>
       );
     }
-    const { events, error } = response!;
+    const { events, panelData } = response!;
 
-    if (error) {
+    if (panelData?.error) {
       return (
         <div
           className={cx(
@@ -107,7 +107,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
           )}
         >
           <Icon name="exclamation-triangle" /> &nbsp;
-          {error.message}
+          {panelData.error.message}
         </div>
       );
     }
@@ -117,46 +117,32 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     return <div>Found: {events?.length} annotations</div>;
   }
 
-  renderPluginEditor = () => {
+  render() {
     const { datasource, annotation } = this.props;
+    const { response } = this.state;
 
     // Find the annotaiton runner
     let QueryEditor = datasource.annotations?.QueryEditor || datasource.components?.QueryEditor;
     if (!QueryEditor) {
-      return <div>Missing QueryEditor or Annotation Editor</div>;
+      return <div>Annotations are not supported. This datasource needs to export a QueryEditor</div>;
     }
 
-    const query = annotation.query ?? { refId: 'Anno' };
+    const query = annotation.target ?? { refId: 'Anno' };
     return (
-      <QueryEditor
-        key={datasource?.name}
-        query={query}
-        datasource={datasource}
-        onChange={this.onQueryChange}
-        onRunQuery={this.onRunQuery}
-        // data={data}
-        range={getTimeSrv().timeRange()}
-      />
-    );
-  };
-
-  render() {
-    // const { annotation } = this.props;
-
-    // datasource: DSType;
-    // query: TQuery;
-    // onRunQuery: () => void;
-    // onChange: (value: TQuery) => void;
-    // onBlur?: () => void;
-    // data?: PanelData;
-    // range?: TimeRange;
-
-    return (
-      <div>
-        <div>STANDARD/EDITOR</div>
-        {this.renderPluginEditor()}
-        <div>AFTER</div>
-      </div>
+      <>
+        <QueryEditor
+          key={datasource?.name}
+          query={query}
+          datasource={datasource}
+          onChange={this.onQueryChange}
+          onRunQuery={this.onRunQuery}
+          data={response?.panelData}
+          range={getTimeSrv().timeRange()}
+        />
+        {this.renderStatus()}
+        [MAPPER]
+        <br />
+      </>
     );
     // const { response } = this.state;
 
@@ -169,7 +155,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     //   <>
     //     <FluxQueryEditor target={query} change={this.onQueryChange} refresh={this.runQuery} />
     //     <br />
-    //     {this.renderStatus()}
+    //
     //     <br />
     //     <AnnotationFieldMapper
     //       frame={rsp?.data[0]}

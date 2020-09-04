@@ -483,22 +483,6 @@ export interface DataSourceJsonData {
 }
 
 /**
- * Options passed to the datasource.annotationQuery method. See docs/plugins/developing/datasource.md
- *
- * @deprecated -- use {@link AnnotationSupport}
- */
-export interface AnnotationQueryRequest<MoreOptions = {}> {
-  range: TimeRange;
-  rangeRaw: RawTimeRange;
-  // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
-  dashboard: any;
-  annotation: {
-    datasource: string;
-    enable: boolean;
-    name: string;
-  } & MoreOptions;
-}
-/**
  * Data Source instance edit model.  This is returned from:
  *  /api/datasources
  */
@@ -557,6 +541,23 @@ export interface DataSourceSelectItem {
   value: string | null;
   meta: DataSourcePluginMeta;
   sort: string;
+}
+
+/**
+ * Options passed to the datasource.annotationQuery method. See docs/plugins/developing/datasource.md
+ *
+ * @deprecated -- use {@link AnnotationSupport}
+ */
+export interface AnnotationQueryRequest<MoreOptions = {}> {
+  range: TimeRange;
+  rangeRaw: RawTimeRange;
+  // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
+  dashboard: any;
+  annotation: {
+    datasource: string;
+    enable: boolean;
+    name: string;
+  } & MoreOptions;
 }
 
 export interface HistoryItem<TQuery extends DataQuery = DataQuery> {

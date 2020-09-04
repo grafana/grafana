@@ -1,4 +1,4 @@
-import { DataQueryError, DataFrame, AnnotationEvent, LoadingState, TimeRange } from '@grafana/data';
+import { PanelData, DataFrame, AnnotationEvent, TimeRange } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../dashboard/state';
 
 export interface AnnotationQueryOptions {
@@ -9,9 +9,9 @@ export interface AnnotationQueryOptions {
 
 export interface AnnotationQueryResponse {
   /**
-   * Optionally return the original data frames
+   * All the data flattened to a single frame
    */
-  data?: DataFrame; // Multiple frames will always be joined first
+  frame?: DataFrame;
 
   /**
    * The processed annotation events
@@ -19,13 +19,7 @@ export interface AnnotationQueryResponse {
   events?: AnnotationEvent[];
 
   /**
-   * Optionally include error info along with the response data
+   * The original panel response
    */
-  error?: DataQueryError;
-
-  /**
-   * Use this to control which state the response should have
-   * Defaults to LoadingState.Done if state is not defined
-   */
-  state?: LoadingState;
+  panelData?: PanelData;
 }

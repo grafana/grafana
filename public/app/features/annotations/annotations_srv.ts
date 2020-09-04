@@ -145,7 +145,7 @@ export class AnnotationsSrv {
       promises.push(
         datasourcePromise
           .then((datasource: DataSourceApi) => {
-            if (datasource.annotationQuery && !datasource.annotationProcessor) {
+            if (datasource.annotationQuery && !datasource.annotations) {
               return datasource.annotationQuery({
                 range,
                 rangeRaw: range.raw,
@@ -215,7 +215,7 @@ export function executeAnnotationQuery(
 ): Observable<AnnotationQueryResponse> {
   const processor = {
     ...standardAnnotationSupport,
-    ...datasource.annotationProcessor,
+    ...datasource.annotations,
   };
 
   const annotation = processor.prepareAnnotation!(savedJsonAnno);
@@ -261,10 +261,10 @@ export function executeAnnotationQuery(
 
   return runRequest(datasource, queryRequest).pipe(
     map(panelData => {
-      const data = singleFrameFromPanelData(panelData);
-      const events = data ? processor.processEvents!(annotation, data) : [];
+      const frame = singleFrameFromPanelData(panelData);
+      const events = frame ? processor.processEvents!(annotation, frame) : [];
 
-      return { state: panelData.state, error: panelData.error, data, events } as AnnotationQueryResponse;
+      return { panelData, frame, events };
     })
   );
 }

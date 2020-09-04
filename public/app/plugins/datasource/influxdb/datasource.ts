@@ -63,11 +63,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       this.annotations = {
         QueryEditor: FluxQueryEditor,
 
+        // Do now send an empty query
         prepareQuery: (anno: AnnotationQuery<InfluxQuery>) => {
-          if (!anno.query?.query) {
+          if (!anno.target?.query) {
             return undefined;
           }
-          return anno.query;
+          return anno.target;
         },
       };
     }

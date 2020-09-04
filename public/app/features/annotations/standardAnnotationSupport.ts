@@ -24,7 +24,7 @@ export const standardAnnotationSupport: AnnotationSupport = {
       const { query, ...rest } = json;
       return {
         ...rest,
-        query: {
+        target: {
           query,
         },
         mappings: {},
@@ -38,7 +38,7 @@ export const standardAnnotationSupport: AnnotationSupport = {
    * This query will be executed in the datasource and the results converted into events.
    * Returning an undefined result will quietly skip query execution
    */
-  prepareQuery: (anno: AnnotationQuery) => anno.query,
+  prepareQuery: (anno: AnnotationQuery) => anno.target,
 
   /**
    * When the standard frame > event processing is insufficient, this allows explicit control of the mappings
@@ -134,10 +134,12 @@ export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationEv
 
     if (opt.source === AnnotationEventFieldMapValue.Text) {
       setter.text = opt.value;
-    } else if (opt.value) {
-      setter.field = byName[opt.value];
-    } else if (evts.field) {
-      setter.field = evts.field(frame);
+    } else {
+      const lower = (opt.value || evts.key).toLowerCase();
+      setter.field = byName[lower];
+      if (!setter.field && evts.field) {
+        setter.field = evts.field(frame);
+      }
     }
 
     if (setter.field || setter.text) {
@@ -163,8 +165,8 @@ export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationEv
       if (f.text) {
         v = f.text; // TODO support templates!
       } else if (f.field) {
-        let v = f.field.values.get(i);
-        if (v && f.regex) {
+        v = f.field.values.get(i);
+        if (v !== undefined && f.regex) {
           const match = f.regex.exec(v);
           if (match) {
             v = match[1] ? match[1] : match[0];

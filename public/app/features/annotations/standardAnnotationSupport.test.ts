@@ -12,7 +12,33 @@ describe('DataFrame to annotations', () => {
     });
 
     const events = getAnnotationsFromFrame(frame);
-    expect(events).toMatchInlineSnapshot();
+    expect(events).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "tags": Array [
+            "aaa",
+            "bbb",
+          ],
+          "text": "t1",
+          "time": 1,
+        },
+        Object {
+          "tags": Array [
+            "bbb",
+            "ccc",
+          ],
+          "text": "t2",
+          "time": 2,
+        },
+        Object {
+          "tags": Array [
+            "zyz",
+          ],
+          "text": "t3",
+          "time": 3,
+        },
+      ]
+    `);
   });
 
   test('explicit mappins', () => {

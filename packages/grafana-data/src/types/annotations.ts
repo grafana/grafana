@@ -1,5 +1,4 @@
 import { DataQuery, QueryEditorProps } from './datasource';
-import { TimeRange, RawTimeRange } from './time';
 import { DataFrame } from './dataFrame';
 import { ComponentType } from 'react';
 
@@ -7,9 +6,10 @@ export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> {
   datasource: string;
   enable: boolean;
   name: string;
+  iconColor: string;
 
   // Standard datasource query
-  query?: TQuery;
+  target?: TQuery;
 
   // Convert a dataframe to an annotation
   mappings?: AnnotationEventMappings;
