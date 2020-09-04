@@ -8,7 +8,6 @@ import {
   DataQueryResponse,
   GrafanaTheme,
   dateTimeFormat,
-  systemDateFormats,
 } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { cx, css } from 'emotion';
