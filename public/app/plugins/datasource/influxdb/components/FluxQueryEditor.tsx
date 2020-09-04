@@ -14,6 +14,7 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import InfluxDatasource from '../datasource';
 
+// @ts-ignore -- complicated since the datasource is not really reactified yet!
 type Props = QueryEditorProps<InfluxDatasource, InfluxQuery>;
 
 const samples: Array<SelectableValue<string>> = [
@@ -84,20 +85,19 @@ v1.tagValues(
 
 export class FluxQueryEditor extends PureComponent<Props> {
   onFluxQueryChange = (query: string) => {
-    const { target, change } = this.props;
-    change({ ...target, query });
-    this.props.refresh();
+    this.props.onChange({ ...this.props.query, query });
+    this.props.onRunQuery();
   };
 
   onSampleChange = (val: SelectableValue<string>) => {
-    this.props.change({
-      ...this.props.target,
+    this.props.onChange({
+      ...this.props.query,
       query: val.value!,
     });
 
     // Angular HACK: Since the target does not actually change!
     this.forceUpdate();
-    this.props.refresh();
+    this.props.onRunQuery();
   };
 
   getSuggestions = (): CodeEditorSuggestionItem[] => {
@@ -154,7 +154,7 @@ export class FluxQueryEditor extends PureComponent<Props> {
   };
 
   render() {
-    const { target } = this.props;
+    const { query } = this.props;
 
     const helpTooltip = (
       <div>
@@ -168,7 +168,7 @@ export class FluxQueryEditor extends PureComponent<Props> {
         <CodeEditor
           height={'200px'}
           language="sql"
-          value={target.query || ''}
+          value={query.query || ''}
           onBlur={this.onFluxQueryChange}
           onSave={this.onFluxQueryChange}
           showMiniMap={false}
@@ -208,6 +208,6 @@ export class FluxQueryEditor extends PureComponent<Props> {
 coreModule.directive('fluxQueryEditor', [
   'reactDirective',
   (reactDirective: any) => {
-    return reactDirective(FluxQueryEditor, ['target', 'change', 'refresh']);
+    return reactDirective(FluxQueryEditor, ['query', 'onChange', 'onRunQuery']);
   },
 ]);

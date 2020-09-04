@@ -120,25 +120,24 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   renderPluginEditor = () => {
     const { datasource, annotation } = this.props;
 
-    if (datasource?.components?.QueryEditor) {
-      const QueryEditor = datasource.components.QueryEditor;
-      const query = annotation.query ?? { refId: 'Anno' };
-      console.log('QUERY! (for editor)', query);
-
-      return (
-        <QueryEditor
-          key={datasource?.name}
-          query={query}
-          datasource={datasource}
-          onChange={this.onQueryChange}
-          onRunQuery={this.onRunQuery}
-          // data={data}
-          range={getTimeSrv().timeRange()}
-        />
-      );
+    // Find the annotaiton runner
+    let QueryEditor = datasource.annotationProcessor?.QueryEditor || datasource.components?.QueryEditor;
+    if (!QueryEditor) {
+      return <div>Missing QueryEditor or Annotation Editor</div>;
     }
 
-    return <div>Data source plugin does not export any Query Editor or Annotation Editor</div>;
+    const query = annotation.query ?? { refId: 'Anno' };
+    return (
+      <QueryEditor
+        key={datasource?.name}
+        query={query}
+        datasource={datasource}
+        onChange={this.onQueryChange}
+        onRunQuery={this.onRunQuery}
+        // data={data}
+        range={getTimeSrv().timeRange()}
+      />
+    );
   };
 
   render() {
