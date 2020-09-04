@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, fireEvent, screen, waitFor, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { mockSearch } from './mocks';
 import { DashboardSearch, Props } from './DashboardSearch';
 import { searchResults } from '../testData';
@@ -91,8 +92,8 @@ describe('DashboardSearch', () => {
     const tagComponent = screen.getByLabelText('Tag filter').querySelector('div') as Node;
     fireEvent.keyDown(tagComponent, { keyCode: 40 });
 
-    await waitFor(() => screen.getByText('tag1'));
-    fireEvent.click(screen.getByText('tag1'));
+    const firstTag = await screen.findByText('tag1');
+    userEvent.click(firstTag);
 
     expect(tagComponent).toBeInTheDocument();
 
