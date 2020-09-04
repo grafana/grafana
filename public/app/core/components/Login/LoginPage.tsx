@@ -12,6 +12,8 @@ import { Branding } from 'app/core/components/Branding/Branding';
 import { HorizontalGroup, LinkButton } from '@grafana/ui';
 import { LoginLayout, InnerBox } from './LoginLayout';
 
+import config from 'app/core/config';
+
 const forgottenPasswordStyles = css`
   padding: 0;
   margin-top: 4px;
@@ -51,7 +53,7 @@ export const LoginPage: FC = () => {
                           <LinkButton
                             className={forgottenPasswordStyles}
                             variant="link"
-                            href="/user/password/send-reset-email"
+                            href={`${config.appSubUrl}/user/password/send-reset-email`}
                           >
                             Forgot your password?
                           </LinkButton>
