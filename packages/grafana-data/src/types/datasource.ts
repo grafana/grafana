@@ -3,7 +3,8 @@ import { ComponentType } from 'react';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { PanelData } from './panel';
 import { LogRowModel } from './logs';
-import { AnnotationEvent, KeyValue, LoadingState, TableData, TimeSeries } from './data';
+import { AnnotationEvent, AnnotationProcessor, AnnotationQueryRequest } from './annotations';
+import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
@@ -155,8 +156,7 @@ export interface DataSourceConstructor<
  */
 export abstract class DataSourceApi<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData,
-  TAnno = TQuery // defatult to direct query
+  TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
   /**
    *  Set in constructor
@@ -268,10 +268,20 @@ export abstract class DataSourceApi<
   showContextToggle?(row?: LogRowModel): boolean;
 
   /**
-   * Can be optionally implemented to allow datasource to be a source of annotations for dashboard. To be visible
-   * in the annotation editor `annotations` capability also needs to be enabled in plugin.json.
+   * An annotation processor allows explict control for how annotations are managed.
+   *
+   * It is only necessary to configure an annotation processor if the default behavior is not desirable
    */
-  annotationQuery?(options: AnnotationQueryRequest<TAnno>): Promise<AnnotationEvent[]>;
+  annotationProcessor?: AnnotationProcessor<TQuery>;
+
+  /**
+   * Can be optionally implemented to allow datasource to be a source of annotations for dashboard.
+   * This function will only be called if an angular {@link AnnotationsQueryCtrl} is configured and
+   * the {@link annotationProcessor} is undefined
+   *
+   * @deprecated -- prefer using `annotationProcessor`
+   */
+  annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
 
   interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
 }
@@ -467,12 +477,6 @@ export interface MetricFindValue {
   expandable?: boolean;
 }
 
-export interface BaseAnnotationQuery {
-  datasource: string;
-  enable: boolean;
-  name: string;
-}
-
 export interface DataSourceJsonData {
   authType?: string;
   defaultRegion?: string;
@@ -537,24 +541,6 @@ export interface DataSourceSelectItem {
   value: string | null;
   meta: DataSourcePluginMeta;
   sort: string;
-}
-
-/**
- * Options passed to the datasource.annotationQuery method. See docs/plugins/developing/datasource.md
- */
-export interface AnnotationQueryRequest<TAnno = {}> {
-  range: TimeRange;
-  rangeRaw: RawTimeRange;
-  interval: string;
-  intervalMs: number;
-  maxDataPoints?: number;
-  app: CoreApp | string;
-
-  // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
-  dashboard: any;
-
-  // The annotation query and common properties
-  annotation: BaseAnnotationQuery & TAnno;
 }
 
 export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
