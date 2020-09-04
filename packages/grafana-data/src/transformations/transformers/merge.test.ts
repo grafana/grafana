@@ -534,6 +534,35 @@ describe('Merge multipe to single', () => {
     expect(fields[1].config).toEqual({});
     expect(fields).toEqual(expected);
   });
+
+  it('combine multiple empty series should return one empty serie', () => {
+    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
+      id: DataTransformerID.merge,
+      options: {},
+    };
+
+    const serieA = toDataFrame({
+      name: 'A',
+      fields: [],
+    });
+
+    const serieB = toDataFrame({
+      name: 'B',
+      fields: [],
+    });
+
+    const serieC = toDataFrame({
+      name: 'C',
+      fields: [],
+    });
+
+    const result = transformDataFrame([cfg], [serieA, serieB, serieC]);
+    const expected: Field[] = [];
+    const fields = unwrap(result[0].fields);
+
+    expect(fields).toEqual(expected);
+    expect(result.length).toEqual(1);
+  });
 });
 
 const createField = (name: string, type: FieldType, values: any[], config = {}): Field => {

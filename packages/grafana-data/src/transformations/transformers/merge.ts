@@ -19,11 +19,16 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
   defaultOptions: {},
   transformer: (options: MergeTransformerOptions) => {
     return (dataFrames: DataFrame[]) => {
-      if (!Array.isArray(dataFrames) || dataFrames.length <= 1) {
+      if (!Array.isArray(dataFrames) || dataFrames.length === 0) {
         return dataFrames;
       }
 
       const data = dataFrames.filter(frame => frame.fields.length > 0);
+
+      if (data.length === 0) {
+        return [dataFrames[0]];
+      }
+
       const fieldNames = new Set<string>();
       const fieldIndexByName: Record<string, Record<number, number>> = {};
       const fieldNamesForKey: string[] = [];
