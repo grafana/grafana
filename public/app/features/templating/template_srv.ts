@@ -282,7 +282,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     let variable;
     this.regex.lastIndex = 0;
 
-    return target.replace(this.regex, (match: any, var1: any, var2: any, fmt2: any, var3: any) => {
+    return target.replace(this.regex, (match: any, var1: any, var2: any, fmt2: any, var3: any, fieldPath: any) => {
       if (scopedVars) {
         const option = scopedVars[var1 || var2 || var3];
         if (option) {
@@ -290,13 +290,20 @@ export class TemplateSrv implements BaseTemplateSrv {
         }
       }
 
-      variable = this.getVariableAtIndex(var1 || var2 || var3);
+      const variableName = var1 || var2 || var3;
+      variable = this.getVariableAtIndex(variableName);
+
       if (!variable) {
         return match;
       }
 
-      const value = this.grafanaVariables[variable.current.value];
+      if (variable.current?.value && Object.keys(this.grafanaVariables).length === 0) {
+        return this.getVariableValue(variableName, fieldPath, {
+          [variableName]: { value: variable.current.value, text: match },
+        });
+      }
 
+      const value = this.grafanaVariables[variable.current.value];
       return typeof value === 'string' ? value : variable.current.text;
     });
   }
