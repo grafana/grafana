@@ -75,10 +75,10 @@ export class AnnotationsEditorCtrl {
   /**
    * Called from the react editor
    */
-  onAnnotationChange(annotation: any) {
+  onAnnotationChange = (annotation: any) => {
     console.log('SAVE THE annotation!', annotation, this);
     this.currentAnnotation = annotation;
-  }
+  };
 
   edit(annotation: any) {
     this.currentAnnotation = annotation;
