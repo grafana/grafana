@@ -648,7 +648,7 @@ describe('applyRawFieldOverrides', () => {
       numeric: 1599045551050,
       prefix: undefined,
       suffix: undefined,
-      text: '2020-09-02 13:19:11',
+      text: '2020-09-02 11:19:11',
     });
   };
 
@@ -710,7 +710,7 @@ describe('applyRawFieldOverrides', () => {
       dataFrameA.fields[2].display = getDisplayProcessor({ field: dataFrameA.fields[2] });
       dataFrameA.fields[3].display = getDisplayProcessor({ field: dataFrameA.fields[3] });
       dataFrameA.fields[4].display = getDisplayProcessor({ field: dataFrameA.fields[4] });
-      dataFrameA.fields[5].display = getDisplayProcessor({ field: dataFrameA.fields[5] });
+      dataFrameA.fields[5].display = getDisplayProcessor({ field: dataFrameA.fields[5], timeZone: 'utc' });
 
       const dataFrameB: DataFrame = toDataFrame({
         fields: [numberAsEpoc, numberWithDecimals, numberAsBoolean, boolean, string, datetime],
@@ -721,14 +721,16 @@ describe('applyRawFieldOverrides', () => {
       dataFrameB.fields[2].display = getDisplayProcessor({ field: dataFrameB.fields[2] });
       dataFrameB.fields[3].display = getDisplayProcessor({ field: dataFrameB.fields[3] });
       dataFrameB.fields[4].display = getDisplayProcessor({ field: dataFrameB.fields[4] });
-      dataFrameB.fields[5].display = getDisplayProcessor({ field: dataFrameB.fields[5] });
+      dataFrameB.fields[5].display = getDisplayProcessor({ field: dataFrameB.fields[5], timeZone: 'utc' });
 
       const data = [dataFrameA, dataFrameB];
       const rawData = applyRawFieldOverrides(data);
 
+      // expect raw data is correct
       expectRawDataDisplayValue(rawData, 0);
       expectRawDataDisplayValue(rawData, 1);
 
+      // expect the original data is still the same
       expectFormattedDataDisplayValue(data, 0);
       expectFormattedDataDisplayValue(data, 1);
     });
