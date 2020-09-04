@@ -62,8 +62,12 @@ export type BackendSrvRequest = {
   params?: Record<string, any>;
 
   /**
-   * Indicates whether or not cross-site Access-Control requests should be made using credentials such as cookies, authorization headers or TLS client certificates. Setting withCredentials has no effect on same-site requests.
-   * In addition, this flag is also used to indicate when cookies are to be ignored in the response.
+   * The credentials read-only property of the Request interface indicates whether the user agent should send cookies from the other domain in the case of cross-origin requests.
+   */
+  credentials?: RequestCredentials;
+
+  /**
+   * @deprecated withCredentials is deprecated in favor of credentials
    */
   withCredentials?: boolean;
 };
