@@ -11,6 +11,7 @@ describe('dateTimeParse', () => {
     systemDateFormats.update({
       fullDate: 'MMMM D, YYYY, h:mm:ss a',
       interval: {} as any,
+      useBrowserLocale: false,
     });
 
     const date = dateTimeParse('Aug 20, 2020 10:30:20 am', { timeZone: 'utc' });
