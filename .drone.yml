@@ -299,7 +299,8 @@ steps:
   commands:
   - ./bin/grabpl test-frontend --publish-metrics --api-key $${GRAFANA_MISC_STATS_API_KEY}
   environment:
-    TEST_MAX_WORKERS: 50%
+    GRAFANA_MISC_STATS_API_KEY:
+      from_secret: grafana_misc_stats_api_key
   depends_on:
   - initialize
 

@@ -357,7 +357,7 @@ def test_frontend_step(publish_metrics=False):
     flags_str = ''
     if publish_metrics:
         flags_str = ' --publish-metrics --api-key $${GRAFANA_MISC_STATS_API_KEY}'
-    return {
+    dct = {
         'name': 'test-frontend',
         'image': build_image,
         'depends_on': [
@@ -370,6 +370,14 @@ def test_frontend_step(publish_metrics=False):
             './bin/grabpl test-frontend{}'.format(flags_str),
         ],
     }
+    if publish_metrics:
+        dct['environment'] = {
+            'GRAFANA_MISC_STATS_API_KEY': {
+                'from_secret': 'grafana_misc_stats_api_key',
+            },
+        }
+
+    return dct
 
 def codespell_step():
     return {
