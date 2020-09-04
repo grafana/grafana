@@ -4,7 +4,8 @@ import kbn from 'app/core/utils/kbn';
 
 import {
   DataSourceApi,
-  AnnotationEvent,
+  //  AnnotationEvent,
+  AnnotationEventMappings,
   AnnotationQueryResponse,
   DataQueryResponse,
   LoadingState,
@@ -28,7 +29,7 @@ interface State {
   response?: AnnotationQueryResponse;
 }
 
-export class AnnotationQueryEditor extends PureComponent<Props, State> {
+export default class AnnotationQueryEditor extends PureComponent<Props, State> {
   state = {} as State;
 
   componentDidMount() {
@@ -85,7 +86,7 @@ export class AnnotationQueryEditor extends PureComponent<Props, State> {
   onMappingChange = (mapping: AnnotationEventMappings) => {
     this.props.change({
       ...this.props.annotation,
-      mappings,
+      mapping,
     });
   };
 

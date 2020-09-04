@@ -7,6 +7,9 @@ import DatasourceSrv from '../plugins/datasource_srv';
 import appEvents from 'app/core/app_events';
 import { AppEvents } from '@grafana/data';
 
+// Registeres the angular directive
+import './components/AnnotationQueryEditor';
+
 export class AnnotationsEditorCtrl {
   mode: any;
   datasources: any;
@@ -67,6 +70,13 @@ export class AnnotationsEditorCtrl {
     this.$scope.$apply(() => {
       this.currentDatasource = newDatasource;
     });
+  }
+
+  /**
+   * Called from the react editor
+   */
+  onAnnotationChange(annotation: any) {
+    this.currentAnnotation = annotation;
   }
 
   edit(annotation: any) {

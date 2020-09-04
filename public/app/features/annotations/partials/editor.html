@@ -117,7 +117,10 @@
 
     <h5 class="section-heading">Query</h5>
     <rebuild-on-change property="ctrl.currentDatasource">
-      <plugin-component type="annotations-query-ctrl"> </plugin-component>
+      <standard-annotation-editor
+        annotation="ctrl.currentAnnotation"
+        datasource="ctrl.currentDatasource"
+        change="ctrl.onAnnotationChange" />
     </rebuild-on-change>
 
     <div class="gf-form">
