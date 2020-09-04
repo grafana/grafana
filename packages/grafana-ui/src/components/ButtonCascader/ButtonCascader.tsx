@@ -53,7 +53,7 @@ export const ButtonCascader: React.FC<ButtonCascaderProps> = props => {
       {...rest}
       expandIcon={null}
     >
-      <button className={cx('gf-form-label', className)} disabled={props.disabled} data-testid="bc-button">
+      <button className={cx('gf-form-label', className)} disabled={props.disabled}>
         {icon && <Icon name={icon} className={styles.icons.left} />}
         {props.children}
         <Icon name="angle-down" className={styles.icons.right} />

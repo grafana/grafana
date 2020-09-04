@@ -5,7 +5,7 @@ import PromQlLanguageProvider, { DEFAULT_LOOKUP_METRICS_THRESHOLD } from '../lan
 import PromQueryField, { groupMetricsByPrefix, RECORDING_RULES_GROUP } from './PromQueryField';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { PromOptions } from '../types';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 describe('PromQueryField', () => {
   beforeAll(() => {
@@ -31,7 +31,7 @@ describe('PromQueryField', () => {
       />
     );
 
-    expect(queryField.getAllByTestId('bc-button')).toHaveLength(1);
+    expect(queryField.getAllByRole('button')).toHaveLength(1);
   });
 
   it('renders a disabled metrics chooser if lookups are disabled in datasource settings', () => {
@@ -46,7 +46,7 @@ describe('PromQueryField', () => {
       />
     );
 
-    const bcButton = queryField.getByTestId('bc-button');
+    const bcButton = queryField.getByRole('button');
     expect(bcButton).toBeDisabled();
   });
 
@@ -76,9 +76,9 @@ describe('PromQueryField', () => {
       />
     );
 
-   let cascader = queryField.getByTestId('bc-button');
+    let cascader = await queryField.findByRole('button');
     fireEvent.keyDown(cascader, { keyCode: 40 });
-    let listNodes = await screen.findAllByRole('menuitem');
+    let listNodes = screen.getAllByRole('menuitem');
     for (const node of listNodes) {
       expect(metrics).toContain(node.innerHTML);
     }
@@ -100,7 +100,7 @@ describe('PromQueryField', () => {
       />
     );
 
-    cascader = await queryField.findByTestId('bc-button');
+    cascader = await queryField.findByRole('button');
     fireEvent.keyDown(cascader, { keyCode: 40 });
     listNodes = screen.getAllByRole('menuitem');
     for (const node of listNodes) {
