@@ -50,67 +50,6 @@ export class AnnotationsSrv {
     this.datasourcePromises = null;
   }
 
-  executeAnnotationQuery(
-    options: AnnotationQueryOptions,
-    datasource: DataSourceApi,
-    savedJsonAnno: any
-  ): Observable<AnnotationQueryResponse> {
-    const processor = {
-      ...standardAnnotationProcessor,
-      ...datasource.annotationProcessor,
-    };
-
-    const annotation = processor.prepareAnnotation!(savedJsonAnno);
-    if (!annotation) {
-      return of({});
-    }
-
-    const query = processor.prepareQuery!(annotation);
-    if (!query) {
-      return of({});
-    }
-
-    // No more points than pixels
-    const maxDataPoints = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-
-    // Add interval to annotation queries
-    const interval = rangeUtil.calculateInterval(options.range, maxDataPoints, datasource.interval);
-
-    const scopedVars: ScopedVars = {
-      __interval: { text: interval.interval, value: interval.interval },
-      __interval_ms: { text: interval.intervalMs.toString(), value: interval.intervalMs },
-      __annotation: { text: annotation.name, value: annotation },
-    };
-
-    const queryRequest: DataQueryRequest = {
-      startTime: Date.now(),
-      requestId: getNextRequestId(),
-      range: options.range,
-      maxDataPoints,
-      scopedVars,
-      ...interval,
-      app: CoreApp.Dashboard,
-
-      timezone: options.dashboard.timezone,
-
-      targets: [
-        {
-          ...query,
-          refId: 'Anno',
-        },
-      ],
-    };
-
-    return runRequest(datasource, queryRequest).pipe(
-      map(panelData => {
-        const data = singleFrameFromPanelData(panelData);
-        const events = data ? processor.processEvents!(annotation, data) : [];
-
-        return { state: panelData.state, error: panelData.error, data, events } as AnnotationQueryResponse;
-      })
-    );
-  }
-
   getAnnotations(options: AnnotationQueryOptions) {
     return Promise.all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then(results => {
@@ -214,7 +153,7 @@ export class AnnotationsSrv {
                 dashboard: dashboard,
               });
             }
-            return this.executeAnnotationQuery(options, datasource, annotation)
+            return executeAnnotationQuery(options, datasource, annotation)
               .toPromise()
               .then(res => {
                 return res.events ?? [];
@@ -267,6 +206,67 @@ export class AnnotationsSrv {
 
     return results;
   }
+}
+
+export function executeAnnotationQuery(
+  options: AnnotationQueryOptions,
+  datasource: DataSourceApi,
+  savedJsonAnno: any
+): Observable<AnnotationQueryResponse> {
+  const processor = {
+    ...standardAnnotationProcessor,
+    ...datasource.annotationProcessor,
+  };
+
+  const annotation = processor.prepareAnnotation!(savedJsonAnno);
+  if (!annotation) {
+    return of({});
+  }
+
+  const query = processor.prepareQuery!(annotation);
+  if (!query) {
+    return of({});
+  }
+
+  // No more points than pixels
+  const maxDataPoints = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+
+  // Add interval to annotation queries
+  const interval = rangeUtil.calculateInterval(options.range, maxDataPoints, datasource.interval);
+
+  const scopedVars: ScopedVars = {
+    __interval: { text: interval.interval, value: interval.interval },
+    __interval_ms: { text: interval.intervalMs.toString(), value: interval.intervalMs },
+    __annotation: { text: annotation.name, value: annotation },
+  };
+
+  const queryRequest: DataQueryRequest = {
+    startTime: Date.now(),
+    requestId: getNextRequestId(),
+    range: options.range,
+    maxDataPoints,
+    scopedVars,
+    ...interval,
+    app: CoreApp.Dashboard,
+
+    timezone: options.dashboard.timezone,
+
+    targets: [
+      {
+        ...query,
+        refId: 'Anno',
+      },
+    ],
+  };
+
+  return runRequest(datasource, queryRequest).pipe(
+    map(panelData => {
+      const data = singleFrameFromPanelData(panelData);
+      const events = data ? processor.processEvents!(annotation, data) : [];
+
+      return { state: panelData.state, error: panelData.error, data, events } as AnnotationQueryResponse;
+    })
+  );
 }
 
 coreModule.service('annotationsSrv', AnnotationsSrv);
