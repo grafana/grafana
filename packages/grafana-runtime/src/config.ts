@@ -61,7 +61,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   http2Enabled = false;
-  dateFormats: SystemDateFormatSettings = {} as SystemDateFormatSettings;
+  dateFormats?: SystemDateFormatSettings;
 
   constructor(options: GrafanaBootConfig) {
     this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);
@@ -88,7 +88,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
     merge(this, defaults, options);
 
-    systemDateFormats.update(this.dateFormats);
+    if (this.dateFormats) {
+      systemDateFormats.update(this.dateFormats);
+    }
   }
 }
 

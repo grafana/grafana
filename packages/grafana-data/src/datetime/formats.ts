@@ -18,8 +18,8 @@ export class SystemDateFormatsState {
   interval = {
     second: 'HH:mm:ss',
     minute: 'HH:mm',
-    hour: 'MM-DD HH:mm',
-    day: 'MM-DD',
+    hour: 'MM/DD HH:mm',
+    day: 'MM/DD',
     month: 'YYYY-MM',
     year: 'YYYY',
   };

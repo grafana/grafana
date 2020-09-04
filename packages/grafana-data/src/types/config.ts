@@ -101,5 +101,5 @@ export interface GrafanaConfig {
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
-  dateFormats: SystemDateFormatSettings;
+  dateFormats?: SystemDateFormatSettings;
 }

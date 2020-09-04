@@ -1406,8 +1406,8 @@ Defaults
 ```
 interval_second = HH:mm:ss
 interval_minute = HH:mm
-interval_hour = MM-DD HH:mm
-interval_day = MM-DD
+interval_hour = MM/DD HH:mm
+interval_day = MM/DD
 interval_month = YYYY-MM
 interval_year = YYYY
 ```
