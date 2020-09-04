@@ -102,6 +102,8 @@ export function toSeconds(size: number, decimals?: DecimalCount, scaledDecimals?
   if (size === null) {
     return { text: '' };
   }
+
+  // If 0, use s unit instead of ns
   if (size === 0) {
     return { text: '0', suffix: ' s' };
   }
