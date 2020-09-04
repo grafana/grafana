@@ -27,6 +27,16 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   state = {} as State;
 
   componentDidMount() {
+    this.verifyDataSource();
+  }
+
+  componentDidUpdate(oldProps: Props) {
+    if (this.props.annotation !== oldProps.annotation) {
+      this.verifyDataSource();
+    }
+  }
+
+  verifyDataSource() {
     const { datasource, annotation } = this.props;
 
     // Handle any migration issues
@@ -39,12 +49,6 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     if (fixed !== annotation) {
       this.props.change(fixed);
     } else {
-      this.onRunQuery();
-    }
-  }
-
-  componentDidUpdate(oldProps: Props) {
-    if (this.props.annotation !== oldProps.annotation) {
       this.onRunQuery();
     }
   }
@@ -160,6 +164,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     if (datasource?.components?.QueryEditor) {
       const QueryEditor = datasource.components.QueryEditor;
       const query = annotation.query ?? { refId: 'Anno' };
+      console.log('QUERY! (for editor)', query);
 
       return (
         <QueryEditor

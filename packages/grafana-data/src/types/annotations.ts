@@ -2,7 +2,7 @@ import { DataQuery } from './datasource';
 import { TimeRange, RawTimeRange } from './time';
 import { DataFrame } from './dataFrame';
 
-export interface StandardAnnotationQuery<TQuery = {}> {
+export interface StandardAnnotationQuery<TQuery extends DataQuery = DataQuery> {
   datasource: string;
   enable: boolean;
   name: string;
@@ -64,14 +64,14 @@ export interface AnnotationEventFieldMapping {
   regex?: string;
 }
 
-export type AnnotationEventMappings = Record<keyof AnnotationEvent, AnnotationEventFieldMapping>;
+export type AnnotationEventMappings = Partial<Record<keyof AnnotationEvent, AnnotationEventFieldMapping>>;
 
 /**
  * Since Grafana 7.2
  *
  * This offers a generic approach to annotation processing
  */
-export interface AnnotationProcessor<TQuery = DataQuery, TAnno = StandardAnnotationQuery<TQuery>> {
+export interface AnnotationProcessor<TQuery extends DataQuery = DataQuery, TAnno = StandardAnnotationQuery<TQuery>> {
   /**
    * This hook lets you manipulate any existing stored values before running them though the processor.
    * This is particularly helpful when dealing with migrating old formats.  ie query as a string vs object
