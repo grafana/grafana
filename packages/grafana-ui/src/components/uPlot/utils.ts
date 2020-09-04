@@ -1,9 +1,22 @@
 import throttle from 'lodash/throttle';
-import { DataFrame, FieldType, getFieldDisplayName, getTimeField, GrafanaTheme, TimeRange } from '@grafana/data';
-import { rangeToMinMax } from './MicroPlot';
+import {
+  DataFrame,
+  FieldType,
+  getFieldDisplayName,
+  getTimeField,
+  GrafanaTheme,
+  rangeUtil,
+  RawTimeRange,
+  TimeRange,
+} from '@grafana/data';
 import { colors } from '../../utils';
 import uPlot from 'uplot';
 import { PlotProps } from './types';
+
+export function rangeToMinMax(timeRange: RawTimeRange): [number, number] {
+  const v = rangeUtil.convertRawToRange(timeRange);
+  return [v.from.valueOf() / 1000, v.to.valueOf() / 1000];
+}
 
 // based on aligned data frames creates config for scales, axes and series
 export const buildSeriesConfig = (
