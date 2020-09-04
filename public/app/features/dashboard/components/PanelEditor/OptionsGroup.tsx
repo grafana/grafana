@@ -162,7 +162,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean, isNes
     ),
     body: cx(
       css`
-        padding: ${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.xl} ${theme.spacing.sm};
+        padding: ${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} ${theme.spacing.xl};
       `,
       isNested &&
         css`
