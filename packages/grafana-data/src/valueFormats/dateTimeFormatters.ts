@@ -103,7 +103,7 @@ export function toSeconds(size: number, decimals?: DecimalCount, scaledDecimals?
     return { text: '' };
   }
   if (size === 0) {
-    return { text: '0 s' };
+    return { text: '0', suffix: ' s' };
   }
 
   // Less than 1 µs, divide in ns
