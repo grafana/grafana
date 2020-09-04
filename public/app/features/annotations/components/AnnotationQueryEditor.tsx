@@ -1,14 +1,14 @@
 import React, { PureComponent } from 'react';
 import coreModule from 'app/core/core_module';
 
-import { DataSourceApi, StandardAnnotationQuery } from '@grafana/data';
+import { DataSourceApi, StandardAnnotationQuery, DataQuery } from '@grafana/data';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import StandardAnnotationQueryEditor from './StandardAnnotationQueryEditor';
 
 export interface Props {
   datasource: DataSourceApi;
-  annotation: StandardAnnotationQuery;
-  change: (annotation: StandardAnnotationQuery) => void;
+  annotation: StandardAnnotationQuery<DataQuery>;
+  change: (annotation: StandardAnnotationQuery<DataQuery>) => void;
 }
 
 class AngularAnnotationQueryEditor extends PureComponent<Props> {

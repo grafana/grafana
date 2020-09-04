@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 
-import { AnnotationEventMappings, AnnotationQueryResponse, DataQuery, LoadingState } from '@grafana/data';
+import { AnnotationEventMappings, DataQuery, LoadingState } from '@grafana/data';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { Spinner, Icon } from '@grafana/ui';
 
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -10,6 +11,8 @@ import { Props } from './AnnotationQueryEditor';
 import { standardAnnotationProcessor } from '../standardAnnotationProcessor';
 import { executeAnnotationQuery } from '../annotations_srv';
 import { PanelModel } from 'app/features/dashboard/state';
+import { AnnotationQueryResponse } from '../types';
+import { AngularQueryComponentScope } from '../../dashboard/panel_editor/QueryEditorRow';
 
 interface State {
   running?: boolean;
@@ -17,6 +20,10 @@ interface State {
 }
 
 export default class StandardAnnotationQueryEditor extends PureComponent<Props, State> {
+  element: HTMLElement | null = null;
+  angularScope: AngularQueryComponentScope | null;
+  angularQueryEditor: AngularComponent | null = null;
+
   state = {} as State;
 
   componentDidMount() {
@@ -32,17 +39,17 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     if (fixed !== annotation) {
       this.props.change(fixed);
     } else {
-      this.runQuery();
+      this.onRunQuery();
     }
   }
 
   componentDidUpdate(oldProps: Props) {
     if (this.props.annotation !== oldProps.annotation) {
-      this.runQuery();
+      this.onRunQuery();
     }
   }
 
-  runQuery = async () => {
+  onRunQuery = async () => {
     const { datasource, annotation } = this.props;
     console.log('RUN query');
 
@@ -89,7 +96,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
         </div>
       );
     }
-    const { events, error } = response;
+    const { events, error } = response!;
 
     if (error) {
       return (
@@ -112,9 +119,79 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     return <div>Found: {events?.length} annotations</div>;
   }
 
+  getAngularQueryComponentScope(): AngularQueryComponentScope {
+    const { datasource, annotation } = this.props;
+
+    return {
+      datasource: datasource,
+      target: annotation.query!,
+      //   panel: {},
+      dashboard: getDashboardSrv().getCurrent(),
+      refresh: () => this.onRunQuery,
+      render: () => {},
+      // events: panel.events,
+      range: getTimeSrv().timeRange(),
+    };
+  }
+
+  renderAngularQueryEditor = () => {
+    if (!this.element) {
+      return;
+    }
+    if (this.angularQueryEditor) {
+      this.angularQueryEditor.destroy();
+      this.angularQueryEditor = null;
+    }
+    const loader = getAngularLoader();
+    const template = '<plugin-component type="query-ctrl" />';
+    const scopeProps = { ctrl: this.getAngularQueryComponentScope() };
+    this.angularQueryEditor = loader.load(this.element, scopeProps, template);
+    this.angularScope = scopeProps.ctrl;
+  };
+
+  renderPluginEditor = () => {
+    const { datasource, annotation } = this.props;
+
+    if (datasource?.components?.QueryCtrl) {
+      return <div ref={element => (this.element = element)} />;
+    }
+
+    if (datasource?.components?.QueryEditor) {
+      const QueryEditor = datasource.components.QueryEditor;
+
+      return (
+        <QueryEditor
+          key={datasource?.name}
+          query={annotation.query!}
+          datasource={datasource}
+          onChange={this.onQueryChange}
+          onRunQuery={this.onRunQuery}
+          // data={data}
+          range={getTimeSrv().timeRange()}
+        />
+      );
+    }
+
+    return <div>Data source plugin does not export any Query Editor component</div>;
+  };
+
   render() {
     const { annotation } = this.props;
-    return <div>HELLO!!!! {JSON.stringify(annotation)}</div>;
+
+    // datasource: DSType;
+    // query: TQuery;
+    // onRunQuery: () => void;
+    // onChange: (value: TQuery) => void;
+    // onBlur?: () => void;
+    // data?: PanelData;
+    // range?: TimeRange;
+
+    return (
+      <div>
+        <div>HELLO!!!! {JSON.stringify(annotation)}</div>
+        {this.renderPluginEditor()}
+      </div>
+    );
     // const { response } = this.state;
 
     // const query = {
