@@ -189,8 +189,6 @@ Folder that contains [provisioning]({{< relref "provisioning.md" >}}) config fil
 
 `http`,`https`,`h2` or `socket`
 
-> **Note:** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for SSL termination.
-
 ### http_addr
 
 The IP address to bind to. If empty will bind to all interfaces
@@ -230,8 +228,6 @@ callback URL to be correct).
 > case add the subpath to the end of this URL setting.
 
 ### serve_from_sub_path
-
-> Available in Grafana 6.3+.
 
 Serve Grafana from subpath specified in `root_url` setting. By default it is set to `false` for compatibility reasons.
 
@@ -1389,6 +1385,8 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`, `standaloneAlerts`
 
 ## [date_formats]
+
+> The date format options below are only available in Grafana v7.2+
 
 This section controls system wide defaults for date formats used in time ranges, graphs and date input boxes.
 
