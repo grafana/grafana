@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"sync"
@@ -22,15 +23,17 @@ type proxyTransportCache struct {
 type dataSourceTransport struct {
 	headers   map[string]string
 	transport *http.Transport
+	next      http.RoundTripper
 }
 
 // RoundTrip executes a single HTTP transaction, returning a Response for the provided Request.
 func (d *dataSourceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	log.Println("Setting custom headers")
 	for key, value := range d.headers {
 		req.Header.Set(key, value)
 	}
 
-	return d.transport.RoundTrip(req)
+	return d.next.RoundTrip(req)
 }
 
 type cachedTransport struct {
@@ -85,9 +88,16 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 		IdleConnTimeout:       90 * time.Second,
 	}
 
+	sigv4Middleware := &Sigv4Middleware{
+		Credentials: nil,
+		Region:      "",
+		Next:        transport,
+	}
+
 	dsTransport := &dataSourceTransport{
 		headers:   customHeaders,
 		transport: transport,
+		next:      sigv4Middleware,
 	}
 
 	ptc.cache[ds.Id] = cachedTransport{
