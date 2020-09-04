@@ -10,6 +10,10 @@ describe('thresholdsForm', () => {
           value: 50,
           inputValue: '${thresholdVar}',
         },
+        {
+          value: 10,
+          inputValue: '10',
+        },
       ],
     },
     options: {
@@ -32,6 +36,10 @@ describe('thresholdsForm', () => {
     it('should convert variables to numbers', () => {
       manager.updateThresholds(ctx.panel);
       expect(ctx.panel.thresholds[0].value).toEqual(100);
+    });
+    it('should handle numbers', () => {
+      manager.updateThresholds(ctx.panel);
+      expect(ctx.panel.thresholds[1].value).toEqual(10);
     });
   });
 });
