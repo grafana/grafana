@@ -494,6 +494,46 @@ describe('Merge multipe to single', () => {
     expect(fields[1].config).toEqual({});
     expect(fields).toEqual(expected);
   });
+
+  it('combine two regular series with an empty serie should return the combination of the regular series', () => {
+    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
+      id: DataTransformerID.merge,
+      options: {},
+    };
+
+    const serieA = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [100, 150, 200] },
+        { name: 'Temp', type: FieldType.number, values: [1, 4, 5] },
+      ],
+    });
+
+    const serieB = toDataFrame({
+      name: 'B',
+      fields: [],
+    });
+
+    const serieC = toDataFrame({
+      name: 'C',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [100, 150, 200] },
+        { name: 'Humidity', type: FieldType.number, values: [6, 7, 8] },
+      ],
+    });
+
+    const result = transformDataFrame([cfg], [serieA, serieB, serieC]);
+    const expected: Field[] = [
+      createField('Time', FieldType.time, [100, 150, 200]),
+      createField('Temp', FieldType.number, [1, 4, 5]),
+      createField('Humidity', FieldType.number, [6, 7, 8]),
+    ];
+
+    const fields = unwrap(result[0].fields);
+
+    expect(fields[1].config).toEqual({});
+    expect(fields).toEqual(expected);
+  });
 });
 
 const createField = (name: string, type: FieldType, values: any[], config = {}): Field => {

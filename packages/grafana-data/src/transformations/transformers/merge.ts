@@ -18,11 +18,12 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
   description: 'Merges multiple series/tables into a single serie/table',
   defaultOptions: {},
   transformer: (options: MergeTransformerOptions) => {
-    return (data: DataFrame[]) => {
-      if (!Array.isArray(data) || data.length <= 1) {
-        return data;
+    return (dataFrames: DataFrame[]) => {
+      if (!Array.isArray(dataFrames) || dataFrames.length <= 1) {
+        return dataFrames;
       }
 
+      const data = dataFrames.filter(frame => frame.fields.length > 0);
       const fieldNames = new Set<string>();
       const fieldIndexByName: Record<string, Record<number, number>> = {};
       const fieldNamesForKey: string[] = [];
@@ -53,7 +54,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
       }
 
       if (fieldNamesForKey.length === 0) {
-        return data;
+        return dataFrames;
       }
 
       const valuesByKey: Record<string, Array<Record<string, any>>> = {};
