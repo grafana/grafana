@@ -61,6 +61,7 @@ const updateOptions = (state: OptionsPickerState): OptionsPickerState => {
     state.options = [];
     return state;
   }
+
   const selectedOptions = optionsToRecord(state.selectedValues);
   state.selectedValues = Object.values(selectedOptions);
 
