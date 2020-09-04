@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
@@ -178,8 +179,12 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 		ctx.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,
+			"err", err,
 		)
 
+		if err == models.ErrUserNotFound {
+			err = login.ErrInvalidCredentials
+		}
 		ctx.JsonApiErr(401, errStringInvalidUsernamePassword, err)
 		return true
 	}
