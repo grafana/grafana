@@ -19,15 +19,16 @@ export interface StandardAnnotationQuery<TQuery = {}> {
  *
  * @deprecated -- use {@link AnnotationProcessor}
  */
-export interface AnnotationQueryRequest<TAnno = StandardAnnotationQuery> {
+export interface AnnotationQueryRequest<MoreOptions = {}> {
   range: TimeRange;
   rangeRaw: RawTimeRange;
-
   // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
   dashboard: any;
-
-  // The annotation query and common properties.  This is the object stored in the JSON model
-  annotation: TAnno;
+  annotation: {
+    datasource: string;
+    enable: boolean;
+    name: string;
+  } & MoreOptions;
 }
 
 export interface AnnotationEvent {

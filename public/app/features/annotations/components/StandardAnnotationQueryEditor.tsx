@@ -121,17 +121,18 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
 
   getAngularQueryComponentScope(): AngularQueryComponentScope {
     const { datasource, annotation } = this.props;
+    const target = annotation.query ?? { refId: 'Anno' };
 
-    return {
+    return ({
       datasource: datasource,
-      target: annotation.query!,
+      target,
       //   panel: {},
       dashboard: getDashboardSrv().getCurrent(),
       refresh: () => this.onRunQuery,
       render: () => {},
       // events: panel.events,
       range: getTimeSrv().timeRange(),
-    };
+    } as unknown) as AngularQueryComponentScope;
   }
 
   renderAngularQueryEditor = () => {
@@ -158,11 +159,12 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
 
     if (datasource?.components?.QueryEditor) {
       const QueryEditor = datasource.components.QueryEditor;
+      const query = annotation.query ?? { refId: 'Anno' };
 
       return (
         <QueryEditor
           key={datasource?.name}
-          query={annotation.query!}
+          query={query}
           datasource={datasource}
           onChange={this.onQueryChange}
           onRunQuery={this.onRunQuery}
