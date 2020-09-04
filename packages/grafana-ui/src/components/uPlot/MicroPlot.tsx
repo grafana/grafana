@@ -200,11 +200,7 @@ export class MicroPlot extends PureComponent<Props, State> {
           },
         ],
 
-        setSeries: [
-          () => {
-            debugger;
-          },
-        ],
+        setSeries: [() => {}],
       },
       plugins: [
         // List the plugins
@@ -255,7 +251,7 @@ const defaultFieldConfig: Partial<GraphCustomFieldConfig> = {
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
-function rangeToMinMax(timeRange: RawTimeRange) {
+export function rangeToMinMax(timeRange: RawTimeRange): [number, number] {
   const v = rangeUtil.convertRawToRange(timeRange);
   return [v.from.valueOf() / 1000, v.to.valueOf() / 1000];
 }

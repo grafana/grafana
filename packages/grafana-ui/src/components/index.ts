@@ -70,6 +70,8 @@ export {
 } from './BigValue/BigValue';
 
 export { MicroPlot } from './uPlot/MicroPlot';
+export { UPlotChart } from './uPlot/Plot';
+export * from './uPlot/plugins';
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';
