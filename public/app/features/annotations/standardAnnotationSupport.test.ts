@@ -44,8 +44,8 @@ describe('DataFrame to annotations', () => {
   test('explicit mappins', () => {
     const frame = toDataFrame({
       fields: [
-        { name: 'time1', values: [100, 200, 300] },
-        { name: 'time2', values: [111, 222, 333] },
+        { name: 'time1', values: [111, 222, 333] },
+        { name: 'time2', values: [100, 200, 300] },
         { name: 'aaaaa', values: ['a1', 'a2', 'a3'] },
         { name: 'bbbbb', values: ['b1', 'b2', 'b3'] },
       ],
@@ -61,20 +61,20 @@ describe('DataFrame to annotations', () => {
       Array [
         Object {
           "text": "b1",
-          "time": 111,
-          "timeEnd": 100,
+          "time": 100,
+          "timeEnd": 111,
           "title": "a1",
         },
         Object {
           "text": "b2",
-          "time": 222,
-          "timeEnd": 200,
+          "time": 200,
+          "timeEnd": 222,
           "title": "a2",
         },
         Object {
           "text": "b3",
-          "time": 333,
-          "timeEnd": 300,
+          "time": 300,
+          "timeEnd": 333,
           "title": "a3",
         },
       ]

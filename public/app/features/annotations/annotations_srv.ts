@@ -263,7 +263,6 @@ export function executeAnnotationQuery(
     map(panelData => {
       const frame = singleFrameFromPanelData(panelData);
       const events = frame ? processor.processEvents!(annotation, frame) : [];
-
       return { panelData, frame, events };
     })
   );

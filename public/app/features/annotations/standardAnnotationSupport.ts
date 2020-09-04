@@ -52,7 +52,7 @@ export const standardAnnotationSupport: AnnotationSupport = {
  * Flatten all panel data into a single frame
  */
 export function singleFrameFromPanelData(rsp: PanelData): DataFrame | undefined {
-  if (rsp?.series?.length) {
+  if (!rsp?.series?.length) {
     return undefined;
   }
   if (rsp.series.length === 1) {
@@ -78,7 +78,7 @@ interface AnnotationEventFieldSetter {
   split?: string; // for tags
 }
 
-interface AnnotationFieldDefaults {
+export interface AnnotationFieldDefaults {
   key: keyof AnnotationEvent;
 
   split?: string;
@@ -86,7 +86,7 @@ interface AnnotationFieldDefaults {
   placeholder?: string;
 }
 
-const annotationEventNames: AnnotationFieldDefaults[] = [
+export const annotationEventNames: AnnotationFieldDefaults[] = [
   {
     key: 'time',
     field: (frame: DataFrame) => frame.fields.find(f => f.type === FieldType.time),

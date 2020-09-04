@@ -11,6 +11,7 @@ import { standardAnnotationSupport } from '../standardAnnotationSupport';
 import { executeAnnotationQuery } from '../annotations_srv';
 import { PanelModel } from 'app/features/dashboard/state';
 import { AnnotationQueryResponse } from '../types';
+import { AnnotationFieldMapper } from './AnnotationResultMapper';
 
 interface State {
   running?: boolean;
@@ -64,6 +65,8 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       annotation
     ).toPromise();
 
+    console.log('GOT response', response);
+
     this.setState({
       running: false,
       response,
@@ -86,7 +89,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
 
   renderStatus() {
     const { response, running } = this.state;
-    if (running || response?.panelData?.state === LoadingState.Loading) {
+    if (running || response?.panelData?.state === LoadingState.Loading || !response) {
       return (
         <div>
           <Spinner />
@@ -94,7 +97,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
         </div>
       );
     }
-    const { events, panelData } = response!;
+    const { events, panelData, frame } = response;
 
     if (panelData?.error) {
       return (
@@ -111,10 +114,14 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
         </div>
       );
     }
-    if (events?.length) {
+    if (!events?.length) {
       return <div>No annottions found</div>;
     }
-    return <div>Found: {events?.length} annotations</div>;
+    return (
+      <div>
+        Found: {events?.length} annotations ({frame?.fields.length} fields)
+      </div>
+    );
   }
 
   render() {
@@ -140,31 +147,10 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
           range={getTimeSrv().timeRange()}
         />
         {this.renderStatus()}
-        [MAPPER]
+
+        <AnnotationFieldMapper response={response} mappings={annotation.mappings} change={this.onMappingChange} />
         <br />
       </>
     );
-    // const { response } = this.state;
-
-    // const query = {
-    //   rawQuery: true,
-    //   ...annotation.query,
-    // } as InfluxQuery;
-
-    // return (
-    //   <>
-    //     <FluxQueryEditor target={query} change={this.onQueryChange} refresh={this.runQuery} />
-    //     <br />
-    //
-    //     <br />
-    //     <AnnotationFieldMapper
-    //       frame={rsp?.data[0]}
-    //       options={annotation.mapping}
-    //       change={this.onMappingChange}
-    //       events={events}
-    //     />
-    //     <br />
-    //   </>
-    // );
   }
 }
