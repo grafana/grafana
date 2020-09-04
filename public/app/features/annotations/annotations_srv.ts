@@ -24,7 +24,7 @@ import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AnnotationQueryResponse, AnnotationQueryOptions } from './types';
-import { standardAnnotationProcessor, singleFrameFromPanelData } from './standardAnnotationProcessor';
+import { standardAnnotationSupport, singleFrameFromPanelData } from './standardAnnotationSupport';
 import { runRequest } from '../dashboard/state/runRequest';
 
 let counter = 100;
@@ -214,7 +214,7 @@ export function executeAnnotationQuery(
   savedJsonAnno: any
 ): Observable<AnnotationQueryResponse> {
   const processor = {
-    ...standardAnnotationProcessor,
+    ...standardAnnotationSupport,
     ...datasource.annotationProcessor,
   };
 

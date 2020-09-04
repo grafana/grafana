@@ -12,7 +12,7 @@ import {
   MetricFindValue,
   AnnotationQueryRequest,
   AnnotationEvent,
-  StandardAnnotationQuery,
+  AnnotationQuery,
 } from '@grafana/data';
 import { v4 as uuidv4 } from 'uuid';
 import InfluxSeries from './influx_series';
@@ -60,10 +60,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     if (this.isFlux) {
       // When flux, attach an annotation processor
-      this.annotationProcessor = {
+      this.annotations = {
         QueryEditor: FluxQueryEditor,
 
-        prepareQuery: (anno: StandardAnnotationQuery<InfluxQuery>) => {
+        prepareQuery: (anno: AnnotationQuery<InfluxQuery>) => {
           if (!anno.query?.query) {
             return undefined;
           }
@@ -199,7 +199,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   async annotationQuery(options: AnnotationQueryRequest<any>): Promise<AnnotationEvent[]> {
     if (this.isFlux) {
       return Promise.reject({
-        message: 'Annotations are not yet supported with flux queries',
+        message: 'Flux requires the standard annotation query',
       });
     }
 

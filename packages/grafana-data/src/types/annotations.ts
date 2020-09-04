@@ -3,7 +3,7 @@ import { TimeRange, RawTimeRange } from './time';
 import { DataFrame } from './dataFrame';
 import { ComponentType } from 'react';
 
-export interface StandardAnnotationQuery<TQuery extends DataQuery = DataQuery> {
+export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> {
   datasource: string;
   enable: boolean;
   name: string;
@@ -13,23 +13,6 @@ export interface StandardAnnotationQuery<TQuery extends DataQuery = DataQuery> {
 
   // Convert a dataframe to an annotation
   mappings?: AnnotationEventMappings;
-}
-
-/**
- * Options passed to the datasource.annotationQuery method. See docs/plugins/developing/datasource.md
- *
- * @deprecated -- use {@link AnnotationProcessor}
- */
-export interface AnnotationQueryRequest<MoreOptions = {}> {
-  range: TimeRange;
-  rangeRaw: RawTimeRange;
-  // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
-  dashboard: any;
-  annotation: {
-    datasource: string;
-    enable: boolean;
-    name: string;
-  } & MoreOptions;
 }
 
 export interface AnnotationEvent {
@@ -72,7 +55,7 @@ export type AnnotationEventMappings = Partial<Record<keyof AnnotationEvent, Anno
  *
  * This offers a generic approach to annotation processing
  */
-export interface AnnotationProcessor<TQuery extends DataQuery = DataQuery, TAnno = StandardAnnotationQuery<TQuery>> {
+export interface AnnotationSupport<TQuery extends DataQuery = DataQuery, TAnno = AnnotationQuery<TQuery>> {
   /**
    * This hook lets you manipulate any existing stored values before running them though the processor.
    * This is particularly helpful when dealing with migrating old formats.  ie query as a string vs object

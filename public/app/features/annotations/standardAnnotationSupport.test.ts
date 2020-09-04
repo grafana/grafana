@@ -1,5 +1,5 @@
 import { toDataFrame, FieldType } from '@grafana/data';
-import { getAnnotationsFromFrame } from './annotationsFromDataFrame';
+import { getAnnotationsFromFrame } from './standardAnnotationSupport';
 
 describe('DataFrame to annotations', () => {
   test('simple conversion', () => {
@@ -11,34 +11,8 @@ describe('DataFrame to annotations', () => {
       ],
     });
 
-    const annos = getAnnotationsFromFrame(frame);
-    expect(annos.events).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "tags": Array [
-            "aaa",
-            "bbb",
-          ],
-          "text": "t1",
-          "time": 1,
-        },
-        Object {
-          "tags": Array [
-            "bbb",
-            "ccc",
-          ],
-          "text": "t2",
-          "time": 2,
-        },
-        Object {
-          "tags": Array [
-            "zyz",
-          ],
-          "text": "t3",
-          "time": 3,
-        },
-      ]
-    `);
+    const events = getAnnotationsFromFrame(frame);
+    expect(events).toMatchInlineSnapshot();
   });
 
   test('explicit mappins', () => {
@@ -51,15 +25,13 @@ describe('DataFrame to annotations', () => {
       ],
     });
 
-    const annos = getAnnotationsFromFrame(frame, {
-      field: {
-        text: 'bbbbb',
-        time: 'time2',
-        timeEnd: 'time1',
-        title: 'aaaaa',
-      },
+    const events = getAnnotationsFromFrame(frame, {
+      text: { value: 'bbbbb' },
+      time: { value: 'time2' },
+      timeEnd: { value: 'time1' },
+      title: { value: 'aaaaa' },
     });
-    expect(annos.events).toMatchInlineSnapshot(`
+    expect(events).toMatchInlineSnapshot(`
       Array [
         Object {
           "text": "b1",

@@ -107,17 +107,15 @@ export class DatasourceSrv implements DataSourceService {
     return sortBy(datasources, ['name']);
   }
 
-  /** Since Grafana 7.2 all datasources can produce annotations */
   getAnnotationSources() {
     const sources: any[] = [];
 
     this.addDataSourceVariables(sources);
 
     Object.values(config.datasources).forEach(value => {
-      // if (value.meta?.annotations) {
-      //   sources.push(value);
-      // }
-      sources.push(value);
+      if (value.meta?.annotations) {
+        sources.push(value);
+      }
     });
 
     return sources;

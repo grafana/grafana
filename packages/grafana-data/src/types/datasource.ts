@@ -3,7 +3,7 @@ import { ComponentType } from 'react';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { PanelData } from './panel';
 import { LogRowModel } from './logs';
-import { AnnotationEvent, AnnotationProcessor, AnnotationQueryRequest } from './annotations';
+import { AnnotationEvent, AnnotationSupport } from './annotations';
 import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange } from './time';
@@ -267,23 +267,23 @@ export abstract class DataSourceApi<
 
   showContextToggle?(row?: LogRowModel): boolean;
 
+  interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
+
   /**
    * An annotation processor allows explict control for how annotations are managed.
    *
    * It is only necessary to configure an annotation processor if the default behavior is not desirable
    */
-  annotationProcessor?: AnnotationProcessor<TQuery>;
+  annotations?: AnnotationSupport<TQuery>;
 
   /**
    * Can be optionally implemented to allow datasource to be a source of annotations for dashboard.
    * This function will only be called if an angular {@link AnnotationsQueryCtrl} is configured and
-   * the {@link annotationProcessor} is undefined
+   * the {@link annotations} is undefined
    *
-   * @deprecated -- prefer using `annotationProcessor`
+   * @deprecated -- prefer using {@link AnnotationSupport}
    */
   annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
-
-  interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
 }
 
 export interface MetadataInspectorProps<
@@ -482,6 +482,22 @@ export interface DataSourceJsonData {
   defaultRegion?: string;
 }
 
+/**
+ * Options passed to the datasource.annotationQuery method. See docs/plugins/developing/datasource.md
+ *
+ * @deprecated -- use {@link AnnotationSupport}
+ */
+export interface AnnotationQueryRequest<MoreOptions = {}> {
+  range: TimeRange;
+  rangeRaw: RawTimeRange;
+  // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
+  dashboard: any;
+  annotation: {
+    datasource: string;
+    enable: boolean;
+    name: string;
+  } & MoreOptions;
+}
 /**
  * Data Source instance edit model.  This is returned from:
  *  /api/datasources

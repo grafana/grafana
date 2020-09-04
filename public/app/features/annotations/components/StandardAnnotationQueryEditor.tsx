@@ -7,7 +7,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { cx, css } from 'emotion';
 import { Props } from './AnnotationQueryEditor';
-import { standardAnnotationProcessor } from '../standardAnnotationProcessor';
+import { standardAnnotationSupport } from '../standardAnnotationSupport';
 import { executeAnnotationQuery } from '../annotations_srv';
 import { PanelModel } from 'app/features/dashboard/state';
 import { AnnotationQueryResponse } from '../types';
@@ -35,8 +35,8 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
 
     // Handle any migration issues
     const processor = {
-      ...standardAnnotationProcessor,
-      ...datasource.annotationProcessor,
+      ...standardAnnotationSupport,
+      ...datasource.annotations,
     };
 
     const fixed = processor.prepareAnnotation!(annotation);
@@ -121,7 +121,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     const { datasource, annotation } = this.props;
 
     // Find the annotaiton runner
-    let QueryEditor = datasource.annotationProcessor?.QueryEditor || datasource.components?.QueryEditor;
+    let QueryEditor = datasource.annotations?.QueryEditor || datasource.components?.QueryEditor;
     if (!QueryEditor) {
       return <div>Missing QueryEditor or Annotation Editor</div>;
     }
