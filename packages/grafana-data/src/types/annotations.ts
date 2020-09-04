@@ -1,9 +1,6 @@
-import { DataQueryError, DataQuery } from './datasource';
-import { LoadingState } from './data';
-import { DataFrame } from 'apache-arrow';
+import { DataQuery } from './datasource';
 import { TimeRange, RawTimeRange } from './time';
-import { CoreApp } from './app';
-import { Observable } from 'rxjs';
+import { DataFrame } from './dataFrame';
 
 export interface StandardAnnotationQuery<TQuery = {}> {
   datasource: string;
@@ -19,14 +16,12 @@ export interface StandardAnnotationQuery<TQuery = {}> {
 
 /**
  * Options passed to the datasource.annotationQuery method. See docs/plugins/developing/datasource.md
+ *
+ * @deprecated -- use {@link AnnotationProcessor}
  */
 export interface AnnotationQueryRequest<TAnno = StandardAnnotationQuery> {
   range: TimeRange;
   rangeRaw: RawTimeRange;
-  interval: string;
-  intervalMs: number;
-  maxDataPoints?: number;
-  app: CoreApp | string;
 
   // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
   dashboard: any;
@@ -83,45 +78,14 @@ export interface AnnotationProcessor<TQuery = DataQuery, TAnno = StandardAnnotat
   prepareAnnotation?(json: any): TAnno;
 
   /**
-   * Convert the stored JSON model and environment to a standard datasource query object.
+   * Convert the stored JSON model to a standard datasource query object.
    * This query will be executed in the datasource and the results converted into events.
    * Returning an undefined result will quietly skip query execution
    */
-  prepareQuery?(req: AnnotationQueryRequest<TAnno>): TQuery | undefined;
+  prepareQuery?(anno: TAnno): TQuery | undefined;
 
   /**
    * When the standard frame > event processing is insufficient, this allows explicit control of the mappings
    */
-  processEvents?(req: AnnotationQueryRequest<TAnno>, data: DataFrame): AnnotationEvent[] | undefined;
-
-  /**
-   * In the rare case where standard execution is not possible (perhaps migrations),
-   * implementing this function will entirely replace the standard execution lifecycle.
-   *
-   * When you return `undefined` the standard path will execute as normal
-   */
-  executeQuery?(req: AnnotationQueryRequest<any>): Observable<AnnotationQueryResponse> | undefined;
-}
-
-export interface AnnotationQueryResponse {
-  /**
-   * Optionally return the original data frames
-   */
-  data?: DataFrame; // Multiple frames will always be joined first
-
-  /**
-   * The processed annotation events
-   */
-  events?: AnnotationEvent[];
-
-  /**
-   * Optionally include error info along with the response data
-   */
-  error?: DataQueryError;
-
-  /**
-   * Use this to control which state the response should have
-   * Defaults to LoadingState.Done if state is not defined
-   */
-  state?: LoadingState;
+  processEvents?(anno: TAnno, data: DataFrame): AnnotationEvent[] | undefined;
 }
