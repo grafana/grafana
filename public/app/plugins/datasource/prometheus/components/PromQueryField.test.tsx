@@ -76,14 +76,12 @@ describe('PromQueryField', () => {
       />
     );
 
-    const cascader = queryField.getByTestId('bc-button');
-    fireEvent.click(cascader);
-    await waitFor(() => {
-      const listNodes = screen.getAllByRole('listitem');
-      for (const node of listNodes) {
-        expect(metrics).toContain(node.innerHTML);
-      }
-    });
+   let cascader = queryField.getByTestId('bc-button');
+    fireEvent.keyDown(cascader, { keyCode: 40 });
+    let listNodes = await screen.findAllByRole('menuitem');
+    for (const node of listNodes) {
+      expect(metrics).toContain(node.innerHTML);
+    }
 
     const changedMetrics = ['baz', 'moo'];
     queryField.rerender(
@@ -102,12 +100,12 @@ describe('PromQueryField', () => {
       />
     );
 
-    await waitFor(() => {
-      const listNodes = screen.getAllByRole('listitem');
-      for (const node of listNodes) {
-        expect(changedMetrics).toContain(node.innerHTML);
-      }
-    });
+    cascader = await queryField.findByTestId('bc-button');
+    fireEvent.keyDown(cascader, { keyCode: 40 });
+    listNodes = screen.getAllByRole('menuitem');
+    for (const node of listNodes) {
+      expect(changedMetrics).toContain(node.innerHTML);
+    }
   });
 });
 
