@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/server"
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
@@ -110,14 +111,21 @@ func main() {
 
 	metrics.SetBuildInformation(version, commit, buildBranch)
 
-	server := NewServer(*configFile, *homePath, *pidFile)
+	s, err := server.New(server.Config{
+		ConfigFile: *configFile, HomePath: *homePath, PidFile: *pidFile,
+		Version: version, Commit: commit, BuildBranch: buildBranch,
+	})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
 
-	go listenToSystemSignals(server)
+	go listenToSystemSignals(s)
 
-	err := server.Run()
+	err = s.Run()
 	code := 0
 	if err != nil {
-		code = server.ExitCode(err)
+		code = s.ExitCode(err)
 	}
 	trace.Stop()
 	log.Close()
@@ -135,7 +143,7 @@ func validPackaging(packaging string) string {
 	return "unknown"
 }
 
-func listenToSystemSignals(server *Server) {
+func listenToSystemSignals(s *server.Server) {
 	signalChan := make(chan os.Signal, 1)
 	sighupChan := make(chan os.Signal, 1)
 
@@ -147,7 +155,7 @@ func listenToSystemSignals(server *Server) {
 		case <-sighupChan:
 			log.Reload()
 		case sig := <-signalChan:
-			server.Shutdown(fmt.Sprintf("System signal: %s", sig))
+			s.Shutdown(fmt.Sprintf("System signal: %s", sig))
 		}
 	}
 }

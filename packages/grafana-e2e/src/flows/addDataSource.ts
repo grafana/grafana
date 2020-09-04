@@ -1,27 +1,46 @@
 import { DeleteDataSourceConfig } from './deleteDataSource';
 import { e2e } from '../index';
 import { fromBaseUrl, getDataSourceId } from '../support/url';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface AddDataSourceConfig {
+  basicAuth: boolean;
+  basicAuthPassword: string;
+  basicAuthUser: string;
   checkHealth: boolean;
   expectedAlertMessage: string | RegExp;
-  form: Function;
+  form: () => void;
   name: string;
+  skipTlsVerify: boolean;
   type: string;
 }
 
-// @todo this actually returns type `Cypress.Chainable`
-export const addDataSource = (config?: Partial<AddDataSourceConfig>): any => {
-  const fullConfig = {
+// @todo this actually returns type `Cypress.Chainable<AddDaaSourceConfig>`
+export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
+  const fullConfig: AddDataSourceConfig = {
+    basicAuth: false,
+    basicAuthPassword: '',
+    basicAuthUser: '',
     checkHealth: false,
     expectedAlertMessage: 'Data source is working',
     form: () => {},
-    name: `e2e-${Date.now()}`,
+    name: `e2e-${uuidv4()}`,
+    skipTlsVerify: false,
     type: 'TestData DB',
     ...config,
-  } as AddDataSourceConfig;
+  };
 
-  const { checkHealth, expectedAlertMessage, form, name, type } = fullConfig;
+  const {
+    basicAuth,
+    basicAuthPassword,
+    basicAuthUser,
+    checkHealth,
+    expectedAlertMessage,
+    form,
+    name,
+    skipTlsVerify,
+    type,
+  } = fullConfig;
 
   e2e().logToConsole('Adding data source with name:', name);
   e2e.pages.AddDataSource.visit();
@@ -32,7 +51,39 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>): any => {
 
   e2e.pages.DataSource.name().clear();
   e2e.pages.DataSource.name().type(name);
+
+  if (basicAuth) {
+    e2e()
+      .contains('label', 'Basic auth')
+      .scrollIntoView()
+      .click();
+    e2e()
+      .contains('.gf-form-group', 'Basic Auth Details')
+      .should('be.visible')
+      .scrollIntoView()
+      .within(() => {
+        if (basicAuthUser) {
+          e2e()
+            .get('[placeholder=user]')
+            .type(basicAuthUser);
+        }
+        if (basicAuthPassword) {
+          e2e()
+            .get('[placeholder=Password]')
+            .type(basicAuthPassword);
+        }
+      });
+  }
+
+  if (skipTlsVerify) {
+    e2e()
+      .contains('label', 'Skip TLS Verify')
+      .scrollIntoView()
+      .click();
+  }
+
   form();
+
   e2e.pages.DataSource.saveAndTest().click();
   e2e.pages.DataSource.alert().should('exist');
   e2e.pages.DataSource.alertMessage().contains(expectedAlertMessage); // assertion
@@ -60,9 +111,12 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>): any => {
       }
 
       // @todo remove `wrap` when possible
-      return e2e().wrap({
-        config: fullConfig,
-        id,
-      });
+      return e2e().wrap(
+        {
+          config: fullConfig,
+          id,
+        },
+        { log: false }
+      );
     });
 };

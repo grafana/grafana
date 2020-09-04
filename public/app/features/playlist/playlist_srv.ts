@@ -5,11 +5,10 @@ import _ from 'lodash';
 import coreModule from '../../core/core_module';
 import appEvents from 'app/core/app_events';
 
-import kbn from 'app/core/utils/kbn';
 import { store } from 'app/store/store';
 import { CoreEvents } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
-import { locationUtil, urlUtil } from '@grafana/data';
+import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
 
 export const queryParamsToPreserve: { [key: string]: boolean } = {
   kiosk: true,
@@ -97,7 +96,7 @@ export class PlaylistSrv {
           .get(`/api/playlists/${playlistId}/dashboards`)
           .then((dashboards: any) => {
             this.dashboards = dashboards;
-            this.interval = kbn.interval_to_ms(playlist.interval);
+            this.interval = rangeUtil.intervalToMs(playlist.interval);
             this.next();
           });
       });

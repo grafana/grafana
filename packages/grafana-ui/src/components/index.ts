@@ -7,6 +7,7 @@ export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
 export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
+export { TabbedContainer, TabConfig } from './TabbedContainer/TabbedContainer';
 
 export { ClipboardButton } from './ClipboardButton/ClipboardButton';
 export { Cascader, CascaderOption } from './Cascader/Cascader';
@@ -143,6 +144,7 @@ export { Label } from './Forms/Label';
 export { Field } from './Forms/Field';
 export { Legend } from './Forms/Legend';
 export { FieldSet } from './Forms/FieldSet';
+export { FieldValidationMessage } from './Forms/FieldValidationMessage';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';

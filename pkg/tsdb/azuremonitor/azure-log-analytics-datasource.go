@@ -184,7 +184,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	if query.ResultFormat == "time_series" {
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
-			wideFrame, err := data.LongToWide(frame, &data.FillMissing{})
+			wideFrame, err := data.LongToWide(frame, nil)
 			if err == nil {
 				frame = wideFrame
 			} else {

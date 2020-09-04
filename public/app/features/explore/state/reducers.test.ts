@@ -37,7 +37,7 @@ import {
 import { updateLocation } from '../../../core/actions';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 
-const QUERY_KEY_REGEX = /Q-([0-9]+)-([0-9.]+)-([0-9]+)/;
+const QUERY_KEY_REGEX = /Q-(?:[a-z0-9]+-){5}(?:[0-9]+)/;
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {

@@ -38,10 +38,10 @@ Just add it as a data source and you are ready to query your log data in [Explor
 
 ### Derived fields
 
-The Derived Fields configuration allows you to: 
+The Derived Fields configuration allows you to:
 
-* Add fields parsed from the log message. 
-* Add a link that uses the value of the field. 
+* Add fields parsed from the log message.
+* Add a link that uses the value of the field.
 
 You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/features/explore/#labels-and-parsed-fields).
 {{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
@@ -60,7 +60,7 @@ The new field with the link shown in log details:
 
 ## Querying Logs
 
-Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../../panels/visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a [LogQL](https://github.com/grafana/loki/blob/master/docs/logql.md) query to display your logs.
+Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../../panels/visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a [LogQL](https://grafana.com/docs/loki/latest/logql/) query to display your logs.
 
 ### Log Queries
 
@@ -124,7 +124,7 @@ The following filter types are currently supported:
 * `|~` line matches regular expression.
 * `!~` line does not match regular expression.
 
-> Note: For more details about LogQL, Loki's query language, refer to the [documentation](https://github.com/grafana/loki/blob/master/docs/logql.md)
+> Note: For more details about LogQL, Loki's query language, refer to the [documentation](https://grafana.com/docs/loki/latest/logql/)
 
 ## Live tailing
 

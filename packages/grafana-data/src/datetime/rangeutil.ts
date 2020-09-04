@@ -2,7 +2,7 @@ import each from 'lodash/each';
 import groupBy from 'lodash/groupBy';
 import has from 'lodash/has';
 
-import { RawTimeRange, TimeRange, TimeZone } from '../types/time';
+import { RawTimeRange, TimeRange, TimeZone, IntervalValues } from '../types/time';
 
 import * as dateMath from './datemath';
 import { isDateTime, DateTime } from './moment_wrapper';
@@ -230,22 +230,53 @@ function isRelativeTime(v: DateTime | string) {
   return false;
 }
 
-export function isRelativeTimeRane(raw: RawTimeRange): boolean {
+export function isRelativeTimeRange(raw: RawTimeRange): boolean {
   return isRelativeTime(raw.from) || isRelativeTime(raw.to);
 }
 
-export function calculateIntervalMS(range: TimeRange, resolution: number, lowLimitInterval?: string) {
+export function secondsToHms(seconds: number): string {
+  const numYears = Math.floor(seconds / 31536000);
+  if (numYears) {
+    return numYears + 'y';
+  }
+  const numDays = Math.floor((seconds % 31536000) / 86400);
+  if (numDays) {
+    return numDays + 'd';
+  }
+  const numHours = Math.floor(((seconds % 31536000) % 86400) / 3600);
+  if (numHours) {
+    return numHours + 'h';
+  }
+  const numMinutes = Math.floor((((seconds % 31536000) % 86400) % 3600) / 60);
+  if (numMinutes) {
+    return numMinutes + 'm';
+  }
+  const numSeconds = Math.floor((((seconds % 31536000) % 86400) % 3600) % 60);
+  if (numSeconds) {
+    return numSeconds + 's';
+  }
+  const numMilliseconds = Math.floor(seconds * 1000.0);
+  if (numMilliseconds) {
+    return numMilliseconds + 'ms';
+  }
+
+  return 'less than a millisecond'; //'just now' //or other string you like;
+}
+
+export function calculateInterval(range: TimeRange, resolution: number, lowLimitInterval?: string): IntervalValues {
   let lowLimitMs = 1; // 1 millisecond default low limit
-
   if (lowLimitInterval) {
-    lowLimitMs = interval_to_ms(lowLimitInterval);
+    lowLimitMs = intervalToMs(lowLimitInterval);
   }
 
-  const intervalMs = round_interval((range.to.valueOf() - range.from.valueOf()) / resolution);
+  let intervalMs = roundInterval((range.to.valueOf() - range.from.valueOf()) / resolution);
   if (lowLimitMs > intervalMs) {
-    return lowLimitMs;
+    intervalMs = lowLimitMs;
   }
-  return intervalMs;
+  return {
+    intervalMs: intervalMs,
+    interval: secondsToHms(intervalMs / 1000),
+  };
 }
 
 const interval_regex = /(\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
@@ -261,7 +292,7 @@ const intervals_in_seconds = {
   ms: 0.001,
 };
 
-function describe_interval(str: string) {
+export function describeInterval(str: string) {
   // Default to seconds if no unit is provided
   if (Number(str)) {
     return {
@@ -286,12 +317,17 @@ function describe_interval(str: string) {
   };
 }
 
-const interval_to_ms = (str: string) => {
-  const info = describe_interval(str);
-  return info.sec * 1000 * info.count;
-};
+export function intervalToSeconds(str: string): number {
+  const info = describeInterval(str);
+  return info.sec * info.count;
+}
 
-const round_interval = (interval: number) => {
+export function intervalToMs(str: string): number {
+  const info = describeInterval(str);
+  return info.sec * 1000 * info.count;
+}
+
+export function roundInterval(interval: number) {
   switch (true) {
     // 0.015s
     case interval < 15:
@@ -380,4 +416,4 @@ const round_interval = (interval: number) => {
     default:
       return 31536000000; // 1y
   }
-};
+}
