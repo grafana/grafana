@@ -289,12 +289,6 @@ func TestLoadingSettings(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(value, ShouldEqual, "default_url_val")
 		})
-
-		Convey("In case of panic - should return user-friendly error", func() {
-			value, err := valueAsString(iniFile.Section("server"), "root_url", "")
-			So(err.Error(), ShouldEqual, "Invalid value for key 'root_url' in configuration file")
-			So(value, ShouldEqual, "")
-		})
 	})
 }
 

@@ -5,7 +5,6 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { AppNotificationTimeout } from 'app/types';
 import { store } from 'app/store/store';
-import kbn from 'app/core/utils/kbn';
 import {
   DataFrame,
   DataQueryRequest,
@@ -18,6 +17,7 @@ import {
   ScopedVars,
   TimeRange,
   toDataFrame,
+  rangeUtil,
 } from '@grafana/data';
 import { getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -248,7 +248,8 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
                 map(frames => {
                   let moreRecordsMatched = false;
                   for (const frame of frames) {
-                    const recordsMatched = frame.meta?.custom?.['Statistics']['RecordsMatched'];
+                    const recordsMatched = frame.meta?.stats?.find(stat => stat.displayName === 'Records matched')
+                      ?.value!;
                     if (recordsMatched > (prevRecordsMatched[frame.refId!] ?? 0)) {
                       moreRecordsMatched = true;
                     }
@@ -419,7 +420,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       if (/^\d+$/.test(period)) {
         period = parseInt(period, 10);
       } else {
-        period = kbn.intervalToSeconds(period);
+        period = rangeUtil.intervalToSeconds(period);
       }
 
       if (period < 1) {

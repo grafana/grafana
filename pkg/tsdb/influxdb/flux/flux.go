@@ -26,29 +26,29 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 	tRes := &tsdb.Response{
 		Results: make(map[string]*tsdb.QueryResult),
 	}
-	runner, err := RunnerFromDataSource(dsInfo)
+	r, err := runnerFromDataSource(dsInfo)
 	if err != nil {
 		return nil, err
 	}
-	defer runner.client.Close()
+	defer r.client.Close()
 
 	for _, query := range tsdbQuery.Queries {
-		qm, err := GetQueryModelTSDB(query, tsdbQuery.TimeRange, dsInfo)
+		qm, err := getQueryModelTSDB(query, tsdbQuery.TimeRange, dsInfo)
 		if err != nil {
 			tRes.Results[query.RefId] = &tsdb.QueryResult{Error: err}
 			continue
 		}
 
-		res := executeQuery(context.Background(), *qm, runner, 50)
+		res := executeQuery(ctx, *qm, r, 50)
 
 		tRes.Results[query.RefId] = backendDataResponseToTSDBResponse(&res, query.RefId)
 	}
 	return tRes, nil
 }
 
-// Runner is an influxdb2 Client with an attached org property and is used
+// runner is an influxdb2 Client with an attached org property and is used
 // for running flux queries.
-type Runner struct {
+type runner struct {
 	client influxdb2.Client
 	org    string
 }
@@ -59,13 +59,13 @@ type queryRunner interface {
 }
 
 // runQuery executes fluxQuery against the Runner's organization and returns a Flux typed result.
-func (r *Runner) runQuery(ctx context.Context, fluxQuery string) (*api.QueryTableResult, error) {
+func (r *runner) runQuery(ctx context.Context, fluxQuery string) (*api.QueryTableResult, error) {
 	qa := r.client.QueryAPI(r.org)
 	return qa.Query(ctx, fluxQuery)
 }
 
-// RunnerFromDataSource creates a runner from the datasource model (the datasource instance's configuration).
-func RunnerFromDataSource(dsInfo *models.DataSource) (*Runner, error) {
+// runnerFromDataSource creates a runner from the datasource model (the datasource instance's configuration).
+func runnerFromDataSource(dsInfo *models.DataSource) (*runner, error) {
 	org := dsInfo.JsonData.Get("organization").MustString("")
 	if org == "" {
 		return nil, fmt.Errorf("missing organization in datasource configuration")
@@ -86,7 +86,7 @@ func RunnerFromDataSource(dsInfo *models.DataSource) (*Runner, error) {
 		return nil, err
 	}
 	opts.HTTPOptions().SetHTTPClient(hc)
-	return &Runner{
+	return &runner{
 		client: influxdb2.NewClientWithOptions(url, token, opts),
 		org:    org,
 	}, nil

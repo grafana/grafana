@@ -1,10 +1,18 @@
 // Libraries
 import _ from 'lodash';
 // Utils
-import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
 // Types
-import { dateMath, DefaultTimeRange, TimeRange, RawTimeRange, toUtc, dateTime, isDateTime } from '@grafana/data';
+import {
+  dateMath,
+  DefaultTimeRange,
+  TimeRange,
+  RawTimeRange,
+  toUtc,
+  dateTime,
+  isDateTime,
+  rangeUtil,
+} from '@grafana/data';
 import { ITimeoutService, ILocationService } from 'angular';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
@@ -115,7 +123,7 @@ export class TimeSrv {
       // when time window specified in ms
       timeWindowMs = parseInt(timeWindow, 10);
     } else {
-      timeWindowMs = kbn.intervalToMs(timeWindow);
+      timeWindowMs = rangeUtil.intervalToMs(timeWindow);
     }
 
     return {
@@ -181,7 +189,7 @@ export class TimeSrv {
 
     if (interval) {
       const validInterval = this.contextSrv.getValidInterval(interval);
-      const intervalMs = kbn.intervalToMs(validInterval);
+      const intervalMs = rangeUtil.intervalToMs(validInterval);
 
       this.refreshTimer = this.timer.register(
         this.$timeout(() => {

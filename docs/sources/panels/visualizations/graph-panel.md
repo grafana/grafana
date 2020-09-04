@@ -51,7 +51,7 @@ Use these settings to change the appearance of the tooltip that appears when you
 - **Mode**
   - **All series -** The hover tooltip shows all series in the graph. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
   - **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the graph.
-- **Sort order -** Sorts the order of series in the hover tooltip if you have selected *All series* mode.
+- **Sort order -** Sorts the order of series in the hover tooltip if you have selected **All series** mode. When you hover your cursor on a graph, Grafana displays the values associated with the lines. Generally users are most interested in the highest or lowest values. Sorting these values can make it much easier to find the data of interest.
   - **None -** The order of the series in the tooltip is determined by the sort order in your query. For example, they could be alphabetically sorted by series name.
   - **Increasing -** The series in the hover tooltip are sorted by value and in increasing order, with the lowest value at the top of the list.
   - **Decreasing -** The series in the hover tooltip are sorted by value and in decreasing order, with the highest value at the top of the list.

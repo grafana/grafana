@@ -35,8 +35,8 @@ describe('Merge multipe to single', () => {
 
     const result = transformDataFrame([cfg], [seriesA, seriesB]);
     const expected: Field[] = [
-      createField('Time', FieldType.time, [2000, 1000]),
-      createField('Temp', FieldType.number, [-1, 1]),
+      createField('Time', FieldType.time, [1000, 2000]),
+      createField('Temp', FieldType.number, [1, -1]),
     ];
 
     expect(unwrap(result[0].fields)).toEqual(expected);
@@ -66,8 +66,8 @@ describe('Merge multipe to single', () => {
 
     const result = transformDataFrame([cfg], [seriesA, seriesB]);
     const expected: Field[] = [
-      createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
-      createField('Temp', FieldType.number, [5, 4, 3, 2, 1, -1]),
+      createField('Time', FieldType.time, [100, 150, 200, 100, 125, 126]),
+      createField('Temp', FieldType.number, [1, 4, 5, -1, 2, 3]),
     ];
 
     expect(unwrap(result[0].fields)).toEqual(expected);
@@ -105,8 +105,8 @@ describe('Merge multipe to single', () => {
 
     const result = transformDataFrame([cfg], [seriesA, seriesB, seriesC]);
     const expected: Field[] = [
-      createField('Time', FieldType.time, [2000, 1000, 500]),
-      createField('Temp', FieldType.number, [-1, 1, 2]),
+      createField('Time', FieldType.time, [1000, 2000, 500]),
+      createField('Temp', FieldType.number, [1, -1, 2]),
     ];
 
     expect(unwrap(result[0].fields)).toEqual(expected);
@@ -188,9 +188,9 @@ describe('Merge multipe to single', () => {
 
     const result = transformDataFrame([cfg], [tableA, seriesB, tableC]);
     const expected: Field[] = [
-      createField('Time', FieldType.time, ['2019-11-01T11:10:23Z', '2019-10-01T11:10:23Z', '2019-09-01T11:10:23Z']),
-      createField('Temp', FieldType.number, [2, 1, -1]),
-      createField('Humidity', FieldType.number, [5, 10, null]),
+      createField('Time', FieldType.time, ['2019-10-01T11:10:23Z', '2019-09-01T11:10:23Z', '2019-11-01T11:10:23Z']),
+      createField('Temp', FieldType.number, [1, -1, 2]),
+      createField('Humidity', FieldType.number, [10, null, 5]),
     ];
 
     expect(unwrap(result[0].fields)).toEqual(expected);
@@ -232,10 +232,10 @@ describe('Merge multipe to single', () => {
     const result = transformDataFrame([cfg], [tableA, tableB, tableC]);
 
     const expected: Field[] = [
-      createField('Time', FieldType.time, [200, 150, 149, 126, 125, 124, 100, 100, 100]),
-      createField('Temp', FieldType.number, [5, 4, 5, 3, 2, 4, 1, -1, 1]),
-      createField('Humidity', FieldType.number, [55, 14, 30, null, null, 25, 10, null, 22]),
-      createField('Enabled', FieldType.boolean, [null, null, null, true, false, null, null, true, null]),
+      createField('Time', FieldType.time, [100, 150, 200, 100, 125, 126, 100, 124, 149]),
+      createField('Temp', FieldType.number, [1, 4, 5, -1, 2, 3, 1, 4, 5]),
+      createField('Humidity', FieldType.number, [10, 14, 55, null, null, null, 22, 25, 30]),
+      createField('Enabled', FieldType.boolean, [null, null, null, true, false, true, null, null, null]),
     ];
 
     expect(unwrap(result[0].fields)).toEqual(expected);
@@ -265,8 +265,8 @@ describe('Merge multipe to single', () => {
 
     const result = transformDataFrame([cfg], [serieA, serieB]);
     const expected: Field[] = [
-      createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
-      createField('Temp', FieldType.number, [5, 4, 3, 2, 1, -1]),
+      createField('Time', FieldType.time, [100, 150, 200, 100, 125, 126]),
+      createField('Temp', FieldType.number, [1, 4, 5, -1, 2, 3]),
     ];
 
     const fields = unwrap(result[0].fields);
@@ -299,8 +299,8 @@ describe('Merge multipe to single', () => {
 
     const result = transformDataFrame([cfg], [serieA, serieB]);
     const expected: Field[] = [
-      createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
-      createField('Temp', FieldType.number, [5, 4, 3, 2, 1, -1], { units: 'celsius' }),
+      createField('Time', FieldType.time, [100, 150, 200, 100, 125, 126]),
+      createField('Temp', FieldType.number, [1, 4, 5, -1, 2, 3], { units: 'celsius' }),
     ];
 
     const fields = unwrap(result[0].fields);
@@ -333,8 +333,8 @@ describe('Merge multipe to single', () => {
 
     const result = transformDataFrame([cfg], [serieA, serieB]);
     const expected: Field[] = [
-      createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
-      createField('Temp', FieldType.number, [5, 4, 3, 2, 1, -1]),
+      createField('Time', FieldType.time, [100, 150, 200, 100, 125, 126]),
+      createField('Temp', FieldType.number, [1, 4, 5, -1, 2, 3]),
     ];
 
     const fields = unwrap(result[0].fields);
