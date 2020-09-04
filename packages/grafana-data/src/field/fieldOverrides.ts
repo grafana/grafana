@@ -35,7 +35,6 @@ import { getFieldDisplayName, getFrameDisplayName } from './fieldState';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
 import { getTemplateProxyForField } from './templateProxies';
-import { FormattedVector } from '../vector';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -448,7 +447,6 @@ export function applyRawFieldOverrides(data: DataFrame[]): DataFrame[] {
       newFields[fieldIndex] = {
         ...newFields[fieldIndex],
         display: processor,
-        values: new FormattedVector(newFields[fieldIndex].values, processor),
       };
     }
 
