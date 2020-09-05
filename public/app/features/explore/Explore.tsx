@@ -21,7 +21,11 @@ import {
   ExploreUIState,
   ExploreUrlState,
   LogsModel,
+  NavModel,
 } from '@grafana/data';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { Branding } from 'app/core/components/Branding/Branding';
+import { getTitleFromNavModel } from 'app/core/selectors/navModel';
 
 import store from 'app/core/store';
 import LogsContainer from './LogsContainer';
@@ -86,6 +90,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
+interface ConnectedProps {
+  navModel: NavModel;
+}
+
 export interface ExploreProps {
   changeSize: typeof changeSize;
   datasourceInstance: DataSourceApi | null;
@@ -129,6 +137,8 @@ export interface ExploreProps {
   showTrace: boolean;
 }
 
+type Props = ExploreProps & ConnectedProps;
+
 enum ExploreDrawer {
   RichHistory,
   QueryInspector,
@@ -162,11 +172,11 @@ interface ExploreState {
  * The result viewers determine some of the query options sent to the datasource, e.g.,
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
-export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
+export class Explore extends React.PureComponent<Props, ExploreState> {
   el: any;
   exploreEvents: Emitter;
 
-  constructor(props: ExploreProps) {
+  constructor(props: Props) {
     super(props);
     this.exploreEvents = new Emitter();
     this.state = {
@@ -183,8 +193,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       initialRange,
       initialUI,
       originPanelId,
+      navModel,
     } = this.props;
     const width = this.el ? this.el.offsetWidth : 0;
+    const title = navModel ? getTitleFromNavModel(navModel) : '';
+    document.title = title ? title + ' - ' + Branding.AppTitle : Branding.AppTitle;
 
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
@@ -464,7 +477,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 const ensureQueriesMemoized = memoizeOne(ensureQueries);
 const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
 
-function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partial<ExploreProps> {
+function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partial<Props> {
   const explore = state.explore;
   const { split, syncedTimes } = explore;
   const item: ExploreItemState = explore[exploreId];
@@ -489,6 +502,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     absoluteRange,
     queryResponse,
   } = item;
+  const navModel = getNavModel(state.navIndex, 'explore');
 
   const { datasource, queries, range: urlRange, ui, originPanelId } = (urlState || {}) as ExploreUrlState;
   const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
@@ -525,6 +539,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showMetrics,
     showTable,
     showTrace,
+    navModel,
   };
 }
 
