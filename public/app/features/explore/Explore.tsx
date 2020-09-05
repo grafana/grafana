@@ -94,7 +94,7 @@ interface ConnectedProps {
   navModel: NavModel;
 }
 
-export interface ExploreProps {
+export interface ExploreProps extends ConnectedProps {
   changeSize: typeof changeSize;
   datasourceInstance: DataSourceApi | null;
   datasourceMissing: boolean;
@@ -137,8 +137,6 @@ export interface ExploreProps {
   showTrace: boolean;
 }
 
-type Props = ExploreProps & ConnectedProps;
-
 enum ExploreDrawer {
   RichHistory,
   QueryInspector,
@@ -172,11 +170,11 @@ interface ExploreState {
  * The result viewers determine some of the query options sent to the datasource, e.g.,
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
-export class Explore extends React.PureComponent<Props, ExploreState> {
+export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   el: any;
   exploreEvents: Emitter;
 
-  constructor(props: Props) {
+  constructor(props: ExploreProps) {
     super(props);
     this.exploreEvents = new Emitter();
     this.state = {
@@ -477,7 +475,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 const ensureQueriesMemoized = memoizeOne(ensureQueries);
 const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
 
-function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partial<Props> {
+function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partial<ExploreProps> {
   const explore = state.explore;
   const { split, syncedTimes } = explore;
   const item: ExploreItemState = explore[exploreId];

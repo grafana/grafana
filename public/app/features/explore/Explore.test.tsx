@@ -1,5 +1,5 @@
 import React from 'react';
-import { DataSourceApi, LoadingState, toUtc, DataQueryError, DataQueryRequest, CoreApp } from '@grafana/data';
+import { DataSourceApi, LoadingState, toUtc, DataQueryError, DataQueryRequest, CoreApp, NavModel } from '@grafana/data';
 import { getFirstNonQueryRowSpecificError } from 'app/core/utils/explore';
 import { ExploreId } from 'app/types/explore';
 import { shallow } from 'enzyme';
@@ -111,6 +111,14 @@ const dummyProps: ExploreProps = {
   showLogs: true,
   showTable: true,
   showTrace: true,
+  navModel: {
+    main: {
+      text: 'Explore',
+    },
+    node: {
+      text: 'Explore',
+    },
+  } as NavModel,
 };
 
 const setupErrors = (hasRefId?: boolean) => {
