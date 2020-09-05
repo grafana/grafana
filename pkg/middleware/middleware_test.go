@@ -253,8 +253,7 @@ func TestMiddlewareContext(t *testing.T) {
 				return true, nil
 			}
 
-			maxAgeHours := (time.Duration(setting.LoginMaxLifetimeDays) * time.Hour)
-			maxAge := int(maxAgeHours.Seconds())
+			maxAge := int(setting.LoginMaxLifetime.Seconds())
 
 			sameSitePolicies := []http.SameSite{
 				http.SameSiteNoneMode,

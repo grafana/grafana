@@ -143,7 +143,7 @@ var (
 	AdminUser            string
 	AdminPassword        string
 	LoginCookieName      string
-	LoginMaxLifetimeDays float64
+	LoginMaxLifetime time.Duration
 
 	AnonymousEnabled bool
 	AnonymousOrgName string
@@ -278,8 +278,8 @@ type Cfg struct {
 
 	// Auth
 	LoginCookieName                  string
-	LoginMaxInactiveLifetimeDuration time.Duration
-	LoginMaxLifetimeDuration         time.Duration
+	LoginMaxInactiveLifetime time.Duration
+	LoginMaxLifetime         time.Duration
 	TokenRotationIntervalMinutes     int
 
 	// OAuth

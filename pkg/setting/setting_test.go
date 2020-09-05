@@ -278,44 +278,44 @@ func TestLoadingSettings(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
-				Args:     []string{"cfg:auth.login_maximum_inactive_lifetime_days=10", "cfg:auth.login_maximum_inactive_lifetime_duration=824h"},
+				Args:     []string{"cfg:auth.login_maximum_inactive_lifetime_days=10", "cfg:auth.login_maximum_inactive_lifetime_duration="},
 			})
 			So(err, ShouldBeNil)
 			maxInactiveDaysVal, _ := time.ParseDuration("240h")
-			So(cfg.LoginMaxInactiveLifetimeDuration, ShouldEqual, maxInactiveDaysVal)
+			So(cfg.LoginMaxInactiveLifetime, ShouldEqual, maxInactiveDaysVal)
 		})
 
 		Convey("login_maximum_inactive_lifetime_duration should override default login_maximum_inactive_lifetime_days", func() {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
-				Args:     []string{"cfg:auth.login_maximum_inactive_lifetime_days=7", "cfg:auth.login_maximum_inactive_lifetime_duration=824h"},
+				Args:     []string{"cfg:auth.login_maximum_inactive_lifetime_duration=824h"},
 			})
 			So(err, ShouldBeNil)
 			maxInactiveDurationVal, _ := time.ParseDuration("824h")
-			So(cfg.LoginMaxInactiveLifetimeDuration, ShouldEqual, maxInactiveDurationVal)
+			So(cfg.LoginMaxInactiveLifetime, ShouldEqual, maxInactiveDurationVal)
 		})
 
 		Convey("login_maximum_lifetime_duration should not override non-default login_maximum_lifetime_days", func() {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
-				Args:     []string{"cfg:auth.login_maximum_lifetime_days=24", "cfg:auth.login_maximum_lifetime_duration=824h"},
+				Args:     []string{"cfg:auth.login_maximum_lifetime_days=24", "cfg:auth.login_maximum_lifetime_duration="},
 			})
 			So(err, ShouldBeNil)
 			maxLifetimeDaysVal, _ := time.ParseDuration("576h")
-			So(cfg.LoginMaxLifetimeDuration, ShouldEqual, maxLifetimeDaysVal)
+			So(cfg.LoginMaxLifetime, ShouldEqual, maxLifetimeDaysVal)
 		})
 
 		Convey("login_maximum_lifetime_duration should override default login_maximum_inactive_lifetime_days", func() {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
-				Args:     []string{"cfg:auth.login_maximum_lifetime_days=30", "cfg:auth.login_maximum_lifetime_duration=824h"},
+				Args:     []string{"cfg:auth.login_maximum_lifetime_duration=824h"},
 			})
 			So(err, ShouldBeNil)
 			maxLifetimeDurationVal, _ := time.ParseDuration("824h")
-			So(cfg.LoginMaxLifetimeDuration, ShouldEqual, maxLifetimeDurationVal)
+			So(cfg.LoginMaxLifetime, ShouldEqual, maxLifetimeDurationVal)
 		})
 	})
 
