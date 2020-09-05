@@ -274,7 +274,7 @@ func TestLoadingSettings(t *testing.T) {
 			So(AuthProxySyncTtl, ShouldEqual, 12)
 		})
 
-		Convey("login_maximum_inactive_lifetime_duration should not override non-default login_maximum_inactive_lifetime_days", func() {
+		Convey("unset login_maximum_inactive_lifetime_duration should not override non-default login_maximum_inactive_lifetime_days", func() {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
@@ -285,7 +285,7 @@ func TestLoadingSettings(t *testing.T) {
 			So(cfg.LoginMaxInactiveLifetime, ShouldEqual, maxInactiveDaysVal)
 		})
 
-		Convey("login_maximum_inactive_lifetime_duration should override default login_maximum_inactive_lifetime_days", func() {
+		Convey("login_maximum_inactive_lifetime_duration should override unset login_maximum_inactive_lifetime_days", func() {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
@@ -296,7 +296,7 @@ func TestLoadingSettings(t *testing.T) {
 			So(cfg.LoginMaxInactiveLifetime, ShouldEqual, maxInactiveDurationVal)
 		})
 
-		Convey("login_maximum_lifetime_duration should not override non-default login_maximum_lifetime_days", func() {
+		Convey("unset login_maximum_lifetime_duration should not override non-default login_maximum_lifetime_days", func() {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
@@ -307,7 +307,7 @@ func TestLoadingSettings(t *testing.T) {
 			So(cfg.LoginMaxLifetime, ShouldEqual, maxLifetimeDaysVal)
 		})
 
-		Convey("login_maximum_lifetime_duration should override default login_maximum_inactive_lifetime_days", func() {
+		Convey("login_maximum_lifetime_duration should override unset login_maximum_inactive_lifetime_days", func() {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",

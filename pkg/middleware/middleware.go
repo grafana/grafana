@@ -256,7 +256,7 @@ func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.User
 		}
 
 		if rotated {
-			WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetimeDays)
+			WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetime)
 		}
 	}
 }

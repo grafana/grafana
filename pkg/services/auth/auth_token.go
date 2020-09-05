@@ -397,11 +397,11 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 }
 
 func (s *UserAuthTokenService) createdAfterParam() int64 {
-	return getTime().Add(-s.Cfg.LoginMaxLifetimeDuration).Unix()
+	return getTime().Add(-s.Cfg.LoginMaxLifetime).Unix()
 }
 
 func (s *UserAuthTokenService) rotatedAfterParam() int64 {
-	return getTime().Add(-s.Cfg.LoginMaxInactiveLifetimeDuration).Unix()
+	return getTime().Add(-s.Cfg.LoginMaxInactiveLifetime).Unix()
 }
 
 func hashToken(token string) string {

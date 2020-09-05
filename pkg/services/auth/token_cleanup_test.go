@@ -14,8 +14,8 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 		ctx := createTestContext(t)
 		maxInactiveLifetime, _ := time.ParseDuration("168h")
 		maxLifetime, _ := time.ParseDuration("720h")
-		ctx.tokenService.Cfg.LoginMaxInactiveLifetimeDuration = maxInactiveLifetime
-		ctx.tokenService.Cfg.LoginMaxLifetimeDuration = maxLifetime
+		ctx.tokenService.Cfg.LoginMaxInactiveLifetime = maxInactiveLifetime
+		ctx.tokenService.Cfg.LoginMaxLifetime = maxLifetime
 
 		insertToken := func(token string, prev string, createdAt, rotatedAt int64) {
 			ut := userAuthToken{AuthToken: token, PrevAuthToken: prev, CreatedAt: createdAt, RotatedAt: rotatedAt, UserAgent: "", ClientIp: ""}
