@@ -537,6 +537,18 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       controllerAs: 'ctrl',
       reloadOnSearch: false,
     })
+    .when('/s/:shortLinkUid', {
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(
+              /* webpackChunkName: "ShortUrlRedirectPage" */ '../features/short-urls/containers/ShortUrlRedirectPage'
+            )
+          ),
+      },
+    })
     .otherwise({
       template: '<react-container />',
       resolve: {
