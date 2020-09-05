@@ -10,7 +10,7 @@ import {
   AnnotationEvent,
   AnnotationEventMappings,
   getFieldDisplayName,
-  AnnotationEventFieldMapValue,
+  AnnotationEventFieldSource,
 } from '@grafana/data';
 
 import isString from 'lodash/isString';
@@ -127,12 +127,12 @@ export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationEv
   const fields: AnnotationEventFieldSetter[] = [];
   for (const evts of annotationEventNames) {
     const opt = options[evts.key] || {}; //AnnotationEventFieldMapping
-    if (opt.source === AnnotationEventFieldMapValue.Skip) {
+    if (opt.source === AnnotationEventFieldSource.Skip) {
       continue;
     }
     const setter: AnnotationEventFieldSetter = { key: evts.key, split: evts.split };
 
-    if (opt.source === AnnotationEventFieldMapValue.Text) {
+    if (opt.source === AnnotationEventFieldSource.Text) {
       setter.text = opt.value;
     } else {
       const lower = (opt.value || evts.key).toLowerCase();

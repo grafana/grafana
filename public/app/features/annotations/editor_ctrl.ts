@@ -13,7 +13,7 @@ import './components/AnnotationQueryEditor';
 export class AnnotationsEditorCtrl {
   mode: any;
   datasources: any;
-  annotations: any;
+  annotations: any[];
   currentAnnotation: any;
   currentDatasource: any;
   currentIsNew: any;
@@ -76,7 +76,12 @@ export class AnnotationsEditorCtrl {
    * Called from the react editor
    */
   onAnnotationChange = (annotation: any) => {
-    console.log('SAVE THE annotation!', annotation);
+    const currentIndex = this.dashboard.annotations.list.indexOf(this.currentAnnotation);
+    if (currentIndex >= 0) {
+      this.dashboard.annotations.list[currentIndex] = annotation;
+    } else {
+      console.warn('updating annotatoin, but not in the dashboard', annotation);
+    }
     this.currentAnnotation = annotation;
   };
 

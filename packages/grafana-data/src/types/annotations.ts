@@ -36,14 +36,14 @@ export interface AnnotationEvent {
   source?: any; // source.type === 'dashboard'
 }
 
-export enum AnnotationEventFieldMapValue {
+export enum AnnotationEventFieldSource {
   Field = 'field', // Default -- find the value with a matching key
   Text = 'text', // Write a constant string into the value
   Skip = 'skip', // Do not include the field
 }
 
 export interface AnnotationEventFieldMapping {
-  source?: AnnotationEventFieldMapValue; // defautls to 'field'
+  source?: AnnotationEventFieldSource; // defautls to 'field'
   value?: string;
   regex?: string;
 }

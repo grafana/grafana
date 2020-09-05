@@ -50,8 +50,6 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
 
   onRunQuery = async () => {
     const { datasource, annotation } = this.props;
-    console.log('RUN query');
-
     this.setState({
       running: true,
     });
@@ -64,9 +62,6 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       datasource,
       annotation
     ).toPromise();
-
-    console.log('GOT response', response);
-
     this.setState({
       running: false,
       response,
