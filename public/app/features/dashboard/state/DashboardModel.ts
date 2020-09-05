@@ -25,6 +25,7 @@ import { GetVariables, getVariables } from 'app/features/variables/state/selecto
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
+import { isAllVariable } from '../../variables/utils';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -651,7 +652,7 @@ export class DashboardModel {
 
   getSelectedVariableOptions(variable: any) {
     let selectedOptions: any[];
-    if (variable.current.text === 'All') {
+    if (isAllVariable(variable)) {
       selectedOptions = variable.options.slice(1, variable.options.length);
     } else {
       selectedOptions = _.filter(variable.options, { selected: true });
