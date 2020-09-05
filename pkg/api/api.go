@@ -384,6 +384,12 @@ func (hs *HTTPServer) registerRoutes() {
 		// error test
 		r.Get("/metrics/error", Wrap(GenerateError))
 
+		// short urls
+		apiRoute.Group("/goto", func(shortUrlRoute routing.RouteRegister) {
+			shortUrlRoute.Post("/", Wrap(CreateShortUrl))
+			shortUrlRoute.Get("/:uid", Wrap(GetShortUrlPath))
+		})
+
 	}, reqSignedIn)
 
 	// admin api
