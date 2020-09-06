@@ -537,7 +537,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       controllerAs: 'ctrl',
       reloadOnSearch: false,
     })
-    .when('/s/:shortLinkUid', {
+    .when('/goto/:shortLinkUid', {
       template: '<react-container />',
       reloadOnSearch: false,
       resolve: {

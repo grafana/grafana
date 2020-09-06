@@ -104,6 +104,11 @@ export function buildIframeHtml(
   return '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
 }
 
+export function buildShortUrl(uid: string) {
+  const baseUrl = buildBaseUrl();
+  return urlUtil.appendQueryToUrl(baseUrl, uid);
+}
+
 export function getLocalTimeZone() {
   const utcOffset = '&tz=UTC' + encodeURIComponent(dateTime().format('Z'));
 

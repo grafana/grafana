@@ -15,17 +15,17 @@ export interface Props {
 
 const ShortUrlRedirectPage = (props: Props) => {
   const { navModel } = props;
-  const [error, setError] = useState<boolean>(false);
+  const [error, setError] = useState<Error | undefined>();
   useEffect(() => {
     getBackendSrv()
       .get(`/api/goto/${props.shortLinkUid}`) //todo will returning a 302 work here?
-      .then(path => alert(props.shortLinkUid)) //window.location.replace(path); or like the react-router way i guess?
-      .catch(err => alert(err)); //setError(true);
+      .then(path => window.location.replace(path))
+      .catch(setError);
   }, []);
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={!error}>
-        <span>great work idiot</span>
+        <span>Unable to resolve short URL: {props.shortLinkUid}</span>
       </Page.Contents>
     </Page>
   );
