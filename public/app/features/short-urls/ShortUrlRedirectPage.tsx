@@ -13,7 +13,7 @@ export interface Props {
   shortLinkUid: string;
 }
 
-const ShortUrlRedirectPage = (props: Props) => {
+export const ShortUrlRedirectPage = (props: Props) => {
   const { navModel } = props;
   const [error, setError] = useState<Error | undefined>();
   useEffect(() => {
@@ -25,7 +25,7 @@ const ShortUrlRedirectPage = (props: Props) => {
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={!error}>
-        <span>Unable to resolve short URL: {props.shortLinkUid}</span>
+        {error && <span>Unable to resolve short URL: {props.shortLinkUid}</span>}
       </Page.Contents>
     </Page>
   );

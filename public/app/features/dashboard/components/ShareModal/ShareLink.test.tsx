@@ -46,6 +46,18 @@ function setUTCTimeZone() {
   };
 }
 
+const mockUid = 'abc123';
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+
+  return {
+    ...original,
+    getBackendSrv: () => ({
+      post: jest.fn().mockResolvedValue(mockUid),
+    }),
+  };
+});
+
 interface ScenarioContext {
   wrapper?: ShallowWrapper<Props, State, ShareLink>;
   mount: (propOverrides?: Partial<Props>) => void;
@@ -163,6 +175,21 @@ describe('ShareModal', () => {
       expect(state?.shareUrl).toContain(
         'http://server/#!/test?from=1000&to=2000&orgId=1&var-app=mupp&var-server=srv-01'
       );
+    });
+
+    it('should shorten url', () => {
+      mockLocationHref('http://server/#!/test');
+      fillVariableValuesForUrlMock = (params: any) => {
+        params['var-app'] = 'mupp';
+        params['var-server'] = 'srv-01';
+      };
+      ctx.mount();
+      ctx.wrapper?.setState({ includeTemplateVars: true, useShortUrl: true }, async () => {
+        // @ts-ignore i dunno how else to await the async componentDidUpdate
+        await ctx.wrapper?.instance().busy;
+        const state = ctx.wrapper?.state();
+        expect(state?.shareUrl).toContain(`/goto/${mockUid}`);
+      });
     });
   });
 });
