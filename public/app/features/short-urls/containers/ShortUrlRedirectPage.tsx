@@ -18,8 +18,8 @@ const ShortUrlRedirectPage = (props: Props) => {
   const [error, setError] = useState<Error | undefined>();
   useEffect(() => {
     getBackendSrv()
-      .get(`/api/goto/${props.shortLinkUid}`) //todo will returning a 302 work here?
-      .then(path => window.location.replace(path))
+      .get(`/api/goto/${props.shortLinkUid}`)
+      .then(path => (window.location.href = path))
       .catch(setError);
   }, []);
   return (

@@ -386,7 +386,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// short urls
 		apiRoute.Group("/goto", func(shortUrlRoute routing.RouteRegister) {
-			shortUrlRoute.Post("/", Wrap(CreateShortUrl))
+			shortUrlRoute.Post("/", bind(dtos.CreateShortUrlForm{}), Wrap(hs.CreateShortUrl))
 			shortUrlRoute.Get("/:uid", Wrap(GetShortUrlPath))
 		})
 

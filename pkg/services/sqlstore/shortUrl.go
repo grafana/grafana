@@ -26,19 +26,18 @@ func GetFullUrlByUid(query *models.GetFullUrlQuery) error {
 }
 
 func CreateShortUrl(command *models.CreateShortUrlCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+	shortUrl := models.ShortUrl{
+		Uid:       command.Uid,
+		Path:      command.Path,
+		CreatedBy: command.CreatedBy,
+		CreatedAt: command.CreatedAt,
+	}
 
-		shortUrl := models.ShortUrl{
-			Uid:       command.Uid,
-			Path:      command.Path,
-			CreatedBy: command.CreatedBy,
-			CreatedAt: command.CreatedAt,
-		}
+	_, err := x.Insert(&shortUrl)
+	if err != nil {
+		return err
+	}
 
-		if _, err := sess.Table("shortUrl").Insert(&shortUrl); err != nil {
-			return err
-		}
-
-		return nil
-	})
+	command.Result = &shortUrl
+	return err
 }

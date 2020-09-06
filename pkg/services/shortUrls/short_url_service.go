@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -12,7 +13,7 @@ import (
 // ShortUrlService service for operating on shortUrls
 type ShortUrlService interface {
 	GetFullUrlByUID(uid string) (string, error)
-	CreateShortUrl(cmd *models.CreateShortUrlCommand) (string, error)
+	CreateShortUrl(cmd *dtos.CreateShortUrlForm) (string, error)
 }
 
 type shortUrlServiceImpl struct {
@@ -49,7 +50,7 @@ func (dr *shortUrlServiceImpl) GetFullUrlByUID(uid string) (string, error) {
 	return fullUrl, nil
 }
 
-func (dr *shortUrlServiceImpl) CreateShortUrl(cmd *models.CreateShortUrlCommand) (string, error) {
+func (dr *shortUrlServiceImpl) CreateShortUrl(cmd *dtos.CreateShortUrlForm) (string, error) {
 	createShortUrlCmd, err := dr.buildCreateShortUrlCommand(cmd.Path)
 	if err != nil {
 		return "", err

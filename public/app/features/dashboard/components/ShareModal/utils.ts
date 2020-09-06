@@ -38,6 +38,10 @@ export function buildParams(
   return params;
 }
 
+export function buildHostUrl() {
+  return `${window.location.protocol}//${window.location.host}`;
+}
+
 export function buildBaseUrl() {
   let baseUrl = window.location.href;
   const queryStart = baseUrl.indexOf('?');
@@ -105,8 +109,8 @@ export function buildIframeHtml(
 }
 
 export function buildShortUrl(uid: string) {
-  const baseUrl = buildBaseUrl();
-  return urlUtil.appendQueryToUrl(baseUrl, uid);
+  const hostUrl = buildHostUrl();
+  return `${hostUrl}/goto/${uid}`;
 }
 
 export function getLocalTimeZone() {

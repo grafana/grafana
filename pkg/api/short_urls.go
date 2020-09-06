@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/shortUrls"
 )
@@ -16,13 +17,12 @@ func GetShortUrlPath(c *models.ReqContext) Response {
 		return Error(500, "Failed to get short url", err)
 	}
 
-	return JSON(302, result)
+	return JSON(200, result)
 }
 
 // POST /api/goto
-func CreateShortUrl(c *models.ReqContext, cmd models.CreateShortUrlCommand) Response {
+func (hs *HTTPServer) CreateShortUrl(c *models.ReqContext, cmd dtos.CreateShortUrlForm) Response {
 	service := shortUrls.NewShortUrlService(c.OrgId, c.SignedInUser)
-	cmd.Path = c.Params(":path")
 	result, err := service.CreateShortUrl(&cmd)
 
 	if err != nil {
