@@ -43,10 +43,6 @@ func (dr *shortUrlServiceImpl) GetFullUrlByUID(uid string) (string, error) {
 		return "", err
 	}
 
-	if query.Result.Path == "" {
-		return "", models.ErrShortUrlNotFound
-	}
-
 	return query.Result.Path, nil
 }
 

@@ -24,12 +24,6 @@ func TestShortUrlService(t *testing.T) {
 		CreatedBy: service.user.UserId,
 		CreatedAt: time.Now(),
 	}
-	mockNotFoundShortUrl := models.ShortUrl{
-		Uid:       mockNotFoundUid,
-		Path:      "",
-		CreatedBy: service.user.UserId,
-		CreatedAt: time.Now(),
-	}
 
 	bus.AddHandler("test", func(query *models.CreateShortUrlCommand) error {
 		query.Result = &mockShortUrl
@@ -37,17 +31,17 @@ func TestShortUrlService(t *testing.T) {
 	})
 
 	bus.AddHandler("test", func(query *models.GetFullUrlQuery) error {
-		result := &mockShortUrl
 		if query.Uid == mockNotFoundUid {
-			result = &mockNotFoundShortUrl
+			return models.ErrShortUrlNotFound
 		}
+		result := &mockShortUrl
 		query.Result = result
 		return nil
 	})
 
 	t.Run("User can create and read short URLs", func(t *testing.T) {
 		uid, err := service.CreateShortUrl(&dtos.CreateShortUrlForm{
-			Path: "test/short/url",
+			Path: mockPath,
 		})
 		assert.Nil(t, err)
 		assert.NotEmpty(t, uid)

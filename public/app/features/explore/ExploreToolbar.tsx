@@ -247,19 +247,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               </div>
             )}
 
-            <div className="explore-toolbar-content-item explore-icon-align">
-              <ResponsiveButton
-                splitted={splitted}
-                title="Share"
-                /* 
-                  TODO use ShareLink
-                  */
-                onClick={() => {}}
-                icon="share-alt"
-                iconClassName="icon-margin-right"
-              />
-            </div>
-
             {exploreId === 'left' && !splitted ? (
               <div className="explore-toolbar-content-item explore-icon-align">
                 <ResponsiveButton
