@@ -1,7 +1,9 @@
-import { locale, scaledUnits, simpleCountUnit, toFixedUnit, ValueFormatCategory } from './valueFormats';
+import { locale, scaledUnits, simpleCountUnit, toFixedUnit, ValueFormatCategory, stringFormater } from './valueFormats';
 import {
   dateTimeAsIso,
+  dateTimeAsIsoNoDateIfToday,
   dateTimeAsUS,
+  dateTimeAsUSNoDateIfToday,
   dateTimeFromNow,
   toClockMilliseconds,
   toClockSeconds,
@@ -26,19 +28,20 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Misc',
     formats: [
       { name: 'none', id: 'none', fn: toFixedUnit('') },
+      { name: 'String', id: 'string', fn: stringFormater },
       {
         name: 'short',
         id: 'short',
         fn: scaledUnits(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']),
       },
-      { name: 'percent (0-100)', id: 'percent', fn: toPercent },
-      { name: 'percent (0.0-1.0)', id: 'percentunit', fn: toPercentUnit },
+      { name: 'Percent (0-100)', id: 'percent', fn: toPercent },
+      { name: 'Percent (0.0-1.0)', id: 'percentunit', fn: toPercentUnit },
       { name: 'Humidity (%H)', id: 'humidity', fn: toFixedUnit('%H') },
-      { name: 'decibel', id: 'dB', fn: toFixedUnit('dB') },
-      { name: 'hexadecimal (0x)', id: 'hex0x', fn: toHex0x },
-      { name: 'hexadecimal', id: 'hex', fn: toHex },
-      { name: 'scientific notation', id: 'sci', fn: sci },
-      { name: 'locale format', id: 'locale', fn: locale },
+      { name: 'Decibel', id: 'dB', fn: toFixedUnit('dB') },
+      { name: 'Hexadecimal (0x)', id: 'hex0x', fn: toHex0x },
+      { name: 'Hexadecimal', id: 'hex', fn: toHex },
+      { name: 'Scientific notation', id: 'sci', fn: sci },
+      { name: 'Locale format', id: 'locale', fn: locale },
       { name: 'Pixels', id: 'pixel', fn: toFixedUnit('px') },
     ],
   },
@@ -136,7 +139,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'Data (Metric)',
+    name: 'Data (metric)',
     formats: [
       { name: 'bits(Metric)', id: 'decbits', fn: decimalSIPrefix('b') },
       { name: 'bytes(Metric)', id: 'decbytes', fn: decimalSIPrefix('B') },
@@ -148,7 +151,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'Data Rate',
+    name: 'Data rate',
     formats: [
       { name: 'packets/sec', id: 'pps', fn: decimalSIPrefix('pps') },
       { name: 'bits/sec', id: 'bps', fn: decimalSIPrefix('bps') },
@@ -166,10 +169,12 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'Date & Time',
+    name: 'Date & time',
     formats: [
-      { name: 'YYYY-MM-DD HH:mm:ss', id: 'dateTimeAsIso', fn: dateTimeAsIso },
-      { name: 'MM/DD/YYYY h:mm:ss a', id: 'dateTimeAsUS', fn: dateTimeAsUS },
+      { name: 'Datetime ISO', id: 'dateTimeAsIso', fn: dateTimeAsIso },
+      { name: 'Datetime ISO (No date if today)', id: 'dateTimeAsIsoNoDateIfToday', fn: dateTimeAsIsoNoDateIfToday },
+      { name: 'Datetime US', id: 'dateTimeAsUS', fn: dateTimeAsUS },
+      { name: 'Datetime US (No date if today)', id: 'dateTimeAsUSNoDateIfToday', fn: dateTimeAsUSNoDateIfToday },
       { name: 'From Now', id: 'dateTimeFromNow', fn: dateTimeFromNow },
     ],
   },
@@ -239,7 +244,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'Hash Rate',
+    name: 'Hash rate',
     formats: [
       { name: 'hashes/sec', id: 'Hs', fn: decimalSIPrefix('H/s') },
       { name: 'kilohashes/sec', id: 'KHs', fn: decimalSIPrefix('H/s', 1) },
@@ -290,8 +295,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Gray (Gy)', id: 'radgy', fn: decimalSIPrefix('Gy') },
       { name: 'rad', id: 'radrad', fn: decimalSIPrefix('rad') },
       { name: 'Sievert (Sv)', id: 'radsv', fn: decimalSIPrefix('Sv') },
-      { name: 'milliSievert (mSv)', id: 'radmsv', fn: decimalSIPrefix('mSv', -1) },
-      { name: 'microSievert (µSv)', id: 'radusv', fn: decimalSIPrefix('µSv', -2) },
+      { name: 'milliSievert (mSv)', id: 'radmsv', fn: decimalSIPrefix('Sv', -1) },
+      { name: 'microSievert (µSv)', id: 'radusv', fn: decimalSIPrefix('Sv', -2) },
       { name: 'rem', id: 'radrem', fn: decimalSIPrefix('rem') },
       { name: 'Exposure (C/kg)', id: 'radexpckg', fn: decimalSIPrefix('C/kg') },
       { name: 'roentgen (R)', id: 'radr', fn: decimalSIPrefix('R') },

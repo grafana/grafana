@@ -7,6 +7,7 @@ export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
 export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
+export { TabbedContainer, TabConfig } from './TabbedContainer/TabbedContainer';
 
 export { ClipboardButton } from './ClipboardButton/ClipboardButton';
 export { Cascader, CascaderOption } from './Cascader/Cascader';
@@ -142,6 +143,7 @@ export { Label } from './Forms/Label';
 export { Field } from './Forms/Field';
 export { Legend } from './Forms/Legend';
 export { FieldSet } from './Forms/FieldSet';
+export { FieldValidationMessage } from './Forms/FieldValidationMessage';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';
@@ -159,11 +161,12 @@ export { Checkbox } from './Forms/Checkbox';
 
 export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
+export { TimeRangeInput } from './TimePicker/TimeRangeInput';
 
 // Legacy forms
 
 // Export this until we've figured out a good approach to inline form styles.
-export { FormLabel as InlineFormLabel } from './FormLabel/FormLabel';
+export { InlineFormLabel } from './FormLabel/FormLabel';
 
 // Select
 import { Select, AsyncSelect } from './Forms/Legacy/Select/Select';

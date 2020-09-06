@@ -113,7 +113,36 @@ func TestLDAPPrivateMethods(t *testing.T) {
 			result, err := server.serializeUsers(users)
 
 			So(err, ShouldBeNil)
+			So(result[0].IsDisabled, ShouldBeFalse)
 			So(result[0].Name, ShouldEqual, "Roel")
+		})
+
+		Convey("a user without matching groups should be marked as disabled", func() {
+			server := &Server{
+				Config: &ServerConfig{
+					Groups: []*GroupToOrgRole{{
+						GroupDN: "foo",
+						OrgId:   1,
+						OrgRole: models.ROLE_EDITOR,
+					}},
+				},
+				Connection: &MockConnection{},
+				log:        log.New("test-logger"),
+			}
+
+			entry := ldap.Entry{
+				DN: "dn",
+				Attributes: []*ldap.EntryAttribute{
+					{Name: "memberof", Values: []string{"admins"}},
+				},
+			}
+			users := []*ldap.Entry{&entry}
+
+			result, err := server.serializeUsers(users)
+
+			So(err, ShouldBeNil)
+			So(len(result), ShouldEqual, 1)
+			So(result[0].IsDisabled, ShouldBeTrue)
 		})
 	})
 
@@ -241,5 +270,4 @@ func TestLDAPPrivateMethods(t *testing.T) {
 			So(result, ShouldEqual, "cn=test,dc=grafana,dc=org")
 		})
 	})
-
 }

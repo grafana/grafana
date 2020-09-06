@@ -69,7 +69,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
         .then(() => {
           this.toGrafana();
         })
-        .catch((err: any) => console.log(err));
+        .catch((err: any) => console.error(err));
     }
 
     const resetModel = {

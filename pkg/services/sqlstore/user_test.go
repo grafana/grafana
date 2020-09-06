@@ -14,7 +14,6 @@ import (
 )
 
 func TestUserDataAccess(t *testing.T) {
-
 	Convey("Testing DB", t, func() {
 		ss := InitTestDB(t)
 
@@ -567,6 +566,40 @@ func TestUserDataAccess(t *testing.T) {
 				So(getUserError, ShouldBeNil)
 
 				So(query.Result.IsAdmin, ShouldEqual, true)
+			})
+		})
+
+		Convey("Given one user", func() {
+			const email = "user@test.com"
+			const username = "user"
+			createUserCmd := &models.CreateUserCommand{
+				Email: email,
+				Name:  "user",
+				Login: username,
+			}
+			err := CreateUser(context.Background(), createUserCmd)
+			So(err, ShouldBeNil)
+
+			Convey("When trying to create a new user with the same email, an error is returned", func() {
+				createUserCmd := &models.CreateUserCommand{
+					Email:        email,
+					Name:         "user2",
+					Login:        "user2",
+					SkipOrgSetup: true,
+				}
+				err := CreateUser(context.Background(), createUserCmd)
+				So(err, ShouldEqual, models.ErrUserAlreadyExists)
+			})
+
+			Convey("When trying to create a new user with the same login, an error is returned", func() {
+				createUserCmd := &models.CreateUserCommand{
+					Email:        "user2@test.com",
+					Name:         "user2",
+					Login:        username,
+					SkipOrgSetup: true,
+				}
+				err := CreateUser(context.Background(), createUserCmd)
+				So(err, ShouldEqual, models.ErrUserAlreadyExists)
 			})
 		})
 	})

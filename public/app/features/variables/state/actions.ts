@@ -45,6 +45,7 @@ import {
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { cleanVariables } from './variablesReducer';
 import isEqual from 'lodash/isEqual';
+import { getCurrentText } from '../utils';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -96,7 +97,7 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
   };
 };
 
-export const completeDashboardTemplating = (dashboard: DashboardModel): ThunkResult<void> => {
+export const addSystemTemplateVariables = (dashboard: DashboardModel): ThunkResult<void> => {
   return (dispatch, getState) => {
     const dashboardModel: DashboardVariableModel = {
       id: '__dashboard',
@@ -359,7 +360,8 @@ export const validateVariableSelectionState = (
     let option: VariableOption | undefined | null = null;
 
     // 1. find the current value
-    option = variableInState.options?.find(v => v.text === current.text);
+    const text = getCurrentText(variableInState);
+    option = variableInState.options?.find(v => v.text === text);
     if (option) {
       return setValue(variableInState, option);
     }
@@ -552,16 +554,19 @@ export const initVariablesTransaction = (dashboardUid: string, dashboard: Dashbo
       dispatch(cancelVariables());
     }
 
+    // Start init transaction
     dispatch(variablesInitTransaction({ uid: dashboardUid }));
-
+    // Add system variables like __dashboard and __user
+    dispatch(addSystemTemplateVariables(dashboard));
+    // Load all variables into redux store
     dispatch(initDashboardTemplating(dashboard.templating.list));
+    // Process all variable updates
     await dispatch(processVariables());
-    dispatch(completeDashboardTemplating(dashboard));
-
+    // Mark update as complete
     dispatch(variablesCompleteTransaction({ uid: dashboardUid }));
   } catch (err) {
     dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
-    console.log(err);
+    console.error(err);
   }
 };
 

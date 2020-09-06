@@ -68,11 +68,6 @@ async function fetchDashboard(
         // load home dash
         const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
 
-        // if above all is cancelled it will return an array
-        if (Array.isArray(dashDTO)) {
-          return null;
-        }
-
         // if user specified a custom home dashboard redirect to that
         if (dashDTO.redirectUri) {
           const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
@@ -89,7 +84,7 @@ async function fetchDashboard(
       case DashboardRouteInfo.Normal: {
         // for old db routes we redirect
         if (args.urlType === 'db') {
-          redirectToNewUrl(args.urlSlug, dispatch, getState().location.path);
+          redirectToNewUrl(args.urlSlug!, dispatch, getState().location.path);
           return null;
         }
 
@@ -116,8 +111,13 @@ async function fetchDashboard(
         throw { message: 'Unknown route ' + args.routeInfo };
     }
   } catch (err) {
+    // Ignore cancelled errors
+    if (err.cancelled) {
+      return null;
+    }
+
     dispatch(dashboardInitFailed({ message: 'Failed to fetch dashboard', error: err }));
-    console.log(err);
+    console.error(err);
     return null;
   }
 }
@@ -161,7 +161,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       dashboard = new DashboardModel(dashDTO.dashboard, dashDTO.meta);
     } catch (err) {
       dispatch(dashboardInitFailed({ message: 'Failed create dashboard model', error: err }));
-      console.log(err);
+      console.error(err);
       return;
     }
 
@@ -187,7 +187,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // template values service needs to initialize completely before the rest of the dashboard can load
-    await dispatch(initVariablesTransaction(args.urlUid, dashboard));
+    await dispatch(initVariablesTransaction(args.urlUid!, dashboard));
 
     if (getState().templating.transaction.uid !== args.urlUid) {
       // if a previous dashboard has slow running variable queries the batch uid will be the new one
@@ -216,7 +216,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       keybindingSrv.setupDashboardBindings(args.$scope, dashboard);
     } catch (err) {
       dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
-      console.log(err);
+      console.error(err);
     }
 
     if (storeState.dashboard.modifiedQueries) {

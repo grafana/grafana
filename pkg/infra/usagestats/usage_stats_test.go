@@ -33,7 +33,6 @@ func TestMetrics(t *testing.T) {
 
 		var getSystemStatsQuery *models.GetSystemStatsQuery
 		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
-
 			query.Result = &models.SystemStats{
 				Dashboards:            1,
 				Datasources:           2,
@@ -273,7 +272,6 @@ func TestMetrics(t *testing.T) {
 				So(metrics.Get("stats.auth_enabled.oauth_grafana_com.count").MustInt(), ShouldEqual, 1)
 
 				So(metrics.Get("stats.packaging.deb.count").MustInt(), ShouldEqual, 1)
-
 			})
 		})
 

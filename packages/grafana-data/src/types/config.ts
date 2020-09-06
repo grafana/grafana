@@ -31,9 +31,9 @@ export interface BuildInfo {
  * @public
  */
 export interface FeatureToggles {
-  transformations: boolean;
+  live: boolean;
   expressions: boolean;
-  newEdit: boolean;
+
   /**
    * @remarks
    * Available only in Grafana Enterprise
@@ -41,6 +41,7 @@ export interface FeatureToggles {
   meta: boolean;
   datasourceInsights: boolean;
   reportGrid: boolean;
+  standaloneAlerts: boolean;
 }
 
 /**
@@ -98,4 +99,5 @@ export interface GrafanaConfig {
   pluginsToPreload: string[];
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
+  http2Enabled: boolean;
 }

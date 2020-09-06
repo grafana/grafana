@@ -37,7 +37,7 @@ Refer to [Configure a Grafana Docker image]({{< relref "../installation/configur
 
 `sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
 
-### MacOS
+### macOS
 
 By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. To configure Grafana, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
 
@@ -273,7 +273,7 @@ Path where the socket should be created when `protocol=socket`. Make sure that G
 ## [database]
 
 Grafana needs a database to store users and dashboards (and other
-things). By default it is configured to use `sqlite3` which is an
+things). By default it is configured to use [`sqlite3`](https://www.sqlite.org/index.html) which is an
 embedded database (included in the main Grafana binary).
 
 ### type
@@ -536,6 +536,10 @@ Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 This prevents users from setting the dashboard refresh interval of a lower than given interval. Per default this is 5 seconds.
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
 
+### default_home_dashboard_path
+
+Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json"
+
 <hr />
 
 ## [users]
@@ -642,16 +646,12 @@ This setting is ignored if multiple OAuth providers are configured. Default is `
 
 ### oauth_state_cookie_max_age
 
-How long the OAuth state cookie lives before being deleted. Default is `60` (seconds)
+How many seconds the OAuth state cookie lives before being deleted. Default is `600` (seconds)
 Administrators can increase this if they experience OAuth login state mismatch errors.
 
 ### api_key_max_seconds_to_live
 
 Limit of API key seconds to live before expiration. Default is -1 (unlimited).
-
-### default_home_dashboard_path
-
-Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json"
 
 <hr />
 
@@ -975,6 +975,43 @@ Sets a maximum limit on attempts to sending alert notifications. Default value i
 Sets the minimum interval between rule evaluations. Default value is `1`.
 
 > **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
+
+### max_annotation_age =
+
+Configures for how long alert annotations are stored. Default is 0, which keeps them forever.
+This setting should be expressed as a duration. Examples: 6h (hours), 10d (days), 2w (weeks), 1M (month).
+
+### max_annotations_to_keep =
+
+Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
+
+<hr>
+
+## [annotations.dashboard]
+
+Dashboard annotations means that annotations are associated with the dashboard they are created on.
+
+### max_age
+
+Configures how long dashboard annotations are stored. Default is 0, which keeps them forever.
+This setting should be expressed as a duration. Examples: 6h (hours), 10d (days), 2w (weeks), 1M (month).
+
+### max_annotations_to_keep
+
+Configures max number of dashboard annotations that Grafana stores. Default value is 0, which keeps all dashboard annotations.
+
+## [annotations.api]
+
+API annotations means that the annotations have been created using the API without any association with a dashboard.
+
+### max_age
+
+Configures how long Grafana stores API annotations. Default is 0, which keeps them forever.
+This setting should be expressed as a duration. Examples: 6h (hours), 10d (days), 2w (weeks), 1M (month).
+
+### max_annotations_to_keep
+
+Configures max number of API annotations that Grafana keeps. Default value is 0, which keeps all API annotations.
 
 <hr>
 
@@ -1349,4 +1386,4 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
+Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`, `standaloneAlerts`

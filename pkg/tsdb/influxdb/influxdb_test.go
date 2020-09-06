@@ -1,6 +1,7 @@
 package influxdb
 
 import (
+	"context"
 	"io/ioutil"
 	"net/url"
 	"testing"
@@ -23,7 +24,8 @@ func TestInfluxDB(t *testing.T) {
 			ResponseParser: &ResponseParser{},
 		}
 		Convey("createRequest with GET httpMode", func() {
-			req, _ := e.createRequest(datasource, query)
+			req, err := e.createRequest(context.Background(), datasource, query)
+			So(err, ShouldBeNil)
 
 			Convey("as default", func() {
 				So(req.Method, ShouldEqual, "GET")
@@ -37,12 +39,12 @@ func TestInfluxDB(t *testing.T) {
 			Convey("has an empty body", func() {
 				So(req.Body, ShouldEqual, nil)
 			})
-
 		})
 
 		Convey("createRequest with POST httpMode", func() {
 			datasource.JsonData.Set("httpMode", "POST")
-			req, _ := e.createRequest(datasource, query)
+			req, err := e.createRequest(context.Background(), datasource, query)
+			So(err, ShouldBeNil)
 
 			Convey("method should be POST", func() {
 				So(req.Method, ShouldEqual, "POST")
@@ -58,20 +60,17 @@ func TestInfluxDB(t *testing.T) {
 				testBodyValues := url.Values{}
 				testBodyValues.Add("q", query)
 				testBody := testBodyValues.Encode()
-				So(string(body[:]), ShouldEqual, testBody)
+				So(string(body), ShouldEqual, testBody)
 			})
-
 		})
 
 		Convey("createRequest with PUT httpMode", func() {
 			datasource.JsonData.Set("httpMode", "PUT")
-			_, err := e.createRequest(datasource, query)
+			_, err := e.createRequest(context.Background(), datasource, query)
 
 			Convey("should miserably fail", func() {
 				So(err, ShouldEqual, ErrInvalidHttpMode)
 			})
-
 		})
-
 	})
 }

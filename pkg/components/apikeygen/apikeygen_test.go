@@ -3,26 +3,23 @@ package apikeygen
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/util"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestApiKeyGen(t *testing.T) {
+	result, err := New(12, "Cool key")
+	require.NoError(t, err)
 
-	Convey("When generating new api key", t, func() {
-		result, err := New(12, "Cool key")
-		So(err, ShouldBeNil)
+	assert.NotEmpty(t, result.ClientSecret)
+	assert.NotEmpty(t, result.HashedKey)
 
-		So(result.ClientSecret, ShouldNotBeEmpty)
-		So(result.HashedKey, ShouldNotBeEmpty)
+	keyInfo, err := Decode(result.ClientSecret)
+	require.NoError(t, err)
 
-		Convey("can decode key", func() {
-			keyInfo, err := Decode(result.ClientSecret)
-			So(err, ShouldBeNil)
-
-			keyHashed, err := util.EncodePassword(keyInfo.Key, keyInfo.Name)
-			So(err, ShouldBeNil)
-			So(keyHashed, ShouldEqual, result.HashedKey)
-		})
-	})
+	keyHashed, err := util.EncodePassword(keyInfo.Key, keyInfo.Name)
+	require.NoError(t, err)
+	assert.Equal(t, result.HashedKey, keyHashed)
 }

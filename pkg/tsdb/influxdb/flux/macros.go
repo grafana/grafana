@@ -1,19 +1,15 @@
 package flux
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 const variableFilter = `(?m)([a-zA-Z]+)\.([a-zA-Z]+)`
 
-// Interpolate processes macros
-func Interpolate(query QueryModel) (string, error) {
-
+// interpolate processes macros
+func interpolate(query queryModel) (string, error) {
 	flux := query.RawQuery
 
 	variableFilterExp, err := regexp.Compile(variableFilter)
@@ -39,7 +35,5 @@ func Interpolate(query QueryModel) (string, error) {
 			}
 		}
 	}
-
-	backend.Logger.Info(fmt.Sprintf("%s => %v", flux, query.Options))
 	return flux, err
 }

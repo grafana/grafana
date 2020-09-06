@@ -1,4 +1,4 @@
-import { getDisplayProcessor } from './displayProcessor';
+import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { MappingType, ValueMapping } from '../types/valueMapping';
 import { Field, FieldConfig, FieldType, GrafanaTheme, Threshold, ThresholdsMode } from '../types';
@@ -291,5 +291,62 @@ describe('Date display options', () => {
       },
     });
     expect(processor(0).text).toEqual('1970');
+  });
+
+  it('should handle ISO string dates', () => {
+    const processor = getDisplayProcessor({
+      timeZone: 'utc',
+      field: {
+        type: FieldType.time,
+      },
+    });
+
+    expect(processor('2020-08-01T08:48:43.783337Z').text).toEqual('2020-08-01 08:48:43');
+  });
+
+  describe('number formatting for string values', () => {
+    it('should preserve string unchanged if unit is strings', () => {
+      const processor = getDisplayProcessor({
+        field: {
+          type: FieldType.string,
+          config: { unit: 'string' },
+        },
+      });
+      expect(processor('22.1122334455').text).toEqual('22.1122334455');
+    });
+
+    it('should format string as number if no unit', () => {
+      const processor = getDisplayProcessor({
+        field: {
+          type: FieldType.string,
+          config: { decimals: 2 },
+        },
+      });
+      expect(processor('22.1122334455').text).toEqual('22.11');
+    });
+  });
+});
+
+describe('getRawDisplayProcessor', () => {
+  const processor = getRawDisplayProcessor();
+  const date = new Date('2020-01-01T00:00:00.000Z');
+  const timestamp = date.valueOf();
+
+  it.each`
+    value                             | expected
+    ${0}                              | ${'0'}
+    ${13.37}                          | ${'13.37'}
+    ${true}                           | ${'true'}
+    ${false}                          | ${'false'}
+    ${date}                           | ${`${date}`}
+    ${timestamp}                      | ${'1577836800000'}
+    ${'a string'}                     | ${'a string'}
+    ${null}                           | ${'null'}
+    ${undefined}                      | ${'undefined'}
+    ${{ value: 0, label: 'a label' }} | ${'[object Object]'}
+  `('when called with value:{$value}', ({ value, expected }) => {
+    const result = processor(value);
+
+    expect(result).toEqual({ text: expected, numeric: null });
   });
 });

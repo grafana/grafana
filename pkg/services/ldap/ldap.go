@@ -173,11 +173,12 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 	var authAndBind bool
 
 	// Check if we can use a search user
-	if server.shouldAdminBind() {
+	switch {
+	case server.shouldAdminBind():
 		if err := server.AdminBind(); err != nil {
 			return nil, err
 		}
-	} else if server.shouldSingleBind() {
+	case server.shouldSingleBind():
 		authAndBind = true
 		err = server.UserBind(
 			server.singleBindDN(query.Username),
@@ -186,7 +187,7 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	default:
 		err := server.Connection.UnauthenticatedBind(server.Config.BindDN)
 		if err != nil {
 			return nil, err
@@ -368,7 +369,7 @@ func (server *Server) getSearchRequest(
 			-1,
 		)
 
-		search = search + query
+		search += query
 	}
 
 	filter := fmt.Sprintf("(|%s)", search)
@@ -424,6 +425,12 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
 			}
 		}
+	}
+
+	// If there are group org mappings configured, but no matching mappings,
+	// the user will not be able to login and will be disabled
+	if len(server.Config.Groups) > 0 && len(extUser.OrgRoles) == 0 {
+		extUser.IsDisabled = true
 	}
 
 	return extUser, nil
@@ -532,7 +539,6 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 
 		if len(groupSearchResult.Entries) > 0 {
 			for _, group := range groupSearchResult.Entries {
-
 				memberOf = append(
 					memberOf,
 					getAttribute(groupIDAttribute, group),

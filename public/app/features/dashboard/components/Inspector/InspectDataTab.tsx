@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import {
   applyFieldOverrides,
+  applyRawFieldOverrides,
   DataFrame,
   DataTransformerID,
   dateTimeFormat,
@@ -8,13 +9,8 @@ import {
   SelectableValue,
   toCSV,
   transformDataFrame,
-  getTimeField,
-  FieldType,
-  FormattedVector,
-  DisplayProcessor,
-  getDisplayProcessor,
 } from '@grafana/data';
-import { Button, Field, Icon, Switch, Select, Table, VerticalGroup, Container, HorizontalGroup } from '@grafana/ui';
+import { Button, Container, Field, HorizontalGroup, Icon, Select, Switch, Table, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -60,35 +56,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const { panel } = this.props;
     const { transformId } = this.state;
 
-    // Replace the time field with a formatted time
-    const { timeIndex, timeField } = getTimeField(dataFrame);
-    if (timeField) {
-      // Use the configurd date or standandard time display
-      let processor: DisplayProcessor = timeField.display;
-      if (!processor) {
-        processor = getDisplayProcessor({
-          field: timeField,
-        });
-      }
-
-      const formattedDateField = {
-        ...timeField,
-        type: FieldType.string,
-        values: new FormattedVector(timeField.values, processor),
-      };
-
-      const fields = [...dataFrame.fields];
-      fields[timeIndex] = formattedDateField;
-      dataFrame = {
-        ...dataFrame,
-        fields,
-      };
-    }
-
     const dataFrameCsv = toCSV([dataFrame]);
 
-    const blob = new Blob([dataFrameCsv], {
-      type: 'application/csv;charset=utf-8',
+    const blob = new Blob([String.fromCharCode(0xfeff), dataFrameCsv], {
+      type: 'text/csv;charset=utf-8',
     });
     const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
     const fileName = `${panel.title}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
@@ -100,8 +71,9 @@ export class InspectDataTab extends PureComponent<Props, State> {
       transformId:
         item.value === DataTransformerID.seriesToColumns ? DataTransformerID.seriesToColumns : DataTransformerID.noop,
       dataFrameIndex: typeof item.value === 'number' ? item.value : 0,
-      selectedDataFrame: item.value,
+      selectedDataFrame: item.value!,
     });
+
     this.props.onOptionsChange({
       ...this.props.options,
     });
@@ -127,6 +99,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const { options } = this.props;
     let data = this.props.data;
 
+    if (!data) {
+      return [];
+    }
+
     if (this.state.transformId !== DataTransformerID.noop) {
       data = this.getTransformedData();
     }
@@ -139,12 +115,16 @@ export class InspectDataTab extends PureComponent<Props, State> {
       });
     }
 
+    if (!options.withFieldConfig) {
+      return applyRawFieldOverrides(data);
+    }
+
     // We need to apply field config even though it was already applied in the PanelQueryRunner.
     // That's because transformers create new fields and data frames, so i.e. display processor is no longer there
     return applyFieldOverrides({
       data,
       theme: config.theme,
-      fieldConfig: options.withFieldConfig ? this.props.panel.fieldConfig : { defaults: {}, overrides: [] },
+      fieldConfig: this.props.panel.fieldConfig,
       replaceVariables: (value: string) => {
         return value;
       },
@@ -152,16 +132,21 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
   }
 
-  getActiveString = () => {
+  getActiveString() {
     const { selectedDataFrame } = this.state;
     const { options, data } = this.props;
-
     let activeString = '';
+
+    if (!data) {
+      return activeString;
+    }
+
     if (selectedDataFrame === DataTransformerID.seriesToColumns) {
       activeString = 'series joined by time';
     } else {
       activeString = getFrameDisplayName(data[selectedDataFrame as number]);
     }
+
     if (options.withTransforms || options.withFieldConfig) {
       activeString += ' - applied ';
       if (options.withTransforms) {
@@ -173,13 +158,14 @@ export class InspectDataTab extends PureComponent<Props, State> {
       }
 
       if (options.withFieldConfig) {
-        activeString += 'field configuration';
+        activeString += 'formatted data';
       }
     }
-    return activeString;
-  };
 
-  renderDataOptions = (dataFrames: DataFrame[]) => {
+    return activeString;
+  }
+
+  renderDataOptions(dataFrames: DataFrame[]) {
     const { options, onOptionsChange, panel, data } = this.props;
     const { transformId, transformationOptions, selectedDataFrame } = this.state;
 
@@ -193,7 +179,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     let dataSelect = dataFrames;
     if (selectedDataFrame === DataTransformerID.seriesToColumns) {
-      dataSelect = data;
+      dataSelect = data!;
     }
 
     const choices = dataSelect.map((frame, index) => {
@@ -211,6 +197,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     return (
       <QueryOperationRow
+        id="Table data options"
+        index={0}
         title="Table data options"
         headerElement={<DetailText>{this.getActiveString()}</DetailText>}
         isOpen={false}
@@ -222,7 +210,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
               className={css`
                 margin-bottom: 0;
               `}
-              disabled={!(data.length > 1)}
+              disabled={data!.length < 2}
             >
               <Select
                 options={selectableOptions}
@@ -246,8 +234,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
               )}
               {showFieldConfigsOption && (
                 <Field
-                  label="Apply field configuration"
-                  description="Table data is displayed with options defined in the Field and Override tabs."
+                  label="Formatted data"
+                  description="Table data is formatted with options defined in the Field and Override tabs."
                 >
                   <Switch
                     value={!!options.withFieldConfig}
@@ -260,7 +248,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
         </div>
       </QueryOperationRow>
     );
-  };
+  }
 
   render() {
     const { isLoading } = this.props;

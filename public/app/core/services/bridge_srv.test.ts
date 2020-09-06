@@ -40,4 +40,37 @@ describe('when checking template variables', () => {
     expect(findTemplateVarChanges(b, a)).toBeUndefined();
     expect(findTemplateVarChanges(a, b)).toBeUndefined();
   });
+
+  it('then should ignore empty array values', () => {
+    const a: UrlQueryMap = {
+      'var-adhoc': [],
+    };
+    const b: UrlQueryMap = {};
+
+    expect(findTemplateVarChanges(b, a)).toBeUndefined();
+    expect(findTemplateVarChanges(a, b)).toBeUndefined();
+  });
+
+  it('Should handle array values with one value same as just value', () => {
+    const a: UrlQueryMap = {
+      'var-test': ['test'],
+    };
+    const b: UrlQueryMap = {
+      'var-test': 'test',
+    };
+
+    expect(findTemplateVarChanges(b, a)).toBeUndefined();
+    expect(findTemplateVarChanges(a, b)).toBeUndefined();
+  });
+
+  it('Should detect change in array value and return array with single value', () => {
+    const a: UrlQueryMap = {
+      'var-test': ['test'],
+    };
+    const b: UrlQueryMap = {
+      'var-test': 'asd',
+    };
+
+    expect(findTemplateVarChanges(a, b)!['var-test']).toEqual(['test']);
+  });
 });

@@ -194,9 +194,12 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:ci-package')
+    .option('--signing-admin', 'Use the admin API endpoint for signing the manifest.', false)
     .description('Create a zip packages for the plugin')
     .action(async cmd => {
-      await execTask(ciPackagePluginTask)({});
+      await execTask(ciPackagePluginTask)({
+        signingAdmin: cmd.signingAdmin,
+      });
     });
 
   program

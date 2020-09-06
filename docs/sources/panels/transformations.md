@@ -11,7 +11,7 @@ weight = 300
 
 This page explains what transformations in Grafana are and how to use them.
 
-> **Note:** This documentation refers to a Grafana 7.0 beta feature. This documentation will be frequently updated to reflect updates to the feature, and it will probably be broken into smaller sections when the feature moves out of beta.
+> **Note:** This documentation refers to a Grafana 7.0 feature. This documentation will be frequently updated to reflect updates to the feature, and it will probably be broken into smaller sections when the feature moves out of beta.
 
 Transformations process the result set before it’s passed to the visualization. You access transformations in the Transform tab of the Grafana panel editor.
 
@@ -74,6 +74,8 @@ Grafana comes with the following transformations:
     - [Join by field (outer join)](#join-by-field-outer-join)
     - [Add field from calculation](#add-field-from-calculation)
     - [Labels to fields](#labels-to-fields)
+    - [Group By](#group-by)
+    - [Series to rows](#series-to-rows)
   - [Debug transformations](#debug-transformations)
 
 Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
@@ -96,25 +98,33 @@ After I apply the transformation, there is no time value and each column has bee
 
 ### Merge
 
-Use this transformation to combine the result from multiple queries into one single result based on the time field. This is helpful when using the table panel visualization. 
+> **Note:** This documentation refers to a Grafana 7.1 feature.
 
-In the example below, we are visualizing multiple queries returning table data before applying the transformation.
+Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contains the same data.
 
-{{< docs-imagebox img="/img/docs/transformations/table-data-before-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the transformation.
 
-Here is the same example after applying the merge transformation.
+Query A:
 
-{{< docs-imagebox img="/img/docs/transformations/table-data-after-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+| Time                | Job     | Uptime    |
+|---------------------|---------|-----------|
+| 2020-07-07 11:34:20 | node    | 25260122  |
+| 2020-07-07 11:24:20 | postgre | 123001233 |
 
-If any of the queries return time series data, then a `Metric` column containing the name of the query is added. You can be customized this value by defining `Label` on the source query.
+Query B:
 
-In the example below, we are visualizing multiple queries returning time series data before applying the transformation.
+| Time                | Job     | Errors |
+|---------------------|---------|--------|
+| 2020-07-07 11:34:20 | node    | 15     |
+| 2020-07-07 11:24:20 | postgre | 5      |
 
-{{< docs-imagebox img="/img/docs/transformations/time-series-before-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+Here is the result after applying the `Merge` transformation.
 
-Here is the same example after applying the merge transformation.
+| Time                | Job     | Errors | Uptime    |
+|---------------------|---------|--------|-----------|
+| 2020-07-07 11:34:20 | node    | 15     | 25260122  |
+| 2020-07-07 11:24:20 | postgre | 5      | 123001233 |
 
-{{< docs-imagebox img="/img/docs/transformations/time-series-after-merge-7-1.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ### Filter by name
 
@@ -212,6 +222,104 @@ For this example, I manually defined labels in the Random Walk visualization of 
 After I apply the transformation, my labels appear in the table as fields.
 
 {{< docs-imagebox img="/img/docs/transformations/labels-to-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+
+### Group By
+
+This transformation groups the data by a specified field (column) value and processes calculations on each group. The available calculations are the same as the Reduce transformation.
+
+Here's an example of original data.
+
+| Time                | Server ID   | CPU Temperature | Server Status
+|---------------------|-------------|-----------------|----------
+| 2020-07-07 11:34:20 | server 1    | 80              | Shutdown
+| 2020-07-07 11:34:20 | server 3    | 62              | OK
+| 2020-07-07 10:32:20 | server 2    | 90              | Overload
+| 2020-07-07 10:31:22 | server 3    | 55              | OK
+| 2020-07-07 09:30:57 | server 3    | 62              | Rebooting
+| 2020-07-07 09:30:05 | server 2    | 88              | OK
+| 2020-07-07 09:28:06 | server 1    | 80              | OK
+| 2020-07-07 09:25:05 | server 2    | 88              | OK
+| 2020-07-07 09:23:07 | server 1    | 86              | OK
+
+This transformation goes in two steps. First you specify one or multiple fields to group the data by. This will group all the same values of those fields together, as if you sorted them. For instance if we `Group By` the `Server ID` field, it would group the data this way:
+
+| Time                | Server ID   | CPU Temperature | Server Status
+|---------------------|-------------|-----------------|----------
+| 2020-07-07 11:34:20 | **server 1**    | 80              | Shutdown
+| 2020-07-07 09:28:06 | **server 1**    | 80              | OK
+| 2020-07-07 09:23:07 | **server 1**    | 86              | OK
+|
+| 2020-07-07 10:32:20 | server 2    | 90              | Overload
+| 2020-07-07 09:30:05 | server 2    | 88              | OK
+| 2020-07-07 09:25:05 | server 2    | 88              | OK
+|
+| 2020-07-07 11:34:20 | ***server 3***    | 62              | OK
+| 2020-07-07 10:31:22 | ***server 3***    | 55              | OK
+| 2020-07-07 09:30:57 | ***server 3***    | 62              | Rebooting
+
+All rows with the same value of `Server ID` are grouped together.
+
+After choosing which field you want to group your data by, you can add various calculations on the other fields, and the calculation will be applied on each group of rows. For instance, we could want to calculate the average `CPU temperature` for each of those servers. So we can add the _mean_ calculation applied on the `CPU Temperature` field to get the following:
+
+| Server ID | CPU Temperature (mean) 
+|-----------|--------------------------
+| server 1  | 82
+| server 2  | 88.6
+| server 3  | 59.6
+
+And we can add more than one of those calculation. For instance :
+
+- For field `Time`, we can calculate the *Last* value, to know when the last data point was received for each server
+- For field `Server Status`, we can calculate the *Last* value to know what is the last state value for each server
+- For field `Temperature`, we can also calculate the *Last* value to know what is the latest monitored temperature for each server
+
+We would then get :
+
+| Server ID | CPU Temperature (mean) | CPU Temperature (last) | Time (last)      | Server Status (last)
+|-----------|-------------------------- |------------------------|------------------|----------------------
+| server 1  | 82                        | 80                     | 2020-07-07 11:34:20 | Shutdown
+| server 2  | 88.6                      | 90                     | 2020-07-07 10:32:20 | Overload
+| server 3  | 59.6                      | 62                     | 2020-07-07 11:34:20 | OK
+
+This transformation allows you to extract some key information out of your time series and display them in a convenient way.
+
+## Series to rows
+
+> **Note:** This documentation refers to a Grafana 7.1 feature.
+
+Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization. 
+
+The result from this transformation will contain three columns: `Time`, `Metric`, and `Value`. The `Metric` column is added so you easily can see from which query the metric originates from. Customize this value by defining `Label` on the source query.
+
+In the example below, we have two queries returning time series data. It is visualized as two separate tables before applying the transformation.
+
+Query A:
+
+| Time                | Temperature |
+|---------------------|-------------|
+| 2020-07-07 11:34:20 | 25          |
+| 2020-07-07 10:31:22 | 22          |
+| 2020-07-07 09:30:05 | 19          |
+
+Query B:
+
+| Time                | Humidity |
+|---------------------|----------|
+| 2020-07-07 11:34:20 | 24       |
+| 2020-07-07 10:32:20 | 29       |
+| 2020-07-07 09:30:57 | 33       |
+
+Here is the result after applying the `Series to rows` transformation.
+
+| Time                | Metric      | Value |
+|---------------------|-------------|-------|
+| 2020-07-07 11:34:20 | Temperature | 25    |
+| 2020-07-07 11:34:20 | Humidity    | 22    |
+| 2020-07-07 10:32:20 | Humidity    | 29    |
+| 2020-07-07 10:31:22 | Temperature | 22    |
+| 2020-07-07 09:30:57 | Humidity    | 33    |
+| 2020-07-07 09:30:05 | Temperature | 19    |
 
 ## Debug transformations
 

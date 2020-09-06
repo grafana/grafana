@@ -10,11 +10,13 @@ weight = 200
 
 # Dashboard links
 
-When you create a dashboard link, you can include the time range and current template variables to directly jump to the same context in another dashboard. This way, you don’t have to worry whether the person you send the link to is looking at the right data. For more information about specifying links, refer to [URL variables]({{< relref "../variables/url-variables.md" >}}).
+When you create a dashboard link, you can include the time range and current template variables to directly jump to the same context in another dashboard. This way, you don’t have to worry whether the person you send the link to is looking at the right data. For other types of links, refer to [Data link variables]({{< relref "data-link-variables.md" >}}).
 
 Dashboard links can also be used as shortcuts to external systems, such as submitting [a GitHub issue with the current dashboard name](https://github.com/grafana/grafana/issues/new?title=Dashboard%3A%20HTTP%20Requests).
 
-To see an example of dashboard links in action, check out [this demo](https://play.grafana.org/d/rUpVRdamz/dashboard-links-with-variables?orgId=1).
+To see an example of dashboard links in action, check out: 
+- [Dashboard links with variables](https://play.grafana.org/d/rUpVRdamz/dashboard-links-with-variables?orgId=1)
+- [Prometheus repeat](https://play.grafana.org/d/000000036/prometheus-repeat?orgId=1)
 
 Once you've added a dashboard link, it appears in the upper right corner of your dashboard.
 
@@ -60,6 +62,10 @@ To change or update an existing dashboard link, follow this procedure.
 1. In Dashboard Settings, on the Links tab, click the existing link that you want to edit.
 1. Change the settings and then click **Update**.
 
+## Duplicate a dashboard link
+
+To duplicate an existing dashboard link, click the duplicate icon next to the existing link that you want to duplicate.
+
 ## Delete a dashboard link
 
-To delete an existing dashboard link, click the red **X** next to the existing link that you want to delete.
+To delete an existing dashboard link, click the trash icon next to the duplicate icon that you want to delete.

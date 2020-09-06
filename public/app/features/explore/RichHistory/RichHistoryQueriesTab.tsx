@@ -9,8 +9,8 @@ import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
-import { SortOrder } from 'app/core/utils/explore';
 import {
+  SortOrder,
   mapNumbertoTimeInSlider,
   mapQueriesToHeadings,
   createDatasourcesList,
@@ -32,7 +32,7 @@ export interface Props {
   exploreId: ExploreId;
   height: number;
   onChangeSortOrder: (sortOrder: SortOrder) => void;
-  onSelectDatasourceFilters: (value: SelectableValue[] | null) => void;
+  onSelectDatasourceFilters: (value: SelectableValue[]) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {

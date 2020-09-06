@@ -8,11 +8,10 @@ import appEvents from 'app/core/app_events';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardSrv } from '../dashboard/services/DashboardSrv';
 import DatasourceSrv from '../plugins/datasource_srv';
-import { DataQuery, DataSourceApi } from '@grafana/data';
+import { DataQuery, DataSourceApi, rangeUtil } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getDefaultCondition } from './getAlertingValidationMessage';
 import { CoreEvents } from 'app/types';
-import kbn from 'app/core/utils/kbn';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 
 export class AlertTabCtrl {
@@ -56,7 +55,7 @@ export class AlertTabCtrl {
     this.appSubUrl = config.appSubUrl;
     this.panelCtrl._enableAlert = this.enable;
     this.alertingMinIntervalSecs = config.alertingMinInterval;
-    this.alertingMinInterval = kbn.secondsToHms(config.alertingMinInterval);
+    this.alertingMinInterval = rangeUtil.secondsToHms(config.alertingMinInterval);
   }
 
   $onInit() {
@@ -214,7 +213,7 @@ export class AlertTabCtrl {
         memo.push(this.buildConditionModel(value));
         return memo;
       },
-      []
+      [] as string[]
     );
 
     ThresholdMapper.alertToGraphThresholds(this.panel);
@@ -253,7 +252,7 @@ export class AlertTabCtrl {
     this.frequencyWarning = '';
 
     try {
-      const frequencySecs = kbn.interval_to_seconds(this.alert.frequency);
+      const frequencySecs = rangeUtil.intervalToSeconds(this.alert.frequency);
       if (frequencySecs < this.alertingMinIntervalSecs) {
         this.frequencyWarning =
           'A minimum evaluation interval of ' +
@@ -282,7 +281,7 @@ export class AlertTabCtrl {
     }
 
     let firstTarget;
-    let foundTarget: DataQuery = null;
+    let foundTarget: DataQuery | null = null;
 
     const promises: Array<Promise<any>> = [];
     for (const condition of this.alert.conditions) {

@@ -8,10 +8,11 @@ import coreModule from 'app/core/core_module';
 import { dedupAnnotations } from './events_processing';
 // Types
 import { DashboardModel, PanelModel } from '../dashboard/state';
-import { AnnotationEvent, AppEvents, DataSourceApi, PanelEvents, TimeRange } from '@grafana/data';
+import { AnnotationEvent, AppEvents, DataSourceApi, PanelEvents, TimeRange, CoreApp } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
+import kbn from 'app/core/utils/kbn';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -59,10 +60,15 @@ export class AnnotationsSrv {
         };
       })
       .catch(err => {
+        if (err.cancelled) {
+          return [];
+        }
+
         if (!err.message && err.data && err.data.message) {
           err.message = err.data.message;
         }
-        console.log('AnnotationSrv.query error', err);
+
+        console.error('AnnotationSrv.query error', err);
         appEvents.emit(AppEvents.alertError, ['Annotation Query Failed', err.message || err]);
         return [];
       });
@@ -108,6 +114,9 @@ export class AnnotationsSrv {
     const promises = [];
     const dsPromises = [];
 
+    // No more points than pixels
+    const maxDataPoints = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+
     for (const annotation of dashboard.annotations.list) {
       if (!annotation.enable) {
         continue;
@@ -121,8 +130,16 @@ export class AnnotationsSrv {
       promises.push(
         datasourcePromise
           .then((datasource: DataSourceApi) => {
-            // issue query against data source
+            if (!datasource.annotationQuery) {
+              return [];
+            }
+
+            // Add interval to annotation queries
+            const interval = kbn.calculateInterval(range, maxDataPoints, datasource.interval);
+
             return datasource.annotationQuery({
+              ...interval,
+              app: CoreApp.Dashboard,
               range,
               rangeRaw: range.raw,
               annotation: annotation,

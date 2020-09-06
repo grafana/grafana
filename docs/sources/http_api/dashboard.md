@@ -44,7 +44,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "tags": [ "templated" ],
     "timezone": "browser",
     "schemaVersion": 16,
-    "version": 0
+    "version": 0,
+    "refresh": "25s"
   },
   "folderId": 0,
   "overwrite": false
@@ -59,6 +60,7 @@ JSON Body schema:
 - **folderId** – The id of the folder to save the dashboard in.
 - **overwrite** – Set to true if you want to overwrite existing dashboard with newer version, same dashboard title in folder or same dashboard uid.
 - **message** - Set a commit message for the version history.
+- **refresh** - Set the dashboard refresh interval. If this is lower than [the minimum refresh interval]({{< relref "../administration/configuration.md#min_refresh_interval">}}), then Grafana will ignore it and will enforce the minimum refresh interval.
 
 For adding or updating an alert rule for a dashboard panel the user should declare a
 `dashboard.panels.alert` block.
@@ -332,7 +334,11 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"title": "Production Overview"}
+{
+  "title": "Production Overview",
+  "message": "Dashboard Production Overview deleted",
+  "id": 2
+}
 ```
 
 Status Codes:
@@ -506,7 +512,11 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"title": "Production Overview"}
+{
+  "title": "Production Overview",
+  "message": "Dashboard Production Overview deleted",
+  "id": 2
+}
 ```
 
 Status Codes:

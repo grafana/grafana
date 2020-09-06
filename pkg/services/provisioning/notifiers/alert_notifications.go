@@ -70,7 +70,6 @@ func (dc *NotificationProvisioner) deleteNotifications(notificationToDelete []*d
 
 func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*notificationFromConfig) error {
 	for _, notification := range notificationToMerge {
-
 		if notification.OrgID == 0 && notification.OrgName != "" {
 			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
 			if err := bus.Dispatch(getOrg); err != nil {
@@ -95,6 +94,7 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 				Type:                  notification.Type,
 				IsDefault:             notification.IsDefault,
 				Settings:              notification.SettingsToJSON(),
+				SecureSettings:        notification.SecureSettings,
 				OrgId:                 notification.OrgID,
 				DisableResolveMessage: notification.DisableResolveMessage,
 				Frequency:             notification.Frequency,
@@ -112,6 +112,7 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 				Type:                  notification.Type,
 				IsDefault:             notification.IsDefault,
 				Settings:              notification.SettingsToJSON(),
+				SecureSettings:        notification.SecureSettings,
 				OrgId:                 notification.OrgID,
 				DisableResolveMessage: notification.DisableResolveMessage,
 				Frequency:             notification.Frequency,

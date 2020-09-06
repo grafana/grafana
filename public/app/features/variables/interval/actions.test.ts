@@ -81,7 +81,7 @@ describe('interval actions', () => {
       expect(appEventMock.emit).toHaveBeenCalledWith(AppEvents.alertError, [
         'Templating',
         `Invalid interval string, has to be either unit-less or end with one of the following units: "${Object.keys(
-          kbn.intervals_in_seconds
+          kbn.intervalsInSeconds
         ).join(', ')}"`,
       ]);
       setTimeSrv(originalTimeSrv);
@@ -97,9 +97,7 @@ describe('interval actions', () => {
           .build();
 
         const dependencies: UpdateAutoValueDependencies = {
-          kbn: {
-            calculateInterval: jest.fn(),
-          },
+          calculateInterval: jest.fn(),
           getTimeSrv: () => {
             return ({
               timeRange: jest.fn().mockReturnValue({
@@ -124,7 +122,7 @@ describe('interval actions', () => {
           )
           .whenAsyncActionIsDispatched(updateAutoValue(toVariableIdentifier(interval), dependencies), true);
 
-        expect(dependencies.kbn.calculateInterval).toHaveBeenCalledTimes(0);
+        expect(dependencies.calculateInterval).toHaveBeenCalledTimes(0);
         expect(dependencies.getTimeSrv().timeRange).toHaveBeenCalledTimes(0);
         expect(dependencies.templateSrv.setGrafanaVariable).toHaveBeenCalledTimes(0);
       });
@@ -150,9 +148,7 @@ describe('interval actions', () => {
         });
         const setGrafanaVariableMock = jest.fn();
         const dependencies: UpdateAutoValueDependencies = {
-          kbn: {
-            calculateInterval: jest.fn().mockReturnValue({ interval: '10s' }),
-          },
+          calculateInterval: jest.fn().mockReturnValue({ interval: '10s' }),
           getTimeSrv: () => {
             return ({
               timeRange: timeRangeMock,
@@ -170,8 +166,8 @@ describe('interval actions', () => {
           )
           .whenAsyncActionIsDispatched(updateAutoValue(toVariableIdentifier(interval), dependencies), true);
 
-        expect(dependencies.kbn.calculateInterval).toHaveBeenCalledTimes(1);
-        expect(dependencies.kbn.calculateInterval).toHaveBeenCalledWith(
+        expect(dependencies.calculateInterval).toHaveBeenCalledTimes(1);
+        expect(dependencies.calculateInterval).toHaveBeenCalledWith(
           {
             from: '2001-01-01',
             to: '2001-01-02',

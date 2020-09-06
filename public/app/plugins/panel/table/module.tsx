@@ -1,7 +1,7 @@
 import { PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
 import { CustomFieldConfig, Options } from './types';
-import { tablePanelChangedHandler, tableMigrationHandler } from './migrations';
+import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { TableCellDisplayMode } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
@@ -45,9 +45,16 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
               { value: TableCellDisplayMode.ColorBackground, label: 'Color background' },
               { value: TableCellDisplayMode.GradientGauge, label: 'Gradient gauge' },
               { value: TableCellDisplayMode.LcdGauge, label: 'LCD gauge' },
+              { value: TableCellDisplayMode.BasicGauge, label: 'Basic gauge' },
               { value: TableCellDisplayMode.JSONView, label: 'JSON View' },
             ],
           },
+        })
+        .addBooleanSwitch({
+          path: 'filterable',
+          name: 'Column filter',
+          description: 'Enables/disables field filters in table',
+          defaultValue: false,
         });
     },
   })

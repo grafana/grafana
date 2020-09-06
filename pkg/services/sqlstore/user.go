@@ -68,6 +68,11 @@ func CreateUser(ctx context.Context, cmd *models.CreateUserCommand) error {
 			cmd.Email = cmd.Login
 		}
 
+		exists, _ := sess.Where("email=? OR login=?", cmd.Email, cmd.Login).Get(&models.User{})
+		if exists {
+			return models.ErrUserAlreadyExists
+		}
+
 		// create user
 		user := models.User{
 			Email:         cmd.Email,
@@ -213,7 +218,6 @@ func GetUserByEmail(query *models.GetUserByEmailQuery) error {
 
 func UpdateUser(cmd *models.UpdateUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-
 		user := models.User{
 			Name:    cmd.Name,
 			Email:   cmd.Email,
@@ -240,7 +244,6 @@ func UpdateUser(cmd *models.UpdateUserCommand) error {
 
 func ChangeUserPassword(cmd *models.ChangeUserPasswordCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-
 		user := models.User{
 			Password: cmd.NewPassword,
 			Updated:  time.Now(),
@@ -397,11 +400,12 @@ func GetSignedInUser(query *models.GetSignedInUserQuery) error {
 		LEFT OUTER JOIN org on org.id = org_user.org_id `
 
 	sess := x.Table("user")
-	if query.UserId > 0 {
+	switch {
+	case query.UserId > 0:
 		sess.SQL(rawSql+"WHERE u.id=?", query.UserId)
-	} else if query.Login != "" {
+	case query.Login != "":
 		sess.SQL(rawSql+"WHERE u.login=?", query.Login)
-	} else if query.Email != "" {
+	case query.Email != "":
 		sess.SQL(rawSql+"WHERE u.email=?", query.Email)
 	}
 
@@ -614,7 +618,6 @@ func UpdateUserPermissions(cmd *models.UpdateUserPermissionsCommand) error {
 
 func SetUserHelpFlag(cmd *models.SetUserHelpFlagCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-
 		user := models.User{
 			Id:         cmd.UserId,
 			HelpFlags1: cmd.HelpFlags1,
