@@ -389,7 +389,6 @@ func (hs *HTTPServer) registerRoutes() {
 			shortUrlRoute.Post("/", bind(dtos.CreateShortUrlForm{}), Wrap(hs.CreateShortUrl))
 			shortUrlRoute.Get("/:uid", Wrap(GetShortUrlPath))
 		})
-
 	}, reqSignedIn)
 
 	// admin api
