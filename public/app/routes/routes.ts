@@ -543,9 +543,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       resolve: {
         component: () =>
           SafeDynamicImport(
-            import(
-              /* webpackChunkName: "ShortUrlRedirectPage" */ '../features/short-urls/containers/ShortUrlRedirectPage'
-            )
+            import(/* webpackChunkName: "ShortUrlRedirectPage" */ '../features/short-urls/ShortUrlRedirectPage')
           ),
       },
     })
