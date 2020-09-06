@@ -1,7 +1,10 @@
 import QueryModel from './postgres_query';
 
 export class PostgresMetaQuery {
-  constructor(private target: { table: string; timeColumn: string }, private queryModel: QueryModel) {}
+  constructor(
+    private target: { table: string; timeColumn: string; tableType?: 'MVIEW' | 'TABLE' },
+    private queryModel: QueryModel
+  ) {}
 
   getOperators(datatype: string) {
     switch (datatype) {
@@ -50,7 +53,7 @@ SELECT
   ) AS value_column
 FROM information_schema.tables t
 WHERE `;
-    query += this.buildSchemaConstraint();
+    query += this.buildTableSchemaConstraint();
     query += ` AND
   EXISTS
   ( SELECT 1
@@ -73,19 +76,12 @@ LIMIT 1
     return query;
   }
 
-  buildSchemaConstraint() {
-    const query = `
-table_schema IN (
-  SELECT
-    CASE WHEN trim(s[i]) = '"$user"' THEN user ELSE trim(s[i]) END
-  FROM
-    generate_series(
-      array_lower(string_to_array(current_setting('search_path'),','),1),
-      array_upper(string_to_array(current_setting('search_path'),','),1)
-    ) as i,
-    string_to_array(current_setting('search_path'),',') s
-)`;
-    return query;
+  buildTableSchemaConstraint() {
+    return `table_schema IN (${this.buildSearchPathQuery()})`;
+  }
+
+  buildMViewSchemaConstraint() {
+    return `schemaname IN (${this.buildSearchPathQuery()})`;
   }
 
   buildTableConstraint(table: string) {
@@ -98,21 +94,75 @@ table_schema IN (
       query += ' AND table_name = ' + this.quoteIdentAsLiteral(parts[1]);
       return query;
     } else {
-      query = this.buildSchemaConstraint();
+      query = this.buildTableSchemaConstraint();
       query += ' AND table_name = ' + this.quoteIdentAsLiteral(table);
 
       return query;
     }
   }
 
+  buildSearchPathQuery() {
+    return `
+    SELECT
+        CASE WHEN trim(s[i]) = '"$user"' THEN user ELSE trim(s[i]) END
+      FROM
+        generate_series(
+          array_lower(string_to_array(current_setting('search_path'),','),1),
+          array_upper(string_to_array(current_setting('search_path'),','),1)
+        ) as i,
+        string_to_array(current_setting('search_path'),',') s
+    `;
+  }
+
   buildTableQuery() {
-    let query = 'SELECT quote_ident(table_name) FROM information_schema.tables WHERE ';
-    query += this.buildSchemaConstraint();
+    let query = `
+    SELECT quote_ident(matviewname) as table_name FROM pg_catalog.pg_matviews WHERE 
+    ${this.buildMViewSchemaConstraint()}
+    UNION
+    SELECT quote_ident(table_name) FROM information_schema.tables WHERE `;
+    query += this.buildTableSchemaConstraint();
     query += ' ORDER BY table_name';
     return query;
   }
 
+  buildFindTableTypeQuery(table: string) {
+    if (!table) {
+      return `SELECT quote_ident('TABLE') as table_type`;
+    }
+    let schema;
+    let tableName;
+
+    // check for schema qualified table
+    if (table.includes('.')) {
+      const parts = table.split('.');
+      schema = this.quoteIdentAsLiteral(parts[0]);
+      tableName = this.quoteIdentAsLiteral(parts[1]);
+    } else {
+      schema = this.buildSearchPathQuery();
+      tableName = this.quoteIdentAsLiteral(table);
+    }
+
+    const query = `
+    SELECT 'MVIEW' as table_type FROM pg_catalog.pg_matviews WHERE 
+      matviewname = ${tableName} AND
+      schemaname IN (${schema})
+    UNION
+    SELECT 'TABLE' as table_type FROM information_schema.tables WHERE 
+      table_name = ${tableName} AND
+      table_schema IN (${schema})
+    `;
+    return query;
+  }
+
   buildColumnQuery(type?: string) {
+    if (this.isMView()) {
+      return this.buildMViewColumnQuery(type);
+    } else {
+      return this.buildTableColumnQuery(type);
+    }
+  }
+
+  buildTableColumnQuery(type?: string) {
     let query = 'SELECT quote_ident(column_name) FROM information_schema.columns WHERE ';
     query += this.buildTableConstraint(this.target.table);
 
@@ -127,7 +177,7 @@ table_schema IN (
         break;
       }
       case 'value': {
-        query += " AND data_type IN ('bigint','integer','double precision','real')";
+        query += " AND data_type IN ('bigint','integer','double precision','real', 'numeric')";
         query += ' AND column_name <> ' + this.quoteIdentAsLiteral(this.target.timeColumn);
         break;
       }
@@ -138,6 +188,65 @@ table_schema IN (
     }
 
     query += ' ORDER BY column_name';
+
+    return query;
+  }
+
+  buildMViewColumnQuery(type?: string) {
+    let schema;
+    let tableName;
+
+    // check for schema qualified table
+    if (this.target.table.includes('.')) {
+      const parts = this.target.table.split('.');
+      schema = this.quoteIdentAsLiteral(parts[0]);
+      tableName = this.quoteIdentAsLiteral(parts[1]);
+    } else {
+      schema = this.buildSearchPathQuery();
+      tableName = this.quoteIdentAsLiteral(this.target.table);
+    }
+
+    const subquery = `
+    SELECT a.attname as column_name,
+      pg_catalog.format_type(a.atttypid, a.atttypmod) as data_type,
+      s.nspname as schemaname
+    FROM pg_attribute a
+      JOIN pg_class t on a.attrelid = t.oid
+      JOIN pg_namespace s on t.relnamespace = s.oid
+    WHERE a.attnum > 0 
+      AND NOT a.attisdropped
+      AND t.relname = ${tableName}
+      AND s.nspname in (${schema})`;
+
+    let dataTypeConstraint = '';
+
+    switch (type) {
+      case 'time': {
+        dataTypeConstraint +=
+          " AND data_type IN ('timestamp without time zone','timestamp with time zone','bigint','integer','double precision','real')";
+        break;
+      }
+      case 'metric': {
+        dataTypeConstraint += " AND data_type IN ('text','character','character varying')";
+        break;
+      }
+      case 'value': {
+        dataTypeConstraint += " AND data_type IN ('bigint','integer','double precision','real', 'numeric')";
+        dataTypeConstraint += ' AND column_name <> ' + this.quoteIdentAsLiteral(this.target.timeColumn);
+        break;
+      }
+      case 'group': {
+        dataTypeConstraint += " AND data_type IN ('text','character','character varying')";
+        break;
+      }
+    }
+
+    const query = `SELECT quote_ident(foo.column_name) FROM (
+    ${subquery} ) as foo 
+    WHERE ${this.buildMViewSchemaConstraint()} 
+    ${dataTypeConstraint}
+    ORDER BY column_name
+    `;
 
     return query;
   }
@@ -164,5 +273,9 @@ table_schema IN (
     query += 'INNER JOIN pg_type ON pg_type.oid=pg_proc.prorettype ';
     query += "WHERE pronargs=1 AND typname IN ('float8') AND aggkind='n' ORDER BY 1";
     return query;
+  }
+
+  private isMView(): boolean {
+    return this.target?.tableType === 'MVIEW';
   }
 }

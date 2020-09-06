@@ -72,6 +72,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
         this.datasource.metricFindQuery(this.metaBuilder.findMetricTable()).then((result: any) => {
           if (result.length > 0) {
             this.target.table = result[0].text;
+            this.target.tableType = 'TABLE';
             let segment = this.uiSegmentSrv.newSegment(this.target.table);
             this.tableSegment.html = segment.html;
             this.tableSegment.value = segment.value;
@@ -240,7 +241,15 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.metricColumnSegment.value = segment.value;
     this.target.metricColumn = 'none';
 
-    const task1 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('time')).then((result: any) => {
+    const task1 = this.datasource
+      .metricFindQuery(this.metaBuilder.buildFindTableTypeQuery(this.target.table))
+      .then((result: any) => {
+        if (result.length > 0) {
+          this.target.tableType = result[0].text;
+        }
+      });
+
+    const task2 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('time')).then((result: any) => {
       // check if time column is still valid
       if (result.length > 0 && !_.find(result, (r: any) => r.text === this.target.timeColumn)) {
         const segment = this.uiSegmentSrv.newSegment(result[0].text);
@@ -249,14 +258,14 @@ export class PostgresQueryCtrl extends QueryCtrl {
       }
       return this.timeColumnChanged(false);
     });
-    const task2 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('value')).then((result: any) => {
+    const task3 = this.datasource.metricFindQuery(this.metaBuilder.buildColumnQuery('value')).then((result: any) => {
       if (result.length > 0) {
         this.target.select = [[{ type: 'column', params: [result[0].text] }]];
         this.updateProjection();
       }
     });
 
-    Promise.all([task1, task2]).then(() => {
+    Promise.all([task1, task2, task3]).then(() => {
       this.updateRawSqlAndRefresh();
     });
   }
