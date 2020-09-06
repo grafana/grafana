@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// ShortUrlService service for operating on shortUrls
 type ShortUrlService interface {
 	GetFullUrlByUID(uid string) (string, error)
 	CreateShortUrl(cmd *dtos.CreateShortUrlForm) (string, error)
@@ -21,7 +20,6 @@ type shortUrlServiceImpl struct {
 	log  log.Logger
 }
 
-// NewShortUrlService factory for creating a new shortUrl service
 var NewShortUrlService = func(orgId int64, user *models.SignedInUser) ShortUrlService {
 	return &shortUrlServiceImpl{
 		user: user,
@@ -41,13 +39,15 @@ func (dr *shortUrlServiceImpl) buildCreateShortUrlCommand(path string) (*models.
 
 func (dr *shortUrlServiceImpl) GetFullUrlByUID(uid string) (string, error) {
 	query := models.GetFullUrlQuery{Uid: uid}
-	fullUrl, err := getFullUrl(query)
-
-	if err != nil {
+	if err := bus.Dispatch(&query); err != nil {
 		return "", err
 	}
 
-	return fullUrl, nil
+	if query.Result.Path == "" {
+		return "", models.ErrShortUrlNotFound
+	}
+
+	return query.Result.Path, nil
 }
 
 func (dr *shortUrlServiceImpl) CreateShortUrl(cmd *dtos.CreateShortUrlForm) (string, error) {
@@ -62,16 +62,4 @@ func (dr *shortUrlServiceImpl) CreateShortUrl(cmd *dtos.CreateShortUrlForm) (str
 	}
 
 	return createShortUrlCmd.Result.Uid, nil
-}
-
-func getFullUrl(query models.GetFullUrlQuery) (string, error) {
-	if err := bus.Dispatch(&query); err != nil {
-		return "", err
-	}
-
-	if query.Result.Path == "" {
-		return "", models.ErrShortUrlNotFound
-	}
-
-	return query.Result.Path, nil
 }

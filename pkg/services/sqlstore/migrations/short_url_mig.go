@@ -13,6 +13,5 @@ func addShortUrlMigrations(mg *Migrator) {
 		},
 	}
 
-	// add shortUrl v1
 	mg.AddMigration("create short_url table v1", NewAddTableMigration(shortUrlV1))
 }

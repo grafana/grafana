@@ -5,7 +5,6 @@ import (
 	"time"
 )
 
-// Typed errors
 var (
 	ErrShortUrlNotFound = errors.New("Short URL not found")
 )
@@ -29,7 +28,7 @@ type CreateShortUrlCommand struct {
 	Result *ShortUrl
 }
 
-//
+// ---------------------
 // QUERIES
 //
 
