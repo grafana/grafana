@@ -11,8 +11,8 @@ import {
   getValueFormat,
 } from '@grafana/data';
 
-import { annotationEventNames, AnnotationFieldDefaults } from '../standardAnnotationSupport';
-import { Select } from '@grafana/ui';
+import { annotationEventNames, AnnotationFieldInfo } from '../standardAnnotationSupport';
+import { Select, Tooltip, Icon } from '@grafana/ui';
 import { AnnotationQueryResponse } from '../types';
 
 // const valueOptions: Array<SelectableValue<AnnotationEventFieldSource>> = [
@@ -110,7 +110,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
     });
   };
 
-  renderRow(row: AnnotationFieldDefaults, mapping: AnnotationEventFieldMapping, first?: AnnotationEvent) {
+  renderRow(row: AnnotationFieldInfo, mapping: AnnotationEventFieldMapping, first?: AnnotationEvent) {
     const { fieldNames } = this.state;
 
     let picker = fieldNames;
@@ -137,7 +137,14 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
 
     return (
       <tr key={row.key}>
-        <td>{row.key}</td>
+        <td>
+          {row.key}{' '}
+          {row.help && (
+            <Tooltip content={row.help}>
+              <Icon name="info-circle" />
+            </Tooltip>
+          )}
+        </td>
         {/* <td>
           <Select
             value={valueOptions.find(v => v.value === mapping.source) || valueOptions[0]}

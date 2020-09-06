@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { AnnotationEventMappings, DataQuery, LoadingState } from '@grafana/data';
-import { Spinner, Icon } from '@grafana/ui';
+import { Spinner, Icon, IconName, Button } from '@grafana/ui';
 
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -84,37 +84,58 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
 
   renderStatus() {
     const { response, running } = this.state;
-    if (running || response?.panelData?.state === LoadingState.Loading || !response) {
-      return (
-        <div>
-          <Spinner />
-          Loading...
-        </div>
-      );
-    }
-    const { events, panelData, frame } = response;
+    let rowStyle = 'alert-info';
+    let text = '...';
+    let icon: IconName | undefined = undefined;
 
-    if (panelData?.error) {
-      return (
-        <div
-          className={cx(
-            'alert-warning',
-            css`
-              padding: 5px;
-            `
-          )}
-        >
-          <Icon name="exclamation-triangle" /> &nbsp;
-          {panelData.error.message}
-        </div>
-      );
-    }
-    if (!events?.length) {
-      return <div>No annottions found</div>;
+    if (running || response?.panelData?.state === LoadingState.Loading || !response) {
+      text = 'loading...';
+    } else {
+      const { events, panelData, frame } = response;
+
+      if (panelData?.error) {
+        rowStyle = 'alert-error';
+        icon = 'exclamation-triangle';
+        text = panelData.error.message ?? 'error';
+      } else if (!events?.length) {
+        rowStyle = 'alert-warning';
+        icon = 'exclamation-triangle';
+        text = 'No events found';
+      } else {
+        text = `${events.length} events (from ${frame?.fields.length} fields)`;
+      }
     }
     return (
-      <div>
-        Found: {events?.length} annotations ({frame?.fields.length} fields)
+      <div
+        className={cx(
+          rowStyle,
+          css`
+            margin: 4px 0px;
+            padding: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          `
+        )}
+      >
+        <div>
+          {icon && (
+            <>
+              <Icon name={icon} />
+              &nbsp;
+            </>
+          )}
+          {text}
+        </div>
+        <div>
+          {running ? (
+            <Spinner />
+          ) : (
+            <Button variant="secondary" size="xs" onClick={this.onRunQuery}>
+              TEST
+            </Button>
+          )}
+        </div>
       </div>
     );
   }

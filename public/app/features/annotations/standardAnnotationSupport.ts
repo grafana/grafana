@@ -78,33 +78,34 @@ interface AnnotationEventFieldSetter {
   split?: string; // for tags
 }
 
-export interface AnnotationFieldDefaults {
+export interface AnnotationFieldInfo {
   key: keyof AnnotationEvent;
 
   split?: string;
   field?: (frame: DataFrame) => Field | undefined;
   placeholder?: string;
+  help?: string;
 }
 
-export const annotationEventNames: AnnotationFieldDefaults[] = [
+export const annotationEventNames: AnnotationFieldInfo[] = [
   {
     key: 'time',
     field: (frame: DataFrame) => frame.fields.find(f => f.type === FieldType.time),
-    placeholder: 'first time field',
+    placeholder: 'time, or the first time field',
   },
-  { key: 'timeEnd' },
+  { key: 'timeEnd', help: 'When this field is defined, the annotation will be treated as a range' },
   {
     key: 'title',
   },
   {
     key: 'text',
     field: (frame: DataFrame) => frame.fields.find(f => f.type === FieldType.string),
-    placeholder: 'first text field',
+    placeholder: 'text, or the first text field',
   },
-  { key: 'tags', split: ',' },
-  { key: 'userId' },
-  { key: 'login' },
-  { key: 'email' },
+  { key: 'tags', split: ',', help: 'The results will be split on comma (,)' },
+  // { key: 'userId' },
+  // { key: 'login' },
+  // { key: 'email' },
 ];
 
 export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationEventMappings): AnnotationEvent[] {

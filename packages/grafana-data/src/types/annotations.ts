@@ -2,6 +2,9 @@ import { DataQuery, QueryEditorProps } from './datasource';
 import { DataFrame } from './dataFrame';
 import { ComponentType } from 'react';
 
+/**
+ * This JSON object is stored in the dashboard json model.
+ */
 export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> {
   datasource: string;
   enable: boolean;
@@ -11,7 +14,7 @@ export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> {
   // Standard datasource query
   target?: TQuery;
 
-  // Convert a dataframe to an annotation
+  // Convert a dataframe to an AnnotationEvent
   mappings?: AnnotationEventMappings;
 }
 
@@ -36,6 +39,9 @@ export interface AnnotationEvent {
   source?: any; // source.type === 'dashboard'
 }
 
+/**
+ * @alpha -- any value other than `field` is experimental
+ */
 export enum AnnotationEventFieldSource {
   Field = 'field', // Default -- find the value with a matching key
   Text = 'text', // Write a constant string into the value

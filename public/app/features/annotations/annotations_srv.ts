@@ -145,6 +145,7 @@ export class AnnotationsSrv {
       promises.push(
         datasourcePromise
           .then((datasource: DataSourceApi) => {
+            // Use the legacy annotationQuery unless annotation support is explicitly defined
             if (datasource.annotationQuery && !datasource.annotations) {
               return datasource.annotationQuery({
                 range,
@@ -153,6 +154,7 @@ export class AnnotationsSrv {
                 dashboard: dashboard,
               });
             }
+            // Note: future annotatoin lifecycle will use observables directly
             return executeAnnotationQuery(options, datasource, annotation)
               .toPromise()
               .then(res => {
