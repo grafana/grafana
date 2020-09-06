@@ -1,7 +1,6 @@
 package shortUrls
 
 import (
-	"log"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -17,7 +16,6 @@ type ShortUrlService interface {
 
 type shortUrlServiceImpl struct {
 	user *models.SignedInUser
-	log  log.Logger
 }
 
 var NewShortUrlService = func(orgId int64, user *models.SignedInUser) ShortUrlService {
