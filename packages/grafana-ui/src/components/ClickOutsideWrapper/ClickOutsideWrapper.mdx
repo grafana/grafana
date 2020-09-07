@@ -11,8 +11,8 @@ Useful for components that require an action being triggered when a click outsid
 # Usage
 
 ```jsx
-<ClickOutsideWrapper onClick={action('Clicked outside')}>
-  <div>Container</div>
+<ClickOutsideWrapper onClick={() => console.log('Clicked outside')}>
+  <div style={{width: '300px'}}>Container</div>
 </ClickOutsideWrapper>
 ````
 <Props of={ClickOutsideWrapper}/>
