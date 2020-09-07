@@ -84,7 +84,9 @@ func instrumentRoundtrip(datasourceName string, next http.RoundTripper) promhttp
 				promhttp.InstrumentRoundTripperInFlight(requestInFlight, next))).
 			RoundTrip(r)
 
-		responseSizeSummary.Observe(float64(res.ContentLength))
+		if res.ContentLength > 0 {
+			responseSizeSummary.Observe(float64(res.ContentLength))
+		}
 
 		return res, err
 	})
