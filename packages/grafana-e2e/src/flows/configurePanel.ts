@@ -5,45 +5,75 @@ import { selectOption } from './selectOption';
 import { setDashboardTimeRange } from './setDashboardTimeRange';
 import { setTimeRange, TimeRangeConfig } from './setTimeRange';
 
-export interface ConfigurePanelConfig {
+interface AddPanelOverrides {
+  dataSourceName: string;
+  queriesForm: (config: AddPanelConfig) => void;
+  panelTitle: string;
+}
+
+interface EditPanelOverrides {
+  queriesForm?: (config: EditPanelConfig) => void;
+  panelTitle: string;
+}
+
+interface ConfigurePanelDefault {
   chartData: {
     method: string;
     route: string | RegExp;
   };
   dashboardUid: string;
-  dataSourceName?: string;
-  isExplore: boolean;
   matchScreenshot: boolean;
-  queriesForm?: (config: any) => void;
-  panelTitle: string;
+  saveDashboard: boolean;
   screenshotName: string;
-  timeRange?: TimeRangeConfig;
   visitDashboardAtStart: boolean; // @todo remove when possible
+}
+
+interface ConfigurePanelOptional {
+  dataSourceName?: string;
+  queriesForm?: (config: ConfigurePanelConfig) => void;
+  panelTitle?: string;
+  timeRange?: TimeRangeConfig;
   visualizationName?: string;
 }
 
-// @todo improve config input/output: https://stackoverflow.com/a/63507459/923745
-// @todo this actually returns type `Cypress.Chainable`
-export const configurePanel = (config: Partial<ConfigurePanelConfig>, isEdit: boolean): any =>
+interface ConfigurePanelRequired {
+  isEdit: boolean;
+  isExplore: boolean;
+}
+
+export type PartialConfigurePanelConfig = Partial<ConfigurePanelDefault> &
+  ConfigurePanelOptional &
+  ConfigurePanelRequired;
+
+export type ConfigurePanelConfig = ConfigurePanelDefault & ConfigurePanelOptional & ConfigurePanelRequired;
+
+export type PartialAddPanelConfig = PartialConfigurePanelConfig & AddPanelOverrides;
+export type AddPanelConfig = ConfigurePanelConfig & AddPanelOverrides;
+
+export type PartialEditPanelConfig = PartialConfigurePanelConfig & EditPanelOverrides;
+export type EditPanelConfig = ConfigurePanelConfig & EditPanelOverrides;
+
+// @todo this actually returns type `Cypress.Chainable<AddPanelConfig | EditPanelConfig | ConfigurePanelConfig>`
+export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelConfig | PartialConfigurePanelConfig) =>
   getScenarioContext().then(({ lastAddedDashboardUid }: any) => {
-    const fullConfig = {
+    const fullConfig: AddPanelConfig | EditPanelConfig | ConfigurePanelConfig = {
       chartData: {
         method: 'POST',
         route: '/api/ds/query',
       },
       dashboardUid: lastAddedDashboardUid,
-      isExplore: false,
       matchScreenshot: false,
       saveDashboard: true,
       screenshotName: 'panel-visualization',
       visitDashboardAtStart: true,
       ...config,
-    } as ConfigurePanelConfig;
+    };
 
     const {
       chartData,
       dashboardUid,
       dataSourceName,
+      isEdit,
       isExplore,
       matchScreenshot,
       panelTitle,
@@ -53,6 +83,10 @@ export const configurePanel = (config: Partial<ConfigurePanelConfig>, isEdit: bo
       visitDashboardAtStart,
       visualizationName,
     } = fullConfig;
+
+    if (isEdit && isExplore) {
+      throw new TypeError('Invalid configuration');
+    }
 
     if (isExplore) {
       e2e.pages.Explore.visit();
@@ -108,7 +142,7 @@ export const configurePanel = (config: Partial<ConfigurePanelConfig>, isEdit: bo
             .find('[value="Panel Title"]')
             .scrollIntoView()
             .clear()
-            .type(panelTitle);
+            .type(panelTitle as string);
         }
 
         if (visualizationName) {
