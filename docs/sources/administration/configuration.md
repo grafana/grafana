@@ -1215,7 +1215,7 @@ Optional URL to send to users in notifications. If the string contains the seque
 Optional path to JSON key file associated with a Google service account to authenticate and authorize. If no value is provided it tries to use the [application default credentials](https://cloud.google.com/docs/authentication/production#finding_credentials_automatically).
 Service Account keys can be created and downloaded from https://console.developers.google.com/permissions/serviceaccounts.
 
-Service Account should have "Storage Object Writer" role. The access control model of the bucket needs to be "Set object-level and bucket-level permissions". Grafana itself will make the images public readable.
+Service Account should have "Storage Object Writer" role. The access control model of the bucket needs to be "Set object-level and bucket-level permissions". Grafana itself will make the images public readable when signed urls are not enabled.
 
 ### bucket
 
@@ -1224,6 +1224,15 @@ Bucket Name on Google Cloud Storage.
 ### path
 
 Optional extra path inside bucket.
+
+### enable_signed_urls
+
+If set to true, Grafana creates a [signed URL](https://cloud.google.com/storage/docs/access-control/signed-urls] for
+the image uploaded to Google Cloud Storage.
+
+### signed_url_expiration
+
+Sets the signed URL expiration, which defaults to seven days.
 
 ## [external_image_storage.azure_blob]
 
