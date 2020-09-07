@@ -66,6 +66,14 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     this.setState({ formatOption: option }, this.onRunQuery);
   };
 
+  onExemplarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.props.onChange({
+      ...this.props.query,
+      exemplarQuery: e.target.checked,
+    });
+    this.props.onRunQuery();
+  };
+
   onInstantChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const instant = e.target.checked;
     this.query.instant = instant;
@@ -87,6 +95,10 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     const legendFormat = e.currentTarget.value;
     this.query.legendFormat = legendFormat;
     this.setState({ legendFormat });
+  };
+
+  onAddExemplar = () => {
+    console.log('XXX', this.props);
   };
 
   onRunQuery = () => {
@@ -172,6 +184,8 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               value={formatOption}
             />
             <Switch label="Instant" checked={instant} onChange={this.onInstantChange} />
+
+            <Switch label="Exemplar" checked={query.exemplarQuery || false} onChange={this.onExemplarChange} />
 
             <InlineFormLabel width={10} tooltip="Link to Graph in Prometheus">
               <PromLink

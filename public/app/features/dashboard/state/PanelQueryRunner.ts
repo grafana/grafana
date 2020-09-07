@@ -27,6 +27,7 @@ import {
   LoadingState,
   rangeUtil,
 } from '@grafana/data';
+import { getChannelQueries } from '../utils/channelQueries';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -154,13 +155,9 @@ export class PanelQueryRunner {
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
 
-      // Attach the datasource name to each query
-      request.targets = request.targets.map(query => {
-        if (!query.datasource) {
-          query.datasource = ds.name;
-        }
-        return query;
-      });
+      // Split each target into the various channels that may be listening
+      const channelQueries = getChannelQueries(ds, request.targets);
+      request.targets = channelQueries.standard;
 
       const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
       const norm = rangeUtil.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
@@ -176,6 +173,22 @@ export class PanelQueryRunner {
       request.intervalMs = norm.intervalMs;
 
       this.pipeToSubject(runRequest(ds, request));
+
+      // If aditional channels are requested -- send them over the event bus
+      if (channelQueries.channels) {
+        for (const [channel, targets] of channelQueries.channels) {
+          // TODO -- skip if not observed?
+          const sub = {
+            ...request,
+            requestId: getNextRequestId(),
+            startTime: Date.now(),
+            targets,
+            queryChannel: channel,
+          };
+
+          console.log('TODO, actually query and send to the bus', channel, sub);
+        }
+      }
     } catch (err) {
       console.error('PanelQueryRunner Error', err);
     }

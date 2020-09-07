@@ -200,6 +200,13 @@ export abstract class DataSourceApi<
   abstract testDatasource(): Promise<any>;
 
   /**
+   * This gets called before queries are issueed and allows a datasource to automatically
+   * add additional queries that should be executed.  Typically this will be used to support
+   * exemplar style queries -- from the main query, we can infer queries that pick single instances
+   */
+  getAdditionalChannelQueries?(query: TQuery): TQuery[] | undefined;
+
+  /**
    *  Get hints for query improvements
    */
   getQueryHints?(query: TQuery, results: any[], ...rest: any): QueryHint[];
@@ -333,6 +340,12 @@ export interface ExploreStartPageProps {
   exploreId?: any;
 }
 
+export enum DataQueryChannel {
+  Standard = 'standard', // or undefined
+  Annotations = 'annotations',
+  Exemplars = 'exemplars',
+}
+
 /**
  * Starting in v6.2 DataFrame can represent both TimeSeries and TableData
  */
@@ -393,6 +406,11 @@ export interface DataQuery {
   queryType?: string;
 
   /**
+   * Specify the explict channel for where the query results should be sent
+   */
+  queryChannel?: DataQueryChannel;
+
+  /**
    * For mixed data sources the selected datasource is on the query level.
    * For non mixed scenarios this is undefined.
    */
@@ -429,6 +447,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   targets: TQuery[];
   timezone: string;
   app: CoreApp | string;
+  dataChannel?: DataQueryChannel;
 
   cacheTimeout?: string;
   exploreMode?: ExploreMode;

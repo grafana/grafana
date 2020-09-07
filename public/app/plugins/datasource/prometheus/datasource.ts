@@ -17,6 +17,7 @@ import {
   TimeRange,
   TimeSeries,
   rangeUtil,
+  DataQueryChannel,
 } from '@grafana/data';
 import { forkJoin, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
@@ -246,6 +247,18 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
   };
 
+  getAdditionalChannelQueries = (query: PromQuery) => {
+    if (query.exemplarQuery) {
+      return [
+        {
+          ...query,
+          queryChannel: DataQueryChannel.Exemplars,
+        },
+      ];
+    }
+    return undefined;
+  };
+
   query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
@@ -253,6 +266,14 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     // No valid targets, return the empty result to save a round trip.
     if (!queries || !queries.length) {
+      return of({
+        data: [],
+        state: LoadingState.Done,
+      });
+    }
+
+    if (options.dataChannel === DataQueryChannel.Exemplars) {
+      console.log('TODO --- process exemplars queries');
       return of({
         data: [],
         state: LoadingState.Done,
