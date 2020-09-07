@@ -1,7 +1,6 @@
 // Libraries
 import cloneDeep from 'lodash/cloneDeep';
 // Services & Utils
-import kbn from 'app/core/utils/kbn';
 import {
   AnnotationEvent,
   CoreApp,
@@ -17,6 +16,7 @@ import {
   ScopedVars,
   TimeRange,
   TimeSeries,
+  rangeUtil,
 } from '@grafana/data';
 import { forkJoin, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
@@ -345,18 +345,20 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const range = Math.ceil(end - start);
 
     // options.interval is the dynamically calculated interval
-    let interval: number = kbn.intervalToSeconds(options.interval);
-    // Minimum interval ("Min step"), if specified for the query or datasource. or same as interval otherwise
-    const minInterval = kbn.intervalToSeconds(
+    let interval: number = rangeUtil.intervalToSeconds(options.interval);
+    // Minimum interval ("Min step"), if specified for the query, or same as interval otherwise.
+    const minInterval = rangeUtil.intervalToSeconds(
       templateSrv.replace(target.interval || options.interval, options.scopedVars)
     );
+    // Scrape interval as specified for the query ("Min step") or otherwise taken from the datasource.
+    const scrapeInterval = rangeUtil.intervalToSeconds(target.interval || this.interval);
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
     const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
     let scopedVars = {
       ...options.scopedVars,
       ...this.getRangeScopedVars(options.range),
-      ...this.getRateIntervalScopedVariable(interval, minInterval),
+      ...this.getRateIntervalScopedVariable(adjustedInterval, scrapeInterval),
     };
     // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
     if (interval !== adjustedInterval) {
@@ -364,7 +366,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       scopedVars = Object.assign({}, options.scopedVars, {
         __interval: { text: interval + 's', value: interval + 's' },
         __interval_ms: { text: interval * 1000, value: interval * 1000 },
-        ...this.getRateIntervalScopedVariable(interval, minInterval),
+        ...this.getRateIntervalScopedVariable(interval, scrapeInterval),
         ...this.getRangeScopedVars(options.range),
       });
     }
@@ -403,13 +405,12 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return query;
   }
 
-  getRateIntervalScopedVariable(interval: number, minInterval: number) {
-    let intervalInSeconds = minInterval === interval ? kbn.intervalToSeconds(this.interval) : minInterval;
-    // if intervalInSeconds === 0 then we should fall back to the default 15 seconds
-    if (intervalInSeconds === 0) {
-      intervalInSeconds = 15;
+  getRateIntervalScopedVariable(interval: number, scrapeInterval: number) {
+    // Fall back to the default scrape interval of 15s if scrapeInterval is 0 for some reason.
+    if (scrapeInterval === 0) {
+      scrapeInterval = 15;
     }
-    const rateInterval = Math.max(interval + intervalInSeconds, 4 * intervalInSeconds);
+    const rateInterval = Math.max(interval + scrapeInterval, 4 * scrapeInterval);
     return { __rate_interval: { text: rateInterval + 's', value: rateInterval + 's' } };
   }
 
@@ -532,7 +533,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     const scopedVars = {
       __interval: { text: this.interval, value: this.interval },
-      __interval_ms: { text: kbn.intervalToMs(this.interval), value: kbn.intervalToMs(this.interval) },
+      __interval_ms: { text: rangeUtil.intervalToMs(this.interval), value: rangeUtil.intervalToMs(this.interval) },
       ...this.getRangeScopedVars(getTimeSrv().timeRange()),
     };
     const interpolated = templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);

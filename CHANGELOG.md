@@ -1,3 +1,22 @@
+# 7.2.0-beta1 (unreleased)
+
+### Breaking changes
+
+* **Units**: The date time units `YYYY-MM-DD HH:mm:ss` and `MM/DD/YYYY h:mm:ss a` have been renamed to `Datetime ISO`
+ and `Datetime US` respectively. This is no breaking change just a visual name change (the unit id is unchanged). The
+ unit behavior is different however, it no longer hides the date part if the date is today. If you want this old
+ behavior you need to change unit to `Datetime ISO (No date if today)` or  `Datetime US (No date if today)`.
+
+# 7.1.5 (2020-08-25)
+
+### Features / Enhancements
+* **Stats**: Stop counting the same user multiple times. [#26777](https://github.com/grafana/grafana/pull/26777), [@sakjur](https://github.com/sakjur)
+
+### Bug Fixes
+* **Alerting**: remove LongToWide call in alerting. [#27140](https://github.com/grafana/grafana/pull/27140), [@kylebrandt](https://github.com/kylebrandt)
+* **AzureMonitor**: fix panic introduced in 7.1.4 when unit was unspecified and alias was used. [#27113](https://github.com/grafana/grafana/pull/27113), [@kylebrandt](https://github.com/kylebrandt)
+* **Variables**: Fixes issue with All variable not being resolved. [#27151](https://github.com/grafana/grafana/pull/27151), [@hugohaggmark](https://github.com/hugohaggmark)
+
 # 7.1.4 (2020-08-20)
 
 ### Features / Enhancements
@@ -196,7 +215,7 @@
 * **Variables**: Fixes maximum call stack bug for empty value. [#25503](https://github.com/grafana/grafana/pull/25503), [@hugohaggmark](https://github.com/hugohaggmark)
 
 ### Security fixes
-* **Graph**: Fix XSS vulnerability with series overrides [#25401](https://github.com/grafana/grafana/pull/25401). Thanks to Rotem Reiss for reporting this. 
+* **Graph**: Fix XSS vulnerability with series overrides [#25401](https://github.com/grafana/grafana/pull/25401). Thanks to Rotem Reiss for reporting this.
 
 # 7.0.5 (2020-06-30)
 

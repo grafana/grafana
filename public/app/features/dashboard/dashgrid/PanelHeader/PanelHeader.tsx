@@ -180,7 +180,7 @@ export class PanelHeader extends Component<Props, State> {
               <span className="panel-title-text">{title}</span>
               <Icon name="angle-down" className="panel-menu-toggle" />
               {this.state.panelMenuOpen && (
-                <ClickOutsideWrapper onClick={this.closeMenu}>
+                <ClickOutsideWrapper onClick={this.closeMenu} parent={document}>
                   <PanelHeaderMenu items={menuItems} />
                 </ClickOutsideWrapper>
               )}

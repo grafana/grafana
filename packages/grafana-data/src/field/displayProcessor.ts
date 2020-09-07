@@ -4,7 +4,7 @@ import _ from 'lodash';
 // Types
 import { Field, FieldType } from '../types/dataFrame';
 import { GrafanaTheme } from '../types/theme';
-import { DisplayProcessor, DisplayValue, DecimalCount, DecimalInfo } from '../types/displayValue';
+import { DecimalCount, DecimalInfo, DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
@@ -22,7 +22,9 @@ interface DisplayProcessorOptions {
 // Reasonable units for time
 const timeFormats: KeyValue<boolean> = {
   dateTimeAsIso: true,
+  dateTimeAsIsoSmart: true,
   dateTimeAsUS: true,
+  dateTimeAsUSSmart: true,
   dateTimeFromNow: true,
 };
 
@@ -46,13 +48,14 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
   return (value: any) => {
     const { mappings } = config;
+    const isStringUnit = unit === 'string';
 
     if (hasDateUnit && typeof value === 'string') {
       value = dateTime(value).valueOf();
     }
 
     let text = _.toString(value);
-    let numeric = toNumber(value);
+    let numeric = isStringUnit ? NaN : toNumber(value);
     let prefix: string | undefined = undefined;
     let suffix: string | undefined = undefined;
     let shouldFormat = true;
@@ -62,7 +65,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
       if (mappedValue) {
         text = mappedValue.text;
-        const v = toNumber(text);
+        const v = isStringUnit ? NaN : toNumber(text);
 
         if (!isNaN(v)) {
           numeric = v;
@@ -162,4 +165,11 @@ export function getDecimalsForValue(value: number, decimalOverride?: DecimalCoun
   const scaledDecimals = decimals - Math.floor(Math.log(size) / Math.LN10) + 2;
 
   return { decimals, scaledDecimals };
+}
+
+export function getRawDisplayProcessor(): DisplayProcessor {
+  return (value: any) => ({
+    text: `${value}`,
+    numeric: (null as unknown) as number,
+  });
 }

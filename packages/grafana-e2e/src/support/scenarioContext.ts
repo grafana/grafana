@@ -39,7 +39,7 @@ export const getScenarioContext = (): any =>
   e2e()
     .wrap(
       {
-        getScenarioContext: () => ({ ...scenarioContext } as ScenarioContext),
+        getScenarioContext: (): ScenarioContext => ({ ...scenarioContext }),
       },
       { log: false }
     )
