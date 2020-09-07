@@ -34,7 +34,7 @@ export class ErrorPage extends PureComponent<Props> {
                     <p>0%</p>
                   </div>
                   <div className="error-column image-box">
-                    <img src="public/img/graph404.svg" width="100%" alt="graph" />
+                    <img src="public/img/line-graph-graph-svgrepo-com.svg" width="100%" alt="graph" />
                     <div className="error-row error-space-between">
                       <p className="graph-text">Then</p>
                       <p className="graph-text">Now</p>
