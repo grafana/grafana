@@ -124,16 +124,27 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	})
 
 	b.Handler = func(ctx *models.ReqContext) {
-		// Put authentication Credentials into request Context. Since we don't
-		// have any session backend here we simply set user ID as empty string.
-		// Users with empty ID called anonymous users, in real app you should
-		// decide whether anonymous users allowed to connect to your server
-		// or not. There is also another way to set Credentials - returning them
-		// from ConnectingHandler which is called after client sent first command
-		// to server called Connect. See _examples folder in repo to find real-life
-		// auth samples (OAuth2, Gin sessions, JWT etc).
+		user := ctx.SignedInUser
+		dto := models.UserProfileDTO{
+			Id:             user.UserId,
+			Name:           user.Name,
+			Email:          user.Email,
+			Login:          user.Login,
+			IsGrafanaAdmin: user.IsGrafanaAdmin,
+			OrgId:          user.OrgId,
+		}
+
+		jsonData, err := json.Marshal(dto)
+		if err != nil {
+			logger.Debug("error reading user", "dto", dto)
+			ctx.Resp.WriteHeader(404)
+			return
+		}
+		logger.Info("Logged in user", "user", user)
+
 		cred := &centrifuge.Credentials{
-			UserID: "",
+			UserID: fmt.Sprintf("%d", user.UserId),
+			Info:   jsonData,
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 

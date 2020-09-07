@@ -7,7 +7,7 @@ import Centrifuge, {
   SubscribeErrorContext,
 } from 'centrifuge/dist/centrifuge.protobuf';
 import SockJS from 'sockjs-client';
-import { GrafanaLiveSrv, setGrafanaLiveSrv, ChannelHandler } from '@grafana/runtime';
+import { GrafanaLiveSrv, setGrafanaLiveSrv, ChannelHandler, config } from '@grafana/runtime';
 import { Observable, Subject, BehaviorSubject } from 'rxjs';
 import { KeyValue } from '@grafana/data';
 
@@ -25,7 +25,7 @@ class CentrifugeSrv implements GrafanaLiveSrv {
   constructor() {
     console.log('connecting....');
     // TODO: better pick this from the URL
-    this.centrifuge = new Centrifuge(`http://${location.host}/live/sockjs`, {
+    this.centrifuge = new Centrifuge(`${config.appUrl}live/sockjs`, {
       debug: true,
       sockjs: SockJS,
     });
