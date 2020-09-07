@@ -211,7 +211,10 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext, completeInvite dtos.C
 	metrics.MApiUserSignUpCompleted.Inc()
 	metrics.MApiUserSignUpInvite.Inc()
 
-	return Success("User created and logged in")
+	return JSON(200, util.DynMap{
+		"message": "User created and logged in",
+		"id":      user.Id,
+	})
 }
 
 func updateTempUserStatus(code string, status models.TempUserStatus) (bool, Response) {
