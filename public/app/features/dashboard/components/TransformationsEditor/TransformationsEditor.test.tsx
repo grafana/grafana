@@ -1,6 +1,7 @@
 import React from 'react';
 import { DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { TransformationsEditor } from './TransformationsEditor';
 import { PanelModel } from '../../state';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
@@ -48,13 +49,7 @@ describe('TransformationsEditor', () => {
       ]);
 
       const addTransformationButton = screen.getByText(buttonLabel);
-      fireEvent(
-        addTransformationButton,
-        new MouseEvent('click', {
-          bubbles: true,
-          cancelable: true,
-        })
-      );
+      userEvent.click(addTransformationButton);
 
       const picker = screen.getByLabelText(selectors.components.ValuePicker.select(buttonLabel));
       expect(picker).toBeDefined();
@@ -75,13 +70,8 @@ describe('TransformationsEditor', () => {
         expect(screen.queryByLabelText(debuggerSelector)).toBeNull();
 
         const debugButton = screen.getByLabelText(selectors.components.QueryEditorRow.actionButton('Debug'));
-        fireEvent(
-          debugButton,
-          new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-          })
-        );
+        userEvent.click(debugButton);
+
         expect(screen.getByLabelText(debuggerSelector)).toBeInTheDocument();
       });
     });
