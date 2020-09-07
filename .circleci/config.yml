@@ -852,7 +852,12 @@ jobs:
             - node_modules
       - run:
           name: frontend tests
-          command: "./scripts/circle-test-frontend.sh"
+          command: |
+            if [[ $CIRCLE_BRANCH == "master" ]]; then
+              ./bin/grabpl test-frontend --publish-metrics --api-key ${GRAFANA_MISC_STATS_API_KEY}
+            else
+              ./bin/grabpl test-frontend
+            fi
       - store_test_results:
           path: reports/junit
       - run:
