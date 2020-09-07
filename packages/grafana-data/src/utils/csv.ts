@@ -72,7 +72,7 @@ export class CSVReader {
   }
 
   // PapaParse callback on each line
-  private step = (results: ParseResult, parser: Parser): void => {
+  private chunk = (results: ParseResult<any>, parser: Parser): void => {
     for (let i = 0; i < results.data.length; i++) {
       const line: string[] = results.data[i];
       if (line.length < 1) {
@@ -181,7 +181,7 @@ export class CSVReader {
       dynamicTyping: false,
       skipEmptyLines: true,
       comments: false, // Keep comment lines
-      step: this.step,
+      chunk: this.chunk,
     } as ParseConfig;
 
     Papa.parse(text, papacfg);
