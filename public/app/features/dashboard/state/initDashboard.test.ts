@@ -214,7 +214,7 @@ describeInitScenario('Initializing home dashboard', ctx => {
 describeInitScenario('Initializing home dashboard cancelled', ctx => {
   ctx.setup(() => {
     ctx.args.routeInfo = DashboardRouteInfo.Home;
-    ctx.backendSrv.get.mockResolvedValue([]);
+    ctx.backendSrv.get.mockRejectedValue({ cancelled: true });
   });
 
   it('Should abort init process', () => {

@@ -223,15 +223,15 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 		return nil, errors.New("Unable to find datasource plugin Azure Monitor")
 	}
 
+	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 	var azureMonitorRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
-		if route.Path == "azuremonitor" {
+		if route.Path == cloudName {
 			azureMonitorRoute = route
 			break
 		}
 	}
 
-	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 	proxyPass := fmt.Sprintf("%s/subscriptions", cloudName)
 
 	u, err := url.Parse(dsInfo.Url)
@@ -299,8 +299,16 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 			})
 		}
 		if query.Alias != "" {
-			dataField.Config.DisplayName = formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"],
+			displayName := formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"],
 				amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID, labels)
+
+			if dataField.Config != nil {
+				dataField.Config.DisplayName = displayName
+			} else {
+				dataField.SetConfig(&data.FieldConfig{
+					DisplayName: displayName,
+				})
+			}
 		}
 
 		requestedAgg := query.Params.Get("aggregation")

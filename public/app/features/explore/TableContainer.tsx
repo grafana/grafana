@@ -13,6 +13,7 @@ import { FilterItem } from '@grafana/ui/src/components/Table/types';
 import { getFieldLinksForExplore } from './utils/links';
 
 interface TableContainerProps {
+  ariaLabel?: string;
   exploreId: ExploreId;
   loading: boolean;
   width: number;
@@ -41,7 +42,7 @@ export class TableContainer extends PureComponent<TableContainerProps> {
   }
 
   render() {
-    const { loading, onCellFilterAdded, showingTable, tableResult, width, splitOpen, range } = this.props;
+    const { loading, onCellFilterAdded, showingTable, tableResult, width, splitOpen, range, ariaLabel } = this.props;
 
     const height = this.getTableHeight();
     const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
@@ -61,7 +62,13 @@ export class TableContainer extends PureComponent<TableContainerProps> {
     return (
       <Collapse label="Table" loading={loading} collapsible isOpen={showingTable} onToggle={this.onClickTableButton}>
         {hasTableResult ? (
-          <Table data={tableResult!} width={tableWidth} height={height} onCellFilterAdded={onCellFilterAdded} />
+          <Table
+            ariaLabel={ariaLabel}
+            data={tableResult!}
+            width={tableWidth}
+            height={height}
+            onCellFilterAdded={onCellFilterAdded}
+          />
         ) : (
           <MetaInfoText metaItems={[{ value: '0 series returned' }]} />
         )}

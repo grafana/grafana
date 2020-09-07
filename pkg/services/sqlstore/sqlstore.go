@@ -70,7 +70,7 @@ func (ss *SqlStore) Init() error {
 
 	engine, err := ss.getEngine()
 	if err != nil {
-		return fmt.Errorf("Fail to connect to database: %v", err)
+		return errutil.Wrap("failed to connect to database", err)
 	}
 
 	ss.engine = engine
@@ -91,11 +91,12 @@ func (ss *SqlStore) Init() error {
 	}
 
 	if err := migrator.Start(); err != nil {
-		return fmt.Errorf("Migration failed err: %v", err)
+		return errutil.Wrap("migration failed", err)
 	}
 
 	// Init repo instances
 	annotations.SetRepository(&SqlAnnotationRepo{})
+	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: 100, log: log.New("annotationcleaner")})
 	ss.Bus.SetTransactionManager(ss)
 
 	// Register handlers

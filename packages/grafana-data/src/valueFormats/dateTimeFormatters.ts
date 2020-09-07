@@ -103,6 +103,11 @@ export function toSeconds(size: number, decimals?: DecimalCount, scaledDecimals?
     return { text: '' };
   }
 
+  // If 0, use s unit instead of ns
+  if (size === 0) {
+    return { text: '0', suffix: ' s' };
+  }
+
   // Less than 1 µs, divide in ns
   if (Math.abs(size) < 0.000001) {
     return toFixedScaled(size * 1e9, decimals, trySubstract(scaledDecimals, decimals), -9, ' ns');
@@ -360,8 +365,10 @@ export function toDateTimeValueFormatter(pattern: string, todayPattern?: string)
   };
 }
 
-export const dateTimeAsIso = toDateTimeValueFormatter('YYYY-MM-DD HH:mm:ss', 'HH:mm:ss');
-export const dateTimeAsUS = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a', 'h:mm:ss a');
+export const dateTimeAsIso = toDateTimeValueFormatter('YYYY-MM-DD HH:mm:ss');
+export const dateTimeAsIsoNoDateIfToday = toDateTimeValueFormatter('YYYY-MM-DD HH:mm:ss', 'HH:mm:ss');
+export const dateTimeAsUS = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a');
+export const dateTimeAsUSNoDateIfToday = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a', 'h:mm:ss a');
 
 export function dateTimeFromNow(
   value: number,
