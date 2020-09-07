@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+set -e
 
 echo -e "Collecting code stats (typescript errors & more)"
 
