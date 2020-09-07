@@ -127,6 +127,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     });
   };
 
+  renderTimeStamp(epochMs: number) {
+    return dateTimeFormat(epochMs, {
+      timeZone: this.props.timeZone,
+    });
+  }
+
   renderLogRow(
     context?: LogRowContextRows,
     errors?: LogRowContextQueryErrors,
@@ -143,7 +149,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       allowDetails,
       row,
       showDuplicates,
-      timeZone,
       showContextToggle,
       showLabels,
       showTime,
@@ -176,7 +181,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
             </td>
           )}
-          {showTime && <td className={style.logsRowLocalTime}>{dateTimeFormat(row.timeEpochMs, { timeZone })}</td>}
+          {showTime && <td className={style.logsRowLocalTime}>{this.renderTimeStamp(row.timeEpochMs)}</td>}
           {showLabels && row.uniqueLabels && (
             <td className={style.logsRowLabels}>
               <LogLabels labels={row.uniqueLabels} />

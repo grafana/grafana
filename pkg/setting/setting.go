@@ -300,9 +300,10 @@ type Cfg struct {
 	ApiKeyMaxSecondsToLive int64
 
 	// Use to enable new features which may still be in alpha/beta stage.
-	FeatureToggles map[string]bool
-
+	FeatureToggles       map[string]bool
 	AnonymousHideVersion bool
+
+	DateFormats DateFormats
 
 	// Annotations
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
@@ -834,6 +835,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		Name:    dbName,
 		ConnStr: connStr,
 	}
+
+	cfg.readDateFormats()
 
 	return nil
 }
