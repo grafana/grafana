@@ -11,7 +11,6 @@ import { ChangePassword } from '../ForgottenPassword/ChangePassword';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { HorizontalGroup, LinkButton } from '@grafana/ui';
 import { LoginLayout, InnerBox } from './LoginLayout';
-
 import config from 'app/core/config';
 
 const forgottenPasswordStyles = css`
