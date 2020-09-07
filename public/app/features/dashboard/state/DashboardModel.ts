@@ -421,6 +421,7 @@ export class DashboardModel {
     _.pull(this.panels, ...panelsToRemove);
     panelsToRemove.map(p => p.destroy());
     this.sortPanelsByGridPos();
+    console.log('Cleanup repeats');
     this.events.emit(CoreEvents.repeatsProcessed);
   }
 
@@ -485,6 +486,7 @@ export class DashboardModel {
     }
 
     const clone = new PanelModel(sourcePanel.getSaveModel());
+
     clone.id = this.getNextPanelId();
 
     // insert after source panel + value index
@@ -493,6 +495,11 @@ export class DashboardModel {
     clone.repeatIteration = this.iteration;
     clone.repeatPanelId = sourcePanel.id;
     clone.repeat = undefined;
+
+    if (this.panelInView && this.panelInView.id === clone.id) {
+      clone.setIsViewing(true);
+      this.panelInView = clone;
+    }
 
     return clone;
   }
@@ -539,6 +546,7 @@ export class DashboardModel {
     }
 
     const selectedOptions = this.getSelectedVariableOptions(variable);
+
     const maxPerRow = panel.maxPerRow || 4;
     let xPos = 0;
     let yPos = panel.gridPos.y;
