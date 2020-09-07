@@ -1,7 +1,7 @@
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
-import { AppEvents } from '@grafana/data';
+import { AppEvents, DataQueryErrorType } from '@grafana/data';
 
 import { BackendSrv } from '../services/backend_srv';
 import { Emitter } from '../utils/emitter';
@@ -352,7 +352,7 @@ describe('backendSrv', () => {
         expect(unsubscribe).toHaveBeenCalledTimes(1);
 
         expect(slowError).toEqual({
-          cancelled: true,
+          type: DataQueryErrorType.Cancelled,
           data: null,
           status: -1,
           statusText: 'Request was aborted',
@@ -539,7 +539,7 @@ describe('backendSrv', () => {
           catchedError = err;
         }
 
-        expect(catchedError.cancelled).toEqual(true);
+        expect(catchedError.type).toEqual(DataQueryErrorType.Cancelled);
         expect(catchedError.statusText).toEqual('Request was aborted');
         expect(unsubscribe).toHaveBeenCalledTimes(2);
       });
