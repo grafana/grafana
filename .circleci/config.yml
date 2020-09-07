@@ -48,7 +48,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.5.5
+            VERSION=0.5.6
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -852,7 +852,11 @@ jobs:
             - node_modules
       - run:
           name: frontend tests
-          command: "./scripts/circle-test-frontend.sh"
+          command: |
+            yarn run ci:test-frontend
+            if [[ $CIRCLE_BRANCH == "master" ]]; then
+              ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics ${GRAFANA_MISC_STATS_API_KEY}
+            fi
       - store_test_results:
           path: reports/junit
       - run:
