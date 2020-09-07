@@ -275,11 +275,9 @@ type alertCondition struct {
 		Type string `json:"type"`
 	} `json:"operator"`
 	Query struct {
-		DatasourceID int64 `json:"datasourceId"`
-		Model        struct {
-			data interface{}
-		} `json:"model"`
-		Params []string `json:"params"`
+		DatasourceID int64       `json:"datasourceId"`
+		Model        interface{} `json:"model"`
+		Params       []string    `json:"params"`
 	} `json:"query"`
 	Reducer struct {
 		Params []string `json:"params"`
