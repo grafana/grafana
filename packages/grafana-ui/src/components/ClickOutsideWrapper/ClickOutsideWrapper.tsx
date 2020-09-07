@@ -10,6 +10,7 @@ export interface Props {
    *  Runs the 'onClick' function when pressing a key outside of the current element. Defaults to true.
    */
   includeButtonPress: boolean;
+  /** Object to attach the click event listener to */
   parent: Window | Document;
 
   /**
@@ -35,7 +36,7 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
   componentDidMount() {
     this.props.parent.addEventListener('click', this.onOutsideClick, this.props.useCapture);
     if (this.props.includeButtonPress) {
-      // Use keyup since keydown already has an eventlistener on window
+      // Use keyup since keydown already has an event listener on window
       this.props.parent.addEventListener('keyup', this.onOutsideClick, this.props.useCapture);
     }
   }
