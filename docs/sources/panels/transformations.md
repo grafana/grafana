@@ -226,6 +226,8 @@ After I apply the transformation, my labels appear in the table as fields.
 
 ### Group By
 
+> **Note:** This documentation refers to a Grafana 7.2 feature.
+
 This transformation groups the data by a specified field (column) value and processes calculations on each group. The available calculations are the same as the Reduce transformation.
 
 Here's an example of original data.
