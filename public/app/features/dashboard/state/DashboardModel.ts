@@ -421,7 +421,6 @@ export class DashboardModel {
     _.pull(this.panels, ...panelsToRemove);
     panelsToRemove.map(p => p.destroy());
     this.sortPanelsByGridPos();
-    console.log('Cleanup repeats');
     this.events.emit(CoreEvents.repeatsProcessed);
   }
 
