@@ -151,6 +151,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsSkipVerify           | boolean | _All_                                                            | Controls whether a client verifies the server's certificate chain and host name.            |
 | graphiteVersion         | string  | Graphite                                                         | Graphite version                                                                            |
 | timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source                         |
+| httpMode                | string  | Influxdb, Prometheus                                             | HTTP Method. 'GET', 'POST', defaults to GET                 |
 | esVersion               | number  | Elasticsearch                                                    | Elasticsearch version as a number (2/5/56/60/70)                                            |
 | timeField               | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                |
 | interval                | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |
@@ -275,6 +276,8 @@ providers:
 
 When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path every **updateIntervalSeconds** and look for updated json files and update/insert those into the database.
 
+> **Note:** Dashboards are provisioned to the General folder if the `folder` option is missing or empty.
+
 #### Making changes to a provisioned dashboard
 
 It's possible to make changes to a provisioned dashboard in the Grafana UI. However, it is not possible to automatically save the changes back to the provisioning source.
@@ -332,6 +335,8 @@ providers:
 `server` and `application` will become new folders in Grafana menu.
 
 > **Note.** `folder` and `folderUid` options should be empty or missing to make `foldersFromFilesStructure` work.
+
+> **Note:** To provision dashboards to the General folder, store them in the root of your `path`.
 
 ## Alert Notification Channels
 
@@ -409,13 +414,13 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `pushover`
 
-| Name     |
-| -------- |
-| apiToken |
-| userKey  |
-| device   |
-| retry    |
-| expire   |
+| Name     | Secure setting |
+| -------- | -------------- |
+| apiToken | yes |
+| userKey  | yes |
+| device   | |
+| retry    | |
+| expire   | |
 
 #### Alert notification `slack`
 
@@ -448,9 +453,9 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `LINE`
 
-| Name  |
-| ----- |
-| token |
+| Name  | Secure setting |
+| ----- | - |
+| token | yes |
 
 #### Alert notification `pagerduty`
 
@@ -461,13 +466,13 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `sensu`
 
-| Name     |
-| -------- |
-| url      |
-| source   |
-| handler  |
-| username |
-| password |
+| Name     | Secure setting |
+| -------- | - | 
+| url      | |
+| source   | |
+| handler  | |
+| username | |
+| password | yes |
 
 #### Alert notification `prometheus-alertmanager`
 
@@ -506,28 +511,28 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `opsgenie`
 
-| Name             |
-| ---------------- |
-| apiKey           |
-| apiUrl           |
-| autoClose        |
-| overridePriority |
+| Name             | Secure setting |
+| ---------------- | - |
+| apiKey           | yes |
+| apiUrl           | |
+| autoClose        | |
+| overridePriority | |
 
 #### Alert notification `telegram`
 
-| Name        |
-| ----------- |
-| bottoken    |
-| chatid      |
-| uploadImage |
+| Name        | Secure setting |
+| ----------- | - |
+| bottoken    | yes |
+| chatid      | |
+| uploadImage | |
 
 #### Alert notification `threema`
 
-| Name         |
-| ------------ |
-| gateway_id   |
-| recipient_id |
-| api_secret   |
+| Name         | Secure setting |
+| ------------ | - |
+| gateway_id   | |
+| recipient_id | |
+| api_secret   | yes |
 
 #### Alert notification `webhook`
 

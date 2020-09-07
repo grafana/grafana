@@ -24,9 +24,6 @@ var newTimeSeriesQuery = func(client es.Client, tsdbQuery *tsdb.TsdbQuery, inter
 }
 
 func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
-	result := &tsdb.Response{}
-	result.Results = make(map[string]*tsdb.QueryResult)
-
 	tsQueryParser := newTimeSeriesQueryParser()
 	queries, err := tsQueryParser.parse(e.tsdbQuery)
 	if err != nil {
@@ -37,120 +34,12 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 
 	from := fmt.Sprintf("%d", e.tsdbQuery.TimeRange.GetFromAsMsEpoch())
 	to := fmt.Sprintf("%d", e.tsdbQuery.TimeRange.GetToAsMsEpoch())
-
+	result := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult),
+	}
 	for _, q := range queries {
-		minInterval, err := e.client.GetMinInterval(q.Interval)
-		if err != nil {
+		if err := e.processQuery(q, ms, from, to, result); err != nil {
 			return nil, err
-		}
-		interval := e.intervalCalculator.Calculate(e.tsdbQuery.TimeRange, minInterval)
-
-		b := ms.Search(interval)
-		b.Size(0)
-		filters := b.Query().Bool().Filter()
-		filters.AddDateRangeFilter(e.client.GetTimeField(), to, from, es.DateFormatEpochMS)
-
-		if q.RawQuery != "" {
-			filters.AddQueryStringFilter(q.RawQuery, true)
-		}
-
-		if len(q.BucketAggs) == 0 {
-			if len(q.Metrics) == 0 || q.Metrics[0].Type != "raw_document" {
-				result.Results[q.RefID] = &tsdb.QueryResult{
-					RefId:       q.RefID,
-					Error:       fmt.Errorf("invalid query, missing metrics and aggregations"),
-					ErrorString: "invalid query, missing metrics and aggregations",
-				}
-				continue
-			}
-			metric := q.Metrics[0]
-			b.Size(metric.Settings.Get("size").MustInt(500))
-			b.SortDesc("@timestamp", "boolean")
-			b.AddDocValueField("@timestamp")
-			continue
-		}
-
-		aggBuilder := b.Agg()
-
-		// iterate backwards to create aggregations bottom-down
-		for _, bucketAgg := range q.BucketAggs {
-			switch bucketAgg.Type {
-			case dateHistType:
-				aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
-			case histogramType:
-				aggBuilder = addHistogramAgg(aggBuilder, bucketAgg)
-			case filtersType:
-				aggBuilder = addFiltersAgg(aggBuilder, bucketAgg)
-			case termsType:
-				aggBuilder = addTermsAgg(aggBuilder, bucketAgg, q.Metrics)
-			case geohashGridType:
-				aggBuilder = addGeoHashGridAgg(aggBuilder, bucketAgg)
-			}
-		}
-
-		for _, m := range q.Metrics {
-			m := m
-			if m.Type == countType {
-				continue
-			}
-
-			if isPipelineAgg(m.Type) {
-				if isPipelineAggWithMultipleBucketPaths(m.Type) {
-					if len(m.PipelineVariables) > 0 {
-						bucketPaths := map[string]interface{}{}
-						for name, pipelineAgg := range m.PipelineVariables {
-							if _, err := strconv.Atoi(pipelineAgg); err == nil {
-								var appliedAgg *MetricAgg
-								for _, pipelineMetric := range q.Metrics {
-									if pipelineMetric.ID == pipelineAgg {
-										appliedAgg = pipelineMetric
-										break
-									}
-								}
-								if appliedAgg != nil {
-									if appliedAgg.Type == countType {
-										bucketPaths[name] = "_count"
-									} else {
-										bucketPaths[name] = pipelineAgg
-									}
-								}
-							}
-						}
-
-						aggBuilder.Pipeline(m.ID, m.Type, bucketPaths, func(a *es.PipelineAggregation) {
-							a.Settings = m.Settings.MustMap()
-						})
-					} else {
-						continue
-					}
-				} else {
-					if _, err := strconv.Atoi(m.PipelineAggregate); err == nil {
-						var appliedAgg *MetricAgg
-						for _, pipelineMetric := range q.Metrics {
-							if pipelineMetric.ID == m.PipelineAggregate {
-								appliedAgg = pipelineMetric
-								break
-							}
-						}
-						if appliedAgg != nil {
-							bucketPath := m.PipelineAggregate
-							if appliedAgg.Type == countType {
-								bucketPath = "_count"
-							}
-
-							aggBuilder.Pipeline(m.ID, m.Type, bucketPath, func(a *es.PipelineAggregation) {
-								a.Settings = m.Settings.MustMap()
-							})
-						}
-					} else {
-						continue
-					}
-				}
-			} else {
-				aggBuilder.Metric(m.ID, m.Type, m.Field, func(a *es.MetricAggregation) {
-					a.Settings = m.Settings.MustMap()
-				})
-			}
 		}
 	}
 
@@ -166,6 +55,125 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 
 	rp := newResponseParser(res.Responses, queries, res.DebugInfo)
 	return rp.getTimeSeries()
+}
+
+func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to string,
+	result *tsdb.Response) error {
+	minInterval, err := e.client.GetMinInterval(q.Interval)
+	if err != nil {
+		return err
+	}
+	interval := e.intervalCalculator.Calculate(e.tsdbQuery.TimeRange, minInterval)
+
+	b := ms.Search(interval)
+	b.Size(0)
+	filters := b.Query().Bool().Filter()
+	filters.AddDateRangeFilter(e.client.GetTimeField(), to, from, es.DateFormatEpochMS)
+
+	if q.RawQuery != "" {
+		filters.AddQueryStringFilter(q.RawQuery, true)
+	}
+
+	if len(q.BucketAggs) == 0 {
+		if len(q.Metrics) == 0 || q.Metrics[0].Type != "raw_document" {
+			result.Results[q.RefID] = &tsdb.QueryResult{
+				RefId:       q.RefID,
+				Error:       fmt.Errorf("invalid query, missing metrics and aggregations"),
+				ErrorString: "invalid query, missing metrics and aggregations",
+			}
+			return nil
+		}
+		metric := q.Metrics[0]
+		b.Size(metric.Settings.Get("size").MustInt(500))
+		b.SortDesc("@timestamp", "boolean")
+		b.AddDocValueField("@timestamp")
+		return nil
+	}
+
+	aggBuilder := b.Agg()
+
+	// iterate backwards to create aggregations bottom-down
+	for _, bucketAgg := range q.BucketAggs {
+		switch bucketAgg.Type {
+		case dateHistType:
+			aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
+		case histogramType:
+			aggBuilder = addHistogramAgg(aggBuilder, bucketAgg)
+		case filtersType:
+			aggBuilder = addFiltersAgg(aggBuilder, bucketAgg)
+		case termsType:
+			aggBuilder = addTermsAgg(aggBuilder, bucketAgg, q.Metrics)
+		case geohashGridType:
+			aggBuilder = addGeoHashGridAgg(aggBuilder, bucketAgg)
+		}
+	}
+
+	for _, m := range q.Metrics {
+		m := m
+		if m.Type == countType {
+			continue
+		}
+
+		if isPipelineAgg(m.Type) {
+			if isPipelineAggWithMultipleBucketPaths(m.Type) {
+				if len(m.PipelineVariables) > 0 {
+					bucketPaths := map[string]interface{}{}
+					for name, pipelineAgg := range m.PipelineVariables {
+						if _, err := strconv.Atoi(pipelineAgg); err == nil {
+							var appliedAgg *MetricAgg
+							for _, pipelineMetric := range q.Metrics {
+								if pipelineMetric.ID == pipelineAgg {
+									appliedAgg = pipelineMetric
+									break
+								}
+							}
+							if appliedAgg != nil {
+								if appliedAgg.Type == countType {
+									bucketPaths[name] = "_count"
+								} else {
+									bucketPaths[name] = pipelineAgg
+								}
+							}
+						}
+					}
+
+					aggBuilder.Pipeline(m.ID, m.Type, bucketPaths, func(a *es.PipelineAggregation) {
+						a.Settings = m.Settings.MustMap()
+					})
+				} else {
+					continue
+				}
+			} else {
+				if _, err := strconv.Atoi(m.PipelineAggregate); err == nil {
+					var appliedAgg *MetricAgg
+					for _, pipelineMetric := range q.Metrics {
+						if pipelineMetric.ID == m.PipelineAggregate {
+							appliedAgg = pipelineMetric
+							break
+						}
+					}
+					if appliedAgg != nil {
+						bucketPath := m.PipelineAggregate
+						if appliedAgg.Type == countType {
+							bucketPath = "_count"
+						}
+
+						aggBuilder.Pipeline(m.ID, m.Type, bucketPath, func(a *es.PipelineAggregation) {
+							a.Settings = m.Settings.MustMap()
+						})
+					}
+				} else {
+					continue
+				}
+			}
+		} else {
+			aggBuilder.Metric(m.ID, m.Type, m.Field, func(a *es.MetricAggregation) {
+				a.Settings = m.Settings.MustMap()
+			})
+		}
+	}
+
+	return nil
 }
 
 func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo string) es.AggBuilder {

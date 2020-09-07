@@ -32,7 +32,7 @@ export interface ValueFormatCategory {
   formats: ValueFormat[];
 }
 
-interface ValueFormatterIndex {
+export interface ValueFormatterIndex {
   [id: string]: ValueFormatter;
 }
 
@@ -154,6 +154,10 @@ export function simpleCountUnit(symbol: string): ValueFormatter {
     v.suffix += ' ' + symbol;
     return v;
   };
+}
+
+export function stringFormater(value: number): FormattedValue {
+  return { text: `${value}` };
 }
 
 function buildFormats() {

@@ -37,19 +37,25 @@ const lastProperty = <T extends DeleteDashboardConfig | DeleteDataSourceConfig, 
 // @todo this actually returns type `Cypress.Chainable`
 export const getScenarioContext = (): any =>
   e2e()
-    .wrap({
-      getScenarioContext: () => ({ ...scenarioContext } as ScenarioContext),
-    })
-    .invoke('getScenarioContext');
+    .wrap(
+      {
+        getScenarioContext: (): ScenarioContext => ({ ...scenarioContext }),
+      },
+      { log: false }
+    )
+    .invoke({ log: false }, 'getScenarioContext');
 
 // @todo this actually returns type `Cypress.Chainable`
 export const setScenarioContext = (newContext: Partial<ScenarioContext>): any =>
   e2e()
-    .wrap({
-      setScenarioContext: () => {
-        Object.entries(newContext).forEach(([key, value]) => {
-          scenarioContext[key] = value;
-        });
+    .wrap(
+      {
+        setScenarioContext: () => {
+          Object.entries(newContext).forEach(([key, value]) => {
+            scenarioContext[key] = value;
+          });
+        },
       },
-    })
-    .invoke('setScenarioContext');
+      { log: false }
+    )
+    .invoke({ log: false }, 'setScenarioContext');

@@ -7,7 +7,7 @@ import { SelectableValue } from '@grafana/data';
 
 export interface Props {
   refId: string;
-  usedAlignmentPeriod: string;
+  usedAlignmentPeriod?: number;
   variableOptionGroup: SelectableValue<string>;
   onChange: (query: MetricQuery) => void;
   onRunQuery: () => void;
