@@ -324,37 +324,63 @@ Here is the result after applying the `Series to rows` transformation.
 
 ## Filter By Value
 
-This transformation allows you to filter your data directly in Grafana. This allows you to remove some of the data points from your query result. You can either include or exclude some of your data points (rows) from a field that match the filter test (`Equal`, `Greater`, `Lower`, `isNull`, `Regex`, `Equal` and a few more).
+
+This transformation allows you to filter your data directly in Grafana and remove some data points from your query result. You have the option to include or exclude data that match one or more conditions you define. The conditions are applied on a selected field.
+
+The available conditions are:
+
+- **Regex**: match a regex expression
+- **Is Null**: match if the value is null
+- **Is Not Null**: match if the value is not null
+- **Equal**: match if the value is equal to the specified value
+- **Different**: match if the value is different than the specified value
+- **Greater**\*: match if the value is greater than the specified value
+- **Lower**\*: match if the value is lower than the specified value
+- **Greater or equal**\*: match if the value is greater or equal
+- **Lower or equal**\*: match if the value is lower or equal
+- **Range**\*: match a range between a specified minimum and maximum, min and max included
+
+\* Those conditions are only available for number fields.
 
 Consider the following data set:
 
-| Time                | Temperature |
-|---------------------|--------------|
-| 2020-07-07 11:34:23 | 32    |
-| 2020-07-07 11:34:22 | 28    |
-| 2020-07-07 11:34:21 | 26   |
-| 2020-07-07 11:34:20 | 23    |
-| 2020-07-07 10:32:24 | 31    |
-| 2020-07-07 10:31:22 | 20    |
-| 2020-07-07 09:30:57 | 19    |
+| Time                | Temperature | Altitude
+|---------------------|-------------|----------
+| 2020-07-07 11:34:23 | 32          | 101
+| 2020-07-07 11:34:22 | 28          | 125
+| 2020-07-07 11:34:21 | 26          | 110
+| 2020-07-07 11:34:20 | 23          | 98
+| 2020-07-07 10:32:24 | 31          | 95
+| 2020-07-07 10:31:22 | 20          | 85
+| 2020-07-07 09:30:57 | 19          | 101
 
-For instance, you can `Include` all data points that have a **Temperature** lower than 30°C, you would get the following result :
+If you **Include** the data points that have a temperature lower than 30°C. The configuration will look as followed:
 
-| Time                | Temperature |
-|---------------------|--------------|
-| 2020-07-07 11:34:22 | 28    |
-| 2020-07-07 11:34:21 | 26   |
-| 2020-07-07 11:34:20 | 23    |
-| 2020-07-07 10:31:22 | 20    |
-| 2020-07-07 09:30:57 | 19    |
+- Filter Type: `Include`
+- Condition: Rows where `Temperature` matches `Lower Than` `100`
 
-You can also add more than one filter. For instance you could want to `Exclude` the temperature below 20°C, so you would add the corresponding filter.
+And you will get the following result, where only the temperatures below 30°C are included:
 
-It is important to understand how the filtering process works. All the filters added to the transformation are applied on the rows that match and, at the end of the transformation only, the rows marked as excluded are removed. This means one filter may overwrite the behavior of a previous filter if both match the same row. The filters are applied in order they appear in the transformation. You can chain the _Filter By Value_ transformation more than once to achieve the desired filtering if it is hard to achieve within the same transformation.
 
-If your first filter is an `Include` filter, by default all the data is excluded, then the filters are applied. If your first filter is and `Exclude` filter, then by default all you data is included, then the filters are applied.
+| Time                | Temperature | Altitude
+|---------------------|-------------|----------
+| 2020-07-07 11:34:22 | 28          | 125
+| 2020-07-07 11:34:21 | 26          | 110
+| 2020-07-07 11:34:20 | 23          | 98
+| 2020-07-07 10:31:22 | 20          | 85
+| 2020-07-07 09:30:57 | 19          | 101
 
-Filters that are invalid or incompletely configured are ignored in the transformation (will not be applied).
+You can add more than one condition to the filter. We could want to include the data only if the altitude is higher than 100. To do that we can add a condition to get the following configuration:
+
+- Filter type: `Include` rows that `Match All` conditions
+- Condition 1: Rows where `Temperature` matches `Lower` than `30`
+- Condition 2: Rows where `Altitude` matches `Greater` than `100`
+
+When you have more than one condition, you can choose if you want the action (include / exclude) to be applied on rows that **Match all** conditions or **Match any** of the conditions you added.
+
+In the example above we chose **Match all** because we wanted to include the rows that have a temperature lower than 30 _AND_ an altitude higher than 100. If we wanted to include the rows that have a temperature lower than 30 _OR_ an altitude higher than 100 instead, then we would select **Match any**. This would include the first row in the original data, which has a temperature of 32°C (does not match the first condition) but an altitude of 101 (which matches the second condition), so it is included.
+
+Conditions that are invalid or incompletely configured are ignored.
 
 ## Debug transformations
 
