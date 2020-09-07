@@ -15,6 +15,7 @@ import {
   formattedValueToString,
   dateTimeFormat,
 } from '@grafana/data';
+import { graphTimeFormat } from '@grafana/ui';
 import { CoreEvents } from 'app/types';
 
 const MIN_CARD_SIZE = 1,
@@ -155,9 +156,13 @@ export class HeatmapRenderer {
       .range([0, this.chartWidth]);
 
     const ticks = this.chartWidth / DEFAULT_X_TICK_SIZE_PX;
-    const format = ticksUtils.grafanaTimeFormat(ticks, this.timeRange.from, this.timeRange.to);
+    const format = graphTimeFormat(ticks, this.timeRange.from.valueOf(), this.timeRange.to.valueOf());
     const timeZone = this.ctrl.dashboard.getTimezone();
-    const formatter = (date: Date) => dateTimeFormat(date, { format, timeZone });
+    const formatter = (date: Date) =>
+      dateTimeFormat(date.valueOf(), {
+        format: format,
+        timeZone: timeZone,
+      });
 
     const xAxis = d3
       .axisBottom(this.xScale)

@@ -54,6 +54,8 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		return nil, err
 	}
 
+	settings["dateFormats"] = hs.Cfg.DateFormats
+
 	var data = dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:                         c.UserId,
