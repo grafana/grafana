@@ -354,9 +354,11 @@ def test_backend_step():
     }
 
 def test_frontend_step(publish_metrics=False):
-    flags_str = ''
+    cmds = [
+        'yarn run ci:test-frontend',
+    ]
     if publish_metrics:
-        flags_str = ' --publish-metrics --api-key $${GRAFANA_MISC_STATS_API_KEY}'
+        cmds.append('./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}')
     dct = {
         'name': 'test-frontend',
         'image': build_image,
@@ -366,9 +368,7 @@ def test_frontend_step(publish_metrics=False):
         'environment': {
             'TEST_MAX_WORKERS': '50%',
         },
-        'commands': [
-            './bin/grabpl test-frontend{}'.format(flags_str),
-        ],
+        'commands': cmds,
     }
     if publish_metrics:
         dct['environment'] = {

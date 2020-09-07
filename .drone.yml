@@ -74,7 +74,7 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.2.26
   commands:
-  - ./bin/grabpl test-frontend
+  - yarn run ci:test-frontend
   environment:
     TEST_MAX_WORKERS: 50%
   depends_on:
@@ -297,7 +297,8 @@ steps:
 - name: test-frontend
   image: grafana/build-container:1.2.26
   commands:
-  - ./bin/grabpl test-frontend --publish-metrics --api-key $${GRAFANA_MISC_STATS_API_KEY}
+  - yarn run ci:test-frontend
+  - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
