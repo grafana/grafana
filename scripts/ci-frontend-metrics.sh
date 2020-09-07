@@ -1,6 +1,4 @@
 #!/bin/bash
-set -eo pipefail
-
 echo -e "Collecting code stats (typescript errors & more)"
 
 ERROR_COUNT_LIMIT=580
