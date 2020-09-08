@@ -857,6 +857,69 @@ describe('ElasticDatasource', function(this: any) {
       expect(typeof JSON.parse(query.split('\n')[1]).query.bool.filter[0].range['@time'].gte).toBe('number');
     });
   });
+
+  describe('getMultiSearchUrl', () => {
+    describe('When esVersion >= 70', () => {
+      it('Should add correct params to URL if "includeFrozen" is enabled', () => {
+        const datasSurce = new ElasticDatasource(
+          {
+            jsonData: {
+              esVersion: 70,
+              includeFrozen: true,
+            },
+          } as DataSourceInstanceSettings<ElasticsearchOptions>,
+          templateSrv,
+          timeSrv
+        );
+
+        expect(datasSurce.getMultiSearchUrl()).toMatch(/ignore_throttled=false/);
+      });
+
+      it('Should NOT add ignore_throttled if "includeFrozen" is disabled', () => {
+        const datasSurce = new ElasticDatasource(
+          {
+            jsonData: {
+              esVersion: 70,
+              includeFrozen: false,
+            },
+          } as DataSourceInstanceSettings<ElasticsearchOptions>,
+          templateSrv,
+          timeSrv
+        );
+
+        expect(datasSurce.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
+      });
+    });
+
+    describe('When esVersion <= 70', () => {
+      it('Should NOT add ignore_throttled params regardless of includeFrozen', () => {
+        const datasSurceWithIncludeFrozen = new ElasticDatasource(
+          {
+            jsonData: {
+              esVersion: 60,
+              includeFrozen: true,
+            },
+          } as DataSourceInstanceSettings<ElasticsearchOptions>,
+          templateSrv,
+          timeSrv
+        );
+
+        const datasSurceWithoutIncludeFrozen = new ElasticDatasource(
+          {
+            jsonData: {
+              esVersion: 60,
+              includeFrozen: false,
+            },
+          } as DataSourceInstanceSettings<ElasticsearchOptions>,
+          templateSrv,
+          timeSrv
+        );
+
+        expect(datasSurceWithIncludeFrozen.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
+        expect(datasSurceWithoutIncludeFrozen.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
+      });
+    });
+  });
 });
 
 describe('enhanceDataFrame', () => {
