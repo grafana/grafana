@@ -59,7 +59,7 @@ func TestStatsDataAccess(t *testing.T) {
 			MustUpdate: true,
 			Active:     true,
 		}
-		err := GetUserStats(&query)
+		err := GetUserStats(context.Background(), &query)
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), query.Result.Users)
 		assert.Equal(t, int64(1), query.Result.Admins)
@@ -133,6 +133,6 @@ func populateDB(t *testing.T) {
 		MustUpdate: true,
 		Active:     true,
 	}
-	err = GetUserStats(&query)
+	err = GetUserStats(context.Background(), &query)
 	require.NoError(t, err)
 }
