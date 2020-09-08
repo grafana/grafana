@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import {
   applyFieldOverrides,
+  applyRawFieldOverrides,
   DataFrame,
   DataTransformerID,
   dateTimeFormat,
@@ -8,13 +9,8 @@ import {
   SelectableValue,
   toCSV,
   transformDataFrame,
-  getTimeField,
-  FieldType,
-  FormattedVector,
-  DisplayProcessor,
-  getDisplayProcessor,
 } from '@grafana/data';
-import { Button, Field, Icon, Switch, Select, Table, VerticalGroup, Container, HorizontalGroup } from '@grafana/ui';
+import { Button, Container, Field, HorizontalGroup, Icon, Select, Switch, Table, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -59,33 +55,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
   exportCsv = (dataFrame: DataFrame) => {
     const { panel } = this.props;
     const { transformId } = this.state;
-
-    // Replace the time field with a formatted time
-    const { timeIndex, timeField } = getTimeField(dataFrame);
-
-    if (timeField) {
-      // Use the configured date or standard time display
-      let processor: DisplayProcessor | undefined = timeField.display;
-      if (!processor) {
-        processor = getDisplayProcessor({
-          field: timeField,
-        });
-      }
-
-      const formattedDateField = {
-        ...timeField,
-        type: FieldType.string,
-        values: new FormattedVector(timeField.values, processor),
-      };
-
-      const fields = [...dataFrame.fields];
-      fields[timeIndex!] = formattedDateField;
-
-      dataFrame = {
-        ...dataFrame,
-        fields,
-      };
-    }
 
     const dataFrameCsv = toCSV([dataFrame]);
 
@@ -146,12 +115,16 @@ export class InspectDataTab extends PureComponent<Props, State> {
       });
     }
 
+    if (!options.withFieldConfig) {
+      return applyRawFieldOverrides(data);
+    }
+
     // We need to apply field config even though it was already applied in the PanelQueryRunner.
     // That's because transformers create new fields and data frames, so i.e. display processor is no longer there
     return applyFieldOverrides({
       data,
       theme: config.theme,
-      fieldConfig: options.withFieldConfig ? this.props.panel.fieldConfig : { defaults: {}, overrides: [] },
+      fieldConfig: this.props.panel.fieldConfig,
       replaceVariables: (value: string) => {
         return value;
       },
@@ -185,7 +158,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       }
 
       if (options.withFieldConfig) {
-        activeString += 'field configuration';
+        activeString += 'formatted data';
       }
     }
 
@@ -261,8 +234,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
               )}
               {showFieldConfigsOption && (
                 <Field
-                  label="Apply field configuration"
-                  description="Table data is displayed with options defined in the Field and Override tabs."
+                  label="Formatted data"
+                  description="Table data is formatted with options defined in the Field and Override tabs."
                 >
                   <Switch
                     value={!!options.withFieldConfig}

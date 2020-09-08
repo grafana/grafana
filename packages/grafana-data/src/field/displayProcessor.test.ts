@@ -1,4 +1,4 @@
-import { getDisplayProcessor } from './displayProcessor';
+import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { MappingType, ValueMapping } from '../types/valueMapping';
 import { Field, FieldConfig, FieldType, GrafanaTheme, Threshold, ThresholdsMode } from '../types';
@@ -324,5 +324,29 @@ describe('Date display options', () => {
       });
       expect(processor('22.1122334455').text).toEqual('22.11');
     });
+  });
+});
+
+describe('getRawDisplayProcessor', () => {
+  const processor = getRawDisplayProcessor();
+  const date = new Date('2020-01-01T00:00:00.000Z');
+  const timestamp = date.valueOf();
+
+  it.each`
+    value                             | expected
+    ${0}                              | ${'0'}
+    ${13.37}                          | ${'13.37'}
+    ${true}                           | ${'true'}
+    ${false}                          | ${'false'}
+    ${date}                           | ${`${date}`}
+    ${timestamp}                      | ${'1577836800000'}
+    ${'a string'}                     | ${'a string'}
+    ${null}                           | ${'null'}
+    ${undefined}                      | ${'undefined'}
+    ${{ value: 0, label: 'a label' }} | ${'[object Object]'}
+  `('when called with value:{$value}', ({ value, expected }) => {
+    const result = processor(value);
+
+    expect(result).toEqual({ text: expected, numeric: null });
   });
 });
