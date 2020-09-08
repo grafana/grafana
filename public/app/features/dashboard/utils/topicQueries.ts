@@ -1,12 +1,12 @@
 import { DataSourceApi, DataQueryTopic, DataQuery } from '@grafana/data';
 
-export interface ChannelQueries {
+export interface TopicQueries {
   standard: DataQuery[];
-  channels?: Map<DataQueryTopic, DataQuery[]>;
+  topics?: Map<DataQueryTopic, DataQuery[]>;
 }
 
-export function getChannelQueries(ds: DataSourceApi, targets: DataQuery[]): ChannelQueries {
-  const info: ChannelQueries = {
+export function getTopicQueries(ds: DataSourceApi, targets: DataQuery[]): TopicQueries {
+  const info: TopicQueries = {
     standard: [],
   };
   const addQuery = (q: DataQuery) => {
@@ -16,15 +16,15 @@ export function getChannelQueries(ds: DataSourceApi, targets: DataQuery[]): Chan
     if (!q.queryTopic || q.queryTopic === DataQueryTopic.Standard) {
       info.standard.push(q);
     } else {
-      if (!info.channels) {
-        info.channels = new Map<DataQueryTopic, DataQuery[]>();
+      if (!info.topics) {
+        info.topics = new Map<DataQueryTopic, DataQuery[]>();
       }
-      let channel = info.channels!.get(q.queryTopic);
-      if (!channel) {
-        channel = [] as DataQuery[];
-        info.channels.set(q.queryTopic, channel);
+      let topics = info.topics!.get(q.queryTopic);
+      if (!topics) {
+        topics = [] as DataQuery[];
+        info.topics.set(q.queryTopic, topics);
       }
-      channel.push(q);
+      topics.push(q);
     }
   };
 
