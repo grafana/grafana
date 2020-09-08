@@ -14,7 +14,7 @@ The home directory will be `/home/circleci`
 - npm is installed globally
 
 ## Go
-- Go installed in `/usr/local/bin/go`
+- Go is installed in `/usr/local/bin/go`
 - golangci-lint is installed in `/usr/local/bin/golangci-lint`
 - mage is installed in `/home/circleci/go/bin/mage`
 
