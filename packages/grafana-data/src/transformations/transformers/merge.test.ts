@@ -7,16 +7,16 @@ import { ArrayVector } from '../../vector';
 import { mergeTransformer, MergeTransformerOptions } from './merge';
 
 describe('Merge multipe to single', () => {
+  const cfg: DataTransformerConfig<MergeTransformerOptions> = {
+    id: DataTransformerID.merge,
+    options: {},
+  };
+
   beforeAll(() => {
     mockTransformationsRegistry([mergeTransformer]);
   });
 
   it('combine two series into one', () => {
-    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
-      id: DataTransformerID.merge,
-      options: {},
-    };
-
     const seriesA = toDataFrame({
       name: 'A',
       fields: [
@@ -43,11 +43,6 @@ describe('Merge multipe to single', () => {
   });
 
   it('combine two series with multiple values into one', () => {
-    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
-      id: DataTransformerID.merge,
-      options: {},
-    };
-
     const seriesA = toDataFrame({
       name: 'A',
       fields: [
@@ -74,11 +69,6 @@ describe('Merge multipe to single', () => {
   });
 
   it('combine three series into one', () => {
-    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
-      id: DataTransformerID.merge,
-      options: {},
-    };
-
     const seriesA = toDataFrame({
       name: 'A',
       fields: [
@@ -113,11 +103,6 @@ describe('Merge multipe to single', () => {
   });
 
   it('combine one serie and two tables into one table', () => {
-    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
-      id: DataTransformerID.merge,
-      options: {},
-    };
-
     const tableA = toDataFrame({
       name: 'A',
       fields: [
@@ -155,11 +140,6 @@ describe('Merge multipe to single', () => {
   });
 
   it('combine one serie and two tables with ISO dates into one table', () => {
-    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
-      id: DataTransformerID.merge,
-      options: {},
-    };
-
     const tableA = toDataFrame({
       name: 'A',
       fields: [
@@ -197,11 +177,6 @@ describe('Merge multipe to single', () => {
   });
 
   it('combine two tables, where first is partial overlapping, into one', () => {
-    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
-      id: DataTransformerID.merge,
-      options: {},
-    };
-
     const tableA = toDataFrame({
       name: 'A',
       fields: [
@@ -260,11 +235,6 @@ describe('Merge multipe to single', () => {
      * of the frames. But when testing the old table panel it had this behavior so I am
      * sticking with it.
      */
-    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
-      id: DataTransformerID.merge,
-      options: {},
-    };
-
     const tableA = toDataFrame({
       name: 'A',
       fields: [
@@ -318,11 +288,6 @@ describe('Merge multipe to single', () => {
   });
 
   it('combine three tables with multiple values into one', () => {
-    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
-      id: DataTransformerID.merge,
-      options: {},
-    };
-
     const tableA = toDataFrame({
       name: 'A',
       fields: [
@@ -363,11 +328,6 @@ describe('Merge multipe to single', () => {
   });
 
   it('combine two time series, where first serie fields has displayName, into one', () => {
-    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
-      id: DataTransformerID.merge,
-      options: {},
-    };
-
     const serieA = toDataFrame({
       name: 'A',
       fields: [
@@ -397,11 +357,6 @@ describe('Merge multipe to single', () => {
   });
 
   it('combine two time series, where first serie fields has units, into one', () => {
-    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
-      id: DataTransformerID.merge,
-      options: {},
-    };
-
     const serieA = toDataFrame({
       name: 'A',
       fields: [
@@ -431,11 +386,6 @@ describe('Merge multipe to single', () => {
   });
 
   it('combine two time series, where second serie fields has units, into one', () => {
-    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
-      id: DataTransformerID.merge,
-      options: {},
-    };
-
     const serieA = toDataFrame({
       name: 'A',
       fields: [
@@ -465,11 +415,6 @@ describe('Merge multipe to single', () => {
   });
 
   it('combine one regular serie with an empty serie should return the regular serie', () => {
-    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
-      id: DataTransformerID.merge,
-      options: {},
-    };
-
     const serieA = toDataFrame({
       name: 'A',
       fields: [
@@ -496,11 +441,6 @@ describe('Merge multipe to single', () => {
   });
 
   it('combine two regular series with an empty serie should return the combination of the regular series', () => {
-    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
-      id: DataTransformerID.merge,
-      options: {},
-    };
-
     const serieA = toDataFrame({
       name: 'A',
       fields: [
@@ -536,11 +476,6 @@ describe('Merge multipe to single', () => {
   });
 
   it('combine multiple empty series should return one empty serie', () => {
-    const cfg: DataTransformerConfig<MergeTransformerOptions> = {
-      id: DataTransformerID.merge,
-      options: {},
-    };
-
     const serieA = toDataFrame({
       name: 'A',
       fields: [],
