@@ -992,12 +992,19 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   interpolateMetricsQueryVariables(
     query: CloudWatchMetricsQuery,
     scopedVars: ScopedVars
-  ): Pick<CloudWatchMetricsQuery, 'alias' | 'metricName' | 'namespace' | 'period'> {
+  ): Pick<CloudWatchMetricsQuery, 'alias' | 'metricName' | 'namespace' | 'period' | 'dimensions'> {
     return {
       alias: this.replace(query.alias, scopedVars),
       metricName: this.replace(query.metricName, scopedVars),
       namespace: this.replace(query.namespace, scopedVars),
       period: this.replace(query.period, scopedVars),
+      dimensions: Object.entries(query.dimensions).reduce((prev, [key, value]) => {
+        if (Array.isArray(value)) {
+          return { ...prev, [key]: value };
+        }
+
+        return { ...prev, [this.replace(key, scopedVars)]: this.replace(value, scopedVars) };
+      }, {}),
     };
   }
 }

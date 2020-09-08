@@ -732,16 +732,18 @@ describe('CloudWatchDatasource', () => {
         alias: `$${variableName}`,
         metricName: `$${variableName}`,
         namespace: `$${variableName}`,
-        dimensions: {},
+        dimensions: {
+          [`$${variableName}`]: `$${variableName}`,
+        },
         matchExact: false,
         statistics: [],
       };
 
       ctx.ds.interpolateVariablesInQueries([logQuery], {});
 
-      // We interpolate `expression`, `region`, `period`, `alias`, `metricName` and `nameSpace` in CloudWatchMetricsQuery
+      // We interpolate `expression`, `region`, `period`, `alias`, `metricName`, `nameSpace` and `dimensions` in CloudWatchMetricsQuery
       expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledWith(`$${variableName}`, {});
-      expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledTimes(6);
+      expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledTimes(8);
     });
   });
 
