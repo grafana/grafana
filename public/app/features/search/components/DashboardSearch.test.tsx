@@ -1,10 +1,16 @@
 import React from 'react';
 import { render, fireEvent, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { mockSearch } from './mocks';
+import * as SearchSrv from 'app/core/services/search_srv';
+import * as MockSearchSrv from 'app/core/services/__mocks__/search_srv';
 import { DashboardSearch, Props } from './DashboardSearch';
 import { searchResults } from '../testData';
 import { SearchLayout } from '../types';
+
+jest.mock('app/core/services/search_srv');
+// Typecast the mock search so the mock import is correctly recognised by TS
+// https://stackoverflow.com/a/53222290
+const { mockSearch } = SearchSrv as typeof MockSearchSrv;
 
 beforeEach(() => {
   jest.useFakeTimers();
@@ -81,7 +87,7 @@ describe('DashboardSearch', () => {
     setup();
     const section = await screen.findAllByLabelText('Search section');
     expect(section).toHaveLength(2);
-    expect(screen.getAllByLabelText('Search items')).toHaveLength(2);
+    expect(screen.getAllByLabelText('Search items')).toHaveLength(1);
   });
 
   it('should call search with selected tags', async () => {
