@@ -69,7 +69,7 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
   return (
     <div className="gf-form-inline">
       <div className="gf-form gf-form-spacing">
-        <div className="gf-form-label width-8">Rows with</div>
+        <div className="gf-form-label width-4">With</div>
         <Select
           className="width-24"
           placeholder="Field Name"
@@ -193,8 +193,8 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
           <Select
             className="width-12"
             options={[
-              { label: 'Include', value: 'include' },
-              { label: 'Exclude', value: 'exclude' },
+              { label: 'Include rows', value: 'include' },
+              { label: 'Exclude rows', value: 'exclude' },
             ]}
             value={options.type}
             onChange={option => {
@@ -203,15 +203,14 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
             menuPlacement="bottom"
           />
         </div>
-        <div className="gf-form-label width-4">rows</div>
         {options.valueFilters.length > 1 && (
           <>
             <div className="gf-form gf-form-spacing">
               <Select
                 className="width-12"
                 options={[
-                  { label: 'Matching all', value: 'all' },
-                  { label: 'Matching any', value: 'any' },
+                  { label: 'Matching all conditions', value: 'all' },
+                  { label: 'Matching any condition', value: 'any' },
                 ]}
                 value={options.match}
                 onChange={option => {
@@ -220,7 +219,6 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
                 menuPlacement="bottom"
               />
             </div>
-            <div className="gf-form-label width-8">conditions</div>
           </>
         )}
       </div>
