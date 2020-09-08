@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 
@@ -22,7 +21,7 @@ var datasourceRequestCounter = prometheus.NewCounterVec(
 		Name:      "datasource_request_total",
 		Help:      "A counter for outgoing requests for a datasource",
 	},
-	[]string{"datasource", "orgid", "code", "method"},
+	[]string{"datasource", "code", "method"},
 )
 
 var datasourceRequestSummary = prometheus.NewSummaryVec(
@@ -31,7 +30,7 @@ var datasourceRequestSummary = prometheus.NewSummaryVec(
 		Name:       "datasource_request_duration_seconds",
 		Help:       "summary of outgoing datasource requests sent from Grafana",
 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-	}, []string{"datasource", "orgid", "code", "method"},
+	}, []string{"datasource", "code", "method"},
 )
 
 var datasourceResponseSummary = prometheus.NewSummaryVec(
@@ -40,7 +39,7 @@ var datasourceResponseSummary = prometheus.NewSummaryVec(
 		Name:       "datasource_response_size_bytes",
 		Help:       "summary of datasource response sizes returned to Grafana",
 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-	}, []string{"datasource", "orgid"},
+	}, []string{"datasource"},
 )
 
 var datasourceRequestsInFlight = prometheus.NewGaugeVec(
@@ -49,7 +48,7 @@ var datasourceRequestsInFlight = prometheus.NewGaugeVec(
 		Name:      "datasource_request_in_flight",
 		Help:      "A gauge of outgoing datasource requests currently being sent by Grafana",
 	},
-	[]string{"datasource", "orgid"},
+	[]string{"datasource"},
 )
 
 func init() {
@@ -66,14 +65,14 @@ type proxyTransportCache struct {
 
 // dataSourceTransport implements http.RoundTripper (https://golang.org/pkg/net/http/#RoundTripper)
 type dataSourceTransport struct {
-	datasource *DataSource
-	headers    map[string]string
-	transport  *http.Transport
+	datasourceName string
+	headers        map[string]string
+	transport      *http.Transport
 }
 
-func instrumentRoundtrip(datasource *DataSource, next http.RoundTripper) promhttp.RoundTripperFunc {
+func instrumentRoundtrip(datasourceName string, next http.RoundTripper) promhttp.RoundTripperFunc {
 	return promhttp.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
-		datasourceLabel := prometheus.Labels{"datasource": datasource.Name, "orgid": strconv.FormatInt(datasource.OrgId, 10)}
+		datasourceLabel := prometheus.Labels{"datasource": datasourceName}
 
 		requestCounter := datasourceRequestCounter.MustCurryWith(datasourceLabel)
 		requestSummary := datasourceRequestSummary.MustCurryWith(datasourceLabel)
@@ -96,12 +95,12 @@ func instrumentRoundtrip(datasource *DataSource, next http.RoundTripper) promhtt
 }
 
 // RoundTrip executes a single HTTP transaction, returning a Response for the provided Request.
-func (dt *dataSourceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	for key, value := range dt.headers {
+func (d *dataSourceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	for key, value := range d.headers {
 		req.Header.Set(key, value)
 	}
 
-	return instrumentRoundtrip(dt.datasource, dt.transport).RoundTrip(req)
+	return instrumentRoundtrip(d.datasourceName, d.transport).RoundTrip(req)
 }
 
 type cachedTransport struct {
@@ -157,9 +156,9 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	}
 
 	dsTransport := &dataSourceTransport{
-		headers:    customHeaders,
-		transport:  transport,
-		datasource: ds,
+		headers:        customHeaders,
+		transport:      transport,
+		datasourceName: ds.Name,
 	}
 
 	ptc.cache[ds.Id] = cachedTransport{
