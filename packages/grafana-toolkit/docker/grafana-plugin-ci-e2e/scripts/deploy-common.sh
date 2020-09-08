@@ -11,7 +11,6 @@ do_exit() {
     exit $exit_code
 }
 
-
 ##
 # Get file, get's a file, validates the SHA
 # @param filename
@@ -23,7 +22,7 @@ get_file () {
     [ -n "$2" ] && dest=$2 || do_exit "destination required" -2
     sha=$3
     file=$(basename $dest)
-    
+
     wget "$url" -O "$dest"
     if [ -n "$sha" ]; then
         echo "$sha $dest" | sha256sum --check --status || do_exit "Checksum validation failed for $file. Exiting" -1
