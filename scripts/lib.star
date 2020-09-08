@@ -371,10 +371,10 @@ def test_frontend_step(publish_metrics=False):
         'commands': cmds,
     }
     if publish_metrics:
-        dct['environment'] = {
-            'GRAFANA_MISC_STATS_API_KEY': {
+        if 'environment' not in dct:
+            dct['environment'] = {}
+        dct['environment']['GRAFANA_MISC_STATS_API_KEY'] = {
                 'from_secret': 'grafana_misc_stats_api_key',
-            },
         }
 
     return dct

@@ -302,6 +302,7 @@ steps:
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
+    TEST_MAX_WORKERS: 50%
   depends_on:
   - initialize
 
