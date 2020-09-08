@@ -89,7 +89,7 @@ func NewTimeSeries(name string, points TimeSeriesPoints) *TimeSeries {
 	}
 }
 
-// DataFrames interface for retrieving encoded and decoded data frames.
+// DataFrames is an interface for retrieving encoded and decoded data frames.
 //
 // See NewDecodedDataFrames and NewEncodedDataFrames for more information.
 type DataFrames interface {
