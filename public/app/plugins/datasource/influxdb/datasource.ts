@@ -12,7 +12,6 @@ import {
   MetricFindValue,
   AnnotationQueryRequest,
   AnnotationEvent,
-  AnnotationQuery,
 } from '@grafana/data';
 import { v4 as uuidv4 } from 'uuid';
 import InfluxSeries from './influx_series';
@@ -59,17 +58,9 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.isFlux = settingsData.version === InfluxVersion.Flux;
 
     if (this.isFlux) {
-      // When flux, attach an annotation processor
+      // When flux, use an annotation processor rather than the `annotationQuery` lifecycle
       this.annotations = {
         QueryEditor: FluxQueryEditor,
-
-        // Do now send an empty query
-        prepareQuery: (anno: AnnotationQuery<InfluxQuery>) => {
-          if (!anno.target?.query) {
-            return undefined;
-          }
-          return anno.target;
-        },
       };
     }
   }
@@ -88,6 +79,16 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return query.query;
     }
     return new InfluxQueryModel(query).render(false);
+  }
+
+  /**
+   * Returns false if the query should be skipped
+   */
+  filterQuery(query: InfluxQuery): boolean {
+    if (this.isFlux) {
+      return !!query.query;
+    }
+    return true;
   }
 
   /**
