@@ -43,13 +43,13 @@ get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-l
     "b4138199aa755ebfe171b57cc46910b13258ace5fbc4eaa099c42607cd0bff32"
 chmod +x /usr/local/bin/cc-test-reporter
 
-wget -O /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.0/grabpl"
+wget -O /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.7/grabpl"
 chmod +x /usr/local/bin/grabpl
 
 apk add --no-cache git
 # Install Mage
 mkdir -pv /tmp/mage $HOME/go/bin
-git clone https://github.com/magefile/mage.git /tmp/mage
+git clone --depth 1 https://github.com/magefile/mage.git /tmp/mage
 cd /tmp/mage && go run bootstrap.go
 mv $HOME/go/bin/mage /usr/local/bin
 
