@@ -46,6 +46,28 @@
       "type": "string",
       "description": "The first part of the file name of the backend component executable. There can be multiple executables built for different operating system and architecture. Grafana will check for executables named `<executable>_<$GOOS>_<lower case $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`. Combination of $GOOS and $GOARCH can be found here: https://golang.org/doc/install/source#environment."
     },
+    "hideFromList": {
+      "type": "boolean",
+      "description": ""
+    },
+    "preload": {
+      "type": "boolean",
+      "description": ""
+    },
+    "baseUrl": {
+      "type": "string",
+      "description": ""
+    },
+    "state": {
+      "type": "string",
+      "description": "",
+      "enum": ["alpha", "beta"]
+    },
+    "signature": {
+      "type": "string",
+      "description": "",
+      "enum": ["internal", "valid", "invalid", "modified", "unsigned"]
+    },
     "includes": {
       "type": "array",
       "items": {
@@ -99,7 +121,8 @@
       "description": "Not to be used by external plugins. Special property for the built-in mixed plugin."
     },
     "module": {
-      "type": "string"
+      "type": "string",
+      "description": ""
     },
     "sort": {
       "type": "number",
@@ -135,13 +158,8 @@
         },
         "grafanaDependency": {
           "type": "string",
-<<<<<<< HEAD
           "description": "Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.",
           "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*])?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]))?$"
-=======
-          "description": "Required Grafana version for this plugin, e.g. `>=7.0.0` to denote plugin requires Grafana 7.0.0 or later",
-          "pattern": "^(>=|<|>|<=)?([0-9]+)(\\.[0-9]+)?(\\.[0-9])?$"
->>>>>>> d5c8a983ea... Update plugin metadata schema
         },
         "plugins": {
           "type": "array",
