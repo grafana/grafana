@@ -24,6 +24,8 @@ type ValueFilterInstanceCreator = (filterOptions: Record<string, any>) => ValueF
 export interface ValueFilterInstance {
   isValid: boolean;
   test: ValueFilterTestFunction;
+  expression1Invalid?: boolean;
+  expression2Invalid?: boolean;
 }
 
 //
@@ -193,6 +195,8 @@ function testRangeCreator(filterOptions: Record<string, any>): ValueFilterInstan
     return {
       isValid: false,
       test: value => true,
+      expression1Invalid: isNaN(min),
+      expression2Invalid: isNaN(max),
     };
   }
 

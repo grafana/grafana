@@ -48,11 +48,12 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
   }, [fieldType]);
 
   const filterInfo = valueFiltersRegistry.get(config.filterType);
-  const filterValid = filterInfo.getInstance({
+  const filterInstance = filterInfo.getInstance({
     filterExpression: config.filterExpression,
     filterExpression2: config.filterExpression2,
     fieldType: fieldType,
-  }).isValid;
+  });
+  const filterValid = filterInstance.isValid;
 
   const fieldNameInvalid = config.fieldName !== null && !fieldNameOptions.find(item => item.value === config.fieldName);
   const filterTypeInvalid =
@@ -60,7 +61,7 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
   const filterExpressionInvalid =
     config.filterExpression !== '' &&
     ((filterInfo.placeholder2 !== undefined && config.filterExpression2 !== '') ||
-      filterInfo.placeHolder2 === undefined) &&
+      filterInfo.placeholder2 === undefined) &&
     !fieldNameInvalid &&
     !filterTypeInvalid &&
     !filterValid;
@@ -103,7 +104,7 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
         {filterInfo.placeholder && (
           <Input
             className="flex-grow-1"
-            invalid={filterExpressionInvalid}
+            invalid={filterInstance.expression1Invalid ?? filterExpressionInvalid}
             defaultValue={config.filterExpression || undefined}
             placeholder={filterInfo.placeholder}
             onBlur={event => {
@@ -116,7 +117,7 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
         <div className="gf-form gf-form-spacing gf-form--grow">
           <Input
             className="flex-grow-1"
-            invalid={filterExpressionInvalid}
+            invalid={filterInstance.expression2Invalid}
             defaultValue={config.filterExpression2 || undefined}
             placeholder={filterInfo.placeholder2}
             onBlur={event => {
