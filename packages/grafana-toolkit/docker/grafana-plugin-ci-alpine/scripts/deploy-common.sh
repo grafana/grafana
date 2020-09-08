@@ -23,8 +23,8 @@ get_file () {
     [ -n "$2" ] && dest=$2 || do_exit "destination required" 2
     sha=$3
     file=$(basename $dest)
-    
-    wget "$url" -O "$dest"
+
+    curl -fL "${url}" -o "$dest"
     if [ -n "$sha" ]; then
         echo "$sha  $dest" | sha256sum || do_exit "Checksum validation failed for $file. Exiting" 1
     fi
@@ -43,7 +43,7 @@ untar_file () {
 # compile, and install
 get_latest_release () {
 	tarsrc=$(curl -sL "https://api.github.com/repos/$1/$2/releases/latest" | jq ".tarball_url" | tr -d '"')
-	wget -O /tmp/autoretrieved.tar.gz "$tarsrc"
+	curl -fL -o /tmp/autoretrieved.tar.gz "$tarsrc"
 	origdir=$PWD
 	reponame=$(tar zxvf autoretrieved.tar.gz | tail -1 | awk -F / '{print $1}')
 	cd "/tmp/$reponame"
