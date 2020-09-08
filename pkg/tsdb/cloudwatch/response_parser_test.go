@@ -6,7 +6,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/grafana/grafana/pkg/components/null"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -61,17 +60,17 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded",
 			}
-			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
-			timeSeries := (*series)[0]
-
+			frames, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
 			So(err, ShouldBeNil)
-			So(partialData, ShouldBeFalse)
-			So(timeSeries.Name, ShouldEqual, "lb1 Expanded")
-			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb1")
 
-			timeSeries2 := (*series)[1]
-			So(timeSeries2.Name, ShouldEqual, "lb2 Expanded")
-			So(timeSeries2.Tags["LoadBalancer"], ShouldEqual, "lb2")
+			frame1 := frames[0]
+			So(partialData, ShouldBeFalse)
+			So(frame1.Name, ShouldEqual, "lb1 Expanded")
+			So(frame1.Fields[1].Labels["LoadBalancer"], ShouldEqual, "lb1")
+
+			frame2 := frames[1]
+			So(frame2.Name, ShouldEqual, "lb2 Expanded")
+			So(frame2.Fields[1].Labels["LoadBalancer"], ShouldEqual, "lb2")
 		})
 
 		Convey("can expand dimension value using substring", func() {
@@ -123,16 +122,17 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded",
 			}
-			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
-			timeSeries := (*series)[0]
+			frames, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
 			So(err, ShouldBeNil)
-			So(partialData, ShouldBeFalse)
-			So(timeSeries.Name, ShouldEqual, "lb1 Expanded")
-			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb1")
 
-			timeSeries2 := (*series)[1]
-			So(timeSeries2.Name, ShouldEqual, "lb2 Expanded")
-			So(timeSeries2.Tags["LoadBalancer"], ShouldEqual, "lb2")
+			frame1 := frames[0]
+			So(partialData, ShouldBeFalse)
+			So(frame1.Name, ShouldEqual, "lb1 Expanded")
+			So(frame1.Fields[1].Labels["LoadBalancer"], ShouldEqual, "lb1")
+
+			frame2 := frames[1]
+			So(frame2.Name, ShouldEqual, "lb2 Expanded")
+			So(frame2.Fields[1].Labels["LoadBalancer"], ShouldEqual, "lb2")
 		})
 
 		Convey("can expand dimension value using wildcard", func() {
@@ -184,12 +184,12 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded",
 			}
-			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
-
+			frames, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
 			So(err, ShouldBeNil)
+
 			So(partialData, ShouldBeFalse)
-			So((*series)[0].Name, ShouldEqual, "lb3 Expanded")
-			So((*series)[1].Name, ShouldEqual, "lb4 Expanded")
+			So(frames[0].Name, ShouldEqual, "lb3 Expanded")
+			So(frames[1].Name, ShouldEqual, "lb4 Expanded")
 		})
 
 		Convey("can expand dimension value when no values are returned and a multi-valued template variable is used", func() {
@@ -221,13 +221,13 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded",
 			}
-			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
-
+			frames, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
 			So(err, ShouldBeNil)
+
 			So(partialData, ShouldBeFalse)
-			So(len(*series), ShouldEqual, 2)
-			So((*series)[0].Name, ShouldEqual, "lb1 Expanded")
-			So((*series)[1].Name, ShouldEqual, "lb2 Expanded")
+			So(len(frames), ShouldEqual, 2)
+			So(frames[0].Name, ShouldEqual, "lb1 Expanded")
+			So(frames[1].Name, ShouldEqual, "lb2 Expanded")
 		})
 
 		Convey("can expand dimension value when no values are returned and a multi-valued template variable and two single-valued dimensions are used", func() {
@@ -261,13 +261,13 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{LoadBalancer}} Expanded {{InstanceType}} - {{Resource}}",
 			}
-			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
-
+			frames, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
 			So(err, ShouldBeNil)
+
 			So(partialData, ShouldBeFalse)
-			So(len(*series), ShouldEqual, 2)
-			So((*series)[0].Name, ShouldEqual, "lb1 Expanded micro - res")
-			So((*series)[1].Name, ShouldEqual, "lb2 Expanded micro - res")
+			So(len(frames), ShouldEqual, 2)
+			So(frames[0].Name, ShouldEqual, "lb1 Expanded micro - res")
+			So(frames[1].Name, ShouldEqual, "lb2 Expanded micro - res")
 		})
 
 		Convey("can parse cloudwatch response", func() {
@@ -304,17 +304,18 @@ func TestCloudWatchResponseParser(t *testing.T) {
 				Period: 60,
 				Alias:  "{{namespace}}_{{metric}}_{{stat}}",
 			}
-			series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
-			timeSeries := (*series)[0]
-
+			frames, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
 			So(err, ShouldBeNil)
+
+			frame := frames[0]
 			So(partialData, ShouldBeFalse)
-			So(timeSeries.Name, ShouldEqual, "AWS/ApplicationELB_TargetResponseTime_Average")
-			So(timeSeries.Tags["LoadBalancer"], ShouldEqual, "lb")
-			So(timeSeries.Points[0][0].String(), ShouldEqual, null.FloatFrom(10.0).String())
-			So(timeSeries.Points[1][0].String(), ShouldEqual, null.FloatFrom(20.0).String())
-			So(timeSeries.Points[2][0].String(), ShouldEqual, null.FloatFromPtr(nil).String())
-			So(timeSeries.Points[3][0].String(), ShouldEqual, null.FloatFrom(30.0).String())
+			So(frame.Name, ShouldEqual, "AWS/ApplicationELB_TargetResponseTime_Average")
+			So(frame.Fields[1].Labels["LoadBalancer"], ShouldEqual, "lb")
+			So(frame.Fields[1].Len(), ShouldEqual, 4)
+			So(*frame.Fields[1].At(0).(*float64), ShouldEqual, 10.0)
+			So(*frame.Fields[1].At(1).(*float64), ShouldEqual, 20.0)
+			So(frame.Fields[1].At(2).(*float64), ShouldBeNil)
+			So(*frame.Fields[1].At(3).(*float64), ShouldEqual, 30.0)
 		})
 	})
 }
