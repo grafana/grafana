@@ -179,7 +179,6 @@ function testNotEqualCreator(filterOptions: Record<string, any>): ValueFilterIns
 function testRangeCreator(filterOptions: Record<string, any>): ValueFilterInstance {
   // We need a specific interval format : [min,max] or ]min,max[ (accepting spacing and +- before the values)
   const { filterExpression, filterExpression2 } = filterOptions;
-  console.log('filterOptions', filterOptions, filterExpression, filterExpression2);
 
   if (filterExpression === null || filterExpression2 === null || filterExpression === '' || filterExpression2 === '') {
     return {
@@ -190,7 +189,6 @@ function testRangeCreator(filterOptions: Record<string, any>): ValueFilterInstan
 
   let min = Number(filterExpression);
   let max = Number(filterExpression2);
-  console.log('minmax', min, max);
   if (isNaN(min) || isNaN(max)) {
     return {
       isValid: false,
