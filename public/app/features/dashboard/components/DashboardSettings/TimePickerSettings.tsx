@@ -10,7 +10,7 @@ interface Props {
   onRefreshIntervalChange: (interval: string[]) => void;
   onNowDelayChange: (nowDelay: string) => void;
   onHideTimePickerChange: (hide: boolean) => void;
-  renderCount: number;
+  renderCount: number; // hack to make sure Angular changes are propagated properly, please remove when DashboardSettings are migrated to React
   refreshIntervals: string[];
   timePickerHidden: boolean;
   nowDelay: string;

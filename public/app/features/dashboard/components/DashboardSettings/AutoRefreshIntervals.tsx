@@ -5,19 +5,17 @@ import { defaultIntervals } from '@grafana/ui/src/components/RefreshPicker/Refre
 import { getTimeSrv } from '../../services/TimeSrv';
 
 interface Props {
-  renderCount: number;
+  renderCount: number; // hack to make sure Angular changes are propagated properly, please remove when DashboardSettings are migrated to React
   refreshIntervals: string[];
   onRefreshIntervalChange: (interval: string[]) => void;
 }
 
 export const AutoRefreshIntervals: FC<Props> = ({ renderCount, refreshIntervals, onRefreshIntervalChange }) => {
-  const [intervals, setIntervals] = useState<string[]>(
-    getTimeSrv().getValidIntervals(refreshIntervals ?? defaultIntervals)
-  );
+  const [intervals, setIntervals] = useState<string[]>(getValidIntervals(refreshIntervals ?? defaultIntervals));
   const [invalidIntervalsMessage, setInvalidIntervalsMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const intervals = getTimeSrv().getValidIntervals(refreshIntervals ?? defaultIntervals);
+    const intervals = getValidIntervals(refreshIntervals ?? defaultIntervals);
     setIntervals(intervals);
   }, [renderCount, refreshIntervals]);
 
@@ -31,28 +29,25 @@ export const AutoRefreshIntervals: FC<Props> = ({ renderCount, refreshIntervals,
 
   const onIntervalsChange = useCallback(
     (event: React.FormEvent<HTMLInputElement>) => {
-      if (!event.currentTarget.value) {
-        return;
-      }
-
-      const newIntervals = event.currentTarget.value.split(',');
-      const invalidMessage = validateIntervals(newIntervals);
+      const newIntervals = event.currentTarget.value ? event.currentTarget.value.split(',') : [];
 
       setIntervals(newIntervals);
-      setInvalidIntervalsMessage(invalidMessage);
     },
-    [setIntervals, setInvalidIntervalsMessage]
+    [setIntervals]
   );
 
   const onIntervalsBlur = useCallback(
     (event: React.FormEvent<HTMLInputElement>) => {
-      if (!event.currentTarget.value || invalidIntervalsMessage) {
-        return;
+      const invalidMessage = validateIntervals(intervals);
+
+      if (invalidMessage === null) {
+        // only refresh dashboard JSON if intervals are valid
+        onRefreshIntervalChange(getValidIntervals(intervals));
       }
 
-      onRefreshIntervalChange(getValidIntervals(intervals));
+      setInvalidIntervalsMessage(invalidMessage);
     },
-    [intervals, onRefreshIntervalChange]
+    [intervals, invalidIntervalsMessage, onRefreshIntervalChange, setInvalidIntervalsMessage]
   );
 
   return (
