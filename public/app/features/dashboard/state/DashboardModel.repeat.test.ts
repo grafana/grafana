@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { expect } from 'test/lib/common';
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
+import { PanelModel } from './PanelModel';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -669,5 +670,62 @@ describe('given dashboard with row and panel repeat', () => {
     // toggle row back
     dashboard.toggleRow(dashboard.panels[1]);
     expect(dashboard.panels.length).toBe(4);
+  });
+});
+
+describe('given panel is in view mode', () => {
+  let dashboard: any;
+
+  beforeEach(() => {
+    const dashboardJSON = {
+      panels: [
+        {
+          id: 1,
+          repeat: 'apps',
+          repeatDirection: 'h',
+          gridPos: { x: 0, y: 0, h: 2, w: 24 },
+        },
+      ],
+      templating: {
+        list: [
+          {
+            name: 'apps',
+            current: {
+              text: 'se1, se2, se3',
+              value: ['se1', 'se2', 'se3'],
+            },
+            options: [
+              { text: 'se1', value: 'se1', selected: true },
+              { text: 'se2', value: 'se2', selected: true },
+              { text: 'se3', value: 'se3', selected: true },
+              { text: 'se4', value: 'se4', selected: false },
+            ],
+          },
+        ],
+      },
+    };
+
+    dashboard = getDashboardModel(dashboardJSON);
+    dashboard.initViewPanel(
+      new PanelModel({
+        id: 2,
+        repeat: undefined,
+        repeatDirection: 'h',
+        panels: [
+          {
+            id: 2,
+            repeat: 'apps',
+            repeatDirection: 'h',
+            gridPos: { x: 0, y: 0, h: 2, w: 24 },
+          },
+        ],
+        repeatPanelId: 2,
+      })
+    );
+    dashboard.processRepeats();
+  });
+
+  it('should set correct repeated panel to be in view', () => {
+    expect(dashboard.panels[1].isViewing).toBeTruthy();
   });
 });
