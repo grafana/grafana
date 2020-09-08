@@ -369,16 +369,19 @@ export const dateTimeAsIso = toDateTimeValueFormatter('YYYY-MM-DD HH:mm:ss');
 export const dateTimeAsIsoNoDateIfToday = toDateTimeValueFormatter('YYYY-MM-DD HH:mm:ss', 'HH:mm:ss');
 export const dateTimeAsUS = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a');
 export const dateTimeAsUSNoDateIfToday = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a', 'h:mm:ss a');
-export const dateTimeAsLocal = toDateTimeValueFormatter(
-  localTimeFormat({
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  })
-);
+
+export function getDateTimeAsLocalFormat() {
+  return toDateTimeValueFormatter(
+    localTimeFormat({
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+  );
+}
 
 export function dateTimeFromNow(
   value: number,
