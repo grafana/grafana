@@ -18,8 +18,36 @@ This topic includes the release notes for the Grafana v7.2, which is currently i
 
 Now you can finally customize how dates are formatted in Grafana. Both in the time range picker, graphs and other panels.
 
+Example:
+{{< docs-imagebox img="/img/docs/v72/date_formats.png" max-width="800px" caption="Custom date time formats" >}}
+
+The above screenshot shows both a custom full date format with a 12 hour clock and am/pm suffix. The Graph is also
+showing same 12 hour clock format and a customized month and day format compared to the Grafana default `MM/DD` format.
+
+Currently date formats can only be changed via [server wide settings]({{< relref
+"../administration/configuration.md#date_formats" >}}) but we hope to add org and potentially user level
+settings in the future.
+
+```
+[date_formats]
+full_date = MMM Do, YYYY @ hh:mm:ss a
+interval_second = hh:mm:ss a
+interval_minute = hh:mm a
+interval_hour = MMM DD hh:mm a
+interval_day = MMM DD
+interval_month = YYYY-MM
+interval_year = YYYY
+```
+
+There is also experimental support to use Browser locale/language to dynamically change the current date format
+for each user. This feature is disabled by default as it needs more testing and refinement.
+
 ## Table column filters
-TODO
+
+The new column filter option allow you to dynamically apply value filters to any column. This is option is disabled but
+can be enabled for all or a specific column using an override rule.
+
+{{< docs-imagebox img="/img/docs/v72/table_column_filters.png" max-width="800px" caption="Table column filters" >}}
 
 ## New and improved transforms
 
