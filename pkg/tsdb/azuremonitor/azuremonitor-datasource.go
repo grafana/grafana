@@ -381,10 +381,16 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 		}
 
 		if metaPartName == "dimensionname" {
+			if len(keys) == 0 {
+				return []byte{}
+			}
 			return []byte(keys[0])
 		}
 
 		if metaPartName == "dimensionvalue" {
+			if len(keys) == 0 {
+				return []byte{}
+			}
 			return []byte(lowerLabels[keys[0]])
 		}
 
