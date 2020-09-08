@@ -853,10 +853,7 @@ jobs:
       - run:
           name: frontend tests
           command: |
-            yarn run ci:test-frontend
-            if [[ $CIRCLE_BRANCH == "master" ]]; then
-              ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics ${GRAFANA_MISC_STATS_API_KEY}
-            fi
+            ./scripts/circle-test-backend.sh
       - store_test_results:
           path: reports/junit
       - run:
