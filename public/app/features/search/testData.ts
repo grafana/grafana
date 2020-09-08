@@ -1,5 +1,40 @@
 import { DashboardSearchItemType, DashboardSection } from './types';
 
+export const generalFolder: DashboardSection = {
+  id: 0,
+  title: 'General',
+  items: [
+    {
+      id: 1,
+      uid: 'lBdLINUWk',
+      title: 'Test 1',
+      uri: 'db/test1',
+      url: '/d/lBdLINUWk/test1',
+      type: DashboardSearchItemType.DashDB,
+      tags: [],
+      isStarred: false,
+      checked: true,
+    },
+    {
+      id: 46,
+      uid: '8DY63kQZk',
+      title: 'Test 2',
+      uri: 'db/test2',
+      url: '/d/8DY63kQZk/test2',
+      type: DashboardSearchItemType.DashDB,
+      tags: [],
+      isStarred: false,
+      checked: true,
+    },
+  ],
+  icon: 'folder-open',
+  score: 1,
+  expanded: true,
+  checked: false,
+  url: '',
+  type: DashboardSearchItemType.DashFolder,
+};
+
 export const searchResults: DashboardSection[] = [
   {
     id: 2,
@@ -13,40 +48,7 @@ export const searchResults: DashboardSection[] = [
     checked: true,
     type: DashboardSearchItemType.DashFolder,
   },
-  {
-    id: 0,
-    title: 'General',
-    items: [
-      {
-        id: 1,
-        uid: 'lBdLINUWk',
-        title: 'Test 1',
-        uri: 'db/test1',
-        url: '/d/lBdLINUWk/test1',
-        type: DashboardSearchItemType.DashDB,
-        tags: [],
-        isStarred: false,
-        checked: true,
-      },
-      {
-        id: 46,
-        uid: '8DY63kQZk',
-        title: 'Test 2',
-        uri: 'db/test2',
-        url: '/d/8DY63kQZk/test2',
-        type: DashboardSearchItemType.DashDB,
-        tags: [],
-        isStarred: false,
-        checked: true,
-      },
-    ],
-    icon: 'folder-open',
-    score: 1,
-    expanded: true,
-    checked: false,
-    url: '',
-    type: DashboardSearchItemType.DashFolder,
-  },
+  generalFolder,
 ];
 
 // Search results with more info

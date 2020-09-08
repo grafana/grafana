@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SearchResults, Props } from './SearchResults';
-import { searchResults } from '../testData';
+import { searchResults, generalFolder } from '../testData';
 import { SearchLayout } from '../types';
 
 beforeEach(() => {
@@ -51,6 +51,6 @@ describe('SearchResults', () => {
 
     fireEvent.click(screen.getByLabelText('Collapse folder 0'));
     expect(mockOnToggleSection).toHaveBeenCalledTimes(1);
-    expect(mockOnToggleSection).toHaveBeenCalledWith(searchResults.find(result => result.id === 0));
+    expect(mockOnToggleSection).toHaveBeenCalledWith(generalFolder);
   });
 });
