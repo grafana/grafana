@@ -1,8 +1,8 @@
-import { DataSourceApi, DataQueryChannel, DataQuery } from '@grafana/data';
+import { DataSourceApi, DataQueryTopic, DataQuery } from '@grafana/data';
 
 export interface ChannelQueries {
   standard: DataQuery[];
-  channels?: Map<DataQueryChannel, DataQuery[]>;
+  channels?: Map<DataQueryTopic, DataQuery[]>;
 }
 
 export function getChannelQueries(ds: DataSourceApi, targets: DataQuery[]): ChannelQueries {
@@ -13,16 +13,16 @@ export function getChannelQueries(ds: DataSourceApi, targets: DataQuery[]): Chan
     if (!q.datasource) {
       q.datasource = ds.name;
     }
-    if (!q.queryChannel || q.queryChannel === DataQueryChannel.Standard) {
+    if (!q.queryTopic || q.queryTopic === DataQueryTopic.Standard) {
       info.standard.push(q);
     } else {
       if (!info.channels) {
-        info.channels = new Map<DataQueryChannel, DataQuery[]>();
+        info.channels = new Map<DataQueryTopic, DataQuery[]>();
       }
-      let channel = info.channels!.get(q.queryChannel);
+      let channel = info.channels!.get(q.queryTopic);
       if (!channel) {
         channel = [] as DataQuery[];
-        info.channels.set(q.queryChannel, channel);
+        info.channels.set(q.queryTopic, channel);
       }
       channel.push(q);
     }
@@ -31,8 +31,8 @@ export function getChannelQueries(ds: DataSourceApi, targets: DataQuery[]): Chan
   for (const query of targets) {
     addQuery(query);
 
-    if (ds.getAdditionalChannelQueries) {
-      const subs = ds.getAdditionalChannelQueries(query);
+    if (ds.getAdditionalDataQueryTopics) {
+      const subs = ds.getAdditionalDataQueryTopics(query);
       if (subs) {
         for (const sub of subs) {
           addQuery(sub);

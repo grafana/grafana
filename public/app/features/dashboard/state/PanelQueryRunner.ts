@@ -183,7 +183,7 @@ export class PanelQueryRunner {
             requestId: getNextRequestId(),
             startTime: Date.now(),
             targets,
-            queryChannel: channel,
+            queryTopic: channel,
           };
 
           console.log('TODO, actually query and send to the bus', channel, sub);

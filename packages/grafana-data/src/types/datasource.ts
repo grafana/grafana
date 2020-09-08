@@ -204,7 +204,7 @@ export abstract class DataSourceApi<
    * add additional queries that should be executed.  Typically this will be used to support
    * exemplar style queries -- from the main query, we can infer queries that pick single instances
    */
-  getAdditionalChannelQueries?(query: TQuery): TQuery[] | undefined;
+  getAdditionalDataQueryTopics?(query: TQuery): TQuery[] | undefined;
 
   /**
    *  Get hints for query improvements
@@ -340,7 +340,7 @@ export interface ExploreStartPageProps {
   exploreId?: any;
 }
 
-export enum DataQueryChannel {
+export enum DataQueryTopic {
   Standard = 'standard', // or undefined
   Annotations = 'annotations',
   Exemplars = 'exemplars',
@@ -408,7 +408,7 @@ export interface DataQuery {
   /**
    * Specify the explict channel for where the query results should be sent
    */
-  queryChannel?: DataQueryChannel;
+  queryTopic?: DataQueryTopic;
 
   /**
    * For mixed data sources the selected datasource is on the query level.
@@ -447,7 +447,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   targets: TQuery[];
   timezone: string;
   app: CoreApp | string;
-  dataChannel?: DataQueryChannel;
+  dataChannel?: DataQueryTopic;
 
   cacheTimeout?: string;
   exploreMode?: ExploreMode;
