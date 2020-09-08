@@ -17,12 +17,12 @@ type DateFormatIntervals struct {
 
 func (cfg *Cfg) readDateFormats() {
 	dateFormats := cfg.Raw.Section("date_formats")
-	cfg.DateFormats.FullDate, _ = valueAsString(dateFormats, "full_date", "YYYY-MM-DD HH:mm:ss")
-	cfg.DateFormats.Interval.Second, _ = valueAsString(dateFormats, "interval_second", "HH:mm:ss")
-	cfg.DateFormats.Interval.Minute, _ = valueAsString(dateFormats, "interval_minute", "HH:mm")
-	cfg.DateFormats.Interval.Hour, _ = valueAsString(dateFormats, "interval_hour", "MM-DD HH:mm")
-	cfg.DateFormats.Interval.Day, _ = valueAsString(dateFormats, "interval_day", "YYYY-MM-DD")
-	cfg.DateFormats.Interval.Month, _ = valueAsString(dateFormats, "interval_month", "YYYY-MM")
+	cfg.DateFormats.FullDate = valueAsString(dateFormats, "full_date", "YYYY-MM-DD HH:mm:ss")
+	cfg.DateFormats.Interval.Second = valueAsString(dateFormats, "interval_second", "HH:mm:ss")
+	cfg.DateFormats.Interval.Minute = valueAsString(dateFormats, "interval_minute", "HH:mm")
+	cfg.DateFormats.Interval.Hour = valueAsString(dateFormats, "interval_hour", "MM-DD HH:mm")
+	cfg.DateFormats.Interval.Day = valueAsString(dateFormats, "interval_day", "YYYY-MM-DD")
+	cfg.DateFormats.Interval.Month = valueAsString(dateFormats, "interval_month", "YYYY-MM")
 	cfg.DateFormats.Interval.Year = "YYYY"
 	cfg.DateFormats.UseBrowserLocale = dateFormats.Key("date_format_use_browser_locale").MustBool(false)
 }
