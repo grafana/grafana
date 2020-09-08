@@ -155,7 +155,7 @@ export class PanelQueryRunner {
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
 
-      // Split each target into the various channels that may be listening
+      // Split each target into the various topics that may be listening
       const topicQueries = getTopicQueries(ds, request.targets);
       request.targets = topicQueries.standard;
 
@@ -174,19 +174,19 @@ export class PanelQueryRunner {
 
       this.pipeToSubject(runRequest(ds, request));
 
-      // If aditional channels are requested -- send them over the event bus
+      // If aditional topics are requested -- send them over the event bus
       if (topicQueries.topics) {
-        for (const [channel, targets] of topicQueries.topics) {
+        for (const [queryTopic, targets] of topicQueries.topics) {
           // TODO -- skip if not observed?
           const sub = {
             ...request,
             requestId: getNextRequestId(),
             startTime: Date.now(),
             targets,
-            queryTopic: channel,
+            queryTopic,
           };
 
-          console.log('TODO, actually query and send to the bus', channel, sub);
+          console.log('TODO, actually query and send to the bus', queryTopic, sub);
         }
       }
     } catch (err) {
