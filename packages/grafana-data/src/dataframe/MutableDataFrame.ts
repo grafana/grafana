@@ -110,11 +110,11 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     }
 
     const field: MutableField = {
+      ...f,
       name,
       type,
       config: f.config || {},
       values: this.creator(buffer),
-      labels: f.labels,
     };
 
     if (type === FieldType.other) {

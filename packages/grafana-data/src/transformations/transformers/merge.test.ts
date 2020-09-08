@@ -1,5 +1,5 @@
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { DataTransformerConfig, Field, FieldType } from '../../types';
+import { DataTransformerConfig, Field, FieldType, DisplayProcessor } from '../../types';
 import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe';
 import { transformDataFrame } from '../transformDataFrame';
@@ -356,6 +356,37 @@ describe('Merge multipe to single', () => {
     expect(fields).toEqual(expected);
   });
 
+  it('combine two time series, where first serie fields has display processor, into one', () => {
+    const displayProcessor: DisplayProcessor = jest.fn();
+
+    const serieA = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [100, 150, 200], display: displayProcessor },
+        { name: 'Temp', type: FieldType.number, values: [1, 4, 5] },
+      ],
+    });
+
+    const serieB = toDataFrame({
+      name: 'B',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [100, 125, 126] },
+        { name: 'Temp', type: FieldType.number, values: [-1, 2, 3] },
+      ],
+    });
+
+    const result = transformDataFrame([cfg], [serieA, serieB]);
+    const expected: Field[] = [
+      createField('Time', FieldType.time, [100, 150, 200, 100, 125, 126], {}, displayProcessor),
+      createField('Temp', FieldType.number, [1, 4, 5, -1, 2, 3]),
+    ];
+
+    const fields = unwrap(result[0].fields);
+
+    expect(fields[0].display).toBe(displayProcessor);
+    expect(fields).toEqual(expected);
+  });
+
   it('combine two time series, where first serie fields has units, into one', () => {
     const serieA = toDataFrame({
       name: 'A',
@@ -500,8 +531,8 @@ describe('Merge multipe to single', () => {
   });
 });
 
-const createField = (name: string, type: FieldType, values: any[], config = {}): Field => {
-  return { name, type, values: new ArrayVector(values), config, labels: undefined };
+const createField = (name: string, type: FieldType, values: any[], config = {}, display?: DisplayProcessor): Field => {
+  return { name, type, values: new ArrayVector(values), config, labels: undefined, display };
 };
 
 const unwrap = (fields: Field[]): Field[] => {
@@ -510,7 +541,8 @@ const unwrap = (fields: Field[]): Field[] => {
       field.name,
       field.type,
       field.values.toArray().map((value: any) => value),
-      field.config
+      field.config,
+      field.display
     )
   );
 };
