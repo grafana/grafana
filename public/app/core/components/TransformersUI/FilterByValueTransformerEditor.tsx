@@ -183,21 +183,25 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
           />
         </div>
         <div className="gf-form-label width-4">rows</div>
-        <div className="gf-form gf-form-spacing">
-          <Select
-            className="width-12"
-            options={[
-              { label: 'Matching all', value: 'all' },
-              { label: 'Matching any', value: 'any' },
-            ]}
-            value={options.match}
-            onChange={option => {
-              onChange({ ...options, match: option.value || 'all' });
-            }}
-            menuPlacement="bottom"
-          />
-        </div>
-        <div className="gf-form-label width-8">conditions</div>
+        {options.valueFilters.length > 1 && (
+          <>
+            <div className="gf-form gf-form-spacing">
+              <Select
+                className="width-12"
+                options={[
+                  { label: 'Matching all', value: 'all' },
+                  { label: 'Matching any', value: 'any' },
+                ]}
+                value={options.match}
+                onChange={option => {
+                  onChange({ ...options, match: option.value || 'all' });
+                }}
+                menuPlacement="bottom"
+              />
+            </div>
+            <div className="gf-form-label width-8">conditions</div>
+          </>
+        )}
       </div>
       {options.valueFilters.map((val, idx) => {
         const matchingField = getFieldByName(val.fieldName, input);
