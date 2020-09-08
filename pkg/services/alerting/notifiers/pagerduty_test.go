@@ -2,6 +2,7 @@ package notifiers
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -269,6 +270,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 						{Key: "class", Value: "aClass"},
 						{Key: "component", Value: "aComponent"},
 						{Key: "severity", Value: "warning"},
+						{Key: "dedup_key", Value: "key-" + strings.Repeat("x", 260)},
 					},
 				})
 				evalContext.ImagePublicURL = "http://somewhere.com/omg_dont_panic.png"
@@ -282,7 +284,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				diff := cmp.Diff(map[string]interface{}{
 					"client":       "Grafana",
 					"client_url":   "",
-					"dedup_key":    "alertId-0",
+					"dedup_key":    "key-" + strings.Repeat("x", 250),
 					"event_action": "trigger",
 					"links": []interface{}{
 						map[string]interface{}{
@@ -297,6 +299,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 							"class":     "aClass",
 							"component": "aComponent",
 							"severity":  "warning",
+							"dedup_key": "key-" + strings.Repeat("x", 250),
 							"keyOnly":   "",
 						},
 						"severity":  "warning",

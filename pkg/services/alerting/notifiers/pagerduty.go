@@ -171,10 +171,9 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	// set default, override in following case switch if defined
 	payloadJSON.Set("component", "Grafana")
 	payloadJSON.Set("severity", pn.Severity)
+	dedupKey := "alertId-" + strconv.FormatInt(evalContext.Rule.ID, 10)
 
 	for _, tag := range evalContext.Rule.AlertRuleTags {
-		customData.Set(tag.Key, tag.Value)
-
 		// Override tags appropriately if they are in the PagerDuty v2 API
 		switch strings.ToLower(tag.Key) {
 		case "group":
@@ -183,6 +182,11 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 			payloadJSON.Set("class", tag.Value)
 		case "component":
 			payloadJSON.Set("component", tag.Value)
+		case "dedup_key":
+			if len(tag.Value) > 254 {
+				tag.Value = tag.Value[0:254]
+			}
+			dedupKey = tag.Value
 		case "severity":
 			// Only set severity if it's one of the PD supported enum values
 			// Info, Warning, Error, or Critical (case insensitive)
@@ -199,6 +203,7 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 				pn.log.Warn("Ignoring invalid severity tag", "severity", sev)
 			}
 		}
+		customData.Set(tag.Key, tag.Value)
 	}
 
 	var summary string
@@ -220,7 +225,7 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("routing_key", pn.Key)
 	bodyJSON.Set("event_action", eventType)
-	bodyJSON.Set("dedup_key", "alertId-"+strconv.FormatInt(evalContext.Rule.ID, 10))
+	bodyJSON.Set("dedup_key", dedupKey)
 	bodyJSON.Set("payload", payloadJSON)
 
 	ruleURL, err := evalContext.GetRuleURL()
