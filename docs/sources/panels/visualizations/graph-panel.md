@@ -119,7 +119,7 @@ Options are identical for both Y-axes.
   - **Time -** (default) The X-axis represents time and that the data is grouped by time (for example, by hour, or by minute).
   - **Series -** The data is grouped by series and not by time. The Y-axis still represents the value.
     - **Value -**  The aggregation type to use for the values. The default is total (summing the values together).
-  - **Histogram -** Converts the graph into a histogram. A histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range. 
+  - **Histogram -** Converts the graph into a histogram. A histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range.
    
     For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../getting-started/intro-histograms.md" >}}).
     - **Buckets -** The number of buckets to group the values by. If left empty, then Grafana tries to calculate a suitable number of buckets.
@@ -148,7 +148,7 @@ Additional values can be shown along-side the legend names:
 - **Total -** Sum of all values returned from the metric query.
 - **Decimals -** Controls how many decimals are displayed for legend values and graph hover tooltips.
 
-The legend values are calculated on the client side by Grafana and depend on what type of aggregation or point consolidation your metric query is using. All the above legend values cannot be correct at the same time. 
+The legend values are calculated on the client side by Grafana and depend on what type of aggregation or point consolidation your metric query is using. All the above legend values cannot be correct at the same time.
 
 For example, if you plot a rate like requests/second, this is probably using average as an aggregator, then the Total in the legend will not represent the total number of requests. It is just the sum of all data points received by Grafana.
 
@@ -157,7 +157,8 @@ For example, if you plot a rate like requests/second, this is probably using ave
 Hide series when all values of a series from a metric query are of a specific value.
 
 - **With only nulls -** Value=null (default unchecked)
-- **With only zeroes -** Value=zero (default unchecked) 
+- **With only zeroes -** Value=zero (default unchecked)
+- **With no point -** Hide in tooltip series without a point under the cursor (default unchecked)
 
 ### Time regions
 
