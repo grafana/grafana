@@ -409,6 +409,12 @@ export interface DataQuery {
   datasource?: string | null;
 }
 
+export enum DataQueryErrorType {
+  Cancelled = 'cancelled',
+  Timeout = 'timeout',
+  Unknown = 'unknown',
+}
+
 export interface DataQueryError {
   data?: {
     message?: string;
@@ -418,7 +424,7 @@ export interface DataQueryError {
   status?: string;
   statusText?: string;
   refId?: string;
-  cancelled?: boolean;
+  type?: DataQueryErrorType;
 }
 
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
