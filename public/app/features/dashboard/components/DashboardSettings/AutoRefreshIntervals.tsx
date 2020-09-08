@@ -4,18 +4,26 @@ import { defaultIntervals } from '@grafana/ui/src/components/RefreshPicker/Refre
 
 import { getTimeSrv } from '../../services/TimeSrv';
 
-interface Props {
+export interface Props {
   renderCount: number; // hack to make sure Angular changes are propagated properly, please remove when DashboardSettings are migrated to React
   refreshIntervals: string[];
   onRefreshIntervalChange: (interval: string[]) => void;
+  getIntervalsFunc?: typeof getValidIntervals;
+  validateIntervalsFunc?: typeof validateIntervals;
 }
 
-export const AutoRefreshIntervals: FC<Props> = ({ renderCount, refreshIntervals, onRefreshIntervalChange }) => {
-  const [intervals, setIntervals] = useState<string[]>(getValidIntervals(refreshIntervals ?? defaultIntervals));
+export const AutoRefreshIntervals: FC<Props> = ({
+  renderCount,
+  refreshIntervals,
+  onRefreshIntervalChange,
+  getIntervalsFunc = getValidIntervals,
+  validateIntervalsFunc = validateIntervals,
+}) => {
+  const [intervals, setIntervals] = useState<string[]>(getIntervalsFunc(refreshIntervals ?? defaultIntervals));
   const [invalidIntervalsMessage, setInvalidIntervalsMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const intervals = getValidIntervals(refreshIntervals ?? defaultIntervals);
+    const intervals = getIntervalsFunc(refreshIntervals ?? defaultIntervals);
     setIntervals(intervals);
   }, [renderCount, refreshIntervals]);
 
@@ -38,16 +46,16 @@ export const AutoRefreshIntervals: FC<Props> = ({ renderCount, refreshIntervals,
 
   const onIntervalsBlur = useCallback(
     (event: React.FormEvent<HTMLInputElement>) => {
-      const invalidMessage = validateIntervals(intervals);
+      const invalidMessage = validateIntervalsFunc(intervals);
 
       if (invalidMessage === null) {
         // only refresh dashboard JSON if intervals are valid
-        onRefreshIntervalChange(getValidIntervals(intervals));
+        onRefreshIntervalChange(getIntervalsFunc(intervals));
       }
 
       setInvalidIntervalsMessage(invalidMessage);
     },
-    [intervals, invalidIntervalsMessage, onRefreshIntervalChange, setInvalidIntervalsMessage]
+    [intervals, onRefreshIntervalChange, setInvalidIntervalsMessage]
   );
 
   return (
