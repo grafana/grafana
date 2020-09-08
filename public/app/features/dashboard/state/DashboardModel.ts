@@ -495,7 +495,7 @@ export class DashboardModel {
     clone.repeatPanelId = sourcePanel.id;
     clone.repeat = undefined;
 
-    if (this.panelInView && this.panelInView.id === clone.id) {
+    if (this.panelInView?.id === clone.id) {
       clone.setIsViewing(true);
       this.panelInView = clone;
     }
