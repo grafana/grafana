@@ -49,7 +49,7 @@ chmod +x /usr/local/bin/grabpl
 apk add --no-cache git
 # Install Mage
 mkdir -pv /tmp/mage $HOME/go/bin
-git clone https://github.com/magefile/mage.git /tmp/mage
+git clone --depth 1 https://github.com/magefile/mage.git /tmp/mage
 cd /tmp/mage && go run bootstrap.go
 mv $HOME/go/bin/mage /usr/local/bin
 
