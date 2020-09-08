@@ -64,7 +64,17 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
   };
 
   onTestChannel = (formData: NotificationChannelDTO) => {
-    this.props.testNotificationChannel(transformTestData(formData));
+    const { notificationChannel } = this.props;
+    /*
+      Same as submit
+     */
+    this.props.testNotificationChannel(
+      transformTestData({
+        ...notificationChannel,
+        ...formData,
+        settings: { ...notificationChannel.settings, ...formData.settings },
+      })
+    );
   };
 
   render() {
