@@ -288,4 +288,62 @@ describe('SeriesToColumns Transformer', () => {
       expect(filtered.fields).toEqual(expected);
     });
   });
+
+  it('joins if fields are missing', () => {
+    const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+      id: DataTransformerID.seriesToColumns,
+      options: {
+        byField: 'time',
+      },
+    };
+
+    const frame1 = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'temperature', type: FieldType.number, values: [10, 11, 12] },
+      ],
+    });
+
+    const frame2 = toDataFrame({
+      name: 'B',
+      fields: [],
+    });
+
+    const frame3 = toDataFrame({
+      name: 'C',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'temperature', type: FieldType.number, values: [20, 22, 24] },
+      ],
+    });
+
+    const filtered = transformDataFrame([cfg], [frame1, frame2, frame3])[0];
+
+    expect(filtered.fields).toEqual([
+      {
+        name: 'time',
+        state: { displayName: 'time' },
+        type: FieldType.time,
+        values: new ArrayVector([1, 2, 3]),
+        config: {},
+      },
+      {
+        name: 'temperature',
+        state: { displayName: 'temperature A' },
+        type: FieldType.number,
+        values: new ArrayVector([10, 11, 12]),
+        config: {},
+        labels: { name: 'A' },
+      },
+      {
+        name: 'temperature',
+        state: { displayName: 'temperature C' },
+        type: FieldType.number,
+        values: new ArrayVector([20, 22, 24]),
+        config: {},
+        labels: { name: 'C' },
+      },
+    ]);
+  });
 });
