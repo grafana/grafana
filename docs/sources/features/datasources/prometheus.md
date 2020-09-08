@@ -12,11 +12,11 @@ weight = 1
 
 # Prometheus data source
 
-Grafana includes built-in support for Prometheus. This topic explains options, variables, querying, and other options specific to the Prometheus data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana.
+Grafana includes built-in support for Prometheus. This topic explains options, variables, querying, and other options specific to the Prometheus data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
 ## Prometheus settings
 
-To access Prometheus settings, click the **Configuration** (gear) icon, then click **Data Sources**, and then click **Prometheus**.
+To access Prometheus settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Prometheus data source.
 
 | Name                      | Description                                                                                                                           |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
@@ -28,6 +28,7 @@ To access Prometheus settings, click the **Configuration** (gear) icon, then cli
 | _User_                    | User name for basic authentication.                                                                                                   |
 | _Password_                | Password for basic authentication.                                                                                                    |
 | _Scrape interval_         | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.                                     |
+| _Disable metrics lookup_  | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances. |
 | _Custom Query Parameters_ | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'. |
 
 ## Prometheus query editor
@@ -111,6 +112,8 @@ Query: query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
 Regex:
 ```
 ### Using `$__rate_interval` variable
+
+> **Note:** Available in Grafana 7.2 and above
 
 The `$__rate_interval` variable is meant to be used in the rate function. It is defined as max( `$__interval` + _Scrape interval_, 4 * _Scrape interval_), where _Scrape interval_ is the Min step setting (AKA query_interval, a setting per PromQL query), if any is set, and otherwise the _Scrape interval_ as set in the Prometheus data source (but ignoring any Min interval setting in the panel, because the latter is modified by the resolution setting).
 

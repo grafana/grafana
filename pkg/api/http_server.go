@@ -175,6 +175,36 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 
 	switch setting.Protocol {
 	case setting.HTTP, setting.HTTPS, setting.HTTP2:
+		listener, err := net.Listen("tcp", hs.httpSrv.Addr)
+		if err != nil {
+			return nil, errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
+		}
+		return listener, nil
+	case setting.SOCKET:
+		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
+		if err != nil {
+			return nil, errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
+		}
+
+		// Make socket writable by group
+		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
+			return nil, errutil.Wrapf(err, "failed to change socket permissions")
+		}
+
+		return listener, nil
+	default:
+		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
+		return nil, fmt.Errorf("invalid protocol %q", setting.Protocol)
+	}
+}
+
+func (hs *HTTPServer) getListener() (net.Listener, error) {
+	if hs.Listener != nil {
+		return hs.Listener, nil
+	}
+
+	switch setting.Protocol {
+	case setting.HTTP, setting.HTTPS, setting.HTTP2:
 		// TODO: Support already having a listener
 		listener, err := net.Listen("tcp", hs.httpSrv.Addr)
 		if err != nil {

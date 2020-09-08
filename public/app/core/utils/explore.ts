@@ -22,9 +22,10 @@ import {
   toUtc,
   urlUtil,
   ExploreUrlState,
+  rangeUtil,
 } from '@grafana/data';
 import store from 'app/core/store';
-import kbn from 'app/core/utils/kbn';
+import { v4 as uuidv4 } from 'uuid';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
@@ -265,7 +266,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
 }
 
 export function generateKey(index = 0): string {
-  return `Q-${Date.now()}-${Math.random()}-${index}`;
+  return `Q-${uuidv4()}-${index}`;
 }
 
 export function generateEmptyQuery(queries: DataQuery[], index = 0): DataQuery {
@@ -487,7 +488,7 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
     return { interval: '1s', intervalMs: 1000 };
   }
 
-  return kbn.calculateInterval(range, resolution, lowLimit);
+  return rangeUtil.calculateInterval(range, resolution, lowLimit);
 }
 
 export function deduplicateLogRowsById(rows: LogRowModel[]) {

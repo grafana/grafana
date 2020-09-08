@@ -79,6 +79,10 @@ export const setLocale = (language: string) => {
   moment.locale(language);
 };
 
+export const getLocale = () => {
+  return moment.locale();
+};
+
 export const getLocaleData = (): DateTimeLocale => {
   return moment.localeData();
 };

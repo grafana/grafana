@@ -8,10 +8,11 @@ import coreModule from 'app/core/core_module';
 import { dedupAnnotations } from './events_processing';
 // Types
 import { DashboardModel, PanelModel } from '../dashboard/state';
-import { AnnotationEvent, AppEvents, DataSourceApi, PanelEvents, TimeRange } from '@grafana/data';
+import { AnnotationEvent, AppEvents, DataSourceApi, PanelEvents, TimeRange, CoreApp } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
+import kbn from 'app/core/utils/kbn';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -113,6 +114,9 @@ export class AnnotationsSrv {
     const promises = [];
     const dsPromises = [];
 
+    // No more points than pixels
+    const maxDataPoints = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+
     for (const annotation of dashboard.annotations.list) {
       if (!annotation.enable) {
         continue;
@@ -130,7 +134,12 @@ export class AnnotationsSrv {
               return [];
             }
 
+            // Add interval to annotation queries
+            const interval = kbn.calculateInterval(range, maxDataPoints, datasource.interval);
+
             return datasource.annotationQuery({
+              ...interval,
+              app: CoreApp.Dashboard,
               range,
               rangeRaw: range.raw,
               annotation: annotation,

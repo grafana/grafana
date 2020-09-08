@@ -7,7 +7,7 @@ describe('QueryOperationRow', () => {
   it('renders', () => {
     expect(() =>
       shallow(
-        <QueryOperationRow>
+        <QueryOperationRow id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
       )
@@ -20,7 +20,7 @@ describe('QueryOperationRow', () => {
       // @ts-ignore strict null error, you shouldn't use promise like approach with act but I don't know what the intention is here
       await act(async () => {
         shallow(
-          <QueryOperationRow onOpen={onOpenSpy}>
+          <QueryOperationRow onOpen={onOpenSpy} id="test-id" index={0}>
             <div>Test</div>
           </QueryOperationRow>
         );
@@ -32,7 +32,7 @@ describe('QueryOperationRow', () => {
       const onOpenSpy = jest.fn();
       const onCloseSpy = jest.fn();
       const wrapper = mount(
-        <QueryOperationRow onOpen={onOpenSpy} onClose={onCloseSpy} isOpen={false}>
+        <QueryOperationRow onOpen={onOpenSpy} onClose={onCloseSpy} isOpen={false} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
       );
@@ -60,7 +60,7 @@ describe('QueryOperationRow', () => {
     it('should render title provided as element', () => {
       const title = <div aria-label="test title">Test</div>;
       const wrapper = shallow(
-        <QueryOperationRow title={title}>
+        <QueryOperationRow title={title} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
       );
@@ -71,7 +71,7 @@ describe('QueryOperationRow', () => {
     it('should render title provided as function', () => {
       const title = () => <div aria-label="test title">Test</div>;
       const wrapper = shallow(
-        <QueryOperationRow title={title}>
+        <QueryOperationRow title={title} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
       );
@@ -87,7 +87,7 @@ describe('QueryOperationRow', () => {
         return <div aria-label="test title">Test</div>;
       };
       shallow(
-        <QueryOperationRow title={title}>
+        <QueryOperationRow title={title} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
       );
@@ -100,7 +100,7 @@ describe('QueryOperationRow', () => {
     it('should render actions provided as element', () => {
       const actions = <div aria-label="test actions">Test</div>;
       const wrapper = shallow(
-        <QueryOperationRow actions={actions}>
+        <QueryOperationRow actions={actions} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
       );
@@ -111,7 +111,7 @@ describe('QueryOperationRow', () => {
     it('should render actions provided as function', () => {
       const actions = () => <div aria-label="test actions">Test</div>;
       const wrapper = shallow(
-        <QueryOperationRow actions={actions}>
+        <QueryOperationRow actions={actions} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
       );
@@ -127,7 +127,7 @@ describe('QueryOperationRow', () => {
         return <div aria-label="test actions">Test</div>;
       };
       shallow(
-        <QueryOperationRow actions={actions}>
+        <QueryOperationRow actions={actions} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
       );

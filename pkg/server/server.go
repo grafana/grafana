@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/facebookgo/inject"
@@ -52,7 +53,6 @@ type Config struct {
 	Commit      string
 	BuildBranch string
 	Listener    net.Listener
-	SQLStore    *sqlstore.SqlStore
 }
 
 // New returns a new instance of Server.
@@ -93,6 +93,7 @@ type Server struct {
 	shutdownReason     string
 	shutdownInProgress bool
 	isInitialized      bool
+	mtx                sync.Mutex
 
 	configFile  string
 	homePath    string
@@ -106,6 +107,9 @@ type Server struct {
 
 // init initializes the server and its services.
 func (s *Server) init(cfg *Config) error {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+
 	if s.isInitialized {
 		return nil
 	}
@@ -130,14 +134,11 @@ func (s *Server) init(cfg *Config) error {
 
 		if cfg != nil {
 			if httpS, ok := service.Instance.(*api.HTTPServer); ok {
+				// Configure the api.HTTPServer if necessary
+				// Hopefully we can find a better solution, maybe with a more advanced DI framework, f.ex. Dig?
 				if cfg.Listener != nil {
 					s.log.Debug("Using provided listener for HTTP server")
 					httpS.Listener = cfg.Listener
-				}
-			} else if ss, ok := service.Instance.(datasources.CacheService); ok {
-				if cfg.SQLStore != nil {
-					s.log.Debug("Using provided SQL store for data source cache service")
-					ss.SetSQLStore(cfg.SQLStore)
 				}
 			}
 		}

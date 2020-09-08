@@ -56,13 +56,10 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
           values.push(vals);
 
           fields.push({
-            name: info.id,
+            name: info.name,
             type: FieldType.other, // UNKNOWN until after we call the functions
             values: values[values.length - 1],
-            config: {
-              displayName: info.name,
-              // UNIT from original field?
-            },
+            config: {},
           });
         }
 

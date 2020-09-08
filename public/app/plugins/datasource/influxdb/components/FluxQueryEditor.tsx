@@ -60,7 +60,7 @@ v1.measurements(bucket: v.bucket)`,
     label: 'Schema Exploration: (fields)',
     description: 'Return every possible key in a single table',
     value: `from(bucket: v.bucket)
-  |> range(start: v.timeRangeStart, stop:timeRangeStop)
+  |> range(start: v.timeRangeStart, stop:v.timeRangeStop)
   |> keys()
   |> keep(columns: ["_value"])
   |> group()

@@ -256,7 +256,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
   // Only valid for InfluxQL queries
   toggleEditorMode() {
-    if (this.datasource.is2x) {
+    if (this.datasource.isFlux) {
       return; // nothing
     }
 
