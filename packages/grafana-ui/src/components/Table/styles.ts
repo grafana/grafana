@@ -89,6 +89,8 @@ export const getTableStyles = stylesFactory(
       `,
       tableCellWrapper: css`
         border-right: 1px solid ${borderColor};
+        display: inline-flex;
+        align-items: center;
         height: 100%;
 
         &:last-child {
@@ -107,6 +109,7 @@ export const getTableStyles = stylesFactory(
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
+        flex: 1;
       `,
       overflow: css`
         overflow: hidden;
