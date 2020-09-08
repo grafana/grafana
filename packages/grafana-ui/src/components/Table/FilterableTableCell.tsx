@@ -1,10 +1,9 @@
 import React, { FC, useCallback, useState } from 'react';
 import { TableCellProps } from 'react-table';
 import { GrafanaTheme } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 
 import { stylesFactory, useTheme } from '../../themes';
-import { TableStyles } from './styles';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableFilterActionCallback } from './types';
 import { Icon, Tooltip } from '..';
 import { Props, renderCell } from './TableCell';
@@ -35,15 +34,10 @@ export const FilterableTableCell: FC<FilterableTableCellProps> = ({
     [cell, field, onCellFilterAdded]
   );
   const theme = useTheme();
-  const styles = getFilterableTableCellStyles(theme, tableStyles);
+  const styles = getFilterableTableCellStyles(theme);
 
   return (
-    <div
-      {...cellProps}
-      className={showFilters ? styles.tableCellWrapper : tableStyles.tableCellWrapper}
-      onMouseOver={onMouseOver}
-      onMouseLeave={onMouseLeave}
-    >
+    <div {...cellProps} className={tableStyles.tableCellWrapper} onMouseOver={onMouseOver} onMouseLeave={onMouseLeave}>
       {renderCell(cell, field, tableStyles)}
       {showFilters && cell.value && (
         <div className={styles.filterWrapper}>
@@ -63,15 +57,7 @@ export const FilterableTableCell: FC<FilterableTableCellProps> = ({
   );
 };
 
-const getFilterableTableCellStyles = stylesFactory((theme: GrafanaTheme, tableStyles: TableStyles) => ({
-  tableCellWrapper: cx(
-    tableStyles.tableCellWrapper,
-    css`
-      display: inline-flex;
-      justify-content: space-between;
-      align-items: center;
-    `
-  ),
+const getFilterableTableCellStyles = stylesFactory((theme: GrafanaTheme) => ({
   filterWrapper: css`
     label: filterWrapper;
     display: inline-flex;
