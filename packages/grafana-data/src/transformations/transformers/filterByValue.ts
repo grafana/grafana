@@ -1,5 +1,6 @@
 import { DataTransformerID } from './ids';
-import { DataFrame, /*FieldType,*/ Field } from '../../types/dataFrame';
+import { DataFrame /*FieldType,*/ } from '../../types/dataFrame';
+import { MutableField } from '../../dataframe/MutableDataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { ArrayVector } from '../../vector/ArrayVector';
@@ -93,7 +94,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
         }
 
         // Create the skeleton of the new data, copy original field attributes
-        let filteredFields: Field[] = [];
+        let filteredFields: MutableField[] = [];
         for (let field of frame.fields) {
           filteredFields.push({
             ...field,
