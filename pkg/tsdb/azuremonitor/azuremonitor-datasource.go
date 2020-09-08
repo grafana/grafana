@@ -135,12 +135,12 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 
 		dimSB := strings.Builder{}
 
-		if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionsFilters) == 0 {
+		if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionFilters) == 0 {
 			dimSB.WriteString(fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
 		} else {
-			for i, filter := range azJSONModel.DimensionsFilters {
+			for i, filter := range azJSONModel.DimensionFilters {
 				dimSB.WriteString(filter.String())
-				if i != len(azJSONModel.DimensionsFilters)-1 {
+				if i != len(azJSONModel.DimensionFilters)-1 {
 					dimSB.WriteString(" and ")
 				}
 			}
@@ -381,10 +381,16 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 		}
 
 		if metaPartName == "dimensionname" {
+			if len(keys) == 0 {
+				return []byte{}
+			}
 			return []byte(keys[0])
 		}
 
 		if metaPartName == "dimensionvalue" {
+			if len(keys) == 0 {
+				return []byte{}
+			}
 			return []byte(lowerLabels[keys[0]])
 		}
 
