@@ -279,14 +279,12 @@ func TestLoadingSettings(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("If key is found - should return value from ini file", func() {
-			value, err := valueAsString(iniFile.Section("server"), "alt_url", "")
-			So(err, ShouldBeNil)
+			value := valueAsString(iniFile.Section("server"), "alt_url", "")
 			So(value, ShouldEqual, "https://grafana.com/")
 		})
 
 		Convey("If key is not found - should return default value", func() {
-			value, err := valueAsString(iniFile.Section("server"), "extra_url", "default_url_val")
-			So(err, ShouldBeNil)
+			value := valueAsString(iniFile.Section("server"), "extra_url", "default_url_val")
 			So(value, ShouldEqual, "default_url_val")
 		})
 	})
