@@ -447,7 +447,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   targets: TQuery[];
   timezone: string;
   app: CoreApp | string;
-  dataChannel?: DataQueryTopic;
+  queryTopic?: DataQueryTopic;
 
   cacheTimeout?: string;
   exploreMode?: ExploreMode;

@@ -272,7 +272,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       });
     }
 
-    if (options.dataChannel === DataQueryTopic.Exemplars) {
+    if (options.queryTopic === DataQueryTopic.Exemplars) {
       console.log('TODO --- process exemplars queries');
       return of({
         data: [],
