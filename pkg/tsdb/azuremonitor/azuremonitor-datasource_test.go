@@ -86,9 +86,9 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		{
 			name: "has dimensionFilter*s* property with one dimension",
 			azureMonitorVariedProperties: map[string]interface{}{
-				"timeGrain":         "PT1M",
-				"dimensionsFilters": []azureMonitorDimensionFilter{{"blob", "eq", "*"}},
-				"top":               "30",
+				"timeGrain":        "PT1M",
+				"dimensionFilters": []azureMonitorDimensionFilter{{"blob", "eq", "*"}},
+				"top":              "30",
 			},
 			queryIntervalMS:         400000,
 			expectedInterval:        "PT1M",
@@ -97,9 +97,9 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		{
 			name: "has dimensionFilter*s* property with two dimensions",
 			azureMonitorVariedProperties: map[string]interface{}{
-				"timeGrain":         "PT1M",
-				"dimensionsFilters": []azureMonitorDimensionFilter{{"blob", "eq", "*"}, {"tier", "eq", "*"}},
-				"top":               "30",
+				"timeGrain":        "PT1M",
+				"dimensionFilters": []azureMonitorDimensionFilter{{"blob", "eq", "*"}, {"tier", "eq", "*"}},
+				"top":              "30",
 			},
 			queryIntervalMS:         400000,
 			expectedInterval:        "PT1M",
