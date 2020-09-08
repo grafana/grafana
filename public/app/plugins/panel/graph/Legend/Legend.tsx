@@ -27,6 +27,7 @@ interface LegendComponentEventHandlers {
 interface LegendDisplayProps {
   hiddenSeries: any;
   hideEmpty?: boolean;
+  hideSeriesWithNoPoint?: boolean;
   hideZero?: boolean;
   alignAsTable?: boolean;
   rightSide?: boolean;

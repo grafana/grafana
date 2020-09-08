@@ -38,6 +38,12 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     let middle;
     while (true) {
       if (lower > upper) {
+        if (
+          panel.legend.hideSeriesWithNoPoint &&
+          (series.data[series.data.length - 1][0] < posX || series.data[0][0] > posX)
+        ) {
+          return null;
+        }
         return Math.max(upper, 0);
       }
       middle = Math.floor((lower + upper) / 2);
@@ -89,6 +95,9 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
       }
 
       hoverIndex = this.findHoverIndexFromData(pos.x, series);
+      if (hoverIndex === null) {
+        continue;
+      }
       hoverDistance = pos.x - series.data[hoverIndex][0];
       pointTime = series.data[hoverIndex][0];
 
