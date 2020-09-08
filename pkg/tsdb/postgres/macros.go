@@ -70,6 +70,7 @@ func (m *postgresMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.Tim
 	return sql, nil
 }
 
+//nolint: gocyclo
 func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string, error) {
 	switch name {
 	case "__time":

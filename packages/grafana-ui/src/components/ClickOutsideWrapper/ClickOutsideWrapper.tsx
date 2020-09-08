@@ -3,15 +3,15 @@ import ReactDOM from 'react-dom';
 
 export interface Props {
   /**
-   *  When clicking outside of current element
+   *  Callback to trigger when clicking outside of current element occurs.
    */
   onClick: () => void;
   /**
    *  Runs the 'onClick' function when pressing a key outside of the current element. Defaults to true.
    */
   includeButtonPress: boolean;
+  /** Object to attach the click event listener to. */
   parent: Window | Document;
-
   /**
    * https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener. Defaults to false.
    */
@@ -35,7 +35,7 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
   componentDidMount() {
     this.props.parent.addEventListener('click', this.onOutsideClick, this.props.useCapture);
     if (this.props.includeButtonPress) {
-      // Use keyup since keydown already has an eventlistener on window
+      // Use keyup since keydown already has an event listener on window
       this.props.parent.addEventListener('keyup', this.onOutsideClick, this.props.useCapture);
     }
   }
