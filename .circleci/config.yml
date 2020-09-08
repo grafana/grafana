@@ -853,7 +853,7 @@ jobs:
       - run:
           name: frontend tests
           command: |
-            ./scripts/circle-test-backend.sh
+            ./scripts/circle-test-frontend.sh
       - store_test_results:
           path: reports/junit
       - run:
