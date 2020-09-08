@@ -26,9 +26,9 @@ untar_file "/tmp/$filename"
 GOLANGCILINT_VERSION=1.31.0
 filename="golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64"
 get_file "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/$filename.tar.gz" \
-    "/tmp/$filename.tar.gz" \
+    "/tmp/${filename}.tar.gz" \
     "9a5d47b51442d68b718af4c7350f4406cdc087e2236a5b9ae52f37aebede6cb3"
-untar_file "/tmp/$filename.tar.gz"
+untar_file "/tmp/${filename}.tar.gz"
 ln -s /usr/local/${filename}/golangci-lint /usr/local/bin/golangci-lint
 ln -s /usr/local/go/bin/go /usr/local/bin/go
 ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt
