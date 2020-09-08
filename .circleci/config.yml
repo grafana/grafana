@@ -832,6 +832,7 @@ jobs:
 
   test-frontend:
     executor: node
+    resource_class: large
     steps:
       - checkout
       - run:
