@@ -10,7 +10,7 @@ import {
   SelectableValue,
   FieldType,
 } from '@grafana/data';
-import { Select, Button, Input } from '@grafana/ui';
+import { Select, Button, Input, ButtonSelect } from '@grafana/ui';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   FilterByValueTransformerOptions,
@@ -190,8 +190,8 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
     <div>
       <div className="gf-form-inline">
         <div className="gf-form gf-form-spacing">
-          <Select
-            className="width-12"
+          <ButtonSelect
+            variant="secondary"
             options={[
               { label: 'Include rows', value: 'include' },
               { label: 'Exclude rows', value: 'exclude' },
@@ -206,8 +206,8 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
         {options.valueFilters.length > 1 && (
           <>
             <div className="gf-form gf-form-spacing">
-              <Select
-                className="width-12"
+              <ButtonSelect
+                variant="secondary"
                 options={[
                   { label: 'Matching all conditions', value: 'all' },
                   { label: 'Matching any condition', value: 'any' },
