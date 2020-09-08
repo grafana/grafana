@@ -50,6 +50,7 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
   const filterInfo = valueFiltersRegistry.get(config.filterType);
   const filterValid = filterInfo.getInstance({
     filterExpression: config.filterExpression,
+    filterExpression2: config.filterExpression2,
     fieldType: fieldType,
   }).isValid;
 
@@ -57,7 +58,12 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
   const filterTypeInvalid =
     !fieldNameInvalid && filterInfo.supportedFieldTypes && !filterInfo.supportedFieldTypes.includes(fieldType);
   const filterExpressionInvalid =
-    config.filterExpression !== '' && !fieldNameInvalid && !filterTypeInvalid && !filterValid;
+    config.filterExpression !== '' &&
+    ((filterInfo.placeholder2 !== undefined && config.filterExpression2 !== '') ||
+      filterInfo.placeHolder2 === undefined) &&
+    !fieldNameInvalid &&
+    !filterTypeInvalid &&
+    !filterValid;
 
   return (
     <div className="gf-form-inline">
@@ -106,6 +112,19 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
           />
         )}
       </div>
+      {filterInfo.placeholder2 && (
+        <div className="gf-form gf-form-spacing gf-form--grow">
+          <Input
+            className="flex-grow-1"
+            invalid={filterExpressionInvalid}
+            defaultValue={config.filterExpression2 || undefined}
+            placeholder={filterInfo.placeholder2}
+            onBlur={event => {
+              onConfigChange({ ...config, filterExpression2: event.currentTarget.value });
+            }}
+          />
+        </div>
+      )}
       <div className="gf-form">
         <Button icon="times" onClick={onDelete} style={{ height: '100%' }} size="sm" variant="secondary" />
       </div>
@@ -132,6 +151,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
     valueFilters.push({
       fieldName: null,
       filterExpression: null,
+      filterExpression2: null,
       filterType: ValueFilterID.regex,
     });
 

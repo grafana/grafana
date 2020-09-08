@@ -176,53 +176,29 @@ function testNotEqualCreator(filterOptions: Record<string, any>): ValueFilterIns
 
 function testRangeCreator(filterOptions: Record<string, any>): ValueFilterInstance {
   // We need a specific interval format : [min,max] or ]min,max[ (accepting spacing and +- before the values)
-  const re = /^\s*([\[\]])\s*([-+]?([0-9]*\.[0-9]+|[0-9]+))\s*,\s*([-+]?([0-9]*\.[0-9]+|[0-9]+))\s*([\[\]])\s*$/;
-  const match = re.exec(filterOptions.filterExpression || '');
+  const { filterExpression, filterExpression2 } = filterOptions;
+  console.log('filterOptions', filterOptions, filterExpression, filterExpression2);
 
-  if (match === null) {
+  if (filterExpression === null || filterExpression2 === null || filterExpression === '' || filterExpression2 === '') {
     return {
       isValid: false,
       test: value => true,
     };
   }
 
-  let braces = match[1] + match[6];
-  const min = Number(match[2]);
-  const max = Number(match[4]);
-
-  const ii = (value: any) => {
-    return value >= min && value <= max;
-  };
-
-  const ie = (value: any) => {
-    return value >= min && value < max;
-  };
-
-  const ee = (value: any) => {
-    return value > min && value < max;
-  };
-
-  const ei = (value: any) => {
-    return value > min && value <= max;
-  };
-
-  let isValid = true;
-  let testFunction = (value: any) => true;
-  if (braces === '[]') {
-    testFunction = ii;
-  } else if (braces === ']]') {
-    testFunction = ei;
-  } else if (braces === '[[') {
-    testFunction = ie;
-  } else if (braces === '][') {
-    testFunction = ee;
-  } else {
-    isValid = false;
+  let min = Number(filterExpression);
+  let max = Number(filterExpression2);
+  console.log('minmax', min, max);
+  if (isNaN(min) || isNaN(max)) {
+    return {
+      isValid: false,
+      test: value => true,
+    };
   }
 
   return {
-    isValid,
-    test: testFunction,
+    isValid: true,
+    test: (value: any) => value >= min && value <= max,
   };
 }
 
@@ -240,6 +216,7 @@ export interface ValueFilterInfo extends RegistryItem {
   //   excludeFromPicker?: boolean; // Exclude from selector options
 
   placeholder?: string; // Place holder for filter expression input
+  placeholder2?: string; // Second placeholder for 2 input fields
   getInstance: ValueFilterInstanceCreator;
   supportedFieldTypes?: FieldType[]; // If defined, support only those field types
 }
@@ -305,6 +282,7 @@ export const valueFiltersRegistry = new Registry<ValueFilterInfo>(() => [
     id: ValueFilterID.range,
     name: 'Range',
     getInstance: testRangeCreator,
-    placeholder: 'Interval with braces: [min, max] or ]min, max[',
+    placeholder: 'Min',
+    placeholder2: 'Max',
   },
 ]);
