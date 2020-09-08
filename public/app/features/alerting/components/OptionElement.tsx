@@ -25,11 +25,20 @@ export const OptionElement: FC<Props> = ({ control, option, register, invalid })
       );
 
     case 'select':
-      return <InputControl as={Select} options={option.selectOptions} control={control} name={`${modelValue}`} />;
+      return (
+        <InputControl
+          as={Select}
+          options={option.selectOptions}
+          control={control}
+          name={`${modelValue}`}
+          invalid={invalid}
+        />
+      );
 
     case 'textarea':
       return (
         <TextArea
+          invalid={invalid}
           name={`${modelValue}`}
           ref={register({
             required: option.required ? 'Required' : false,
