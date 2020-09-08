@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -51,7 +52,8 @@ func TestIntegration_GetUserStats(t *testing.T) {
 		}()
 	}
 
-	users := make([]models.User, 5)
+	const nUsers = 100
+	users := make([]models.User, nUsers)
 
 	for i := range users {
 		cmd := &models.CreateUserCommand{
@@ -65,15 +67,43 @@ func TestIntegration_GetUserStats(t *testing.T) {
 		users[i] = cmd.Result
 	}
 
+	orgs := make([]models.Org, 10)
+
+	for i := range orgs {
+		cmd := &models.CreateOrgCommand{
+			Name:   fmt.Sprintf("org %d", i),
+			UserId: firstUser.Id,
+		}
+		err := CreateOrg(cmd)
+		require.NoError(t, err)
+		orgs[i] = cmd.Result
+	}
+
+	for _, u := range users {
+		for _, o := range orgs {
+			cmd := &models.AddOrgUserCommand{
+				Role:   "Viewer",
+				UserId: u.Id,
+				OrgId:  o.Id,
+			}
+			err := AddOrgUser(cmd)
+			require.NoErrorf(t, err, "uID %d oID %d", u.Id, o.Id)
+		}
+	}
+
 	query := models.GetUserStatsQuery{
 		MustUpdate: true,
 	}
-	err = GetUserStats(&query)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err = GetUserStats(ctx, &query)
 	require.NoError(t, err)
 	assert.EqualValues(t, models.UserStats{
-		Users:   6,
+		Users:   nUsers + 1,
 		Admins:  1,
-		Editors: 5,
+		Editors: nUsers,
 		Viewers: 0,
 	}, query.Result)
 }

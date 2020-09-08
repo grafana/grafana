@@ -14,7 +14,7 @@ func init() {
 	bus.AddHandler("sql", GetDataSourceStats)
 	bus.AddHandler("sql", GetDataSourceAccessStats)
 	bus.AddHandler("sql", GetAdminStats)
-	bus.AddHandler("sql", GetUserStats)
+	bus.AddHandlerCtx("sql", GetUserStats)
 	bus.AddHandlerCtx("sql", GetAlertNotifiersUsageStats)
 	bus.AddHandlerCtx("sql", GetSystemUserCountStats)
 }
@@ -95,7 +95,10 @@ func GetSystemStats(query *models.GetSystemStatsQuery) error {
 }
 
 func roleCounterSQL() string {
-	_ = updateUserRoleCountsIfNecessary(false)
+	const roleCounterTimeout = 20 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), roleCounterTimeout)
+	defer cancel()
+	_ = updateUserRoleCountsIfNecessary(ctx, false)
 	sqlQuery :=
 		strconv.FormatInt(userStatsCache.total.Admins, 10) + ` AS admins, ` +
 			strconv.FormatInt(userStatsCache.total.Editors, 10) + ` AS editors, ` +
@@ -182,8 +185,8 @@ func GetSystemUserCountStats(ctx context.Context, query *models.GetSystemUserCou
 	})
 }
 
-func GetUserStats(query *models.GetUserStatsQuery) error {
-	err := updateUserRoleCountsIfNecessary(query.MustUpdate)
+func GetUserStats(ctx context.Context, query *models.GetUserStatsQuery) error {
+	err := updateUserRoleCountsIfNecessary(ctx, query.MustUpdate)
 	if err != nil {
 		return err
 	}
@@ -197,10 +200,10 @@ func GetUserStats(query *models.GetUserStatsQuery) error {
 	return nil
 }
 
-func updateUserRoleCountsIfNecessary(forced bool) error {
+func updateUserRoleCountsIfNecessary(ctx context.Context, forced bool) error {
 	memoizationPeriod := time.Now().Add(-userStatsCacheLimetime)
 	if forced || userStatsCache.memoized.Before(memoizationPeriod) {
-		err := updateUserRoleCounts()
+		err := updateUserRoleCounts(ctx)
 		if err != nil {
 			return err
 		}
@@ -220,21 +223,21 @@ var (
 	userStatsCacheLimetime = 5 * time.Minute
 )
 
-func updateUserRoleCounts() error {
+func updateUserRoleCounts(ctx context.Context) error {
 	query := `
 SELECT role AS bitrole, active, COUNT(role) AS count FROM
-    (SELECT active, SUM(role) AS role
-     FROM (SELECT
-               u.id,
-               CASE org_user.role
-                   WHEN 'Admin' THEN 4
-                   WHEN 'Editor' THEN 2
-                   ELSE 1
-                   END AS role,
-               u.last_seen_at>? AS active
-           FROM ` + dialect.Quote("user") + ` AS u LEFT JOIN org_user ON org_user.user_id = u.id
-           GROUP BY u.id, u.last_seen_at, org_user.role) AS t2
-     GROUP BY active, id) AS t1
+  (SELECT last_seen_at>? AS active, SUM(role) AS role
+   FROM (SELECT
+      u.id,
+      CASE org_user.role
+        WHEN 'Admin' THEN 4
+        WHEN 'Editor' THEN 2
+        ELSE 1
+      END AS role,
+      u.last_seen_at
+    FROM ` + dialect.Quote("user") + ` AS u INNER JOIN org_user ON org_user.user_id = u.id
+    GROUP BY u.id, u.last_seen_at, org_user.role) AS t2
+  GROUP BY id, last_seen_at) AS t1
 GROUP BY active, role;`
 
 	activeUserDeadline := time.Now().Add(-activeUserTimeLimit)
@@ -246,7 +249,7 @@ GROUP BY active, role;`
 	}
 
 	bitmap := []rolebitmap{}
-	err := x.SQL(query, activeUserDeadline).Find(&bitmap)
+	err := x.Context(ctx).SQL(query, activeUserDeadline).Find(&bitmap)
 	if err != nil {
 		return err
 	}
