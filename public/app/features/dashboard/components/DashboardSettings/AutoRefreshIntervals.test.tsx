@@ -10,7 +10,7 @@ describe('getValidIntervals', () => {
       const dependencies = {
         getTimeSrv: () =>
           (({
-            getValidIntervals: intervals => intervals,
+            getValidIntervals: (intervals: any) => intervals,
           } as unknown) as TimeSrv),
       };
 
@@ -26,7 +26,7 @@ describe('getValidIntervals', () => {
       const dependencies = {
         getTimeSrv: () =>
           (({
-            getValidIntervals: intervals => intervals,
+            getValidIntervals: (intervals: any) => intervals,
           } as unknown) as TimeSrv),
       };
 
@@ -42,7 +42,7 @@ describe('getValidIntervals', () => {
       const dependencies = {
         getTimeSrv: () =>
           (({
-            getValidIntervals: intervals => intervals,
+            getValidIntervals: (intervals: any) => intervals,
           } as unknown) as TimeSrv),
       };
 
@@ -59,7 +59,7 @@ describe('validateIntervals', () => {
       const dependencies = {
         getTimeSrv: () =>
           (({
-            getValidIntervals: intervals => intervals,
+            getValidIntervals: (intervals: any) => intervals,
           } as unknown) as TimeSrv),
       };
 
