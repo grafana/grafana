@@ -5,7 +5,6 @@ package setting
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -337,7 +336,7 @@ func init() {
 }
 
 func parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
-	appUrl := readSectionValueString(section, "root_url", "http://localhost:3000/")
+	appUrl := valueAsString(section, "root_url", "http://localhost:3000/")
 
 	if appUrl[len(appUrl)-1] != '/' {
 		appUrl += "/"
@@ -589,7 +588,7 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	}
 
 	// update data path and logging config
-	dataPath := readSectionValueString(parsedFile.Section("paths"), "data", "")
+	dataPath := valueAsString(parsedFile.Section("paths"), "data", "")
 
 	cfg.DataPath = makeAbsolute(dataPath, HomePath)
 	err = cfg.initLogging(parsedFile)
@@ -672,12 +671,12 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	ApplicationName = APP_NAME
 
-	Env = readSectionValueString(iniFile.Section(""), "app_mode", "development")
-	InstanceName = readSectionValueString(iniFile.Section(""), "instance_name", "unknown_instance_name")
-	plugins := readSectionValueString(iniFile.Section("paths"), "plugins", "")
+	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
+	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
+	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
 	PluginsPath = makeAbsolute(plugins, HomePath)
 	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", HomePath)
-	provisioning := readSectionValueString(iniFile.Section("paths"), "provisioning", "")
+	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, HomePath)
 
 	if err := readServerSettings(iniFile, cfg); err != nil {
@@ -701,7 +700,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
-	MinRefreshInterval = readSectionValueString(dashboards, "min_refresh_interval", "5s")
+	MinRefreshInterval = valueAsString(dashboards, "min_refresh_interval", "5s")
 
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 
@@ -717,8 +716,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
 	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)
-	cfg.MetricsEndpointBasicAuthUsername = readSectionValueString(iniFile.Section("metrics"), "basic_auth_username", "")
-	cfg.MetricsEndpointBasicAuthPassword = readSectionValueString(iniFile.Section("metrics"), "basic_auth_password", "")
+	cfg.MetricsEndpointBasicAuthUsername = valueAsString(iniFile.Section("metrics"), "basic_auth_username", "")
+	cfg.MetricsEndpointBasicAuthPassword = valueAsString(iniFile.Section("metrics"), "basic_auth_password", "")
 	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
 
 	analytics := iniFile.Section("analytics")
@@ -751,10 +750,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")
 	cfg.FeatureToggles = make(map[string]bool)
-	featuresTogglesStr, err := valueAsString(featureTogglesSection, "enable", "")
-	if err != nil {
-		return err
-	}
+	featuresTogglesStr := valueAsString(featureTogglesSection, "enable", "")
 	for _, feature := range util.SplitString(featuresTogglesStr) {
 		cfg.FeatureToggles[feature] = true
 	}
@@ -775,20 +771,20 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	// check old key  name
-	GrafanaComUrl = readSectionValueString(iniFile.Section("grafana_net"), "url", "")
+	GrafanaComUrl = valueAsString(iniFile.Section("grafana_net"), "url", "")
 	if GrafanaComUrl == "" {
-		GrafanaComUrl = readSectionValueString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
+		GrafanaComUrl = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
 	}
 
 	imageUploadingSection := iniFile.Section("external_image_storage")
-	ImageUploadProvider = readSectionValueString(imageUploadingSection, "provider", "")
+	ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
 
 	enterprise := iniFile.Section("enterprise")
-	cfg.EnterpriseLicensePath = readSectionValueString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))
+	cfg.EnterpriseLicensePath = valueAsString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))
 
 	cacheServer := iniFile.Section("remote_cache")
-	dbName := readSectionValueString(cacheServer, "type", "database")
-	connStr := readSectionValueString(cacheServer, "connstr", "")
+	dbName := valueAsString(cacheServer, "type", "database")
+	connStr := valueAsString(cacheServer, "connstr", "")
 
 	cfg.RemoteCacheOptions = &RemoteCacheOptions{
 		Name:    dbName,
@@ -800,22 +796,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	return nil
 }
 
-func readSectionValueString(section *ini.Section, keyName string, defaultValue string) string {
-	if !section.HasKey(keyName) {
-		return defaultValue
-	}
-
+func valueAsString(section *ini.Section, keyName string, defaultValue string) string {
 	return section.Key(keyName).MustString(defaultValue)
-}
-
-func valueAsString(section *ini.Section, keyName string, defaultValue string) (value string, err error) {
-	defer func() {
-		if err_ := recover(); err_ != nil {
-			err = errors.New("Invalid value for key '" + keyName + "' in configuration file")
-		}
-	}()
-
-	return section.Key(keyName).MustString(defaultValue), nil
 }
 
 type RemoteCacheOptions struct {
@@ -843,20 +825,14 @@ func (cfg *Cfg) readSessionConfig() {
 }
 
 func (cfg *Cfg) initLogging(file *ini.File) error {
-	logModeStr, err := valueAsString(file.Section("log"), "mode", "console")
-	if err != nil {
-		return err
-	}
+	logModeStr := valueAsString(file.Section("log"), "mode", "console")
 	// split on comma
 	logModes := strings.Split(logModeStr, ",")
 	// also try space
 	if len(logModes) == 1 {
 		logModes = strings.Split(logModeStr, " ")
 	}
-	logsPath, err := valueAsString(file.Section("paths"), "logs", "")
-	if err != nil {
-		return err
-	}
+	logsPath := valueAsString(file.Section("paths"), "logs", "")
 	cfg.LogsPath = makeAbsolute(logsPath, HomePath)
 	return log.ReadLoggingConfig(logModes, cfg.LogsPath, file)
 }
@@ -922,11 +898,7 @@ func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
 
 func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	security := iniFile.Section("security")
-	var err error
-	SecretKey, err = valueAsString(security, "secret_key", "")
-	if err != nil {
-		return err
-	}
+	SecretKey = valueAsString(security, "secret_key", "")
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
 	DisableBruteForceLoginProtection = cfg.DisableBruteForceLoginProtection
@@ -934,7 +906,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	CookieSecure = security.Key("cookie_secure").MustBool(false)
 	cfg.CookieSecure = CookieSecure
 
-	samesiteString := readSectionValueString(security, "cookie_samesite", "lax")
+	samesiteString := valueAsString(security, "cookie_samesite", "lax")
 
 	if samesiteString == "disabled" {
 		CookieSameSiteDisabled = true
@@ -965,7 +937,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 
 	// read data source proxy whitelist
 	DataProxyWhiteList = make(map[string]bool)
-	securityStr := readSectionValueString(security, "data_source_proxy_whitelist", "")
+	securityStr := valueAsString(security, "data_source_proxy_whitelist", "")
 
 	for _, hostAndIP := range util.SplitString(securityStr) {
 		DataProxyWhiteList[hostAndIP] = true
@@ -973,8 +945,8 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 
 	// admin
 	cfg.DisableInitAdminCreation = security.Key("disable_initial_admin_creation").MustBool(false)
-	AdminUser = readSectionValueString(security, "admin_user", "")
-	AdminPassword = readSectionValueString(security, "admin_password", "")
+	AdminUser = valueAsString(security, "admin_user", "")
+	AdminPassword = valueAsString(security, "admin_password", "")
 
 	return nil
 }
@@ -982,8 +954,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 func readAuthSettings(iniFile *ini.File, cfg *Cfg) error {
 	auth := iniFile.Section("auth")
 
-	var err error
-	LoginCookieName = readSectionValueString(auth, "login_cookie_name", "grafana_session")
+	LoginCookieName = valueAsString(auth, "login_cookie_name", "grafana_session")
 	cfg.LoginCookieName = LoginCookieName
 	cfg.LoginMaxInactiveLifetimeDays = auth.Key("login_maximum_inactive_lifetime_days").MustInt(7)
 
@@ -1000,24 +971,15 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) error {
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
-	SignoutRedirectUrl, err = valueAsString(auth, "signout_redirect_url", "")
-	if err != nil {
-		return err
-	}
+	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 
 	// SAML auth
 	cfg.SAMLEnabled = iniFile.Section("auth.saml").Key("enabled").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
-	AnonymousOrgName, err = valueAsString(iniFile.Section("auth.anonymous"), "org_name", "")
-	if err != nil {
-		return err
-	}
-	AnonymousOrgRole, err = valueAsString(iniFile.Section("auth.anonymous"), "org_role", "")
-	if err != nil {
-		return err
-	}
+	AnonymousOrgName = valueAsString(iniFile.Section("auth.anonymous"), "org_name", "")
+	AnonymousOrgRole = valueAsString(iniFile.Section("auth.anonymous"), "org_role", "")
 	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
 
 	// basic auth
@@ -1027,8 +989,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) error {
 	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
 
-	AuthProxyHeaderName = readSectionValueString(authProxy, "header_name", "")
-	AuthProxyHeaderProperty = readSectionValueString(authProxy, "header_property", "")
+	AuthProxyHeaderName = valueAsString(authProxy, "header_name", "")
+	AuthProxyHeaderProperty = valueAsString(authProxy, "header_property", "")
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 	AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
 
@@ -1042,10 +1004,10 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) error {
 		AuthProxySyncTtl = syncVal
 	}
 
-	AuthProxyWhitelist = readSectionValueString(authProxy, "whitelist", "")
+	AuthProxyWhitelist = valueAsString(authProxy, "whitelist", "")
 
 	AuthProxyHeaders = make(map[string]string)
-	headers := readSectionValueString(authProxy, "headers", "")
+	headers := valueAsString(authProxy, "headers", "")
 
 	for _, propertyAndHeader := range util.SplitString(headers) {
 		split := strings.SplitN(propertyAndHeader, ":", 2)
@@ -1066,12 +1028,12 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
-	LoginHint = readSectionValueString(users, "login_hint", "")
-	PasswordHint = readSectionValueString(users, "password_hint", "")
-	DefaultTheme = readSectionValueString(users, "default_theme", "")
-	ExternalUserMngLinkUrl = readSectionValueString(users, "external_manage_link_url", "")
-	ExternalUserMngLinkName = readSectionValueString(users, "external_manage_link_name", "")
-	ExternalUserMngInfo = readSectionValueString(users, "external_manage_info", "")
+	LoginHint = valueAsString(users, "login_hint", "")
+	PasswordHint = valueAsString(users, "password_hint", "")
+	DefaultTheme = valueAsString(users, "default_theme", "")
+	ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
+	ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
+	ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
 
 	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
@@ -1081,8 +1043,8 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 
 func readRenderingSettings(iniFile *ini.File, cfg *Cfg) error {
 	renderSec := iniFile.Section("rendering")
-	cfg.RendererUrl = readSectionValueString(renderSec, "server_url", "")
-	cfg.RendererCallbackUrl = readSectionValueString(renderSec, "callback_url", "")
+	cfg.RendererUrl = valueAsString(renderSec, "server_url", "")
+	cfg.RendererCallbackUrl = valueAsString(renderSec, "callback_url", "")
 
 	if cfg.RendererCallbackUrl == "" {
 		cfg.RendererCallbackUrl = AppUrl
@@ -1109,8 +1071,8 @@ func readAlertingSettings(iniFile *ini.File) error {
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
 	AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
 
-	AlertingErrorOrTimeout = readSectionValueString(alerting, "error_or_timeout", "alerting")
-	AlertingNoDataOrNullValues = readSectionValueString(alerting, "nodata_or_nullvalues", "no_data")
+	AlertingErrorOrTimeout = valueAsString(alerting, "error_or_timeout", "alerting")
+	AlertingNoDataOrNullValues = valueAsString(alerting, "nodata_or_nullvalues", "no_data")
 
 	evaluationTimeoutSeconds := alerting.Key("evaluation_timeout_seconds").MustInt64(30)
 	AlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
@@ -1125,8 +1087,8 @@ func readAlertingSettings(iniFile *ini.File) error {
 func readSnapshotsSettings(iniFile *ini.File) error {
 	snapshots := iniFile.Section("snapshots")
 
-	ExternalSnapshotUrl = readSectionValueString(snapshots, "external_snapshot_url", "")
-	ExternalSnapshotName = readSectionValueString(snapshots, "external_snapshot_name", "")
+	ExternalSnapshotUrl = valueAsString(snapshots, "external_snapshot_url", "")
+	ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
 
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
 	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
@@ -1149,7 +1111,7 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ServeFromSubPath = ServeFromSubPath
 
 	Protocol = HTTP
-	protocolStr := readSectionValueString(server, "protocol", "http")
+	protocolStr := valueAsString(server, "protocol", "http")
 
 	if protocolStr == "https" {
 		Protocol = HTTPS
@@ -1166,14 +1128,14 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 		SocketPath = server.Key("socket").String()
 	}
 
-	Domain = readSectionValueString(server, "domain", "localhost")
-	HttpAddr = readSectionValueString(server, "http_addr", DEFAULT_HTTP_ADDR)
-	HttpPort = readSectionValueString(server, "http_port", "3000")
+	Domain = valueAsString(server, "domain", "localhost")
+	HttpAddr = valueAsString(server, "http_addr", DEFAULT_HTTP_ADDR)
+	HttpPort = valueAsString(server, "http_port", "3000")
 	RouterLogging = server.Key("router_logging").MustBool(false)
 
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
 	EnforceDomain = server.Key("enforce_domain").MustBool(false)
-	staticRoot := readSectionValueString(server, "static_root_path", "")
+	staticRoot := valueAsString(server, "static_root_path", "")
 	StaticRootPath = makeAbsolute(staticRoot, HomePath)
 	cfg.StaticRootPath = StaticRootPath
 
