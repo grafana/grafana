@@ -5,9 +5,9 @@ source "/etc/profile"
 source "./deploy-slim.sh"
 source "./deploy-common.sh"
 
-NODEVER="v12.16.2-linux-x64"
+NODEVER="v12.18.3-linux-x64"
 # Install Node
-wget -O - "https://nodejs.org/dist/v12.16.2/node-${NODEVER}.tar.xz" | tar Jvxf - -C "/tmp"
+wget -O - "https://nodejs.org/dist/v12.18.3/node-${NODEVER}.tar.xz" | tar Jvxf - -C "/tmp"
 
 # Move node to /usr/local so it's in the path
 pushd /tmp/node-${NODEVER}
@@ -22,15 +22,16 @@ source "/etc/profile"
 npm i -g yarn
 
 # Install Go
-filename="go1.14.linux-amd64.tar.gz"
-get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "08df79b46b0adf498ea9f320a0f23d6ec59e9003660b4c9c1ce8e5e2c6f823ca"
+filename="go1.15.1.linux-amd64.tar.gz"
+get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "70ac0dbf60a8ee9236f337ed0daa7a4c3b98f6186d4497826f68e97c0c0413f6"
 untar_file "/tmp/$filename"
 
 # Install golangci-lint
-filename="golangci-lint-1.26.0-linux-amd64"
-get_file "https://github.com/golangci/golangci-lint/releases/download/v1.26.0/$filename.tar.gz" \
+GOLANGCILINT_VERSION=1.31.0
+filename="golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64"
+get_file "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/$filename.tar.gz" \
     "/tmp/$filename.tar.gz" \
-    "59b0e49a4578fea574648a2fd5174ed61644c667ea1a1b54b8082fde15ef94fd"
+    "9a5d47b51442d68b718af4c7350f4406cdc087e2236a5b9ae52f37aebede6cb3"
 untar_file "/tmp/$filename.tar.gz"
 ln -s /usr/local/${filename}/golangci-lint /usr/local/bin/golangci-lint
 ln -s /usr/local/go/bin/go /usr/local/bin/go
@@ -48,7 +49,7 @@ chmod +x /usr/local/bin/grabpl
 
 # Install Mage
 mkdir -pv /tmp/mage $HOME/go/bin
-git clone --depth 1 https://github.com/magefile/mage.git /tmp/mage
+git clone https://github.com/magefile/mage.git /tmp/mage
 pushd /tmp/mage && go run bootstrap.go && popd
 mv $HOME/go/bin/mage /usr/local/bin
 # Cleanup after yourself

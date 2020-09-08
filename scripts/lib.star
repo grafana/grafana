@@ -1,5 +1,5 @@
 build_image = 'grafana/build-container:1.2.26'
-publish_image = 'grafana/grafana-ci-deploy:1.2.5'
+publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.2.0'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'

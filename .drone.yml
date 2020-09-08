@@ -369,7 +369,7 @@ steps:
   - package
 
 - name: publish-storybook
-  image: grafana/grafana-ci-deploy:1.2.5
+  image: grafana/grafana-ci-deploy:1.2.6
   commands:
   - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
@@ -459,7 +459,7 @@ steps:
   - end-to-end-tests
 
 - name: publish-packages
-  image: grafana/grafana-ci-deploy:1.2.5
+  image: grafana/grafana-ci-deploy:1.2.6
   commands:
   - echo ./bin/grabpl publish-packages --edition oss
   depends_on:
