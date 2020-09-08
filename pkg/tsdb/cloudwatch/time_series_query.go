@@ -6,19 +6,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/sync/errgroup"
 )
 
 func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	plog.Debug("Executing time series query")
 	startTime, err := queryContext.TimeRange.ParseFrom()
 	if err != nil {
-		return nil, errutil.Wrap("failed to parse start time", err)
+		return nil, err
 	}
 	endTime, err := queryContext.TimeRange.ParseTo()
 	if err != nil {
-		return nil, errutil.Wrap("failed to parse end time", err)
+		return nil, err
 	}
 	if !startTime.Before(endTime) {
 		return nil, fmt.Errorf("invalid time range: start time must be before end time")

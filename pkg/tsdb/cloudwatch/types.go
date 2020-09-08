@@ -3,8 +3,15 @@ package cloudwatch
 import (
 	"fmt"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/grafana/grafana/pkg/tsdb"
 )
+
+type cloudWatchClient interface {
+	GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error)
+}
 
 type requestQuery struct {
 	RefId              string
@@ -24,7 +31,7 @@ type requestQuery struct {
 }
 
 type cloudwatchResponse struct {
-	DataFrames              data.Frames
+	series                  *tsdb.TimeSeriesSlice
 	Id                      string
 	RefId                   string
 	Expression              string
