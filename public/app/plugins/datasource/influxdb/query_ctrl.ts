@@ -256,14 +256,14 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
   // Only valid for InfluxQL queries
   toggleEditorMode() {
-    if (this.datasource.is2x) {
+    if (this.datasource.isFlux) {
       return; // nothing
     }
 
     try {
       this.target.query = this.queryModel.render(false);
     } catch (err) {
-      console.log('query render error');
+      console.error('query render error');
     }
     this.target.rawQuery = !this.target.rawQuery;
   }
@@ -419,9 +419,5 @@ export class InfluxQueryCtrl extends QueryCtrl {
       return '=';
     }
     return null;
-  }
-
-  getCollapsedText() {
-    return this.queryModel.render(false);
   }
 }

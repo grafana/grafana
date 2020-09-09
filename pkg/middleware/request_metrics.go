@@ -43,11 +43,12 @@ func RequestMetrics(handler string) macaron.Handler {
 		duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
 		metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))
 
-		if strings.HasPrefix(req.RequestURI, "/api/datasources/proxy") {
+		switch {
+		case strings.HasPrefix(req.RequestURI, "/api/datasources/proxy"):
 			countProxyRequests(status)
-		} else if strings.HasPrefix(req.RequestURI, "/api/") {
+		case strings.HasPrefix(req.RequestURI, "/api/"):
 			countApiRequests(status)
-		} else {
+		default:
 			countPageRequests(status)
 		}
 	}
@@ -118,6 +119,7 @@ func sanitizeMethod(m string) string {
 // If the wrapped http.Handler has not set a status code, i.e. the value is
 // currently 0, sanitizeCode will return 200, for consistency with behavior in
 // the stdlib.
+//nolint: gocyclo
 func sanitizeCode(s int) string {
 	switch s {
 	case 100:

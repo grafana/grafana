@@ -20,25 +20,6 @@ func init() {
 		Description: "Sends alert to Prometheus Alertmanager",
 		Heading:     "Alertmanager settings",
 		Factory:     NewAlertmanagerNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">Alertmanager settings</h3>
-		<div class="gf-form max-width-30">
-            <span class="gf-form-label width-10">Url(s)</span>
-            <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="http://localhost:9093"></input>
-            <info-popover mode="right-absolute">
-              As specified in Alertmanager documentation, do not specify a load balancer here. Enter all your Alertmanager URLs comma-separated.
-            </info-popover>
-		</div>
-		<div class="gf-form max-width-30">
-        	<span class="gf-form-label width-10">Basic Auth User</span>
-            <input type="text" class="gf-form-input max-width-30" ng-model="ctrl.model.settings.basicAuthUser" placeholder=""></input>
-		</div>
-		<div class="gf-form max-width-30">
-        	<span class="gf-form-label width-10">Basic Auth Password</span>
-            <input type="text" class="gf-form-input max-width-30" ng-model="ctrl.model.settings.basicAuthPassword" placeholder=""></input>
-		</div>
-      </div>
-    `,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Url",
@@ -60,6 +41,7 @@ func init() {
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypePassword,
 				PropertyName: "basicAuthPassword",
+				Secure:       true,
 			},
 		},
 	})
@@ -80,7 +62,7 @@ func NewAlertmanagerNotifier(model *models.AlertNotification) (alerting.Notifier
 		}
 	}
 	basicAuthUser := model.Settings.Get("basicAuthUser").MustString()
-	basicAuthPassword := model.Settings.Get("basicAuthPassword").MustString()
+	basicAuthPassword := model.DecryptedValue("basicAuthPassword", model.Settings.Get("basicAuthPassword").MustString())
 
 	return &AlertmanagerNotifier{
 		NotifierBase:      NewNotifierBase(model),

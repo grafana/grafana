@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
-import { TableCellProps } from './types';
 import { formattedValueToString, LinkModel } from '@grafana/data';
-import { Tooltip } from '../Tooltip/Tooltip';
+
+import { TableCellProps } from './types';
 
 export const DefaultCell: FC<TableCellProps> = props => {
   const { field, cell, tableStyles, row } = props;
@@ -14,35 +14,33 @@ export const DefaultCell: FC<TableCellProps> = props => {
       valueRowIndex: row.index,
     })[0];
   }
-  const value = field.display ? formattedValueToString(displayValue) : displayValue;
+  const value = field.display ? formattedValueToString(displayValue) : `${displayValue}`;
+
+  if (!link) {
+    return <div className={tableStyles.tableCell}>{value}</div>;
+  }
 
   return (
     <div className={tableStyles.tableCell}>
-      {link ? (
-        <Tooltip content={link.title}>
-          <a
-            href={link.href}
-            onClick={
-              link.onClick
-                ? event => {
-                    // Allow opening in new tab
-                    if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
-                      event.preventDefault();
-                      link!.onClick(event);
-                    }
-                  }
-                : undefined
-            }
-            target={link.target}
-            title={link.title}
-            className={tableStyles.tableCellLink}
-          >
-            {value}
-          </a>
-        </Tooltip>
-      ) : (
-        value
-      )}
+      <a
+        href={link.href}
+        onClick={
+          link.onClick
+            ? event => {
+                // Allow opening in new tab
+                if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
+                  event.preventDefault();
+                  link!.onClick(event);
+                }
+              }
+            : undefined
+        }
+        target={link.target}
+        title={link.title}
+        className={tableStyles.tableCellLink}
+      >
+        {value}
+      </a>
     </div>
   );
 };

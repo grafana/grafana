@@ -116,7 +116,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
     }),
     // handle errors
     catchError(err => {
-      console.log('runRequest.catchError', err);
+      console.error('runRequest.catchError', err);
       return of({
         ...state.panelData,
         state: LoadingState.Error,
@@ -171,9 +171,11 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
   for (const result of results) {
     const dataFrame = guessFieldTypes(toDataFrame(result));
 
-    // clear out the cached info
-    for (const field of dataFrame.fields) {
-      field.state = null;
+    if (dataFrame.fields && dataFrame.fields.length) {
+      // clear out the cached info
+      for (const field of dataFrame.fields) {
+        field.state = null;
+      }
     }
 
     dataFrames.push(dataFrame);

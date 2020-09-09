@@ -31,7 +31,7 @@ interface Props {
 }
 
 interface State {
-  allNodesExpanded: boolean;
+  allNodesExpanded: boolean | null;
   isMocking: boolean;
   mockedResponse: string;
   dsQuery: DsQuery;
@@ -133,7 +133,7 @@ export class QueryInspector extends PureComponent<Props, State> {
 
   onDataSourceResponse(response: any) {
     // ignore silent requests
-    if (response.config?.silent) {
+    if (response.config?.hideFromInspector) {
       return;
     }
 

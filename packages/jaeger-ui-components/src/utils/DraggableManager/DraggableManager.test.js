@@ -174,9 +174,7 @@ describe('DraggableManager', () => {
         const { type, handler, callback, updateType } = testCase;
         const event = { ...baseMouseEvt, type };
         handler(event);
-        expect(callback.mock.calls).toEqual([
-          [{ event, tag, value, x, manager: instance, type: updateType }],
-        ]);
+        expect(callback.mock.calls).toEqual([[{ event, tag, value, x, manager: instance, type: updateType }]]);
       });
     });
   });
@@ -294,9 +292,7 @@ describe('DraggableManager', () => {
         const { type, handler, callback, updateType } = testCase;
         const event = { ...baseMouseEvt, type };
         handler(event);
-        expect(callback.mock.calls).toEqual([
-          [{ event, tag, value, x, manager: instance, type: updateType }],
-        ]);
+        expect(callback.mock.calls).toEqual([[{ event, tag, value, x, manager: instance, type: updateType }]]);
       });
     });
   });

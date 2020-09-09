@@ -6,17 +6,21 @@ import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOp
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 
 interface TransformationOperationRowProps {
+  id: string;
+  index: number;
   name: string;
   description?: string;
-  editor?: JSX.Element;
-  onRemove: () => void;
   input: DataFrame[];
   output: DataFrame[];
+  editor?: JSX.Element;
+  onRemove: () => void;
 }
 
 export const TransformationOperationRow: React.FC<TransformationOperationRowProps> = ({
   children,
   onRemove,
+  index,
+  id,
   ...props
 }) => {
   const [showDebug, setShowDebug] = useState(false);
@@ -25,6 +29,7 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
     return (
       <HorizontalGroup align="center">
         <QueryOperationAction
+          title="Debug"
           disabled={!isOpen}
           icon="bug"
           onClick={() => {
@@ -32,13 +37,13 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
           }}
         />
 
-        <QueryOperationAction icon="trash-alt" onClick={onRemove} />
+        <QueryOperationAction title="Remove" icon="trash-alt" onClick={onRemove} />
       </HorizontalGroup>
     );
   };
 
   return (
-    <QueryOperationRow title={props.name} actions={renderActions}>
+    <QueryOperationRow id={id} index={index} title={props.name} draggable actions={renderActions}>
       <TransformationEditor {...props} debugMode={showDebug} />
     </QueryOperationRow>
   );

@@ -24,6 +24,12 @@ describe('addLabelToQuery()', () => {
     expect(addLabelToQuery('sum by (xx) (foo)', 'bar', 'baz')).toBe('sum by (xx) (foo{bar="baz"})');
   });
 
+  it('should convert number Infinity to +Inf', () => {
+    expect(
+      addLabelToQuery('sum(rate(prometheus_tsdb_compaction_chunk_size_bytes_bucket[5m])) by (le)', 'le', Infinity)
+    ).toBe('sum(rate(prometheus_tsdb_compaction_chunk_size_bytes_bucket{le="+Inf"}[5m])) by (le)');
+  });
+
   it('should handle selectors with punctuation', () => {
     expect(addLabelToQuery('foo{instance="my-host.com:9100"}', 'bar', 'baz')).toBe(
       'foo{bar="baz",instance="my-host.com:9100"}'

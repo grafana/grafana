@@ -25,10 +25,14 @@ export interface ConnectedProps {
 export type Props = OwnProps & ConnectedProps;
 
 const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultTab, plugin }) => {
+  if (!plugin) {
+    return null;
+  }
+
   const dispatch = useDispatch();
   const [dataOptions, setDataOptions] = useState<GetDataOptions>({
     withTransforms: false,
-    withFieldConfig: false,
+    withFieldConfig: true,
   });
   const { data, isLoading, error } = usePanelLatestData(panel, dataOptions);
   const metaDs = useDatasourceMetadata(data);
@@ -41,10 +45,6 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultT
       })
     );
   }, [updateLocation]);
-
-  if (!plugin) {
-    return null;
-  }
 
   return (
     <InspectContent

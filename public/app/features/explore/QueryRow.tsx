@@ -21,6 +21,7 @@ import {
   AbsoluteTimeRange,
   LoadingState,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
@@ -76,10 +77,6 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     }
   };
 
-  componentWillUnmount() {
-    console.log('QueryRow will unmount');
-  }
-
   onClickToggleDisabled = () => {
     const { exploreId, index, query } = this.props;
     const newQuery = {
@@ -117,16 +114,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   };
 
   renderQueryEditor = () => {
-    const {
-      datasourceInstance,
-      history,
-      query,
-      exploreEvents,
-      range,
-      absoluteRange,
-      queryResponse,
-      exploreId,
-    } = this.props;
+    const { datasourceInstance, history, query, exploreEvents, range, queryResponse, exploreId } = this.props;
 
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
 
@@ -142,7 +130,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
           onBlur={noopOnBlur}
           onChange={this.onChange}
           data={queryResponse}
-          absoluteRange={absoluteRange}
+          range={range}
           exploreId={exploreId}
         />
       );
@@ -179,7 +167,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 
     return (
       <>
-        <div className="query-row">
+        <div className="query-row" aria-label={selectors.components.QueryEditorRows.rows}>
           <div className="query-row-field flex-shrink-1">{this.renderQueryEditor()}</div>
           <QueryRowActions
             canToggleEditorModes={canToggleEditorModes}

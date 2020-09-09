@@ -19,17 +19,6 @@ func init() {
 		Description: "Sends notifications to Kafka Rest Proxy",
 		Heading:     "Kafka settings",
 		Factory:     NewKafkaNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">Kafka settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">Kafka REST Proxy</span>
-        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.kafkaRestProxy" placeholder="http://localhost:8082"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">Topic</span>
-        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.kafkaTopic" placeholder="topic1"></input>
-      </div>
-    `,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Kafka REST Proxy",
@@ -85,7 +74,7 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	customData := triggMetrString
 	for _, evt := range evalContext.EvalMatches {
-		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
+		customData += fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
 	}
 
 	kn.log.Info("Notifying Kafka", "alert_state", state)

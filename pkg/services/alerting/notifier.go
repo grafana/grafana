@@ -16,20 +16,20 @@ import (
 )
 
 // for stubbing in tests
+//nolint: gocritic
 var newImageUploaderProvider = func() (imguploader.ImageUploader, error) {
 	return imguploader.NewImageUploader()
 }
 
 // NotifierPlugin holds meta information about a notifier.
 type NotifierPlugin struct {
-	Type            string           `json:"type"`
-	Name            string           `json:"name"`
-	Heading         string           `json:"heading"`
-	Description     string           `json:"description"`
-	Info            string           `json:"info"`
-	OptionsTemplate string           `json:"optionsTemplate"`
-	Factory         NotifierFactory  `json:"-"`
-	Options         []NotifierOption `json:"options"`
+	Type        string           `json:"type"`
+	Name        string           `json:"name"`
+	Heading     string           `json:"heading"`
+	Description string           `json:"description"`
+	Info        string           `json:"info"`
+	Factory     NotifierFactory  `json:"-"`
+	Options     []NotifierOption `json:"options"`
 }
 
 // NotifierOption holds information about options specific for the NotifierPlugin.
@@ -44,6 +44,7 @@ type NotifierOption struct {
 	ShowWhen       ShowWhen       `json:"showWhen"`
 	Required       bool           `json:"required"`
 	ValidationRule string         `json:"validationRule"`
+	Secure         bool           `json:"secure"`
 }
 
 // InputType is the type of input that can be rendered in the frontend.
@@ -64,8 +65,8 @@ const (
 	ElementTypeInput = "input"
 	// ElementTypeSelect will render a select
 	ElementTypeSelect = "select"
-	// ElementTypeSwitch will render a switch
-	ElementTypeSwitch = "switch"
+	// ElementTypeCheckbox will render a checkbox
+	ElementTypeCheckbox = "checkbox"
 	// ElementTypeTextArea will render a textarea
 	ElementTypeTextArea = "textarea"
 )

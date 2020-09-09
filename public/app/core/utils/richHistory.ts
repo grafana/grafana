@@ -5,7 +5,6 @@ import _ from 'lodash';
 import { DataQuery, DataSourceApi, dateTimeFormat, AppEvents, urlUtil, ExploreUrlState } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import store from 'app/core/store';
-import { SortOrder } from './explore';
 import { getExploreDatasources } from '../../features/explore/state/selectors';
 
 // Types
@@ -20,6 +19,13 @@ export const RICH_HISTORY_SETTING_KEYS = {
   activeDatasourceOnly: 'grafana.explore.richHistory.activeDatasourceOnly',
   datasourceFilters: 'grafana.explore.richHistory.datasourceFilters',
 };
+
+export enum SortOrder {
+  Descending = 'Descending',
+  Ascending = 'Ascending',
+  DatasourceAZ = 'Datasource A-Z',
+  DatasourceZA = 'Datasource Z-A',
+}
 
 /*
  * Add queries to rich history. Save only queries within the retention period, or that are starred.
@@ -188,7 +194,7 @@ export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
   };
 
   const serializedState = serializeStateToUrlParam(exploreState, true);
-  const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)[0];
+  const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)![0];
   const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
   return url;
 };
@@ -330,7 +336,7 @@ export function filterQueriesBySearchFilter(queries: RichHistoryQuery[], searchF
     const listOfMatchingQueries = query.queries.filter(query =>
       // Remove fields in which we don't want to be searching
       Object.values(_.omit(query, ['datasource', 'key', 'refId', 'hide', 'queryType'])).some((value: any) =>
-        value.toString().includes(searchFilter)
+        value?.toString().includes(searchFilter)
       )
     );
 

@@ -581,7 +581,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         return this.funcDefs;
       })
       .catch((err: any) => {
-        console.log('Fetching graphite functions error', err);
+        console.error('Fetching graphite functions error', err);
         this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
         return this.funcDefs;
       });
@@ -593,6 +593,9 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     const query = ({
       panelId: 3,
       rangeRaw: { from: 'now-1h', to: 'now' },
+      range: {
+        raw: { from: 'now-1h', to: 'now' },
+      },
       targets: [{ target: 'constantLine(100)' }],
       maxDataPoints: 300,
     } as unknown) as DataQueryRequest<GraphiteQuery>;

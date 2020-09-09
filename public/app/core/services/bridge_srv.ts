@@ -80,13 +80,15 @@ export class BridgeSrv {
             this.$location.replace();
           }
         });
-
-        console.log('store updating angular $location.url', url);
       }
 
-      // Check for template variable changes on a dashboard
-      if (state.location.path === this.lastPath) {
+      // if only query params changed, check if variables changed
+      if (state.location.path === this.lastPath && state.location.query !== this.lastQuery) {
+        // Find template variable changes
         const changes = findTemplateVarChanges(state.location.query, this.lastQuery);
+        // Store current query params to avoid recursion
+        this.lastQuery = state.location.query;
+
         if (changes) {
           const dash = getDashboardSrv().getCurrent();
           if (dash) {
@@ -95,8 +97,8 @@ export class BridgeSrv {
         }
       }
 
-      this.lastQuery = state.location.query;
       this.lastPath = state.location.path;
+      this.lastQuery = state.location.query;
       this.lastUrl = state.location.url;
     });
 

@@ -156,6 +156,11 @@ export function changeDatasource(
     }
 
     await dispatch(loadDatasource(exploreId, newDataSourceInstance, orgId));
+
+    // Exception - we only want to run queries on data source change, if the queries were imported
+    if (options?.importQueries) {
+      dispatch(runQueries(exploreId));
+    }
   };
 }
 
@@ -372,7 +377,7 @@ export const loadDatasource = (exploreId: ExploreId, instance: DataSourceApi, or
       try {
         instance.init();
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     }
 

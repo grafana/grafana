@@ -132,7 +132,11 @@ export class ResultTransformer {
             for (j = 0; j < sortedLabels.length; j++) {
               const label = sortedLabels[j];
               if (series.metric.hasOwnProperty(label)) {
-                reordered.push(series.metric[label]);
+                if (label === 'le') {
+                  reordered.push(parseHistogramLabel(series.metric[label]));
+                } else {
+                  reordered.push(series.metric[label]);
+                }
               } else {
                 reordered.push('');
               }
@@ -156,7 +160,7 @@ export class ResultTransformer {
 
   createLabelInfo(labels: { [key: string]: string }, options: any): { name?: string; labels: Labels; title?: string } {
     if (options?.legendFormat) {
-      const title = this.renderTemplate(this.templateSrv.replace(options.legendFormat), labels);
+      const title = this.renderTemplate(this.templateSrv.replace(options.legendFormat, options?.scopedVars), labels);
       return { name: title, title, labels };
     }
 
@@ -226,7 +230,7 @@ function sortSeriesByLabel(s1: TimeSeries, s2: TimeSeries): number {
     le1 = parseHistogramLabel(s1.target);
     le2 = parseHistogramLabel(s2.target);
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return 0;
   }
 

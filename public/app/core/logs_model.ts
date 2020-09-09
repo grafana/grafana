@@ -28,10 +28,11 @@ import {
   textUtil,
   dateTime,
   AbsoluteTimeRange,
+  sortInAscendingOrder,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 
-import { sortInAscendingOrder, deduplicateLogRowsById } from 'app/core/utils/explore';
+import { deduplicateLogRowsById } from 'app/core/utils/explore';
 import { decimalSIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 
 export const LogLevelColor = {
@@ -141,24 +142,21 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
     const data = toDataFrame(series);
     const fieldCache = new FieldCache(data);
 
-    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
-    if (timeField) {
-      timeField.display = getDisplayProcessor({
-        field: timeField,
-        timeZone,
-      });
-    }
+    const timeField = fieldCache.getFirstFieldOfType(FieldType.time)!;
+    timeField.display = getDisplayProcessor({
+      field: timeField,
+      timeZone,
+    });
 
-    const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
-    if (valueField) {
-      valueField.config = {
-        ...valueField.config,
-        color: series.color,
-      };
-      valueField.name = series.alias;
-      const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone });
-      valueField.display = (value: any) => ({ ...fieldDisplayProcessor(value), color: series.color });
-    }
+    const valueField = fieldCache.getFirstFieldOfType(FieldType.number)!;
+    valueField.config = {
+      ...valueField.config,
+      color: series.color,
+    };
+
+    valueField.name = series.alias;
+    const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone });
+    valueField.display = (value: any) => ({ ...fieldDisplayProcessor(value), color: series.color });
 
     const points = getFlotPairs({
       xField: timeField,
@@ -272,7 +270,7 @@ function separateLogsAndMetrics(dataFrames: DataFrame[]) {
   const logSeries: DataFrame[] = [];
 
   for (const dataFrame of dataFrames) {
-    if (isLogsData(dataFrame)) {
+    if (isLogsData(dataFrame) || !dataFrame.fields.length) {
       logSeries.push(dataFrame);
       continue;
     }
@@ -306,23 +304,29 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   const allLabels: Labels[] = [];
 
   // Find the fields we care about and collect all labels
-  const allSeries: LogFields[] = logSeries.map(series => {
-    const fieldCache = new FieldCache(series);
-    const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
-    if (stringField?.labels) {
-      allLabels.push(stringField.labels);
-    }
-    return {
-      series,
-      timeField: fieldCache.getFirstFieldOfType(FieldType.time),
-      timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
-        ? fieldCache.getFieldByName('tsNs')
-        : undefined,
-      stringField,
-      logLevelField: fieldCache.getFieldByName('level'),
-      idField: getIdField(fieldCache),
-    } as LogFields;
-  });
+  let allSeries: LogFields[] = [];
+
+  if (hasFields(logSeries)) {
+    allSeries = logSeries.map(series => {
+      const fieldCache = new FieldCache(series);
+      const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
+
+      if (stringField?.labels) {
+        allLabels.push(stringField.labels);
+      }
+
+      return {
+        series,
+        timeField: fieldCache.getFirstFieldOfType(FieldType.time),
+        timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
+          ? fieldCache.getFieldByName('tsNs')
+          : undefined,
+        stringField,
+        logLevelField: fieldCache.getFieldByName('level'),
+        idField: getIdField(fieldCache),
+      } as LogFields;
+    });
+  }
 
   const commonLabels = allLabels.length > 0 ? findCommonLabels(allLabels) : {};
 
@@ -415,20 +419,23 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   // Hack to print loki stats in Explore. Should be using proper stats display via drawer in Explore (rework in 7.1)
   let totalBytes = 0;
   const queriesVisited: { [refId: string]: boolean } = {};
+
   for (const series of logSeries) {
     const totalBytesKey = series.meta?.custom?.lokiQueryStatKey;
-    // Stats are per query, keeping track by refId
-    const { refId } = series;
+    const { refId } = series; // Stats are per query, keeping track by refId
+
     if (refId && !queriesVisited[refId]) {
       if (totalBytesKey && series.meta?.stats) {
-        const byteStat = series.meta?.stats.find(stat => stat.displayName === totalBytesKey);
+        const byteStat = series.meta.stats.find(stat => stat.displayName === totalBytesKey);
         if (byteStat) {
           totalBytes += byteStat.value;
         }
       }
+
       queriesVisited[refId] = true;
     }
   }
+
   if (totalBytes > 0) {
     const { text, suffix } = decimalSIPrefix('B')(totalBytes);
     meta.push({
@@ -443,6 +450,10 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     meta,
     rows: deduplicatedLogRows,
   };
+}
+
+function hasFields(logSeries: DataFrame[]): boolean {
+  return logSeries.some(series => series.fields.length);
 }
 
 function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {

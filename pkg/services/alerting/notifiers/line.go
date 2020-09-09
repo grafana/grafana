@@ -17,15 +17,6 @@ func init() {
 		Description: "Send notifications to LINE notify",
 		Heading:     "LINE notify settings",
 		Factory:     NewLINENotifier,
-		OptionsTemplate: `
-    <div class="gf-form-group">
-      <h3 class="page-heading">LINE notify settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">Token</span>
-        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.token" placeholder="LINE notify token key"></input>
-      </div>
-    </div>
-`,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Token",
@@ -34,6 +25,7 @@ func init() {
 				Placeholder:  "LINE notify token key",
 				PropertyName: "token",
 				Required:     true,
+				Secure:       true,
 			}},
 	})
 }
@@ -44,7 +36,7 @@ const (
 
 // NewLINENotifier is the constructor for the LINE notifier
 func NewLINENotifier(model *models.AlertNotification) (alerting.Notifier, error) {
-	token := model.Settings.Get("token").MustString()
+	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
 	if token == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find token in settings"}
 	}
@@ -67,13 +59,11 @@ type LineNotifier struct {
 // Notify send an alert notification to LINE
 func (ln *LineNotifier) Notify(evalContext *alerting.EvalContext) error {
 	ln.log.Info("Executing line notification", "ruleId", evalContext.Rule.ID, "notification", ln.Name)
-
-	var err error
-	switch evalContext.Rule.State {
-	case models.AlertStateAlerting:
-		err = ln.createAlert(evalContext)
+	if evalContext.Rule.State == models.AlertStateAlerting {
+		return ln.createAlert(evalContext)
 	}
-	return err
+
+	return nil
 }
 
 func (ln *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {

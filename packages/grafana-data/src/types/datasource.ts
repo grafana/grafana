@@ -5,7 +5,7 @@ import { PanelData } from './panel';
 import { LogRowModel } from './logs';
 import { AnnotationEvent, KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
-import { RawTimeRange, TimeRange, AbsoluteTimeRange } from './time';
+import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
 import { CoreApp } from './app';
 
@@ -155,7 +155,8 @@ export interface DataSourceConstructor<
  */
 export abstract class DataSourceApi<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
+  TAnno = TQuery // defatult to direct query
 > {
   /**
    *  Set in constructor
@@ -270,7 +271,7 @@ export abstract class DataSourceApi<
    * Can be optionally implemented to allow datasource to be a source of annotations for dashboard. To be visible
    * in the annotation editor `annotations` capability also needs to be enabled in plugin.json.
    */
-  annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
+  annotationQuery?(options: AnnotationQueryRequest<TAnno>): Promise<AnnotationEvent[]>;
 
   interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
 }
@@ -300,6 +301,7 @@ export interface QueryEditorProps<
    * Contains query response filtered by refId of QueryResultBase and possible query error
    */
   data?: PanelData;
+  range?: TimeRange;
   exploreId?: any;
   history?: HistoryItem[];
 }
@@ -322,7 +324,6 @@ export interface ExploreQueryFieldProps<
 > extends QueryEditorProps<DSType, TQuery, TOptions> {
   history: any[];
   onBlur?: () => void;
-  absoluteRange?: AbsoluteTimeRange;
   exploreId?: any;
 }
 
@@ -398,6 +399,12 @@ export interface DataQuery {
   datasource?: string | null;
 }
 
+export enum DataQueryErrorType {
+  Cancelled = 'cancelled',
+  Timeout = 'timeout',
+  Unknown = 'unknown',
+}
+
 export interface DataQueryError {
   data?: {
     message?: string;
@@ -407,7 +414,7 @@ export interface DataQueryError {
   status?: string;
   statusText?: string;
   refId?: string;
-  cancelled?: boolean;
+  type?: DataQueryErrorType;
 }
 
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
@@ -433,6 +440,11 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   // Request Timing
   startTime: number;
   endTime?: number;
+
+  // Explore state used by various datasources
+  liveStreaming?: boolean;
+  showingGraph?: boolean;
+  showingTable?: boolean;
 }
 
 export interface DataQueryTimings {
@@ -459,6 +471,12 @@ export interface QueryHint {
 export interface MetricFindValue {
   text: string;
   expandable?: boolean;
+}
+
+export interface BaseAnnotationQuery {
+  datasource: string;
+  enable: boolean;
+  name: string;
 }
 
 export interface DataSourceJsonData {
@@ -530,16 +548,19 @@ export interface DataSourceSelectItem {
 /**
  * Options passed to the datasource.annotationQuery method. See docs/plugins/developing/datasource.md
  */
-export interface AnnotationQueryRequest<MoreOptions = {}> {
+export interface AnnotationQueryRequest<TAnno = {}> {
   range: TimeRange;
   rangeRaw: RawTimeRange;
+  interval: string;
+  intervalMs: number;
+  maxDataPoints?: number;
+  app: CoreApp | string;
+
   // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
   dashboard: any;
-  annotation: {
-    datasource: string;
-    enable: boolean;
-    name: string;
-  } & MoreOptions;
+
+  // The annotation query and common properties
+  annotation: BaseAnnotationQuery & TAnno;
 }
 
 export interface HistoryItem<TQuery extends DataQuery = DataQuery> {

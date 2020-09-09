@@ -8,7 +8,10 @@ import {
   DataFrame,
   ScopedVars,
   DataLink,
+  PluginMeta,
+  DataQuery,
 } from '@grafana/data';
+import LanguageProvider from './language_provider';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
@@ -34,6 +37,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   logMessageField?: string;
   logLevelField?: string;
   dataLinks: DataLinkConfig[];
+  languageProvider: LanguageProvider;
 
   /** @ngInject */
   constructor(
@@ -69,6 +73,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     if (this.logLevelField === '') {
       this.logLevelField = undefined;
     }
+    this.languageProvider = new LanguageProvider(this);
   }
 
   private request(method: string, url: string, data?: undefined) {
@@ -98,6 +103,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         }
         throw err;
       });
+  }
+
+  async importQueries(queries: DataQuery[], originMeta: PluginMeta): Promise<ElasticsearchQuery[]> {
+    return this.languageProvider.importQueries(queries, originMeta.id);
   }
 
   /**
@@ -315,7 +324,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         return { status: 'success', message: 'Index OK. Time field name OK.' };
       },
       (err: any) => {
-        console.log(err);
+        console.error(err);
         if (err.data && err.data.error) {
           let message = angular.toJson(err.data.error);
           if (err.data.error.reason) {

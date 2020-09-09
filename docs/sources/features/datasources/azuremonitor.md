@@ -232,7 +232,7 @@ Grafana alerting is supported for Application Insights. This is not Azure Alerts
 
 ## Querying the Azure Log Analytics service
 
-Queries are written in the new [Azure Log Analytics (or KustoDB) Query Language](https://docs.loganalytics.io/index). A Log Analytics query can be formatted as time series data or as table data.
+Queries are written in the new [Azure Log Analytics (or KustoDB) Query Language](https://docs.microsoft.com/en-us/azure/azure-monitor/log-query/query-language). A Log Analytics query can be formatted as time series data or as table data.
 
 If your credentials give you access to multiple subscriptions, then choose the appropriate subscription before entering queries.
 
@@ -263,10 +263,12 @@ You can also select additional number value columns (with, or without multiple d
 ```kusto
 Perf
 | where $__timeFilter(TimeGenerated)
-| summarize Samples=count(), AvgValue=avg(CounterValue)
+| summarize Samples=count(), ["Avg Value"]=avg(CounterValue)
     by bin(TimeGenerated, $__interval), Computer, CounterName, InstanceName
 | order by TimeGenerated asc
 ```
+
+> **Tip**: In the above query, the Kusto syntax `Samples=count()` and `["Avg Value"]=...` is used to rename those columns — the second syntax allowing for the space. This changes the name of the metric that Grafana uses, and as a result, things like series legends and table columns will match what you specify. Here `Samples` is displayed instead of `_count`.
 
 {{< docs-imagebox img="/img/docs/azuremonitor/logs_multi-value_multi-dim.png" class="docs-image--no-shadow" caption="Azure Logs query with multiple values and multiple dimensions" >}}
 
@@ -280,6 +282,14 @@ AzureActivity
 | project TimeGenerated, ResourceGroup, Category, OperationName, ActivityStatus, Caller
 | order by TimeGenerated desc
 ```
+
+### Format the display name for Log Analytics
+
+The default display name format is:
+
+`metricName{dimensionName=dimensionValue,dimensionTwoName=DimensionTwoValue}`
+
+This can be customized by using the [display name field configuration option]({{< relref "../../panels/field-configuration-options.md#display-name" >}}).
 
 ### Azure Log Analytics macros
 

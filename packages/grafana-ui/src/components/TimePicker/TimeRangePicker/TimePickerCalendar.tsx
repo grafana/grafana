@@ -1,23 +1,23 @@
-import React, { memo, useState, useEffect, useCallback } from 'react';
+import React, { FormEvent, memo, useCallback, useEffect, useState } from 'react';
 import { css } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import { GrafanaTheme, DateTime, TimeZone, dateTimeParse } from '@grafana/data';
-import { useTheme, stylesFactory } from '../../../themes';
+import { dateTime, DateTime, dateTimeParse, GrafanaTheme, TimeZone } from '@grafana/data';
+import { stylesFactory, useTheme } from '../../../themes';
 import { TimePickerTitle } from './TimePickerTitle';
 import { Button } from '../../Button';
 import { Icon } from '../../Icon/Icon';
 import { Portal } from '../../Portal/Portal';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme, isReversed = false) => {
   const containerBorder = theme.isDark ? theme.palette.dark9 : theme.palette.gray5;
 
   return {
     container: css`
       top: -1px;
       position: absolute;
-      right: 544px;
-      box-shadow: 0px 0px 20px ${theme.colors.dropdownShadow};
+      ${isReversed ? 'left' : 'right'}: 544px;
+      box-shadow: ${isReversed ? '10px' : '0px'} 0px 20px ${theme.colors.dropdownShadow};
       background-color: ${theme.colors.bodyBg};
       z-index: -1;
       border: 1px solid ${containerBorder};
@@ -28,7 +28,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         background-color: ${theme.colors.bodyBg};
         width: 19px;
         height: 100%;
-        content: ' ';
+        content: ${!isReversed ? ' ' : ''};
         position: absolute;
         top: 0;
         right: -19px;
@@ -189,17 +189,18 @@ interface Props {
   from: DateTime;
   to: DateTime;
   onClose: () => void;
-  onApply: () => void;
+  onApply: (e: FormEvent<HTMLButtonElement>) => void;
   onChange: (from: DateTime, to: DateTime) => void;
   isFullscreen: boolean;
   timeZone?: TimeZone;
+  isReversed?: boolean;
 }
 
 const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
 
 export const TimePickerCalendar = memo<Props>(props => {
   const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, props.isReversed);
   const { isOpen, isFullscreen } = props;
 
   if (!isOpen) {
@@ -284,14 +285,16 @@ const Footer = memo<Props>(({ onClose, onApply }) => {
   );
 });
 
-function inputToValue(from: DateTime, to: DateTime): Date[] {
+export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: Date = new Date()): Date[] {
   const fromAsDate = from.toDate();
   const toAsDate = to.toDate();
+  const fromAsValidDate = dateTime(fromAsDate).isValid() ? fromAsDate : invalidDateDefault;
+  const toAsValidDate = dateTime(toAsDate).isValid() ? toAsDate : invalidDateDefault;
 
-  if (fromAsDate > toAsDate) {
-    return [toAsDate, fromAsDate];
+  if (fromAsValidDate > toAsValidDate) {
+    return [toAsValidDate, fromAsValidDate];
   }
-  return [fromAsDate, toAsDate];
+  return [fromAsValidDate, toAsValidDate];
 }
 
 function useOnCalendarChange(onChange: (from: DateTime, to: DateTime) => void, timeZone?: TimeZone) {

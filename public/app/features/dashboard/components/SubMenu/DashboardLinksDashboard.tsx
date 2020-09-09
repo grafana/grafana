@@ -19,13 +19,17 @@ interface State {
 export class DashboardLinksDashboard extends PureComponent<Props, State> {
   state: State = { resolvedLinks: [] };
 
+  componentDidMount() {
+    this.searchForDashboards();
+  }
+
   componentDidUpdate(prevProps: Readonly<Props>) {
-    if (!this.props.link.asDropdown && prevProps.linkInfo !== this.props.linkInfo) {
-      this.onResolveLinks();
+    if (this.props.link !== prevProps.link) {
+      this.searchForDashboards();
     }
   }
 
-  onResolveLinks = async () => {
+  searchForDashboards = async () => {
     const { dashboardId, link } = this.props;
 
     const searchHits = await searchForTags(link);
@@ -73,7 +77,7 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
       <>
         <a
           className="gf-form-label pointer"
-          onClick={this.onResolveLinks}
+          onClick={this.searchForDashboards}
           data-placement="bottom"
           data-toggle="dropdown"
         >
