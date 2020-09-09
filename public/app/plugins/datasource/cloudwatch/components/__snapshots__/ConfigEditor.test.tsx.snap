@@ -139,6 +139,26 @@ exports[`Render should disable access key id field 1`] = `
             value=""
           />
         </div>
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+            tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
+          >
+            External ID
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              placeholder="External ID"
+              value=""
+            />
+          </div>
+        </div>
       </div>
     </div>
     <div
@@ -343,6 +363,26 @@ exports[`Render should render component 1`] = `
             placeholder="arn:aws:iam:*"
             value=""
           />
+        </div>
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+            tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
+          >
+            External ID
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              placeholder="External ID"
+              value=""
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -549,6 +589,26 @@ exports[`Render should show access key and secret access key fields 1`] = `
             value=""
           />
         </div>
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+            tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
+          >
+            External ID
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              placeholder="External ID"
+              value=""
+            />
+          </div>
+        </div>
       </div>
     </div>
     <div
@@ -754,6 +814,26 @@ exports[`Render should show arn role field 1`] = `
             value=""
           />
         </div>
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+            tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
+          >
+            External ID
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              placeholder="External ID"
+              value=""
+            />
+          </div>
+        </div>
       </div>
     </div>
     <div
@@ -958,6 +1038,26 @@ exports[`Render should show credentials profile name field 1`] = `
             placeholder="arn:aws:iam:*"
             value=""
           />
+        </div>
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+            tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
+          >
+            External ID
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              placeholder="External ID"
+              value=""
+            />
+          </div>
         </div>
       </div>
     </div>
