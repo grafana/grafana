@@ -14,6 +14,16 @@ weight = -16
 
 This topic includes the release notes for the Grafana v7.2, which is currently in beta. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
+This article is not complete yet. We will be adding new details over the coming days as we get closer to a stable
+release.
+
+The main highlights are:
+
+- [**Date formatting options**]({{< relref "#date-formatting-options" >}})
+- [**Table column filters**]({{< relref "#table-column-filters" >}})
+- [**New and improved transforms**]({{< relref "#new-and-improved-transforms" >}})
+- [**Field override matchers**]({{< relref "#field-override-matchers" >}})
+
 ## Date formatting options
 
 Now you can finally customize how dates are formatted in Grafana. Both in the time range picker, graphs and other panels.
