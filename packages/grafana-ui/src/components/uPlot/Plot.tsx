@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { css } from 'emotion';
 import uPlot from 'uplot';
+import 'uplot/dist/uPlot.min.css';
 
 import { useTheme } from '../../themes';
 import { buildPlotContext, PlotContext, PlotPluginsContext } from './context';
