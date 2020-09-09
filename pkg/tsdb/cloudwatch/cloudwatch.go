@@ -80,11 +80,6 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 	cfgs := []*aws.Config{
 		regionCfg,
 	}
-	// Choose authentication scheme based on the type chosen for the data source
-	// Basically, we support the following methods:
-	// Shared credentials: Providing access key pair sourced from user's AWS credentials file
-	// Static credentials: Providing access key pair directly
-	// SDK: Leave it to SDK to decide
 	switch dsInfo.AuthType {
 	case authTypeSharedCreds:
 		plog.Debug("Authenticating towards AWS with shared credentials", "profile", dsInfo.Profile,
