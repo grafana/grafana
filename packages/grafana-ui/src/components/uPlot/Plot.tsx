@@ -4,7 +4,7 @@ import uPlot from 'uplot';
 import 'uplot/dist/uPlot.min.css';
 
 import { useTheme } from '../../themes';
-import { buildPlotContext, PlotContext, PlotPluginsContext } from './context';
+import { buildPlotContext, PlotContext, PlotPluginsContext, PlotDataContext } from './context';
 import { buildPlotConfig, pluginLog, preparePlotData } from './utils';
 import { PlotPlugin, PlotProps } from './types';
 
@@ -101,20 +101,22 @@ export const UPlotChart: React.FC<PlotProps> = props => {
   }, [props.width, props.height]);
 
   return (
-    <PlotPluginsContext.Provider value={{ registerPlugin }}>
-      <PlotContext.Provider value={buildPlotContext(plotInstance)}>
-        <div
-          className={css`
-            width: ${props.width}px;
-            height: ${props.height}px;
-            position: relative;
-          `}
-        >
-          <div title="canvas-ref" ref={canvasRef} />
-          {/* render plugins provided as children */}
-          {props.children}
-        </div>
-      </PlotContext.Provider>
-    </PlotPluginsContext.Provider>
+    <PlotDataContext.Provider value={{ data: props.data }}>
+      <PlotPluginsContext.Provider value={{ registerPlugin }}>
+        <PlotContext.Provider value={buildPlotContext(plotInstance)}>
+          <div
+            className={css`
+              width: ${props.width}px;
+              height: ${props.height}px;
+              position: relative;
+            `}
+          >
+            <div ref={canvasRef} />
+            {/* render plugins provided as children */}
+            {props.children}
+          </div>
+        </PlotContext.Provider>
+      </PlotPluginsContext.Provider>
+    </PlotDataContext.Provider>
   );
 };

@@ -174,3 +174,5 @@ export const pluginLog = throttle((id: string, throttle = false, ...t: any[]) =>
   const fn = throttle ? throttledLog : console.log;
   fn(`[Plugin: ${id}]: `, ...t);
 }, 500);
+
+const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
