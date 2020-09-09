@@ -20,25 +20,6 @@ func init() {
 		Description: "Sends notifications uto a HipChat Room",
 		Heading:     "HipChat settings",
 		Factory:     NewHipChatNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">HipChat settings</h3>
-			      <div class="gf-form max-width-30">
-			        <span class="gf-form-label width-8">Hip Chat Url</span>
-			        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="HipChat URL (ex https://grafana.hipchat.com)"></input>
-			      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">API Key</span>
-        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.apikey" placeholder="HipChat API Key"></input>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">Room ID</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.roomid"
-          data-placement="right">
-        </input>
-      </div>
-    `,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Hip Chat Url",

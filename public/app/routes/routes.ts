@@ -535,25 +535,22 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/alerting/notification/new', {
-      templateUrl: 'public/app/features/alerting/partials/notification_edit.html',
-      controller: 'AlertNotificationEditCtrl',
-      controllerAs: 'ctrl',
-      reloadOnSearch: false,
-    })
-    .when('/alerting/notification/new2', {
       template: '<react-container />',
       resolve: {
         component: () =>
           SafeDynamicImport(
-            import(/* webpackChunkName: "NewNotificationChannel" */ 'app/features/alerting/NewAlertNotificationPage')
+            import(/* webpackChunkName: "NewNotificationChannel" */ 'app/features/alerting/NewNotificationChannelPage')
           ),
       },
     })
     .when('/alerting/notification/:id/edit', {
-      templateUrl: 'public/app/features/alerting/partials/notification_edit.html',
-      controller: 'AlertNotificationEditCtrl',
-      controllerAs: 'ctrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "EditNotificationChannel"*/ 'app/features/alerting/EditNotificationChannelPage')
+          ),
+      },
     })
     .otherwise({
       template: '<react-container />',
