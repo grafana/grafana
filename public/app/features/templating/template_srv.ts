@@ -276,6 +276,7 @@ export class TemplateSrv implements BaseTemplateSrv {
 
       if (this.isAllValue(value)) {
         value = this.getAllValue(variable);
+        text = 'All';
         // skip formatting of custom all values
         if (variable.allValue) {
           return this.replace(value);

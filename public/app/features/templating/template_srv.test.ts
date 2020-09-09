@@ -622,6 +622,12 @@ describe('templateSrv', () => {
           name: 'empty_on_init',
           current: { value: '', text: '' },
         },
+        {
+          type: 'query',
+          name: 'databases',
+          current: { value: '$__all', text: '' },
+          options: [{ value: '$__all' }, { value: 'db1' }, { value: 'db2' }],
+        },
       ]);
       _templateSrv.updateIndex();
     });
@@ -634,6 +640,11 @@ describe('templateSrv', () => {
     it('should replace empty string-values with an empty string', () => {
       const target = _templateSrv.replaceWithText('Hello $empty_on_init');
       expect(target).toBe('Hello ');
+    });
+
+    it('should replace $__all with All', () => {
+      const target = _templateSrv.replaceWithText('Db: $databases');
+      expect(target).toBe('Db: All');
     });
   });
 
