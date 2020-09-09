@@ -95,6 +95,20 @@ describe('templateSrv', () => {
       expect(target).toBe('this.asd.filters');
     });
 
+    it('should replace ${test.name} with scoped text', () => {
+      const target = _templateSrv.replaceWithText('this.${test.name}.filters', {
+        test: { value: { name: 'mupp' }, text: 'asd' },
+      });
+      expect(target).toBe('this.mupp.filters');
+    });
+
+    it('should replace ${test.name} with variable text', () => {
+      const target = _templateSrv.replaceWithText('this.${test.name}.filters', {
+        test: { value: { name: 1 }, text: 'asd' },
+      });
+      expect(target).toBe('this.asd.filters');
+    });
+
     it('should replace ${test:glob} with scoped text', () => {
       const target = _templateSrv.replaceWithText('this.${test:glob}.filters', {
         test: { value: 'mupp', text: 'asd' },
