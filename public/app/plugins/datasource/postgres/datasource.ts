@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { getBackendSrv } from '@grafana/runtime';
 import { DataQueryResponse, ScopedVars } from '@grafana/data';
 
@@ -8,9 +9,8 @@ import PostgresQuery from 'app/plugins/datasource/postgres/postgres_query';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
-import { PostgresQueryForInterpolation } from './types';
+import { PostgresMetricFindValue, PostgresQueryForInterpolation } from './types';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
-import { map } from 'rxjs/operators';
 
 export class PostgresDatasource {
   id: any;
@@ -34,7 +34,7 @@ export class PostgresDatasource {
     this.interval = (instanceSettings.jsonData || {}).timeInterval || '1m';
   }
 
-  interpolateVariable = (value: string, variable: { multi: any; includeAll: any }) => {
+  interpolateVariable = (value: string | string[], variable: { multi: any; includeAll: any }) => {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
         return this.queryModel.quoteLiteral(value);
@@ -133,7 +133,10 @@ export class PostgresDatasource {
       .toPromise();
   }
 
-  metricFindQuery(query: string, optionalOptions: { variable?: any; searchFilter?: string }) {
+  metricFindQuery(
+    query: string,
+    optionalOptions: { variable?: any; searchFilter?: string }
+  ): Promise<PostgresMetricFindValue[]> {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
       refId = optionalOptions.variable.name;

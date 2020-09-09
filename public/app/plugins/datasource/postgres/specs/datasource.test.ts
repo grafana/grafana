@@ -35,9 +35,9 @@ describe('PostgreSQLDatasource', () => {
       }),
     } as unknown) as TimeSrv;
     const variable = { ...initialCustomVariableModelState };
-    const postgres = new PostgresDatasource({ name: 'postgresql' }, templateSrv, timeSrvMock);
+    const ds = new PostgresDatasource({ name: 'dsql' }, templateSrv, timeSrvMock);
 
-    return { postgres, templateSrv, timeSrvMock, variable };
+    return { ds, templateSrv, timeSrvMock, variable };
   };
 
   // https://rxjs-dev.firebaseapp.com/guide/testing/marble-testing
@@ -53,14 +53,14 @@ describe('PostgreSQLDatasource', () => {
       expect(actual).toEqual(expected);
     });
 
-    const { postgres } = setupTestContext({});
+    const { ds } = setupTestContext({});
 
     scheduler.run(({ cold, expectObservable }) => {
       const source = cold(marble, values);
       jest.clearAllMocks();
       fetchMock.mockImplementation(() => source);
 
-      const result = postgres.query(options);
+      const result = ds.query(options);
       expectObservable(result).toBe(expectedMarble, expectedValues);
     });
   };
@@ -78,7 +78,7 @@ describe('PostgreSQLDatasource', () => {
             rawQuery: true,
             rawSql: 'select time, metric from grafana_metric',
             refId: 'A',
-            datasource: 'gdev-postgres',
+            datasource: 'gdev-ds',
           },
         ],
       };
@@ -139,7 +139,7 @@ describe('PostgreSQLDatasource', () => {
             rawQuery: true,
             rawSql: 'select time, metric, value from grafana_metric',
             refId: 'A',
-            datasource: 'gdev-postgres',
+            datasource: 'gdev-ds',
           },
         ],
       };
@@ -221,24 +221,20 @@ describe('PostgreSQLDatasource', () => {
             rawQuery: true,
             rawSql: 'select time, metric, value from grafana_metric',
             refId: 'A',
-            datasource: 'gdev-postgres',
+            datasource: 'gdev-ds',
             hide: true,
           },
         ],
       };
 
-      const { postgres } = setupTestContext({});
+      const { ds } = setupTestContext({});
 
-      observableTester().subscribeAndExpectOnNext({
-        observable: postgres.query(options),
-        expect: value => {
+      observableTester().subscribeAndExpectOnNextAndComplete({
+        observable: ds.query(options),
+        expectOnNext: value => {
           expect(value).toEqual({ data: [] });
         },
-      });
-
-      observableTester().subscribeAndExpectOnComplete({
-        observable: postgres.query(options),
-        expect: () => {
+        expectOnComplete: () => {
           expect(fetchMock).not.toHaveBeenCalled();
         },
         done,
@@ -277,9 +273,9 @@ describe('PostgreSQLDatasource', () => {
         },
       };
 
-      const { postgres } = setupTestContext(data);
+      const { ds } = setupTestContext(data);
 
-      const results = await postgres.annotationQuery(options);
+      const results = await ds.annotationQuery(options);
 
       expect(results.length).toBe(3);
 
@@ -318,9 +314,9 @@ describe('PostgreSQLDatasource', () => {
         },
       };
 
-      const { postgres } = setupTestContext(data);
+      const { ds } = setupTestContext(data);
 
-      const results = await postgres.metricFindQuery(query, {});
+      const results = await ds.metricFindQuery(query, {});
 
       expect(results.length).toBe(6);
       expect(results[0].text).toBe('aTitle');
@@ -352,9 +348,9 @@ describe('PostgreSQLDatasource', () => {
         },
       };
 
-      const { postgres } = setupTestContext(data);
+      const { ds } = setupTestContext(data);
 
-      const results = await postgres.metricFindQuery(query, { searchFilter: 'aTit' });
+      const results = await ds.metricFindQuery(query, { searchFilter: 'aTit' });
 
       expect(fetchMock).toBeCalledTimes(1);
       expect(fetchMock.mock.calls[0][0].data.queries[0].rawSql).toBe(
@@ -395,9 +391,9 @@ describe('PostgreSQLDatasource', () => {
         },
       };
 
-      const { postgres } = setupTestContext(data);
+      const { ds } = setupTestContext(data);
 
-      const results = await postgres.metricFindQuery(query, {});
+      const results = await ds.metricFindQuery(query, {});
 
       expect(fetchMock).toBeCalledTimes(1);
       expect(fetchMock.mock.calls[0][0].data.queries[0].rawSql).toBe("select title from atable where title LIKE '%'");
@@ -436,15 +432,15 @@ describe('PostgreSQLDatasource', () => {
         },
       };
 
-      const { postgres } = setupTestContext(data);
+      const { ds } = setupTestContext(data);
 
-      const results = await postgres.metricFindQuery(query, {});
+      const results = await ds.metricFindQuery(query, {});
 
-      expect(results.length).toBe(3);
-      expect(results[0].text).toBe('aTitle');
-      expect(results[0].value).toBe('value1');
-      expect(results[2].text).toBe('aTitle3');
-      expect(results[2].value).toBe('value3');
+      expect(results).toEqual([
+        { text: 'aTitle', value: 'value1' },
+        { text: 'aTitle2', value: 'value2' },
+        { text: 'aTitle3', value: 'value3' },
+      ]);
     });
   });
 
@@ -472,60 +468,58 @@ describe('PostgreSQLDatasource', () => {
         },
       };
 
-      const { postgres } = setupTestContext(data);
+      const { ds } = setupTestContext(data);
 
-      const results = await postgres.metricFindQuery(query, {});
+      const results = await ds.metricFindQuery(query, {});
 
-      expect(results.length).toBe(1);
-      expect(results[0].text).toBe('aTitle');
-      expect(results[0].value).toBe('same');
+      expect(results).toEqual([{ text: 'aTitle', value: 'same' }]);
     });
   });
 
   describe('When interpolating variables', () => {
     describe('and value is a string', () => {
       it('should return an unquoted value', () => {
-        const { postgres, variable } = setupTestContext({});
-        expect(postgres.interpolateVariable('abc', variable)).toEqual('abc');
+        const { ds, variable } = setupTestContext({});
+        expect(ds.interpolateVariable('abc', variable)).toEqual('abc');
       });
     });
 
     describe('and value is a number', () => {
       it('should return an unquoted value', () => {
-        const { postgres, variable } = setupTestContext({});
-        expect(postgres.interpolateVariable(1000, variable)).toEqual(1000);
+        const { ds, variable } = setupTestContext({});
+        expect(ds.interpolateVariable((1000 as unknown) as string, variable)).toEqual(1000);
       });
     });
 
     describe('and value is an array of strings', () => {
       it('should return comma separated quoted values', () => {
-        const { postgres, variable } = setupTestContext({});
-        expect(postgres.interpolateVariable(['a', 'b', 'c'], variable)).toEqual("'a','b','c'");
+        const { ds, variable } = setupTestContext({});
+        expect(ds.interpolateVariable(['a', 'b', 'c'], variable)).toEqual("'a','b','c'");
       });
     });
 
     describe('and variable allows multi-value and is a string', () => {
       it('should return a quoted value', () => {
-        const { postgres, variable } = setupTestContext({});
+        const { ds, variable } = setupTestContext({});
         variable.multi = true;
-        expect(postgres.interpolateVariable('abc', variable)).toEqual("'abc'");
+        expect(ds.interpolateVariable('abc', variable)).toEqual("'abc'");
       });
     });
 
     describe('and variable contains single quote', () => {
       it('should return a quoted value', () => {
-        const { postgres, variable } = setupTestContext({});
+        const { ds, variable } = setupTestContext({});
         variable.multi = true;
-        expect(postgres.interpolateVariable("a'bc", variable)).toEqual("'a''bc'");
-        expect(postgres.interpolateVariable("a'b'c", variable)).toEqual("'a''b''c'");
+        expect(ds.interpolateVariable("a'bc", variable)).toEqual("'a''bc'");
+        expect(ds.interpolateVariable("a'b'c", variable)).toEqual("'a''b''c'");
       });
     });
 
     describe('and variable allows all and is a string', () => {
       it('should return a quoted value', () => {
-        const { postgres, variable } = setupTestContext({});
+        const { ds, variable } = setupTestContext({});
         variable.includeAll = true;
-        expect(postgres.interpolateVariable('abc', variable)).toEqual("'abc'");
+        expect(ds.interpolateVariable('abc', variable)).toEqual("'abc'");
       });
     });
   });
@@ -548,14 +542,14 @@ describe('PostgreSQLDatasource', () => {
         rawSql,
         rawQuery: true,
       };
-      const { templateSrv, postgres } = setupTestContext({});
+      const { templateSrv, ds } = setupTestContext({});
 
       templateSrv.init([
         { type: 'query', name: 'summarize', current: { value: '1m' } },
         { type: 'query', name: 'host', current: { value: 'a' } },
       ]);
 
-      expect(postgres.targetContainsTemplate(query)).toBeTruthy();
+      expect(ds.targetContainsTemplate(query)).toBeTruthy();
     });
 
     it('given query that only contains global template variable it should return false', () => {
@@ -574,14 +568,14 @@ describe('PostgreSQLDatasource', () => {
         rawSql,
         rawQuery: true,
       };
-      const { templateSrv, postgres } = setupTestContext({});
+      const { templateSrv, ds } = setupTestContext({});
 
       templateSrv.init([
         { type: 'query', name: 'summarize', current: { value: '1m' } },
         { type: 'query', name: 'host', current: { value: 'a' } },
       ]);
 
-      expect(postgres.targetContainsTemplate(query)).toBeFalsy();
+      expect(ds.targetContainsTemplate(query)).toBeFalsy();
     });
   });
 });
