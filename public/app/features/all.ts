@@ -5,7 +5,6 @@ import './dashboard';
 import './playlist/all';
 import './panel/all';
 import './admin';
-import './alerting/NotificationsEditCtrl';
 import './manage-dashboards';
 import './profile/all';
 import './datasources/settings/HttpSettingsCtrl';
