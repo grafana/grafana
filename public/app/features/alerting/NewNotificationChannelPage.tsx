@@ -38,11 +38,11 @@ class NewNotificationChannelPage extends PureComponent<Props> {
   }
 
   onSubmit = (data: NotificationChannelDTO) => {
-    this.props.createNotificationChannel(transformSubmitData(data));
+    this.props.createNotificationChannel(transformSubmitData({ ...defaultValues, ...data }));
   };
 
   onTestChannel = (data: NotificationChannelDTO) => {
-    this.props.testNotificationChannel(transformTestData(data));
+    this.props.testNotificationChannel(transformTestData({ ...defaultValues, ...data }));
   };
 
   render() {
