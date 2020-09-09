@@ -24,7 +24,6 @@ export class SettingsCtrl {
   hasUnsavedFolderChange: boolean;
   selectors: typeof selectors.pages.Dashboard.Settings.General;
   renderCount: number; // hack to update React when Angular changes
-  refreshIntervals: string[];
 
   /** @ngInject */
   constructor(

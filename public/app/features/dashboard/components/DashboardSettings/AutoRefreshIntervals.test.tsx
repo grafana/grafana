@@ -1,9 +1,10 @@
 import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { defaultIntervals } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 import { AutoRefreshIntervals, getValidIntervals, Props, validateIntervals } from './AutoRefreshIntervals';
-import { TimeSrv } from '../../services/TimeSrv';
+import { TimeSrv } from 'app/core/services/TimeSrv';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
@@ -25,9 +26,7 @@ describe('AutoRefreshIntervals', () => {
     it('then supplied intervals should be shown', () => {
       setupTestContext({ getIntervalsFunc: () => ['5s', '10s'] }); // remove 1s entry to validate we're calling getIntervalsFunc
 
-      const input = (screen.getByRole('textbox') as unknown) as HTMLInputElement;
-
-      expect(input.value).toEqual('5s,10s');
+      expect(screen.getByRole('textbox')).toHaveValue('5s,10s');
     });
   });
 
@@ -35,9 +34,7 @@ describe('AutoRefreshIntervals', () => {
     it('then default intervals should be shown', () => {
       setupTestContext({ refreshIntervals: (null as unknown) as string[] });
 
-      const input = (screen.getByRole('textbox') as unknown) as HTMLInputElement;
-
-      expect(input.value).toEqual('5s,10s,30s,1m,5m,15m,30m,1h,2h,1d');
+      expect(screen.getByRole('textbox')).toHaveValue('5s,10s,30s,1m,5m,15m,30m,1h,2h,1d');
     });
   });
 
@@ -48,9 +45,7 @@ describe('AutoRefreshIntervals', () => {
 
       rerender(<AutoRefreshIntervals {...newProps} />);
 
-      const input = (screen.getByRole('textbox') as unknown) as HTMLInputElement;
-
-      expect(input.value).toEqual('2s,6s,11s');
+      expect(screen.getByRole('textbox')).toHaveValue('2s,6s,11s');
     });
   });
 
@@ -58,19 +53,12 @@ describe('AutoRefreshIntervals', () => {
     it('then onRefreshIntervalChange should be called', () => {
       const { props } = setupTestContext({ validateIntervalsFunc: () => null });
 
-      const input = (screen.getByRole('textbox') as unknown) as HTMLInputElement;
+      userEvent.type(screen.getByRole('textbox'), ',30s');
+      userEvent.tab();
 
-      act(() => {
-        fireEvent.change(input, { target: { value: '2s,6s,11s' } });
-      });
-
-      act(() => {
-        fireEvent.blur(input);
-      });
-
-      expect(input.value).toEqual('2s,6s,11s');
+      expect(screen.getByRole('textbox')).toHaveValue('1s,5s,10s,30s');
       expect(props.onRefreshIntervalChange).toHaveBeenCalledTimes(1);
-      expect(props.onRefreshIntervalChange).toHaveBeenCalledWith(['2s', '6s', '11s']);
+      expect(props.onRefreshIntervalChange).toHaveBeenCalledWith(['1s', '5s', '10s', '30s']);
     });
   });
 
@@ -78,18 +66,30 @@ describe('AutoRefreshIntervals', () => {
     it('then onRefreshIntervalChange should not be called', () => {
       const { props } = setupTestContext({ validateIntervalsFunc: () => 'Not valid' });
 
-      const input = (screen.getByRole('textbox') as unknown) as HTMLInputElement;
+      userEvent.type(screen.getByRole('textbox'), ',30q');
+      userEvent.tab();
 
-      act(() => {
-        fireEvent.change(input, { target: { value: '2q' } });
-      });
-
-      act(() => {
-        fireEvent.blur(input);
-      });
-
-      expect(input.value).toEqual('2q');
+      expect(screen.getByRole('textbox')).toHaveValue('1s,5s,10s,30q');
       expect(props.onRefreshIntervalChange).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('when input loses focus and previous intervals were invalid', () => {
+    it('then onRefreshIntervalChange should be called', () => {
+      const validateIntervalsFunc = jest
+        .fn()
+        .mockReturnValueOnce('Not valid')
+        .mockReturnValue(null);
+      const { props } = setupTestContext({ validateIntervalsFunc });
+
+      userEvent.type(screen.getByRole('textbox'), ',30q');
+      userEvent.tab();
+      userEvent.type(screen.getByRole('textbox'), '{backspace}s');
+      userEvent.tab();
+
+      expect(screen.getByRole('textbox')).toHaveValue('1s,5s,10s,30s');
+      expect(props.onRefreshIntervalChange).toHaveBeenCalledTimes(1);
+      expect(props.onRefreshIntervalChange).toHaveBeenCalledWith(['1s', '5s', '10s', '30s']);
     });
   });
 });

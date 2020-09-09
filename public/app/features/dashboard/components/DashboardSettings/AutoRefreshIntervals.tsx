@@ -60,13 +60,12 @@ export const AutoRefreshIntervals: FC<Props> = ({
 
   return (
     <div className="gf-form">
-      <span className="gf-form-label width-7">Auto-refresh</span>
-      {invalidIntervalsMessage && (
+      <label className="gf-form-label width-7">Auto-refresh</label>
+      {invalidIntervalsMessage ? (
         <Tooltip placement="right" content={invalidIntervalsMessage}>
           <Input width={60} invalid value={intervalsString} onChange={onIntervalsChange} onBlur={onIntervalsBlur} />
         </Tooltip>
-      )}
-      {!invalidIntervalsMessage && (
+      ) : (
         <Input width={60} value={intervalsString} onChange={onIntervalsChange} onBlur={onIntervalsBlur} />
       )}
     </div>
