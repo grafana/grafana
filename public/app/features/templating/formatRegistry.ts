@@ -201,17 +201,28 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: 'text',
       name: 'Text',
       description: 'Format variables in their text representation. Example in multi variable scenario A + B + C.',
-      formatter: ({ text }, variable) => {
-        if (typeof text === 'string') {
-          return text;
+      formatter: (options, variable) => {
+        if (typeof options.text === 'string') {
+          return options.text;
         }
 
         const current = (variable as any)?.current;
 
-        if (typeof current?.value === 'string') {
-          return current.value;
+        if (!current) {
+          return '';
         }
-        return current.text;
+
+        const { value, text } = current;
+
+        if (Array.isArray(value)) {
+          return value.join(' + ');
+        }
+
+        if (typeof value === 'string') {
+          return value;
+        }
+
+        return text ?? '';
       },
     },
   ];

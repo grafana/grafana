@@ -609,6 +609,34 @@ describe('templateSrv', () => {
     });
   });
 
+  describe('replaceWithText can pass all / multi value', () => {
+    beforeEach(() => {
+      initTemplateSrv([
+        {
+          type: 'query',
+          name: 'server',
+          current: { value: ['server1', 'server2'] },
+        },
+        {
+          type: 'textbox',
+          name: 'empty_on_init',
+          current: { value: '', text: '' },
+        },
+      ]);
+      _templateSrv.updateIndex();
+    });
+
+    it('should replace with text with variable label', () => {
+      const target = _templateSrv.replaceWithText('Server: $server');
+      expect(target).toBe('Server: server1 + server2');
+    });
+
+    it('should replace empty string-values with an empty string', () => {
+      const target = _templateSrv.replaceWithText('Hello $empty_on_init');
+      expect(target).toBe('Hello ');
+    });
+  });
+
   describe('built in interval variables', () => {
     beforeEach(() => {
       initTemplateSrv([]);
