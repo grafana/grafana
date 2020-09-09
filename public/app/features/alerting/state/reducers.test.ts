@@ -335,9 +335,6 @@ describe('Notification channel', () => {
         frequency: '',
         created: '2020-08-28T08:49:24Z',
         updated: '2020-08-28T08:49:24Z',
-        secureFields: {
-          password: true,
-        },
         secureSettings: {
           password: 'asdf',
         },

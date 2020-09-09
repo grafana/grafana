@@ -129,12 +129,10 @@ function migrateSecureFields(
   notificationChannel: any,
   secureChannelOptions: NotificationChannelOption[]
 ) {
-  const secureFields: { [key: string]: boolean } = {};
   const cleanedSettings: { [key: string]: string } = {};
   const secureSettings: { [key: string]: string } = {};
 
   secureChannelOptions.forEach(option => {
-    secureFields[option.propertyName] = true;
     secureSettings[option.propertyName] = notificationChannel.settings[option.propertyName];
     cleanedSettings[option.propertyName] = '';
   });
@@ -143,7 +141,6 @@ function migrateSecureFields(
     ...state,
     notificationChannel: {
       ...notificationChannel,
-      secureFields: { ...secureFields },
       settings: { ...notificationChannel.settings, ...cleanedSettings },
       secureSettings: { ...secureSettings },
     },
