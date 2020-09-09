@@ -307,23 +307,21 @@ export class TemplateSrv implements BaseTemplateSrv {
 
     const targetWithFormat = target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
       const format = fmt2 ?? fmt3;
-      const variable = var1 ?? var2 ?? var3;
+      const variable = variableNameWithFieldPath(var1 ?? var2 ?? var3, fieldPath);
 
       if (!variable) {
         return match;
       }
 
-      const fullVariable = `${variable}${fieldPath ?? ''}`;
-
       if (format) {
-        return match.replace(`${fullVariable}:${format}`, `${fullVariable}:text`);
+        return match.replace(`${variable}:${format}`, `${variable}:text`);
       }
 
       if (match.indexOf(`$${variable}`) > -1) {
-        return match.replace(`$${fullVariable}`, `\${${fullVariable}:text}`);
+        return match.replace(`$${variable}`, `\${${variable}:text}`);
       }
 
-      return match.replace(`${fullVariable}`, `${fullVariable}:text`);
+      return match.replace(`${variable}`, `${variable}:text`);
     });
 
     return this.replace(targetWithFormat, scopedVars);
@@ -361,6 +359,13 @@ export class TemplateSrv implements BaseTemplateSrv {
     return this.dependencies.getFilteredVariables(isAdHoc);
   }
 }
+
+const variableNameWithFieldPath = (variable: string, fieldPath?: string): string => {
+  if (!fieldPath) {
+    return variable;
+  }
+  return `${variable}.${fieldPath}`;
+};
 
 // Expose the template srv
 const srv = new TemplateSrv();
