@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
-
 	"github.com/aws/aws-sdk-go/aws/credentials"
+
+	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 )
 
 const (
@@ -15,14 +15,17 @@ const (
 )
 
 type Sigv4Middleware struct {
-	Region      string
-	Credentials *credentials.Credentials
-	Next        http.RoundTripper
+	Config *Config
+	Next   http.RoundTripper
+}
+
+type Config struct {
+	Region    string
+	AccessKey string
+	SecretKey string
 }
 
 func (m *Sigv4Middleware) RoundTrip(req *http.Request) (*http.Response, error) {
-	log.Println("Signing with sigv4")
-
 	if m.Next == nil {
 		return http.DefaultTransport.RoundTrip(req)
 	}
@@ -38,8 +41,8 @@ func (m *Sigv4Middleware) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func (m *Sigv4Middleware) signRequest(req *http.Request) error {
-	signer := v4.NewSigner(m.Credentials)
-	_, err := signer.Sign(req, nil, "grafana", m.Region, time.Now())
+	signer := v4.NewSigner(credentials.NewStaticCredentials(m.Config.AccessKey, m.Config.SecretKey, ""))
+	_, err := signer.Sign(req, nil, "grafana", m.Config.Region, time.Now())
 
 	return err
 }

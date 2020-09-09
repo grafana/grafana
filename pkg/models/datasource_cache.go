@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"sync"
@@ -28,7 +27,6 @@ type dataSourceTransport struct {
 
 // RoundTrip executes a single HTTP transaction, returning a Response for the provided Request.
 func (d *dataSourceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	log.Println("Setting custom headers")
 	for key, value := range d.headers {
 		req.Header.Set(key, value)
 	}
@@ -88,10 +86,18 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 		IdleConnTimeout:       90 * time.Second,
 	}
 
+	decrypted := ds.SecureJsonData.Decrypt()
+	accessKey := decrypted["sigv4AccessKey"]
+	secretKey := decrypted["sigv4SecretKey"]
+	region := ds.JsonData.Get("sigv4Region").MustString()
+
 	sigv4Middleware := &Sigv4Middleware{
-		Credentials: nil,
-		Region:      "",
-		Next:        transport,
+		Config: &Config{
+			AccessKey: accessKey,
+			SecretKey: secretKey,
+			Region:    region,
+		},
+		Next: transport,
 	}
 
 	dsTransport := &dataSourceTransport{

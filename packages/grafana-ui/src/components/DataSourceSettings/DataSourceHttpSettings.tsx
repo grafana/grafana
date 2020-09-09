@@ -1,11 +1,10 @@
-import React, { useState, useCallback } from 'react';
-import { SelectableValue } from '@grafana/data';
+import React, { useCallback, useState } from 'react';
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { useTheme } from '../../themes';
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { HttpProxySettings } from './HttpProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
-import { DataSourceSettings } from '@grafana/data';
 import { HttpSettingsProps } from './types';
 import { CustomHeadersSettings } from './CustomHeadersSettings';
 import { Select } from '../Forms/Legacy/Select/Select';
@@ -15,6 +14,7 @@ import { FormField } from '../FormField/FormField';
 import { FormLabel } from '../FormLabel/FormLabel';
 import { Switch } from '../Forms/Legacy/Switch/Switch';
 import { TagsInput } from '../TagsInput/TagsInput';
+import { Sigv4AuthSettings } from './Sigv4AuthSettings';
 
 const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
   {
@@ -190,6 +190,19 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
             />
           </div>
 
+          <div className="gf-form-inline">
+            <Switch
+              label="Sigv4 auth"
+              labelClass="width-13"
+              checked={dataSourceConfig.jsonData.sigv4Auth || false}
+              onChange={event => {
+                onSettingsChange({
+                  jsonData: { ...dataSourceConfig.jsonData, sigv4Auth: event!.currentTarget.checked },
+                });
+              }}
+            />
+          </div>
+
           {dataSourceConfig.access === 'proxy' && (
             <HttpProxySettings
               dataSourceConfig={dataSourceConfig}
@@ -202,6 +215,15 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
             <h6>Basic Auth Details</h6>
             <div className="gf-form-group">
               <BasicAuthSettings {...props} />
+            </div>
+          </>
+        )}
+
+        {dataSourceConfig.jsonData.sigv4Auth && (
+          <>
+            <h6>Sigv4 Auth Details</h6>
+            <div className="gf-form-group">
+              <Sigv4AuthSettings {...props} />
             </div>
           </>
         )}
