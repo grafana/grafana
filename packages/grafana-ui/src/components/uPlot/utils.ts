@@ -1,7 +1,9 @@
 import throttle from 'lodash/throttle';
+import tinycolor from 'tinycolor2';
 import {
   DataFrame,
   FieldType,
+  formattedValueToString,
   getFieldDisplayName,
   getTimeField,
   GrafanaTheme,
@@ -52,7 +54,7 @@ export const buildSeriesConfig = (
     stroke: theme.colors.text,
     grid: {
       show: true,
-      stroke: theme.palette.gray1,
+      stroke: theme.palette.gray4,
       width: 1 / devicePixelRatio,
     },
   });
@@ -61,9 +63,7 @@ export const buildSeriesConfig = (
 
   for (let i = 0; i < data.fields.length; i++) {
     const field = data.fields[i];
-
-    // TODO
-    // const fmt = field.display ?? defaultFormatter;
+    const fmt = field.display ?? defaultFormatter;
 
     if (i === timeIndex || field.type !== FieldType.number) {
       continue;
@@ -75,16 +75,17 @@ export const buildSeriesConfig = (
       scales[scale] = {};
       axes.push({
         scale,
+        label: field.config.custom.axisLabel,
         show: true,
         size: 80,
         stroke: theme.colors.text,
-        side: 3,
+        side: field.config.custom.axisSide || 3,
         grid: {
-          show: true,
-          stroke: theme.palette.gray1, // X grid lines
+          show: field.config.custom.axisGrid,
+          stroke: theme.palette.gray4,
           width: 1 / devicePixelRatio,
         },
-        // values: (u, vals, space) => vals.map(v => formattedValueToString(fmt(v))),
+        values: (u, vals) => vals.map(v => formattedValueToString(fmt(v))),
       });
     }
 
@@ -92,10 +93,15 @@ export const buildSeriesConfig = (
       scale,
       label: getFieldDisplayName(field, data),
       stroke: colors[seriesIdx],
-      width: 1,
+      fill: field.config.custom.fillAlpha
+        ? tinycolor(colors[seriesIdx])
+            .setAlpha(field.config.custom.fillAlpha)
+            .toRgbString()
+        : undefined,
+      width: field.config.custom.showLines ? field.config.custom.lineWidth || 1 : 0,
       points: {
-        show: false,
-        size: 20,
+        show: field.config.custom.showPoints,
+        size: field.config.custom.pointRadius || 5,
       },
     });
     seriesIdx += 1;
