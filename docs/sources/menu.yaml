@@ -126,6 +126,8 @@
       name: Add data source
     - link: /features/datasources/cloudwatch/
       name: AWS Cloudwatch
+    - link: /features/datasources/x-ray/
+      name: AWS X-Ray
     - link: /features/datasources/azuremonitor/
       name: Azure Monitor
     - link: /features/datasources/elasticsearch/

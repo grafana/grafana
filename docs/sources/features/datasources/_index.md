@@ -22,6 +22,7 @@ The query language and capabilities of each data source are obviously very diffe
 The following data sources are officially supported:
 
 * [AWS CloudWatch]({{< relref "cloudwatch.md" >}})
+* [AWS X-Ray]({{< relref "x-ray.md" >}})
 * [Azure Monitor]({{< relref "azuremonitor.md" >}})
 * [Elasticsearch]({{< relref "elasticsearch.md" >}})
 * [Google Cloud Monitoring]({{< relref "cloudmonitoring.md" >}})
