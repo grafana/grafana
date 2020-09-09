@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { defaultIntervals } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 import { AutoRefreshIntervals, getValidIntervals, Props, validateIntervals } from './AutoRefreshIntervals';
-import { TimeSrv } from 'app/core/services/TimeSrv';
+import { TimeSrv } from '../../services/TimeSrv';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
