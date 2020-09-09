@@ -52,7 +52,7 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   return (
     <UPlotChart data={alignedData} timeRange={timeRange} width={width} height={height}>
       <PlotLegend />
-      <TooltipPlugin />
+      <TooltipPlugin mode={options.tooltipOptions.mode as any} />
 
       {/*<AnnotationsEditorPlugin*/}
       {/*  onAnnotationCreate={() => {*/}

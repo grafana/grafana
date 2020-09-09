@@ -36,26 +36,30 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({ position, of
     y: position.y + offset.y,
   });
 
+  console.log(placement);
+
+  console.log(offset);
   // Make sure tooltip does not overflow window
   useLayoutEffect(() => {
     let xO = 0,
       yO = 0;
     if (tooltipRef && tooltipRef.current) {
       const measurement = tooltipRef.current.getBoundingClientRect();
+      console.log(measurement);
       const xOverflow = width - (position.x + measurement.width);
       const yOverflow = height - (position.y + measurement.height);
       if (xOverflow < 0) {
-        xO = measurement.width + offset.x;
+        xO = measurement.width;
       }
 
       if (yOverflow < 0) {
-        yO = measurement.height + offset.y;
+        yO = measurement.height;
       }
     }
 
     setPlacement({
-      x: position.x - xO,
-      y: position.y - yO,
+      x: position.x + offset.x - xO,
+      y: position.y + offset.y - yO,
     });
   }, [tooltipRef, position]);
 
