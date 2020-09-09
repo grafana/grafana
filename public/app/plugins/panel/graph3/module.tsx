@@ -45,7 +45,6 @@ export const plugin = new PanelPlugin<Options>(GraphPanel)
           name: 'Point radius',
           settings: {
             options: [
-              { value: 0.5, label: '0.5' },
               { value: 1, label: '1 • thin' },
               { value: 2, label: '2' },
               { value: 3, label: '3' },
@@ -93,6 +92,25 @@ export const plugin = new PanelPlugin<Options>(GraphPanel)
           name: 'Axis Label',
           settings: {
             placeholder: 'Optional text',
+          },
+          // no matter what the field type is
+          shouldApply: () => true,
+        })
+        .addBooleanSwitch({
+          path: 'axisGrid',
+          name: 'Show axis grid',
+          description: '',
+          defaultValue: true,
+        })
+        .addRadio({
+          path: 'axisSide',
+          name: 'Y axis side',
+          defaultValue: { value: 3, label: 'Left' },
+          settings: {
+            options: [
+              { value: 3, label: 'Left' },
+              { value: 1, label: 'Right' },
+            ],
           },
         });
     },
