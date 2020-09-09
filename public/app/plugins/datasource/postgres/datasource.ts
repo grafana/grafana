@@ -1,13 +1,16 @@
 import _ from 'lodash';
+import { Observable, of } from 'rxjs';
+import { getBackendSrv } from '@grafana/runtime';
+import { DataQueryResponse, ScopedVars } from '@grafana/data';
+
 import ResponseParser from './response_parser';
 import PostgresQuery from 'app/plugins/datasource/postgres/postgres_query';
-import { getBackendSrv } from '@grafana/runtime';
-import { ScopedVars } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
 import { PostgresQueryForInterpolation } from './types';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
+import { map } from 'rxjs/operators';
 
 export class PostgresDatasource {
   id: any;
@@ -69,7 +72,7 @@ export class PostgresDatasource {
     return expandedQueries;
   }
 
-  query(options: any) {
+  query(options: any): Observable<DataQueryResponse> {
     const queries = _.filter(options.targets, target => {
       return target.hide !== true;
     }).map(target => {
@@ -86,11 +89,11 @@ export class PostgresDatasource {
     });
 
     if (queries.length === 0) {
-      return Promise.resolve({ data: [] });
+      return of({ data: [] });
     }
 
     return getBackendSrv()
-      .datasourceRequest({
+      .fetch({
         url: '/api/tsdb/query',
         method: 'POST',
         data: {
@@ -99,7 +102,7 @@ export class PostgresDatasource {
           queries: queries,
         },
       })
-      .then(this.responseParser.processQueryResult);
+      .pipe(map(this.responseParser.processQueryResult));
   }
 
   annotationQuery(options: any) {
@@ -117,7 +120,7 @@ export class PostgresDatasource {
     };
 
     return getBackendSrv()
-      .datasourceRequest({
+      .fetch({
         url: '/api/tsdb/query',
         method: 'POST',
         data: {
@@ -126,7 +129,8 @@ export class PostgresDatasource {
           queries: [query],
         },
       })
-      .then((data: any) => this.responseParser.transformAnnotationResponse(options, data));
+      .pipe(map((data: any) => this.responseParser.transformAnnotationResponse(options, data)))
+      .toPromise();
   }
 
   metricFindQuery(query: string, optionalOptions: { variable?: any; searchFilter?: string }) {
@@ -156,12 +160,13 @@ export class PostgresDatasource {
     };
 
     return getBackendSrv()
-      .datasourceRequest({
+      .fetch({
         url: '/api/tsdb/query',
         method: 'POST',
         data: data,
       })
-      .then((data: any) => this.responseParser.parseMetricFindQueryResult(refId, data));
+      .pipe(map((data: any) => this.responseParser.parseMetricFindQueryResult(refId, data)))
+      .toPromise();
   }
 
   getVersion() {
