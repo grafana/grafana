@@ -5,6 +5,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { action } from '@storybook/addon-actions';
 import { Button } from '../Button';
 import { DeleteButton } from './DeleteButton';
+import mdx from './ConfirmButton.mdx';
 
 const getKnobs = () => {
   return {
@@ -31,6 +32,11 @@ export default {
   component: ConfirmButton,
   decorators: [withCenteredStory],
   subcomponents: { DeleteButton },
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 export const basic = () => {
