@@ -1,15 +1,29 @@
 import React from 'react';
-import { mount, shallow } from 'enzyme';
-import { SearchResultsFilter, Props } from './SearchResultsFilter';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { Props, SearchResultsFilter } from './SearchResultsFilter';
+import { SearchLayout } from '../types';
+
+jest.mock('app/core/services/search_srv');
 
 const noop = jest.fn();
 
-const findBtnByText = (wrapper: any, text: string) =>
-  wrapper.findWhere((c: any) => c.name() === 'Button' && c.text() === text);
+beforeEach(() => {
+  jest.clearAllMocks();
+});
 
-const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
+const searchQuery = {
+  starred: false,
+  sort: null,
+  tag: ['tag'],
+  query: '',
+  skipRecent: true,
+  skipStarred: true,
+  folderIds: [],
+  layout: SearchLayout.Folders,
+};
+
+const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
-    //@ts-ignore
     allChecked: false,
     canDelete: false,
     canMove: false,
@@ -18,73 +32,57 @@ const setup = (propOverrides?: Partial<Props>, renderMethod = shallow) => {
     onStarredFilterChange: noop,
     onTagFilterChange: noop,
     onToggleAllChecked: noop,
-    //@ts-ignore
-    query: { starred: false, sort: null, tag: ['tag'] },
+    onLayoutChange: noop,
+    query: searchQuery,
     onSortChange: noop,
     editable: true,
   };
 
   Object.assign(props, propOverrides);
 
-  const wrapper = renderMethod(<SearchResultsFilter {...props} />);
-  const instance = wrapper.instance();
-
-  return {
-    wrapper,
-    instance,
-  };
+  render(<SearchResultsFilter {...props} />);
 };
 
 describe('SearchResultsFilter', () => {
-  it('should render "filter by starred" and "filter by tag" filters by default', () => {
-    const { wrapper } = setup();
-    const ActionRow = wrapper.find('ActionRow').shallow();
-    expect(ActionRow.find('Checkbox')).toHaveLength(1);
-    expect(findBtnByText(wrapper, 'Move')).toHaveLength(0);
-    expect(findBtnByText(wrapper, 'Delete')).toHaveLength(0);
+  it('should render "filter by starred" and "filter by tag" filters by default', async () => {
+    setup();
+    expect(await screen.findAllByRole('checkbox')).toHaveLength(1);
+    expect(screen.queryByText('Move')).not.toBeInTheDocument();
+    expect(screen.queryByText('Delete')).not.toBeInTheDocument();
   });
 
   it('should render Move and Delete buttons when canDelete is true', () => {
-    const { wrapper } = setup({ canDelete: true });
-    expect(wrapper.find('Checkbox')).toHaveLength(1);
-    expect(findBtnByText(wrapper, 'Move')).toHaveLength(1);
-    expect(findBtnByText(wrapper, 'Delete')).toHaveLength(1);
+    setup({ canDelete: true });
+    expect(screen.getAllByRole('checkbox')).toHaveLength(1);
+    expect(screen.queryByText('Move')).toBeInTheDocument();
+    expect(screen.queryByText('Delete')).toBeInTheDocument();
   });
 
   it('should render Move and Delete buttons when canMove is true', () => {
-    const { wrapper } = setup({ canMove: true });
-    expect(wrapper.find('Checkbox')).toHaveLength(1);
-    expect(findBtnByText(wrapper, 'Move')).toHaveLength(1);
-    expect(findBtnByText(wrapper, 'Delete')).toHaveLength(1);
+    setup({ canMove: true });
+    expect(screen.getAllByRole('checkbox')).toHaveLength(1);
+    expect(screen.queryByText('Move')).toBeInTheDocument();
+    expect(screen.queryByText('Delete')).toBeInTheDocument();
   });
 
-  it('should be called with proper filter option when "filter by starred" is changed', () => {
+  it('should call onStarredFilterChange when "filter by starred" is changed', async () => {
     const mockFilterStarred = jest.fn();
-    const option = { value: true, label: 'Yes' };
-    //@ts-ignore
-    const { wrapper } = setup({ onStarredFilterChange: mockFilterStarred }, mount);
-    //@ts-ignore
-    wrapper
-      .find('Checkbox')
-      .at(1)
-      .prop('onChange')(option as any);
-
+    setup({ onStarredFilterChange: mockFilterStarred });
+    const checkbox = await screen.findByLabelText(/filter by starred/i);
+    fireEvent.click(checkbox);
     expect(mockFilterStarred).toHaveBeenCalledTimes(1);
-    expect(mockFilterStarred).toHaveBeenCalledWith(option);
   });
 
-  it('should be called with proper filter option when "filter by tags" is changed', () => {
+  it('should be called with proper filter option when "filter by tags" is changed', async () => {
     const mockFilterByTags = jest.fn();
-    const tags = [
-      { value: 'tag1', label: 'Tag 1' },
-      { value: 'tag2', label: 'Tag 2' },
-    ];
-    //@ts-ignore
-    const { wrapper } = setup({ onTagFilterChange: mockFilterByTags }, mount);
-    wrapper
-      .find({ placeholder: 'Filter by tag' })
-      .at(0)
-      .prop('onChange')([tags[0]]);
+    setup({
+      onTagFilterChange: mockFilterByTags,
+      query: { ...searchQuery, tag: [] },
+    });
+    const tagComponent = await screen.findByLabelText('Tag filter');
+
+    fireEvent.keyDown(tagComponent.querySelector('div') as Node, { keyCode: 40 });
+    fireEvent.click(await screen.findByText('tag1'));
     expect(mockFilterByTags).toHaveBeenCalledTimes(1);
     expect(mockFilterByTags).toHaveBeenCalledWith(['tag1']);
   });
