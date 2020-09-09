@@ -12,26 +12,14 @@ import (
 )
 
 const defaultDingdingMsgType = "link"
-const dingdingOptionsTemplate = `
-      <h3 class="page-heading">DingDing settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Url</span>
-        <input type="text" required class="gf-form-input max-width-70" ng-model="ctrl.model.settings.url" placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">MessageType</span>
-        <select class="gf-form-input max-width-14" ng-model="ctrl.model.settings.msgType" ng-options="s for s in ['link','actionCard']" ng-init="ctrl.model.settings.msgType=ctrl.model.settings.msgType || '` + defaultDingdingMsgType + `'"></select>
-      </div>
-`
 
 func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
-		Type:            "dingding",
-		Name:            "DingDing",
-		Description:     "Sends HTTP POST request to DingDing",
-		Heading:         "DingDing settings",
-		Factory:         newDingDingNotifier,
-		OptionsTemplate: dingdingOptionsTemplate,
+		Type:        "dingding",
+		Name:        "DingDing",
+		Description: "Sends HTTP POST request to DingDing",
+		Heading:     "DingDing settings",
+		Factory:     newDingDingNotifier,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Url",

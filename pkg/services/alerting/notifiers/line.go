@@ -17,25 +17,6 @@ func init() {
 		Description: "Send notifications to LINE notify",
 		Heading:     "LINE notify settings",
 		Factory:     NewLINENotifier,
-		OptionsTemplate: `
-		<h3 class="page-heading">LINE notify settings</h3>
-		<div class="gf-form">
-			<label class="gf-form-label max-width-14">Token</label>
-			<div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.token">
-				<input type="text"
-					required
-					class="gf-form-input max-width-22"
-					ng-init="ctrl.model.secureSettings.token = ctrl.model.settings.token || null; ctrl.model.settings.token = null;"
-					ng-model="ctrl.model.secureSettings.token"
-					data-placement="right">
-				</input>
-			</div>
-			<div class="gf-form" ng-if="ctrl.model.secureFields.token">
-			  <input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
-			  <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.token = false">reset</a>
-			</div>
-		</div>
-`,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Token",
@@ -44,6 +25,7 @@ func init() {
 				Placeholder:  "LINE notify token key",
 				PropertyName: "token",
 				Required:     true,
+				Secure:       true,
 			}},
 	})
 }
