@@ -105,7 +105,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     formContainer: css``,
     formItem: css`
       flex-grow: 1;
-      padding-top: ${theme.spacing.lg};
+      padding-top: ${theme.spacing.md};
     `,
     formButtons: css`
       padding-top: ${theme.spacing.xl};
