@@ -18,9 +18,9 @@ export const Sigv4AuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
         ...dataSourceConfig.secureJsonFields,
       },
     };
-
     state.secureJsonData[fieldName] = '';
     state.secureJsonFields[fieldName] = false;
+
     onChange(state);
   };
 

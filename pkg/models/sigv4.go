@@ -1,7 +1,6 @@
 package models
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -33,7 +32,7 @@ func (m *Sigv4Middleware) RoundTrip(req *http.Request) (*http.Response, error) {
 	if sigV4Enabled {
 		err := m.signRequest(req)
 		if err != nil {
-			log.Printf("Failed to sign request: (%v)\n", err)
+			return nil, err
 		}
 	}
 
