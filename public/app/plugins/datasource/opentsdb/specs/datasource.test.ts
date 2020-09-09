@@ -1,5 +1,6 @@
 import OpenTsDatasource from '../datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { OpenTsdbQuery } from '../types';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -106,6 +107,35 @@ describe('opentsdb', () => {
       expect(requestOptions.url).toBe('/api/suggest');
       expect(requestOptions.params.type).toBe('tagv');
       expect(requestOptions.params.q).toBe('bar');
+    });
+  });
+
+  describe('When interpolating variables', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+
+      ctx.mockedTemplateSrv = {
+        replace: jest.fn(),
+      };
+
+      ctx.ds = new OpenTsDatasource(instanceSettings, ctx.mockedTemplateSrv);
+    });
+
+    it('should return an empty array if no queries are provided', () => {
+      expect(ctx.ds.interpolateVariablesInQueries([], {})).toHaveLength(0);
+    });
+
+    it('should replace correct variables', () => {
+      const variableName = 'someVar';
+      const logQuery: OpenTsdbQuery = {
+        refId: 'someRefId',
+        metric: `$${variableName}`,
+      };
+
+      ctx.ds.interpolateVariablesInQueries([logQuery], {});
+
+      expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledWith(`$${variableName}`, {});
+      expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledTimes(1);
     });
   });
 });
