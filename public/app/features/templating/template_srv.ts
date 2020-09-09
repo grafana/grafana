@@ -301,6 +301,10 @@ export class TemplateSrv implements BaseTemplateSrv {
   replaceWithText(target: string, scopedVars?: ScopedVars) {
     deprecationWarning('template_srv.ts', 'replaceWithText()', 'replace(), and specify the :text format');
 
+    if (!target) {
+      return target;
+    }
+
     const targetWithFormat = target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
       const format = fmt2 ?? fmt3;
       const variable = var1 ?? var2 ?? var3;
@@ -309,15 +313,17 @@ export class TemplateSrv implements BaseTemplateSrv {
         return match;
       }
 
+      const fullVariable = `${variable}${fieldPath ?? ''}`;
+
       if (format) {
-        return match.replace(`${variable}:${format}`, `${variable}:text`);
+        return match.replace(`${fullVariable}:${format}`, `${fullVariable}:text`);
       }
 
       if (match.indexOf(`$${variable}`) > -1) {
-        return match.replace(`$${variable}`, `\${${variable}:text}`);
+        return match.replace(`$${fullVariable}`, `\${${fullVariable}:text}`);
       }
 
-      return match.replace(variable, `${variable}:text`);
+      return match.replace(`${fullVariable}`, `${fullVariable}:text`);
     });
 
     return this.replace(targetWithFormat, scopedVars);
