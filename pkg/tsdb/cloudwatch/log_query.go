@@ -175,6 +175,7 @@ func groupResults(results *data.Frame, groupingFieldNames []string) ([]*data.Fra
 		if _, exists := groupedDataFrames[groupKey]; !exists {
 			newFrame := results.EmptyCopy()
 			newFrame.Name = groupKey
+			newFrame.Meta = results.Meta
 			groupedDataFrames[groupKey] = newFrame
 		}
 
