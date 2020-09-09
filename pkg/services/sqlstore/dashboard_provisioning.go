@@ -93,26 +93,24 @@ func UnprovisionDashboard(cmd *models.UnprovisionDashboardCommand) error {
 }
 
 func DeleteOrphanedProvisionedDashboards(cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		var result []*models.DashboardProvisioning
+	var result []*models.DashboardProvisioning
 
-		convertedReaderNames := make([]interface{}, len(cmd.ReaderNames))
-		for index, readerName := range cmd.ReaderNames {
-			convertedReaderNames[index] = readerName
-		}
+	convertedReaderNames := make([]interface{}, len(cmd.ReaderNames))
+	for index, readerName := range cmd.ReaderNames {
+		convertedReaderNames[index] = readerName
+	}
 
-		err := sess.NotIn("name", convertedReaderNames...).Find(&result)
-		if err != nil {
+	err := x.NotIn("name", convertedReaderNames...).Find(&result)
+	if err != nil {
+		return err
+	}
+
+	for _, deleteDashCommand := range result {
+		err := DeleteDashboard(&models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId})
+		if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
 			return err
 		}
+	}
 
-		for _, deleteDashCommand := range result {
-			err := deleteDashboard(&models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId}, sess)
-			if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
-				return err
-			}
-		}
-
-		return nil
-	})
+	return nil
 }
