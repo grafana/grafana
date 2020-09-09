@@ -345,7 +345,7 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 
 	at := authTypeDefault
 	switch atStr {
-	case "sharedCredentials":
+	case "credentials":
 		at = authTypeSharedCreds
 	case "keys":
 		at = authTypeKeys
