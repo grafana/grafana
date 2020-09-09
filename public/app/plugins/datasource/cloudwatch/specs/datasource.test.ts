@@ -10,13 +10,20 @@ import {
   DataQueryErrorType,
 } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CloudWatchLogsQueryStatus, CloudWatchMetricsQuery, CloudWatchQuery, LogAction } from '../types';
+import {
+  CloudWatchLogsQueryStatus,
+  CloudWatchMetricsQuery,
+  CloudWatchQuery,
+  LogAction,
+  CloudWatchLogsQuery,
+} from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
 import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependencies';
 import { of, interval } from 'rxjs';
 import { CustomVariableModel, VariableHide } from '../../../../features/variables/types';
+import { TimeSrvStub } from '../../../../../test/specs/helpers';
 
 import * as rxjsUtils from '../utils/rxjs/increasingInterval';
 
@@ -674,6 +681,69 @@ describe('CloudWatchDatasource', () => {
           expect(requestParams.queries[0].region).toBe(instanceSettings.jsonData.defaultRegion);
           done();
         });
+    });
+  });
+
+  describe('When interpolating variables', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+
+      ctx.mockedTemplateSrv = {
+        replace: jest.fn(),
+      };
+
+      ctx.ds = new CloudWatchDatasource(
+        instanceSettings,
+        ctx.mockedTemplateSrv,
+        (new TimeSrvStub() as unknown) as TimeSrv
+      );
+    });
+
+    it('should return an empty array if no queries are provided', () => {
+      expect(ctx.ds.interpolateVariablesInQueries([], {})).toHaveLength(0);
+    });
+
+    it('should replace correct variables in CloudWatchLogsQuery', () => {
+      const variableName = 'someVar';
+      const logQuery: CloudWatchLogsQuery = {
+        id: 'someId',
+        refId: 'someRefId',
+        queryMode: 'Logs',
+        expression: `$${variableName}`,
+        region: `$${variableName}`,
+      };
+
+      ctx.ds.interpolateVariablesInQueries([logQuery], {});
+
+      // We interpolate `expression` and `region` in CloudWatchLogsQuery
+      expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledWith(`$${variableName}`, {});
+      expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledTimes(2);
+    });
+
+    it('should replace correct variables in CloudWatchMetricsQuery', () => {
+      const variableName = 'someVar';
+      const logQuery: CloudWatchMetricsQuery = {
+        id: 'someId',
+        refId: 'someRefId',
+        queryMode: 'Metrics',
+        expression: `$${variableName}`,
+        region: `$${variableName}`,
+        period: `$${variableName}`,
+        alias: `$${variableName}`,
+        metricName: `$${variableName}`,
+        namespace: `$${variableName}`,
+        dimensions: {
+          [`$${variableName}`]: `$${variableName}`,
+        },
+        matchExact: false,
+        statistics: [],
+      };
+
+      ctx.ds.interpolateVariablesInQueries([logQuery], {});
+
+      // We interpolate `expression`, `region`, `period`, `alias`, `metricName`, `nameSpace` and `dimensions` in CloudWatchMetricsQuery
+      expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledWith(`$${variableName}`, {});
+      expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledTimes(8);
     });
   });
 

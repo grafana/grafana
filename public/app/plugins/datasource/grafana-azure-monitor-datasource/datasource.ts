@@ -9,6 +9,7 @@ import {
   DataSourceInstanceSettings,
   DataQueryResponseData,
   LoadingState,
+  ScopedVars,
 } from '@grafana/data';
 import { Observable, of, from } from 'rxjs';
 import { DataSourceWithBackend } from '@grafana/runtime';
@@ -254,5 +255,11 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
   getSubscriptions() {
     return this.azureMonitorDatasource.getSubscriptions();
+  }
+
+  interpolateVariablesInQueries(queries: AzureMonitorQuery[], scopedVars: ScopedVars): AzureMonitorQuery[] {
+    return queries.map(
+      query => this.pseudoDatasource[query.queryType].applyTemplateVariables(query, scopedVars) as AzureMonitorQuery
+    );
   }
 }
