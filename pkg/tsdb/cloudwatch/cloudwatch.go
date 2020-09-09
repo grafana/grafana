@@ -33,8 +33,8 @@ import (
 type datasourceInfo struct {
 	Profile       string
 	Region        string
-	AuthType      string
-	AssumeRoleArn string
+	AuthType      authType
+	AssumeRoleARN string
 	ExternalID    string
 	Namespace     string
 
@@ -86,34 +86,33 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 	// Static credentials: Providing access key pair directly
 	// SDK: Leave it to SDK to decide
 	switch dsInfo.AuthType {
-	case "credentials":
+	case authTypeSharedCreds:
 		plog.Debug("Authenticating towards AWS with shared credentials", "profile", dsInfo.Profile,
 			"region", dsInfo.Region)
 		cfgs = append(cfgs, &aws.Config{
 			Credentials: credentials.NewSharedCredentials("", dsInfo.Profile),
 		})
-	case "keys":
+	case authTypeKeys:
 		plog.Debug("Authenticating towards AWS with an access key pair", "region", dsInfo.Region)
 		cfgs = append(cfgs, &aws.Config{
 			Credentials: credentials.NewStaticCredentials(dsInfo.AccessKey, dsInfo.SecretKey, ""),
 		})
-	case "sdk":
+	case authTypeDefault:
 		plog.Debug("Authenticating towards AWS with default SDK method", "region", dsInfo.Region)
 	default:
-		return nil, fmt.Errorf(`%q is not a valid authentication type - expected "credentials", "keys" or "sdk"`,
-			dsInfo.AuthType)
+		panic(fmt.Sprintf("Unrecognized authType: %d", dsInfo.AuthType))
 	}
 	sess, err := newSession(cfgs...)
 	if err != nil {
 		return nil, err
 	}
 
-	if dsInfo.AssumeRoleArn != "" {
+	if dsInfo.AssumeRoleARN != "" {
 		// We should assume a role in AWS
-		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleArn)
+		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleARN)
 
 		sess, err = newSession(regionCfg, &aws.Config{
-			Credentials: newSTSCredentials(sess, dsInfo.AssumeRoleArn, func(p *stscreds.AssumeRoleProvider) {
+			Credentials: newSTSCredentials(sess, dsInfo.AssumeRoleARN, func(p *stscreds.AssumeRoleProvider) {
 				if dsInfo.ExternalID != "" {
 					p.ExternalID = aws.String(dsInfo.ExternalID)
 				}
@@ -324,23 +323,43 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	return response, nil
 }
 
+type authType int
+
+const (
+	authTypeDefault authType = iota
+	authTypeSharedCreds
+	authTypeKeys
+)
+
 func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 	if region == defaultRegion {
 		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
 	}
 
-	authType := e.DataSource.JsonData.Get("authType").MustString()
-	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
+	atStr := e.DataSource.JsonData.Get("authType").MustString()
+	assumeRoleARN := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
 	externalID := e.DataSource.JsonData.Get("externalId").MustString()
 	decrypted := e.DataSource.DecryptedValues()
 	accessKey := decrypted["accessKey"]
 	secretKey := decrypted["secretKey"]
 
+	at := authTypeDefault
+	switch atStr {
+	case "sharedCredentials":
+		at = authTypeSharedCreds
+	case "keys":
+		at = authTypeKeys
+	case "default":
+		at = authTypeDefault
+	default:
+		plog.Warn("Unrecognized AWS authentication type %q", atStr)
+	}
+
 	return &datasourceInfo{
 		Region:        region,
 		Profile:       e.DataSource.Database,
-		AuthType:      authType,
-		AssumeRoleArn: assumeRoleArn,
+		AuthType:      at,
+		AssumeRoleARN: assumeRoleARN,
 		ExternalID:    externalID,
 		AccessKey:     accessKey,
 		SecretKey:     secretKey,
