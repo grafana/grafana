@@ -298,6 +298,14 @@ steps:
   image: grafana/build-container:1.2.26
   commands:
   - yarn run ci:test-frontend
+  environment:
+    TEST_MAX_WORKERS: 50%
+  depends_on:
+  - initialize
+
+- name: frontend-metrics
+  image: grafana/build-container:1.2.26
+  commands:
   - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
   environment:
     GRAFANA_MISC_STATS_API_KEY:
