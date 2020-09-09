@@ -26,7 +26,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.5.7
+    GRABPL_VERSION: 0.5.8
 
 - name: lint-backend
   image: grafana/build-container:1.2.26
@@ -249,7 +249,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.5.7
+    GRABPL_VERSION: 0.5.8
 
 - name: lint-backend
   image: grafana/build-container:1.2.26
@@ -298,6 +298,14 @@ steps:
   image: grafana/build-container:1.2.26
   commands:
   - yarn run ci:test-frontend
+  environment:
+    TEST_MAX_WORKERS: 50%
+  depends_on:
+  - initialize
+
+- name: frontend-metrics
+  image: grafana/build-container:1.2.26
+  commands:
   - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
   environment:
     GRAFANA_MISC_STATS_API_KEY:
@@ -519,7 +527,7 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.7/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.8/windows/grabpl.exe -OutFile grabpl.exe
   - cp C:\App\nssm-2.24.zip .
   - ./grabpl.exe windows-installer --edition oss --build-id $DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]

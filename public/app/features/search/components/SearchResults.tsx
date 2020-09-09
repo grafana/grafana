@@ -4,6 +4,7 @@ import { FixedSizeList } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 import { DashboardSection, OnToggleChecked, SearchLayout } from '../types';
 import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
 import { SearchItem } from './SearchItem';
@@ -18,6 +19,8 @@ export interface Props {
   results: DashboardSection[];
   layout?: string;
 }
+
+const { section: sectionLabel, items: itemsLabel } = selectors.components.Search;
 
 export const SearchResults: FC<Props> = ({
   editable,
@@ -36,11 +39,15 @@ export const SearchResults: FC<Props> = ({
       <div className={styles.wrapper}>
         {results.map(section => {
           return (
-            <div aria-label="Search section" className={styles.section} key={section.id || section.title}>
+            <div aria-label={sectionLabel} className={styles.section} key={section.id || section.title}>
               <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
-              <div aria-label="Search items" className={styles.sectionItems}>
-                {section.expanded && section.items.map(item => <SearchItem key={item.id} {...itemProps} item={item} />)}
-              </div>
+              {section.expanded && (
+                <div aria-label={itemsLabel} className={styles.sectionItems}>
+                  {section.items.map(item => (
+                    <SearchItem key={item.id} {...itemProps} item={item} />
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
