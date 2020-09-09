@@ -8,7 +8,7 @@ import appEvents from 'app/core/app_events';
 import { AppEvents } from '@grafana/data';
 
 // Registeres the angular directive
-import './components/AnnotationQueryEditor';
+import './components/StandardAnnotationQueryEditor';
 
 export class AnnotationsEditorCtrl {
   mode: any;

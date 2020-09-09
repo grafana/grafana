@@ -1,17 +1,23 @@
 import React, { PureComponent } from 'react';
 
-import { AnnotationEventMappings, DataQuery, LoadingState } from '@grafana/data';
+import { AnnotationEventMappings, DataQuery, LoadingState, DataSourceApi, AnnotationQuery } from '@grafana/data';
 import { Spinner, Icon, IconName, Button } from '@grafana/ui';
 
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { cx, css } from 'emotion';
-import { Props } from './AnnotationQueryEditor';
 import { standardAnnotationSupport } from '../standardAnnotationSupport';
 import { executeAnnotationQuery } from '../annotations_srv';
 import { PanelModel } from 'app/features/dashboard/state';
 import { AnnotationQueryResponse } from '../types';
 import { AnnotationFieldMapper } from './AnnotationResultMapper';
+import coreModule from 'app/core/core_module';
+
+interface Props {
+  datasource: DataSourceApi;
+  annotation: AnnotationQuery<DataQuery>;
+  change: (annotation: AnnotationQuery<DataQuery>) => void;
+}
 
 interface State {
   running?: boolean;
@@ -170,3 +176,11 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     );
   }
 }
+
+// Careful to use a unique directive name!  many plugins already use "annotationEditor" and have conflicts
+coreModule.directive('standardAnnotationEditor', [
+  'reactDirective',
+  (reactDirective: any) => {
+    return reactDirective(StandardAnnotationQueryEditor, ['annotation', 'datasource', 'change']);
+  },
+]);
