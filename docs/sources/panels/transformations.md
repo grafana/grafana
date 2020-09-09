@@ -98,7 +98,7 @@ After I apply the transformation, there is no time value and each column has bee
 
 ### Merge
 
-> **Note:** This documentation refers to a Grafana 7.1 feature.
+> **Note:** This transformation is only available in Grafana 7.1+.
 
 Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contains the same data.
 
@@ -226,6 +226,8 @@ After I apply the transformation, my labels appear in the table as fields.
 
 ### Group By
 
+> **Note:** This transformation is only available in Grafana 7.2+.
+
 This transformation groups the data by a specified field (column) value and processes calculations on each group. The available calculations are the same as the Reduce transformation.
 
 Here's an example of original data.
@@ -286,7 +288,7 @@ This transformation allows you to extract some key information out of your time 
 
 ## Series to rows
 
-> **Note:** This documentation refers to a Grafana 7.1 feature.
+> **Note:** This transformation is only available in Grafana 7.1+.
 
 Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization. 
 
