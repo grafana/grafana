@@ -168,6 +168,9 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
 }
 
 export const ConfirmButton = withTheme(UnThemedConfirmButton);
+
+// Declare defaultProps directly on the themed component so they are displayed
+// in the props table
 ConfirmButton.defaultProps = {
   size: 'md',
   confirmText: 'Save',
