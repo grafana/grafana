@@ -28,9 +28,12 @@ executors:
   go:
     docker:
       - image: cimg/go:1.14
+  e2e:
+    docker:
+      - image: srclosson/grafana-plugin-ci-e2e:latest
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.24
+      - image: grafana/build-container:1.2.26
   grafana-publish:
     docker:
       - image: grafana/grafana-ci-deploy:1.2.5
@@ -45,7 +48,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.5.0
+            VERSION=0.5.8
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -668,8 +671,7 @@ jobs:
           when: on_success
 
   end-to-end-tests:
-    docker:
-      - image: circleci/node:12-browsers
+    executor: e2e
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -850,7 +852,8 @@ jobs:
             - node_modules
       - run:
           name: frontend tests
-          command: "./scripts/circle-test-frontend.sh"
+          command: |
+            ./scripts/circle-test-frontend.sh
       - store_test_results:
           path: reports/junit
       - run:

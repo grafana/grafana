@@ -50,7 +50,18 @@
     </gf-form-switch>
   </div>
 
-  <time-picker-settings getDashboard="ctrl.getDashboard" onTimeZoneChange="ctrl.onTimeZoneChange" onRefreshIntervalChange="ctrl.onRefreshIntervalChange" onNowDelayChange="ctrl.onNowDelayChange" onHideTimePickerChange="ctrl.onHideTimePickerChange"></time-picker-settings>
+  <time-picker-settings
+    onTimeZoneChange="ctrl.onTimeZoneChange"
+    onRefreshIntervalChange="ctrl.onRefreshIntervalChange"
+    onNowDelayChange="ctrl.onNowDelayChange"
+    onHideTimePickerChange="ctrl.onHideTimePickerChange"
+    renderCount="ctrl.renderCount"
+    refreshIntervals="ctrl.dashboard.timepicker.refresh_intervals"
+    timePickerHidden="ctrl.dashboard.timepicker.hidden"
+    nowDelay="ctrl.dashboard.timepicker.nowDelay"
+    timezone="ctrl.dashboard.timezone"
+  >
+  </time-picker-settings>
 
   <h5 class="section-heading">Panel Options</h5>
   <div class="gf-form">

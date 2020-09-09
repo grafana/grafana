@@ -135,12 +135,12 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 
 		dimSB := strings.Builder{}
 
-		if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionsFilters) == 0 {
+		if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionFilters) == 0 {
 			dimSB.WriteString(fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
 		} else {
-			for i, filter := range azJSONModel.DimensionsFilters {
+			for i, filter := range azJSONModel.DimensionFilters {
 				dimSB.WriteString(filter.String())
-				if i != len(azJSONModel.DimensionsFilters)-1 {
+				if i != len(azJSONModel.DimensionFilters)-1 {
 					dimSB.WriteString(" and ")
 				}
 			}
@@ -223,15 +223,15 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 		return nil, errors.New("Unable to find datasource plugin Azure Monitor")
 	}
 
+	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 	var azureMonitorRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
-		if route.Path == "azuremonitor" {
+		if route.Path == cloudName {
 			azureMonitorRoute = route
 			break
 		}
 	}
 
-	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 	proxyPass := fmt.Sprintf("%s/subscriptions", cloudName)
 
 	u, err := url.Parse(dsInfo.Url)
@@ -299,8 +299,16 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 			})
 		}
 		if query.Alias != "" {
-			dataField.Config.DisplayName = formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"],
+			displayName := formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"],
 				amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID, labels)
+
+			if dataField.Config != nil {
+				dataField.Config.DisplayName = displayName
+			} else {
+				dataField.SetConfig(&data.FieldConfig{
+					DisplayName: displayName,
+				})
+			}
 		}
 
 		requestedAgg := query.Params.Get("aggregation")
@@ -373,10 +381,16 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 		}
 
 		if metaPartName == "dimensionname" {
+			if len(keys) == 0 {
+				return []byte{}
+			}
 			return []byte(keys[0])
 		}
 
 		if metaPartName == "dimensionvalue" {
+			if len(keys) == 0 {
+				return []byte{}
+			}
 			return []byte(lowerLabels[keys[0]])
 		}
 

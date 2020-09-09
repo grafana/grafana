@@ -86,9 +86,9 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		{
 			name: "has dimensionFilter*s* property with one dimension",
 			azureMonitorVariedProperties: map[string]interface{}{
-				"timeGrain":         "PT1M",
-				"dimensionsFilters": []azureMonitorDimensionFilter{{"blob", "eq", "*"}},
-				"top":               "30",
+				"timeGrain":        "PT1M",
+				"dimensionFilters": []azureMonitorDimensionFilter{{"blob", "eq", "*"}},
+				"top":              "30",
 			},
 			queryIntervalMS:         400000,
 			expectedInterval:        "PT1M",
@@ -97,9 +97,9 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		{
 			name: "has dimensionFilter*s* property with two dimensions",
 			azureMonitorVariedProperties: map[string]interface{}{
-				"timeGrain":         "PT1M",
-				"dimensionsFilters": []azureMonitorDimensionFilter{{"blob", "eq", "*"}, {"tier", "eq", "*"}},
-				"top":               "30",
+				"timeGrain":        "PT1M",
+				"dimensionFilters": []azureMonitorDimensionFilter{{"blob", "eq", "*"}, {"tier", "eq", "*"}},
+				"top":              "30",
 			},
 			queryIntervalMS:         400000,
 			expectedInterval:        "PT1M",
@@ -403,6 +403,27 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 					data.NewField("Blob Capacity", data.Labels{"blobtype": "Azure Data Lake Storage", "tier": "Cool"},
 						[]float64{0, 0, 0}).SetConfig(
 						&data.FieldConfig{Unit: "decbytes", DisplayName: "danieltest {Blob Type=Azure Data Lake Storage, Tier=Cool}"})),
+			},
+		},
+		{
+			name:         "unspecified unit with alias should not panic",
+			responseFile: "8-azure-monitor-response-unspecified-unit.json",
+			mockQuery: &AzureMonitorQuery{
+				Alias: "custom",
+				UrlComponents: map[string]string{
+					"resourceName": "grafana",
+				},
+				Params: url.Values{
+					"aggregation": {"Average"},
+				},
+			},
+			expectedFrames: data.Frames{
+				data.NewFrame("",
+					data.NewField("", nil,
+						[]time.Time{time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC)}),
+					data.NewField("Percentage CPU", nil, []float64{
+						2.0875,
+					}).SetConfig(&data.FieldConfig{DisplayName: "custom"})),
 			},
 		},
 	}

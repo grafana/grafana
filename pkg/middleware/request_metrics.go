@@ -119,6 +119,7 @@ func sanitizeMethod(m string) string {
 // If the wrapped http.Handler has not set a status code, i.e. the value is
 // currently 0, sanitizeCode will return 200, for consistency with behavior in
 // the stdlib.
+//nolint: gocyclo
 func sanitizeCode(s int) string {
 	switch s {
 	case 100:

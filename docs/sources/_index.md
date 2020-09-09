@@ -30,7 +30,7 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
         <img src="/static/img/logos/logo-docker.svg">
         <h5>Run Docker image</h5>
     </a>
-    <a href="https://grafana.com/cloud/grafana" class="nav-cards__item nav-cards__item--install">
+    <a href="https://grafana.com/docs/grafana-cloud/" class="nav-cards__item nav-cards__item--install">
         <div class="nav-cards__icon fa fa-cloud">
         </div>
         <h5>Grafana Cloud</h5>

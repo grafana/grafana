@@ -31,11 +31,11 @@ There is an Explore icon on the menu bar to the left. This opens an empty Explor
 
 {{< docs-imagebox img="/img/docs/v65/explore_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore Icon" >}}
 
-If you want to start with an existing query in a panel then choose the Explore option from the Panel menu. This opens an Explore tab with the query from the panel and allows you to tweak or iterate in the query outside of your dashboard.
+If you want to start with an existing query in a panel, choose the Explore option from the Panel menu. This opens an Explore tab with the query from the panel and allows you to tweak or iterate in the query outside of your dashboard.
 
 {{< docs-imagebox img="/img/docs/v65/explore_panel_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
-Choose your data source from the dropdown in the top left. Prometheus has a custom Explore implementation, the other data sources (for now) use their standard query editor.
+Choose your data source from the dropdown in the top left. Prometheus has a custom Explore implementation, the other data sources use their standard query editor.
 
 The query field is where you can write your query and explore your data. There are three buttons beside the query field, a clear button (X), an add query button (+) and the remove query button (-). Just like the normal query editor, you can add and remove multiple queries.
 
@@ -274,3 +274,11 @@ Simply clicking the button will return you to the origin dashboard, or, if you'd
 the arrow next to the button to reveal a "Return to panel with changes" menu item.
 
 {{< docs-imagebox img="/img/docs/v64/explore_return_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the expanded explore return dropdown" >}}
+
+## Query inspector
+
+To help with debugging queries, Explore allows you to investigate query requests and responses, as well as query statistics, via the Query inspector.
+This functionality is similar to the panel inspector [Stats tab]({{< relref "../../panels/inspect-panel.md#inspect-query-performance" >}}) and
+[Query tab]({{< relref "../../panels/inspect-panel.md##view-raw-request-and-response-to-data-source" >}}).
+
+{{< docs-imagebox img="/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" caption="Screenshot of the query inspector button in Explore" >}}

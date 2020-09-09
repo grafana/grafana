@@ -26,26 +26,53 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from '../../state';
 import { getDocsLink } from 'app/core/utils/docsLinks';
+import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
-interface Props {
+interface TransformationsEditorProps {
   panel: PanelModel;
+}
+
+interface TransformationsEditorTransformation {
+  transformation: DataTransformerConfig;
+  id: string;
 }
 
 interface State {
   data: DataFrame[];
-  transformations: DataTransformerConfig[];
+  transformations: TransformationsEditorTransformation[];
 }
 
-export class TransformationsEditor extends React.PureComponent<Props, State> {
+export class TransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
   subscription?: Unsubscribable;
 
-  constructor(props: Props) {
+  constructor(props: TransformationsEditorProps) {
     super(props);
+    const transformations = props.panel.transformations || [];
 
+    const ids = this.buildTransformationIds(transformations);
     this.state = {
-      transformations: props.panel.transformations || [],
+      transformations: transformations.map((t, i) => ({
+        transformation: t,
+        id: ids[i],
+      })),
       data: [],
     };
+  }
+
+  buildTransformationIds(transformations: DataTransformerConfig[]) {
+    const transformationCounters: Record<string, number> = {};
+    const transformationIds: string[] = [];
+
+    for (let i = 0; i < transformations.length; i++) {
+      const transformation = transformations[i];
+      if (transformationCounters[transformation.id] === undefined) {
+        transformationCounters[transformation.id] = 0;
+      } else {
+        transformationCounters[transformation.id] += 1;
+      }
+      transformationIds.push(`${transformations[i].id}-${transformationCounters[transformations[i].id]}`);
+    }
+    return transformationIds;
   }
 
   componentDidMount() {
@@ -63,19 +90,37 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
     }
   }
 
-  onChange(transformations: DataTransformerConfig[]) {
-    this.props.panel.setTransformations(transformations);
+  onChange(transformations: TransformationsEditorTransformation[]) {
     this.setState({ transformations });
+    this.props.panel.setTransformations(transformations.map(t => t.transformation));
   }
+
+  // Transformation uid are stored in a name-X form. name is NOT unique hence we need to parse the ids and increase X
+  // for transformations with the same name
+  getTransformationNextId = (name: string) => {
+    const { transformations } = this.state;
+    let nextId = 0;
+    const existingIds = transformations.filter(t => t.id.startsWith(name)).map(t => t.id);
+
+    if (existingIds.length !== 0) {
+      nextId = Math.max(...existingIds.map(i => parseInt(i.match(/\d+/)![0], 10))) + 1;
+    }
+
+    return `${name}-${nextId}`;
+  };
 
   onTransformationAdd = (selectable: SelectableValue<string>) => {
     const { transformations } = this.state;
 
+    const nextId = this.getTransformationNextId(selectable.value!);
     this.onChange([
       ...transformations,
       {
-        id: selectable.value as string,
-        options: {},
+        id: nextId,
+        transformation: {
+          id: selectable.value as string,
+          options: {},
+        },
       },
     ]);
   };
@@ -83,7 +128,7 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
   onTransformationChange = (idx: number, config: DataTransformerConfig) => {
     const { transformations } = this.state;
     const next = Array.from(transformations);
-    next[idx] = config;
+    next[idx].transformation = config;
     this.onChange(next);
   };
 
@@ -122,48 +167,86 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
     );
   };
 
+  onDragEnd = (result: DropResult) => {
+    const { transformations } = this.state;
+
+    if (!result || !result.destination) {
+      return;
+    }
+
+    const startIndex = result.source.index;
+    const endIndex = result.destination.index;
+    if (startIndex === endIndex) {
+      return;
+    }
+    const update = Array.from(transformations);
+    const [removed] = update.splice(startIndex, 1);
+    update.splice(endIndex, 0, removed);
+    this.onChange(update);
+  };
+
   renderTransformationEditors = () => {
     const { data, transformations } = this.state;
 
     return (
-      <>
-        {transformations.map((t, i) => {
-          let editor;
+      <DragDropContext onDragEnd={this.onDragEnd}>
+        <Droppable droppableId="transformations-list" direction="vertical">
+          {provided => {
+            return (
+              <div ref={provided.innerRef} {...provided.droppableProps}>
+                {transformations.map((t, i) => {
+                  // Transformations are not identified uniquely by any property apart from array index.
+                  // For drag and drop to work we need to generate unique ids. This record stores counters for each transformation type
+                  // based on which ids are generated
+                  let editor;
 
-          const transformationUI = standardTransformersRegistry.getIfExists(t.id);
-          if (!transformationUI) {
-            return null;
-          }
+                  const transformationUI = standardTransformersRegistry.getIfExists(t.transformation.id);
+                  if (!transformationUI) {
+                    return null;
+                  }
 
-          const input = transformDataFrame(transformations.slice(0, i), data);
-          const output = transformDataFrame(transformations.slice(i), input);
+                  const input = transformDataFrame(
+                    transformations.slice(0, i).map(t => t.transformation),
+                    data
+                  );
+                  const output = transformDataFrame(
+                    transformations.slice(i).map(t => t.transformation),
+                    input
+                  );
 
-          if (transformationUI) {
-            editor = React.createElement(transformationUI.editor, {
-              options: { ...transformationUI.transformation.defaultOptions, ...t.options },
-              input,
-              onChange: (options: any) => {
-                this.onTransformationChange(i, {
-                  id: t.id,
-                  options,
-                });
-              },
-            });
-          }
+                  if (transformationUI) {
+                    editor = React.createElement(transformationUI.editor, {
+                      options: { ...transformationUI.transformation.defaultOptions, ...t.transformation.options },
+                      input,
+                      onChange: (options: any) => {
+                        this.onTransformationChange(i, {
+                          id: t.transformation.id,
+                          options,
+                        });
+                      },
+                    });
+                  }
 
-          return (
-            <TransformationOperationRow
-              key={`${t.id}-${i}`}
-              input={input || []}
-              output={output || []}
-              onRemove={() => this.onTransformationRemove(i)}
-              editor={editor}
-              name={transformationUI ? transformationUI.name : ''}
-              description={transformationUI ? transformationUI.description : ''}
-            />
-          );
-        })}
-      </>
+                  return (
+                    <TransformationOperationRow
+                      index={i}
+                      id={`${t.id}`}
+                      key={`${t.id}`}
+                      input={input || []}
+                      output={output || []}
+                      onRemove={() => this.onTransformationRemove(i)}
+                      editor={editor}
+                      name={transformationUI.name}
+                      description={transformationUI.description}
+                    />
+                  );
+                })}
+                {provided.placeholder}
+              </div>
+            );
+          }}
+        </Droppable>
+      </DragDropContext>
     );
   };
 
