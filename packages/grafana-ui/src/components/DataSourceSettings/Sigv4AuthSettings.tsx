@@ -13,13 +13,13 @@ export const Sigv4AuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
       ...dataSourceConfig,
       secureJsonData: {
         ...dataSourceConfig.secureJsonData,
+        [fieldName]: '',
       },
       secureJsonFields: {
         ...dataSourceConfig.secureJsonFields,
+        [fieldName]: false,
       },
     };
-    state.secureJsonData[fieldName] = '';
-    state.secureJsonFields[fieldName] = false;
 
     onChange(state);
   };
@@ -29,9 +29,9 @@ export const Sigv4AuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
       ...dataSourceConfig,
       secureJsonData: {
         ...dataSourceConfig.secureJsonData,
+        [fieldName]: fieldValue,
       },
     };
-    state.secureJsonData[fieldName] = fieldValue;
 
     onChange(state);
   };
@@ -41,9 +41,9 @@ export const Sigv4AuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
       ...dataSourceConfig,
       jsonData: {
         ...dataSourceConfig.secureJsonData,
+        [fieldName]: fieldValue,
       },
     };
-    state.jsonData[fieldName] = fieldValue;
 
     onChange(state);
   };
