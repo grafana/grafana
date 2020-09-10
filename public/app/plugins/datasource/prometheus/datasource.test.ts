@@ -1640,12 +1640,12 @@ describe('PrometheusDatasource', () => {
     it('should be 4 times the scrape interval if min step set to 1m and interval is 15s', () => {
       // For a 5m graph, $__interval is 15s
       ds.createQuery({ ...target, interval: '1m' }, { interval: '15s' } as any, 0, 300);
-      expect((templateSrv.replace as any).mock.calls[1][1]['__rate_interval'].value).toBe('240s');
+      expect((templateSrv.replace as any).mock.calls[2][1]['__rate_interval'].value).toBe('240s');
     });
     it('should be interval + scrape interval if min step set to 1m and interval is 5m', () => {
       // For a 7d graph, $__interval is 5m
       ds.createQuery({ ...target, interval: '1m' }, { interval: '5m' } as any, 0, 10080);
-      expect((templateSrv.replace as any).mock.calls[1][1]['__rate_interval'].value).toBe('360s');
+      expect((templateSrv.replace as any).mock.calls[2][1]['__rate_interval'].value).toBe('360s');
     });
     it('should be interval + scrape interval if resolution is set to 1/2 and interval is 10m', () => {
       // For a 7d graph, $__interval is 10m
@@ -1656,6 +1656,12 @@ describe('PrometheusDatasource', () => {
       // For a 5m graph, $__interval is 15s
       ds.createQuery({ ...target, intervalFactor: 2 }, { interval: '15s' } as any, 0, 300);
       expect((templateSrv.replace as any).mock.calls[1][1]['__rate_interval'].value).toBe('60s');
+    });
+    it('should interpolate min step if set', () => {
+      templateSrv.replace = jest.fn(() => '15s');
+      ds.createQuery({ ...target, interval: '$int' }, { interval: '15s' } as any, 0, 300);
+      expect((templateSrv.replace as any).mock.calls).toHaveLength(3);
+      templateSrv.replace = jest.fn((a: string) => a);
     });
   });
 });

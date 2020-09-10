@@ -351,7 +351,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       templateSrv.replace(target.interval || options.interval, options.scopedVars)
     );
     // Scrape interval as specified for the query ("Min step") or otherwise taken from the datasource.
-    const scrapeInterval = rangeUtil.intervalToSeconds(target.interval || this.interval);
+    // Min step field can have template variables in it, make sure to replace it.
+    const scrapeInterval = target.interval
+      ? rangeUtil.intervalToSeconds(templateSrv.replace(target.interval, options.scopedVars))
+      : rangeUtil.intervalToSeconds(this.interval);
+
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
     const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
