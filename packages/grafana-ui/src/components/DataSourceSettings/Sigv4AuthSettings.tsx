@@ -1,12 +1,46 @@
 import React from 'react';
-import { SecretFormField } from '../SecretFormField/SecretFormField';
 import { HttpSettingsProps } from './types';
-import { FormField } from '../FormField/FormField';
+import { SelectableValue } from '@grafana/data';
+import { Button, InlineFormLabel, Input } from '..';
+import Select from '../Forms/Legacy/Select/Select';
 
-export const Sigv4AuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfig, onChange }) => {
-  const accessKey = dataSourceConfig.secureJsonData ? dataSourceConfig.secureJsonData.sigv4AccessKey : '';
-  const secretKey = dataSourceConfig.secureJsonData ? dataSourceConfig.secureJsonData.sigv4SecretKey : '';
-  const region = dataSourceConfig.jsonData ? dataSourceConfig.jsonData.sigv4Region : '';
+export const Sigv4AuthSettings: React.FC<HttpSettingsProps> = props => {
+  const { dataSourceConfig } = props;
+
+  const authProviderOptions = [
+    { label: 'Access & secret key', value: 'keys' },
+    { label: 'Credentials file', value: 'credentials' },
+    { label: 'ARN', value: 'arn' },
+  ] as SelectableValue[];
+
+  const regions = [
+    { value: 'af-south-1', label: 'af-south-1' },
+    { value: 'ap-east-1', label: 'ap-east-1' },
+    { value: 'ap-northeast-1', label: 'ap-northeast-1' },
+    { value: 'ap-northeast-2', label: 'ap-northeast-2' },
+    { value: 'ap-northeast-3', label: 'ap-northeast-3' },
+    { value: 'ap-south-1', label: 'ap-south-1' },
+    { value: 'ap-southeast-1', label: 'ap-southeast-1' },
+    { value: 'ap-southeast-2', label: 'ap-southeast-2' },
+    { value: 'ca-central-1', label: 'ca-central-1' },
+    { value: 'cn-north-1', label: 'cn-north-1' },
+    { value: 'cn-northwest-1', label: 'cn-northwest-1' },
+    { value: 'eu-central-1', label: 'eu-central-1' },
+    { value: 'eu-north-1', label: 'eu-north-1' },
+    { value: 'eu-west-1', label: 'eu-west-1' },
+    { value: 'eu-west-2', label: 'eu-west-2' },
+    { value: 'eu-west-3', label: 'eu-west-3' },
+    { value: 'me-south-1', label: 'me-south-1' },
+    { value: 'sa-east-1', label: 'sa-east-1' },
+    { value: 'us-east-1', label: 'us-east-1' },
+    { value: 'us-east-2', label: 'us-east-2' },
+    { value: 'us-gov-east-1', label: 'us-gov-east-1' },
+    { value: 'us-gov-west-1', label: 'us-gov-west-1' },
+    { value: 'us-iso-east-1', label: 'us-iso-east-1' },
+    { value: 'us-isob-east-1', label: 'us-isob-east-1' },
+    { value: 'us-west-1', label: 'us-west-1' },
+    { value: 'us-west-2', label: 'us-west-2' },
+  ] as SelectableValue[];
 
   const onSecureJsonDataReset = (fieldName: string) => {
     const state = {
@@ -21,7 +55,7 @@ export const Sigv4AuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
       },
     };
 
-    onChange(state);
+    props.onChange(state);
   };
 
   const onSecureJsonDataChange = (fieldName: string, fieldValue: string) => {
@@ -33,56 +67,175 @@ export const Sigv4AuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
       },
     };
 
-    onChange(state);
+    props.onChange(state);
   };
 
   const onJsonDataChange = (fieldName: string, fieldValue: string) => {
     const state = {
       ...dataSourceConfig,
       jsonData: {
-        ...dataSourceConfig.secureJsonData,
+        ...dataSourceConfig.jsonData,
         [fieldName]: fieldValue,
       },
     };
 
-    onChange(state);
+    props.onChange(state);
   };
 
   return (
     <>
-      <div className="gf-form">
-        <FormField
-          label="Region"
-          labelWidth={10}
-          inputWidth={18}
-          placeholder="Region"
-          value={region || ''}
-          onChange={e => onJsonDataChange('sigv4Region', e.target.value)}
-        />
-      </div>
-      <div className="gf-form">
-        <SecretFormField
-          isConfigured={!!(dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.sigv4AccessKey)}
-          label="Access Key"
-          labelWidth={10}
-          inputWidth={18}
-          placeholder="Access Key"
-          value={accessKey || ''}
-          onReset={() => onSecureJsonDataReset('sigv4AccessKey')}
-          onChange={e => onSecureJsonDataChange('sigv4AccessKey', e.target.value)}
-        />
-      </div>
-      <div className="gf-form">
-        <SecretFormField
-          isConfigured={!!(dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.sigv4SecretKey)}
-          label="Secret Key"
-          value={secretKey || ''}
-          inputWidth={18}
-          labelWidth={10}
-          placeholder="Secret Key"
-          onReset={() => onSecureJsonDataReset('sigv4SecretKey')}
-          onChange={e => onSecureJsonDataChange('sigv4SecretKey', e.target.value)}
-        />
+      <h3 className="page-heading">Sigv4 Details</h3>
+      <div className="gf-form-group">
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel className="width-14">Auth Provider</InlineFormLabel>
+            <Select
+              className="width-30"
+              value={authProviderOptions.find(
+                authProvider => authProvider.value === dataSourceConfig.jsonData.authType
+              )}
+              options={authProviderOptions}
+              defaultValue={dataSourceConfig.jsonData.authType || 'keys'}
+              onChange={option => {
+                if (dataSourceConfig.jsonData.authType === 'arn' && option.value !== 'arn') {
+                  delete dataSourceConfig.jsonData.assumeRoleArn;
+                  delete dataSourceConfig.jsonData.externalId;
+                }
+                onJsonDataChange('authType', option.value);
+              }}
+            />
+          </div>
+        </div>
+        {dataSourceConfig.jsonData.authType === 'credentials' && (
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <InlineFormLabel
+                className="width-14"
+                tooltip="Credentials profile name, as specified in ~/.aws/credentials, leave blank for default."
+              >
+                Credentials Profile Name
+              </InlineFormLabel>
+              <div className="width-30">
+                <Input
+                  className="width-30"
+                  placeholder="default"
+                  value={dataSourceConfig.jsonData.database || ''}
+                  onChange={e => onJsonDataChange('database', e.currentTarget.value)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+        {dataSourceConfig.jsonData.authType === 'keys' && (
+          <div>
+            {dataSourceConfig.secureJsonFields?.sigv4AccessKey ? (
+              <div className="gf-form-inline">
+                <div className="gf-form">
+                  <InlineFormLabel className="width-14">Access Key ID</InlineFormLabel>
+                  <Input className="width-25" placeholder="Configured" disabled={true} />
+                </div>
+                <div className="gf-form">
+                  <div className="max-width-30 gf-form-inline">
+                    <Button variant="secondary" type="button" onClick={e => onSecureJsonDataReset('sigv4AccessKey')}>
+                      Reset
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="gf-form-inline">
+                <div className="gf-form">
+                  <InlineFormLabel className="width-14">Access Key ID</InlineFormLabel>
+                  <div className="width-30">
+                    <Input
+                      className="width-30"
+                      value={dataSourceConfig.secureJsonData?.sigv4AccessKey || ''}
+                      onChange={e => onSecureJsonDataChange('sigv4AccessKey', e.currentTarget.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+            {dataSourceConfig.secureJsonFields?.sigv4SecretKey ? (
+              <div className="gf-form-inline">
+                <div className="gf-form">
+                  <InlineFormLabel className="width-14">Secret Access Key</InlineFormLabel>
+                  <Input className="width-25" placeholder="Configured" disabled={true} />
+                </div>
+                <div className="gf-form">
+                  <div className="max-width-30 gf-form-inline">
+                    <Button variant="secondary" type="button" onClick={e => onSecureJsonDataReset('sigv4SecretKey')}>
+                      Reset
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="gf-form-inline">
+                <div className="gf-form">
+                  <InlineFormLabel className="width-14">Secret Access Key</InlineFormLabel>
+                  <div className="width-30">
+                    <Input
+                      className="width-30"
+                      value={dataSourceConfig.secureJsonData?.sigv4SecretKey || ''}
+                      onChange={e => onSecureJsonDataChange('sigv4SecretKey', e.currentTarget.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        {dataSourceConfig.jsonData.authType === 'arn' && (
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <InlineFormLabel className="width-14" tooltip="ARN of Assume Role">
+                Assume Role ARN
+              </InlineFormLabel>
+              <div className="width-30">
+                <Input
+                  className="width-30"
+                  placeholder="arn:aws:iam:*"
+                  value={dataSourceConfig.jsonData.assumeRoleArn || ''}
+                  onChange={e => onJsonDataChange('assumeRoleArn', e.currentTarget.value)}
+                />
+              </div>
+            </div>
+            <div className="gf-form">
+              <InlineFormLabel
+                className="width-14"
+                tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
+              >
+                External ID
+              </InlineFormLabel>
+              <div className="width-30">
+                <Input
+                  className="width-30"
+                  placeholder="External ID"
+                  value={dataSourceConfig.jsonData.externalId || ''}
+                  onChange={e => onJsonDataChange('externalId', e.currentTarget.value)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel
+              className="width-14"
+              tooltip="Specify the region, such as for US West (Oregon) use ` us-west-2 ` as the region."
+            >
+              Default Region
+            </InlineFormLabel>
+            <Select
+              className="width-30"
+              value={regions.find(region => region.value === dataSourceConfig.jsonData.sigv4Region)}
+              options={regions}
+              defaultValue={dataSourceConfig.jsonData.sigv4Region || ''}
+              onChange={option => onJsonDataChange('sigv4Region', option.value)}
+            />
+          </div>
+        </div>
       </div>
     </>
   );

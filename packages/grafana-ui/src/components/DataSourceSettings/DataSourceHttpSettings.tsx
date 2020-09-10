@@ -219,14 +219,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
           </>
         )}
 
-        {dataSourceConfig.jsonData.sigv4Auth && (
-          <>
-            <h6>Sigv4 Auth Details</h6>
-            <div className="gf-form-group">
-              <Sigv4AuthSettings {...props} />
-            </div>
-          </>
-        )}
+        {dataSourceConfig.jsonData.sigv4Auth && <Sigv4AuthSettings {...props} />}
 
         {(dataSourceConfig.jsonData.tlsAuth || dataSourceConfig.jsonData.tlsAuthWithCACert) && (
           <TLSAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
