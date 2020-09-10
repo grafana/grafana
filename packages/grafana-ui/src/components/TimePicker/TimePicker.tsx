@@ -18,6 +18,7 @@ import { withTheme } from '../../themes/ThemeContext';
 // Types
 import { TimeRange, TimeOption, TimeZone, SelectableValue, dateMath, GrafanaTheme } from '@grafana/data';
 import { Themeable } from '../../types';
+import { LocationState } from '../../../../../public/app/types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -52,6 +53,7 @@ export interface Props extends Themeable {
   onMoveBackward: () => void;
   onMoveForward: () => void;
   onZoom: () => void;
+  location: LocationState;
 }
 
 export const defaultSelectOptions: TimeOption[] = [
@@ -60,6 +62,16 @@ export const defaultSelectOptions: TimeOption[] = [
   { from: 'now-24h', to: 'now', display: 'Last 24 hours', section: 3 },
   { from: 'now-7d', to: 'now', display: 'Last 7 days', section: 3 },
   { from: 'now-14d', to: 'now', display: 'Last 14 days', section: 3 },
+];
+
+export const extendedSelectOptions: TimeOption[] = [
+  { from: 'now-1h', to: 'now', display: 'Last 1 hour', section: 3 },
+  { from: 'now-6h', to: 'now', display: 'Last 6 hours', section: 3 },
+  { from: 'now-24h', to: 'now', display: 'Last 24 hours', section: 3 },
+  { from: 'now-7d', to: 'now', display: 'Last 7 days', section: 3 },
+  { from: 'now-14d', to: 'now', display: 'Last 14 days', section: 3 },
+  { from: 'now-30d', to: 'now', display: 'Last 30 days', section: 3 },
+  { from: 'now-90d', to: 'now', display: 'Last 90 days', section: 3 },
 ];
 
 const defaultZoomOutTooltip = () => {
@@ -116,6 +128,10 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
     this.setState({ isCustomOpen: false });
   };
 
+  get extendedRetention90ParamInUrl(): string {
+    return this.props.location.query.extendedretention90 as string;
+  }
+
   render() {
     const {
       selectOptions: selectTimeOptions,
@@ -130,7 +146,8 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
 
     const styles = getStyles(theme);
     const { isCustomOpen } = this.state;
-    const options = this.mapTimeOptionsToSelectableValues(selectTimeOptions);
+    const timeOpts = this.extendedRetention90ParamInUrl ? extendedSelectOptions : selectTimeOptions;
+    const options = this.mapTimeOptionsToSelectableValues(timeOpts);
     const currentOption = options.find(item => isTimeOptionEqualToTimeRange(item.value, value));
 
     const isUTC = timeZone === 'utc';

@@ -116,7 +116,7 @@ class UnthemedDashNavTimeControls extends Component<Props> {
   };
 
   render() {
-    const { dashboard, theme } = this.props;
+    const { dashboard, theme, location } = this.props;
     const intervals = defaultIntervals;
 
     const timePickerValue = getTimeSrv().timeRange();
@@ -133,6 +133,7 @@ class UnthemedDashNavTimeControls extends Component<Props> {
           onMoveForward={this.onMoveForward}
           onZoom={this.onZoom}
           selectOptions={this.setActiveTimeOption(defaultSelectOptions, timePickerValue.raw)}
+          location={location}
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}
