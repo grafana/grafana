@@ -224,7 +224,7 @@ trigger:
 ---
 kind: pipeline
 type: docker
-name: test-master
+name: build-master
 
 platform:
   os: linux
@@ -544,6 +544,6 @@ trigger:
   - push
 
 depends_on:
-- test-master
+- build-master
 
 ...

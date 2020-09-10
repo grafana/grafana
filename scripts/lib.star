@@ -111,11 +111,11 @@ def master_pipelines(edition):
     }
     return [
         pipeline(
-            name='test-master', edition=edition, trigger=trigger, services=services, steps=steps
+            name='build-master', edition=edition, trigger=trigger, services=services, steps=steps
         ),
         pipeline(
             name='windows-installer-master', edition=edition, trigger=trigger,
-            steps=windows_steps, platform='windows', depends_on=['test-master'],
+            steps=windows_steps, platform='windows', depends_on=['build-master'],
         ),
     ]
 
