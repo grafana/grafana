@@ -247,6 +247,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
                   onChange={onUpdateDatasourceJsonDataOption(this.props, 'assumeRoleArn')}
                 />
               </div>
+            </div>
+            <div className="gf-form-inline">
               <div className="gf-form">
                 <InlineFormLabel
                   className="width-14"
