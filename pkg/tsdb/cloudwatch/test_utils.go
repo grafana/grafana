@@ -26,7 +26,7 @@ type fakeDataSourceCfg struct {
 func fakeDataSource(cfgs ...fakeDataSourceCfg) *models.DataSource {
 	jsonData := simplejson.New()
 	jsonData.Set("defaultRegion", defaultRegion)
-	jsonData.Set("authType", "sdk")
+	jsonData.Set("authType", defaultAuthType)
 	for _, cfg := range cfgs {
 		if cfg.assumeRoleARN != "" {
 			jsonData.Set("assumeRoleArn", cfg.assumeRoleARN)

@@ -30,6 +30,12 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
+const (
+	defaultAuthType     = "default"
+	sharedCredsAuthType = "credentials"
+	keysAuthType        = "keys"
+)
+
 type datasourceInfo struct {
 	Profile       string
 	Region        string
@@ -366,11 +372,11 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 
 	at := authTypeDefault
 	switch atStr {
-	case "credentials":
+	case sharedCredsAuthType:
 		at = authTypeSharedCreds
-	case "keys":
+	case keysAuthType:
 		at = authTypeKeys
-	case "default":
+	case defaultAuthType:
 		at = authTypeDefault
 	default:
 		plog.Warn("Unrecognized AWS authentication type %q", atStr)
