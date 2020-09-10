@@ -67,6 +67,8 @@ There is also an update to the labels to fields transform that allow you to pick
 
 The UI for transforms also has an update that now allows you to move transformations up and down.
 
+{{< docs-imagebox img="/img/docs/v72/transformations.gif" max-width="800px" caption="Group by and reordering of transformations" >}}
+
 ## Field override matchers
 
 You can now add override rules that use a regex matcher and overrides that match on field type.
@@ -79,4 +81,11 @@ See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
 
 Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) for a complete list of new features, changes, and bug fixes.
 
+# News from other parts of the Grafana ecosystem
 
+## ADX (Azure Data Explorer) plugin
+In collaboration with Microsoft we have started to improve the usability of the ADX datasource plugin. The goal is to make it easier for users, regardless on their previous knowledge of writning KQL (Kusto Query Language) queries, to work with and visualize their data.
+
+This is the first step towards a more performant, user friendly and flexible datasource plugin. Stay tuned for more updates at [ADX datasource plugin](https://github.com/grafana/azure-data-explorer-datasource).
+
+{{< docs-imagebox img="/img/docs/v72/adx-ds.png" max-width="800px" caption="ADX visual query builder" >}}
