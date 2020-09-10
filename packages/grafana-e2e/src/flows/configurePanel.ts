@@ -127,9 +127,15 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     // @todo instead wait for '@pluginModule'
     e2e().wait(2000);
 
-    e2e().wait('@chartData');
-
     if (!isExplore) {
+      // Avoid cache flakiness (where @chartData isn't requested)
+      e2e()
+        .get('.refresh-picker-buttons .btn')
+        .first()
+        .click({ force: true });
+
+      e2e().wait('@chartData');
+
       // `panelTitle` is needed to edit the panel, and unlikely to have its value changed at that point
       const changeTitle = panelTitle && !isEdit;
 
