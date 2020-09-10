@@ -170,7 +170,14 @@ func (s *InsightsDimensions) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
-		*s = InsightsDimensions(sa)
+		dimensions := []string{}
+		for _, v := range sa {
+			if v == "none" || v == "None" {
+				continue
+			}
+			dimensions = append(dimensions, v)
+		}
+		*s = InsightsDimensions(dimensions)
 		return nil
 	}
 
