@@ -2,6 +2,7 @@ package pluginproxy
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -12,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/oauth2"
@@ -311,8 +314,9 @@ func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
 		return
 	}
 
-	provider := authInfoQuery.Result.AuthModule
-	connect, ok := social.SocialMap[strings.TrimPrefix(provider, "oauth_")] // The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
+	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
+	provider := strings.TrimPrefix(authInfoQuery.Result.AuthModule, "oauth_")
+	connect, ok := social.SocialMap[provider]
 	if !ok {
 		logger.Error("Failed to find oauth provider with given name", "provider", provider)
 		return
@@ -325,7 +329,13 @@ func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
 		TokenType:    authInfoQuery.Result.OAuthTokenType,
 	}
 	// TokenSource handles refreshing the token if it has expired
-	token, err := connect.TokenSource(c.Req.Context(), persistedToken).Token()
+	client, err := oauthtoken.GetOAuthHttpClient(provider)
+	if err != nil {
+		logger.Error("Failed to create OAuth http client", "error", err)
+		return
+	}
+	oauthctx := context.WithValue(c.Req.Context(), oauth2.HTTPClient, client)
+	token, err := connect.TokenSource(oauthctx, persistedToken).Token()
 	if err != nil {
 		logger.Error("Failed to retrieve access token from OAuth provider", "provider", authInfoQuery.Result.AuthModule, "userid", c.UserId, "username", c.Login, "error", err)
 		return
