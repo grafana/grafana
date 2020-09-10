@@ -37,7 +37,7 @@ var resourceComponentMap = map[string]int{
 }
 
 func (e *cloudWatchExecutor) getMetricResourceTags(queries map[string]*cloudWatchQuery) (map[string]map[string]string, error) {
-	/* We can query multiple resources types simultaneously, but only one region at a time, so we collect all query resource types into
+	/* We can query multiple resource types simultaneously, but only one region at a time, so we collect all query resource types into
 	 * regional buckets.
 	 */
 	resourceTypesByRegion := map[string][]string{}
