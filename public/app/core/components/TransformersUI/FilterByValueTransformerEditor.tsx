@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
+import { css } from 'emotion';
 import {
   DataTransformerID,
   standardTransformers,
@@ -10,7 +11,7 @@ import {
   SelectableValue,
   FieldType,
 } from '@grafana/data';
-import { Select, Button, Input, ButtonSelect } from '@grafana/ui';
+import { Select, Button, Input, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   FilterByValueTransformerOptions,
@@ -69,7 +70,7 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
   return (
     <div className="gf-form-inline">
       <div className="gf-form gf-form-spacing">
-        <div className="gf-form-label width-4">With</div>
+        <div className="gf-form-label width-4">Field</div>
         <Select
           className="width-24"
           placeholder="Field Name"
@@ -87,7 +88,7 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
         />
       </div>
       <div className="gf-form gf-form-spacing">
-        <div className="gf-form-label width-8">Matching</div>
+        <div className="gf-form-label width-8">Match</div>
         <Select
           invalid={filterTypeInvalid}
           className="width-8"
@@ -138,6 +139,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
   options,
   onChange,
 }) => {
+  const styles = getEditorStyles();
   const fieldsInfo = useMemo(() => getAllFieldInfoFromDataFrames(input), [input]);
   const fieldNameOptions = useMemo(
     () =>
@@ -188,58 +190,51 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
 
   return (
     <div>
-      <div className="gf-form-inline">
-        <div className="gf-form gf-form-spacing">
-          <ButtonSelect
-            variant="secondary"
-            options={[
-              { label: 'Include rows', value: 'include' },
-              { label: 'Exclude rows', value: 'exclude' },
-            ]}
-            value={options.type}
-            onChange={option => {
-              onChange({ ...options, type: option.value || 'include' });
-            }}
-            menuPlacement="bottom"
-          />
-        </div>
-        {options.valueFilters.length > 1 && (
-          <>
-            <div className="gf-form gf-form-spacing">
-              <ButtonSelect
-                variant="secondary"
-                options={[
-                  { label: 'Matching all conditions', value: 'all' },
-                  { label: 'Matching any condition', value: 'any' },
-                ]}
-                value={options.match}
-                onChange={option => {
-                  onChange({ ...options, match: option.value || 'all' });
-                }}
-                menuPlacement="bottom"
-              />
-            </div>
-          </>
-        )}
+      <div className="gf-form gf-form-inline">
+        <div className="gf-form-label">Filter type</div>
+        <RadioButtonGroup
+          options={[
+            { label: 'Include values', value: 'include' },
+            { label: 'Exclude values', value: 'exclude' },
+          ]}
+          value={options.type}
+          onChange={option => {
+            onChange({ ...options, type: option || 'include' });
+          }}
+        />
       </div>
-      {options.valueFilters.map((val, idx) => {
-        const matchingField = getFieldByName(val.fieldName, input);
-        return (
-          <FilterSelectorRow
-            onConfigChange={onConfigChange(idx)}
-            onDelete={onDeleteFilter(idx)}
-            fieldNameOptions={fieldNameOptions}
-            config={val}
-            fieldType={matchingField?.type || FieldType.other}
-            key={idx}
-          />
-        );
-      })}
-
-      <div className="gf-form-inline">
-        <Button icon="plus" onClick={onAddFilter} variant="secondary">
-          Add condition
-        </Button>
+      <div className="gf-form gf-form-inline">
+        <div className="gf-form-label gf-form--grow">Conditions</div>
+        <RadioButtonGroup
+          options={[
+            { label: 'Match all', value: 'all' },
+            { label: 'Match any', value: 'any' },
+          ]}
+          value={options.match}
+          onChange={option => {
+            onChange({ ...options, match: option || 'all' });
+          }}
+        />
+      </div>
+      <div className={styles.conditions}>
+        {options.valueFilters.map((val, idx) => {
+          const matchingField = getFieldByName(val.fieldName, input);
+          return (
+            <FilterSelectorRow
+              onConfigChange={onConfigChange(idx)}
+              onDelete={onDeleteFilter(idx)}
+              fieldNameOptions={fieldNameOptions}
+              config={val}
+              fieldType={matchingField?.type || FieldType.other}
+              key={idx}
+            />
+          );
+        })}
+        <div className="gf-form">
+          <Button icon="plus" size="sm" onClick={onAddFilter} variant="secondary">
+            Add condition
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -252,6 +247,12 @@ export const filterByValueTransformRegistryItem: TransformerRegistyItem<FilterBy
   name: standardTransformers.filterByValueTransformer.name,
   description: standardTransformers.filterByValueTransformer.description,
 };
+
+const getEditorStyles = stylesFactory(() => ({
+  conditions: css`
+    padding-left: 16px;
+  `,
+}));
 
 // Utils functions
 
