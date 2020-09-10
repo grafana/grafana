@@ -78,7 +78,6 @@
 * **Loki**: Send current time range when fetching labels and values. [#26622](https://github.com/grafana/grafana/pull/26622), [@ivanahuckova](https://github.com/ivanahuckova)
 * **Prometheus**: Add backslash escaping for template variables. [#26205](https://github.com/grafana/grafana/pull/26205), [@ivanahuckova](https://github.com/ivanahuckova)
 * **Prometheus**: Correctly format multi values variables in queries. [#26896](https://github.com/grafana/grafana/pull/26896), [@ivanahuckova](https://github.com/ivanahuckova)
-* **Prometheus**: Fix rate_interval to use min step properly. [#27168](https://github.com/grafana/grafana/pull/27168), [@zoltanbedi](https://github.com/zoltanbedi)
 * **Provisioning**: Add validation for missing organisations in datasource, dashboard, and notifier configurations. [#26601](https://github.com/grafana/grafana/pull/26601), [@nabokihms](https://github.com/nabokihms)
 * **Rendering**: Fixed issue rendering text panel to image via image renderer plugin. [#27083](https://github.com/grafana/grafana/pull/27083), [@torkelo](https://github.com/torkelo)
 * **Stats**: Use more efficient SQL and add timeouts. [#27390](https://github.com/grafana/grafana/pull/27390), [@sakjur](https://github.com/sakjur)
