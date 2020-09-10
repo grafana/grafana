@@ -1,7 +1,10 @@
 package cloudwatch
 
 import (
+	"reflect"
 	"testing"
+
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
@@ -9,6 +12,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,7 +50,13 @@ func TestNewSession_AssumeRole(t *testing.T) {
 		return nil
 	}
 
+	const duration = 5 * time.Minute
+
 	t.Run("Without external ID", func(t *testing.T) {
+		t.Cleanup(func() {
+			sessCache = map[string]envelope{}
+		})
+
 		const roleARN = "test"
 
 		e := newExecutor()
@@ -57,14 +68,21 @@ func TestNewSession_AssumeRole(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, sess)
 
-		p := &stscreds.AssumeRoleProvider{
-			RoleARN: roleARN,
-		}
-		expCreds := credentials.NewCredentials(p)
-		assert.Equal(t, expCreds, sess.Config.Credentials)
+		expCreds := credentials.NewCredentials(&stscreds.AssumeRoleProvider{
+			RoleARN:  roleARN,
+			Duration: duration,
+		})
+		diff := cmp.Diff(expCreds, sess.Config.Credentials, cmp.Exporter(func(_ reflect.Type) bool {
+			return true
+		}), cmpopts.IgnoreFields(stscreds.AssumeRoleProvider{}, "Expiry"))
+		assert.Empty(t, diff)
 	})
 
 	t.Run("With external ID", func(t *testing.T) {
+		t.Cleanup(func() {
+			sessCache = map[string]envelope{}
+		})
+
 		const roleARN = "test"
 		const externalID = "external"
 
@@ -78,11 +96,14 @@ func TestNewSession_AssumeRole(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, sess)
 
-		p := &stscreds.AssumeRoleProvider{
+		expCreds := credentials.NewCredentials(&stscreds.AssumeRoleProvider{
 			RoleARN:    roleARN,
 			ExternalID: aws.String(externalID),
-		}
-		expCreds := credentials.NewCredentials(p)
-		assert.Equal(t, expCreds, sess.Config.Credentials)
+			Duration:   duration,
+		})
+		diff := cmp.Diff(expCreds, sess.Config.Credentials, cmp.Exporter(func(_ reflect.Type) bool {
+			return true
+		}), cmpopts.IgnoreFields(stscreds.AssumeRoleProvider{}, "Expiry"))
+		assert.Empty(t, diff)
 	})
 }

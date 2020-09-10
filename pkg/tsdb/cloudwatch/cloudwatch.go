@@ -76,6 +76,19 @@ type cloudWatchExecutor struct {
 
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
 	dsInfo := e.getDSInfo(region)
+
+	cacheKey := fmt.Sprintf("%d:%s:%s:%s:%s", dsInfo.AuthType, dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN,
+		dsInfo.ExternalID)
+
+	sessCacheLock.RLock()
+	if env, ok := sessCache[cacheKey]; ok {
+		if env.expiration.After(time.Now().UTC()) {
+			sessCacheLock.RUnlock()
+			return env.session, nil
+		}
+	}
+	sessCacheLock.RUnlock()
+
 	regionCfg := &aws.Config{Region: aws.String(dsInfo.Region)}
 	cfgs := []*aws.Config{
 		regionCfg,
@@ -102,12 +115,17 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 		return nil, err
 	}
 
+	duration := 5 * time.Minute
+	expiration := time.Now().Add(duration)
 	if dsInfo.AssumeRoleARN != "" {
 		// We should assume a role in AWS
 		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleARN)
 
 		sess, err = newSession(regionCfg, &aws.Config{
 			Credentials: newSTSCredentials(sess, dsInfo.AssumeRoleARN, func(p *stscreds.AssumeRoleProvider) {
+				// Not sure if this is necessary, overlaps with p.Duration and is undocumented
+				p.Expiry.SetExpiration(expiration, 0)
+				p.Duration = duration
 				if dsInfo.ExternalID != "" {
 					p.ExternalID = aws.String(dsInfo.ExternalID)
 				}
@@ -119,6 +137,14 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 	}
 
 	plog.Debug("Successfully authenticated towards AWS")
+
+	sessCacheLock.Lock()
+	sessCache[cacheKey] = envelope{
+		session:    sess,
+		expiration: expiration,
+	}
+	sessCacheLock.Unlock()
+
 	return sess, nil
 }
 
