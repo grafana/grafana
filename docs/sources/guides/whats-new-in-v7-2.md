@@ -77,7 +77,7 @@ General features are included in the Grafana Enterprise edition software.
 
 ### Report time range
 
-Report time range can be now customised separately per report, in the report form. By default, the time range from the report's dashboard would apply.
+Report time range can be now customized separately per report, in the report form. By default, the time range from the report's dashboard would apply.
 
 ### Organization-wide report settings
 
