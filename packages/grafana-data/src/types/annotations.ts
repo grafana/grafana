@@ -81,7 +81,7 @@ export interface AnnotationSupport<TQuery extends DataQuery = DataQuery, TAnno =
   processEvents?(anno: TAnno, data: DataFrame): AnnotationEvent[] | undefined;
 
   /**
-   * Specify a custom QueryEditor for the annotaiton page.  If not specified, the standard one will be used
+   * Specify a custom QueryEditor for the annotation page.  If not specified, the standard one will be used
    */
   QueryEditor?: ComponentType<QueryEditorProps<any, TQuery>>;
 }
