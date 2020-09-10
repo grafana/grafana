@@ -119,8 +119,8 @@ export const Sigv4AuthSettings: React.FC<HttpSettingsProps> = props => {
                 <Input
                   className="width-30"
                   placeholder="default"
-                  value={dataSourceConfig.jsonData.database || ''}
-                  onChange={e => onJsonDataChange('database', e.currentTarget.value)}
+                  value={dataSourceConfig.jsonData.profile || ''}
+                  onChange={e => onJsonDataChange('profile', e.currentTarget.value)}
                 />
               </div>
             </div>

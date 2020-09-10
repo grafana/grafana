@@ -159,13 +159,22 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	decrypted := ds.SecureJsonData.Decrypt()
 	accessKey := decrypted["sigv4AccessKey"]
 	secretKey := decrypted["sigv4SecretKey"]
+
+	authType := ds.JsonData.Get("authType").MustString()
+	assumeRoleARN := ds.JsonData.Get("assumeRoleArn").MustString()
+	externalID := ds.JsonData.Get("externalId").MustString()
+	profile := ds.JsonData.Get("profile").MustString()
 	region := ds.JsonData.Get("sigv4Region").MustString()
 
 	sigv4Middleware := &Sigv4Middleware{
 		Config: &Config{
-			AccessKey: accessKey,
-			SecretKey: secretKey,
-			Region:    region,
+			AccessKey:     accessKey,
+			SecretKey:     secretKey,
+			Region:        region,
+			AssumeRoleARN: assumeRoleARN,
+			AuthType:      authType,
+			ExternalID:    externalID,
+			Profile:       profile,
 		},
 		Next: transport,
 	}
