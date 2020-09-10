@@ -1,3 +1,5 @@
+import { of } from 'rxjs';
+
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
 import { DataFrame, Field } from '../../types/dataFrame';
@@ -19,19 +21,19 @@ export const renameFieldsTransformer: DataTransformerInfo<RenameFieldsTransforme
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options: RenameFieldsTransformerOptions) => {
+  transformer: (options, data) => {
     const renamer = createRenamer(options.renameByName);
 
-    return (data: DataFrame[]) => {
-      if (!Array.isArray(data) || data.length === 0) {
-        return data;
-      }
+    if (!Array.isArray(data) || data.length === 0) {
+      return of(data);
+    }
 
-      return data.map(frame => ({
+    return of(
+      data.map(frame => ({
         ...frame,
         fields: renamer(frame),
-      }));
-    };
+      }))
+    );
   },
 };
 

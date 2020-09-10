@@ -1,3 +1,5 @@
+import { of } from 'rxjs';
+
 import { DataFrame, DataTransformerInfo, Field } from '../../types';
 import { DataTransformerID } from './ids';
 import { MutableDataFrame } from '../../dataframe';
@@ -17,7 +19,7 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
   defaultOptions: {
     byField: DEFAULT_KEY_FIELD,
   },
-  transformer: options => (data: DataFrame[]) => {
+  transformer: (options: SeriesToColumnsOptions, data: DataFrame[]) => {
     const keyFieldMatch = options.byField || DEFAULT_KEY_FIELD;
     const allFields: FieldsToProcess[] = [];
 
@@ -57,7 +59,7 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
 
     // if no key fields or more than one value field
     if (allFields.length <= 1) {
-      return data;
+      return of(data);
     }
 
     const resultFrame = new MutableDataFrame();
@@ -118,7 +120,7 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
       }
     }
 
-    return [resultFrame];
+    return of([resultFrame]);
   },
 };
 

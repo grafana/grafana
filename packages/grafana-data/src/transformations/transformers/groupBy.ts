@@ -1,5 +1,7 @@
+import { of } from 'rxjs';
+
 import { DataTransformerID } from './ids';
-import { DataFrame, FieldType, Field } from '../../types/dataFrame';
+import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { ArrayVector } from '../../vector/ArrayVector';
@@ -33,126 +35,124 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options: GroupByTransformerOptions) => {
+  transformer: (options, data) => {
     const hasValidConfig = Object.keys(options.fields).find(
       name => options.fields[name].operation === GroupByOperationID.groupBy
     );
 
-    return (data: DataFrame[]) => {
-      if (!hasValidConfig) {
-        return data;
+    if (!hasValidConfig) {
+      return of(data);
+    }
+
+    const processed: DataFrame[] = [];
+
+    for (const frame of data) {
+      const groupByFields: Field[] = [];
+
+      for (const field of frame.fields) {
+        if (shouldGroupOnField(field, options)) {
+          groupByFields.push(field);
+        }
       }
 
-      const processed: DataFrame[] = [];
+      if (groupByFields.length === 0) {
+        continue; // No group by field in this frame, ignore the frame
+      }
 
-      for (const frame of data) {
-        const groupByFields: Field[] = [];
+      // Group the values by fields and groups so we can get all values for a
+      // group for a given field.
+      const valuesByGroupKey: Record<string, Record<string, MutableField>> = {};
+      for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
+        const groupKey = String(groupByFields.map(field => field.values.get(rowIndex)));
+        const valuesByField = valuesByGroupKey[groupKey] ?? {};
 
-        for (const field of frame.fields) {
-          if (shouldGroupOnField(field, options)) {
-            groupByFields.push(field);
-          }
+        if (!valuesByGroupKey[groupKey]) {
+          valuesByGroupKey[groupKey] = valuesByField;
         }
 
-        if (groupByFields.length === 0) {
-          continue; // No group by field in this frame, ignore the frame
-        }
-
-        // Group the values by fields and groups so we can get all values for a
-        // group for a given field.
-        const valuesByGroupKey: Record<string, Record<string, MutableField>> = {};
-        for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
-          const groupKey = String(groupByFields.map(field => field.values.get(rowIndex)));
-          const valuesByField = valuesByGroupKey[groupKey] ?? {};
-
-          if (!valuesByGroupKey[groupKey]) {
-            valuesByGroupKey[groupKey] = valuesByField;
-          }
-
-          for (let field of frame.fields) {
-            const fieldName = getFieldDisplayName(field);
-
-            if (!valuesByField[fieldName]) {
-              valuesByField[fieldName] = {
-                name: fieldName,
-                type: field.type,
-                config: { ...field.config },
-                values: new ArrayVector(),
-              };
-            }
-
-            valuesByField[fieldName].values.add(field.values.get(rowIndex));
-          }
-        }
-
-        const fields: Field[] = [];
-        const groupKeys = Object.keys(valuesByGroupKey);
-
-        for (const field of groupByFields) {
-          const values = new ArrayVector();
+        for (let field of frame.fields) {
           const fieldName = getFieldDisplayName(field);
 
-          for (let key of groupKeys) {
-            const valuesByField = valuesByGroupKey[key];
-            values.add(valuesByField[fieldName].values.get(0));
-          }
-
-          fields.push({
-            name: field.name,
-            type: field.type,
-            config: {
-              ...field.config,
-            },
-            values: values,
-          });
-        }
-
-        // Then for each calculations configured, compute and add a new field (column)
-        for (const field of frame.fields) {
-          if (!shouldCalculateField(field, options)) {
-            continue;
-          }
-
-          const fieldName = getFieldDisplayName(field);
-          const aggregations = options.fields[fieldName].aggregations;
-          const valuesByAggregation: Record<string, any[]> = {};
-
-          for (const groupKey of groupKeys) {
-            const fieldWithValuesForGroup = valuesByGroupKey[groupKey][fieldName];
-            const results = reduceField({
-              field: fieldWithValuesForGroup,
-              reducers: aggregations,
-            });
-
-            for (const aggregation of aggregations) {
-              if (!Array.isArray(valuesByAggregation[aggregation])) {
-                valuesByAggregation[aggregation] = [];
-              }
-              valuesByAggregation[aggregation].push(results[aggregation]);
-            }
-          }
-
-          for (const aggregation of aggregations) {
-            const aggregationField: Field = {
-              name: `${fieldName} (${aggregation})`,
-              values: new ArrayVector(valuesByAggregation[aggregation]),
-              type: FieldType.other,
-              config: {},
+          if (!valuesByField[fieldName]) {
+            valuesByField[fieldName] = {
+              name: fieldName,
+              type: field.type,
+              config: { ...field.config },
+              values: new ArrayVector(),
             };
-
-            aggregationField.type = detectFieldType(aggregation, field, aggregationField);
-            fields.push(aggregationField);
           }
+
+          valuesByField[fieldName].values.add(field.values.get(rowIndex));
+        }
+      }
+
+      const fields: Field[] = [];
+      const groupKeys = Object.keys(valuesByGroupKey);
+
+      for (const field of groupByFields) {
+        const values = new ArrayVector();
+        const fieldName = getFieldDisplayName(field);
+
+        for (let key of groupKeys) {
+          const valuesByField = valuesByGroupKey[key];
+          values.add(valuesByField[fieldName].values.get(0));
         }
 
-        processed.push({
-          fields,
-          length: groupKeys.length,
+        fields.push({
+          name: field.name,
+          type: field.type,
+          config: {
+            ...field.config,
+          },
+          values: values,
         });
       }
 
-      return processed;
-    };
+      // Then for each calculations configured, compute and add a new field (column)
+      for (const field of frame.fields) {
+        if (!shouldCalculateField(field, options)) {
+          continue;
+        }
+
+        const fieldName = getFieldDisplayName(field);
+        const aggregations = options.fields[fieldName].aggregations;
+        const valuesByAggregation: Record<string, any[]> = {};
+
+        for (const groupKey of groupKeys) {
+          const fieldWithValuesForGroup = valuesByGroupKey[groupKey][fieldName];
+          const results = reduceField({
+            field: fieldWithValuesForGroup,
+            reducers: aggregations,
+          });
+
+          for (const aggregation of aggregations) {
+            if (!Array.isArray(valuesByAggregation[aggregation])) {
+              valuesByAggregation[aggregation] = [];
+            }
+            valuesByAggregation[aggregation].push(results[aggregation]);
+          }
+        }
+
+        for (const aggregation of aggregations) {
+          const aggregationField: Field = {
+            name: `${fieldName} (${aggregation})`,
+            values: new ArrayVector(valuesByAggregation[aggregation]),
+            type: FieldType.other,
+            config: {},
+          };
+
+          aggregationField.type = detectFieldType(aggregation, field, aggregationField);
+          fields.push(aggregationField);
+        }
+      }
+
+      processed.push({
+        fields,
+        length: groupKeys.length,
+      });
+    }
+
+    return of(processed);
   },
 };
 

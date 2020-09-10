@@ -1,17 +1,17 @@
+import { Observable } from 'rxjs';
+
 import { DataFrame, Field } from './dataFrame';
 import { RegistryItemWithOptions } from '../utils/Registry';
 
 /**
  * Function that transform data frames (AKA transformer)
  */
-export type DataTransformer = (data: DataFrame[]) => DataFrame[];
-
 export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOptions {
   /**
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  transformer: (options: TOptions) => DataTransformer;
+  transformer: (options: TOptions, data: DataFrame[]) => Observable<DataFrame[]>;
 }
 
 export interface DataTransformerConfig<TOptions = any> {

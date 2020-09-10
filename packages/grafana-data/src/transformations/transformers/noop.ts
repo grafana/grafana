@@ -1,3 +1,5 @@
+import { of } from 'rxjs';
+
 import { DataTransformerID } from './ids';
 import { DataFrame } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
@@ -17,7 +19,5 @@ export const noopTransformer: DataTransformerInfo<NoopTransformerOptions> = {
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options: NoopTransformerOptions) => {
-    return (data: DataFrame[]) => data;
-  },
+  transformer: (options: NoopTransformerOptions, data: DataFrame[]) => of(data),
 };

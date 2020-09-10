@@ -1,4 +1,4 @@
-import { DataFrame, DataTransformerInfo, FieldType, Field } from '../../types';
+import { DataFrame, DataTransformerInfo, Field, FieldType } from '../../types';
 import { DataTransformerID } from './ids';
 import { ArrayVector } from '../../vector';
 import { mergeTransformer } from './merge';
@@ -15,7 +15,7 @@ export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOption
   name: 'Labels to fields',
   description: 'Extract time series labels to fields (columns)',
   defaultOptions: {},
-  transformer: options => (data: DataFrame[]) => {
+  transformer: (options, data) => {
     const result: DataFrame[] = [];
 
     for (const frame of data) {
@@ -63,6 +63,6 @@ export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOption
       });
     }
 
-    return mergeTransformer.transformer({})(result);
+    return mergeTransformer.transformer({}, result);
   },
 };

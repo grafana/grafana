@@ -1,3 +1,5 @@
+import { of } from 'rxjs';
+
 import { seriesToColumnsTransformer } from './seriesToColumns';
 import { DataFrame } from '../../types/dataFrame';
 import { getTimeField } from '../../dataframe/processDataFrame';
@@ -8,17 +10,20 @@ export const ensureColumnsTransformer: DataTransformerInfo = {
   id: DataTransformerID.ensureColumns,
   name: 'Ensure Columns Transformer',
   description: 'Will check if current data frames is series or columns. If in series it will convert to columns.',
-  transformer: () => (data: DataFrame[]) => {
+  transformer: (options = {}, data) => {
     // Assume timeseries should first be joined by time
     const timeFieldName = findConsistentTimeFieldName(data);
 
     if (data.length > 1 && timeFieldName) {
-      return seriesToColumnsTransformer.transformer({
-        byField: timeFieldName,
-      })(data);
+      return seriesToColumnsTransformer.transformer(
+        {
+          byField: timeFieldName,
+        },
+        data
+      );
     }
 
-    return data;
+    return of(data);
   },
 };
 

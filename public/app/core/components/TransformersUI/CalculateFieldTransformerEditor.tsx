@@ -1,25 +1,26 @@
 import React, { ChangeEvent } from 'react';
+import { map } from 'rxjs/operators';
 
 import {
+  BinaryOperationID,
+  binaryOperators,
   DataTransformerID,
   FieldType,
+  getFieldDisplayName,
   KeyValue,
   ReducerID,
+  SelectableValue,
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
-  BinaryOperationID,
-  SelectableValue,
-  binaryOperators,
-  getFieldDisplayName,
 } from '@grafana/data';
-import { Select, StatsPicker, LegacyForms, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
+import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
 import {
-  CalculateFieldTransformerOptions,
+  BinaryOptions,
   CalculateFieldMode,
+  CalculateFieldTransformerOptions,
   getNameFromOptions,
   ReduceOptions,
-  BinaryOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
 
 import defaults from 'lodash/defaults';
@@ -64,44 +65,54 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   private initOptions() {
     const { options } = this.props;
     const configuredOptions = options?.reduce?.include || [];
-    const input = standardTransformers.ensureColumnsTransformer.transformer(null)(this.props.input);
+    const subscription = standardTransformers.ensureColumnsTransformer
+      .transformer(null, this.props.input)
+      .pipe(
+        map(input => {
+          const allNames: string[] = [];
+          const byName: KeyValue<boolean> = {};
 
-    const allNames: string[] = [];
-    const byName: KeyValue<boolean> = {};
+          for (const frame of input) {
+            for (const field of frame.fields) {
+              if (field.type !== FieldType.number) {
+                continue;
+              }
 
-    for (const frame of input) {
-      for (const field of frame.fields) {
-        if (field.type !== FieldType.number) {
-          continue;
+              const displayName = getFieldDisplayName(field, frame, input);
+
+              if (!byName[displayName]) {
+                byName[displayName] = true;
+                allNames.push(displayName);
+              }
+            }
+          }
+
+          return { allNames };
+        })
+      )
+      .subscribe(({ allNames }) => {
+        if (configuredOptions.length) {
+          const options: string[] = [];
+          const selected: string[] = [];
+
+          for (const v of allNames) {
+            if (configuredOptions.includes(v)) {
+              selected.push(v);
+            }
+            options.push(v);
+          }
+
+          this.setState(
+            {
+              names: options,
+              selected: selected,
+            },
+            () => subscription.unsubscribe()
+          );
+        } else {
+          this.setState({ names: allNames, selected: [] }, () => subscription.unsubscribe());
         }
-
-        const displayName = getFieldDisplayName(field, frame, input);
-
-        if (!byName[displayName]) {
-          byName[displayName] = true;
-          allNames.push(displayName);
-        }
-      }
-    }
-
-    if (configuredOptions.length) {
-      const options: string[] = [];
-      const selected: string[] = [];
-
-      for (const v of allNames) {
-        if (configuredOptions.includes(v)) {
-          selected.push(v);
-        }
-        options.push(v);
-      }
-
-      this.setState({
-        names: options,
-        selected: selected,
       });
-    } else {
-      this.setState({ names: allNames, selected: [] });
-    }
   }
 
   onToggleReplaceFields = () => {

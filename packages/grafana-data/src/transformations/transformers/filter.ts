@@ -1,3 +1,5 @@
+import { of } from 'rxjs';
+
 import { noopTransformer } from './noop';
 import { DataFrame, Field } from '../../types/dataFrame';
 import { DataTransformerID } from './ids';
@@ -19,46 +21,44 @@ export const filterFieldsTransformer: DataTransformerInfo<FilterOptions> = {
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options: FilterOptions) => {
+  transformer: (options: FilterOptions, data: DataFrame[]) => {
     if (!options.include && !options.exclude) {
-      return noopTransformer.transformer({});
+      return noopTransformer.transformer({}, data);
     }
 
     const include = options.include ? getFieldMatcher(options.include) : null;
     const exclude = options.exclude ? getFieldMatcher(options.exclude) : null;
 
-    return (data: DataFrame[]) => {
-      const processed: DataFrame[] = [];
-      for (const series of data) {
-        // Find the matching field indexes
-        const fields: Field[] = [];
-        for (let i = 0; i < series.fields.length; i++) {
-          const field = series.fields[i];
+    const processed: DataFrame[] = [];
+    for (const series of data) {
+      // Find the matching field indexes
+      const fields: Field[] = [];
+      for (let i = 0; i < series.fields.length; i++) {
+        const field = series.fields[i];
 
-          if (exclude) {
-            if (exclude(field, series, data)) {
-              continue;
-            }
-            if (!include) {
-              fields.push(field);
-            }
+        if (exclude) {
+          if (exclude(field, series, data)) {
+            continue;
           }
-          if (include && include(field, series, data)) {
+          if (!include) {
             fields.push(field);
           }
         }
-
-        if (!fields.length) {
-          continue;
+        if (include && include(field, series, data)) {
+          fields.push(field);
         }
-        const copy = {
-          ...series, // all the other properties
-          fields, // but a different set of fields
-        };
-        processed.push(copy);
       }
-      return processed;
-    };
+
+      if (!fields.length) {
+        continue;
+      }
+      const copy = {
+        ...series, // all the other properties
+        fields, // but a different set of fields
+      };
+      processed.push(copy);
+    }
+    return of(processed);
   },
 };
 
@@ -72,30 +72,28 @@ export const filterFramesTransformer: DataTransformerInfo<FilterOptions> = {
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options: FilterOptions) => {
+  transformer: (options, data) => {
     if (!options.include && !options.exclude) {
-      return noopTransformer.transformer({});
+      return noopTransformer.transformer({}, data);
     }
 
     const include = options.include ? getFrameMatchers(options.include) : null;
     const exclude = options.exclude ? getFrameMatchers(options.exclude) : null;
 
-    return (data: DataFrame[]) => {
-      const processed: DataFrame[] = [];
-      for (const series of data) {
-        if (exclude) {
-          if (exclude(series)) {
-            continue;
-          }
-          if (!include) {
-            processed.push(series);
-          }
+    const processed: DataFrame[] = [];
+    for (const series of data) {
+      if (exclude) {
+        if (exclude(series)) {
+          continue;
         }
-        if (include && include(series)) {
+        if (!include) {
           processed.push(series);
         }
       }
-      return processed;
-    };
+      if (include && include(series)) {
+        processed.push(series);
+      }
+    }
+    return of(processed);
   },
 };

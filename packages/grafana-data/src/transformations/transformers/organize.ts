@@ -1,9 +1,10 @@
+import { mergeMap } from 'rxjs/operators';
+
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
-import { OrderFieldsTransformerOptions, orderFieldsTransformer } from './order';
+import { orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
 import { filterFieldsByNameTransformer } from './filterByName';
-import { DataFrame } from '../..';
-import { RenameFieldsTransformerOptions, renameFieldsTransformer } from './rename';
+import { renameFieldsTransformer, RenameFieldsTransformerOptions } from './rename';
 
 export interface OrganizeFieldsTransformerOptions
   extends OrderFieldsTransformerOptions,
@@ -25,14 +26,21 @@ export const organizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransf
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options: OrganizeFieldsTransformerOptions) => {
-    const rename = renameFieldsTransformer.transformer(options);
-    const order = orderFieldsTransformer.transformer(options);
-    const filter = filterFieldsByNameTransformer.transformer({
-      exclude: { names: mapToExcludeArray(options.excludeByName) },
-    });
-
-    return (data: DataFrame[]) => rename(order(filter(data)));
+  transformer: (options, data) => {
+    return renameFieldsTransformer.transformer(options, data).pipe(
+      mergeMap(rename =>
+        orderFieldsTransformer.transformer(options, rename).pipe(
+          mergeMap(order =>
+            filterFieldsByNameTransformer.transformer(
+              {
+                exclude: { names: mapToExcludeArray(options.excludeByName) },
+              },
+              order
+            )
+          )
+        )
+      )
+    );
   },
 };
 
