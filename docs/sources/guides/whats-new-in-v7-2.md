@@ -85,6 +85,11 @@ You can now configure organization-wide report settings, such as report branding
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" caption="Reports settings" >}}
 
+### Report grid layout
+
+A new layout option is available to render reports: the grid layout. With this option, your reports will be closer to your dashboards by showing panels in the same layout as they appear on the dashboard. 
+
+The grid layout is also available for the [Export dashboard as PDF]({{< relref "../enterprise/export-pdf.md" >}}) feature. 
 ## Upgrading
 
 See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
@@ -92,5 +97,4 @@ See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
 ## Changelog
 
 Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) for a complete list of new features, changes, and bug fixes.
-
 
