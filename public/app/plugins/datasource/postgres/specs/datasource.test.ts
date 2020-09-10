@@ -8,7 +8,6 @@ import { backendSrv } from 'app/core/services/backend_srv'; // will use the vers
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
 import { TimeSrv } from '../../../../features/dashboard/services/TimeSrv';
-import { describe } from '../../../../../test/lib/common';
 import { observableTester } from '../../../../../test/helpers/observableTester';
 
 jest.mock('@grafana/runtime', () => ({
