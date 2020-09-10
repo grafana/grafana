@@ -211,6 +211,11 @@ func TestAppInsightsPluginRoutes(t *testing.T) {
 func TestInsightsDimensionsUnmarshalJSON(t *testing.T) {
 	a := []byte(`"foo"`)
 	b := []byte(`["foo"]`)
+	c := []byte(`["none"]`)
+	d := []byte(`["None"]`)
+	e := []byte("null")
+	f := []byte(`""`)
+	g := []byte(`"none"`)
 
 	var as InsightsDimensions
 	var bs InsightsDimensions
@@ -223,4 +228,29 @@ func TestInsightsDimensionsUnmarshalJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, []string{"foo"}, []string(bs))
+
+	var cs InsightsDimensions
+	err = json.Unmarshal(c, &cs)
+	require.NoError(t, err)
+	require.Empty(t, cs)
+
+	var ds InsightsDimensions
+	err = json.Unmarshal(d, &ds)
+	require.NoError(t, err)
+	require.Empty(t, ds)
+
+	var es InsightsDimensions
+	err = json.Unmarshal(e, &es)
+	require.NoError(t, err)
+	require.Empty(t, es)
+
+	var fs InsightsDimensions
+	err = json.Unmarshal(f, &fs)
+	require.NoError(t, err)
+	require.Empty(t, fs)
+
+	var gs InsightsDimensions
+	err = json.Unmarshal(g, &gs)
+	require.NoError(t, err)
+	require.Empty(t, gs)
 }
