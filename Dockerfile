@@ -16,7 +16,7 @@ COPY emails emails
 ENV NODE_ENV production
 RUN ./node_modules/.bin/grunt build
 
-FROM golang:1.14.7-alpine3.12 as go-builder
+FROM golang:1.15.1-alpine3.12 as go-builder
 
 RUN apk add --no-cache gcc g++
 

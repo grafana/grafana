@@ -1,7 +1,10 @@
 import { locale, scaledUnits, simpleCountUnit, toFixedUnit, ValueFormatCategory, stringFormater } from './valueFormats';
 import {
   dateTimeAsIso,
+  dateTimeAsIsoNoDateIfToday,
   dateTimeAsUS,
+  dateTimeAsUSNoDateIfToday,
+  getDateTimeAsLocalFormat,
   dateTimeFromNow,
   toClockMilliseconds,
   toClockSeconds,
@@ -137,7 +140,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'Data (Metric)',
+    name: 'Data (metric)',
     formats: [
       { name: 'bits(Metric)', id: 'decbits', fn: decimalSIPrefix('b') },
       { name: 'bytes(Metric)', id: 'decbytes', fn: decimalSIPrefix('B') },
@@ -149,7 +152,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'Data Rate',
+    name: 'Data rate',
     formats: [
       { name: 'packets/sec', id: 'pps', fn: decimalSIPrefix('pps') },
       { name: 'bits/sec', id: 'bps', fn: decimalSIPrefix('bps') },
@@ -167,10 +170,13 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'Date & Time',
+    name: 'Date & time',
     formats: [
-      { name: 'YYYY-MM-DD HH:mm:ss', id: 'dateTimeAsIso', fn: dateTimeAsIso },
-      { name: 'MM/DD/YYYY h:mm:ss a', id: 'dateTimeAsUS', fn: dateTimeAsUS },
+      { name: 'Datetime ISO', id: 'dateTimeAsIso', fn: dateTimeAsIso },
+      { name: 'Datetime ISO (No date if today)', id: 'dateTimeAsIsoNoDateIfToday', fn: dateTimeAsIsoNoDateIfToday },
+      { name: 'Datetime US', id: 'dateTimeAsUS', fn: dateTimeAsUS },
+      { name: 'Datetime US (No date if today)', id: 'dateTimeAsUSNoDateIfToday', fn: dateTimeAsUSNoDateIfToday },
+      { name: 'Datetime local', id: 'dateTimeAsLocal', fn: getDateTimeAsLocalFormat() },
       { name: 'From Now', id: 'dateTimeFromNow', fn: dateTimeFromNow },
     ],
   },
@@ -240,7 +246,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
   {
-    name: 'Hash Rate',
+    name: 'Hash rate',
     formats: [
       { name: 'hashes/sec', id: 'Hs', fn: decimalSIPrefix('H/s') },
       { name: 'kilohashes/sec', id: 'KHs', fn: decimalSIPrefix('H/s', 1) },
