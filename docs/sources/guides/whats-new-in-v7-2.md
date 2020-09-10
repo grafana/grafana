@@ -71,6 +71,20 @@ The UI for transforms also has an update that now allows you to move transformat
 
 You can now add override rules that use a regex matcher and overrides that match on field type.
 
+## Grafana Enterprise features
+
+General features are included in the Grafana Enterprise edition software.
+
+### Report time range
+
+Report time range can be now customised separately per report, in the report form. By default, the time range from the report's dashboard would apply.
+
+### Organization-wide report settings
+
+You can now configure organization-wide report settings, such as report branding, in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports for current organization.
+
+{{< docs-imagebox img="/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" caption="Reports settings" >}}
+
 ## Upgrading
 
 See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
