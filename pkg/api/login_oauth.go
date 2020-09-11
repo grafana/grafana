@@ -4,13 +4,10 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 
@@ -116,46 +113,14 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		return
 	}
 
-	// handle callback
-	tr := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: setting.OAuthService.OAuthInfos[name].TlsSkipVerify,
-		},
-	}
-	oauthClient := &http.Client{
-		Transport: tr,
-	}
-
-	if setting.OAuthService.OAuthInfos[name].TlsClientCert != "" || setting.OAuthService.OAuthInfos[name].TlsClientKey != "" {
-		cert, err := tls.LoadX509KeyPair(setting.OAuthService.OAuthInfos[name].TlsClientCert, setting.OAuthService.OAuthInfos[name].TlsClientKey)
-		if err != nil {
-			ctx.Logger.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
-			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
-				HttpStatus:    http.StatusInternalServerError,
-				PublicMessage: "login.OAuthLogin(Failed to setup TlsClientCert)",
-			})
-			return
-		}
-
-		tr.TLSClientConfig.Certificates = append(tr.TLSClientConfig.Certificates, cert)
-	}
-
-	if setting.OAuthService.OAuthInfos[name].TlsClientCa != "" {
-		caCert, err := ioutil.ReadFile(setting.OAuthService.OAuthInfos[name].TlsClientCa)
-		if err != nil {
-			ctx.Logger.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
-			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
-				HttpStatus:    http.StatusInternalServerError,
-				PublicMessage: "login.OAuthLogin(Failed to setup TlsClientCa)",
-			})
-			return
-		}
-
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
-
-		tr.TLSClientConfig.RootCAs = caCertPool
+	oauthClient, err := social.GetOAuthHttpClient(name)
+	if err != nil {
+		ctx.Logger.Error("Failed to create OAuth http client", "error", err)
+		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+			HttpStatus:    http.StatusInternalServerError,
+			PublicMessage: "login.OAuthLogin(" + err.Error() + ")",
+		})
+		return
 	}
 
 	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, oauthClient)
