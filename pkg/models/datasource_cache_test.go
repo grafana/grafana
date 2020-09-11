@@ -35,7 +35,7 @@ func TestDataSourceProxyCache(t *testing.T) {
 		t, err := ds.GetHttpTransport()
 		So(err, ShouldBeNil)
 
-		Convey("Should include sigv4 in middleware chain", func() {
+		Convey("Should include sigv4 in middleware chain if configured", func() {
 			m1, ok := interface{}(t.next).(*Sigv4Middleware)
 			So(ok, ShouldEqual, true)
 
@@ -48,16 +48,15 @@ func TestDataSourceProxyCache(t *testing.T) {
 		clearDSProxyCache()
 
 		ds := DataSource{
-			Id:       1,
-			Url:      "http://k8s:8001",
-			Type:     "Kubernetes",
-			JsonData: simplejson.New(),
+			Id:   1,
+			Url:  "http://k8s:8001",
+			Type: "Kubernetes",
 		}
 
 		t, err := ds.GetHttpTransport()
 		So(err, ShouldBeNil)
 
-		Convey("Should not include sigv4 middleware", func() {
+		Convey("Should not include sigv4 middleware if not configured", func() {
 			_, ok := interface{}(t.next).(*http.Transport)
 			So(ok, ShouldEqual, true)
 		})
