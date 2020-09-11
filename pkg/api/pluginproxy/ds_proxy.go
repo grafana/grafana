@@ -313,7 +313,7 @@ func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
 	}
 
 	authProvider := authInfoQuery.Result.AuthModule
-	connect, err := social.GetConnecter(authProvider)
+	connect, err := social.GetConnector(authProvider)
 	if err != nil {
 		logger.Error("Failed to get OAuth connector", "error", err)
 		return
