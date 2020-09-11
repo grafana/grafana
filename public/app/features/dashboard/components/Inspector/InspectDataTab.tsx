@@ -45,9 +45,9 @@ export class InspectDataTab extends PureComponent<Props, State> {
     super(props);
 
     this.state = {
-      selectedDataFrame: DataTransformerID.seriesToColumns,
+      selectedDataFrame: 0,
       dataFrameIndex: 0,
-      transformId: DataTransformerID.seriesToColumns,
+      transformId: DataTransformerID.noop,
       transformationOptions: buildTransformationOptions(),
     };
   }
@@ -141,28 +141,28 @@ export class InspectDataTab extends PureComponent<Props, State> {
       return activeString;
     }
 
+    const parts: string[] = [];
+
     if (selectedDataFrame === DataTransformerID.seriesToColumns) {
-      activeString = 'series joined by time';
-    } else {
-      activeString = getFrameDisplayName(data[selectedDataFrame as number]);
+      parts.push('Series joined by time');
+    } else if (data.length > 1) {
+      parts.push(getFrameDisplayName(data[selectedDataFrame as number]));
     }
 
     if (options.withTransforms || options.withFieldConfig) {
-      activeString += ' - applied ';
       if (options.withTransforms) {
-        activeString += 'panel transformations ';
+        parts.push('Panel transforms');
       }
 
       if (options.withTransforms && options.withFieldConfig) {
-        activeString += 'and  ';
       }
 
       if (options.withFieldConfig) {
-        activeString += 'formatted data';
+        parts.push('Formatted data');
       }
     }
 
-    return activeString;
+    return parts.join(', ');
   }
 
   renderDataOptions(dataFrames: DataFrame[]) {
@@ -197,28 +197,24 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     return (
       <QueryOperationRow
-        id="Table data options"
+        id="Data options"
         index={0}
-        title="Table data options"
+        title="Data options"
         headerElement={<DetailText>{this.getActiveString()}</DetailText>}
         isOpen={false}
       >
         <div className={styles.options}>
-          <VerticalGroup spacing="lg">
-            <Field
-              label="Show data frame"
-              className={css`
-                margin-bottom: 0;
-              `}
-              disabled={data!.length < 2}
-            >
-              <Select
-                options={selectableOptions}
-                value={selectedDataFrame}
-                onChange={this.onDataFrameChange}
-                width={30}
-              />
-            </Field>
+          <VerticalGroup spacing="none">
+            {data!.length > 1 && (
+              <Field label="Show data frame">
+                <Select
+                  options={selectableOptions}
+                  value={selectedDataFrame}
+                  onChange={this.onDataFrameChange}
+                  width={30}
+                />
+              </Field>
+            )}
 
             <HorizontalGroup>
               {showPanelTransformationsOption && (

@@ -69,7 +69,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const aggregation = templateSrv.replace(item.aggregation, scopedVars);
     const top = templateSrv.replace(item.top || '', scopedVars);
 
-    const dimensionsFilters = item.dimensionFilters
+    const dimensionFilters = item.dimensionFilters
       .filter(f => f.dimension && f.dimension !== 'None')
       .map(f => {
         const filter = templateSrv.replace(f.filter ?? '', scopedVars);
@@ -94,7 +94,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
         metricNamespace:
           metricNamespace && metricNamespace !== defaultDropdownValue ? metricNamespace : metricDefinition,
         aggregation: aggregation,
-        dimensionsFilters,
+        dimensionFilters,
         top: top || '10',
         alias: item.alias,
         format: target.format,
