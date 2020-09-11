@@ -87,7 +87,7 @@ General features are included in the Grafana Enterprise edition software.
 
 ### Report grid layout
 
-A new layout option is available when rendering reports: the grid layout. With this option, your report will look more similar to your dashboard by re-using the same panel layout as the one used in the Dashboard.  Learn more about the [grid layout]({{< relref "../enterprise/reporting.md#layout-and-orientation.md" >}}) in the documentation.
+A new layout option is available when rendering reports: the grid layout. With this option your report will use the panel layout from your dashboard so that what you see is what you get.  Learn more about the [grid layout]({{< relref "../enterprise/reporting.md#layout-and-orientation.md" >}}) in the documentation.
 
 The grid layout is also available for the [Export dashboard as PDF]({{< relref "../enterprise/export-pdf.md" >}}) feature. 
 
@@ -110,4 +110,3 @@ See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
 ## Changelog
 
 Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) for a complete list of new features, changes, and bug fixes.
-
