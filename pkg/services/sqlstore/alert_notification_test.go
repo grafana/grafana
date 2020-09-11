@@ -451,6 +451,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				}
 				err = DeleteAlertNotificationWithUid(deleteWithUidCmd)
 				So(err, ShouldBeNil)
+				So(deleteWithUidCmd.DeletedAlertNotificationId, ShouldEqual, cmd.Result.Id)
 			})
 		})
 

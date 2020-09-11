@@ -95,6 +95,8 @@ type DeleteAlertNotificationCommand struct {
 type DeleteAlertNotificationWithUidCommand struct {
 	Uid   string
 	OrgId int64
+
+	DeletedAlertNotificationId int64
 }
 
 type GetAlertNotificationUidQuery struct {

@@ -64,6 +64,7 @@ func DeleteAlertNotificationWithUid(cmd *models.DeleteAlertNotificationWithUidCo
 		return models.ErrAlertNotificationNotFound
 	}
 
+	cmd.DeletedAlertNotificationId = existingNotification.Result.Id
 	deleteCommand := &models.DeleteAlertNotificationCommand{
 		Id:    existingNotification.Result.Id,
 		OrgId: existingNotification.Result.OrgId,

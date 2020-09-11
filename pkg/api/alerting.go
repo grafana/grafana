@@ -411,7 +411,10 @@ func DeleteAlertNotificationByUID(c *models.ReqContext) Response {
 		return Error(500, "Failed to delete alert notification", err)
 	}
 
-	return Success("Notification deleted")
+	return JSON(200, util.DynMap{
+		"message": "Notification deleted",
+		"id":      cmd.DeletedAlertNotificationId,
+	})
 }
 
 //POST /api/alert-notifications/test
