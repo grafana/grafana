@@ -1,6 +1,7 @@
 import kbn from 'app/core/utils/kbn';
 import { Registry, RegistryItem, VariableModel, textUtil, dateTime } from '@grafana/data';
 import { map, isArray, replace } from 'lodash';
+import { formatVariableLabel } from '../variables/shared/formatVariable';
 
 export interface FormatOptions {
   value: any;
@@ -212,25 +213,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
           return options.value;
         }
 
-        const { value, text } = current;
-
-        if (typeof text === 'string') {
-          return text;
-        }
-
-        if (Array.isArray(text)) {
-          return text.join(' + ');
-        }
-
-        if (typeof value === 'string') {
-          return value;
-        }
-
-        if (Array.isArray(value)) {
-          return value.join(' + ');
-        }
-
-        return '';
+        return formatVariableLabel(variable);
       },
     },
   ];
