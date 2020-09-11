@@ -53,7 +53,7 @@ export function getOffsetFromSIPrefix(c: string): number {
   return 0;
 }
 
-export function binarySIPrefix(unit: string, offset = 0): ValueFormatter {
+export function binaryPrefix(unit: string, offset = 0): ValueFormatter {
   const prefixes = ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi'].slice(offset);
   const units = prefixes.map(p => {
     return ' ' + p + unit;
@@ -61,7 +61,7 @@ export function binarySIPrefix(unit: string, offset = 0): ValueFormatter {
   return scaledUnits(1024, units);
 }
 
-export function decimalSIPrefix(unit: string, offset = 0): ValueFormatter {
+export function SIPrefix(unit: string, offset = 0): ValueFormatter {
   let prefixes = ['f', 'p', 'n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
   prefixes = prefixes.slice(5 + (offset || 0));
   const units = prefixes.map(p => {
