@@ -1,9 +1,12 @@
 import React, { useMemo } from 'react';
-import { ContextMenuPlugin, PlotLegend, TooltipPlugin, UPlotChart, ZoomPlugin } from '@grafana/ui';
-import { getTimeField, PanelProps, transformDataFrame } from '@grafana/data';
+import { ContextMenuPlugin, TooltipPlugin, UPlotChart, ZoomPlugin } from '@grafana/ui';
+import { PanelProps } from '@grafana/data';
 import { Options } from './types';
+import { alignAndSortDataFramesByFieldName } from './utils';
 
 interface GraphPanelProps extends PanelProps<Options> {}
+
+const TIME_FIELD_NAME = 'Time';
 
 export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   data,
@@ -21,24 +24,7 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
     if (!data || !data.series?.length) {
       return null;
     }
-    const dataFramesToPlot = data.series.filter(f => {
-      let { timeIndex } = getTimeField(f);
-      // filter out series without time index or if the time column is the only one (i.e. after transformations)
-      // won't live long as we gona move out from assuming x === time
-      return timeIndex !== undefined ? f.fields.length > 1 : false;
-    });
-
-    // uPlot data needs to be aligned on x-axis (ref. https://github.com/leeoniya/uPlot/issues/108)
-    // For experimentation just assuming alignment on time field, needs to change
-    return transformDataFrame(
-      [
-        {
-          id: 'seriesToColumns',
-          options: { byField: 'Time' },
-        },
-      ],
-      dataFramesToPlot
-    )[0];
+    return alignAndSortDataFramesByFieldName(data.series, TIME_FIELD_NAME);
   }, [data]);
 
   if (!alignedData) {
@@ -51,21 +37,11 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
 
   return (
     <UPlotChart data={alignedData} timeRange={timeRange} width={width} height={height}>
-      <PlotLegend />
-      <TooltipPlugin mode={options.tooltipOptions.mode as any} />
-
-      {/*<AnnotationsEditorPlugin*/}
-      {/*  onAnnotationCreate={() => {*/}
-      {/*    console.log('Annotation created');*/}
-      {/*  }}*/}
-      {/*/>*/}
-
-      <ZoomPlugin
-        onZoom={range => {
-          console.log(range);
-          onChangeTimeRange(range);
-        }}
-      />
+      {/*<PlotLegend />*/}
+      {options.tooltipOptions.mode !== 'none' && (
+        <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
+      )}
+      <ZoomPlugin onZoom={onChangeTimeRange} />
       <ContextMenuPlugin />
     </UPlotChart>
 

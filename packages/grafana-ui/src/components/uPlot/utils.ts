@@ -30,7 +30,6 @@ export const buildSeriesConfig = (
   scales: Record<string, uPlot.Scale>;
   axes: uPlot.Axis[];
 } => {
-  console.log('buildSeriesConfig', data);
   const series: uPlot.Series[] = [{}];
   const scales: Record<string, uPlot.Scale> = {
     x: {
@@ -103,6 +102,7 @@ export const buildSeriesConfig = (
         show: field.config.custom.showPoints,
         size: field.config.custom.pointRadius || 5,
       },
+      spanGaps: field.config.custom.nullValues === 'connected',
     });
     seriesIdx += 1;
   }
@@ -158,7 +158,13 @@ export const preparePlotData = (data: DataFrame): uPlot.AlignedData => {
       continue;
     }
 
-    plotData.push(field.values.toArray());
+    let values = field.values.toArray();
+
+    if (field.config.custom.nullValues === 'asZero') {
+      values = values.map(v => (v === null ? 0 : v));
+    }
+
+    plotData.push(values);
   }
 
   console.log('Prepared Data:', plotData);

@@ -18,7 +18,7 @@ interface PlotCanvasContextType {
 
 interface PlotContextType {
   u: uPlot;
-  series: uPlot.Series;
+  series: uPlot.Series[];
   canvas: PlotCanvasContextType;
 }
 
@@ -36,7 +36,7 @@ export const PlotDataContext = React.createContext<PlotDataContextType | null>(n
 
 // Exposes uPlot instance and bounding box of the entire canvas and plot area
 export const usePlotContext = (): PlotContextType | null => {
-  return useContext<PlotContextType>(PlotContext);
+  return useContext<PlotContextType | null>(PlotContext);
 };
 
 // Exposes API for registering uPlot plugins
@@ -61,12 +61,14 @@ interface PlotDataAPI {
 
 export const usePlotData = (): PlotDataAPI => {
   const ctx = useContext(PlotDataContext);
-
   const getField = useCallback(
     (idx: number) => {
+      if (!ctx) {
+        throw new Error('usePlotData needs to be used within PlotDataContext');
+      }
       return ctx.data.fields[idx];
     },
-    [ctx.data]
+    [ctx]
   );
 
   const getFieldConfig = useCallback(
@@ -74,7 +76,7 @@ export const usePlotData = (): PlotDataAPI => {
       const field: Field = getField(idx);
       return field.config;
     },
-    [ctx.data]
+    [ctx]
   );
 
   const getFieldValue = useCallback(
@@ -82,14 +84,14 @@ export const usePlotData = (): PlotDataAPI => {
       const field: Field = getField(fieldIdx);
       return field.values.get(rowIdx);
     },
-    [ctx.data]
+    [ctx]
   );
 
   const getXAxisFields = useCallback(() => {
     // by uPlot convention x-axis is always first field
     // this may change when we introduce non-time x-axis and multiple x-axes (https://leeoniya.github.io/uPlot/demos/time-periods.html)
     return [getField(0)];
-  }, [ctx.data]);
+  }, [ctx]);
 
   const getYAxisFields = useCallback(() => {
     if (!ctx) {
@@ -98,7 +100,7 @@ export const usePlotData = (): PlotDataAPI => {
     // by uPlot convention x-axis is always first field
     // this may change when we introduce non-time x-axis and multiple x-axes (https://leeoniya.github.io/uPlot/demos/time-periods.html)
     return ctx.data.fields.slice(1);
-  }, [ctx.data]);
+  }, [ctx]);
 
   if (!ctx) {
     throw new Error('usePlotData needs to be used within PlotDataContext');
@@ -117,7 +119,10 @@ export const usePlotData = (): PlotDataAPI => {
 // Returns bbox of the plot canvas (only the graph, no axes)
 export const usePlotCanvas = (): PlotCanvasContextType | null => {
   const ctx = usePlotContext();
-  return ctx?.canvas;
+  if (!ctx) {
+    return null;
+  }
+  return ctx.canvas || null;
 };
 
 export const buildPlotContext = (u?: uPlot): PlotContextType | null => {

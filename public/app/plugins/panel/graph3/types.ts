@@ -1,6 +1,8 @@
 import { LegendOptions, GraphTooltipOptions } from '@grafana/ui';
 import { YAxis } from '@grafana/data';
 
+export type NullValuesMode = 'null' | 'connected' | 'asZero';
+
 export interface SeriesOptions {
   color?: string;
   yAxis?: YAxis;
@@ -19,6 +21,9 @@ export interface Options {
     [alias: string]: SeriesOptions;
   };
   tooltipOptions: GraphTooltipOptions;
+  values: {
+    nullValues: NullValuesMode;
+  };
 }
 
 export const defaults: Options = {
@@ -34,6 +39,9 @@ export const defaults: Options = {
   },
   series: {},
   tooltipOptions: { mode: 'single' },
+  values: {
+    nullValues: 'null',
+  },
 };
 
 export interface GraphLegendEditorLegendOptions extends LegendOptions {
