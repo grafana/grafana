@@ -33,7 +33,7 @@ import {
 import { getThemeColor } from 'app/core/utils/colors';
 
 import { deduplicateLogRowsById } from 'app/core/utils/explore';
-import { decimalSIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
+import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -437,7 +437,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   }
 
   if (totalBytes > 0) {
-    const { text, suffix } = decimalSIPrefix('B')(totalBytes);
+    const { text, suffix } = SIPrefix('B')(totalBytes);
     meta.push({
       label: 'Total bytes processed',
       value: `${text} ${suffix}`,
