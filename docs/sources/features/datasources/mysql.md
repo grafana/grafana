@@ -35,6 +35,7 @@ Name | Description
 *Database* | Name of your MySQL database.
 *User* | Database user's login/username
 *Password* | Database user's password
+*Session Timezone* | Specify the time zone used in the database session, e.g. `Europe/Berlin` or `+02:00`. The value will be set int the session with `SET time_zone='...'`. If you leave this field empty, the timezone will not be changed. You can find more information in the [MySQL documentation](https://dev.mysql.com/doc/refman/8.0/en/time-zone-support.html). 
 *Max open* | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).
 *Max idle* | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).
 *Max lifetime* | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours. This should always be lower than configured [wait_timeout](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_wait_timeout) in MySQL (Grafana v5.4+).

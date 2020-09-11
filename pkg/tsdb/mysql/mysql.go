@@ -57,6 +57,13 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		cnnstr += "&tls=" + tlsConfigString
 	}
 
+	if datasource.JsonData != nil {
+		timezone, hasTimezone := datasource.JsonData.CheckGet("timezone")
+		if hasTimezone && timezone.MustString() != "" {
+			cnnstr += fmt.Sprintf("&time_zone='%s'", url.QueryEscape(timezone.MustString()))
+		}
+	}
+
 	if setting.Env == setting.DEV {
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
