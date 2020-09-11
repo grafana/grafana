@@ -23,6 +23,10 @@ The main highlights are:
 - [**Table column filters**]({{< relref "#table-column-filters" >}})
 - [**New and improved transforms**]({{< relref "#new-and-improved-transforms" >}})
 - [**Field override matchers**]({{< relref "#field-override-matchers" >}})
+- [**Grafana Enterprise features**]({{< relref "#grafana-enterprise-features" >}})
+  - [**Report time range**]({{< relref "#report-time-range" >}})
+  - [**Organization-wide report settings**]({{< relref "#organization-wide-report-settings" >}})
+  - [**Report grid layout**]({{< relref "#report-grid-layout" >}})
 
 ## Date formatting options
 
@@ -90,6 +94,7 @@ You can now configure organization-wide report settings, such as report branding
 A new layout option is available to render reports: the grid layout. With this option, your reports will be closer to your dashboards by showing panels in the same layout as they appear on the dashboard. 
 
 The grid layout is also available for the [Export dashboard as PDF]({{< relref "../enterprise/export-pdf.md" >}}) feature. 
+
 ## Upgrading
 
 See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
