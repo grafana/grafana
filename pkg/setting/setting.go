@@ -144,6 +144,7 @@ var (
 	AdminPassword        string
 	LoginCookieName      string
 	LoginMaxLifetimeDays int
+	Sigv4Enabled         bool
 
 	AnonymousEnabled bool
 	AnonymousOrgName string

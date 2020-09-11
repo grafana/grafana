@@ -11,10 +11,6 @@ import (
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 )
 
-const (
-	sigV4Enabled = false
-)
-
 type Sigv4Middleware struct {
 	Config *Config
 	Next   http.RoundTripper
@@ -39,11 +35,9 @@ func (m *Sigv4Middleware) RoundTrip(req *http.Request) (*http.Response, error) {
 		return http.DefaultTransport.RoundTrip(req)
 	}
 
-	if sigV4Enabled {
-		err := m.signRequest(req)
-		if err != nil {
-			return nil, err
-		}
+	err := m.signRequest(req)
+	if err != nil {
+		return nil, err
 	}
 
 	return m.Next.RoundTrip(req)

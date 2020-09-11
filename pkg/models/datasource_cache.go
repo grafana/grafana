@@ -126,6 +126,7 @@ func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	}, nil
 }
 
+// Creates a HTTP Transport middleware chain
 func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	ptc.Lock()
 	defer ptc.Unlock()
@@ -160,7 +161,7 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	var next http.RoundTripper = transport
 
 	// Add Sigv4 middleware if enabled, which will then defer to the default transport
-	if ds.JsonData != nil && ds.JsonData.Get("sigv4Auth").MustBool() {
+	if ds.JsonData != nil && ds.JsonData.Get("sigv4Auth").MustBool() && setting.Sigv4Enabled {
 		next = ds.sigv4Middleware(transport)
 	}
 
