@@ -42,7 +42,6 @@ export interface FeatureToggles {
   meta: boolean;
   datasourceInsights: boolean;
   reportGrid: boolean;
-  standaloneAlerts: boolean;
 }
 
 /**
