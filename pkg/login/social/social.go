@@ -282,9 +282,9 @@ func GetOAuthHttpClient(name string) (*http.Client, error) {
 func GetConnecter(name string) (SocialConnector, error) {
 	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
 	provider := strings.TrimPrefix(name, "oauth_")
-	if connector, ok := SocialMap[provider]; ok {
-		return connector, nil
-	} else {
+	connector, ok := SocialMap[provider]
+	if !ok {
 		return nil, fmt.Errorf("Failed to find oauth provider for %s", name)
 	}
+	return connector, nil
 }
