@@ -11,8 +11,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
-
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -115,7 +113,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		return
 	}
 
-	oauthClient, err := oauthtoken.GetOAuthHttpClient(name)
+	oauthClient, err := social.GetOAuthHttpClient(name)
 	if err != nil {
 		ctx.Logger.Error("Failed to create OAuth http client", "error", err)
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{

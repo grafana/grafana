@@ -14,8 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
-
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/oauth2"
 
@@ -314,11 +312,10 @@ func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
 		return
 	}
 
-	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
-	provider := strings.TrimPrefix(authInfoQuery.Result.AuthModule, "oauth_")
-	connect, ok := social.SocialMap[provider]
-	if !ok {
-		logger.Error("Failed to find oauth provider with given name", "provider", provider)
+	authProvider := authInfoQuery.Result.AuthModule
+	connect, err := social.GetConnecter(authProvider)
+	if err != nil {
+		logger.Error("Failed to get OAuth connector", "error", err)
 		return
 	}
 
@@ -329,7 +326,7 @@ func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
 		TokenType:    authInfoQuery.Result.OAuthTokenType,
 	}
 
-	client, err := oauthtoken.GetOAuthHttpClient(provider)
+	client, err := social.GetOAuthHttpClient(authProvider)
 	if err != nil {
 		logger.Error("Failed to create OAuth http client", "error", err)
 		return
