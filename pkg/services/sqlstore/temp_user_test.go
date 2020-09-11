@@ -70,6 +70,13 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 				err := ExpireOldUserInvites(&cmd4)
 				So(err, ShouldBeNil)
 				So(cmd4.NumExpired, ShouldEqual, 1)
+
+				Convey("Should do nothing when no temp users to expire", func() {
+					cmd4 := models.ExpireTempUsersCommand{OlderThan: timeNow()}
+					err := ExpireOldUserInvites(&cmd4)
+					So(err, ShouldBeNil)
+					So(cmd4.NumExpired, ShouldEqual, 0)
+				})
 			})
 		})
 	})
