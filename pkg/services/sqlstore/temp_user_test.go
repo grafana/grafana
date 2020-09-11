@@ -64,6 +64,13 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 				So(query.Result[0].EmailSent, ShouldBeTrue)
 				So(query.Result[0].EmailSentOn, ShouldHappenOnOrAfter, (query.Result[0].Created))
 			})
+
+			Convey("Should be able expire temp user", func() {
+				cmd4 := models.ExpireTempUsersCommand{OlderThan: timeNow()}
+				err := ExpireOldUserInvites(&cmd4)
+				So(err, ShouldBeNil)
+				So(cmd4.ExpiredInvites, ShouldEqual, 1)
+			})
 		})
 	})
 }

@@ -13,6 +13,7 @@ func init() {
 	bus.AddHandler("sql", UpdateTempUserStatus)
 	bus.AddHandler("sql", GetTempUserByCode)
 	bus.AddHandler("sql", UpdateTempUserWithEmailSent)
+	bus.AddHandler("sql", ExpireOldUserInvites)
 }
 
 func UpdateTempUserStatus(cmd *models.UpdateTempUserStatusCommand) error {
@@ -131,4 +132,18 @@ func GetTempUserByCode(query *models.GetTempUserByCodeQuery) error {
 
 	query.Result = &tempUser
 	return err
+}
+
+func ExpireOldUserInvites(cmd *models.ExpireTempUsersCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		var rawSql = "UPDATE temp_user SET status = ? WHERE created <= ? AND status != ?"
+		expiredStatus := string(models.TmpUserExpired)
+
+		if result, err := sess.Exec(rawSql, expiredStatus, cmd.OlderThan, expiredStatus); err != nil {
+			return err
+		} else if cmd.ExpiredInvites, err = result.RowsAffected(); err != nil {
+			return err
+		}
+		return nil
+	})
 }

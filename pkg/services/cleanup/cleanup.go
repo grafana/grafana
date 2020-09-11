@@ -47,7 +47,7 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 			srv.deleteExpiredSnapshots()
 			srv.deleteExpiredDashboardVersions()
 			srv.cleanUpOldAnnotations(ctxWithTimeout)
-			srv.deleteExpiredUserInvites(ctx)
+			srv.expireOldUserInvites()
 			err := srv.ServerLockService.LockAndExecute(ctx, "delete old login attempts",
 				time.Minute*10, func() {
 					srv.deleteOldLoginAttempts()
@@ -141,30 +141,15 @@ func (srv *CleanUpService) deleteOldLoginAttempts() {
 	}
 }
 
-func (srv *CleanUpService) deleteExpiredUserInvites(ctx context.Context) {
+func (srv *CleanUpService) expireOldUserInvites() {
 	maxInviteLifetime := time.Duration(srv.Cfg.UserInviteMaxLifetimeDays) * 24 * time.Hour
 
-	err := srv.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		sql := `DELETE from temp_user WHERE created_at <= ?`
-		createdBefore := time.Now().Add(-maxInviteLifetime)
-
-		srv.log.Debug("starting cleanup of expired user invites", "createdBefore", createdBefore)
-
-		res, err := dbSession.Exec(sql, createdBefore.Unix())
-		if err != nil {
-			return err
-		}
-
-		affected, err := res.RowsAffected()
-		if err != nil {
-			srv.log.Error("failed to cleanup expired user invites", "error", err)
-			return nil
-		}
-
-		srv.log.Debug("cleanup of expired user invites done", "count", affected)
-
-		return nil
-	})
-
-	srv.log.Error("Failed to delete expired user invites", "error", err.Error())
+	cmd := models.ExpireTempUsersCommand{
+		OlderThan: time.Now().Add(-maxInviteLifetime),
+	}
+	if err := bus.Dispatch(&cmd); err != nil {
+		srv.log.Error("Problem expiring user invites", "error", err.Error())
+	} else {
+		srv.log.Debug("Expired user invites", "rows affected", cmd.ExpiredInvites)
+	}
 }

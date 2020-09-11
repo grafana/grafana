@@ -17,6 +17,7 @@ const (
 	TmpUserInvitePending TempUserStatus = "InvitePending"
 	TmpUserCompleted     TempUserStatus = "Completed"
 	TmpUserRevoked       TempUserStatus = "Revoked"
+	TmpUserExpired       TempUserStatus = "Expired"
 )
 
 // TempUser holds data for org invites and unconfirmed sign ups
@@ -58,6 +59,11 @@ type CreateTempUserCommand struct {
 type UpdateTempUserStatusCommand struct {
 	Code   string
 	Status TempUserStatus
+}
+
+type ExpireTempUsersCommand struct {
+	OlderThan      time.Time
+	ExpiredInvites int64
 }
 
 type UpdateTempUserWithEmailSentCommand struct {
