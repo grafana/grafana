@@ -539,6 +539,9 @@ function makeAnnotationQueryRequest(): AnnotationQueryRequest<LokiQuery> {
       raw: timeRange,
     },
     rangeRaw: timeRange,
+    app: 'test',
+    interval: '1m',
+    intervalMs: 6000,
   };
 }
 

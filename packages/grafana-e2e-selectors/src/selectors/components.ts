@@ -149,4 +149,8 @@ export const Components = {
   ValuePicker: {
     select: (name: string) => `Value picker select ${name}`,
   },
+  Search: {
+    section: 'Search section',
+    items: 'Search items',
+  },
 };
