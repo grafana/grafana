@@ -1,129 +1,182 @@
+import { MonoTypeOperatorFunction, of, OperatorFunction } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
 import {
-  LogsModel,
-  GraphSeriesXY,
   DataFrame,
+  DataSourceApi,
   FieldType,
-  TimeZone,
   getDisplayProcessor,
+  PanelData,
   PreferredVisualisationType,
-  standardTransformers,
   sortLogsResult,
+  standardTransformers,
 } from '@grafana/data';
-import { ExploreItemState } from 'app/types/explore';
-import { refreshIntervalToSortOrder } from 'app/core/utils/explore';
-import { dataFrameToLogsModel } from 'app/core/logs_model';
-import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
-import { config } from 'app/core/config';
+import { config } from '@grafana/runtime';
 
-export class ResultProcessor {
-  graphFrames: DataFrame[] = [];
-  tableFrames: DataFrame[] = [];
-  logsFrames: DataFrame[] = [];
-  traceFrames: DataFrame[] = [];
+import { DecoratedPanelData, ExploreItemState } from '../../../types';
+import { getGraphSeriesModel } from '../../../plugins/panel/graph2/getGraphSeriesModel';
+import { dataFrameToLogsModel } from '../../../core/logs_model';
+import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 
-  constructor(
-    private state: ExploreItemState,
-    private dataFrames: DataFrame[],
-    private intervalMs: number,
-    private timeZone: TimeZone
-  ) {
-    this.classifyFrames();
-  }
+export const decorateWithGraphLogsTraceAndTable = (
+  datasourceInstance?: DataSourceApi | null
+): OperatorFunction<PanelData, DecoratedPanelData> => inputStream =>
+  inputStream.pipe(
+    map(data => {
+      if (data.error) {
+        return {
+          ...data,
+          graphFrames: [],
+          tableFrames: [],
+          logsFrames: [],
+          traceFrames: [],
+          graphResult: null,
+          tableResult: null,
+          logsResult: null,
+        };
+      }
 
-  private classifyFrames() {
-    for (const frame of this.dataFrames) {
-      if (shouldShowInVisualisationTypeStrict(frame, 'logs')) {
-        this.logsFrames.push(frame);
-      } else if (shouldShowInVisualisationTypeStrict(frame, 'graph')) {
-        this.graphFrames.push(frame);
-      } else if (shouldShowInVisualisationTypeStrict(frame, 'trace')) {
-        this.traceFrames.push(frame);
-      } else if (shouldShowInVisualisationTypeStrict(frame, 'table')) {
-        this.tableFrames.push(frame);
-      } else if (isTimeSeries(frame, this.state.datasourceInstance?.meta.id)) {
-        if (shouldShowInVisualisationType(frame, 'graph')) {
-          this.graphFrames.push(frame);
+      const graphFrames: DataFrame[] = [];
+      const tableFrames: DataFrame[] = [];
+      const logsFrames: DataFrame[] = [];
+      const traceFrames: DataFrame[] = [];
+
+      for (const frame of data.series) {
+        if (shouldShowInVisualisationTypeStrict(frame, 'logs')) {
+          logsFrames.push(frame);
+        } else if (shouldShowInVisualisationTypeStrict(frame, 'graph')) {
+          graphFrames.push(frame);
+        } else if (shouldShowInVisualisationTypeStrict(frame, 'trace')) {
+          traceFrames.push(frame);
+        } else if (shouldShowInVisualisationTypeStrict(frame, 'table')) {
+          tableFrames.push(frame);
+        } else if (isTimeSeries(frame, datasourceInstance?.meta.id)) {
+          if (shouldShowInVisualisationType(frame, 'graph')) {
+            graphFrames.push(frame);
+          }
+          if (shouldShowInVisualisationType(frame, 'table')) {
+            tableFrames.push(frame);
+          }
+        } else {
+          // We fallback to table if we do not have any better meta info about the dataframe.
+          tableFrames.push(frame);
         }
-        if (shouldShowInVisualisationType(frame, 'table')) {
-          this.tableFrames.push(frame);
+      }
+
+      return {
+        ...data,
+        graphFrames,
+        tableFrames,
+        logsFrames,
+        traceFrames,
+        graphResult: null,
+        tableResult: null,
+        logsResult: null,
+      };
+    })
+  );
+
+export const decorateWithGraphResult = (): MonoTypeOperatorFunction<DecoratedPanelData> => inputStream =>
+  inputStream.pipe(
+    map(data => {
+      if (data.error) {
+        return { ...data, graphResult: null };
+      }
+
+      const graphResult =
+        data.graphFrames.length === 0
+          ? null
+          : getGraphSeriesModel(
+              data.graphFrames,
+              data.request?.timezone ?? 'browser',
+              {},
+              { showBars: false, showLines: true, showPoints: false },
+              { asTable: false, isVisible: true, placement: 'under' }
+            );
+
+      return { ...data, graphResult };
+    })
+  );
+
+export const decorateWithTableResult = (): MonoTypeOperatorFunction<DecoratedPanelData> => inputStream =>
+  inputStream.pipe(
+    mergeMap(data => {
+      if (data.error) {
+        return of({ ...data, tableResult: null });
+      }
+
+      if (data.tableFrames.length === 0) {
+        return of({ ...data, tableResult: null });
+      }
+
+      data.tableFrames.sort((frameA: DataFrame, frameB: DataFrame) => {
+        const frameARefId = frameA.refId!;
+        const frameBRefId = frameB.refId!;
+
+        if (frameARefId > frameBRefId) {
+          return 1;
         }
-      } else {
-        // We fallback to table if we do not have any better meta info about the dataframe.
-        this.tableFrames.push(frame);
+        if (frameARefId < frameBRefId) {
+          return -1;
+        }
+        return 0;
+      });
+
+      const hasOnlyTimeseries = data.tableFrames.every(df => isTimeSeries(df));
+
+      // If we have only timeseries we do join on default time column which makes more sense. If we are showing
+      // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
+      // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
+      const transformer = hasOnlyTimeseries
+        ? standardTransformers.seriesToColumnsTransformer.transformer({}, data.tableFrames)
+        : standardTransformers.mergeTransformer.transformer({}, data.tableFrames);
+
+      return transformer.pipe(
+        map(frames => {
+          const frame = frames[0];
+
+          // set display processor
+          for (const field of frame.fields) {
+            field.display =
+              field.display ??
+              getDisplayProcessor({
+                field,
+                theme: config.theme,
+                timeZone: data.request?.timezone ?? 'browser',
+              });
+          }
+
+          return { ...data, tableResult: frame };
+        })
+      );
+    })
+  );
+
+export const decorateWithLogsResult = (
+  state: ExploreItemState
+): MonoTypeOperatorFunction<DecoratedPanelData> => inputStream =>
+  inputStream.pipe(
+    map(data => {
+      if (data.error) {
+        return { ...data, logsResult: null };
       }
-    }
-  }
 
-  getGraphResult(): GraphSeriesXY[] | null {
-    if (this.graphFrames.length === 0) {
-      return null;
-    }
-
-    return getGraphSeriesModel(
-      this.graphFrames,
-      this.timeZone,
-      {},
-      { showBars: false, showLines: true, showPoints: false },
-      { asTable: false, isVisible: true, placement: 'under' }
-    );
-  }
-
-  getTableResult(): DataFrame | null {
-    if (this.tableFrames.length === 0) {
-      return null;
-    }
-
-    this.tableFrames.sort((frameA: DataFrame, frameB: DataFrame) => {
-      const frameARefId = frameA.refId!;
-      const frameBRefId = frameB.refId!;
-
-      if (frameARefId > frameBRefId) {
-        return 1;
+      const { absoluteRange, refreshInterval } = state;
+      if (data.logsFrames.length === 0) {
+        return { ...data, logsResult: null };
       }
-      if (frameARefId < frameBRefId) {
-        return -1;
-      }
-      return 0;
-    });
 
-    const hasOnlyTimeseries = this.tableFrames.every(df => isTimeSeries(df));
+      const timeZone = data.request?.timezone ?? 'browser';
+      const intervalMs = data.request?.intervalMs;
+      const newResults = dataFrameToLogsModel(data.logsFrames, intervalMs, timeZone, absoluteRange);
+      const sortOrder = refreshIntervalToSortOrder(refreshInterval);
+      const sortedNewResults = sortLogsResult(newResults, sortOrder);
+      const rows = sortedNewResults.rows;
+      const series = sortedNewResults.series;
+      const logsResult = { ...sortedNewResults, rows, series };
 
-    // If we have only timeseries we do join on default time column which makes more sense. If we are showing
-    // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
-    // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
-    const transformer = hasOnlyTimeseries
-      ? standardTransformers.seriesToColumnsTransformer.transformer({})
-      : standardTransformers.mergeTransformer.transformer({});
-
-    const data = transformer(this.tableFrames)[0];
-
-    // set display processor
-    for (const field of data.fields) {
-      field.display =
-        field.display ??
-        getDisplayProcessor({
-          field,
-          theme: config.theme,
-          timeZone: this.timeZone,
-        });
-    }
-
-    return data;
-  }
-
-  getLogsResult(): LogsModel | null {
-    if (this.logsFrames.length === 0) {
-      return null;
-    }
-
-    const newResults = dataFrameToLogsModel(this.logsFrames, this.intervalMs, this.timeZone, this.state.absoluteRange);
-    const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
-    const sortedNewResults = sortLogsResult(newResults, sortOrder);
-    const rows = sortedNewResults.rows;
-    const series = sortedNewResults.series;
-    return { ...sortedNewResults, rows, series };
-  }
-}
+      return { ...data, logsResult };
+    })
+  );
 
 function isTimeSeries(frame: DataFrame, datasource?: string): boolean {
   // TEMP: Temporary hack. Remove when logs/metrics unification is done

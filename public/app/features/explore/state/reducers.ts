@@ -3,17 +3,16 @@ import { AnyAction } from 'redux';
 import { PayloadAction } from '@reduxjs/toolkit';
 import {
   DataQuery,
+  DataQueryErrorType,
   DataSourceApi,
   DefaultTimeRange,
+  ExploreMode,
   LoadingState,
+  LogsDedupStrategy,
   PanelData,
   PanelEvents,
-  TimeZone,
-  toLegacyResponseData,
-  ExploreMode,
-  LogsDedupStrategy,
   sortLogsResult,
-  DataQueryErrorType,
+  toLegacyResponseData,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { LocationUpdate } from '@grafana/runtime';
@@ -30,6 +29,7 @@ import {
 import { ExploreId, ExploreItemState, ExploreState, ExploreUpdateState } from 'app/types/explore';
 import {
   addQueryRowAction,
+  cancelQueriesAction,
   changeLoadingStateAction,
   changeQueryAction,
   changeRangeAction,
@@ -38,7 +38,6 @@ import {
   clearQueriesAction,
   highlightLogsExpressionAction,
   historyUpdatedAction,
-  richHistoryUpdatedAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
@@ -51,6 +50,7 @@ import {
   removeQueryRowAction,
   resetExploreAction,
   ResetExplorePayload,
+  richHistoryUpdatedAction,
   scanStartAction,
   scanStopAction,
   setPausedStateAction,
@@ -65,9 +65,7 @@ import {
   toggleTableAction,
   updateDatasourceInstanceAction,
   updateUIStateAction,
-  cancelQueriesAction,
 } from './actionTypes';
-import { ResultProcessor } from '../utils/ResultProcessor';
 import { updateLocation } from '../../../core/actions';
 import { Emitter } from 'app/core/core';
 
@@ -508,7 +506,7 @@ export const processQueryResponse = (
   action: PayloadAction<QueryEndedPayload>
 ): ExploreItemState => {
   const { response } = action.payload;
-  const { request, state: loadingState, series, error } = response;
+  const { request, state: loadingState, series, error, graphResult, logsResult, tableResult, traceFrames } = response;
 
   if (error) {
     if (error.type === DataQueryErrorType.Timeout) {
@@ -540,10 +538,6 @@ export const processQueryResponse = (
   }
 
   const latency = request.endTime ? request.endTime - request.startTime : 0;
-  const processor = new ResultProcessor(state, series, request.intervalMs, request.timezone as TimeZone);
-  const graphResult = processor.getGraphResult();
-  const tableResult = processor.getTableResult();
-  const logsResult = processor.getLogsResult();
 
   // Send legacy data to Angular editors
   if (state.datasourceInstance?.components?.QueryCtrl) {
@@ -564,7 +558,7 @@ export const processQueryResponse = (
     showLogs: !!logsResult,
     showMetrics: !!graphResult,
     showTable: !!tableResult,
-    showTrace: !!processor.traceFrames.length,
+    showTrace: !!traceFrames.length,
   };
 };
 

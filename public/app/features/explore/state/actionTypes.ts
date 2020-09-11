@@ -7,15 +7,14 @@ import {
   AbsoluteTimeRange,
   DataQuery,
   DataSourceApi,
+  ExploreUIState,
   HistoryItem,
   LoadingState,
   LogLevel,
-  PanelData,
   QueryFixAction,
   TimeRange,
-  ExploreUIState,
 } from '@grafana/data';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { DecoratedPanelData, ExploreId, ExploreItemState } from 'app/types/explore';
 
 export interface AddQueryRowPayload {
   exploreId: ExploreId;
@@ -83,7 +82,7 @@ export interface ModifyQueriesPayload {
 
 export interface QueryEndedPayload {
   exploreId: ExploreId;
-  response: PanelData;
+  response: DecoratedPanelData;
 }
 
 export interface QueryStoreSubscriptionPayload {
