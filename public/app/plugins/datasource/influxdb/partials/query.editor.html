@@ -1,9 +1,9 @@
 
 <query-editor-row ng-if="ctrl.datasource.isFlux" query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
   <flux-query-editor 
-    target="ctrl.target" 
-    change="ctrl.onChange" 
-    refresh="ctrl.onRunQuery"
+    query="ctrl.target" 
+    onChange="ctrl.onChange" 
+    onRunQuery="ctrl.onRunQuery"
   ></flux-query-editor>
 </query-editor-row>
 
