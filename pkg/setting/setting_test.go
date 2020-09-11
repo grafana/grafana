@@ -273,50 +273,6 @@ func TestLoadingSettings(t *testing.T) {
 
 			So(AuthProxySyncTtl, ShouldEqual, 12)
 		})
-
-		Convey("unset login_maximum_inactive_lifetime_duration should not override non-default login_maximum_inactive_lifetime_days", func() {
-			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{
-				HomePath: "../../",
-				Args:     []string{"cfg:auth.login_maximum_inactive_lifetime_days=10", "cfg:auth.login_maximum_inactive_lifetime_duration="},
-			})
-			So(err, ShouldBeNil)
-			maxInactiveDaysVal, _ := time.ParseDuration("240h")
-			So(cfg.LoginMaxInactiveLifetime, ShouldEqual, maxInactiveDaysVal)
-		})
-
-		Convey("login_maximum_inactive_lifetime_duration should override unset login_maximum_inactive_lifetime_days", func() {
-			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{
-				HomePath: "../../",
-				Args:     []string{"cfg:auth.login_maximum_inactive_lifetime_duration=824h"},
-			})
-			So(err, ShouldBeNil)
-			maxInactiveDurationVal, _ := time.ParseDuration("824h")
-			So(cfg.LoginMaxInactiveLifetime, ShouldEqual, maxInactiveDurationVal)
-		})
-
-		Convey("unset login_maximum_lifetime_duration should not override non-default login_maximum_lifetime_days", func() {
-			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{
-				HomePath: "../../",
-				Args:     []string{"cfg:auth.login_maximum_lifetime_days=24", "cfg:auth.login_maximum_lifetime_duration="},
-			})
-			So(err, ShouldBeNil)
-			maxLifetimeDaysVal, _ := time.ParseDuration("576h")
-			So(cfg.LoginMaxLifetime, ShouldEqual, maxLifetimeDaysVal)
-		})
-
-		Convey("login_maximum_lifetime_duration should override unset login_maximum_inactive_lifetime_days", func() {
-			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{
-				HomePath: "../../",
-				Args:     []string{"cfg:auth.login_maximum_lifetime_duration=824h"},
-			})
-			So(err, ShouldBeNil)
-			maxLifetimeDurationVal, _ := time.ParseDuration("824h")
-			So(cfg.LoginMaxLifetime, ShouldEqual, maxLifetimeDurationVal)
-		})
 	})
 
 	Convey("Test reading string values from .ini file", t, func() {
@@ -360,4 +316,47 @@ func TestParseAppUrlAndSubUrl(t *testing.T) {
 		require.Equal(t, tc.expectedAppURL, appURL)
 		require.Equal(t, tc.expectedAppSubURL, appSubURL)
 	}
+}
+func TestAuthDurationSettings(t *testing.T) {
+	f := ini.Empty()
+	cfg := NewCfg()
+	sec, err := f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_inactive_lifetime_days", "10")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_inactive_lifetime_duration", "")
+	require.NoError(t, err)
+	maxInactiveDaysTest, _ := time.ParseDuration("240h")
+	ad := readAuthSettings(f, cfg)
+	_ = ad
+	require.Equal(t, maxInactiveDaysTest, cfg.LoginMaxInactiveLifetime)
+
+	f = ini.Empty()
+	sec, err = f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_inactive_lifetime_duration", "824h")
+	require.NoError(t, err)
+	maxInactiveDurationTest, _ := time.ParseDuration("824h")
+	ad = readAuthSettings(f, cfg)
+	require.Equal(t, maxInactiveDurationTest, cfg.LoginMaxInactiveLifetime)
+
+	f = ini.Empty()
+	sec, err = f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_days", "24")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_duration", "")
+	require.NoError(t, err)
+	maxLifetimeDaysTest, _ := time.ParseDuration("576h")
+	ad = readAuthSettings(f, cfg)
+	require.Equal(t, maxLifetimeDaysTest, cfg.LoginMaxLifetime)
+
+	f = ini.Empty()
+	sec, err = f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_duration", "824h")
+	require.NoError(t, err)
+	maxLifetimeDurationTest, _ := time.ParseDuration("824h")
+	ad = readAuthSettings(f, cfg)
+	require.Equal(t, maxLifetimeDurationTest, cfg.LoginMaxLifetime)
 }
