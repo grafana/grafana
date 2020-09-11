@@ -50,7 +50,16 @@ describe('Labels as Columns', () => {
       name: 'A',
       fields: [
         { name: 'time', type: FieldType.time, values: [1000, 2000] },
-        { name: 'Value', type: FieldType.number, values: [1, 2], labels: { location: 'inside', name: 'Request' } },
+        {
+          name: 'Value',
+          type: FieldType.number,
+          values: [1, 2],
+          labels: { location: 'inside', name: 'Request' },
+          config: {
+            displayName: 'Custom1',
+            displayNameFromDS: 'Custom2',
+          },
+        },
       ],
     });
 
