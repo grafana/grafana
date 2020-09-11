@@ -114,8 +114,6 @@ Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELO
 ## What's new in other parts of the Grafana ecosystem
 
 ### ADX (Azure Data Explorer) plugin
-In collaboration with Microsoft we have started to improve the usability of the ADX datasource plugin. The goal is to make it easier for users, regardless of their previous knowledge of writing KQL (Kusto Query Language) queries, to work with and visualize their data.
-
-This is the first step towards a more user friendly and flexible datasource plugin. Stay tuned for more updates.
+In collaboration with Microsoft we have started to improve the usability of our ADX datasource plugin by adding a visual query builder. The goal is to make it easier for users, regardless of their previous knowledge of writing KQL (Kusto Query Language) queries, to query and visualize their data.
 
 {{< docs-imagebox img="/img/docs/v72/adx-ds.png" max-width="800px" caption="ADX visual query builder" >}}
