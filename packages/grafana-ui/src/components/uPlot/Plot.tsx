@@ -96,7 +96,10 @@ export const UPlotChart: React.FC<PlotProps> = props => {
   useEffect(() => {
     if (plotInstance) {
       console.log('Updating plot size', props.width, props.height);
-      plotInstance.setSize({ width: props.width, height: props.height });
+      plotInstance.setSize({
+        width: props.width,
+        height: props.height,
+      });
     }
   }, [props.width, props.height]);
 

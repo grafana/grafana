@@ -112,6 +112,19 @@ export const plugin = new PanelPlugin<Options>(GraphPanel)
               { value: 1, label: 'Right' },
             ],
           },
+        })
+        .addRadio({
+          path: 'nullValues',
+          name: 'Display null values as',
+          description: '',
+          defaultValue: 'null',
+          settings: {
+            options: [
+              { value: 'null', label: 'null' },
+              { value: 'connected', label: 'Connected' },
+              { value: 'asZero', label: 'Zero' },
+            ],
+          },
         });
     },
   })
@@ -126,6 +139,7 @@ export const plugin = new PanelPlugin<Options>(GraphPanel)
           options: [
             { value: 'single', label: 'Single series' },
             { value: 'multi', label: 'All series' },
+            { value: 'none', label: 'No tooltip' },
           ],
         },
       })

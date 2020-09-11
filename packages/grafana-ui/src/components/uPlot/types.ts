@@ -1,3 +1,4 @@
+import React from 'react';
 import uPlot from 'uplot';
 import { DataFrame, TimeRange } from '@grafana/data';
 

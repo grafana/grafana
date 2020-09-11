@@ -32,9 +32,9 @@ interface Coords {
 
 // Exposes API for Graph cursor position
 export const CursorPlugin: React.FC<CursorPluginProps> = ({ id, children, capture = 'mousemove', lock = false }) => {
+  const pluginId = `CursorPlugin:${id}`;
   const plotCanvas = useRef<HTMLDivElement>(null);
   const plotCanvasBBox = useRef<any>({ left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 });
-  const pluginId = `CursorPlugin:${id}`;
   const pluginsApi = usePlotPluginContext();
 
   // state exposed to the consumers, maybe better implement as CursorPlugin?
@@ -85,7 +85,7 @@ export const CursorPlugin: React.FC<CursorPluginProps> = ({ id, children, captur
           }
         },
         setCursor: u => {
-          setFocusedPointIdx(u.cursor.idx || null);
+          setFocusedPointIdx(u.cursor.idx === undefined ? null : u.cursor.idx);
         },
         setSeries: (u, idx) => {
           setFocusedSeriesIdx(idx);
