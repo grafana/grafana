@@ -353,57 +353,61 @@ func GetDashboardTags(query *models.GetDashboardTagsQuery) error {
 
 func DeleteDashboard(cmd *models.DeleteDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		dashboard := models.Dashboard{Id: cmd.Id, OrgId: cmd.OrgId}
-		has, err := sess.Get(&dashboard)
+		return deleteDashboard(cmd, sess)
+	})
+}
+
+func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error {
+	dashboard := models.Dashboard{Id: cmd.Id, OrgId: cmd.OrgId}
+	has, err := sess.Get(&dashboard)
+	if err != nil {
+		return err
+	} else if !has {
+		return models.ErrDashboardNotFound
+	}
+
+	deletes := []string{
+		"DELETE FROM dashboard_tag WHERE dashboard_id = ? ",
+		"DELETE FROM star WHERE dashboard_id = ? ",
+		"DELETE FROM dashboard WHERE id = ?",
+		"DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?",
+		"DELETE FROM dashboard_version WHERE dashboard_id = ?",
+		"DELETE FROM annotation WHERE dashboard_id = ?",
+		"DELETE FROM dashboard_provisioning WHERE dashboard_id = ?",
+	}
+
+	if dashboard.IsFolder {
+		deletes = append(deletes, "DELETE FROM dashboard_provisioning WHERE dashboard_id in (select id from dashboard where folder_id = ?)")
+		deletes = append(deletes, "DELETE FROM dashboard WHERE folder_id = ?")
+
+		dashIds := []struct {
+			Id int64
+		}{}
+		err := sess.SQL("select id from dashboard where folder_id = ?", dashboard.Id).Find(&dashIds)
 		if err != nil {
 			return err
-		} else if !has {
-			return models.ErrDashboardNotFound
 		}
 
-		deletes := []string{
-			"DELETE FROM dashboard_tag WHERE dashboard_id = ? ",
-			"DELETE FROM star WHERE dashboard_id = ? ",
-			"DELETE FROM dashboard WHERE id = ?",
-			"DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?",
-			"DELETE FROM dashboard_version WHERE dashboard_id = ?",
-			"DELETE FROM annotation WHERE dashboard_id = ?",
-			"DELETE FROM dashboard_provisioning WHERE dashboard_id = ?",
-		}
-
-		if dashboard.IsFolder {
-			deletes = append(deletes, "DELETE FROM dashboard_provisioning WHERE dashboard_id in (select id from dashboard where folder_id = ?)")
-			deletes = append(deletes, "DELETE FROM dashboard WHERE folder_id = ?")
-
-			dashIds := []struct {
-				Id int64
-			}{}
-			err := sess.SQL("select id from dashboard where folder_id = ?", dashboard.Id).Find(&dashIds)
-			if err != nil {
+		for _, id := range dashIds {
+			if err := deleteAlertDefinition(id.Id, sess); err != nil {
 				return err
 			}
-
-			for _, id := range dashIds {
-				if err := deleteAlertDefinition(id.Id, sess); err != nil {
-					return err
-				}
-			}
 		}
+	}
 
-		if err := deleteAlertDefinition(dashboard.Id, sess); err != nil {
+	if err := deleteAlertDefinition(dashboard.Id, sess); err != nil {
+		return err
+	}
+
+	for _, sql := range deletes {
+		_, err := sess.Exec(sql, dashboard.Id)
+
+		if err != nil {
 			return err
 		}
+	}
 
-		for _, sql := range deletes {
-			_, err := sess.Exec(sql, dashboard.Id)
-
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
+	return nil
 }
 
 func GetDashboards(query *models.GetDashboardsQuery) error {
