@@ -95,7 +95,7 @@ The grid layout is also available for the [Export dashboard as PDF]({{< relref "
 
 ### Report time range
 
-The time range for a report can be now customized separately for each report instead of always using the time range of the Dashboard. This means you can for example configure a report that covers the previous week or month without having to trigger the report generation when that time period ends. The default is still the time range used in the Dashboard the report is based on.
+A report can now be set up with a different time range from the dashboard it is based on. This means you no longer have to apply workarounds such as copying dashboards or carefully aligning report generation with the end of the month to generate reports that covers the period you want. The dashboard's stored time range remains the default option.
 
 ### Organization-wide report settings
 
