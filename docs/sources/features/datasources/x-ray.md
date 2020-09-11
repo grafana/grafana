@@ -65,12 +65,18 @@ region = us-west-2
 
 ## The Query Editor 
 
+The most important field in the editor is the query type. There are 4 query types Trace List(Traces in AWS), Trace Statistics, Trace Analytics(Analytics in AWS), Insights.
+
 {{< docs-imagebox img="/img/docs/v72/x-ray-query-editor.png" max-width="800px" class="docs-image--left" caption="X-Ray query editor" >}}
 
 ### Trace List
 
-### Trace Statistics
+The trace list is pretty much the same as in AWS. Clicking on the trace id in the first column opens the trace on the right side. Notice the query field in the editor which works the same as in AWS. You can write queries, filter expressions or a trace id there.
 
+{{< docs-imagebox img="/img/docs/v72/x-ray-trace-list.png" caption="X-Ray trace list in Grafana" >}}
+
+### Trace Statistics
+{{< docs-imagebox img="/img/docs/v72/x-ray-trace-statistics.png" caption="X-Ray trace statistics in Grafana" >}}
 ### Trace Analytics
 
 ### Insights
