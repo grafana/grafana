@@ -85,21 +85,23 @@ Please read the [upgrade notes]({{< relref "../installation/upgrading.md#ensure-
 
 General features are included in the Grafana Enterprise edition software.
 
+### Report grid layout
+
+A new layout option is available when rendering reports: the grid layout. With this option, your report will look more similar to your dashboard by re-using the same panel layout as the one used in the Dashboard.  Learn more about the [grid layout]({{< relref "../enterprise/reporting.md#layout-and-orientation.md" >}}) in the documentation.
+
+The grid layout is also available for the [Export dashboard as PDF]({{< relref "../enterprise/export-pdf.md" >}}) feature. 
+
+{{< docs-imagebox img="/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+
 ### Report time range
 
-Report time range can be now customized separately per report, in the report form. By default, the time range from the report's dashboard would apply.
+The time range for a report can be now customized separately for each report instead of always using the time range of the Dashboard. This means you can for example configure a report that covers the previous week or month without having to trigger the report generation when that time period ends. The default is still the time range used in the Dashboard the report is based on.
 
 ### Organization-wide report settings
 
-You can now configure organization-wide report settings, such as report branding, in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports for current organization.
+You can now configure organization-wide report settings, such as report branding, in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports of your current organization.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" caption="Reports settings" >}}
-
-### Report grid layout
-
-A new layout option is available to render reports: the grid layout. With this option, your reports will be closer to your dashboards by showing panels in the same layout as they appear on the dashboard. 
-
-The grid layout is also available for the [Export dashboard as PDF]({{< relref "../enterprise/export-pdf.md" >}}) feature. 
 
 ## Upgrading
 
