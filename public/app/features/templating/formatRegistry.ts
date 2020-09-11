@@ -226,6 +226,10 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
           return value;
         }
 
+        if (Array.isArray(value)) {
+          return value.join(' + ');
+        }
+
         return '';
       },
     },
