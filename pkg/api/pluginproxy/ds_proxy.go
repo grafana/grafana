@@ -328,13 +328,15 @@ func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
 		RefreshToken: authInfoQuery.Result.OAuthRefreshToken,
 		TokenType:    authInfoQuery.Result.OAuthTokenType,
 	}
-	// TokenSource handles refreshing the token if it has expired
+
 	client, err := oauthtoken.GetOAuthHttpClient(provider)
 	if err != nil {
 		logger.Error("Failed to create OAuth http client", "error", err)
 		return
 	}
 	oauthctx := context.WithValue(c.Req.Context(), oauth2.HTTPClient, client)
+
+	// TokenSource handles refreshing the token if it has expired
 	token, err := connect.TokenSource(oauthctx, persistedToken).Token()
 	if err != nil {
 		logger.Error("Failed to retrieve access token from OAuth provider", "provider", authInfoQuery.Result.AuthModule, "userid", c.UserId, "username", c.Login, "error", err)
