@@ -23,6 +23,10 @@ The main highlights are:
 - [**Table column filters**]({{< relref "#table-column-filters" >}})
 - [**New and improved transforms**]({{< relref "#new-and-improved-transforms" >}})
 - [**Field override matchers**]({{< relref "#field-override-matchers" >}})
+- [**Grafana Enterprise features**]({{< relref "#grafana-enterprise-features" >}})
+  - [**Report time range**]({{< relref "#report-time-range" >}})
+  - [**Organization-wide report settings**]({{< relref "#organization-wide-report-settings" >}})
+  - [**Report grid layout**]({{< relref "#report-grid-layout" >}})
 
 ## Date formatting options
 
@@ -73,6 +77,32 @@ The UI for transforms also has an update that now allows you to move transformat
 
 You can now add override rules that use a regex matcher and overrides that match on field type.
 
+## Sensitive alert notification channel settings are now stored encrypted in the database
+
+Before Grafana v7.2 alert notification channels did not store sensitive settings/secrets such as API tokens and password encrypted in the database. In Grafana v7.2, creating a new alert notification channel will store sensitive settings encrypted in the database.
+
+Please read the [upgrade notes]({{< relref "../installation/upgrading.md#ensure-encryption-of-existing-alert-notification-channel-secrets" >}}) for more information and how to migrate.
+
+## Grafana Enterprise features
+
+General features are included in the Grafana Enterprise edition software.
+
+### Report time range
+
+Report time range can be now customized separately per report, in the report form. By default, the time range from the report's dashboard would apply.
+
+### Organization-wide report settings
+
+You can now configure organization-wide report settings, such as report branding, in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports for current organization.
+
+{{< docs-imagebox img="/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" caption="Reports settings" >}}
+
+### Report grid layout
+
+A new layout option is available to render reports: the grid layout. With this option, your reports will be closer to your dashboards by showing panels in the same layout as they appear on the dashboard. 
+
+The grid layout is also available for the [Export dashboard as PDF]({{< relref "../enterprise/export-pdf.md" >}}) feature. 
+
 ## Upgrading
 
 See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
@@ -81,11 +111,11 @@ See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
 
 Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) for a complete list of new features, changes, and bug fixes.
 
-# News from other parts of the Grafana ecosystem
+## What's new in other parts of the Grafana ecosystem
 
-## ADX (Azure Data Explorer) plugin
-In collaboration with Microsoft we have started to improve the usability of the ADX datasource plugin. The goal is to make it easier for users, regardless on their previous knowledge of writning KQL (Kusto Query Language) queries, to work with and visualize their data.
+### ADX (Azure Data Explorer) plugin
+In collaboration with Microsoft we have started to improve the usability of the ADX datasource plugin. The goal is to make it easier for users, regardless of their previous knowledge of writing KQL (Kusto Query Language) queries, to work with and visualize their data.
 
-This is the first step towards a more performant, user friendly and flexible datasource plugin. Stay tuned for more updates at [ADX datasource plugin](https://github.com/grafana/azure-data-explorer-datasource).
+This is the first step towards a more user friendly and flexible datasource plugin. Stay tuned for more updates.
 
 {{< docs-imagebox img="/img/docs/v72/adx-ds.png" max-width="800px" caption="ADX visual query builder" >}}

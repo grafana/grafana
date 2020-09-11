@@ -28,6 +28,7 @@ func init() {
 				Placeholder:  "Pagerduty Integration Key",
 				PropertyName: "integrationKey",
 				Required:     true,
+				Secure:       true,
 			},
 			{
 				Label:   "Severity",
