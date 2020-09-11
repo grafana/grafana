@@ -4,8 +4,8 @@ import { map, isArray, replace } from 'lodash';
 
 export interface FormatOptions {
   value: any;
-  args: string[];
   text: string;
+  args: string[];
 }
 
 export interface FormatRegistryItem extends RegistryItem {
@@ -209,20 +209,24 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
         const current = (variable as any)?.current;
 
         if (!current) {
-          return '';
+          return options.value;
         }
 
         const { value, text } = current;
 
-        if (Array.isArray(value)) {
-          return value.join(' + ');
+        if (typeof text === 'string') {
+          return text;
+        }
+
+        if (Array.isArray(text)) {
+          return text.join(' + ');
         }
 
         if (typeof value === 'string') {
           return value;
         }
 
-        return text ?? '';
+        return '';
       },
     },
   ];

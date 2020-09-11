@@ -220,25 +220,18 @@ export class TemplateSrv implements BaseTemplateSrv {
     return scopedVar.value;
   }
 
-  private getVariableText(variableName: string, fieldPath: string | undefined, scopedVars: ScopedVars) {
+  private getVariableText(variableName: string, value: any, scopedVars: ScopedVars) {
     const scopedVar = scopedVars[variableName];
+
     if (!scopedVar) {
       return null;
     }
 
-    if (fieldPath) {
-      const value = this.getFieldAccessor(fieldPath)(scopedVar.value);
-
-      if (typeof value?.text === 'string') {
-        return value.text;
-      }
-
-      if (typeof value === 'string') {
-        return value;
-      }
+    if (scopedVar.value === value || typeof value !== 'string') {
+      return scopedVar.text;
     }
 
-    return scopedVar.text;
+    return value;
   }
 
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
@@ -255,7 +248,7 @@ export class TemplateSrv implements BaseTemplateSrv {
 
       if (scopedVars) {
         const value = this.getVariableValue(variableName, fieldPath, scopedVars);
-        const text = this.getVariableText(variableName, fieldPath, scopedVars);
+        const text = this.getVariableText(variableName, value, scopedVars);
 
         if (value !== null && value !== undefined) {
           return this.formatValue(value, fmt, variable, text);
@@ -305,28 +298,20 @@ export class TemplateSrv implements BaseTemplateSrv {
     deprecationWarning('template_srv.ts', 'replaceWithText()', 'replace(), and specify the :text format');
 
     if (!target) {
-      return target;
+      return target ?? '';
     }
 
-    const targetWithFormat = target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
-      const format = fmt2 ?? fmt3;
-      const variable = this.variableNameWithFieldPath(var1 ?? var2 ?? var3, fieldPath);
+    this.regex.lastIndex = 0;
 
-      if (!variable) {
+    const withoutFormat = target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
+      const format = fmt2 ?? fmt3;
+      if (!format) {
         return match;
       }
-
-      if (format) {
-        return match.replace(`${variable}:${format}`, `${variable}:text`);
-      }
-
-      if (match.indexOf(`$${variable}`) > -1) {
-        return match.replace(`$${variable}`, `\${${variable}:text}`);
-      }
-      return match.replace(`${variable}`, `${variable}:text`);
+      return match.replace(`:${format}`, '');
     });
 
-    return this.replace(targetWithFormat, scopedVars);
+    return this.replace(withoutFormat, scopedVars, 'text');
   }
 
   fillVariableValuesForUrl = (params: any, scopedVars?: ScopedVars) => {
@@ -359,13 +344,6 @@ export class TemplateSrv implements BaseTemplateSrv {
 
   private getAdHocVariables(): any[] {
     return this.dependencies.getFilteredVariables(isAdHoc);
-  }
-
-  private variableNameWithFieldPath(variable: string, fieldPath?: string): string {
-    if (!fieldPath) {
-      return variable;
-    }
-    return `${variable}.${fieldPath}`;
   }
 }
 

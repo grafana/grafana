@@ -102,13 +102,6 @@ describe('templateSrv', () => {
       expect(target).toBe('this.mupp.filters');
     });
 
-    it('should replace ${test.name} with variable text', () => {
-      const target = _templateSrv.replaceWithText('this.${test.name}.filters', {
-        test: { value: { name: 1 }, text: 'asd' },
-      });
-      expect(target).toBe('this.asd.filters');
-    });
-
     it('should replace ${test:glob} with scoped text', () => {
       const target = _templateSrv.replaceWithText('this.${test:glob}.filters', {
         test: { value: 'mupp', text: 'asd' },
@@ -615,7 +608,7 @@ describe('templateSrv', () => {
         {
           type: 'query',
           name: 'server',
-          current: { value: ['server1', 'server2'] },
+          current: { value: ['server1', 'server2'], text: ['Server 1', 'Server 2'] },
         },
         {
           type: 'textbox',
@@ -626,7 +619,7 @@ describe('templateSrv', () => {
           type: 'query',
           name: 'databases',
           current: { value: '$__all', text: '' },
-          options: [{ value: '$__all' }, { value: 'db1' }, { value: 'db2' }],
+          options: [{ value: '$__all' }, { value: 'db1', text: 'Database 1' }, { value: 'db2', text: 'Database 2' }],
         },
       ]);
       _templateSrv.updateIndex();
@@ -634,7 +627,7 @@ describe('templateSrv', () => {
 
     it('should replace with text with variable label', () => {
       const target = _templateSrv.replaceWithText('Server: $server');
-      expect(target).toBe('Server: server1 + server2');
+      expect(target).toBe('Server: Server 1 + Server 2');
     });
 
     it('should replace empty string-values with an empty string', () => {
