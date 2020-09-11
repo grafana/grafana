@@ -156,4 +156,20 @@ describe('Value filters', () => {
       expect(filter.test(value)).toBe(result);
     }
   });
+
+  it('should match range', () => {
+    let datasetNoMatch = [-5, -4, -3, -1.1, 3.1, 4, 5, 100];
+    let datasetMatch = [-1, 0, 0.5, 1, 1.2, 2];
+
+    let filterInfo = valueFiltersRegistry.get(ValueFilterID.range);
+    let filter = filterInfo.getInstance({
+      filterExpression: '-1',
+      filterExpression2: '2',
+      fieldType: FieldType.number,
+    });
+
+    expect(filter.isValid).toBe(true);
+    expect(datasetMatch.every(val => filter.test(val))).toBe(true);
+    expect(datasetNoMatch.some(val => filter.test(val))).toBe(false);
+  });
 });

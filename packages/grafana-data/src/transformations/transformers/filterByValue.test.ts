@@ -22,19 +22,18 @@ describe('FilterByValue transformer', () => {
   });
 
   it('should exclude values', () => {
-    const valueFilters = [
-      {
-        type: 'exclude',
-        fieldName: 'numbers',
-        filterExpression: '5',
-        filterType: ValueFilterID.lowerOrEqual,
-      },
-    ];
-
     const cfg = {
       id: DataTransformerID.filterByValue,
       options: {
-        valueFilters,
+        type: 'exclude',
+        match: 'all',
+        valueFilters: [
+          {
+            fieldName: 'numbers',
+            filterExpression: '5',
+            filterType: ValueFilterID.lowerOrEqual,
+          },
+        ],
       },
     };
 
@@ -61,19 +60,20 @@ describe('FilterByValue transformer', () => {
   });
 
   it('should include values', () => {
-    const valueFilters = [
-      {
-        type: 'include',
-        fieldName: 'numbers',
-        filterExpression: '5',
-        filterType: ValueFilterID.lowerOrEqual,
-      },
-    ];
+    const valueFilters = [,];
 
     const cfg = {
       id: DataTransformerID.filterByValue,
       options: {
-        valueFilters,
+        type: 'include',
+        match: 'all',
+        valueFilters: [
+          {
+            fieldName: 'numbers',
+            filterExpression: '5',
+            filterType: ValueFilterID.lowerOrEqual,
+          },
+        ],
       },
     };
 
@@ -99,22 +99,14 @@ describe('FilterByValue transformer', () => {
     expect(processed[0].fields).toEqual(expected);
   });
 
-  it('should chain properly all the filters', () => {
+  it('should match any condition', () => {
     const valueFilters = [
       {
-        type: 'exclude',
-        fieldName: 'numbers',
-        filterExpression: '2',
-        filterType: ValueFilterID.greater,
-      },
-      {
-        type: 'include',
         fieldName: 'numbers',
         filterExpression: '4',
         filterType: ValueFilterID.lowerOrEqual,
       },
       {
-        type: 'include',
         fieldName: 'numbers',
         filterExpression: '7',
         filterType: ValueFilterID.equal,
@@ -124,6 +116,8 @@ describe('FilterByValue transformer', () => {
     const cfg = {
       id: DataTransformerID.filterByValue,
       options: {
+        type: 'include',
+        match: 'any',
         valueFilters,
       },
     };
