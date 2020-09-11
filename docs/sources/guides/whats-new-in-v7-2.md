@@ -71,6 +71,12 @@ The UI for transforms also has an update that now allows you to move transformat
 
 You can now add override rules that use a regex matcher and overrides that match on field type.
 
+## Sensitive alert notification channel settings are now stored encrypted in the database
+
+Before Grafana v7.2 alert notification channels did not store sensitive settings/secrets such as API tokens and password encrypted in the database. In Grafana v7.2, creating a new alert notification channel will store sensitive settings encrypted in the database.
+
+Please read the [upgrade notes]({{< relref "../installation/upgrading.md#ensure-encryption-of-existing-alert-notification-channel-secrets" >}}) for more information and how to migrate.
+
 ## Upgrading
 
 See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
