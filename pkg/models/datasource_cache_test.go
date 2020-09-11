@@ -19,6 +19,50 @@ import (
 
 //nolint:goconst
 func TestDataSourceProxyCache(t *testing.T) {
+	Convey("When caching a datasource proxy with middleware", t, func() {
+		clearDSProxyCache()
+
+		json, err := simplejson.NewJson([]byte(`{ "sigv4Auth": true }`))
+		So(err, ShouldBeNil)
+
+		ds := DataSource{
+			Id:       1,
+			Url:      "http://k8s:8001",
+			Type:     "Kubernetes",
+			JsonData: json,
+		}
+
+		t, err := ds.GetHttpTransport()
+		So(err, ShouldBeNil)
+
+		Convey("Should include sigv4 in middleware chain", func() {
+			m1, ok := interface{}(t.next).(*Sigv4Middleware)
+			So(ok, ShouldEqual, true)
+
+			_, ok = interface{}(m1.Next).(*http.Transport)
+			So(ok, ShouldEqual, true)
+		})
+	})
+
+	Convey("When caching a datasource proxy with middleware", t, func() {
+		clearDSProxyCache()
+
+		ds := DataSource{
+			Id:       1,
+			Url:      "http://k8s:8001",
+			Type:     "Kubernetes",
+			JsonData: simplejson.New(),
+		}
+
+		t, err := ds.GetHttpTransport()
+		So(err, ShouldBeNil)
+
+		Convey("Should not include sigv4 middleware", func() {
+			_, ok := interface{}(t.next).(*http.Transport)
+			So(ok, ShouldEqual, true)
+		})
+	})
+
 	Convey("When caching a datasource proxy", t, func() {
 		clearDSProxyCache()
 		ds := DataSource{

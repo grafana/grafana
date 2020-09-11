@@ -156,34 +156,19 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 		IdleConnTimeout:       90 * time.Second,
 	}
 
-	decrypted := ds.SecureJsonData.Decrypt()
-	accessKey := decrypted["sigv4AccessKey"]
-	secretKey := decrypted["sigv4SecretKey"]
+	// Set default next round tripper to the default transport
+	var next http.RoundTripper = transport
 
-	authType := ds.JsonData.Get("authType").MustString()
-	assumeRoleARN := ds.JsonData.Get("assumeRoleArn").MustString()
-	externalID := ds.JsonData.Get("externalId").MustString()
-	profile := ds.JsonData.Get("profile").MustString()
-	region := ds.JsonData.Get("sigv4Region").MustString()
-
-	sigv4Middleware := &Sigv4Middleware{
-		Config: &Config{
-			AccessKey:     accessKey,
-			SecretKey:     secretKey,
-			Region:        region,
-			AssumeRoleARN: assumeRoleARN,
-			AuthType:      authType,
-			ExternalID:    externalID,
-			Profile:       profile,
-		},
-		Next: transport,
+	// Add Sigv4 middleware if enabled, which will then defer to the default transport
+	if ds.JsonData != nil && ds.JsonData.Get("sigv4Auth").MustBool() {
+		next = ds.sigv4Middleware(transport)
 	}
 
 	dsTransport := &dataSourceTransport{
 		datasourceName: ds.Name,
 		headers:        customHeaders,
 		transport:      transport,
-		next:           sigv4Middleware,
+		next:           next,
 	}
 
 	ptc.cache[ds.Id] = cachedTransport{
@@ -192,6 +177,23 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	}
 
 	return dsTransport, nil
+}
+
+func (ds *DataSource) sigv4Middleware(next http.RoundTripper) http.RoundTripper {
+	decrypted := ds.SecureJsonData.Decrypt()
+
+	return &Sigv4Middleware{
+		Config: &Config{
+			AccessKey:     decrypted["accessKey"],
+			SecretKey:     decrypted["secretKey"],
+			Region:        ds.JsonData.Get("region").MustString(),
+			AssumeRoleARN: ds.JsonData.Get("assumeRoleArn").MustString(),
+			AuthType:      ds.JsonData.Get("authType").MustString(),
+			ExternalID:    ds.JsonData.Get("externalId").MustString(),
+			Profile:       ds.JsonData.Get("profile").MustString(),
+		},
+		Next: next,
+	}
 }
 
 func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
