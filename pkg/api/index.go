@@ -327,10 +327,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		Children:     []*dtos.NavLink{},
 	})
 
-	sort.SliceStable(navTree, func(i, j int) bool {
-		return navTree[i].SortWeight < navTree[j].SortWeight
-	})
-
 	return navTree, nil
 }
 
@@ -433,6 +429,10 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	}
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
+
+	sort.SliceStable(data.NavTree, func(i, j int) bool {
+		return data.NavTree[i].SortWeight < data.NavTree[j].SortWeight
+	})
 
 	return &data, nil
 }
