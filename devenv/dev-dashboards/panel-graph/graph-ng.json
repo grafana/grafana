@@ -1,0 +1,689 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 79,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": null,
+            "axisGrid": true,
+            "axisLabel": "Temperature",
+            "axisSide": 3,
+            "nullValues": "null",
+            "pointRadius": 2,
+            "showBars": false,
+            "showLines": false,
+            "showPoints": true
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "B-series"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "fahrenheit"
+              },
+              {
+                "id": "custom.axisSide",
+                "value": 1
+              },
+              {
+                "id": "custom.showLines",
+                "value": true
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Temperature (F)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "C-series"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "kelvin"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Temperature (K)"
+              },
+              {
+                "id": "custom.axisSide",
+                "value": 1
+              },
+              {
+                "id": "custom.axisGrid",
+                "value": false
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "under"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "C",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Panel Title",
+      "transformations": [],
+      "type": "graph3"
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      },
+      "id": 17,
+      "panels": [],
+      "title": "Tooltip",
+      "type": "row"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisGrid": true,
+            "axisSide": 3,
+            "nullValues": "null",
+            "showBars": false,
+            "showLines": true,
+            "showPoints": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 12
+      },
+      "id": 19,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "under"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "B",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Single mode",
+      "type": "graph3"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisGrid": true,
+            "axisSide": 3,
+            "nullValues": "null",
+            "showBars": false,
+            "showLines": true,
+            "showPoints": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 12
+      },
+      "id": 20,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "under"
+        },
+        "tooltipOptions": {
+          "mode": "multi"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "B",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Multi mode",
+      "type": "graph3"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "axisGrid": true,
+            "axisSide": 3,
+            "nullValues": "null",
+            "showBars": false,
+            "showLines": true,
+            "showPoints": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 12
+      },
+      "id": 21,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "under"
+        },
+        "tooltipOptions": {
+          "mode": "none"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "B",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "No tooltio",
+      "type": "graph3"
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "id": 15,
+      "panels": [],
+      "title": "Misaligned data",
+      "type": "row"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": null,
+            "axisGrid": true,
+            "axisLabel": "Temperature",
+            "axisSide": 3,
+            "nullValues": "null",
+            "pointRadius": 8,
+            "showBars": false,
+            "showLines": true,
+            "showPoints": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 9,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "under"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0"
+        },
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "10,25,40"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Diff number of datapoints",
+      "transformations": [],
+      "type": "graph3"
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "id": 11,
+      "panels": [],
+      "title": "Null values rendering",
+      "type": "row"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": null,
+            "axisGrid": true,
+            "axisLabel": "Temperature",
+            "axisSide": 3,
+            "nullValues": "null",
+            "pointRadius": 8,
+            "showBars": false,
+            "showLines": true,
+            "showPoints": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 8,
+        "x": 0,
+        "y": 32
+      },
+      "id": 8,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "under"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0"
+        },
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "10,25,null,null,50,10"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "As null",
+      "transformations": [],
+      "type": "graph3"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": null,
+            "axisGrid": true,
+            "axisLabel": "Temperature",
+            "axisSide": 3,
+            "nullValues": "asZero",
+            "pointRadius": 8,
+            "showBars": false,
+            "showLines": true,
+            "showPoints": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 8,
+        "x": 8,
+        "y": 32
+      },
+      "id": 13,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "under"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0"
+        },
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "10,25,null,null,50,10"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "As zero",
+      "transformations": [],
+      "type": "graph3"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": null,
+            "axisGrid": true,
+            "axisLabel": "Temperature",
+            "axisSide": 3,
+            "nullValues": "connected",
+            "pointRadius": 8,
+            "showBars": false,
+            "showLines": true,
+            "showPoints": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 8,
+        "x": 16,
+        "y": 32
+      },
+      "id": 12,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "isVisible": true,
+          "placement": "under"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0"
+        },
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "10,25,null,null,50,10"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Connected",
+      "transformations": [],
+      "type": "graph3"
+    }
+  ],
+  "refresh": false,
+  "schemaVersion": 26,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "2020-09-11T12:02:41.856Z",
+    "to": "2020-09-11T12:47:02.799Z"
+  },
+  "timepicker": {
+    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+  },
+  "timezone": "",
+  "title": "Graph NG - tests",
+  "uid": "TkZXxlNGj",
+  "version": 77
+}

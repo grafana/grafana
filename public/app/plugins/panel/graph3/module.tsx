@@ -105,7 +105,7 @@ export const plugin = new PanelPlugin<Options>(GraphPanel)
         .addRadio({
           path: 'axisSide',
           name: 'Y axis side',
-          defaultValue: { value: 3, label: 'Left' },
+          defaultValue: 3,
           settings: {
             options: [
               { value: 3, label: 'Left' },
