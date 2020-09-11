@@ -76,14 +76,14 @@ possible to improve the legibility of its calls by either passing it
 a struct with its arguments or by implementing functional options.
 
 ```go
-type FunctionArguments struct {
-	prefix string
-	suffix string
-	validation func(string) error
-	finalize func(string) string
+type Args struct {
+	Prefix string
+	Suffix string
+	Validation func(string) error
+	Finalize func(string) string
 }
 
-func Function(str string, args FunctionArguments) (string, error) {
+func Function(str string, args Args) (string, error) {
 ```
 
 or
