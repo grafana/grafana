@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -49,6 +51,22 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 	instanceSettings, err := ModelToInstanceSettings(ds)
 	if err != nil {
 		return nil, err
+	}
+
+	if query.Headers == nil {
+		query.Headers = make(map[string]string)
+	}
+
+	if oauthtoken.IsOAuthPassThruEnabled(ds) {
+		// skip AddOAuthPassThruAuth for alerts
+		if query.User != nil {
+			token, err := oauthtoken.GetCurrentOAuthToken(ctx, *query.User)
+			if err != nil {
+				tw.logger.Error("Error fetching OAuth token for user", "error", err)
+			}
+			delete(query.Headers, "Authorization")
+			query.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
+		}
 	}
 
 	pbQuery := &pluginv2.QueryDataRequest{
