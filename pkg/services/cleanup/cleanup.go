@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -21,7 +20,6 @@ type CleanUpService struct {
 	log               log.Logger
 	Cfg               *setting.Cfg                  `inject:""`
 	ServerLockService *serverlock.ServerLockService `inject:""`
-	SQLStore          *sqlstore.SqlStore            `inject:""`
 }
 
 func init() {
@@ -150,6 +148,6 @@ func (srv *CleanUpService) expireOldUserInvites() {
 	if err := bus.Dispatch(&cmd); err != nil {
 		srv.log.Error("Problem expiring user invites", "error", err.Error())
 	} else {
-		srv.log.Debug("Expired user invites", "rows affected", cmd.ExpiredInvites)
+		srv.log.Debug("Expired user invites", "rows affected", cmd.NumExpired)
 	}
 }

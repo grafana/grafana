@@ -69,7 +69,7 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 				cmd4 := models.ExpireTempUsersCommand{OlderThan: timeNow()}
 				err := ExpireOldUserInvites(&cmd4)
 				So(err, ShouldBeNil)
-				So(cmd4.ExpiredInvites, ShouldEqual, 1)
+				So(cmd4.NumExpired, ShouldEqual, 1)
 			})
 		})
 	})

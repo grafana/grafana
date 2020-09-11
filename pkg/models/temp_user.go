@@ -62,8 +62,8 @@ type UpdateTempUserStatusCommand struct {
 }
 
 type ExpireTempUsersCommand struct {
-	OlderThan      time.Time
-	ExpiredInvites int64
+	OlderThan  time.Time
+	NumExpired int64
 }
 
 type UpdateTempUserWithEmailSentCommand struct {

@@ -141,7 +141,7 @@ func ExpireOldUserInvites(cmd *models.ExpireTempUsersCommand) error {
 
 		if result, err := sess.Exec(rawSql, expiredStatus, cmd.OlderThan, expiredStatus); err != nil {
 			return err
-		} else if cmd.ExpiredInvites, err = result.RowsAffected(); err != nil {
+		} else if cmd.NumExpired, err = result.RowsAffected(); err != nil {
 			return err
 		}
 		return nil
