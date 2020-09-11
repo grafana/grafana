@@ -76,10 +76,18 @@ The trace list is pretty much the same as in AWS. Clicking on the trace id in th
 {{< docs-imagebox img="/img/docs/v72/x-ray-trace-list.png" caption="X-Ray trace list in Grafana" >}}
 
 ### Trace Statistics
+
+In trace statistics you can see a graph and a table showing information about error, fault, throttle, success and total count. You can use the columns field in the query editor to only see specified columns.
+
 {{< docs-imagebox img="/img/docs/v72/x-ray-trace-statistics.png" caption="X-Ray trace statistics in Grafana" >}}
+
 ### Trace Analytics
 
+In trace analytics you can visualize one of the tables from Analytics in AWS.
+
 ### Insights
+
+In insights you can see the summary table for insights just like in AWS. Clicking the InsightId will take you to AWS console.
 
 ### Alerting
 
