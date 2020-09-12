@@ -119,8 +119,11 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: space-between;
     `,
     dragIcon: css`
-      opacity: 0.4;
       cursor: drag;
+      color: ${theme.colors.textWeak};
+      &:hover {
+        color: ${theme.colors.text};
+      }
     `,
     collapseIcon: css`
       color: ${theme.colors.textWeak};
