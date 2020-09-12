@@ -11,11 +11,9 @@ weight = 300
 This page explains what field options and field overrides in Grafana are and how to use them. It also includes
 [examples](#examples) if you need an idea of how this feature might be useful in the real world.
 
-The data model behind Grafana, the [data frame]({{< relref "../developers/plugins/data-frames.md" >}}),
+The data model used in Grafana, the [data frame]({{< relref "../developers/plugins/data-frames.md" >}}),
 is a columnar-oriented table structure that unifies both time series and table query results. Each column within
 this structure is called a _field_. A field can represent a single time series or table column.
-
-Grafana allows to customize how a particular field is displayed in the visualization.
 
 ## Field configuration options and overrides
 
@@ -50,18 +48,14 @@ yet to update to the new panel and data model will be missing either all or some
 
 ### Custom field options
 
-Some visualizations have custom field level options.
-You can only apply custom field options to table visualizations. Plugin authors can add their own custom field options as well, and they might differ across visualizations.
-
-Custom field options are:
-
-- [Column width](#column-width)
-- [Column alignment](#column-alignment)
-- [Cell display mode](#cell-display-mode)
+Some visualizations have custom field options. For example the [Table]({{< relref "visualizations/table-panel.md" >}})
+visualization has many custom field optons. Community panels can add their own custom field options as well,
+and they might differ across visualizations.
 
 ## Configure all fields
 
-To change how all fields display data, you apply a [field option](#field-options). Usually you apply changes that you want to most of or all of the fields here, rather than applying field overrides to exceptions.
+To change how all fields display data, you change an option in the `Field` tab. In the `Overrides` tab
+you then override that for specific fields.
 
 1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
 1. Click the **Field** tab.
@@ -71,7 +65,9 @@ To change how all fields display data, you apply a [field option](#field-options
 
 ## Override a field
 
-Field overrides allow you to change the settings for one field (column in tables) to be different than the others. Field options for overrides are exactly the same as the field options available in a particular visualization. The only difference is that you choose which field to apply them to.
+Field overrides allow you to change the settings for one or more fields (i.e. series or column). What fields are targeted
+by the override depends on the matcher. Field options for overrides are exactly the same as the field options
+available in a particular visualization. The only difference is that you choose which fields to apply them to.
 
 1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
 1. Click the **Overrides** tab.
@@ -104,37 +100,6 @@ Allows you to select fields by their type (string, numeric, etc).
 This section explains all available field options. They are listed in alphabetical order.
 
 Most field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
-
-### Cell display mode
-
-This custom field option applies only to table visualizations.
-
-By default, Grafana automatically chooses display settings. You can override the settings by choosing one of the following options to change all fields.
-
-- **Color text -** If thresholds are set, then the field text is displayed in the appropriate threshold color.
-- **Color background -** If thresholds are set, then the field background is displayed in the appropriate threshold color.
-- **Gradient gauge -** The threshold levels define a gradient.
-- **LCD gauge -** The gauge is split up in small cells that are lit or unlit.
-- **JSON view -** Shows value formatted as code. If a value is an object the JSON view allowing browsing the JSON object will appear on hover
-
-### Column alignment
-
-This custom field option applies only to table visualizations.
-
-Choose how Grafana should align cell contents:
-
-- Auto (default)
-- Left
-- Center
-- Right
-
-### Column width
-
-This custom field option applies only to table visualizations.
-
-By default, Grafana automatically calculates the column width based on the cell contents. In this field option, can override the setting and define the width for all columns in pixels.
-
-For example, if you enter `100` in the field, then when you click outside the field, all the columns will be set to 100 pixels wide.
 
 ### Decimals
 
