@@ -6,8 +6,7 @@ import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload, VariableIdent
 import { StoreState } from '../../../types';
 import { VariableEditorList } from './VariableEditorList';
 import { VariableEditorEditor } from './VariableEditorEditor';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
+import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { getEditorVariables } from '../state/selectors';
 import { VariableModel } from '../types';
 import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
@@ -137,8 +136,4 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   switchToListMode,
 };
 
-export const VariableEditorContainer = connectWithStore(
-  VariableEditorContainerUnconnected,
-  mapStateToProps,
-  mapDispatchToProps
-);
+export const VariableEditorContainer = connect(mapStateToProps, mapDispatchToProps)(VariableEditorContainerUnconnected);
