@@ -8,23 +8,26 @@ weight = 300
 
 # Field configuration options
 
-This page explains what field configurations and field overrides in Grafana are and how to use them. It also includes [examples](#examples) if you need an idea of how this feature might be useful in the real world.
+This page explains what field options and field overrides in Grafana are and how to use them. It also includes
+[examples](#examples) if you need an idea of how this feature might be useful in the real world.
 
-> **Note:** This documentation refers to a Grafana 7.0 beta feature. This documentation will be frequently updated to reflect updates to the feature, and it will probably be broken into smaller sections when the feature moves out of beta.
+The data model behind Grafana, the [data frame]({{< relref "../developers/plugins/data-frames.md" >}}),
+is a columnar-oriented table structure that unifies both time series and table query results. Each column within
+this structure is called a _field_. A field can represent a single time series or table column.
 
-The data model behind Grafana, the [data frame]({{< relref "../developers/plugins/data-frames.md" >}}), is a columnar-oriented table structure.
-
-Each column within this structure is called a _field_. Grafana allows to customize how a particular field is displayed in the visualization.
+Grafana allows to customize how a particular field is displayed in the visualization.
 
 ## Field configuration options and overrides
 
-Field configuration options allow you to change how the data is displayed in your visualizations. Options and overrides that you apply do not change the data, they change how Grafana displays the data.
+Field configuration options allow you to change how the data is displayed in your visualizations. Options and overrides
+that you apply do not change the data, they change how Grafana displays the data.
 
-> **Note:** The time fields are not affected by field configuration options or overrides.
+_Field configuration options_, both standard and custom, can be found in the **Field** tab in the panel editor. Changes
+on this tab apply to all fields (i.e. series/columns). For example, if you change the unit to percentage,
+then all fields with numeric values will be displayed in percentages. [Apply a field option](#configure-all-fields).
 
-_Field configuration options_, both standard and custom, are applied in the **Field** tab in the panel editor. Changes on this panel apply to all fields in the visualization. For example, if you change the unit to percentage, then all fields with numeric values will be displayed in percentages. [Apply a field option](#configure-all-fields).
-
-_Field overrides_ are applied in the _Overrides_ tab in the panel editor. They are exactly the same as field configuration options except that they only change fields you select. The current feature only allows you to change one field at a time, but future improvements will offer more flexibility. [Apply an override](#override-a-field).
+_Field overrides_ can be added in the _Overrides_ tab in the panel editor. There you can add the same options as you
+find in the `Field` tab but they will only be applied to specific fields. [Apply an override](#override-a-field).
 
 All [field options](#field-options) are defined below.
 
@@ -42,15 +45,12 @@ Standard field options are:
 - [Value mappings](#value-mapping)
 - [Data links](#data-links)
 
-You can apply standard field options to the following panel visualizations:
-
-- [Bar gauge]({{< relref "visualizations/bar-gauge-panel.md" >}})
-- [Gauge]({{< relref "visualizations/gauge-panel.md" >}})
-- [Stat]({{< relref "visualizations/stat-panel.md" >}})
-- [Table]({{< relref "visualizations/table-panel.md" >}})
+You can apply standard field options to most of the built-in Grafana panels. Some older panels and community panels that have
+yet to update to the new panel and data model will be missing either all or some of these field options.
 
 ### Custom field options
 
+Some visualizations have custom field level options.
 You can only apply custom field options to table visualizations. Plugin authors can add their own custom field options as well, and they might differ across visualizations.
 
 Custom field options are:
@@ -83,19 +83,19 @@ Field overrides allow you to change the settings for one field (column in tables
 1. Continue to add overrides to this field by clicking **Add override property**, or you can click **Add override** and select a different field to add overrides to.
 1. When finished, click **Save** to save all panel edits to the dashboard.
 
-## Filter options
+## Override matchers
 
-This section explains all available filter options for field overrides. They are listed in alphabetical order.
+This section explains all available matchers for field overrides. They are listed in alphabetical order.
 
-### Filter field by name
+### Match field by name
 
 Allows you to select a field from the list of all available fields that the override will be applied to.
 
-### Filter field by name using regex
+### Match field by name using regex
 
 Allows you to type in a regular expression against which fields to be overridden will be matched.
 
-### Filter field by type
+### Match field by type
 
 Allows you to select fields by their type (string, numeric, etc).
 
@@ -261,7 +261,7 @@ Let’s assume that our result set is a data frame that consists of four fields:
 | 2020-01-02 03:05:00 | 47.0      | 34.0     | 68       |
 | 2020-01-02 03:06:00 | 48.0      | 31.0     | 68       |
 
-Let's apply the field options from the [field option example](#field-option-example) to apply the Celsius unit and get rid of the decimal place. This results in the following table:
+Let's apply the field options from the [field option example](#ield-option-example) to apply the Celsius unit and get rid of the decimal place. This results in the following table:
 
 | time                | high temp | low temp | humidity |
 | ------------------- | --------- | -------- | -------- |
