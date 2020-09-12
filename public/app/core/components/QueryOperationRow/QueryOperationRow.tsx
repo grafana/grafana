@@ -131,8 +131,10 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
     titleWrapper: css`
       display: flex;
       align-items: center;
-      cursor: pointer;
       flex-grow: 1;
+      cursor: pointer;
+      overflow: hidden;
+      margin-right: ${theme.spacing.sm};
     `,
     title: css`
       font-weight: ${theme.typography.weight.semibold};
