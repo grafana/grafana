@@ -74,13 +74,17 @@ describe('EventBus', () => {
   it('Supports legacy events', () => {
     const bus = new EventBusSrv();
     const events: any = [];
-
-    bus.on(alertSuccess, event => {
+    const handler = event => {
       events.push(event);
-    });
+    };
 
+    bus.on(alertSuccess, handler);
+    bus.emit(alertSuccess, ['hello', 'hello2']);
+
+    bus.off(handler);
     bus.emit(alertSuccess, ['hello', 'hello2']);
 
     expect(events[0]).toEqual(['hello', 'hello2']);
+    expect(events.length).toEqual(1);
   });
 });

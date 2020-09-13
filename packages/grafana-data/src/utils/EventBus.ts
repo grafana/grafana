@@ -9,6 +9,7 @@ export abstract class BusEvent {
   readonly type: string;
 
   constructor() {
+    //@ts-ignore
     this.type = this.__proto__.constructor.type;
   }
 }
@@ -51,15 +52,15 @@ export interface EventBus {
  */
 export interface LegacyEmitter {
   /**
-   * @deprecated  use $emit
+   * @deprecated use $emit
    */
   emit(name: string, data?: any): void;
   /**
-   * @deprecated  use $emit
+   * @deprecated use $emit
    */
   emit<T extends undefined>(event: AppEvent<T>): void;
   /**
-   * @deprecated  use $emit
+   * @deprecated use $emit
    */
   emit<T>(event: AppEvent<T>, payload: T): void;
 
@@ -78,7 +79,24 @@ export interface LegacyEmitter {
   /**
    * @deprecated use $on
    */
-  on<T>(event: AppEvent<T> | string, handler: (payload?: T | any) => void, scope?: any);
+  on<T>(event: AppEvent<T> | string, handler: (payload?: T | any) => void, scope?: any): void;
+
+  /**
+   * @deprecated use $on
+   */
+  off(name: string, handler: (payload?: any) => void): void;
+  /**
+   * @deprecated use $on
+   */
+  off<T extends undefined>(event: AppEvent<T>, handler: () => void): void;
+  /**
+   * @deprecated use $on
+   */
+  off<T>(event: AppEvent<T>, handler: (payload: T) => void): void;
+  /**
+   * @deprecated use $on
+   */
+  off<T>(event: AppEvent<T> | string, handler: (payload?: T | any) => void): void;
 }
 
 export class EventBusSrv implements EventBus, LegacyEmitter {
@@ -115,12 +133,12 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
         type: event,
         payload,
       });
+    } else {
+      this.eventStream.next({
+        type: event.name,
+        payload,
+      });
     }
-
-    this.eventStream.next({
-      type: event.name,
-      payload,
-    });
   }
 
   on(name: string, handler: (payload?: any) => void, scope?: any): void;
@@ -129,19 +147,19 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
   on<T>(event: AppEvent<T> | string, handler: (payload?: T | any) => void, scope?: any) {
     console.log(`Deprecated emitter function used (on), use $on`);
 
-    // if (typeof event === 'string') {
-    //   this.emitter.on(event, handler);
+    if (typeof event === 'string') {
+      // this.emitter.on(event, handler);
 
-    //   // if (scope) {
-    //   //   const unbind = scope.$on('$destroy', () => {
-    //   //     this.emitter.off(event, handler);
-    //   //     unbind();
-    //   //   });
-    //   // }
-    //   return;
-    // }
+      // if (scope) {
+      //   const unbind = scope.$on('$destroy', () => {
+      //     this.emitter.off(event, handler);
+      //     unbind();
+      //   });
+      // }
+      return;
+    }
 
-    return this.eventStream
+    this.eventStream
       .pipe(
         filter(streamEvent => {
           console.log('got event', event);
@@ -160,6 +178,18 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
     //     unbind();
     //   });
     // }
+  }
+
+  off(name: string, handler: (payload?: any) => void): void;
+  off<T extends undefined>(event: AppEvent<T>, handler: () => void): void;
+  off<T>(event: AppEvent<T>, handler: (payload: T) => void): void;
+  off<T>(event: AppEvent<T> | string, handler: (payload?: T | any) => void) {
+    if (typeof event === 'string') {
+      this.emitter.off(event, handler);
+      return;
+    }
+
+    this.emitter.off(event.name, handler);
   }
 }
 
