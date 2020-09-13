@@ -246,7 +246,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   renderPanel(width: number, height: number) {
-    const { panel, plugin } = this.props;
+    const { panel, plugin, dashboard } = this.props;
     const { renderCounter, data, isFirstLoad } = this.state;
     const { theme } = config;
     const { state: loadingState } = data;
@@ -293,7 +293,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             onOptionsChange={this.onOptionsChange}
             onFieldConfigChange={this.onFieldConfigChange}
             onChangeTimeRange={this.onChangeTimeRange}
-            eventBus={panel.events}
+            eventBus={dashboard.events}
           />
         </div>
       </>
