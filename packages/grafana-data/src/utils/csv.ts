@@ -21,6 +21,7 @@ export interface CSVConfig {
   newline?: string; // default: "\r\n"
   quoteChar?: string; // default: '"'
   encoding?: string; // default: "",
+  useExcelHeader?: boolean; // default: false
   headerStyle?: CSVHeaderStyle;
 }
 
@@ -269,14 +270,15 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
     return '';
   }
 
-  let csv = '';
   config = defaults(config, {
     delimiter: getLocaleDelimiter(),
     newline: '\r\n',
     quoteChar: '"',
     encoding: '',
     headerStyle: CSVHeaderStyle.name,
+    useExcelHeader: false,
   });
+  let csv = config.useExcelHeader ? `sep=${config.delimiter}${config.newline}` : '';
 
   for (const series of data) {
     const { fields } = series;

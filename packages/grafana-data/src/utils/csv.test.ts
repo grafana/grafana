@@ -89,9 +89,7 @@ describe('write csv', () => {
     expect(fields.map(f => f.name).join(',')).toEqual('a,b,c'); // the names
   });
 
-  it('should use locale to find delimiter', () => {
-    const mockToLocaleString = jest.spyOn(Array.prototype, 'toLocaleString');
-    mockToLocaleString.mockReturnValueOnce('x;y');
+  it('should add Excel header given config', () => {
     const dataFrame = new MutableDataFrame({
       fields: [
         { name: 'Time', values: [1598784913123, 1598784914123] },
@@ -99,15 +97,15 @@ describe('write csv', () => {
       ],
     });
 
-    const csv = toCSV([dataFrame]);
+    const csv = toCSV([dataFrame], { useExcelHeader: true });
     expect(csv).toMatchInlineSnapshot(`
-      "\\"Time\\";\\"Value\\"
-      1598784913123;1234
-      1598784914123;5678
+      "sep=,
+      \\"Time\\",\\"Value\\"
+      1598784913123,1234
+      1598784914123,5678
 
       "
     `);
-    mockToLocaleString.mockRestore();
   });
 });
 
