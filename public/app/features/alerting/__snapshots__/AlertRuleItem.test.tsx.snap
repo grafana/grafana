@@ -4,13 +4,11 @@ exports[`Render should render component 1`] = `
 <li
   className="alert-rule-item"
 >
-  <span
+  <Icon
     className="alert-rule-item__icon state class"
-  >
-    <i
-      className="icon"
-    />
-  </span>
+    name="icon"
+    size="xl"
+  />
   <div
     className="alert-rule-item__body"
   >
@@ -21,7 +19,7 @@ exports[`Render should render component 1`] = `
         className="alert-rule-item__name"
       >
         <a
-          href="https://something.something.darkside?panelId=1&fullscreen&edit&tab=alert"
+          href="https://something.something.darkside?editPanel=1&tab=alert"
         >
           <Highlighter
             highlightClassName="highlight-search-match"
@@ -62,24 +60,32 @@ exports[`Render should render component 1`] = `
   <div
     className="alert-rule-item__actions"
   >
-    <button
-      className="btn btn-small btn-inverse alert-list__btn width-2"
-      onClick={[MockFunction]}
-      title="Pausing an alert rule prevents it from executing"
+    <Component
+      spacing="sm"
     >
-      <i
-        className="fa fa-pause"
-      />
-    </button>
-    <a
-      className="btn btn-small btn-inverse alert-list__btn width-2"
-      href="https://something.something.darkside?panelId=1&fullscreen&edit&tab=alert"
-      title="Edit alert rule"
-    >
-      <i
-        className="gicon gicon-cog"
-      />
-    </a>
+      <Component
+        content="Pausing an alert rule prevents it from executing"
+        placement="bottom"
+      >
+        <Button
+          icon="pause"
+          onClick={[MockFunction]}
+          size="sm"
+          variant="secondary"
+        />
+      </Component>
+      <Component
+        content="Edit alert rule"
+        placement="right"
+      >
+        <LinkButton
+          href="https://something.something.darkside?editPanel=1&tab=alert"
+          icon="cog"
+          size="sm"
+          variant="secondary"
+        />
+      </Component>
+    </Component>
   </div>
 </li>
 `;

@@ -14,12 +14,13 @@ type SendEmailAttachFile struct {
 // SendEmailCommand is command for sending emails
 type SendEmailCommand struct {
 	To            []string
+	SingleEmail   bool
 	Template      string
 	Subject       string
 	Data          map[string]interface{}
 	Info          string
 	ReplyTo       []string
-	EmbededFiles  []string
+	EmbeddedFiles []string
 	AttachedFiles []*SendEmailAttachFile
 }
 

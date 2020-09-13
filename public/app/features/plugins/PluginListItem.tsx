@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import { PluginMeta } from '@grafana/data';
+import { PluginSignatureBadge } from './PluginSignatureBadge';
 
 interface Props {
   plugin: PluginMeta;
@@ -13,6 +14,7 @@ const PluginListItem: FC<Props> = props => {
       <a className="card-item" href={`plugins/${plugin.id}/`}>
         <div className="card-item-header">
           <div className="card-item-type">{plugin.type}</div>
+          <PluginSignatureBadge status={plugin.signature} />
           {plugin.hasUpdate && (
             <div className="card-item-notice">
               <span bs-tooltip="plugin.latestVersion">Update available!</span>

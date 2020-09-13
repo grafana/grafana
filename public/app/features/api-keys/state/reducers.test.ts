@@ -1,31 +1,27 @@
-﻿import { Action, ActionTypes } from './actions';
-import { initialApiKeysState, apiKeysReducer } from './reducers';
+﻿import { apiKeysLoaded, apiKeysReducer, initialApiKeysState, setSearchQuery } from './reducers';
 import { getMultipleMockKeys } from '../__mocks__/apiKeysMock';
+import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { ApiKeysState } from '../../../types';
 
 describe('API Keys reducer', () => {
   it('should set keys', () => {
-    const payload = getMultipleMockKeys(4);
-
-    const action: Action = {
-      type: ActionTypes.LoadApiKeys,
-      payload,
-    };
-
-    const result = apiKeysReducer(initialApiKeysState, action);
-
-    expect(result.keys).toEqual(payload);
+    reducerTester<ApiKeysState>()
+      .givenReducer(apiKeysReducer, { ...initialApiKeysState })
+      .whenActionIsDispatched(apiKeysLoaded(getMultipleMockKeys(4)))
+      .thenStateShouldEqual({
+        ...initialApiKeysState,
+        keys: getMultipleMockKeys(4),
+        hasFetched: true,
+      });
   });
 
   it('should set search query', () => {
-    const payload = 'test query';
-
-    const action: Action = {
-      type: ActionTypes.SetApiKeysSearchQuery,
-      payload,
-    };
-
-    const result = apiKeysReducer(initialApiKeysState, action);
-
-    expect(result.searchQuery).toEqual('test query');
+    reducerTester<ApiKeysState>()
+      .givenReducer(apiKeysReducer, { ...initialApiKeysState })
+      .whenActionIsDispatched(setSearchQuery('test query'))
+      .thenStateShouldEqual({
+        ...initialApiKeysState,
+        searchQuery: 'test query',
+      });
   });
 });

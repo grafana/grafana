@@ -8,7 +8,7 @@ import { getValueFromDimension } from '@grafana/data';
 export const MultiModeGraphTooltip: React.FC<GraphTooltipContentProps & {
   // We expect position to figure out correct values when not hovering over a datapoint
   pos: FlotPosition;
-}> = ({ dimensions, activeDimensions, pos }) => {
+}> = ({ dimensions, activeDimensions, pos, timeZone }) => {
   let activeSeriesIndex: number | null = null;
   // when no x-axis provided, skip rendering
   if (activeDimensions.xAxis === null) {
@@ -24,7 +24,7 @@ export const MultiModeGraphTooltip: React.FC<GraphTooltipContentProps & {
     ? getValueFromDimension(dimensions.xAxis, activeDimensions.xAxis[0], activeDimensions.xAxis[1])
     : pos.x;
 
-  const hoverInfo = getMultiSeriesGraphHoverInfo(dimensions.yAxis.columns, dimensions.xAxis.columns, time);
+  const hoverInfo = getMultiSeriesGraphHoverInfo(dimensions.yAxis.columns, dimensions.xAxis.columns, time, timeZone);
   const timestamp = hoverInfo.time;
 
   const series = hoverInfo.results.map((s, i) => {

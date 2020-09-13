@@ -1,20 +1,25 @@
 package dashboards
 
 import (
+	"fmt"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	. "github.com/smartystreets/goconvey/convey"
-	"golang.org/x/xerrors"
 )
 
 func TestDashboardService(t *testing.T) {
 	Convey("Dashboard service tests", t, func() {
 		bus.ClearBusHandlers()
 
-		service := &dashboardServiceImpl{}
+		service := &dashboardServiceImpl{
+			log: log.New("test.logger"),
+		}
 
 		origNewDashboardGuardian := guardian.New
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
@@ -70,7 +75,7 @@ func TestDashboardService(t *testing.T) {
 					{Uid: "asdf90_-", Error: nil},
 					{Uid: "asdf/90", Error: models.ErrDashboardInvalidUid},
 					{Uid: "   asdfghjklqwertyuiopzxcvbnmasdfghjklqwer   ", Error: nil},
-					{Uid: "asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm", Error: models.ErrDashboardUidToLong},
+					{Uid: "asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm", Error: models.ErrDashboardUidTooLong},
 				}
 
 				for _, tc := range testCases {
@@ -140,12 +145,12 @@ func TestDashboardService(t *testing.T) {
 				})
 
 				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
-					return xerrors.New("Alert validation error")
+					return fmt.Errorf("alert validation error")
 				})
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				_, err := service.SaveDashboard(dto, false)
-				So(err.Error(), ShouldEqual, "Alert validation error")
+				So(err.Error(), ShouldEqual, "alert validation error")
 			})
 		})
 
@@ -183,6 +188,42 @@ func TestDashboardService(t *testing.T) {
 				_, err := service.SaveProvisionedDashboard(dto, nil)
 				So(err, ShouldBeNil)
 				So(provisioningValidated, ShouldBeFalse)
+			})
+
+			Convey("Should override invalid refresh interval if dashboard is provisioned", func() {
+				oldRefreshInterval := setting.MinRefreshInterval
+				setting.MinRefreshInterval = "5m"
+				defer func() { setting.MinRefreshInterval = oldRefreshInterval }()
+
+				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+					cmd.Result = &models.DashboardProvisioning{}
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.SaveProvisionedDashboardCommand) error {
+					return nil
+				})
+
+				bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
+					return nil
+				})
+
+				dto.Dashboard = models.NewDashboard("Dash")
+				dto.Dashboard.SetId(3)
+				dto.User = &models.SignedInUser{UserId: 1}
+				dto.Dashboard.Data.Set("refresh", "1s")
+				_, err := service.SaveProvisionedDashboard(dto, nil)
+				So(err, ShouldBeNil)
+				So(dto.Dashboard.Data.Get("refresh").MustString(), ShouldEqual, "5m")
 			})
 		})
 

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -14,10 +16,13 @@ import (
 // NotificationTestCommand initiates an test
 // execution of an alert notification.
 type NotificationTestCommand struct {
-	State    models.AlertStateType
-	Name     string
-	Type     string
-	Settings *simplejson.Json
+	OrgID          int64
+	ID             int64
+	State          models.AlertStateType
+	Name           string
+	Type           string
+	Settings       *simplejson.Json
+	SecureSettings map[string]string
 }
 
 var (
@@ -37,6 +42,28 @@ func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
 		Settings: cmd.Settings,
 	}
 
+	secureSettingsMap := map[string]string{}
+
+	if cmd.ID > 0 {
+		query := &models.GetAlertNotificationsQuery{
+			OrgId: cmd.OrgID,
+			Id:    cmd.ID,
+		}
+		if err := bus.Dispatch(query); err != nil {
+			return err
+		}
+
+		if query.Result.SecureSettings != nil {
+			secureSettingsMap = query.Result.SecureSettings.Decrypt()
+		}
+	}
+
+	for k, v := range cmd.SecureSettings {
+		secureSettingsMap[k] = v
+	}
+
+	model.SecureSettings = securejsondata.GetEncryptedJsonData(secureSettingsMap)
+
 	notifiers, err := InitNotifier(model)
 
 	if err != nil {
@@ -52,7 +79,7 @@ func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 		DashboardID: 1,
 		PanelID:     1,
 		Name:        "Test notification",
-		Message:     "Someone is testing the alert notification within grafana.",
+		Message:     "Someone is testing the alert notification within Grafana.",
 		State:       models.AlertStateAlerting,
 	}
 

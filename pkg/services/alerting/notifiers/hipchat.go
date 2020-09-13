@@ -18,28 +18,33 @@ func init() {
 		Type:        "hipchat",
 		Name:        "HipChat",
 		Description: "Sends notifications uto a HipChat Room",
+		Heading:     "HipChat settings",
 		Factory:     NewHipChatNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">HipChat settings</h3>
-			      <div class="gf-form max-width-30">
-			        <span class="gf-form-label width-8">Hip Chat Url</span>
-			        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="HipChat URL (ex https://grafana.hipchat.com)"></input>
-			      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">API Key</span>
-        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.apikey" placeholder="HipChat API Key"></input>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">Room ID</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.roomid"
-          data-placement="right">
-        </input>
-      </div>
-    `,
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "Hip Chat Url",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "HipChat URL (ex https://grafana.hipchat.com)",
+				PropertyName: "url",
+				Required:     true,
+			},
+			{
+				Label:        "API Key",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "HipChat API Key",
+				PropertyName: "apiKey",
+				Required:     true,
+			},
+			{
+				Label:        "Room ID",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				PropertyName: "roomid",
+			},
+		},
 	})
-
 }
 
 const (
@@ -148,7 +153,7 @@ func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"date":       evalContext.EndTime.Unix(),
 		"attributes": attributes,
 	}
-	if evalContext.ImagePublicURL != "" {
+	if hc.NeedsImage() && evalContext.ImagePublicURL != "" {
 		card["thumbnail"] = map[string]interface{}{
 			"url":    evalContext.ImagePublicURL,
 			"url@2x": evalContext.ImagePublicURL,

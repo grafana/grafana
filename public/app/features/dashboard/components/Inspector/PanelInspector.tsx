@@ -1,43 +1,77 @@
-// Libraries
-import React, { PureComponent } from 'react';
+import React, { useCallback, useState } from 'react';
+import { connect, MapStateToProps, useDispatch } from 'react-redux';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { Drawer, JSONFormatter } from '@grafana/ui';
-import { css } from 'emotion';
-import { getLocationSrv } from '@grafana/runtime';
 
-interface Props {
+import { PanelPlugin } from '@grafana/data';
+import { StoreState } from 'app/types';
+import { GetDataOptions } from '../../state/PanelQueryRunner';
+import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
+import { InspectContent } from './InspectContent';
+import { useDatasourceMetadata, useInspectTabs } from './hooks';
+import { InspectTab } from './types';
+import { updateLocation } from 'app/core/actions';
+
+interface OwnProps {
   dashboard: DashboardModel;
   panel: PanelModel;
+  defaultTab?: InspectTab;
 }
 
-export class PanelInspector extends PureComponent<Props> {
-  onDismiss = () => {
-    getLocationSrv().update({
-      query: { inspect: null },
-      partial: true,
-    });
-  };
+export interface ConnectedProps {
+  plugin?: PanelPlugin | null;
+}
 
-  render() {
-    const { panel } = this.props;
-    if (!panel) {
-      this.onDismiss(); // Try to close the component
-      return null;
-    }
-    const bodyStyle = css`
-      max-height: 70vh;
-      overflow-y: scroll;
-    `;
+export type Props = OwnProps & ConnectedProps;
 
-    // TODO? should we get the result with an observable once?
-    const data = (panel.getQueryRunner() as any).lastResult;
-    return (
-      <Drawer title={panel.title} onClose={this.onDismiss}>
-        <div className={bodyStyle}>
-          <JSONFormatter json={data} open={2} />
-        </div>
-      </Drawer>
-    );
+const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultTab, plugin }) => {
+  if (!plugin) {
+    return null;
   }
-}
+
+  const dispatch = useDispatch();
+  const [dataOptions, setDataOptions] = useState<GetDataOptions>({
+    withTransforms: false,
+    withFieldConfig: true,
+  });
+  const { data, isLoading, error } = usePanelLatestData(panel, dataOptions);
+  const metaDs = useDatasourceMetadata(data);
+  const tabs = useInspectTabs(plugin, dashboard, error, metaDs);
+  const onClose = useCallback(() => {
+    dispatch(
+      updateLocation({
+        query: { inspect: null, inspectTab: null },
+        partial: true,
+      })
+    );
+  }, [updateLocation]);
+
+  return (
+    <InspectContent
+      dashboard={dashboard}
+      panel={panel}
+      plugin={plugin}
+      defaultTab={defaultTab}
+      tabs={tabs}
+      data={data}
+      isDataLoading={isLoading}
+      dataOptions={dataOptions}
+      onDataOptionsChange={setDataOptions}
+      metadataDatasource={metaDs}
+      onClose={onClose}
+    />
+  );
+};
+
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
+  const panelState = state.dashboard.panels[props.panel.id];
+  if (!panelState) {
+    return { plugin: null };
+  }
+
+  return {
+    plugin: panelState.plugin,
+  };
+};
+
+export const PanelInspector = connect(mapStateToProps)(PanelInspectorUnconnected);

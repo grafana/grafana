@@ -1,5 +1,8 @@
 const path = require('path');
+const TerserPlugin = require('terser-webpack-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 module.exports = ({ config, mode }) => {
+  const isProductionBuild = mode === 'PRODUCTION';
   config.module.rules = [
     ...(config.module.rules || []),
     {
@@ -35,7 +38,8 @@ module.exports = ({ config, mode }) => {
     test: /\.scss$/,
     use: [
       {
-        loader: 'style-loader/useable',
+        loader: 'style-loader',
+        options: { injectType: 'lazyStyleTag' },
       },
       {
         loader: 'css-loader',
@@ -73,9 +77,45 @@ module.exports = ({ config, mode }) => {
     ],
   });
 
+  config.optimization = {
+    nodeEnv: 'production',
+    moduleIds: 'hashed',
+    runtimeChunk: 'single',
+    splitChunks: {
+      chunks: 'all',
+      minChunks: 1,
+      cacheGroups: {
+        vendors: {
+          test: /[\\/]node_modules[\\/].*[jt]sx?$/,
+          chunks: 'initial',
+          priority: -10,
+          reuseExistingChunk: true,
+          enforce: true,
+        },
+        default: {
+          priority: -20,
+          chunks: 'all',
+          test: /.*[jt]sx?$/,
+          reuseExistingChunk: true,
+        },
+      },
+    },
+    minimize: isProductionBuild,
+    minimizer: isProductionBuild
+      ? [
+          new TerserPlugin({ cache: false, parallel: false, sourceMap: false, exclude: /monaco/ }),
+          new OptimizeCSSAssetsPlugin({}),
+        ]
+      : [],
+  };
+
   config.resolve.extensions.push('.ts', '.tsx', '.mdx');
+  config.resolve.alias = config.resolve.alias || {};
+  config.resolve.alias['@grafana/ui'] = path.resolve(__dirname, '..');
+
   config.stats = {
     warningsFilter: /export .* was not found in/,
   };
+
   return config;
 };

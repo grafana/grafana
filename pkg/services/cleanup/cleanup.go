@@ -10,8 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,9 +38,14 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ticker.C:
+			ctxWithTimeout, cancelFn := context.WithTimeout(ctx, time.Minute*9)
+			defer cancelFn()
+
 			srv.cleanUpTmpFiles()
 			srv.deleteExpiredSnapshots()
 			srv.deleteExpiredDashboardVersions()
+			srv.cleanUpOldAnnotations(ctxWithTimeout)
+
 			err := srv.ServerLockService.LockAndExecute(ctx, "delete old login attempts",
 				time.Minute*10, func() {
 					srv.deleteOldLoginAttempts()
@@ -50,6 +56,14 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		}
+	}
+}
+
+func (srv *CleanUpService) cleanUpOldAnnotations(ctx context.Context) {
+	cleaner := annotations.GetAnnotationCleaner()
+	err := cleaner.CleanAnnotations(ctx, srv.Cfg)
+	if err != nil {
+		srv.log.Error("failed to clean up old annotations", "error", err)
 	}
 }
 
@@ -93,7 +107,7 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 }
 
 func (srv *CleanUpService) deleteExpiredSnapshots() {
-	cmd := m.DeleteExpiredSnapshotsCommand{}
+	cmd := models.DeleteExpiredSnapshotsCommand{}
 	if err := bus.Dispatch(&cmd); err != nil {
 		srv.log.Error("Failed to delete expired snapshots", "error", err.Error())
 	} else {
@@ -102,7 +116,7 @@ func (srv *CleanUpService) deleteExpiredSnapshots() {
 }
 
 func (srv *CleanUpService) deleteExpiredDashboardVersions() {
-	cmd := m.DeleteExpiredVersionsCommand{}
+	cmd := models.DeleteExpiredVersionsCommand{}
 	if err := bus.Dispatch(&cmd); err != nil {
 		srv.log.Error("Failed to delete expired dashboard versions", "error", err.Error())
 	} else {
@@ -115,7 +129,7 @@ func (srv *CleanUpService) deleteOldLoginAttempts() {
 		return
 	}
 
-	cmd := m.DeleteOldLoginAttemptsCommand{
+	cmd := models.DeleteOldLoginAttemptsCommand{
 		OlderThan: time.Now().Add(time.Minute * -10),
 	}
 	if err := bus.Dispatch(&cmd); err != nil {

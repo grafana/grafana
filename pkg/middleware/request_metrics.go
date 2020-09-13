@@ -7,13 +7,32 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/macaron.v1"
 )
 
+var (
+	httpRequestsInFlight prometheus.Gauge
+)
+
+func init() {
+	httpRequestsInFlight = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "http_request_in_flight",
+			Help: "A gauge of requests currently being served by Grafana.",
+		},
+	)
+
+	prometheus.MustRegister(httpRequestsInFlight)
+}
+
+// RequestMetrics is a middleware handler that instruments the request
 func RequestMetrics(handler string) macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		rw := res.(macaron.ResponseWriter)
 		now := time.Now()
+		httpRequestsInFlight.Inc()
+		defer httpRequestsInFlight.Dec()
 		c.Next()
 
 		status := rw.Status()
@@ -24,11 +43,12 @@ func RequestMetrics(handler string) macaron.Handler {
 		duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
 		metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))
 
-		if strings.HasPrefix(req.RequestURI, "/api/datasources/proxy") {
+		switch {
+		case strings.HasPrefix(req.RequestURI, "/api/datasources/proxy"):
 			countProxyRequests(status)
-		} else if strings.HasPrefix(req.RequestURI, "/api/") {
+		case strings.HasPrefix(req.RequestURI, "/api/"):
 			countApiRequests(status)
-		} else {
+		default:
 			countPageRequests(status)
 		}
 	}
@@ -97,8 +117,9 @@ func sanitizeMethod(m string) string {
 }
 
 // If the wrapped http.Handler has not set a status code, i.e. the value is
-// currently 0, santizeCode will return 200, for consistency with behavior in
+// currently 0, sanitizeCode will return 200, for consistency with behavior in
 // the stdlib.
+//nolint: gocyclo
 func sanitizeCode(s int) string {
 	switch s {
 	case 100:

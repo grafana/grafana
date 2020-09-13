@@ -1,7 +1,5 @@
 import React, { PureComponent } from 'react';
-
-import { Select } from '../Select/Select';
-
+import { Cascader, CascaderOption } from '../Cascader/Cascader';
 import { getValueFormats, SelectableValue } from '@grafana/data';
 
 interface Props {
@@ -15,10 +13,6 @@ function formatCreateLabel(input: string) {
 }
 
 export class UnitPicker extends PureComponent<Props> {
-  static defaultProps = {
-    width: 12,
-  };
-
   onChange = (value: SelectableValue<string>) => {
     this.props.onChange(value.value);
   };
@@ -26,37 +20,46 @@ export class UnitPicker extends PureComponent<Props> {
   render() {
     const { value, width } = this.props;
 
+    // Set the current selection
+    let current: SelectableValue<string> | undefined = undefined;
+
+    // All units
     const unitGroups = getValueFormats();
 
     // Need to transform the data structure to work well with Select
     const groupOptions = unitGroups.map(group => {
       const options = group.submenu.map(unit => {
-        return {
+        const sel = {
           label: unit.text,
           value: unit.value,
         };
+        if (unit.value === value) {
+          current = sel;
+        }
+        return sel;
       });
 
       return {
         label: group.text,
-        options,
+        value: group.text,
+        items: options,
       };
     });
 
-    const valueOption = groupOptions.map(group => {
-      return group.options.find(option => option.value === value);
-    });
+    // Show the custom unit
+    if (value && !current) {
+      current = { value, label: value };
+    }
 
     return (
-      <Select
+      <Cascader
         width={width}
-        defaultValue={valueOption}
-        isSearchable={true}
-        allowCustomValue={true}
+        initialValue={current && current.label}
+        allowCustomValue
         formatCreateLabel={formatCreateLabel}
-        options={groupOptions}
+        options={groupOptions as CascaderOption[]}
         placeholder="Choose"
-        onChange={this.onChange}
+        onSelect={this.props.onChange}
       />
     );
   }

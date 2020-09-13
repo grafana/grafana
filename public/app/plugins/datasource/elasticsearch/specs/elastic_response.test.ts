@@ -1,5 +1,6 @@
-import { DataFrameView, KeyValue, MutableDataFrame } from '@grafana/data';
+import { DataFrameView, FieldCache, KeyValue, MutableDataFrame } from '@grafana/data';
 import { ElasticResponse } from '../elastic_response';
+import flatten from 'app/core/utils/flatten';
 
 describe('ElasticResponse', () => {
   let targets;
@@ -810,7 +811,6 @@ describe('ElasticResponse', () => {
 
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
-
     it('should return 3 series', () => {
       expect(result.data.length).toBe(3);
       expect(result.data[0].datapoints.length).toBe(2);
@@ -826,21 +826,38 @@ describe('ElasticResponse', () => {
     });
   });
 
-  describe('simple logs query and count', () => {
+  describe('terms with bucket_script and two scripts', () => {
+    let result: any;
+
     beforeEach(() => {
       targets = [
         {
           refId: 'A',
-          metrics: [{ type: 'count', id: '1' }],
-          bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '2' }],
-          context: 'explore',
-          interval: '10s',
-          isLogsQuery: true,
-          key: 'Q-1561369883389-0.7611823271062786-0',
-          liveStreaming: false,
-          maxDataPoints: 1620,
-          query: '',
-          timeField: '@timestamp',
+          metrics: [
+            { id: '1', type: 'sum', field: '@value' },
+            { id: '3', type: 'max', field: '@value' },
+            {
+              id: '4',
+              field: 'select field',
+              pipelineVariables: [
+                { name: 'var1', pipelineAgg: '1' },
+                { name: 'var2', pipelineAgg: '3' },
+              ],
+              settings: { script: 'params.var1 * params.var2' },
+              type: 'bucket_script',
+            },
+            {
+              id: '5',
+              field: 'select field',
+              pipelineVariables: [
+                { name: 'var1', pipelineAgg: '1' },
+                { name: 'var2', pipelineAgg: '3' },
+              ],
+              settings: { script: 'params.var1 * params.var2 * 4' },
+              type: 'bucket_script',
+            },
+          ],
+          bucketAggs: [{ type: 'terms', field: '@timestamp', id: '2' }],
         },
       ];
       response = {
@@ -850,48 +867,116 @@ describe('ElasticResponse', () => {
               '2': {
                 buckets: [
                   {
-                    doc_count: 10,
+                    1: { value: 2 },
+                    3: { value: 3 },
+                    4: { value: 6 },
+                    5: { value: 24 },
+                    doc_count: 60,
                     key: 1000,
                   },
                   {
-                    doc_count: 15,
+                    1: { value: 3 },
+                    3: { value: 4 },
+                    4: { value: 12 },
+                    5: { value: 48 },
+                    doc_count: 60,
                     key: 2000,
                   },
                 ],
               },
             },
-            hits: {
-              hits: [
-                {
-                  _id: 'fdsfs',
-                  _type: '_doc',
-                  _index: 'mock-index',
-                  _source: {
-                    '@timestamp': '2019-06-24T09:51:19.765Z',
-                    host: 'djisaodjsoad',
-                    message: 'hello, i am a message',
-                  },
-                },
-                {
-                  _id: 'kdospaidopa',
-                  _type: '_doc',
-                  _index: 'mock-index',
-                  _source: {
-                    '@timestamp': '2019-06-24T09:52:19.765Z',
-                    host: 'dsalkdakdop',
-                    message: 'hello, i am also message',
-                  },
-                },
-              ],
-            },
           },
         ],
       };
 
-      result = new ElasticResponse(targets, response).getLogs();
+      result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
+    it('should return 2 rows with 5 columns', () => {
+      expect(result.data[0].columns.length).toBe(5);
+      expect(result.data[0].rows.length).toBe(2);
+      expect(result.data[0].rows[0][1]).toBe(2);
+      expect(result.data[0].rows[0][2]).toBe(3);
+      expect(result.data[0].rows[0][3]).toBe(6);
+      expect(result.data[0].rows[0][4]).toBe(24);
+      expect(result.data[0].rows[1][1]).toBe(3);
+      expect(result.data[0].rows[1][2]).toBe(4);
+      expect(result.data[0].rows[1][3]).toBe(12);
+      expect(result.data[0].rows[1][4]).toBe(48);
+    });
+  });
+
+  describe('simple logs query and count', () => {
+    const targets: any = [
+      {
+        refId: 'A',
+        metrics: [{ type: 'count', id: '1' }],
+        bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '2' }],
+        context: 'explore',
+        interval: '10s',
+        isLogsQuery: true,
+        key: 'Q-1561369883389-0.7611823271062786-0',
+        liveStreaming: false,
+        maxDataPoints: 1620,
+        query: '',
+        timeField: '@timestamp',
+      },
+    ];
+    const response = {
+      responses: [
+        {
+          aggregations: {
+            '2': {
+              buckets: [
+                {
+                  doc_count: 10,
+                  key: 1000,
+                },
+                {
+                  doc_count: 15,
+                  key: 2000,
+                },
+              ],
+            },
+          },
+          hits: {
+            hits: [
+              {
+                _id: 'fdsfs',
+                _type: '_doc',
+                _index: 'mock-index',
+                _source: {
+                  '@timestamp': '2019-06-24T09:51:19.765Z',
+                  host: 'djisaodjsoad',
+                  message: 'hello, i am a message',
+                  level: 'debug',
+                  fields: {
+                    lvl: 'debug',
+                  },
+                },
+              },
+              {
+                _id: 'kdospaidopa',
+                _type: '_doc',
+                _index: 'mock-index',
+                _source: {
+                  '@timestamp': '2019-06-24T09:52:19.765Z',
+                  host: 'dsalkdakdop',
+                  message: 'hello, i am also message',
+                  level: 'error',
+                  fields: {
+                    lvl: 'info',
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    };
+
     it('should return histogram aggregation and documents', () => {
+      const result = new ElasticResponse(targets, response).getLogs();
       expect(result.data.length).toBe(2);
       const logResults = result.data[0] as MutableDataFrame;
       const fields = logResults.fields.map(f => {
@@ -911,21 +996,41 @@ describe('ElasticResponse', () => {
         expect(r._id).toEqual(response.responses[0].hits.hits[i]._id);
         expect(r._type).toEqual(response.responses[0].hits.hits[i]._type);
         expect(r._index).toEqual(response.responses[0].hits.hits[i]._index);
-        expect(r._source).toEqual(response.responses[0].hits.hits[i]._source);
+        expect(r._source).toEqual(
+          flatten(
+            response.responses[0].hits.hits[i]._source,
+            (null as unknown) as { delimiter?: any; maxDepth?: any; safe?: any }
+          )
+        );
       }
 
       // Make a map from the histogram results
       const hist: KeyValue<number> = {};
       const histogramResults = new MutableDataFrame(result.data[1]);
       rows = new DataFrameView(histogramResults);
+
       for (let i = 0; i < rows.length; i++) {
         const row = rows.get(i);
-        hist[row.Time] = row.Count;
+        hist[row.Time] = row.Value;
       }
 
       response.responses[0].aggregations['2'].buckets.forEach((bucket: any) => {
         expect(hist[bucket.key]).toEqual(bucket.doc_count);
       });
+    });
+
+    it('should map levels field', () => {
+      const result = new ElasticResponse(targets, response).getLogs(undefined, 'level');
+      const fieldCache = new FieldCache(result.data[0]);
+      const field = fieldCache.getFieldByName('level');
+      expect(field?.values.toArray()).toEqual(['debug', 'error']);
+    });
+
+    it('should re map levels field to new field', () => {
+      const result = new ElasticResponse(targets, response).getLogs(undefined, 'fields.lvl');
+      const fieldCache = new FieldCache(result.data[0]);
+      const field = fieldCache.getFieldByName('level');
+      expect(field?.values.toArray()).toEqual(['debug', 'info']);
     });
   });
 });

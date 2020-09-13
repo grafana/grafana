@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"gopkg.in/ini.v1"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -19,7 +21,6 @@ const (
 )
 
 func TestLoadingSettings(t *testing.T) {
-
 	Convey("Testing loading settings from ini file", t, func() {
 		skipStaticRootValidation = true
 
@@ -274,27 +275,42 @@ func TestLoadingSettings(t *testing.T) {
 	})
 
 	Convey("Test reading string values from .ini file", t, func() {
-
 		iniFile, err := ini.Load(path.Join(HomePath, "pkg/setting/testdata/invalid.ini"))
 		So(err, ShouldBeNil)
 
 		Convey("If key is found - should return value from ini file", func() {
-			value, err := valueAsString(iniFile.Section("server"), "alt_url", "")
-			So(err, ShouldBeNil)
+			value := valueAsString(iniFile.Section("server"), "alt_url", "")
 			So(value, ShouldEqual, "https://grafana.com/")
 		})
 
 		Convey("If key is not found - should return default value", func() {
-			value, err := valueAsString(iniFile.Section("server"), "extra_url", "default_url_val")
-			So(err, ShouldBeNil)
+			value := valueAsString(iniFile.Section("server"), "extra_url", "default_url_val")
 			So(value, ShouldEqual, "default_url_val")
 		})
-
-		Convey("In case of panic - should return user-friendly error", func() {
-			value, err := valueAsString(iniFile.Section("server"), "root_url", "")
-			So(err.Error(), ShouldEqual, "Invalid value for key 'root_url' in configuration file")
-			So(value, ShouldEqual, "")
-		})
-
 	})
+}
+
+func TestParseAppUrlAndSubUrl(t *testing.T) {
+	testCases := []struct {
+		rootURL           string
+		expectedAppURL    string
+		expectedAppSubURL string
+	}{
+		{rootURL: "http://localhost:3000/", expectedAppURL: "http://localhost:3000/"},
+		{rootURL: "http://localhost:3000", expectedAppURL: "http://localhost:3000/"},
+		{rootURL: "http://localhost:3000/grafana", expectedAppURL: "http://localhost:3000/grafana/", expectedAppSubURL: "/grafana"},
+		{rootURL: "http://localhost:3000/grafana/", expectedAppURL: "http://localhost:3000/grafana/", expectedAppSubURL: "/grafana"},
+	}
+
+	for _, tc := range testCases {
+		f := ini.Empty()
+		s, err := f.NewSection("server")
+		require.NoError(t, err)
+		_, err = s.NewKey("root_url", tc.rootURL)
+		require.NoError(t, err)
+		appURL, appSubURL, err := parseAppUrlAndSubUrl(s)
+		require.NoError(t, err)
+		require.Equal(t, tc.expectedAppURL, appURL)
+		require.Equal(t, tc.expectedAppSubURL, appSubURL)
+	}
 }

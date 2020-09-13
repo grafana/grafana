@@ -1,6 +1,8 @@
 import {
   dateTimeAsIso,
+  dateTimeAsIsoNoDateIfToday,
   dateTimeAsUS,
+  dateTimeAsUSNoDateIfToday,
   dateTimeFromNow,
   Interval,
   toClock,
@@ -8,6 +10,9 @@ import {
   toDurationInMilliseconds,
   toDurationInSeconds,
   toDurationInHoursMinutesSeconds,
+  toDurationInDaysHoursMinutesSeconds,
+  toNanoSeconds,
+  toSeconds,
 } from './dateTimeFormatters';
 import { formattedValueToString } from './valueFormats';
 import { toUtc, dateTime } from '../datetime/moment_wrapper';
@@ -19,81 +24,81 @@ describe('date time formats', () => {
 
   it('should format as iso date', () => {
     const expected = browserTime.format('YYYY-MM-DD HH:mm:ss');
-    const actual = dateTimeAsIso(epoch, 0, 0, false);
+    const actual = dateTimeAsIso(epoch, 0, 0);
     expect(actual.text).toBe(expected);
   });
 
   it('should format as iso date (in UTC)', () => {
     const expected = utcTime.format('YYYY-MM-DD HH:mm:ss');
-    const actual = dateTimeAsIso(epoch, 0, 0, true);
+    const actual = dateTimeAsIso(epoch, 0, 0, 'utc');
     expect(actual.text).toBe(expected);
   });
 
   it('should format as iso date and skip date when today', () => {
     const now = dateTime();
     const expected = now.format('HH:mm:ss');
-    const actual = dateTimeAsIso(now.valueOf(), 0, 0, false);
+    const actual = dateTimeAsIsoNoDateIfToday(now.valueOf(), 0, 0);
     expect(actual.text).toBe(expected);
   });
 
   it('should format as iso date (in UTC) and skip date when today', () => {
     const now = toUtc();
     const expected = now.format('HH:mm:ss');
-    const actual = dateTimeAsIso(now.valueOf(), 0, 0, true);
+    const actual = dateTimeAsIsoNoDateIfToday(now.valueOf(), 0, 0, 'utc');
     expect(actual.text).toBe(expected);
   });
 
   it('should format as US date', () => {
     const expected = browserTime.format('MM/DD/YYYY h:mm:ss a');
-    const actual = dateTimeAsUS(epoch, 0, 0, false);
+    const actual = dateTimeAsUS(epoch, 0, 0);
     expect(actual.text).toBe(expected);
   });
 
   it('should format as US date (in UTC)', () => {
     const expected = utcTime.format('MM/DD/YYYY h:mm:ss a');
-    const actual = dateTimeAsUS(epoch, 0, 0, true);
+    const actual = dateTimeAsUS(epoch, 0, 0, 'utc');
     expect(actual.text).toBe(expected);
   });
 
   it('should format as US date and skip date when today', () => {
     const now = dateTime();
     const expected = now.format('h:mm:ss a');
-    const actual = dateTimeAsUS(now.valueOf(), 0, 0, false);
+    const actual = dateTimeAsUSNoDateIfToday(now.valueOf(), 0, 0);
     expect(actual.text).toBe(expected);
   });
 
   it('should format as US date (in UTC) and skip date when today', () => {
     const now = toUtc();
     const expected = now.format('h:mm:ss a');
-    const actual = dateTimeAsUS(now.valueOf(), 0, 0, true);
+    const actual = dateTimeAsUSNoDateIfToday(now.valueOf(), 0, 0, 'utc');
     expect(actual.text).toBe(expected);
   });
 
   it('should format as from now with days', () => {
     const daysAgo = dateTime().add(-7, 'd');
     const expected = '7 days ago';
-    const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0, false);
+    const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0);
     expect(actual.text).toBe(expected);
   });
 
   it('should format as from now with days (in UTC)', () => {
     const daysAgo = toUtc().add(-7, 'd');
     const expected = '7 days ago';
-    const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0, true);
+    const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0, 'utc');
     expect(actual.text).toBe(expected);
   });
 
   it('should format as from now with minutes', () => {
     const daysAgo = dateTime().add(-2, 'm');
     const expected = '2 minutes ago';
-    const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0, false);
+    const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0);
     expect(actual.text).toBe(expected);
   });
 
   it('should format as from now with minutes (in UTC)', () => {
     const daysAgo = toUtc().add(-2, 'm');
     const expected = '2 minutes ago';
-    const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0, true);
+    const actual = dateTimeFromNow(daysAgo.valueOf(), 0, 0, 'utc');
     expect(actual.text).toBe(expected);
   });
 });
@@ -179,6 +184,42 @@ describe('duration', () => {
     const str = toDurationInHoursMinutesSeconds(0);
     expect(formattedValueToString(str)).toBe('00:00:00');
   });
+  it('1 dtdhms', () => {
+    const str = toDurationInHoursMinutesSeconds(1);
+    expect(formattedValueToString(str)).toBe('00:00:01');
+  });
+  it('-1 dtdhms', () => {
+    const str = toDurationInHoursMinutesSeconds(-1);
+    expect(formattedValueToString(str)).toBe('00:00:01 ago');
+  });
+  it('0 dtdhms', () => {
+    const str = toDurationInHoursMinutesSeconds(0);
+    expect(formattedValueToString(str)).toBe('00:00:00');
+  });
+  it('86399 dtdhms', () => {
+    const str = toDurationInDaysHoursMinutesSeconds(86399);
+    expect(formattedValueToString(str)).toBe('23:59:59');
+  });
+  it('86400 dtdhms', () => {
+    const str = toDurationInDaysHoursMinutesSeconds(86400);
+    expect(formattedValueToString(str)).toBe('1 d 00:00:00');
+  });
+  it('360000 dtdhms', () => {
+    const str = toDurationInDaysHoursMinutesSeconds(360000);
+    expect(formattedValueToString(str)).toBe('4 d 04:00:00');
+  });
+  it('1179811 dtdhms', () => {
+    const str = toDurationInDaysHoursMinutesSeconds(1179811);
+    expect(formattedValueToString(str)).toBe('13 d 15:43:31');
+  });
+  it('-1179811 dtdhms', () => {
+    const str = toDurationInDaysHoursMinutesSeconds(-1179811);
+    expect(formattedValueToString(str)).toBe('13 d 15:43:31 ago');
+  });
+  it('116876364 dtdhms', () => {
+    const str = toDurationInDaysHoursMinutesSeconds(116876364);
+    expect(formattedValueToString(str)).toBe('1352 d 17:39:24');
+  });
 });
 
 describe('clock', () => {
@@ -245,5 +286,57 @@ describe('clock', () => {
       const str = toClock(89999999, 2);
       expect(formattedValueToString(str)).toBe('24h:59m:59s');
     });
+  });
+});
+
+describe('to nanoseconds', () => {
+  it('should correctly display as ns', () => {
+    const tenNanoseconds = toNanoSeconds(10);
+    expect(tenNanoseconds.text).toBe('10');
+    expect(tenNanoseconds.suffix).toBe(' ns');
+  });
+
+  it('should correctly display as µs', () => {
+    const threeMicroseconds = toNanoSeconds(3000);
+    expect(threeMicroseconds.text).toBe('3');
+    expect(threeMicroseconds.suffix).toBe(' µs');
+  });
+
+  it('should correctly display as ms', () => {
+    const fourMilliseconds = toNanoSeconds(4000000);
+    expect(fourMilliseconds.text).toBe('4');
+    expect(fourMilliseconds.suffix).toBe(' ms');
+  });
+
+  it('should correctly display as s', () => {
+    const fiveSeconds = toNanoSeconds(5000000000);
+    expect(fiveSeconds.text).toBe('5');
+    expect(fiveSeconds.suffix).toBe(' s');
+  });
+
+  it('should correctly display as minutes', () => {
+    const eightMinutes = toNanoSeconds(480000000000);
+    expect(eightMinutes.text).toBe('8');
+    expect(eightMinutes.suffix).toBe(' min');
+  });
+
+  it('should correctly display as hours', () => {
+    const nineHours = toNanoSeconds(32400000000000);
+    expect(nineHours.text).toBe('9');
+    expect(nineHours.suffix).toBe(' hour');
+  });
+
+  it('should correctly display as days', () => {
+    const tenDays = toNanoSeconds(864000000000000);
+    expect(tenDays.text).toBe('10');
+    expect(tenDays.suffix).toBe(' day');
+  });
+});
+
+describe('seconds', () => {
+  it('should show 0 as 0', () => {
+    const zeroSeconds = toSeconds(0);
+    expect(zeroSeconds.text).toBe('0');
+    expect(zeroSeconds.suffix).toBe(' s');
   });
 });

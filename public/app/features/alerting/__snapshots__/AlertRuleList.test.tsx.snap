@@ -13,7 +13,7 @@ exports[`Render should render alert rules 1`] = `
       <div
         className="gf-form gf-form--grow"
       >
-        <ForwardRef
+        <Component
           inputClassName="gf-form-input"
           labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}
@@ -30,67 +30,55 @@ exports[`Render should render alert rules 1`] = `
           States
         </label>
         <div
-          className="gf-form-select-wrapper width-13"
+          className="width-13"
         >
-          <select
-            className="gf-form-input"
+          <Select
             onChange={[Function]}
+            options={
+              Array [
+                Object {
+                  "label": "All",
+                  "value": "all",
+                },
+                Object {
+                  "label": "OK",
+                  "value": "ok",
+                },
+                Object {
+                  "label": "Not OK",
+                  "value": "not_ok",
+                },
+                Object {
+                  "label": "Alerting",
+                  "value": "alerting",
+                },
+                Object {
+                  "label": "No Data",
+                  "value": "no_data",
+                },
+                Object {
+                  "label": "Paused",
+                  "value": "paused",
+                },
+                Object {
+                  "label": "Pending",
+                  "value": "pending",
+                },
+              ]
+            }
             value="all"
-          >
-            <option
-              key="all"
-              value="all"
-            >
-              All
-            </option>
-            <option
-              key="ok"
-              value="ok"
-            >
-              OK
-            </option>
-            <option
-              key="not_ok"
-              value="not_ok"
-            >
-              Not OK
-            </option>
-            <option
-              key="alerting"
-              value="alerting"
-            >
-              Alerting
-            </option>
-            <option
-              key="no_data"
-              value="no_data"
-            >
-              No Data
-            </option>
-            <option
-              key="paused"
-              value="paused"
-            >
-              Paused
-            </option>
-            <option
-              key="pending"
-              value="pending"
-            >
-              Pending
-            </option>
-          </select>
+          />
         </div>
       </div>
       <div
         className="page-action-bar__spacer"
       />
-      <a
-        className="btn btn-secondary"
+      <Button
         onClick={[Function]}
+        variant="secondary"
       >
         How to add an alert
-      </a>
+      </Button>
     </div>
     <section>
       <ol
@@ -157,7 +145,7 @@ exports[`Render should render component 1`] = `
       <div
         className="gf-form gf-form--grow"
       >
-        <ForwardRef
+        <Component
           inputClassName="gf-form-input"
           labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}
@@ -174,67 +162,55 @@ exports[`Render should render component 1`] = `
           States
         </label>
         <div
-          className="gf-form-select-wrapper width-13"
+          className="width-13"
         >
-          <select
-            className="gf-form-input"
+          <Select
             onChange={[Function]}
+            options={
+              Array [
+                Object {
+                  "label": "All",
+                  "value": "all",
+                },
+                Object {
+                  "label": "OK",
+                  "value": "ok",
+                },
+                Object {
+                  "label": "Not OK",
+                  "value": "not_ok",
+                },
+                Object {
+                  "label": "Alerting",
+                  "value": "alerting",
+                },
+                Object {
+                  "label": "No Data",
+                  "value": "no_data",
+                },
+                Object {
+                  "label": "Paused",
+                  "value": "paused",
+                },
+                Object {
+                  "label": "Pending",
+                  "value": "pending",
+                },
+              ]
+            }
             value="all"
-          >
-            <option
-              key="all"
-              value="all"
-            >
-              All
-            </option>
-            <option
-              key="ok"
-              value="ok"
-            >
-              OK
-            </option>
-            <option
-              key="not_ok"
-              value="not_ok"
-            >
-              Not OK
-            </option>
-            <option
-              key="alerting"
-              value="alerting"
-            >
-              Alerting
-            </option>
-            <option
-              key="no_data"
-              value="no_data"
-            >
-              No Data
-            </option>
-            <option
-              key="paused"
-              value="paused"
-            >
-              Paused
-            </option>
-            <option
-              key="pending"
-              value="pending"
-            >
-              Pending
-            </option>
-          </select>
+          />
         </div>
       </div>
       <div
         className="page-action-bar__spacer"
       />
-      <a
-        className="btn btn-secondary"
+      <Button
         onClick={[Function]}
+        variant="secondary"
       >
         How to add an alert
-      </a>
+      </Button>
     </div>
     <section>
       <ol

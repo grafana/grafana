@@ -19,11 +19,11 @@ Edit content in the `sources` directory.
 
 ### Using `relref` for internal links
 
-Use the Hugo shortcode [relref](https://gohugo.io/content-management/cross-references/#use-ref-and-relref) anytime you are linking to other internal docs pages.
+Use the Hugo shortcode [relref](https://gohugo.io/content-management/cross-references/#use-ref-and-relref) any time you are linking to other internal docs pages.
 
 ### Edit the side menu
 
-Edit [sources/menu.yaml](sources/menu.yaml) to make changes to the sidebar. Restart the `make run` command for changes to take effect.
+Edit [sources/menu.yaml](sources/menu.yaml) to make changes to the sidebar. Stop and rerun the `make docs` command for changes to take effect.
 
 ### Add images
 
@@ -33,6 +33,6 @@ Images are currently hosted in the grafana/website repo.
 
 ## Deploy changes to grafana.com
 
-When a PR is merged to master with changes in the `docs` directory, those changes are automatically synched to the grafana/website repo on the `docs-grafana` branch.
+When a PR is merged to master with changes in the `docs/sources` directory, those changes are automatically synched to the grafana/website repo and published to the staging site.
 
-In order to make those changes live, open a PR in the website repo that merges the `docs-grafana` branch into `master`. Then follow the publishing guidelines in that repo.
+Generally, someone from marketing will publish to production each day, so as long as the sync is successful your docs edits will be published. Alternatively, you can refer to [publishing to production](https://github.com/grafana/website#publishing-to-production-grafanacom) if you'd like to do it yourself.

@@ -5,11 +5,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-func GetDashboardPermissionList(c *m.ReqContext) Response {
+func GetDashboardPermissionList(c *models.ReqContext) Response {
 	dashID := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashID, "")
@@ -35,14 +35,14 @@ func GetDashboardPermissionList(c *m.ReqContext) Response {
 			perm.TeamAvatarUrl = dtos.GetGravatarUrlWithDefault(perm.TeamEmail, perm.Team)
 		}
 		if perm.Slug != "" {
-			perm.Url = m.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
+			perm.Url = models.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
 		}
 	}
 
 	return JSON(200, acl)
 }
 
-func UpdateDashboardPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
+func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
 	dashID := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashID, "")
@@ -55,11 +55,11 @@ func UpdateDashboardPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclC
 		return dashboardGuardianResponse(err)
 	}
 
-	cmd := m.UpdateDashboardAclCommand{}
+	cmd := models.UpdateDashboardAclCommand{}
 	cmd.DashboardId = dashID
 
 	for _, item := range apiCmd.Items {
-		cmd.Items = append(cmd.Items, &m.DashboardAcl{
+		cmd.Items = append(cmd.Items, &models.DashboardAcl{
 			OrgId:       c.OrgId,
 			DashboardId: dashID,
 			UserId:      item.UserId,
@@ -71,7 +71,7 @@ func UpdateDashboardPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclC
 		})
 	}
 
-	if okToUpdate, err := g.CheckPermissionBeforeUpdate(m.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
+	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
 		if err != nil {
 			if err == guardian.ErrGuardianPermissionExists ||
 				err == guardian.ErrGuardianOverride {
@@ -85,7 +85,7 @@ func UpdateDashboardPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclC
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == m.ErrDashboardAclInfoMissing || err == m.ErrDashboardPermissionDashboardEmpty {
+		if err == models.ErrDashboardAclInfoMissing || err == models.ErrDashboardPermissionDashboardEmpty {
 			return Error(409, err.Error(), err)
 		}
 		return Error(500, "Failed to create permission", err)

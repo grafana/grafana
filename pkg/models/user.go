@@ -7,8 +7,9 @@ import (
 
 // Typed errors
 var (
-	ErrUserNotFound     = errors.New("User not found")
-	ErrLastGrafanaAdmin = errors.New("Cannot remove last grafana admin")
+	ErrUserNotFound      = errors.New("User not found")
+	ErrUserAlreadyExists = errors.New("User already exists")
+	ErrLastGrafanaAdmin  = errors.New("Cannot remove last grafana admin")
 )
 
 type Password string
@@ -43,11 +44,11 @@ type User struct {
 func (u *User) NameOrFallback() string {
 	if u.Name != "" {
 		return u.Name
-	} else if u.Login != "" {
-		return u.Login
-	} else {
-		return u.Email
 	}
+	if u.Login != "" {
+		return u.Login
+	}
+	return u.Email
 }
 
 // ---------------------
@@ -58,6 +59,7 @@ type CreateUserCommand struct {
 	Login          string
 	Name           string
 	Company        string
+	OrgId          int64
 	OrgName        string
 	Password       string
 	EmailVerified  bool
@@ -191,11 +193,11 @@ func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
 func (u *SignedInUser) NameOrFallback() string {
 	if u.Name != "" {
 		return u.Name
-	} else if u.Login != "" {
-		return u.Login
-	} else {
-		return u.Email
 	}
+	if u.Login != "" {
+		return u.Login
+	}
+	return u.Email
 }
 
 type UpdateUserLastSeenAtCommand struct {
@@ -227,6 +229,7 @@ type UserProfileDTO struct {
 	AuthLabels     []string  `json:"authLabels"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 	CreatedAt      time.Time `json:"createdAt"`
+	AvatarUrl      string    `json:"avatarUrl"`
 }
 
 type UserSearchHitDTO struct {
@@ -257,7 +260,7 @@ func (auth *AuthModuleConversion) FromDB(data []byte) error {
 	return nil
 }
 
-// Just a stub, we don't wanna write to database
+// Just a stub, we don't want to write to database
 func (auth *AuthModuleConversion) ToDB() ([]byte, error) {
 	return []byte{}, nil
 }

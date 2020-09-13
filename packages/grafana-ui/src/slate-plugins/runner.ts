@@ -7,11 +7,11 @@ export function RunnerPlugin({ handler }: any): Plugin {
       const keyEvent = event as KeyboardEvent;
 
       // Handle enter
-      if (handler && keyEvent.key === 'Enter' && !keyEvent.shiftKey) {
+      if (handler && keyEvent.key === 'Enter' && (keyEvent.shiftKey || keyEvent.ctrlKey)) {
         // Submit on Enter
         keyEvent.preventDefault();
         handler(keyEvent);
-        return true;
+        return editor;
       }
 
       return next();

@@ -13,11 +13,8 @@
   <div class="gf-form">
     <label class="gf-form-label query-keyword width-8">Metric</label>
 
-    <metric-segment
-      segment="namespaceSegment"
-      get-options="getNamespaces()"
-      on-change="namespaceChanged()"
-    ></metric-segment>
+    <metric-segment segment="namespaceSegment" get-options="getNamespaces()" on-change="namespaceChanged()">
+    </metric-segment>
     <metric-segment segment="metricSegment" get-options="getMetrics()" on-change="metricChanged()"></metric-segment>
   </div>
 
@@ -26,11 +23,8 @@
   </div>
 
   <div class="gf-form" ng-repeat="segment in statSegments">
-    <metric-segment
-      segment="segment"
-      get-options="getStatSegments(segment, $index)"
-      on-change="statSegmentChanged(segment, $index)"
-    ></metric-segment>
+    <metric-segment segment="segment" get-options="getStatSegments(segment, $index)"
+      on-change="statSegmentChanged(segment, $index)"></metric-segment>
   </div>
 
   <div class="gf-form gf-form--grow">
@@ -41,12 +35,8 @@
 <div class="gf-form-inline" ng-if="target.expression.length === 0">
   <div class="gf-form">
     <label class="gf-form-label query-keyword width-8">Dimensions</label>
-    <metric-segment
-      ng-repeat="segment in dimSegments"
-      segment="segment"
-      get-options="getDimSegments(segment, $index)"
-      on-change="dimSegmentChanged(segment, $index)"
-    ></metric-segment>
+    <metric-segment ng-repeat="segment in dimSegments" segment="segment" get-options="getDimSegments(segment, $index)"
+      on-change="dimSegmentChanged(segment, $index)"></metric-segment>
   </div>
 
   <div class="gf-form gf-form--grow">
@@ -58,31 +48,16 @@
   <div class="gf-form">
     <label class=" gf-form-label query-keyword width-8 ">
       Id
-      <info-popover mode="right-normal "
-        >Id can include numbers, letters, and underscore, and must start with a lowercase letter.</info-popover
-      >
+      <info-popover mode="right-normal ">Id can include numbers, letters, and underscore, and must start with a
+        lowercase letter.</info-popover>
     </label>
-    <input
-      type="text "
-      class="gf-form-input "
-      ng-model="target.id "
-      spellcheck="false"
-      ng-pattern="/^[a-z][a-zA-Z0-9_]*$/"
-      ng-model-onblur
-      ng-change="onChange() "
-    />
+    <input type="text " class="gf-form-input " ng-model="target.id " spellcheck="false"
+      ng-pattern="/^[a-z][a-zA-Z0-9_]*$/" ng-model-onblur ng-change="onChange() " />
   </div>
   <div class="gf-form max-width-30 ">
     <label class="gf-form-label query-keyword width-7 ">Expression</label>
-    <input
-      type="text "
-      class="gf-form-input "
-      ng-model="target.expression
- "
-      spellcheck="false"
-      ng-model-onblur
-      ng-change="onChange() "
-    />
+    <input type="text " class="gf-form-input " ng-model="target.expression
+ " spellcheck="false" ng-model-onblur ng-change="onChange() " />
   </div>
 </div>
 
@@ -92,27 +67,13 @@
       Min period
       <info-popover mode="right-normal ">Minimum interval between points in seconds</info-popover>
     </label>
-    <input
-      type="text "
-      class="gf-form-input "
-      ng-model="target.period "
-      spellcheck="false"
-      placeholder="auto
- "
-      ng-model-onblur
-      ng-change="onChange() "
-    />
+    <input type="text " class="gf-form-input " ng-model="target.period " spellcheck="false" placeholder="auto
+ " ng-model-onblur ng-change="onChange() " />
   </div>
   <div class="gf-form max-width-30 ">
     <label class="gf-form-label query-keyword width-7 ">Alias</label>
-    <input
-      type="text "
-      class="gf-form-input "
-      ng-model="target.alias "
-      spellcheck="false"
-      ng-model-onblur
-      ng-change="onChange() "
-    />
+    <input type="text " class="gf-form-input " ng-model="target.alias " spellcheck="false" ng-model-onblur
+      ng-change="onChange() " />
     <info-popover mode="right-absolute ">
       Alias replacement variables:
       <ul ng-non-bindable>

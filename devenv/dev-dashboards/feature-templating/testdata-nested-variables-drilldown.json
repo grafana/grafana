@@ -222,7 +222,7 @@
           "text": "A",
           "value": ["A"]
         },
-        "datasource": "TestData DB-1",
+        "datasource": "gdev-testdata",
         "definition": "*",
         "hide": 0,
         "includeAll": true,
@@ -247,7 +247,7 @@
           "text": "AA",
           "value": ["AA"]
         },
-        "datasource": "TestData DB-1",
+        "datasource": "gdev-testdata",
         "definition": "$datacenter.*",
         "hide": 0,
         "includeAll": true,

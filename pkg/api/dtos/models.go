@@ -8,9 +8,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var regNonAlphaNumeric = regexp.MustCompile("[^a-zA-Z0-9]+")
 
 type AnyId struct {
 	Id int64 `json:"id"`
@@ -23,22 +25,22 @@ type LoginCommand struct {
 }
 
 type CurrentUser struct {
-	IsSignedIn                 bool         `json:"isSignedIn"`
-	Id                         int64        `json:"id"`
-	Login                      string       `json:"login"`
-	Email                      string       `json:"email"`
-	Name                       string       `json:"name"`
-	LightTheme                 bool         `json:"lightTheme"`
-	OrgCount                   int          `json:"orgCount"`
-	OrgId                      int64        `json:"orgId"`
-	OrgName                    string       `json:"orgName"`
-	OrgRole                    m.RoleType   `json:"orgRole"`
-	IsGrafanaAdmin             bool         `json:"isGrafanaAdmin"`
-	GravatarUrl                string       `json:"gravatarUrl"`
-	Timezone                   string       `json:"timezone"`
-	Locale                     string       `json:"locale"`
-	HelpFlags1                 m.HelpFlags1 `json:"helpFlags1"`
-	HasEditPermissionInFolders bool         `json:"hasEditPermissionInFolders"`
+	IsSignedIn                 bool              `json:"isSignedIn"`
+	Id                         int64             `json:"id"`
+	Login                      string            `json:"login"`
+	Email                      string            `json:"email"`
+	Name                       string            `json:"name"`
+	LightTheme                 bool              `json:"lightTheme"`
+	OrgCount                   int               `json:"orgCount"`
+	OrgId                      int64             `json:"orgId"`
+	OrgName                    string            `json:"orgName"`
+	OrgRole                    models.RoleType   `json:"orgRole"`
+	IsGrafanaAdmin             bool              `json:"isGrafanaAdmin"`
+	GravatarUrl                string            `json:"gravatarUrl"`
+	Timezone                   string            `json:"timezone"`
+	Locale                     string            `json:"locale"`
+	HelpFlags1                 models.HelpFlags1 `json:"helpFlags1"`
+	HasEditPermissionInFolders bool              `json:"hasEditPermissionInFolders"`
 }
 
 type MetricRequest struct {
@@ -63,7 +65,7 @@ func GetGravatarUrl(text string) string {
 
 	hasher := md5.New()
 	if _, err := hasher.Write([]byte(strings.ToLower(text))); err != nil {
-		log.Warn("Failed to hash text: %s", err)
+		log.Warnf("Failed to hash text: %s", err)
 	}
 	return fmt.Sprintf(setting.AppSubUrl+"/avatar/%x", hasher.Sum(nil))
 }
@@ -73,13 +75,7 @@ func GetGravatarUrlWithDefault(text string, defaultText string) string {
 		return GetGravatarUrl(text)
 	}
 
-	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
-
-	if err != nil {
-		return ""
-	}
-
-	text = reg.ReplaceAllString(defaultText, "") + "@localhost"
+	text = regNonAlphaNumeric.ReplaceAllString(defaultText, "") + "@localhost"
 
 	return GetGravatarUrl(text)
 }

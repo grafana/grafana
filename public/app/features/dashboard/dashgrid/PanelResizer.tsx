@@ -23,16 +23,12 @@ export class PanelResizer extends PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    const { panel } = this.props;
 
     this.state = {
       editorHeight: this.initialHeight,
     };
 
     this.throttledChangeHeight = throttle(this.changeHeight, 20, { trailing: true });
-    this.throttledResizeDone = throttle(() => {
-      panel.resizeDone();
-    }, 50);
   }
 
   get largestHeight() {
@@ -57,7 +53,6 @@ export class PanelResizer extends PureComponent<Props, State> {
   onDrag: DraggableEventHandler = (evt, data) => {
     const newHeight = this.state.editorHeight + data.y;
     this.throttledChangeHeight(newHeight);
-    this.throttledResizeDone();
   };
 
   render() {

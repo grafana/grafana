@@ -1,11 +1,15 @@
 import { getValueFromEventItem, promSettingsValidationEvents } from './PromSettings';
 import { EventsWithValidation } from '@grafana/ui';
+import { SyntheticEvent } from 'react';
+import { SelectableValue } from '@grafana/data';
 
 describe('PromSettings', () => {
   describe('getValueFromEventItem', () => {
     describe('when called with undefined', () => {
       it('then it should return empty string', () => {
-        const result = getValueFromEventItem(undefined);
+        const result = getValueFromEventItem(
+          (undefined as unknown) as SyntheticEvent<HTMLInputElement> | SelectableValue<string>
+        );
         expect(result).toEqual('');
       });
     });

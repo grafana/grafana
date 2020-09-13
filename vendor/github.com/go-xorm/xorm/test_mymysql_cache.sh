@@ -1,1 +1,0 @@
-go test -db=mymysql -conn_str="xorm_test/root/" -cache=true

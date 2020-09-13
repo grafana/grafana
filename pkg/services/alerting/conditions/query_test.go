@@ -3,7 +3,9 @@ package conditions
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -14,11 +16,8 @@ import (
 )
 
 func TestQueryCondition(t *testing.T) {
-
 	Convey("when evaluating query condition", t, func() {
-
 		queryConditionScenario("Given avg() and > 100", func(ctx *queryConditionTestContext) {
-
 			ctx.reducer = `{"type": "avg"}`
 			ctx.evaluator = `{"type": "gt", "params": [100]}`
 
@@ -51,6 +50,17 @@ func TestQueryCondition(t *testing.T) {
 				So(cr.Firing, ShouldBeTrue)
 			})
 
+			Convey("should fire when avg is above 100 on dataframe", func() {
+				ctx.frame = data.NewFrame("",
+					data.NewField("time", nil, []time.Time{time.Now(), time.Now()}),
+					data.NewField("val", nil, []int64{120, 150}),
+				)
+				cr, err := ctx.exec()
+
+				So(err, ShouldBeNil)
+				So(cr.Firing, ShouldBeTrue)
+			})
+
 			Convey("Should not fire when avg is below 100", func() {
 				points := tsdb.NewTimeSeriesPointsFromArgs(90, 0)
 				ctx.series = tsdb.TimeSeriesSlice{tsdb.NewTimeSeries("test1", points)}
@@ -60,7 +70,18 @@ func TestQueryCondition(t *testing.T) {
 				So(cr.Firing, ShouldBeFalse)
 			})
 
-			Convey("Should fire if only first serie matches", func() {
+			Convey("Should not fire when avg is below 100 on dataframe", func() {
+				ctx.frame = data.NewFrame("",
+					data.NewField("time", nil, []time.Time{time.Now(), time.Now()}),
+					data.NewField("val", nil, []int64{12, 47}),
+				)
+				cr, err := ctx.exec()
+
+				So(err, ShouldBeNil)
+				So(cr.Firing, ShouldBeFalse)
+			})
+
+			Convey("Should fire if only first series matches", func() {
 				ctx.series = tsdb.TimeSeriesSlice{
 					tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs(120, 0)),
 					tsdb.NewTimeSeries("test2", tsdb.NewTimeSeriesPointsFromArgs(0, 0)),
@@ -125,7 +146,7 @@ func TestQueryCondition(t *testing.T) {
 					So(cr.NoDataFound, ShouldBeTrue)
 				})
 
-				Convey("Should not set NoDataFound if one serie is empty", func() {
+				Convey("Should not set NoDataFound if one series is empty", func() {
 					ctx.series = tsdb.TimeSeriesSlice{
 						tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs()),
 						tsdb.NewTimeSeries("test2", tsdb.NewTimeSeriesPointsFromArgs(120, 0)),
@@ -144,6 +165,7 @@ type queryConditionTestContext struct {
 	reducer   string
 	evaluator string
 	series    tsdb.TimeSeriesSlice
+	frame     *data.Frame
 	result    *alerting.EvalContext
 	condition *QueryCondition
 }
@@ -168,10 +190,20 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 
 	ctx.condition = condition
 
+	qr := &tsdb.QueryResult{
+		Series: ctx.series,
+	}
+
+	if ctx.frame != nil {
+		qr = &tsdb.QueryResult{
+			Dataframes: tsdb.NewDecodedDataFrames(data.Frames{ctx.frame}),
+		}
+	}
+
 	condition.HandleRequest = func(context context.Context, dsInfo *models.DataSource, req *tsdb.TsdbQuery) (*tsdb.Response, error) {
 		return &tsdb.Response{
 			Results: map[string]*tsdb.QueryResult{
-				"A": {Series: ctx.series},
+				"A": qr,
 			},
 		}, nil
 	}
@@ -181,7 +213,6 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 
 func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
 	Convey(desc, func() {
-
 		bus.AddHandler("test", func(query *models.GetDataSourceByIdQuery) error {
 			query.Result = &models.DataSource{Id: 1, Type: "graphite"}
 			return nil

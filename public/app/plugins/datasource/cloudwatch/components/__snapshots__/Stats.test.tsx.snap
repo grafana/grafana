@@ -29,9 +29,22 @@ Array [
     <a
       className="gf-form-label query-part"
     >
-      <i
-        className="fa fa-plus"
-      />
+      <div
+        className="css-1cvxpvr"
+      >
+        <svg
+          className="css-sr6nr"
+          fill="currentColor"
+          height={16}
+          viewBox="0 0 24 24"
+          width={16}
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M19,11H13V5a1,1,0,0,0-2,0v6H5a1,1,0,0,0,0,2h6v6a1,1,0,0,0,2,0V13h6a1,1,0,0,0,0-2Z"
+          />
+        </svg>
+      </div>
     </a>
   </div>,
 ]

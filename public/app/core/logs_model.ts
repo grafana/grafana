@@ -16,8 +16,8 @@ import {
   LogsMetaKind,
   LogsDedupStrategy,
   GraphSeriesXY,
-  dateTime,
-  toUtc,
+  dateTimeFormat,
+  dateTimeFormatTimeAgo,
   NullValueMode,
   toDataFrame,
   FieldCache,
@@ -25,11 +25,15 @@ import {
   getFlotPairs,
   TimeZone,
   getDisplayProcessor,
+  textUtil,
+  dateTime,
+  AbsoluteTimeRange,
+  sortInAscendingOrder,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
-import { hasAnsiCodes } from 'app/core/utils/text';
-import { sortInAscendingOrder } from 'app/core/utils/explore';
-import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
+
+import { deduplicateLogRowsById } from 'app/core/utils/explore';
+import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -87,18 +91,14 @@ export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<Log
   });
 }
 
-export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZone: TimeZone): GraphSeriesXY[] {
+export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number, timeZone: TimeZone): GraphSeriesXY[] {
   // currently interval is rangeMs / resolution, which is too low for showing series as bars.
-  // need at least 10px per bucket, so we multiply interval by 10. Should be solved higher up the chain
-  // when executing queries & interval calculated and not here but this is a temporary fix.
-  // intervalMs = intervalMs * 10;
+  // Should be solved higher up the chain when executing queries & interval calculated and not here but this is a temporary fix.
 
   // Graph time series by log level
   const seriesByLevel: any = {};
-  const bucketSize = intervalMs * 10;
   const seriesList: any[] = [];
 
-  const sortedRows = rows.sort(sortInAscendingOrder);
   for (const row of sortedRows) {
     let series = seriesByLevel[row.logLevel];
 
@@ -136,30 +136,33 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number, timeZ
   }
 
   return seriesList.map((series, i) => {
-    series.datapoints.sort((a: number[], b: number[]) => {
-      return a[1] - b[1];
-    });
+    series.datapoints.sort((a: number[], b: number[]) => a[1] - b[1]);
 
     // EEEP: converts GraphSeriesXY to DataFrame and back again!
     const data = toDataFrame(series);
-    const points = getFlotPairs({
-      xField: data.fields[1],
-      yField: data.fields[0],
-      nullValueMode: NullValueMode.Null,
-    });
+    const fieldCache = new FieldCache(data);
 
-    const timeField = data.fields[1];
+    const timeField = fieldCache.getFirstFieldOfType(FieldType.time)!;
     timeField.display = getDisplayProcessor({
-      config: timeField.config,
-      type: timeField.type,
-      isUtc: timeZone === 'utc',
+      field: timeField,
+      timeZone,
     });
 
-    const valueField = data.fields[0];
+    const valueField = fieldCache.getFirstFieldOfType(FieldType.number)!;
     valueField.config = {
       ...valueField.config,
       color: series.color,
     };
+
+    valueField.name = series.alias;
+    const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone });
+    valueField.display = (value: any) => ({ ...fieldDisplayProcessor(value), color: series.color });
+
+    const points = getFlotPairs({
+      xField: timeField,
+      yField: valueField,
+      nullValueMode: NullValueMode.Null,
+    });
 
     const graphSeries: GraphSeriesXY = {
       color: series.color,
@@ -193,29 +196,27 @@ function isLogsData(series: DataFrame) {
  * @param dataFrame
  * @param intervalMs In case there are no metrics series, we use this for computing it from log rows.
  */
-export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number, timeZone: TimeZone): LogsModel {
-  const { logSeries, metricSeries } = separateLogsAndMetrics(dataFrame);
+export function dataFrameToLogsModel(
+  dataFrame: DataFrame[],
+  intervalMs: number | undefined,
+  timeZone: TimeZone,
+  absoluteRange?: AbsoluteTimeRange
+): LogsModel {
+  const { logSeries } = separateLogsAndMetrics(dataFrame);
   const logsModel = logSeriesToLogsModel(logSeries);
 
+  // unification: Removed logic for using metrics data in LogsModel as with the unification changes this would result
+  // in the incorrect data being used. Instead logs series are always derived from logs.
   if (logsModel) {
-    if (metricSeries.length === 0) {
-      // Create metrics from logs
-      logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs, timeZone);
+    // Create histogram metrics from logs using the interval as bucket size for the line count
+    if (intervalMs && logsModel.rows.length > 0) {
+      const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
+      const { visibleRange, bucketSize } = getSeriesProperties(sortedRows, intervalMs, absoluteRange);
+      logsModel.visibleRange = visibleRange;
+      logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
     } else {
-      // We got metrics in the dataFrame so process those
-      logsModel.series = getGraphSeriesModel(
-        metricSeries,
-        timeZone,
-        {},
-        { showBars: true, showLines: false, showPoints: false },
-        {
-          asTable: false,
-          isVisible: true,
-          placement: 'under',
-        }
-      );
+      logsModel.series = [];
     }
-
     return logsModel;
   }
 
@@ -227,29 +228,67 @@ export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number,
   };
 }
 
-function separateLogsAndMetrics(dataFrame: DataFrame[]) {
+/**
+ * Returns a clamped time range and interval based on the visible logs and the given range.
+ *
+ * @param sortedRows Log rows from the query response
+ * @param intervalMs Dynamnic data interval based on available pixel width
+ * @param absoluteRange Requested time range
+ * @param pxPerBar Default: 20, buckets will be rendered as bars, assuming 10px per histogram bar plus some free space around it
+ */
+export function getSeriesProperties(
+  sortedRows: LogRowModel[],
+  intervalMs: number,
+  absoluteRange?: AbsoluteTimeRange,
+  pxPerBar = 20,
+  minimumBucketSize = 1000
+) {
+  let visibleRange = absoluteRange;
+  let resolutionIntervalMs = intervalMs;
+  let bucketSize = Math.max(resolutionIntervalMs * pxPerBar, minimumBucketSize);
+  // Clamp time range to visible logs otherwise big parts of the graph might look empty
+  if (absoluteRange) {
+    const earliest = sortedRows[0].timeEpochMs;
+    const latest = absoluteRange.to;
+    const visibleRangeMs = latest - earliest;
+    if (visibleRangeMs > 0) {
+      // Adjust interval bucket size for potentially shorter visible range
+      const clampingFactor = visibleRangeMs / (absoluteRange.to - absoluteRange.from);
+      resolutionIntervalMs *= clampingFactor;
+      // Minimum bucketsize of 1s for nicer graphing
+      bucketSize = Math.max(Math.ceil(resolutionIntervalMs * pxPerBar), minimumBucketSize);
+      // makeSeriesForLogs() aligns dataspoints with time buckets, so we do the same here to not cut off data
+      const adjustedEarliest = Math.floor(earliest / bucketSize) * bucketSize;
+      visibleRange = { from: adjustedEarliest, to: latest };
+    }
+  }
+  return { bucketSize, visibleRange };
+}
+
+function separateLogsAndMetrics(dataFrames: DataFrame[]) {
   const metricSeries: DataFrame[] = [];
   const logSeries: DataFrame[] = [];
 
-  for (const series of dataFrame) {
-    if (isLogsData(series)) {
-      logSeries.push(series);
+  for (const dataFrame of dataFrames) {
+    if (isLogsData(dataFrame) || !dataFrame.fields.length) {
+      logSeries.push(dataFrame);
       continue;
     }
 
-    metricSeries.push(series);
+    if (dataFrame.length > 0) {
+      metricSeries.push(dataFrame);
+    }
   }
 
   return { logSeries, metricSeries };
 }
-
-const logTimeFormat = 'YYYY-MM-DD HH:mm:ss';
 
 interface LogFields {
   series: DataFrame;
 
   timeField: FieldWithIndex;
   stringField: FieldWithIndex;
+  timeNanosecondField?: FieldWithIndex;
   logLevelField?: FieldWithIndex;
   idField?: FieldWithIndex;
 }
@@ -265,23 +304,29 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   const allLabels: Labels[] = [];
 
   // Find the fields we care about and collect all labels
-  const allSeries: LogFields[] = logSeries.map(series => {
-    const fieldCache = new FieldCache(series);
+  let allSeries: LogFields[] = [];
 
-    // Assume the first string field in the dataFrame is the message. This was right so far but probably needs some
-    // more explicit checks.
-    const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
-    if (stringField.labels) {
-      allLabels.push(stringField.labels);
-    }
-    return {
-      series,
-      timeField: fieldCache.getFirstFieldOfType(FieldType.time),
-      stringField,
-      logLevelField: fieldCache.getFieldByName('level'),
-      idField: getIdField(fieldCache),
-    };
-  });
+  if (hasFields(logSeries)) {
+    allSeries = logSeries.map(series => {
+      const fieldCache = new FieldCache(series);
+      const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
+
+      if (stringField?.labels) {
+        allLabels.push(stringField.labels);
+      }
+
+      return {
+        series,
+        timeField: fieldCache.getFirstFieldOfType(FieldType.time),
+        timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
+          ? fieldCache.getFieldByName('tsNs')
+          : undefined,
+        stringField,
+        logLevelField: fieldCache.getFieldByName('level'),
+        idField: getIdField(fieldCache),
+      } as LogFields;
+    });
+  }
 
   const commonLabels = allLabels.length > 0 ? findCommonLabels(allLabels) : {};
 
@@ -289,7 +334,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   let hasUniqueLabels = false;
 
   for (const info of allSeries) {
-    const { timeField, stringField, logLevelField, idField, series } = info;
+    const { timeField, timeNanosecondField, stringField, logLevelField, idField, series } = info;
     const labels = stringField.labels;
     const uniqueLabels = findUniqueLabels(labels, commonLabels);
     if (Object.keys(uniqueLabels).length > 0) {
@@ -304,43 +349,46 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values.get(j);
       const time = dateTime(ts);
+      const tsNs = timeNanosecondField ? timeNanosecondField.values.get(j) : undefined;
+      const timeEpochNs = tsNs ? tsNs : time.valueOf() + '000000';
 
       const messageValue: unknown = stringField.values.get(j);
       // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
       const message: string = typeof messageValue === 'string' ? messageValue : JSON.stringify(messageValue);
 
-      const hasAnsi = hasAnsiCodes(message);
+      const hasAnsi = textUtil.hasAnsiCodes(message);
       const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
       let logLevel = LogLevel.unknown;
-      if (logLevelField) {
+      if (logLevelField && logLevelField.values.get(j)) {
         logLevel = getLogLevelFromKey(logLevelField.values.get(j));
       } else if (seriesLogLevel) {
         logLevel = seriesLogLevel;
       } else {
         logLevel = getLogLevel(message);
       }
-
       rows.push({
         entryFieldIndex: stringField.index,
         rowIndex: j,
         dataFrame: series,
         logLevel,
-        timeFromNow: time.fromNow(),
+        timeFromNow: dateTimeFormatTimeAgo(ts),
         timeEpochMs: time.valueOf(),
-        timeLocal: time.format(logTimeFormat),
-        timeUtc: toUtc(ts).format(logTimeFormat),
+        timeEpochNs,
+        timeLocal: dateTimeFormat(ts, { timeZone: 'browser' }),
+        timeUtc: dateTimeFormat(ts, { timeZone: 'utc' }),
         uniqueLabels,
         hasAnsi,
         searchWords,
         entry: hasAnsi ? ansicolor.strip(message) : message,
         raw: message,
-        labels: stringField.labels,
-        timestamp: ts,
+        labels: stringField.labels || {},
         uid: idField ? idField.values.get(j) : j.toString(),
       });
     }
   }
+
+  const deduplicatedLogRows = deduplicateLogRowsById(rows);
 
   // Meta data to display in status
   const meta: LogsMetaItem[] = [];
@@ -353,11 +401,46 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   }
 
   const limits = logSeries.filter(series => series.meta && series.meta.limit);
+  const limitValue = Object.values(
+    limits.reduce((acc: any, elem: any) => {
+      acc[elem.refId] = elem.meta.limit;
+      return acc;
+    }, {})
+  ).reduce((acc: number, elem: any) => (acc += elem), 0);
 
   if (limits.length > 0) {
     meta.push({
       label: 'Limit',
-      value: `${limits[0].meta.limit} (${rows.length} returned)`,
+      value: `${limitValue} (${deduplicatedLogRows.length} returned)`,
+      kind: LogsMetaKind.String,
+    });
+  }
+
+  // Hack to print loki stats in Explore. Should be using proper stats display via drawer in Explore (rework in 7.1)
+  let totalBytes = 0;
+  const queriesVisited: { [refId: string]: boolean } = {};
+
+  for (const series of logSeries) {
+    const totalBytesKey = series.meta?.custom?.lokiQueryStatKey;
+    const { refId } = series; // Stats are per query, keeping track by refId
+
+    if (refId && !queriesVisited[refId]) {
+      if (totalBytesKey && series.meta?.stats) {
+        const byteStat = series.meta.stats.find(stat => stat.displayName === totalBytesKey);
+        if (byteStat) {
+          totalBytes += byteStat.value;
+        }
+      }
+
+      queriesVisited[refId] = true;
+    }
+  }
+
+  if (totalBytes > 0) {
+    const { text, suffix } = SIPrefix('B')(totalBytes);
+    meta.push({
+      label: 'Total bytes processed',
+      value: `${text} ${suffix}`,
       kind: LogsMetaKind.String,
     });
   }
@@ -365,8 +448,12 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   return {
     hasUniqueLabels,
     meta,
-    rows,
+    rows: deduplicatedLogRows,
   };
+}
+
+function hasFields(logSeries: DataFrame[]): boolean {
+  return logSeries.some(series => series.fields.length);
 }
 
 function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {

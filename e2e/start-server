@@ -1,0 +1,50 @@
+#!/bin/bash
+set -eo pipefail
+
+. e2e/variables
+
+PORT=${PORT:-$DEFAULT_PORT}
+
+./e2e/kill-server
+
+mkdir $RUNDIR
+
+echo -e "Copying grafana backend files to temp dir..."
+
+if [ -f $PACKAGE_FILE ]; then
+  echo "Found package tar file, extracting..."
+  tar zxf $PACKAGE_FILE -C $RUNDIR
+  mv $RUNDIR/grafana-*/* $RUNDIR
+else
+  echo "Copying local dev files"
+
+  cp -r ./bin $RUNDIR
+  cp -r ./public $RUNDIR
+  cp -r ./tools $RUNDIR
+
+  mkdir $RUNDIR/conf
+  mkdir $PROV_DIR
+  mkdir $PROV_DIR/datasources
+  mkdir $PROV_DIR/dashboards
+
+  cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
+fi
+
+echo -e "Copy provisioning setup from devenv"
+
+cp devenv/datasources.yaml $PROV_DIR/datasources
+cp devenv/dashboards.yaml $PROV_DIR/dashboards
+
+cp -r devenv $RUNDIR
+
+echo -e "Starting Grafana Server port $PORT"
+
+$RUNDIR/bin/grafana-server \
+  --homepath=$RUNDIR \
+  --pidfile=$RUNDIR/pid \
+  cfg:server.http_port=$PORT \
+  cfg:app_mode=development
+
+# 2>&1 > $RUNDIR/output.log &
+# cfg:log.level=debug \
+

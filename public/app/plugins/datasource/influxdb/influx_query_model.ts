@@ -3,7 +3,7 @@ import queryPart from './query_part';
 import kbn from 'app/core/utils/kbn';
 import { InfluxQuery, InfluxQueryTag } from './types';
 import { ScopedVars } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 
 export default class InfluxQueryModel {
   target: InfluxQuery;
@@ -12,7 +12,7 @@ export default class InfluxQueryModel {
   groupByParts: any;
   templateSrv: any;
   scopedVars: any;
-  refId: string;
+  refId?: string;
 
   /** @ngInject */
   constructor(target: InfluxQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
@@ -62,7 +62,12 @@ export default class InfluxQueryModel {
   }
 
   addGroupBy(value: string) {
-    const stringParts = value.match(/^(\w+)\((.*)\)$/);
+    let stringParts = value.match(/^(\w+)\((.*)\)$/);
+
+    if (!stringParts || !this.target.groupBy) {
+      return;
+    }
+
     const typePart = stringParts[1];
     const arg = stringParts[2];
     const partModel = queryPart.create({ type: typePart, params: [arg] });
@@ -106,12 +111,12 @@ export default class InfluxQueryModel {
       });
     }
 
-    this.target.groupBy.splice(index, 1);
+    this.target.groupBy!.splice(index, 1);
     this.updateProjection();
   }
 
   removeSelect(index: number) {
-    this.target.select.splice(index, 1);
+    this.target.select!.splice(index, 1);
     this.updateProjection();
   }
 
@@ -136,7 +141,7 @@ export default class InfluxQueryModel {
     this.updatePersistedParts();
   }
 
-  private renderTagCondition(tag: InfluxQueryTag, index: number, interpolate: boolean) {
+  private renderTagCondition(tag: InfluxQueryTag, index: number, interpolate?: boolean) {
     let str = '';
     let operator = tag.operator;
     let value = tag.value;

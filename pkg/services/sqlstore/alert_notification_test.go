@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"context"
+	"regexp"
 	"testing"
 	"time"
 
@@ -168,7 +169,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				cmd.Frequency = "invalid duration"
 
 				err := CreateAlertNotificationCommand(cmd)
-				So(err.Error(), ShouldEqual, "time: invalid duration invalid duration")
+				So(regexp.MustCompile(`^time: invalid duration "?invalid duration"?$`).MatchString(
+					err.Error()), ShouldBeTrue)
 			})
 		})
 
@@ -199,7 +201,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 				err := UpdateAlertNotification(updateCmd)
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "time: invalid duration invalid duration")
+				So(regexp.MustCompile(`^time: invalid duration "?invalid duration"?$`).MatchString(
+					err.Error()), ShouldBeTrue)
 			})
 		})
 
@@ -319,6 +322,154 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				err := GetAllAlertNotifications(query)
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 4)
+			})
+		})
+
+		Convey("Notification Uid by Id Caching", func() {
+			ss := InitTestDB(t)
+
+			notification := &models.CreateAlertNotificationCommand{Uid: "aNotificationUid", OrgId: 1, Name: "aNotificationUid"}
+			err := CreateAlertNotificationCommand(notification)
+			So(err, ShouldBeNil)
+
+			byUidQuery := &models.GetAlertNotificationsWithUidQuery{
+				Uid:   notification.Uid,
+				OrgId: notification.OrgId,
+			}
+
+			notificationByUidErr := GetAlertNotificationsWithUid(byUidQuery)
+			So(notificationByUidErr, ShouldBeNil)
+
+			Convey("Can cache notification Uid", func() {
+				byIdQuery := &models.GetAlertNotificationUidQuery{
+					Id:    byUidQuery.Result.Id,
+					OrgId: byUidQuery.Result.OrgId,
+				}
+
+				cacheKey := newAlertNotificationUidCacheKey(byIdQuery.OrgId, byIdQuery.Id)
+
+				resultBeforeCaching, foundBeforeCaching := ss.CacheService.Get(cacheKey)
+				So(foundBeforeCaching, ShouldBeFalse)
+				So(resultBeforeCaching, ShouldBeNil)
+
+				notificationByIdErr := ss.GetAlertNotificationUidWithId(byIdQuery)
+				So(notificationByIdErr, ShouldBeNil)
+
+				resultAfterCaching, foundAfterCaching := ss.CacheService.Get(cacheKey)
+				So(foundAfterCaching, ShouldBeTrue)
+				So(resultAfterCaching, ShouldEqual, notification.Uid)
+			})
+
+			Convey("Retrieves from cache when exists", func() {
+				query := &models.GetAlertNotificationUidQuery{
+					Id:    999,
+					OrgId: 100,
+				}
+				cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
+				ss.CacheService.Set(cacheKey, "a-cached-uid", -1)
+
+				err := ss.GetAlertNotificationUidWithId(query)
+				So(err, ShouldBeNil)
+				So(query.Result, ShouldEqual, "a-cached-uid")
+			})
+
+			Convey("Returns an error without populating cache when the notification doesn't exist in the database", func() {
+				query := &models.GetAlertNotificationUidQuery{
+					Id:    -1,
+					OrgId: 100,
+				}
+
+				err := ss.GetAlertNotificationUidWithId(query)
+				So(query.Result, ShouldEqual, "")
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, "Alert notification [ Id: -1, OrgId: 100 ] not found")
+
+				cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
+				result, found := ss.CacheService.Get(cacheKey)
+				So(found, ShouldBeFalse)
+				So(result, ShouldBeNil)
+			})
+		})
+
+		Convey("Cannot update non-existing Alert Notification", func() {
+			updateCmd := &models.UpdateAlertNotificationCommand{
+				Name:                  "NewName",
+				Type:                  "webhook",
+				OrgId:                 1,
+				SendReminder:          true,
+				DisableResolveMessage: true,
+				Frequency:             "60s",
+				Settings:              simplejson.New(),
+				Id:                    1,
+			}
+			err := UpdateAlertNotification(updateCmd)
+			So(err, ShouldEqual, models.ErrAlertNotificationNotFound)
+
+			Convey("using UID", func() {
+				updateWithUidCmd := &models.UpdateAlertNotificationWithUidCommand{
+					Name:                  "NewName",
+					Type:                  "webhook",
+					OrgId:                 1,
+					SendReminder:          true,
+					DisableResolveMessage: true,
+					Frequency:             "60s",
+					Settings:              simplejson.New(),
+					Uid:                   "uid",
+					NewUid:                "newUid",
+				}
+				err := UpdateAlertNotificationWithUid(updateWithUidCmd)
+				So(err, ShouldEqual, models.ErrAlertNotificationNotFound)
+			})
+		})
+
+		Convey("Can delete Alert Notification", func() {
+			cmd := &models.CreateAlertNotificationCommand{
+				Name:         "ops update",
+				Type:         "email",
+				OrgId:        1,
+				SendReminder: false,
+				Settings:     simplejson.New(),
+			}
+
+			err := CreateAlertNotificationCommand(cmd)
+			So(err, ShouldBeNil)
+
+			deleteCmd := &models.DeleteAlertNotificationCommand{
+				Id:    cmd.Result.Id,
+				OrgId: 1,
+			}
+			err = DeleteAlertNotification(deleteCmd)
+			So(err, ShouldBeNil)
+
+			Convey("using UID", func() {
+				err := CreateAlertNotificationCommand(cmd)
+				So(err, ShouldBeNil)
+
+				deleteWithUidCmd := &models.DeleteAlertNotificationWithUidCommand{
+					Uid:   cmd.Result.Uid,
+					OrgId: 1,
+				}
+				err = DeleteAlertNotificationWithUid(deleteWithUidCmd)
+				So(err, ShouldBeNil)
+				So(deleteWithUidCmd.DeletedAlertNotificationId, ShouldEqual, cmd.Result.Id)
+			})
+		})
+
+		Convey("Cannot delete non-existing Alert Notification", func() {
+			deleteCmd := &models.DeleteAlertNotificationCommand{
+				Id:    1,
+				OrgId: 1,
+			}
+			err := DeleteAlertNotification(deleteCmd)
+			So(err, ShouldEqual, models.ErrAlertNotificationNotFound)
+
+			Convey("using UID", func() {
+				deleteWithUidCmd := &models.DeleteAlertNotificationWithUidCommand{
+					Uid:   "uid",
+					OrgId: 1,
+				}
+				err = DeleteAlertNotificationWithUid(deleteWithUidCmd)
+				So(err, ShouldEqual, models.ErrAlertNotificationNotFound)
 			})
 		})
 	})

@@ -1,12 +1,12 @@
 import React from 'react';
 import { text } from '@storybook/addon-knobs';
-import { Drawer } from './Drawer';
+import { Button, Drawer } from '@grafana/ui';
 import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './Drawer.mdx';
 
 export default {
-  title: 'UI/Drawer',
+  title: 'Overlays/Drawer',
   component: Drawer,
   decorators: [withCenteredStory],
   parameters: {
@@ -17,35 +17,33 @@ export default {
 };
 
 export const global = () => {
-  const drawerTitle = text('title', 'Storybook');
+  const drawerTitle = text('title', 'Drawer title');
 
   return (
     <UseState initialState={{ isOpen: false }}>
       {(state, updateValue) => {
         return (
           <>
-            <div
-              style={{ border: '1px solid gray', borderRadius: '4px', padding: '10px', cursor: 'pointer' }}
-              onClick={() => updateValue({ isOpen: !state.isOpen })}
-            >
-              Open drawer
-            </div>
+            <Button onClick={() => updateValue({ isOpen: !state.isOpen })}>Open drawer</Button>
             {state.isOpen && (
               <Drawer
                 title={drawerTitle}
+                subtitle="This is a subtitle."
                 onClose={() => {
                   updateValue({ isOpen: !state.isOpen });
                 }}
               >
-                <ul>
-                  <li>this</li>
-                  <li>is</li>
-                  <li>a</li>
-                  <li>list</li>
-                  <li>of</li>
-                  <li>menu</li>
-                  <li>items</li>
-                </ul>
+                <div style={{ padding: '10px' }}>
+                  <ul>
+                    <li>this</li>
+                    <li>is</li>
+                    <li>a</li>
+                    <li>list</li>
+                    <li>of</li>
+                    <li>menu</li>
+                    <li>items</li>
+                  </ul>
+                </div>
               </Drawer>
             )}
           </>
@@ -61,14 +59,11 @@ export const longContent = () => {
       {(state, updateValue) => {
         return (
           <>
-            <div
-              style={{ border: '1px solid gray', borderRadius: '4px', padding: '10px', cursor: 'pointer' }}
-              onClick={() => updateValue({ isOpen: !state.isOpen })}
-            >
-              Open drawer
-            </div>
+            <Button onClick={() => updateValue({ isOpen: !state.isOpen })}>Open drawer</Button>
             {state.isOpen && (
               <Drawer
+                scrollableContent
+                expandable
                 title="Drawer with long content"
                 onClose={() => {
                   updateValue({ isOpen: !state.isOpen });
@@ -171,12 +166,7 @@ export const inLine = () => {
                 overflow: 'hidden',
               }}
             >
-              <div
-                style={{ border: '1px solid gray', borderRadius: '4px', padding: '10px', cursor: 'pointer' }}
-                onClick={() => updateValue({ isOpen: !state.isOpen })}
-              >
-                Open drawer
-              </div>
+              <Button onClick={() => updateValue({ isOpen: !state.isOpen })}>Open drawer</Button>
               {state.isOpen && (
                 <Drawer
                   inline={true}

@@ -2,7 +2,7 @@
 title = "Playlist HTTP API "
 description = "Playlist Admin HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "playlist"]
-aliases = ["/http_api/playlist/"]
+aliases = ["/docs/grafana/latest/http_api/playlist/"]
 type = "docs"
 [menu.docs]
 name = "Playlist"
@@ -20,7 +20,7 @@ Get all existing playlist for the current organization using pagination
 
 **Example Request**:
 
-```bash
+```http
 GET /api/playlists HTTP/1.1
 Accept: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -35,7 +35,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 [
@@ -53,7 +53,7 @@ Content-Type: application/json
 
 **Example Request**:
 
-```bash
+```http
 GET /api/playlists/1 HTTP/1.1
 Accept: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -61,7 +61,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 {
@@ -76,7 +76,7 @@ Content-Type: application/json
       "type": "dashboard_by_id",
       "value": "3",
       "order": 1,
-      "title":"my third dasboard"
+      "title":"my third dashboard"
     },
     {
       "id": 2,
@@ -84,7 +84,7 @@ Content-Type: application/json
       "type": "dashboard_by_tag",
       "value": "myTag",
       "order": 2,
-      "title":"my other dasboard"
+      "title":"my other dashboard"
     }
   ]
 }
@@ -96,7 +96,7 @@ Content-Type: application/json
 
 **Example Request**:
 
-```bash
+```http
 GET /api/playlists/1/items HTTP/1.1
 Accept: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -104,7 +104,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 [
@@ -114,7 +114,7 @@ Content-Type: application/json
     "type": "dashboard_by_id",
     "value": "3",
     "order": 1,
-    "title":"my third dasboard"
+    "title":"my third dashboard"
   },
   {
     "id": 2,
@@ -122,7 +122,7 @@ Content-Type: application/json
     "type": "dashboard_by_tag",
     "value": "myTag",
     "order": 2,
-    "title":"my other dasboard"
+    "title":"my other dashboard"
   }
 ]
 ```
@@ -133,7 +133,7 @@ Content-Type: application/json
 
 **Example Request**:
 
-```bash
+```http
 GET /api/playlists/1/dashboards HTTP/1.1
 Accept: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -141,18 +141,18 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 [
   {
     "id": 3,
-    "title": "my third dasboard",
+    "title": "my third dashboard",
     "order": 1,
   },
   {
     "id": 5,
-    "title":"my other dasboard"
+    "title":"my other dashboard"
     "order": 2,
 
   }
@@ -165,7 +165,7 @@ Content-Type: application/json
 
 **Example Request**:
 
-```bash
+```http
 PUT /api/playlists/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -178,13 +178,13 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
         "type": "dashboard_by_id",
         "value": "3",
         "order": 1,
-        "title":"my third dasboard"
+        "title":"my third dashboard"
       },
       {
         "type": "dashboard_by_tag",
         "value": "myTag",
         "order": 2,
-        "title":"my other dasboard"
+        "title":"my other dashboard"
       }
     ]
   }
@@ -192,7 +192,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
   {
@@ -208,7 +208,7 @@ Content-Type: application/json
 
 **Example Request**:
 
-```bash
+```http
 PUT /api/playlists/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -222,14 +222,14 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
         "type": "dashboard_by_id",
         "value": "3",
         "order": 1,
-        "title":"my third dasboard"
+        "title":"my third dashboard"
       },
       {
         "playlistId": 1,
         "type": "dashboard_by_tag",
         "value": "myTag",
         "order": 2,
-        "title":"my other dasboard"
+        "title":"my other dashboard"
       }
     ]
   }
@@ -237,7 +237,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 {
@@ -252,7 +252,7 @@ Content-Type: application/json
       "type": "dashboard_by_id",
       "value": "3",
       "order": 1,
-      "title":"my third dasboard"
+      "title":"my third dashboard"
     },
     {
       "id": 2,
@@ -260,7 +260,7 @@ Content-Type: application/json
       "type": "dashboard_by_tag",
       "value": "myTag",
       "order": 2,
-      "title":"my other dasboard"
+      "title":"my other dashboard"
     }
   ]
 }
@@ -272,7 +272,7 @@ Content-Type: application/json
 
 **Example Request**:
 
-```bash
+```http
 DELETE /api/playlists/1 HTTP/1.1
 Accept: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -280,7 +280,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 {}

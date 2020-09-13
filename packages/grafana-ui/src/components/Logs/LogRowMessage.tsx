@@ -17,26 +17,27 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { LogRowContext } from './LogRowContext';
 import { LogMessageAnsi } from './LogMessageAnsi';
 
+export const MAX_CHARACTERS = 100000;
+
 interface Props extends Themeable {
   row: LogRowModel;
   hasMoreContextRows?: HasMoreContextRows;
-  showContext: boolean;
+  contextIsOpen: boolean;
   wrapLogMessage: boolean;
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
+  showContextToggle?: (row?: LogRowModel) => boolean;
   highlighterExpressions?: string[];
   getRows: () => LogRowModel[];
   onToggleContext: () => void;
   updateLimit?: () => void;
 }
 
-interface State {}
-
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const outlineColor = selectThemeVariant(
     {
-      light: theme.colors.white,
-      dark: theme.colors.black,
+      light: theme.palette.white,
+      dark: theme.palette.black,
     },
     theme.type
   );
@@ -54,10 +55,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
           .setAlpha(0.7)
           .toRgbString()};
     `,
-    whiteSpacePreWrap: css`
-      label: whiteSpacePreWrap;
-      white-space: pre-wrap;
-    `,
     horizontalScroll: css`
       label: verticalScroll;
       white-space: nowrap;
@@ -65,7 +62,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-class UnThemedLogRowMessage extends PureComponent<Props, State> {
+class UnThemedLogRowMessage extends PureComponent<Props> {
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
     e.stopPropagation();
     this.props.onToggleContext();
@@ -80,25 +77,28 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
       hasMoreContextRows,
       updateLimit,
       context,
-      showContext,
+      contextIsOpen,
+      showContextToggle,
       wrapLogMessage,
       onToggleContext,
     } = this.props;
-    const {} = this.state;
+
     const style = getLogRowStyles(theme, row.logLevel);
     const { entry, hasAnsi, raw } = row;
 
     const previewHighlights = highlighterExpressions && !_.isEqual(highlighterExpressions, row.searchWords);
     const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
-    const needsHighlighter = highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0;
+    const needsHighlighter =
+      highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && entry.length < MAX_CHARACTERS;
     const highlightClassName = previewHighlights
       ? cx([style.logsRowMatchHighLight, style.logsRowMatchHighLightPreview])
       : cx([style.logsRowMatchHighLight]);
     const styles = getStyles(theme);
+
     return (
       <td className={style.logsRowMessage}>
         <div className={cx(styles.positionRelative, { [styles.horizontalScroll]: !wrapLogMessage })}>
-          {showContext && context && (
+          {contextIsOpen && context && (
             <LogRowContext
               row={row}
               context={context}
@@ -112,10 +112,9 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
               }}
             />
           )}
-          <span className={cx(styles.positionRelative, { [styles.rowWithContext]: showContext })}>
+          <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
             {needsHighlighter ? (
               <Highlighter
-                style={styles.whiteSpacePreWrap}
                 textToHighlight={entry}
                 searchWords={highlights}
                 findChunks={findHighlightChunksInText}
@@ -127,9 +126,9 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
               entry
             )}
           </span>
-          {row.searchWords && row.searchWords.length > 0 && (
+          {showContextToggle?.(row) && (
             <span onClick={this.onContextToggle} className={cx(style.context)}>
-              {showContext ? 'Hide' : 'Show'} context
+              {contextIsOpen ? 'Hide' : 'Show'} context
             </span>
           )}
         </div>

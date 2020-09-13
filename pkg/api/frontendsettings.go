@@ -3,29 +3,29 @@ package api
 import (
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/models"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
-func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interface{}, error) {
-	orgDataSources := make([]*m.DataSource, 0)
+func getFSDataSources(c *models.ReqContext, enabledPlugins *plugins.EnabledPlugins) (map[string]interface{}, error) {
+	orgDataSources := make([]*models.DataSource, 0)
 
 	if c.OrgId != 0 {
-		query := m.GetDataSourcesQuery{OrgId: c.OrgId}
+		query := models.GetDataSourcesQuery{OrgId: c.OrgId}
 		err := bus.Dispatch(&query)
 
 		if err != nil {
 			return nil, err
 		}
 
-		dsFilterQuery := m.DatasourcesPermissionFilterQuery{
+		dsFilterQuery := models.DatasourcesPermissionFilterQuery{
 			User:        c.SignedInUser,
 			Datasources: query.Result,
 		}
@@ -41,51 +41,30 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		}
 	}
 
-	datasources := make(map[string]interface{})
-	var defaultDatasource string
-
-	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
-	if err != nil {
-		return nil, err
-	}
-
-	pluginsToPreload := []string{}
-
-	for _, app := range enabledPlugins.Apps {
-		if app.Preload {
-			pluginsToPreload = append(pluginsToPreload, app.Module)
-		}
-	}
+	dataSources := make(map[string]interface{})
 
 	for _, ds := range orgDataSources {
 		url := ds.Url
 
-		if ds.Access == m.DS_ACCESS_PROXY {
+		if ds.Access == models.DS_ACCESS_PROXY {
 			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
 		}
 
-		var dsMap = map[string]interface{}{
-			"id":   ds.Id,
-			"type": ds.Type,
-			"name": ds.Name,
-			"url":  url,
+		dsMap := map[string]interface{}{
+			"id":        ds.Id,
+			"uid":       ds.Uid,
+			"type":      ds.Type,
+			"name":      ds.Name,
+			"url":       url,
+			"isDefault": ds.IsDefault,
 		}
 
 		meta, exists := enabledPlugins.DataSources[ds.Type]
 		if !exists {
-			log.Error(3, "Could not find plugin definition for data source: %v", ds.Type)
+			log.Errorf(3, "Could not find plugin definition for data source: %v", ds.Type)
 			continue
 		}
-
-		if meta.Preload {
-			pluginsToPreload = append(pluginsToPreload, meta.Module)
-		}
-
 		dsMap["meta"] = meta
-
-		if ds.IsDefault {
-			defaultDatasource = ds.Name
-		}
 
 		jsonData := ds.JsonData
 		if jsonData == nil {
@@ -94,7 +73,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 
 		dsMap["jsonData"] = jsonData
 
-		if ds.Access == m.DS_ACCESS_DIRECT {
+		if ds.Access == models.DS_ACCESS_DIRECT {
 			if ds.BasicAuth {
 				dsMap["basicAuth"] = util.GetBasicAuthHeader(ds.BasicAuthUser, ds.DecryptedBasicAuthPassword())
 			}
@@ -102,35 +81,36 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 				dsMap["withCredentials"] = ds.WithCredentials
 			}
 
-			if ds.Type == m.DS_INFLUXDB_08 {
+			if ds.Type == models.DS_INFLUXDB_08 {
 				dsMap["username"] = ds.User
 				dsMap["password"] = ds.DecryptedPassword()
 				dsMap["url"] = url + "/db/" + ds.Database
 			}
 
-			if ds.Type == m.DS_INFLUXDB {
+			if ds.Type == models.DS_INFLUXDB {
 				dsMap["username"] = ds.User
 				dsMap["password"] = ds.DecryptedPassword()
 				dsMap["url"] = url
 			}
 		}
 
-		if (ds.Type == m.DS_INFLUXDB) || (ds.Type == m.DS_ES) {
+		if (ds.Type == models.DS_INFLUXDB) || (ds.Type == models.DS_ES) {
 			dsMap["database"] = ds.Database
 		}
 
-		if ds.Type == m.DS_PROMETHEUS {
+		if ds.Type == models.DS_PROMETHEUS {
 			// add unproxied server URL for link to Prometheus web UI
 			jsonData.Set("directUrl", ds.Url)
 		}
 
-		datasources[ds.Name] = dsMap
+		dataSources[ds.Name] = dsMap
 	}
 
-	// add datasources that are built in (meaning they are not added via data sources page, nor have any entry in datasource table)
+	// add data sources that are built in (meaning they are not added via data sources page, nor have any entry in
+	// the datasource table)
 	for _, ds := range plugins.DataSources {
 		if ds.BuiltIn {
-			datasources[ds.Name] = map[string]interface{}{
+			dataSources[ds.Name] = map[string]interface{}{
 				"type": ds.Type,
 				"name": ds.Name,
 				"meta": plugins.DataSources[ds.Id],
@@ -138,8 +118,39 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		}
 	}
 
-	if defaultDatasource == "" {
-		defaultDatasource = "-- Grafana --"
+	return dataSources, nil
+}
+
+// getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
+func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]interface{}, error) {
+	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
+	if err != nil {
+		return nil, err
+	}
+	pluginsToPreload := []string{}
+	for _, app := range enabledPlugins.Apps {
+		if app.Preload {
+			pluginsToPreload = append(pluginsToPreload, app.Module)
+		}
+	}
+
+	dataSources, err := getFSDataSources(c, enabledPlugins)
+	if err != nil {
+		return nil, err
+	}
+
+	defaultDS := "-- Grafana --"
+	for n, ds := range dataSources {
+		dsM := ds.(map[string]interface{})
+		if isDefault, _ := dsM["isDefault"].(bool); isDefault {
+			defaultDS = n
+		}
+		delete(dsM, "isDefault")
+
+		meta := dsM["meta"].(*plugins.DataSourcePlugin)
+		if meta.Preload {
+			pluginsToPreload = append(pluginsToPreload, meta.Module)
+		}
 	}
 
 	panels := map[string]interface{}{}
@@ -165,10 +176,23 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		}
 	}
 
+	hideVersion := hs.Cfg.AnonymousHideVersion && !c.IsSignedIn
+	version := setting.BuildVersion
+	commit := setting.BuildCommit
+	buildstamp := setting.BuildStamp
+
+	if hideVersion {
+		version = ""
+		commit = ""
+		buildstamp = 0
+	}
+
 	jsonObj := map[string]interface{}{
-		"defaultDatasource":          defaultDatasource,
-		"datasources":                datasources,
+		"defaultDatasource":          defaultDS,
+		"datasources":                dataSources,
+		"minRefreshInterval":         setting.MinRefreshInterval,
 		"panels":                     panels,
+		"appUrl":                     setting.AppUrl,
 		"appSubUrl":                  setting.AppSubUrl,
 		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":           setting.AuthProxyEnabled,
@@ -176,6 +200,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"alertingEnabled":            setting.AlertingEnabled,
 		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
+		"alertingMinInterval":        setting.AlertingMinInterval,
+		"autoAssignOrg":              setting.AutoAssignOrg,
+		"verifyEmailEnabled":         setting.VerifyEmailEnabled,
 		"exploreEnabled":             setting.ExploreEnabled,
 		"googleAnalyticsId":          setting.GoogleAnalyticsId,
 		"disableLoginForm":           setting.DisableLoginForm,
@@ -190,9 +217,11 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
 		"pluginsToPreload":           pluginsToPreload,
 		"buildInfo": map[string]interface{}{
-			"version":       setting.BuildVersion,
-			"commit":        setting.BuildCommit,
-			"buildstamp":    setting.BuildStamp,
+			"hideVersion":   hideVersion,
+			"version":       version,
+			"commit":        commit,
+			"buildstamp":    buildstamp,
+			"edition":       hs.License.Edition(),
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,
 			"env":           setting.Env,
@@ -201,8 +230,12 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"licenseInfo": map[string]interface{}{
 			"hasLicense": hs.License.HasLicense(),
 			"expiry":     hs.License.Expiry(),
+			"stateInfo":  hs.License.StateInfo(),
+			"licenseUrl": hs.License.LicenseURL(c.SignedInUser),
 		},
-		"featureToggles": hs.Cfg.FeatureToggles,
+		"featureToggles":    hs.Cfg.FeatureToggles,
+		"rendererAvailable": hs.RenderService.IsAvailable(),
+		"http2Enabled":      hs.Cfg.Protocol == setting.HTTP2,
 	}
 
 	return jsonObj, nil
@@ -213,7 +246,7 @@ func getPanelSort(id string) int {
 	switch id {
 	case "graph":
 		sort = 1
-	case "singlestat":
+	case "stat":
 		sort = 2
 	case "gauge":
 		sort = 3
@@ -221,19 +254,23 @@ func getPanelSort(id string) int {
 		sort = 4
 	case "table":
 		sort = 5
-	case "text":
+	case "singlestat":
 		sort = 6
-	case "heatmap":
+	case "text":
 		sort = 7
-	case "alertlist":
+	case "heatmap":
 		sort = 8
-	case "dashlist":
+	case "alertlist":
 		sort = 9
+	case "dashlist":
+		sort = 10
+	case "news":
+		sort = 10
 	}
 	return sort
 }
 
-func (hs *HTTPServer) GetFrontendSettings(c *m.ReqContext) {
+func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
 	settings, err := hs.getFrontendSettingsMap(c)
 	if err != nil {
 		c.JsonApiErr(400, "Failed to get frontend settings", err)

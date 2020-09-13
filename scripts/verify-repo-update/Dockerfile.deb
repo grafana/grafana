@@ -1,9 +1,8 @@
-FROM ubuntu
+FROM ubuntu:20.04
 
 ARG REPO_CONFIG=grafana.list.oss
 ARG PACKAGE=grafana
 
-COPY sources.list /etc/apt/sources.list
 RUN apt update && \
     apt install -y curl                \
                    apt-transport-https \

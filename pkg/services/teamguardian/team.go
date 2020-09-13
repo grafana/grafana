@@ -2,19 +2,19 @@ package teamguardian
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
-func CanAdmin(bus bus.Bus, orgId int64, teamId int64, user *m.SignedInUser) error {
-	if user.OrgRole == m.ROLE_ADMIN {
+func CanAdmin(bus bus.Bus, orgId int64, teamId int64, user *models.SignedInUser) error {
+	if user.OrgRole == models.ROLE_ADMIN {
 		return nil
 	}
 
 	if user.OrgId != orgId {
-		return m.ErrNotAllowedToUpdateTeamInDifferentOrg
+		return models.ErrNotAllowedToUpdateTeamInDifferentOrg
 	}
 
-	cmd := m.GetTeamMembersQuery{
+	cmd := models.GetTeamMembersQuery{
 		OrgId:  orgId,
 		TeamId: teamId,
 		UserId: user.UserId,
@@ -25,10 +25,10 @@ func CanAdmin(bus bus.Bus, orgId int64, teamId int64, user *m.SignedInUser) erro
 	}
 
 	for _, member := range cmd.Result {
-		if member.UserId == user.UserId && member.Permission == m.PERMISSION_ADMIN {
+		if member.UserId == user.UserId && member.Permission == models.PERMISSION_ADMIN {
 			return nil
 		}
 	}
 
-	return m.ErrNotAllowedToUpdateTeam
+	return models.ErrNotAllowedToUpdateTeam
 }

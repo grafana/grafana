@@ -3,10 +3,14 @@ package notifiers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -21,110 +25,148 @@ func init() {
 		Type:        "slack",
 		Name:        "Slack",
 		Description: "Sends notifications to Slack via Slack Webhooks",
+		Heading:     "Slack settings",
 		Factory:     NewSlackNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">Slack settings</h3>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Url</span>
-        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Slack incoming webhook url"></input>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Recipient</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.recipient"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Override default channel or user, use #channel-name or @username
-        </info-popover>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Username</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.username"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Set the username for the bot's message
-        </info-popover>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Icon emoji</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.icon_emoji"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Provide an emoji to use as the icon for the bot's message. Overrides the icon URL
-        </info-popover>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Icon URL</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.icon_url"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Provide a URL to an image to use as the icon for the bot's message
-        </info-popover>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Mention</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.mention"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Mention a user or a group using @ when notifying in a channel
-        </info-popover>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Token</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.token"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Provide a bot token to use the Slack file.upload API (starts with "xoxb"). Specify #channel-name or @username in Recipient for this to work 
-        </info-popover>
-      </div>
-    `,
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "Url",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "Slack incoming webhook url",
+				PropertyName: "url",
+				Required:     true,
+				Secure:       true,
+			},
+			{
+				Label:        "Recipient",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Description:  "Override default channel or user, use #channel-name, @username (has to be all lowercase, no whitespace), or user/channel Slack ID",
+				PropertyName: "recipient",
+			},
+			{
+				Label:        "Username",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Description:  "Set the username for the bot's message",
+				PropertyName: "username",
+			},
+			{
+				Label:        "Icon emoji",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Description:  "Provide an emoji to use as the icon for the bot's message. Overrides the icon URL.",
+				PropertyName: "iconEmoji",
+			},
+			{
+				Label:        "Icon URL",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Description:  "Provide a URL to an image to use as the icon for the bot's message",
+				PropertyName: "iconUrl",
+			},
+			{
+				Label:        "Mention Users",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Description:  "Mention one or more users (comma separated) when notifying in a channel, by ID (you can copy this from the user's Slack profile)",
+				PropertyName: "mentionUsers",
+			},
+			{
+				Label:        "Mention Groups",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Description:  "Mention one or more groups (comma separated) when notifying in a channel (you can copy this from the group's Slack profile URL)",
+				PropertyName: "mentionGroups",
+			},
+			{
+				Label:   "Mention Channel",
+				Element: alerting.ElementTypeSelect,
+				SelectOptions: []alerting.SelectOption{
+					{
+						Value: "",
+						Label: "Disabled",
+					},
+					{
+						Value: "here",
+						Label: "Every active channel member",
+					},
+					{
+						Value: "channel",
+						Label: "Every channel member",
+					},
+				},
+				Description:  "Mention whole channel or just active members when notifying",
+				PropertyName: "mentionChannel",
+			},
+			{
+				Label:        "Token",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Description:  "Provide a bot token to use the Slack file.upload API (starts with \"xoxb\"). Specify Recipient for this to work",
+				PropertyName: "token",
+				Secure:       true,
+			},
+		},
 	})
-
 }
+
+var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*)|(#[^ .A-Z]{1,79})|([a-zA-Z0-9]+))$")
 
 // NewSlackNotifier is the constructor for the Slack notifier
 func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
-	url := model.Settings.Get("url").MustString()
+	url := model.DecryptedValue("url", model.Settings.Get("url").MustString())
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
-	recipient := model.Settings.Get("recipient").MustString()
+	recipient := strings.TrimSpace(model.Settings.Get("recipient").MustString())
+	if recipient != "" && !reRecipient.MatchString(recipient) {
+		return nil, alerting.ValidationError{Reason: fmt.Sprintf("Recipient on invalid format: %q", recipient)}
+	}
 	username := model.Settings.Get("username").MustString()
 	iconEmoji := model.Settings.Get("icon_emoji").MustString()
 	iconURL := model.Settings.Get("icon_url").MustString()
-	mention := model.Settings.Get("mention").MustString()
-	token := model.Settings.Get("token").MustString()
+	mentionUsersStr := model.Settings.Get("mentionUsers").MustString()
+	mentionGroupsStr := model.Settings.Get("mentionGroups").MustString()
+	mentionChannel := model.Settings.Get("mentionChannel").MustString()
+	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
+
 	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
+	if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {
+		return nil, alerting.ValidationError{
+			Reason: fmt.Sprintf("Invalid value for mentionChannel: %q", mentionChannel),
+		}
+	}
+	mentionUsers := []string{}
+	for _, u := range strings.Split(mentionUsersStr, ",") {
+		u = strings.TrimSpace(u)
+		if u != "" {
+			mentionUsers = append(mentionUsers, u)
+		}
+	}
+	mentionGroups := []string{}
+	for _, g := range strings.Split(mentionGroupsStr, ",") {
+		g = strings.TrimSpace(g)
+		if g != "" {
+			mentionGroups = append(mentionGroups, g)
+		}
+	}
+
 	return &SlackNotifier{
-		NotifierBase: NewNotifierBase(model),
-		URL:          url,
-		Recipient:    recipient,
-		Username:     username,
-		IconEmoji:    iconEmoji,
-		IconURL:      iconURL,
-		Mention:      mention,
-		Token:        token,
-		Upload:       uploadImage,
-		log:          log.New("alerting.notifier.slack"),
+		NotifierBase:   NewNotifierBase(model),
+		URL:            url,
+		Recipient:      recipient,
+		Username:       username,
+		IconEmoji:      iconEmoji,
+		IconURL:        iconURL,
+		MentionUsers:   mentionUsers,
+		MentionGroups:  mentionGroups,
+		MentionChannel: mentionChannel,
+		Token:          token,
+		Upload:         uploadImage,
+		log:            log.New("alerting.notifier.slack"),
 	}, nil
 }
 
@@ -132,15 +174,17 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 // alert notification to Slack.
 type SlackNotifier struct {
 	NotifierBase
-	URL       string
-	Recipient string
-	Username  string
-	IconEmoji string
-	IconURL   string
-	Mention   string
-	Token     string
-	Upload    bool
-	log       log.Logger
+	URL            string
+	Recipient      string
+	Username       string
+	IconEmoji      string
+	IconURL        string
+	MentionUsers   []string
+	MentionGroups  []string
+	MentionChannel string
+	Token          string
+	Upload         bool
+	log            log.Logger
 }
 
 // Notify send alert notification to Slack.
@@ -174,9 +218,31 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		})
 	}
 
-	message := sn.Mention
+	mentionsBuilder := strings.Builder{}
+	appendSpace := func() {
+		if mentionsBuilder.Len() > 0 {
+			mentionsBuilder.WriteString(" ")
+		}
+	}
+	mentionChannel := strings.TrimSpace(sn.MentionChannel)
+	if mentionChannel != "" {
+		mentionsBuilder.WriteString(fmt.Sprintf("<!%s|%s>", mentionChannel, mentionChannel))
+	}
+	if len(sn.MentionGroups) > 0 {
+		appendSpace()
+		for _, g := range sn.MentionGroups {
+			mentionsBuilder.WriteString(fmt.Sprintf("<!subteam^%s>", g))
+		}
+	}
+	if len(sn.MentionUsers) > 0 {
+		appendSpace()
+		for _, u := range sn.MentionUsers {
+			mentionsBuilder.WriteString(fmt.Sprintf("<@%s>", u))
+		}
+	}
+	msg := ""
 	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
-		message += " " + evalContext.Rule.Message
+		msg = evalContext.Rule.Message
 	}
 	imageURL := ""
 	// default to file.upload API method if a token is provided
@@ -184,22 +250,41 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		imageURL = evalContext.ImagePublicURL
 	}
 
-	body := map[string]interface{}{
-		"attachments": []map[string]interface{}{
+	var blocks []map[string]interface{}
+	if mentionsBuilder.Len() > 0 {
+		blocks = []map[string]interface{}{
 			{
-				"fallback":    evalContext.GetNotificationTitle(),
-				"color":       evalContext.GetStateModel().Color,
-				"title":       evalContext.GetNotificationTitle(),
-				"title_link":  ruleURL,
-				"text":        message,
-				"fields":      fields,
-				"image_url":   imageURL,
-				"footer":      "Grafana v" + setting.BuildVersion,
-				"footer_icon": "https://grafana.com/assets/img/fav32.png",
-				"ts":          time.Now().Unix(),
+				"type": "section",
+				"text": map[string]interface{}{
+					"type": "mrkdwn",
+					"text": mentionsBuilder.String(),
+				},
 			},
+		}
+	}
+	attachment := map[string]interface{}{
+		"color":       evalContext.GetStateModel().Color,
+		"title":       evalContext.GetNotificationTitle(),
+		"title_link":  ruleURL,
+		"text":        msg,
+		"fallback":    evalContext.GetNotificationTitle(),
+		"fields":      fields,
+		"footer":      "Grafana v" + setting.BuildVersion,
+		"footer_icon": "https://grafana.com/assets/img/fav32.png",
+		"ts":          time.Now().Unix(),
+	}
+	if sn.NeedsImage() && imageURL != "" {
+		attachment["image_url"] = imageURL
+	}
+	body := map[string]interface{}{
+		"text": evalContext.GetNotificationTitle(),
+		"attachments": []map[string]interface{}{
+			attachment,
 		},
 		"parse": "full", // to linkify urls, users and channels in alert message.
+	}
+	if len(blocks) > 0 {
+		body["blocks"] = blocks
 	}
 
 	//recipient override
@@ -215,8 +300,22 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if sn.IconURL != "" {
 		body["icon_url"] = sn.IconURL
 	}
-	data, _ := json.Marshal(&body)
-	cmd := &models.SendWebhookSync{Url: sn.URL, Body: string(data)}
+	data, err := json.Marshal(&body)
+	if err != nil {
+		return err
+	}
+
+	cmd := &models.SendWebhookSync{
+		Url:        sn.URL,
+		Body:       string(data),
+		HttpMethod: http.MethodPost,
+	}
+	if sn.Token != "" {
+		sn.log.Debug("Adding authorization header to HTTP request")
+		cmd.HttpHeader = map[string]string{
+			"Authorization": fmt.Sprintf("Bearer %s", sn.Token),
+		}
+	}
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		sn.log.Error("Failed to send slack notification", "error", err, "webhook", sn.Name)
 		return err

@@ -1,9 +1,11 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { Props, ApiKeysPage } from './ApiKeysPage';
+import { ApiKeysPage, Props } from './ApiKeysPage';
 import { ApiKey } from 'app/types';
-import { getMultipleMockKeys, getMockKey } from './__mocks__/apiKeysMock';
+import { getMockKey, getMultipleMockKeys } from './__mocks__/apiKeysMock';
 import { NavModel } from '@grafana/data';
+import { setSearchQuery } from './state/reducers';
+import { mockToolkitActionCreator } from '../../../test/core/redux/mocks';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -20,7 +22,7 @@ const setup = (propOverrides?: object) => {
     hasFetched: false,
     loadApiKeys: jest.fn(),
     deleteApiKey: jest.fn(),
-    setSearchQuery: jest.fn(),
+    setSearchQuery: mockToolkitActionCreator(setSearchQuery),
     addApiKey: jest.fn(),
     apiKeysCount: 0,
     includeExpired: false,

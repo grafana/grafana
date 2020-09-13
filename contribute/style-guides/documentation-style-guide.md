@@ -2,6 +2,10 @@
 
 This style guide applies to all documentation created for Grafana products.
 
+For information about how to write technical documentation, we suggest reviewing the content of the [Google Technical Writing courses](https://developers.google.com/tech-writing).
+
+The [Divio documentation system](https://documentation.divio.com/) site and the [Vue writing principles](https://v3.vuejs.org/guide/contributing/writing-guide.html#principles) are also good resources.
+
 ## Contributing
 
 The *Documentation style guide* is a living document. Add to it whenever a style decision is made or a question is answered regarding style, grammar, or word choice.
@@ -13,6 +17,32 @@ For all items not covered in this guide, refer to the [Microsoft Style Guide](ht
 ## Spelling
 
 The [codespell](https://github.com/codespell-project/codespell) tool is run for every change to catch common misspellings.
+
+## Inclusive language
+
+This section provides guidelines on how to avoid using charged language in documentation.
+
+### Allowing and blocking
+
+Don't use "whitelist" or "blacklist" when referring to allowing or blocking content or traffic.
+
+* When used as a noun, use "allowlist" or "blocklist".
+* When used as a verb, use "allow" or "block"
+
+Example: _To **allow** outgoing traffic, add the IP to the **allowlist**._
+
+### Leader and follower
+
+Don't use "master" or "slave" to describe relationships between nodes or processes.
+
+* Use "leader", "main" or "primary," instead of "master."
+* Use "follower" or "secondary," instead of "slave."
+
+### Exceptions
+
+When referring to a configuration or settings used by third-party libraries och technologies outside the Grafana project, prefer the original name to avoid confusion.
+
+For example, use "master" when referring to the default Git branch.
 
 ## Grafana-specific style
 
@@ -27,8 +57,10 @@ The following sections provide general guidelines on topics specific to Grafana 
 * Write in present tense.
   - Not: The panel will open.
   - Use: The panel opens. Grafana opens the panel.
-* Do not use an ampersand (&) as an abbreviation for "and." 
+* Do not use an ampersand (&) as an abbreviation for "and."
   - **Exceptions:** If an ampersand is used in the Grafana UI, then match the UI.
+* Avoid using internal slang and jargon in technical documentation.
+* Do not use two spaces after a period. Only add one space after each sentence. Do not add a space at the end of the paragraph.
 
 ### File naming conventions
 
@@ -81,11 +113,34 @@ Always give the reader some idea of what to expect in the reference. Avoid blind
 When possible, use the exact title of the page or section you are linking to as the link text.
 
 **Example**
-* Refer to the [Documentation style guide](documentation-style-guide.md) for information about word usage and capitalization guidelines.
+Refer to the [Documentation style guide](documentation-style-guide.md) for information about word usage and capitalization guidelines.
+
+### Command line examples
+
+* Do not assume everyone is using Linux. Make sure instructions include enough information for Windows and Mac users to successfully complete procedures.
+
+* Do not add `$` before commands. Make it easy for users to copy and paste commands.
+
+  * **Wrong:** `$ sudo yum install grafana`
+  * **Right:** `sudo yum install grafana`
+
+* Include `sudo` before commands that require `sudo` to work.
+
+For terminal examples and Grafana configuration, use a `bash` code block:
+```bash
+sudo yum install grafana
+```
+For HTTP request/response, use an `http` code block:
+```http
+GET /api/dashboards/id/1/permissions HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 ### Word usage
 
-Grafana products has some words, abbreviations, and slang particular to this discourse community.
+Grafana products has some words, abbreviations, and terms particular to the Grafana discourse community.
 
 #### checkout, check out
 
@@ -114,9 +169,21 @@ Two words, not one
 * Correct, but passive voice: Your list of active alarms is displayed.
 * Incorrect: The list of active alarms displays.
 
+#### drawer
+
+Do not use. This is developer jargon that refers to a UI panel. Refer to the panel or feature by its proper name.
+
+#### intro, introduction
+
+"Introduction" is the preferred word. Use "intro" if there are space constraints (like on the side menu) or you are specifically trying for a less formal, more conversational tone.
+
+#### metadata
+
+One word, not two.
+
 #### open source, open-source
 
-Do not hyphenate when used as an adjective unless the lack of hyphen would cause confusion. For example: _Open source software design is the most open open-source system I can imagine._ 
+Do not hyphenate when used as an adjective unless the lack of hyphen would cause confusion. For example: _Open source software design is the most open open-source system I can imagine._
 
 Do not hyphenate when it is used as a noun. For example: _Open source is the best way to develop software._
 

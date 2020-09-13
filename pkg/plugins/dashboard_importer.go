@@ -7,9 +7,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
+
+var varRegex = regexp.MustCompile(`(\$\{.+?\})`)
 
 type ImportDashboardCommand struct {
 	Dashboard *simplejson.Json
@@ -19,7 +21,7 @@ type ImportDashboardCommand struct {
 	FolderId  int64
 
 	OrgId    int64
-	User     *m.SignedInUser
+	User     *models.SignedInUser
 	PluginId string
 	Result   *PluginDashboardInfoDTO
 }
@@ -44,7 +46,7 @@ func init() {
 }
 
 func ImportDashboard(cmd *ImportDashboardCommand) error {
-	var dashboard *m.Dashboard
+	var dashboard *models.Dashboard
 	var err error
 
 	if cmd.PluginId != "" {
@@ -52,7 +54,7 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 			return err
 		}
 	} else {
-		dashboard = m.NewDashboardFromJson(cmd.Dashboard)
+		dashboard = models.NewDashboardFromJson(cmd.Dashboard)
 	}
 
 	evaluator := &DashTemplateEvaluator{
@@ -65,7 +67,7 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		return err
 	}
 
-	saveCmd := m.SaveDashboardCommand{
+	saveCmd := models.SaveDashboardCommand{
 		Dashboard: generatedDash,
 		OrgId:     cmd.OrgId,
 		UserId:    cmd.User.UserId,
@@ -109,11 +111,9 @@ type DashTemplateEvaluator struct {
 	inputs    []ImportDashboardInput
 	variables map[string]string
 	result    *simplejson.Json
-	varRegex  *regexp.Regexp
 }
 
 func (this *DashTemplateEvaluator) findInput(varName string, varType string) *ImportDashboardInput {
-
 	for _, input := range this.inputs {
 		if varType == input.Type && (input.Name == varName || input.Name == "*") {
 			return &input
@@ -126,7 +126,6 @@ func (this *DashTemplateEvaluator) findInput(varName string, varType string) *Im
 func (this *DashTemplateEvaluator) Eval() (*simplejson.Json, error) {
 	this.result = simplejson.New()
 	this.variables = make(map[string]string)
-	this.varRegex, _ = regexp.Compile(`(\$\{.+\})`)
 
 	// check that we have all inputs we need
 	for _, inputDef := range this.template.Get("__inputs").MustArray() {
@@ -146,12 +145,11 @@ func (this *DashTemplateEvaluator) Eval() (*simplejson.Json, error) {
 }
 
 func (this *DashTemplateEvaluator) evalValue(source *simplejson.Json) interface{} {
-
 	sourceValue := source.Interface()
 
 	switch v := sourceValue.(type) {
 	case string:
-		interpolated := this.varRegex.ReplaceAllStringFunc(v, func(match string) string {
+		interpolated := varRegex.ReplaceAllStringFunc(v, func(match string) string {
 			replacement, exists := this.variables[match]
 			if exists {
 				return replacement

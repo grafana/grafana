@@ -6,10 +6,9 @@ import (
 	"sync"
 
 	"github.com/BurntSushi/toml"
-	"golang.org/x/xerrors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -61,7 +60,7 @@ type GroupToOrgRole struct {
 	// This pointer specifies if setting was set (for backwards compatibility)
 	IsGrafanaAdmin *bool `toml:"grafana_admin"`
 
-	OrgRole m.RoleType `toml:"org_role"`
+	OrgRole models.RoleType `toml:"org_role"`
 }
 
 // logger for all LDAP stuff
@@ -125,7 +124,10 @@ func readConfig(configFile string) (*Config, error) {
 	}
 
 	// interpolate full toml string (it can contain ENV variables)
-	stringContent := setting.EvalEnvVarExpression(string(fileBytes))
+	stringContent, err := setting.ExpandVar(string(fileBytes))
+	if err != nil {
+		return nil, errutil.Wrap("Failed to expand variables", err)
+	}
 
 	_, err = toml.Decode(stringContent, result)
 	if err != nil {
@@ -133,7 +135,7 @@ func readConfig(configFile string) (*Config, error) {
 	}
 
 	if len(result.Servers) == 0 {
-		return nil, xerrors.New("LDAP enabled but no LDAP servers defined in config file")
+		return nil, fmt.Errorf("LDAP enabled but no LDAP servers defined in config file")
 	}
 
 	// set default org id
@@ -161,11 +163,11 @@ func assertNotEmptyCfg(val interface{}, propName string) error {
 	switch v := val.(type) {
 	case string:
 		if v == "" {
-			return xerrors.Errorf("LDAP config file is missing option: %v", propName)
+			return fmt.Errorf("LDAP config file is missing option: %q", propName)
 		}
 	case []string:
 		if len(v) == 0 {
-			return xerrors.Errorf("LDAP config file is missing option: %v", propName)
+			return fmt.Errorf("LDAP config file is missing option: %q", propName)
 		}
 	default:
 		fmt.Println("unknown")

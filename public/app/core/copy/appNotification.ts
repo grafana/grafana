@@ -1,11 +1,12 @@
 import { AppNotification, AppNotificationSeverity, AppNotificationTimeout } from 'app/types';
 import { getMessageFromError } from 'app/core/utils/errors';
+import { v4 as uuidv4 } from 'uuid';
 
 const defaultSuccessNotification = {
   title: '',
   text: '',
   severity: AppNotificationSeverity.Success,
-  icon: 'fa fa-check',
+  icon: 'check',
   timeout: AppNotificationTimeout.Success,
 };
 
@@ -13,7 +14,7 @@ const defaultWarningNotification = {
   title: '',
   text: '',
   severity: AppNotificationSeverity.Warning,
-  icon: 'fa fa-exclamation',
+  icon: 'exclamation-triangle',
   timeout: AppNotificationTimeout.Warning,
 };
 
@@ -21,7 +22,7 @@ const defaultErrorNotification = {
   title: '',
   text: '',
   severity: AppNotificationSeverity.Error,
-  icon: 'fa fa-exclamation-triangle',
+  icon: 'exclamation-triangle',
   timeout: AppNotificationTimeout.Error,
 };
 
@@ -29,15 +30,19 @@ export const createSuccessNotification = (title: string, text = ''): AppNotifica
   ...defaultSuccessNotification,
   title: title,
   text: text,
-  id: Date.now(),
+  id: uuidv4(),
 });
 
-export const createErrorNotification = (title: string, text = '', component?: React.ReactElement): AppNotification => {
+export const createErrorNotification = (
+  title: string,
+  text: string | Error = '',
+  component?: React.ReactElement
+): AppNotification => {
   return {
     ...defaultErrorNotification,
     text: getMessageFromError(text),
     title,
-    id: Date.now(),
+    id: uuidv4(),
     component,
   };
 };
@@ -46,5 +51,5 @@ export const createWarningNotification = (title: string, text = ''): AppNotifica
   ...defaultWarningNotification,
   title: title,
   text: text,
-  id: Date.now(),
+  id: uuidv4(),
 });

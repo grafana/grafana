@@ -35,7 +35,6 @@ func (m *postgresMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.Tim
 	var macroError error
 
 	sql = m.ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
-
 		// detect if $__timeGroup is supposed to add AS time for pre 5.3 compatibility
 		// if there is a ',' directly after the macro call $__timeGroup is probably used
 		// in the old way. Inside window function ORDER BY $__timeGroup will be followed
@@ -71,6 +70,7 @@ func (m *postgresMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.Tim
 	return sql, nil
 }
 
+//nolint: gocyclo
 func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string, error) {
 	switch name {
 	case "__time":

@@ -1,13 +1,5 @@
 import store from '../store';
 
-Object.assign(window, {
-  localStorage: {
-    removeItem(key: string) {
-      delete window.localStorage[key];
-    },
-  },
-});
-
 describe('store', () => {
   it('should store', () => {
     store.set('key1', '123');

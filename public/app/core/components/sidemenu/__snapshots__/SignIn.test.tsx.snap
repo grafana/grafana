@@ -6,19 +6,20 @@ exports[`Render should render component 1`] = `
 >
   <a
     className="sidemenu-link"
-    href="login?redirect=%2F"
+    href="/whatever?forceLogin=true"
     target="_self"
   >
     <span
       className="icon-circle sidemenu-icon"
     >
-      <i
-        className="fa fa-fw fa-sign-in"
+      <Icon
+        name="sign-in-alt"
+        size="xl"
       />
     </span>
   </a>
   <a
-    href="login?redirect=%2F"
+    href="/whatever?forceLogin=true"
     target="_self"
   >
     <ul

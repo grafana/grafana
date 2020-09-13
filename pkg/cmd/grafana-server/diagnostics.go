@@ -39,7 +39,7 @@ func (pd *profilingDiagnostics) overrideWithEnv() error {
 	if portEnv != "" {
 		port, parseErr := strconv.ParseUint(portEnv, 0, 64)
 		if parseErr != nil {
-			return fmt.Errorf("Failed to parse %s enviroment variable to unsigned integer", profilingPortEnvName)
+			return fmt.Errorf("Failed to parse %s environment variable to unsigned integer", profilingPortEnvName)
 		}
 		pd.port = uint(port)
 	}

@@ -3,14 +3,8 @@ import React from 'react';
 import renderer from 'react-test-renderer';
 import { UserPicker } from './UserPicker';
 
-jest.mock('app/core/services/backend_srv', () => ({
-  getBackendSrv: () => {
-    return {
-      get: () => {
-        return Promise.resolve([]);
-      },
-    };
-  },
+jest.mock('@grafana/runtime', () => ({
+  getBackendSrv: () => ({ get: jest.fn().mockResolvedValue([]) }),
 }));
 
 describe('UserPicker', () => {

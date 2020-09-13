@@ -3,6 +3,9 @@ package main
 import (
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPreparingReleaseFromRemote(t *testing.T) {
@@ -59,7 +62,7 @@ func TestPreparingReleaseFromRemote(t *testing.T) {
 			expectedStable:  false,
 			expectedArch:    "amd64",
 			expectedOs:      "rhel",
-			expectedURL:     "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.4.0-pre1asdf.x86_64.rpm",
+			expectedURL:     "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-5.4.0~pre1asdf-1.x86_64.rpm",
 			baseArchiveURL:  "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana",
 			buildArtifacts:  []buildArtifact{{"rhel", "amd64", ".x86_64.rpm", ""}},
 		},
@@ -72,10 +75,12 @@ func TestPreparingReleaseFromRemote(t *testing.T) {
 			expectedBeta:    false,
 			expectedStable:  false,
 			expectedArch:    "armv6",
-			expectedOs:      "linux",
-			expectedURL:     "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-rpi-5.4.0-pre1asdf_armhf.deb",
+			expectedOs:      "deb",
+			expectedURL:     "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-rpi_5.4.0~pre1asdf_armhf.deb",
 			baseArchiveURL:  "https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana",
-			buildArtifacts:  []buildArtifact{{"linux", "armv6", "_armhf.deb", "-rpi"}},
+			buildArtifacts: []buildArtifact{
+				{os: "deb", arch: "armv6", urlPostfix: "_armhf.deb", packagePostfix: "-rpi"},
+			},
 		},
 		{
 			version:         "v5.4.0-pre1asdf",
@@ -114,33 +119,20 @@ func TestPreparingReleaseFromRemote(t *testing.T) {
 			artifactConfigurations: test.buildArtifacts,
 		}
 
-		rel, _ := builder.prepareRelease(test.baseArchiveURL, test.whatsNewURL, test.relNotesURL, test.nightly)
+		t.Log("Preparing release", "baseArchiveURL", test.baseArchiveURL, "nightly", test.nightly)
+		rel, err := builder.prepareRelease(test.baseArchiveURL, test.whatsNewURL, test.relNotesURL, test.nightly)
+		require.NoError(t, err)
 
-		if rel.Beta != test.expectedBeta || rel.Stable != test.expectedStable {
-			t.Errorf("%s should have been tagged as beta=%v, stable=%v.", test.version, test.expectedBeta, test.expectedStable)
-		}
+		assert.Equal(t, test.expectedBeta, rel.Beta)
+		assert.Equal(t, test.expectedStable, rel.Stable)
+		assert.Equal(t, test.expectedVersion, rel.Version)
 
-		if rel.Version != test.expectedVersion {
-			t.Errorf("Expected version to be %s, but it was %s.", test.expectedVersion, rel.Version)
-		}
-
-		expectedBuilds := len(test.buildArtifacts)
-		if len(rel.Builds) != expectedBuilds {
-			t.Errorf("Expected %v builds, but got %v.", expectedBuilds, len(rel.Builds))
-		}
+		assert.Len(t, rel.Builds, len(test.buildArtifacts))
 
 		build := rel.Builds[0]
-		if build.Arch != test.expectedArch {
-			t.Errorf("Expected arch to be %v, but it was %v", test.expectedArch, build.Arch)
-		}
-
-		if build.Os != test.expectedOs {
-			t.Errorf("Expected os to be %v, but it was %v", test.expectedOs, build.Os)
-		}
-
-		if build.URL != test.expectedURL {
-			t.Errorf("Expected url to be %v, but it was %v", test.expectedURL, build.URL)
-		}
+		assert.Equal(t, test.expectedArch, build.Arch)
+		assert.Equal(t, test.expectedOs, build.Os)
+		assert.Equal(t, test.expectedURL, build.URL)
 	}
 }
 

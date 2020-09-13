@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import memoizeOne from 'memoize-one';
-import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel } from '@grafana/data';
+import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel, LogsSortOrder, sortLogRows } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
@@ -8,6 +8,7 @@ import { getLogRowStyles } from './getLogRowStyles';
 
 //Components
 import { LogRow } from './LogRow';
+import { RowContextOptions } from './LogRowContextProvider';
 
 export const PREVIEW_LIMIT = 100;
 export const RENDER_LIMIT = 500;
@@ -17,17 +18,25 @@ export interface Props extends Themeable {
   deduplicatedRows?: LogRowModel[];
   dedupStrategy: LogsDedupStrategy;
   highlighterExpressions?: string[];
+  showContextToggle?: (row?: LogRowModel) => boolean;
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
   timeZone: TimeZone;
+  logsSortOrder?: LogsSortOrder | null;
   rowLimit?: number;
   allowDetails?: boolean;
   previewLimit?: number;
+  // Passed to fix problems with inactive scrolling in Logs Panel
+  // Can be removed when we unify scrolling for Panel and Explore
+  disableCustomHorizontalScroll?: boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
-  getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
+  getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  showParsedFields?: string[];
+  onClickShowParsedField?: (key: string) => void;
+  onClickHideParsedField?: (key: string) => void;
 }
 
 interface State {
@@ -65,13 +74,18 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     }
   }
 
-  makeGetRows = memoizeOne((processedRows: LogRowModel[]) => {
-    return () => processedRows;
+  makeGetRows = memoizeOne((orderedRows: LogRowModel[]) => {
+    return () => orderedRows;
   });
+
+  sortLogs = memoizeOne((logRows: LogRowModel[], logsSortOrder: LogsSortOrder): LogRowModel[] =>
+    sortLogRows(logRows, logsSortOrder)
+  );
 
   render() {
     const {
       dedupStrategy,
+      showContextToggle,
       showLabels,
       showTime,
       wrapLogMessage,
@@ -86,6 +100,11 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       allowDetails,
       previewLimit,
       getFieldLinks,
+      disableCustomHorizontalScroll,
+      logsSortOrder,
+      showParsedFields,
+      onClickShowParsedField,
+      onClickHideParsedField,
     } = this.props;
     const { renderAll } = this.state;
     const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
@@ -95,16 +114,20 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
-    const horizontalScrollWindow = wrapLogMessage ? '' : logsRowsHorizontalScroll;
+
+    // For horizontal scrolling we can't use CustomScrollbar as it causes the problem with logs context - it is not visible
+    // for top log rows. Therefore we use CustomScrollbar only in LogsPanel and for Explore, we use custom css styling.
+    const horizontalScrollWindow = wrapLogMessage && !disableCustomHorizontalScroll ? '' : logsRowsHorizontalScroll;
 
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
-    const firstRows = processedRows.slice(0, previewLimit!);
-    const rowCount = Math.min(processedRows.length, rowLimit!);
-    const lastRows = processedRows.slice(previewLimit!, rowCount);
+    const orderedRows = logsSortOrder ? this.sortLogs(processedRows, logsSortOrder) : processedRows;
+    const firstRows = orderedRows.slice(0, previewLimit!);
+    const rowCount = Math.min(orderedRows.length, rowLimit!);
+    const lastRows = orderedRows.slice(previewLimit!, rowCount);
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
-    const getRows = this.makeGetRows(processedRows);
+    const getRows = this.makeGetRows(orderedRows);
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
 
     return (
@@ -119,15 +142,20 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   getRowContext={getRowContext}
                   highlighterExpressions={highlighterExpressions}
                   row={row}
+                  showContextToggle={showContextToggle}
                   showDuplicates={showDuplicates}
                   showLabels={showLabels}
                   showTime={showTime}
+                  showParsedFields={showParsedFields}
                   wrapLogMessage={wrapLogMessage}
                   timeZone={timeZone}
                   allowDetails={allowDetails}
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
+                  onClickShowParsedField={onClickShowParsedField}
+                  onClickHideParsedField={onClickHideParsedField}
                   getFieldLinks={getFieldLinks}
+                  logsSortOrder={logsSortOrder}
                 />
               ))}
             {hasData &&
@@ -138,15 +166,20 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   getRows={getRows}
                   getRowContext={getRowContext}
                   row={row}
+                  showContextToggle={showContextToggle}
                   showDuplicates={showDuplicates}
                   showLabels={showLabels}
                   showTime={showTime}
+                  showParsedFields={showParsedFields}
                   wrapLogMessage={wrapLogMessage}
                   timeZone={timeZone}
                   allowDetails={allowDetails}
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
+                  onClickShowParsedField={onClickShowParsedField}
+                  onClickHideParsedField={onClickHideParsedField}
                   getFieldLinks={getFieldLinks}
+                  logsSortOrder={logsSortOrder}
                 />
               ))}
             {hasData && !renderAll && (

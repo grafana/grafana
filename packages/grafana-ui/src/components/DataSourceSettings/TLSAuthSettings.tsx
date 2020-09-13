@@ -2,6 +2,7 @@ import React from 'react';
 import { KeyValue } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { Tooltip } from '../Tooltip/Tooltip';
+import { Icon } from '../Icon/Icon';
 import { CertificationKey } from './CertificationKey';
 import { HttpSettingsBaseProps } from './types';
 
@@ -47,7 +48,7 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
           theme="info"
         >
           <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-            <i className="fa fa-info-circle" />
+            <Icon name="info-circle" size="xs" style={{ marginLeft: '10px' }} />
           </div>
         </Tooltip>
       </div>

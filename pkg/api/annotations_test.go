@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -32,7 +32,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 		}
 
 		Convey("When user is an Org Viewer", func() {
-			role := m.ROLE_VIEWER
+			role := models.ROLE_VIEWER
 			Convey("Should not be allowed to save an annotation", func() {
 				postAnnotationScenario("When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -58,7 +58,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 		})
 
 		Convey("When user is an Org Editor", func() {
-			role := m.ROLE_EDITOR
+			role := models.ROLE_EDITOR
 			Convey("Should be able to save an annotation", func() {
 				postAnnotationScenario("When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -112,26 +112,26 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 			PanelId:     1,
 		}
 
-		viewerRole := m.ROLE_VIEWER
-		editorRole := m.ROLE_EDITOR
+		viewerRole := models.ROLE_VIEWER
+		editorRole := models.ROLE_EDITOR
 
-		aclMockResp := []*m.DashboardAclInfoDTO{
-			{Role: &viewerRole, Permission: m.PERMISSION_VIEW},
-			{Role: &editorRole, Permission: m.PERMISSION_EDIT},
+		aclMockResp := []*models.DashboardAclInfoDTO{
+			{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
+			{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 		}
 
-		bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
 			query.Result = aclMockResp
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
-			query.Result = []*m.TeamDTO{}
+		bus.AddHandler("test", func(query *models.GetTeamsByUserQuery) error {
+			query.Result = []*models.TeamDTO{}
 			return nil
 		})
 
 		Convey("When user is an Org Viewer", func() {
-			role := m.ROLE_VIEWER
+			role := models.ROLE_VIEWER
 			Convey("Should not be allowed to save an annotation", func() {
 				postAnnotationScenario("When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -157,7 +157,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 		})
 
 		Convey("When user is an Org Editor", func() {
-			role := m.ROLE_EDITOR
+			role := models.ROLE_EDITOR
 			Convey("Should be able to save an annotation", func() {
 				postAnnotationScenario("When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -183,7 +183,7 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 		})
 
 		Convey("When user is an Admin", func() {
-			role := m.ROLE_ADMIN
+			role := models.ROLE_ADMIN
 			Convey("Should be able to do anything", func() {
 				postAnnotationScenario("When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -229,12 +229,12 @@ func (repo *fakeAnnotationsRepo) Find(query *annotations.ItemQuery) ([]*annotati
 
 var fakeAnnoRepo *fakeAnnotationsRepo
 
-func postAnnotationScenario(desc string, url string, routePattern string, role m.RoleType, cmd dtos.PostAnnotationsCmd, fn scenarioFunc) {
+func postAnnotationScenario(desc string, url string, routePattern string, role models.RoleType, cmd dtos.PostAnnotationsCmd, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
+		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 			sc.context.OrgId = TestOrgID
@@ -252,12 +252,12 @@ func postAnnotationScenario(desc string, url string, routePattern string, role m
 	})
 }
 
-func putAnnotationScenario(desc string, url string, routePattern string, role m.RoleType, cmd dtos.UpdateAnnotationsCmd, fn scenarioFunc) {
+func putAnnotationScenario(desc string, url string, routePattern string, role models.RoleType, cmd dtos.UpdateAnnotationsCmd, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
+		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 			sc.context.OrgId = TestOrgID
@@ -275,12 +275,12 @@ func putAnnotationScenario(desc string, url string, routePattern string, role m.
 	})
 }
 
-func patchAnnotationScenario(desc string, url string, routePattern string, role m.RoleType, cmd dtos.PatchAnnotationsCmd, fn scenarioFunc) {
+func patchAnnotationScenario(desc string, url string, routePattern string, role models.RoleType, cmd dtos.PatchAnnotationsCmd, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
+		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 			sc.context.OrgId = TestOrgID
@@ -298,12 +298,12 @@ func patchAnnotationScenario(desc string, url string, routePattern string, role 
 	})
 }
 
-func deleteAnnotationsScenario(desc string, url string, routePattern string, role m.RoleType, cmd dtos.DeleteAnnotationsCmd, fn scenarioFunc) {
+func deleteAnnotationsScenario(desc string, url string, routePattern string, role models.RoleType, cmd dtos.DeleteAnnotationsCmd, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(url)
-		sc.defaultHandler = Wrap(func(c *m.ReqContext) Response {
+		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
 			sc.context.OrgId = TestOrgID

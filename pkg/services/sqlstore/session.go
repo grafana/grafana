@@ -4,7 +4,7 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/go-xorm/xorm"
+	"xorm.io/xorm"
 )
 
 type DBSession struct {
@@ -28,7 +28,7 @@ func newSession() *DBSession {
 }
 
 func startSession(ctx context.Context, engine *xorm.Engine, beginTran bool) (*DBSession, error) {
-	value := ctx.Value(ContextSessionName)
+	value := ctx.Value(ContextSessionKey{})
 	var sess *DBSession
 	sess, ok := value.(*DBSession)
 
@@ -52,6 +52,7 @@ func (ss *SqlStore) WithDbSession(ctx context.Context, callback dbTransactionFun
 	if err != nil {
 		return err
 	}
+	defer sess.Close()
 
 	return callback(sess)
 }

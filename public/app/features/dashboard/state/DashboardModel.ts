@@ -12,23 +12,41 @@ import { GridPos, panelAdded, PanelModel, panelRemoved } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import {
   AppEvent,
-  dateTime,
+  dateTimeFormat,
+  dateTimeFormatTimeAgo,
   DateTimeInput,
-  isDateTime,
   PanelEvents,
   TimeRange,
   TimeZone,
-  toUtc,
   EventBus,
+  UrlQueryValue,
   EventBusSrv,
 } from '@grafana/data';
-import { UrlQueryValue } from '@grafana/runtime';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
+import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
+import { variableAdapters } from 'app/features/variables/adapters';
+import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
+import { dispatch } from '../../../store/store';
+import { isAllVariable } from '../../variables/utils';
 
 export interface CloneOptions {
   saveVariables?: boolean;
   saveTimerange?: boolean;
   message?: string;
+}
+
+type DashboardLinkType = 'link' | 'dashboards';
+
+export interface DashboardLink {
+  icon: string;
+  title: string;
+  tooltip: string;
+  type: DashboardLinkType;
+  url: string;
+  asDropdown: boolean;
+  tags: any[];
+  searchHits?: any[];
+  targetBlank: boolean;
 }
 
 export class DashboardModel {
@@ -53,9 +71,11 @@ export class DashboardModel {
   schemaVersion: number;
   version: number;
   revision: number;
-  links: any;
+  links: DashboardLink[];
   gnetId: any;
   panels: PanelModel[];
+  panelInEdit?: PanelModel;
+  panelInView?: PanelModel;
 
   // ------------------
   // not persisted
@@ -75,9 +95,12 @@ export class DashboardModel {
     templating: true, // needs special handling
     originalTime: true,
     originalTemplating: true,
+    panelInEdit: true,
+    panelInView: true,
+    getVariablesFromState: true,
   };
 
-  constructor(data: any, meta?: DashboardMeta) {
+  constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
     if (!data) {
       data = {};
     }
@@ -107,7 +130,7 @@ export class DashboardModel {
     this.gnetId = data.gnetId || null;
     this.panels = _.map(data.panels || [], (panelData: any) => new PanelModel(panelData));
 
-    this.resetOriginalVariables();
+    this.resetOriginalVariables(true);
     this.resetOriginalTime();
 
     this.initMeta(meta);
@@ -141,7 +164,7 @@ export class DashboardModel {
     });
   }
 
-  private initMeta(meta: DashboardMeta) {
+  private initMeta(meta?: DashboardMeta) {
     meta = meta || {};
 
     meta.canShare = meta.canShare !== false;
@@ -150,8 +173,6 @@ export class DashboardModel {
     meta.canEdit = meta.canEdit !== false;
     meta.showSettings = meta.canEdit;
     meta.canMakeEditable = meta.canSave && !this.editable;
-    meta.fullscreen = false;
-    meta.isEditing = false;
 
     if (!this.editable) {
       meta.canEdit = false;
@@ -163,7 +184,7 @@ export class DashboardModel {
   }
 
   // cleans meta data and other non persistent state
-  getSaveModelClone(options?: CloneOptions) {
+  getSaveModelClone(options?: CloneOptions): DashboardModel {
     const defaults = _.defaults(options || {}, {
       saveVariables: true,
       saveTimerange: true,
@@ -179,17 +200,52 @@ export class DashboardModel {
       copy[property] = _.cloneDeep(this[property]);
     }
 
-    // get variable save models
+    this.updateTemplatingSaveModelClone(copy, defaults);
+
+    if (!defaults.saveTimerange) {
+      copy.time = this.originalTime;
+    }
+
+    // get panel save models
+    copy.panels = this.panels
+      .filter((panel: PanelModel) => panel.type !== 'add-panel')
+      .map((panel: PanelModel) => {
+        // If we save while editing we should include the panel in edit mode instead of the
+        // unmodified source panel
+        if (this.panelInEdit && this.panelInEdit.editSourceId === panel.id) {
+          const saveModel = this.panelInEdit.getSaveModel();
+          // while editing a panel we modify its id, need to restore it here
+          saveModel.id = this.panelInEdit.editSourceId;
+          return saveModel;
+        }
+
+        return panel.getSaveModel();
+      });
+
+    //  sort by keys
+    copy = sortByKeys(copy);
+    copy.getVariables = () => {
+      return copy.templating.list;
+    };
+
+    return copy;
+  }
+
+  private updateTemplatingSaveModelClone(
+    copy: any,
+    defaults: { saveTimerange: boolean; saveVariables: boolean } & CloneOptions
+  ) {
+    const originalVariables = this.originalTemplating;
+    const currentVariables = this.getVariablesFromState();
+
     copy.templating = {
-      list: _.map(this.templating.list, (variable: any) =>
-        variable.getSaveModel ? variable.getSaveModel() : variable
-      ),
+      list: currentVariables.map(variable => variableAdapters.get(variable.type).getSaveModel(variable)),
     };
 
     if (!defaults.saveVariables) {
       for (let i = 0; i < copy.templating.list.length; i++) {
         const current = copy.templating.list[i];
-        const original: any = _.find(this.originalTemplating, { name: current.name, type: current.type });
+        const original: any = _.find(originalVariables, { name: current.name, type: current.type });
 
         if (!original) {
           continue;
@@ -202,38 +258,20 @@ export class DashboardModel {
         }
       }
     }
-
-    if (!defaults.saveTimerange) {
-      copy.time = this.originalTime;
-    }
-
-    // get panel save models
-    copy.panels = _.chain(this.panels)
-      .filter((panel: PanelModel) => panel.type !== 'add-panel')
-      .map((panel: PanelModel) => panel.getSaveModel())
-      .value();
-
-    //  sort by keys
-    copy = sortByKeys(copy);
-
-    return copy;
-  }
-
-  setViewMode(panel: PanelModel, fullscreen: boolean, isEditing: boolean) {
-    this.meta.fullscreen = fullscreen;
-    this.meta.isEditing = isEditing && this.meta.canEdit;
-
-    panel.setViewMode(fullscreen, this.meta.isEditing);
-
-    this.events.emit(CoreEvents.viewModeChanged, panel);
   }
 
   timeRangeUpdated(timeRange: TimeRange) {
     this.events.emit(CoreEvents.timeRangeUpdated, timeRange);
+    dispatch(onTimeRangeUpdated(timeRange));
   }
 
   startRefresh() {
     this.events.emit(PanelEvents.refresh);
+
+    if (this.panelInEdit) {
+      this.panelInEdit.refresh();
+      return;
+    }
 
     for (const panel of this.panels) {
       if (!this.otherPanelInFullscreen(panel)) {
@@ -253,13 +291,35 @@ export class DashboardModel {
   panelInitialized(panel: PanelModel) {
     panel.initialized();
 
-    if (!this.otherPanelInFullscreen(panel)) {
+    const lastResult = panel.getQueryRunner().getLastResult();
+
+    if (!this.otherPanelInFullscreen(panel) && !lastResult) {
       panel.refresh();
     }
   }
 
   otherPanelInFullscreen(panel: PanelModel) {
-    return this.meta.fullscreen && !panel.fullscreen;
+    return (this.panelInEdit || this.panelInView) && !(panel.isViewing || panel.isEditing);
+  }
+
+  initEditPanel(sourcePanel: PanelModel): PanelModel {
+    this.panelInEdit = sourcePanel.getEditClone();
+    return this.panelInEdit;
+  }
+
+  initViewPanel(panel: PanelModel) {
+    this.panelInView = panel;
+    panel.setIsViewing(true);
+  }
+
+  exitViewPanel(panel: PanelModel) {
+    this.panelInView = undefined;
+    panel.setIsViewing(false);
+  }
+
+  exitPanelEditor() {
+    this.panelInEdit!.destroy();
+    this.panelInEdit = undefined;
   }
 
   private ensureListExist(data: any) {
@@ -298,13 +358,26 @@ export class DashboardModel {
     }
   }
 
-  getPanelById(id: number): PanelModel {
+  getPanelById(id: number): PanelModel | null {
+    if (this.panelInEdit && this.panelInEdit.id === id) {
+      return this.panelInEdit;
+    }
+
     for (const panel of this.panels) {
       if (panel.id === id) {
         return panel;
       }
     }
+
     return null;
+  }
+
+  canEditPanel(panel?: PanelModel | null): boolean | undefined | null {
+    return this.meta.canEdit && panel && !panel.repeatPanelId;
+  }
+
+  canEditPanelById(id: number): boolean | undefined | null {
+    return this.canEditPanel(this.getPanelById(id));
   }
 
   addPanel(panelData: any) {
@@ -330,7 +403,7 @@ export class DashboardModel {
   }
 
   cleanUpRepeats() {
-    if (this.snapshot || this.templating.list.length === 0) {
+    if (this.isSnapshotTruthy() || !this.hasVariables()) {
       return;
     }
 
@@ -357,7 +430,7 @@ export class DashboardModel {
   }
 
   processRepeats() {
-    if (this.snapshot || this.templating.list.length === 0) {
+    if (this.isSnapshotTruthy() || !this.hasVariables()) {
       return;
     }
 
@@ -389,7 +462,7 @@ export class DashboardModel {
   }
 
   processRowRepeats(row: PanelModel) {
-    if (this.snapshot || this.templating.list.length === 0) {
+    if (this.isSnapshotTruthy() || !this.hasVariables()) {
       return;
     }
 
@@ -417,6 +490,7 @@ export class DashboardModel {
     }
 
     const clone = new PanelModel(sourcePanel.getSaveModel());
+
     clone.id = this.getNextPanelId();
 
     // insert after source panel + value index
@@ -424,7 +498,13 @@ export class DashboardModel {
 
     clone.repeatIteration = this.iteration;
     clone.repeatPanelId = sourcePanel.id;
-    clone.repeat = null;
+    clone.repeat = undefined;
+
+    if (this.panelInView?.id === clone.id) {
+      clone.setIsViewing(true);
+      this.panelInView = clone;
+    }
+
     return clone;
   }
 
@@ -459,7 +539,7 @@ export class DashboardModel {
   }
 
   repeatPanel(panel: PanelModel, panelIndex: number) {
-    const variable: any = _.find(this.templating.list, { name: panel.repeat } as any);
+    const variable: any = this.getPanelRepeatVariable(panel);
     if (!variable) {
       return;
     }
@@ -470,6 +550,7 @@ export class DashboardModel {
     }
 
     const selectedOptions = this.getSelectedVariableOptions(variable);
+
     const maxPerRow = panel.maxPerRow || 4;
     let xPos = 0;
     let yPos = panel.gridPos.y;
@@ -576,14 +657,14 @@ export class DashboardModel {
     if (repeatedByRow) {
       panel.repeatedByRow = true;
     } else {
-      panel.repeat = null;
+      panel.repeat = undefined;
     }
     return panel;
   }
 
   getSelectedVariableOptions(variable: any) {
     let selectedOptions: any[];
-    if (variable.current.text === 'All') {
+    if (isAllVariable(variable)) {
       selectedOptions = variable.options.slice(1, variable.options.length);
     } else {
       selectedOptions = _.filter(variable.options, { selected: true });
@@ -711,11 +792,10 @@ export class DashboardModel {
   }
 
   formatDate(date: DateTimeInput, format?: string) {
-    date = isDateTime(date) ? date : dateTime(date);
-    format = format || 'YYYY-MM-DD HH:mm:ss';
-    const timezone = this.getTimezone();
-
-    return timezone === 'browser' ? dateTime(date).format(format) : toUtc(date).format(format);
+    return dateTimeFormat(date, {
+      format,
+      timeZone: this.getTimezone(),
+    });
   }
 
   destroy() {
@@ -813,7 +893,7 @@ export class DashboardModel {
     this.events.on(event, callback);
   }
 
-  off<T>(event: AppEvent<T>, callback?: (payload?: T) => void) {
+  off<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
     this.events.off(event, callback);
   }
 
@@ -830,13 +910,9 @@ export class DashboardModel {
   }
 
   getRelativeTime(date: DateTimeInput) {
-    date = isDateTime(date) ? date : dateTime(date);
-
-    return this.timezone === 'browser' ? dateTime(date).fromNow() : toUtc(date).fromNow();
-  }
-
-  isTimezoneUtc() {
-    return this.getTimezone() === 'utc';
+    return dateTimeFormatTimeAgo(date, {
+      timeZone: this.getTimezone(),
+    });
   }
 
   isSnapshot() {
@@ -844,7 +920,7 @@ export class DashboardModel {
   }
 
   getTimezone(): TimeZone {
-    return (this.timezone ? this.timezone : contextSrv.user.timezone) as TimeZone;
+    return (this.timezone ? this.timezone : contextSrv?.user?.timezone) as TimeZone;
   }
 
   private updateSchema(old: any) {
@@ -860,32 +936,17 @@ export class DashboardModel {
     return !_.isEqual(this.time, this.originalTime);
   }
 
-  resetOriginalVariables() {
-    this.originalTemplating = _.map(this.templating.list, (variable: any) => {
-      return {
-        name: variable.name,
-        type: variable.type,
-        current: _.cloneDeep(variable.current),
-        filters: _.cloneDeep(variable.filters),
-      };
-    });
+  resetOriginalVariables(initial = false) {
+    if (initial) {
+      this.originalTemplating = this.cloneVariablesFrom(this.templating.list);
+      return;
+    }
+
+    this.originalTemplating = this.cloneVariablesFrom(this.getVariablesFromState());
   }
 
   hasVariableValuesChanged() {
-    if (this.templating.list.length !== this.originalTemplating.length) {
-      return false;
-    }
-
-    const updated = _.map(this.templating.list, (variable: any) => {
-      return {
-        name: variable.name,
-        type: variable.type,
-        current: _.cloneDeep(variable.current),
-        filters: _.cloneDeep(variable.filters),
-      };
-    });
-
-    return !_.isEqual(updated, this.originalTemplating);
+    return this.hasVariablesChanged(this.originalTemplating, this.getVariablesFromState());
   }
 
   autoFitPanels(viewHeight: number, kioskMode?: UrlQueryValue) {
@@ -944,13 +1005,57 @@ export class DashboardModel {
     });
 
     // determine if more panels are displaying legends or not
-    const onCount = panelsWithLegends.filter(panel => panel.legend.show).length;
+    const onCount = panelsWithLegends.filter(panel => panel.legend!.show).length;
     const offCount = panelsWithLegends.length - onCount;
     const panelLegendsOn = onCount >= offCount;
 
     for (const panel of panelsWithLegends) {
-      panel.legend.show = !panelLegendsOn;
+      panel.legend!.show = !panelLegendsOn;
       panel.render();
     }
+  }
+
+  getVariables = () => {
+    return this.getVariablesFromState();
+  };
+
+  private getPanelRepeatVariable(panel: PanelModel) {
+    return this.getVariablesFromState().find(variable => variable.name === panel.repeat);
+  }
+
+  private isSnapshotTruthy() {
+    return this.snapshot;
+  }
+
+  private hasVariables() {
+    return this.getVariablesFromState().length > 0;
+  }
+
+  private hasVariablesChanged(originalVariables: any[], currentVariables: any[]): boolean {
+    if (originalVariables.length !== currentVariables.length) {
+      return false;
+    }
+
+    const updated = _.map(currentVariables, (variable: any) => {
+      return {
+        name: variable.name,
+        type: variable.type,
+        current: _.cloneDeep(variable.current),
+        filters: _.cloneDeep(variable.filters),
+      };
+    });
+
+    return !_.isEqual(updated, originalVariables);
+  }
+
+  private cloneVariablesFrom(variables: any[]): any[] {
+    return variables.map(variable => {
+      return {
+        name: variable.name,
+        type: variable.type,
+        current: _.cloneDeep(variable.current),
+        filters: _.cloneDeep(variable.filters),
+      };
+    });
   }
 }

@@ -4,14 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	sqlite3 "github.com/mattn/go-sqlite3"
+	"github.com/mattn/go-sqlite3"
+	"xorm.io/xorm"
 )
 
-// WithTransactionalDbSession calls the callback with an session within a transaction
+// WithTransactionalDbSession calls the callback with a session within a transaction.
 func (ss *SqlStore) WithTransactionalDbSession(ctx context.Context, callback dbTransactionFunc) error {
 	return inTransactionWithRetryCtx(ctx, ss.engine, callback, 0)
 }
@@ -22,7 +22,7 @@ func (ss *SqlStore) InTransaction(ctx context.Context, fn func(ctx context.Conte
 
 func (ss *SqlStore) inTransactionWithRetry(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
 	return inTransactionWithRetryCtx(ctx, ss.engine, func(sess *DBSession) error {
-		withValue := context.WithValue(ctx, ContextSessionName, sess)
+		withValue := context.WithValue(ctx, ContextSessionKey{}, sess)
 		return fn(withValue)
 	}, retry)
 }
@@ -66,7 +66,7 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callbac
 	if len(sess.events) > 0 {
 		for _, e := range sess.events {
 			if err = bus.Publish(e); err != nil {
-				log.Error(3, "Failed to publish event after commit. error: %v", err)
+				log.Errorf(3, "Failed to publish event after commit. error: %v", err)
 			}
 		}
 	}

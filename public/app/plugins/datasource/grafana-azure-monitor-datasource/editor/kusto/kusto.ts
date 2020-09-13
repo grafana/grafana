@@ -1,4 +1,4 @@
-/* tslint:disable:max-line-length */
+/* eslint-disable max-len */
 export const operatorTokens = [
   { text: '!between', hint: 'Matches the input that is outside the inclusive range.' },
   { text: 'as', hint: "Binds a name to the operator's input tabular expression." },

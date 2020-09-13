@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v5.1"
+title = "What's new in Grafana v5.1"
 description = "Feature and improvement highlights for Grafana v5.1"
-keywords = ["grafana", "new", "documentation", "5.1"]
+keywords = ["grafana", "new", "documentation", "5.1", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 5.1"
@@ -10,7 +10,7 @@ parent = "whatsnew"
 weight = -7
 +++
 
-# What's New in Grafana v5.1
+# What's new in Grafana v5.1
 
 Grafana v5.1 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
@@ -29,7 +29,7 @@ the native scrolling functionality. Grafana v5.1 ships with a native scrollbar f
 the dashboard grid and panels that's not overriding the native scrolling functionality. We hope that these changes and improvements should
 make the Grafana user experience much better!
 
-## Improved docker image (breaking change)
+## Improved Docker image (breaking change)
 
 Grafana v5.1 brings an improved official docker image which should make it easier to run and use the Grafana docker image and at the same time give more control to the user how to use/run it.
 
@@ -51,7 +51,7 @@ The Prometheus data source now support transforming Prometheus histograms to the
 really happy to finally allow our users to render those as heatmaps. Please read [Heatmap panel documentation](/features/panels/heatmap/#pre-bucketed-data)
 for more information on how to use it.
 
-Prometheus query editor also got support for autocomplete of template variables. More information in the [Prometheus data source documentation](/features/datasources/prometheus/).
+Prometheus query editor also got support for autocomplete of template variables. More information in the [Prometheus data source documentation]({{< relref "../features/datasources/prometheus/" >}}).
 
 <div class="clearfix"></div>
 
@@ -63,7 +63,7 @@ Grafana v5.1 now ships with a built-in Microsoft SQL Server (MSSQL) data source 
 Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. Do you have metric or log data in MSSQL? You can now visualize
 that data and define alert rules on it like with any of Grafana's other core data sources.
 
-Please read [Using Microsoft SQL Server in Grafana documentation](/features/datasources/mssql/) for more detailed information on how to get started and use it.
+Please read [Using Microsoft SQL Server in Grafana documentation]({{< relref "../features/datasources/mssql/" >}}) for more detailed information on how to get started and use it.
 
 <div class="clearfix"></div>
 
@@ -86,16 +86,16 @@ copied panel into the current dashboard.
 
 ### Graph Panel
 
-New enhancements includes support for multiple series stacking in histogram mode, thresholds for right Y axis, aligning left and right Y-axes to one level and additional units. More information in the [Graph panel documentation](/features/panels/graph/).
+New enhancements include support for multiple series stacking in histogram mode, thresholds for right Y axis, aligning left and right Y-axes to one level and additional units. More information in the [Graph panel documentation](/features/panels/graph/).
 
 ### Table Panel
 
-New enhancements includes support for mapping a numeric value/range to text and additional units. More information in the [Table panel documentation](/features/panels/table_panel/#string).
+New enhancements include support for mapping a numeric value/range to text and additional units. More information in the [Table panel documentation](/features/panels/table_panel/#string).
 
 ## New variable interpolation syntax
 
 We now support a new option for rendering variables that gives the user full control of how the value(s) should be rendered.
-In the table below you can see some examples and you can find all different options in the [Variables documentation](http://docs.grafana.org/reference/templating/#advanced-formatting-options).
+In the table below you can see some examples and you can find all different options in the [Variables documentation](http://docs.grafana.org/variables/templates-and-variables/#advanced-formatting-options).
 
 Filter Option | Example | Raw | Interpolated | Description
 ------------ | ------------- | ------------- | -------------  | -------------

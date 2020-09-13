@@ -133,4 +133,22 @@ func addDataSourceMigration(mg *Migrator) {
 
 	const setEmptyJSONWhereNullJSON = `UPDATE data_source SET json_data = '{}' WHERE json_data is null`
 	mg.AddMigration("Update json_data with nulls", NewRawSqlMigration(setEmptyJSONWhereNullJSON))
+
+	// add column uid for linking
+	mg.AddMigration("Add uid column", NewAddColumnMigration(tableV2, &Column{
+		Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: false, Default: "0",
+	}))
+
+	// Initialize as id as that is unique already
+	mg.AddMigration(
+		"Update uid value",
+		NewRawSqlMigration("").
+			Sqlite("UPDATE data_source SET uid=printf('%09d',id);").
+			Postgres("UPDATE data_source SET uid=lpad('' || id::text,9,'0');").
+			Mysql("UPDATE data_source SET uid=lpad(id,9,'0');"),
+	)
+
+	mg.AddMigration("Add unique index datasource_org_id_uid", NewAddIndexMigration(tableV2, &Index{
+		Cols: []string{"org_id", "uid"}, Type: UniqueIndex,
+	}))
 }

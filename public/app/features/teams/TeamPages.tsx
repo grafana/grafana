@@ -23,9 +23,9 @@ export interface Props {
   teamId: number;
   pageName: string;
   navModel: NavModel;
-  members?: TeamMember[];
-  editorsCanAdmin?: boolean;
-  signedInUser?: User;
+  members: TeamMember[];
+  editorsCanAdmin: boolean;
+  signedInUser: User;
 }
 
 interface State {
@@ -45,7 +45,7 @@ export class TeamPages extends PureComponent<Props, State> {
 
     this.state = {
       isLoading: false,
-      isSyncEnabled: config.buildInfo.isEnterprise,
+      isSyncEnabled: config.licenseInfo.hasLicense,
     };
   }
 
@@ -92,7 +92,7 @@ export class TeamPages extends PureComponent<Props, State> {
     return navModel;
   };
 
-  renderPage(isSignedInUserTeamAdmin: boolean) {
+  renderPage(isSignedInUserTeamAdmin: boolean): React.ReactNode {
     const { isSyncEnabled } = this.state;
     const { members } = this.props;
     const currentPage = this.getCurrentPage();

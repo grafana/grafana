@@ -18,15 +18,22 @@ func init() {
 		Name:        "Email",
 		Description: "Sends notifications using Grafana server configured SMTP settings",
 		Factory:     NewEmailNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">Email addresses</h3>
-      <div class="gf-form">
-         <textarea rows="7" class="gf-form-input width-27" required ng-model="ctrl.model.settings.addresses"></textarea>
-      </div>
-      <div class="gf-form">
-      <span>You can enter multiple email addresses using a ";" separator</span>
-      </div>
-    `,
+		Heading:     "Email settings",
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "Single email",
+				Description:  "Send a single email to all recipients",
+				Element:      alerting.ElementTypeCheckbox,
+				PropertyName: "singleEmail",
+			},
+			{
+				Label:        "Addresses",
+				Description:  "You can enter multiple email addresses using a \";\" separator",
+				Element:      alerting.ElementTypeTextArea,
+				PropertyName: "addresses",
+				Required:     true,
+			},
+		},
 	})
 }
 
@@ -34,14 +41,16 @@ func init() {
 // alert notifications over email.
 type EmailNotifier struct {
 	NotifierBase
-	Addresses []string
-	log       log.Logger
+	Addresses   []string
+	SingleEmail bool
+	log         log.Logger
 }
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
 func NewEmailNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	addressesString := model.Settings.Get("addresses").MustString()
+	singleEmail := model.Settings.Get("singleEmail").MustBool(false)
 
 	if addressesString == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find addresses in settings"}
@@ -53,13 +62,14 @@ func NewEmailNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	return &EmailNotifier{
 		NotifierBase: NewNotifierBase(model),
 		Addresses:    addresses,
+		SingleEmail:  singleEmail,
 		log:          log.New("alerting.notifier.email"),
 	}, nil
 }
 
 // Notify sends the alert notification.
 func (en *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
-	en.log.Info("Sending alert notification to", "addresses", en.Addresses)
+	en.log.Info("Sending alert notification to", "addresses", en.Addresses, "singleEmail", en.SingleEmail)
 
 	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
@@ -88,19 +98,22 @@ func (en *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"AlertPageUrl":  setting.AppUrl + "alerting",
 				"EvalMatches":   evalContext.EvalMatches,
 			},
-			To:           en.Addresses,
-			Template:     "alert_notification.html",
-			EmbededFiles: []string{},
+			To:            en.Addresses,
+			SingleEmail:   en.SingleEmail,
+			Template:      "alert_notification.html",
+			EmbeddedFiles: []string{},
 		},
 	}
 
-	if evalContext.ImagePublicURL != "" {
-		cmd.Data["ImageLink"] = evalContext.ImagePublicURL
-	} else {
-		file, err := os.Stat(evalContext.ImageOnDiskPath)
-		if err == nil {
-			cmd.EmbededFiles = []string{evalContext.ImageOnDiskPath}
-			cmd.Data["EmbeddedImage"] = file.Name()
+	if en.NeedsImage() {
+		if evalContext.ImagePublicURL != "" {
+			cmd.Data["ImageLink"] = evalContext.ImagePublicURL
+		} else {
+			file, err := os.Stat(evalContext.ImageOnDiskPath)
+			if err == nil {
+				cmd.EmbeddedFiles = []string{evalContext.ImageOnDiskPath}
+				cmd.Data["EmbeddedImage"] = file.Name()
+			}
 		}
 	}
 

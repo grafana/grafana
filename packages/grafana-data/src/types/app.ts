@@ -3,6 +3,11 @@ import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
 
+export enum CoreApp {
+  Dashboard = 'dashboard',
+  Explore = 'explore',
+}
+
 export interface AppRootProps<T = KeyValue> {
   meta: AppPluginMeta<T>;
 
@@ -37,6 +42,10 @@ export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
   /**
    * Set the component displayed under:
    *   /a/${plugin-id}/*
+   *
+   * If the NavModel is configured, the page will have a managed frame, otheriwse it has full control.
+   *
+   * NOTE: this structure will change in 7.2+ so that it is managed with a normal react router
    */
   setRootPage(root: ComponentClass<AppRootProps<T>>, rootNav?: NavModel) {
     this.root = root;
@@ -68,4 +77,13 @@ export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
       }
     }
   }
+}
+
+/**
+ * Defines life cycle of a feature
+ * @internal
+ */
+export enum FeatureState {
+  alpha = 'alpha',
+  beta = 'beta',
 }

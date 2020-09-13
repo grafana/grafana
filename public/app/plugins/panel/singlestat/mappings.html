@@ -1,13 +1,17 @@
 <div class="editor-row">
   <div class="gf-form-group">
     <div class="gf-form">
-        <span class="gf-form-label">
-          Type
-        </span>
-        <div class="gf-form-select-wrapper">
-          <select class="gf-form-input" ng-model="ctrl.panel.mappingType"
-                                                        ng-options="f.value as f.name for f in ctrl.panel.mappingTypes" ng-change="ctrl.refresh()"></select>
-        </div>
+      <span class="gf-form-label">
+        Type
+      </span>
+      <div class="gf-form-select-wrapper">
+        <select
+          class="gf-form-input"
+          ng-model="ctrl.panel.mappingType"
+          ng-options="f.value as f.name for f in ctrl.panel.mappingTypes"
+          ng-change="ctrl.refresh()"
+        ></select>
+      </div>
     </div>
   </div>
 </div>
@@ -16,18 +20,30 @@
   <div class="gf-form-group">
     <div class="gf-form" ng-repeat="map in ctrl.panel.valueMaps">
       <span class="gf-form-label">
-        <i class="fa fa-remove pointer" ng-click="ctrl.removeValueMap(map)"></i>
+        <icon name="'times'" ng-click="ctrl.removeValueMap(map)"></icon>
       </span>
-      <input type="text" ng-model="map.value" placeholder="value" class="gf-form-input max-width-6" ng-blur="ctrl.refresh()">
+      <input
+        type="text"
+        ng-model="map.value"
+        placeholder="value"
+        class="gf-form-input max-width-6"
+        ng-blur="ctrl.refresh()"
+      />
       <span class="gf-form-label">
-        <i class="fa fa-arrow-right"></i>
+        <icon name="'arrow-right'"></icon>
       </span>
-      <input type="text" placeholder="text" ng-model="map.text" class="gf-form-input max-width-8" ng-blur="ctrl.refresh()">
+      <input
+        type="text"
+        placeholder="text"
+        ng-model="map.text"
+        class="gf-form-input max-width-8"
+        ng-blur="ctrl.refresh()"
+      />
     </div>
 
     <div class="gf-form-button-row">
       <button class="btn btn-inverse" ng-click="ctrl.addValueMap();">
-        <i class="fa fa-plus"></i>
+        <icon name="'plus'"></icon>
         Add a value mapping
       </button>
     </div>
@@ -37,20 +53,20 @@
   <h5 class="section-heading">Set range mappings</h5>
   <div class="gf-form-group">
     <div class="gf-form" ng-repeat="rangeMap in ctrl.panel.rangeMaps">
-        <span class="gf-form-label">
-          <i class="fa fa-remove pointer" ng-click="ctrl.removeRangeMap(rangeMap)"></i>
-        </span>
-        <span class="gf-form-label">From</span>
-        <input type="text" ng-model="rangeMap.from" class="gf-form-input max-width-6" ng-blur="ctrl.refresh()">
-        <span class="gf-form-label">To</span>
-        <input type="text" ng-model="rangeMap.to" class="gf-form-input max-width-6" ng-blur="ctrl.refresh()">
-        <span class="gf-form-label">Text</span>
-        <input type="text" ng-model="rangeMap.text" class="gf-form-input max-width-8" ng-blur="ctrl.refresh()">
+      <span class="gf-form-label">
+        <icon name="'times'" ng-click="ctrl.removeRangeMap(rangeMap)"></icon>
+      </span>
+      <span class="gf-form-label">From</span>
+      <input type="text" ng-model="rangeMap.from" class="gf-form-input max-width-6" ng-blur="ctrl.refresh()" />
+      <span class="gf-form-label">To</span>
+      <input type="text" ng-model="rangeMap.to" class="gf-form-input max-width-6" ng-blur="ctrl.refresh()" />
+      <span class="gf-form-label">Text</span>
+      <input type="text" ng-model="rangeMap.text" class="gf-form-input max-width-8" ng-blur="ctrl.refresh()" />
     </div>
 
     <div class="gf-form-button-row">
       <button class="btn btn-inverse" ng-click="ctrl.addRangeMap()">
-        <i class="fa fa-plus"></i>
+        <icon name="'plus'"></icon>
         Add a range mapping
       </button>
     </div>

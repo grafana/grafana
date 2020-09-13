@@ -1,12 +1,24 @@
 .dashboard-container {
-  padding: $dashboard-padding $dashboard-padding 0 $dashboard-padding;
+  position: absolute;
+  top: 0;
+  bottom: 0;
   width: 100%;
   height: 100%;
-  box-sizing: border-box;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
 }
 
-.template-variable {
-  color: $variable;
+.dashboard-scroll {
+  width: 100%;
+  flex-grow: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.dashboard-content {
+  padding: $dashboard-padding $dashboard-padding 0 $dashboard-padding;
+  height: 100%;
 }
 
 div.flot-text {
@@ -22,6 +34,10 @@ div.flot-text {
   .sidemenu {
     display: none;
   }
+}
+
+.template-variable {
+  color: $variable;
 }
 
 .panel-solo {
@@ -54,10 +70,13 @@ div.flot-text {
   border-radius: 3px;
   height: 100%;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
 
   &--transparent {
-    background-color: $page-bg;
-    border: none;
+    background-color: transparent;
+    border: 1px solid transparent;
   }
 
   &:hover {
@@ -79,25 +98,16 @@ div.flot-text {
 
 .panel-content {
   padding: $panel-padding;
-  height: calc(100% - #{$panel-header-height});
   width: 100%;
-  position: relative;
-  overflow: auto;
+  flex-grow: 1;
+  height: calc(100% - #{$panel-header-height});
 
   &--no-padding {
     padding: 0;
   }
 }
-
-// For larger screens, set back to hidden to avoid double scroll bars
-@include media-breakpoint-up(md) {
-  .panel-content {
-    overflow: hidden;
-  }
-}
-
 .dashboard-header {
-  font-size: $font-size-h3;
+  font-size: $font-size-h2;
   text-align: center;
   overflow: hidden;
   position: relative;

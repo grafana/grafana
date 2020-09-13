@@ -6,9 +6,9 @@ import { LoadingChunkPlaceHolder } from './LoadingChunkPlaceHolder';
 describe('loadComponentHandler', () => {
   describe('when there is no error and pastDelay is false', () => {
     it('then it should return null', () => {
-      const error: Error = null;
+      const error: Error | null = null;
       const pastDelay = false;
-      const element = loadComponentHandler({ error, pastDelay });
+      const element = loadComponentHandler({ error: (error as unknown) as Error, pastDelay });
 
       expect(element).toBe(null);
     });
@@ -26,9 +26,9 @@ describe('loadComponentHandler', () => {
 
   describe('when loading is taking more then default delay of 200ms', () => {
     it('then it should return LoadingChunkPlaceHolder', () => {
-      const error: Error = null;
+      const error: Error | null = null;
       const pastDelay = true;
-      const element = loadComponentHandler({ error, pastDelay });
+      const element = loadComponentHandler({ error: (error as unknown) as Error, pastDelay });
 
       expect(element).toEqual(<LoadingChunkPlaceHolder />);
     });

@@ -1,3 +1,5 @@
+// +build integration
+
 package mysql
 
 import (
@@ -8,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"xorm.io/xorm"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -26,7 +28,7 @@ import (
 // Use the docker/blocks/mysql_tests/docker-compose.yaml to spin up a
 // preconfigured MySQL server suitable for running these tests.
 // There is also a datasource and dashboard provisioned by devenv scripts that you can
-// use to verify that the generated data are vizualized as expected, see
+// use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
 func TestMySQL(t *testing.T) {
 	// change to true to run the MySQL tests
@@ -303,7 +305,6 @@ func TestMySQL(t *testing.T) {
 
 				// check for NULL values inserted by fill
 				So(points[6][0].Valid, ShouldBeFalse)
-
 			})
 
 			Convey("When doing a metric query using timeGroup and $__interval", func() {
@@ -336,7 +337,7 @@ func TestMySQL(t *testing.T) {
 					So(err, ShouldBeNil)
 					queryResult := resp.Results["A"]
 					So(queryResult.Error, ShouldBeNil)
-					So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT UNIX_TIMESTAMP(time) DIV 60 * 60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1")
+					So(queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString(), ShouldEqual, "SELECT UNIX_TIMESTAMP(time) DIV 60 * 60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1")
 				})
 			})
 
@@ -393,7 +394,6 @@ func TestMySQL(t *testing.T) {
 				So(points[3][0].Float64, ShouldEqual, 15.0)
 				So(points[6][0].Float64, ShouldEqual, 20.0)
 			})
-
 		})
 
 		Convey("Given a table with metrics having multiple values and measurements", func() {
@@ -778,8 +778,7 @@ func TestMySQL(t *testing.T) {
 			So(err, ShouldBeNil)
 			queryResult := resp.Results["A"]
 			So(queryResult.Error, ShouldBeNil)
-			So(queryResult.Meta.Get("sql").MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > FROM_UNIXTIME(1521118500) OR time < FROM_UNIXTIME(1521118800) OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
-
+			So(queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > FROM_UNIXTIME(1521118500) OR time < FROM_UNIXTIME(1521118800) OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
 		})
 
 		Convey("Given a table with event data", func() {
@@ -1043,7 +1042,9 @@ func TestMySQL(t *testing.T) {
 }
 
 func InitMySQLTestDB(t *testing.T) *xorm.Engine {
-	x, err := xorm.NewEngine(sqlutil.TestDB_Mysql.DriverName, strings.Replace(sqlutil.TestDB_Mysql.ConnStr, "/grafana_tests", "/grafana_ds_tests", 1))
+	testDB := sqlutil.MySQLTestDB()
+	x, err := xorm.NewEngine(testDB.DriverName, strings.Replace(testDB.ConnStr, "/grafana_tests",
+		"/grafana_ds_tests", 1))
 	if err != nil {
 		t.Fatalf("Failed to init mysql db %v", err)
 	}

@@ -49,7 +49,7 @@ exports[`Render should render invitees 1`] = `
     </tr>
   </thead>
   <tbody>
-    <Component
+    <Connect(InviteeRow)
       invitee={
         Object {
           "code": "asdfasdfsadf-0",
@@ -70,7 +70,7 @@ exports[`Render should render invitees 1`] = `
       }
       key="0-0"
     />
-    <Component
+    <Connect(InviteeRow)
       invitee={
         Object {
           "code": "asdfasdfsadf-1",
@@ -91,7 +91,7 @@ exports[`Render should render invitees 1`] = `
       }
       key="1-1"
     />
-    <Component
+    <Connect(InviteeRow)
       invitee={
         Object {
           "code": "asdfasdfsadf-2",
@@ -112,7 +112,7 @@ exports[`Render should render invitees 1`] = `
       }
       key="2-2"
     />
-    <Component
+    <Connect(InviteeRow)
       invitee={
         Object {
           "code": "asdfasdfsadf-3",
@@ -133,7 +133,7 @@ exports[`Render should render invitees 1`] = `
       }
       key="3-3"
     />
-    <Component
+    <Connect(InviteeRow)
       invitee={
         Object {
           "code": "asdfasdfsadf-4",
@@ -154,7 +154,7 @@ exports[`Render should render invitees 1`] = `
       }
       key="4-4"
     />
-    <Component
+    <Connect(InviteeRow)
       invitee={
         Object {
           "code": "asdfasdfsadf-5",

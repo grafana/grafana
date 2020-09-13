@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from '../../state/DashboardModel';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 
 export interface HistoryListOpts {
   limit: number;
@@ -32,23 +32,20 @@ export interface DiffTarget {
 }
 
 export class HistorySrv {
-  /** @ngInject */
-  constructor(private backendSrv: BackendSrv) {}
-
   getHistoryList(dashboard: DashboardModel, options: HistoryListOpts) {
     const id = dashboard && dashboard.id ? dashboard.id : void 0;
-    return id ? this.backendSrv.get(`api/dashboards/id/${id}/versions`, options) : Promise.resolve([]);
+    return id ? getBackendSrv().get(`api/dashboards/id/${id}/versions`, options) : Promise.resolve([]);
   }
 
   calculateDiff(options: CalculateDiffOptions) {
-    return this.backendSrv.post('api/dashboards/calculate-diff', options);
+    return getBackendSrv().post('api/dashboards/calculate-diff', options);
   }
 
   restoreDashboard(dashboard: DashboardModel, version: number) {
     const id = dashboard && dashboard.id ? dashboard.id : void 0;
     const url = `api/dashboards/id/${id}/restore`;
 
-    return id && _.isNumber(version) ? this.backendSrv.post(url, { version }) : Promise.resolve({});
+    return id && _.isNumber(version) ? getBackendSrv().post(url, { version }) : Promise.resolve({});
   }
 }
 

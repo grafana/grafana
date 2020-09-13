@@ -79,7 +79,7 @@ export class ElasticBucketAggCtrl {
         case 'terms': {
           settings.order = settings.order || 'desc';
           settings.size = settings.size || '10';
-          settings.min_doc_count = settings.min_doc_count || 1;
+          settings.min_doc_count = settings.min_doc_count || 0;
           settings.orderBy = settings.orderBy || '_term';
 
           if (settings.size !== '0') {

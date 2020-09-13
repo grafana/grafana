@@ -1,3 +1,4 @@
+import { defaultsDeep } from 'lodash';
 import { PanelPluginMeta, PluginMeta, PluginType, PanelPlugin, PanelProps } from '@grafana/data';
 import { ComponentType } from 'enzyme';
 
@@ -34,17 +35,17 @@ export const getMockPlugins = (amount: number): PluginMeta[] => {
   return plugins as any;
 };
 
-export const getPanelPlugin = (
+export function getPanelPlugin(
   options: Partial<PanelPluginMeta>,
   reactPanel?: ComponentType<PanelProps>,
   angularPanel?: any
-): PanelPlugin => {
-  const plugin = new PanelPlugin(reactPanel);
+): PanelPlugin {
+  const plugin = new PanelPlugin(reactPanel!);
   plugin.angularPanelCtrl = angularPanel;
   plugin.meta = {
-    id: options.id,
+    id: options.id!,
     type: PluginType.panel,
-    name: options.id,
+    name: options.id!,
     sort: options.sort || 1,
     info: {
       author: {
@@ -65,10 +66,10 @@ export const getPanelPlugin = (
     baseUrl: '',
   };
   return plugin;
-};
+}
 
-export const getMockPlugin = () => {
-  return {
+export function getMockPlugin(overrides?: Partial<PluginMeta>): PluginMeta {
+  const defaults: PluginMeta = {
     defaultNavUrl: 'some/url',
     enabled: false,
     hasUpdate: false,
@@ -81,7 +82,7 @@ export const getMockPlugin = () => {
       description: 'pretty decent plugin',
       links: [{ name: 'project', url: 'one link' }],
       logos: { small: 'small/logo', large: 'large/logo' },
-      screenshots: [{ path: `screenshot` }],
+      screenshots: [{ path: `screenshot`, name: 'test' }],
       updated: '2018-09-26',
       version: '1',
     },
@@ -91,5 +92,7 @@ export const getMockPlugin = () => {
     pinned: false,
     type: PluginType.panel,
     module: 'path/to/module',
-  } as PluginMeta;
-};
+  };
+
+  return defaultsDeep(overrides || {}, defaults) as PluginMeta;
+}

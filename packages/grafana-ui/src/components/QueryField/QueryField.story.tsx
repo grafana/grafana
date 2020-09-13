@@ -1,12 +1,13 @@
 import React from 'react';
-import { storiesOf } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { QueryField } from './QueryField';
+import { QueryField } from '@grafana/ui';
 
-const QueryFieldStories = storiesOf('UI/QueryField', module);
+export default {
+  title: 'Data Source/QueryField',
+  component: QueryField,
+  decorators: [withCenteredStory],
+};
 
-QueryFieldStories.addDecorator(withCenteredStory);
-
-QueryFieldStories.add('default', () => {
+export const basic = () => {
   return <QueryField portalOrigin="mock-origin" query="" />;
-});
+};

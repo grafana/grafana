@@ -20,8 +20,6 @@ Upgrading Go or Node.js requires making changes in many different files. See bel
 
 The Grafana project uses [Go modules](https://golang.org/cmd/go/#hdr-Modules__module_versions__and_more) to manage dependencies on external packages. This requires a working Go environment with version 1.11 or greater installed.
 
-All dependencies are vendored in the `vendor/` directory.
-
 _Note:_ Since most developers of Grafana still use the `GOPATH` we need to specify `GO111MODULE=on` to make `go mod` and `got get` work as intended. If you have setup Grafana outside of the `GOPATH` on your machine you can skip `GO111MODULE=on` when running the commands below.
 
 To add or update a new dependency, use the `go get` command:
@@ -35,16 +33,14 @@ GO111MODULE=on go get example.com/some/module/pkg
 GO111MODULE=on go get example.com/some/module/pkg@vX.Y.Z
 ```
 
-Tidy up the `go.mod` and `go.sum` files and copy the new/updated dependency to the `vendor/` directory:
+Tidy up the `go.mod` and `go.sum` files:
 
 ```bash
 # The GO111MODULE variable can be omitted when the code isn't located in GOPATH.
 GO111MODULE=on go mod tidy
-
-GO111MODULE=on go mod vendor
 ```
 
-You have to commit the changes to `go.mod`, `go.sum` and the `vendor/` directory before submitting the pull request.
+You have to commit the changes to `go.mod` and `go.sum` before submitting the pull request.
 
 ## Node.js dependencies
 

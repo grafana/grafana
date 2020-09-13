@@ -1,4 +1,13 @@
-import { GraphSeriesValue, Field, formattedValueToString } from '@grafana/data';
+import {
+  GraphSeriesValue,
+  Field,
+  formattedValueToString,
+  getDisplayProcessor,
+  getFieldDisplayName,
+  TimeZone,
+  dateTimeFormat,
+  systemDateFormats,
+} from '@grafana/data';
 
 /**
  * Returns index of the closest datapoint BEFORE hover position
@@ -48,19 +57,20 @@ export const getMultiSeriesGraphHoverInfo = (
   yAxisDimensions: Field[],
   xAxisDimensions: Field[],
   /** Well, time basically */
-  xAxisPosition: number
+  xAxisPosition: number,
+  timeZone?: TimeZone
 ): {
   results: MultiSeriesHoverInfo[];
   time?: GraphSeriesValue;
 } => {
-  let value, i, series, hoverIndex, hoverDistance, pointTime;
+  let i, field, hoverIndex, hoverDistance, pointTime;
 
   const results: MultiSeriesHoverInfo[] = [];
 
   let minDistance, minTime;
 
   for (i = 0; i < yAxisDimensions.length; i++) {
-    series = yAxisDimensions[i];
+    field = yAxisDimensions[i];
     const time = xAxisDimensions[i];
     hoverIndex = findHoverIndexFromData(time, xAxisPosition);
     hoverDistance = xAxisPosition - time.values.get(hoverIndex);
@@ -75,14 +85,15 @@ export const getMultiSeriesGraphHoverInfo = (
       minTime = time.display ? formattedValueToString(time.display(pointTime)) : pointTime;
     }
 
-    value = series.values.get(hoverIndex);
+    const display = field.display ?? getDisplayProcessor({ field, timeZone });
+    const disp = display(field.values.get(hoverIndex));
 
     results.push({
-      value: series.display ? formattedValueToString(series.display(value)) : value,
+      value: formattedValueToString(disp),
       datapointIndex: hoverIndex,
       seriesIndex: i,
-      color: series.config.color,
-      label: series.name,
+      color: disp.color,
+      label: getFieldDisplayName(field),
       time: time.display ? formattedValueToString(time.display(pointTime)) : pointTime,
     });
   }
@@ -91,4 +102,41 @@ export const getMultiSeriesGraphHoverInfo = (
     results,
     time: minTime,
   };
+};
+
+export const graphTickFormatter = (epoch: number, axis: any) => {
+  return dateTimeFormat(epoch, {
+    format: axis?.options?.timeformat,
+    timeZone: axis?.options?.timezone,
+  });
+};
+
+export const graphTimeFormat = (ticks: number | null, min: number | null, max: number | null): string => {
+  if (min && max && ticks) {
+    const range = max - min;
+    const secPerTick = range / ticks / 1000;
+    // Need have 10 millisecond margin on the day range
+    // As sometimes last 24 hour dashboard evaluates to more than 86400000
+    const oneDay = 86400010;
+    const oneYear = 31536000000;
+
+    if (secPerTick <= 45) {
+      return systemDateFormats.interval.second;
+    }
+    if (secPerTick <= 7200 || range <= oneDay) {
+      return systemDateFormats.interval.minute;
+    }
+    if (secPerTick <= 80000) {
+      return systemDateFormats.interval.hour;
+    }
+    if (secPerTick <= 2419200 || range <= oneYear) {
+      return systemDateFormats.interval.day;
+    }
+    if (secPerTick <= 31536000) {
+      return systemDateFormats.interval.month;
+    }
+    return systemDateFormats.interval.year;
+  }
+
+  return systemDateFormats.interval.minute;
 };

@@ -49,6 +49,7 @@ describe('Language completion provider', () => {
       expect(cleanText('foo < bar')).toBe('bar');
       expect(cleanText('foo >= bar')).toBe('bar');
       expect(cleanText('foo <= bar')).toBe('bar');
+      expect(cleanText('memory')).toBe('memory');
     });
 
     it('removes aggregation syntax', () => {
@@ -123,6 +124,7 @@ describe('Language completion provider', () => {
         {
           items: [
             { label: '$__interval', sortText: '$__interval' }, // TODO: figure out why this row and sortText is needed
+            { label: '$__rate_interval', sortText: '$__rate_interval' },
             { label: '1m', sortText: '00:01:00' },
             { label: '5m', sortText: '00:05:00' },
             { label: '10m', sortText: '00:10:00' },
@@ -300,7 +302,7 @@ describe('Language completion provider', () => {
       instance.lookupsDisabled = false;
       const value = Plain.deserialize('{job!=}');
       const ed = new SlateEditor({ value });
-      const valueWithSelection = ed.moveForward(8).value;
+      const valueWithSelection = ed.moveForward(6).value;
       const result = await instance.provideCompletionItems({
         text: '!=',
         prefix: '',

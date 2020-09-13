@@ -1,13 +1,13 @@
 package authproxy
 
 import (
-	"encoding/base32"
 	"errors"
 	"fmt"
 	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
@@ -67,8 +67,10 @@ func prepareMiddleware(t *testing.T, req *http.Request, store *remotecache.Remot
 }
 
 func TestMiddlewareContext(t *testing.T) {
+	logger := log.New("test")
 	Convey("auth_proxy helper", t, func() {
-		req, _ := http.NewRequest("POST", "http://example.com", nil)
+		req, err := http.NewRequest("POST", "http://example.com", nil)
+		So(err, ShouldBeNil)
 		setting.AuthProxyHeaderName = "X-Killa"
 		store := remotecache.NewFakeStore(t)
 
@@ -76,19 +78,19 @@ func TestMiddlewareContext(t *testing.T) {
 		req.Header.Add(setting.AuthProxyHeaderName, name)
 
 		Convey("when the cache only contains the main header", func() {
-
 			Convey("with a simple cache key", func() {
 				// Set cache key
-				key := fmt.Sprintf(CachePrefix, base32.StdEncoding.EncodeToString([]byte(name)))
+				key := fmt.Sprintf(CachePrefix, HashCacheKey(name))
 				err := store.Set(key, int64(33), 0)
 				So(err, ShouldBeNil)
 
 				// Set up the middleware
 				auth := prepareMiddleware(t, req, store)
-				id, err := auth.Login()
+				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:0a7f3374e9659b10980fd66247b0cf2f")
+
+				id, err := auth.Login(logger, false)
 				So(err, ShouldBeNil)
 
-				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:NVQXE23FNRXWO===")
 				So(id, ShouldEqual, 33)
 			})
 
@@ -97,19 +99,16 @@ func TestMiddlewareContext(t *testing.T) {
 				group := "grafana-core-team"
 				req.Header.Add("X-WEBAUTH-GROUPS", group)
 
-				key := fmt.Sprintf(CachePrefix, base32.StdEncoding.EncodeToString([]byte(name+"-"+group)))
+				key := fmt.Sprintf(CachePrefix, HashCacheKey(name+"-"+group))
 				err := store.Set(key, int64(33), 0)
 				So(err, ShouldBeNil)
 
 				auth := prepareMiddleware(t, req, store)
+				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:14f69b7023baa0ac98c96b31cec07bc0")
 
-				id, err := auth.Login()
+				id, err := auth.Login(logger, false)
 				So(err, ShouldBeNil)
-				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:NVQXE23FNRXWOLLHOJQWMYLOMEWWG33SMUWXIZLBNU======")
 				So(id, ShouldEqual, 33)
-			})
-
-			Convey("when the does not exist", func() {
 			})
 		})
 
@@ -156,7 +155,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 				auth := prepareMiddleware(t, req, store)
 
-				id, err := auth.Login()
+				id, err := auth.Login(logger, false)
 
 				So(err, ShouldBeNil)
 				So(id, ShouldEqual, 42)
@@ -190,10 +189,10 @@ func TestMiddlewareContext(t *testing.T) {
 					return stub
 				}
 
-				id, err := auth.Login()
+				id, err := auth.Login(logger, false)
 
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldContainSubstring, "Failed to get the user")
+				So(err.Error(), ShouldContainSubstring, "failed to get the user")
 				So(id, ShouldNotEqual, 42)
 				So(stub.loginCalled, ShouldEqual, false)
 			})

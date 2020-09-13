@@ -1,11 +1,17 @@
 import React from 'react';
-import { RenderFunction } from '@storybook/react';
 import { boolean, number } from '@storybook/addon-knobs';
 import { css, cx } from 'emotion';
+import { RenderFunction } from '../../types';
 
-const StoryContainer: React.FC<{ width?: number; showBoundaries: boolean }> = ({ children, width, showBoundaries }) => {
+const StoryContainer: React.FC<{ width?: number; height?: number; showBoundaries: boolean }> = ({
+  children,
+  width,
+  height,
+  showBoundaries,
+}) => {
   const checkColor = '#f0f0f0';
   const finalWidth = width ? `${width}px` : '100%';
+  const finalHeight = height !== 0 ? `${height}px` : 'auto';
   const bgStyles =
     showBoundaries &&
     css`
@@ -27,6 +33,7 @@ const StoryContainer: React.FC<{ width?: number; showBoundaries: boolean }> = ({
       className={cx(
         css`
           width: ${finalWidth};
+          height: ${finalHeight};
         `,
         bgStyles
       )}
@@ -40,7 +47,7 @@ export const withStoryContainer = (story: RenderFunction) => {
   const CONTAINER_GROUP = 'Container options';
   // ---
   const containerBoundary = boolean('Show container boundary', false, CONTAINER_GROUP);
-  const fullWidthContainter = boolean('Full width container', false, CONTAINER_GROUP);
+  const fullWidthContainer = boolean('Full width container', false, CONTAINER_GROUP);
   const containerWidth = number(
     'Container width',
     300,
@@ -52,8 +59,23 @@ export const withStoryContainer = (story: RenderFunction) => {
     },
     CONTAINER_GROUP
   );
+  const containerHeight = number(
+    'Container height',
+    0,
+    {
+      range: true,
+      min: 100,
+      max: 500,
+      step: 10,
+    },
+    CONTAINER_GROUP
+  );
   return (
-    <StoryContainer width={fullWidthContainter ? undefined : containerWidth} showBoundaries={containerBoundary}>
+    <StoryContainer
+      width={fullWidthContainer ? undefined : containerWidth}
+      height={containerHeight}
+      showBoundaries={containerBoundary}
+    >
       {story()}
     </StoryContainer>
   );

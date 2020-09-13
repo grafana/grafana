@@ -13,7 +13,7 @@ import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { AnnotationEvent } from '@grafana/data';
 
 export class EventManager {
-  event: AnnotationEvent;
+  event: AnnotationEvent | null;
   editorOpen: boolean;
 
   constructor(private panelCtrl: MetricsPanelCtrl) {}

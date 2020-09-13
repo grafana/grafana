@@ -21,7 +21,7 @@ describe('hex', () => {
 });
 
 describe('hex 0x', () => {
-  it('positive integeter', () => {
+  it('positive integer', () => {
     const str = toHex0x(7999, 0);
     expect(formattedValueToString(str)).toBe('0x1F3F');
   });

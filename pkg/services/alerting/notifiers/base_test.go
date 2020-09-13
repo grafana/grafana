@@ -104,7 +104,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			expect: false,
 		},
 		{
-			name:         "alerting -> alerting with reminder and last notifciation sent 11 minutes ago should trigger",
+			name:         "alerting -> alerting with reminder and last notification sent 11 minutes ago should trigger",
 			newState:     models.AlertStateAlerting,
 			prevState:    models.AlertStateAlerting,
 			frequency:    time.Minute * 10,
@@ -114,7 +114,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			expect: true,
 		},
 		{
-			name:      "OK -> alerting with notifciation state pending and updated 30 seconds ago should not trigger",
+			name:      "OK -> alerting with notification state pending and updated 30 seconds ago should not trigger",
 			newState:  models.AlertStateAlerting,
 			prevState: models.AlertStateOK,
 			state:     &models.AlertNotificationState{State: models.AlertNotificationStatePending, UpdatedAt: tnow.Add(-30 * time.Second).Unix()},
@@ -122,7 +122,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			expect: false,
 		},
 		{
-			name:      "OK -> alerting with notifciation state pending and updated 2 minutes ago should trigger",
+			name:      "OK -> alerting with notification state pending and updated 2 minutes ago should trigger",
 			newState:  models.AlertStateAlerting,
 			prevState: models.AlertStateOK,
 			state:     &models.AlertNotificationState{State: models.AlertNotificationStatePending, UpdatedAt: tnow.Add(-2 * time.Minute).Unix()},

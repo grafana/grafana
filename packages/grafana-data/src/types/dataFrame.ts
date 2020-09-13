@@ -1,16 +1,19 @@
-import { Threshold } from './threshold';
+import { ThresholdsConfig } from './thresholds';
 import { ValueMapping } from './valueMapping';
 import { QueryResultBase, Labels, NullValueMode } from './data';
-import { DisplayProcessor } from './displayValue';
-import { DataLink } from './dataLink';
+import { DisplayProcessor, DisplayValue } from './displayValue';
+import { DataLink, LinkModel } from './dataLink';
 import { Vector } from './vector';
-import { FieldCalcs } from '../transformations/fieldReducer';
+import { FieldColor } from './fieldColor';
+import { ScopedVars } from './ScopedVars';
 
 export enum FieldType {
   time = 'time', // or date
   number = 'number',
   string = 'string',
   boolean = 'boolean',
+  // Used to detect that the value is some kind of trace data to help with the visualisation and processing.
+  trace = 'trace',
   other = 'other', // Object, Array, etc
 }
 
@@ -19,8 +22,21 @@ export enum FieldType {
  *
  * Plugins may extend this with additional properties. Something like series overrides
  */
-export interface FieldConfig {
-  title?: string; // The display value for this field.  This supports template variables blank is auto
+export interface FieldConfig<TOptions extends object = any> {
+  /**
+   * The display value for this field.  This supports template variables blank is auto
+   */
+  displayName?: string;
+
+  /**
+   * This can be used by data sources that return and explicit naming structure for values and labels
+   * When this property is configured, this value is used rather than the default naming strategy.
+   */
+  displayNameFromDS?: string;
+
+  /**
+   * True if data source field supports ad-hoc filters
+   */
   filterable?: boolean;
 
   // Numeric Options
@@ -32,8 +48,11 @@ export interface FieldConfig {
   // Convert input values into a display string
   mappings?: ValueMapping[];
 
-  // Must be sorted by 'value', first value is always -Infinity
-  thresholds?: Threshold[];
+  // Map numeric values to states
+  thresholds?: ThresholdsConfig;
+
+  // Map values to a display color
+  color?: FieldColor;
 
   // Used when reducing field values
   nullValueMode?: NullValueMode;
@@ -44,9 +63,19 @@ export interface FieldConfig {
   // Alternative to empty string
   noValue?: string;
 
-  color?: string;
+  // Panel Specific Values
+  custom?: TOptions;
+}
 
-  custom?: Record<string, any>;
+export interface ValueLinkConfig {
+  /**
+   * Result of field reduction
+   */
+  calculatedValue?: DisplayValue;
+  /**
+   * Index of the value row within Field. Should be provided only when value is not a result of a reduction
+   */
+  valueRowIndex?: number;
 }
 
 export interface Field<T = any, V = Vector<T>> {
@@ -66,9 +95,9 @@ export interface Field<T = any, V = Vector<T>> {
   labels?: Labels;
 
   /**
-   * Cache of reduced values
+   * Cached values with appropriate display and id values
    */
-  calcs?: FieldCalcs;
+  state?: FieldState | null;
 
   /**
    * Convert text to the field value
@@ -79,6 +108,28 @@ export interface Field<T = any, V = Vector<T>> {
    * Convert a value for display
    */
   display?: DisplayProcessor;
+
+  /**
+   * Get value data links with variables interpolated
+   */
+  getLinks?: (config: ValueLinkConfig) => Array<LinkModel<Field>>;
+}
+
+export interface FieldState {
+  /**
+   * An appropriate name for the field (does not include frame info)
+   */
+  displayName?: string | null;
+
+  /**
+   * Cache of reduced values
+   */
+  calcs?: FieldCalcs;
+
+  /**
+   * Appropriate values for templating
+   */
+  scopedVars?: ScopedVars;
 }
 
 export interface DataFrame extends QueryResultBase {
@@ -107,3 +158,9 @@ export interface DataFrameDTO extends QueryResultBase {
   name?: string;
   fields: Array<FieldDTO | Field>;
 }
+
+export interface FieldCalcs extends Record<string, any> {}
+
+export const TIME_SERIES_VALUE_FIELD_NAME = 'Value';
+export const TIME_SERIES_TIME_FIELD_NAME = 'Time';
+export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';

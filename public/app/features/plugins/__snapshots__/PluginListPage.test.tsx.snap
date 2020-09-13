@@ -17,16 +17,15 @@ exports[`Render should render component 1`] = `
     isLoading={true}
   >
     <OrgActionBar
-      layoutMode="grid"
       linkButton={
         Object {
           "href": "https://grafana.com/plugins?utm_source=grafana_plugin_list",
           "title": "Find more plugins on Grafana.com",
         }
       }
-      onSetLayoutMode={[Function]}
       searchQuery=""
       setSearchQuery={[Function]}
+      target="_blank"
     />
   </PageContents>
 </Page>
@@ -49,19 +48,17 @@ exports[`Render should render list 1`] = `
     isLoading={false}
   >
     <OrgActionBar
-      layoutMode="grid"
       linkButton={
         Object {
           "href": "https://grafana.com/plugins?utm_source=grafana_plugin_list",
           "title": "Find more plugins on Grafana.com",
         }
       }
-      onSetLayoutMode={[Function]}
       searchQuery=""
       setSearchQuery={[Function]}
+      target="_blank"
     />
     <PluginList
-      layoutMode="grid"
       plugins={Array []}
     />
   </PageContents>

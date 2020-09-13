@@ -10,7 +10,7 @@ import { ThemeContext } from '../../themes/ThemeContext';
 import { css } from 'emotion';
 import { selectThemeVariant } from '../../themes/index';
 
-interface GraphLegendProps extends LegendProps {
+export interface GraphLegendProps extends LegendProps {
   displayMode: LegendDisplayMode;
   sortBy?: string;
   sortDesc?: boolean;
@@ -63,8 +63,8 @@ export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
 
     const legendTableEvenRowBackground = selectThemeVariant(
       {
-        dark: theme.colors.dark6,
-        light: theme.colors.gray5,
+        dark: theme.palette.dark6,
+        light: theme.palette.gray5,
       },
       theme.type
     );

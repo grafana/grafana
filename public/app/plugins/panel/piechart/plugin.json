@@ -1,12 +1,12 @@
 {
   "type": "panel",
-  "name": "PieChart v2",
+  "name": "Pie chart v2",
   "id": "piechart",
   "state": "alpha",
 
   "info": {
     "author": {
-      "name": "Grafana Project",
+      "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {

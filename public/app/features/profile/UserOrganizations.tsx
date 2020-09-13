@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
-import { User } from 'app/types';
-import { UserOrg } from 'app/core/utils/UserProvider';
+import { User, UserOrg } from 'app/types';
 import { LoadingPlaceholder, Button } from '@grafana/ui';
 
 export interface Props {
@@ -48,7 +47,7 @@ export class UserOrganizations extends PureComponent<Props> {
                             <span className="btn btn-primary btn-small">Current</span>
                           ) : (
                             <Button
-                              variant="inverse"
+                              variant="secondary"
                               size="sm"
                               onClick={() => {
                                 this.props.setUserOrg(org);

@@ -19,7 +19,7 @@ export class NavModelSrv {
     let children = this.navItems;
     const nav = {
       breadcrumbs: [],
-    } as NavModel;
+    } as any;
 
     for (const id of args) {
       // if its a number then it's the index to use for main
@@ -53,6 +53,11 @@ export class NavModelSrv {
   }
 }
 
+export function getExceptionNav(error: any): NavModel {
+  console.error(error);
+  return getWarningNav('Exception thrown', 'See console for details');
+}
+
 export function getNotFoundNav(): NavModel {
   return getWarningNav('Page not found', '404 Error');
 }
@@ -61,7 +66,7 @@ export function getWarningNav(text: string, subTitle?: string): NavModel {
   const node = {
     text,
     subTitle,
-    icon: 'fa fa-fw fa-warning',
+    icon: 'exclamation-triangle',
   };
   return {
     breadcrumbs: [node],

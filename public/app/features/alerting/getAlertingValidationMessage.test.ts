@@ -22,6 +22,7 @@ describe('getAlertingValidationMessage', () => {
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
         get: getMock,
+        getDataSourceSettingsByUid(): any {},
       };
       const targets: ElasticsearchQuery[] = [
         { refId: 'A', query: '@hostname:$hostname', isLogsQuery: false },
@@ -58,6 +59,7 @@ describe('getAlertingValidationMessage', () => {
 
           return Promise.resolve(alertingDatasource);
         },
+        getDataSourceSettingsByUid(): any {},
       };
       const targets: any[] = [
         { refId: 'A', query: 'some query', datasource: 'alertingDatasource' },
@@ -81,6 +83,7 @@ describe('getAlertingValidationMessage', () => {
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
         get: getMock,
+        getDataSourceSettingsByUid(): any {},
       };
       const targets: ElasticsearchQuery[] = [
         { refId: 'A', query: '@hostname:$hostname', isLogsQuery: false },
@@ -106,6 +109,7 @@ describe('getAlertingValidationMessage', () => {
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
         get: getMock,
+        getDataSourceSettingsByUid(): any {},
       };
       const targets: ElasticsearchQuery[] = [
         { refId: 'A', query: '@hostname:hostname', isLogsQuery: false },
@@ -131,6 +135,7 @@ describe('getAlertingValidationMessage', () => {
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
         get: getMock,
+        getDataSourceSettingsByUid(): any {},
       };
       const targets: ElasticsearchQuery[] = [
         { refId: 'A', query: '@hostname:hostname', isLogsQuery: false },

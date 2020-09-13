@@ -7,9 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"gopkg.in/yaml.v2"
 )
 
@@ -46,10 +48,11 @@ func (cr *configReader) readConfig(path string) ([]*notificationsAsConfig, error
 		return nil, err
 	}
 
-	checkOrgIdAndOrgName(notifications)
+	if err := checkOrgIDAndOrgName(notifications); err != nil {
+		return nil, err
+	}
 
-	err = validateNotifications(notifications)
-	if err != nil {
+	if err := validateNotifications(notifications); err != nil {
 		return nil, err
 	}
 
@@ -72,28 +75,33 @@ func (cr *configReader) parseNotificationConfig(path string, file os.FileInfo) (
 	return cfg.mapToNotificationFromConfig(), nil
 }
 
-func checkOrgIdAndOrgName(notifications []*notificationsAsConfig) {
+func checkOrgIDAndOrgName(notifications []*notificationsAsConfig) error {
 	for i := range notifications {
 		for _, notification := range notifications[i].Notifications {
-			if notification.OrgId < 1 {
+			if notification.OrgID < 1 {
 				if notification.OrgName == "" {
-					notification.OrgId = 1
+					notification.OrgID = 1
 				} else {
-					notification.OrgId = 0
+					notification.OrgID = 0
+				}
+			} else {
+				if err := utils.CheckOrgExists(notification.OrgID); err != nil {
+					return fmt.Errorf("failed to provision %q notification: %w", notification.Name, err)
 				}
 			}
 		}
 
 		for _, notification := range notifications[i].DeleteNotifications {
-			if notification.OrgId < 1 {
+			if notification.OrgID < 1 {
 				if notification.OrgName == "" {
-					notification.OrgId = 1
+					notification.OrgID = 1
 				} else {
-					notification.OrgId = 0
+					notification.OrgID = 0
 				}
 			}
 		}
 	}
+	return nil
 }
 
 func validateRequiredField(notifications []*notificationsAsConfig) error {
@@ -107,7 +115,7 @@ func validateRequiredField(notifications []*notificationsAsConfig) error {
 				)
 			}
 
-			if notification.Uid == "" {
+			if notification.UID == "" {
 				errStrings = append(
 					errStrings,
 					fmt.Sprintf("Added alert notification item %d in configuration doesn't contain required field uid", index+1),
@@ -123,7 +131,7 @@ func validateRequiredField(notifications []*notificationsAsConfig) error {
 				)
 			}
 
-			if notification.Uid == "" {
+			if notification.UID == "" {
 				errStrings = append(
 					errStrings,
 					fmt.Sprintf("Deleted alert notification item %d in configuration doesn't contain required field uid", index+1),
@@ -140,17 +148,17 @@ func validateRequiredField(notifications []*notificationsAsConfig) error {
 }
 
 func validateNotifications(notifications []*notificationsAsConfig) error {
-
 	for i := range notifications {
 		if notifications[i].Notifications == nil {
 			continue
 		}
 
 		for _, notification := range notifications[i].Notifications {
-			_, err := alerting.InitNotifier(&m.AlertNotification{
-				Name:     notification.Name,
-				Settings: notification.SettingsToJson(),
-				Type:     notification.Type,
+			_, err := alerting.InitNotifier(&models.AlertNotification{
+				Name:           notification.Name,
+				Settings:       notification.SettingsToJSON(),
+				SecureSettings: securejsondata.GetEncryptedJsonData(notification.SecureSettings),
+				Type:           notification.Type,
 			})
 
 			if err != nil {

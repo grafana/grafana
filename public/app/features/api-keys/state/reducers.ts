@@ -1,5 +1,6 @@
-﻿import { ApiKeysState } from 'app/types';
-import { Action, ActionTypes } from './actions';
+﻿import { createSlice } from '@reduxjs/toolkit';
+
+import { ApiKeysState } from 'app/types';
 
 export const initialApiKeysState: ApiKeysState = {
   keys: [],
@@ -8,15 +9,22 @@ export const initialApiKeysState: ApiKeysState = {
   includeExpired: false,
 };
 
-export const apiKeysReducer = (state = initialApiKeysState, action: Action): ApiKeysState => {
-  switch (action.type) {
-    case ActionTypes.LoadApiKeys:
+const apiKeysSlice = createSlice({
+  name: 'apiKeys',
+  initialState: initialApiKeysState,
+  reducers: {
+    apiKeysLoaded: (state, action): ApiKeysState => {
       return { ...state, hasFetched: true, keys: action.payload };
-    case ActionTypes.SetApiKeysSearchQuery:
+    },
+    setSearchQuery: (state, action): ApiKeysState => {
       return { ...state, searchQuery: action.payload };
-  }
-  return state;
-};
+    },
+  },
+});
+
+export const { setSearchQuery, apiKeysLoaded } = apiKeysSlice.actions;
+
+export const apiKeysReducer = apiKeysSlice.reducer;
 
 export default {
   apiKeys: apiKeysReducer,

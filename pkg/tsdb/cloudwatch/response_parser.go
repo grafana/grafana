@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -11,9 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
-	mdr := make(map[string]map[string]*cloudwatch.MetricDataResult)
-
+func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
+	// Map from result ID -> label -> result
+	mdrs := make(map[string]map[string]*cloudwatch.MetricDataResult)
+	labels := map[string][]string{}
 	for _, mdo := range metricDataOutputs {
 		requestExceededMaxLimit := false
 		for _, message := range mdo.Messages {
@@ -23,86 +25,135 @@ func (e *CloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 		}
 
 		for _, r := range mdo.MetricDataResults {
-			if _, exists := mdr[*r.Id]; !exists {
-				mdr[*r.Id] = make(map[string]*cloudwatch.MetricDataResult)
-				mdr[*r.Id][*r.Label] = r
-			} else if _, exists := mdr[*r.Id][*r.Label]; !exists {
-				mdr[*r.Id][*r.Label] = r
+			id := *r.Id
+			label := *r.Label
+			if _, exists := mdrs[id]; !exists {
+				mdrs[id] = make(map[string]*cloudwatch.MetricDataResult)
+				mdrs[id][label] = r
+				labels[id] = append(labels[id], label)
+			} else if _, exists := mdrs[id][label]; !exists {
+				mdrs[id][label] = r
+				labels[id] = append(labels[id], label)
 			} else {
-				mdr[*r.Id][*r.Label].Timestamps = append(mdr[*r.Id][*r.Label].Timestamps, r.Timestamps...)
-				mdr[*r.Id][*r.Label].Values = append(mdr[*r.Id][*r.Label].Values, r.Values...)
+				mdr := mdrs[id][label]
+				mdr.Timestamps = append(mdr.Timestamps, r.Timestamps...)
+				mdr.Values = append(mdr.Values, r.Values...)
 				if *r.StatusCode == "Complete" {
-					mdr[*r.Id][*r.Label].StatusCode = r.StatusCode
+					mdr.StatusCode = r.StatusCode
 				}
 			}
-			queries[*r.Id].RequestExceededMaxLimit = requestExceededMaxLimit
+			queries[id].RequestExceededMaxLimit = requestExceededMaxLimit
 		}
 	}
 
 	cloudWatchResponses := make([]*cloudwatchResponse, 0)
-	for id, lr := range mdr {
-		response := &cloudwatchResponse{}
-		series, err := parseGetMetricDataTimeSeries(lr, queries[id])
+	for id, lr := range mdrs {
+		query := queries[id]
+		series, partialData, err := parseGetMetricDataTimeSeries(lr, labels[id], query)
 		if err != nil {
-			return cloudWatchResponses, err
+			return nil, err
 		}
 
-		response.series = series
-		response.Expression = queries[id].UsedExpression
-		response.RefId = queries[id].RefId
-		response.Id = queries[id].Id
-		response.RequestExceededMaxLimit = queries[id].RequestExceededMaxLimit
-
+		response := &cloudwatchResponse{
+			series:                  series,
+			Period:                  query.Period,
+			Expression:              query.UsedExpression,
+			RefId:                   query.RefId,
+			Id:                      query.Id,
+			RequestExceededMaxLimit: query.RequestExceededMaxLimit,
+			PartialData:             partialData,
+		}
 		cloudWatchResponses = append(cloudWatchResponses, response)
 	}
 
 	return cloudWatchResponses, nil
 }
 
-func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, query *cloudWatchQuery) (*tsdb.TimeSeriesSlice, error) {
+func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, labels []string,
+	query *cloudWatchQuery) (*tsdb.TimeSeriesSlice, bool, error) {
+	partialData := false
 	result := tsdb.TimeSeriesSlice{}
-	for label, metricDataResult := range metricDataResults {
+	for _, label := range labels {
+		metricDataResult := metricDataResults[label]
 		if *metricDataResult.StatusCode != "Complete" {
-			return nil, fmt.Errorf("too many datapoints requested in query %s. Please try to reduce the time range", query.RefId)
+			partialData = true
 		}
 
 		for _, message := range metricDataResult.Messages {
 			if *message.Code == "ArithmeticError" {
-				return nil, fmt.Errorf("ArithmeticError in query %s: %s", query.RefId, *message.Value)
+				return nil, false, fmt.Errorf("ArithmeticError in query %q: %s", query.RefId, *message.Value)
 			}
 		}
 
-		series := tsdb.TimeSeries{
-			Tags:   make(map[string]string),
-			Points: make([]tsdb.TimePoint, 0),
-		}
+		// In case a multi-valued dimension is used and the cloudwatch query yields no values, create one empty time series for each dimension value.
+		// Use that dimension value to expand the alias field
+		if len(metricDataResult.Values) == 0 && query.isMultiValuedDimensionExpression() {
+			series := 0
+			multiValuedDimension := ""
+			for key, values := range query.Dimensions {
+				if len(values) > series {
+					series = len(values)
+					multiValuedDimension = key
+				}
+			}
 
-		for key, values := range query.Dimensions {
-			if len(values) == 1 && values[0] != "*" {
-				series.Tags[key] = values[0]
-			} else {
-				for _, value := range values {
-					if value == label || value == "*" {
-						series.Tags[key] = label
+			for _, value := range query.Dimensions[multiValuedDimension] {
+				emptySeries := tsdb.TimeSeries{
+					Tags:   map[string]string{multiValuedDimension: value},
+					Points: make([]tsdb.TimePoint, 0),
+				}
+				for key, values := range query.Dimensions {
+					if key != multiValuedDimension && len(values) > 0 {
+						emptySeries.Tags[key] = values[0]
+					}
+				}
+
+				emptySeries.Name = formatAlias(query, query.Stats, emptySeries.Tags, label)
+				result = append(result, &emptySeries)
+			}
+		} else {
+			keys := make([]string, 0)
+			for k := range query.Dimensions {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+
+			series := tsdb.TimeSeries{
+				Tags:   make(map[string]string),
+				Points: make([]tsdb.TimePoint, 0),
+			}
+
+			for _, key := range keys {
+				values := query.Dimensions[key]
+				if len(values) == 1 && values[0] != "*" {
+					series.Tags[key] = values[0]
+				} else {
+					for _, value := range values {
+						if value == label || value == "*" {
+							series.Tags[key] = label
+						} else if strings.Contains(label, value) {
+							series.Tags[key] = value
+						}
 					}
 				}
 			}
-		}
 
-		series.Name = formatAlias(query, query.Stats, series.Tags, label)
+			series.Name = formatAlias(query, query.Stats, series.Tags, label)
 
-		for j, t := range metricDataResult.Timestamps {
-			if j > 0 {
-				expectedTimestamp := metricDataResult.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
-				if expectedTimestamp.Before(*t) {
-					series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), float64(expectedTimestamp.Unix()*1000)))
+			for j, t := range metricDataResult.Timestamps {
+				if j > 0 {
+					expectedTimestamp := metricDataResult.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
+					if expectedTimestamp.Before(*t) {
+						series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), float64(expectedTimestamp.Unix()*1000)))
+					}
 				}
+				series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*metricDataResult.Values[j]),
+					float64(t.Unix())*1000))
 			}
-			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*metricDataResult.Values[j]), float64((*t).Unix())*1000))
+			result = append(result, &series)
 		}
-		result = append(result, &series)
 	}
-	return &result, nil
+	return &result, partialData, nil
 }
 
 func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]string, label string) string {
@@ -121,17 +172,17 @@ func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]stri
 	if len(query.Alias) == 0 && query.isMathExpression() {
 		return query.Id
 	}
-
-	if len(query.Alias) == 0 && query.isInferredSearchExpression() {
+	if len(query.Alias) == 0 && query.isInferredSearchExpression() && !query.isMultiValuedDimensionExpression() {
 		return label
 	}
 
-	data := map[string]string{}
-	data["region"] = region
-	data["namespace"] = namespace
-	data["metric"] = metricName
-	data["stat"] = stat
-	data["period"] = period
+	data := map[string]string{
+		"region":    region,
+		"namespace": namespace,
+		"metric":    metricName,
+		"stat":      stat,
+		"period":    period,
+	}
 	if len(label) != 0 {
 		data["label"] = label
 	}

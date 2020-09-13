@@ -2,7 +2,7 @@ package sqlstore
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 func init() {
@@ -14,8 +14,8 @@ func init() {
 	bus.AddHandler("sql", GetPlaylistItem)
 }
 
-func CreatePlaylist(cmd *m.CreatePlaylistCommand) error {
-	playlist := m.Playlist{
+func CreatePlaylist(cmd *models.CreatePlaylistCommand) error {
+	playlist := models.Playlist{
 		Name:     cmd.Name,
 		Interval: cmd.Interval,
 		OrgId:    cmd.OrgId,
@@ -26,9 +26,9 @@ func CreatePlaylist(cmd *m.CreatePlaylistCommand) error {
 		return err
 	}
 
-	playlistItems := make([]m.PlaylistItem, 0)
+	playlistItems := make([]models.PlaylistItem, 0)
 	for _, item := range cmd.Items {
-		playlistItems = append(playlistItems, m.PlaylistItem{
+		playlistItems = append(playlistItems, models.PlaylistItem{
 			PlaylistId: playlist.Id,
 			Type:       item.Type,
 			Value:      item.Value,
@@ -43,21 +43,21 @@ func CreatePlaylist(cmd *m.CreatePlaylistCommand) error {
 	return err
 }
 
-func UpdatePlaylist(cmd *m.UpdatePlaylistCommand) error {
-	playlist := m.Playlist{
+func UpdatePlaylist(cmd *models.UpdatePlaylistCommand) error {
+	playlist := models.Playlist{
 		Id:       cmd.Id,
 		OrgId:    cmd.OrgId,
 		Name:     cmd.Name,
 		Interval: cmd.Interval,
 	}
 
-	existingPlaylist := x.Where("id = ? AND org_id = ?", cmd.Id, cmd.OrgId).Find(m.Playlist{})
+	existingPlaylist := x.Where("id = ? AND org_id = ?", cmd.Id, cmd.OrgId).Find(models.Playlist{})
 
 	if existingPlaylist == nil {
-		return m.ErrPlaylistNotFound
+		return models.ErrPlaylistNotFound
 	}
 
-	cmd.Result = &m.PlaylistDTO{
+	cmd.Result = &models.PlaylistDTO{
 		Id:       playlist.Id,
 		OrgId:    playlist.OrgId,
 		Name:     playlist.Name,
@@ -77,10 +77,10 @@ func UpdatePlaylist(cmd *m.UpdatePlaylistCommand) error {
 		return err
 	}
 
-	playlistItems := make([]m.PlaylistItem, 0)
+	playlistItems := make([]models.PlaylistItem, 0)
 
 	for index, item := range cmd.Items {
-		playlistItems = append(playlistItems, m.PlaylistItem{
+		playlistItems = append(playlistItems, models.PlaylistItem{
 			PlaylistId: playlist.Id,
 			Type:       item.Type,
 			Value:      item.Value,
@@ -94,12 +94,12 @@ func UpdatePlaylist(cmd *m.UpdatePlaylistCommand) error {
 	return err
 }
 
-func GetPlaylist(query *m.GetPlaylistByIdQuery) error {
+func GetPlaylist(query *models.GetPlaylistByIdQuery) error {
 	if query.Id == 0 {
-		return m.ErrCommandValidationFailed
+		return models.ErrCommandValidationFailed
 	}
 
-	playlist := m.Playlist{}
+	playlist := models.Playlist{}
 	_, err := x.ID(query.Id).Get(&playlist)
 
 	query.Result = &playlist
@@ -107,9 +107,9 @@ func GetPlaylist(query *m.GetPlaylistByIdQuery) error {
 	return err
 }
 
-func DeletePlaylist(cmd *m.DeletePlaylistCommand) error {
+func DeletePlaylist(cmd *models.DeletePlaylistCommand) error {
 	if cmd.Id == 0 {
-		return m.ErrCommandValidationFailed
+		return models.ErrCommandValidationFailed
 	}
 
 	return inTransaction(func(sess *DBSession) error {
@@ -127,8 +127,8 @@ func DeletePlaylist(cmd *m.DeletePlaylistCommand) error {
 	})
 }
 
-func SearchPlaylists(query *m.GetPlaylistsQuery) error {
-	var playlists = make(m.Playlists, 0)
+func SearchPlaylists(query *models.GetPlaylistsQuery) error {
+	var playlists = make(models.Playlists, 0)
 
 	sess := x.Limit(query.Limit)
 
@@ -143,12 +143,12 @@ func SearchPlaylists(query *m.GetPlaylistsQuery) error {
 	return err
 }
 
-func GetPlaylistItem(query *m.GetPlaylistItemsByIdQuery) error {
+func GetPlaylistItem(query *models.GetPlaylistItemsByIdQuery) error {
 	if query.PlaylistId == 0 {
-		return m.ErrCommandValidationFailed
+		return models.ErrCommandValidationFailed
 	}
 
-	var playlistItems = make([]m.PlaylistItem, 0)
+	var playlistItems = make([]models.PlaylistItem, 0)
 	err := x.Where("playlist_id=?", query.PlaylistId).Find(&playlistItems)
 
 	query.Result = &playlistItems

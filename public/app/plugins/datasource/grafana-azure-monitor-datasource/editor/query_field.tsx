@@ -73,7 +73,7 @@ class QueryField extends React.Component<any, any> {
       labelKeys: {},
       labelValues: {},
       suggestions: [],
-      typeaheadIndex: 0,
+      typeaheadIndex: null,
       typeaheadPrefix: '',
       value: getInitialValue(props.initialQuery || ''),
     };
@@ -101,13 +101,6 @@ class QueryField extends React.Component<any, any> {
         this.onChangeQuery();
       }
     });
-  };
-
-  request = (url?: string) => {
-    if (this.props.request) {
-      return this.props.request(url);
-    }
-    return fetch(url);
   };
 
   onChangeQuery = () => {
@@ -144,10 +137,10 @@ class QueryField extends React.Component<any, any> {
 
       case 'Tab':
       case 'Enter': {
-        if (this.menuEl) {
+        if (this.menuEl && typeaheadIndex !== null) {
           // Dont blur input
           keyboardEvent.preventDefault();
-          if (!suggestions || !suggestions.length) {
+          if (!suggestions || !suggestions.length || keyboardEvent.shiftKey || keyboardEvent.ctrlKey) {
             return next();
           }
 
@@ -166,7 +159,7 @@ class QueryField extends React.Component<any, any> {
         if (this.menuEl) {
           // Select next suggestion
           keyboardEvent.preventDefault();
-          this.setState({ typeaheadIndex: typeaheadIndex + 1 });
+          this.setState({ typeaheadIndex: (typeaheadIndex || 0) + 1 });
         }
         break;
       }
@@ -175,7 +168,7 @@ class QueryField extends React.Component<any, any> {
         if (this.menuEl) {
           // Select previous suggestion
           keyboardEvent.preventDefault();
-          this.setState({ typeaheadIndex: Math.max(0, typeaheadIndex - 1) });
+          this.setState({ typeaheadIndex: Math.max(0, (typeaheadIndex || 0) - 1) });
         }
         break;
       }
@@ -203,7 +196,7 @@ class QueryField extends React.Component<any, any> {
     this.setState(
       {
         suggestions: [],
-        typeaheadIndex: 0,
+        typeaheadIndex: null,
         typeaheadPrefix: '',
         typeaheadContext: null,
       },
@@ -256,12 +249,13 @@ class QueryField extends React.Component<any, any> {
     const { suggestions } = this.state;
     const menu = this.menuEl;
     const selection = window.getSelection();
-    const node = selection.anchorNode;
 
     // No menu, nothing to do
-    if (!menu) {
+    if (!menu || !selection) {
       return;
     }
+
+    const node = selection.anchorNode;
 
     // No suggestions or blur, remove menu
     const hasSuggesstions = suggestions && suggestions.length > 0;
@@ -298,19 +292,20 @@ class QueryField extends React.Component<any, any> {
 
   renderMenu = () => {
     const { portalPrefix } = this.props;
-    const { suggestions } = this.state;
+    const { suggestions, typeaheadIndex } = this.state;
     const hasSuggesstions = suggestions && suggestions.length > 0;
     if (!hasSuggesstions) {
       return null;
     }
 
     // Guard selectedIndex to be within the length of the suggestions
-    let selectedIndex = Math.max(this.state.typeaheadIndex, 0);
+    let selectedIndex = Math.max(typeaheadIndex, 0);
     const flattenedSuggestions = flattenSuggestions(suggestions);
     selectedIndex = selectedIndex % flattenedSuggestions.length || 0;
-    const selectedKeys = (flattenedSuggestions.length > 0 ? [flattenedSuggestions[selectedIndex]] : []).map(i =>
-      typeof i === 'object' ? i.text : i
-    );
+    const selectedKeys = (typeaheadIndex !== null && flattenedSuggestions.length > 0
+      ? [flattenedSuggestions[selectedIndex]]
+      : []
+    ).map(i => (typeof i === 'object' ? i.text : i));
 
     // Create typeahead in DOM root so we can later position it absolutely
     return (

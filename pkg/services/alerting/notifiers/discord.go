@@ -22,24 +22,24 @@ func init() {
 		Name:        "Discord",
 		Description: "Sends notifications to Discord",
 		Factory:     newDiscordNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">Discord settings</h3>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-10">Message Content</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.content"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Mention a group using @ or a user using <@ID> when notifying in a channel
-        </info-popover>
-      </div>
-      <div class="gf-form  max-width-30">
-        <span class="gf-form-label width-10">Webhook URL</span>
-        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Discord webhook URL"></input>
-      </div>
-    `,
+		Heading:     "Discord settings",
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "Message Content",
+				Description:  "Mention a group using @ or a user using <@ID> when notifying in a channel",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				PropertyName: "content",
+			},
+			{
+				Label:        "Webhook URL",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "Discord webhook URL",
+				PropertyName: "url",
+				Required:     true,
+			},
+		},
 	})
 }
 
@@ -87,7 +87,6 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	fields := make([]map[string]interface{}, 0)
 
 	for _, evt := range evalContext.EvalMatches {
-
 		fields = append(fields, map[string]interface{}{
 			"name":   evt.Metric,
 			"value":  evt.Value.FullString(),
@@ -115,17 +114,19 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	var image map[string]interface{}
 	var embeddedImage = false
 
-	if evalContext.ImagePublicURL != "" {
-		image = map[string]interface{}{
-			"url": evalContext.ImagePublicURL,
+	if dn.NeedsImage() {
+		if evalContext.ImagePublicURL != "" {
+			image = map[string]interface{}{
+				"url": evalContext.ImagePublicURL,
+			}
+			embed.Set("image", image)
+		} else {
+			image = map[string]interface{}{
+				"url": "attachment://graph.png",
+			}
+			embed.Set("image", image)
+			embeddedImage = true
 		}
-		embed.Set("image", image)
-	} else {
-		image = map[string]interface{}{
-			"url": "attachment://graph.png",
-		}
-		embed.Set("image", image)
-		embeddedImage = true
 	}
 
 	bodyJSON.Set("embeds", []interface{}{embed})

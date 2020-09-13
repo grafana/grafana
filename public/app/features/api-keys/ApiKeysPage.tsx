@@ -2,25 +2,31 @@ import React, { PureComponent } from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { ApiKey, NewApiKey, OrgRole } from 'app/types';
+// Utils
+import { ApiKey, CoreEvents, NewApiKey, OrgRole } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getApiKeys, getApiKeysCount } from './state/selectors';
-import { loadApiKeys, deleteApiKey, setSearchQuery, addApiKey } from './state/actions';
+import { addApiKey, deleteApiKey, loadApiKeys } from './state/actions';
 import Page from 'app/core/components/Page/Page';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { EventsWithValidation, FormLabel, Input, Switch, ValidationEvents, DeleteButton } from '@grafana/ui';
-import { NavModel, dateTime, isDateTime } from '@grafana/data';
+import {
+  DeleteButton,
+  EventsWithValidation,
+  InlineFormLabel,
+  LegacyForms,
+  ValidationEvents,
+  IconButton,
+} from '@grafana/ui';
+const { Input, Switch } = LegacyForms;
+import { NavModel, dateTimeFormat, rangeUtil } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { store } from 'app/store/store';
-import kbn from 'app/core/utils/kbn';
-
-// Utils
-import { CoreEvents } from 'app/types';
 import { getTimeZone } from 'app/features/profile/state/selectors';
+import { setSearchQuery } from './state/reducers';
 
 const timeRangeValidationEvents: ValidationEvents = {
   [EventsWithValidation.onBlur]: [
@@ -30,7 +36,7 @@ const timeRangeValidationEvents: ValidationEvents = {
           return true;
         }
         try {
-          kbn.interval_to_seconds(value);
+          rangeUtil.intervalToSeconds(value);
           return true;
         } catch {
           return false;
@@ -118,7 +124,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
 
     // make sure that secondsToLive is number or null
     const secondsToLive = this.state.newApiKey['secondsToLive'];
-    this.state.newApiKey['secondsToLive'] = secondsToLive ? kbn.interval_to_seconds(secondsToLive) : null;
+    this.state.newApiKey['secondsToLive'] = secondsToLive ? rangeUtil.intervalToSeconds(secondsToLive) : null;
     this.props.addApiKey(this.state.newApiKey, openModal, this.props.includeExpired);
     this.setState((prevState: State) => {
       return {
@@ -151,7 +157,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
         {!isAdding && (
           <EmptyListCTA
             title="You haven't added any API Keys yet."
-            buttonIcon="gicon gicon-apikeys"
+            buttonIcon="key-skeleton-alt"
             buttonLink="#"
             onClick={this.onToggleAdding}
             buttonTitle=" New API Key"
@@ -167,11 +173,8 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     if (!date) {
       return 'No expiration date';
     }
-    date = isDateTime(date) ? date : dateTime(date);
-    format = format || 'YYYY-MM-DD HH:mm:ss';
-    const timezone = getTimeZone(store.getState().user);
-
-    return timezone === 'utc' ? date.utc().format(format) : date.format(format);
+    const timeZone = getTimeZone(store.getState().user);
+    return dateTimeFormat(date, { format, timeZone });
   }
 
   renderAddApiKeyForm() {
@@ -180,9 +183,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     return (
       <SlideDown in={isAdding}>
         <div className="cta-form">
-          <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
-            <i className="fa fa-close" />
-          </button>
+          <IconButton name="times" className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding} />
           <h5>Add API Key</h5>
           <form className="gf-form-group" onSubmit={this.onAddApiKey}>
             <div className="gf-form-inline">
@@ -215,7 +216,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                 </span>
               </div>
               <div className="gf-form max-width-21">
-                <FormLabel tooltip={tooltipText}>Time to live</FormLabel>
+                <InlineFormLabel tooltip={tooltipText}>Time to live</InlineFormLabel>
                 <Input
                   type="text"
                   className="gf-form-input"

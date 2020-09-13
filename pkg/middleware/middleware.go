@@ -1,8 +1,8 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -14,7 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,6 +41,7 @@ var (
 func GetContextHandler(
 	ats models.UserTokenService,
 	remoteCache *remotecache.RemoteCache,
+	renderService rendering.Service,
 ) macaron.Handler {
 	return func(c *macaron.Context) {
 		ctx := &models.ReqContext{
@@ -62,7 +65,7 @@ func GetContextHandler(
 		// then look for api key in session (special case for render calls via api)
 		// then test if anonymous access is enabled
 		switch {
-		case initContextWithRenderAuth(ctx):
+		case initContextWithRenderAuth(ctx, renderService):
 		case initContextWithApiKey(ctx):
 		case initContextWithBasicAuth(ctx, orgId):
 		case initContextWithAuthProxy(remoteCache, ctx, orgId):
@@ -92,7 +95,7 @@ func initContextWithAnonymousUser(ctx *models.ReqContext) bool {
 
 	orgQuery := models.GetOrgByNameQuery{Name: setting.AnonymousOrgName}
 	if err := bus.Dispatch(&orgQuery); err != nil {
-		log.Error(3, "Anonymous access organization error: '%s': %s", setting.AnonymousOrgName, err)
+		log.Errorf(3, "Anonymous access organization error: '%s': %s", setting.AnonymousOrgName, err)
 		return false
 	}
 
@@ -176,8 +179,12 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 		ctx.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,
+			"err", err,
 		)
 
+		if err == models.ErrUserNotFound {
+			err = login.ErrInvalidCredentials
+		}
 		ctx.JsonApiErr(401, errStringInvalidUsernamePassword, err)
 		return true
 	}
@@ -227,17 +234,36 @@ func initContextWithToken(authTokenService models.UserTokenService, ctx *models.
 	ctx.IsSignedIn = true
 	ctx.UserToken = token
 
-	rotated, err := authTokenService.TryRotateToken(ctx.Req.Context(), token, ctx.RemoteAddr(), ctx.Req.UserAgent())
-	if err != nil {
-		ctx.Logger.Error("Failed to rotate token", "error", err)
-		return true
-	}
-
-	if rotated {
-		WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetimeDays)
-	}
+	// Rotate the token just before we write response headers to ensure there is no delay between
+	// the new token being generated and the client receiving it.
+	ctx.Resp.Before(rotateEndOfRequestFunc(ctx, authTokenService, token))
 
 	return true
+}
+
+func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.UserTokenService, token *models.UserToken) macaron.BeforeFunc {
+	return func(w macaron.ResponseWriter) {
+		// if response has already been written, skip.
+		if w.Written() {
+			return
+		}
+
+		// if the request is cancelled by the client we should not try
+		// to rotate the token since the client would not accept any result.
+		if ctx.Context.Req.Context().Err() == context.Canceled {
+			return
+		}
+
+		rotated, err := authTokenService.TryRotateToken(ctx.Req.Context(), token, ctx.RemoteAddr(), ctx.Req.UserAgent())
+		if err != nil {
+			ctx.Logger.Error("Failed to rotate token", "error", err)
+			return
+		}
+
+		if rotated {
+			WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetimeDays)
+		}
+	}
 }
 
 func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays int) {
@@ -253,25 +279,17 @@ func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays in
 		maxAge = int(maxAgeHours.Seconds())
 	}
 
-	ctx.Resp.Header().Del("Set-Cookie")
-	cookie := http.Cookie{
-		Name:     setting.LoginCookieName,
-		Value:    url.QueryEscape(value),
-		HttpOnly: true,
-		Path:     setting.AppSubUrl + "/",
-		Secure:   setting.CookieSecure,
-		MaxAge:   maxAge,
-	}
-	if setting.CookieSameSite != http.SameSiteDefaultMode {
-		cookie.SameSite = setting.CookieSameSite
-	}
-
-	http.SetCookie(ctx.Resp, &cookie)
+	WriteCookie(ctx.Resp, setting.LoginCookieName, url.QueryEscape(value), maxAge, newCookieOptions)
 }
 
 func AddDefaultResponseHeaders() macaron.Handler {
 	return func(ctx *macaron.Context) {
 		ctx.Resp.Before(func(w macaron.ResponseWriter) {
+			// if response has already been written, skip.
+			if w.Written() {
+				return
+			}
+
 			if !strings.HasPrefix(ctx.Req.URL.Path, "/api/datasources/proxy/") {
 				AddNoCacheHeaders(ctx.Resp)
 			}

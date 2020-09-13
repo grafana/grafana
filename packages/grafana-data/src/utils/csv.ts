@@ -1,12 +1,13 @@
 // Libraries
-import Papa, { ParseResult, ParseConfig, Parser } from 'papaparse';
+import Papa, { ParseConfig, Parser, ParseResult } from 'papaparse';
 import defaults from 'lodash/defaults';
-import isNumber from 'lodash/isNumber';
 
 // Types
-import { DataFrame, Field, FieldType, FieldConfig } from '../types';
+import { DataFrame, Field, FieldConfig, FieldType } from '../types';
 import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
+import { getFieldDisplayName } from '../field';
+import { formattedValueToString } from '../valueFormats';
 
 export enum CSVHeaderStyle {
   full,
@@ -71,7 +72,7 @@ export class CSVReader {
   }
 
   // PapaParse callback on each line
-  private step = (results: ParseResult, parser: Parser): void => {
+  private chunk = (results: ParseResult<any>, parser: Parser): void => {
     for (let i = 0; i < results.data.length; i++) {
       const line: string[] = results.data[i];
       if (line.length < 1) {
@@ -149,7 +150,7 @@ export class CSVReader {
 
       this.state = ParseState.ReadingRows;
 
-      // Make sure colum structure is valid
+      // Make sure column structure is valid
       if (line.length > this.current.fields.length) {
         const { fields } = this.current;
         for (let f = fields.length; f < line.length; f++) {
@@ -180,7 +181,7 @@ export class CSVReader {
       dynamicTyping: false,
       skipEmptyLines: true,
       comments: false, // Keep comment lines
-      step: this.step,
+      chunk: this.chunk,
     } as ParseConfig;
 
     Papa.parse(text, papacfg);
@@ -204,21 +205,11 @@ function writeValue(value: any, config: CSVConfig): string {
 }
 
 function makeFieldWriter(field: Field, config: CSVConfig): FieldWriter {
-  if (field.type) {
-    if (field.type === FieldType.boolean) {
-      return (value: any) => {
-        return value ? 'true' : 'false';
-      };
-    }
-
-    if (field.type === FieldType.number) {
-      return (value: any) => {
-        if (isNumber(value)) {
-          return value.toString();
-        }
-        return writeValue(value, config);
-      };
-    }
+  if (field.display) {
+    return (value: any) => {
+      const displayValue = field.display!(value);
+      return writeValue(formattedValueToString(displayValue), config);
+    };
   }
 
   return (value: any) => writeValue(value, config);
@@ -289,7 +280,7 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
         if (i > 0) {
           csv += config.delimiter;
         }
-        csv += fields[i].name;
+        csv += `"${getFieldDisplayName(fields[i], series).replace(/"/g, '""')}"`;
       }
       csv += config.newline;
     }

@@ -1,5 +1,6 @@
 import React from 'react';
-import { EventsWithValidation, FormField, Input, regexValidation, Select } from '@grafana/ui';
+import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui';
+const { Select, Input, FormField } = LegacyForms;
 import { ElasticsearchOptions } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 
@@ -85,13 +86,13 @@ export const ElasticDetails = (props: Props) => {
                   onChange={option => {
                     const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
                       value.jsonData.maxConcurrentShardRequests,
-                      option.value
+                      option.value!
                     );
                     onChange({
                       ...value,
                       jsonData: {
                         ...value.jsonData,
-                        esVersion: option.value,
+                        esVersion: option.value!,
                         maxConcurrentShardRequests,
                       },
                     });
@@ -178,10 +179,12 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
 
   if (!database || database.length === 0 || database.startsWith('[logstash-]')) {
     let newDatabase = '';
+
     if (newInterval !== undefined) {
       const pattern = indexPatternTypes.find(pattern => pattern.value === newInterval);
+
       if (pattern) {
-        newDatabase = pattern.example;
+        newDatabase = pattern.example ?? '';
       }
     }
 
@@ -204,7 +207,7 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
   }
 };
 
-function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number, version: number): number {
+function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number | undefined, version: number): number {
   if (maxConcurrentShardRequests === 5 && version < 70) {
     return 256;
   }

@@ -1,4 +1,4 @@
-import { addLabelToQuery, addLabelToSelector, keepSelectorFilters } from './add_label_to_query';
+import { addLabelToQuery, addLabelToSelector } from './add_label_to_query';
 
 describe('addLabelToQuery()', () => {
   it('should add label to simple query', () => {
@@ -22,6 +22,12 @@ describe('addLabelToQuery()', () => {
 
   it('should detect in-order function use', () => {
     expect(addLabelToQuery('sum by (xx) (foo)', 'bar', 'baz')).toBe('sum by (xx) (foo{bar="baz"})');
+  });
+
+  it('should convert number Infinity to +Inf', () => {
+    expect(
+      addLabelToQuery('sum(rate(prometheus_tsdb_compaction_chunk_size_bytes_bucket[5m])) by (le)', 'le', Infinity)
+    ).toBe('sum(rate(prometheus_tsdb_compaction_chunk_size_bytes_bucket{le="+Inf"}[5m])) by (le)');
   });
 
   it('should handle selectors with punctuation', () => {
@@ -58,6 +64,20 @@ describe('addLabelToQuery()', () => {
       'avg(foo{bar="baz"}) + sum(xx_yy{bar="baz"})'
     );
   });
+
+  it('should not remove filters', () => {
+    expect(addLabelToQuery('{x="y"} |="yy"', 'bar', 'baz')).toBe('{bar="baz",x="y"} |="yy"');
+    expect(addLabelToQuery('{x="y"} |="yy" !~"xx"', 'bar', 'baz')).toBe('{bar="baz",x="y"} |="yy" !~"xx"');
+  });
+
+  it('should add label to query properly with Loki datasource', () => {
+    expect(addLabelToQuery('{job="grafana"} |= "foo-bar"', 'filename', 'test.txt', undefined, true)).toBe(
+      '{filename="test.txt",job="grafana"} |= "foo-bar"'
+    );
+    expect(addLabelToQuery('{job="grafana"} |= "foo-bar"', 'filename', 'test.txt')).toBe(
+      '{filename="test.txt",job="grafana"} |= "foo{filename="test.txt"}-bar"'
+    );
+  });
 });
 
 describe('addLabelToSelector()', () => {
@@ -70,17 +90,5 @@ describe('addLabelToSelector()', () => {
   });
   test('should add a label to a selector with custom operator', () => {
     expect(addLabelToSelector('{}', 'baz', '42', '!=')).toBe('{baz!="42"}');
-  });
-});
-
-describe('keepSelectorFilters()', () => {
-  test('should return empty string if no filter is in selector', () => {
-    expect(keepSelectorFilters('{foo="bar"}')).toBe('');
-  });
-  test('should return a filter if filter is in selector', () => {
-    expect(keepSelectorFilters('{foo="bar"} |="baz"')).toBe('|="baz"');
-  });
-  test('should return multiple filters if multiple filters are in selector', () => {
-    expect(keepSelectorFilters('{foo!="bar"} |="baz" |~"yy" !~"xx"')).toBe('|="baz" |~"yy" !~"xx"');
   });
 });

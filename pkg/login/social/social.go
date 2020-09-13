@@ -1,6 +1,10 @@
 package social
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -11,6 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+var (
+	logger = log.New("social")
 )
 
 type BasicUserInfo struct {
@@ -37,7 +45,9 @@ type SocialConnector interface {
 
 type SocialBase struct {
 	*oauth2.Config
-	log log.Logger
+	log            log.Logger
+	allowSignup    bool
+	allowedDomains []string
 }
 
 type Error struct {
@@ -55,8 +65,19 @@ const (
 var (
 	SocialBaseUrl = "/login/"
 	SocialMap     = make(map[string]SocialConnector)
-	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom}
+	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread", "okta"}
 )
+
+func newSocialBase(name string, config *oauth2.Config, info *setting.OAuthInfo) *SocialBase {
+	logger := log.New("oauth." + name)
+
+	return &SocialBase{
+		Config:         config,
+		log:            logger,
+		allowSignup:    info.AllowSignup,
+		allowedDomains: info.AllowedDomains,
+	}
+}
 
 func NewOAuthService() {
 	setting.OAuthService = &setting.OAuther{}
@@ -107,18 +128,11 @@ func NewOAuthService() {
 			Scopes:      info.Scopes,
 		}
 
-		logger := log.New("oauth." + name)
-
 		// GitHub.
 		if name == "github" {
 			SocialMap["github"] = &SocialGithub{
-				SocialBase: &SocialBase{
-					Config: &config,
-					log:    logger,
-				},
-				allowedDomains:       info.AllowedDomains,
+				SocialBase:           newSocialBase(name, &config, info),
 				apiUrl:               info.ApiUrl,
-				allowSignup:          info.AllowSignup,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
@@ -127,44 +141,49 @@ func NewOAuthService() {
 		// GitLab.
 		if name == "gitlab" {
 			SocialMap["gitlab"] = &SocialGitlab{
-				SocialBase: &SocialBase{
-					Config: &config,
-					log:    logger,
-				},
-				allowedDomains: info.AllowedDomains,
-				apiUrl:         info.ApiUrl,
-				allowSignup:    info.AllowSignup,
-				allowedGroups:  util.SplitString(sec.Key("allowed_groups").String()),
+				SocialBase:    newSocialBase(name, &config, info),
+				apiUrl:        info.ApiUrl,
+				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
 			}
 		}
 
 		// Google.
 		if name == "google" {
 			SocialMap["google"] = &SocialGoogle{
-				SocialBase: &SocialBase{
-					Config: &config,
-					log:    logger,
-				},
-				allowedDomains: info.AllowedDomains,
-				hostedDomain:   info.HostedDomain,
-				apiUrl:         info.ApiUrl,
-				allowSignup:    info.AllowSignup,
+				SocialBase:   newSocialBase(name, &config, info),
+				hostedDomain: info.HostedDomain,
+				apiUrl:       info.ApiUrl,
 			}
 		}
 
-		// Generic - Uses the same scheme as Github.
+		// AzureAD.
+		if name == "azuread" {
+			SocialMap["azuread"] = &SocialAzureAD{
+				SocialBase:    newSocialBase(name, &config, info),
+				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+			}
+		}
+
+		// Okta
+		if name == "okta" {
+			SocialMap["okta"] = &SocialOkta{
+				SocialBase:        newSocialBase(name, &config, info),
+				apiUrl:            info.ApiUrl,
+				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
+				roleAttributePath: info.RoleAttributePath,
+			}
+		}
+
+		// Generic - Uses the same scheme as GitHub.
 		if name == "generic_oauth" {
 			SocialMap["generic_oauth"] = &SocialGenericOAuth{
-				SocialBase: &SocialBase{
-					Config: &config,
-					log:    logger,
-				},
-				allowedDomains:       info.AllowedDomains,
+				SocialBase:           newSocialBase(name, &config, info),
 				apiUrl:               info.ApiUrl,
-				allowSignup:          info.AllowSignup,
 				emailAttributeName:   info.EmailAttributeName,
 				emailAttributePath:   info.EmailAttributePath,
 				roleAttributePath:    info.RoleAttributePath,
+				loginAttributePath:   sec.Key("login_attribute_path").String(),
+				idTokenAttributeName: sec.Key("id_token_attribute_name").String(),
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
@@ -184,12 +203,8 @@ func NewOAuthService() {
 			}
 
 			SocialMap[grafanaCom] = &SocialGrafanaCom{
-				SocialBase: &SocialBase{
-					Config: &config,
-					log:    logger,
-				},
+				SocialBase:           newSocialBase(name, &config, info),
 				url:                  setting.GrafanaComUrl,
-				allowSignup:          info.AllowSignup,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}
@@ -217,4 +232,59 @@ var GetOAuthProviders = func(cfg *setting.Cfg) map[string]bool {
 	}
 
 	return result
+}
+
+func GetOAuthHttpClient(name string) (*http.Client, error) {
+	if setting.OAuthService == nil {
+		return nil, fmt.Errorf("OAuth not enabled")
+	}
+	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
+	name = strings.TrimPrefix(name, "oauth_")
+	info, ok := setting.OAuthService.OAuthInfos[name]
+	if !ok {
+		return nil, fmt.Errorf("Could not find %s in OAuth Settings", name)
+	}
+
+	// handle call back
+	tr := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: info.TlsSkipVerify,
+		},
+	}
+	oauthClient := &http.Client{
+		Transport: tr,
+	}
+
+	if info.TlsClientCert != "" || info.TlsClientKey != "" {
+		cert, err := tls.LoadX509KeyPair(info.TlsClientCert, info.TlsClientKey)
+		logger.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to setup TlsClientCert")
+		}
+
+		tr.TLSClientConfig.Certificates = append(tr.TLSClientConfig.Certificates, cert)
+	}
+
+	if info.TlsClientCa != "" {
+		caCert, err := ioutil.ReadFile(info.TlsClientCa)
+		if err != nil {
+			logger.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
+			return nil, fmt.Errorf("Failed to setup TlsClientCa")
+		}
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+		tr.TLSClientConfig.RootCAs = caCertPool
+	}
+	return oauthClient, nil
+}
+
+func GetConnector(name string) (SocialConnector, error) {
+	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
+	provider := strings.TrimPrefix(name, "oauth_")
+	connector, ok := SocialMap[provider]
+	if !ok {
+		return nil, fmt.Errorf("Failed to find oauth provider for %s", name)
+	}
+	return connector, nil
 }

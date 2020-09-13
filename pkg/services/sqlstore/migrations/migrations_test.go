@@ -3,16 +3,16 @@ package migrations
 import (
 	"testing"
 
-	"github.com/go-xorm/xorm"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"xorm.io/xorm"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestMigrations(t *testing.T) {
 	testDBs := []sqlutil.TestDB{
-		sqlutil.TestDB_Sqlite3,
+		sqlutil.Sqlite3TestDB(),
 	}
 
 	for _, testDB := range testDBs {

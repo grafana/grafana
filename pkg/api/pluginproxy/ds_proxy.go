@@ -2,10 +2,11 @@ package pluginproxy
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -16,23 +17,25 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
+	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 var (
-	logger = log.New("data-proxy-log")
+	logger = glog.New("data-proxy-log")
 	client = newHTTPClient()
 )
 
 type DataSourceProxy struct {
-	ds        *m.DataSource
-	ctx       *m.ReqContext
+	ds        *models.DataSource
+	ctx       *models.ReqContext
 	targetUrl *url.URL
 	proxyPath string
 	route     *plugins.AppPluginRoute
@@ -40,12 +43,41 @@ type DataSourceProxy struct {
 	cfg       *setting.Cfg
 }
 
+type handleResponseTransport struct {
+	transport http.RoundTripper
+}
+
+func (t *handleResponseTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	res, err := t.transport.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
+	res.Header.Del("Set-Cookie")
+	return res, nil
+}
+
 type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string, cfg *setting.Cfg) *DataSourceProxy {
-	targetURL, _ := url.Parse(ds.Url)
+type logWrapper struct {
+	logger glog.Logger
+}
+
+// Write writes log messages as bytes from proxy
+func (lw *logWrapper) Write(p []byte) (n int, err error) {
+	withoutNewline := strings.TrimSuffix(string(p), "\n")
+	lw.logger.Error("Data proxy error", "error", withoutNewline)
+	return len(p), nil
+}
+
+// NewDataSourceProxy creates a new Datasource proxy
+func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
+	proxyPath string, cfg *setting.Cfg) (*DataSourceProxy, error) {
+	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
+	if err != nil {
+		return nil, err
+	}
 
 	return &DataSourceProxy{
 		ds:        ds,
@@ -54,7 +86,7 @@ func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx 
 		proxyPath: proxyPath,
 		targetUrl: targetURL,
 		cfg:       cfg,
-	}
+	}, nil
 }
 
 func newHTTPClient() httpClient {
@@ -70,16 +102,22 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		return
 	}
 
+	proxyErrorLogger := logger.New("userId", proxy.ctx.UserId, "orgId", proxy.ctx.OrgId, "uname", proxy.ctx.Login, "path", proxy.ctx.Req.URL.Path, "remote_addr", proxy.ctx.RemoteAddr(), "referer", proxy.ctx.Req.Referer())
+
 	reverseProxy := &httputil.ReverseProxy{
 		Director:      proxy.getDirector(),
 		FlushInterval: time.Millisecond * 200,
+		ErrorLog:      log.New(&logWrapper{logger: proxyErrorLogger}, "", 0),
 	}
 
-	var err error
-	reverseProxy.Transport, err = proxy.ds.GetHttpTransport()
+	transport, err := proxy.ds.GetHttpTransport()
 	if err != nil {
 		proxy.ctx.JsonApiErr(400, "Unable to load TLS certificate", err)
 		return
+	}
+
+	reverseProxy.Transport = &handleResponseTransport{
+		transport: transport,
 	}
 
 	proxy.logRequest()
@@ -103,14 +141,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		logger.Error("Failed to inject span context instance", "err", err)
 	}
 
-	originalSetCookie := proxy.ctx.Resp.Header().Get("Set-Cookie")
-
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req.Request)
-	proxy.ctx.Resp.Header().Del("Set-Cookie")
-
-	if originalSetCookie != "" {
-		proxy.ctx.Resp.Header().Set("Set-Cookie", originalSetCookie)
-	}
 }
 
 func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, headerName string, tagName string) {
@@ -129,21 +160,23 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 
 		reqQueryVals := req.URL.Query()
 
-		if proxy.ds.Type == m.DS_INFLUXDB_08 {
+		switch proxy.ds.Type {
+		case models.DS_INFLUXDB_08:
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Database+"/"+proxy.proxyPath)
 			reqQueryVals.Add("u", proxy.ds.User)
 			reqQueryVals.Add("p", proxy.ds.DecryptedPassword())
 			req.URL.RawQuery = reqQueryVals.Encode()
-		} else if proxy.ds.Type == m.DS_INFLUXDB {
+		case models.DS_INFLUXDB:
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 			req.URL.RawQuery = reqQueryVals.Encode()
 			if !proxy.ds.BasicAuth {
 				req.Header.Del("Authorization")
 				req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.User, proxy.ds.DecryptedPassword()))
 			}
-		} else {
+		default:
 			req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 		}
+
 		if proxy.ds.BasicAuth {
 			req.Header.Del("Authorization")
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser, proxy.ds.DecryptedBasicAuthPassword()))
@@ -156,51 +189,23 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.Header.Add("Authorization", dsAuth)
 		}
 
-		if proxy.cfg.SendUserHeader && !proxy.ctx.SignedInUser.IsAnonymous {
-			req.Header.Add("X-Grafana-User", proxy.ctx.SignedInUser.Login)
-		}
+		applyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
 
-		// clear cookie header, except for whitelisted cookies
-		var keptCookies []*http.Cookie
+		keepCookieNames := []string{}
 		if proxy.ds.JsonData != nil {
 			if keepCookies := proxy.ds.JsonData.Get("keepCookies"); keepCookies != nil {
-				keepCookieNames := keepCookies.MustStringArray()
-				for _, c := range req.Cookies() {
-					for _, v := range keepCookieNames {
-						if c.Name == v {
-							keptCookies = append(keptCookies, c)
-						}
-					}
-				}
+				keepCookieNames = keepCookies.MustStringArray()
 			}
 		}
-		req.Header.Del("Cookie")
-		for _, c := range keptCookies {
-			req.AddCookie(c)
-		}
 
-		// clear X-Forwarded Host/Port/Proto headers
-		req.Header.Del("X-Forwarded-Host")
-		req.Header.Del("X-Forwarded-Port")
-		req.Header.Del("X-Forwarded-Proto")
+		proxyutil.ClearCookieHeader(req, keepCookieNames)
+		proxyutil.PrepareProxyRequest(req)
+
 		req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 		// Clear Origin and Referer to avoir CORS issues
 		req.Header.Del("Origin")
 		req.Header.Del("Referer")
-
-		// set X-Forwarded-For header
-		if req.RemoteAddr != "" {
-			remoteAddr, _, err := net.SplitHostPort(req.RemoteAddr)
-			if err != nil {
-				remoteAddr = req.RemoteAddr
-			}
-			if req.Header.Get("X-Forwarded-For") != "" {
-				req.Header.Set("X-Forwarded-For", req.Header.Get("X-Forwarded-For")+", "+remoteAddr)
-			} else {
-				req.Header.Set("X-Forwarded-For", remoteAddr)
-			}
-		}
 
 		if proxy.route != nil {
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
@@ -217,7 +222,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		return errors.New("Target url is not a valid target")
 	}
 
-	if proxy.ds.Type == m.DS_PROMETHEUS {
+	if proxy.ds.Type == models.DS_PROMETHEUS {
 		if proxy.ctx.Req.Request.Method == "DELETE" {
 			return errors.New("Deletes not allowed on proxied Prometheus datasource")
 		}
@@ -229,7 +234,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		}
 	}
 
-	if proxy.ds.Type == m.DS_ES {
+	if proxy.ds.Type == models.DS_ES {
 		if proxy.ctx.Req.Request.Method == "DELETE" {
 			return errors.New("Deletes not allowed on proxied Elasticsearch datasource")
 		}
@@ -289,7 +294,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		"body", body)
 }
 
-func checkWhiteList(c *m.ReqContext, host string) bool {
+func checkWhiteList(c *models.ReqContext, host string) bool {
 	if host != "" && len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[host]; !exists {
 			c.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)
@@ -300,45 +305,63 @@ func checkWhiteList(c *m.ReqContext, host string) bool {
 	return true
 }
 
-func addOAuthPassThruAuth(c *m.ReqContext, req *http.Request) {
-	authInfoQuery := &m.GetAuthInfoQuery{UserId: c.UserId}
+func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
+	authInfoQuery := &models.GetAuthInfoQuery{UserId: c.UserId}
 	if err := bus.Dispatch(authInfoQuery); err != nil {
-		logger.Error("Error feching oauth information for user", "error", err)
+		logger.Error("Error fetching oauth information for user", "userid", c.UserId, "username", c.Login, "error", err)
 		return
 	}
 
-	provider := authInfoQuery.Result.AuthModule
-	connect, ok := social.SocialMap[strings.TrimPrefix(provider, "oauth_")] // The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
-	if !ok {
-		logger.Error("Failed to find oauth provider with given name", "provider", provider)
+	authProvider := authInfoQuery.Result.AuthModule
+	connect, err := social.GetConnector(authProvider)
+	if err != nil {
+		logger.Error("Failed to get OAuth connector", "error", err)
 		return
 	}
 
-	// TokenSource handles refreshing the token if it has expired
-	token, err := connect.TokenSource(c.Req.Context(), &oauth2.Token{
+	persistedToken := &oauth2.Token{
 		AccessToken:  authInfoQuery.Result.OAuthAccessToken,
 		Expiry:       authInfoQuery.Result.OAuthExpiry,
 		RefreshToken: authInfoQuery.Result.OAuthRefreshToken,
 		TokenType:    authInfoQuery.Result.OAuthTokenType,
-	}).Token()
+	}
+
+	client, err := social.GetOAuthHttpClient(authProvider)
 	if err != nil {
-		logger.Error("Failed to retrieve access token from oauth provider", "provider", authInfoQuery.Result.AuthModule, "error", err)
+		logger.Error("Failed to create OAuth http client", "error", err)
+		return
+	}
+	oauthctx := context.WithValue(c.Req.Context(), oauth2.HTTPClient, client)
+
+	// TokenSource handles refreshing the token if it has expired
+	token, err := connect.TokenSource(oauthctx, persistedToken).Token()
+	if err != nil {
+		logger.Error("Failed to retrieve access token from OAuth provider", "provider", authInfoQuery.Result.AuthModule, "userid", c.UserId, "username", c.Login, "error", err)
 		return
 	}
 
 	// If the tokens are not the same, update the entry in the DB
-	if token.AccessToken != authInfoQuery.Result.OAuthAccessToken {
-		updateAuthCommand := &m.UpdateAuthInfoCommand{
+	if !tokensEq(persistedToken, token) {
+		updateAuthCommand := &models.UpdateAuthInfoCommand{
 			UserId:     authInfoQuery.Result.UserId,
 			AuthModule: authInfoQuery.Result.AuthModule,
 			AuthId:     authInfoQuery.Result.AuthId,
 			OAuthToken: token,
 		}
 		if err := bus.Dispatch(updateAuthCommand); err != nil {
-			logger.Error("Failed to update access token during token refresh", "error", err)
+			logger.Error("Failed to update auth info during token refresh", "userid", c.UserId, "username", c.Login, "error", err)
 			return
 		}
+		logger.Debug("Updated OAuth info while proxying an OAuth pass-thru request", "userid", c.UserId, "username", c.Login)
 	}
 	req.Header.Del("Authorization")
 	req.Header.Add("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
+}
+
+// tokensEq checks for OAuth2 token equivalence given the fields of the struct Grafana is interested in
+func tokensEq(t1, t2 *oauth2.Token) bool {
+	return t1.AccessToken == t2.AccessToken &&
+		t1.RefreshToken == t2.RefreshToken &&
+		t1.Expiry == t2.Expiry &&
+		t1.TokenType == t2.TokenType
 }

@@ -18,11 +18,19 @@ const builtInWords = [
 const metricNameRegexp = /([A-Za-z:][\w:]*)\b(?![\(\]{=!",])/g;
 const selectorRegexp = /{([^{]*)}/g;
 
-// addLabelToQuery('foo', 'bar', 'baz') => 'foo{bar="baz"}'
-export function addLabelToQuery(query: string, key: string, value: string, operator?: string): string {
+export function addLabelToQuery(
+  query: string,
+  key: string,
+  value: string | number,
+  operator?: string,
+  hasNoMetrics?: boolean
+): string {
   if (!key || !value) {
     throw new Error('Need label to add to query.');
   }
+
+  // We need to make sure that we convert the value back to string because it may be a number
+  const transformedValue = value === Infinity ? '+Inf' : value.toString();
 
   // Add empty selectors to bare metric names
   let previousWord: string;
@@ -35,7 +43,17 @@ export function addLabelToQuery(query: string, key: string, value: string, opera
     const isColonBounded = word.endsWith(':');
 
     previousWord = word;
-    if (!insideSelector && !isColonBounded && !previousWordIsKeyWord && builtInWords.indexOf(word) === -1) {
+
+    // with Prometheus datasource, adds an empty selector to a bare metric name
+    // but doesn't add it with Loki datasource so there are no unnecessary labels
+    // e.g. when the filter contains a dash (-) character inside
+    if (
+      !hasNoMetrics &&
+      !insideSelector &&
+      !isColonBounded &&
+      !previousWordIsKeyWord &&
+      builtInWords.indexOf(word) === -1
+    ) {
       return `${word}{}`;
     }
     return word;
@@ -50,7 +68,7 @@ export function addLabelToQuery(query: string, key: string, value: string, opera
   while (match) {
     const prefix = query.slice(lastIndex, match.index);
     const selector = match[1];
-    const selectorWithLabel = addLabelToSelector(selector, key, value, operator);
+    const selectorWithLabel = addLabelToSelector(selector, key, transformedValue, operator);
     lastIndex = match.index + match[1].length + 2;
     suffix = query.slice(match.index + match[0].length);
     parts.push(prefix, selectorWithLabel);
@@ -89,12 +107,6 @@ export function addLabelToSelector(selector: string, labelKey: string, labelValu
     .join(',');
 
   return `{${formatted}}`;
-}
-
-export function keepSelectorFilters(selector: string) {
-  // Remove all label-key between {} and return filters. If first character is space, remove it.
-  const filters = selector.replace(/\{(.*?)\}/g, '').replace(/^ /, '');
-  return filters;
 }
 
 function isPositionInsideChars(text: string, position: number, openChar: string, closeChar: string) {

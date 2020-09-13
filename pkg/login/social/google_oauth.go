@@ -12,22 +12,12 @@ import (
 
 type SocialGoogle struct {
 	*SocialBase
-	allowedDomains []string
-	hostedDomain   string
-	apiUrl         string
-	allowSignup    bool
+	hostedDomain string
+	apiUrl       string
 }
 
 func (s *SocialGoogle) Type() int {
 	return int(models.GOOGLE)
-}
-
-func (s *SocialGoogle) IsEmailAllowed(email string) bool {
-	return isEmailAllowed(email, s.allowedDomains)
-}
-
-func (s *SocialGoogle) IsSignupAllowed() bool {
-	return s.allowSignup
 }
 
 func (s *SocialGoogle) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {

@@ -5,241 +5,236 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-type mockedEc2 struct {
-	ec2iface.EC2API
-	Resp        ec2.DescribeInstancesOutput
-	RespRegions ec2.DescribeRegionsOutput
-}
-
-type mockedRGTA struct {
-	resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-	Resp resourcegroupstaggingapi.GetResourcesOutput
-}
-
-func (m mockedEc2) DescribeInstancesPages(in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
-	fn(&m.Resp, true)
-	return nil
-}
-func (m mockedEc2) DescribeRegions(in *ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error) {
-	return &m.RespRegions, nil
-}
-
-func (m mockedRGTA) GetResourcesPages(in *resourcegroupstaggingapi.GetResourcesInput, fn func(*resourcegroupstaggingapi.GetResourcesOutput, bool) bool) error {
-	fn(&m.Resp, true)
-	return nil
-}
-
-func TestCloudWatchMetrics(t *testing.T) {
-
-	Convey("When calling getMetricsForCustomMetrics", t, func() {
-		dsInfo := &DatasourceInfo{
-			Region:        "us-east-1",
-			Namespace:     "Foo",
-			Profile:       "default",
-			AssumeRoleArn: "",
-		}
-		f := func(dsInfo *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
-			return cloudwatch.ListMetricsOutput{
-				Metrics: []*cloudwatch.Metric{
-					{
-						MetricName: aws.String("Test_MetricName"),
-						Dimensions: []*cloudwatch.Dimension{
-							{
-								Name: aws.String("Test_DimensionName"),
-							},
-						},
-					},
-				},
-			}, nil
-		}
-		metrics, _ := getMetricsForCustomMetrics(dsInfo, f)
-
-		Convey("Should contain Test_MetricName", func() {
-			So(metrics, ShouldContain, "Test_MetricName")
-		})
+func TestQuery_Metrics(t *testing.T) {
+	origNewCWClient := newCWClient
+	t.Cleanup(func() {
+		newCWClient = origNewCWClient
 	})
 
-	Convey("When calling getDimensionsForCustomMetrics", t, func() {
-		dsInfo := &DatasourceInfo{
-			Region:        "us-east-1",
-			Namespace:     "Foo",
-			Profile:       "default",
-			AssumeRoleArn: "",
-		}
-		f := func(dsInfo *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
-			return cloudwatch.ListMetricsOutput{
-				Metrics: []*cloudwatch.Metric{
-					{
-						MetricName: aws.String("Test_MetricName"),
-						Dimensions: []*cloudwatch.Dimension{
-							{
-								Name: aws.String("Test_DimensionName"),
-							},
-						},
-					},
-				},
-			}, nil
-		}
-		dimensionKeys, _ := getDimensionsForCustomMetrics(dsInfo, f)
+	var client fakeCWClient
 
-		Convey("Should contain Test_DimensionName", func() {
-			So(dimensionKeys, ShouldContain, "Test_DimensionName")
-		})
-	})
+	newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
+		return client
+	}
 
-	Convey("When calling handleGetRegions", t, func() {
-		executor := &CloudWatchExecutor{
-			ec2Svc: mockedEc2{RespRegions: ec2.DescribeRegionsOutput{
-				Regions: []*ec2.Region{
-					{
-						RegionName: aws.String("ap-northeast-2"),
-					},
-				},
-			}},
-		}
-		jsonData := simplejson.New()
-		jsonData.Set("defaultRegion", "default")
-		executor.DataSource = &models.DataSource{
-			JsonData:       jsonData,
-			SecureJsonData: securejsondata.SecureJsonData{},
-		}
-
-		result, _ := executor.handleGetRegions(context.Background(), simplejson.New(), &tsdb.TsdbQuery{})
-
-		Convey("Should return regions", func() {
-			So(result[0].Text, ShouldEqual, "ap-east-1")
-			So(result[1].Text, ShouldEqual, "ap-northeast-1")
-			So(result[2].Text, ShouldEqual, "ap-northeast-2")
-		})
-	})
-
-	Convey("When calling handleGetEc2InstanceAttribute", t, func() {
-		executor := &CloudWatchExecutor{
-			ec2Svc: mockedEc2{Resp: ec2.DescribeInstancesOutput{
-				Reservations: []*ec2.Reservation{
-					{
-						Instances: []*ec2.Instance{
-							{
-								InstanceId: aws.String("i-12345678"),
-								Tags: []*ec2.Tag{
-									{
-										Key:   aws.String("Environment"),
-										Value: aws.String("production"),
-									},
-								},
-							},
-						},
-					},
-				},
-			}},
-		}
-
-		json := simplejson.New()
-		json.Set("region", "us-east-1")
-		json.Set("attributeName", "InstanceId")
-		filters := make(map[string]interface{})
-		filters["tag:Environment"] = []string{"production"}
-		json.Set("filters", filters)
-		result, _ := executor.handleGetEc2InstanceAttribute(context.Background(), json, &tsdb.TsdbQuery{})
-
-		Convey("Should equal production InstanceId", func() {
-			So(result[0].Text, ShouldEqual, "i-12345678")
-		})
-	})
-
-	Convey("When calling handleGetEbsVolumeIds", t, func() {
-
-		executor := &CloudWatchExecutor{
-			ec2Svc: mockedEc2{Resp: ec2.DescribeInstancesOutput{
-				Reservations: []*ec2.Reservation{
-					{
-						Instances: []*ec2.Instance{
-							{
-								InstanceId: aws.String("i-1"),
-								BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
-									{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-1")}},
-									{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-2")}},
-								},
-							},
-							{
-								InstanceId: aws.String("i-2"),
-								BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
-									{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-1")}},
-									{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-2")}},
-								},
-							},
-						},
-					},
-					{
-						Instances: []*ec2.Instance{
-							{
-								InstanceId: aws.String("i-3"),
-								BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
-									{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-1")}},
-									{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-2")}},
-								},
-							},
-							{
-								InstanceId: aws.String("i-4"),
-								BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
-									{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-1")}},
-									{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-2")}},
-								},
-							},
-						},
-					},
-				},
-			}},
-		}
-
-		json := simplejson.New()
-		json.Set("region", "us-east-1")
-		json.Set("instanceId", "{i-1, i-2, i-3, i-4}")
-		result, _ := executor.handleGetEbsVolumeIds(context.Background(), json, &tsdb.TsdbQuery{})
-
-		Convey("Should return all 8 VolumeIds", func() {
-			So(len(result), ShouldEqual, 8)
-			So(result[0].Text, ShouldEqual, "vol-1-1")
-			So(result[1].Text, ShouldEqual, "vol-1-2")
-			So(result[2].Text, ShouldEqual, "vol-2-1")
-			So(result[3].Text, ShouldEqual, "vol-2-2")
-			So(result[4].Text, ShouldEqual, "vol-3-1")
-			So(result[5].Text, ShouldEqual, "vol-3-2")
-			So(result[6].Text, ShouldEqual, "vol-4-1")
-			So(result[7].Text, ShouldEqual, "vol-4-2")
-		})
-	})
-
-	Convey("When calling handleGetResourceArns", t, func() {
-		executor := &CloudWatchExecutor{
-			rgtaSvc: mockedRGTA{
-				Resp: resourcegroupstaggingapi.GetResourcesOutput{
-					ResourceTagMappingList: []*resourcegroupstaggingapi.ResourceTagMapping{
+	t.Run("Custom metrics", func(t *testing.T) {
+		client = fakeCWClient{
+			metrics: []*cloudwatch.Metric{
+				{
+					MetricName: aws.String("Test_MetricName"),
+					Dimensions: []*cloudwatch.Dimension{
 						{
-							ResourceARN: aws.String("arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567"),
-							Tags: []*resourcegroupstaggingapi.Tag{
+							Name: aws.String("Test_DimensionName"),
+						},
+					},
+				},
+			},
+		}
+		executor := newExecutor()
+		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
+			Queries: []*tsdb.Query{
+				{
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"type":      "metricFindQuery",
+						"subtype":   "metrics",
+						"region":    "us-east-1",
+						"namespace": "custom",
+					}),
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"": {
+					Meta: simplejson.NewFromAny(map[string]interface{}{
+						"rowCount": 1,
+					}),
+					Tables: []*tsdb.Table{
+						{
+							Columns: []tsdb.TableColumn{
 								{
-									Key:   aws.String("Environment"),
-									Value: aws.String("production"),
+									Text: "text",
+								},
+								{
+									Text: "value",
+								},
+							},
+							Rows: []tsdb.RowValues{
+								{
+									"Test_MetricName",
+									"Test_MetricName",
 								},
 							},
 						},
+					},
+				},
+			},
+		}, resp)
+	})
+
+	t.Run("Dimension keys for custom metrics", func(t *testing.T) {
+		client = fakeCWClient{
+			metrics: []*cloudwatch.Metric{
+				{
+					MetricName: aws.String("Test_MetricName"),
+					Dimensions: []*cloudwatch.Dimension{
 						{
-							ResourceARN: aws.String("arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321"),
-							Tags: []*resourcegroupstaggingapi.Tag{
+							Name: aws.String("Test_DimensionName"),
+						},
+					},
+				},
+			},
+		}
+		executor := newExecutor()
+		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
+			Queries: []*tsdb.Query{
+				{
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"type":      "metricFindQuery",
+						"subtype":   "dimension_keys",
+						"region":    "us-east-1",
+						"namespace": "custom",
+					}),
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"": {
+					Meta: simplejson.NewFromAny(map[string]interface{}{
+						"rowCount": 1,
+					}),
+					Tables: []*tsdb.Table{
+						{
+							Columns: []tsdb.TableColumn{
+								{
+									Text: "text",
+								},
+								{
+									Text: "value",
+								},
+							},
+							Rows: []tsdb.RowValues{
+								{
+									"Test_DimensionName",
+									"Test_DimensionName",
+								},
+							},
+						},
+					},
+				},
+			},
+		}, resp)
+	})
+}
+
+func TestQuery_Regions(t *testing.T) {
+	origNewEC2Client := newEC2Client
+	t.Cleanup(func() {
+		newEC2Client = origNewEC2Client
+	})
+
+	var cli fakeEC2Client
+
+	newEC2Client = func(client.ConfigProvider) ec2iface.EC2API {
+		return cli
+	}
+
+	t.Run("An extra region", func(t *testing.T) {
+		const regionName = "xtra-region"
+		cli = fakeEC2Client{
+			regions: []string{regionName},
+		}
+		executor := newExecutor()
+		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
+			Queries: []*tsdb.Query{
+				{
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"type":      "metricFindQuery",
+						"subtype":   "regions",
+						"region":    "us-east-1",
+						"namespace": "custom",
+					}),
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		rows := []tsdb.RowValues{}
+		for _, region := range knownRegions {
+			rows = append(rows, []interface{}{
+				region,
+				region,
+			})
+		}
+		rows = append(rows, []interface{}{
+			regionName,
+			regionName,
+		})
+		assert.Equal(t, &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"": {
+					Meta: simplejson.NewFromAny(map[string]interface{}{
+						"rowCount": len(knownRegions) + 1,
+					}),
+					Tables: []*tsdb.Table{
+						{
+							Columns: []tsdb.TableColumn{
+								{
+									Text: "text",
+								},
+								{
+									Text: "value",
+								},
+							},
+							Rows: rows,
+						},
+					},
+				},
+			},
+		}, resp)
+	})
+}
+
+func TestQuery_InstanceAttributes(t *testing.T) {
+	origNewEC2Client := newEC2Client
+	t.Cleanup(func() {
+		newEC2Client = origNewEC2Client
+	})
+
+	var cli fakeEC2Client
+
+	newEC2Client = func(client.ConfigProvider) ec2iface.EC2API {
+		return cli
+	}
+
+	t.Run("Get instance ID", func(t *testing.T) {
+		const instanceID = "i-12345678"
+		cli = fakeEC2Client{
+			reservations: []*ec2.Reservation{
+				{
+					Instances: []*ec2.Instance{
+						{
+							InstanceId: aws.String(instanceID),
+							Tags: []*ec2.Tag{
 								{
 									Key:   aws.String("Environment"),
 									Value: aws.String("production"),
@@ -250,36 +245,257 @@ func TestCloudWatchMetrics(t *testing.T) {
 				},
 			},
 		}
-
-		json := simplejson.New()
-		json.Set("region", "us-east-1")
-		json.Set("resourceType", "ec2:instance")
-		tags := make(map[string]interface{})
-		tags["Environment"] = []string{"production"}
-		json.Set("tags", tags)
-		result, _ := executor.handleGetResourceArns(context.Background(), json, &tsdb.TsdbQuery{})
-
-		Convey("Should return all two instances", func() {
-			So(result[0].Text, ShouldEqual, "arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567")
-			So(result[0].Value, ShouldEqual, "arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567")
-			So(result[1].Text, ShouldEqual, "arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321")
-			So(result[1].Value, ShouldEqual, "arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321")
-
+		executor := newExecutor()
+		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
+			Queries: []*tsdb.Query{
+				{
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"type":          "metricFindQuery",
+						"subtype":       "ec2_instance_attribute",
+						"region":        "us-east-1",
+						"attributeName": "InstanceId",
+						"filters": map[string]interface{}{
+							"tag:Environment": []string{"production"},
+						},
+					}),
+				},
+			},
 		})
+		require.NoError(t, err)
+
+		assert.Equal(t, &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"": {
+					Meta: simplejson.NewFromAny(map[string]interface{}{
+						"rowCount": 1,
+					}),
+					Tables: []*tsdb.Table{
+						{
+							Columns: []tsdb.TableColumn{
+								{
+									Text: "text",
+								},
+								{
+									Text: "value",
+								},
+							},
+							Rows: []tsdb.RowValues{
+								{
+									instanceID,
+									instanceID,
+								},
+							},
+						},
+					},
+				},
+			},
+		}, resp)
 	})
 }
 
-func TestParseMultiSelectValue(t *testing.T) {
-	values := parseMultiSelectValue(" i-someInstance ")
-	assert.Equal(t, []string{"i-someInstance"}, values)
+func TestQuery_EBSVolumeIDs(t *testing.T) {
+	origNewEC2Client := newEC2Client
+	t.Cleanup(func() {
+		newEC2Client = origNewEC2Client
+	})
 
-	values = parseMultiSelectValue("{i-05}")
-	assert.Equal(t, []string{"i-05"}, values)
+	var cli fakeEC2Client
 
-	values = parseMultiSelectValue(" {i-01, i-03, i-04} ")
-	assert.Equal(t, []string{"i-01", "i-03", "i-04"}, values)
+	newEC2Client = func(client.ConfigProvider) ec2iface.EC2API {
+		return cli
+	}
 
-	values = parseMultiSelectValue("i-{01}")
-	assert.Equal(t, []string{"i-{01}"}, values)
+	t.Run("", func(t *testing.T) {
+		const instanceIDs = "{i-1, i-2, i-3}"
 
+		cli = fakeEC2Client{
+			reservations: []*ec2.Reservation{
+				{
+					Instances: []*ec2.Instance{
+						{
+							InstanceId: aws.String("i-1"),
+							BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-1")}},
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-1-2")}},
+							},
+						},
+						{
+							InstanceId: aws.String("i-2"),
+							BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-1")}},
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-2-2")}},
+							},
+						},
+					},
+				},
+				{
+					Instances: []*ec2.Instance{
+						{
+							InstanceId: aws.String("i-3"),
+							BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-1")}},
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-3-2")}},
+							},
+						},
+						{
+							InstanceId: aws.String("i-4"),
+							BlockDeviceMappings: []*ec2.InstanceBlockDeviceMapping{
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-1")}},
+								{Ebs: &ec2.EbsInstanceBlockDevice{VolumeId: aws.String("vol-4-2")}},
+							},
+						},
+					},
+				},
+			},
+		}
+		executor := newExecutor()
+		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
+			Queries: []*tsdb.Query{
+				{
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"type":       "metricFindQuery",
+						"subtype":    "ebs_volume_ids",
+						"region":     "us-east-1",
+						"instanceId": instanceIDs,
+					}),
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"": {
+					Meta: simplejson.NewFromAny(map[string]interface{}{
+						"rowCount": 6,
+					}),
+					Tables: []*tsdb.Table{
+						{
+							Columns: []tsdb.TableColumn{
+								{
+									Text: "text",
+								},
+								{
+									Text: "value",
+								},
+							},
+							Rows: []tsdb.RowValues{
+								{
+									"vol-1-1",
+									"vol-1-1",
+								},
+								{
+									"vol-1-2",
+									"vol-1-2",
+								},
+								{
+									"vol-2-1",
+									"vol-2-1",
+								},
+								{
+									"vol-2-2",
+									"vol-2-2",
+								},
+								{
+									"vol-3-1",
+									"vol-3-1",
+								},
+								{
+									"vol-3-2",
+									"vol-3-2",
+								},
+							},
+						},
+					},
+				},
+			},
+		}, resp)
+	})
+}
+
+func TestQuery_ResourceARNs(t *testing.T) {
+	origNewRGTAClient := newRGTAClient
+	t.Cleanup(func() {
+		newRGTAClient = origNewRGTAClient
+	})
+
+	var cli fakeRGTAClient
+
+	newRGTAClient = func(client.ConfigProvider) resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI {
+		return cli
+	}
+
+	t.Run("", func(t *testing.T) {
+		cli = fakeRGTAClient{
+			tagMapping: []*resourcegroupstaggingapi.ResourceTagMapping{
+				{
+					ResourceARN: aws.String("arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567"),
+					Tags: []*resourcegroupstaggingapi.Tag{
+						{
+							Key:   aws.String("Environment"),
+							Value: aws.String("production"),
+						},
+					},
+				},
+				{
+					ResourceARN: aws.String("arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321"),
+					Tags: []*resourcegroupstaggingapi.Tag{
+						{
+							Key:   aws.String("Environment"),
+							Value: aws.String("production"),
+						},
+					},
+				},
+			},
+		}
+		executor := newExecutor()
+		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
+			Queries: []*tsdb.Query{
+				{
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"type":         "metricFindQuery",
+						"subtype":      "resource_arns",
+						"region":       "us-east-1",
+						"resourceType": "ec2:instance",
+						"tags": map[string]interface{}{
+							"Environment": []string{"production"},
+						},
+					}),
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				"": {
+					Meta: simplejson.NewFromAny(map[string]interface{}{
+						"rowCount": 2,
+					}),
+					Tables: []*tsdb.Table{
+						{
+							Columns: []tsdb.TableColumn{
+								{
+									Text: "text",
+								},
+								{
+									Text: "value",
+								},
+							},
+							Rows: []tsdb.RowValues{
+								{
+									"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",
+									"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",
+								},
+								{
+									"arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321",
+									"arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321",
+								},
+							},
+						},
+					},
+				},
+			},
+		}, resp)
+	})
 }

@@ -21,15 +21,25 @@ exports[`Render should disable insights api key input 1`] = `
         >
           API Key
         </Component>
+        <Input
+          className="width-25"
+          disabled={true}
+          placeholder="configured"
+        />
+      </div>
+      <div
+        className="gf-form"
+      >
         <div
-          className="width-15"
+          className="max-width-30 gf-form-inline"
         >
-          <Input
-            className="width-30"
-            onChange={[Function]}
-            placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-            value="e7f3f775-a987-4b3f-3835-51c4f982kl48"
-          />
+          <Button
+            onClick={[Function]}
+            type="button"
+            variant="secondary"
+          >
+            reset
+          </Button>
         </div>
       </div>
     </div>
@@ -49,8 +59,7 @@ exports[`Render should disable insights api key input 1`] = `
         >
           <Input
             className="width-30"
-            onChange={[Function]}
-            value="cvvcc020-2cpo-123a-a3d0-df6547fki792"
+            value="cddcc020-2c94-460a-a3d0-df3147ffa792"
           />
         </div>
       </div>
@@ -85,9 +94,8 @@ exports[`Render should enable insights api key input 1`] = `
         >
           <Input
             className="width-30"
-            onChange={[Function]}
             placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-            value="e7f3f775-a987-4b3f-3835-51c4f982kl48"
+            value="e7f3f661-a933-4b3f-8176-51c4f982ec48"
           />
         </div>
       </div>
@@ -108,8 +116,7 @@ exports[`Render should enable insights api key input 1`] = `
         >
           <Input
             className="width-30"
-            onChange={[Function]}
-            value="cvvcc020-2cpo-123a-a3d0-df6547fki792"
+            value="cddcc020-2c94-460a-a3d0-df3147ffa792"
           />
         </div>
       </div>
@@ -144,9 +151,8 @@ exports[`Render should render component 1`] = `
         >
           <Input
             className="width-30"
-            onChange={[Function]}
             placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-            value="e7f3f775-a987-4b3f-3835-51c4f982kl48"
+            value=""
           />
         </div>
       </div>
@@ -167,8 +173,7 @@ exports[`Render should render component 1`] = `
         >
           <Input
             className="width-30"
-            onChange={[Function]}
-            value="cvvcc020-2cpo-123a-a3d0-df6547fki792"
+            value=""
           />
         </div>
       </div>

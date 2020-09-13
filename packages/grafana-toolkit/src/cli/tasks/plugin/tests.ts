@@ -1,6 +1,6 @@
 import * as jestCLI from 'jest-cli';
 import { useSpinner } from '../../utils/useSpinner';
-import { jestConfig } from '../../../config/jest.plugin.config';
+import { loadJestPluginConfig } from '../../../config/jest.plugin.config';
 
 export interface PluginTestOptions {
   updateSnapshot: boolean;
@@ -13,7 +13,7 @@ export interface PluginTestOptions {
 export const testPlugin = useSpinner<PluginTestOptions>(
   'Running tests',
   async ({ updateSnapshot, coverage, watch, testPathPattern, testNamePattern }) => {
-    const testConfig = jestConfig();
+    const testConfig = loadJestPluginConfig();
 
     const cliConfig = {
       config: JSON.stringify(testConfig),

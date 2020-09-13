@@ -16,6 +16,8 @@ type SystemStats struct {
 	Folders               int64
 	ProvisionedDashboards int64
 	AuthTokens            int64
+	DashboardVersions     int64
+	Annotations           int64
 
 	Admins         int
 	Editors        int
@@ -88,4 +90,17 @@ type SystemUserCountStats struct {
 
 type GetSystemUserCountStatsQuery struct {
 	Result *SystemUserCountStats
+}
+
+type UserStats struct {
+	Users   int64
+	Admins  int64
+	Editors int64
+	Viewers int64
+}
+
+type GetUserStatsQuery struct {
+	MustUpdate bool
+	Active     bool
+	Result     UserStats
 }

@@ -1,7 +1,9 @@
 package commands
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/bus"
@@ -16,17 +18,32 @@ import (
 const AdminUserId = 1
 
 func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SqlStore) error {
-	newPassword := c.Args().First()
+	newPassword := ""
+
+	if c.Bool("password-from-stdin") {
+		logger.Infof("New Password: ")
+
+		scanner := bufio.NewScanner(os.Stdin)
+		if ok := scanner.Scan(); !ok {
+			if err := scanner.Err(); err != nil {
+				return fmt.Errorf("can't read password from stdin: %w", err)
+			}
+			return fmt.Errorf("can't read password from stdin")
+		}
+		newPassword = scanner.Text()
+	} else {
+		newPassword = c.Args().First()
+	}
 
 	password := models.Password(newPassword)
 	if password.IsWeak() {
-		return fmt.Errorf("New password is too short")
+		return fmt.Errorf("new password is too short")
 	}
 
 	userQuery := models.GetUserByIdQuery{Id: AdminUserId}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
-		return fmt.Errorf("Could not read user from database. Error: %v", err)
+		return fmt.Errorf("could not read user from database. Error: %v", err)
 	}
 
 	passwordHashed, err := util.EncodePassword(newPassword, userQuery.Result.Salt)
@@ -40,7 +57,7 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SqlStore) erro
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return errutil.Wrapf(err, "Failed to update user password")
+		return errutil.Wrapf(err, "failed to update user password")
 	}
 
 	logger.Infof("\n")

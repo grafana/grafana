@@ -37,7 +37,6 @@ func TestProvisioningServiceImpl(t *testing.T) {
 
 		assert.False(t, serviceTest.serviceRunning, "Service should not be running")
 		assert.Equal(t, context.Canceled, serviceTest.serviceError, "Service should have returned canceled error")
-
 	})
 
 	t.Run("Failed reloading does not stop polling with old provisioned", func(t *testing.T) {
@@ -75,7 +74,7 @@ type serviceTestStruct struct {
 	startService func()
 	cancel       func()
 
-	mock    *dashboards.DashboardProvisionerMock
+	mock    *dashboards.ProvisionerMock
 	service *provisioningServiceImpl
 }
 
@@ -92,9 +91,10 @@ func setup() *serviceTestStruct {
 	}
 
 	serviceTest.service = NewProvisioningServiceImpl(
-		func(path string) (DashboardProvisioner, error) {
+		func(path string) (dashboards.DashboardProvisioner, error) {
 			return serviceTest.mock, nil
 		},
+		nil,
 		nil,
 		nil,
 	)

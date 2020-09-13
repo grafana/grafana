@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 import { shuffle } from 'lodash';
 import { ExploreStartPageProps, DataQuery } from '@grafana/data';
 import LokiLanguageProvider from '../language_provider';
-import { ExploreMode } from 'app/types';
 
 const DEFAULT_EXAMPLES = ['{job="default/prometheus"}'];
 const PREFERRED_LABELS = ['job', 'app', 'k8s_app'];
@@ -47,7 +46,7 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
 
   checkUserLabels = async () => {
     // Set example from user labels
-    const provider: LokiLanguageProvider = this.props.datasource.languageProvider;
+    const provider: LokiLanguageProvider = this.props.datasource?.languageProvider;
     if (provider.started) {
       const labels = provider.getLabelKeys() || [];
       const preferredLabel = PREFERRED_LABELS.find(l => labels.includes(l));
@@ -77,11 +76,11 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
     );
   }
 
-  renderLogsCheatSheet() {
+  render() {
     const { userExamples } = this.state;
 
     return (
-      <>
+      <div>
         <h2>Loki Cheat Sheet</h2>
         <div className="cheat-sheet-item">
           <div className="cheat-sheet-item__title">See your logs</div>
@@ -115,14 +114,6 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
             supports exact and regular expression filters.
           </div>
         </div>
-      </>
-    );
-  }
-
-  renderMetricsCheatSheet() {
-    return (
-      <div>
-        <h2>LogQL Cheat Sheet</h2>
         {LOGQL_EXAMPLES.map(item => (
           <div className="cheat-sheet-item" key={item.expression}>
             <div className="cheat-sheet-item__title">{item.title}</div>
@@ -132,11 +123,5 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
         ))}
       </div>
     );
-  }
-
-  render() {
-    const { exploreMode } = this.props;
-
-    return exploreMode === ExploreMode.Logs ? this.renderLogsCheatSheet() : this.renderMetricsCheatSheet();
   }
 }

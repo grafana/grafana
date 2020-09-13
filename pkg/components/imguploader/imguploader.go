@@ -4,12 +4,16 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const pngExt = ".png"
+const (
+	pngExt                         = ".png"
+	defaultSGcsSignedUrlExpiration = 7 * 24 * time.Hour //7 days
+)
 
 type ImageUploader interface {
 	Upload(ctx context.Context, path string) (string, error)
@@ -27,7 +31,6 @@ var (
 )
 
 func NewImageUploader() (ImageUploader, error) {
-
 	switch setting.ImageUploadProvider {
 	case "s3":
 		s3sec, err := setting.Raw.GetSection("external_image_storage.s3")
@@ -35,6 +38,8 @@ func NewImageUploader() (ImageUploader, error) {
 			return nil, err
 		}
 
+		endpoint := s3sec.Key("endpoint").MustString("")
+		pathStyleAccess := s3sec.Key("path_style_access").MustBool(false)
 		bucket := s3sec.Key("bucket").MustString("")
 		region := s3sec.Key("region").MustString("")
 		path := s3sec.Key("path").MustString("")
@@ -55,7 +60,7 @@ func NewImageUploader() (ImageUploader, error) {
 			region = info.region
 		}
 
-		return NewS3Uploader(region, bucket, path, "public-read", accessKey, secretKey), nil
+		return NewS3Uploader(endpoint, region, bucket, path, "public-read", accessKey, secretKey, pathStyleAccess), nil
 	case "webdav":
 		webdavSec, err := setting.Raw.GetSection("external_image_storage.webdav")
 		if err != nil {
@@ -81,8 +86,10 @@ func NewImageUploader() (ImageUploader, error) {
 		keyFile := gcssec.Key("key_file").MustString("")
 		bucketName := gcssec.Key("bucket").MustString("")
 		path := gcssec.Key("path").MustString("")
+		enableSignedUrls := gcssec.Key("enable_signed_urls").MustBool(false)
+		signedUrlExpiration := gcssec.Key("signed_url_expiration").MustString(defaultSGcsSignedUrlExpiration.String())
 
-		return NewGCSUploader(keyFile, bucketName, path), nil
+		return NewGCSUploader(keyFile, bucketName, path, enableSignedUrls, signedUrlExpiration)
 	case "azure_blob":
 		azureBlobSec, err := setting.Raw.GetSection("external_image_storage.azure_blob")
 		if err != nil {

@@ -61,10 +61,10 @@ export class ThresholdFormCtrl {
   onThresholdTypeChange(index: number) {
     // Because of the ng-model binding, threshold's color mode is already set here
     if (this.panel.thresholds[index].colorMode === 'custom') {
-      this.panel.thresholds[index].fillColor = tinycolor(config.theme.colors.blueBase)
+      this.panel.thresholds[index].fillColor = tinycolor(config.theme.palette.blue85)
         .setAlpha(0.2)
         .toRgbString();
-      this.panel.thresholds[index].lineColor = tinycolor(config.theme.colors.blueShade)
+      this.panel.thresholds[index].lineColor = tinycolor(config.theme.palette.blue77)
         .setAlpha(0.6)
         .toRgbString();
     }

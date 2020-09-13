@@ -95,6 +95,29 @@ func TestCloudWatchQuery(t *testing.T) {
 			})
 		})
 
+		Convey("and query has a multi-valued dimension", func() {
+			query := &cloudWatchQuery{
+				RefId:      "A",
+				Region:     "us-east-1",
+				Expression: "",
+				Stats:      "Average",
+				Period:     300,
+				Id:         "id1",
+				Dimensions: map[string][]string{
+					"InstanceId":   {"i-12345678", "i-12345679"},
+					"InstanceType": {"abc"},
+				},
+			}
+
+			Convey("it is a search expression", func() {
+				So(query.isSearchExpression(), ShouldBeTrue)
+			})
+
+			Convey("it is a multi-valued dimension expression", func() {
+				So(query.isMultiValuedDimensionExpression(), ShouldBeTrue)
+			})
+		})
+
 		Convey("and no dimensions were added", func() {
 			query := &cloudWatchQuery{
 				RefId:      "A",
@@ -119,7 +142,6 @@ func TestCloudWatchQuery(t *testing.T) {
 				Convey("it is not metric stat", func() {
 					So(query.isMetricStat(), ShouldBeFalse)
 				})
-
 			})
 
 			Convey("and match exact is true", func() {
@@ -135,7 +157,6 @@ func TestCloudWatchQuery(t *testing.T) {
 				Convey("it is a metric stat", func() {
 					So(query.isMetricStat(), ShouldBeTrue)
 				})
-
 			})
 		})
 

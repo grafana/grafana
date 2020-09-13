@@ -2,7 +2,7 @@
 title = "Alerting HTTP API "
 description = "Grafana Alerts HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "alerting", "alerts"]
-aliases = ["/http_api/alerting/"]
+aliases = ["/docs/grafana/latest/http_api/alerting/"]
 type = "docs"
 [menu.docs]
 name = "Alerting"

@@ -1,1 +1,0 @@
-export { FolderPickerCtrl } from './FolderPickerCtrl';

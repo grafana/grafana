@@ -14,9 +14,9 @@ const anyFieldMatcher: FieldMatcherInfo<MatcherConfig[]> = {
     const children = options.map(option => {
       return getFieldMatcher(option);
     });
-    return (field: Field) => {
+    return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
       for (const child of children) {
-        if (child(field)) {
+        if (child(field, frame, allFrames)) {
           return true;
         }
       }
@@ -82,9 +82,9 @@ const allFieldsMatcher: FieldMatcherInfo<MatcherConfig[]> = {
     const children = options.map(option => {
       return getFieldMatcher(option);
     });
-    return (field: Field) => {
+    return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
       for (const child of children) {
-        if (!child(field)) {
+        if (!child(field, frame, allFrames)) {
           return false;
         }
       }
@@ -147,8 +147,8 @@ const notFieldMatcher: FieldMatcherInfo<MatcherConfig> = {
 
   get: (option: MatcherConfig) => {
     const check = getFieldMatcher(option);
-    return (field: Field) => {
-      return !check(field);
+    return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
+      return !check(field, frame, allFrames);
     };
   },
 

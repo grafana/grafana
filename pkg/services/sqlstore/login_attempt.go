@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 var getTimeNow = time.Now
@@ -16,9 +16,9 @@ func init() {
 	bus.AddHandler("sql", GetUserLoginAttemptCount)
 }
 
-func CreateLoginAttempt(cmd *m.CreateLoginAttemptCommand) error {
+func CreateLoginAttempt(cmd *models.CreateLoginAttemptCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		loginAttempt := m.LoginAttempt{
+		loginAttempt := models.LoginAttempt{
 			Username:  cmd.Username,
 			IpAddress: cmd.IpAddress,
 			Created:   getTimeNow().Unix(),
@@ -34,7 +34,7 @@ func CreateLoginAttempt(cmd *m.CreateLoginAttemptCommand) error {
 	})
 }
 
-func DeleteOldLoginAttempts(cmd *m.DeleteOldLoginAttemptsCommand) error {
+func DeleteOldLoginAttempts(cmd *models.DeleteOldLoginAttemptsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var maxId int64
 		sql := "SELECT max(id) as id FROM login_attempt WHERE created < ?"
@@ -66,8 +66,8 @@ func DeleteOldLoginAttempts(cmd *m.DeleteOldLoginAttemptsCommand) error {
 	})
 }
 
-func GetUserLoginAttemptCount(query *m.GetUserLoginAttemptCountQuery) error {
-	loginAttempt := new(m.LoginAttempt)
+func GetUserLoginAttemptCount(query *models.GetUserLoginAttemptCountQuery) error {
+	loginAttempt := new(models.LoginAttempt)
 	total, err := x.
 		Where("username = ?", query.Username).
 		And("created >= ?", query.Since.Unix()).

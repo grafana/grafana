@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v6.2"
+title = "What's new in Grafana v6.2"
 description = "Feature and improvement highlights for Grafana v6.2"
-keywords = ["grafana", "new", "documentation", "6.2"]
+keywords = ["grafana", "new", "documentation", "6.2", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 6.2"
@@ -10,9 +10,9 @@ parent = "whatsnew"
 weight = -13
 +++
 
-# What's New in Grafana v6.2
+# What's new in Grafana v6.2
 
-For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
+For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 If you use a password for your data sources please read the [upgrade notes](/installation/upgrading/#upgrading-to-v6-2).
 
@@ -37,7 +37,7 @@ To mitigate the risk of sensitive information being cached in browser after a us
 
 ## Official support for Elasticsearch 7
 
-Grafana v6.2 ships with official support for Elasticsearch v7, see [Using Elasticsearch in Grafana](/features/datasources/elasticsearch/#elasticsearch-version) for more information.
+Grafana v6.2 ships with official support for Elasticsearch v7, see [Using Elasticsearch in Grafana]({{< relref "../features/datasources/elasticsearch/#elasticsearch-version" >}}) for more information.
 
 ## Bar Gauge Panel
 
@@ -80,7 +80,7 @@ to use the full panel height in case there is no panel title.
 This release contains a lot of small features and fixes:
 
 - Explore - Adds user time zone support, reconnect for failing data sources and a fix that prevents killing Prometheus instances when Histogram metrics are loaded.
-- Alerting - Adds support for configuring timeout durations and retries, see [configuration](/installation/configuration/#evaluation-timeout-seconds) for more information.
+- Alerting - Adds support for configuring timeout durations and retries, see [configuration](/administration/configuration/#evaluation-timeout-seconds) for more information.
 - Azure Monitor - Adds support for multiple subscriptions per data source.
 - Elasticsearch - A small bug fix to properly display percentiles metrics in table panel.
 - InfluxDB - Support for POST HTTP verb.

@@ -1,80 +1,110 @@
-// Libraries
 import React, { PureComponent } from 'react';
-
-// Utils & Services
-import { config } from 'app/core/config';
-
-// Types
-import { StatPanelOptions } from './types';
-import { VizRepeater, BigValue, DataLinksContextMenu, BigValueSparkline, BigValueGraphMode } from '@grafana/ui';
-
 import {
-  PanelProps,
-  getFieldDisplayValues,
-  FieldDisplay,
-  ReducerID,
-  getDisplayValueAlignmentFactors,
+  BigValue,
+  BigValueGraphMode,
+  BigValueSparkline,
+  DataLinksContextMenu,
+  VizRepeater,
+  VizRepeaterRenderValueProps,
+  BigValueTextMode,
+} from '@grafana/ui';
+import {
   DisplayValueAlignmentFactors,
-  VizOrientation,
+  FieldDisplay,
+  getDisplayValueAlignmentFactors,
+  getFieldDisplayValues,
+  PanelProps,
+  ReducerID,
 } from '@grafana/data';
 
-import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { config } from 'app/core/config';
+import { StatPanelOptions } from './types';
+import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 
 export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
-  renderValue = (
-    value: FieldDisplay,
-    width: number,
-    height: number,
-    alignmentFactors: DisplayValueAlignmentFactors
+  renderComponent = (
+    valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
+    menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
     const { timeRange, options } = this.props;
+    const { value, alignmentFactors, width, height, count } = valueProps;
+    const { openMenu, targetClassName } = menuProps;
     let sparkline: BigValueSparkline | undefined;
 
     if (value.sparkline) {
       sparkline = {
         data: value.sparkline,
-        minX: timeRange.from.valueOf(),
-        maxX: timeRange.to.valueOf(),
+        xMin: timeRange.from.valueOf(),
+        xMax: timeRange.to.valueOf(),
+        yMin: value.field.min,
+        yMax: value.field.max,
       };
 
-      const calc = options.fieldOptions.calcs[0];
+      const calc = options.reduceOptions.calcs[0];
       if (calc === ReducerID.last) {
         sparkline.highlightIndex = sparkline.data.length - 1;
       }
     }
 
     return (
-      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
-        {({ openMenu, targetClassName }) => {
-          return (
-            <BigValue
-              value={value.display}
-              sparkline={sparkline}
-              colorMode={options.colorMode}
-              graphMode={options.graphMode}
-              justifyMode={options.justifyMode}
-              alignmentFactors={alignmentFactors}
-              width={width}
-              height={height}
-              theme={config.theme}
-              onClick={openMenu}
-              className={targetClassName}
-            />
-          );
-        }}
-      </DataLinksContextMenu>
+      <BigValue
+        value={value.display}
+        count={count}
+        sparkline={sparkline}
+        colorMode={options.colorMode}
+        graphMode={options.graphMode}
+        justifyMode={options.justifyMode}
+        textMode={this.getTextMode()}
+        alignmentFactors={alignmentFactors}
+        width={width}
+        height={height}
+        theme={config.theme}
+        onClick={openMenu}
+        className={targetClassName}
+      />
     );
   };
 
+  getTextMode() {
+    const { options, fieldConfig, title } = this.props;
+
+    // If we have manually set displayName or panel title switch text mode to value and name
+    if (options.textMode === BigValueTextMode.Auto && (fieldConfig.defaults.displayName || !title)) {
+      return BigValueTextMode.ValueAndName;
+    }
+
+    return options.textMode;
+  }
+
+  renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
+    const { value } = valueProps;
+    const { getLinks, hasLinks } = value;
+
+    if (hasLinks && getLinks) {
+      return (
+        <DataLinksContextMenu links={getLinks}>
+          {api => {
+            return this.renderComponent(valueProps, api);
+          }}
+        </DataLinksContextMenu>
+      );
+    }
+
+    return this.renderComponent(valueProps, {});
+  };
+
   getValues = (): FieldDisplay[] => {
-    const { data, options, replaceVariables } = this.props;
+    const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
 
     return getFieldDisplayValues({
-      ...options,
+      fieldConfig,
+      reduceOptions: options.reduceOptions,
       replaceVariables,
       theme: config.theme,
       data: data.series,
       sparkline: options.graphMode !== BigValueGraphMode.None,
+      autoMinMax: true,
+      timeZone,
     });
   };
 
@@ -89,24 +119,11 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         width={width}
         height={height}
         source={data}
+        itemSpacing={3}
         renderCounter={renderCounter}
-        orientation={getOrientation(width, height, options.orientation)}
+        autoGrid={true}
+        orientation={options.orientation}
       />
     );
-  }
-}
-
-/**
- * Stat panel custom auto orientation
- */
-function getOrientation(width: number, height: number, orientation: VizOrientation): VizOrientation {
-  if (orientation !== VizOrientation.Auto) {
-    return orientation;
-  }
-
-  if (width / height > 2) {
-    return VizOrientation.Vertical;
-  } else {
-    return VizOrientation.Horizontal;
   }
 }

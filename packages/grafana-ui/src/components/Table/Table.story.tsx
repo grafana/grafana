@@ -1,17 +1,19 @@
 import React from 'react';
-import { Table } from './Table';
+import { merge } from 'lodash';
+import { Table } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { number } from '@storybook/addon-knobs';
 import { useTheme } from '../../themes';
 import mdx from './Table.mdx';
 import {
+  applyFieldOverrides,
   DataFrame,
-  MutableDataFrame,
   FieldType,
   GrafanaTheme,
-  applyFieldOverrides,
-  FieldMatcherID,
-  ConfigOverrideRule,
+  MutableDataFrame,
+  ThresholdsConfig,
+  ThresholdsMode,
+  FieldConfig,
 } from '@grafana/data';
 
 export default {
@@ -25,7 +27,7 @@ export default {
   },
 };
 
-function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFrame {
+function buildData(theme: GrafanaTheme, config: Record<string, FieldConfig>): DataFrame {
   const data = new MutableDataFrame({
     fields: [
       { name: 'Time', type: FieldType.time, values: [] }, // The time field
@@ -37,6 +39,7 @@ function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFr
           decimals: 0,
           custom: {
             align: 'center',
+            width: 80,
           },
         },
       },
@@ -55,13 +58,19 @@ function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFr
         values: [],
         config: {
           unit: 'percent',
+          min: 0,
+          max: 100,
           custom: {
-            width: 50,
+            width: 150,
           },
         },
       },
     ],
   });
+
+  for (const field of data.fields) {
+    field.config = merge(field.config, config[field.name]);
+  }
 
   for (let i = 0; i < 1000; i++) {
     data.appendRow([
@@ -75,19 +84,34 @@ function buildData(theme: GrafanaTheme, overrides: ConfigOverrideRule[]): DataFr
 
   return applyFieldOverrides({
     data: [data],
-    fieldOptions: {
-      overrides,
+    fieldConfig: {
+      overrides: [],
       defaults: {},
     },
     theme,
     replaceVariables: (value: string) => value,
+    getDataSourceSettingsByUid: (value: string) => ({} as any),
   })[0];
 }
+
+const defaultThresholds: ThresholdsConfig = {
+  steps: [
+    {
+      color: 'blue',
+      value: -Infinity,
+    },
+    {
+      color: 'green',
+      value: 20,
+    },
+  ],
+  mode: ThresholdsMode.Absolute,
+};
 
 export const Simple = () => {
   const theme = useTheme();
   const width = number('width', 700, {}, 'Props');
-  const data = buildData(theme, []);
+  const data = buildData(theme, {});
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
@@ -99,17 +123,15 @@ export const Simple = () => {
 export const BarGaugeCell = () => {
   const theme = useTheme();
   const width = number('width', 700, {}, 'Props');
-  const data = buildData(theme, [
-    {
-      matcher: { id: FieldMatcherID.byName, options: 'Progress' },
-      properties: [
-        { path: 'custom.width', value: '200' },
-        { path: 'custom.displayMode', value: 'gradient-gauge' },
-        { path: 'min', value: '0' },
-        { path: 'max', value: '100' },
-      ],
+  const data = buildData(theme, {
+    Progress: {
+      custom: {
+        width: 200,
+        displayMode: 'gradient-gauge',
+      },
+      thresholds: defaultThresholds,
     },
-  ]);
+  });
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
@@ -118,32 +140,18 @@ export const BarGaugeCell = () => {
   );
 };
 
-const defaultThresholds = [
-  {
-    color: 'blue',
-    value: -Infinity,
-  },
-  {
-    color: 'green',
-    value: 20,
-  },
-];
-
 export const ColoredCells = () => {
   const theme = useTheme();
   const width = number('width', 750, {}, 'Props');
-  const data = buildData(theme, [
-    {
-      matcher: { id: FieldMatcherID.byName, options: 'Progress' },
-      properties: [
-        { path: 'custom.width', value: '80' },
-        { path: 'custom.displayMode', value: 'color-background' },
-        { path: 'min', value: '0' },
-        { path: 'max', value: '100' },
-        { path: 'thresholds', value: defaultThresholds },
-      ],
+  const data = buildData(theme, {
+    Progress: {
+      custom: {
+        width: 80,
+        displayMode: 'color-background',
+      },
+      thresholds: defaultThresholds,
     },
-  ]);
+  });
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>

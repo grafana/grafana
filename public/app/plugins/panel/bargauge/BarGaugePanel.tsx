@@ -1,64 +1,82 @@
-// Libraries
 import React, { PureComponent } from 'react';
-
-// Services & Utils
-import { config } from 'app/core/config';
-
-import { BarGauge, VizRepeater, DataLinksContextMenu } from '@grafana/ui';
-import { BarGaugeOptions } from './types';
 import {
-  getFieldDisplayValues,
-  FieldDisplay,
-  PanelProps,
-  getDisplayValueAlignmentFactors,
   DisplayValueAlignmentFactors,
+  FieldDisplay,
+  getDisplayValueAlignmentFactors,
+  getFieldDisplayValues,
+  PanelProps,
+  FieldConfig,
+  DisplayProcessor,
+  DisplayValue,
 } from '@grafana/data';
-import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { BarGauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
+
+import { config } from 'app/core/config';
+import { BarGaugeOptions } from './types';
+import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
+import { isNumber } from 'lodash';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
-  renderValue = (
-    value: FieldDisplay,
-    width: number,
-    height: number,
-    alignmentFactors: DisplayValueAlignmentFactors
+  renderComponent = (
+    valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
+    menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
-    const { options } = this.props;
-    const { field, display } = value;
+    const { options, fieldConfig } = this.props;
+    const { value, alignmentFactors, orientation, width, height, count } = valueProps;
+    const { field, display, view, colIndex } = value;
+    const { openMenu, targetClassName } = menuProps;
+
+    let processor: DisplayProcessor | undefined = undefined;
+    if (view && isNumber(colIndex)) {
+      processor = view!.getFieldDisplayProcessor(colIndex as number);
+    }
 
     return (
-      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
-        {({ openMenu, targetClassName }) => {
-          return (
-            <BarGauge
-              value={display}
-              width={width}
-              height={height}
-              orientation={options.orientation}
-              thresholds={field.thresholds}
-              theme={config.theme}
-              itemSpacing={this.getItemSpacing()}
-              displayMode={options.displayMode}
-              minValue={field.min}
-              maxValue={field.max}
-              onClick={openMenu}
-              className={targetClassName}
-              alignmentFactors={alignmentFactors}
-              showUnfilled={options.showUnfilled}
-            />
-          );
-        }}
-      </DataLinksContextMenu>
+      <BarGauge
+        value={clearNameForSingleSeries(count, fieldConfig.defaults, display)}
+        width={width}
+        height={height}
+        orientation={orientation}
+        field={field}
+        display={processor}
+        theme={config.theme}
+        itemSpacing={this.getItemSpacing()}
+        displayMode={options.displayMode}
+        onClick={openMenu}
+        className={targetClassName}
+        alignmentFactors={count > 1 ? alignmentFactors : undefined}
+        showUnfilled={options.showUnfilled}
+      />
     );
   };
 
+  renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
+    const { value } = valueProps;
+    const { hasLinks, getLinks } = value;
+
+    if (hasLinks && getLinks) {
+      return (
+        <DataLinksContextMenu links={getLinks}>
+          {api => {
+            return this.renderComponent(valueProps, api);
+          }}
+        </DataLinksContextMenu>
+      );
+    }
+
+    return this.renderComponent(valueProps, {});
+  };
+
   getValues = (): FieldDisplay[] => {
-    const { data, options, replaceVariables } = this.props;
+    const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
     return getFieldDisplayValues({
-      ...options,
+      fieldConfig,
+      reduceOptions: options.reduceOptions,
       replaceVariables,
       theme: config.theme,
       data: data.series,
       autoMinMax: true,
+      timeZone,
     });
   };
 
@@ -82,9 +100,21 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         renderCounter={renderCounter}
         width={width}
         height={height}
+        minVizHeight={10}
         itemSpacing={this.getItemSpacing()}
         orientation={options.orientation}
       />
     );
   }
+}
+
+export function clearNameForSingleSeries(count: number, field: FieldConfig<any>, display: DisplayValue): DisplayValue {
+  if (count === 1 && !field.displayName) {
+    return {
+      ...display,
+      title: undefined,
+    };
+  }
+
+  return display;
 }

@@ -1,6 +1,37 @@
-import { PanelPlugin } from '@grafana/data';
-import { Options, defaults } from './types';
+import { PanelPlugin, LogsSortOrder } from '@grafana/data';
+import { Options } from './types';
 import { LogsPanel } from './LogsPanel';
-import { LogsPanelEditor } from './LogsPanelEditor';
 
-export const plugin = new PanelPlugin<Options>(LogsPanel).setDefaults(defaults).setEditor(LogsPanelEditor);
+export const plugin = new PanelPlugin<Options>(LogsPanel).setPanelOptions(builder => {
+  builder
+    .addBooleanSwitch({
+      path: 'showTime',
+      name: 'Time',
+      description: '',
+      defaultValue: false,
+    })
+    .addBooleanSwitch({
+      path: 'showLabels',
+      name: 'Unique labels',
+      description: '',
+      defaultValue: false,
+    })
+    .addBooleanSwitch({
+      path: 'wrapLogMessage',
+      name: 'Wrap lines',
+      description: '',
+      defaultValue: false,
+    })
+    .addRadio({
+      path: 'sortOrder',
+      name: 'Order',
+      description: '',
+      settings: {
+        options: [
+          { value: LogsSortOrder.Descending, label: 'Descending' },
+          { value: LogsSortOrder.Ascending, label: 'Ascending' },
+        ],
+      },
+      defaultValue: LogsSortOrder.Descending,
+    });
+});

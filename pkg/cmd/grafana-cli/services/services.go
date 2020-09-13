@@ -7,15 +7,15 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 )
 
 var (
-	IoHelper            m.IoUtil = IoUtilImp{}
+	IoHelper            models.IoUtil = IoUtilImp{}
 	HttpClient          http.Client
 	HttpClientNoTimeout http.Client
 	grafanaVersion      string
@@ -63,23 +63,19 @@ func makeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
 	}
 }
 
-func ReadPlugin(pluginDir, pluginName string) (m.InstalledPlugin, error) {
-	distPluginDataPath := path.Join(pluginDir, pluginName, "dist", "plugin.json")
+func ReadPlugin(pluginDir, pluginName string) (models.InstalledPlugin, error) {
+	distPluginDataPath := filepath.Join(pluginDir, pluginName, "dist", "plugin.json")
 
-	var data []byte
-	var err error
-	data, err = IoHelper.ReadFile(distPluginDataPath)
-
+	data, err := IoHelper.ReadFile(distPluginDataPath)
 	if err != nil {
-		pluginDataPath := path.Join(pluginDir, pluginName, "plugin.json")
+		pluginDataPath := filepath.Join(pluginDir, pluginName, "plugin.json")
 		data, err = IoHelper.ReadFile(pluginDataPath)
-
 		if err != nil {
-			return m.InstalledPlugin{}, errors.New("Could not find dist/plugin.json or plugin.json on  " + pluginName + " in " + pluginDir)
+			return models.InstalledPlugin{}, errors.New("Could not find dist/plugin.json or plugin.json on  " + pluginName + " in " + pluginDir)
 		}
 	}
 
-	res := m.InstalledPlugin{}
+	res := models.InstalledPlugin{}
 	if err := json.Unmarshal(data, &res); err != nil {
 		return res, err
 	}
@@ -89,14 +85,14 @@ func ReadPlugin(pluginDir, pluginName string) (m.InstalledPlugin, error) {
 	}
 
 	if res.Id == "" {
-		return m.InstalledPlugin{}, errors.New("could not find plugin " + pluginName + " in " + pluginDir)
+		return models.InstalledPlugin{}, errors.New("could not find plugin " + pluginName + " in " + pluginDir)
 	}
 
 	return res, nil
 }
 
-func GetLocalPlugins(pluginDir string) []m.InstalledPlugin {
-	result := make([]m.InstalledPlugin, 0)
+func GetLocalPlugins(pluginDir string) []models.InstalledPlugin {
+	result := make([]models.InstalledPlugin, 0)
 	files, _ := IoHelper.ReadDir(pluginDir)
 	for _, f := range files {
 		res, err := ReadPlugin(pluginDir, f.Name())
@@ -110,7 +106,7 @@ func GetLocalPlugins(pluginDir string) []m.InstalledPlugin {
 
 func RemoveInstalledPlugin(pluginPath, pluginName string) error {
 	logger.Infof("Removing plugin: %v\n", pluginName)
-	pluginDir := path.Join(pluginPath, pluginName)
+	pluginDir := filepath.Join(pluginPath, pluginName)
 
 	_, err := IoHelper.Stat(pluginDir)
 	if err != nil {

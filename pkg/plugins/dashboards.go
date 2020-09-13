@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 type PluginDashboardInfoDTO struct {
@@ -35,7 +35,7 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 	result := make([]*PluginDashboardInfoDTO, 0)
 
 	// load current dashboards
-	query := m.GetDashboardsByPluginIdQuery{OrgId: orgId, PluginId: pluginId}
+	query := models.GetDashboardsByPluginIdQuery{OrgId: orgId, PluginId: pluginId}
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 		}
 
 		res := &PluginDashboardInfoDTO{}
-		var dashboard *m.Dashboard
+		var dashboard *models.Dashboard
 		var err error
 
 		if dashboard, err = loadPluginDashboard(plugin.Id, include.Path); err != nil {
@@ -89,7 +89,7 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 	return result, nil
 }
 
-func loadPluginDashboard(pluginId, path string) (*m.Dashboard, error) {
+func loadPluginDashboard(pluginId, path string) (*models.Dashboard, error) {
 	plugin, exists := Plugins[pluginId]
 
 	if !exists {
@@ -109,5 +109,5 @@ func loadPluginDashboard(pluginId, path string) (*m.Dashboard, error) {
 		return nil, err
 	}
 
-	return m.NewDashboardFromJson(data), nil
+	return models.NewDashboardFromJson(data), nil
 }

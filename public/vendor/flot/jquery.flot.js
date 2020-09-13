@@ -1357,6 +1357,7 @@ Licensed under the MIT license.
                 // .mouseleave when we drop support for 1.2.6.
 
                 eventHolder.bind("mouseleave", onMouseLeave);
+                $(document).bind("touchend", onTouch);
             }
 
             if (options.grid.clickable)
@@ -1372,6 +1373,7 @@ Licensed under the MIT license.
             eventHolder.unbind("mousemove", onMouseMove);
             eventHolder.unbind("mouseleave", onMouseLeave);
             eventHolder.unbind("click", onClick);
+            $(document).unbind("touchend", onTouch);
 
             executeHooks(hooks.shutdown, [eventHolder]);
         }
@@ -3050,6 +3052,44 @@ Licensed under the MIT license.
           }
 
           triggerClickHoverEvent("plotclick", e, function (s) { return s["clickable"] != false; });
+        }
+
+        // grafana addon - added to support mobile devices click in plot
+        function onTouch(e) {
+            if (!e.cancelable) {
+                return;
+            }
+        
+            if (!eventHolder.is(e.target) && eventHolder.has(e.target).length === 0) {
+                triggerClickHoverEvent("plotleave", e, function (s) { false; });
+                return;
+            }
+
+            onMouseMove(mapFromTouchEvent(e));
+            e.preventDefault();
+        }
+
+        // grafana addon - added to support mobile devices and mapping touch event to click event structure
+        function mapFromTouchEvent(e) {
+            if (!e || !e.originalEvent) {
+                return e;
+            }
+
+            if (e.pageX && e.pageY) {
+                return e;
+            }
+
+            var original = e.originalEvent;
+            
+            if (original.changedTouches.length === 0) {
+                return e;
+            }
+
+            var touch = original.changedTouches[0];
+            e.pageX = touch.pageX;
+            e.pageY = touch.pageY;
+
+            return e;
         }
 
         // trigger click or hover event (they send the same parameters

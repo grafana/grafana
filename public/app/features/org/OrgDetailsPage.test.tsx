@@ -1,8 +1,11 @@
 import React from 'react';
 import { shallow } from 'enzyme';
+import { NavModel } from '@grafana/data';
+
 import { OrgDetailsPage, Props } from './OrgDetailsPage';
 import { Organization } from '../../types';
-import { NavModel } from '@grafana/data';
+import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+import { setOrganizationName } from './state/reducers';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -16,7 +19,7 @@ const setup = (propOverrides?: object) => {
       },
     } as NavModel,
     loadOrganization: jest.fn(),
-    setOrganizationName: jest.fn(),
+    setOrganizationName: mockToolkitActionCreator(setOrganizationName),
     updateOrganization: jest.fn(),
   };
 

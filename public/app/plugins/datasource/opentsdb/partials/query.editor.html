@@ -4,7 +4,7 @@
 			<label class="gf-form-label query-keyword width-8">
 				Metric
 				<label class="gf-form-label" bs-tooltip="ctrl.errors.metric" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.metric">
-					<i class="fa fa-warning"></i>
+					<icon name="'exclamation-triangle'"></icon>
 				</label>
 			</label>
 			<input type="text" class="gf-form-input" ng-model="ctrl.target.metric"
@@ -16,7 +16,7 @@
 			<label class="gf-form-label query-keyword">
 				Aggregator
 				<a bs-tooltip="ctrl.errors.aggregator" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.aggregator">
-					<i class="fa fa-warning"></i>
+					<icon name="'exclamation-triangle'"></icon>
 				</a>
 			</label>
 			<div class="gf-form-select-wrapper max-width-15">
@@ -104,15 +104,15 @@
 			<div ng-repeat="fil in ctrl.target.filters track by $index" class="gf-form-label">
 				{{fil.tagk}}&nbsp;=&nbsp;{{fil.type}}&#40;{{fil.filter}}&#41;&nbsp;&#44&nbsp;groupBy&nbsp;=&nbsp;{{fil.groupBy}}
 				<a ng-click="ctrl.editFilter(fil, $index)">
-					<i class="fa fa-pencil"></i>
+					<icon name="'pen'"></icon>
 				</a>
 				<a ng-click="ctrl.removeFilter($index)">
-					<i class="fa fa-remove"></i>
+					<icon name="'times'"></icon>
 				</a>
 			</div>
 			<label class="gf-form-label query-keyword" ng-hide="ctrl.addFilterMode">
 				<a ng-click="ctrl.addFilter()">
-					<i class="fa fa-plus"></i>
+					<icon name="'plus'"></icon>
 				</a>
 			</label>
  		</div>
@@ -148,13 +148,13 @@
 			<div class="gf-form" ng-show="ctrl.addFilterMode">
 				<label class="gf-form-label" ng-show="ctrl.errors.filters">
 					<a bs-tooltip="ctrl.errors.filters" style="color: rgb(229, 189, 28)" >
-						<i class="fa fa-warning"></i>
+						<icon name="'exclamation-triangle'"></icon>
 					</a>
 				</label>
 				<label class="gf-form-label">
 					<a ng-click="ctrl.addFilter()" ng-hide="ctrl.errors.filters">add filter</a>
 					<a ng-click="ctrl.closeAddFilterMode()">
-						<i class="fa fa-remove"></i>
+						<icon name="'times'"></icon>
 					</a>
 				</label>
 			</div>
@@ -180,17 +180,17 @@
 			<label class="gf-form-label">
 				{{key}}&nbsp;=&nbsp;{{value}}
 				<a ng-click="ctrl.editTag(key, value)">
-					<i class="fa fa-pencil"></i>
+					<icon name="'pen'"></icon>
 				</a>
 				<a ng-click="ctrl.removeTag(key)">
-					<i class="fa fa-remove"></i>
+					<icon name="'times'"></icon>
 				</a>
 			</label>
 		</div>
 
 		<div class="gf-form" ng-hide="ctrl.addTagMode">
 			<label class="gf-form-label query-keyword">
-				<a ng-click="ctrl.addTag()"><i class="fa fa-plus"></i></a>
+				<a ng-click="ctrl.addTag()"><icon name="'plus'"></icon></a>
 			</label>
 		</div>
 
@@ -208,12 +208,12 @@
 
 			<label class="gf-form-label" ng-show="ctrl.errors.tags">
 				<a bs-tooltip="ctrl.errors.tags" style="color: rgb(229, 189, 28)" >
-					<i class="fa fa-warning"></i>
+					<icon name="'exclamation-triangle'"></icon>
 				</a>
 			</label>
 			<label class="gf-form-label" >
 				<a ng-click="ctrl.addTag()" ng-hide="ctrl.errors.tags">add tag</a>
-				<a ng-click="ctrl.closeAddTagMode()"><i class="fa fa-remove"></i></a>
+				<a ng-click="ctrl.closeAddTagMode()"><icon name="'times'" size="'sm'"></icon></a>
 			</label>
 		</div>
 

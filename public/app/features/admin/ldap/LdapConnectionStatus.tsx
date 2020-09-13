@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Alert } from '@grafana/ui';
+import { Alert, Icon } from '@grafana/ui';
 import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
 
 interface Props {
@@ -27,9 +27,9 @@ export const LdapConnectionStatus: FC<Props> = ({ ldapConnectionInfo }) => {
                     <td>{serverInfo.port}</td>
                     <td>
                       {serverInfo.available ? (
-                        <i className="fa fa-fw fa-check pull-right" />
+                        <Icon name="check" className="pull-right" />
                       ) : (
-                        <i className="fa fa-fw fa-exclamation-triangle pull-right" />
+                        <Icon name="exclamation-triangle" className="pull-right" />
                       )}
                     </td>
                   </tr>

@@ -51,7 +51,7 @@ export function findCommonLabels(labelsSets: Labels[]): Labels {
 /**
  * Returns a map of labels that are in `labels`, but not in `commonLabels`.
  */
-export function findUniqueLabels(labels: Labels, commonLabels: Labels): Labels {
+export function findUniqueLabels(labels: Labels | undefined, commonLabels: Labels): Labels {
   const uncommonLabels: Labels = { ...labels };
   Object.keys(commonLabels).forEach(key => {
     delete uncommonLabels[key];
@@ -62,11 +62,14 @@ export function findUniqueLabels(labels: Labels, commonLabels: Labels): Labels {
 /**
  * Serializes the given labels to a string.
  */
-export function formatLabels(labels: Labels, defaultValue = ''): string {
+export function formatLabels(labels: Labels, defaultValue = '', withoutBraces?: boolean): string {
   if (!labels || Object.keys(labels).length === 0) {
     return defaultValue;
   }
   const labelKeys = Object.keys(labels).sort();
   const cleanSelector = labelKeys.map(key => `${key}="${labels[key]}"`).join(', ');
+  if (withoutBraces) {
+    return cleanSelector;
+  }
   return ['{', cleanSelector, '}'].join('');
 }

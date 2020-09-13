@@ -20,7 +20,7 @@ func RegisterService(instance Service) {
 	services = append(services, &Descriptor{
 		Name:         reflect.TypeOf(instance).Elem().Name(),
 		Instance:     instance,
-		InitPriority: Low,
+		InitPriority: Medium,
 	})
 }
 
@@ -68,7 +68,7 @@ func getServicesWithOverrides() []*Descriptor {
 }
 
 // Service interface is the lowest common shape that services
-// are expected to forfill to be started within Grafana.
+// are expected to fulfill to be started within Grafana.
 type Service interface {
 
 	// Init is called by Grafana main process which gives the service
@@ -114,6 +114,7 @@ func IsDisabled(srv Service) bool {
 type Priority int
 
 const (
-	High Priority = 100
-	Low  Priority = 0
+	High   Priority = 100
+	Medium Priority = 50
+	Low    Priority = 0
 )

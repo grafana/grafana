@@ -14,18 +14,21 @@ import (
 
 func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
-		Type: "googlechat",
-		Name: "Google Hangouts Chat",
-		Description: "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message " +
-			"format (https://developers.google.com/hangouts/chat/reference/message-formats/).",
-		Factory: newGoogleChatNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">Google Hangouts Chat settings</h3>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Url</span>
-        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Google Hangouts Chat incoming webhook url"></input>
-      </div>
-    `,
+		Type:        "googlechat",
+		Name:        "Google Hangouts Chat",
+		Description: "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message format",
+		Factory:     newGoogleChatNotifier,
+		Heading:     "Google Hangouts Chat settings",
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "Url",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "Google Hangouts Chat incoming webhook url",
+				PropertyName: "url",
+				Required:     true,
+			},
+		},
 	})
 }
 
@@ -55,7 +58,8 @@ Structs used to build a custom Google Hangouts Chat message card.
 See: https://developers.google.com/hangouts/chat/reference/message-formats/cards
 */
 type outerStruct struct {
-	Cards []card `json:"cards"`
+	FallbackText string `json:"fallbackText"`
+	Cards        []card `json:"cards"`
 }
 
 type card struct {
@@ -125,13 +129,15 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		gcn.log.Error("evalContext returned an invalid rule URL")
 	}
 
-	// add a text paragraph widget for the message
-	widgets := []widget{
-		textParagraphWidget{
+	widgets := []widget{}
+	if len(evalContext.Rule.Message) > 0 {
+		// add a text paragraph widget for the message if there is a message
+		// Google Chat API doesn't accept an empty text property
+		widgets = append(widgets, textParagraphWidget{
 			Text: text{
 				Text: evalContext.Rule.Message,
 			},
-		},
+		})
 	}
 
 	// add a text paragraph widget for the fields
@@ -151,15 +157,17 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 	widgets = append(widgets, fields)
 
-	// if an image exists, add it as an image widget
-	if evalContext.ImagePublicURL != "" {
-		widgets = append(widgets, imageWidget{
-			Image: image{
-				ImageURL: evalContext.ImagePublicURL,
-			},
-		})
-	} else {
-		gcn.log.Info("Could not retrieve a public image URL.")
+	if gcn.NeedsImage() {
+		// if an image exists, add it as an image widget
+		if evalContext.ImagePublicURL != "" {
+			widgets = append(widgets, imageWidget{
+				Image: image{
+					ImageURL: evalContext.ImagePublicURL,
+				},
+			})
+		} else {
+			gcn.log.Info("Could not retrieve a public image URL.")
+		}
 	}
 
 	// add a button widget (link to Grafana)
@@ -187,6 +195,7 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	// nest the required structs
 	res1D := &outerStruct{
+		FallbackText: evalContext.GetNotificationTitle(),
 		Cards: []card{
 			{
 				Header: header{

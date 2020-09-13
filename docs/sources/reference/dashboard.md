@@ -130,20 +130,6 @@ The grid has a negative gravity that moves panels up if there is empty space abo
       "1d"
     ],
     "status": "Stable",
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "3h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "3d",
-      "4d",
-      "7d",
-      "30d"
-    ],
     "type": "timepicker"
   }
 ```
@@ -158,7 +144,6 @@ Usage of the fields is explained below:
 | **now** | TODO |
 | **refresh_intervals** | TODO |
 | **status** | TODO |
-| **time_options** | TODO |
 | **type** | TODO |
 
 ### templating
@@ -197,7 +182,6 @@ The `templating` field contains an array of template variables with their saved 
           }
         ],
         "query": "tag_values(cpu.utilization.average,env)",
-        "refresh": false,
         "refresh": false,
         "type": "query"
       },

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { action } from '@storybook/addon-actions';
-import { SegmentInput } from '.';
+import { SegmentInput, Icon } from '@grafana/ui';
 
 const SegmentFrame = ({ children }: any) => (
   <>
@@ -29,8 +29,8 @@ export const BasicInput = () => {
 };
 
 export default {
-  title: 'UI/Segment/SegmentInput',
-  component: BasicInput,
+  title: 'Data Source/Segment/SegmentInput',
+  component: SegmentInput,
 };
 
 export const BasicInputWithPlaceholder = () => {
@@ -69,7 +69,7 @@ export const InputWithAutoFocus = () => {
   return (
     <SegmentFrame>
       {inputComponents.map((InputComponent: any) => (
-        <InputComponent intitialValue="test"></InputComponent>
+        <InputComponent initialValue="test"></InputComponent>
       ))}
       <a
         className="gf-form-label query-part"
@@ -77,7 +77,7 @@ export const InputWithAutoFocus = () => {
           setInputComponents([...inputComponents, InputComponent]);
         }}
       >
-        <i className="fa fa-plus" />
+        <Icon name="plus" />
       </a>
     </SegmentFrame>
   );

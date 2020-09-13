@@ -35,7 +35,7 @@ export const ColorPickerTrigger = forwardRef(function ColorPickerTrigger(
           float: 'left',
           zIndex: 0,
           backgroundImage:
-            // tslint:disable-next-line:max-line-length
+            // eslint-disable-next-line max-len
             'url(data:image/png,base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwH+YwCGIasIUwhT25BVBADtzYNYrHvv4gAAAABJRU5ErkJggg==)',
         }}
       >

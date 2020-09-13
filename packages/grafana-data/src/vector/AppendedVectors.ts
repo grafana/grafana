@@ -14,7 +14,7 @@ interface AppendedVectorInfo<T> {
  */
 export class AppendedVectors<T = any> implements Vector<T> {
   length = 0;
-  source: Array<AppendedVectorInfo<T>> = new Array<AppendedVectorInfo<T>>();
+  source: Array<AppendedVectorInfo<T>> = [];
 
   constructor(startAt = 0) {
     this.length = startAt;
@@ -29,7 +29,7 @@ export class AppendedVectors<T = any> implements Vector<T> {
       this.length = length;
     } else if (length < this.length) {
       // make the array shorter
-      const sources: Array<AppendedVectorInfo<T>> = new Array<AppendedVectorInfo<T>>();
+      const sources: Array<AppendedVectorInfo<T>> = [];
       for (const src of this.source) {
         sources.push(src);
         if (src.end > length) {

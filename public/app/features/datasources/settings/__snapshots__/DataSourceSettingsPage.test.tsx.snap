@@ -51,6 +51,7 @@ exports[`Render should render alpha info text 1`] = `
               "orgId": 1,
               "password": "",
               "readOnly": false,
+              "secureJsonFields": Object {},
               "type": "cloudwatch",
               "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
               "url": "",
@@ -83,6 +84,7 @@ exports[`Render should render alpha info text 1`] = `
                 },
                 "screenshots": Array [
                   Object {
+                    "name": "test",
                     "path": "screenshot",
                   },
                 ],
@@ -102,6 +104,7 @@ exports[`Render should render alpha info text 1`] = `
             DataSourcePlugin {
               "DataSourceClass": Object {},
               "components": Object {},
+              "meta": Object {},
             }
           }
         />
@@ -240,6 +243,7 @@ exports[`Render should render is ready only message 1`] = `
               "orgId": 1,
               "password": "",
               "readOnly": true,
+              "secureJsonFields": Object {},
               "type": "cloudwatch",
               "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
               "url": "",
@@ -272,6 +276,7 @@ exports[`Render should render is ready only message 1`] = `
                 },
                 "screenshots": Array [
                   Object {
+                    "name": "test",
                     "path": "screenshot",
                   },
                 ],
@@ -290,6 +295,7 @@ exports[`Render should render is ready only message 1`] = `
             DataSourcePlugin {
               "DataSourceClass": Object {},
               "components": Object {},
+              "meta": Object {},
             }
           }
         />

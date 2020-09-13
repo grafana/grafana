@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import isNil from 'lodash/isNil';
 import classNames from 'classnames';
 import Scrollbars from 'react-custom-scrollbars';
-import { cx, css } from 'emotion';
 
 interface Props {
   className?: string;
@@ -72,17 +71,11 @@ export class CustomScrollbar extends Component<Props> {
   }
 
   renderTrack = (track: 'track-vertical' | 'track-horizontal', hideTrack: boolean | undefined, passedProps: any) => {
-    return (
-      <div
-        {...passedProps}
-        className={cx(
-          css`
-            visibility: ${hideTrack ? 'hidden' : 'visible'};
-          `,
-          track
-        )}
-      />
-    );
+    if (passedProps.style && hideTrack) {
+      passedProps.style.display = 'none';
+    }
+
+    return <div {...passedProps} className={track} />;
   };
 
   renderThumb = (thumb: 'thumb-horizontal' | 'thumb-vertical', passedProps: any) => {
@@ -131,7 +124,7 @@ export class CustomScrollbar extends Component<Props> {
         autoHideTimeout={autoHideTimeout}
         hideTracksWhenNotNeeded={hideTracksWhenNotNeeded}
         // These autoHeightMin & autoHeightMax options affect firefox and chrome differently.
-        // Before these where set to inhert but that caused problems with cut of legends in firefox
+        // Before these where set to inherit but that caused problems with cut of legends in firefox
         autoHeightMax={autoHeightMax}
         autoHeightMin={autoHeightMin}
         renderTrackHorizontal={this.renderTrackHorizontal}

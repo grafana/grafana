@@ -61,6 +61,8 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	metrics["stats.snapshots.count"] = statsQuery.Result.Snapshots
 	metrics["stats.teams.count"] = statsQuery.Result.Teams
 	metrics["stats.total_auth_token.count"] = statsQuery.Result.AuthTokens
+	metrics["stats.dashboard_versions.count"] = statsQuery.Result.DashboardVersions
+	metrics["stats.annotations.count"] = statsQuery.Result.Annotations
 	metrics["stats.valid_license.count"] = getValidLicenseCount(uss.License.HasValidLicense())
 	metrics["stats.edition.oss.count"] = getOssEditionCount()
 	metrics["stats.edition.enterprise.count"] = getEnterpriseEditionCount()
@@ -68,7 +70,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	userCount := statsQuery.Result.Users
 	avgAuthTokensPerUser := statsQuery.Result.AuthTokens
 	if userCount != 0 {
-		avgAuthTokensPerUser = avgAuthTokensPerUser / userCount
+		avgAuthTokensPerUser /= userCount
 	}
 
 	metrics["stats.avg_auth_token_per_user.count"] = avgAuthTokensPerUser
@@ -94,6 +96,29 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 
 	metrics["stats.packaging."+setting.Packaging+".count"] = 1
 
+	// Alerting stats
+	alertingUsageStats, err := uss.AlertingUsageStats.QueryUsageStats()
+	if err != nil {
+		uss.log.Error("Failed to get alerting usage stats", "error", err)
+		return
+	}
+
+	var addAlertingUsageStats = func(dsType string, usageCount int) {
+		metrics[fmt.Sprintf("stats.alerting.ds.%s.count", dsType)] = usageCount
+	}
+
+	alertingOtherCount := 0
+	for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
+		if models.IsKnownDataSourcePlugin(dsType) {
+			addAlertingUsageStats(dsType, usageCount)
+		} else {
+			alertingOtherCount += usageCount
+		}
+	}
+
+	addAlertingUsageStats("other", alertingOtherCount)
+
+	// fetch datasource access stats
 	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
 	if err := uss.Bus.Dispatch(&dsAccessStats); err != nil {
 		metricsLogger.Error("Failed to get datasource access stats", "error", err)
@@ -123,6 +148,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 		metrics["stats.ds_access.other."+access+".count"] = count
 	}
 
+	// get stats about alert notifier usage
 	anStats := models.GetAlertNotifierUsageStatsQuery{}
 	if err := uss.Bus.Dispatch(&anStats); err != nil {
 		metricsLogger.Error("Failed to get alert notification stats", "error", err)
@@ -133,6 +159,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 		metrics["stats.alert_notifiers."+stats.Type+".count"] = stats.Count
 	}
 
+	// Add stats about auth configuration
 	authTypes := map[string]bool{}
 	authTypes["anonymous"] = setting.AnonymousEnabled
 	authTypes["basic_auth"] = setting.BasicAuthEnabled
@@ -156,9 +183,12 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 
 	client := http.Client{Timeout: 5 * time.Second}
 	go func() {
-		if _, err := client.Post(usageStatsURL, "application/json", data); err != nil {
+		resp, err := client.Post(usageStatsURL, "application/json", data)
+		if err != nil {
 			metricsLogger.Error("Failed to send usage stats", "err", err)
+			return
 		}
+		resp.Body.Close()
 	}()
 }
 
@@ -184,6 +214,18 @@ func (uss *UsageStatsService) updateTotalStats() {
 	metrics.StatsTotalActiveEditors.Set(float64(statsQuery.Result.ActiveEditors))
 	metrics.StatsTotalAdmins.Set(float64(statsQuery.Result.Admins))
 	metrics.StatsTotalActiveAdmins.Set(float64(statsQuery.Result.ActiveAdmins))
+	metrics.StatsTotalDashboardVersions.Set(float64(statsQuery.Result.DashboardVersions))
+	metrics.StatsTotalAnnotations.Set(float64(statsQuery.Result.Annotations))
+
+	dsStats := models.GetDataSourceStatsQuery{}
+	if err := uss.Bus.Dispatch(&dsStats); err != nil {
+		metricsLogger.Error("Failed to get datasource stats", "error", err)
+		return
+	}
+
+	for _, dsStat := range dsStats.Result {
+		metrics.StatsTotalDataSources.WithLabelValues(dsStat.Type).Set(float64(dsStat.Count))
+	}
 }
 
 func getEdition() string {

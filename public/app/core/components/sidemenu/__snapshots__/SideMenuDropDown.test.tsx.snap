@@ -1,5 +1,44 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Render should not render hideFromMenu children 1`] = `
+<ul
+  className="dropdown-menu dropdown-menu--sidemenu"
+  role="menu"
+>
+  <li
+    className="side-menu-header"
+  >
+    <a
+      className="side-menu-header-link"
+    >
+      <span
+        className="sidemenu-item-text"
+      >
+        link
+      </span>
+    </a>
+  </li>
+  <DropDownChild
+    child={
+      Object {
+        "hideFromMenu": false,
+        "id": 1,
+      }
+    }
+    key="undefined-0"
+  />
+  <DropDownChild
+    child={
+      Object {
+        "hideFromMenu": false,
+        "id": 3,
+      }
+    }
+    key="undefined-1"
+  />
+</ul>
+`;
+
 exports[`Render should render children 1`] = `
 <ul
   className="dropdown-menu dropdown-menu--sidemenu"

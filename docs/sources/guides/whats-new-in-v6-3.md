@@ -1,7 +1,7 @@
 +++
-title = "What's New in Grafana v6.3"
+title = "What's new in Grafana v6.3"
 description = "Feature and improvement highlights for Grafana v6.3"
-keywords = ["grafana", "new", "documentation", "6.3"]
+keywords = ["grafana", "new", "documentation", "6.3", "release notes"]
 type = "docs"
 [menu.docs]
 name = "Version 6.3"
@@ -10,9 +10,9 @@ parent = "whatsnew"
 weight = -14
 +++
 
-# What's New in Grafana v6.3
+# What's new in Grafana v6.3
 
-For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
+For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## Highlights
 
@@ -50,7 +50,7 @@ simplified query interface specifically designed for logs search.
 
 {{< docs-imagebox img="/img/docs/v63/elasticsearch_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
 
-Please read [Using Elasticsearch in Grafana](/features/datasources/elasticsearch/#querying-logs-beta) for more detailed information on how to get started and use it.
+Please read [Using Elasticsearch in Grafana]({{< relref "../features/datasources/elasticsearch/#elasticsearch-version" >}}) for more detailed information on how to get started and use it.
 
 ### InfluxDB logs support
 
@@ -59,7 +59,7 @@ simplified query interface specifically designed for logs search.
 
 {{< docs-imagebox img="/img/docs/v63/influxdb_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
 
-Please read [Using InfluxDB in Grafana](/features/datasources/influxdb/#querying-logs-beta) for more detailed information on how to get started and use it.
+Please read [Using InfluxDB in Grafana]({{< relref "../features/datasources/influxdb/#querying-logs-beta" >}}) for more detailed information on how to get started and use it.
 
 ## Data Links
 
@@ -82,7 +82,7 @@ Name | Description
 *${__series_name}* | The name of the time series (or table)
 *${__value_time}* | The time of the point your clicking on (in millisecond epoch)
 *${__url_time_range}* | Interpolates as the full time range (i.e. from=21312323412&to=21312312312)
-*${__all_variables}* | Adds all current variables (and current values) to the url
+*${__all_variables}* | Adds all current variables (and current values) to the URL
 
 You can then click on point in the Graph.
 
@@ -124,7 +124,7 @@ wait for the user to logout or the session to expire for the Grafana permissions
 With active sync the user would be automatically removed from the corresponding team in Grafana or even logged out and disabled if no longer
 belonging to an LDAP group that gives them access to Grafana.
 
-[Read more](/auth/enhanced_ldap/#active-ldap-synchronization)
+[Read more](/auth/enhanced_ldap/#active-ldap-synchronization).
 
 ### SAML Authentication
 
@@ -143,4 +143,4 @@ When setting up OAuth with GitHub it's now possible to sync GitHub teams with Te
 We've added support for enriching the Auth Proxy headers with Teams information, which makes it possible
 to use Team Sync with Auth Proxy.
 
-[See docs](/auth/auth-proxy/#auth-proxy-authentication)
+[See docs](/auth/auth-proxy/#auth-proxy-authentication).

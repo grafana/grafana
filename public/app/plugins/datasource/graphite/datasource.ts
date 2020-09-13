@@ -1,20 +1,23 @@
 import _ from 'lodash';
 import {
   DataFrame,
-  dateMath,
-  ScopedVars,
-  DataQueryResponse,
   DataQueryRequest,
-  toDataFrame,
+  DataQueryResponse,
   DataSourceApi,
+  dateMath,
+  QueryResultMetaStat,
+  ScopedVars,
+  toDataFrame,
+  TimeRange,
 } from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
-import { BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-//Types
-import { GraphiteOptions, GraphiteQuery, GraphiteType } from './types';
-import { getSearchFilterScopedVar } from '../../../features/templating/variable';
+// Types
+import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
+import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
+import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;
@@ -23,14 +26,15 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   graphiteVersion: any;
   supportsTags: boolean;
   isMetricTank: boolean;
+  rollupIndicatorEnabled: boolean;
   cacheTimeout: any;
   withCredentials: boolean;
   funcDefs: any = null;
-  funcDefsPromise: Promise<any> = null;
+  funcDefsPromise: Promise<any> | null = null;
   _seriesRefLetters: string;
 
   /** @ngInject */
-  constructor(instanceSettings: any, private backendSrv: BackendSrv, private templateSrv: TemplateSrv) {
+  constructor(instanceSettings: any, private templateSrv: TemplateSrv) {
     super(instanceSettings);
     this.basicAuth = instanceSettings.basicAuth;
     this.url = instanceSettings.url;
@@ -39,6 +43,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     this.isMetricTank = instanceSettings.jsonData.graphiteType === GraphiteType.Metrictank;
     this.supportsTags = supportsTags(this.graphiteVersion);
     this.cacheTimeout = instanceSettings.cacheTimeout;
+    this.rollupIndicatorEnabled = instanceSettings.jsonData.rollupIndicatorEnabled;
     this.withCredentials = instanceSettings.withCredentials;
     this.funcDefs = null;
     this.funcDefsPromise = null;
@@ -60,8 +65,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
 
   async query(options: DataQueryRequest<GraphiteQuery>): Promise<DataQueryResponse> {
     const graphOptions = {
-      from: this.translateTime(options.rangeRaw.from, false, options.timezone),
-      until: this.translateTime(options.rangeRaw.to, true, options.timezone),
+      from: this.translateTime(options.range.raw.from, false, options.timezone),
+      until: this.translateTime(options.range.raw.to, true, options.timezone),
       targets: options.targets,
       format: (options as any).format,
       cacheTimeout: options.cacheTimeout || this.cacheTimeout,
@@ -95,42 +100,89 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     return this.doGraphiteRequest(httpOptions).then(this.convertResponseToDataFrames);
   }
 
-  addTracingHeaders(httpOptions: { headers: any }, options: { dashboardId: any; panelId: any }) {
+  addTracingHeaders(httpOptions: { headers: any }, options: { dashboardId?: number; panelId?: number }) {
     const proxyMode = !this.url.match(/^http/);
     if (proxyMode) {
-      httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
-      httpOptions.headers['X-Panel-Id'] = options.panelId;
+      if (options.dashboardId) {
+        httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      }
+      if (options.panelId) {
+        httpOptions.headers['X-Panel-Id'] = options.panelId;
+      }
     }
   }
 
-  convertResponseToDataFrames(result: any): DataQueryResponse {
+  convertResponseToDataFrames = (result: any): DataQueryResponse => {
     const data: DataFrame[] = [];
     if (!result || !result.data) {
       return { data };
     }
+
     // Series are either at the root or under a node called 'series'
     const series = result.data.series || result.data;
+
     if (!_.isArray(series)) {
       throw { message: 'Missing series in result', data: result };
     }
 
     for (let i = 0; i < series.length; i++) {
       const s = series[i];
+
+      // Disables Grafana own series naming
+      s.title = s.target;
+
       for (let y = 0; y < s.datapoints.length; y++) {
         s.datapoints[y][1] *= 1000;
       }
+
       const frame = toDataFrame(s);
 
       // Metrictank metadata
       if (s.meta) {
         frame.meta = {
-          metrictank: s.meta, // array of metadata
-          metrictankReq: result.data.meta, // info on the request
+          custom: {
+            requestMetaList: result.data.meta, // info for the whole request
+            seriesMetaList: s.meta, // Array of metadata
+          },
         };
+
+        if (this.rollupIndicatorEnabled) {
+          const rollupNotice = getRollupNotice(s.meta);
+          const runtimeNotice = getRuntimeConsolidationNotice(s.meta);
+
+          if (rollupNotice) {
+            frame.meta.notices = [rollupNotice];
+          } else if (runtimeNotice) {
+            frame.meta.notices = [runtimeNotice];
+          }
+        }
+
+        // only add the request stats to the first frame
+        if (i === 0 && result.data.meta.stats) {
+          frame.meta.stats = this.getRequestStats(result.data.meta);
+        }
       }
+
       data.push(frame);
     }
+
     return { data };
+  };
+
+  getRequestStats(meta: MetricTankRequestMeta): QueryResultMetaStat[] {
+    const stats: QueryResultMetaStat[] = [];
+
+    for (const key in meta.stats) {
+      let unit: string | undefined = undefined;
+
+      if (key.endsWith('.ms')) {
+        unit = 'ms';
+      }
+
+      stats.push({ displayName: key, value: meta.stats[key], unit });
+    }
+
+    return stats;
   }
 
   parseTags(tagString: string) {
@@ -145,14 +197,14 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     return tags;
   }
 
-  interpolateVariablesInQueries(queries: GraphiteQuery[]): GraphiteQuery[] {
+  interpolateVariablesInQueries(queries: GraphiteQuery[], scopedVars: ScopedVars): GraphiteQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          target: this.templateSrv.replace(query.target),
+          target: this.templateSrv.replace(query.target ?? '', scopedVars),
         };
         return expandedQuery;
       });
@@ -165,7 +217,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     if (options.annotation.target) {
       const target = this.templateSrv.replace(options.annotation.target, {}, 'glob');
       const graphiteQuery = ({
-        rangeRaw: options.rangeRaw,
+        range: options.range,
         targets: [{ target: target }],
         format: 'json',
         maxDataPoints: 100,
@@ -178,8 +230,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           const target = result.data[i];
 
           for (let y = 0; y < target.length; y++) {
-            const time = target.fields[1].values.get(y);
-            const value = target.fields[0].values.get(y);
+            const time = target.fields[0].values.get(y);
+            const value = target.fields[1].values.get(y);
 
             if (!value) {
               continue;
@@ -198,7 +250,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     } else {
       // Graphite event as annotation
       const tags = this.templateSrv.replace(options.annotation.tags);
-      return this.events({ range: options.rangeRaw, tags: tags }).then((results: any) => {
+      return this.events({ range: options.range, tags: tags }).then((results: any) => {
         const list = [];
         for (let i = 0; i < results.data.length; i++) {
           const e = results.data[i];
@@ -222,7 +274,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     }
   }
 
-  events(options: { range: any; tags: any; timezone?: any }) {
+  events(options: { range: TimeRange; tags: any; timezone?: any }) {
     try {
       let tags = '';
       if (options.tags) {
@@ -232,9 +284,9 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         method: 'GET',
         url:
           '/events/get_data?from=' +
-          this.translateTime(options.range.from, false, options.timezone) +
+          this.translateTime(options.range.raw.from, false, options.timezone) +
           '&until=' +
-          this.translateTime(options.range.to, true, options.timezone) +
+          this.translateTime(options.range.raw.to, true, options.timezone) +
           tags,
       });
     } catch (err) {
@@ -243,7 +295,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   }
 
   targetContainsTemplate(target: GraphiteQuery) {
-    return this.templateSrv.variableExists(target.target);
+    return this.templateSrv.variableExists(target.target ?? '');
   }
 
   translateTime(date: any, roundUp: any, timezone: any) {
@@ -276,7 +328,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     return date.unix();
   }
 
-  metricFindQuery(query: string, optionalOptions: any) {
+  metricFindQuery(query: string, optionalOptions?: any) {
     const options: any = optionalOptions || {};
     let interpolatedQuery = this.templateSrv.replace(
       query,
@@ -529,7 +581,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         return this.funcDefs;
       })
       .catch((err: any) => {
-        console.log('Fetching graphite functions error', err);
+        console.error('Fetching graphite functions error', err);
         this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
         return this.funcDefs;
       });
@@ -541,6 +593,9 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     const query = ({
       panelId: 3,
       rangeRaw: { from: 'now-1h', to: 'now' },
+      range: {
+        raw: { from: 'now-1h', to: 'now' },
+      },
       targets: [{ target: 'constantLine(100)' }],
       maxDataPoints: 300,
     } as unknown) as DataQueryRequest<GraphiteQuery>;
@@ -568,10 +623,10 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     options.url = this.url + options.url;
     options.inspect = { type: 'graphite' };
 
-    return this.backendSrv.datasourceRequest(options);
+    return getBackendSrv().datasourceRequest(options);
   }
 
-  buildGraphiteParams(options: any, scopedVars: ScopedVars): string[] {
+  buildGraphiteParams(options: any, scopedVars?: ScopedVars): string[] {
     const graphiteOptions = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
     const cleanOptions = [],
       targets: any = {};

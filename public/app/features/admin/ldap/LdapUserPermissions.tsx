@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import { LdapPermissions } from 'app/types';
+import { Icon } from '@grafana/ui';
 
 interface Props {
   permissions: LdapPermissions;
@@ -21,7 +22,7 @@ export const LdapUserPermissions: FC<Props> = ({ permissions }) => {
               <td>
                 {permissions.isGrafanaAdmin ? (
                   <>
-                    <i className="gicon gicon-shield" /> Yes
+                    <Icon name="shield" /> Yes
                   </>
                 ) : (
                   'No'
@@ -33,11 +34,11 @@ export const LdapUserPermissions: FC<Props> = ({ permissions }) => {
               <td>
                 {permissions.isDisabled ? (
                   <>
-                    <i className="fa fa-fw fa-times" /> Inactive
+                    <Icon name="times" /> Inactive
                   </>
                 ) : (
                   <>
-                    <i className="fa fa-fw fa-check" /> Active
+                    <Icon name="check" /> Active
                   </>
                 )}
               </td>

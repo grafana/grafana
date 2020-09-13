@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"go/build"
 	"io"
 	"io/ioutil"
 	"log"
@@ -40,7 +41,6 @@ var (
 	linuxPackageVersion   string = "v1"
 	linuxPackageIteration string = ""
 	race                  bool
-	phjsToRelease         string
 	workingDir            string
 	includeBuildId        bool     = true
 	buildId               string   = "0"
@@ -52,14 +52,11 @@ var (
 	skipRpmGen            bool     = false
 	skipDebGen            bool     = false
 	printGenVersion       bool     = false
-	modVendor             bool     = true
 )
 
 func main() {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(0)
-
-	ensureGoPath()
 
 	var buildIdRaw string
 
@@ -69,9 +66,7 @@ func main() {
 	flag.StringVar(&libc, "libc", "", "LIBC")
 	flag.BoolVar(&cgo, "cgo-enabled", cgo, "Enable cgo")
 	flag.StringVar(&pkgArch, "pkg-arch", "", "PKG ARCH")
-	flag.StringVar(&phjsToRelease, "phjs", "", "PhantomJS binary")
 	flag.BoolVar(&race, "race", race, "Use race detector")
-	flag.BoolVar(&modVendor, "modVendor", modVendor, "Go modules use vendor folder")
 	flag.BoolVar(&includeBuildId, "includeBuildId", includeBuildId, "IncludeBuildId in package name")
 	flag.BoolVar(&enterprise, "enterprise", enterprise, "Build enterprise version of Grafana")
 	flag.StringVar(&buildIdRaw, "buildId", "0", "Build ID from CI system")
@@ -110,16 +105,16 @@ func main() {
 
 		case "build-srv", "build-server":
 			clean()
-			build("grafana-server", "./pkg/cmd/grafana-server", []string{})
+			doBuild("grafana-server", "./pkg/cmd/grafana-server", []string{})
 
 		case "build-cli":
 			clean()
-			build("grafana-cli", "./pkg/cmd/grafana-cli", []string{})
+			doBuild("grafana-cli", "./pkg/cmd/grafana-cli", []string{})
 
 		case "build":
 			//clean()
 			for _, binary := range binaries {
-				build(binary, "./pkg/cmd/"+binary, []string{})
+				doBuild(binary, "./pkg/cmd/"+binary, []string{})
 			}
 
 		case "build-frontend":
@@ -389,7 +384,6 @@ func createPackage(options linuxPackageOptions) {
 	if enterprise {
 		description += " Enterprise"
 	}
-	args = append(args, "--vendor", description)
 
 	if !enterprise {
 		args = append(args, "--license", "\"Apache 2.0\"")
@@ -422,18 +416,6 @@ func createPackage(options linuxPackageOptions) {
 	runPrint("fpm", append([]string{"-t", options.packageType}, args...)...)
 }
 
-func ensureGoPath() {
-	if os.Getenv("GOPATH") == "" {
-		cwd, err := os.Getwd()
-		if err != nil {
-			log.Fatal(err)
-		}
-		gopath := filepath.Clean(filepath.Join(cwd, "../../../../"))
-		log.Println("GOPATH is", gopath)
-		os.Setenv("GOPATH", gopath)
-	}
-}
-
 func grunt(params ...string) {
 	if runtime.GOOS == windows {
 		runPrint(`.\node_modules\.bin\grunt`, params...)
@@ -459,9 +441,6 @@ func gruntBuildArg(task string) []string {
 	if libc != "" {
 		args = append(args, fmt.Sprintf("--libc=%s", libc))
 	}
-	if phjsToRelease != "" {
-		args = append(args, fmt.Sprintf("--phjsToRelease=%v", phjsToRelease))
-	}
 	if enterprise {
 		args = append(args, "--enterprise")
 	}
@@ -484,7 +463,7 @@ func test(pkg string) {
 	runPrint("go", "test", "-short", "-timeout", "60s", pkg)
 }
 
-func build(binaryName, pkg string, tags []string) {
+func doBuild(binaryName, pkg string, tags []string) {
 	libcPart := ""
 	if libc != "" {
 		libcPart = fmt.Sprintf("-%s", libc)
@@ -508,9 +487,6 @@ func build(binaryName, pkg string, tags []string) {
 	}
 	if race {
 		args = append(args, "-race")
-	}
-	if modVendor {
-		args = append(args, "-mod=vendor")
 	}
 
 	args = append(args, "-o", binary)
@@ -565,7 +541,7 @@ func clean() {
 
 	rmr("dist")
 	rmr("tmp")
-	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/grafana", goos, goarch)))
+	rmr(filepath.Join(build.Default.GOPATH, fmt.Sprintf("pkg/%s_%s/github.com/grafana", goos, goarch)))
 }
 
 func setBuildEnv() {

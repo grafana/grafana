@@ -1,0 +1,276 @@
+import { Meta, Story, Preview, Props } from "@storybook/addon-docs/blocks";
+import { Form } from "./Form";
+
+<Meta title="MDX|Form" component={Form} />
+
+# Form
+
+Form component provides a way to build simple forms at Grafana. It is built on top of [react-hook-form](https://react-hook-form.com/) library and incorporates the same concepts while adjusting the API slightly.
+
+## Usage
+
+```jsx
+import { Forms } from '@grafana/ui';
+
+interface UserDTO {
+  name: string;
+  email: string;
+  //...
+}
+
+const defaultUser: Partial<UserDTO> = {
+  name: 'Roger Waters',
+  // ...
+}
+
+<Form
+  defaultValues={defaultUser}
+  onSubmit={async (user: UserDTO) => await createUser(user)}
+>{({register, errors}) => {
+  return (
+    <Field>
+      <Input name="name" ref={register}/>
+      <Input type="email" name="email" ref={register({required: true})}/>
+      <Button type="submit">Create User</Button>
+    </Field>
+  )
+}}</Form>
+```
+
+### Form API
+
+`Form` component exposes API via render prop. Three properties are exposed: `register`, `errors` and `control`
+
+#### `register`
+
+`register` allows to register form elements(inputs, selects, radios, etc) in the form. In order to do that you need to pass `register` as a `ref` property to the form input. For example:
+
+```jsx
+<Input name="inputName" ref={register} />
+```
+
+Register accepts an object which describes validation rules for a given input:
+
+```jsx
+<Input
+  name="inputName"
+  ref={register({
+    required: true,
+    minLength: 10,
+    validate: v => { // custom validation rule }
+  })}
+/>
+```
+
+See [Validation](#validation) for examples on validation and validation rules.
+
+#### `errors`
+
+`errors` is an object that contains validation errors of the form. To show error message and invalid input indication in your form, wrap input element with `<Field ...>` component and pass `invalid` and `error` props to it:
+
+```jsx
+<Field label="Name" invalid={!!errors.name} error="Name is required">
+  <Input name="name" ref={register({ required: true })} />
+</Field>
+```
+
+#### `control`
+
+By default `Form` component assumes form elements are uncontrolled (https://reactjs.org/docs/glossary.html#controlled-vs-uncontrolled-components).
+There are some components like `RadioButton` or `Select` that are controlled-only and require some extra work. To make
+them work with the form, you need to render those using `InputControl` component:
+
+```jsx
+import { Form, Field, InputControl } from '@grafana/ui';
+
+// render function
+<Form ...>{({register, errors, control}) => (
+  <>
+    <Field label="RadioButtonExample">
+      <InputControl
+        {/* Render InputControl as controlled input (RadioButtonGroup) */}
+        as={RadioButtonGroup}
+        {/* Pass control exposed from Form render prop */}
+        control={control}
+        name="radio"
+        options={...}
+      />
+    </Field>
+
+    <Field label="SelectExample">
+      <InputControl
+        {/* Render InputControl as controlled input (Select) */}
+        as={Select}
+        {/* Pass control exposed from Form render prop */}
+        control={control}
+        name="select"
+        options={...}
+      />
+    </Field>
+  </>
+)}
+</Form>
+```
+
+Note that when using `InputControl`, it expects the name of the prop that handles input change to be called `onChange`.
+If the property is named differently for any specific component, additional `onChangeName` prop has to be provided, specifying the name.
+Additionally, the `onChange` arguments passed as an array. Check [react-hook-form docs](https://react-hook-form.com/api/#Controller)
+for more prop options.
+
+```jsx
+{/* DashboardPicker has onSelected prop instead of onChange */}
+import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
+
+{/* In case of Select the value has to be returned as an object with a `value` key for the value to be saved to form data */}
+const onSelectChange = ([value]) => {
+  // ...
+  return { value };
+}
+
+<Field label="SelectExample">
+  <InputControl
+    as={DashboardPicker}
+    control={control}
+    name="select"
+    onSelected={onSelectChange}
+    {/* Pass the name of the onChange handler */}
+    onChangeName='onSelected'
+  />
+</Field>
+
+```
+
+### Default values
+
+Default values of the form can be passed either via `defaultValues` property on the `Form` element, or directly on
+form's input via `defaultValue` prop.
+Note that changing/updating `defaultValues` passed to the form will reset the form's state, which might be undesirable in
+case it has both controlled and uncontrolled components. In that case it's better to pass `defaultValue` to each form component separately.
+
+```jsx
+// Passing default values to the Form
+
+interface FormDTO {
+  name: string;
+  isAdmin: boolean;
+}
+
+const defaultValues: FormDto {
+  name: 'Roger Waters',
+  isAdmin: false,
+}
+
+<Form defaultValues={defaultValues} ...>{...}</Form>
+```
+
+```jsx
+// Passing default value directly to form inputs
+
+interface FormDTO {
+  name: string;
+  isAdmin: boolean;
+}
+
+const defaultValues: FormDto {
+  name: 'Roger Waters',
+  isAdmin: false,
+}
+
+<Form ...>{
+  ({register}) => (
+    <>
+      <Input defaultValue={default.name} name="name" ref={register} />
+    </>
+  )}
+</Form>
+```
+
+### Validation
+
+Validation can be performed either synchronously or asynchronously. What's important here is that the validation function must return either a `boolean` or a `string`.
+
+#### Basic required example
+
+```jsx
+<Form ...>{
+  ({register, errors}) => (
+    <>
+      <Field invalid={!!errors.name} error={errors.name && 'Name is required'}
+      <Input
+        defaultValue={default.name}
+        name="name"
+        ref={register({ required: true })}
+      />
+    </>
+  )}
+</Form>
+```
+
+#### Required with synchronous custom validation
+
+One important thing to note is that if you want to provide different error messages for different kind of validation errors you'll need to return a `string` instead of a `boolean`.
+
+```jsx
+<Form ...>{
+  ({register, errors}) => (
+    <>
+      <Field invalid={!!errors.name} error={errors.name?.message }
+      <Input
+        defaultValue={default.name}
+        name="name"
+        ref={register({
+          required: 'Name is required',
+          validation: v => {
+            return v !== 'John' && 'Name must be John'
+          },
+        )}
+      />
+    </>
+  )}
+</Form>
+```
+
+#### Asynchronous validation
+
+For cases when you might want to validate fields asynchronously (on the backend or via some service) you can provide an asynchronous function to the field.
+
+Consider this function that simulates a call to some service. Remember, if you want to display an error message replace `return true` or `return false` with `return 'your error message'`.
+
+```jsx
+validateAsync = (newValue: string) => {
+  try {
+    await new Promise<ValidateResult>((resolve, reject) => {
+      setTimeout(() => {
+        reject('Something went wrong...');
+      }, 2000);
+    });
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+```
+
+```jsx
+<Form ...>{
+  ({register, errors}) => (
+    <>
+      <Field invalid={!!errors.name} error={errors.name?.message}
+      <Input
+        defaultValue={default.name}
+        name="name"
+        ref={register({
+          required: 'Name is required',
+          validation: async v => {
+            return  await validateAsync(v);
+          },
+        )}
+      />
+    </>
+  )}
+</Form>
+```
+
+### Props
+
+<Props of={Form} />

@@ -10,7 +10,11 @@ import (
 	"path"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/api/live"
+	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/search"
+
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -25,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
@@ -42,51 +47,63 @@ func init() {
 	})
 }
 
-type ProvisioningService interface {
-	ProvisionDatasources() error
-	ProvisionNotifications() error
-	ProvisionDashboards() error
-	GetDashboardProvisionerResolvedPath(name string) string
-	GetAllowUiUpdatesFromConfig(name string) bool
-}
-
 type HTTPServer struct {
-	log           log.Logger
-	macaron       *macaron.Macaron
-	context       context.Context
-	streamManager *live.StreamManager
-	httpSrv       *http.Server
+	log         log.Logger
+	macaron     *macaron.Macaron
+	context     context.Context
+	httpSrv     *http.Server
+	middlewares []macaron.Handler
 
-	RouteRegister       routing.RouteRegister    `inject:""`
-	Bus                 bus.Bus                  `inject:""`
-	RenderService       rendering.Service        `inject:""`
-	Cfg                 *setting.Cfg             `inject:""`
-	HooksService        *hooks.HooksService      `inject:""`
-	CacheService        *localcache.CacheService `inject:""`
-	DatasourceCache     datasources.CacheService `inject:""`
-	AuthTokenService    models.UserTokenService  `inject:""`
-	QuotaService        *quota.QuotaService      `inject:""`
-	RemoteCacheService  *remotecache.RemoteCache `inject:""`
-	ProvisioningService ProvisioningService      `inject:""`
-	Login               *login.LoginService      `inject:""`
-	License             models.Licensing         `inject:""`
+	RouteRegister        routing.RouteRegister            `inject:""`
+	Bus                  bus.Bus                          `inject:""`
+	RenderService        rendering.Service                `inject:""`
+	Cfg                  *setting.Cfg                     `inject:""`
+	HooksService         *hooks.HooksService              `inject:""`
+	CacheService         *localcache.CacheService         `inject:""`
+	DatasourceCache      datasources.CacheService         `inject:""`
+	AuthTokenService     models.UserTokenService          `inject:""`
+	QuotaService         *quota.QuotaService              `inject:""`
+	RemoteCacheService   *remotecache.RemoteCache         `inject:""`
+	ProvisioningService  provisioning.ProvisioningService `inject:""`
+	Login                *login.LoginService              `inject:""`
+	License              models.Licensing                 `inject:""`
+	BackendPluginManager backendplugin.Manager            `inject:""`
+	PluginManager        *plugins.PluginManager           `inject:""`
+	SearchService        *search.SearchService            `inject:""`
+	Live                 *live.GrafanaLive
+	Listener             net.Listener
 }
 
 func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
 
-	hs.streamManager = live.NewStreamManager()
+	// Set up a websocket broker
+	if hs.Cfg.IsLiveEnabled() { // feature flag
+		node, err := live.InitalizeBroker()
+		if err != nil {
+			return err
+		}
+		hs.Live = node
+
+		// Spit random walk to example
+		go live.RunRandomCSV(hs.Live, "random-2s-stream", 2000, 0)
+		go live.RunRandomCSV(hs.Live, "random-flakey-stream", 400, .6)
+	}
+
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
 
 	return nil
 }
 
+func (hs *HTTPServer) AddMiddleware(middleware macaron.Handler) {
+	hs.middlewares = append(hs.middlewares, middleware)
+}
+
 func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.context = ctx
 
 	hs.applyRoutes()
-	hs.streamManager.Run(ctx)
 
 	hs.httpSrv = &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort),
@@ -103,28 +120,9 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		}
 	}
 
-	var listener net.Listener
-	switch setting.Protocol {
-	case setting.HTTP, setting.HTTPS, setting.HTTP2:
-		var err error
-		listener, err = net.Listen("tcp", hs.httpSrv.Addr)
-		if err != nil {
-			return errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
-		}
-	case setting.SOCKET:
-		var err error
-		listener, err = net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
-		if err != nil {
-			return errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
-		}
-
-		// Make socket writable by group
-		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
-			return errutil.Wrapf(err, "failed to change socket permissions")
-		}
-	default:
-		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
-		return fmt.Errorf("invalid protocol %q", setting.Protocol)
+	listener, err := hs.getListener()
+	if err != nil {
+		return err
 	}
 
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
@@ -169,6 +167,36 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	return nil
 }
 
+func (hs *HTTPServer) getListener() (net.Listener, error) {
+	if hs.Listener != nil {
+		return hs.Listener, nil
+	}
+
+	switch setting.Protocol {
+	case setting.HTTP, setting.HTTPS, setting.HTTP2:
+		listener, err := net.Listen("tcp", hs.httpSrv.Addr)
+		if err != nil {
+			return nil, errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
+		}
+		return listener, nil
+	case setting.SOCKET:
+		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
+		if err != nil {
+			return nil, errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
+		}
+
+		// Make socket writable by group
+		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
+			return nil, errutil.Wrapf(err, "failed to change socket permissions")
+		}
+
+		return listener, nil
+	default:
+		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
+		return nil, fmt.Errorf("invalid protocol %q", setting.Protocol)
+	}
+}
+
 func (hs *HTTPServer) configureHttps() error {
 	if setting.CertFile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTPS")
@@ -190,18 +218,18 @@ func (hs *HTTPServer) configureHttps() error {
 		MinVersion:               tls.VersionTLS12,
 		PreferServerCipherSuites: true,
 		CipherSuites: []uint16{
-			tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
 			tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
 		},
 	}
 
@@ -235,12 +263,12 @@ func (hs *HTTPServer) configureHttp2() error {
 			tls.TLS_CHACHA20_POLY1305_SHA256,
 			tls.TLS_AES_128_GCM_SHA256,
 			tls.TLS_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
 			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
 		},
 		NextProtos: []string{"h2", "http/1.1"},
 	}
@@ -308,11 +336,11 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
-	m.Use(hs.healthHandler)
 	m.Use(hs.metricsEndpoint)
 	m.Use(middleware.GetContextHandler(
 		hs.AuthTokenService,
 		hs.RemoteCacheService,
+		hs.RenderService,
 	))
 	m.Use(middleware.OrgRedirect())
 
@@ -322,6 +350,10 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.HandleNoCacheHeader())
+
+	for _, mw := range hs.middlewares {
+		m.Use(mw)
+	}
 }
 
 func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
@@ -351,8 +383,10 @@ func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 
 	data := simplejson.New()
 	data.Set("database", "ok")
-	data.Set("version", setting.BuildVersion)
-	data.Set("commit", setting.BuildCommit)
+	if !hs.Cfg.AnonymousHideVersion {
+		data.Set("version", setting.BuildVersion)
+		data.Set("commit", setting.BuildCommit)
+	}
 
 	if err := bus.Dispatch(&models.GetDBHealthQuery{}); err != nil {
 		data.Set("database", "failing")
@@ -363,7 +397,12 @@ func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 		ctx.Resp.WriteHeader(200)
 	}
 
-	dataBytes, _ := data.EncodePretty()
+	dataBytes, err := data.EncodePretty()
+	if err != nil {
+		hs.log.Error("Failed to encode data", "err", err)
+		return
+	}
+
 	if _, err := ctx.Resp.Write(dataBytes); err != nil {
 		hs.log.Error("Failed to write to response", "err", err)
 	}

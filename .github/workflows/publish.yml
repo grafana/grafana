@@ -19,7 +19,7 @@ jobs:
       id: publish
       with:
         repository: grafana/website
-        branch: docs-grafana
+        branch: master
         host: github.com
         github_pat: '${{ secrets.GH_BOT_ACCESS_TOKEN }}'
         source_folder: docs/sources

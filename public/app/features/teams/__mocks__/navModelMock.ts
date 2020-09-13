@@ -2,7 +2,7 @@ export const getMockNavModel = (pageName: string) => {
   return {
     node: {
       active: false,
-      icon: 'gicon gicon-team',
+      icon: 'users-alt',
       id: `team-${pageName}-2`,
       text: `${pageName}`,
       url: 'org/teams/edit/2/members',
@@ -16,14 +16,14 @@ export const getMockNavModel = (pageName: string) => {
         children: [
           {
             active: false,
-            icon: 'gicon gicon-team',
+            icon: 'users-alt',
             id: 'team-members-2',
             text: 'Members',
             url: 'org/teams/edit/2/members',
           },
           {
             active: false,
-            icon: 'fa fa-fw fa-sliders',
+            icon: 'sliders-v-alt',
             id: 'team-settings-2',
             text: 'Settings',
             url: 'org/teams/edit/2/settings',
@@ -41,14 +41,14 @@ export const getMockNavModel = (pageName: string) => {
       children: [
         {
           active: true,
-          icon: 'gicon gicon-team',
+          icon: 'users-alt',
           id: 'team-members-2',
           text: 'Members',
           url: 'org/teams/edit/2/members',
         },
         {
           active: false,
-          icon: 'fa fa-fw fa-sliders',
+          icon: 'sliders-v-alt',
           id: 'team-settings-2',
           text: 'Settings',
           url: 'org/teams/edit/2/settings',

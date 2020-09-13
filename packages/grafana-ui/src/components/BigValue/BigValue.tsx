@@ -4,21 +4,15 @@ import { DisplayValue, GraphSeriesValue, DisplayValueAlignmentFactors } from '@g
 
 // Types
 import { Themeable } from '../../types';
-import {
-  calculateLayout,
-  getPanelStyles,
-  getValueAndTitleContainerStyles,
-  getValueStyles,
-  getTitleStyles,
-} from './styles';
-
-import { renderGraph } from './renderGraph';
+import { buildLayout } from './BigValueLayout';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 export interface BigValueSparkline {
   data: GraphSeriesValue[][];
-  minX: number;
-  maxX: number;
+  xMin?: number | null;
+  xMax?: number | null;
+  yMin?: number | null;
+  yMax?: number | null;
   highlightIndex?: number;
 }
 
@@ -38,6 +32,17 @@ export enum BigValueJustifyMode {
   Center = 'center',
 }
 
+/**
+ * Options for how the value & title are to be displayed
+ */
+export enum BigValueTextMode {
+  Auto = 'auto',
+  Value = 'value',
+  ValueAndName = 'value_and_name',
+  Name = 'name',
+  None = 'none',
+}
+
 export interface Props extends Themeable {
   height: number;
   width: number;
@@ -49,6 +54,13 @@ export interface Props extends Themeable {
   graphMode: BigValueGraphMode;
   justifyMode?: BigValueJustifyMode;
   alignmentFactors?: DisplayValueAlignmentFactors;
+  textMode?: BigValueTextMode;
+
+  /**
+   * If part of a series of stat panes, this is the total number.
+   * Used by BigValueTextMode.Auto text mode.
+   */
+  count?: number;
 }
 
 export class BigValue extends PureComponent<Props> {
@@ -57,21 +69,22 @@ export class BigValue extends PureComponent<Props> {
   };
 
   render() {
-    const { value, onClick, className, sparkline } = this.props;
+    const { onClick, className } = this.props;
 
-    const layout = calculateLayout(this.props);
-    const panelStyles = getPanelStyles(layout);
-    const valueAndTitleContainerStyles = getValueAndTitleContainerStyles(layout);
-    const valueStyles = getValueStyles(layout);
-    const titleStyles = getTitleStyles(layout);
+    const layout = buildLayout(this.props);
+    const panelStyles = layout.getPanelStyles();
+    const valueAndTitleContainerStyles = layout.getValueAndTitleContainerStyles();
+    const valueStyles = layout.getValueStyles();
+    const titleStyles = layout.getTitleStyles();
+    const textValues = layout.textValues;
 
     return (
-      <div className={className} style={panelStyles} onClick={onClick}>
+      <div className={className} style={panelStyles} onClick={onClick} title={textValues.tooltip}>
         <div style={valueAndTitleContainerStyles}>
-          {value.title && <div style={titleStyles}>{value.title}</div>}
-          <FormattedValueDisplay value={value} style={valueStyles} />
+          {textValues.title && <div style={titleStyles}>{textValues.title}</div>}
+          <FormattedValueDisplay value={textValues} style={valueStyles} />
         </div>
-        {renderGraph(layout, sparkline)}
+        {layout.renderChart()}
       </div>
     );
   }

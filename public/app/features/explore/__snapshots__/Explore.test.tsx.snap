@@ -1,0 +1,53 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Explore should render component 1`] = `
+<div
+  aria-label="Explore"
+  className="explore"
+>
+  <Connect(UnConnectedExploreToolbar)
+    exploreId="left"
+    onChangeTime={[Function]}
+  />
+  <div
+    className="explore-container"
+  >
+    <div
+      className="panel-container css-kj45dn-queryContainer"
+    >
+      <QueryRows
+        exploreEvents={
+          Emitter {
+            "emitter": EventEmitter {
+              "_events": Object {},
+              "_eventsCount": 0,
+            },
+          }
+        }
+        exploreId="left"
+        queryKeys={Array []}
+      />
+      <SecondaryActions
+        addQueryRowButtonDisabled={false}
+        addQueryRowButtonHidden={false}
+        onClickAddQueryRowButton={[Function]}
+        onClickQueryInspectorButton={[Function]}
+        onClickRichHistoryButton={[Function]}
+        queryInspectorButtonActive={false}
+        richHistoryButtonActive={false}
+      />
+    </div>
+    <Component
+      queryError={Object {}}
+    />
+    <AutoSizer
+      disableHeight={true}
+      disableWidth={false}
+      onResize={[Function]}
+      style={Object {}}
+    >
+      <Component />
+    </AutoSizer>
+  </div>
+</div>
+`;

@@ -1,0 +1,13 @@
+{
+  "extends": ["@grafana/eslint-config"],
+  "root": true,
+  "overrides": [
+    {
+      "files": ["packages/**/*.{ts,tsx}", "public/app/**/*.{ts,tsx}"],
+      "rules": {
+        "react-hooks/rules-of-hooks": "off",
+        "react-hooks/exhaustive-deps": "off"
+      }
+    }
+  ]
+}

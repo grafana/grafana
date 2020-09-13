@@ -1,0 +1,18 @@
+version: '3'
+services:
+  citest:
+    image: "amd64/alpine"
+    user: root
+    volumes:
+      - ../scripts:/home/circleci/scripts
+      - ../install:/home/circleci/install
+      - ${HOME}/.ssh:/root/.ssh
+      - ../../..:/home/circleci/grafana-toolkit
+  cibuilt:
+    image: "grafana/grafana-plugin-ci:latest-alpine"
+    user: root
+    volumes:
+      - ../scripts:/home/circleci/scripts
+      - ../install:/home/circleci/install
+      - ${HOME}/.ssh:/root/.ssh
+      - ../../..:/home/circleci/grafana-toolkit

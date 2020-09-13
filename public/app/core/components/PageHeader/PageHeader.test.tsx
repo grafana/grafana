@@ -9,7 +9,7 @@ describe('PageHeader', () => {
     beforeAll(() => {
       const nav = {
         main: {
-          icon: 'fa fa-folder-open',
+          icon: 'folder-open',
           id: 'node',
           subTitle: 'node subtitle',
           url: '',
@@ -30,7 +30,7 @@ describe('PageHeader', () => {
     beforeAll(() => {
       const nav = {
         main: {
-          icon: 'fa fa-folder-open',
+          icon: 'folder-open',
           id: 'child',
           subTitle: 'child subtitle',
           url: '',

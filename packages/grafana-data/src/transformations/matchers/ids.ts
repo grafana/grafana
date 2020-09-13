@@ -1,7 +1,7 @@
 // This needs to be in its own file to avoid circular references
 
 // Builtin Predicates
-// not using 'any' and 'never' since they are reservered keywords
+// not using 'any' and 'never' since they are reserved keywords
 export enum MatcherID {
   anyMatch = 'anyMatch', // checks children
   allMatch = 'allMatch', // checks children
@@ -18,6 +18,9 @@ export enum FieldMatcherID {
   // With arguments
   byType = 'byType',
   byName = 'byName',
+  byNames = 'byNames',
+  byRegexp = 'byRegexp',
+  byRegexpOrNames = 'byRegexpOrNames',
   // byIndex = 'byIndex',
   // byLabel = 'byLabel',
 }

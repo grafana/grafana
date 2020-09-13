@@ -22,6 +22,8 @@ _docker_repo=${2:-grafana/grafana-enterprise}
 
 if echo "$_raw_grafana_tag" | grep -q "^v"; then
   _grafana_tag=$(echo "${_raw_grafana_tag}" | cut -d "v" -f 2)
+elif echo "$_raw_grafana_tag" | grep -q "^master-"; then
+  _grafana_tag="master"
 else
   _grafana_tag="${_raw_grafana_tag}"
 fi
@@ -48,3 +50,10 @@ if echo "$_raw_grafana_tag" | grep -q "^v" && echo "$_raw_grafana_tag" | grep -q
   docker tag "${_docker_repo}:${_grafana_tag}${TAG_SUFFIX}" "${_docker_repo}:latest${TAG_SUFFIX}"
   docker push "${_docker_repo}:latest${TAG_SUFFIX}"
 fi
+
+
+if echo "${_raw_grafana_tag}" | grep -q "^master-" && [ ${UBUNTU_BASE} = "1" ]; then
+  docker tag "${_docker_repo}:${_grafana_tag}${TAG_SUFFIX}" "grafana/grafana-enterprise-dev:${_raw_grafana_tag}"
+  docker push "grafana/grafana-enterprise-dev:${_raw_grafana_tag}"
+fi
+

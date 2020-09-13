@@ -2,7 +2,14 @@ import _ from 'lodash';
 import flatten from 'app/core/utils/flatten';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
-import { DataQueryResponse, DataFrame, toDataFrame, FieldType, MutableDataFrame } from '@grafana/data';
+import {
+  DataQueryResponse,
+  DataFrame,
+  toDataFrame,
+  FieldType,
+  MutableDataFrame,
+  PreferredVisualisationType,
+} from '@grafana/data';
 import { ElasticsearchAggregation } from './types';
 
 export class ElasticResponse {
@@ -12,7 +19,8 @@ export class ElasticResponse {
   }
 
   processMetrics(esAgg: any, target: any, seriesList: any, props: any) {
-    let metric, y, i, newSeries, bucket, value;
+    let metric, y, i, bucket, value;
+    let newSeries: any;
 
     for (y = 0; y < target.metrics.length; y++) {
       metric = target.metrics[y];
@@ -127,8 +135,8 @@ export class ElasticResponse {
       table.addColumn({ text: metricName });
       values.push(value);
     };
-
-    for (const bucket of esAgg.buckets) {
+    const buckets = _.isArray(esAgg.buckets) ? esAgg.buckets : [esAgg.buckets];
+    for (const bucket of buckets) {
       const values = [];
 
       for (const propValues of _.values(props)) {
@@ -174,6 +182,10 @@ export class ElasticResponse {
             // if more of the same metric type include field field name in property
             if (otherMetrics.length > 1) {
               metricName += ' ' + metric.field;
+              if (metric.type === 'bucket_script') {
+                //Use the formula in the column name
+                metricName = metric.settings.script;
+              }
             }
 
             addMetricValue(values, metricName, bucket[metric.id].value);
@@ -368,7 +380,7 @@ export class ElasticResponse {
     if (err.root_cause && err.root_cause.length > 0 && err.root_cause[0].reason) {
       result.message = err.root_cause[0].reason;
     } else {
-      result.message = err.reason || 'Unkown elastic error response';
+      result.message = err.reason || 'Unknown elastic error response';
     }
 
     if (response.$$config) {
@@ -379,6 +391,88 @@ export class ElasticResponse {
   }
 
   getTimeSeries() {
+    if (this.targets.some((target: any) => target.metrics.some((metric: any) => metric.type === 'raw_data'))) {
+      return this.processResponseToDataFrames(false);
+    }
+    return this.processResponseToSeries();
+  }
+
+  getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
+    return this.processResponseToDataFrames(true, logMessageField, logLevelField);
+  }
+
+  processResponseToDataFrames(
+    isLogsRequest: boolean,
+    logMessageField?: string,
+    logLevelField?: string
+  ): DataQueryResponse {
+    const dataFrame: DataFrame[] = [];
+
+    for (let n = 0; n < this.response.responses.length; n++) {
+      const response = this.response.responses[n];
+      if (response.error) {
+        throw this.getErrorFromElasticResponse(this.response, response.error);
+      }
+
+      if (response.hits && response.hits.hits.length > 0) {
+        const { propNames, docs } = flattenHits(response.hits.hits);
+        if (docs.length > 0) {
+          let series = createEmptyDataFrame(
+            propNames,
+            this.targets[0].timeField,
+            isLogsRequest,
+            logMessageField,
+            logLevelField
+          );
+
+          // Add a row for each document
+          for (const doc of docs) {
+            if (logLevelField) {
+              // Remap level field based on the datasource config. This field is then used in explore to figure out the
+              // log level. We may rewrite some actual data in the level field if they are different.
+              doc['level'] = doc[logLevelField];
+            }
+
+            series.add(doc);
+          }
+          if (isLogsRequest) {
+            series = addPreferredVisualisationType(series, 'logs');
+          }
+          dataFrame.push(series);
+        }
+      }
+
+      if (response.aggregations) {
+        const aggregations = response.aggregations;
+        const target = this.targets[n];
+        const tmpSeriesList: any[] = [];
+        const table = new TableModel();
+
+        this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
+        this.trimDatapoints(tmpSeriesList, target);
+        this.nameSeries(tmpSeriesList, target);
+
+        if (table.rows.length > 0) {
+          dataFrame.push(toDataFrame(table));
+        }
+
+        for (let y = 0; y < tmpSeriesList.length; y++) {
+          let series = toDataFrame(tmpSeriesList[y]);
+
+          // When log results, show aggregations only in graph. Log fields are then going to be shown in table.
+          if (isLogsRequest) {
+            series = addPreferredVisualisationType(series, 'graph');
+          }
+
+          dataFrame.push(series);
+        }
+      }
+    }
+
+    return { data: dataFrame };
+  }
+
+  processResponseToSeries = () => {
     const seriesList = [];
 
     for (let i = 0; i < this.response.responses.length; i++) {
@@ -412,113 +506,121 @@ export class ElasticResponse {
     }
 
     return { data: seriesList };
-  }
+  };
+}
 
-  getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
-    const dataFrame: DataFrame[] = [];
-    const docs: any[] = [];
+type Doc = {
+  _id: string;
+  _type: string;
+  _index: string;
+  _source?: any;
+};
 
-    for (let n = 0; n < this.response.responses.length; n++) {
-      const response = this.response.responses[n];
-      if (response.error) {
-        throw this.getErrorFromElasticResponse(this.response, response.error);
-      }
+/**
+ * Flatten the docs from response mainly the _source part which can be nested. This flattens it so that it is one level
+ * deep and the keys are: `level1Name.level2Name...`. Also returns list of all properties from all the docs (not all
+ * docs have to have the same keys).
+ * @param hits
+ */
+const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames: string[] } => {
+  const docs: any[] = [];
+  // We keep a list of all props so that we can create all the fields in the dataFrame, this can lead
+  // to wide sparse dataframes in case the scheme is different per document.
+  let propNames: string[] = [];
 
-      // We keep a list of all props so that we can create all the fields in the dataFrame, this can lead
-      // to wide sparse dataframes in case the scheme is different per document.
-      let propNames: string[] = [];
+  for (const hit of hits) {
+    const flattened = hit._source ? flatten(hit._source) : {};
+    const doc = {
+      _id: hit._id,
+      _type: hit._type,
+      _index: hit._index,
+      _source: { ...flattened },
+      ...flattened,
+    };
 
-      for (const hit of response.hits.hits) {
-        const flattened = hit._source ? flatten(hit._source, null) : {};
-        const doc = {
-          _id: hit._id,
-          _type: hit._type,
-          _index: hit._index,
-          _source: { ...flattened },
-          ...flattened,
-        };
-
-        for (const propName of Object.keys(doc)) {
-          if (propNames.indexOf(propName) === -1) {
-            propNames.push(propName);
-          }
-        }
-
-        docs.push(doc);
-      }
-
-      if (docs.length > 0) {
-        propNames = propNames.sort();
-        const series = new MutableDataFrame({ fields: [] });
-
-        series.addField({
-          name: this.targets[0].timeField,
-          type: FieldType.time,
-        });
-
-        if (logMessageField) {
-          series.addField({
-            name: logMessageField,
-            type: FieldType.string,
-          }).parse = (v: any) => {
-            return v || '';
-          };
-        } else {
-          series.addField({
-            name: '_source',
-            type: FieldType.string,
-          }).parse = (v: any) => {
-            return JSON.stringify(v, null, 2);
-          };
-        }
-
-        if (logLevelField) {
-          series.addField({
-            name: 'level',
-            type: FieldType.string,
-          }).parse = (v: any) => {
-            return v || '';
-          };
-        }
-
-        for (const propName of propNames) {
-          if (propName === this.targets[0].timeField || propName === '_source') {
-            continue;
-          }
-
-          series.addField({
-            name: propName,
-            type: FieldType.string,
-          }).parse = (v: any) => {
-            return v || '';
-          };
-        }
-
-        // Add a row for each document
-        for (const doc of docs) {
-          series.add(doc);
-        }
-
-        dataFrame.push(series);
-      }
-
-      if (response.aggregations) {
-        const aggregations = response.aggregations;
-        const target = this.targets[n];
-        const tmpSeriesList: any[] = [];
-        const table = new TableModel();
-
-        this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
-        this.trimDatapoints(tmpSeriesList, target);
-        this.nameSeries(tmpSeriesList, target);
-
-        for (let y = 0; y < tmpSeriesList.length; y++) {
-          const series = toDataFrame(tmpSeriesList[y]);
-          dataFrame.push(series);
-        }
+    for (const propName of Object.keys(doc)) {
+      if (propNames.indexOf(propName) === -1) {
+        propNames.push(propName);
       }
     }
 
-    return { data: dataFrame };
+    docs.push(doc);
   }
-}
+
+  propNames.sort();
+  return { docs, propNames };
+};
+
+/**
+ * Create empty dataframe but with created fields. Fields are based from propNames (should be from the response) and
+ * also from configuration specified fields for message, time, and level.
+ * @param propNames
+ * @param timeField
+ * @param logMessageField
+ * @param logLevelField
+ */
+const createEmptyDataFrame = (
+  propNames: string[],
+  timeField: string,
+  isLogsRequest: boolean,
+  logMessageField?: string,
+  logLevelField?: string
+): MutableDataFrame => {
+  const series = new MutableDataFrame({ fields: [] });
+
+  series.addField({
+    name: timeField,
+    type: FieldType.time,
+  });
+
+  if (logMessageField) {
+    series.addField({
+      name: logMessageField,
+      type: FieldType.string,
+    }).parse = (v: any) => {
+      return v || '';
+    };
+  }
+
+  if (logLevelField) {
+    series.addField({
+      name: 'level',
+      type: FieldType.string,
+    }).parse = (v: any) => {
+      return v || '';
+    };
+  }
+
+  const fieldNames = series.fields.map(field => field.name);
+
+  for (const propName of propNames) {
+    // Do not duplicate fields. This can mean that we will shadow some fields.
+    if (fieldNames.includes(propName)) {
+      continue;
+    }
+    // Do not add _source field (besides logs) as we are showing each _source field in table instead.
+    if (!isLogsRequest && propName === '_source') {
+      continue;
+    }
+
+    series.addField({
+      name: propName,
+      type: FieldType.string,
+    }).parse = (v: any) => {
+      return v || '';
+    };
+  }
+
+  return series;
+};
+
+const addPreferredVisualisationType = (series: any, type: PreferredVisualisationType) => {
+  let s = series;
+  s.meta
+    ? (s.meta.preferredVisualisationType = type)
+    : (s.meta = {
+        preferredVisualisationType: type,
+      });
+
+  return s;
+};

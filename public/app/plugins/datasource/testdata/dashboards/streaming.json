@@ -24,7 +24,7 @@
     },
     {
       "type": "panel",
-      "id": "graph2",
+      "id": "graph",
       "name": "React Graph",
       "version": ""
     },
@@ -187,7 +187,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Simple dummy streaming example",
-      "type": "graph2"
+      "type": "graph"
     }
   ],
   "schemaVersion": 18,

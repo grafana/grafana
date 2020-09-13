@@ -6,13 +6,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	. "github.com/smartystreets/goconvey/convey"
 
 	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestUserDataAccess(t *testing.T) {
-
 	Convey("Testing DB", t, func() {
 		ss := InitTestDB(t)
 
@@ -60,6 +61,56 @@ func TestUserDataAccess(t *testing.T) {
 				So(query.Result.Rands, ShouldHaveLength, 10)
 				So(query.Result.Salt, ShouldHaveLength, 10)
 				So(query.Result.IsDisabled, ShouldBeTrue)
+			})
+		})
+
+		Convey("Given an organization", func() {
+			autoAssignOrg := setting.AutoAssignOrg
+			setting.AutoAssignOrg = true
+			defer func() {
+				setting.AutoAssignOrg = autoAssignOrg
+			}()
+
+			orgCmd := &models.CreateOrgCommand{Name: "Some Test Org"}
+			err := CreateOrg(orgCmd)
+			So(err, ShouldBeNil)
+
+			Convey("Creates user assigned to other organization", func() {
+				cmd := &models.CreateUserCommand{
+					Email: "usertest@test.com",
+					Name:  "user name",
+					Login: "user_test_login",
+					OrgId: orgCmd.Result.Id,
+				}
+
+				err := CreateUser(context.Background(), cmd)
+				So(err, ShouldBeNil)
+
+				Convey("Loading a user", func() {
+					query := models.GetUserByIdQuery{Id: cmd.Result.Id}
+					err := GetUserById(&query)
+					So(err, ShouldBeNil)
+
+					So(query.Result.Email, ShouldEqual, "usertest@test.com")
+					So(query.Result.Password, ShouldEqual, "")
+					So(query.Result.Rands, ShouldHaveLength, 10)
+					So(query.Result.Salt, ShouldHaveLength, 10)
+					So(query.Result.IsDisabled, ShouldBeFalse)
+					So(query.Result.OrgId, ShouldEqual, orgCmd.Result.Id)
+				})
+			})
+
+			Convey("Don't create user assigned to unknown organization", func() {
+				const nonExistingOrgID = 10000
+				cmd := &models.CreateUserCommand{
+					Email: "usertest@test.com",
+					Name:  "user name",
+					Login: "user_test_login",
+					OrgId: nonExistingOrgID,
+				}
+
+				err := CreateUser(context.Background(), cmd)
+				So(err, ShouldEqual, models.ErrOrgNotFound)
 			})
 		})
 
@@ -270,7 +321,7 @@ func TestUserDataAccess(t *testing.T) {
 					})
 				})
 
-				Convey("when retreiving signed in user for orgId=0 result should return active org id", func() {
+				Convey("when retrieving signed in user for orgId=0 result should return active org id", func() {
 					ss.CacheService.Flush()
 
 					query := &models.GetSignedInUserQuery{OrgId: users[1].OrgId, UserId: users[1].Id}
@@ -402,7 +453,7 @@ func TestUserDataAccess(t *testing.T) {
 				// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
 				// Make the first log-in during the past
 				getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-				query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test1", AuthId: "test1"}
+				query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "ldap", AuthId: "ldap0"}
 				err := GetUserByAuthInfo(query)
 				getTime = time.Now
 
@@ -412,7 +463,7 @@ func TestUserDataAccess(t *testing.T) {
 				// Add a second auth module for this user
 				// Have this module's last log-in be more recent
 				getTime = func() time.Time { return time.Now().AddDate(0, 0, -1) }
-				query = &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test2", AuthId: "test2"}
+				query = &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "oauth", AuthId: "oauth0"}
 				err = GetUserByAuthInfo(query)
 				getTime = time.Now
 
@@ -428,12 +479,12 @@ func TestUserDataAccess(t *testing.T) {
 					for _, user := range searchUserQuery.Result.Users {
 						if user.Login == login {
 							So(user.AuthModule, ShouldHaveLength, 1)
-							So(user.AuthModule[0], ShouldEqual, "test2")
+							So(user.AuthModule[0], ShouldEqual, "oauth")
 						}
 					}
 
 					// "log in" again with the first auth module
-					updateAuthCmd := &models.UpdateAuthInfoCommand{UserId: query.Result.Id, AuthModule: "test1", AuthId: "test1"}
+					updateAuthCmd := &models.UpdateAuthInfoCommand{UserId: query.Result.Id, AuthModule: "ldap", AuthId: "ldap1"}
 					err = UpdateAuthInfo(updateAuthCmd)
 					So(err, ShouldBeNil)
 
@@ -444,7 +495,48 @@ func TestUserDataAccess(t *testing.T) {
 					for _, user := range searchUserQuery.Result.Users {
 						if user.Login == login {
 							So(user.AuthModule, ShouldHaveLength, 1)
-							So(user.AuthModule[0], ShouldEqual, "test1")
+							So(user.AuthModule[0], ShouldEqual, "ldap")
+						}
+					}
+				})
+			})
+
+			Convey("When searching LDAP users", func() {
+				for i := 0; i < 5; i++ {
+					// Find a user to set tokens on
+					login := fmt.Sprint("loginuser", i)
+
+					// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
+					// Make the first log-in during the past
+					getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
+					query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "ldap", AuthId: fmt.Sprint("ldap", i)}
+					err := GetUserByAuthInfo(query)
+					getTime = time.Now
+
+					So(err, ShouldBeNil)
+					So(query.Result.Login, ShouldEqual, login)
+				}
+
+				// Log in first user with oauth
+				login := "loginuser0"
+				getTime = func() time.Time { return time.Now().AddDate(0, 0, -1) }
+				query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "oauth", AuthId: "oauth0"}
+				err := GetUserByAuthInfo(query)
+				getTime = time.Now
+
+				So(err, ShouldBeNil)
+				So(query.Result.Login, ShouldEqual, login)
+
+				Convey("Should only return users recently logged in with ldap when filtered by ldap auth module", func() {
+					searchUserQuery := &models.SearchUsersQuery{AuthModule: "ldap"}
+					err = SearchUsers(searchUserQuery)
+
+					So(err, ShouldBeNil)
+					So(searchUserQuery.Result.Users, ShouldHaveLength, 4)
+					for _, user := range searchUserQuery.Result.Users {
+						if user.Login == login {
+							So(user.AuthModule, ShouldHaveLength, 1)
+							So(user.AuthModule[0], ShouldEqual, "ldap")
 						}
 					}
 				})
@@ -455,8 +547,8 @@ func TestUserDataAccess(t *testing.T) {
 			var err error
 			createUserCmd := &models.CreateUserCommand{
 				Email:   fmt.Sprint("admin", "@test.com"),
-				Name:    fmt.Sprint("admin"),
-				Login:   fmt.Sprint("admin"),
+				Name:    "admin",
+				Login:   "admin",
 				IsAdmin: true,
 			}
 			err = CreateUser(context.Background(), createUserCmd)
@@ -474,6 +566,40 @@ func TestUserDataAccess(t *testing.T) {
 				So(getUserError, ShouldBeNil)
 
 				So(query.Result.IsAdmin, ShouldEqual, true)
+			})
+		})
+
+		Convey("Given one user", func() {
+			const email = "user@test.com"
+			const username = "user"
+			createUserCmd := &models.CreateUserCommand{
+				Email: email,
+				Name:  "user",
+				Login: username,
+			}
+			err := CreateUser(context.Background(), createUserCmd)
+			So(err, ShouldBeNil)
+
+			Convey("When trying to create a new user with the same email, an error is returned", func() {
+				createUserCmd := &models.CreateUserCommand{
+					Email:        email,
+					Name:         "user2",
+					Login:        "user2",
+					SkipOrgSetup: true,
+				}
+				err := CreateUser(context.Background(), createUserCmd)
+				So(err, ShouldEqual, models.ErrUserAlreadyExists)
+			})
+
+			Convey("When trying to create a new user with the same login, an error is returned", func() {
+				createUserCmd := &models.CreateUserCommand{
+					Email:        "user2@test.com",
+					Name:         "user2",
+					Login:        username,
+					SkipOrgSetup: true,
+				}
+				err := CreateUser(context.Background(), createUserCmd)
+				So(err, ShouldEqual, models.ErrUserAlreadyExists)
 			})
 		})
 	})

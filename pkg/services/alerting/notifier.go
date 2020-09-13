@@ -1,8 +1,10 @@
 package alerting
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
@@ -13,13 +15,72 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// for stubbing in tests
+//nolint: gocritic
+var newImageUploaderProvider = func() (imguploader.ImageUploader, error) {
+	return imguploader.NewImageUploader()
+}
+
 // NotifierPlugin holds meta information about a notifier.
 type NotifierPlugin struct {
-	Type            string          `json:"type"`
-	Name            string          `json:"name"`
-	Description     string          `json:"description"`
-	OptionsTemplate string          `json:"optionsTemplate"`
-	Factory         NotifierFactory `json:"-"`
+	Type        string           `json:"type"`
+	Name        string           `json:"name"`
+	Heading     string           `json:"heading"`
+	Description string           `json:"description"`
+	Info        string           `json:"info"`
+	Factory     NotifierFactory  `json:"-"`
+	Options     []NotifierOption `json:"options"`
+}
+
+// NotifierOption holds information about options specific for the NotifierPlugin.
+type NotifierOption struct {
+	Element        ElementType    `json:"element"`
+	InputType      InputType      `json:"inputType"`
+	Label          string         `json:"label"`
+	Description    string         `json:"description"`
+	Placeholder    string         `json:"placeholder"`
+	PropertyName   string         `json:"propertyName"`
+	SelectOptions  []SelectOption `json:"selectOptions"`
+	ShowWhen       ShowWhen       `json:"showWhen"`
+	Required       bool           `json:"required"`
+	ValidationRule string         `json:"validationRule"`
+	Secure         bool           `json:"secure"`
+}
+
+// InputType is the type of input that can be rendered in the frontend.
+type InputType string
+
+const (
+	// InputTypeText will render a text field in the frontend
+	InputTypeText = "text"
+	// InputTypePassword will render a text field in the frontend
+	InputTypePassword = "password"
+)
+
+// ElementType is the type of element that can be rendered in the frontend.
+type ElementType string
+
+const (
+	// ElementTypeInput will render an input
+	ElementTypeInput = "input"
+	// ElementTypeSelect will render a select
+	ElementTypeSelect = "select"
+	// ElementTypeCheckbox will render a checkbox
+	ElementTypeCheckbox = "checkbox"
+	// ElementTypeTextArea will render a textarea
+	ElementTypeTextArea = "textarea"
+)
+
+// SelectOption is a simple type for Options that have dropdown options. Should be used when Element is ElementTypeSelect.
+type SelectOption struct {
+	Value string `json:"value"`
+	Label string `json:"label"`
+}
+
+// ShowWhen holds information about when options are dependant on other options.
+type ShowWhen struct {
+	Field string `json:"field"`
+	Is    string `json:"is"`
 }
 
 func newNotificationService(renderService rendering.Service) *notificationService {
@@ -34,8 +95,8 @@ type notificationService struct {
 	renderService rendering.Service
 }
 
-func (n *notificationService) SendIfNeeded(context *EvalContext) error {
-	notifierStates, err := n.getNeededNotifiers(context.Rule.OrgID, context.Rule.Notifications, context)
+func (n *notificationService) SendIfNeeded(evalCtx *EvalContext) error {
+	notifierStates, err := n.getNeededNotifiers(evalCtx.Rule.OrgID, evalCtx.Rule.Notifications, evalCtx)
 	if err != nil {
 		n.log.Error("Failed to get alert notifiers", "error", err)
 		return err
@@ -46,12 +107,22 @@ func (n *notificationService) SendIfNeeded(context *EvalContext) error {
 	}
 
 	if notifierStates.ShouldUploadImage() {
-		if err = n.uploadImage(context); err != nil {
-			n.log.Error("Failed to upload alert panel image.", "error", err)
+		// Create a copy of EvalContext and give it a new, shorter, timeout context to upload the image
+		uploadEvalCtx := *evalCtx
+		timeout := setting.AlertingNotificationTimeout / 2
+		var uploadCtxCancel func()
+		uploadEvalCtx.Ctx, uploadCtxCancel = context.WithTimeout(evalCtx.Ctx, timeout)
+
+		// Try to upload the image without consuming all the time allocated for EvalContext
+		if err = n.renderAndUploadImage(&uploadEvalCtx, timeout); err != nil {
+			n.log.Error("Failed to render and upload alert panel image.", "ruleId", uploadEvalCtx.Rule.ID, "error", err)
 		}
+		uploadCtxCancel()
+		evalCtx.ImageOnDiskPath = uploadEvalCtx.ImageOnDiskPath
+		evalCtx.ImagePublicURL = uploadEvalCtx.ImagePublicURL
 	}
 
-	return n.sendNotifications(context, notifierStates)
+	return n.sendNotifications(evalCtx, notifierStates)
 }
 
 func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, notifierState *notifierState) error {
@@ -118,8 +189,8 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 	return nil
 }
 
-func (n *notificationService) uploadImage(context *EvalContext) (err error) {
-	uploader, err := imguploader.NewImageUploader()
+func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout time.Duration) (err error) {
+	uploader, err := newImageUploaderProvider()
 	if err != nil {
 		return err
 	}
@@ -127,32 +198,42 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	renderOpts := rendering.Opts{
 		Width:           1000,
 		Height:          500,
-		Timeout:         setting.AlertingEvaluationTimeout,
-		OrgId:           context.Rule.OrgID,
+		Timeout:         timeout,
+		OrgId:           evalCtx.Rule.OrgID,
 		OrgRole:         models.ROLE_ADMIN,
 		ConcurrentLimit: setting.AlertingRenderLimit,
 	}
 
-	ref, err := context.GetDashboardUID()
+	ref, err := evalCtx.GetDashboardUID()
 	if err != nil {
 		return err
 	}
 
-	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?orgId=%d&panelId=%d", ref.Uid, ref.Slug, context.Rule.OrgID, context.Rule.PanelID)
+	renderOpts.Path = fmt.Sprintf("d-solo/%s/%s?orgId=%d&panelId=%d", ref.Uid, ref.Slug, evalCtx.Rule.OrgID, evalCtx.Rule.PanelID)
 
-	result, err := n.renderService.Render(context.Ctx, renderOpts)
+	n.log.Debug("Rendering alert panel image", "ruleId", evalCtx.Rule.ID, "urlPath", renderOpts.Path)
+	start := time.Now()
+	result, err := n.renderService.Render(evalCtx.Ctx, renderOpts)
 	if err != nil {
 		return err
 	}
+	took := time.Since(start)
 
-	context.ImageOnDiskPath = result.FilePath
-	context.ImagePublicURL, err = uploader.Upload(context.Ctx, context.ImageOnDiskPath)
+	n.log.Debug("Rendered alert panel image", "ruleId", evalCtx.Rule.ID, "path", result.FilePath, "took", took)
+
+	evalCtx.ImageOnDiskPath = result.FilePath
+
+	n.log.Debug("Uploading alert panel image to external image store", "ruleId", evalCtx.Rule.ID, "path", evalCtx.ImageOnDiskPath)
+
+	start = time.Now()
+	evalCtx.ImagePublicURL, err = uploader.Upload(evalCtx.Ctx, evalCtx.ImageOnDiskPath)
 	if err != nil {
 		return err
 	}
+	took = time.Since(start)
 
-	if context.ImagePublicURL != "" {
-		n.log.Info("uploaded screenshot of alert to external image store", "url", context.ImagePublicURL)
+	if evalCtx.ImagePublicURL != "" {
+		n.log.Debug("Uploaded alert panel image to external image store", "ruleId", evalCtx.Rule.ID, "url", evalCtx.ImagePublicURL, "took", took)
 	}
 
 	return nil

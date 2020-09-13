@@ -73,6 +73,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     onHorizontalRegionSelected,
     timeZone,
     children,
+    ariaLabel,
   } = props;
   const { graphContainer, wrapper, legendContainer } = getGraphWithLegendStyles(props);
 
@@ -82,7 +83,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
       : acc.concat([
           {
             label: s.label,
-            color: s.color,
+            color: s.color || '',
             isVisible: s.isVisible,
             yAxis: s.yAxis.index,
             displayValues: s.info || [],
@@ -91,7 +92,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
   }, []);
 
   return (
-    <div className={wrapper}>
+    <div className={wrapper} aria-label={ariaLabel}>
       <div className={graphContainer}>
         <Graph
           series={series}

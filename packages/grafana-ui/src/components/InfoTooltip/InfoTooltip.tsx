@@ -1,5 +1,6 @@
 import React from 'react';
 import { Tooltip, TooltipProps, PopoverContent } from '../Tooltip/Tooltip';
+import { Icon } from '../Icon/Icon';
 
 interface InfoTooltipProps extends Omit<TooltipProps, 'children' | 'content'> {
   children: PopoverContent;
@@ -8,7 +9,7 @@ interface InfoTooltipProps extends Omit<TooltipProps, 'children' | 'content'> {
 export const InfoTooltip = ({ children, ...restProps }: InfoTooltipProps) => {
   return (
     <Tooltip content={children} {...restProps}>
-      <i className="fa fa-info-circle" />
+      <Icon name="info-circle" />
     </Tooltip>
   );
 };

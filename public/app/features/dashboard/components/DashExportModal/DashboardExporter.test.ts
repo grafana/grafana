@@ -1,15 +1,41 @@
-jest.mock('app/core/store', () => {
-  return {
-    getBool: jest.fn(),
-  };
-});
-
 import _ from 'lodash';
 import config from 'app/core/config';
 import { DashboardExporter } from './DashboardExporter';
 import { DashboardModel } from '../../state/DashboardModel';
-import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PanelPluginMeta } from '@grafana/data';
+import { variableAdapters } from '../../../variables/adapters';
+import { createConstantVariableAdapter } from '../../../variables/constant/adapter';
+import { createQueryVariableAdapter } from '../../../variables/query/adapter';
+import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
+
+function getStub(arg: string) {
+  return Promise.resolve(stubs[arg || 'gfdb']);
+}
+
+jest.mock('app/core/store', () => {
+  return {
+    getBool: jest.fn(),
+    getObject: jest.fn(),
+  };
+});
+
+jest.mock('@grafana/runtime', () => ({
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  getDataSourceSrv: () => ({
+    get: jest.fn(arg => getStub(arg)),
+  }),
+  config: {
+    buildInfo: {},
+    panels: {},
+    featureToggles: {
+      newVariables: false,
+    },
+  },
+}));
+
+variableAdapters.register(createQueryVariableAdapter());
+variableAdapters.register(createConstantVariableAdapter());
+variableAdapters.register(createDataSourceVariableAdapter());
 
 describe('given dashboard with repeated panels', () => {
   let dash: any, exported: any;
@@ -90,9 +116,6 @@ describe('given dashboard with repeated panels', () => {
 
     config.buildInfo.version = '3.0.2';
 
-    //Stubs test function calls
-    const datasourceSrvStub = ({ get: jest.fn(arg => getStub(arg)) } as any) as DatasourceSrv;
-
     config.panels['graph'] = {
       id: 'graph',
       name: 'Graph',
@@ -111,8 +134,8 @@ describe('given dashboard with repeated panels', () => {
       info: { version: '1.1.2' },
     } as PanelPluginMeta;
 
-    dash = new DashboardModel(dash, {});
-    const exporter = new DashboardExporter(datasourceSrvStub);
+    dash = new DashboardModel(dash, {}, () => dash.templating.list);
+    const exporter = new DashboardExporter();
     exporter.makeExportable(dash).then(clean => {
       exported = clean;
       done();
@@ -250,7 +273,3 @@ stubs['-- Grafana --'] = {
     builtIn: true,
   },
 };
-
-function getStub(arg: string) {
-  return Promise.resolve(stubs[arg || 'gfdb']);
-}

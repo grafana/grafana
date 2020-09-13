@@ -5,6 +5,7 @@ import _ from 'lodash';
 import GraphiteQuery from './graphite_query';
 import { QueryCtrl } from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';
+import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 import { auto } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { AppEvents } from '@grafana/data';
@@ -37,7 +38,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
     this.datasource.waitForFuncDefsLoaded().then(() => {
       this.queryModel = new GraphiteQuery(this.datasource, this.target, templateSrv);
-      this.buildSegments();
+      this.buildSegments(false);
     });
 
     this.removeTagValue = '-- remove tag --';
@@ -53,13 +54,14 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     this.parseTarget();
   }
 
-  buildSegments() {
+  buildSegments(modifyLastSegment = true) {
     this.segments = _.map(this.queryModel.segments, segment => {
       return this.uiSegmentSrv.newSegment(segment);
     });
 
     const checkOtherSegmentsIndex = this.queryModel.checkOtherSegmentsIndex || 0;
-    this.checkOtherSegments(checkOtherSegmentsIndex);
+
+    promiseToDigest(this.$scope)(this.checkOtherSegments(checkOtherSegmentsIndex, modifyLastSegment));
 
     if (this.queryModel.seriesByTagUsed) {
       this.fixTagSegments();
@@ -71,14 +73,14 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     this.segments.push(this.uiSegmentSrv.newSelectMetric());
   }
 
-  checkOtherSegments(fromIndex: number) {
+  checkOtherSegments(fromIndex: number, modifyLastSegment = true) {
     if (this.queryModel.segments.length === 1 && this.queryModel.segments[0].type === 'series-ref') {
-      return;
+      return Promise.resolve();
     }
 
     if (fromIndex === 0) {
       this.addSelectMetricSegment();
-      return;
+      return Promise.resolve();
     }
 
     const path = this.queryModel.getSegmentPathUpTo(fromIndex + 1);
@@ -90,7 +92,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       .metricFindQuery(path)
       .then((segments: any) => {
         if (segments.length === 0) {
-          if (path !== '') {
+          if (path !== '' && modifyLastSegment) {
             this.queryModel.segments = this.queryModel.segments.splice(0, fromIndex);
             this.segments = this.segments.splice(0, fromIndex);
             this.addSelectMetricSegment();
@@ -156,7 +158,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
         }
 
         // add template variables
-        _.eachRight(this.templateSrv.variables, variable => {
+        _.eachRight(this.templateSrv.getVariables(), variable => {
           altSegments.unshift(
             this.uiSegmentSrv.newSegment({
               type: 'template',
@@ -207,20 +209,24 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       const tag = removeTagPrefix(segment.value);
       this.pause();
       this.addSeriesByTagFunc(tag);
-      return;
+      return null;
     }
 
     if (segment.expandable) {
-      return this.checkOtherSegments(segmentIndex + 1).then(() => {
-        this.setSegmentFocus(segmentIndex + 1);
-        this.targetChanged();
-      });
+      return promiseToDigest(this.$scope)(
+        this.checkOtherSegments(segmentIndex + 1).then(() => {
+          this.setSegmentFocus(segmentIndex + 1);
+          this.targetChanged();
+        })
+      );
     } else {
       this.spliceSegments(segmentIndex + 1);
     }
 
     this.setSegmentFocus(segmentIndex + 1);
     this.targetChanged();
+
+    return null;
   }
 
   spliceSegments(index: any) {
@@ -363,7 +369,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     return this.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix).then((values: any[]) => {
       const altValues = _.map(values, 'text');
       // Add template variables as additional values
-      _.eachRight(this.templateSrv.variables, variable => {
+      _.eachRight(this.templateSrv.getVariables(), variable => {
         altValues.push('${' + variable.name + ':regex}');
       });
       return mapToDropdownOptions(altValues);

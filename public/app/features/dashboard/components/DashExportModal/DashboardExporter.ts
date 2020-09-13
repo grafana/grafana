@@ -2,9 +2,11 @@ import _ from 'lodash';
 
 import config from 'app/core/config';
 import { DashboardModel } from '../../state/DashboardModel';
-import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { PanelModel } from 'app/features/dashboard/state';
 import { PanelPluginMeta } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { VariableOption, VariableRefresh } from '../../../variables/types';
+import { isConstant, isQuery } from '../../../variables/guard';
 
 interface Input {
   name: string;
@@ -35,8 +37,6 @@ interface DataSources {
 }
 
 export class DashboardExporter {
-  constructor(private datasourceSrv: DatasourceSrv) {}
-
   makeExportable(dashboard: DashboardModel) {
     // clean up repeated rows and panels,
     // this is done on the live real dashboard instance, not on a clone
@@ -56,7 +56,7 @@ export class DashboardExporter {
     const promises: Array<Promise<void>> = [];
     const variableLookup: { [key: string]: any } = {};
 
-    for (const variable of saveModel.templating.list) {
+    for (const variable of saveModel.getVariables()) {
       variableLookup[variable.name] = variable;
     }
 
@@ -73,36 +73,38 @@ export class DashboardExporter {
       }
 
       promises.push(
-        this.datasourceSrv.get(datasource).then(ds => {
-          if (ds.meta.builtIn) {
-            return;
-          }
+        getDataSourceSrv()
+          .get(datasource)
+          .then(ds => {
+            if (ds.meta?.builtIn) {
+              return;
+            }
 
-          // add data source type to require list
-          requires['datasource' + ds.meta.id] = {
-            type: 'datasource',
-            id: ds.meta.id,
-            name: ds.meta.name,
-            version: ds.meta.info.version || '1.0.0',
-          };
+            // add data source type to require list
+            requires['datasource' + ds.meta?.id] = {
+              type: 'datasource',
+              id: ds.meta.id,
+              name: ds.meta.name,
+              version: ds.meta.info.version || '1.0.0',
+            };
 
-          // if used via variable we can skip templatizing usage
-          if (datasourceVariable) {
-            return;
-          }
+            // if used via variable we can skip templatizing usage
+            if (datasourceVariable) {
+              return;
+            }
 
-          const refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
-          datasources[refName] = {
-            name: refName,
-            label: ds.name,
-            description: '',
-            type: 'datasource',
-            pluginId: ds.meta.id,
-            pluginName: ds.meta.name,
-          };
+            const refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
+            datasources[refName] = {
+              name: refName,
+              label: ds.name,
+              description: '',
+              type: 'datasource',
+              pluginId: ds.meta?.id,
+              pluginName: ds.meta?.name,
+            };
 
-          obj.datasource = '${' + refName + '}';
-        })
+            obj.datasource = '${' + refName + '}';
+          })
       );
     };
 
@@ -143,12 +145,13 @@ export class DashboardExporter {
     }
 
     // templatize template vars
-    for (const variable of saveModel.templating.list) {
-      if (variable.type === 'query') {
+    for (const variable of saveModel.getVariables()) {
+      if (isQuery(variable)) {
         templateizeDatasourceUsage(variable);
         variable.options = [];
-        variable.current = {};
-        variable.refresh = variable.refresh > 0 ? variable.refresh : 1;
+        variable.current = ({} as unknown) as VariableOption;
+        variable.refresh =
+          variable.refresh !== VariableRefresh.never ? variable.refresh : VariableRefresh.onDashboardLoad;
       }
     }
 
@@ -172,8 +175,8 @@ export class DashboardExporter {
         });
 
         // templatize constants
-        for (const variable of saveModel.templating.list) {
-          if (variable.type === 'constant') {
+        for (const variable of saveModel.getVariables()) {
+          if (isConstant(variable)) {
             const refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
             inputs.push({
               name: refName,
@@ -187,6 +190,7 @@ export class DashboardExporter {
             variable.options[0] = variable.current = {
               value: variable.query,
               text: variable.query,
+              selected: false,
             };
           }
         }
@@ -200,7 +204,7 @@ export class DashboardExporter {
         return newObj;
       })
       .catch(err => {
-        console.log('Export failed:', err);
+        console.error('Export failed:', err);
         return {
           error: err,
         };

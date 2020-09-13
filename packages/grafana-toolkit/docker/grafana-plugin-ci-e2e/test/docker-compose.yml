@@ -1,0 +1,18 @@
+version: '3'
+services:
+  citest:
+    image: "debian:buster-slim"
+    user: root
+    volumes:
+      - ../scripts:/root/scripts
+      - ../install:/root/install
+      - ${HOME}/.ssh:/root/.ssh
+      - ../../..:/root/grafana-toolkit
+  cibuilt:
+    image: "srclosson/grafana-plugin-ci-e2e"
+    user: root
+    volumes:
+      - ../scripts:/root/scripts
+      - ../install:/root/install
+      - ${HOME}/.ssh:/root/.ssh
+      - ../../..:/root/grafana-toolkit

@@ -4,9 +4,7 @@ import { ReplaySubject, Unsubscribable, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 // Services & Utils
-import { config } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
 import { runRequest, preProcessPanelData } from './runRequest';
 import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
@@ -15,6 +13,7 @@ import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datas
 import {
   PanelData,
   DataQuery,
+  CoreApp,
   DataQueryRequest,
   DataSourceApi,
   DataSourceJsonData,
@@ -22,21 +21,25 @@ import {
   DataTransformerConfig,
   transformDataFrame,
   ScopedVars,
+  applyFieldOverrides,
+  DataConfigSource,
+  TimeZone,
+  LoadingState,
+  rangeUtil,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
-  datasource: string | DataSourceApi<TQuery, TOptions>;
+  datasource: string | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId: number;
   dashboardId?: number;
-  timezone?: string;
+  timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
-  widthPixels: number;
-  maxDataPoints: number | undefined | null;
+  maxDataPoints: number;
   minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
@@ -49,38 +52,63 @@ function getNextRequestId() {
   return 'Q' + counter++;
 }
 
-export class PanelQueryRunner {
-  private subject?: ReplaySubject<PanelData>;
-  private subscription?: Unsubscribable;
-  private transformations?: DataTransformerConfig[];
-  private lastResult?: PanelData;
+export interface GetDataOptions {
+  withTransforms: boolean;
+  withFieldConfig: boolean;
+}
 
-  constructor() {
+export class PanelQueryRunner {
+  private subject: ReplaySubject<PanelData>;
+  private subscription?: Unsubscribable;
+  private lastResult?: PanelData;
+  private dataConfigSource: DataConfigSource;
+
+  constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
+    this.dataConfigSource = dataConfigSource;
   }
 
   /**
    * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
    */
-  getData(transform = true): Observable<PanelData> {
-    if (transform) {
-      return this.subject.pipe(
-        map((data: PanelData) => {
-          if (this.hasTransformations()) {
-            const newSeries = transformDataFrame(this.transformations, data.series);
-            return { ...data, series: newSeries };
+  getData(options: GetDataOptions): Observable<PanelData> {
+    const { withFieldConfig, withTransforms } = options;
+
+    return this.subject.pipe(
+      map((data: PanelData) => {
+        let processedData = data;
+
+        // Apply transformation
+        if (withTransforms) {
+          const transformations = this.dataConfigSource.getTransformations();
+
+          if (transformations && transformations.length > 0) {
+            processedData = {
+              ...processedData,
+              series: transformDataFrame(transformations, data.series),
+            };
           }
-          return data;
-        })
-      );
-    }
+        }
 
-    // Just pass it directly
-    return this.subject.pipe();
-  }
+        if (withFieldConfig) {
+          // Apply field defaults & overrides
+          const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+          if (fieldConfig) {
+            processedData = {
+              ...processedData,
+              series: applyFieldOverrides({
+                timeZone: data.request!.timezone,
+                autoMinMax: true,
+                data: processedData.series,
+                ...fieldConfig,
+              }),
+            };
+          }
+        }
 
-  hasTransformations() {
-    return config.featureToggles.transformations && this.transformations && this.transformations.length > 0;
+        return processedData;
+      })
+    );
   }
 
   async run(options: QueryRunnerOptions) {
@@ -93,11 +121,9 @@ export class PanelQueryRunner {
       timeRange,
       timeInfo,
       cacheTimeout,
-      widthPixels,
       maxDataPoints,
       scopedVars,
       minInterval,
-      // delayStateNotification,
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
@@ -106,6 +132,7 @@ export class PanelQueryRunner {
     }
 
     const request: DataQueryRequest = {
+      app: CoreApp.Dashboard,
       requestId: getNextRequestId(),
       timezone,
       panelId,
@@ -115,7 +142,7 @@ export class PanelQueryRunner {
       interval: '',
       intervalMs: 0,
       targets: cloneDeep(queries),
-      maxDataPoints: maxDataPoints || widthPixels,
+      maxDataPoints: maxDataPoints,
       scopedVars: scopedVars || {},
       cacheTimeout,
       startTime: Date.now(),
@@ -136,7 +163,7 @@ export class PanelQueryRunner {
       });
 
       const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
-      const norm = kbn.calculateInterval(timeRange, widthPixels, lowerIntervalLimit);
+      const norm = rangeUtil.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,
       // and add built in variables interval and interval_ms
@@ -150,7 +177,7 @@ export class PanelQueryRunner {
 
       this.pipeToSubject(runRequest(ds, request));
     } catch (err) {
-      console.log('PanelQueryRunner Error', err);
+      console.error('PanelQueryRunner Error', err);
     }
   }
 
@@ -162,14 +189,33 @@ export class PanelQueryRunner {
     this.subscription = observable.subscribe({
       next: (data: PanelData) => {
         this.lastResult = preProcessPanelData(data, this.lastResult);
+        // Store preprocessed query results for applying overrides later on in the pipeline
         this.subject.next(this.lastResult);
       },
     });
   }
 
-  setTransformations(transformations?: DataTransformerConfig[]) {
-    this.transformations = transformations;
+  cancelQuery() {
+    if (!this.subscription) {
+      return;
+    }
+
+    this.subscription.unsubscribe();
+
+    // If we have an old result with loading state, send it with done state
+    if (this.lastResult && this.lastResult.state === LoadingState.Loading) {
+      this.subject.next({
+        ...this.lastResult,
+        state: LoadingState.Done,
+      });
+    }
   }
+
+  resendLastResult = () => {
+    if (this.lastResult) {
+      this.subject.next(this.lastResult);
+    }
+  };
 
   /**
    * Called when the panel is closed
@@ -183,6 +229,19 @@ export class PanelQueryRunner {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
+  }
+
+  useLastResultFrom(runner: PanelQueryRunner) {
+    this.lastResult = runner.getLastResult();
+
+    if (this.lastResult) {
+      // The subject is a replay subject so anyone subscribing will get this last result
+      this.subject.next(this.lastResult);
+    }
+  }
+
+  getLastResult(): PanelData | undefined {
+    return this.lastResult;
   }
 }
 

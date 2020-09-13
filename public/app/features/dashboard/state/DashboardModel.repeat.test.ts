@@ -1,6 +1,8 @@
 import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { expect } from 'test/lib/common';
+import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
+import { PanelModel } from './PanelModel';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -31,7 +33,7 @@ describe('given dashboard with panel repeat', () => {
         ],
       },
     };
-    dashboard = new DashboardModel(dashboardJSON);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
   });
 
@@ -59,7 +61,7 @@ describe('given dashboard with panel repeat in horizontal direction', () => {
   let dashboard: any;
 
   beforeEach(() => {
-    dashboard = new DashboardModel({
+    const dashboardJSON = {
       panels: [
         {
           id: 2,
@@ -85,7 +87,8 @@ describe('given dashboard with panel repeat in horizontal direction', () => {
           },
         ],
       },
-    });
+    };
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
   });
 
@@ -191,7 +194,7 @@ describe('given dashboard with panel repeat in vertical direction', () => {
   let dashboard: any;
 
   beforeEach(() => {
-    dashboard = new DashboardModel({
+    const dashboardJSON = {
       panels: [
         { id: 1, type: 'row', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
         { id: 2, repeat: 'apps', repeatDirection: 'v', gridPos: { x: 5, y: 1, h: 2, w: 8 } },
@@ -214,7 +217,8 @@ describe('given dashboard with panel repeat in vertical direction', () => {
           },
         ],
       },
-    });
+    };
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
   });
 
@@ -230,7 +234,7 @@ describe('given dashboard with panel repeat in vertical direction', () => {
 });
 
 describe('given dashboard with row repeat and panel repeat in horizontal direction', () => {
-  let dashboard: any, dashboardJSON;
+  let dashboard: any, dashboardJSON: any;
 
   beforeEach(() => {
     dashboardJSON = {
@@ -269,7 +273,7 @@ describe('given dashboard with row repeat and panel repeat in horizontal directi
         ],
       },
     };
-    dashboard = new DashboardModel(dashboardJSON);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats(false);
   });
 
@@ -348,7 +352,7 @@ describe('given dashboard with row repeat', () => {
         ],
       },
     };
-    dashboard = new DashboardModel(dashboardJSON);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
   });
 
@@ -359,7 +363,7 @@ describe('given dashboard with row repeat', () => {
 
   it('should set scopedVars for each panel', () => {
     dashboardJSON.templating.list[0].options[2].selected = true;
-    dashboard = new DashboardModel(dashboardJSON);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     expect(dashboard.panels[1].scopedVars).toMatchObject({
@@ -399,7 +403,7 @@ describe('given dashboard with row repeat', () => {
       { id: 4, type: 'row', gridPos: { x: 0, y: 1, h: 1, w: 24 } },
       { id: 5, type: 'graph', gridPos: { x: 0, y: 2, h: 1, w: 12 } },
     ];
-    dashboard = new DashboardModel(dashboardJSON);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     const panelTypes = _.map(dashboard.panels, 'type');
@@ -441,7 +445,7 @@ describe('given dashboard with row repeat', () => {
         { text: 'backend03', value: 'backend03', selected: false },
       ],
     });
-    dashboard = new DashboardModel(dashboardJSON);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     const panelTypes = _.map(dashboard.panels, 'type');
@@ -488,7 +492,7 @@ describe('given dashboard with row repeat', () => {
       { id: 4, type: 'row', gridPos: { x: 0, y: 1, h: 1, w: 24 } },
       { id: 5, type: 'graph', gridPos: { x: 0, y: 2, h: 1, w: 12 } },
     ];
-    dashboard = new DashboardModel(dashboardJSON);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     const panelIds = _.flattenDeep(
@@ -511,7 +515,7 @@ describe('given dashboard with row repeat', () => {
       { id: 3, type: 'graph', gridPos: { x: 6, y: 1, h: 4, w: 12 } },
       { id: 4, type: 'graph', gridPos: { x: 0, y: 5, h: 2, w: 12 } },
     ];
-    dashboard = new DashboardModel(dashboardJSON);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     const panelTypes = _.map(dashboard.panels, 'type');
@@ -564,7 +568,7 @@ describe('given dashboard with row and panel repeat', () => {
         ],
       },
     };
-    dashboard = new DashboardModel(dashboardJSON);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
   });
 
@@ -592,7 +596,7 @@ describe('given dashboard with row and panel repeat', () => {
       },
       { id: 12, type: 'graph', repeatPanelId: 2, repeatIteration: 101, gridPos: { x: 0, y: 3, h: 1, w: 6 } },
     ];
-    dashboard = new DashboardModel(dashboardJSON);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     const panelTypes = _.map(dashboard.panels, 'type');
@@ -600,7 +604,7 @@ describe('given dashboard with row and panel repeat', () => {
   });
 
   it('should set scopedVars for each row', () => {
-    dashboard = new DashboardModel(dashboardJSON);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     expect(dashboard.panels[0].scopedVars).toMatchObject({
@@ -612,7 +616,7 @@ describe('given dashboard with row and panel repeat', () => {
   });
 
   it('should set panel-repeat variable for each panel', () => {
-    dashboard = new DashboardModel(dashboardJSON);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     expect(dashboard.panels[1].scopedVars).toMatchObject({
@@ -631,7 +635,7 @@ describe('given dashboard with row and panel repeat', () => {
   });
 
   it('should set row-repeat variable for each panel', () => {
-    dashboard = new DashboardModel(dashboardJSON);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     expect(dashboard.panels[1].scopedVars).toMatchObject({
@@ -650,7 +654,7 @@ describe('given dashboard with row and panel repeat', () => {
   });
 
   it('should repeat panels when row is expanding', () => {
-    dashboard = new DashboardModel(dashboardJSON);
+    dashboard = getDashboardModel(dashboardJSON);
     dashboard.processRepeats();
 
     expect(dashboard.panels.length).toBe(6);
@@ -666,5 +670,62 @@ describe('given dashboard with row and panel repeat', () => {
     // toggle row back
     dashboard.toggleRow(dashboard.panels[1]);
     expect(dashboard.panels.length).toBe(4);
+  });
+});
+
+describe('given panel is in view mode', () => {
+  let dashboard: any;
+
+  beforeEach(() => {
+    const dashboardJSON = {
+      panels: [
+        {
+          id: 1,
+          repeat: 'apps',
+          repeatDirection: 'h',
+          gridPos: { x: 0, y: 0, h: 2, w: 24 },
+        },
+      ],
+      templating: {
+        list: [
+          {
+            name: 'apps',
+            current: {
+              text: 'se1, se2, se3',
+              value: ['se1', 'se2', 'se3'],
+            },
+            options: [
+              { text: 'se1', value: 'se1', selected: true },
+              { text: 'se2', value: 'se2', selected: true },
+              { text: 'se3', value: 'se3', selected: true },
+              { text: 'se4', value: 'se4', selected: false },
+            ],
+          },
+        ],
+      },
+    };
+
+    dashboard = getDashboardModel(dashboardJSON);
+    dashboard.initViewPanel(
+      new PanelModel({
+        id: 2,
+        repeat: undefined,
+        repeatDirection: 'h',
+        panels: [
+          {
+            id: 2,
+            repeat: 'apps',
+            repeatDirection: 'h',
+            gridPos: { x: 0, y: 0, h: 2, w: 24 },
+          },
+        ],
+        repeatPanelId: 2,
+      })
+    );
+    dashboard.processRepeats();
+  });
+
+  it('should set correct repeated panel to be in view', () => {
+    expect(dashboard.panels[1].isViewing).toBeTruthy();
   });
 });

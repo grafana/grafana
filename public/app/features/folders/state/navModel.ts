@@ -3,7 +3,7 @@ import { NavModelItem, NavModel } from '@grafana/data';
 
 export function buildNavModel(folder: FolderDTO): NavModelItem {
   return {
-    icon: 'fa fa-folder-open',
+    icon: 'folder',
     id: 'manage-folder',
     subTitle: 'Manage folder dashboards & permissions',
     url: '',
@@ -12,21 +12,21 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
     children: [
       {
         active: false,
-        icon: 'fa fa-fw fa-th-large',
+        icon: 'apps',
         id: `folder-dashboards-${folder.uid}`,
         text: 'Dashboards',
         url: folder.url,
       },
       {
         active: false,
-        icon: 'fa fa-fw fa-lock',
+        icon: 'lock',
         id: `folder-permissions-${folder.uid}`,
         text: 'Permissions',
         url: `${folder.url}/permissions`,
       },
       {
         active: false,
-        icon: 'gicon gicon-cog',
+        icon: 'cog',
         id: `folder-settings-${folder.uid}`,
         text: 'Settings',
         url: `${folder.url}/settings`,
@@ -42,13 +42,15 @@ export function getLoadingNav(tabIndex: number): NavModel {
     title: 'Loading',
     url: 'url',
     canSave: false,
+    canEdit: false,
+    canAdmin: false,
     version: 0,
   });
 
-  main.children[tabIndex].active = true;
+  main.children![tabIndex].active = true;
 
   return {
     main: main,
-    node: main.children[tabIndex],
+    node: main.children![tabIndex],
   };
 }

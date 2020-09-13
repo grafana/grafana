@@ -446,3 +446,75 @@ func TestMultiLDAP(t *testing.T) {
 		})
 	})
 }
+
+// mockLDAP represents testing struct for ldap testing
+type mockLDAP struct {
+	dialCalledTimes  int
+	loginCalledTimes int
+	closeCalledTimes int
+	usersCalledTimes int
+	bindCalledTimes  int
+
+	dialErrReturn error
+
+	loginErrReturn error
+	loginReturn    *models.ExternalUserInfo
+
+	bindErrReturn error
+
+	usersErrReturn   error
+	usersFirstReturn []*models.ExternalUserInfo
+	usersRestReturn  []*models.ExternalUserInfo
+}
+
+// Login test fn
+func (mock *mockLDAP) Login(*models.LoginUserQuery) (*models.ExternalUserInfo, error) {
+	mock.loginCalledTimes++
+	return mock.loginReturn, mock.loginErrReturn
+}
+
+// Users test fn
+func (mock *mockLDAP) Users([]string) ([]*models.ExternalUserInfo, error) {
+	mock.usersCalledTimes++
+
+	if mock.usersCalledTimes == 1 {
+		return mock.usersFirstReturn, mock.usersErrReturn
+	}
+
+	return mock.usersRestReturn, mock.usersErrReturn
+}
+
+// UserBind test fn
+func (mock *mockLDAP) UserBind(string, string) error {
+	return nil
+}
+
+// Dial test fn
+func (mock *mockLDAP) Dial() error {
+	mock.dialCalledTimes++
+	return mock.dialErrReturn
+}
+
+// Close test fn
+func (mock *mockLDAP) Close() {
+	mock.closeCalledTimes++
+}
+
+func (mock *mockLDAP) Bind() error {
+	mock.bindCalledTimes++
+	return mock.bindErrReturn
+}
+
+func setup() *mockLDAP {
+	mock := &mockLDAP{}
+
+	newLDAP = func(config *ldap.ServerConfig) ldap.IServer {
+		return mock
+	}
+
+	return mock
+}
+
+func teardown() {
+	newLDAP = ldap.New
+}

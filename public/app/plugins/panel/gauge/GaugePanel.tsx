@@ -1,54 +1,64 @@
-// Libraries
 import React, { PureComponent } from 'react';
+import { FieldDisplay, getFieldDisplayValues, PanelProps, VizOrientation } from '@grafana/data';
+import { DataLinksContextMenu, Gauge, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
+import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 
-// Services & Utils
 import { config } from 'app/core/config';
-
-// Components
-import { Gauge, DataLinksContextMenu } from '@grafana/ui';
-
-// Types
 import { GaugeOptions } from './types';
-import { VizRepeater } from '@grafana/ui';
-import { FieldDisplay, getFieldDisplayValues, VizOrientation, PanelProps } from '@grafana/data';
-import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { clearNameForSingleSeries } from '../bargauge/BarGaugePanel';
 
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
-  renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
-    const { options } = this.props;
+  renderComponent = (
+    valueProps: VizRepeaterRenderValueProps<FieldDisplay>,
+    menuProps: DataLinksContextMenuApi
+  ): JSX.Element => {
+    const { options, fieldConfig } = this.props;
+    const { width, height, count, value } = valueProps;
     const { field, display } = value;
+    const { openMenu, targetClassName } = menuProps;
 
     return (
-      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
-        {({ openMenu, targetClassName }) => {
-          return (
-            <Gauge
-              value={display}
-              width={width}
-              height={height}
-              thresholds={field.thresholds}
-              showThresholdLabels={options.showThresholdLabels}
-              showThresholdMarkers={options.showThresholdMarkers}
-              minValue={field.min}
-              maxValue={field.max}
-              theme={config.theme}
-              onClick={openMenu}
-              className={targetClassName}
-            />
-          );
-        }}
-      </DataLinksContextMenu>
+      <Gauge
+        value={clearNameForSingleSeries(count, fieldConfig.defaults, display)}
+        width={width}
+        height={height}
+        field={field}
+        showThresholdLabels={options.showThresholdLabels}
+        showThresholdMarkers={options.showThresholdMarkers}
+        theme={config.theme}
+        onClick={openMenu}
+        className={targetClassName}
+      />
     );
   };
 
+  renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay>): JSX.Element => {
+    const { value } = valueProps;
+    const { getLinks, hasLinks } = value;
+
+    if (hasLinks && getLinks) {
+      return (
+        <DataLinksContextMenu links={getLinks}>
+          {api => {
+            return this.renderComponent(valueProps, api);
+          }}
+        </DataLinksContextMenu>
+      );
+    }
+
+    return this.renderComponent(valueProps, {});
+  };
+
   getValues = (): FieldDisplay[] => {
-    const { data, options, replaceVariables } = this.props;
+    const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
     return getFieldDisplayValues({
-      fieldOptions: options.fieldOptions,
+      fieldConfig,
+      reduceOptions: options.reduceOptions,
       replaceVariables,
       theme: config.theme,
       data: data.series,
       autoMinMax: true,
+      timeZone,
     });
   };
 
@@ -61,6 +71,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
         width={width}
         height={height}
         source={data}
+        autoGrid={true}
         renderCounter={renderCounter}
         orientation={VizOrientation.Auto}
       />

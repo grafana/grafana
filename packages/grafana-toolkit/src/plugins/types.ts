@@ -11,6 +11,7 @@ export interface PluginBuildReport {
   workflow: WorkflowInfo;
   coverage: CoverageInfo[];
   tests: TestResultsInfo[];
+  git?: GitLogInfo;
   pullRequest?: number;
   artifactsBaseURL?: string;
   grafanaVersion?: KeyValue<string>;
@@ -69,4 +70,28 @@ export interface ZipFileInfo {
   contents: ExtensionSize;
   sha1?: string;
   md5?: string;
+}
+
+interface UserInfo {
+  name: string;
+  email: string;
+  time?: number;
+}
+
+export interface GitLogInfo {
+  commit: string;
+  tree: string;
+  subject: string;
+  body?: string;
+  notes?: string;
+  author: UserInfo;
+  commiter: UserInfo;
+}
+
+export interface ManifestInfo {
+  // time: number;  << filled in by the server
+  // keyId: string; << filled in by the server
+  plugin: string;
+  version: string;
+  files: Record<string, string>;
 }

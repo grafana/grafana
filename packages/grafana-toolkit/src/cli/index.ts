@@ -13,15 +13,13 @@ import { pluginTestTask } from './tasks/plugin.tests';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
-import {
-  ciBuildPluginTask,
-  ciBuildPluginDocsTask,
-  ciPackagePluginTask,
-  ciTestPluginTask,
-  ciPluginReportTask,
-} from './tasks/plugin.ci';
+import { githubPublishTask } from './tasks/plugin.utils';
+import { pluginUpdateTask } from './tasks/plugin.update';
+import { ciBuildPluginDocsTask, ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginCreateTask } from './tasks/plugin.create';
+import { bundleManagedTask } from './tasks/plugin/bundle.managed';
+import { componentCreateTask } from './tasks/component.create';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -42,7 +40,7 @@ export const run = (includeInternalScripts = false) => {
 
     program
       .command('package:build')
-      .option('-s, --scope <packages>', 'packages=[data|runtime|ui|toolkit]')
+      .option('-s, --scope <packages>', 'packages=[data|runtime|ui|toolkit|e2e|e2e-selectors]')
       .description('Builds @grafana/* package to packages/grafana-*/dist')
       .action(async cmd => {
         await execTask(buildPackageTask)({
@@ -106,6 +104,7 @@ export const run = (includeInternalScripts = false) => {
     program
       .command('close-milestone')
       .option('-m, --milestone <milestone>', 'Specify milestone')
+      .option('--dryRun', 'Only simulate actions')
       .description('Helps ends a milestone by removing the cherry-pick label and closing it')
       .action(async cmd => {
         if (!cmd.milestone) {
@@ -115,7 +114,18 @@ export const run = (includeInternalScripts = false) => {
 
         await execTask(closeMilestoneTask)({
           milestone: cmd.milestone,
+          dryRun: !!cmd.dryRun,
         });
+      });
+
+    // React generator
+    program
+      .command('component:create')
+      .description(
+        'Scaffold React components. Optionally add test, story and .mdx files. The components are created in the same dir the script is run from.'
+      )
+      .action(async () => {
+        await execTask(componentCreateTask)({});
       });
   }
 
@@ -167,15 +177,11 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:ci-build')
-    .option('--backend', 'Run Makefile for backend task', false)
+    .option('--finish', 'move all results to the jobs folder', false)
     .description('Build the plugin, leaving results in /dist and /coverage')
     .action(async cmd => {
-      if (typeof cmd === 'string') {
-        console.error(`Invalid argument: ${cmd}\nSee --help for a list of available commands.`);
-        process.exit(1);
-      }
       await execTask(ciBuildPluginTask)({
-        backend: cmd.backend,
+        finish: cmd.finish,
       });
     });
 
@@ -188,18 +194,11 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:ci-package')
+    .option('--signing-admin', 'Use the admin API endpoint for signing the manifest.', false)
     .description('Create a zip packages for the plugin')
     .action(async cmd => {
-      await execTask(ciPackagePluginTask)({});
-    });
-
-  program
-    .command('plugin:ci-test')
-    .option('--full', 'run all the tests (even stuff that will break)')
-    .description('end-to-end test using bundle in /artifacts')
-    .action(async cmd => {
-      await execTask(ciTestPluginTask)({
-        full: cmd.full,
+      await execTask(ciPackagePluginTask)({
+        signingAdmin: cmd.signingAdmin,
       });
     });
 
@@ -211,6 +210,34 @@ export const run = (includeInternalScripts = false) => {
       await execTask(ciPluginReportTask)({
         upload: cmd.upload,
       });
+    });
+
+  program
+    .command('plugin:bundle-managed')
+    .description('Builds managed plugins')
+    .action(async cmd => {
+      await execTask(bundleManagedTask)({});
+    });
+
+  program
+    .command('plugin:github-publish')
+    .option('--dryrun', 'Do a dry run only', false)
+    .option('--verbose', 'Print verbose', false)
+    .option('--commitHash <hashKey>', 'Specify the commit hash')
+    .description('Publish to github')
+    .action(async cmd => {
+      await execTask(githubPublishTask)({
+        dryrun: cmd.dryrun,
+        verbose: cmd.verbose,
+        commitHash: cmd.commitHash,
+      });
+    });
+
+  program
+    .command('plugin:update-circleci')
+    .description('Update plugin')
+    .action(async cmd => {
+      await execTask(pluginUpdateTask)({});
     });
 
   program.on('command:*', () => {

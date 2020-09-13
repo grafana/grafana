@@ -4,6 +4,18 @@ import { Plugin } from '@grafana/slate-react';
 import Options, { OptionsFormat } from './options';
 import TOKEN_MARK from './TOKEN_MARK';
 
+export interface Token {
+  content: string;
+  offsets?: {
+    start: number;
+    end: number;
+  };
+  types: string[];
+  aliases: string[];
+  prev?: Token | null;
+  next?: Token | null;
+}
+
 /**
  * A Slate plugin to highlight code syntax.
  */
@@ -15,7 +27,25 @@ export function SlatePrism(optsParam: OptionsFormat = {}): Plugin {
       if (!opts.onlyIn(node)) {
         return next();
       }
-      return decorateNode(opts, Block.create(node as Block));
+
+      const block = Block.create(node as Block);
+      const grammarName = opts.getSyntax(block);
+      const grammar = Prism.languages[grammarName];
+
+      if (!grammar) {
+        // Grammar not loaded
+        return [];
+      }
+
+      // Tokenize the whole block text
+      const texts = block.getTexts();
+      const blockText = texts.map(text => text && text.getText()).join('\n');
+      const tokens = Prism.tokenize(blockText, grammar);
+      const flattened = flattenTokens(tokens);
+
+      const newData = editor.value.data.set('tokens', flattened);
+      editor.setData(newData);
+      return decorateNode(opts, tokens, block);
     },
 
     renderDecoration: (props, editor, next) =>
@@ -33,18 +63,8 @@ export function SlatePrism(optsParam: OptionsFormat = {}): Plugin {
 /**
  * Returns the decoration for a node
  */
-function decorateNode(opts: Options, block: Block) {
-  const grammarName = opts.getSyntax(block);
-  const grammar = Prism.languages[grammarName];
-  if (!grammar) {
-    // Grammar not loaded
-    return [];
-  }
-
-  // Tokenize the whole block text
+function decorateNode(opts: Options, tokens: Array<string | Prism.Token>, block: Block) {
   const texts = block.getTexts();
-  const blockText = texts.map(text => text && text.getText()).join('\n');
-  const tokens = Prism.tokenize(blockText, grammar);
 
   // The list of decorations to return
   const decorations: Decoration[] = [];
@@ -67,13 +87,17 @@ function decorateNode(opts: Options, block: Block) {
             className: `prism-token token ${accu}`,
             block,
           });
+
           if (decoration) {
             decorations.push(decoration);
           }
         }
         offset += token.length;
       } else {
-        accu = `${accu} ${token.type} ${token.alias || ''}`;
+        accu = `${accu} ${token.type}`;
+        if (token.alias) {
+          accu += ' ' + token.alias;
+        }
 
         if (typeof token.content === 'string') {
           const decoration = createDecoration({
@@ -85,6 +109,7 @@ function decorateNode(opts: Options, block: Block) {
             className: `prism-token token ${accu}`,
             block,
           });
+
           if (decoration) {
             decorations.push(decoration);
           }
@@ -157,4 +182,72 @@ function createDecoration({
   });
 
   return myDec;
+}
+
+function flattenToken(token: string | Prism.Token | Array<string | Prism.Token>): Token[] {
+  if (typeof token === 'string') {
+    return [
+      {
+        content: token,
+        types: [],
+        aliases: [],
+      },
+    ];
+  } else if (Array.isArray(token)) {
+    return token.flatMap(t => flattenToken(t));
+  } else if (token instanceof Prism.Token) {
+    return flattenToken(token.content).flatMap(t => {
+      let aliases: string[] = [];
+      if (typeof token.alias === 'string') {
+        aliases = [token.alias];
+      } else {
+        aliases = token.alias ?? [];
+      }
+
+      return {
+        content: t.content,
+        types: [token.type, ...t.types],
+        aliases: [...aliases, ...t.aliases],
+      };
+    });
+  }
+
+  return [];
+}
+
+export function flattenTokens(token: string | Prism.Token | Array<string | Prism.Token>) {
+  const tokens = flattenToken(token);
+
+  if (!tokens.length) {
+    return [];
+  }
+
+  const firstToken = tokens[0];
+  firstToken.prev = null;
+  firstToken.next = tokens.length >= 2 ? tokens[1] : null;
+  firstToken.offsets = {
+    start: 0,
+    end: firstToken.content.length,
+  };
+
+  for (let i = 1; i < tokens.length - 1; i++) {
+    tokens[i].prev = tokens[i - 1];
+    tokens[i].next = tokens[i + 1];
+
+    tokens[i].offsets = {
+      start: tokens[i - 1].offsets!.end,
+      end: tokens[i - 1].offsets!.end + tokens[i].content.length,
+    };
+  }
+
+  const lastToken = tokens[tokens.length - 1];
+  lastToken.prev = tokens.length >= 2 ? tokens[tokens.length - 2] : null;
+  lastToken.next = null;
+  lastToken.offsets = {
+    start: tokens.length >= 2 ? tokens[tokens.length - 2].offsets!.end : 0,
+    end:
+      tokens.length >= 2 ? tokens[tokens.length - 2].offsets!.end + lastToken.content.length : lastToken.content.length,
+  };
+
+  return tokens;
 }

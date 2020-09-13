@@ -3,9 +3,9 @@ package migrations
 import (
 	"fmt"
 
-	"github.com/go-xorm/xorm"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
+	"xorm.io/xorm"
 )
 
 func addUserMigrations(mg *Migrator) {
@@ -121,6 +121,10 @@ func addUserMigrations(mg *Migrator) {
 	// This field used in couple with LDAP auth to disable users removed from LDAP rather than delete it immediately.
 	mg.AddMigration("Add is_disabled column to user", NewAddColumnMigration(userV2, &Column{
 		Name: "is_disabled", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+
+	mg.AddMigration("Add index user.login/user.email", NewAddIndexMigration(userV2, &Index{
+		Cols: []string{"login", "email"},
 	}))
 }
 

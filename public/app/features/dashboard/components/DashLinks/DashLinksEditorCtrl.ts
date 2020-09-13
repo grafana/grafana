@@ -4,14 +4,14 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
 
-export let iconMap = {
-  'external link': 'fa-external-link',
-  dashboard: 'fa-th-large',
-  question: 'fa-question',
-  info: 'fa-info',
-  bolt: 'fa-bolt',
-  doc: 'fa-file-text-o',
-  cloud: 'fa-cloud',
+export let iconMap: { [key: string]: string } = {
+  'external link': 'external-link-alt',
+  dashboard: 'apps',
+  question: 'question-circle',
+  info: 'info-circle',
+  bolt: 'bolt',
+  doc: 'file-alt',
+  cloud: 'cloud',
 };
 
 export class DashLinksEditorCtrl {
@@ -22,11 +22,11 @@ export class DashLinksEditorCtrl {
 
   emptyListCta = {
     title: 'There are no dashboard links added yet',
-    buttonIcon: 'gicon gicon-link',
+    buttonIcon: 'link',
     buttonTitle: 'Add Dashboard Link',
     infoBox: {
       __html: `<p>
-      Dashboard Links allow you to place links to other dashboards and web sites directly in below the dashboard
+      Dashboard Links allow you to place links to other dashboards and web sites directly below the dashboard
       header.
     </p>`,
     },
@@ -54,7 +54,7 @@ export class DashLinksEditorCtrl {
   };
 
   addLink() {
-    this.dashboard.links.push(this.link);
+    this.dashboard.links = [...this.dashboard.links, this.link];
     this.mode = 'list';
     this.dashboard.updateSubmenuVisibility();
   }
@@ -62,16 +62,21 @@ export class DashLinksEditorCtrl {
   editLink(link: any) {
     this.link = link;
     this.mode = 'edit';
-    console.log(this.link);
   }
 
   saveLink() {
+    this.dashboard.links = _.cloneDeep(this.dashboard.links);
     this.backToList();
   }
 
   moveLink(index: string | number, dir: string | number) {
     // @ts-ignore
     _.move(this.dashboard.links, index, index + dir);
+  }
+
+  duplicateLink(link: any, index: number) {
+    this.dashboard.links.splice(index, 0, link);
+    this.dashboard.updateSubmenuVisibility();
   }
 
   deleteLink(index: number) {

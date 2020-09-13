@@ -2,7 +2,7 @@
 title = "Dashboard HTTP API "
 description = "Grafana Dashboard HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "dashboard"]
-aliases = ["/http_api/dashboard/"]
+aliases = ["/docs/grafana/latest/http_api/dashboard/"]
 type = "docs"
 [menu.docs]
 name = "Dashboard"
@@ -16,8 +16,8 @@ parent = "http_api"
 The identifier (id) of a dashboard is an auto-incrementing numeric value and is only unique per Grafana install.
 
 The unique identifier (uid) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
-It's automatically generated if not provided when creating a dashboard. The uid allows having consistent URL's for accessing
-dashboards and when syncing dashboards between multiple Grafana installs, see [dashboard provisioning](/administration/provisioning/#dashboards)
+It's automatically generated if not provided when creating a dashboard. The uid allows having consistent URLs for accessing
+dashboards and when syncing dashboards between multiple Grafana installs, see [dashboard provisioning]({{< relref "../administration/provisioning.md#dashboards" >}})
 for more information. This means that changing the title of a dashboard will not break any bookmarked links to that dashboard.
 
 The uid can have a maximum length of 40 characters.
@@ -44,7 +44,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "tags": [ "templated" ],
     "timezone": "browser",
     "schemaVersion": 16,
-    "version": 0
+    "version": 0,
+    "refresh": "25s"
   },
   "folderId": 0,
   "overwrite": false
@@ -55,10 +56,168 @@ JSON Body schema:
 
 - **dashboard** – The complete dashboard model, id = null to create a new dashboard.
 - **dashboard.id** – id = null to create a new dashboard.
-- **dashboard.uid** – Optional [unique identifier](/http_api/dashboard/#identifier-id-vs-unique-identifier-uid) when creating a dashboard. uid = null will generate a new uid.
+- **dashboard.uid** – Optional unique identifier when creating a dashboard. uid = null will generate a new uid.
 - **folderId** – The id of the folder to save the dashboard in.
 - **overwrite** – Set to true if you want to overwrite existing dashboard with newer version, same dashboard title in folder or same dashboard uid.
 - **message** - Set a commit message for the version history.
+- **refresh** - Set the dashboard refresh interval. If this is lower than [the minimum refresh interval]({{< relref "../administration/configuration.md#min_refresh_interval">}}), then Grafana will ignore it and will enforce the minimum refresh interval.
+
+For adding or updating an alert rule for a dashboard panel the user should declare a
+`dashboard.panels.alert` block.
+
+**Example Request for updating dashboard alert rule**:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+Content-Length: 78
+
+{
+ "dashboard":  {
+        "id": 104,
+        "panels": [
+            {
+                "alert": {
+                    "alertRuleTags": {},
+                    "conditions": [
+                        {
+                            "evaluator": {
+                                "params": [
+                                    25
+                                ],
+                                "type": "gt"
+                            },
+                            "operator": {
+                                "type": "and"
+                            },
+                            "query": {
+                                "params": [
+                                    "A",
+                                    "5m",
+                                    "now"
+                                ]
+                            },
+                            "reducer": {
+                                "params": [],
+                                "type": "avg"
+                            },
+                            "type": "query"
+                        }
+                    ],
+                    "executionErrorState": "alerting",
+                    "for": "5m",
+                    "frequency": "1m",
+                    "handler": 1,
+                    "name": "Panel Title alert",
+                    "noDataState": "no_data",
+                    "notifications": []
+                },
+                "aliasColors": {},
+                "bars": false,
+                "dashLength": 10,
+                "dashes": false,
+                "datasource": null,
+                "fieldConfig": {
+                    "defaults": {
+                        "custom": {}
+                    },
+                    "overrides": []
+                },
+                "fill": 1,
+                "fillGradient": 0,
+                "gridPos": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0
+                },
+                "hiddenSeries": false,
+                "id": 2,
+                "legend": {
+                    "avg": false,
+                    "current": false,
+                    "max": false,
+                    "min": false,
+                    "show": true,
+                    "total": false,
+                    "values": false
+                },
+                "lines": true,
+                "linewidth": 1,
+                "nullPointMode": "null",
+                "options": {
+                    "dataLinks": []
+                },
+                "percentage": false,
+                "pointradius": 2,
+                "points": false,
+                "renderer": "flot",
+                "seriesOverrides": [],
+                "spaceLength": 10,
+                "stack": false,
+                "steppedLine": false,
+                "targets": [
+                    {
+                        "refId": "A",
+                        "scenarioId": "random_walk"
+                    }
+                ],
+                "thresholds": [
+                    {
+                        "colorMode": "critical",
+                        "fill": true,
+                        "line": true,
+                        "op": "gt",
+                        "value": 50
+                    }
+                ],
+                "timeFrom": null,
+                "timeRegions": [],
+                "timeShift": null,
+                "title": "Panel Title",
+                "tooltip": {
+                    "shared": true,
+                    "sort": 0,
+                    "value_type": "individual"
+                },
+                "type": "graph",
+                "xaxis": {
+                    "buckets": null,
+                    "mode": "time",
+                    "name": null,
+                    "show": true,
+                    "values": []
+                },
+                "yaxes": [
+                    {
+                        "format": "short",
+                        "label": null,
+                        "logBase": 1,
+                        "max": null,
+                        "min": null,
+                        "show": true
+                    },
+                    {
+                        "format": "short",
+                        "label": null,
+                        "logBase": 1,
+                        "max": null,
+                        "min": null,
+                        "show": true
+                    }
+                ],
+                "yaxis": {
+                    "align": false,
+                    "alignLevel": null
+                }
+            }
+        ],
+        "title": "Update alert rule via API",
+        "uid": "dHEquNzGz",
+        "version": 1
+    }
+}
+```
 
 **Example Response**:
 
@@ -175,7 +334,11 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"title": "Production Overview"}
+{
+  "title": "Production Overview",
+  "message": "Dashboard Production Overview deleted",
+  "id": 2
+}
 ```
 
 Status Codes:
@@ -274,7 +437,7 @@ Content-Type: application/json
 ```
 
 ## Dashboard Search
-See [Folder/Dashboard Search API](/http_api/folder_dashboard_search).
+See [Folder/Dashboard Search API]({{< relref "folder_dashboard_search.md" >}}).
 
 ## Deprecated resources
 Please note that these resource have been deprecated and will be removed in a future release.
@@ -284,7 +447,7 @@ Please note that these resource have been deprecated and will be removed in a fu
 
 `GET /api/dashboards/db/:slug`
 
-Will return the dashboard given the dashboard slug. Slug is the url friendly version of the dashboard title.
+Will return the dashboard given the dashboard slug. Slug is the URL friendly version of the dashboard title.
 If there exists multiple dashboards with the same slug, one of them will be returned in the response.
 
 **Example Request**:
@@ -332,7 +495,7 @@ Status Codes:
 
 `DELETE /api/dashboards/db/:slug`
 
-Will delete the dashboard given the specified slug. Slug is the url friendly version of the dashboard title.
+Will delete the dashboard given the specified slug. Slug is the URL friendly version of the dashboard title.
 
 **Example Request**:
 
@@ -349,7 +512,11 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"title": "Production Overview"}
+{
+  "title": "Production Overview",
+  "message": "Dashboard Production Overview deleted",
+  "id": 2
+}
 ```
 
 Status Codes:

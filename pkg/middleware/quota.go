@@ -5,7 +5,7 @@ import (
 
 	"gopkg.in/macaron.v1"
 
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/quota"
 )
 
@@ -13,7 +13,7 @@ import (
 func Quota(quotaService *quota.QuotaService) func(target string) macaron.Handler {
 	//https://open.spotify.com/track/7bZSoBEAEEUsGEuLOf94Jm?si=T1Tdju5qRSmmR0zph_6RBw fuuuuunky
 	return func(target string) macaron.Handler {
-		return func(c *m.ReqContext) {
+		return func(c *models.ReqContext) {
 			limitReached, err := quotaService.QuotaReached(c, target)
 			if err != nil {
 				c.JsonApiErr(500, "failed to get quota", err)

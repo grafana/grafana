@@ -7,7 +7,7 @@
   "info": {
     "description": "Data source for PostgreSQL and compatible databases",
     "author": {
-      "name": "Grafana Project",
+      "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {

@@ -8,7 +8,7 @@ for ((i = 1; i <= $#; i++ )); do
   remainder="${!i}"
   # Find everything until last = character (= is included in the result)
   # This allows to add tags to metric names
-  metricName=$(grep -o "\(.*\)=" <<< $remainder)
+  metricName=$(grep -o "\(.*\)=" <<< "$remainder")
   # Get the metric value
   value=${remainder#"$metricName"}
   # Remove remaining = character from metric name

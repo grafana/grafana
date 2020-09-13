@@ -3,7 +3,7 @@ title = "Using Elasticsearch in Grafana"
 description = "Guide for using Elasticsearch in Grafana"
 keywords = ["grafana", "elasticsearch", "guide"]
 type = "docs"
-aliases = ["/datasources/elasticsearch"]
+aliases = ["/docs/grafana/latest/datasources/elasticsearch"]
 [menu.docs]
 name = "Elasticsearch"
 parent = "datasources"
@@ -91,6 +91,15 @@ For example, if you're using a default setup of Filebeat for shipping logs to El
 - **Message field name:**  message
 - **Level field name:** fields.level
 
+### Data links
+
+Data links create a link from a specified field that can be accessed in logs view in Explore.
+
+Each data link configuration consists of: 
+- **Field -** Name of the field used by the data link.
+- **URL/query -** If the link is external, then enter the full link URL. If the link is internal link, then this input serves as query for the target data source. In both cases, you can interpolate the value from the field with `${__value.raw }` macro.
+- **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.
+
 ## Metric Query editor
 
 ![Elasticsearch Query Editor](/img/docs/elasticsearch/query_editor.png)
@@ -116,11 +125,11 @@ Some metric aggregations are called Pipeline aggregations, for example, *Moving 
 
 ## Templating
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
-Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
+Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place.
+Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -168,11 +177,11 @@ In the above example, we have a lucene query that filters documents based on the
 a variable in the *Terms* group by field input box. This allows you to use a variable to quickly change how the data is grouped.
 
 Example dashboard:
-[Elasticsearch Templated Dashboard](http://play.grafana.org/dashboard/db/elasticsearch-templated)
+[Elasticsearch Templated Dashboard](https://play.grafana.org/dashboard/db/elasticsearch-templated)
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Grafana can query any Elasticsearch index
 for annotation events.
 

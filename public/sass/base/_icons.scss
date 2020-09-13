@@ -11,17 +11,12 @@
   vertical-align: middle;
 }
 
-.gicon--has-hover {
+.icon--has-hover {
   opacity: 0.7;
 
   &:hover {
     opacity: 1;
   }
-}
-
-.mini {
-  width: 0.8em;
-  height: 0.8em;
 }
 
 .gicon-add-annotation {
@@ -64,6 +59,18 @@
 
 .gicon-alert {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_alert.svg');
+}
+
+.gicon-remove {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_remove.svg');
+}
+
+.gicon-arrow-left {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_arrow_left.svg');
+}
+
+.gicon-arrow-left-circle {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_arrow_left_circle.svg');
 }
 
 //not used
@@ -202,6 +209,10 @@
   background-image: url('../img/icons_#{$theme-name}_theme/icon_explore.svg');
 }
 
+.gicon-reports {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_reports.svg');
+}
+
 .sidemenu {
   .gicon-dashboard {
     background-image: url('../img/icons_dark_theme/icon_dashboard.svg');
@@ -220,6 +231,9 @@
   }
   .gicon-shield {
     background-image: url('../img/icons_dark_theme/icon_shield.svg');
+  }
+  .gicon-reports {
+    background-image: url('../img/icons_dark_theme/icon_reports.svg');
   }
 }
 

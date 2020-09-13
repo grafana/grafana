@@ -37,7 +37,6 @@ func (q *cloudWatchQuery) isInferredSearchExpression() bool {
 	if len(q.Dimensions) == 0 {
 		return !q.MatchExact
 	}
-
 	if !q.MatchExact {
 		return true
 	}
@@ -52,6 +51,22 @@ func (q *cloudWatchQuery) isInferredSearchExpression() bool {
 			}
 		}
 	}
+	return false
+}
+
+func (q *cloudWatchQuery) isMultiValuedDimensionExpression() bool {
+	for _, values := range q.Dimensions {
+		for _, v := range values {
+			if v == "*" {
+				return false
+			}
+		}
+
+		if len(values) > 1 {
+			return true
+		}
+	}
+
 	return false
 }
 

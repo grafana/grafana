@@ -3,13 +3,13 @@ import {
   SelectableValue,
   DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginOption,
-  updateDatasourcePluginResetKeyOption,
+  updateDatasourcePluginResetOption,
   updateDatasourcePluginJsonDataOption,
+  updateDatasourcePluginSecureJsonDataOption,
 } from '@grafana/data';
 import { MonitorConfig } from './MonitorConfig';
 import { AnalyticsConfig } from './AnalyticsConfig';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv, TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 import { InsightsConfig } from './InsightsConfig';
 import ResponseParser from '../azure_monitor/response_parser';
 import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
@@ -26,6 +26,9 @@ export interface State {
 }
 
 export class ConfigEditor extends PureComponent<Props, State> {
+  initPromise: CancelablePromise<any> | null = null;
+  templateSrv: TemplateSrv = getTemplateSrv();
+
   constructor(props: Props) {
     super(props);
 
@@ -37,16 +40,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
       logAnalyticsSubscriptionId: '',
     };
 
-    this.backendSrv = getBackendSrv();
-    this.templateSrv = new TemplateSrv();
     if (this.props.options.id) {
       updateDatasourcePluginOption(this.props, 'url', '/api/datasources/proxy/' + this.props.options.id);
     }
   }
-
-  initPromise: CancelablePromise<any> = null;
-  backendSrv: BackendSrv = null;
-  templateSrv: TemplateSrv = null;
 
   componentDidMount() {
     this.initPromise = makePromiseCancelable(this.init());
@@ -58,7 +55,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   }
 
   componentWillUnmount() {
-    this.initPromise.cancel();
+    this.initPromise!.cancel();
   }
 
   init = async () => {
@@ -69,19 +66,35 @@ export class ConfigEditor extends PureComponent<Props, State> {
     }
   };
 
-  updateOption = (key: string, val: any, secure: boolean) => {
-    updateDatasourcePluginJsonDataOption(this.props, key, val, secure);
+  updateJsonDataOption = (key: keyof AzureDataSourceJsonData, val: any) => {
+    updateDatasourcePluginJsonDataOption(this.props, key, val);
   };
 
-  resetKey = (key: string) => {
-    updateDatasourcePluginResetKeyOption(this.props, key);
+  updateSecureJsonDataOption = (key: keyof AzureDataSourceSecureJsonData, val: any) => {
+    updateDatasourcePluginSecureJsonDataOption(this.props, key, val);
+  };
+
+  resetSecureKey = (key: keyof AzureDataSourceSecureJsonData) => {
+    updateDatasourcePluginResetOption(this.props, key);
+  };
+
+  onUpdateJsonDataOption = (key: keyof AzureDataSourceJsonData) => (
+    event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    this.updateJsonDataOption(key, event.currentTarget.value);
+  };
+
+  onUpdateSecureJsonDataOption = (key: keyof AzureDataSourceSecureJsonData) => (
+    event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    this.updateSecureJsonDataOption(key, event.currentTarget.value);
   };
 
   makeSameAs = (updatedClientSecret?: string) => {
     const { options } = this.props;
-    const clientSecret = updatedClientSecret || options.secureJsonData.clientSecret;
+    const clientSecret = updatedClientSecret || options.secureJsonData!.clientSecret;
 
-    this.updateOptions({
+    this.props.onOptionsChange({
       ...options,
       jsonData: {
         ...options.jsonData,
@@ -98,34 +111,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
     });
   };
 
-  updateOptions = (options: AzureDataSourceSettings) => {
-    if (options.hasOwnProperty('secureJsonData')) {
-      if (options.secureJsonData.hasOwnProperty('clientSecret') && options.secureJsonData.clientSecret.length === 0) {
-        delete options.secureJsonData.clientSecret;
-      }
-
-      if (
-        options.secureJsonData.hasOwnProperty('logAnalyticsClientSecret') &&
-        options.secureJsonData.logAnalyticsClientSecret.length === 0
-      ) {
-        delete options.secureJsonData.logAnalyticsClientSecret;
-      }
-
-      if (
-        options.secureJsonData.hasOwnProperty('appInsightsApiKey') &&
-        options.secureJsonData.appInsightsApiKey.length === 0
-      ) {
-        delete options.secureJsonData.appInsightsApiKey;
-      }
-    }
-
-    this.props.onOptionsChange({
-      ...options,
-    });
-  };
-
   hasNecessaryCredentials = () => {
-    if (!this.props.options.secureJsonFields.clientSecret && !this.props.options.secureJsonData.clientSecret) {
+    if (!this.props.options.secureJsonFields.clientSecret && !this.props.options.secureJsonData!.clientSecret) {
       return false;
     }
 
@@ -139,7 +126,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   logAnalyticsHasNecessaryCredentials = () => {
     if (
       !this.props.options.secureJsonFields.logAnalyticsClientSecret &&
-      !this.props.options.secureJsonData.logAnalyticsClientSecret
+      !this.props.options.secureJsonData!.logAnalyticsClientSecret
     ) {
       return false;
     }
@@ -152,7 +139,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   onLoadSubscriptions = async (type?: string) => {
-    await this.backendSrv
+    await getBackendSrv()
       .put(`/api/datasources/${this.props.options.id}`, this.props.options)
       .then((result: AzureDataSourceSettings) => {
         updateDatasourcePluginOption(this.props, 'version', result.version);
@@ -168,7 +155,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   loadSubscriptions = async (route?: string) => {
     const url = `/${route || this.props.options.jsonData.cloudName}/subscriptions?api-version=2019-03-01`;
 
-    const result = await this.backendSrv.datasourceRequest({
+    const result = await getBackendSrv().datasourceRequest({
       url: this.props.options.url + url,
       method: 'GET',
     });
@@ -181,11 +168,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
     let azureMonitorUrl = '',
       subscriptionId = this.templateSrv.replace(subscription || this.props.options.jsonData.subscriptionId);
 
-    if (!!subscriptionId || !!azureLogAnalyticsSameAs) {
+    if (azureLogAnalyticsSameAs) {
       const azureCloud = cloudName || 'azuremonitor';
       azureMonitorUrl = `/${azureCloud}/subscriptions`;
     } else {
-      subscriptionId = logAnalyticsSubscriptionId;
+      subscriptionId = logAnalyticsSubscriptionId!;
       azureMonitorUrl = `/workspacesloganalytics/subscriptions`;
     }
 
@@ -193,7 +180,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
       azureMonitorUrl +
       `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
 
-    const result = await this.backendSrv.datasourceRequest({
+    const result = await getBackendSrv().datasourceRequest({
       url: this.props.options.url + workspaceListUrl,
       method: 'GET',
     });
@@ -211,7 +198,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     if (subscriptions && subscriptions.length > 0) {
       this.setState({ subscriptions });
 
-      this.updateOption('subscriptionId', this.props.options.jsonData.subscriptionId || subscriptions[0].value, false);
+      this.updateJsonDataOption('subscriptionId', this.props.options.jsonData.subscriptionId || subscriptions[0].value);
     }
 
     if (this.props.options.jsonData.subscriptionId && this.props.options.jsonData.azureLogAnalyticsSameAs) {
@@ -230,10 +217,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
     if (logAnalyticsSubscriptions && logAnalyticsSubscriptions.length > 0) {
       this.setState({ logAnalyticsSubscriptions });
 
-      this.updateOption(
+      this.updateJsonDataOption(
         'logAnalyticsSubscriptionId',
-        this.props.options.jsonData.logAnalyticsSubscriptionId || logAnalyticsSubscriptions[0].value,
-        false
+        this.props.options.jsonData.logAnalyticsSubscriptionId || logAnalyticsSubscriptions[0].value
       );
     }
 
@@ -243,22 +229,21 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   getWorkspaces = async () => {
-    const sameAs = this.props.options.jsonData.azureLogAnalyticsSameAs && this.props.options.jsonData.subscriptionId;
-    if (!sameAs && !this.props.options.jsonData.logAnalyticsSubscriptionId) {
+    const { subscriptionId, azureLogAnalyticsSameAs, logAnalyticsSubscriptionId } = this.props.options.jsonData;
+    const subscriptionIdToUse = azureLogAnalyticsSameAs ? subscriptionId : logAnalyticsSubscriptionId;
+
+    if (!subscriptionIdToUse) {
       return;
     }
 
-    const logAnalyticsWorkspaces = await this.loadWorkspaces(
-      sameAs ? this.props.options.jsonData.subscriptionId : this.props.options.jsonData.logAnalyticsSubscriptionId
-    );
+    const logAnalyticsWorkspaces = await this.loadWorkspaces(subscriptionIdToUse);
 
     if (logAnalyticsWorkspaces.length > 0) {
       this.setState({ logAnalyticsWorkspaces });
 
-      this.updateOption(
+      this.updateJsonDataOption(
         'logAnalyticsDefaultWorkspace',
-        this.props.options.jsonData.logAnalyticsDefaultWorkspace || logAnalyticsWorkspaces[0].value,
-        false
+        this.props.options.jsonData.logAnalyticsDefaultWorkspace || logAnalyticsWorkspaces[0].value
       );
     }
   };
@@ -268,6 +253,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const { options } = this.props;
 
     options.jsonData.cloudName = options.jsonData.cloudName || 'azuremonitor';
+    // This is bad, causes so many messy typing issues everwhere..
     options.secureJsonData = (options.secureJsonData || {}) as AzureDataSourceSecureJsonData;
 
     return (
@@ -277,8 +263,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
           subscriptions={subscriptions}
           makeSameAs={this.makeSameAs}
           onLoadSubscriptions={this.onLoadSubscriptions}
-          onUpdateOption={this.updateOption}
-          onResetOptionKey={this.resetKey}
+          onUpdateJsonDataOption={this.updateJsonDataOption}
+          onUpdateSecureJsonDataOption={this.updateSecureJsonDataOption}
+          onResetOptionKey={this.resetSecureKey}
         />
 
         <AnalyticsConfig
@@ -286,14 +273,20 @@ export class ConfigEditor extends PureComponent<Props, State> {
           workspaces={logAnalyticsWorkspaces}
           subscriptions={logAnalyticsSubscriptions}
           makeSameAs={this.makeSameAs}
-          onUpdateOptions={this.updateOptions}
-          onUpdateOption={this.updateOption}
-          onResetOptionKey={this.resetKey}
+          onUpdateDatasourceOptions={this.props.onOptionsChange}
+          onUpdateJsonDataOption={this.updateJsonDataOption}
+          onUpdateSecureJsonDataOption={this.updateSecureJsonDataOption}
+          onResetOptionKey={this.resetSecureKey}
           onLoadSubscriptions={this.onLoadSubscriptions}
           onLoadWorkspaces={this.getWorkspaces}
         />
 
-        <InsightsConfig options={options} onUpdateOption={this.updateOption} onResetOptionKey={this.resetKey} />
+        <InsightsConfig
+          options={options}
+          onUpdateJsonDataOption={this.onUpdateJsonDataOption}
+          onUpdateSecureJsonDataOption={this.onUpdateSecureJsonDataOption}
+          onResetOptionKey={this.resetSecureKey}
+        />
       </>
     );
   }

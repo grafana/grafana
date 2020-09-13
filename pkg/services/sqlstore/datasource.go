@@ -1,16 +1,19 @@
 package sqlstore
 
 import (
+	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/util/errutil"
 
-	"github.com/go-xorm/xorm"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
+
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	m "github.com/grafana/grafana/pkg/models"
 )
 
 func init() {
@@ -24,51 +27,61 @@ func init() {
 	bus.AddHandler("sql", GetDataSourceByName)
 }
 
-func GetDataSourceById(query *m.GetDataSourceByIdQuery) error {
+func getDataSourceByID(id, orgID int64, engine *xorm.Engine) (*models.DataSource, error) {
 	metrics.MDBDataSourceQueryByID.Inc()
 
-	datasource := m.DataSource{OrgId: query.OrgId, Id: query.Id}
-	has, err := x.Get(&datasource)
-
+	datasource := models.DataSource{OrgId: orgID, Id: id}
+	has, err := engine.Get(&datasource)
 	if err != nil {
-		return err
+		sqlog.Error("Failed getting data source", "err", err, "id", id, "orgId", orgID)
+		return nil, err
 	}
-
 	if !has {
-		return m.ErrDataSourceNotFound
+		sqlog.Debug("Failed to find data source", "id", id, "orgId", orgID)
+		return nil, models.ErrDataSourceNotFound
 	}
 
-	query.Result = &datasource
+	return &datasource, nil
+}
+
+func (ss *SqlStore) GetDataSourceByID(id, orgID int64) (*models.DataSource, error) {
+	return getDataSourceByID(id, orgID, ss.engine)
+}
+
+func GetDataSourceById(query *models.GetDataSourceByIdQuery) error {
+	ds, err := getDataSourceByID(query.Id, query.OrgId, x)
+	query.Result = ds
+
 	return err
 }
 
-func GetDataSourceByName(query *m.GetDataSourceByNameQuery) error {
-	datasource := m.DataSource{OrgId: query.OrgId, Name: query.Name}
+func GetDataSourceByName(query *models.GetDataSourceByNameQuery) error {
+	datasource := models.DataSource{OrgId: query.OrgId, Name: query.Name}
 	has, err := x.Get(&datasource)
 
 	if !has {
-		return m.ErrDataSourceNotFound
+		return models.ErrDataSourceNotFound
 	}
 
 	query.Result = &datasource
 	return err
 }
 
-func GetDataSources(query *m.GetDataSourcesQuery) error {
+func GetDataSources(query *models.GetDataSourcesQuery) error {
 	sess := x.Limit(5000, 0).Where("org_id=?", query.OrgId).Asc("name")
 
-	query.Result = make([]*m.DataSource, 0)
+	query.Result = make([]*models.DataSource, 0)
 	return sess.Find(&query.Result)
 }
 
-func GetAllDataSources(query *m.GetAllDataSourcesQuery) error {
+func GetAllDataSources(query *models.GetAllDataSourcesQuery) error {
 	sess := x.Limit(5000, 0).Asc("name")
 
-	query.Result = make([]*m.DataSource, 0)
+	query.Result = make([]*models.DataSource, 0)
 	return sess.Find(&query.Result)
 }
 
-func DeleteDataSourceById(cmd *m.DeleteDataSourceByIdCommand) error {
+func DeleteDataSourceById(cmd *models.DeleteDataSourceByIdCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "DELETE FROM data_source WHERE id=? and org_id=?"
 		result, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
@@ -78,7 +91,7 @@ func DeleteDataSourceById(cmd *m.DeleteDataSourceByIdCommand) error {
 	})
 }
 
-func DeleteDataSourceByName(cmd *m.DeleteDataSourceByNameCommand) error {
+func DeleteDataSourceByName(cmd *models.DeleteDataSourceByNameCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "DELETE FROM data_source WHERE name=? and org_id=?"
 		result, err := sess.Exec(rawSql, cmd.Name, cmd.OrgId)
@@ -88,20 +101,28 @@ func DeleteDataSourceByName(cmd *m.DeleteDataSourceByNameCommand) error {
 	})
 }
 
-func AddDataSource(cmd *m.AddDataSourceCommand) error {
+func AddDataSource(cmd *models.AddDataSourceCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		existing := m.DataSource{OrgId: cmd.OrgId, Name: cmd.Name}
+		existing := models.DataSource{OrgId: cmd.OrgId, Name: cmd.Name}
 		has, _ := sess.Get(&existing)
 
 		if has {
-			return m.ErrDataSourceNameExists
+			return models.ErrDataSourceNameExists
 		}
 
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()
 		}
 
-		ds := &m.DataSource{
+		if cmd.Uid == "" {
+			uid, err := generateNewDatasourceUid(sess, cmd.OrgId)
+			if err != nil {
+				return errutil.Wrapf(err, "Failed to generate UID for datasource %q", cmd.Name)
+			}
+			cmd.Uid = uid
+		}
+
+		ds := &models.DataSource{
 			OrgId:             cmd.OrgId,
 			Name:              cmd.Name,
 			Type:              cmd.Type,
@@ -121,9 +142,13 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			Updated:           time.Now(),
 			Version:           1,
 			ReadOnly:          cmd.ReadOnly,
+			Uid:               cmd.Uid,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
+			if dialect.IsUniqueConstraintViolation(err) && strings.Contains(strings.ToLower(dialect.ErrorMessage(err)), "uid") {
+				return models.ErrDataSourceUidExists
+			}
 			return err
 		}
 		if err := updateIsDefaultFlag(ds, sess); err != nil {
@@ -135,7 +160,7 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 	})
 }
 
-func updateIsDefaultFlag(ds *m.DataSource, sess *DBSession) error {
+func updateIsDefaultFlag(ds *models.DataSource, sess *DBSession) error {
 	// Handle is default flag
 	if ds.IsDefault {
 		rawSql := "UPDATE data_source SET is_default=? WHERE org_id=? AND id <> ?"
@@ -146,13 +171,13 @@ func updateIsDefaultFlag(ds *m.DataSource, sess *DBSession) error {
 	return nil
 }
 
-func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
+func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()
 		}
 
-		ds := &m.DataSource{
+		ds := &models.DataSource{
 			Id:                cmd.Id,
 			OrgId:             cmd.OrgId,
 			Name:              cmd.Name,
@@ -172,6 +197,7 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			Updated:           time.Now(),
 			ReadOnly:          cmd.ReadOnly,
 			Version:           cmd.Version + 1,
+			Uid:               cmd.Uid,
 		}
 
 		sess.UseBool("is_default")
@@ -189,7 +215,6 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			// updates to datasources using the datasource.yaml file without knowing exactly what version
 			// a datasource have in the db.
 			updateSession = sess.Where("id=? and org_id=? and version < ?", ds.Id, ds.OrgId, ds.Version)
-
 		} else {
 			updateSession = sess.Where("id=? and org_id=?", ds.Id, ds.OrgId)
 		}
@@ -200,7 +225,7 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 		}
 
 		if affected == 0 {
-			return m.ErrDataSourceUpdatingOldVersion
+			return models.ErrDataSourceUpdatingOldVersion
 		}
 
 		err = updateIsDefaultFlag(ds, sess)
@@ -208,4 +233,21 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 		cmd.Result = ds
 		return err
 	})
+}
+
+func generateNewDatasourceUid(sess *DBSession, orgId int64) (string, error) {
+	for i := 0; i < 3; i++ {
+		uid := generateNewUid()
+
+		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&models.DataSource{})
+		if err != nil {
+			return "", err
+		}
+
+		if !exists {
+			return uid, nil
+		}
+	}
+
+	return "", models.ErrDataSourceFailedGenerateUniqueUid
 }

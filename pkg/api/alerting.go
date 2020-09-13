@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func ValidateOrgAlert(c *models.ReqContext) {
@@ -281,30 +282,104 @@ func CreateAlertNotification(c *models.ReqContext, cmd models.CreateAlertNotific
 func UpdateAlertNotification(c *models.ReqContext, cmd models.UpdateAlertNotificationCommand) Response {
 	cmd.OrgId = c.OrgId
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	err := fillWithSecureSettingsData(&cmd)
+	if err != nil {
 		return Error(500, "Failed to update alert notification", err)
 	}
 
-	if cmd.Result == nil {
-		return Error(404, "Alert notification not found", nil)
+	if err := bus.Dispatch(&cmd); err != nil {
+		if err == models.ErrAlertNotificationNotFound {
+			return Error(404, err.Error(), err)
+		}
+		return Error(500, "Failed to update alert notification", err)
 	}
 
-	return JSON(200, dtos.NewAlertNotification(cmd.Result))
+	query := models.GetAlertNotificationsQuery{
+		OrgId: c.OrgId,
+		Id:    cmd.Id,
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return Error(500, "Failed to get alert notification", err)
+	}
+
+	return JSON(200, dtos.NewAlertNotification(query.Result))
 }
 
 func UpdateAlertNotificationByUID(c *models.ReqContext, cmd models.UpdateAlertNotificationWithUidCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Uid = c.Params("uid")
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	err := fillWithSecureSettingsDataByUID(&cmd)
+	if err != nil {
 		return Error(500, "Failed to update alert notification", err)
 	}
 
-	if cmd.Result == nil {
-		return Error(404, "Alert notification not found", nil)
+	if err := bus.Dispatch(&cmd); err != nil {
+		if err == models.ErrAlertNotificationNotFound {
+			return Error(404, err.Error(), nil)
+		}
+		return Error(500, "Failed to update alert notification", err)
 	}
 
-	return JSON(200, dtos.NewAlertNotification(cmd.Result))
+	query := models.GetAlertNotificationsWithUidQuery{
+		OrgId: cmd.OrgId,
+		Uid:   cmd.Uid,
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return Error(500, "Failed to get alert notification", err)
+	}
+
+	return JSON(200, dtos.NewAlertNotification(query.Result))
+}
+
+func fillWithSecureSettingsData(cmd *models.UpdateAlertNotificationCommand) error {
+	if len(cmd.SecureSettings) == 0 {
+		return nil
+	}
+
+	query := &models.GetAlertNotificationsQuery{
+		OrgId: cmd.OrgId,
+		Id:    cmd.Id,
+	}
+
+	if err := bus.Dispatch(query); err != nil {
+		return err
+	}
+
+	secureSettings := query.Result.SecureSettings.Decrypt()
+	for k, v := range secureSettings {
+		if _, ok := cmd.SecureSettings[k]; !ok {
+			cmd.SecureSettings[k] = v
+		}
+	}
+
+	return nil
+}
+
+func fillWithSecureSettingsDataByUID(cmd *models.UpdateAlertNotificationWithUidCommand) error {
+	if len(cmd.SecureSettings) == 0 {
+		return nil
+	}
+
+	query := &models.GetAlertNotificationsWithUidQuery{
+		OrgId: cmd.OrgId,
+		Uid:   cmd.Uid,
+	}
+
+	if err := bus.Dispatch(query); err != nil {
+		return err
+	}
+
+	secureSettings := query.Result.SecureSettings.Decrypt()
+	for k, v := range secureSettings {
+		if _, ok := cmd.SecureSettings[k]; !ok {
+			cmd.SecureSettings[k] = v
+		}
+	}
+
+	return nil
 }
 
 func DeleteAlertNotification(c *models.ReqContext) Response {
@@ -314,6 +389,9 @@ func DeleteAlertNotification(c *models.ReqContext) Response {
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == models.ErrAlertNotificationNotFound {
+			return Error(404, err.Error(), nil)
+		}
 		return Error(500, "Failed to delete alert notification", err)
 	}
 
@@ -327,18 +405,27 @@ func DeleteAlertNotificationByUID(c *models.ReqContext) Response {
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == models.ErrAlertNotificationNotFound {
+			return Error(404, err.Error(), nil)
+		}
 		return Error(500, "Failed to delete alert notification", err)
 	}
 
-	return Success("Notification deleted")
+	return JSON(200, util.DynMap{
+		"message": "Notification deleted",
+		"id":      cmd.DeletedAlertNotificationId,
+	})
 }
 
 //POST /api/alert-notifications/test
 func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) Response {
 	cmd := &alerting.NotificationTestCommand{
-		Name:     dto.Name,
-		Type:     dto.Type,
-		Settings: dto.Settings,
+		OrgID:          c.OrgId,
+		ID:             dto.ID,
+		Name:           dto.Name,
+		Type:           dto.Type,
+		Settings:       dto.Settings,
+		SecureSettings: dto.SecureSettings,
 	}
 
 	if err := bus.Dispatch(cmd); err != nil {
@@ -354,9 +441,10 @@ func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) Re
 //POST /api/alerts/:alertId/pause
 func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 	alertID := c.ParamsInt64("alertId")
+	result := make(map[string]interface{})
+	result["alertId"] = alertID
 
 	query := models.GetAlertByIdQuery{Id: alertID}
-
 	if err := bus.Dispatch(&query); err != nil {
 		return Error(500, "Get Alert failed", err)
 	}
@@ -368,6 +456,17 @@ func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 		}
 
 		return Error(403, "Access denied to this dashboard and alert", nil)
+	}
+
+	// Alert state validation
+	if query.Result.State != models.AlertStatePaused && !dto.Paused {
+		result["state"] = "un-paused"
+		result["message"] = "Alert is already un-paused"
+		return JSON(200, result)
+	} else if query.Result.State == models.AlertStatePaused && dto.Paused {
+		result["state"] = models.AlertStatePaused
+		result["message"] = "Alert is already paused"
+		return JSON(200, result)
 	}
 
 	cmd := models.PauseAlertCommand{
@@ -387,12 +486,8 @@ func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 		pausedState = "paused"
 	}
 
-	result := map[string]interface{}{
-		"alertId": alertID,
-		"state":   response,
-		"message": "Alert " + pausedState,
-	}
-
+	result["state"] = response
+	result["message"] = "Alert " + pausedState
 	return JSON(200, result)
 }
 

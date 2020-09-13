@@ -54,11 +54,11 @@ export class EventBusSrv implements EventBus {
     this.eventStream = new Subject();
   }
 
-  public emit<T extends BusEvent>(event: T): void {
+  emit<T extends BusEvent>(event: T): void {
     this.eventStream.next(event);
   }
 
-  public on<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
+  on<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
     return this.eventStream
       .pipe(
         filter(event => {
@@ -77,11 +77,11 @@ export class EventBusGroup implements EventBus {
 
   constructor(private bus: EventBus) {}
 
-  public emit<T extends BusEvent>(event: T) {
+  emit<T extends BusEvent>(event: T) {
     this.bus.emit(event);
   }
 
-  public on<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
+  on<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
     return this.addToGroupSub(this.bus.on(typeFilter, handler));
   }
 
@@ -93,7 +93,7 @@ export class EventBusGroup implements EventBus {
     return this.groupSub.add(childSub);
   }
 
-  public unsubscribe() {
+  unsubscribe() {
     if (this.groupSub) {
       this.groupSub.unsubscribe();
     }

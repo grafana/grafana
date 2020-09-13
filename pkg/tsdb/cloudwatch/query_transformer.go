@@ -13,7 +13,7 @@ import (
 // has more than one statistic defined, one cloudwatchQuery will be created for each statistic.
 // If the query doesn't have an Id defined by the user, we'll give it an with format `query[RefId]`. In the case
 // the incoming query had more than one stat, it will ge an id like `query[RefId]_[StatName]`, eg queryC_Average
-func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQueries []*requestQuery) (map[string]*cloudWatchQuery, error) {
+func (e *cloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQueries []*requestQuery) (map[string]*cloudWatchQuery, error) {
 	cloudwatchQueries := make(map[string]*cloudWatchQuery)
 	for _, requestQuery := range requestQueries {
 		for _, stat := range requestQuery.Statistics {
@@ -23,6 +23,10 @@ func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 			}
 			if len(requestQuery.Statistics) > 1 {
 				id = fmt.Sprintf("%s_%v", id, strings.ReplaceAll(*stat, ".", "_"))
+			}
+
+			if _, ok := cloudwatchQueries[id]; ok {
+				return nil, fmt.Errorf("error in query %q - query ID %q is not unique", requestQuery.RefId, id)
 			}
 
 			query := &cloudWatchQuery{
@@ -39,11 +43,6 @@ func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 				ReturnData: requestQuery.ReturnData,
 				MatchExact: requestQuery.MatchExact,
 			}
-
-			if _, ok := cloudwatchQueries[id]; ok {
-				return nil, fmt.Errorf("Error in query %s. Query id %s is not unique", query.RefId, query.Id)
-			}
-
 			cloudwatchQueries[id] = query
 		}
 	}
@@ -51,18 +50,13 @@ func (e *CloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 	return cloudwatchQueries, nil
 }
 
-func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchResponses []*cloudwatchResponse) map[string]*tsdb.QueryResult {
-	results := make(map[string]*tsdb.QueryResult)
+func (e *cloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchResponses []*cloudwatchResponse) map[string]*tsdb.QueryResult {
 	responsesByRefID := make(map[string][]*cloudwatchResponse)
-
 	for _, res := range cloudwatchResponses {
-		if _, ok := responsesByRefID[res.RefId]; ok {
-			responsesByRefID[res.RefId] = append(responsesByRefID[res.RefId], res)
-		} else {
-			responsesByRefID[res.RefId] = []*cloudwatchResponse{res}
-		}
+		responsesByRefID[res.RefId] = append(responsesByRefID[res.RefId], res)
 	}
 
+	results := make(map[string]*tsdb.QueryResult)
 	for refID, responses := range responsesByRefID {
 		queryResult := tsdb.NewQueryResult()
 		queryResult.RefId = refID
@@ -71,18 +65,23 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 		timeSeries := make(tsdb.TimeSeriesSlice, 0)
 
 		requestExceededMaxLimit := false
+		partialData := false
 		queryMeta := []struct {
 			Expression, ID string
+			Period         int
 		}{}
 
 		for _, response := range responses {
 			timeSeries = append(timeSeries, *response.series...)
 			requestExceededMaxLimit = requestExceededMaxLimit || response.RequestExceededMaxLimit
+			partialData = partialData || response.PartialData
 			queryMeta = append(queryMeta, struct {
 				Expression, ID string
+				Period         int
 			}{
 				Expression: response.Expression,
 				ID:         response.Id,
+				Period:     response.Period,
 			})
 		}
 
@@ -93,6 +92,10 @@ func (e *CloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 		if requestExceededMaxLimit {
 			queryResult.ErrorString = "Cloudwatch GetMetricData error: Maximum number of allowed metrics exceeded. Your search may have been limited."
 		}
+		if partialData {
+			queryResult.ErrorString = "Cloudwatch GetMetricData error: Too many datapoints requested - your search has been limited. Please try to reduce the time range"
+		}
+
 		queryResult.Series = append(queryResult.Series, timeSeries...)
 		queryResult.Meta.Set("gmdMeta", queryMeta)
 		results[refID] = queryResult
