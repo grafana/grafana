@@ -57,9 +57,7 @@ export class HistoryListCtrl {
     }
   }
 
-  dismiss() {
-    this.$rootScope.appEvent(CoreEvents.hideDashEditor);
-  }
+  dismiss() {}
 
   addToLog() {
     this.start = this.start + this.limit;

@@ -102,12 +102,7 @@ export interface PanelChangeViewPayload {
  * Events
  */
 
-export const viewModeChanged = eventFactory('view-mode-changed');
 export const panelChangeView = eventFactory<PanelChangeViewPayload>('panel-change-view');
-export const showDashSearch = eventFactory<ShowDashSearchPayload>('show-dash-search');
-export const hideDashSearch = eventFactory('hide-dash-search');
-export const hideDashEditor = eventFactory('hide-dash-editor');
-export const dashScroll = eventFactory<DashScrollPayload>('dash-scroll');
 export const dashLinksUpdated = eventFactory('dash-links-updated');
 export const saveDashboard = eventFactory<SaveDashboardPayload>('save-dashboard');
 export const dashboardFetchStart = eventFactory('dashboard-fetch-start');
@@ -128,9 +123,6 @@ export const showModalReact = eventFactory<ShowModalReactPayload>('show-modal-re
 
 export const dsRequestResponse = eventFactory<DataSourceResponsePayload>('ds-request-response');
 export const dsRequestError = eventFactory<any>('ds-request-error');
-
-export const graphHover = eventFactory<GraphHoverPayload>('graph-hover');
-export const graphHoverClear = eventFactory('graph-hover-clear');
 
 export const toggleSidemenuMobile = eventFactory('toggle-sidemenu-mobile');
 export const toggleSidemenuHidden = eventFactory('toggle-sidemenu-hidden');

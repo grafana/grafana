@@ -26,4 +26,5 @@ export * from './orgs';
 export * from './flot';
 export * from './trace';
 export * from './explore';
+export * from './legacyEvents';
 export { GrafanaConfig, BuildInfo, FeatureToggles, LicenseInfo } from './config';

@@ -37,6 +37,8 @@ import {
   getTimeField,
   getValueFormat,
   hasLinks,
+  LegacyGraphHoverClearEvent,
+  LegacyGraphHoverEvent,
   LinkModelSupplier,
   PanelEvents,
   toUtc,
@@ -86,8 +88,9 @@ class GraphElement {
     this.ctrl.events.on(PanelEvents.render, this.onRender.bind(this));
 
     // global events
-    this.dashboard.on(CoreEvents.graphHover, this.onGraphHover.bind(this), scope);
-    this.dashboard.on(CoreEvents.graphHoverClear, this.onGraphHoverClear.bind(this), scope);
+    // Using old way here to use the scope unsubscribe model as the new $on function does not take scope
+    this.ctrl.dashboard.events.on(LegacyGraphHoverEvent.type, this.onGraphHover.bind(this), this.scope);
+    this.ctrl.dashboard.events.on(LegacyGraphHoverClearEvent.type, this.onGraphHoverClear.bind(this), this.scope);
 
     // plot events
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
@@ -161,9 +164,6 @@ class GraphElement {
     this.elem.off();
     this.elem.remove();
 
-    // unsub to dashboard events
-    this.dashboard.off(CoreEvents.graphHover, this.onGraphHover);
-    this.dashboard.off(CoreEvents.graphHoverClear, this.onGraphHoverClear);
     ReactDOM.unmountComponentAtNode(this.legendElem);
   }
 

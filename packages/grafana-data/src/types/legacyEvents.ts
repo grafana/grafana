@@ -1,12 +1,11 @@
-import { DataQueryError, DataQueryResponseData } from '../types/datasource';
-import { AngularPanelMenuItem } from '../types/panel';
-import { DataFrame } from '../types/dataFrame';
-import { AppEvent } from './types';
+import { DataQueryError, DataQueryResponseData } from '../datasource';
+import { AngularPanelMenuItem } from '../panel';
+import { DataFrame } from './dataFrame';
+import { eventFactory } from '../events/eventFactory';
+import { BusEventBase, BusEventWithPayload } from '../events/types';
 
 export type AlertPayload = [string, string?];
 export type AlertErrorPayload = [string, (string | Error)?];
-
-const typeList: Set<string> = new Set();
 
 export const AppEvents = {
   alertSuccess: eventFactory<AlertPayload>('alert-success'),
@@ -29,11 +28,17 @@ export const PanelEvents = {
   render: eventFactory<any>('render'),
 };
 
-export function eventFactory<T = undefined>(name: string): AppEvent<T> {
-  if (typeList.has(name)) {
-    throw new Error(`There is already an event defined with type '${name}'`);
-  }
+export interface LegacyGraphHoverEventPayload {
+  pos: any;
+  panel: {
+    id: number;
+  };
+}
 
-  typeList.add(name);
-  return { name };
+export class LegacyGraphHoverEvent extends BusEventWithPayload<LegacyGraphHoverEventPayload> {
+  static type = 'graph-hover';
+}
+
+export class LegacyGraphHoverClearEvent extends BusEventBase {
+  static type = 'graph-hover-clear';
 }
