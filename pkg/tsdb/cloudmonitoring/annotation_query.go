@@ -25,9 +25,11 @@ func (e *CloudMonitoringExecutor) executeAnnotationQuery(ctx context.Context, ts
 	if err != nil {
 		return nil, err
 	}
-	title := firstQuery.Model.Get("title").MustString()
-	text := firstQuery.Model.Get("text").MustString()
-	tags := firstQuery.Model.Get("tags").MustString()
+
+	metricQuery := firstQuery.Model.Get("metricQuery")
+	title := metricQuery.Get("title").MustString()
+	text := metricQuery.Get("text").MustString()
+	tags := metricQuery.Get("tags").MustString()
 	err = e.parseToAnnotations(queryRes, resp, queries[0], title, text, tags)
 	result.Results[firstQuery.RefId] = queryRes
 

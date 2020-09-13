@@ -143,9 +143,11 @@ func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 	defer ps.mutex.Unlock()
 
 	ps.cancelPolling()
+	dashProvisioner.CleanUpOrphanedDashboards()
 
-	if err := dashProvisioner.Provision(); err != nil {
-		// If we fail to provision with the new provisioner, mutex will unlock and the polling we restart with the
+	err = dashProvisioner.Provision()
+	if err != nil {
+		// If we fail to provision with the new provisioner, the mutex will unlock and the polling will restart with the
 		// old provisioner as we did not switch them yet.
 		return errutil.Wrap("Failed to provision dashboards", err)
 	}
