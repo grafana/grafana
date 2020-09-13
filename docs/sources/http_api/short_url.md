@@ -15,7 +15,7 @@ parent = "http_api"
 
 `GET /api/goto/:uid`
 
-Returns path associated with the given uid if it exists.
+Returns redirect to path associated with the given uid. If it does not exist, returns redirect to `/notfound`
 
 **Example Request**:
 
@@ -29,16 +29,15 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 **Example Response**:
 
 ```http
-HTTP/1.1 200
+HTTP/1.1 302
 Content-Type: application/json
 
-/d/TxKARsmGz/new-dashboard?orgId=1&from=1599389322894&to=1599410922894
+Location: /d/TxKARsmGz/new-dashboard?orgId=1&from=1599389322894&to=1599410922894
 ```
 
 Status Codes:
 
-- **200** – Found
-- **404** – Uid not found
+- **302** – Redirect to resolved URL
 
 ## Create short url
 

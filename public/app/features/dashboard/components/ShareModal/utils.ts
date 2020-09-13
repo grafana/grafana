@@ -110,7 +110,7 @@ export function buildIframeHtml(
 
 export function buildShortUrl(uid: string) {
   const hostUrl = buildHostUrl();
-  return `${hostUrl}/goto/${uid}`;
+  return `${hostUrl}/api/goto/${uid}`;
 }
 
 export function getLocalTimeZone() {

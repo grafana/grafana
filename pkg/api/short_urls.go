@@ -12,12 +12,12 @@ func GetShortUrlPath(c *models.ReqContext) Response {
 	result, err := service.GetFullUrlByUID(c.Params(":uid"))
 	if err != nil {
 		if err == models.ErrShortUrlNotFound {
-			return Error(404, "Not found", err)
+			return Redirect("/notfound")
 		}
-		return Error(500, "Failed to get short url", err)
+		return Redirect("/error")
 	}
 
-	return JSON(200, result)
+	return Redirect(result)
 }
 
 // POST /api/goto
