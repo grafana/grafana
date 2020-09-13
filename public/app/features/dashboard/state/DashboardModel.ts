@@ -83,14 +83,7 @@ export class DashboardModel {
   // repeat process cycles
   iteration: number;
   meta: DashboardMeta;
-<<<<<<< HEAD
-  events: Emitter;
-||||||| constructed merge base
-  events: Emitter;
-  eventBus: EventBus;
-=======
   events: EventBusExtended;
->>>>>>> Everything using new EventBus
 
   static nonPersistedProperties: { [str: string]: boolean } = {
     events: true,
@@ -109,14 +102,7 @@ export class DashboardModel {
       data = {};
     }
 
-<<<<<<< HEAD
-    this.events = new Emitter();
-||||||| constructed merge base
-    this.events = new Emitter();
-    this.eventBus = new EventBusSrv();
-=======
     this.events = new EventBusSrv();
->>>>>>> Everything using new EventBus
     this.id = data.id || null;
     this.uid = data.uid || null;
     this.revision = data.revision;
