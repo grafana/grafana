@@ -1,5 +1,5 @@
-import { DataQueryError, DataQueryResponseData } from '../datasource';
-import { AngularPanelMenuItem } from '../panel';
+import { DataQueryError, DataQueryResponseData } from './datasource';
+import { AngularPanelMenuItem } from './panel';
 import { DataFrame } from './dataFrame';
 import { eventFactory } from '../events/eventFactory';
 import { BusEventBase, BusEventWithPayload } from '../events/types';

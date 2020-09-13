@@ -18,7 +18,6 @@ import {
   LegacyGraphHoverClearEvent,
 } from '@grafana/data';
 import { graphTimeFormat } from '@grafana/ui';
-import { CoreEvents } from 'app/types';
 
 const MIN_CARD_SIZE = 1,
   CARD_PADDING = 1,
@@ -739,7 +738,7 @@ export class HeatmapRenderer {
   }
 
   onMouseLeave() {
-    this.ctrl.dashboard.emit(CoreEvents.graphHoverClear);
+    this.ctrl.dashboard.$emit(new LegacyGraphHoverClearEvent());
     this.clearCrosshair();
   }
 

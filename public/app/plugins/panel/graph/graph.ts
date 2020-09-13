@@ -47,7 +47,6 @@ import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-import { CoreEvents } from 'app/types';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
