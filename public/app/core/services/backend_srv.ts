@@ -5,13 +5,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { BackendSrv as BackendService, BackendSrvRequest, FetchResponse, FetchError } from '@grafana/runtime';
 import { AppEvents, DataQueryErrorType } from '@grafana/data';
 
-import appEvents from 'app/core/app_events';
+import { appEvents } from 'app/core/app_events';
 import config, { getConfig } from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
-import { Emitter } from '../utils/emitter';
 import { parseInitFromOptions, parseUrlFromOptions } from '../utils/fetch';
 import { isDataQuery, isLocalUrl } from '../utils/query';
 import { FetchQueue } from './FetchQueue';
@@ -22,7 +21,7 @@ const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
 export interface BackendSrvDependencies {
   fromFetch: (input: string | Request, init?: RequestInit) => Observable<Response>;
-  appEvents: Emitter;
+  appEvents: typeof appEvents;
   contextSrv: ContextSrv;
   logout: () => void;
 }

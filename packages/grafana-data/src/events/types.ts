@@ -102,8 +102,8 @@ export interface LegacyEmitter {
 }
 
 export interface LegacyEventHandler<T> {
-  (payload?: T): void;
+  (payload: T): void;
   wrapper?: (event: BusEvent) => void;
 }
 
-export interface EventBusWithLegacySupport extends EventBus, LegacyEmitter {}
+export interface EventBusExtended extends EventBus, LegacyEmitter {}

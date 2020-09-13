@@ -1,7 +1,6 @@
-import { dateTime, TimeRange } from '@grafana/data';
+import { dateTime, TimeRange, EventBusExtended } from '@grafana/data';
 
 import { TemplateSrv } from '../../templating/template_srv';
-import { Emitter } from '../../../core/utils/emitter';
 import { onTimeRangeUpdated, OnTimeRangeUpdatedDependencies } from './actions';
 import { DashboardModel } from '../../dashboard/state';
 import { DashboardState } from '../../../types';
@@ -25,7 +24,7 @@ const getOnTimeRangeUpdatedContext = (args: { update?: boolean; throw?: boolean 
   const updateTimeRangeMock = jest.fn();
   const templateSrvMock = ({ updateTimeRange: updateTimeRangeMock } as unknown) as TemplateSrv;
   const emitMock = jest.fn();
-  const appEventsMock = ({ emit: emitMock } as unknown) as Emitter;
+  const appEventsMock = ({ emit: emitMock } as unknown) as EventBusExtended;
   const dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrvMock, appEvents: appEventsMock };
   const templateVariableValueUpdatedMock = jest.fn();
   const dashboard = ({
