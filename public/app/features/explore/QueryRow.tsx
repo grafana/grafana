@@ -20,18 +20,18 @@ import {
   TimeRange,
   AbsoluteTimeRange,
   LoadingState,
+  EventBusExtended,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { ExploreItemState, ExploreId } from 'app/types/explore';
-import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
 import { ErrorContainer } from './ErrorContainer';
 
 interface PropsFromParent {
   exploreId: ExploreId;
   index: number;
-  exploreEvents: Emitter;
+  exploreEvents: EventBusExtended;
 }
 
 export interface QueryRowProps extends PropsFromParent {

@@ -17,7 +17,7 @@ import {
   ScopedVars,
   ThresholdsConfig,
   ThresholdsMode,
-  EventBusWithLegacySupport,
+  EventBusExtended,
   EventBusSrv,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
@@ -144,7 +144,7 @@ export class PanelModel implements DataConfigSource {
   isEditing: boolean;
   isInView: boolean;
   hasRefreshed: boolean;
-  events: EventBusWithLegacySupport;
+  events: EventBusExtended;
   cacheTimeout?: any;
   cachedPluginOptions?: any;
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };

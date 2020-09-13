@@ -1,9 +1,8 @@
 import _ from 'lodash';
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
-import { Emitter } from 'app/core/utils/emitter';
 import { auto } from 'angular';
-import { AppEvent, PanelEvents, PanelPluginMeta, AngularPanelMenuItem } from '@grafana/data';
+import { AppEvent, PanelEvents, PanelPluginMeta, AngularPanelMenuItem, EventBusExtended } from '@grafana/data';
 import { DashboardModel } from '../dashboard/state';
 
 export class PanelCtrl {
@@ -21,7 +20,7 @@ export class PanelCtrl {
   height: number;
   width: number;
   containerHeight: any;
-  events: Emitter;
+  events: EventBusExtended;
   loading: boolean;
   timing: any;
 

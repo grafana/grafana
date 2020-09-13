@@ -18,7 +18,7 @@ import {
   PanelEvents,
   TimeRange,
   toLegacyResponseData,
-  EventBusWithLegacySupport,
+  EventBusExtended,
 } from '@grafana/data';
 import { QueryEditorRowTitle } from './QueryEditorRowTitle';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
@@ -338,7 +338,7 @@ export interface AngularQueryComponentScope {
   target: DataQuery;
   panel: PanelModel;
   dashboard: DashboardModel;
-  events: EventBusWithLegacySupport;
+  events: EventBusExtended;
   refresh: () => void;
   render: () => void;
   datasource: DataSourceApi | null;

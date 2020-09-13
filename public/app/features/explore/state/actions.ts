@@ -18,11 +18,11 @@ import {
   TimeRange,
   ExploreUrlState,
   ExploreUIState,
+  EventBusExtended,
 } from '@grafana/data';
 // Services & Utils
 import store from 'app/core/store';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { Emitter } from 'app/core/core';
 import {
   buildQueryTransaction,
   clearQueryKeys,
@@ -280,7 +280,7 @@ export function initializeExplore(
   queries: DataQuery[],
   range: TimeRange,
   containerWidth: number,
-  eventBridge: Emitter,
+  eventBridge: EventBusExtended,
   ui: ExploreUIState,
   originPanelId?: number | null
 ): ThunkResult<void> {
