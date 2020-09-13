@@ -165,7 +165,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
 
     // broadcast to other graph panels that we are hovering!
     pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
-    appEvents.emit(CoreEvents.graphHover, { pos: pos, panel: panel });
+    dashboard.events.emit(CoreEvents.graphHover, { pos: pos, panel: panel });
   });
 
   elem.bind('plotclick', (event: any, pos: any, item: any) => {

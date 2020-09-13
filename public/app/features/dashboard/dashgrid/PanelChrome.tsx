@@ -52,8 +52,9 @@ export interface State {
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
-  timeSrv: TimeSrv = getTimeSrv();
-  querySubscription: Unsubscribable;
+  readonly timeSrv: TimeSrv = getTimeSrv();
+
+  querySubscription?: Unsubscribable;
 
   constructor(props: Props) {
     super(props);
@@ -292,6 +293,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             onOptionsChange={this.onOptionsChange}
             onFieldConfigChange={this.onFieldConfigChange}
             onChangeTimeRange={this.onChangeTimeRange}
+            eventBus={panel.events}
           />
         </div>
       </>

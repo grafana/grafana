@@ -4,6 +4,12 @@ import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
+<<<<<<< HEAD
+||||||| constructed merge base
+import { BusEventWithPayload, EventBus } from '../utils/EventBus';
+=======
+import { EventBus } from '../events';
+>>>>>>> EventBus & Emitter unification
 import { FieldConfigSource } from './fieldOverrides';
 import { Registry } from '../utils';
 import { StandardEditorProps } from '../field';
