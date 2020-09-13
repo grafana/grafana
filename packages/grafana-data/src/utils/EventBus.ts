@@ -1,10 +1,17 @@
 import { Subject, Unsubscribable, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
+import { AppEvent } from '../types/appEvents';
 
 /*
  * Base event type
  */
-export abstract class BusEvent {}
+export abstract class BusEvent {
+  readonly type: string;
+
+  constructor() {
+    this.type = this.__proto__.constructor.type;
+  }
+}
 
 /*
  * Base event type with payload
@@ -33,39 +40,135 @@ export interface BusEventHandler<T extends BusEvent> {
   (event: T): void;
 }
 
-/*
+/**
  * Main minimal interface
  */
 export interface EventBus {
-  /*
+  /**
    * Emit single vent
    */
-  emit<T extends BusEvent>(event: T): void;
-  /*
+  $emit<T extends BusEvent>(event: T): void;
+
+  /**
    * Subscribe to single event
    */
-  on<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
+  $on<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
 }
 
-export class EventBusSrv implements EventBus {
+/**
+ * Legacy functions
+ */
+export interface LegacyEmitter {
+  /**
+   * @deprecated  use $emit
+   */
+  emit(name: string, data?: any): void;
+  /**
+   * @deprecated  use $emit
+   */
+  emit<T extends undefined>(event: AppEvent<T>): void;
+  /**
+   * @deprecated  use $emit
+   */
+  emit<T>(event: AppEvent<T>, payload: T): void;
+
+  /**
+   * @deprecated use $on
+   */
+  on(name: string, handler: (payload?: any) => void, scope?: any): void;
+  /**
+   * @deprecated use $on
+   */
+  on<T extends undefined>(event: AppEvent<T>, handler: () => void, scope?: any): void;
+  /**
+   * @deprecated use $on
+   */
+  on<T>(event: AppEvent<T>, handler: (payload: T) => void, scope?: any): void;
+  /**
+   * @deprecated use $on
+   */
+  on<T>(event: AppEvent<T> | string, handler: (payload?: T | any) => void, scope?: any);
+}
+
+export class EventBusSrv implements EventBus, LegacyEmitter {
   private eventStream: Subject<any>;
 
   constructor() {
     this.eventStream = new Subject();
   }
 
-  emit<T extends BusEvent>(event: T): void {
+  $emit<T extends BusEvent>(event: T): void {
     this.eventStream.next(event);
   }
 
-  on<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
+  $on<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
     return this.eventStream
       .pipe(
         filter(event => {
-          return event.__proto__.constructor.type === typeFilter.type;
+          return event.type === typeFilter.type;
         })
       )
       .subscribe({ next: handler });
+  }
+
+  /**
+   * Legacy functions
+   */
+  emit(name: string, data?: any): void;
+  emit<T extends undefined>(event: AppEvent<T>): void;
+  emit<T>(event: AppEvent<T> | string, payload?: T | any): void {
+    console.log(`Deprecated emitter function used (emit), use $emit`);
+
+    if (typeof event === 'string') {
+      this.eventStream.next({
+        type: event,
+        payload,
+      });
+    }
+
+    this.eventStream.next({
+      type: event.name,
+      payload,
+    });
+  }
+
+  on(name: string, handler: (payload?: any) => void, scope?: any): void;
+  on<T extends undefined>(event: AppEvent<T>, handler: () => void, scope?: any): void;
+  on<T>(event: AppEvent<T>, handler: (payload: T) => void, scope?: any): void;
+  on<T>(event: AppEvent<T> | string, handler: (payload?: T | any) => void, scope?: any) {
+    console.log(`Deprecated emitter function used (on), use $on`);
+
+    // if (typeof event === 'string') {
+    //   this.emitter.on(event, handler);
+
+    //   // if (scope) {
+    //   //   const unbind = scope.$on('$destroy', () => {
+    //   //     this.emitter.off(event, handler);
+    //   //     unbind();
+    //   //   });
+    //   // }
+    //   return;
+    // }
+
+    return this.eventStream
+      .pipe(
+        filter(streamEvent => {
+          console.log('got event', event);
+          return streamEvent.type === event.name;
+        })
+      )
+      .subscribe({
+        next: streamEvent => {
+          handler(streamEvent.payload);
+        },
+      });
+
+    // if (scope) {
+    //   const unbind = scope.$on('$destroy', () => {
+    //     this.emitter.off(event.name, handler);
+    //     unbind();
+    //   });
+    // }
   }
 }
 
@@ -77,12 +180,12 @@ export class EventBusGroup implements EventBus {
 
   constructor(private bus: EventBus) {}
 
-  emit<T extends BusEvent>(event: T) {
-    this.bus.emit(event);
+  $emit<T extends BusEvent>(event: T) {
+    this.bus.$emit(event);
   }
 
-  on<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
-    return this.addToGroupSub(this.bus.on(typeFilter, handler));
+  $on<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
+    return this.addToGroupSub(this.bus.$on(typeFilter, handler));
   }
 
   private addToGroupSub(childSub: Unsubscribable): Unsubscribable {

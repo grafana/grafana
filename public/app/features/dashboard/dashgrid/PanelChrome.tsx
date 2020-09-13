@@ -77,6 +77,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   componentDidMount() {
     const { panel, dashboard } = this.props;
+
     // Subscribe to panel events
     panel.events.on(PanelEvents.refresh, this.onRefresh);
     panel.events.on(PanelEvents.render, this.onRender);
