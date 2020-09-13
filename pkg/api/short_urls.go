@@ -4,11 +4,15 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/shortUrls"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // GET /api/goto/:uid
 func GetShortUrlPath(c *models.ReqContext) Response {
 	service := shortUrls.NewShortUrlService(c.OrgId, c.SignedInUser)
+	if !util.IsValidShortUID(c.Params(":uid")) {
+		return Redirect("/malformed")
+	}
 	result, err := service.GetFullUrlByUID(c.Params(":uid"))
 	if err != nil {
 		if err == models.ErrShortUrlNotFound {
