@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import { CoreEvents } from 'app/types';
-import { textUtil, systemDateFormats, PanelHoverEvent } from '@grafana/data';
+import { textUtil, systemDateFormats } from '@grafana/data';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;
@@ -165,8 +165,6 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     // broadcast to other graph panels that we are hovering!
     pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
     dashboard.events.emit(CoreEvents.graphHover, { pos: pos, panel: panel });
-    // emit new event
-    dashboard.eventBus.emit(new PanelHoverEvent({ panelId: 1, pos: { x: pos.x, y: pos.y } }));
   });
 
   elem.bind('plotclick', (event: any, pos: any, item: any) => {

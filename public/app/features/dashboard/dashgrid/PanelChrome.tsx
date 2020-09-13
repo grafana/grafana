@@ -26,7 +26,6 @@ import {
   PanelPlugin,
   FieldConfigSource,
   PanelPluginMeta,
-  EventBusGroup,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -54,14 +53,11 @@ export interface State {
 
 export class PanelChrome extends PureComponent<Props, State> {
   readonly timeSrv: TimeSrv = getTimeSrv();
-  readonly panelBus: EventBusGroup;
 
   querySubscription?: Unsubscribable;
 
   constructor(props: Props) {
     super(props);
-
-    this.panelBus = new EventBusGroup(this.props.dashboard.eventBus);
 
     this.state = {
       isFirstLoad: true,
@@ -112,9 +108,6 @@ export class PanelChrome extends PureComponent<Props, State> {
   componentWillUnmount() {
     this.props.panel.events.off(PanelEvents.refresh, this.onRefresh);
     this.props.panel.events.off(PanelEvents.render, this.onRender);
-
-    // unsubscribe to any events the panel subscribed to
-    this.panelBus.unsubscribe();
 
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
@@ -300,7 +293,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             onOptionsChange={this.onOptionsChange}
             onFieldConfigChange={this.onFieldConfigChange}
             onChangeTimeRange={this.onChangeTimeRange}
-            eventBus={this.panelBus}
+            eventBus={panel.events}
           />
         </div>
       </>

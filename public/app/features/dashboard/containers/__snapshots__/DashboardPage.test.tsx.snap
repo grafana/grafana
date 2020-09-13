@@ -25,13 +25,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         "description": undefined,
         "editable": true,
         "eventBus": EventBusSrv {
-          "eventStream": Subject {
-            "_isScalar": false,
-            "closed": false,
-            "hasError": false,
-            "isStopped": false,
-            "observers": Array [],
-            "thrownError": null,
+          "emitter": EventEmitter {
+            "_events": Object {},
+            "_eventsCount": 0,
           },
         },
         "events": Emitter {
@@ -63,7 +59,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           PanelModel {
             "cachedPluginOptions": Object {},
             "datasource": null,
-            "events": Emitter {
+            "events": EventBusSrv {
               "emitter": EventEmitter {
                 "_events": Object {},
                 "_eventsCount": 0,
@@ -148,13 +144,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "description": undefined,
               "editable": true,
               "eventBus": EventBusSrv {
-                "eventStream": Subject {
-                  "_isScalar": false,
-                  "closed": false,
-                  "hasError": false,
-                  "isStopped": false,
-                  "observers": Array [],
-                  "thrownError": null,
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
                 },
               },
               "events": Emitter {
@@ -186,7 +178,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 PanelModel {
                   "cachedPluginOptions": Object {},
                   "datasource": null,
-                  "events": Emitter {
+                  "events": EventBusSrv {
                     "emitter": EventEmitter {
                       "_events": Object {},
                       "_eventsCount": 0,
@@ -253,13 +245,9 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "description": undefined,
               "editable": true,
               "eventBus": EventBusSrv {
-                "eventStream": Subject {
-                  "_isScalar": false,
-                  "closed": false,
-                  "hasError": false,
-                  "isStopped": false,
-                  "observers": Array [],
-                  "thrownError": null,
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
                 },
               },
               "events": Emitter {
@@ -291,7 +279,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 PanelModel {
                   "cachedPluginOptions": Object {},
                   "datasource": null,
-                  "events": Emitter {
+                  "events": EventBusSrv {
                     "emitter": EventEmitter {
                       "_events": Object {},
                       "_eventsCount": 0,
@@ -414,13 +402,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "description": undefined,
         "editable": true,
         "eventBus": EventBusSrv {
-          "eventStream": Subject {
-            "_isScalar": false,
-            "closed": false,
-            "hasError": false,
-            "isStopped": false,
-            "observers": Array [],
-            "thrownError": null,
+          "emitter": EventEmitter {
+            "_events": Object {},
+            "_eventsCount": 0,
           },
         },
         "events": Emitter {
@@ -452,7 +436,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           PanelModel {
             "cachedPluginOptions": Object {},
             "datasource": null,
-            "events": Emitter {
+            "events": EventBusSrv {
               "emitter": EventEmitter {
                 "_events": Object {},
                 "_eventsCount": 0,
@@ -537,13 +521,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "description": undefined,
               "editable": true,
               "eventBus": EventBusSrv {
-                "eventStream": Subject {
-                  "_isScalar": false,
-                  "closed": false,
-                  "hasError": false,
-                  "isStopped": false,
-                  "observers": Array [],
-                  "thrownError": null,
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
                 },
               },
               "events": Emitter {
@@ -575,7 +555,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 PanelModel {
                   "cachedPluginOptions": Object {},
                   "datasource": null,
-                  "events": Emitter {
+                  "events": EventBusSrv {
                     "emitter": EventEmitter {
                       "_events": Object {},
                       "_eventsCount": 0,
@@ -642,13 +622,9 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "description": undefined,
               "editable": true,
               "eventBus": EventBusSrv {
-                "eventStream": Subject {
-                  "_isScalar": false,
-                  "closed": false,
-                  "hasError": false,
-                  "isStopped": false,
-                  "observers": Array [],
-                  "thrownError": null,
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
                 },
               },
               "events": Emitter {
@@ -680,7 +656,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 PanelModel {
                   "cachedPluginOptions": Object {},
                   "datasource": null,
-                  "events": Emitter {
+                  "events": EventBusSrv {
                     "emitter": EventEmitter {
                       "_events": Object {},
                       "_eventsCount": 0,
@@ -751,6 +727,12 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "autoUpdate": undefined,
         "description": undefined,
         "editable": true,
+        "eventBus": EventBusSrv {
+          "emitter": EventEmitter {
+            "_events": Object {},
+            "_eventsCount": 0,
+          },
+        },
         "events": Emitter {
           "emitter": EventEmitter {
             "_events": Object {},
@@ -780,7 +762,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           PanelModel {
             "cachedPluginOptions": Object {},
             "datasource": null,
-            "events": Emitter {
+            "events": EventBusSrv {
               "emitter": EventEmitter {
                 "_events": Object {},
                 "_eventsCount": 0,

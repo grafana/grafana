@@ -4,7 +4,7 @@ import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
-import { BusEventWithPayload, EventBus } from '../utils/EventBus';
+import { EventBus } from '../events';
 import { FieldConfigSource } from './fieldOverrides';
 import { Registry } from '../utils';
 import { StandardEditorProps } from '../field';
@@ -194,17 +194,4 @@ export enum VizOrientation {
   Auto = 'auto',
   Vertical = 'vertical',
   Horizontal = 'horizontal',
-}
-
-export interface PanelHoverEventPayload {
-  panelId: number;
-  // temp test event
-  pos: {
-    x: number;
-    y: number;
-  };
-}
-
-export class PanelHoverEvent extends BusEventWithPayload<PanelHoverEventPayload> {
-  static readonly type = 'panel-hover-event';
 }

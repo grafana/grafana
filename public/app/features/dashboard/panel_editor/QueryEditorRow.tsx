@@ -5,7 +5,6 @@ import _ from 'lodash';
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
-import { Emitter } from 'app/core/utils/emitter';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 // Types
 import { PanelModel } from '../state/PanelModel';
@@ -19,6 +18,7 @@ import {
   PanelEvents,
   TimeRange,
   toLegacyResponseData,
+  EventBusWithLegacySupport,
 } from '@grafana/data';
 import { QueryEditorRowTitle } from './QueryEditorRowTitle';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
@@ -338,7 +338,7 @@ export interface AngularQueryComponentScope {
   target: DataQuery;
   panel: PanelModel;
   dashboard: DashboardModel;
-  events: Emitter;
+  events: EventBusWithLegacySupport;
   refresh: () => void;
   render: () => void;
   datasource: DataSourceApi | null;
