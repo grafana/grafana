@@ -18,6 +18,7 @@ func GetShortUrlPath(c *models.ReqContext) Response {
 		if err == models.ErrShortUrlNotFound {
 			return Redirect("/notfound")
 		}
+		c.Logger.Error("Failed to resolve short url", "error", err)
 		return Redirect("/error")
 	}
 
@@ -30,6 +31,7 @@ func (hs *HTTPServer) CreateShortUrl(c *models.ReqContext, cmd dtos.CreateShortU
 	result, err := service.CreateShortUrl(&cmd)
 
 	if err != nil {
+		c.Logger.Error("Failed to create short url", "error", err)
 		return Error(500, "Failed to create short url", err)
 	}
 

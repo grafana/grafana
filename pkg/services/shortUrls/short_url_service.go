@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,6 +40,10 @@ func (dr *shortUrlServiceImpl) GetFullUrlByUID(uid string) (string, error) {
 	query := models.GetFullUrlQuery{Uid: uid}
 	if err := bus.Dispatch(&query); err != nil {
 		return "", err
+	}
+
+	if err := bus.Dispatch(&models.UpdateShortUrlLastSeenAtCommand{Uid: query.Result.Uid}); err != nil {
+		logger.Error("Failed to update shortUrl last_seen_at", "error", err)
 	}
 
 	return query.Result.Path, nil

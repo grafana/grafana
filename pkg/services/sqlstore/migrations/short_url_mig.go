@@ -10,6 +10,7 @@ func addShortUrlMigrations(mg *Migrator) {
 			{Name: "path", Type: DB_Text, Nullable: false},
 			{Name: "created_by", Type: DB_Int, Nullable: false},
 			{Name: "created_at", Type: DB_DateTime, Nullable: false},
+			{Name: "last_seen_at", Type: DB_DateTime, Nullable: true},
 		},
 	}
 

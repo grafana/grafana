@@ -1,12 +1,15 @@
 package sqlstore
 
 import (
+	"time"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
 
 func init() {
 	bus.AddHandler("sql", GetFullUrlByUid)
+	bus.AddHandler("sql", UpdateShortUrlLastSeenAt)
 	bus.AddHandler("sql", CreateShortUrl)
 }
 
@@ -23,6 +26,16 @@ func GetFullUrlByUid(query *models.GetFullUrlQuery) error {
 
 	query.Result = &shortUrl
 	return nil
+}
+
+func UpdateShortUrlLastSeenAt(cmd *models.UpdateShortUrlLastSeenAtCommand) error {
+	var shortUrl = models.ShortUrl{
+		Uid:        cmd.Uid,
+		LastSeenAt: time.Now(),
+	}
+
+	_, err := x.ID(cmd.Uid).Update(&shortUrl)
+	return err
 }
 
 func CreateShortUrl(command *models.CreateShortUrlCommand) error {
