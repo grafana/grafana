@@ -14,7 +14,19 @@ import {
   DisplayProcessor,
   getDisplayProcessor,
 } from '@grafana/data';
-import { Button, Field, Icon, Switch, Select, Table, VerticalGroup, Container, HorizontalGroup } from '@grafana/ui';
+import {
+  Button,
+  Field,
+  Icon,
+  Switch,
+  Select,
+  Table,
+  VerticalGroup,
+  Container,
+  HorizontalGroup,
+  Modal,
+} from '@grafana/ui';
+import { CSVConfig } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -42,6 +54,7 @@ interface State {
   transformId: DataTransformerID;
   dataFrameIndex: number;
   transformationOptions: Array<SelectableValue<DataTransformerID>>;
+  showExportModal: boolean;
 }
 
 export class InspectDataTab extends PureComponent<Props, State> {
@@ -53,10 +66,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
       dataFrameIndex: 0,
       transformId: DataTransformerID.seriesToColumns,
       transformationOptions: buildTransformationOptions(),
+      showExportModal: false,
     };
   }
 
-  exportCsv = (dataFrame: DataFrame) => {
+  exportCsv = (dataFrame: DataFrame, csvConfig: CSVConfig = {}) => {
     const { panel } = this.props;
     const { transformId } = this.state;
 
@@ -87,7 +101,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       };
     }
 
-    const dataFrameCsv = toCSV([dataFrame]);
+    const dataFrameCsv = toCSV([dataFrame], csvConfig);
 
     const blob = new Blob([String.fromCharCode(0xfeff), dataFrameCsv], {
       type: 'text/csv;charset=utf-8',
@@ -304,13 +318,33 @@ export class InspectDataTab extends PureComponent<Props, State> {
           <div className={styles.dataDisplayOptions}>{this.renderDataOptions(dataFrames)}</div>
           <Button
             variant="primary"
-            onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}
+            onClick={() => this.setState({ showExportModal: true })}
             className={css`
               margin-bottom: 10px;
             `}
           >
             Download CSV
           </Button>
+          <Modal title="Use Excel header?" isOpen={this.state.showExportModal}>
+            <HorizontalGroup justify="center">
+              <Button
+                onClick={() => {
+                  this.exportCsv(dataFrames[dataFrameIndex], { useExcelHeader: true });
+                  this.setState({ showExportModal: false });
+                }}
+              >
+                Yes
+              </Button>
+              <Button
+                onClick={() => {
+                  this.exportCsv(dataFrames[dataFrameIndex]);
+                  this.setState({ showExportModal: false });
+                }}
+              >
+                No
+              </Button>
+            </HorizontalGroup>
+          </Modal>
         </div>
         <Container grow={1}>
           <AutoSizer>
