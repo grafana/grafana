@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import { debounce } from 'lodash';
-import { PanelProps, renderMarkdown, textUtil } from '@grafana/data';
+import { LegacyGraphHoverEvent, PanelProps, renderMarkdown, textUtil } from '@grafana/data';
 // Utils
 import config from 'app/core/config';
 // Types
@@ -9,6 +9,7 @@ import { TextOptions } from './types';
 import { CustomScrollbar, stylesFactory } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
+import { Unsubscribable } from 'rxjs';
 
 interface Props extends PanelProps<TextOptions> {}
 
@@ -17,6 +18,8 @@ interface State {
 }
 
 export class TextPanel extends PureComponent<Props, State> {
+  eventSub?: Unsubscribable;
+
   constructor(props: Props) {
     super(props);
 
@@ -31,6 +34,16 @@ export class TextPanel extends PureComponent<Props, State> {
       this.setState({ html });
     }
   }, 150);
+
+  componentDidMount() {
+    this.eventSub = this.props.eventBus.$on(LegacyGraphHoverEvent, event => {
+      console.log('grap hover event', event);
+    });
+  }
+
+  componentWillUnmount() {
+    this.eventSub?.unsubscribe();
+  }
 
   componentDidUpdate(prevProps: Props) {
     // Since any change could be referenced in a template variable,

@@ -39,8 +39,8 @@ export class SettingsCtrl {
 
     this.$scope.$on('$destroy', () => {
       this.dashboard.updateSubmenuVisibility();
+
       setTimeout(() => {
-        this.$rootScope.appEvent(CoreEvents.dashScroll, { restore: true });
         this.dashboard.startRefresh();
       });
     });
@@ -53,7 +53,6 @@ export class SettingsCtrl {
     this.onRouteUpdated();
 
     this.$rootScope.onAppEvent(CoreEvents.routeUpdated, this.onRouteUpdated.bind(this), $scope);
-    this.$rootScope.appEvent(CoreEvents.dashScroll, { animate: false, pos: 0 });
 
     appEvents.on(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
 
