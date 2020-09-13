@@ -10,6 +10,7 @@ export class Emitter {
 
   /**
    * DEPRECATED.
+   * @deprecated since 6.7
    */
   emit(name: string, data?: any): void;
 
@@ -32,6 +33,7 @@ export class Emitter {
 
   /**
    * DEPRECATED.
+   * @deprecated since 6.7
    */
   on(name: string, handler: (payload?: any) => void, scope?: any): void;
 
