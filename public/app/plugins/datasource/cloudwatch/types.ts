@@ -1,7 +1,7 @@
 import { DataQuery, SelectableValue, DataSourceJsonData } from '@grafana/data';
 
 export interface CloudWatchMetricsQuery extends DataQuery {
-  queryMode: 'Metrics';
+  queryMode?: 'Metrics';
 
   id: string;
   region: string;
@@ -43,6 +43,9 @@ export interface CloudWatchLogsQuery extends DataQuery {
 }
 
 export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery;
+
+export const isCloudWatchLogsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchLogsQuery =>
+  (cloudwatchQuery as CloudWatchLogsQuery).queryMode === 'Logs';
 
 export interface AnnotationQuery extends CloudWatchMetricsQuery {
   prefixMatching: boolean;

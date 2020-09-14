@@ -51,7 +51,9 @@ export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOption
           name,
           config: {
             ...field.config,
+            // we need to clear thes for this transform as these can contain label names that we no longer want
             displayName: undefined,
+            displayNameFromDS: undefined,
           },
           labels: undefined,
         });
