@@ -125,17 +125,19 @@ Grafana documentation uses notes, tips, cautions, and warnings. Notes are the mo
 
 #### Notes
 
-Notes are for additional information that the user should be extra aware of. For example:
+Notes provide additional information that the user should be extra aware of. For example:
 
 > **Note:** This page describes a feature for Grafana 7.0 beta.
 
 #### Tips
 
-Tips are alternate or more efficient ways of doing things. Rarely used.
+Tips describe alternate or more efficient ways of doing things. Rarely used.
 
 #### Cautions
 
 Cautions warn the user that they should proceed with caution. Use cautions to emphasize the potential downside of a course of action.
+
+> **Caution:** If you turn off authentication requirements, then anyone can access your Grafana instance. This poses a considerable security risk.
 
 #### Warnings
 
