@@ -24,7 +24,7 @@ _Field configuration options_, both standard and custom, can be found in the **F
 on this tab apply to all fields (i.e. series/columns). For example, if you change the unit to percentage,
 then all fields with numeric values will be displayed in percentages. [Apply a field option](#configure-all-fields).
 
-_Field overrides_ can be added in the _Overrides_ tab in the panel editor. There you can add the same options as you
+_Field overrides_ can be added in the Overrides tab in the panel editor. There you can add the same options as you
 find in the Field tab but they are only applied to specific fields. [Apply an override](#override-a-field).
 
 All [field options](#field-options) are defined below.
