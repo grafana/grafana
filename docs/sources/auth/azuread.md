@@ -122,7 +122,7 @@ to a comma- or space-separated list of group Object Ids. Object Ids for a specif
 
 1. Go to **Azure Active Directory -> Groups**.
 
-For example, if you want to only give access to members of the group `example` which has Id `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, set the following:
+For example, if you want to only give access to members of the group `example` which has ID `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, set the following:
 
 ```ini
 allowed_groups = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
