@@ -69,7 +69,7 @@ Overrides allow you to change the settings for one or more fields (i.e. series o
 1. Continue to add overrides to this field by clicking **Add override property**, or you can click **Add override** and select a different field to add overrides to.
 1. When finished, click **Save** to save all panel edits to the dashboard.
 
-## Override field selectors
+## Override field selector
 
 This section explains the different ways you can select which fields an override rule will be applied to.
 
