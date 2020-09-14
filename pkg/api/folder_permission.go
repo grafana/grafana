@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func GetFolderPermissionList(c *models.ReqContext) Response {
@@ -109,5 +110,9 @@ func UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAc
 		return Error(500, "Failed to create permission", err)
 	}
 
-	return Success("Folder permissions updated")
+	return JSON(200, util.DynMap{
+		"message": "Folder permissions updated",
+		"id":      folder.Id,
+		"title":   folder.Title,
+	})
 }

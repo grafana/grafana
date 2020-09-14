@@ -7,4 +7,18 @@ import { ConfirmModal } from './ConfirmModal';
 
 Used to request user for action confirmation, e.g. deleting items. Triggers provided 'onConfirm' callback.
 
+# Usage
+```jsx
+<ConfirmModal
+  isOpen={false}
+  title='Delete user'
+  body='Are you sure you want to delete this user?'
+  confirmText='Confirm'
+  icon='exclamation-triangle'
+  onConfirm={() => console.log('Confirm action')}
+  onDismiss={() => console.log('Dismiss action')}
+/>
+```
+
+
 <Props of={ConfirmModal} />

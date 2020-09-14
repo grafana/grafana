@@ -4,7 +4,7 @@ set -eo pipefail
 source ./common.sh
 
 #
-# No longer required, but useful to keep just in case we want to deploy 
+# No longer required, but useful to keep just in case we want to deploy
 # changes in toolkit directly to the docker image
 #
 if [ -n "$INCLUDE_TOOLKIT" ]; then
@@ -16,12 +16,7 @@ if [ -n "$INCLUDE_TOOLKIT" ]; then
 	cp -v ../../tsconfig.json install/grafana-toolkit
 fi
 
-
-output=$(docker build . | tee /dev/tty)
-hash=$(echo "$output" | tail -1 | sed -ne "s/^Successfully built \(.*\)/\1/p")
-if [ ${#hash} -gt 0 ]; then
-	docker tag "$hash" $DOCKER_IMAGE_NAME:latest
-	docker push $DOCKER_IMAGE_NAME:latest
-fi
+docker build -t ${DOCKER_IMAGE_NAME} .
+docker push $DOCKER_IMAGE_NAME
 
 [ -n "$INCLUDE_TOOLKIT" ] && /bin/rm -rfv install/grafana-toolkit
