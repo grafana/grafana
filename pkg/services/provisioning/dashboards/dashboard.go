@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -16,6 +18,7 @@ type DashboardProvisioner interface {
 	PollChanges(ctx context.Context)
 	GetProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
+	CleanUpOrphanedDashboards()
 }
 
 // DashboardProvisionerFactory creates DashboardProvisioners based on input
@@ -69,6 +72,19 @@ func (provider *Provisioner) Provision() error {
 	}
 
 	return nil
+}
+
+// CleanUpOrphanedDashboards deletes provisioned dashboards missing a linked reader.
+func (provider *Provisioner) CleanUpOrphanedDashboards() {
+	currentReaders := make([]string, len(provider.fileReaders))
+
+	for index, reader := range provider.fileReaders {
+		currentReaders[index] = reader.Cfg.Name
+	}
+
+	if err := bus.Dispatch(&models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: currentReaders}); err != nil {
+		provider.log.Warn("Failed to delete orphaned provisioned dashboards", "err", err)
+	}
 }
 
 // PollChanges starts polling for changes in dashboard definition files. It creates goroutine for each provider

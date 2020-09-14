@@ -67,9 +67,6 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   const rowHeader = (
     <div className={styles.header}>
       <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">
-        {draggable && (
-          <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
-        )}
         <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
         {title && <div className={styles.title}>{titleElement}</div>}
         {headerElement}
@@ -77,20 +74,25 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
       {actions && <div>{actionsElement}</div>}
     </div>
   );
-  return draggable ? (
-    <Draggable draggableId={id} index={index}>
-      {provided => {
-        return (
-          <>
-            <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
-              <div {...provided.dragHandleProps}>{rowHeader}</div>
-              {isContentVisible && <div className={styles.content}>{children}</div>}
-            </div>
-          </>
-        );
-      }}
-    </Draggable>
-  ) : (
+
+  if (draggable) {
+    return (
+      <Draggable draggableId={id} index={index}>
+        {provided => {
+          return (
+            <>
+              <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
+                <div {...provided.dragHandleProps}>{rowHeader}</div>
+                {isContentVisible && <div className={styles.content}>{children}</div>}
+              </div>
+            </>
+          );
+        }}
+      </Draggable>
+    );
+  }
+
+  return (
     <div className={styles.wrapper}>
       {rowHeader}
       {isContentVisible && <div className={styles.content}>{children}</div>}
@@ -113,8 +115,11 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       justify-content: space-between;
     `,
     dragIcon: css`
-      opacity: 0.4;
       cursor: drag;
+      color: ${theme.colors.textWeak};
+      &:hover {
+        color: ${theme.colors.text};
+      }
     `,
     collapseIcon: css`
       color: ${theme.colors.textWeak};
@@ -125,6 +130,7 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
     titleWrapper: css`
       display: flex;
       align-items: center;
+      flex-grow: 1;
       cursor: pointer;
       overflow: hidden;
       margin-right: ${theme.spacing.sm};
