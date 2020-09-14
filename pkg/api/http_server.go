@@ -77,8 +77,8 @@ type HTTPServer struct {
 func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
 
-	// Set up a websocket broker (feature flag)
-	if hs.Cfg.IsLiveEnabled() {
+	// Set up a websocket broker
+	if hs.Cfg.IsLiveEnabled() { // feature flag
 		node, err := live.InitalizeBroker()
 		if err != nil {
 			return err

@@ -23,13 +23,10 @@ class CentrifugeSrv implements GrafanaLiveSrv {
   standardCallbacks: SubscriptionEvents;
 
   constructor() {
-    console.log('connecting....');
-    // TODO: better pick this from the URL
     this.centrifuge = new Centrifuge(`${config.appUrl}live/sockjs`, {
       debug: true,
       sockjs: SockJS,
     });
-    this.centrifuge.setToken('ABCD');
     this.centrifuge.connect(); // do connection
     this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
 
