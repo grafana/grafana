@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // POST /api/org/users
@@ -35,12 +36,18 @@ func addOrgUserHelper(cmd models.AddOrgUserCommand) Response {
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == models.ErrOrgUserAlreadyAdded {
-			return Error(409, "User is already member of this organization", nil)
+			return JSON(409, util.DynMap{
+				"message": "User is already member of this organization",
+				"userId":  cmd.UserId,
+			})
 		}
 		return Error(500, "Could not add user to organization", err)
 	}
 
-	return Success("User added to organization")
+	return JSON(200, util.DynMap{
+		"message": "User added to organization",
+		"userId":  cmd.UserId,
+	})
 }
 
 // GET /api/org/users
