@@ -263,7 +263,6 @@ export function loadExploreDatasourcesAndSetDatasource(
 
     if (exploreDatasources.length >= 1) {
       await dispatch(changeDatasource(exploreId, datasourceName, { importQueries: true }));
-      dispatch(runQueries(exploreId));
     } else {
       dispatch(loadDatasourceMissingAction({ exploreId }));
     }
