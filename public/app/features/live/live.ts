@@ -7,25 +7,37 @@ import Centrifuge, {
   SubscribeErrorContext,
 } from 'centrifuge/dist/centrifuge.protobuf';
 import SockJS from 'sockjs-client';
-import { GrafanaLiveSrv, setGrafanaLiveSrv, ChannelHandler } from '@grafana/runtime';
+import { GrafanaLiveSrv, setGrafanaLiveSrv, ChannelHandler, config } from '@grafana/runtime';
 import { Observable, Subject, BehaviorSubject } from 'rxjs';
-import { KeyValue } from '@grafana/data';
+import { share, finalize } from 'rxjs/operators';
+
+import { registerDashboardWatcher } from './dashboardWatcher';
+
+//http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
+export const browserSessionId =
+  Math.random()
+    .toString(36)
+    .substring(2, 15) +
+  Math.random()
+    .toString(36)
+    .substring(2, 15);
 
 interface Channel<T = any> {
-  subject: Subject<T>;
+  subject: Subject<T>; // private
+  stream: Observable<T>;
   subscription?: Centrifuge.Subscription;
 }
 
 class CentrifugeSrv implements GrafanaLiveSrv {
   centrifuge: Centrifuge;
-  channels: KeyValue<Channel> = {};
+  channels = new Map<string, Channel>();
   connectionState: BehaviorSubject<boolean>;
   standardCallbacks: SubscriptionEvents;
 
   constructor() {
     console.log('connecting....');
     // TODO: better pick this from the URL
-    this.centrifuge = new Centrifuge(`http://${location.host}/live/sockjs`, {
+    this.centrifuge = new Centrifuge(`${config.appUrl}live/sockjs`, {
       debug: true,
       sockjs: SockJS,
     });
@@ -116,15 +128,25 @@ class CentrifugeSrv implements GrafanaLiveSrv {
     return this.connectionState.asObservable();
   }
 
-  initChannel<T>(path: string, handler: ChannelHandler<T>) {
-    if (this.channels[path]) {
+  initChannel<T>(path: string, handler: ChannelHandler<T>): Observable<T> {
+    if (this.channels.has(path)) {
       console.log('Already connected to:', path);
-      return;
+      return this.channels.get(path)!.stream;
     }
+    const subject = new Subject<T>();
     const c: Channel = {
-      subject: new Subject<T>(),
+      subject,
+      stream: subject.pipe(
+        finalize(() => {
+          console.log('Final listener for', path, c);
+          if (c.subscription) {
+            c.subscription.unsubscribe();
+          }
+          this.channels.delete(path); // remove the listener when done
+        }),
+        share()
+      ),
     };
-    this.channels[path] = c;
 
     console.log('initChannel', this.centrifuge.isConnected(), path, handler);
     const callbacks: SubscriptionEvents = {
@@ -136,15 +158,27 @@ class CentrifugeSrv implements GrafanaLiveSrv {
       },
     };
     c.subscription = this.centrifuge.subscribe(path, callbacks);
+    this.channels.set(path, c);
+    return c.stream;
   }
 
   getChannelStream<T>(path: string): Observable<T> {
-    let c = this.channels[path];
-    if (!c) {
-      this.initChannel(path, noopChannelHandler);
-      c = this.channels[path];
+    const c = this.channels.get(path);
+    if (c) {
+      return c.stream;
     }
-    return c!.subject.asObservable();
+    return this.initChannel(path, noopChannelHandler);
+  }
+
+  // Force close everyone who is listening to that channel
+  closeChannelStream(path: string) {
+    const c = this.channels.get(path);
+    if (c) {
+      if (c.subscription) {
+        c.subscription.unsubscribe();
+      }
+      this.channels.delete(path);
+    }
   }
 
   /**
@@ -163,4 +197,7 @@ const noopChannelHandler: ChannelHandler = {
 
 export function initGrafanaLive() {
   setGrafanaLiveSrv(new CentrifugeSrv());
+
+  // Listen for navigation changes
+  registerDashboardWatcher();
 }

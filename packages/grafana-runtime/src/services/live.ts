@@ -37,12 +37,17 @@ export interface GrafanaLiveSrv {
   /**
    * Configure a channel with the given setup
    */
-  initChannel<T>(channel: string, handler: ChannelHandler<T>): void;
+  initChannel<T>(channel: string, handler: ChannelHandler<T>): Observable<T>;
 
   /**
    * Subscribe to activity on a given channel
    */
   getChannelStream<T>(channel: string): Observable<T>;
+
+  /**
+   * Unsubscribe all local references to a channel
+   */
+  closeChannelStream(channel: string): void;
 
   /**
    * Send data to a channel.  This feature is disabled for most channels and will return an error

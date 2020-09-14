@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/live"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -259,6 +260,20 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		err := dashboards.MakeUserAdmin(hs.Bus, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
 		if err != nil {
 			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
+		}
+	}
+
+	// Tell everyone listening that the dashboard changed
+	if hs.Live != nil {
+		msg, err := json.Marshal(live.DashboardEvent{
+			UID:    dashboard.Uid,
+			Action: live.DashboardEventActionSaved,
+			UserID: c.UserId,
+		})
+		if err != nil {
+			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
+		} else {
+			hs.Live.Publish("grafana/dashboard/"+dashboard.Uid, msg)
 		}
 	}
 
