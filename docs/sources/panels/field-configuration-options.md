@@ -69,21 +69,21 @@ Overrides allow you to change the settings for one or more fields (i.e. series o
 1. Continue to add overrides to this field by clicking **Add override property**, or you can click **Add override** and select a different field to add overrides to.
 1. When finished, click **Save** to save all panel edits to the dashboard.
 
-## Override matcher
+## Override field selectors
 
-This section explains all available matchers for field overrides. They are listed in alphabetical order.
+This section explains the different ways you can select which fields an override rule will be applied to.
 
-### Match field by name
+### Fields matching name
 
-Allows you to select a field from the list of all available fields that the override will be applied to.
+Allows you to select a field from the list of all available fields. Properties you add to a rule with this selector will only be applied to this single field.
 
-### Match field by name using regex
+### Fields matching regex
 
-Allows you to type in a regular expression against which fields to be overridden will be matched.
+Allows you to specify a regular expression. The properties you add to a rule with this selector will be applied to all fields where the field name match the regex.
 
-### Match field by type
+### Field with type
 
-Allows you to select fields by their type (string, numeric, etc).
+Allows you to select fields by their type (string, numeric, etc). The properties you add to a rule with this selector will be applied to all fields of matching type.
 
 ## Field options
 
