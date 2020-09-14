@@ -15,6 +15,7 @@ import { TagsInput } from '../TagsInput/TagsInput';
 import { Sigv4AuthSettings } from './Sigv4AuthSettings';
 import { useTheme } from '../../themes';
 import { HttpSettingsProps } from './types';
+import { getConfig } from 'app/core/config';
 
 const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
   {
@@ -190,18 +191,20 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
             />
           </div>
 
-          <div className="gf-form-inline">
-            <Switch
-              label="Sigv4 auth"
-              labelClass="width-13"
-              checked={dataSourceConfig.jsonData.sigv4Auth || false}
-              onChange={event => {
-                onSettingsChange({
-                  jsonData: { ...dataSourceConfig.jsonData, sigv4Auth: event!.currentTarget.checked },
-                });
-              }}
-            />
-          </div>
+          {getConfig().sigv4AuthEnabled && (
+            <div className="gf-form-inline">
+              <Switch
+                label="Sigv4 auth"
+                labelClass="width-13"
+                checked={dataSourceConfig.jsonData.sigv4Auth || false}
+                onChange={event => {
+                  onSettingsChange({
+                    jsonData: { ...dataSourceConfig.jsonData, sigv4Auth: event!.currentTarget.checked },
+                  });
+                }}
+              />
+            </div>
+          )}
 
           {dataSourceConfig.access === 'proxy' && (
             <HttpProxySettings

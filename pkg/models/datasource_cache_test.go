@@ -294,7 +294,7 @@ func TestDataSourceDecryptionCache(t *testing.T) {
 func TestDataSourceSigv4Auth(t *testing.T) {
 	Convey("When caching a datasource proxy with middleware", t, func() {
 		clearDSProxyCache()
-		setting.Sigv4Enabled = true
+		setting.Sigv4AuthEnabled = true
 
 		json, err := simplejson.NewJson([]byte(`{ "sigv4Auth": true }`))
 		So(err, ShouldBeNil)
@@ -317,7 +317,7 @@ func TestDataSourceSigv4Auth(t *testing.T) {
 
 	Convey("When caching a datasource proxy with middleware", t, func() {
 		clearDSProxyCache()
-		setting.Sigv4Enabled = true
+		setting.Sigv4AuthEnabled = true
 
 		ds := DataSource{}
 
@@ -332,7 +332,7 @@ func TestDataSourceSigv4Auth(t *testing.T) {
 
 	Convey("When caching a datasource proxy with middleware", t, func() {
 		clearDSProxyCache()
-		setting.Sigv4Enabled = false
+		setting.Sigv4AuthEnabled = false
 
 		json, err := simplejson.NewJson([]byte(`{ "sigv4Auth": true }`))
 		So(err, ShouldBeNil)
