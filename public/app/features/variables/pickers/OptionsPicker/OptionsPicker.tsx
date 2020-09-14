@@ -10,6 +10,7 @@ import { VariableOption, VariableTag, VariableWithMultiSupport, VariableWithOpti
 import { VariableOptions } from '../shared/VariableOptions';
 import { isQuery } from '../../guard';
 import { VariablePickerProps } from '../types';
+import { formatVariableLabel } from '../../shared/formatVariable';
 
 interface OwnProps extends VariablePickerProps<VariableWithMultiSupport> {}
 
@@ -64,7 +65,7 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
       return null;
     }
 
-    const linkText = getLinkText(variable);
+    const linkText = formatVariableLabel(variable);
     const tags = getSelectedTags(variable);
 
     return <VariableLink text={linkText} tags={tags} onClick={this.onShowOptions} />;
@@ -102,44 +103,6 @@ const getSelectedTags = (variable: VariableWithOptions): VariableTag[] => {
     return [];
   }
   return variable.tags.filter(t => t.selected);
-};
-
-const getLinkText = (variable: VariableWithOptions) => {
-  const { current, options } = variable;
-
-  if (!current.tags || current.tags.length === 0) {
-    if (Array.isArray(current.text)) {
-      return current.text.join(' + ');
-    }
-    return current.text;
-  }
-
-  // filer out values that are in selected tags
-  const selectedAndNotInTag = options.filter(option => {
-    if (!option.selected) {
-      return false;
-    }
-
-    if (!current || !current.tags || !current.tags.length) {
-      return false;
-    }
-
-    for (let i = 0; i < current.tags.length; i++) {
-      const tag = current.tags[i];
-      const foundIndex = tag?.values?.findIndex(v => v === option.value);
-      if (foundIndex && foundIndex !== -1) {
-        return false;
-      }
-    }
-    return true;
-  });
-
-  // convert values to text
-  const currentTexts = selectedAndNotInTag.map(s => s.text);
-
-  // join texts
-  const newLinkText = currentTexts.join(' + ');
-  return newLinkText.length > 0 ? `${newLinkText} + ` : newLinkText;
 };
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {

@@ -26,7 +26,7 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
       const keyField = findKeyField(frame, keyFieldMatch);
 
       if (!keyField) {
-        return data;
+        continue;
       }
 
       for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
@@ -74,8 +74,8 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
     const keyFieldTitle = getFieldDisplayName(resultFrame.fields[0], resultFrame);
     const byKeyField: { [key: string]: { [key: string]: any } } = {};
 
-    /*    
-    this loop creates a dictionary object that groups the key fields values 
+    /*
+    this loop creates a dictionary object that groups the key fields values
     {
       "key field first value as string" : {
         "key field name": key field first value,

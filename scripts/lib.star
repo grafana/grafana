@@ -1,9 +1,9 @@
 build_image = 'grafana/build-container:1.2.26'
-publish_image = 'grafana/grafana-ci-deploy:1.2.5'
+publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.2.0'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
-grabpl_version = '0.5.5'
+grabpl_version = '0.5.8'
 
 def pr_pipelines(edition):
     services = [
@@ -83,6 +83,7 @@ def master_pipelines(edition):
         shellcheck_step(),
         test_backend_step(),
         test_frontend_step(),
+        frontend_metrics_step(),
         build_backend_step(edition=edition),
         build_frontend_step(edition=edition),
         build_plugins_step(edition=edition),
@@ -364,12 +365,27 @@ def test_frontend_step():
             'TEST_MAX_WORKERS': '50%',
         },
         'commands': [
-            'yarn run prettier:check',
-            'yarn run packages:typecheck',
-            'yarn run typecheck',
-            'yarn run test',
+            'yarn run ci:test-frontend',
         ],
     }
+
+def frontend_metrics_step():
+    return {
+        'name': 'frontend-metrics',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+        ],
+        'environment': {
+            'GRAFANA_MISC_STATS_API_KEY': {
+                'from_secret': 'grafana_misc_stats_api_key',
+            },
+        },
+        'commands': [
+            './scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}',
+        ],
+    }
+
 
 def codespell_step():
     return {

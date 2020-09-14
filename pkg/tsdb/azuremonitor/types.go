@@ -98,7 +98,7 @@ type azureMonitorJSONQuery struct {
 		TimeGrain           string  `json:"timeGrain"`
 		Top                 string  `json:"top"`
 
-		DimensionsFilters []azureMonitorDimensionFilter `json:"dimensionsFilters"` // new model
+		DimensionFilters []azureMonitorDimensionFilter `json:"dimensionFilters"` // new model
 	} `json:"azureMonitor"`
 	Subscription string `json:"subscription"`
 }
@@ -112,7 +112,11 @@ type azureMonitorDimensionFilter struct {
 }
 
 func (a azureMonitorDimensionFilter) String() string {
-	return fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, a.Filter)
+	filter := "*"
+	if a.Filter != "" {
+		filter = a.Filter
+	}
+	return fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter)
 }
 
 // insightsJSONQuery is the frontend JSON query model for an Azure Application Insights query.
@@ -166,7 +170,14 @@ func (s *InsightsDimensions) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
-		*s = InsightsDimensions(sa)
+		dimensions := []string{}
+		for _, v := range sa {
+			if v == "none" || v == "None" {
+				continue
+			}
+			dimensions = append(dimensions, v)
+		}
+		*s = InsightsDimensions(dimensions)
 		return nil
 	}
 
