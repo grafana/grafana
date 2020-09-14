@@ -102,11 +102,11 @@ describe('templateSrv', () => {
       expect(target).toBe('this.mupp.filters');
     });
 
-    it('should replace ${test:glob} with scoped text', () => {
+    it('should not replace ${test:glob} with scoped text', () => {
       const target = _templateSrv.replaceWithText('this.${test:glob}.filters', {
         test: { value: 'mupp', text: 'asd' },
       });
-      expect(target).toBe('this.asd.filters');
+      expect(target).toBe('this.mupp.filters');
     });
   });
 

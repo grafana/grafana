@@ -7,6 +7,7 @@ import { VariableModel } from '../variables/types';
 import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 import { variableAdapters } from '../variables/adapters';
 import { formatRegistry, FormatOptions } from './formatRegistry';
+import { ALL_VARIABLE_TEXT } from '../variables/state/types';
 
 interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
@@ -269,7 +270,7 @@ export class TemplateSrv implements BaseTemplateSrv {
 
       if (this.isAllValue(value)) {
         value = this.getAllValue(variable);
-        text = 'All';
+        text = ALL_VARIABLE_TEXT;
         // skip formatting of custom all values
         if (variable.allValue) {
           return this.replace(value);
@@ -296,22 +297,7 @@ export class TemplateSrv implements BaseTemplateSrv {
 
   replaceWithText(target: string, scopedVars?: ScopedVars) {
     deprecationWarning('template_srv.ts', 'replaceWithText()', 'replace(), and specify the :text format');
-
-    if (!target) {
-      return target ?? '';
-    }
-
-    this.regex.lastIndex = 0;
-
-    const withoutFormat = target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
-      const format = fmt2 ?? fmt3;
-      if (!format) {
-        return match;
-      }
-      return match.replace(`:${format}`, '');
-    });
-
-    return this.replace(withoutFormat, scopedVars, 'text');
+    return this.replace(target, scopedVars, 'text');
   }
 
   fillVariableValuesForUrl = (params: any, scopedVars?: ScopedVars) => {
