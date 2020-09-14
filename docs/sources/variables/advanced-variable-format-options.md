@@ -143,3 +143,13 @@ servers = ["test'1", "test2"]
 String to interpolate: '${servers:sqlstring}'
 Interpolation result: "'test''1','test2'"
 ```
+
+## Text
+
+Formats single- and multi-valued variables into their text representation. For a single variable it will just return the text representation. For multi-valued variables it will return the text representation combined with `+`.
+
+```bash
+servers = ["test1", "test2"]
+String to interpolate: '${servers:text}'
+Interpolation result: "test1 + test2"
+```
