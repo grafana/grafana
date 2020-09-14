@@ -33,11 +33,12 @@ e2e.scenario({
       `Server:doublequote = "A'A\\"A","BB\\B","CCC"`,
       `Server:sqlstring = 'A''A"A','BB\\\B','CCC'`,
       `Server:date = null`,
+      `Server:text = All`,
     ];
 
     e2e()
       .get('.markdown-html li')
-      .should('have.length', 21)
+      .should('have.length', 22)
       .each(element => {
         items.push(element.text());
       })
