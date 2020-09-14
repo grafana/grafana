@@ -31,13 +31,13 @@ type Config struct {
 }
 
 func (m *Sigv4Middleware) RoundTrip(req *http.Request) (*http.Response, error) {
-	if m.Next == nil {
-		return http.DefaultTransport.RoundTrip(req)
-	}
-
 	_, err := m.signRequest(req)
 	if err != nil {
 		return nil, err
+	}
+
+	if m.Next == nil {
+		return http.DefaultTransport.RoundTrip(req)
 	}
 
 	return m.Next.RoundTrip(req)
