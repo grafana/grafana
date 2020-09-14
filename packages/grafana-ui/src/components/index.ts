@@ -69,6 +69,7 @@ export {
   BigValueTextMode,
 } from './BigValue/BigValue';
 
+export { MicroPlot } from './uPlot/MicroPlot';
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';
