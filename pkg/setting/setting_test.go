@@ -327,8 +327,8 @@ func TestAuthDurationSettings(t *testing.T) {
 	_, err = sec.NewKey("login_maximum_inactive_lifetime_duration", "")
 	require.NoError(t, err)
 	maxInactiveDaysTest, _ := time.ParseDuration("240h")
-	ad := readAuthSettings(f, cfg)
-	_ = ad
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
 	require.Equal(t, maxInactiveDaysTest, cfg.LoginMaxInactiveLifetime)
 
 	f = ini.Empty()
@@ -337,7 +337,8 @@ func TestAuthDurationSettings(t *testing.T) {
 	_, err = sec.NewKey("login_maximum_inactive_lifetime_duration", "824h")
 	require.NoError(t, err)
 	maxInactiveDurationTest, _ := time.ParseDuration("824h")
-	ad = readAuthSettings(f, cfg)
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
 	require.Equal(t, maxInactiveDurationTest, cfg.LoginMaxInactiveLifetime)
 
 	f = ini.Empty()
@@ -348,7 +349,8 @@ func TestAuthDurationSettings(t *testing.T) {
 	_, err = sec.NewKey("login_maximum_lifetime_duration", "")
 	require.NoError(t, err)
 	maxLifetimeDaysTest, _ := time.ParseDuration("576h")
-	ad = readAuthSettings(f, cfg)
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
 	require.Equal(t, maxLifetimeDaysTest, cfg.LoginMaxLifetime)
 
 	f = ini.Empty()
@@ -357,6 +359,7 @@ func TestAuthDurationSettings(t *testing.T) {
 	_, err = sec.NewKey("login_maximum_lifetime_duration", "824h")
 	require.NoError(t, err)
 	maxLifetimeDurationTest, _ := time.ParseDuration("824h")
-	ad = readAuthSettings(f, cfg)
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
 	require.Equal(t, maxLifetimeDurationTest, cfg.LoginMaxLifetime)
 }
