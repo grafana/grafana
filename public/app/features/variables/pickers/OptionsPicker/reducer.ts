@@ -78,10 +78,7 @@ const updateOptions = (state: OptionsPickerState): OptionsPickerState => {
 
     return { ...option, selected };
   });
-  if (Array.isArray(state.options) && state.options.length > OPTIONS_LIMIT) {
-    const options = state.options;
-    state.options = options.slice(0, OPTIONS_LIMIT);
-  }
+  state.options = applyLimit(state.options);
   return state;
 };
 
