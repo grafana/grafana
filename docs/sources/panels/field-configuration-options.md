@@ -12,20 +12,15 @@ This page explains what field options and field overrides in Grafana are and how
 [examples](#examples) if you need an idea of how this feature might be useful in the real world.
 
 The data model used in Grafana, the [data frame]({{< relref "../developers/plugins/data-frames.md" >}}),
-is a columnar-oriented table structure that unifies both time series and table query results. Each column within
-this structure is called a _field_. A field can represent a single time series or table column.
+is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
 
 ## Field configuration options and overrides
 
-Field configuration options allow you to change how the data is displayed in your visualizations. Options and overrides
-that you apply do not change the data, they change how Grafana displays the data.
+Field configuration options allow you to change how the data is displayed in your visualizations. Options and overrides that you apply do not change the data, they change how Grafana displays the data.
 
-_Field configuration options_, both standard and custom, can be found in the **Field** tab in the panel editor. Changes
-on this tab apply to all fields (i.e. series/columns). For example, if you change the unit to percentage,
-then all fields with numeric values will be displayed in percentages. [Apply a field option](#configure-all-fields).
+_Field configuration options_, both standard and custom, can be found in the **Field** tab in the panel editor. Changes on this tab apply to all fields (i.e. series/columns). For example, if you change the unit to percentage, then all fields with numeric values will be displayed in percentages. [Apply a field option](#configure-all-fields).
 
-_Field overrides_ can be added in the Overrides tab in the panel editor. There you can add the same options as you
-find in the Field tab but they are only applied to specific fields. [Apply an override](#override-a-field).
+_Field overrides_ can be added in the Overrides tab in the panel editor. There you can add the same options as you find in the Field tab but they are only applied to specific fields. [Apply an override](#override-a-field).
 
 All [field options](#field-options) are defined below.
 
@@ -43,14 +38,11 @@ Standard field options are:
 - [Value mappings](#value-mapping)
 - [Data links](#data-links)
 
-You can apply standard field options to most of the built-in Grafana panels. Some older panels and community panels that have
-yet to update to the new panel and data model will be missing either all or some of these field options.
+You can apply standard field options to most of the built-in Grafana panels. Some older panels and community panels that have yet to update to the new panel and data model will be missing either all or some of these field options.
 
 ### Custom field options
 
-Some visualizations have custom field options. For example the [Table]({{< relref "visualizations/table-panel.md" >}})
-visualization has many custom field options. Community panels can add their own custom field options as well,
-and they might differ across visualizations.
+Some visualizations have custom field options. For example the [Table]({{< relref "visualizations/table-panel.md" >}}) visualization has many custom field options. Community panels can add their own custom field options as well, and they might differ across visualizations.
 
 ## Configure all fields
 
@@ -63,11 +55,9 @@ you then override that for specific fields.
 1. Enter options by adding values in the fields. To return options to default values, delete the white text in the fields.
 1. When finished, click **Save** to save all panel edits to the dashboard.
 
-## Override a field
+## Configure specific fields with overrides
 
-Field overrides allow you to change the settings for one or more fields (i.e. series or column). What fields are targeted
-by the override depends on the matcher. Field options for overrides are exactly the same as the field options
-available in a particular visualization. The only difference is that you choose which fields to apply them to.
+Overrides allow you to change the settings for one or more fields (i.e. series or column). What fields are targeted by the override depends on the matcher. Field options for overrides are exactly the same as the field options available in a particular visualization. The only difference is that you choose which fields to apply them to.
 
 1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
 1. Click the **Overrides** tab.
@@ -79,7 +69,7 @@ available in a particular visualization. The only difference is that you choose 
 1. Continue to add overrides to this field by clicking **Add override property**, or you can click **Add override** and select a different field to add overrides to.
 1. When finished, click **Save** to save all panel edits to the dashboard.
 
-## Override matchers
+## Override matcher
 
 This section explains all available matchers for field overrides. They are listed in alphabetical order.
 
