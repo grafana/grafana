@@ -21,7 +21,7 @@ This page also contains important information about [migrating from earlier Dock
 
 This is the default image. It's based on the popular [Alpine Linux project](http://alpinelinux.org), available in [the Alpine official image](https://hub.docker.com/_/alpine). Alpine Linux is much smaller than most distribution base images, and thus leads to slimmer and more secure images.
 
-This variant is highly recommended when security and final image size being as small as possible is desired. The main caveat to note is that it uses [musl libc](http://www.musl-libc.org) instead of [glibc and friends](http://www.etalabs.net/compare_libcs.html), so certain software might run into issues depending on the depth of their libc requirements. However, most software doesn't have an issue with this, so this variant is usually a very safe choice.
+This variant is highly recommended when security and final image size being as small as possible is desired. The main caveat to note is that it uses [musl libc](http://www.musl-libc.org) instead of [glibc and friends](http://www.etalabs.net/compare_libcs.html), so certain software might run into issues depending on the depth of their libc requirements. However, most software don't have an issue with this, so this variant is usually a very safe choice.
 
 > **Note:** The `grafana/grafana:<version>` image was based on [Ubuntu](https://ubuntu.com/) before version 6.4.0.
 
