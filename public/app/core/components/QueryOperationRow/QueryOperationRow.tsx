@@ -71,7 +71,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
           <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
         )}
         <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
-        {title && <span className={styles.title}>{titleElement}</span>}
+        {title && <div className={styles.title}>{titleElement}</div>}
         {headerElement}
       </div>
       {actions && <div>{actionsElement}</div>}
@@ -133,6 +133,7 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       font-weight: ${theme.typography.weight.semibold};
       color: ${theme.colors.textBlue};
       margin-left: ${theme.spacing.sm};
+      overflow: hidden;
     `,
     content: css`
       margin-top: ${theme.spacing.inlineFormMargin};
