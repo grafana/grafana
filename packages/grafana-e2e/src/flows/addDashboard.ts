@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export interface AddAnnotationConfig {
   dataSource: string;
+  dataSourceForm?: () => void;
   name: string;
 }
 
@@ -109,7 +110,7 @@ const addAnnotation = (config: AddAnnotationConfig, isFirst: boolean) => {
       .click();
   }
 
-  const { dataSource, name } = config;
+  const { dataSource, dataSourceForm, name } = config;
 
   // @todo add to e2e-selectors and `aria-label`
   e2e()
@@ -122,6 +123,10 @@ const addAnnotation = (config: AddAnnotationConfig, isFirst: boolean) => {
     .contains('.gf-form', 'Name')
     .find('input')
     .type(name);
+
+  if (dataSourceForm) {
+    dataSourceForm();
+  }
 
   // @todo add to e2e-selectors and `aria-label`
   e2e()
