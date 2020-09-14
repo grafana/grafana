@@ -10,16 +10,14 @@ import {
   VerticalGroup,
 } from '@grafana/ui';
 import {
+  DataFrame,
   DataTransformerConfig,
+  DocsId,
   GrafanaTheme,
+  PanelData,
   SelectableValue,
   standardTransformersRegistry,
-  transformDataFrame,
-  DataFrame,
-  PanelData,
-  DocsId,
 } from '@grafana/data';
-import { TransformationOperationRow } from './TransformationOperationRow';
 import { Card, CardProps } from '../../../../core/components/Card/Card';
 import { css } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
@@ -27,6 +25,7 @@ import { Unsubscribable } from 'rxjs';
 import { PanelModel } from '../../state';
 import { getDocsLink } from 'app/core/utils/docsLinks';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { TransformationOperationRows } from './TransformationOperationRows';
 
 interface TransformationsEditorProps {
   panel: PanelModel;
@@ -194,53 +193,12 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
           {provided => {
             return (
               <div ref={provided.innerRef} {...provided.droppableProps}>
-                {transformations.map((t, i) => {
-                  // Transformations are not identified uniquely by any property apart from array index.
-                  // For drag and drop to work we need to generate unique ids. This record stores counters for each transformation type
-                  // based on which ids are generated
-                  let editor;
-
-                  const transformationUI = standardTransformersRegistry.getIfExists(t.transformation.id);
-                  if (!transformationUI) {
-                    return null;
-                  }
-
-                  const input = transformDataFrame(
-                    transformations.slice(0, i).map(t => t.transformation),
-                    data
-                  );
-                  const output = transformDataFrame(
-                    transformations.slice(i).map(t => t.transformation),
-                    input
-                  );
-
-                  if (transformationUI) {
-                    editor = React.createElement(transformationUI.editor, {
-                      options: { ...transformationUI.transformation.defaultOptions, ...t.transformation.options },
-                      input,
-                      onChange: (options: any) => {
-                        this.onTransformationChange(i, {
-                          id: t.transformation.id,
-                          options,
-                        });
-                      },
-                    });
-                  }
-
-                  return (
-                    <TransformationOperationRow
-                      index={i}
-                      id={`${t.id}`}
-                      key={`${t.id}`}
-                      input={input || []}
-                      output={output || []}
-                      onRemove={() => this.onTransformationRemove(i)}
-                      editor={editor}
-                      name={transformationUI.name}
-                      description={transformationUI.description}
-                    />
-                  );
-                })}
+                <TransformationOperationRows
+                  transformations={transformations}
+                  data={data}
+                  onRemove={this.onTransformationRemove}
+                  onChange={this.onTransformationChange}
+                />
                 {provided.placeholder}
               </div>
             );

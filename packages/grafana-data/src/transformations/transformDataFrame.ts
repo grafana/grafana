@@ -1,5 +1,5 @@
-import { generate, Observable, of } from 'rxjs';
-import { map, mergeMap, scan } from 'rxjs/operators';
+import { EMPTY, Observable, of } from 'rxjs';
+import { concatMap, expand, map, mergeMap, reduce } from 'rxjs/operators';
 
 import { DataFrame, DataTransformerConfig } from '../types';
 import { standardTransformersRegistry } from './standardTransformersRegistry';
@@ -46,14 +46,17 @@ const getTransform = (config: DataTransformerConfig, data: Observable<DataFrame[
  * Apply configured transformations to the input data
  */
 export function transformDataFrame(options: DataTransformerConfig[], data: DataFrame[]): Observable<DataFrame[]> {
-  return generate(
-    0,
-    index => index < options.length,
-    index => index + 1
-  ).pipe(
-    scan((acc, index) => {
-      return getTransform(options[index], acc);
-    }, of(data)),
-    mergeMap(data => data)
+  return of(of(data)).pipe(
+    expand((value, index) => {
+      if (index < options.length) {
+        return of(getTransform(options[index], value));
+      }
+
+      return EMPTY;
+    }),
+    concatMap(x => x),
+    reduce((acc, one) => {
+      return one;
+    }, data)
   );
 }
