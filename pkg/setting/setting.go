@@ -140,10 +140,10 @@ var (
 	ViewersCanEdit          bool
 
 	// Http auth
-	AdminUser            string
-	AdminPassword        string
-	LoginCookieName      string
-	LoginMaxLifetimeDays int
+	AdminUser        string
+	AdminPassword    string
+	LoginCookieName  string
+	LoginMaxLifetime time.Duration
 
 	AnonymousEnabled bool
 	AnonymousOrgName string
@@ -278,8 +278,8 @@ type Cfg struct {
 
 	// Auth
 	LoginCookieName              string
-	LoginMaxInactiveLifetimeDays int
-	LoginMaxLifetimeDays         int
+	LoginMaxInactiveLifetime     time.Duration
+	LoginMaxLifetime             time.Duration
 	TokenRotationIntervalMinutes int
 
 	// OAuth
@@ -946,15 +946,38 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	return nil
 }
 
-func readAuthSettings(iniFile *ini.File, cfg *Cfg) error {
+func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	auth := iniFile.Section("auth")
 
 	LoginCookieName = valueAsString(auth, "login_cookie_name", "grafana_session")
 	cfg.LoginCookieName = LoginCookieName
-	cfg.LoginMaxInactiveLifetimeDays = auth.Key("login_maximum_inactive_lifetime_days").MustInt(7)
+	maxInactiveDaysVal := auth.Key("login_maximum_inactive_lifetime_days").MustString("")
+	if maxInactiveDaysVal != "" {
+		maxInactiveDaysVal = fmt.Sprintf("%sd", maxInactiveDaysVal)
+		cfg.Logger.Warn("[Deprecated] the configuration setting 'login_maximum_inactive_lifetime_days' is deprecated, please use 'login_maximum_inactive_lifetime_duration' instead")
+	} else {
+		maxInactiveDaysVal = "7d"
+	}
+	maxInactiveDurationVal := valueAsString(auth, "login_maximum_inactive_lifetime_duration", maxInactiveDaysVal)
+	cfg.LoginMaxInactiveLifetime, err = gtime.ParseInterval(maxInactiveDurationVal)
+	if err != nil {
+		return err
+	}
 
-	LoginMaxLifetimeDays = auth.Key("login_maximum_lifetime_days").MustInt(30)
-	cfg.LoginMaxLifetimeDays = LoginMaxLifetimeDays
+	maxLifetimeDaysVal := auth.Key("login_maximum_lifetime_days").MustString("")
+	if maxLifetimeDaysVal != "" {
+		maxLifetimeDaysVal = fmt.Sprintf("%sd", maxLifetimeDaysVal)
+		cfg.Logger.Warn("[Deprecated] the configuration setting 'login_maximum_lifetime_days' is deprecated, please use 'login_maximum_lifetime_duration' instead")
+	} else {
+		maxLifetimeDaysVal = "7d"
+	}
+	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", maxLifetimeDaysVal)
+	cfg.LoginMaxLifetime, err = gtime.ParseInterval(maxLifetimeDurationVal)
+	if err != nil {
+		return err
+	}
+	LoginMaxLifetime = cfg.LoginMaxLifetime
+
 	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 
 	cfg.TokenRotationIntervalMinutes = auth.Key("token_rotation_interval_minutes").MustInt(10)
