@@ -946,7 +946,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	return nil
 }
 
-func readAuthSettings(iniFile *ini.File, cfg *Cfg) error {
+func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	auth := iniFile.Section("auth")
 
 	LoginCookieName = valueAsString(auth, "login_cookie_name", "grafana_session")
@@ -958,10 +958,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) error {
 	} else {
 		maxInactiveDaysVal = "7d"
 	}
-	maxInactiveDurationVal, err := valueAsString(auth, "login_maximum_inactive_lifetime_duration", maxInactiveDaysVal)
-	if err != nil {
-		return err
-	}
+	maxInactiveDurationVal := valueAsString(auth, "login_maximum_inactive_lifetime_duration", maxInactiveDaysVal)
 	cfg.LoginMaxInactiveLifetime, err = gtime.ParseInterval(maxInactiveDurationVal)
 	if err != nil {
 		return err
@@ -974,10 +971,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) error {
 	} else {
 		maxLifetimeDaysVal = "7d"
 	}
-	maxLifetimeDurationVal, err := valueAsString(auth, "login_maximum_lifetime_duration", maxLifetimeDaysVal)
-	if err != nil {
-		return err
-	}
+	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", maxLifetimeDaysVal)
 	cfg.LoginMaxLifetime, err = gtime.ParseInterval(maxLifetimeDurationVal)
 	if err != nil {
 		return err
