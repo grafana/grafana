@@ -79,11 +79,11 @@ Allows you to select a field from the list of all available fields. Properties y
 
 ### Fields matching regex
 
-Allows you to specify a regular expression. The properties you add to a rule with this selector will be applied to all fields where the field name match the regex.
+Allows you to specify a regular expression. Properties you add to a rule with this selector will be applied to all fields where the field name match the regex.
 
 ### Fields with type
 
-Allows you to select fields by their type (string, numeric, etc). The properties you add to a rule with this selector will be applied to all fields of matching type.
+Allows you to select fields by their type (string, numeric, etc). Properties you add to a rule with this selector will be applied to all fields of matching type.
 
 ## Field options
 
