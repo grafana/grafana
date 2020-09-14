@@ -54,20 +54,20 @@ describe('supportsDataQuery', () => {
 describe('updateDefaultFieldConfigValue', () => {
   it.each`
     property | isCustom | newValue                    | expected
-    ${'a'}   | ${false} | ${2}                        | ${{ defaults: { a: 2, b: { c: 'nested default' }, custom: { d: 1, e: { f: 'nested custom' } } } }}
-    ${'b.c'} | ${false} | ${'nested default updated'} | ${{ defaults: { a: 1, b: { c: 'nested default updated' }, custom: { d: 1, e: { f: 'nested custom' } } } }}
-    ${'a'}   | ${false} | ${undefined}                | ${{ defaults: { b: { c: 'nested default' }, custom: { d: 1, e: { f: 'nested custom' } } } }}
-    ${'b'}   | ${false} | ${undefined}                | ${{ defaults: { a: 1, custom: { d: 1, e: { f: 'nested custom' } } } }}
-    ${'b.c'} | ${false} | ${undefined}                | ${{ defaults: { a: 1, b: {}, custom: { d: 1, e: { f: 'nested custom' } } } }}
-    ${'d'}   | ${true}  | ${2}                        | ${{ defaults: { a: 1, b: { c: 'nested default' }, custom: { d: 2, e: { f: 'nested custom' } } } }}
-    ${'e.f'} | ${true}  | ${'nested custom updated'}  | ${{ defaults: { a: 1, b: { c: 'nested default' }, custom: { d: 1, e: { f: 'nested custom updated' } } } }}
-    ${'d'}   | ${true}  | ${undefined}                | ${{ defaults: { a: 1, b: { c: 'nested default' }, custom: { e: { f: 'nested custom' } } } }}
-    ${'e'}   | ${true}  | ${undefined}                | ${{ defaults: { a: 1, b: { c: 'nested default' }, custom: { d: 1 } } }}
-    ${'e.f'} | ${true}  | ${undefined}                | ${{ defaults: { a: 1, b: { c: 'nested default' }, custom: { d: 1, e: {} } } }}
+    ${'a'}   | ${false} | ${2}                        | ${{ a: 2, b: { c: 'nested default' }, custom: { d: 1, e: { f: 'nested custom' } } }}
+    ${'b.c'} | ${false} | ${'nested default updated'} | ${{ a: 1, b: { c: 'nested default updated' }, custom: { d: 1, e: { f: 'nested custom' } } }}
+    ${'a'}   | ${false} | ${undefined}                | ${{ b: { c: 'nested default' }, custom: { d: 1, e: { f: 'nested custom' } } }}
+    ${'b'}   | ${false} | ${undefined}                | ${{ a: 1, custom: { d: 1, e: { f: 'nested custom' } } }}
+    ${'b.c'} | ${false} | ${undefined}                | ${{ a: 1, b: {}, custom: { d: 1, e: { f: 'nested custom' } } }}
+    ${'d'}   | ${true}  | ${2}                        | ${{ a: 1, b: { c: 'nested default' }, custom: { d: 2, e: { f: 'nested custom' } } }}
+    ${'e.f'} | ${true}  | ${'nested custom updated'}  | ${{ a: 1, b: { c: 'nested default' }, custom: { d: 1, e: { f: 'nested custom updated' } } }}
+    ${'d'}   | ${true}  | ${undefined}                | ${{ a: 1, b: { c: 'nested default' }, custom: { e: { f: 'nested custom' } } }}
+    ${'e'}   | ${true}  | ${undefined}                | ${{ a: 1, b: { c: 'nested default' }, custom: { d: 1 } }}
+    ${'e.f'} | ${true}  | ${undefined}                | ${{ a: 1, b: { c: 'nested default' }, custom: { d: 1, e: {} } }}
   `(
     'when updating property:$property (is custom: $isCustom) with $newValue',
     ({ property, isCustom, newValue, expected }) => {
-      const config: FieldConfigSource = {
+      const config = {
         defaults: {
           a: 1,
           b: {
@@ -78,8 +78,11 @@ describe('updateDefaultFieldConfigValue', () => {
             e: { f: 'nested custom' },
           },
         },
+        overrides: [],
       };
-      expect(updateDefaultFieldConfigValue(config, property, newValue, isCustom)).toEqual(expected);
+      expect(updateDefaultFieldConfigValue(config as FieldConfigSource, property, newValue, isCustom).defaults).toEqual(
+        expected
+      );
     }
   );
 });
