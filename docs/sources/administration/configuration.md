@@ -1428,4 +1428,4 @@ is an experimental feature right now with a few problems that remain unsolved.
 
 ### default_timezone
 
-Used as the default timezone for user preferences. Can be either `browser` for the browser local timezone or a timezone name from IANA Time Zone database 
+Used as the default timezone for user preferences. Can be either `browser` for the browser local timezone or a timezone name from IANA Time Zone database, e.g. `UTC` or `Europe/Amsterdam` etc.
