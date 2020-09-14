@@ -96,6 +96,13 @@ describe('PanelModel', () => {
         fieldConfig: {
           defaults: {
             unit: 'mpg',
+            thresholds: {
+              mode: 'absolute',
+              steps: [
+                { color: 'green', value: null },
+                { color: 'red', value: 80 },
+              ],
+            },
           },
           overrides: [
             {
@@ -103,7 +110,18 @@ describe('PanelModel', () => {
                 id: '1',
                 options: {},
               },
-              properties: [],
+              properties: [
+                {
+                  id: 'thresholds',
+                  value: {
+                    mode: 'absolute',
+                    steps: [
+                      { color: 'green', value: null },
+                      { color: 'red', value: 80 },
+                    ],
+                  },
+                },
+              ],
             },
           ],
         },
@@ -144,6 +162,11 @@ describe('PanelModel', () => {
 
     it('should apply option defaults', () => {
       expect(model.getOptions().showThresholds).toBeTruthy();
+    });
+
+    it('should change null thresholds to negative infinity', () => {
+      expect(model.fieldConfig.defaults.thresholds.steps[0].value).toBe(-Infinity);
+      expect(model.fieldConfig.overrides[0].properties[0].value.steps[0].value).toBe(-Infinity);
     });
 
     it('should apply option defaults but not override if array is changed', () => {

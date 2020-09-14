@@ -28,6 +28,7 @@ To access Prometheus settings, hover your mouse over the **Configuration** (gear
 | _User_                    | User name for basic authentication.                                                                                                   |
 | _Password_                | Password for basic authentication.                                                                                                    |
 | _Scrape interval_         | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.                                     |
+| _Disable metrics lookup_  | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances. |
 | _Custom Query Parameters_ | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'. |
 
 ## Prometheus query editor

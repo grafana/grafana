@@ -13,7 +13,6 @@ const makeError = (propOverrides?: DataQueryError): DataQueryError => {
     status: 'Error status',
     statusText: 'Error status text',
     refId: 'A',
-    cancelled: false,
   };
   Object.assign(queryError, propOverrides);
   return queryError;

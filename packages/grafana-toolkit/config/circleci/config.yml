@@ -187,7 +187,7 @@ jobs:
           - << pipeline.parameters.ssh-fingerprint >>
     - run:
         name: Checkout provisioning files
-        command: git clone git@github.com:grafana/plugin-provisioning.git
+        command: git clone --depth 1 git@github.com:grafana/plugin-provisioning.git
     - run:
         name: Prepare task output dir
         command: |

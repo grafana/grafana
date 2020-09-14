@@ -45,8 +45,8 @@ Transformations are available from the Transform tab in the bottom pane of the p
 
 1. Navigate to the panel that you want to add transformations, click the panel title and then click **Edit**.
 1. Click the **Transform** tab.
-1. Click a transformation to select it. 
-  
+1. Click a transformation to select it.
+
    A transformation row appears that allows you to configure the transformation options.
 
    Click **Add transformation** to apply another transformation. Keep in mind that the next transformation acts on the result set returned by the previous transformation.
@@ -74,6 +74,7 @@ Grafana comes with the following transformations:
     - [Join by field (outer join)](#join-by-field-outer-join)
     - [Add field from calculation](#add-field-from-calculation)
     - [Labels to fields](#labels-to-fields)
+    - [Group By](#group-by)
     - [Series to rows](#series-to-rows)
   - [Debug transformations](#debug-transformations)
 
@@ -97,7 +98,7 @@ After I apply the transformation, there is no time value and each column has bee
 
 ### Merge
 
-> **Note:** This documentation refers to a Grafana 7.1 feature.
+> **Note:** This transformation is only available in Grafana 7.1+.
 
 Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contains the same data.
 
@@ -106,24 +107,23 @@ In the example below, we have two queries returning table data. It is visualized
 Query A:
 
 | Time                | Job     | Uptime    |
-|---------------------|---------|-----------|
+| ------------------- | ------- | --------- |
 | 2020-07-07 11:34:20 | node    | 25260122  |
 | 2020-07-07 11:24:20 | postgre | 123001233 |
 
 Query B:
 
 | Time                | Job     | Errors |
-|---------------------|---------|--------|
+| ------------------- | ------- | ------ |
 | 2020-07-07 11:34:20 | node    | 15     |
 | 2020-07-07 11:24:20 | postgre | 5      |
 
 Here is the result after applying the `Merge` transformation.
 
 | Time                | Job     | Errors | Uptime    |
-|---------------------|---------|--------|-----------|
+| ------------------- | ------- | ------ | --------- |
 | 2020-07-07 11:34:20 | node    | 15     | 25260122  |
 | 2020-07-07 11:24:20 | postgre | 5      | 123001233 |
-
 
 ### Filter by name
 
@@ -169,7 +169,7 @@ Use this transformation to rename, reorder, or hide fields returned by the query
 Grafana displays a list of fields returned by the query. You can:
 
 - Change field order by hovering your cursor over a field. The cursor turns into a hand and then you can drag the field to its new place.
-- Hide or show a field by clicking the eye icon next to the field name. 
+- Hide or show a field by clicking the eye icon next to the field name.
 - Rename fields by typing a new name in the **Rename <field>** box.
 
 In the example below, I hid the value field and renamed Max and Min.
@@ -208,11 +208,29 @@ In the example below, I added two fields together and named them Sum.
 
 ### Labels to fields
 
-Use this transformation to group series by time and return labels or tags as fields.
-
-> **Note:** In order to apply this transformation, you must have a query to a data source that returns labeled fields.
+> **Note:** In order to apply this transformation, your query needs to returns labeled fields.
 
 When you select this transformation, Grafana automatically transforms all labeled data into fields.
+
+Example: Given a query result of two time series
+
+1: labels Server=Server A, Datacenter=EU
+2: labels Server=Server B, Datacenter=EU
+
+This would result in a table like this
+
+| Time                | Server   | Datacenter | Value |
+| ------------------- | -------- | ---------- | ----- |
+| 2020-07-07 11:34:20 | Server A | EU         | 1     |
+| 2020-07-07 11:34:20 | Server B | EU         | 2     |
+
+**Value field name**
+If you where to select `Server` as in the **Value field name** you would get one field for every value of the `Server`
+label.
+
+| Time                | Datacenter | Server A | Server B |
+| ------------------- | ---------- | -------- | -------- |
+| 2020-07-07 11:34:20 | EU         | 1        | 2        |
 
 For this example, I manually defined labels in the Random Walk visualization of TestData DB.
 
@@ -222,11 +240,74 @@ After I apply the transformation, my labels appear in the table as fields.
 
 {{< docs-imagebox img="/img/docs/transformations/labels-to-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
+### Group By
+
+> **Note:** This transformation is only available in Grafana 7.2+.
+
+This transformation groups the data by a specified field (column) value and processes calculations on each group. The available calculations are the same as the Reduce transformation.
+
+Here's an example of original data.
+
+| Time                | Server ID | CPU Temperature | Server Status |
+| ------------------- | --------- | --------------- | ------------- |
+| 2020-07-07 11:34:20 | server 1  | 80              | Shutdown      |
+| 2020-07-07 11:34:20 | server 3  | 62              | OK            |
+| 2020-07-07 10:32:20 | server 2  | 90              | Overload      |
+| 2020-07-07 10:31:22 | server 3  | 55              | OK            |
+| 2020-07-07 09:30:57 | server 3  | 62              | Rebooting     |
+| 2020-07-07 09:30:05 | server 2  | 88              | OK            |
+| 2020-07-07 09:28:06 | server 1  | 80              | OK            |
+| 2020-07-07 09:25:05 | server 2  | 88              | OK            |
+| 2020-07-07 09:23:07 | server 1  | 86              | OK            |
+
+This transformation goes in two steps. First you specify one or multiple fields to group the data by. This will group all the same values of those fields together, as if you sorted them. For instance if we `Group By` the `Server ID` field, it would group the data this way:
+
+| Time                | Server ID    | CPU Temperature | Server Status |
+| ------------------- | ------------ | --------------- | ------------- |
+| 2020-07-07 11:34:20 | **server 1** | 80              | Shutdown      |
+| 2020-07-07 09:28:06 | **server 1** | 80              | OK            |
+| 2020-07-07 09:23:07 | **server 1** | 86              | OK            |
+
+|
+| 2020-07-07 10:32:20 | server 2 | 90 | Overload
+| 2020-07-07 09:30:05 | server 2 | 88 | OK
+| 2020-07-07 09:25:05 | server 2 | 88 | OK
+|
+| 2020-07-07 11:34:20 | **_server 3_** | 62 | OK
+| 2020-07-07 10:31:22 | **_server 3_** | 55 | OK
+| 2020-07-07 09:30:57 | **_server 3_** | 62 | Rebooting
+
+All rows with the same value of `Server ID` are grouped together.
+
+After choosing which field you want to group your data by, you can add various calculations on the other fields, and the calculation will be applied on each group of rows. For instance, we could want to calculate the average `CPU temperature` for each of those servers. So we can add the _mean_ calculation applied on the `CPU Temperature` field to get the following:
+
+| Server ID | CPU Temperature (mean) |
+| --------- | ---------------------- |
+| server 1  | 82                     |
+| server 2  | 88.6                   |
+| server 3  | 59.6                   |
+
+And we can add more than one of those calculation. For instance :
+
+- For field `Time`, we can calculate the _Last_ value, to know when the last data point was received for each server
+- For field `Server Status`, we can calculate the _Last_ value to know what is the last state value for each server
+- For field `Temperature`, we can also calculate the _Last_ value to know what is the latest monitored temperature for each server
+
+We would then get :
+
+| Server ID | CPU Temperature (mean) | CPU Temperature (last) | Time (last)         | Server Status (last) |
+| --------- | ---------------------- | ---------------------- | ------------------- | -------------------- |
+| server 1  | 82                     | 80                     | 2020-07-07 11:34:20 | Shutdown             |
+| server 2  | 88.6                   | 90                     | 2020-07-07 10:32:20 | Overload             |
+| server 3  | 59.6                   | 62                     | 2020-07-07 11:34:20 | OK                   |
+
+This transformation allows you to extract some key information out of your time series and display them in a convenient way.
+
 ## Series to rows
 
-> **Note:** This documentation refers to a Grafana 7.1 feature.
+> **Note:** This transformation is only available in Grafana 7.1+.
 
-Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization. 
+Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization.
 
 The result from this transformation will contain three columns: `Time`, `Metric`, and `Value`. The `Metric` column is added so you easily can see from which query the metric originates from. Customize this value by defining `Label` on the source query.
 
@@ -235,7 +316,7 @@ In the example below, we have two queries returning time series data. It is visu
 Query A:
 
 | Time                | Temperature |
-|---------------------|-------------|
+| ------------------- | ----------- |
 | 2020-07-07 11:34:20 | 25          |
 | 2020-07-07 10:31:22 | 22          |
 | 2020-07-07 09:30:05 | 19          |
@@ -243,7 +324,7 @@ Query A:
 Query B:
 
 | Time                | Humidity |
-|---------------------|----------|
+| ------------------- | -------- |
 | 2020-07-07 11:34:20 | 24       |
 | 2020-07-07 10:32:20 | 29       |
 | 2020-07-07 09:30:57 | 33       |
@@ -251,7 +332,7 @@ Query B:
 Here is the result after applying the `Series to rows` transformation.
 
 | Time                | Metric      | Value |
-|---------------------|-------------|-------|
+| ------------------- | ----------- | ----- |
 | 2020-07-07 11:34:20 | Temperature | 25    |
 | 2020-07-07 11:34:20 | Humidity    | 22    |
 | 2020-07-07 10:32:20 | Humidity    | 29    |

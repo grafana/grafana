@@ -1,6 +1,6 @@
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, styleMixins } from '../../themes';
+import { styleMixins, stylesFactory } from '../../themes';
 import { getScrollbarWidth } from '../../utils';
 
 export interface TableStyles {
@@ -12,6 +12,7 @@ export interface TableStyles {
   thead: string;
   headerCell: string;
   headerCellLabel: string;
+  headerFilter: string;
   tableCell: string;
   tableCellWrapper: string;
   tableCellLink: string;
@@ -56,20 +57,27 @@ export const getTableStyles = stylesFactory(
       `,
       headerCell: css`
         padding: ${padding}px;
-        cursor: pointer;
         overflow: hidden;
         white-space: nowrap;
         color: ${colors.textBlue};
         border-right: 1px solid ${theme.colors.panelBg};
+        display: flex;
 
         &:last-child {
           border-right: none;
         }
       `,
       headerCellLabel: css`
+        cursor: pointer;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        display: flex;
+        margin-right: ${theme.spacing.xs};
+      `,
+      headerFilter: css`
+        label: headerFilter;
+        cursor: pointer;
       `,
       row: css`
         label: row;
@@ -81,6 +89,9 @@ export const getTableStyles = stylesFactory(
       `,
       tableCellWrapper: css`
         border-right: 1px solid ${borderColor};
+        display: inline-flex;
+        align-items: center;
+        height: 100%;
 
         &:last-child {
           border-right: none;
@@ -98,6 +109,7 @@ export const getTableStyles = stylesFactory(
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
+        flex: 1;
       `,
       overflow: css`
         overflow: hidden;

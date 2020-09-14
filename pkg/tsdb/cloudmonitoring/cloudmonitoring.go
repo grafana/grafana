@@ -302,7 +302,7 @@ func migrateLegacyQueryModel(query *tsdb.Query) {
 	if mq == nil {
 		migratedModel := simplejson.NewFromAny(map[string]interface{}{
 			"queryType":   metricQueryType,
-			"metricQuery": query.Model,
+			"metricQuery": query.Model.MustMap(),
 		})
 		query.Model = migratedModel
 	}

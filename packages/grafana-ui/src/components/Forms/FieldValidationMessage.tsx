@@ -45,7 +45,7 @@ export const FieldValidationMessage: React.FC<FieldValidationMessageProps> = ({ 
   const styles = getFieldValidationMessageStyles(theme);
 
   return (
-    <div className={cx(styles.fieldValidationMessage, className)}>
+    <div role="alert" className={cx(styles.fieldValidationMessage, className)}>
       <Icon className={styles.fieldValidationMessageIcon} name="exclamation-triangle" />
       {children}
     </div>
