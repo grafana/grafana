@@ -46,9 +46,9 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
    
    - Define the required Application Role values for Grafana: Viewer, Editor, Admin. Without this configuration, all users receive the Viewer role.
    - Every role requires a unique id.
-   - Generate the unique id on Linux with `uuidgen`, and on Windows through Microsoft
+   - Generate the unique ID on Linux with `uuidgen`, and on Windows through Microsoft
    PowerShell with `New-Guid`.
-   - Include the unique id in the configuration file:
+   - Include the unique ID in the configuration file:
 
         ```json
         "appRoles": [
@@ -93,7 +93,7 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
 
 1. Go to **Azure Active Directory** and then to **Enterprise Applications**. Search for your application and click on it.
 
-1. Click on **Users and Groups** and add Users/Groups to the Grafana roles by using **Add User**. 
+1. Click on **Users and Groups** and add Users/Groups to the Grafana roles with **Add User**.
 
 ## Enable Azure AD OAuth in Grafana
 
@@ -113,22 +113,22 @@ allowed_domains =
 allowed_groups =
 ```
 
-> **Note:** Ensure that the [root_url]({{< relref "../administration/configuration/#root-url" >}}) in Grafana is set in your Azure Application Reply URLs (App -> Settings -> Reply URLs)
+> **Note:** Ensure that the [root_url]({{< relref "../administration/configuration/#root-url" >}}) in Grafana is set in your Azure Application Reply URLs (**App** -> **Settings** -> **Reply URLs**)
 
 ### Configure allowed groups
 
 To limit access to authenticated users who are members of one or more groups, set `allowed_groups`
-to a comma- or space-separated list of group Object Ids. Object Ids for a specific group appear on the Azure portal:
+to a comma- or space-separated list of group object IDs. You can find object IDs for a specific group on the Azure portal:
 
 1. Go to **Azure Active Directory -> Groups**.
 
-For example, if you want to only give access to members of the group `example` which has Id `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, set the following:
+For example, if you want to only give access to members of the group `example` with an ID of `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, set the following:
 
 ```ini
 allowed_groups = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
 ```
 
-You'll need to ensure that you've [enabled group attributes](https://docs.microsoft.com/en-us/azure/active-directory/hybrid/how-to-connect-fed-group-claims#configure-the-azure-ad-application-registration-for-group-attributes) in your Azure AD Application Registration manifest file. Navigate to Azure Portal -> Azure Active Directory -> Application Registrations -> Select Application -> Manifest, and set the following:
+You'll need to ensure that you've [enabled group attributes](https://docs.microsoft.com/en-us/azure/active-directory/hybrid/how-to-connect-fed-group-claims#configure-the-azure-ad-application-registration-for-group-attributes) in your Azure AD Application Registration manifest file. Navigate to **Azure Portal** -> **Azure Active Directory** -> **Application Registrations** -> **Select Application** -> **Manifest**, and set the following:
 
 ```json
 "groupMembershipClaims": "ApplicationGroup"
@@ -149,6 +149,6 @@ allowed_domains = mycompany.com mycompany.org
 With Team Sync you can map your Azure AD groups to teams in Grafana so that your users will automatically be added to
 the correct teams.
 
-You can reference Azure AD groups by group Object Id, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
+You can reference Azure AD groups by group object ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
 
 [Learn more about Team Sync]({{< relref "team-sync.md" >}})
