@@ -342,6 +342,7 @@ export class BackendSrv implements BackendService {
         // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
         throwIfEmpty(() => ({
           type: DataQueryErrorType.Cancelled,
+          cancelled: true,
           data: null,
           status: this.HTTP_REQUEST_CANCELED,
           statusText: 'Request was aborted',
