@@ -2,6 +2,7 @@ import throttle from 'lodash/throttle';
 import tinycolor from 'tinycolor2';
 import {
   DataFrame,
+  FieldConfig,
   FieldType,
   formattedValueToString,
   getFieldDisplayName,
@@ -13,7 +14,7 @@ import {
 } from '@grafana/data';
 import { colors } from '../../utils';
 import uPlot from 'uplot';
-import { PlotProps } from './types';
+import { GraphCustomFieldConfig, PlotProps } from './types';
 
 export function rangeToMinMax(timeRange: RawTimeRange): [number, number] {
   const v = rangeUtil.convertRawToRange(timeRange);
@@ -62,25 +63,26 @@ export const buildSeriesConfig = (
 
   for (let i = 0; i < data.fields.length; i++) {
     const field = data.fields[i];
+    const config = field.config as FieldConfig<GraphCustomFieldConfig>;
     const fmt = field.display ?? defaultFormatter;
 
     if (i === timeIndex || field.type !== FieldType.number) {
       continue;
     }
 
-    const scale = field.config.unit || '__fixed';
+    const scale = config.unit || '__fixed';
 
     if (!scales[scale]) {
       scales[scale] = {};
       axes.push({
         scale,
-        label: field.config.custom.axisLabel,
+        label: config.custom?.axis.label,
         show: true,
-        size: 80,
+        size: config.custom?.axis.width || 80,
         stroke: theme.colors.text,
-        side: field.config.custom.axisSide || 3,
+        side: config.custom?.axis.side || 3,
         grid: {
-          show: field.config.custom.axisGrid,
+          show: config.custom?.axis.grid,
           stroke: theme.palette.gray4,
           width: 1 / devicePixelRatio,
         },
@@ -92,17 +94,17 @@ export const buildSeriesConfig = (
       scale,
       label: getFieldDisplayName(field, data),
       stroke: colors[seriesIdx],
-      fill: field.config.custom.fillAlpha
+      fill: config.custom?.fill.alpha
         ? tinycolor(colors[seriesIdx])
-            .setAlpha(field.config.custom.fillAlpha)
+            .setAlpha(config.custom?.fill.alpha)
             .toRgbString()
         : undefined,
-      width: field.config.custom.showLines ? field.config.custom.lineWidth || 1 : 0,
+      width: config.custom?.line.show ? config.custom?.line.width || 1 : 0,
       points: {
-        show: field.config.custom.showPoints,
-        size: field.config.custom.pointRadius || 5,
+        show: config.custom?.points.show,
+        size: config.custom?.points.radius || 5,
       },
-      spanGaps: field.config.custom.nullValues === 'connected',
+      spanGaps: config.custom?.nullValues === 'connected',
     });
     seriesIdx += 1;
   }
@@ -160,7 +162,7 @@ export const preparePlotData = (data: DataFrame): uPlot.AlignedData => {
 
     let values = field.values.toArray();
 
-    if (field.config.custom.nullValues === 'asZero') {
+    if (field.config.custom?.nullValues === 'asZero') {
       values = values.map(v => (v === null ? 0 : v));
     }
 

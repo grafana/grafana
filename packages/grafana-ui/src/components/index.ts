@@ -70,6 +70,7 @@ export {
 } from './BigValue/BigValue';
 
 export { UPlotChart } from './uPlot/Plot';
+export { GraphCustomFieldConfig } from './uPlot/types';
 export * from './uPlot/plugins';
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
