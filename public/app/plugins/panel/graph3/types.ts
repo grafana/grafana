@@ -21,17 +21,10 @@ export interface Options {
     [alias: string]: SeriesOptions;
   };
   tooltipOptions: GraphTooltipOptions;
-  values: {
-    nullValues: NullValuesMode;
-  };
 }
 
 export const defaults: Options = {
-  graph: {
-    // showBars: false,
-    // showLines: true,
-    // showPoints: false,
-  },
+  graph: {},
   legend: {
     asTable: false,
     isVisible: true,
@@ -39,9 +32,6 @@ export const defaults: Options = {
   },
   series: {},
   tooltipOptions: { mode: 'single' },
-  values: {
-    nullValues: 'null',
-  },
 };
 
 export interface GraphLegendEditorLegendOptions extends LegendOptions {

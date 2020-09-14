@@ -1,6 +1,7 @@
 import React from 'react';
 import uPlot from 'uplot';
 import { DataFrame, TimeRange } from '@grafana/data';
+import { NullValuesMode } from '../../../../../public/app/plugins/panel/graph3/types';
 
 export enum MicroPlotAxisSide {
   top = 0,
@@ -9,21 +10,35 @@ export enum MicroPlotAxisSide {
   left = 3,
 }
 
+interface AxisConfig {
+  label: string;
+  side: number;
+  grid: boolean;
+  width: number;
+}
+
+interface LineConfig {
+  show: boolean;
+  width: number;
+}
+interface PointConfig {
+  show: boolean;
+  radius: number;
+}
+interface BarsConfig {
+  show: boolean;
+}
+interface FillConfig {
+  alpha: number;
+}
+
 export interface GraphCustomFieldConfig {
-  showLines: boolean;
-  lineWidth: number;
-  limeMode: 'connect' | 'staircase';
-
-  showPoints: boolean;
-  pointRadius: number;
-
-  showBars: boolean;
-
-  fillAlpha: number; // 0-1
-
-  showAxis: boolean;
-  axisWidth: number; // empty is auto
-  axisLabel: string; // display text
+  axis: AxisConfig;
+  line: LineConfig;
+  points: PointConfig;
+  bars: BarsConfig;
+  fill: FillConfig;
+  nullValues: NullValuesMode;
 }
 
 export type PlotPlugin = {

@@ -1,20 +1,22 @@
 import { PanelPlugin } from '@grafana/data';
 import { GraphPanel } from './GraphPanel';
 import { Options } from './types';
+import { GraphCustomFieldConfig } from '@grafana/ui';
 
-export const plugin = new PanelPlugin<Options>(GraphPanel)
+export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPanel)
   .useFieldConfig({
     useCustomConfig: builder => {
       builder
         .addBooleanSwitch({
-          path: 'showLines',
+          path: 'line.show',
           name: 'Show lines',
           description: '',
           defaultValue: true,
         })
         .addSelect({
-          path: 'lineWidth',
+          path: 'line.width',
           name: 'Line width',
+          defaultValue: 1,
           settings: {
             options: [
               { value: 1, label: '1 • thin' },
@@ -29,20 +31,21 @@ export const plugin = new PanelPlugin<Options>(GraphPanel)
               { value: 10, label: '10 • thick' },
             ],
           },
-          showIf: cfg => {
-            console.log('SHOW???', cfg);
-            return true; //cfg.custom.showLines;
+          showIf: c => {
+            console.log(c);
+            return c.line.show;
           },
         })
         .addBooleanSwitch({
-          path: 'showPoints',
+          path: 'points.show',
           name: 'Show points',
           description: '',
           defaultValue: false,
         })
         .addSelect({
-          path: 'pointRadius',
+          path: 'points.radius',
           name: 'Point radius',
+          defaultValue: 5,
           settings: {
             options: [
               { value: 1, label: '1 • thin' },
@@ -57,27 +60,25 @@ export const plugin = new PanelPlugin<Options>(GraphPanel)
               { value: 10, label: '10 • thick' },
             ],
           },
-          showIf: cfg => {
-            console.log('SHOW???', cfg);
-            return true; //cfg.custom.showLines;
-          },
+          showIf: c => c.points.show,
         })
         .addBooleanSwitch({
-          path: 'showBars',
+          path: 'bars.show',
           name: 'Show bars',
           description: '',
           defaultValue: false,
         })
         .addSelect({
-          path: 'fillAlpha',
-          name: 'Fill Area',
+          path: 'fill.alpha',
+          name: 'Fill area opacity',
+          defaultValue: 0,
           settings: {
             options: [
               { value: 0, label: 'No Fill' },
               { value: 0.1, label: '10% • transparent' },
               { value: 0.2, label: '20%' },
               { value: 0.3, label: '30%' },
-              { value: 0.4, label: '40%' },
+              { value: 0.4, label: '40% ' },
               { value: 0.5, label: '50%' },
               { value: 0.6, label: '60%' },
               { value: 0.7, label: '70%' },
@@ -88,23 +89,20 @@ export const plugin = new PanelPlugin<Options>(GraphPanel)
           },
         })
         .addTextInput({
-          path: 'axisLabel',
+          path: 'axis.label',
           name: 'Axis Label',
+          category: ['Axis'],
+          defaultValue: '',
           settings: {
             placeholder: 'Optional text',
           },
           // no matter what the field type is
           shouldApply: () => true,
         })
-        .addBooleanSwitch({
-          path: 'axisGrid',
-          name: 'Show axis grid',
-          description: '',
-          defaultValue: true,
-        })
         .addRadio({
-          path: 'axisSide',
+          path: 'axis.side',
           name: 'Y axis side',
+          category: ['Axis'],
           defaultValue: 3,
           settings: {
             options: [
@@ -113,18 +111,18 @@ export const plugin = new PanelPlugin<Options>(GraphPanel)
             ],
           },
         })
-        .addRadio({
-          path: 'nullValues',
-          name: 'Display null values as',
+        .addNumberInput({
+          path: 'axis.width',
+          name: 'Y axis width',
+          category: ['Axis'],
+          defaultValue: 80,
+        })
+        .addBooleanSwitch({
+          path: 'axis.grid',
+          name: 'Show axis grid',
+          category: ['Axis'],
           description: '',
-          defaultValue: 'null',
-          settings: {
-            options: [
-              { value: 'null', label: 'null' },
-              { value: 'connected', label: 'Connected' },
-              { value: 'asZero', label: 'Zero' },
-            ],
-          },
+          defaultValue: true,
         });
     },
   })

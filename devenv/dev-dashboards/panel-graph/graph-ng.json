@@ -23,15 +23,23 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
+            "line": {
+              "show": false
+            },
+            "points": {
+              "show": true,
+              "radius": 2
+            },
+            "bars": {
+              "show": false
+            },
             "align": null,
-            "axisGrid": true,
-            "axisLabel": "Temperature",
-            "axisSide": 3,
-            "nullValues": "null",
-            "pointRadius": 2,
-            "showBars": false,
-            "showLines": false,
-            "showPoints": true
+            "axis": {
+              "grid": true,
+              "label": "Temperature",
+              "side": 3
+            },
+            "nullValues": "null"
           },
           "decimals": 2,
           "mappings": [],
@@ -62,15 +70,15 @@
                 "value": "fahrenheit"
               },
               {
-                "id": "custom.axisSide",
+                "id": "custom.axis.side",
                 "value": 1
               },
               {
-                "id": "custom.showLines",
+                "id": "custom.line.show",
                 "value": true
               },
               {
-                "id": "custom.axisLabel",
+                "id": "custom.axis.label",
                 "value": "Temperature (F)"
               }
             ]
@@ -86,15 +94,15 @@
                 "value": "kelvin"
               },
               {
-                "id": "custom.axisLabel",
+                "id": "custom.axis.label",
                 "value": "Temperature (K)"
               },
               {
-                "id": "custom.axisSide",
+                "id": "custom.axis.side",
                 "value": 1
               },
               {
-                "id": "custom.axisGrid",
+                "id": "custom.axis.grid",
                 "value": false
               }
             ]
@@ -161,12 +169,21 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "axisGrid": true,
-            "axisSide": 3,
-            "nullValues": "null",
-            "showBars": false,
-            "showLines": true,
-            "showPoints": false
+            "line": {
+              "show": false
+            },
+            "points": {
+              "show": false
+            },
+            "bars": {
+              "show": false
+            },
+            "align": null,
+            "axis": {
+              "grid": true,
+              "side": 3
+            },
+            "nullValues": "null"
           },
           "mappings": [],
           "thresholds": {
@@ -226,12 +243,21 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "axisGrid": true,
-            "axisSide": 3,
-            "nullValues": "null",
-            "showBars": false,
-            "showLines": true,
-            "showPoints": false
+            "line": {
+              "show": true
+            },
+            "points": {
+              "show": false
+            },
+            "bars": {
+              "show": false
+            },
+            "align": null,
+            "axis": {
+              "grid": true,
+              "side": 3
+            },
+            "nullValues": "null"
           },
           "mappings": [],
           "thresholds": {
@@ -291,12 +317,20 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "axisGrid": true,
-            "axisSide": 3,
-            "nullValues": "null",
-            "showBars": false,
-            "showLines": true,
-            "showPoints": false
+            "line": {
+              "show": true
+            },
+            "points": {
+              "show": false
+            },
+            "bars": {
+              "show": false
+            },
+            "axis": {
+              "grid": true,
+              "side": 3
+            },
+            "nullValues": "null"
           },
           "mappings": [],
           "thresholds": {
@@ -370,15 +404,22 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "align": null,
-            "axisGrid": true,
-            "axisLabel": "Temperature",
-            "axisSide": 3,
-            "nullValues": "null",
-            "pointRadius": 8,
-            "showBars": false,
-            "showLines": true,
-            "showPoints": true
+            "line": {
+              "show": true
+            },
+            "points": {
+              "show": true,
+              "radius": 8
+            },
+            "bars": {
+              "show": false
+            },
+            "axis": {
+              "grid": true,
+              "side": 3,
+              "label": "Temperature"
+            },
+            "nullValues": "null"
           },
           "mappings": [],
           "thresholds": {
@@ -456,15 +497,22 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "align": null,
-            "axisGrid": true,
-            "axisLabel": "Temperature",
-            "axisSide": 3,
-            "nullValues": "null",
-            "pointRadius": 8,
-            "showBars": false,
-            "showLines": true,
-            "showPoints": true
+            "line": {
+              "show": true
+            },
+            "points": {
+              "show": true,
+              "radius": 8
+            },
+            "bars": {
+              "show": false
+            },
+            "axis": {
+              "grid": true,
+              "side": 3,
+              "label": "Temperature"
+            },
+            "nullValues": "null"
           },
           "mappings": [],
           "thresholds": {
@@ -528,15 +576,24 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "align": null,
-            "axisGrid": true,
-            "axisLabel": "Temperature",
-            "axisSide": 3,
-            "nullValues": "asZero",
-            "pointRadius": 8,
-            "showBars": false,
-            "showLines": true,
-            "showPoints": true
+            "custom": {
+              "line": {
+                "show": true
+              },
+              "points": {
+                "show": true,
+                "radius": 8
+              },
+              "bars": {
+                "show": false
+              },
+              "axis": {
+                "grid": true,
+                "side": 3,
+                "label": "Temperature"
+              }
+            },
+            "nullValues": "asZero"
           },
           "mappings": [],
           "thresholds": {
@@ -600,15 +657,22 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "align": null,
-            "axisGrid": true,
-            "axisLabel": "Temperature",
-            "axisSide": 3,
-            "nullValues": "connected",
-            "pointRadius": 8,
-            "showBars": false,
-            "showLines": true,
-            "showPoints": true
+            "line": {
+              "show": true
+            },
+            "points": {
+              "show": true,
+              "radius": 8
+            },
+            "bars": {
+              "show": false
+            },
+            "axis": {
+              "grid": true,
+              "side": 3,
+              "label": "Temperature"
+            },
+            "nullValues": "connected"
           },
           "mappings": [],
           "thresholds": {
