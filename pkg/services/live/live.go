@@ -125,6 +125,11 @@ func InitalizeBroker() (*GrafanaLive, error) {
 
 	b.Handler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
+		if user == nil {
+			ctx.Resp.WriteHeader(401)
+			return
+		}
+
 		dto := models.UserProfileDTO{
 			Id:             user.UserId,
 			Name:           user.Name,
@@ -148,13 +153,11 @@ func InitalizeBroker() (*GrafanaLive, error) {
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 
-		path := ctx.Req.URL.Path
-		logger.Debug("Handle", "path", path)
-
 		r := ctx.Req.Request
 		r = r.WithContext(newCtx) // Set a user ID
 
 		// Check if this is a direct websocket connection
+		path := ctx.Req.URL.Path
 		if strings.Contains(path, "live/ws") {
 			wsHandler.ServeHTTP(ctx.Resp, r)
 			return
