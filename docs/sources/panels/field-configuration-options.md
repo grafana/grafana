@@ -73,11 +73,11 @@ Overrides allow you to change the settings for one or more fields (i.e. series o
 
 This section explains the different ways you can select which fields an override rule will be applied to.
 
-### Fields matching name
+### Fields with name
 
 Allows you to select a field from the list of all available fields. Properties you add to a rule with this selector will only be applied to this single field.
 
-### Fields matching regex
+### Fields with name matching regex
 
 Allows you to specify a regular expression. Properties you add to a rule with this selector will be applied to all fields where the field name match the regex.
 
