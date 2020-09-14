@@ -4,6 +4,7 @@ import { map } from 'rxjs/operators';
 import {
   BinaryOperationID,
   binaryOperators,
+  DataFrame,
   DataTransformerID,
   FieldType,
   getFieldDisplayName,
@@ -68,51 +69,52 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     const subscription = standardTransformers.ensureColumnsTransformer
       .transformer(null, this.props.input)
       .pipe(
-        map(input => {
-          const allNames: string[] = [];
-          const byName: KeyValue<boolean> = {};
-
-          for (const frame of input) {
-            for (const field of frame.fields) {
-              if (field.type !== FieldType.number) {
-                continue;
-              }
-
-              const displayName = getFieldDisplayName(field, frame, input);
-
-              if (!byName[displayName]) {
-                byName[displayName] = true;
-                allNames.push(displayName);
-              }
-            }
-          }
-
-          return { allNames };
-        })
+        map(this.extractAllNames),
+        map(({ allNames }) => this.extractNamesAndSelected(configuredOptions, allNames))
       )
-      .subscribe(({ allNames }) => {
-        if (configuredOptions.length) {
-          const options: string[] = [];
-          const selected: string[] = [];
-
-          for (const v of allNames) {
-            if (configuredOptions.includes(v)) {
-              selected.push(v);
-            }
-            options.push(v);
-          }
-
-          this.setState(
-            {
-              names: options,
-              selected: selected,
-            },
-            () => subscription.unsubscribe()
-          );
-        } else {
-          this.setState({ names: allNames, selected: [] }, () => subscription.unsubscribe());
-        }
+      .subscribe(({ selected, names }) => {
+        this.setState({ names, selected }, () => subscription.unsubscribe());
       });
+  }
+
+  private extractAllNames(input: DataFrame[]) {
+    const allNames: string[] = [];
+    const byName: KeyValue<boolean> = {};
+
+    for (const frame of input) {
+      for (const field of frame.fields) {
+        if (field.type !== FieldType.number) {
+          continue;
+        }
+
+        const displayName = getFieldDisplayName(field, frame, input);
+
+        if (!byName[displayName]) {
+          byName[displayName] = true;
+          allNames.push(displayName);
+        }
+      }
+    }
+
+    return { allNames };
+  }
+
+  private extractNamesAndSelected(configuredOptions: string[], allNames: string[]) {
+    if (!configuredOptions.length) {
+      return { names: allNames, selected: [] };
+    }
+
+    const names: string[] = [];
+    const selected: string[] = [];
+
+    for (const v of allNames) {
+      if (configuredOptions.includes(v)) {
+        selected.push(v);
+      }
+      names.push(v);
+    }
+
+    return { names, selected };
   }
 
   onToggleReplaceFields = () => {
