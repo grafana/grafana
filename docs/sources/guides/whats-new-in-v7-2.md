@@ -58,7 +58,7 @@ for each user. This feature is disabled by default as it needs more testing and 
 
 ## Table column filters
 
-The new column filter option allow you to dynamically apply value filters to any column. This is option is disabled but
+The new column filter option allows you to dynamically apply value filters to any column. This option is disabled but
 can be enabled for all or a specific column using an override rule.
 
 {{< docs-imagebox img="/img/docs/v72/table_column_filters.png" max-width="800px" caption="Table column filters" >}}
