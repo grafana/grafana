@@ -36,14 +36,14 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
    - Note the **OAuth 2.0 token endpoint (v2)**. This is the token URL.
 
 1. Click **Certificates & secrets** and add a new entry under **Client secrets**.
-   
+
    - Description: Grafana OAuth
    - Expires: Never
 
 1. Click **Add**, and then copy the key value. This is the OAuth client secret.
 
 1. Click **Manifest**.
-   
+
    - Define the required Application Role values for Grafana: Viewer, Editor, Admin. Without this configuration, all users receive the Viewer role.
    - Every role requires a unique id.
    - Generate the unique ID on Linux with `uuidgen`, and on Windows through Microsoft
