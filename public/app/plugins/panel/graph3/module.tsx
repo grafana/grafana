@@ -116,6 +116,9 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           name: 'Y axis width',
           category: ['Axis'],
           defaultValue: 60,
+          settings: {
+            placeholder: '60',
+          },
         })
         .addBooleanSwitch({
           path: 'axis.grid',
