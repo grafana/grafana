@@ -14,8 +14,7 @@ weight = -16
 
 This topic includes the release notes for the Grafana v7.2, which is currently in beta. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
-This article is not complete yet. We will be adding new details over the coming days as we get closer to a stable
-release.
+This article is not complete yet. We will be adding new details over the coming days as we get closer to a stable release.
 
 The main highlights are:
 
@@ -54,9 +53,9 @@ There is also experimental support to use the browser location and language to d
 
 The [Configuration]({{< relref "../administration/configuration.md#date_formats" >}}) topic has been updated as a result of this change.
 
-## Field configuration options are out of beta!
+## Field options are out of beta!
 
-After lots of testing and user feedback, we removed the beta label from our the Field and Override tabs. Field configuration options are out of beta! This release also includes the following feature enhancements.
+After lots of testing and user feedback, we removed the beta label from the configuration options in the Field and Override tabs. This release also includes the following feature enhancements.
 
 ### Added table column filters
 
@@ -72,14 +71,13 @@ The [Field configuration options]({{< relref "../panels/field-configuration-opti
 
 ## New transformations and enhancements
 
-You can now move transformations up and down. Remember that transformations are processed in the order they are listed in the UI, so think before you move something!
-
-{{< docs-imagebox img="/img/docs/v72/transformations.gif" max-width="800px" caption="Group by and reordering of transformations" >}}
-
 Grafana 7.2 includes the following transformation enhancements:
 
 - A new [Group By]({{< relref "../panels/transformations.md#group-by">}}) transformation that allows you to group by multiple fields and add any number of aggregations for other fields.
 - The [Labels to fields]({{< relref "../panels/transformations.md#labels-to-fields">}}) transformation now allows you to pick one label and use that as the name of the value field.
+- You can now move transformations up and down. Remember that transformations are processed in the order they are listed in the UI, so think before you move something!
+
+{{< docs-imagebox img="/img/docs/v72/transformations.gif" max-width="800px" caption="Group by and reordering of transformations" >}}
 
 ## Sensitive alert notification channel settings are now stored encrypted in the database
 
