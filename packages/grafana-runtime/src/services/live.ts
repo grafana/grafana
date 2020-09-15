@@ -80,10 +80,13 @@ export const getGrafanaLiveSrv = (): GrafanaLiveSrv => singletonInstance;
  * @experimental
  * @public
  */
-export const getConnectedLiveSrv = (): Promise<GrafanaLiveSrv> => {
-  return new Promise(resolve => {
+export const getConnectedLiveSrv = (): Promise<GrafanaLiveSrv> =>
+  new Promise(resolve => {
+    if (singletonInstance.isConnected()) {
+      return resolve(singletonInstance);
+    }
+
     singletonInstance.addListener('connect', () => {
       resolve(singletonInstance);
     });
   });
-};
