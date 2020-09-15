@@ -162,7 +162,7 @@ func TestMetrics(t *testing.T) {
 		}))
 		usageStatsURL = ts.URL
 
-		oauthProviders := map[string]bool{
+		uss.oauthProviders = map[string]bool{
 			"github":        true,
 			"gitlab":        true,
 			"azuread":       true,
@@ -171,11 +171,11 @@ func TestMetrics(t *testing.T) {
 			"grafana_com":   true,
 		}
 
-		uss.sendUsageStats(oauthProviders)
+		uss.sendUsageStats()
 
 		Convey("Given reporting not enabled and sending usage stats", func() {
 			setting.ReportingEnabled = false
-			uss.sendUsageStats(oauthProviders)
+			uss.sendUsageStats()
 
 			Convey("Should not gather stats or call http endpoint", func() {
 				So(getSystemStatsQuery, ShouldBeNil)
@@ -195,7 +195,7 @@ func TestMetrics(t *testing.T) {
 			setting.Packaging = "deb"
 
 			wg.Add(1)
-			uss.sendUsageStats(oauthProviders)
+			uss.sendUsageStats()
 
 			Convey("Should gather stats and call http endpoint", func() {
 				if waitTimeout(&wg, 2*time.Second) {
