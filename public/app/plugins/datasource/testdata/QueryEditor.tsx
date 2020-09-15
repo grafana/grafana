@@ -3,12 +3,14 @@ import React, { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 // Components
-import { Field, Form, InlineFormLabel, Input, LegacyForms, Select } from '@grafana/ui';
+import { Field, Form, Icon, InlineFormLabel, Input, LegacyForms, Select, Tooltip } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 
 // Types
 import { TestDataDataSource } from './datasource';
 import { TestDataQuery, Scenario } from './types';
+
+const showLabelsFor = ['random_walk', 'predictable_pulse', 'predictable_csv_wave'];
 
 type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
 
@@ -36,11 +38,14 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
     onChange({ ...query, [name]: value });
   };
 
+  const options = useMemo(() => (scenarioList || []).map(item => ({ label: item.name, value: item.id })), [
+    scenarioList,
+  ]);
+  const showLabels = useMemo(() => showLabelsFor.includes(query.scenarioId), [query]);
+
   if (loading) {
     return null;
   }
-
-  const options = scenarioList.map(item => ({ label: item.name, value: item.id }));
 
   return (
     <div className="gf-form-inline">
@@ -72,7 +77,46 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
         <InlineFormLabel className="query-keyword" width={7}>
           Alias
         </InlineFormLabel>
-        <Input type="text" placeholder="optional" pattern='[^<>&\\"]+' name="alias" onChange={onInputChange} />
+        <Input
+          type="text"
+          placeholder="optional"
+          pattern='[^<>&\\"]+'
+          name="alias"
+          value={query.alias}
+          onChange={onInputChange}
+        />
+      </div>
+      <div className="gf-form gf-form--grow">
+        {showLabels ? (
+          <>
+            <InlineFormLabel className="query-keyword" width={7}>
+              Labels
+              <Tooltip
+                placement="top"
+                content={
+                  <>
+                    Set labels using a key=value syntax:
+                    <br />
+                    {`{ key = "value", key2 = "value" }`}
+                    <br />
+                    key="value", key2="value"
+                    <br />
+                    key=value, key2=value
+                    <br />
+                  </>
+                }
+                theme={'info'}
+              >
+                <div className="gf-form-help-icon gf-form-help-icon--right-normal">
+                  <Icon name="info-circle" size="sm" />
+                </div>
+              </Tooltip>
+            </InlineFormLabel>
+            <Input name="labels" onChange={onInputChange} value={query.labels} placeholder="key=value, key2=value2" />
+          </>
+        ) : (
+          <div className="gf-form-label gf-form-label--grow" />
+        )}
       </div>
     </div>
   );
