@@ -102,6 +102,7 @@ func (ss *SqlStore) Init() error {
 	// Register handlers
 	ss.addUserQueryAndCommandHandlers()
 	ss.addAlertNotificationUidByIdHandler()
+	ss.addPreferencesQueryAndCommandHandlers()
 
 	err = ss.logOrgsNotice()
 	if err != nil {
