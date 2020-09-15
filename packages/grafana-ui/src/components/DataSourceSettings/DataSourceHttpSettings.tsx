@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { css, cx } from 'emotion';
-import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { DataSourceSettings, SelectableValue } from '@grafana/data'; // eslint-disable-next-line no-restricted-imports
+import { config } from '@grafana/runtime';
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { HttpProxySettings } from './HttpProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
@@ -15,7 +16,6 @@ import { TagsInput } from '../TagsInput/TagsInput';
 import { Sigv4AuthSettings } from './Sigv4AuthSettings';
 import { useTheme } from '../../themes';
 import { HttpSettingsProps } from './types';
-import { getConfig } from 'app/core/config';
 
 const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
   {
@@ -191,7 +191,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
             />
           </div>
 
-          {getConfig().sigv4AuthEnabled && (
+          {config.sigv4AuthEnabled && (
             <div className="gf-form-inline">
               <Switch
                 label="Sigv4 auth"

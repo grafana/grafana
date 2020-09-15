@@ -11,6 +11,14 @@ import (
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 )
 
+type AuthType string
+
+const (
+	Keys        AuthType = "keys"
+	Credentials AuthType = "credentials"
+	ARN         AuthType = "arn"
+)
+
 type Sigv4Middleware struct {
 	Config *Config
 	Next   http.RoundTripper
@@ -54,12 +62,14 @@ func (m *Sigv4Middleware) signRequest(req *http.Request) (http.Header, error) {
 }
 
 func (m *Sigv4Middleware) credentials() *credentials.Credentials {
-	switch m.Config.AuthType {
-	case "keys":
+	authType := AuthType(m.Config.AuthType)
+
+	switch authType {
+	case Keys:
 		return credentials.NewStaticCredentials(m.Config.AccessKey, m.Config.SecretKey, "")
-	case "credentials":
+	case Credentials:
 		return credentials.NewSharedCredentials("", m.Config.Profile)
-	case "arn":
+	case ARN:
 		s := session.Must(session.NewSession())
 		return stscreds.NewCredentials(s, m.Config.AssumeRoleARN)
 	}
