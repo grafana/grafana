@@ -28,19 +28,16 @@ The main highlights are:
   - [**Organization-wide report settings**]({{< relref "#organization-wide-report-settings" >}})
   - [**Report grid layout**]({{< relref "#report-grid-layout" >}})
 
-## Date formatting options
+## New date formatting options added
 
-Now you can finally customize how dates are formatted in Grafana. Both in the time range picker, graphs and other panels.
+Now you can finally customize how dates are formatted in Grafana. Both in the time range picker, graphs, and other panels.
 
-Example:
+This screenshot shows both a custom full date format with a 12 hour clock and am/pm suffix. The graph is also
+showing same 12-hour clock format and a customized month and day format compared to the Grafana default `MM/DD` format.
+
 {{< docs-imagebox img="/img/docs/v72/date_formats.png" max-width="800px" caption="Custom date time formats" >}}
 
-The above screenshot shows both a custom full date format with a 12 hour clock and am/pm suffix. The Graph is also
-showing same 12 hour clock format and a customized month and day format compared to the Grafana default `MM/DD` format.
-
-Currently date formats can only be changed via [server wide settings]({{< relref
-"../administration/configuration.md#date_formats" >}}) but we hope to add org and potentially user level
-settings in the future.
+Date formats are set for a Grafana instance by adjusting [server-wide settings]({{< relref "../administration/configuration.md#date_formats" >}}) in the Grafana configuration file. We hope to add org- and user-level settings in the future.
 
 ```
 [date_formats]
@@ -53,15 +50,23 @@ interval_month = YYYY-MM
 interval_year = YYYY
 ```
 
-There is also experimental support to use Browser locale/language to dynamically change the current date format
-for each user. This feature is disabled by default as it needs more testing and refinement.
+There is also experimental support to use Browser locale/language to dynamically change the current date format for each user. This feature is disabled by default as it needs more testing and refinement.
 
-## Table column filters
+The [Configuration]({{< relref "../administration/configuration.md#date_formats" >}}) topic has been updated as a result of this change.
 
-The new column filter option allows you to dynamically apply value filters to any column. This option is disabled but
-can be enabled for all or a specific column using an override rule.
+## Field configuration options are out of beta!
+
+After lots of testing and user feedback, we removed the beta label from our the Field and Override tabs. Field configuration options are out of beta! This release also includes the following feature enhancements.
+
+### Added table column filters
+
+You can now dynamically apply value filters to any table column. This option is can be enabled for all columns or one specific column using an override rule.
 
 {{< docs-imagebox img="/img/docs/v72/table_column_filters.png" max-width="800px" caption="Table column filters" >}}
+
+### New field override selection options
+
+You can now add override rules that use a regex matcher and overrides that match on field type.
 
 ## New and improved transforms
 
@@ -73,9 +78,7 @@ The UI for transforms also has an update that now allows you to move transformat
 
 {{< docs-imagebox img="/img/docs/v72/transformations.gif" max-width="800px" caption="Group by and reordering of transformations" >}}
 
-## Field override matchers
 
-You can now add override rules that use a regex matcher and overrides that match on field type.
 
 ## Sensitive alert notification channel settings are now stored encrypted in the database
 
