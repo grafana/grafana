@@ -11,11 +11,62 @@ import {
   GrafanaTheme,
   rangeUtil,
   RawTimeRange,
+  systemDateFormats,
   TimeRange,
 } from '@grafana/data';
 import { colors } from '../../utils';
 import uPlot from 'uplot';
 import { GraphCustomFieldConfig, PlotProps } from './types';
+
+const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
+
+const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
+export const timeFormatToTemplate = (f: string) => {
+  return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, match => `{${match}}`);
+};
+
+const timeStampsConfig = [
+  [3600 * 24 * 365, '{YYYY}', 7, '{YYYY}'],
+  [3600 * 24 * 28, `{${timeFormatToTemplate(systemDateFormats.interval.month)}`, 7, '{MMM}\n{YYYY}'],
+  [
+    3600 * 24,
+    `{${timeFormatToTemplate(systemDateFormats.interval.day)}`,
+    7,
+    `${timeFormatToTemplate(systemDateFormats.interval.day)}\n${timeFormatToTemplate(systemDateFormats.interval.year)}`,
+  ],
+  [
+    3600,
+    `{${timeFormatToTemplate(systemDateFormats.interval.minute)}`,
+    4,
+    `${timeFormatToTemplate(systemDateFormats.interval.minute)}\n${timeFormatToTemplate(
+      systemDateFormats.interval.day
+    )}`,
+  ],
+  [
+    60,
+    `{${timeFormatToTemplate(systemDateFormats.interval.second)}`,
+    4,
+    `${timeFormatToTemplate(systemDateFormats.interval.second)}\n${timeFormatToTemplate(
+      systemDateFormats.interval.day
+    )}`,
+  ],
+  [
+    1,
+    `:{ss}`,
+    2,
+    `:{ss}\n${timeFormatToTemplate(systemDateFormats.interval.day)} ${timeFormatToTemplate(
+      systemDateFormats.interval.minute
+    )}`,
+  ],
+  [
+    1e-3,
+    ':{ss}.{fff}',
+    2,
+    `:{ss}.{fff}\n${timeFormatToTemplate(systemDateFormats.interval.day)} ${timeFormatToTemplate(
+      systemDateFormats.interval.minute
+    )}`,
+  ],
+];
 
 export function rangeToMinMax(timeRange: RawTimeRange): [number, number] {
   const v = rangeUtil.convertRawToRange(timeRange);
@@ -58,6 +109,7 @@ export const buildSeriesConfig = (
       stroke: theme.palette.gray4,
       width: 1 / devicePixelRatio,
     },
+    values: timeStampsConfig,
   });
 
   let seriesIdx = 0;
@@ -190,8 +242,9 @@ export const throttledLog = throttle((...t: any[]) => {
 }, 500);
 
 export const pluginLog = throttle((id: string, throttle = false, ...t: any[]) => {
+  if (process.env.NODE_ENV === 'production') {
+    return;
+  }
   const fn = throttle ? throttledLog : console.log;
   fn(`[Plugin: ${id}]: `, ...t);
 }, 500);
-
-const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
