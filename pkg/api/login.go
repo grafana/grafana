@@ -260,6 +260,12 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 
 	middleware.WriteSessionCookie(c, "", -1)
 
+	if hs.Cfg.SAMLEnabled && hs.Cfg.SAMLSingleLogoutEnabled {
+		hs.log.Debug("Performing single logout")
+		err := hs.SingleLogout.SingleLogout(c)
+		hs.log.Debug("Single logout result", "err", err)
+	}
+
 	if setting.SignoutRedirectUrl != "" {
 		c.Redirect(setting.SignoutRedirectUrl)
 	} else {
