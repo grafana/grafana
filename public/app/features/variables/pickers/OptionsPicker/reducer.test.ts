@@ -911,4 +911,35 @@ describe('optionsPickerReducer', () => {
         });
     });
   });
+
+  describe('when large data for showOptions', () => {
+    it('then state should be correct', () => {
+      const { initialState } = getVariableTestContext({});
+      const payload = {
+        type: 'query',
+        query: '',
+        options: [{ text: 'option0', value: 'option0', selected: false }],
+        multi: false,
+        id: '0',
+      } as QueryVariableModel;
+      const checkOptions = [];
+      for (let index = 0; index < OPTIONS_LIMIT; index++) {
+        checkOptions.push({ text: `option${index}`, value: `option${index}`, selected: false });
+      }
+      for (let i = 1; i <= OPTIONS_LIMIT + 137; i++) {
+        payload.options.push({ text: `option${i}`, value: `option${i}`, selected: false });
+      }
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(showOptions(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          options: checkOptions,
+          id: payload.id,
+          multi: payload.multi,
+          queryValue: '',
+        });
+    });
+  });
 });
