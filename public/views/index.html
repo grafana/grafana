@@ -286,7 +286,7 @@
         
         const status = getJSON(sqlAtlasCheckConfigURL);
         
-        if (status.db != true || status.ds != true || status.lic != true) {
+        if (status.db != true || status.ds != true) {
           window.location.pathname = "/sqlatlas";
         };
       }
