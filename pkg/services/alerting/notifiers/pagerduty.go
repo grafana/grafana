@@ -20,53 +20,6 @@ func init() {
 		Description: "Sends notifications to PagerDuty",
 		Heading:     "PagerDuty settings",
 		Factory:     NewPagerdutyNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">PagerDuty settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">Integration Key</span>
-		<div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.integrationKey">
-			<input type="text"
-				class="gf-form-input max-width-22"
-				ng-init="ctrl.model.secureSettings.integrationKey = ctrl.model.settings.integrationKey || null; ctrl.model.settings.integrationKey = null;"
-				ng-model="ctrl.model.secureSettings.integrationKey"
-				placeholder="Pagerduty Integration Key"
-				data-placement="right">
-			</input>
-		</div>
-		<div class="gf-form" ng-if="ctrl.model.secureFields.integrationKey">
-			<input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
-			<a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.integrationKey = false">reset</a>
-		</div>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">Severity</span>
-        <div class="gf-form-select-wrapper width-14">
-          <select
-            class="gf-form-input"
-            ng-model="ctrl.model.settings.severity"
-            ng-options="s for s in ['critical', 'error', 'warning', 'info']">
-          </select>
-        </div>
-      </div>
-      <div class="gf-form">
-        <gf-form-switch
-           class="gf-form"
-           label="Auto resolve incidents"
-           label-class="width-14"
-           checked="ctrl.model.settings.autoResolve"
-           tooltip="Resolve incidents in pagerduty once the alert goes back to ok.">
-        </gf-form-switch>
-      </div>
-      <div class="gf-form">
-        <gf-form-switch
-           class="gf-form"
-           label="Include message in details"
-           label-class="width-14"
-           checked="ctrl.model.settings.messageInDetails"
-           tooltip="Move the alert message from the PD summary into the custom details. This changes the custom details object and may break event rules you have configured">
-        </gf-form-switch>
-      </div>
-    `,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Integration Key",
@@ -75,6 +28,7 @@ func init() {
 				Placeholder:  "Pagerduty Integration Key",
 				PropertyName: "integrationKey",
 				Required:     true,
+				Secure:       true,
 			},
 			{
 				Label:   "Severity",
@@ -101,9 +55,15 @@ func init() {
 			},
 			{
 				Label:        "Auto resolve incidents",
-				Element:      alerting.ElementTypeSwitch,
+				Element:      alerting.ElementTypeCheckbox,
 				Description:  "Resolve incidents in pagerduty once the alert goes back to ok.",
 				PropertyName: "autoResolve",
+			},
+			{
+				Label:        "Include message in details",
+				Element:      alerting.ElementTypeCheckbox,
+				Description:  "Move the alert message from the PD summary into the custom details. This changes the custom details object and may break event rules you have configured",
+				PropertyName: "messageInDetails",
 			},
 		},
 	})

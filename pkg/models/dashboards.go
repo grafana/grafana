@@ -384,6 +384,10 @@ type ValidateDashboardBeforeSaveCommand struct {
 	Result    *ValidateDashboardBeforeSaveResult
 }
 
+type DeleteOrphanedProvisionedDashboardsCommand struct {
+	ReaderNames []string
+}
+
 //
 // QUERIES
 //

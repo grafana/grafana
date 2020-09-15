@@ -27,7 +27,7 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
 
   const renderActions = ({ isOpen }: { isOpen: boolean }) => {
     return (
-      <HorizontalGroup align="center">
+      <HorizontalGroup align="center" width="auto">
         <QueryOperationAction
           title="Debug"
           disabled={!isOpen}
