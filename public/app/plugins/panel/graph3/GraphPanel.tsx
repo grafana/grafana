@@ -36,7 +36,7 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   }
 
   return (
-    <UPlotChart data={alignedData} timeRange={timeRange} width={width} height={height}>
+    <UPlotChart data={alignedData} timeRange={timeRange} timeZone={timeZone} width={width} height={height}>
       {/*<PlotLegend />*/}
       {options.tooltipOptions.mode !== 'none' && (
         <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />

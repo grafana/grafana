@@ -1,6 +1,6 @@
 import React from 'react';
 import uPlot from 'uplot';
-import { DataFrame, TimeRange } from '@grafana/data';
+import { DataFrame, TimeRange, TimeZone } from '@grafana/data';
 import { NullValuesMode } from '../../../../../public/app/plugins/panel/graph3/types';
 
 export enum MicroPlotAxisSide {
@@ -57,5 +57,6 @@ export interface PlotProps {
   width: number;
   height: number;
   timeRange: TimeRange;
+  timeZone: TimeZone;
   children: React.ReactNode[];
 }

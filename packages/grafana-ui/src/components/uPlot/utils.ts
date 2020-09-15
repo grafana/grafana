@@ -7,6 +7,7 @@ import {
   formattedValueToString,
   getFieldDisplayName,
   getTimeField,
+  getTimeZoneInfo,
   GrafanaTheme,
   rangeUtil,
   RawTimeRange,
@@ -118,6 +119,15 @@ export const buildSeriesConfig = (
 
 export const buildPlotConfig = (props: PlotProps, data: DataFrame, theme: GrafanaTheme): uPlot.Options => {
   const seriesConfig = buildSeriesConfig(data, props.timeRange, theme);
+  let tzDate;
+
+  // When plotting time series use correct timezone for timestamps
+  if (seriesConfig.scales.x.time) {
+    const tz = getTimeZoneInfo(props.timeZone, Date.now())?.ianaName;
+    if (tz) {
+      tzDate = (ts: number) => uPlot.tzDate(new Date(ts * 1e3), tz);
+    }
+  }
 
   return {
     width: props.width,
@@ -135,6 +145,7 @@ export const buildPlotConfig = (props: PlotProps, data: DataFrame, theme: Grafan
     },
     plugins: [],
     hooks: {},
+    tzDate,
     ...seriesConfig,
   };
 };

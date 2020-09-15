@@ -55,7 +55,6 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     // Creates array of datapoints to be consumed by uPLot
     const data = preparePlotData(props.data);
     // Creates series, axes and scales config
-    // TODO: use field config
     const config = buildPlotConfig(props, props.data, theme);
 
     config.plugins = [
