@@ -3,6 +3,7 @@ import { DataQuery } from '@grafana/data';
 export interface Scenario {
   id: string;
   name: string;
+  stringInput: string;
 }
 
 export interface TestDataQuery extends DataQuery {

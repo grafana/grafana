@@ -1,67 +1,79 @@
 // Libraries
-import React, { PureComponent } from 'react';
-import _ from 'lodash';
-
-// Services & Utils
-import { getBackendSrv } from '@grafana/runtime';
+import React, { useMemo } from 'react';
+import { useAsync } from 'react-use';
 
 // Components
-import { InlineFormLabel, LegacyForms } from '@grafana/ui';
-const { Select } = LegacyForms;
+import { Field, Form, InlineFormLabel, Input, LegacyForms, Select } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 
 // Types
 import { TestDataDataSource } from './datasource';
 import { TestDataQuery, Scenario } from './types';
 
-interface State {
-  scenarioList: Scenario[];
-  current: Scenario | null;
-}
-
 type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
 
-export class QueryEditor extends PureComponent<Props> {
-  backendSrv = getBackendSrv();
+export const QueryEditor = ({ query, datasource, onChange }: Props) => {
+  const { loading, error, value: scenarioList } = useAsync<Scenario[]>(async () => {
+    return datasource.getScenarios();
+  }, []);
 
-  state: State = {
-    scenarioList: [],
-    current: null,
-  };
+  const currentScenario = useMemo(
+    () => scenarioList?.find(scenario => scenario.id === (query.scenarioId || 'random_walk')),
+    [scenarioList, query]
+  );
 
-  async componentDidMount() {
-    const { query, datasource } = this.props;
-
-    query.scenarioId = query.scenarioId || 'random_walk';
-
-    // const scenarioList = await backendSrv.get('/api/tsdb/testdata/scenarios');
-    const scenarioList = await datasource.getScenarios();
-    const current: any = _.find(scenarioList, { id: query.scenarioId });
-
-    this.setState({ scenarioList: scenarioList, current: current });
-  }
-
-  onScenarioChange = (item: SelectableValue<string>) => {
-    this.props.onChange({
-      ...this.props.query,
+  query.stringInput = query.stringInput || currentScenario?.stringInput;
+  const onScenarioChange = (item: SelectableValue<string>) => {
+    onChange({
+      ...query,
+      stringInput: currentScenario?.stringInput ?? '',
       scenarioId: item.value!,
     });
   };
 
-  render() {
-    const { query } = this.props;
-    const options = this.state.scenarioList.map(item => ({ label: item.name, value: item.id }));
-    const current = options.find(item => item.value === query.scenarioId);
+  const onInputChange = (e: any) => {
+    const { name, value } = e.target;
+    onChange({ ...query, [name]: value });
+  };
 
-    return (
-      <div className="gf-form-inline">
+  if (loading) {
+    return null;
+  }
+
+  const options = scenarioList.map(item => ({ label: item.name, value: item.id }));
+
+  return (
+    <div className="gf-form-inline">
+      <div className="gf-form">
+        <InlineFormLabel className="query-keyword" width={7}>
+          Scenario
+        </InlineFormLabel>
+        <Select
+          options={options}
+          value={options.find(item => item.value === query.scenarioId)}
+          onChange={onScenarioChange}
+          width={32}
+        />
+      </div>
+      {currentScenario?.stringInput && (
         <div className="gf-form">
           <InlineFormLabel className="query-keyword" width={7}>
-            Scenario
+            String Input
           </InlineFormLabel>
-          <Select options={options} value={current} onChange={this.onScenarioChange} />
+          <Input
+            name="stringInput"
+            placeholder={query.stringInput}
+            value={query.stringInput}
+            onChange={onInputChange}
+          />
         </div>
+      )}
+      <div className="gf-form">
+        <InlineFormLabel className="query-keyword" width={7}>
+          Alias
+        </InlineFormLabel>
+        <Input type="text" placeholder="optional" pattern='[^<>&\\"]+' name="alias" onChange={onInputChange} />
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
