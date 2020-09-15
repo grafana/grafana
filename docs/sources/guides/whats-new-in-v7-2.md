@@ -82,7 +82,7 @@ You can now add override rules that use a regex matcher and overrides that match
 
 ## Query inspector in Explore
 
-You can enjoy all the details query inspector gave you in dashboards now in explore as well. You can open query inspector tab with the button next to query history.
+You can enjoy all the details query inspector gave you in dashboards now in Explore as well. You can open query inspector tab with the button next to query history. See [Query inspector in Explore]({{< relref "../features/explore/index.md#query-inspector" >}}) for more details.
 
 ## $__rate_interval for Prometheus
 
@@ -92,7 +92,7 @@ You can now use the new variable `$__rate_interval` in Prometheus for rate funct
 
 With this awesome contribution from one of our community members you can now toggle parsed fields in Explore.
 
-{{< docs-imagebox img="/img/docs/v72/explore-toggle-parsed-fields.gif" max-width="800px" caption="Toggling parsed fields in explore" >}} 
+{{< docs-imagebox img="/img/docs/v72/explore-toggle-parsed-fields.gif" max-width="800px" caption="Toggling parsed fields in Explore" >}} 
 
 ## Sensitive alert notification channel settings are now stored encrypted in the database
 
