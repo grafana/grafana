@@ -2,7 +2,6 @@ import {
   DataFrame,
   AnnotationQuery,
   AnnotationSupport,
-  PanelData,
   transformDataFrame,
   FieldType,
   Field,
@@ -43,20 +42,20 @@ export const standardAnnotationSupport: AnnotationSupport = {
   /**
    * When the standard frame > event processing is insufficient, this allows explicit control of the mappings
    */
-  processEvents: (anno: AnnotationQuery, data: DataFrame) => {
-    return getAnnotationsFromFrame(data, anno.mappings);
+  processEvents: (anno: AnnotationQuery, data: DataFrame[]) => {
+    return getAnnotationsFromData(data, anno.mappings);
   },
 };
 
 /**
  * Flatten all panel data into a single frame
  */
-export function singleFrameFromPanelData(rsp: PanelData): DataFrame | undefined {
-  if (!rsp?.series?.length) {
+export function singleFrameFromPanelData(data: DataFrame[]): DataFrame | undefined {
+  if (!data?.length) {
     return undefined;
   }
-  if (rsp.series.length === 1) {
-    return rsp.series[0];
+  if (data.length === 1) {
+    return data[0];
   }
 
   return transformDataFrame(
@@ -66,7 +65,7 @@ export function singleFrameFromPanelData(rsp: PanelData): DataFrame | undefined 
         options: { byField: 'Time' },
       },
     ],
-    rsp.series
+    data
   )[0];
 }
 
@@ -108,7 +107,8 @@ export const annotationEventNames: AnnotationFieldInfo[] = [
   // { key: 'email' },
 ];
 
-export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationEventMappings): AnnotationEvent[] {
+export function getAnnotationsFromData(data: DataFrame[], options?: AnnotationEventMappings): AnnotationEvent[] {
+  const frame = singleFrameFromPanelData(data);
   if (!frame?.length) {
     return [];
   }

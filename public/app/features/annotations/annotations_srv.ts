@@ -24,7 +24,7 @@ import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AnnotationQueryResponse, AnnotationQueryOptions } from './types';
-import { standardAnnotationSupport, singleFrameFromPanelData } from './standardAnnotationSupport';
+import { standardAnnotationSupport } from './standardAnnotationSupport';
 import { runRequest } from '../dashboard/state/runRequest';
 
 let counter = 100;
@@ -263,9 +263,8 @@ export function executeAnnotationQuery(
 
   return runRequest(datasource, queryRequest).pipe(
     map(panelData => {
-      const frame = singleFrameFromPanelData(panelData);
-      const events = frame ? processor.processEvents!(annotation, frame) : [];
-      return { panelData, frame, events };
+      const events = panelData.series ? processor.processEvents!(annotation, panelData.series) : [];
+      return { panelData, events };
     })
   );
 }
