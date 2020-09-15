@@ -18,9 +18,9 @@ is a columnar-oriented table structure that unifies both time series and table q
 
 Field configuration options allow you to change how the data is displayed in your visualizations. Options and overrides that you apply do not change the data, they change how Grafana displays the data.
 
-_Field configuration options_, both standard and custom, can be found in the **Field** tab in the panel editor. Changes on this tab apply to all fields (i.e. series/columns). For example, if you change the unit to percentage, then all fields with numeric values will be displayed in percentages. [Apply a field option](#configure-all-fields).
+_Field configuration options_, both standard and custom, can be found in the **Field** tab in the panel editor. Changes on this tab apply to all fields (i.e. series/columns). For example, if you change the unit to percentage, then all fields with numeric values are displayed in percentages. [Apply a field option](#configure-all-fields).
 
-_Field overrides_ can be added in the Overrides tab in the panel editor. There you can add the same options as you find in the Field tab but they are only applied to specific fields. [Apply an override](#override-a-field).
+_Field overrides_ can be added in the **Overrides** tab in the panel editor. There you can add the same options as you find in the **Field** tab, but they are only applied to specific fields. [Apply an override](#override-a-field).
 
 All [field options](#field-options) are defined below.
 
@@ -46,7 +46,7 @@ Some visualizations have custom field options. For example the [Table]({{< relre
 
 ## Configure all fields
 
-To change how all fields display data, you change an option in the `Field` tab. In the `Overrides` tab
+To change how all fields display data, you change an option in the **Field** tab. In the **Overrides** tab
 you then override that for specific fields.
 
 1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
@@ -69,7 +69,7 @@ Overrides allow you to change the settings for one or more fields (i.e. series o
 1. Continue to add overrides to this field by clicking **Add override property**, or you can click **Add override** and select a different field to add overrides to.
 1. When finished, click **Save** to save all panel edits to the dashboard.
 
-## Override field selector
+## Select fields
 
 This section explains the different ways you can select which fields an override rule will be applied to.
 

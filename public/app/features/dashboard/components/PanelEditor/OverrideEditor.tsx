@@ -117,7 +117,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
         {!isExpanded && (
           <div className={styles.overrideDetails}>
             <div className={styles.options} title={matcherOptions}>
-              Options <Icon name="angle-right" /> {matcherOptions}
+              {matcherUi.name} <Icon name="angle-right" /> {matcherOptions}
             </div>
             <div className={styles.options} title={overriddenProperites}>
               Properties overridden <Icon name="angle-right" />
