@@ -33,7 +33,7 @@ export const TransformationEditor = ({
   const styles = useStyles(getStyles);
   const [input, setInput] = useState<DataFrame[]>([]);
   const [output, setOutput] = useState<DataFrame[]>([]);
-  const config = useMemo(() => configs[index], [configs]);
+  const config = useMemo(() => configs[index], [configs, index]);
 
   useEffect(() => {
     const inputTransforms = configs.slice(0, index).map(t => t.transformation);
@@ -58,7 +58,14 @@ export const TransformationEditor = ({
           onChange(index, { id: config.transformation.id, options: opts });
         },
       }),
-    [uiConfig, config, input, onChange]
+    [
+      uiConfig.editor,
+      uiConfig.transformation.defaultOptions,
+      config.transformation.id,
+      config.transformation.options,
+      input,
+      onChange,
+    ]
   );
 
   return (
