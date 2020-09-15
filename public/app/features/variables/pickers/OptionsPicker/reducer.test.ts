@@ -861,4 +861,54 @@ describe('optionsPickerReducer', () => {
         });
     });
   });
+
+  describe('when large data for updateOptionsAndFilter', () => {
+    it('then state should be correct', () => {
+      const searchQuery = 'option:11256';
+
+      const options: VariableOption[] = [];
+      for (let index = 0; index <= OPTIONS_LIMIT + 11256; index++) {
+        options.push({ text: `option:${index}`, value: `option:${index}`, selected: false });
+      }
+
+      const { initialState } = getVariableTestContext({
+        queryValue: searchQuery,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateOptionsAndFilter(options))
+        .thenStateShouldEqual({
+          ...cloneDeep(initialState),
+          options: [{ text: 'option:11256', value: 'option:11256', selected: false }],
+          selectedValues: [],
+          queryValue: 'option:11256',
+          highlightIndex: 0,
+        });
+    });
+  });
+
+  describe('when large data for updateOptionsFromSearch is dispatched and variable has searchFilter', () => {
+    it('then state should be correct', () => {
+      const searchQuery = '__searchFilter';
+      const options = [{ text: 'All', value: '$__all', selected: true }];
+
+      for (let i = 0; i <= OPTIONS_LIMIT + 137; i++) {
+        options.push({ text: `option${i}`, value: `option${i}`, selected: false });
+      }
+      const { initialState } = getVariableTestContext({
+        queryValue: searchQuery,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateOptionsFromSearch(options))
+        .thenStateShouldEqual({
+          ...initialState,
+          options: options.slice(0, OPTIONS_LIMIT),
+          selectedValues: [{ text: 'All', value: '$__all', selected: true }],
+          highlightIndex: 0,
+        });
+    });
+  });
 });
