@@ -63,9 +63,14 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 			token, err := oauthtoken.GetCurrentOAuthToken(ctx, *query.User)
 			if err != nil {
 				tw.logger.Error("Error fetching OAuth token for user", "error", err)
+				return nil, err
 			}
-			delete(query.Headers, "Authorization")
-			query.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
+			// Token can still be nil if OAuthPassThruEnabled on the datasource, but the
+			// user is logged in another way.  The datasource can decide what to do.
+			if token != nil {
+				delete(query.Headers, "Authorization")
+				query.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
+			}
 		}
 	}
 

@@ -4,17 +4,24 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"golang.org/x/oauth2"
 )
 
+var (
+	logger = log.New("oauthtoken")
+)
+
 func GetCurrentOAuthToken(ctx context.Context, user models.SignedInUser) (*oauth2.Token, error) {
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: user.UserId}
 	if err := bus.Dispatch(authInfoQuery); err != nil {
-		return nil, fmt.Errorf("Error fetching OAuth information for userid=%d username=%s error=%s", user.UserId, user.Login, err)
+		logger.Debug("No oauth token for user", "userid", user.UserId, "username", user.Login)
+		// Not necessarily an error.  User may be logged in another way.
+		return nil, nil
 	}
 
 	authProvider := authInfoQuery.Result.AuthModule
