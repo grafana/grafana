@@ -29,7 +29,7 @@ import { DashboardModel } from './DashboardModel';
 import { DataQuery, locationUtil } from '@grafana/data';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
-import { dashboardWatcher } from 'app/features/live/dashboardWatcher';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
 export interface InitDashboardArgs {
   $injector: any;

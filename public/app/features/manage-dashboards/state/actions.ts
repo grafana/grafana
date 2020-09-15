@@ -12,7 +12,7 @@ import {
 import { updateLocation } from 'app/core/actions';
 import { ThunkResult, FolderInfo, DashboardDTO, DashboardDataDTO } from 'app/types';
 import { appEvents } from '../../../core/core';
-import { dashboardWatcher } from 'app/features/live/dashboardWatcher';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
   return async dispatch => {
