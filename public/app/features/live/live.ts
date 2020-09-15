@@ -11,8 +11,6 @@ import { GrafanaLiveSrv, setGrafanaLiveSrv, ChannelHandler, config } from '@graf
 import { Observable, Subject, BehaviorSubject } from 'rxjs';
 import { share, finalize } from 'rxjs/operators';
 
-import { registerDashboardWatcher } from './dashboardWatcher';
-
 //http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
 export const browserSessionId =
   Math.random()
@@ -194,7 +192,4 @@ const noopChannelHandler: ChannelHandler = {
 
 export function initGrafanaLive() {
   setGrafanaLiveSrv(new CentrifugeSrv());
-
-  // Listen for navigation changes
-  registerDashboardWatcher();
 }

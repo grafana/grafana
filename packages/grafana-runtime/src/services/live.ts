@@ -45,11 +45,6 @@ export interface GrafanaLiveSrv {
   getChannelStream<T>(channel: string): Observable<T>;
 
   /**
-   * Unsubscribe all local references to a channel
-   */
-  closeChannelStream(channel: string): void;
-
-  /**
    * Send data to a channel.  This feature is disabled for most channels and will return an error
    */
   publish<T>(channel: string, data: any): Promise<T>;

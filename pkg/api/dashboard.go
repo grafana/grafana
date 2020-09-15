@@ -267,7 +267,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	if hs.Live != nil {
 		msg, err := json.Marshal(live.DashboardEvent{
 			UID:    dashboard.Uid,
-			Action: live.DashboardEventActionSaved,
+			Action: live.DASHBOARD_ACTION_SAVED,
 			UserID: c.UserId,
 		})
 		if err != nil {
