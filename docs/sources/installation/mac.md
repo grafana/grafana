@@ -23,7 +23,7 @@ Before you begin, you must have [Homebrew](http://brew.sh/) installed.
    * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
 2. Select an **Edition**.
    * **Open Source** - Functionally identical to the enterprise version, but you will need to download the enterprise version if you want enterprise features.
-   * **Enterprise** - Not currently available for Mac.
+   * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
 3. Click **Mac**.
 4. Copy and paste the code from the installation page into your command line and run. It follows the pattern shown below.
 
