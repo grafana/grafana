@@ -11,8 +11,8 @@ interface TransformationOperationRowProps {
   id: string;
   index: number;
   data: DataFrame[];
-  transformationUI: TransformerRegistyItem<any>;
-  transformations: TransformationsEditorTransformation[];
+  uiConfig: TransformerRegistyItem<any>;
+  configs: TransformationsEditorTransformation[];
   onRemove: (index: number) => void;
   onChange: (index: number, config: DataTransformerConfig) => void;
 }
@@ -22,8 +22,8 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
   index,
   id,
   data,
-  transformations,
-  transformationUI,
+  configs,
+  uiConfig,
   onChange,
 }) => {
   const [showDebug, setShowDebug] = useState(false);
@@ -46,13 +46,13 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
   };
 
   return (
-    <QueryOperationRow id={id} index={index} title={transformationUI.name} draggable actions={renderActions}>
+    <QueryOperationRow id={id} index={index} title={uiConfig.name} draggable actions={renderActions}>
       <TransformationEditor
         debugMode={showDebug}
         index={index}
         data={data}
-        transformations={transformations}
-        transformationUI={transformationUI}
+        configs={configs}
+        uiConfig={uiConfig}
         onChange={onChange}
       />
     </QueryOperationRow>

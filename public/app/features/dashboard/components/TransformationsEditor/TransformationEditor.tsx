@@ -17,8 +17,8 @@ interface TransformationEditorProps {
   debugMode?: boolean;
   index: number;
   data: DataFrame[];
-  transformationUI: TransformerRegistyItem<any>;
-  transformations: TransformationsEditorTransformation[];
+  uiConfig: TransformerRegistyItem<any>;
+  configs: TransformationsEditorTransformation[];
   onChange: (index: number, config: DataTransformerConfig) => void;
 }
 
@@ -26,18 +26,18 @@ export const TransformationEditor = ({
   debugMode,
   index,
   data,
-  transformationUI,
-  transformations,
+  uiConfig,
+  configs,
   onChange,
 }: TransformationEditorProps) => {
   const styles = useStyles(getStyles);
   const [input, setInput] = useState<DataFrame[]>([]);
   const [output, setOutput] = useState<DataFrame[]>([]);
-  const config = useMemo(() => transformations[index], [transformations]);
+  const config = useMemo(() => configs[index], [configs]);
 
   useEffect(() => {
-    const inputTransforms = transformations.slice(0, index).map(t => t.transformation);
-    const outputTransforms = transformations.slice(index, index + 1).map(t => t.transformation);
+    const inputTransforms = configs.slice(0, index).map(t => t.transformation);
+    const outputTransforms = configs.slice(index, index + 1).map(t => t.transformation);
     const inputSubscription = transformDataFrame(inputTransforms, data).subscribe(setInput);
     const outputSubscription = transformDataFrame(inputTransforms, data)
       .pipe(mergeMap(before => transformDataFrame(outputTransforms, before)))
@@ -47,30 +47,27 @@ export const TransformationEditor = ({
       inputSubscription.unsubscribe();
       outputSubscription.unsubscribe();
     };
-  }, [index, data, transformations]);
+  }, [index, data, configs]);
 
   const editor = useMemo(
     () =>
-      React.createElement(transformationUI.editor, {
-        options: { ...transformationUI.transformation.defaultOptions, ...config.transformation.options },
+      React.createElement(uiConfig.editor, {
+        options: { ...uiConfig.transformation.defaultOptions, ...config.transformation.options },
         input,
         onChange: (opts: any) => {
           onChange(index, { id: config.transformation.id, options: opts });
         },
       }),
-    [transformationUI, config, input, onChange]
+    [uiConfig, config, input, onChange]
   );
 
   return (
-    <div
-      className={styles.editor}
-      aria-label={selectors.components.TransformTab.transformationEditor(transformationUI.name)}
-    >
+    <div className={styles.editor} aria-label={selectors.components.TransformTab.transformationEditor(uiConfig.name)}>
       {editor}
       {debugMode && (
         <div
           className={styles.debugWrapper}
-          aria-label={selectors.components.TransformTab.transformationEditorDebugger(transformationUI.name)}
+          aria-label={selectors.components.TransformTab.transformationEditorDebugger(uiConfig.name)}
         >
           <div className={styles.debug}>
             <div className={styles.debugTitle}>Transformation input data</div>

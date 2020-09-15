@@ -190,7 +190,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
             return (
               <div ref={provided.innerRef} {...provided.droppableProps}>
                 <TransformationOperationRows
-                  transformations={transformations}
+                  configs={transformations}
                   data={data}
                   onRemove={this.onTransformationRemove}
                   onChange={this.onTransformationChange}

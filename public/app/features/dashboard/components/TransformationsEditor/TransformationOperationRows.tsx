@@ -6,7 +6,7 @@ import { TransformationsEditorTransformation } from './types';
 
 interface TransformationOperationRowsProps {
   data: DataFrame[];
-  transformations: TransformationsEditorTransformation[];
+  configs: TransformationsEditorTransformation[];
   onRemove: (index: number) => void;
   onChange: (index: number, config: DataTransformerConfig) => void;
 }
@@ -15,13 +15,13 @@ export const TransformationOperationRows: React.FC<TransformationOperationRowsPr
   data,
   onChange,
   onRemove,
-  transformations,
+  configs,
 }) => {
   return (
     <>
-      {transformations.map((t, i) => {
-        const transformationUI = standardTransformersRegistry.getIfExists(t.transformation.id);
-        if (!transformationUI) {
+      {configs.map((t, i) => {
+        const uiConfig = standardTransformersRegistry.getIfExists(t.transformation.id);
+        if (!uiConfig) {
           return null;
         }
 
@@ -31,8 +31,8 @@ export const TransformationOperationRows: React.FC<TransformationOperationRowsPr
             id={`${t.id}`}
             key={`${t.id}`}
             data={data}
-            transformations={transformations}
-            transformationUI={transformationUI}
+            configs={configs}
+            uiConfig={uiConfig}
             onRemove={onRemove}
             onChange={onChange}
           />
