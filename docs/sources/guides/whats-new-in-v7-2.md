@@ -86,11 +86,11 @@ You can enjoy all the details query inspector gave you in dashboards now in Expl
 
 ## $__rate_interval for Prometheus
 
-You can now use the new variable `$__rate_interval` in Prometheus for rate functions mainly. `$__rate_interval` in general is one scrape interval larger than `$__interval` but is never smaller than four times the scrape interval (which is 15s by default). See the [Prometheus datasource]({{< relref "../features/datasources/prometheus.md#using-__rate_interval-variable" >}}) for more details.
+You can now use the new variable `$__rate_interval` in Prometheus for rate functions mainly. `$__rate_interval` in general is one scrape interval larger than `$__interval` but is never smaller than four times the scrape interval (which is 15s by default). See the [Prometheus data source]({{< relref "../features/datasources/prometheus.md#using-__rate_interval-variable" >}}) for more details.
 
 ## Loki toggling parsed fields
 
-With this awesome contribution from one of our community members you can now toggle parsed fields in Explore.
+With this awesome contribution from one of our community members, you can now toggle parsed fields in Explore.
 
 {{< docs-imagebox img="/img/docs/v72/explore-toggle-parsed-fields.gif" max-width="800px" caption="Toggling parsed fields in Explore" >}} 
 
