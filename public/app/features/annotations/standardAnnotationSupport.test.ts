@@ -1,5 +1,5 @@
 import { toDataFrame, FieldType } from '@grafana/data';
-import { getAnnotationsFromFrame } from './standardAnnotationSupport';
+import { getAnnotationsFromData } from './standardAnnotationSupport';
 
 describe('DataFrame to annotations', () => {
   test('simple conversion', () => {
@@ -11,7 +11,7 @@ describe('DataFrame to annotations', () => {
       ],
     });
 
-    const events = getAnnotationsFromFrame(frame);
+    const events = getAnnotationsFromData([frame]);
     expect(events).toMatchInlineSnapshot(`
       Array [
         Object {
@@ -51,7 +51,7 @@ describe('DataFrame to annotations', () => {
       ],
     });
 
-    const events = getAnnotationsFromFrame(frame, {
+    const events = getAnnotationsFromData([frame], {
       text: { value: 'bbbbb' },
       time: { value: 'time2' },
       timeEnd: { value: 'time1' },
