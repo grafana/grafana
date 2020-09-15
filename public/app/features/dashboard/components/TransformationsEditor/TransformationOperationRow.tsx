@@ -1,73 +1,32 @@
-import React, { ComponentType, useEffect, useMemo, useState } from 'react';
-import { mergeMap } from 'rxjs/operators';
-import { DataFrame, DataTransformerConfig, transformDataFrame, TransformerUIProps } from '@grafana/data';
+import React, { useState } from 'react';
+import { DataFrame, DataTransformerConfig, TransformerRegistyItem } from '@grafana/data';
 import { HorizontalGroup } from '@grafana/ui';
 
 import { TransformationEditor } from './TransformationEditor';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
-
-interface TransformationsEditorTransformation {
-  transformation: DataTransformerConfig;
-  id: string;
-}
+import { TransformationsEditorTransformation } from './types';
 
 interface TransformationOperationRowProps {
   id: string;
   index: number;
-  name: string;
-  description?: string;
-  options: any;
-  editor: ComponentType<TransformerUIProps<any>>;
   data: DataFrame[];
+  transformationUI: TransformerRegistyItem<any>;
   transformations: TransformationsEditorTransformation[];
   onRemove: (index: number) => void;
   onChange: (index: number, config: DataTransformerConfig) => void;
 }
 
 export const TransformationOperationRow: React.FC<TransformationOperationRowProps> = ({
-  children,
-  name,
   onRemove,
   index,
   id,
   data,
   transformations,
-  editor,
-  description,
-  options,
+  transformationUI,
   onChange,
 }) => {
   const [showDebug, setShowDebug] = useState(false);
-  const [input, setInput] = useState<DataFrame[]>([]);
-  const [output, setOutput] = useState<DataFrame[]>([]);
-  const config = useMemo(() => transformations[index], [transformations]);
-
-  useEffect(() => {
-    const inputTransforms = transformations.slice(0, index).map(t => t.transformation);
-    const outputTransforms = transformations.slice(index).map(t => t.transformation);
-    const inputSubscription = transformDataFrame(inputTransforms, data).subscribe(setInput);
-    const outputSubscription = transformDataFrame(inputTransforms, data)
-      .pipe(mergeMap(before => transformDataFrame(outputTransforms, before)))
-      .subscribe(setOutput);
-
-    return function unsubscribe() {
-      inputSubscription.unsubscribe();
-      outputSubscription.unsubscribe();
-    };
-  }, [index, data, transformations]);
-
-  const transformEditor = useMemo(
-    () =>
-      React.createElement(editor, {
-        options,
-        input,
-        onChange: (options: any) => {
-          onChange(index, { id: config.transformation.id, options });
-        },
-      }),
-    [editor, options, input, onChange]
-  );
 
   const renderActions = ({ isOpen }: { isOpen: boolean }) => {
     return (
@@ -87,14 +46,14 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
   };
 
   return (
-    <QueryOperationRow id={id} index={index} title={name} draggable actions={renderActions}>
+    <QueryOperationRow id={id} index={index} title={transformationUI.name} draggable actions={renderActions}>
       <TransformationEditor
         debugMode={showDebug}
-        input={input}
-        name={name}
-        editor={transformEditor}
-        description={description}
-        output={output}
+        index={index}
+        data={data}
+        transformations={transformations}
+        transformationUI={transformationUI}
+        onChange={onChange}
       />
     </QueryOperationRow>
   );

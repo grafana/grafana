@@ -26,14 +26,10 @@ import { PanelModel } from '../../state';
 import { getDocsLink } from 'app/core/utils/docsLinks';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { TransformationOperationRows } from './TransformationOperationRows';
+import { TransformationsEditorTransformation } from './types';
 
 interface TransformationsEditorProps {
   panel: PanelModel;
-}
-
-interface TransformationsEditorTransformation {
-  transformation: DataTransformerConfig;
-  id: string;
 }
 
 interface State {

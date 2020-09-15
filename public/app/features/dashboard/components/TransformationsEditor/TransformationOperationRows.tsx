@@ -1,11 +1,8 @@
 import React from 'react';
 import { DataFrame, DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
-import { TransformationOperationRow } from './TransformationOperationRow';
 
-interface TransformationsEditorTransformation {
-  transformation: DataTransformerConfig;
-  id: string;
-}
+import { TransformationOperationRow } from './TransformationOperationRow';
+import { TransformationsEditorTransformation } from './types';
 
 interface TransformationOperationRowsProps {
   data: DataFrame[];
@@ -28,8 +25,6 @@ export const TransformationOperationRows: React.FC<TransformationOperationRowsPr
           return null;
         }
 
-        const options = { ...transformationUI.transformation.defaultOptions, ...t.transformation.options };
-
         return (
           <TransformationOperationRow
             index={i}
@@ -37,10 +32,7 @@ export const TransformationOperationRows: React.FC<TransformationOperationRowsPr
             key={`${t.id}`}
             data={data}
             transformations={transformations}
-            name={transformationUI.name}
-            description={transformationUI.description}
-            options={options}
-            editor={transformationUI.editor}
+            transformationUI={transformationUI}
             onRemove={onRemove}
             onChange={onChange}
           />

@@ -27,20 +27,20 @@ export const organizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransf
    * be applied, just return the input series
    */
   transformer: (options, data) => {
-    return renameFieldsTransformer.transformer(options, data).pipe(
-      mergeMap(rename =>
-        orderFieldsTransformer.transformer(options, rename).pipe(
-          mergeMap(order =>
-            filterFieldsByNameTransformer.transformer(
-              {
-                exclude: { names: mapToExcludeArray(options.excludeByName) },
-              },
-              order
-            )
-          )
-        )
+    return filterFieldsByNameTransformer
+      .transformer(
+        {
+          exclude: { names: mapToExcludeArray(options.excludeByName) },
+        },
+        data
       )
-    );
+      .pipe(
+        mergeMap(filter =>
+          orderFieldsTransformer
+            .transformer(options, filter)
+            .pipe(mergeMap(order => renameFieldsTransformer.transformer(options, order)))
+        )
+      );
   },
 };
 
