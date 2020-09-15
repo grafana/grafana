@@ -97,10 +97,6 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     this.setState({ legendFormat });
   };
 
-  onAddExemplar = () => {
-    console.log('XXX', this.props);
-  };
-
   onRunQuery = () => {
     const { query } = this;
     this.props.onChange(query);
