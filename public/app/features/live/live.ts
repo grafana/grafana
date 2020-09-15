@@ -150,6 +150,10 @@ class CentrifugeSrv implements GrafanaLiveSrv {
   publish<T>(channel: string, data: any): Promise<T> {
     return this.centrifuge.publish(channel, data);
   }
+
+  addListener(event: string | symbol, listener: (...args: any[]) => void): void {
+    this.centrifuge.addListener(event, listener);
+  }
 }
 
 const noopChannelHandler: ChannelHandler = {

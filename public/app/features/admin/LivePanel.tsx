@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable, PartialObserver } from 'rxjs';
-import { getGrafanaLiveSrv } from '@grafana/runtime';
+import { getConnectedLiveSrv } from '@grafana/runtime';
 
 interface Props {
   channel: string;
@@ -38,15 +38,11 @@ export class LivePanel extends PureComponent<Props, State> {
       this.subscription = undefined;
     }
 
-    const srv = getGrafanaLiveSrv();
-    if (srv.isConnected()) {
+    getConnectedLiveSrv().then(srv => {
       const stream = srv.getChannelStream(this.props.channel);
       this.subscription = stream.subscribe(this.observer);
       this.setState({ connected: true, count: 0, lastTime: 0, lastBody: '' });
-      return;
-    }
-    console.log('Not yet connected... try again...');
-    setTimeout(this.startSubscription, 200);
+    });
   };
 
   componentDidMount = () => {

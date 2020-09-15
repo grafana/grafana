@@ -48,6 +48,8 @@ export interface GrafanaLiveSrv {
    * Send data to a channel.  This feature is disabled for most channels and will return an error
    */
   publish<T>(channel: string, data: any): Promise<T>;
+
+  addListener(event: string | symbol, listener: (...args: any[]) => void): void;
 }
 
 let singletonInstance: GrafanaLiveSrv;
@@ -70,3 +72,18 @@ export const setGrafanaLiveSrv = (instance: GrafanaLiveSrv) => {
  * @public
  */
 export const getGrafanaLiveSrv = (): GrafanaLiveSrv => singletonInstance;
+
+/**
+ * Returns a promise that resolves with the {@link GrafanaLiveSrv} once it has
+ * connected
+ *
+ * @experimental
+ * @public
+ */
+export const getConnectedLiveSrv = (): Promise<GrafanaLiveSrv> => {
+  return new Promise(resolve => {
+    singletonInstance.addListener('connect', () => {
+      resolve(singletonInstance);
+    });
+  });
+};
