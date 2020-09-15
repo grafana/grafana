@@ -936,8 +936,8 @@ describe('optionsPickerReducer', () => {
         .thenStateShouldEqual({
           ...initialState,
           options: checkOptions,
-          id: payload.id,
-          multi: payload.multi,
+          id: '0',
+          multi: false,
           queryValue: '',
         });
     });
