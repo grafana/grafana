@@ -30,7 +30,7 @@ The main highlights are:
 
 ## New date formatting options added
 
-Now you can finally customize how dates are formatted in Grafana. Both in the time range picker, graphs, and other panels.
+You can now customize how dates are formatted in Grafana. Custom date formats apply to the time range picker, graphs, and other panel visualizations.
 
 This screenshot shows both a custom full date format with a 12 hour clock and am/pm suffix. The graph is also
 showing same 12-hour clock format and a customized month and day format compared to the Grafana default `MM/DD` format.
@@ -50,7 +50,7 @@ interval_month = YYYY-MM
 interval_year = YYYY
 ```
 
-There is also experimental support to use Browser locale/language to dynamically change the current date format for each user. This feature is disabled by default as it needs more testing and refinement.
+There is also experimental support to use the browser location and language to dynamically change the current date format for each user. This feature is disabled by default.
 
 The [Configuration]({{< relref "../administration/configuration.md#date_formats" >}}) topic has been updated as a result of this change.
 
@@ -66,47 +66,52 @@ You can now dynamically apply value filters to any table column. This option is 
 
 ### New field override selection options
 
-You can now add override rules that use a regex matcher and overrides that match on field type.
+You can now add override rules that use a regex matcher to choose which fields to apply rules to.
 
-## New and improved transforms
+The [Field configuration options]({{< relref "../panels/field-configuration-options.md" >}}) content has been updated as a result of these changes.
 
-Grafana 7.2 includes a new group by transform that allows you to group by multiple fields and add any number of aggregations for other fields.
+## New transformations and enhancements
 
-There is also an update to the labels to fields transform that allow you to pick one label and use that as the name of the value field.
-
-The UI for transforms also has an update that now allows you to move transformations up and down.
+You can now move transformations up and down. Remember that transformations are processed in the order they are listed in the UI, so think before you move something!
 
 {{< docs-imagebox img="/img/docs/v72/transformations.gif" max-width="800px" caption="Group by and reordering of transformations" >}}
 
+Grafana 7.2 includes the following transformation enhancements:
 
+- A new [Group By]({{< relref "../panels/transformations.md#group-by">}}) transformation that allows you to group by multiple fields and add any number of aggregations for other fields.
+- The [Labels to fields]({{< relref "../panels/transformations.md#labels-to-fields">}}) transformation now allows you to pick one label and use that as the name of the value field.
 
 ## Sensitive alert notification channel settings are now stored encrypted in the database
 
-Before Grafana v7.2 alert notification channels did not store sensitive settings/secrets such as API tokens and password encrypted in the database. In Grafana v7.2, creating a new alert notification channel will store sensitive settings encrypted in the database.
+Alert notification channels now store sensitive settings and secrets, such as API tokens and passwords, encrypted in the database.
 
 Please read the [upgrade notes]({{< relref "../installation/upgrading.md#ensure-encryption-of-existing-alert-notification-channel-secrets" >}}) for more information and how to migrate.
 
 ## Grafana Enterprise features
 
-General features are included in the Grafana Enterprise edition software.
+These features are included in the Grafana Enterprise edition software.
 
-### Report grid layout
+### Report and export dashboards in grid layout
 
-A new layout option is available when rendering reports: the grid layout. With this option your report will use the panel layout from your dashboard so that what you see is what you get.  Learn more about the [grid layout]({{< relref "../enterprise/reporting.md#layout-and-orientation.md" >}}) in the documentation.
+A new layout option is available when rendering reports: the grid layout. With this option, your report uses the panel layout from your dashboard, so that what you see is what you get. Learn more about the [grid layout]({{< relref "../enterprise/reporting.md#layout-and-orientation" >}}) in the documentation.
 
-The grid layout is also available for the [Export dashboard as PDF]({{< relref "../enterprise/export-pdf.md" >}}) feature. 
+The grid layout is also available for the [Export dashboard as PDF]({{< relref "../enterprise/export-pdf.md" >}}) feature.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Report time range
 
-A report can now be set up with a different time range from the dashboard it is based on. This means you no longer have to apply workarounds such as copying dashboards or carefully aligning report generation with the end of the month to generate reports that covers the period you want. The dashboard's stored time range remains the default option.
+You can now generate a report with a different time range from the dashboard it is based on. This means that you no longer have to apply workarounds, such as copying dashboards or carefully aligning report generation with the end of the month, to generate reports that cover the period you want.
+
+For more information, refer to [Reports time range]({{< relref "../enterprise/reporting.md#report-time-range" >}}).
 
 ### Organization-wide report settings
 
-You can now configure organization-wide report settings, such as report branding, in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports of your current organization.
+You can now configure organization-wide report settings, such as report branding, in the Settings tab on the Reporting page. Settings are applied to all the reports of your current organization.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" caption="Reports settings" >}}
+
+For more information, refer to [Reports settings]({{< relref "../enterprise/reporting.md#reports-settings" >}}).
 
 ## Upgrading
 
@@ -119,6 +124,7 @@ Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELO
 ## What's new in other parts of the Grafana ecosystem
 
 ### ADX (Azure Data Explorer) plugin
-In collaboration with Microsoft we have started to improve the usability of our ADX datasource plugin by adding a visual query builder. The goal is to make it easier for users, regardless of their previous knowledge of writing KQL (Kusto Query Language) queries, to query and visualize their data.
+
+In collaboration with Microsoft, we have improved the usability of our ADX datasource plugin by adding a visual query builder. The goal is to make it easier for users, regardless of their previous knowledge of writing KQL (Kusto Query Language) queries, to query and visualize their data.
 
 {{< docs-imagebox img="/img/docs/v72/adx-ds.png" max-width="800px" caption="ADX visual query builder" >}}
