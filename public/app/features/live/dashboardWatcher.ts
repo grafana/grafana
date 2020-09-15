@@ -1,4 +1,4 @@
-import { ChannelHandler, getGrafanaLiveSrv, config } from '@grafana/runtime';
+import { ChannelHandler, getGrafanaLiveSrv } from '@grafana/runtime';
 import { getPageTracker, PageEvent } from './pageTracker';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 import { PartialObserver, Subscription } from 'rxjs';

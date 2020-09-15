@@ -1,4 +1,4 @@
-import { Subject, Observable, ReplaySubject } from 'rxjs';
+import { Observable, ReplaySubject } from 'rxjs';
 
 export interface PageEvent {
   page: string;
