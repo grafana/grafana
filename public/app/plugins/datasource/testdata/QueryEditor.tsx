@@ -24,7 +24,7 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
     [scenarioList, query]
   );
 
-  query.stringInput = query.stringInput || currentScenario?.stringInput;
+  query.stringInput = (query.stringInput || currentScenario?.stringInput) ?? '';
   const onScenarioChange = (item: SelectableValue<string>) => {
     onChange({
       ...query,
@@ -48,76 +48,86 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
   }
 
   return (
-    <div className="gf-form-inline">
-      <div className="gf-form">
-        <InlineFormLabel className="query-keyword" width={7}>
-          Scenario
-        </InlineFormLabel>
-        <Select
-          options={options}
-          value={options.find(item => item.value === query.scenarioId)}
-          onChange={onScenarioChange}
-          width={32}
-        />
-      </div>
-      {currentScenario?.stringInput && (
+    <>
+      <div className="gf-form-inline">
         <div className="gf-form">
           <InlineFormLabel className="query-keyword" width={7}>
-            String Input
+            Scenario
+          </InlineFormLabel>
+          <Select
+            options={options}
+            value={options.find(item => item.value === query.scenarioId)}
+            onChange={onScenarioChange}
+            width={32}
+          />
+        </div>
+        {currentScenario?.stringInput && (
+          <div className="gf-form">
+            <InlineFormLabel htmlFor="stringInput" className="query-keyword" width={7}>
+              String Input
+            </InlineFormLabel>
+            <Input
+              id="stringInput"
+              name="stringInput"
+              placeholder={query.stringInput}
+              value={query.stringInput}
+              onChange={onInputChange}
+            />
+          </div>
+        )}
+        <div className="gf-form">
+          <InlineFormLabel htmlFor="alias" className="query-keyword" width={7}>
+            Alias
           </InlineFormLabel>
           <Input
-            name="stringInput"
-            placeholder={query.stringInput}
-            value={query.stringInput}
+            id="alias"
+            type="text"
+            placeholder="optional"
+            pattern='[^<>&\\"]+'
+            name="alias"
+            value={query.alias}
             onChange={onInputChange}
           />
         </div>
-      )}
-      <div className="gf-form">
-        <InlineFormLabel className="query-keyword" width={7}>
-          Alias
-        </InlineFormLabel>
-        <Input
-          type="text"
-          placeholder="optional"
-          pattern='[^<>&\\"]+'
-          name="alias"
-          value={query.alias}
-          onChange={onInputChange}
-        />
+        <div className="gf-form gf-form--grow">
+          {showLabels ? (
+            <>
+              <InlineFormLabel htmlFor="labels" className="query-keyword" width={7}>
+                Labels
+                <Tooltip
+                  placement="top"
+                  content={
+                    <>
+                      Set labels using a key=value syntax:
+                      <br />
+                      {`{ key = "value", key2 = "value" }`}
+                      <br />
+                      key="value", key2="value"
+                      <br />
+                      key=value, key2=value
+                      <br />
+                    </>
+                  }
+                  theme={'info'}
+                >
+                  <div className="gf-form-help-icon gf-form-help-icon--right-normal">
+                    <Icon name="info-circle" size="sm" />
+                  </div>
+                </Tooltip>
+              </InlineFormLabel>
+              <Input
+                id="labels"
+                name="labels"
+                onChange={onInputChange}
+                value={query?.labels}
+                placeholder="key=value, key2=value2"
+              />
+            </>
+          ) : (
+            <div className="gf-form-label gf-form-label--grow" />
+          )}
+        </div>
       </div>
-      <div className="gf-form gf-form--grow">
-        {showLabels ? (
-          <>
-            <InlineFormLabel className="query-keyword" width={7}>
-              Labels
-              <Tooltip
-                placement="top"
-                content={
-                  <>
-                    Set labels using a key=value syntax:
-                    <br />
-                    {`{ key = "value", key2 = "value" }`}
-                    <br />
-                    key="value", key2="value"
-                    <br />
-                    key=value, key2=value
-                    <br />
-                  </>
-                }
-                theme={'info'}
-              >
-                <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-                  <Icon name="info-circle" size="sm" />
-                </div>
-              </Tooltip>
-            </InlineFormLabel>
-            <Input name="labels" onChange={onInputChange} value={query.labels} placeholder="key=value, key2=value2" />
-          </>
-        ) : (
-          <div className="gf-form-label gf-form-label--grow" />
-        )}
-      </div>
-    </div>
+    </>
   );
 };
