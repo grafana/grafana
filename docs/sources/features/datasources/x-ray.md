@@ -39,22 +39,22 @@ build dashboards or use Explore with X-Ray to look at traces.
 
 ### AWS credentials
 
-If Auth Provider is `Credentials file`, Grafana tries to get credentials in the following order.
+If the Auth Provider is `Credentials file`, then Grafana tries to get credentials in the following order:
 
 - Environment variables. (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`)
 - Hard-code credentials.
 - Shared credentials file.
 - IAM role for Amazon EC2.
 
-See the AWS documentation on [Configuring the AWS SDK for Go](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html)
+Refer to [Configuring the AWS SDK for Go](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html) in the AWS documentation for more information.
 
 ### AWS credentials file
 
 Create a file at `~/.aws/credentials`. That is the `HOME` path for user running grafana-server.
 
-> NOTE: If you think you have the credentials file in the right place but it is still not working then you might try moving your .aws file to '/usr/share/grafana/' and make sure your credentials file has at most 0644 permissions.
+> **Note:** If the credentials file in the right place, but it is not working, then try moving your .aws file to '/usr/share/grafana/'. Make sure your credentials file has at most 0644 permissions.
 
-Example content:
+Example credential file:
 
 ```bash
 [default]
@@ -63,15 +63,19 @@ aws_secret_access_key = <your access key>
 region = us-west-2
 ```
 
-## The Query Editor 
+## Query editor 
 
-The most important field in the editor is the query type. There are 4 query types Trace List(Traces in AWS), Trace Statistics, Trace Analytics(Analytics in AWS), Insights.
+The most important field in the editor is the query type. There are four query types:
+- Trace List (Traces in AWS)
+- Trace Statistics
+- Trace Analytics (Analytics in AWS)
+- Insights
 
 {{< docs-imagebox img="/img/docs/v72/x-ray-query-editor.png" max-width="800px" class="docs-image--left" caption="X-Ray query editor" >}}
 
 ### Trace List
 
-The trace list is pretty much the same as in AWS. Clicking on the trace id in the first column opens the trace on the right side. Notice the query field in the editor which works the same as in AWS. You can write queries, filter expressions or a trace id there.
+The trace list is pretty much the same as in AWS. Clicking on the trace id in the first column opens the trace on the right side. Notice the query field in the editor which works the same as in AWS. You can write queries, filter expressions, or a trace ID there.
 
 {{< docs-imagebox img="/img/docs/v72/x-ray-trace-list.png" caption="X-Ray trace list in Grafana" >}}
 
