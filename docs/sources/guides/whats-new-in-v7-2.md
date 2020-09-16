@@ -61,7 +61,7 @@ for each user. This feature is disabled by default as it needs more testing and 
 
 ## Table column filters
 
-The new column filter option allow you to dynamically apply value filters to any column. This is option is disabled but
+The new column filter option allows you to dynamically apply value filters to any column. This option is disabled but
 can be enabled for all or a specific column using an override rule.
 
 {{< docs-imagebox img="/img/docs/v72/table_column_filters.png" max-width="800px" caption="Table column filters" >}}
@@ -104,21 +104,23 @@ Please read the [upgrade notes]({{< relref "../installation/upgrading.md#ensure-
 
 General features are included in the Grafana Enterprise edition software.
 
+### Report grid layout
+
+A new layout option is available when rendering reports: the grid layout. With this option your report will use the panel layout from your dashboard so that what you see is what you get.  Learn more about the [grid layout]({{< relref "../enterprise/reporting.md#layout-and-orientation.md" >}}) in the documentation.
+
+The grid layout is also available for the [Export dashboard as PDF]({{< relref "../enterprise/export-pdf.md" >}}) feature. 
+
+{{< docs-imagebox img="/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+
 ### Report time range
 
-Report time range can be now customized separately per report, in the report form. By default, the time range from the report's dashboard would apply.
+A report can now be set up with a different time range from the dashboard it is based on. This means you no longer have to apply workarounds such as copying dashboards or carefully aligning report generation with the end of the month to generate reports that covers the period you want. The dashboard's stored time range remains the default option.
 
 ### Organization-wide report settings
 
-You can now configure organization-wide report settings, such as report branding, in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports for current organization.
+You can now configure organization-wide report settings, such as report branding, in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports of your current organization.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" caption="Reports settings" >}}
-
-### Report grid layout
-
-A new layout option is available to render reports: the grid layout. With this option, your reports will be closer to your dashboards by showing panels in the same layout as they appear on the dashboard. 
-
-The grid layout is also available for the [Export dashboard as PDF]({{< relref "../enterprise/export-pdf.md" >}}) feature. 
 
 ## Upgrading
 

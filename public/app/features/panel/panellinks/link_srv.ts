@@ -283,7 +283,7 @@ export class LinkSrv implements LinkService {
   /**
    * Returns LinkModel which is basically a DataLink with all values interpolated through the templateSrv.
    */
-  getDataLinkUIModel = <T>(link: DataLink, scopedVars: ScopedVars, origin: T): LinkModel<T> => {
+  getDataLinkUIModel = <T>(link: DataLink, scopedVars: ScopedVars | undefined, origin: T): LinkModel<T> => {
     const params: KeyValue = {};
     const timeRangeUrl = urlUtil.toUrlParams(this.timeSrv.timeRangeForUrl());
 

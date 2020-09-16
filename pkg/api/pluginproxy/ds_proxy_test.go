@@ -383,6 +383,9 @@ func TestDSRouteRule(t *testing.T) {
 					Config: &oauth2.Config{},
 				},
 			}
+			setting.OAuthService = &setting.OAuther{}
+			setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
+			setting.OAuthService.OAuthInfos["generic_oauth"] = &setting.OAuthInfo{}
 
 			bus.AddHandler("test", func(query *models.GetAuthInfoQuery) error {
 				query.Result = &models.UserAuth{
