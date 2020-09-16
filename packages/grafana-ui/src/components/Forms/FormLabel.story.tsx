@@ -1,6 +1,6 @@
 import React from 'react';
-import { InlineFormLabel } from './FormLabel';
-//import mdx from './FormLabel';
+import { InlineFormLabel } from './InlineFormLabel';
+//import mdx from './InlineFormLabel';
 
 export default {
   title: 'Forms/InlineFormLabel',
@@ -18,10 +18,8 @@ export const basic = () => {
 
 export const withTooltip = () => {
   return (
-    <div className="gf-form">
-      <InlineFormLabel width="auto" tooltip="Some tooltip content">
-        Simple label
-      </InlineFormLabel>
-    </div>
+    <InlineFormLabel width="auto" tooltip="Tooltip content">
+      Simple label
+    </InlineFormLabel>
   );
 };

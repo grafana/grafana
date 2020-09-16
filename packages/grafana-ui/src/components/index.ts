@@ -167,7 +167,7 @@ export { TimeRangeInput } from './TimePicker/TimeRangeInput';
 // Legacy forms
 
 // Export this until we've figured out a good approach to inline form styles.
-export { InlineFormLabel } from './FormLabel/FormLabel';
+export { InlineFormLabel } from './Forms/InlineFormLabel';
 
 // Select
 import { Select, AsyncSelect } from './Forms/Legacy/Select/Select';

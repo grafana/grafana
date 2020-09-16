@@ -1,5 +1,5 @@
 import React, { FunctionComponent, HTMLProps, ReactNode } from 'react';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data/compiled';
 import { css } from 'emotion';
 import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
@@ -12,9 +12,10 @@ export interface Props extends Omit<HTMLProps<HTMLLabelElement>, 'children' | 'c
   isInvalid?: boolean;
   tooltip?: PopoverContent;
   width?: number | 'auto';
+  queryKeyword?: boolean;
 }
 
-export const FormLabel: FunctionComponent<Props> = ({
+export const InlineFormLabel: FunctionComponent<Props> = ({
   children,
   isFocused,
   isInvalid,
@@ -22,10 +23,11 @@ export const FormLabel: FunctionComponent<Props> = ({
   htmlFor,
   tooltip,
   width,
+  queryKeyword,
   ...rest
 }) => {
   const theme = useTheme();
-  const styles = getStyles(theme, width);
+  const styles = getStyles(theme, width, queryKeyword);
 
   return (
     <label className={styles.label} {...rest}>
@@ -39,7 +41,7 @@ export const FormLabel: FunctionComponent<Props> = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme, width?: number | 'auto') => {
+const getStyles = (theme: GrafanaTheme, width?: number | 'auto', queryKeyword = false) => {
   return {
     label: css`
       display: flex;
@@ -57,6 +59,7 @@ const getStyles = (theme: GrafanaTheme, width?: number | 'auto') => {
       border: none;
       // Keep the spacer at 16 px for compatibility
       width: ${width ? (width !== 'auto' ? `${16 * width}px` : width) : '100%'};
+      color: ${queryKeyword ? theme.colors.textBlue : 'inherit'};
     `,
     icon: css`
       flex-grow: 0;
@@ -69,5 +72,3 @@ const getStyles = (theme: GrafanaTheme, width?: number | 'auto') => {
     `,
   };
 };
-
-export const InlineFormLabel = FormLabel;
