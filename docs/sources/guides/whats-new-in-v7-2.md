@@ -18,10 +18,12 @@ This article is not complete yet. We will be adding new details over the coming 
 
 The main highlights are:
 
-- [**Date formatting options**]({{< relref "#date-formatting-options" >}})
-- [**Table column filters**]({{< relref "#table-column-filters" >}})
-- [**New and improved transforms**]({{< relref "#new-and-improved-transforms" >}})
-- [**Field override matchers**]({{< relref "#field-override-matchers" >}})
+- [**New date formatting options added**]({{< relref "#new=date-formatting-options-added" >}})
+- [**Field options are out of beta!**]({{< relref "#field-options-are-out-of-beta" >}})
+  - [**Added table column filters**]({{< relref "#added-table-column-filters" >}})
+  - [**New field override selection options**]({{< relref "#new-field-override-selection-options" >}})
+- [**New transformations and enhancements**]({{< relref "#new-transformations-and-enhancements" >}})
+- [**Sensitive alert channel settings are now encrypted**]({{< relref "#sensitive-alert-channel-settings-are-now-encrypted" >}})
 - [**Grafana Enterprise features**]({{< relref "#grafana-enterprise-features" >}})
   - [**Report time range**]({{< relref "#report-time-range" >}})
   - [**Organization-wide report settings**]({{< relref "#organization-wide-report-settings" >}})
@@ -79,7 +81,7 @@ Grafana 7.2 includes the following transformation enhancements:
 
 {{< docs-imagebox img="/img/docs/v72/transformations.gif" max-width="800px" caption="Group by and reordering of transformations" >}}
 
-## Sensitive alert notification channel settings are now stored encrypted in the database
+## Sensitive alert channel settings are now encrypted
 
 Alert notification channels now store sensitive settings and secrets, such as API tokens and passwords, encrypted in the database.
 
