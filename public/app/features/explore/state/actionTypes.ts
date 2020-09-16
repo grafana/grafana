@@ -14,7 +14,7 @@ import {
   QueryFixAction,
   TimeRange,
 } from '@grafana/data';
-import { DecoratedPanelData, ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExplorePanelData } from 'app/types/explore';
 
 export interface AddQueryRowPayload {
   exploreId: ExploreId;
@@ -82,7 +82,7 @@ export interface ModifyQueriesPayload {
 
 export interface QueryEndedPayload {
   exploreId: ExploreId;
-  response: DecoratedPanelData;
+  response: ExplorePanelData;
 }
 
 export interface QueryStoreSubscriptionPayload {

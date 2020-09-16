@@ -234,7 +234,7 @@ export type RichHistoryQuery = {
   timeRange?: string;
 };
 
-export interface DecoratedPanelData extends PanelData {
+export interface ExplorePanelData extends PanelData {
   graphFrames: DataFrame[];
   tableFrames: DataFrame[];
   logsFrames: DataFrame[];

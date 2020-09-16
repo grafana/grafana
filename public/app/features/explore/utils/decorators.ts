@@ -12,14 +12,14 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { DecoratedPanelData, ExploreItemState } from '../../../types';
+import { ExploreItemState, ExplorePanelData } from '../../../types';
 import { getGraphSeriesModel } from '../../../plugins/panel/graph2/getGraphSeriesModel';
 import { dataFrameToLogsModel } from '../../../core/logs_model';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 
 export const decorateWithGraphLogsTraceAndTable = (
   datasourceInstance?: DataSourceApi | null
-): OperatorFunction<PanelData, DecoratedPanelData> => inputStream =>
+): OperatorFunction<PanelData, ExplorePanelData> => inputStream =>
   inputStream.pipe(
     map(data => {
       if (data.error) {
@@ -75,7 +75,7 @@ export const decorateWithGraphLogsTraceAndTable = (
     })
   );
 
-export const decorateWithGraphResult = (): MonoTypeOperatorFunction<DecoratedPanelData> => inputStream =>
+export const decorateWithGraphResult = (): MonoTypeOperatorFunction<ExplorePanelData> => inputStream =>
   inputStream.pipe(
     map(data => {
       if (data.error) {
@@ -97,7 +97,7 @@ export const decorateWithGraphResult = (): MonoTypeOperatorFunction<DecoratedPan
     })
   );
 
-export const decorateWithTableResult = (): MonoTypeOperatorFunction<DecoratedPanelData> => inputStream =>
+export const decorateWithTableResult = (): MonoTypeOperatorFunction<ExplorePanelData> => inputStream =>
   inputStream.pipe(
     mergeMap(data => {
       if (data.error) {
@@ -153,7 +153,7 @@ export const decorateWithTableResult = (): MonoTypeOperatorFunction<DecoratedPan
 
 export const decorateWithLogsResult = (
   state: ExploreItemState
-): MonoTypeOperatorFunction<DecoratedPanelData> => inputStream =>
+): MonoTypeOperatorFunction<ExplorePanelData> => inputStream =>
   inputStream.pipe(
     map(data => {
       if (data.error) {
