@@ -1,10 +1,21 @@
 // Libraries
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 // Components
-import { Field, Form, Icon, InlineFormLabel, Input, LegacyForms, Select, Tooltip } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import {
+  Field,
+  Form,
+  HorizontalGroup,
+  Icon,
+  InlineFormLabel,
+  Input,
+  InputControl,
+  LegacyForms,
+  Select,
+  Tooltip,
+} from '@grafana/ui';
+import { dateMath, dateTime, QueryEditorProps, SelectableValue } from '@grafana/data';
 
 // Types
 import { TestDataDataSource } from './datasource';
@@ -128,6 +139,80 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
           )}
         </div>
       </div>
+
+      {currentScenario.id === 'manual_entry' && <ManualEntryEditor onChange={onChange} query={query} />}
     </>
+  );
+};
+
+const ManualEntryEditor = ({ onChange, query }) => {
+  const addPoint = point => {
+    let points = query.points || [];
+    const newPointTime = dateMath.parse(point.newPointTime);
+    points = [...points, [point.newPointValue, newPointTime.valueOf()]].sort((a, b) => a[1] - b[1]);
+    console.log('p', point, points);
+  };
+
+  const deletePoint = () => {};
+
+  const points = (query.points || []).map((point, index) => {
+    return {
+      text: dateTime(point[1]).format('MMMM Do YYYY, H:mm:ss') + ' : ' + point[0],
+      value: index,
+    };
+  });
+
+  console.log('dd', dateMath.parse(dateTime()));
+
+  return (
+    <Form onSubmit={addPoint} maxWidth="auto">
+      {({ register, control, watch }) => {
+        const selectedPoint = watch('selectedPoint');
+        return (
+          <div style={{ display: 'flex' }}>
+            <div className="gf-form">
+              <InlineFormLabel htmlFor="newPointValue" className="query-keyword" width={7}>
+                New value
+              </InlineFormLabel>
+              <Input type="number" placeholder="value" id="newPointValue" name="newPointValue" ref={register} />
+              <InlineFormLabel htmlFor="newPointTime" className="query-keyword">
+                Time
+              </InlineFormLabel>
+              <Input
+                id="newPointTime"
+                placeholder="time"
+                name="newPointTime"
+                ref={register}
+                defaultValue={dateTime().format()}
+              />
+              <button className="btn btn-secondary gf-form-btn">Add</button>
+              <InlineFormLabel className="query-keyword">All values</InlineFormLabel>
+              <InputControl
+                control={control}
+                as={Select}
+                options={points}
+                width={16}
+                name="selectedPoint"
+                onChange={value => {
+                  console.log('v', value);
+                  return value;
+                }}
+              />
+            </div>
+
+            {selectedPoint?.value && (
+              <div className="gf-form gf-form">
+                <button type="button" className="btn btn-danger gf-form-btn" onClick={deletePoint}>
+                  Delete
+                </button>
+              </div>
+            )}
+            <div className="gf-form gf-form--grow" style={{ flex: 1 }}>
+              <div className="gf-form-label gf-form-label--grow" />
+            </div>
+          </div>
+        );
+      }}
+    </Form>
   );
 };
