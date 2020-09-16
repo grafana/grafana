@@ -1391,7 +1391,7 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`, `standaloneAlerts`
+Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
 
 ## [date_formats]
 
@@ -1426,3 +1426,6 @@ interval_year = YYYY
 Set this to `true` to have date formats be automatically be derived from browser locale. Defaults to `false`. This
 is an experimental feature right now with a few problems that remain unsolved.
 
+### default_timezone
+
+Used as the default timezone for user preferences. Can be either `browser` for the browser local timezone or a timezone name from IANA Time Zone database, e.g. `UTC` or `Europe/Amsterdam` etc.

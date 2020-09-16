@@ -21,6 +21,7 @@ import { InfluxQueryBuilder } from './query_builder';
 import { InfluxQuery, InfluxOptions, InfluxVersion } from './types';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
+import { FluxQueryEditor } from './components/FluxQueryEditor';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
   type: string;
@@ -55,6 +56,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
     this.isFlux = settingsData.version === InfluxVersion.Flux;
+
+    if (this.isFlux) {
+      // When flux, use an annotation processor rather than the `annotationQuery` lifecycle
+      this.annotations = {
+        QueryEditor: FluxQueryEditor,
+      };
+    }
   }
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
@@ -71,6 +79,16 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return query.query;
     }
     return new InfluxQueryModel(query).render(false);
+  }
+
+  /**
+   * Returns false if the query should be skipped
+   */
+  filterQuery(query: InfluxQuery): boolean {
+    if (this.isFlux) {
+      return !!query.query;
+    }
+    return true;
   }
 
   /**
@@ -183,7 +201,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   async annotationQuery(options: AnnotationQueryRequest<any>): Promise<AnnotationEvent[]> {
     if (this.isFlux) {
       return Promise.reject({
-        message: 'Annotations are not yet supported with flux queries',
+        message: 'Flux requires the standard annotation query',
       });
     }
 
