@@ -21,6 +21,7 @@ class CentrifugeSrv implements GrafanaLiveSrv {
   centrifuge: Centrifuge;
   channels: KeyValue<Channel> = {};
   connectionState: BehaviorSubject<boolean>;
+  connected: Observable<void>;
   standardCallbacks: SubscriptionEvents;
 
   constructor() {
@@ -30,6 +31,15 @@ class CentrifugeSrv implements GrafanaLiveSrv {
     });
     this.centrifuge.connect(); // do connection
     this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
+    this.connected = from(
+      new Promise<void>(resolve => {
+        if (this.centrifuge.isConnected()) {
+          return resolve();
+        }
+
+        this.centrifuge.addListener('connect', resolve);
+      })
+    );
 
     // Register global listeners
     this.centrifuge.on('connect', this.onConnect);
@@ -115,19 +125,9 @@ class CentrifugeSrv implements GrafanaLiveSrv {
   }
 
   initChannel<T>(path: string, handler: ChannelHandler<T>) {
-    const connected = from(
-      new Promise<void>(resolve => {
-        if (this.centrifuge.isConnected()) {
-          return resolve();
-        }
-
-        this.centrifuge.addListener('connect', resolve);
-      })
-    );
-
     if (this.channels[path]) {
       console.log('Already connected to:', path);
-      return connected;
+      return this.connected;
     }
     const c: Channel = {
       subject: new Subject<T>(),
@@ -144,7 +144,7 @@ class CentrifugeSrv implements GrafanaLiveSrv {
       },
     };
     c.subscription = this.centrifuge.subscribe(path, callbacks);
-    return connected;
+    return this.connected;
   }
 
   getChannelStream<T>(path: string): Observable<T> {
