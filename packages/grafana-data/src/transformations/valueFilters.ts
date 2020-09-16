@@ -24,7 +24,7 @@ type ValueFilterInstanceCreator = (filterOptions: Record<string, any>) => ValueF
 export interface ValueFilterInstance {
   isValid: boolean;
   test: ValueFilterTestFunction;
-  invalidArgs?: string[];
+  invalidArgs?: Record<string, boolean>;
   expression1Invalid?: boolean;
   expression2Invalid?: boolean;
 }
@@ -67,9 +67,10 @@ function testIsNotNullCreator(filterOptions: Record<string, any>): ValueFilterIn
 }
 
 function testGreaterCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let { filterExpression, fieldType } = filterOptions;
+  let { filterArgs, fieldType } = filterOptions;
+  let expression = filterArgs?.value || null;
 
-  if (filterExpression === '' || filterExpression === null) {
+  if (expression === '' || expression === null) {
     return { isValid: false, test: value => true };
   }
 
@@ -77,7 +78,7 @@ function testGreaterCreator(filterOptions: Record<string, any>): ValueFilterInst
 
   // For a Number, compare as number
   if (fieldType === FieldType.number) {
-    compare = Number(filterOptions.filterExpression);
+    compare = Number(expression);
     if (isNaN(compare)) {
       compare = null;
     }
@@ -85,14 +86,16 @@ function testGreaterCreator(filterOptions: Record<string, any>): ValueFilterInst
 
   return {
     isValid: compare !== null,
+    invalidArgs: { value: isNaN(expression) },
     test: value => value > compare,
   };
 }
 
 function testGreaterOrEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let { filterExpression, fieldType } = filterOptions;
+  let { filterArgs, fieldType } = filterOptions;
+  let expression = filterArgs?.value || null;
 
-  if (filterExpression === '' || filterExpression === null) {
+  if (expression === '' || expression === null) {
     return { isValid: false, test: value => true };
   }
 
@@ -100,7 +103,7 @@ function testGreaterOrEqualCreator(filterOptions: Record<string, any>): ValueFil
 
   // For a Number, compare as number
   if (fieldType === FieldType.number) {
-    compare = Number(filterOptions.filterExpression);
+    compare = Number(expression);
     if (isNaN(compare)) {
       compare = null;
     }
@@ -113,9 +116,10 @@ function testGreaterOrEqualCreator(filterOptions: Record<string, any>): ValueFil
 }
 
 function testLowerCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let { filterExpression, fieldType } = filterOptions;
+  let { filterArgs, fieldType } = filterOptions;
+  let expression = filterArgs?.value || null;
 
-  if (filterExpression === '' || filterExpression === null) {
+  if (expression === '' || expression === null) {
     return { isValid: false, test: value => true };
   }
 
@@ -123,7 +127,7 @@ function testLowerCreator(filterOptions: Record<string, any>): ValueFilterInstan
 
   // For a Number, compare as number
   if (fieldType === FieldType.number) {
-    compare = Number(filterOptions.filterExpression);
+    compare = Number(expression);
     if (isNaN(compare)) {
       compare = null;
     }
@@ -136,9 +140,10 @@ function testLowerCreator(filterOptions: Record<string, any>): ValueFilterInstan
 }
 
 function testLowerOrEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let { filterExpression, fieldType } = filterOptions;
+  let { filterArgs, fieldType } = filterOptions;
+  let expression = filterArgs?.value || null;
 
-  if (filterExpression === '' || filterExpression === null) {
+  if (expression === '' || expression === null) {
     return { isValid: false, test: value => true };
   }
 
@@ -146,7 +151,7 @@ function testLowerOrEqualCreator(filterOptions: Record<string, any>): ValueFilte
 
   // For a Number, compare as number
   if (fieldType === FieldType.number) {
-    compare = Number(filterOptions.filterExpression);
+    compare = Number(expression);
     if (isNaN(compare)) {
       compare = null;
     }
@@ -159,7 +164,7 @@ function testLowerOrEqualCreator(filterOptions: Record<string, any>): ValueFilte
 }
 
 function testEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let compare: any = filterOptions.filterExpression || '';
+  let compare: any = filterOptions?.value || '';
   return {
     isValid: compare !== null,
     // eslint-disable-next-line eqeqeq
@@ -168,7 +173,7 @@ function testEqualCreator(filterOptions: Record<string, any>): ValueFilterInstan
 }
 
 function testNotEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let compare: any = filterOptions.filterExpression || '';
+  let compare: any = filterOptions?.value || '';
   return {
     isValid: compare !== null,
     // eslint-disable-next-line eqeqeq
@@ -178,23 +183,24 @@ function testNotEqualCreator(filterOptions: Record<string, any>): ValueFilterIns
 
 function testRangeCreator(filterOptions: Record<string, any>): ValueFilterInstance {
   // We need a specific interval format : [min,max] or ]min,max[ (accepting spacing and +- before the values)
-  const { filterExpression, filterExpression2 } = filterOptions;
+  let { max = null, min = null } = filterOptions.filterArgs;
 
-  if (filterExpression === null || filterExpression2 === null || filterExpression === '' || filterExpression2 === '') {
+  console.log(min, max);
+  if (min === null || max === null || min === '' || max === '') {
     return {
       isValid: false,
       test: value => true,
     };
   }
 
-  let min = Number(filterExpression);
-  let max = Number(filterExpression2);
+  console.log(min, max);
+  min = Number(min);
+  max = Number(max);
   if (isNaN(min) || isNaN(max)) {
     return {
       isValid: false,
+      invalidArgs: { min: isNaN(min), max: isNaN(min) },
       test: value => true,
-      expression1Invalid: isNaN(min),
-      expression2Invalid: isNaN(max),
     };
   }
 

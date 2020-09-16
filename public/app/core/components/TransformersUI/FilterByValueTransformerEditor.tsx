@@ -11,7 +11,7 @@ import {
   SelectableValue,
   FieldType,
 } from '@grafana/data';
-import { Select, Button, Input, RadioButtonGroup, stylesFactory } from '@grafana/ui';
+import { Select, Button, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   FilterByValueTransformerOptions,
@@ -56,20 +56,12 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
     filterArgs: config.filterArgs,
     fieldType: fieldType,
   });
-  const filterValid = filterInstance.isValid;
 
   const fieldNameInvalid = config.fieldName !== null && !fieldNameOptions.find(item => item.value === config.fieldName);
   const filterTypeInvalid =
     !fieldNameInvalid && filterInfo.supportedFieldTypes && !filterInfo.supportedFieldTypes.includes(fieldType);
-  const filterExpressionInvalid =
-    config.filterExpression !== '' &&
-    ((filterInfo.placeholder2 !== undefined && config.filterExpression2 !== '') ||
-      filterInfo.placeholder2 === undefined) &&
-    !fieldNameInvalid &&
-    !filterTypeInvalid &&
-    !filterValid;
 
-  console.log('>>', config, filterInfo, filterInstance);
+  // console.log('>>', config, filterInfo, filterInstance);
 
   const onArgsChange = useCallback(
     (filterArgs: Record<string, any>) => {
@@ -114,38 +106,12 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
           menuPlacement="bottom"
         />
       </div>
-      <div className="gf-form gf-form--grow gf-form-spacing ">
-        {(filterArgsComponent &&
-          filterArgsComponent({
-            onArgsChange,
-            filterArgs: config.filterArgs,
-            invalidArgs: filterInstance?.invalidArgs ?? ([] as string[]),
-          })) ||
-          (filterInfo.placeholder && (
-            <Input
-              className="flex-grow-1"
-              invalid={filterInstance.expression1Invalid ?? filterExpressionInvalid}
-              defaultValue={config.filterExpression || undefined}
-              placeholder={filterInfo.placeholder}
-              onBlur={event => {
-                onConfigChange({ ...config, filterExpression: event.currentTarget.value });
-              }}
-            />
-          ))}
-      </div>
-      {filterInfo.placeholder2 && (
-        <div className="gf-form gf-form-spacing gf-form--grow">
-          <Input
-            className="flex-grow-1"
-            invalid={filterInstance.expression2Invalid}
-            defaultValue={config.filterExpression2 || undefined}
-            placeholder={filterInfo.placeholder2}
-            onBlur={event => {
-              onConfigChange({ ...config, filterExpression2: event.currentTarget.value });
-            }}
-          />
-        </div>
-      )}
+      {(filterArgsComponent &&
+        filterArgsComponent({
+          onArgsChange,
+          filterArgs: config.filterArgs,
+          invalidArgs: filterInstance?.invalidArgs ?? ({} as Record<string, boolean>),
+        })) || <div className="gf-form--grow"></div>}
       <div className="gf-form">
         <Button icon="times" onClick={onDelete} style={{ height: '100%' }} size="sm" variant="secondary" />
       </div>
