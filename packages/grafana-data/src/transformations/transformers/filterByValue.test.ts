@@ -30,7 +30,7 @@ describe('FilterByValue transformer', () => {
         valueFilters: [
           {
             fieldName: 'numbers',
-            filterExpression: '5',
+            filterArgs: { expression: '5' },
             filterType: ValueFilterID.lowerOrEqual,
           },
         ],
@@ -70,7 +70,7 @@ describe('FilterByValue transformer', () => {
         valueFilters: [
           {
             fieldName: 'numbers',
-            filterExpression: '5',
+            filterArgs: { expression: '5' },
             filterType: ValueFilterID.lowerOrEqual,
           },
         ],
@@ -103,12 +103,12 @@ describe('FilterByValue transformer', () => {
     const valueFilters = [
       {
         fieldName: 'numbers',
-        filterExpression: '4',
+        filterArgs: { expression: '4' },
         filterType: ValueFilterID.lowerOrEqual,
       },
       {
         fieldName: 'numbers',
-        filterExpression: '7',
+        filterArgs: { expression: '7' },
         filterType: ValueFilterID.equal,
       },
     ];
