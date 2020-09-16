@@ -1,15 +1,15 @@
 import React from 'react';
 import { InlineFormLabel } from './InlineFormLabel';
-//import mdx from './InlineFormLabel';
+import mdx from './InlineFormLabel.mdx';
 
 export default {
   title: 'Forms/InlineFormLabel',
   component: InlineFormLabel,
-  // parameters: {
-  //   docs: {
-  //     page: mdx,
-  //   },
-  // },
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 export const basic = () => {

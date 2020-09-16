@@ -1,24 +1,30 @@
 import React, { FunctionComponent, HTMLProps, ReactNode } from 'react';
-import { GrafanaTheme } from '@grafana/data/compiled';
-import { css } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
+import { css, cx } from 'emotion';
 import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
 import { useTheme } from '../../themes';
 
-export interface Props extends Omit<HTMLProps<HTMLLabelElement>, 'children' | 'className'> {
+export interface Props extends Omit<HTMLProps<HTMLLabelElement>, 'children' | 'className' | 'css'> {
+  /** Label content */
   children: ReactNode;
+  /** Custom styles for the label */
   className?: string;
+  /** @depecated */
   isFocused?: boolean;
+  /** @depecated */
   isInvalid?: boolean;
+  /** Content for the labels tooltip. If provided, an info icon with the tooltip content
+   * will be displayed */
   tooltip?: PopoverContent;
+  /** Custom width for the label */
   width?: number | 'auto';
+  /** A toggle to apply query keyword styling to the label */
   queryKeyword?: boolean;
 }
 
 export const InlineFormLabel: FunctionComponent<Props> = ({
   children,
-  isFocused,
-  isInvalid,
   className,
   htmlFor,
   tooltip,
@@ -30,7 +36,7 @@ export const InlineFormLabel: FunctionComponent<Props> = ({
   const styles = getStyles(theme, width, queryKeyword);
 
   return (
-    <label className={styles.label} {...rest}>
+    <label className={cx(styles.label, className)} {...rest}>
       {children}
       {tooltip && (
         <Tooltip placement="top" content={tooltip} theme="info">
