@@ -16,35 +16,36 @@ weight = 5
 Grafana ships with built-in support for X-Ray. Add it as a data source, then you are ready to
 build dashboards or use Explore with X-Ray to look at traces.
 
-## Adding the data source
+## Add the data source
 
-1. In the side menu under the `Configuration` link, click on `Data Sources`.
-2. Click the `Add data source` button.
-3. Select `X-Ray` in the `Distributed tracing` section.
+1. In the side menu under the **Configuration** link, click on **Data Sources**.
+1. Click the **Add data source** button.
+1. Select **X-Ray** in the **Distributed tracing** section.
 
-> NOTE: If at any moment you have issues with getting this data source to work and Grafana is giving you undescriptive errors then don't
-> forget to check your log file (try looking in /var/log/grafana/grafana.log).
+> **Note:** If you have issues getting this data source to work and Grafana is giving you undescriptive errors, then check your log file (try looking in /var/log/grafana/grafana.log).
 
 | Name                       | Description                                                                                                              |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| _Name_                     | The data source name. This is how you refer to the data source in panels and queries.                                    |
-| _Default_                  | Default data source means that it will be pre-selected for new panels.                                                   |
-| _Default Region_           | Used in query editor to set region (can be changed on per query basis)                                                   |                                                                    
-| _Auth Provider_            | Specify the provider to get credentials.                                                                                 |
-| _Credentials_ profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.                  |
-| _Assume Role Arn_          | Specify the ARN of the role to assume                                                                                    |
-| _External ID_              | If you are assuming a role in another account, that has been created with an external ID, specify the external ID here. |
+| Name                     | The data source name. This is how you refer to the data source in panels and queries.                                    |
+| Default                  | Default data source means that it will be pre-selected for new panels.                                                   |
+| Default Region           | Used in query editor to set region. (can be changed on per query basis)                                                   |                                                                    
+| Auth Provider            | Specify the provider to get credentials.                                                                                 |
+| Credentials profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.                  |
+| Assume Role Arn          | Specify the ARN of the role to assume.                                                                                    |
+| External ID              | If you are assuming a role in another account, that has been created with an external ID, specify the external ID here. |
 
 ## Authentication
+
+In this section we will go through the different type of authentication you can use for X-Ray data source.
 
 ### AWS credentials
 
 If the Auth Provider is `Credentials file`, then Grafana tries to get credentials in the following order:
 
-- Environment variables. (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`)
-- Hard-code credentials.
-- Shared credentials file.
-- IAM role for Amazon EC2.
+- Environment variables (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`)
+- Hard-code credentials
+- Shared credentials file
+- IAM role for Amazon EC2
 
 Refer to [Configuring the AWS SDK for Go](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html) in the AWS documentation for more information.
 
@@ -75,23 +76,23 @@ The most important field in the editor is the query type. There are four query t
 
 ### Trace List
 
-The trace list is pretty much the same as in AWS. Clicking on the trace id in the first column opens the trace on the right side. Notice the query field in the editor which works the same as in AWS. You can write queries, filter expressions, or a trace ID there.
+The Trace List is pretty much the same as in AWS. Clicking on the trace id in the first column opens the trace on the right side. Notice the query field in the editor which works the same as in AWS. You can write queries, filter expressions, or a trace ID there.
 
-{{< docs-imagebox img="/img/docs/v72/x-ray-trace-list.png" caption="X-Ray trace list in Grafana" >}}
+{{< docs-imagebox img="/img/docs/v72/x-ray-trace-list.png" caption="X-Ray Trace List in Grafana" >}}
 
 ### Trace Statistics
 
-In trace statistics you can see a graph and a table showing information about error, fault, throttle, success and total count. You can use the columns field in the query editor to only see specified columns.
+In Trace Statistics you can see a graph and a table showing information about error, fault, throttle, success, and total count. You can use the columns field in the query editor to only see specified columns.
 
-{{< docs-imagebox img="/img/docs/v72/x-ray-trace-statistics.png" caption="X-Ray trace statistics in Grafana" >}}
+{{< docs-imagebox img="/img/docs/v72/x-ray-trace-statistics.png" caption="X-Ray Trace Statistics in Grafana" >}}
 
 ### Trace Analytics
 
-In trace analytics you can visualize one of the tables from Analytics in AWS.
+In Trace Analytics you can visualize one of the tables from Analytics in AWS.
 
 ### Insights
 
-In insights you can see the summary table for insights just like in AWS. Clicking the InsightId will take you to AWS console.
+In Insights you can see the summary table for Insights just like in AWS. Clicking the InsightId will take you to AWS console.
 
 ### Alerting
 
@@ -104,7 +105,7 @@ Please see the [X-Ray pricing page](https://aws.amazon.com/xray/pricing/) for mo
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
+You can configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}}).
 
 Here are some provisioning examples for this data source.
 
