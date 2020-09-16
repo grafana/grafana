@@ -23,9 +23,9 @@ The main highlights are:
 - [**Table column filters**]({{< relref "#table-column-filters" >}})
 - [**New and improved transforms**]({{< relref "#new-and-improved-transforms" >}})
 - [**Field override matchers**]({{< relref "#field-override-matchers" >}})
-- [**Query inspector in Explore**]({{< relref "#query-inspector-in-explore" >}})
+- [**Inspect queries in Explore**]({{< relref "#inspect-queries-in-explore" >}})
 - [**$__rate_interval for Prometheus**]({{< relref "#__rate_interval-for-prometheus" >}})
-- [**Loki toggling parsed fields**]({{< relref "#loki-toggling-parsed-fields" >}})
+- [**Toggle parsed Loki fields**]({{< relref "#toggle-parsed-loki-fields" >}})
 - [**Grafana Enterprise features**]({{< relref "#grafana-enterprise-features" >}})
   - [**Report time range**]({{< relref "#report-time-range" >}})
   - [**Organization-wide report settings**]({{< relref "#organization-wide-report-settings" >}})
@@ -88,7 +88,7 @@ You can enjoy all the details query inspector gave you in dashboards now in Expl
 
 You can now use the new variable `$__rate_interval` in Prometheus for rate functions mainly. `$__rate_interval` in general is one scrape interval larger than `$__interval` but is never smaller than four times the scrape interval (which is 15s by default). See the [Prometheus data source]({{< relref "../features/datasources/prometheus.md#using-__rate_interval-variable" >}}) for more details.
 
-## Loki toggling parsed fields
+## Toggle parsed Loki fields
 
 With this awesome contribution from one of our community members, you can now toggle parsed fields in Explore.
 
