@@ -18,8 +18,9 @@ This panel can show one or more bar gauges depending on how many series, rows, o
 ## Data and field options
 
 Bar gauge visualizations allow you to apply:
+
 - [Data transformations]({{< relref "../transformations.md" >}})
-- [Field configuration options and overrides]({{< relref "../field-configuration-options.md" >}})
+- [Field options and overrides]({{< relref "../field-options.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options

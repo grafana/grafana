@@ -43,7 +43,6 @@ On the right side of the header are the following options:
 - **Save -** Saves the dashboard, including all changes you have made in the panel editor.
 - **Apply -** Applies changes you made and then closes the panel editor, returning you to the dashboard. You will have to save the dashboard to persist the applied changes.
 
-
 ### Visualization preview
 
 The visualization preview section contains viewing options, time range controls, the visualization preview, and (if applicable) the panel title, axes, and legend.
@@ -65,7 +64,7 @@ The section contains tabs where you enter queries, transform your data, and crea
 - **Transform tab -** Apply data transformations. For more information, refer to [Transformations]({{< relref "transformations.md" >}}).
 - **Alert tab -** Write alert rules. For more information, refer to [Create alerts]({{< relref "../alerting/create-alerts.md" >}}).
 
-### Panel and field configuration options (side pane)
+### Panel and field options (side pane)
 
 The section contains tabs where you control almost every aspect of how your data is visualized. Not all tabs are available for each visualization.
 
@@ -73,5 +72,5 @@ Features in these tabs are documented in the following topics:
 
 - [Add a panel]({{< relref "add-a-panel.md" >}}) describes basic panel settings.
 - [Visualizations]({{< relref "visualizations/_index.md" >}}) display options vary widely. They are described in the individual visualization topic.
-- [Field configuration options and overrides]({{< relref "field-configuration-options.md" >}}) allow you to control almost every aspect of your visualization, including units, value mappings, and [Thresholds]({{< relref "thresholds.md" >}}).
+- [Field options and overrides]({{< relref "field-options.md" >}}) allow you to control almost every aspect of your visualization, including units, value mappings, and [Thresholds]({{< relref "thresholds.md" >}}).
 - [Panel links]({{< relref "../linking/panel-links.md" >}}) and [Data links]({{< relref "../linking/data-links.md" >}}) help you connect your visualization to other resources.

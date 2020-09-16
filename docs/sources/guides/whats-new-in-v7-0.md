@@ -26,7 +26,7 @@ The main highlights are:
 - [**Explore** New tracing UI and support for visualizing Jaeger and Zipkin traces.]({{< relref "#new-tracing-ui" >}})
 - [**Enterprise** Usage insights, Presence indicator, and Auth improvements.]({{< relref "#grafana-enterprise" >}})
 - [**Transformations** Transformations and simple Math operations for all data sources.]({{< relref "#transformations" >}})
-- [**Field overrides** Automatically configure panels with data from queries.]({{< relref "#field-configuration-options-and-overrides" >}})
+- [**Field overrides** Automatically configure panels with data from queries.]({{< relref "#field-options-and-overrides" >}})
 - [**Table** New Table panel.]({{< relref "#table-panel" >}})
 - [**Plugins** New plugins platform.]({{< relref "#plugins-platform" >}})
 - [**Tutorials** New tutorials section.]({{< relref "#new-tutorials" >}})
@@ -82,7 +82,7 @@ We are also introducing a new shared data model for both time series and table d
 
 Learn more about this feature in [Transformations]({{< relref "../panels/transformations.md" >}}).
 
-## Field configuration options and overrides
+## Field options and overrides
 
 With Grafana 7.0 we are introducing a new, unified data configuration system that powers a consistent UI for setting data options across visualizations as well as making all data display settings data driven and overridable. This new option architecture and UI will make all panels have a consistent set of options and behaviors for attributes like `unit`, `min`, `max`, `thresholds`, `links`, `decimals` or `value mappings`. Not only that but all these options will share a consistent UI for specifying override rules and is extensible for custom panel specific options.
 
@@ -90,7 +90,7 @@ Up until now the overrides were available only for Graph and Table panel(via Col
 
 This feature enables even more powerful visualizations and fine grained control over how the data is displayed.
 
-Learn more about this feature in [Field configuration options]({{< relref "../panels/field-configuration-options.md" >}}).
+Learn more about this feature in [Field options]({{< relref "../panels/field-options.md" >}}).
 
 ## Inspect panels and export data to CSV
 

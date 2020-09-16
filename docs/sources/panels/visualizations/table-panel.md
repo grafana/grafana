@@ -13,21 +13,23 @@ weight = 1000
 
 The table panel is very flexible, supporting multiple modes for time series and for tables, annotation, and raw JSON data. This panel also provides date formatting, value formatting, and coloring options.
 
-<img class="screenshot" src="/assets/img/features/table-panel.png">
+{{< figure src="/img/docs/v72/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
 
 ## Data and field options
 
 Table visualizations allow you to apply:
 
 - [Data transformations]({{< relref "../transformations.md" >}})
-- [Field configuration options and overrides]({{< relref "../field-configuration-options.md" >}})
+- [Field options and overrides]({{< relref "../field-options.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options
 
 - **Show header -** Show or hide column names imported from your data source..
 
-### Custom field options
+### Field display options
+
+In the **Field** tab you can set table specific display options that will affect all columns. In the **Override** tab you can customize them per column.
 
 - [Column width](#column-width)
 - [Column alignment](#column-alignment)
