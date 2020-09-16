@@ -51,8 +51,6 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
 
   const filterInfo = valueFiltersRegistry.get(config.filterType);
   const filterInstance = filterInfo.getInstance({
-    filterExpression: config.filterExpression,
-    filterExpression2: config.filterExpression2,
     filterArgs: config.filterArgs,
     fieldType: fieldType,
   });
@@ -60,8 +58,6 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
   const fieldNameInvalid = config.fieldName !== null && !fieldNameOptions.find(item => item.value === config.fieldName);
   const filterTypeInvalid =
     !fieldNameInvalid && filterInfo.supportedFieldTypes && !filterInfo.supportedFieldTypes.includes(fieldType);
-
-  // console.log('>>', config, filterInfo, filterInstance);
 
   const onArgsChange = useCallback(
     (filterArgs: Record<string, any>) => {
@@ -71,7 +67,6 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
   );
 
   const filterArgsComponent = getValueFilterArgsComponent(config.filterType);
-
   return (
     <div className="gf-form-inline">
       <div className="gf-form gf-form-spacing">
@@ -93,7 +88,7 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
         />
       </div>
       <div className="gf-form gf-form-spacing">
-        <div className="gf-form-label width-8">Match</div>
+        <div className="gf-form-label width-4">Match</div>
         <Select
           invalid={filterTypeInvalid}
           className="width-8"
@@ -101,7 +96,10 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
           options={filterTypeOptions}
           value={config.filterType}
           onChange={value => {
-            onConfigChange({ ...config, filterType: (value.value as ValueFilterID) ?? ValueFilterID.regex });
+            onConfigChange({
+              ...config,
+              filterType: (value.value as ValueFilterID) ?? ValueFilterID.regex,
+            });
           }}
           menuPlacement="bottom"
         />
@@ -138,8 +136,6 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
     let valueFilters = cloneDeep(options.valueFilters);
     valueFilters.push({
       fieldName: null,
-      filterExpression: null,
-      filterExpression2: null,
       filterArgs: {},
       filterType: ValueFilterID.regex,
     });

@@ -8,8 +8,6 @@ import { ValueFilterID, valueFiltersRegistry } from '../valueFilters';
 
 export interface ValueFilter {
   fieldName: string | null; // Corresponding field name
-  filterExpression: string | null; // The filter expression / value
-  filterExpression2: string | null;
   filterArgs: Record<string, any>;
   filterType: ValueFilterID;
 }
@@ -28,9 +26,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
     valueFilters: [
       {
         fieldName: null,
-        filterExpression: null,
         filterType: ValueFilterID.regex,
-        filterExpression2: null,
         filterArgs: {},
       },
     ],
@@ -73,9 +69,8 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
           }
 
           // This creates the filter instance we need (with the test function) we need to match the rows
+          console.log('filterArgs', filter.filterArgs);
           let filterInstance = valueFiltersRegistry.get(filter.filterType).getInstance({
-            filterExpression: filter.filterExpression,
-            filterExpression2: filter.filterExpression2,
             filterArgs: filter.filterArgs,
             fieldType: field.type,
           });

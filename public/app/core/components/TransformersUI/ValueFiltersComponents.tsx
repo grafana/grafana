@@ -16,7 +16,7 @@ function SingleTextInput(placeholder: string, argName: string) {
         <Input
           className="flex-grow-1"
           invalid={invalidArgs[argName] ?? false}
-          defaultValue={filterArgs?.regex}
+          defaultValue={filterArgs?.[argName] ?? null}
           placeholder={placeholder}
           onBlur={event => {
             onArgsChange({ [argName]: event.currentTarget.value });
@@ -59,15 +59,15 @@ const RangeInput: React.FC<Props> = ({ filterArgs, invalidArgs, onArgsChange }) 
 };
 
 const components: Record<ValueFilterID, React.FC<Props> | null> = {
-  [ValueFilterID.regex]: SingleTextInput('Regex', 'regex'),
+  [ValueFilterID.regex]: SingleTextInput('Regex', 'expression'),
   [ValueFilterID.isNull]: null,
   [ValueFilterID.isNotNull]: null,
-  [ValueFilterID.greater]: SingleTextInput('Value', 'value'),
-  [ValueFilterID.greaterOrEqual]: SingleTextInput('Value', 'value'),
-  [ValueFilterID.lower]: SingleTextInput('Value', 'value'),
-  [ValueFilterID.lowerOrEqual]: SingleTextInput('Value', 'value'),
-  [ValueFilterID.equal]: SingleTextInput('Value', 'value'),
-  [ValueFilterID.notEqual]: SingleTextInput('Value', 'value'),
+  [ValueFilterID.greater]: SingleTextInput('Value', 'expression'),
+  [ValueFilterID.greaterOrEqual]: SingleTextInput('Value', 'expression'),
+  [ValueFilterID.lower]: SingleTextInput('Value', 'expression'),
+  [ValueFilterID.lowerOrEqual]: SingleTextInput('Value', 'expression'),
+  [ValueFilterID.equal]: SingleTextInput('Value', 'expression'),
+  [ValueFilterID.notEqual]: SingleTextInput('Value', 'expression'),
   [ValueFilterID.range]: RangeInput,
 };
 

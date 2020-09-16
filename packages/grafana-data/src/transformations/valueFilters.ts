@@ -25,8 +25,6 @@ export interface ValueFilterInstance {
   isValid: boolean;
   test: ValueFilterTestFunction;
   invalidArgs?: Record<string, boolean>;
-  expression1Invalid?: boolean;
-  expression2Invalid?: boolean;
 }
 
 //
@@ -35,8 +33,7 @@ export interface ValueFilterInstance {
 
 function testRegexCreator(filterOptions: Record<string, any>): ValueFilterInstance {
   let { filterArgs } = filterOptions;
-  let regex = filterArgs?.regex ?? '';
-  console.log('regex', regex);
+  let regex = filterArgs?.expression ?? '';
 
   // The filter configuration
   const re = new RegExp(regex);
@@ -68,7 +65,7 @@ function testIsNotNullCreator(filterOptions: Record<string, any>): ValueFilterIn
 
 function testGreaterCreator(filterOptions: Record<string, any>): ValueFilterInstance {
   let { filterArgs, fieldType } = filterOptions;
-  let expression = filterArgs?.value || null;
+  let expression = filterArgs?.expression || null;
 
   if (expression === '' || expression === null) {
     return { isValid: false, test: value => true };
@@ -93,7 +90,7 @@ function testGreaterCreator(filterOptions: Record<string, any>): ValueFilterInst
 
 function testGreaterOrEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
   let { filterArgs, fieldType } = filterOptions;
-  let expression = filterArgs?.value || null;
+  let expression = filterArgs?.expression || null;
 
   if (expression === '' || expression === null) {
     return { isValid: false, test: value => true };
@@ -117,7 +114,7 @@ function testGreaterOrEqualCreator(filterOptions: Record<string, any>): ValueFil
 
 function testLowerCreator(filterOptions: Record<string, any>): ValueFilterInstance {
   let { filterArgs, fieldType } = filterOptions;
-  let expression = filterArgs?.value || null;
+  let expression = filterArgs?.expression || null;
 
   if (expression === '' || expression === null) {
     return { isValid: false, test: value => true };
@@ -141,7 +138,7 @@ function testLowerCreator(filterOptions: Record<string, any>): ValueFilterInstan
 
 function testLowerOrEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
   let { filterArgs, fieldType } = filterOptions;
-  let expression = filterArgs?.value || null;
+  let expression = filterArgs?.expression || null;
 
   if (expression === '' || expression === null) {
     return { isValid: false, test: value => true };
@@ -185,7 +182,6 @@ function testRangeCreator(filterOptions: Record<string, any>): ValueFilterInstan
   // We need a specific interval format : [min,max] or ]min,max[ (accepting spacing and +- before the values)
   let { max = null, min = null } = filterOptions.filterArgs;
 
-  console.log(min, max);
   if (min === null || max === null || min === '' || max === '') {
     return {
       isValid: false,
@@ -193,7 +189,6 @@ function testRangeCreator(filterOptions: Record<string, any>): ValueFilterInstan
     };
   }
 
-  console.log(min, max);
   min = Number(min);
   max = Number(max);
   if (isNaN(min) || isNaN(max)) {
@@ -223,8 +218,6 @@ export interface ValueFilterInfo extends RegistryItem {
   //   aliasIds?: string[]; // when the ID changes, we may want backwards compatibility ('current' => 'last')
   //   excludeFromPicker?: boolean; // Exclude from selector options
 
-  placeholder?: string; // Place holder for filter expression input
-  placeholder2?: string; // Second placeholder for 2 input fields
   getInstance: ValueFilterInstanceCreator;
   supportedFieldTypes?: FieldType[]; // If defined, support only those field types
 }
@@ -234,7 +227,6 @@ export const valueFiltersRegistry = new Registry<ValueFilterInfo>(() => [
     id: ValueFilterID.regex,
     name: 'Regex',
     getInstance: testRegexCreator,
-    placeholder: 'Regular expression',
   },
   {
     id: ValueFilterID.isNull,
@@ -251,46 +243,38 @@ export const valueFiltersRegistry = new Registry<ValueFilterInfo>(() => [
     name: 'Greater',
     getInstance: testGreaterCreator,
     supportedFieldTypes: [FieldType.number],
-    placeholder: 'Value',
   },
   {
     id: ValueFilterID.greaterOrEqual,
     name: 'Greater or Equal',
     getInstance: testGreaterOrEqualCreator,
     supportedFieldTypes: [FieldType.number],
-    placeholder: 'Value',
   },
   {
     id: ValueFilterID.lower,
     name: 'Lower',
     getInstance: testLowerCreator,
     supportedFieldTypes: [FieldType.number],
-    placeholder: 'Value',
   },
   {
     id: ValueFilterID.lowerOrEqual,
     name: 'Lower or Equal',
     getInstance: testLowerOrEqualCreator,
     supportedFieldTypes: [FieldType.number],
-    placeholder: 'Value',
   },
   {
     id: ValueFilterID.equal,
     name: 'Equal',
     getInstance: testEqualCreator,
-    placeholder: 'Value',
   },
   {
     id: ValueFilterID.notEqual,
     name: 'Different',
     getInstance: testNotEqualCreator,
-    placeholder: 'Value',
   },
   {
     id: ValueFilterID.range,
     name: 'Range',
     getInstance: testRangeCreator,
-    placeholder: 'Min',
-    placeholder2: 'Max',
   },
 ]);
