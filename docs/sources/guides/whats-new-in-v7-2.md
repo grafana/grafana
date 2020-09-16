@@ -80,7 +80,7 @@ The UI for transforms also has an update that now allows you to move transformat
 
 You can now add override rules that use a regex matcher and overrides that match on field type.
 
-## Query inspector in Explore
+## Inspect queries in Explore
 
 You can enjoy all the details query inspector gave you in dashboards now in Explore as well. You can open query inspector tab with the button next to query history. See [Query inspector in Explore]({{< relref "../features/explore/index.md#query-inspector" >}}) for more details.
 
