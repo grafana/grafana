@@ -223,7 +223,7 @@
       name: Export and import
     - link: /dashboards/dashboard_history/
       name: Dashboard version history
-    - name: Keyboard Shortcuts
+    - name: Keyboard shortcuts
       link: /features/shortcuts/
     - name: Reporting
       link: /features/reporting/
