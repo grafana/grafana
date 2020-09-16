@@ -99,7 +99,7 @@ import {
   decorateWithGraphResult,
   decorateWithLogsResult,
   decorateWithTableResult,
-} from '../utils/ResultProcessor';
+} from '../utils/decorators';
 
 /**
  * Updates UI state and save it to the URL
