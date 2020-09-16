@@ -103,28 +103,24 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
         <div className="gf-form gf-form--grow">
           {showLabels ? (
             <>
-              <InlineFormLabel htmlFor="labels" className="query-keyword" width={7}>
+              <InlineFormLabel
+                htmlFor="labels"
+                className="query-keyword"
+                width={7}
+                tooltip={
+                  <>
+                    Set labels using a key=value syntax:
+                    <br />
+                    {`{ key = "value", key2 = "value" }`}
+                    <br />
+                    key="value", key2="value"
+                    <br />
+                    key=value, key2=value
+                    <br />
+                  </>
+                }
+              >
                 Labels
-                <Tooltip
-                  placement="top"
-                  content={
-                    <>
-                      Set labels using a key=value syntax:
-                      <br />
-                      {`{ key = "value", key2 = "value" }`}
-                      <br />
-                      key="value", key2="value"
-                      <br />
-                      key=value, key2=value
-                      <br />
-                    </>
-                  }
-                  theme={'info'}
-                >
-                  <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-                    <Icon name="info-circle" size="sm" />
-                  </div>
-                </Tooltip>
               </InlineFormLabel>
               <Input
                 id="labels"
