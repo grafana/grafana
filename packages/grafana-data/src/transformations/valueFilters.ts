@@ -161,7 +161,7 @@ function testLowerOrEqualCreator(filterOptions: Record<string, any>): ValueFilte
 }
 
 function testEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let compare: any = filterOptions?.value || '';
+  let compare: any = filterOptions.filterArgs?.expression || '';
   return {
     isValid: compare !== null,
     // eslint-disable-next-line eqeqeq
@@ -170,7 +170,7 @@ function testEqualCreator(filterOptions: Record<string, any>): ValueFilterInstan
 }
 
 function testNotEqualCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let compare: any = filterOptions?.value || '';
+  let compare: any = filterOptions.filterArgs?.expression || '';
   return {
     isValid: compare !== null,
     // eslint-disable-next-line eqeqeq
