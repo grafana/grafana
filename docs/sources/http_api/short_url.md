@@ -1,21 +1,21 @@
 +++
-title = "ShortUrl HTTP API "
-description = "Grafana ShortUrl HTTP API"
+title = "ShortURL HTTP API "
+description = "Grafana ShortURL HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "shortUrl"]
 aliases = ["/docs/grafana/latest/http_api/short_url/"]
 type = "docs"
 [menu.docs]
-name = "ShortUrl"
+name = "ShortURL"
 parent = "http_api"
 +++
 
-# ShortUrl API
+# ShortURL API
 
-## Get path from short url uid
+## Redirect to full path from short URL UID
 
 `GET /api/goto/:uid`
 
-Returns redirect to path associated with the given uid. If it does not exist, returns redirect to `/notfound`
+Redirects to the URL path associated with the given UID if it exists. Otherwise redirects to `/notfound`.
 
 **Example Request**:
 
@@ -39,11 +39,11 @@ Status Codes:
 
 - **302** – Redirect to resolved URL
 
-## Create short url
+## Create short URL
 
 `POST /api/goto`
 
-Creates a new short url.
+Creates a new short URL.
 
 **Example Request**:
 
@@ -68,10 +68,10 @@ JSON Body schema:
 HTTP/1.1 200
 Content-Type: application/json
 
-abcde
+AT76wBvGk
 ```
 
 Status Codes:
 
 - **200** – Created
-- **400** – Errors (invalid json, missing or invalid fields, etc)
+- **400** – Errors (invalid json, missing or invalid fields)
