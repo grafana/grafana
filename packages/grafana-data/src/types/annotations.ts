@@ -78,7 +78,7 @@ export interface AnnotationSupport<TQuery extends DataQuery = DataQuery, TAnno =
   /**
    * When the standard frame > event processing is insufficient, this allows explicit control of the mappings
    */
-  processEvents?(anno: TAnno, data: DataFrame): AnnotationEvent[] | undefined;
+  processEvents?(anno: TAnno, data: DataFrame[]): AnnotationEvent[] | undefined;
 
   /**
    * Specify a custom QueryEditor for the annotation page.  If not specified, the standard one will be used
