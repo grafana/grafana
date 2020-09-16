@@ -2,7 +2,7 @@ import { e2e } from '@grafana/e2e';
 
 e2e.scenario({
   describeName: 'Solo Route',
-  itName: 'Can view panes with shared queries in fullsceen',
+  itName: 'Can view panels with shared queries in fullsceen',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
   skipScenario: false,
