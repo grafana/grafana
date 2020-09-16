@@ -273,7 +273,7 @@ describe('applyFieldOverrides', () => {
       fieldConfigRegistry: customFieldRegistry,
     })[0];
 
-    const links = data.fields[1].getLinks!({ valueRowIndex: 0 });
+    data.fields[1].getLinks!({ valueRowIndex: 0 });
 
     expect(data.fields[1].config.decimals).toEqual(1);
     expect(replaceVariablesCalls[0].__value.value.text).toEqual('100.0');
