@@ -101,6 +101,9 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   }
 
   return options.data.map((frame, index) => {
+    // Need to define this new frame here as it's passed to the getLinkSupplier function inside the fields loop
+    const newFrame: DataFrame = { ...frame };
+
     const scopedVars: ScopedVars = {
       __series: { text: 'Series', value: { name: getFrameDisplayName(frame, index) } }, // might be missing
     };
@@ -206,7 +209,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
       // Attach data links supplier
       f.getLinks = getLinksSupplier(
-        frame,
+        newFrame,
         f,
         fieldScopedVars,
         context.replaceVariables,
@@ -220,10 +223,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       return f;
     });
 
-    return {
-      ...frame,
-      fields,
-    };
+    newFrame.fields = fields;
+    return newFrame;
   });
 }
 
