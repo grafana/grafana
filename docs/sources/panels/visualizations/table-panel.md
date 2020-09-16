@@ -15,6 +15,8 @@ The table panel is very flexible, supporting multiple modes for time series and 
 
 {{< figure src="/img/docs/v72/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
 
+> **Note:** Annotations are not currently supported in the table panel.
+
 ## Data and field options
 
 Table visualizations allow you to apply:
