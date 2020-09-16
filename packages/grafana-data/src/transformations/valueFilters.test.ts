@@ -18,7 +18,7 @@ describe('Value filters', () => {
 
     let filterInfo = valueFiltersRegistry.get(ValueFilterID.greater);
     let filter = filterInfo.getInstance({
-      filterExpression: '1.5',
+      filterArgs: { expression: '1.5' },
       fieldType: FieldType.number,
     });
 
@@ -33,7 +33,7 @@ describe('Value filters', () => {
 
     let filterInfo = valueFiltersRegistry.get(ValueFilterID.greaterOrEqual);
     let filter = filterInfo.getInstance({
-      filterExpression: '1.5',
+      filterArgs: { expression: '1.5' },
       fieldType: FieldType.number,
     });
 
@@ -48,7 +48,7 @@ describe('Value filters', () => {
 
     let filterInfo = valueFiltersRegistry.get(ValueFilterID.lower);
     let filter = filterInfo.getInstance({
-      filterExpression: '1.5',
+      filterArgs: { expression: '1.5' },
       fieldType: FieldType.number,
     });
 
@@ -63,7 +63,7 @@ describe('Value filters', () => {
 
     let filterInfo = valueFiltersRegistry.get(ValueFilterID.lowerOrEqual);
     let filter = filterInfo.getInstance({
-      filterExpression: '1.5',
+      filterArgs: { expression: '1.5' },
       fieldType: FieldType.number,
     });
 
@@ -78,7 +78,7 @@ describe('Value filters', () => {
 
     let filterInfo = valueFiltersRegistry.get(ValueFilterID.isNull);
     let filter = filterInfo.getInstance({
-      filterExpression: '',
+      filterArgs: {},
       fieldType: FieldType.number,
     });
 
@@ -93,7 +93,7 @@ describe('Value filters', () => {
 
     let filterInfo = valueFiltersRegistry.get(ValueFilterID.isNotNull);
     let filter = filterInfo.getInstance({
-      filterExpression: '',
+      filterArgs: {},
       fieldType: FieldType.number,
     });
 
@@ -114,7 +114,7 @@ describe('Value filters', () => {
 
     for (let [value, fieldType, filterExpression, result] of dataset) {
       let filterInfo = valueFiltersRegistry.get(ValueFilterID.equal);
-      let filter = filterInfo.getInstance({ filterExpression, fieldType });
+      let filter = filterInfo.getInstance({ filterArgs: { expression: filterExpression }, fieldType });
       expect(filter.isValid).toBe(true);
       expect(filter.test(value)).toBe(result);
     }
@@ -132,7 +132,7 @@ describe('Value filters', () => {
 
     for (let [value, fieldType, filterExpression, result] of dataset) {
       let filterInfo = valueFiltersRegistry.get(ValueFilterID.notEqual);
-      let filter = filterInfo.getInstance({ filterExpression, fieldType });
+      let filter = filterInfo.getInstance({ filterArgs: { expression: filterExpression }, fieldType });
       expect(filter.isValid).toBe(true);
       expect(filter.test(value)).toBe(result);
     }
@@ -151,7 +151,7 @@ describe('Value filters', () => {
 
     for (let [value, fieldType, filterExpression, result] of dataset) {
       let filterInfo = valueFiltersRegistry.get(ValueFilterID.regex);
-      let filter = filterInfo.getInstance({ filterExpression, fieldType });
+      let filter = filterInfo.getInstance({ filterArgs: { expression: filterExpression }, fieldType });
       expect(filter.isValid).toBe(true);
       expect(filter.test(value)).toBe(result);
     }
@@ -163,8 +163,7 @@ describe('Value filters', () => {
 
     let filterInfo = valueFiltersRegistry.get(ValueFilterID.range);
     let filter = filterInfo.getInstance({
-      filterExpression: '-1',
-      filterExpression2: '2',
+      filterArgs: { min: '-1', max: '2' },
       fieldType: FieldType.number,
     });
 
