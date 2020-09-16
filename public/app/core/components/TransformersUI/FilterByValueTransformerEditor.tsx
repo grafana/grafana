@@ -119,7 +119,7 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
           filterArgsComponent({
             onArgsChange,
             filterArgs: config.filterArgs,
-            invalidArgs: filterInstance.invalidArgs,
+            invalidArgs: filterInstance?.invalidArgs ?? ([] as string[]),
           })) ||
           (filterInfo.placeholder && (
             <Input

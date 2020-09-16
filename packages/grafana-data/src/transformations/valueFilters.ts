@@ -24,7 +24,7 @@ type ValueFilterInstanceCreator = (filterOptions: Record<string, any>) => ValueF
 export interface ValueFilterInstance {
   isValid: boolean;
   test: ValueFilterTestFunction;
-  invalidArgs?: Record<string, boolean>;
+  invalidArgs?: string[];
   expression1Invalid?: boolean;
   expression2Invalid?: boolean;
 }
