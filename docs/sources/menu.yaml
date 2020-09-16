@@ -165,8 +165,8 @@
       name: Queries
     - link: /panels/transformations/
       name: Transformations
-    - link: /panels/field-configuration-options/
-      name: Field config options
+    - link: /panels/field-options/
+      name: Field options
     - link: /panels/panel-editor/
       name: Panel editor
     - name: Visualizations
