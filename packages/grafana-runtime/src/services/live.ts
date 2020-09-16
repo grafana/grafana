@@ -30,19 +30,15 @@ export interface GrafanaLiveSrv {
   isConnected(): boolean;
 
   /**
-   * Resolves when the server is connected
-   */
-  waitUntilConnected(): Promise<void>;
-
-  /**
    * Listen for changes to the connection state
    */
   getConnectionState(): Observable<boolean>;
 
   /**
-   * Configure a channel with the given setup
+   * Configure a channel with the given setup. The returned observable emits when
+   * the server connects or if it is already connected.
    */
-  initChannel<T>(channel: string, handler: ChannelHandler<T>): void;
+  initChannel<T>(channel: string, handler: ChannelHandler<T>): Observable<void>;
 
   /**
    * Subscribe to activity on a given channel
@@ -75,15 +71,3 @@ export const setGrafanaLiveSrv = (instance: GrafanaLiveSrv) => {
  * @public
  */
 export const getGrafanaLiveSrv = (): GrafanaLiveSrv => singletonInstance;
-
-/**
- * Returns a promise that resolves with the {@link GrafanaLiveSrv} once it has
- * connected
- *
- * @experimental
- * @public
- */
-export const getConnectedLiveSrv = async () => {
-  await singletonInstance.waitUntilConnected();
-  return singletonInstance;
-};

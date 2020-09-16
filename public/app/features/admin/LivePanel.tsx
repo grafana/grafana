@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable, PartialObserver } from 'rxjs';
-import { getConnectedLiveSrv } from '@grafana/runtime';
+import { getGrafanaLiveSrv } from '@grafana/runtime';
+import { tap } from 'rxjs/operators';
 
 interface Props {
   channel: string;
@@ -38,11 +39,10 @@ export class LivePanel extends PureComponent<Props, State> {
       this.subscription = undefined;
     }
 
-    getConnectedLiveSrv().then(srv => {
-      const stream = srv.getChannelStream(this.props.channel);
-      this.subscription = stream.subscribe(this.observer);
-      this.setState({ connected: true, count: 0, lastTime: 0, lastBody: '' });
-    });
+    const stream = getGrafanaLiveSrv()
+      .getChannelStream(this.props.channel)
+      .pipe(tap(() => this.setState({ connected: true, count: 0, lastTime: 0, lastBody: '' })));
+    this.subscription = stream.subscribe(this.observer);
   };
 
   componentDidMount = () => {

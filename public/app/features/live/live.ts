@@ -8,8 +8,9 @@ import Centrifuge, {
 } from 'centrifuge/dist/centrifuge.protobuf';
 import SockJS from 'sockjs-client';
 import { GrafanaLiveSrv, setGrafanaLiveSrv, ChannelHandler, config } from '@grafana/runtime';
-import { Observable, Subject, BehaviorSubject } from 'rxjs';
+import { Observable, Subject, BehaviorSubject, from } from 'rxjs';
 import { KeyValue } from '@grafana/data';
+import { mergeMap, take } from 'rxjs/operators';
 
 interface Channel<T = any> {
   subject: Subject<T>;
@@ -107,19 +108,6 @@ class CentrifugeSrv implements GrafanaLiveSrv {
   }
 
   /**
-   * Resolves when the server is connected
-   */
-  waitUntilConnected(): Promise<void> {
-    return new Promise(resolve => {
-      if (this.isConnected()) {
-        return resolve();
-      }
-
-      this.centrifuge.addListener('connect', () => resolve());
-    });
-  }
-
-  /**
    * Listen for changes to the connection state
    */
   getConnectionState() {
@@ -127,9 +115,19 @@ class CentrifugeSrv implements GrafanaLiveSrv {
   }
 
   initChannel<T>(path: string, handler: ChannelHandler<T>) {
+    const connected = from(
+      new Promise<void>(resolve => {
+        if (this.centrifuge.isConnected()) {
+          return resolve();
+        }
+
+        this.centrifuge.addListener('connect', resolve);
+      })
+    );
+
     if (this.channels[path]) {
       console.log('Already connected to:', path);
-      return;
+      return connected;
     }
     const c: Channel = {
       subject: new Subject<T>(),
@@ -146,15 +144,17 @@ class CentrifugeSrv implements GrafanaLiveSrv {
       },
     };
     c.subscription = this.centrifuge.subscribe(path, callbacks);
+    return connected;
   }
 
   getChannelStream<T>(path: string): Observable<T> {
-    let c = this.channels[path];
-    if (!c) {
-      this.initChannel(path, noopChannelHandler);
-      c = this.channels[path];
-    }
-    return c!.subject.asObservable();
+    const connected = this.initChannel(path, noopChannelHandler);
+    const c = this.channels[path];
+
+    return connected.pipe(
+      take(1),
+      mergeMap(() => c!.subject.asObservable())
+    );
   }
 
   /**
