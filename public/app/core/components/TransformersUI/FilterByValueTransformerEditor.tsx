@@ -19,6 +19,7 @@ import {
 } from '@grafana/data/src/transformations/transformers/filterByValue';
 
 import { valueFiltersRegistry, ValueFilterID } from '@grafana/data/src/transformations/valueFilters';
+import { getValueFilterArgsComponent } from './ValueFiltersComponents';
 
 interface RowProps {
   fieldNameOptions: Array<SelectableValue<string>>;
@@ -52,6 +53,7 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
   const filterInstance = filterInfo.getInstance({
     filterExpression: config.filterExpression,
     filterExpression2: config.filterExpression2,
+    filterArgs: config.filterArgs,
     fieldType: fieldType,
   });
   const filterValid = filterInstance.isValid;
@@ -66,6 +68,17 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
     !fieldNameInvalid &&
     !filterTypeInvalid &&
     !filterValid;
+
+  console.log('>>', config, filterInfo, filterInstance);
+
+  const onArgsChange = useCallback(
+    (filterArgs: Record<string, any>) => {
+      onConfigChange({ ...config, filterArgs });
+    },
+    [onConfigChange, config]
+  );
+
+  const filterArgsComponent = getValueFilterArgsComponent(config.filterType);
 
   return (
     <div className="gf-form-inline">
@@ -102,17 +115,23 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
         />
       </div>
       <div className="gf-form gf-form--grow gf-form-spacing ">
-        {filterInfo.placeholder && (
-          <Input
-            className="flex-grow-1"
-            invalid={filterInstance.expression1Invalid ?? filterExpressionInvalid}
-            defaultValue={config.filterExpression || undefined}
-            placeholder={filterInfo.placeholder}
-            onBlur={event => {
-              onConfigChange({ ...config, filterExpression: event.currentTarget.value });
-            }}
-          />
-        )}
+        {(filterArgsComponent &&
+          filterArgsComponent({
+            onArgsChange,
+            filterArgs: config.filterArgs,
+            invalidArgs: filterInstance.invalidArgs,
+          })) ||
+          (filterInfo.placeholder && (
+            <Input
+              className="flex-grow-1"
+              invalid={filterInstance.expression1Invalid ?? filterExpressionInvalid}
+              defaultValue={config.filterExpression || undefined}
+              placeholder={filterInfo.placeholder}
+              onBlur={event => {
+                onConfigChange({ ...config, filterExpression: event.currentTarget.value });
+              }}
+            />
+          ))}
       </div>
       {filterInfo.placeholder2 && (
         <div className="gf-form gf-form-spacing gf-form--grow">
@@ -155,6 +174,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
       fieldName: null,
       filterExpression: null,
       filterExpression2: null,
+      filterArgs: {},
       filterType: ValueFilterID.regex,
     });
 

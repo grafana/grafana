@@ -24,6 +24,7 @@ type ValueFilterInstanceCreator = (filterOptions: Record<string, any>) => ValueF
 export interface ValueFilterInstance {
   isValid: boolean;
   test: ValueFilterTestFunction;
+  invalidArgs?: Record<string, boolean>;
   expression1Invalid?: boolean;
   expression2Invalid?: boolean;
 }
@@ -33,13 +34,12 @@ export interface ValueFilterInstance {
 //
 
 function testRegexCreator(filterOptions: Record<string, any>): ValueFilterInstance {
-  let { filterExpression } = filterOptions;
-  if (!filterExpression) {
-    filterExpression = '';
-  }
+  let { filterArgs } = filterOptions;
+  let regex = filterArgs?.regex ?? '';
+  console.log('regex', regex);
 
   // The filter configuration
-  const re = new RegExp(filterExpression);
+  const re = new RegExp(regex);
 
   return {
     isValid: true,

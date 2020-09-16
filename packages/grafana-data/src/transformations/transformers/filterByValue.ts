@@ -10,6 +10,7 @@ export interface ValueFilter {
   fieldName: string | null; // Corresponding field name
   filterExpression: string | null; // The filter expression / value
   filterExpression2: string | null;
+  filterArgs: Record<string, any>;
   filterType: ValueFilterID;
 }
 
@@ -25,7 +26,13 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
   description: 'Filter the data points (rows) depending on the value of certain fields',
   defaultOptions: {
     valueFilters: [
-      { fieldName: null, filterExpression: null, filterType: ValueFilterID.regex, filterExpression2: null },
+      {
+        fieldName: null,
+        filterExpression: null,
+        filterType: ValueFilterID.regex,
+        filterExpression2: null,
+        filterArgs: {},
+      },
     ],
     type: 'include',
     match: 'all',
@@ -69,6 +76,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
           let filterInstance = valueFiltersRegistry.get(filter.filterType).getInstance({
             filterExpression: filter.filterExpression,
             filterExpression2: filter.filterExpression2,
+            filterArgs: filter.filterArgs,
             fieldType: field.type,
           });
 
