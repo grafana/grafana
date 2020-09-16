@@ -107,6 +107,19 @@ class CentrifugeSrv implements GrafanaLiveSrv {
   }
 
   /**
+   * Resolves when the server is connected
+   */
+  waitUntilConnected(): Promise<void> {
+    return new Promise(resolve => {
+      if (this.isConnected()) {
+        return resolve();
+      }
+
+      this.centrifuge.addListener('connect', () => resolve());
+    });
+  }
+
+  /**
    * Listen for changes to the connection state
    */
   getConnectionState() {
@@ -149,10 +162,6 @@ class CentrifugeSrv implements GrafanaLiveSrv {
    */
   publish<T>(channel: string, data: any): Promise<T> {
     return this.centrifuge.publish(channel, data);
-  }
-
-  addListener(event: string | symbol, listener: (...args: any[]) => void): void {
-    this.centrifuge.addListener(event, listener);
   }
 }
 
