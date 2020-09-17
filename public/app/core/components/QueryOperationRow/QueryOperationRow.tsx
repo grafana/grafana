@@ -72,6 +72,9 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
         {headerElement}
       </div>
       {actions && <div>{actionsElement}</div>}
+      {draggable && (
+        <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
+      )}
     </div>
   );
 
