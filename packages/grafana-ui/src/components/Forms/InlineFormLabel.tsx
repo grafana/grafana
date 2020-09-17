@@ -10,10 +10,6 @@ export interface Props extends Omit<HTMLProps<HTMLLabelElement>, 'children' | 'c
   children: ReactNode;
   /** Custom styles for the label */
   className?: string;
-  /** @depecated */
-  isFocused?: boolean;
-  /** @depecated */
-  isInvalid?: boolean;
   /** Content for the labels tooltip. If provided, an info icon with the tooltip content
    * will be displayed */
   tooltip?: PopoverContent;
@@ -21,6 +17,12 @@ export interface Props extends Omit<HTMLProps<HTMLLabelElement>, 'children' | 'c
   width?: number | 'auto';
   /** A toggle to apply query keyword styling to the label */
   queryKeyword?: boolean;
+  /** @deprecated */
+  /** This prop is deprecated and is not used anymore */
+  isFocused?: boolean;
+  /** @deprecated */
+  /** This prop is deprecated and is not used anymore */
+  isInvalid?: boolean;
 }
 
 export const InlineFormLabel: FunctionComponent<Props> = ({

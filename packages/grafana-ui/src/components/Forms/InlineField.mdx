@@ -1,0 +1,16 @@
+import { Props } from "@storybook/addon-docs/blocks";
+import { InlineField } from "./InlineField";
+
+# InlineField
+
+A basic component for rendering inline form elements together with their label. If the child element has `id` specified, the label's `htmlFor` attribute, pointing to the id, will be added.
+
+# Usage
+
+```jsx
+<InlineField label="Inline field">
+  <Input placeholder="Inline input" />
+</InlineField>
+```
+
+<Props of={InlineField} />

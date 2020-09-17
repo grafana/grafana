@@ -5,19 +5,23 @@ import { useStyles } from '../../themes';
 import { InlineFormLabel } from './InlineFormLabel';
 import { PopoverContent } from '../Tooltip/Tooltip';
 
-export interface Props extends InputHTMLAttributes<HTMLInputElement> {
+export interface Props extends Omit<InputHTMLAttributes<HTMLDivElement>, 'className' | 'css'> {
   /** Form input element, i.e Input or Switch */
   children: React.ReactElement;
-  /** Label for the field */
-  label?: string | React.ReactNode;
+  /** Label for the field. If it's html elements and not a string */
+  label?: React.ReactNode;
+  /** Content for the label's tooltip */
   tooltip?: PopoverContent;
-  labelWidth?: number;
+  /** Custom width for the label */
+  labelWidth?: number | 'auto';
   /** Indicates if field is in invalid state */
   invalid?: boolean;
   /** Indicates if field is in loading state */
   loading?: boolean;
   /** Indicates if field is disabled */
   disabled?: boolean;
+  /** Custom styles for the field */
+  className?: string;
 }
 
 /**
@@ -44,7 +48,7 @@ export const InlineField: FC<Props> = ({
   const labelElement =
     typeof label === 'string' ? (
       <InlineFormLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId}>
-        label
+        {label}
       </InlineFormLabel>
     ) : (
       label
@@ -68,6 +72,14 @@ const getStyles = (theme: GrafanaTheme) => {
       align-items: flex-start;
       text-align: left;
       position: relative;
+
+      * {
+        :focus {
+          // Keep the focus outline inset
+          box-shadow: none;
+          border-color: ${theme.palette.blue95};
+        }
+      }
     `,
   };
 };
