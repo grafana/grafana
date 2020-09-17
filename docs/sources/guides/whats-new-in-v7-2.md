@@ -37,8 +37,7 @@ The main highlights are:
 
 You can now customize how dates are formatted in Grafana. Custom date formats apply to the time range picker, graphs, and other panel visualizations.
 
-This screenshot shows both a custom full date format with a 12 hour clock and am/pm suffix. The graph is also
-showing same 12-hour clock format and a customized month and day format compared to the Grafana default `MM/DD` format.
+This screenshot shows both a custom full date format with a 12 hour clock and am/pm suffix. The graph is also showing the same 12-hour clock format and a customized month and day format compared to the Grafana default `MM/DD` format.
 
 {{< docs-imagebox img="/img/docs/v72/date_formats.png" max-width="800px" caption="Custom date time formats" >}}
 
@@ -81,13 +80,13 @@ Grafana 7.2 includes the following transformation enhancements:
 
 - A new [Group By]({{< relref "../panels/transformations.md#group-by">}}) transformation that allows you to group by multiple fields and add any number of aggregations for other fields.
 - The [Labels to fields]({{< relref "../panels/transformations.md#labels-to-fields">}}) transformation now allows you to pick one label and use that as the name of the value field.
-- You can now move transformations up and down. Remember that transformations are processed in the order they are listed in the UI, so think before you move something!
+- You can drag transformations to reorder them. Remember that transformations are processed in the order they are listed in the UI, so think before you move something!
 
 {{< docs-imagebox img="/img/docs/v72/transformations.gif" max-width="800px" caption="Group by and reordering of transformations" >}}
 
 ## Drag to reorder queries
 
-The up and down arrows which were previously the only way to change query order have been removed. Instead, there is now a grab icon that allows you to drag and drop queries in a list to change their order.
+The up and down arrows, which were previously the only way to change query order, have been removed. Instead, there is now a grab icon that allows you to drag and drop queries in a list to change their order.
 
 {{< docs-imagebox img="/img/docs/v72/drag-queries.gif" max-width="800px" caption="Drag to reorder queries" >}}
 
