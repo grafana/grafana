@@ -21,11 +21,11 @@ Because of the difference between query languages, data sources may have query e
 
 **InfluxDB query editor**
 
-{{< docs-imagebox img="/img/docs/queries/influxdb-query-editor-7-0.png" class="docs-image--no-shadow" max-width="1000px" >}}
+{{< docs-imagebox img="/img/docs/queries/influxdb-query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
 **Prometheus (PromQL) query editor**
 
-{{< docs-imagebox img="/img/docs/queries/prometheus-query-editor-7-0.png" class="docs-image--no-shadow" max-width="1000px" >}}
+{{< docs-imagebox img="/img/docs/queries/prometheus-query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
 ## Query syntax
 
