@@ -1,5 +1,6 @@
 import { ComponentClass } from 'react';
 import { KeyValue } from './data';
+import { LiveChannelSupport } from './live';
 
 export enum PluginState {
   alpha = 'alpha', // Only included it `enable_alpha` is true
@@ -139,6 +140,9 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   // This is set if the plugin system had errors loading the plugin
   loadError?: boolean;
 
+  // Live support
+  liveSupport?: LiveChannelSupport;
+
   // Config control (app/datasource)
   angularConfigCtrl?: any;
 
@@ -151,6 +155,11 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
       this.configPages = [];
     }
     this.configPages.push(tab);
+    return this;
+  }
+
+  setLiveSupport(support: LiveChannelSupport) {
+    this.liveSupport = support;
     return this;
   }
 

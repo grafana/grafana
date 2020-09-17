@@ -7,10 +7,11 @@ import Centrifuge, {
   SubscribeErrorContext,
 } from 'centrifuge/dist/centrifuge.protobuf';
 import SockJS from 'sockjs-client';
-import { GrafanaLiveSrv, setGrafanaLiveSrv, ChannelHandler, config } from '@grafana/runtime';
-import { Observable, Subject, BehaviorSubject } from 'rxjs';
-import { share, finalize } from 'rxjs/operators';
-import { Trie } from '@grafana/data';
+import { GrafanaLiveSrv, setGrafanaLiveSrv, config } from '@grafana/runtime';
+import { Observable, Subject, BehaviorSubject, from } from 'rxjs';
+import { share, finalize, mergeMap, take } from 'rxjs/operators';
+import { ChannelHandler, LiveChannelSupport } from '@grafana/data';
+import { loadPlugin } from '../plugins/PluginPage';
 
 interface Channel<T = any> {
   plugin: string;
@@ -21,15 +22,8 @@ interface Channel<T = any> {
   subscription: Centrifuge.Subscription;
 }
 
-interface PluginChannelSupport {
-  plugin: string;
-  paths: Map<string, ChannelHandler>;
-  prefix: Trie<ChannelHandler>;
-}
-
 class CentrifugeSrv implements GrafanaLiveSrv {
   readonly channels = new Map<string, Channel>();
-  readonly plugins = new Map<string, PluginChannelSupport>();
 
   centrifuge: Centrifuge;
   connectionState: BehaviorSubject<boolean>;
@@ -79,15 +73,6 @@ class CentrifugeSrv implements GrafanaLiveSrv {
   // Channel functions
   //----------------------------------------------------------
 
-  //   export interface SubscriptionEvents {
-  //     publish?: (ctx: PublicationContext) => void;
-  //     join?: (ctx: JoinLeaveContext) => void;
-  //     leave?: (ctx: JoinLeaveContex) => void;
-  //     subscribe?: (ctx: SubscribeSuccessContext) => void;
-  //     error?: (ctx: SubscribeErrorContext) => void;
-  //     unsubscribe?: (ctx: UnsubscribeContext) => void;
-  // }
-
   onSubscribe = (context: SubscribeSuccessContext) => {
     console.log('onSubscribe', context);
   };
@@ -111,12 +96,32 @@ class CentrifugeSrv implements GrafanaLiveSrv {
   /**
    * Returns a channel that has been initalized and subscribed to the given path
    */
-  private getChannel<T>(id: string) {
-    let channel = this.channels.get(id);
-    if (channel) {
-      return channel;
+  private async getChannel<T>(pluginId: string, path: string): Promise<Channel<T>> {
+    const key = `${pluginId}/${path}`;
+    const c = this.channels.get(key);
+    if (c) {
+      return Promise.resolve(c);
     }
-    const { plugin, path, handler } = this.getHandlerInfo(id);
+
+    const liveSupport = await this.getChannelSupport(pluginId);
+    const handler = liveSupport.getChannelHandler(path);
+    if (!handler) {
+      return Promise.reject(`Invalid path: ${key}`);
+    }
+
+    // Make sure we are connected before trying to subscribe
+    if (!this.isConnected()) {
+      await new Promise<void>(resolve => {
+        if (this.centrifuge.isConnected()) {
+          return resolve();
+        }
+        const connectListener = () => {
+          resolve();
+          this.centrifuge.removeListener('connect', connectListener);
+        };
+        this.centrifuge.addListener('connect', connectListener);
+      });
+    }
 
     const subject = new Subject<T>();
     const callbacks: SubscriptionEvents = {
@@ -127,53 +132,36 @@ class CentrifugeSrv implements GrafanaLiveSrv {
         subject.next(v);
       },
     };
-    console.log('initChannel', this.centrifuge.isConnected(), path, handler);
-    const subscription = this.centrifuge.subscribe(path, callbacks);
-    channel = {
-      plugin,
+    console.log('initChannel', this.centrifuge.isConnected(), key, handler);
+    const subscription = this.centrifuge.subscribe(key, callbacks);
+    const channel = {
+      plugin: pluginId,
       path,
       subject,
       stream: subject.pipe(
         finalize(() => {
-          console.log('Final listener for', path);
+          console.log('Final listener for', key);
           if (subscription) {
             subscription.unsubscribe();
           }
-          this.channels.delete(path); // remove the listener when done
+          this.channels.delete(key); // remove the listener when done
         }),
         share()
       ),
       handler,
       subscription,
     };
-    this.channels.set(path, channel);
+    this.channels.set(key, channel);
     return channel;
   }
 
-  private getHandlerInfo(id: string) {
-    const idx = id.indexOf('/');
-    if (idx < 1) {
-      throw new Error('Invalid channel.  expecting `${pluginId}/path`');
-    }
-    const plugin = id.substring(0, idx);
-    const path = id.substring(idx + 1);
-    const support = this.plugins.get(plugin);
-    if (!support) {
-      throw new Error('No channels are configured for plugin: ' + plugin);
-    }
-
-    let handler = support.paths.get(path);
-    if (!handler) {
-      handler = support.prefix.find(path);
-    }
-    if (!handler) {
-      throw new Error('No handler registered for channel: ' + id);
-    }
-    return {
-      plugin,
-      path,
-      handler,
-    };
+  private async getChannelSupport(pluginId: string): Promise<LiveChannelSupport> {
+    return loadPlugin(pluginId).then(plugin => {
+      if (!plugin.liveSupport) {
+        return Promise.reject('Plugin does not have live support configured');
+      }
+      return plugin.liveSupport;
+    });
   }
 
   //----------------------------------------------------------
@@ -194,57 +182,33 @@ class CentrifugeSrv implements GrafanaLiveSrv {
     return this.connectionState.asObservable();
   }
 
-  registerChannelSupport<T>(plugin: string, path: string, handler?: ChannelHandler<T>) {
-    let support = this.plugins.get(plugin);
-    if (!support) {
-      support = {
-        plugin,
-        paths: new Map<string, ChannelHandler>(),
-        prefix: new Trie<ChannelHandler>(),
-      };
-      this.plugins.set(plugin, support);
-    }
-    if (!handler) {
-      handler = noopChannelHandler;
-    }
-
-    if (path.endsWith('*')) {
-      support.prefix.insert(path.substring(0, path.length - 1), handler);
-    } else {
-      support.paths.set(path, handler);
-    }
-  }
-
-  getChannelStream<T>(path: string): Observable<T> {
-    return this.getChannel(path).stream; // shared with ref count
+  getChannelStream<T>(plugin: string, path: string): Observable<T> {
+    return from(this.getChannel<T>(plugin, path)).pipe(
+      take(1), // This converts the promise to observable
+      mergeMap(c => c.stream)
+    );
   }
 
   /**
    * Send data to a channel.  This feature is disabled for most channels and will return an error
    */
-  publish<T>(channel: string, data: any): Promise<T> {
+  async publish<T>(plugin: string, path: string, data: any): Promise<T> {
     try {
-      const { handler } = this.getHandlerInfo(channel);
-      if (!handler.allowPublish) {
+      const support = await this.getChannelSupport(plugin);
+      if (!support.onPublish) {
         return Promise.reject({
-          text: `Channel ${channel} does not allow publishing`,
+          text: `Channel ${path} does not allow publishing`,
         });
       }
+      data = support.onPublish(path, data);
+
       // Writes a message over the websocket to grafana server
-      return this.centrifuge.publish(channel, data);
+      return this.centrifuge.publish(`${plugin}/${path}`, data);
     } catch (err) {
-      return Promise.reject({
-        text: `${err}`,
-      });
+      return Promise.reject(err);
     }
   }
 }
-
-const noopChannelHandler: ChannelHandler = {
-  onMessageReceived: (v: any) => {
-    return v; // Just pass the object along
-  },
-};
 
 export function initGrafanaLive() {
   setGrafanaLiveSrv(new CentrifugeSrv());

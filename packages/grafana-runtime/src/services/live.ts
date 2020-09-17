@@ -3,32 +3,6 @@ import { Observable } from 'rxjs';
 /**
  * @experimental
  */
-export interface ChannelHandler<T = any> {
-  /**
-   * Indicate if the channel should try to publish to the service.  Even when
-   * this is enabled, the backend support for the channel may not support publish
-   */
-  allowPublish?: boolean;
-
-  /**
-   * Process the raw message from the server before broadcasting it
-   * to the channel stream
-   */
-  onMessageReceived(msg: any): T;
-}
-
-// export interface SubscriptionEvents {
-//   publish?: (ctx: PublicationContext) => void;
-//   join?: (ctx: JoinLeaveContext) => void;
-//   leave?: (ctx: JoinLeaveContext) => void;
-//   subscribe?: (ctx: SubscribeSuccessContext) => void;
-//   error?: (ctx: SubscribeErrorContext) => void;
-//   unsubscribe?: (ctx: UnsubscribeContext) => void;
-// }
-
-/**
- * @experimental
- */
 export interface GrafanaLiveSrv {
   /**
    * Is the server currently connected
@@ -41,25 +15,17 @@ export interface GrafanaLiveSrv {
   getConnectionState(): Observable<boolean>;
 
   /**
-   * Register channel support on a given path.  Plugins should call this function
-   * on initalization to specify which paths should support streaming responses.
+   * Subscribe to activity on a given channel.
    *
-   * If the path ends in "*" it will will be applied to everything with this prefix
-   *
-   * Optionally define custom behavior for the channel
+   * NOTE: this should be wrapped in try/catch because it may throw errors
+   * if the plugin or path are invalid
    */
-  registerChannelSupport<T>(plugin: string, path: string, handler?: ChannelHandler<T>): void;
-
-  /**
-   * Subscribe to activity on a given channel.  The channel is identified by a plugin and path:
-   *   `${pluginId}/path`
-   */
-  getChannelStream<T>(channel: string): Observable<T>;
+  getChannelStream<T>(plugin: string, path: string): Observable<T>;
 
   /**
    * Send data to a channel.  This feature is disabled for most channels and will return an error
    */
-  publish<T>(channel: string, data: any): Promise<T>;
+  publish<T>(plugin: string, path: string, data: any): Promise<T>;
 }
 
 let singletonInstance: GrafanaLiveSrv;

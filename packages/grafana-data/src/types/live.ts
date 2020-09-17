@@ -3,12 +3,6 @@
  */
 export interface ChannelHandler<T = any> {
   /**
-   * Indicate if the channel should try to publish to the service.  Even when
-   * this is enabled, the backend support for the channel may not support publish
-   */
-  allowPublish?: boolean;
-
-  /**
    * Process the raw message from the server before broadcasting it
    * to the channel stream
    */
@@ -35,9 +29,15 @@ export const StandardChannelHandler: ChannelHandler = {
 /**
  * @experimental
  */
-export interface ChannelSupport {
+export interface LiveChannelSupport {
   /**
    * Get the channel handler for this plugin or null if the channel shoudl not be opened
    */
   getChannelHandler(path: string): ChannelHandler | null;
+
+  /**
+   * If a channel should support publishing, return the body that should be sent
+   * Throw an error if the path should not support publishing a message
+   */
+  onPublish?: (path: string, body: any) => any;
 }

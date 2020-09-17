@@ -20,7 +20,7 @@ interface State {
 
 export class LiveAdmin extends PureComponent<Props, State> {
   state: State = {
-    channel: 'grafana/random-2s-stream',
+    channel: 'testdata/random-2s-stream',
     text: '', // publish text to a channel
   };
 
@@ -42,11 +42,19 @@ export class LiveAdmin extends PureComponent<Props, State> {
       const msg = {
         line: text,
       };
+      const idx = channel.indexOf('/');
+      const plugin = channel.substring(0, idx);
+      const path = channel.substring(idx + 1);
 
       const srv = getGrafanaLiveSrv();
-      srv.publish(channel, msg).then(v => {
-        console.log('PUBLISHED', text, v);
-      });
+      srv
+        .publish(plugin, path, msg)
+        .then(v => {
+          console.log('PUBLISHED', text, v);
+        })
+        .catch(err => {
+          console.log('ERROR', err);
+        });
     }
     this.setState({ text: '' });
   };
@@ -57,18 +65,18 @@ export class LiveAdmin extends PureComponent<Props, State> {
 
     const channels: Array<SelectableValue<string>> = [
       {
-        label: 'random-2s-stream',
-        value: 'random-2s-stream',
+        label: 'testdata/random-2s-stream',
+        value: 'testdata/random-2s-stream',
         description: 'Random stream that updates every 2s',
       },
       {
-        label: 'random-flakey-stream',
-        value: 'random-flakey-stream',
+        label: 'testdata/random-flakey-stream',
+        value: 'testdata/random-flakey-stream',
         description: 'Random stream with intermittent updates',
       },
       {
-        label: 'example-chat',
-        value: 'example-chat',
+        label: 'grafana/example-chat',
+        value: 'grafana/example-chat',
         description: 'A channel that expects chat messages',
       },
     ];
