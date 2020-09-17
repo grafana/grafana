@@ -56,14 +56,14 @@ describe('findHoverIndexFromData', () => {
     ],
   };
 
-  it('should return 0 if posX out of lower bounds', () => {
+  it('should return null if posX out of lower bounds', () => {
     const posX = 99;
-    expect(tooltip.findHoverIndexFromData(posX, series)).toBe(0);
+    expect(tooltip.findHoverIndexFromData(posX, series)).toBe(null);
   });
 
-  it('should return n - 1 if posX out of upper bounds', () => {
+  it('should return null if posX out of upper bounds', () => {
     const posX = 108;
-    expect(tooltip.findHoverIndexFromData(posX, series)).toBe(series.data.length - 1);
+    expect(tooltip.findHoverIndexFromData(posX, series)).toBe(null);
   });
 
   it('should return i if posX in series', () => {
