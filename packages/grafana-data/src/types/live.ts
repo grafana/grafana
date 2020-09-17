@@ -3,33 +3,34 @@
  */
 export interface ChannelHandler<T = any> {
   /**
-   * Callback once subscribed
+   * Callback when subscribed
    */
   onSubscribe?: (ctx: any) => void;
 
   /**
-   * Callback once subscribed
+   * Callback when unsubscribed
    */
   onUnsubscribe?: (ctx: any) => void;
 
   /**
-   * Process the raw message from the server before broadcasting it
-   * to the channel stream
+   * Called when a message is sent to this channel.  This function is used
+   * to transform the raw message from the server into a message that will
+   * be broadcast to all subscribers of the channel
    */
   onMessageReceived?: (msg: any) => T;
 
   /**
-   * Error in the channel
+   * Called when an error occurs in the channel
    */
   onError?: (ctx: any) => void;
 
   /**
-   * Callback once subscribed
+   * Called when someone joins the channel
    */
   onJoin?: (ctx: any) => void;
 
   /**
-   * Callback once subscribed
+   * Called when someone leaves the channel
    */
   onLeave?: (ctx: any) => void;
 }
