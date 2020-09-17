@@ -72,7 +72,6 @@ func (ln *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
 	}
 
 	form := url.Values{}
-	// body := fmt.Sprintf("%s - %s\n%s", evalContext.Rule.Name, ruleURL, evalContext.Rule.Message)
 	body := fmt.Sprintf("%s - %s\n", evalContext.GetNotificationTitle(), ruleURL)
 	form.Add("message", body)
 
