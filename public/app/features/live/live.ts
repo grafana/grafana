@@ -171,10 +171,14 @@ class CentrifugeSrv implements GrafanaLiveSrv {
    */
   async publish<T>(plugin: string, path: string, data: any): Promise<T> {
     const support = await this.getChannelSupport(plugin);
-    if (!support.onPublish) {
+    const handler = support.getChannelHandler(path);
+    if (!handler) {
+      throw new Error(`Invalid path: ${path}`);
+    }
+    if (!handler.onPublish) {
       throw new Error(`Channel ${path} does not allow publishing`);
     }
-    data = support.onPublish(path, data);
+    data = handler.onPublish(data);
 
     // Writes a message over the websocket to grafana server
     return this.centrifuge.publish(`${plugin}/${path}`, data);
