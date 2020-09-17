@@ -36,6 +36,17 @@ export const testDataChannelSupport: ChannelSupport = {
     if (path === 'random-flakey-stream') {
       return noisyHandler;
     }
-    return null; // not supported
+    throw new Error('unsupported channel');
   },
+
+  getChannels: () => [
+    {
+      path: 'random-2s-stream',
+      description: 'Random walk with a point every 2 seconds',
+    },
+    {
+      path: 'random-flakey-stream',
+      description: 'intermittant stream with points .5-4x/sec',
+    },
+  ],
 };

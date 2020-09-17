@@ -1,7 +1,20 @@
+import { SelectableValue } from './select';
+
+/**
+ * @experimental
+ */
+export interface ChannelMeta {
+  path: string; // the channel name
+  description?: string;
+  variables?: Array<SelectableValue<string>>; // Describe the variables within the path syntax
+}
+
 /**
  * @experimental
  */
 export interface ChannelHandler<T = any> {
+  meta?: ChannelMeta;
+
   /**
    * Callback when subscribed
    */
@@ -33,6 +46,13 @@ export interface ChannelHandler<T = any> {
    * Called when someone leaves the channel
    */
   onLeave?: (ctx: any) => void;
+
+  /**
+   * This function must be defined for the channel to support publishing events
+   * into the websocket.  NOTE, the backend plugin must also allow publishing
+   * for this to work succesfully
+   */
+  onPublish?: (body: any) => any;
 }
 
 /**
@@ -40,13 +60,12 @@ export interface ChannelHandler<T = any> {
  */
 export interface ChannelSupport {
   /**
-   * Get the channel handler for this plugin or null if the channel should not be opened
+   * Get the channel handler for the path, or throw an error if invalid
    */
-  getChannelHandler(path: string): ChannelHandler | null;
+  getChannelHandler(path: string): ChannelHandler;
 
   /**
-   * If a channel should support publishing, return the body that should be sent
-   * Throw an error if the path should not support publishing a message
+   * Return a list of supported channels
    */
-  onPublish?: (path: string, body: any) => any;
+  getChannels(): ChannelMeta[];
 }
