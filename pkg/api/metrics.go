@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sort"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -14,7 +15,17 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 	"github.com/grafana/grafana/pkg/util"
+	uuid "github.com/satori/go.uuid"
 )
+
+type WebsocketResponse struct {
+	ChannelName string `json:"channelName"`
+}
+
+type RequestRun struct {
+	Channel     chan *tsdb.QueryResult
+	ChannelName string
+}
 
 // QueryMetricsV2 returns query metrics
 // POST /api/ds/query   DataSource query w/ expressions
@@ -151,6 +162,65 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 	}
 
 	return JSON(statusCode, &resp)
+}
+
+// QueryMetricsWS returns query metrics via websocket
+// POST /api/tsdb/wsquery
+func (hs *HTTPServer) QueryMetricsWS(c *models.ReqContext, reqDto dtos.MetricRequest) Response {
+	timeRange := tsdb.NewTimeRange(reqDto.From, reqDto.To)
+
+	if len(reqDto.Queries) == 0 {
+		return Error(400, "No queries found in query", nil)
+	}
+
+	datasourceId, err := reqDto.Queries[0].Get("datasourceId").Int64()
+	if err != nil {
+		return Error(400, "Query missing datasourceId", nil)
+	}
+
+	ds, err := hs.DatasourceCache.GetDatasource(datasourceId, c.SignedInUser, c.SkipCache)
+	if err != nil {
+		if err == models.ErrDataSourceAccessDenied {
+			return Error(403, "Access denied to datasource", err)
+		}
+		return Error(500, "Unable to load datasource meta data", err)
+	}
+
+	request := &tsdb.TsdbQuery{
+		TimeRange: timeRange,
+		Debug:     reqDto.Debug,
+		User:      c.SignedInUser,
+	}
+
+	for _, query := range reqDto.Queries {
+		request.Queries = append(request.Queries, &tsdb.Query{
+			RefId:         query.Get("refId").MustString("A"),
+			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
+			IntervalMs:    query.Get("intervalMs").MustInt64(1000),
+			Model:         query,
+			DataSource:    ds,
+		})
+	}
+
+	websocketContext, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	channel, err := tsdb.HandleWebSocketRequest(websocketContext, ds, request)
+	if err != nil {
+		cancel()
+		return Error(500, "Metric request error", err)
+	}
+
+	channelName := uuid.Must(uuid.NewV4()).String()
+	hs.SocketChannel <- &RequestRun{
+		ChannelName: channelName,
+		Channel:     channel,
+	}
+
+	statusCode := 200
+	response := WebsocketResponse{
+		ChannelName: channelName,
+	}
+
+	return JSON(statusCode, response)
 }
 
 // GET /api/tsdb/testdata/scenarios

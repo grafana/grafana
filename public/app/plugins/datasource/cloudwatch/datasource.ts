@@ -18,9 +18,8 @@ import {
   TimeRange,
   toDataFrame,
   rangeUtil,
-  DataQueryErrorType,
 } from '@grafana/data';
-import { getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
+import { getBackendSrv, getGrafanaLiveSrv, toDataQueryResponse } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
@@ -41,14 +40,13 @@ import {
   TSDBResponse,
   isCloudWatchLogsQuery,
 } from './types';
-import { from, Observable, of, merge, zip } from 'rxjs';
-import { catchError, finalize, map, mergeMap, tap, concatMap, scan, share, repeat, takeWhile } from 'rxjs/operators';
+import { from, Observable, of, merge } from 'rxjs';
+import { catchError, finalize, map, mergeMap } from 'rxjs/operators';
 import { CloudWatchLanguageProvider } from './language_provider';
 
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { AwsUrl, encodeUrl } from './aws_url';
-import { increasingInterval } from './utils/rxjs/increasingInterval';
 
 const TSDB_QUERY_ENDPOINT = '/api/tsdb/query';
 
@@ -110,7 +108,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
     const dataQueryResponses: Array<Observable<DataQueryResponse>> = [];
     if (logQueries.length > 0) {
-      dataQueryResponses.push(this.handleLogQueries(logQueries, options));
+      dataQueryResponses.push(this.handleLogQueriesWS(logQueries, options));
     }
 
     if (metricsQueries.length > 0) {
@@ -128,7 +126,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     return merge(...dataQueryResponses);
   }
 
-  handleLogQueries = (
+  handleLogQueriesWS = (
     logQueries: CloudWatchLogsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
@@ -143,25 +141,40 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     }
 
     const queryParams = validLogQueries.map((target: CloudWatchLogsQuery) => ({
-      queryString: target.expression,
+      intervalMs: 1, // dummy
+      maxDataPoints: 1, // dummy
+      datasourceId: this.id,
+      queryString: this.replace(target.expression, options.scopedVars, true),
       refId: target.refId,
-      logGroupNames: target.logGroupNames,
-      region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
+      logGroupNames: target.logGroupNames?.map(logGroup =>
+        this.replace(logGroup, options.scopedVars, true, 'log groups')
+      ),
+      region: this.getActualRegion(this.replace(target.region, options.scopedVars, true, 'region')),
     }));
 
-    return this.makeLogActionRequest('StartQuery', queryParams, options.scopedVars).pipe(
-      mergeMap(dataFrames =>
-        this.logsQuery(
-          dataFrames.map(dataFrame => ({
-            queryId: dataFrame.fields[0].values.get(0),
-            region: dataFrame.meta?.custom?.['Region'] ?? 'default',
-            refId: dataFrame.refId!,
-            statsGroups: (logQueries.find(target => target.refId === dataFrame.refId)! as CloudWatchLogsQuery)
-              .statsGroups,
-          }))
+    const range = this.timeSrv.timeRange();
+
+    const requestParams = {
+      from: range.from.valueOf().toString(),
+      to: range.to.valueOf().toString(),
+      queries: queryParams,
+    };
+    return this.getResponseChannel(requestParams).pipe(
+      map(response => {
+        const dataQueryResponse = toDataQueryResponse({
+          data: {
+            results: {
+              [response.refId]: response,
+            },
+          },
+        });
+        dataQueryResponse.state = dataQueryResponse.data.every(dataFrame =>
+          statusIsTerminated(dataFrame.meta?.custom?.['Status'])
         )
-      ),
-      map(response => this.addDataLinksToLogsResponse(response, options))
+          ? LoadingState.Done
+          : LoadingState.Loading;
+        return this.addDataLinksToLogsResponse(dataQueryResponse, options);
+      })
     );
   };
 
@@ -223,93 +236,6 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
     return from(this.performTimeSeriesQuery(request, options.range));
   };
-
-  logsQuery(
-    queryParams: Array<{ queryId: string; refId: string; limit?: number; region: string; statsGroups?: string[] }>
-  ): Observable<DataQueryResponse> {
-    this.logQueries = {};
-    queryParams.forEach(param => {
-      this.logQueries[param.refId] = {
-        id: param.queryId,
-        region: param.region,
-        statsQuery: (param.statsGroups?.length ?? 0) > 0 ?? false,
-      };
-    });
-
-    const dataFrames = increasingInterval({ startPeriod: 100, endPeriod: 1000, step: 300 }).pipe(
-      concatMap(_ => this.makeLogActionRequest('GetQueryResults', queryParams)),
-      repeat(),
-      share()
-    );
-
-    const consecutiveFailedAttempts = dataFrames.pipe(
-      scan(
-        ({ failures, prevRecordsMatched }, frames) => {
-          failures++;
-          for (const frame of frames) {
-            const recordsMatched = frame.meta?.stats?.find(stat => stat.displayName === 'Records matched')?.value!;
-            if (recordsMatched > (prevRecordsMatched[frame.refId!] ?? 0)) {
-              failures = 0;
-            }
-            prevRecordsMatched[frame.refId!] = recordsMatched;
-          }
-
-          return { failures, prevRecordsMatched };
-        },
-        { failures: 0, prevRecordsMatched: {} as Record<string, number> }
-      ),
-      map(({ failures }) => failures),
-      share()
-    );
-
-    const queryResponse: Observable<DataQueryResponse> = zip(dataFrames, consecutiveFailedAttempts).pipe(
-      tap(([dataFrames]) => {
-        for (const frame of dataFrames) {
-          if (
-            [
-              CloudWatchLogsQueryStatus.Complete,
-              CloudWatchLogsQueryStatus.Cancelled,
-              CloudWatchLogsQueryStatus.Failed,
-            ].includes(frame.meta?.custom?.['Status']) &&
-            this.logQueries.hasOwnProperty(frame.refId!)
-          ) {
-            delete this.logQueries[frame.refId!];
-          }
-        }
-      }),
-      map(([dataFrames, failedAttempts]) => {
-        if (failedAttempts >= MAX_ATTEMPTS) {
-          for (const frame of dataFrames) {
-            _.set(frame, 'meta.custom.Status', CloudWatchLogsQueryStatus.Cancelled);
-          }
-        }
-
-        return {
-          data: dataFrames,
-          key: 'test-key',
-          state: dataFrames.every(dataFrame =>
-            [
-              CloudWatchLogsQueryStatus.Complete,
-              CloudWatchLogsQueryStatus.Cancelled,
-              CloudWatchLogsQueryStatus.Failed,
-            ].includes(dataFrame.meta?.custom?.['Status'])
-          )
-            ? LoadingState.Done
-            : LoadingState.Loading,
-          error:
-            failedAttempts >= MAX_ATTEMPTS
-              ? {
-                  message: `error: query timed out after ${MAX_ATTEMPTS} attempts`,
-                  type: DataQueryErrorType.Timeout,
-                }
-              : undefined,
-        };
-      }),
-      takeWhile(({ state }) => state !== LoadingState.Error && state !== LoadingState.Done, true)
-    );
-
-    return withTeardown(queryResponse, () => this.stopQueries());
-  }
 
   private addDataLinksToLogsResponse(response: DataQueryResponse, options: DataQueryRequest<CloudWatchQuery>) {
     for (const dataFrame of response.data as DataFrame[]) {
@@ -882,6 +808,17 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     return result.data;
   }
 
+  getResponseChannel(data: MetricRequest) {
+    const srv = getGrafanaLiveSrv();
+    return getBackendSrv()
+      .fetch<{ channelName: string }>({
+        method: 'POST',
+        url: '/api/tsdb/wsquery',
+        data,
+      })
+      .pipe(mergeMap(resp => srv.getChannelStream<any>(resp.data.channelName)));
+  }
+
   getDefaultRegion() {
     return this.defaultRegion;
   }
@@ -1009,22 +946,16 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
   }
 }
 
-function withTeardown<T = any>(observable: Observable<T>, onUnsubscribe: () => void): Observable<T> {
-  return new Observable<T>(subscriber => {
-    const innerSub = observable.subscribe({
-      next: val => subscriber.next(val),
-      error: err => subscriber.next(err),
-      complete: () => subscriber.complete(),
-    });
-
-    return () => {
-      innerSub.unsubscribe();
-      onUnsubscribe();
-    };
-  });
-}
-
 function parseLogGroupName(logIdentifier: string): string {
   const colonIndex = logIdentifier.lastIndexOf(':');
   return logIdentifier.substr(colonIndex + 1);
+}
+
+function statusIsTerminated(status: string | CloudWatchLogsQueryStatus) {
+  return [
+    CloudWatchLogsQueryStatus.Complete,
+    CloudWatchLogsQueryStatus.Cancelled,
+    CloudWatchLogsQueryStatus.Failed,
+    CloudWatchLogsQueryStatus.Timeout,
+  ].includes(status as CloudWatchLogsQueryStatus);
 }

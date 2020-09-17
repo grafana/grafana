@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -72,6 +73,19 @@ type HTTPServer struct {
 	SearchService        *search.SearchService            `inject:""`
 	Live                 *live.GrafanaLive
 	Listener             net.Listener
+	SocketChannel        chan *RequestRun
+}
+
+func (hs *HTTPServer) runRequests() {
+	for res := range hs.SocketChannel {
+		res := res
+		go func() {
+			for r := range res.Channel {
+				bytes, _ := json.Marshal(r)
+				hs.Live.Publish(res.ChannelName, bytes)
+			}
+		}()
+	}
 }
 
 func (hs *HTTPServer) Init() error {
@@ -84,10 +98,12 @@ func (hs *HTTPServer) Init() error {
 			return err
 		}
 		hs.Live = node
+		hs.SocketChannel = make(chan *RequestRun)
 
 		// Spit random walk to example
 		go live.RunRandomCSV(hs.Live, "grafana/testdata/random-2s-stream", 2000, 0)
 		go live.RunRandomCSV(hs.Live, "grafana/testdata/random-flakey-stream", 400, .6)
+		go hs.runRequests()
 	}
 
 	hs.macaron = hs.newMacaron()

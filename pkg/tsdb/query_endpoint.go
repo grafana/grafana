@@ -11,6 +11,10 @@ type TsdbQueryEndpoint interface {
 	Query(ctx context.Context, ds *models.DataSource, query *TsdbQuery) (*Response, error)
 }
 
+type TsdbWebSocketQueryEndpoint interface {
+	WebSocketQuery(ctx context.Context, ds *models.DataSource, query *TsdbQuery, channel chan *QueryResult) error
+}
+
 var registry map[string]GetTsdbQueryEndpointFn
 
 type GetTsdbQueryEndpointFn func(dsInfo *models.DataSource) (TsdbQueryEndpoint, error)

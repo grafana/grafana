@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
@@ -50,15 +51,20 @@ const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
+var maxAttempts = 5
+var pollInterval = 2 * time.Second
+
 func init() {
+	globalExecutor := newExecutor()
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return newExecutor(), nil
+		return globalExecutor, nil
 	})
 }
 
 func newExecutor() *cloudWatchExecutor {
 	return &cloudWatchExecutor{
 		logsClientsByRegion: map[string]cloudwatchlogsiface.CloudWatchLogsAPI{},
+		queue:               make(chan bool, 4),
 	}
 }
 
@@ -70,6 +76,7 @@ type cloudWatchExecutor struct {
 	rgtaClient          resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 	logsClientsByRegion map[string]cloudwatchlogsiface.CloudWatchLogsAPI
 	mtx                 sync.Mutex
+	queue               chan bool
 }
 
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
@@ -216,6 +223,114 @@ func (e *cloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	}
 
 	return result, err
+}
+
+func (e *cloudWatchExecutor) sendQueryResultsToChannel(ctx context.Context, channel chan *tsdb.QueryResult, query *tsdb.Query, timeRange *tsdb.TimeRange) error {
+	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
+	parameters := query.Model
+	region := parameters.Get("region").MustString(defaultRegion)
+	logsClient, err := e.getCWLogsClient(region)
+	if err != nil {
+		return err
+	}
+
+	e.queue <- true
+	defer func() { <-e.queue }()
+
+	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, parameters, timeRange)
+	if err != nil {
+		return err
+	}
+
+	queryResultsInput := &cloudwatchlogs.GetQueryResultsInput{
+		QueryId: startQueryOutput.QueryId,
+	}
+
+	attemptCount := 1
+	recordsMatched := 0.0
+
+	ticker := time.NewTicker(pollInterval)
+	defer ticker.Stop()
+	for range ticker.C {
+		getQueryResultsOutput, err := logsClient.GetQueryResultsWithContext(ctx, queryResultsInput)
+		if err != nil {
+			return err
+		}
+
+		if *getQueryResultsOutput.Statistics.RecordsMatched > recordsMatched {
+			attemptCount = 1
+		}
+
+		dataFrame, err := logsResultsToDataframes(getQueryResultsOutput)
+		if err != nil {
+			return err
+		}
+
+		dataFrame.Name = query.RefId
+		dataFrame.RefID = query.RefId
+
+		// When a query of the form "stats ... by ..." is made, we want to return
+		// one series per group defined in the query, but due to the format
+		// the query response is in, there does not seem to be a way to tell
+		// by the response alone if/how the results should be grouped.
+		// Because of this, if the frontend sees that a "stats ... by ..." query is being made
+		// the "statsGroups" parameter is sent along with the query to the backend so that we
+		// can correctly group the CloudWatch logs response.
+		statsGroups := parameters.Get("statsGroups").MustStringArray()
+		if len(statsGroups) > 0 && len(dataFrame.Fields) > 0 {
+			groupedFrames, err := groupResults(dataFrame, statsGroups)
+			if err != nil {
+				return err
+			}
+
+			channel <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: tsdb.NewDecodedDataFrames(groupedFrames)}
+			continue
+		}
+
+		if dataFrame.Meta != nil {
+			dataFrame.Meta.PreferredVisualization = "logs"
+		} else {
+			dataFrame.Meta = &data.FrameMeta{
+				PreferredVisualization: "logs",
+			}
+		}
+
+		channel <- &tsdb.QueryResult{
+			RefId:      query.RefId,
+			Dataframes: tsdb.NewDecodedDataFrames(data.Frames{dataFrame}),
+		}
+
+		if isTerminated(*getQueryResultsOutput.Status) {
+			return nil
+		}
+		if attemptCount >= maxAttempts {
+			return fmt.Errorf("fetching of query results exceeded max number of attempts")
+		}
+
+		attemptCount++
+	}
+
+	return nil
+}
+
+func (e *cloudWatchExecutor) WebSocketQuery(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery, channel chan *tsdb.QueryResult) error {
+	e.DataSource = dsInfo
+
+	eg, ectx := errgroup.WithContext(ctx)
+	for _, query := range queryContext.Queries {
+		query := query
+		eg.Go(func() error {
+			return e.sendQueryResultsToChannel(ectx, channel, query, queryContext.TimeRange)
+		})
+	}
+
+	if err := eg.Wait(); err != nil {
+		return err
+	}
+
+	close(channel)
+
+	return nil
 }
 
 func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {

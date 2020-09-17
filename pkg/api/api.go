@@ -337,6 +337,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// metrics
 		apiRoute.Post("/tsdb/query", bind(dtos.MetricRequest{}), Wrap(hs.QueryMetrics))
+		apiRoute.Any("/tsdb/wsquery", bind(dtos.MetricRequest{}), Wrap(hs.QueryMetricsWS))
 		apiRoute.Get("/tsdb/testdata/scenarios", Wrap(GetTestDataScenarios))
 		apiRoute.Get("/tsdb/testdata/gensql", reqGrafanaAdmin, Wrap(GenerateSQLTestData))
 		apiRoute.Get("/tsdb/testdata/random-walk", Wrap(GetTestDataRandomWalk))
