@@ -93,11 +93,13 @@ export class PanelQueryRunner {
         if (withFieldConfig) {
           // Apply field defaults & overrides
           const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+          const timeZone = data.request?.timezone ?? 'browser';
+
           if (fieldConfig) {
             processedData = {
               ...processedData,
               series: applyFieldOverrides({
-                timeZone: data.request!.timezone,
+                timeZone: timeZone,
                 autoMinMax: true,
                 data: processedData.series,
                 ...fieldConfig,
