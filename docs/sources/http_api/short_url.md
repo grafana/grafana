@@ -1,23 +1,25 @@
 +++
-title = "ShortURL HTTP API "
-description = "Grafana ShortURL HTTP API"
+title = "Short URL HTTP API "
+description = "Grafana Short URL HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "shortUrl"]
 aliases = ["/docs/grafana/latest/http_api/short_url/"]
 type = "docs"
 [menu.docs]
-name = "ShortURL"
+name = "Short URL"
 parent = "http_api"
 +++
 
-# ShortURL API
+# Short URL API
 
-## Redirect to full path from short URL UID
+This API can be used to create and resolve shortened URLs. This allows URLs containing complex query parameters to be represented by smaller, simpler URLs of the format `/api/goto/:uid`.
+
+## Redirect to full path from short URL
 
 `GET /api/goto/:uid`
 
 Redirects to the URL path associated with the given UID if it exists. Otherwise redirects to `/notfound`.
 
-**Example Request**:
+**Example request:**
 
 ```http
 GET /api/goto/abcde HTTP/1.1
@@ -26,7 +28,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-**Example Response**:
+**Example response:**
 
 ```http
 HTTP/1.1 302
@@ -35,9 +37,9 @@ Content-Type: application/json
 Location: /d/TxKARsmGz/new-dashboard?orgId=1&from=1599389322894&to=1599410922894
 ```
 
-Status Codes:
+Status codes:
 
-- **302** – Redirect to resolved URL
+- **302** – Redirect to resolved URL path
 
 ## Create short URL
 
@@ -45,7 +47,7 @@ Status Codes:
 
 Creates a new short URL.
 
-**Example Request**:
+**Example request:**
 
 ```http
 POST /api/goto HTTP/1.1
@@ -58,11 +60,11 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-JSON Body schema:
+JSON body schema:
 
 - **path** – The path to shorten.
 
-**Example Response**:
+**Example response:**
 
 ```http
 HTTP/1.1 200
@@ -71,7 +73,7 @@ Content-Type: application/json
 AT76wBvGk
 ```
 
-Status Codes:
+Status codes:
 
 - **200** – Created
-- **400** – Errors (invalid json, missing or invalid fields)
+- **400** – Errors (invalid JSON, missing or invalid fields)
