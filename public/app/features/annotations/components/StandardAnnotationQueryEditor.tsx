@@ -97,7 +97,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     if (running || response?.panelData?.state === LoadingState.Loading || !response) {
       text = 'loading...';
     } else {
-      const { events, panelData, frame } = response;
+      const { events, panelData } = response;
 
       if (panelData?.error) {
         rowStyle = 'alert-error';
@@ -108,6 +108,8 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
         icon = 'exclamation-triangle';
         text = 'No events found';
       } else {
+        const frame = panelData?.series[0];
+
         text = `${events.length} events (from ${frame?.fields.length} fields)`;
       }
     }
