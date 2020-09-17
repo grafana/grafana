@@ -1,4 +1,4 @@
-import { DataSourceSettings } from '@grafana/data';
+import { DataSourceSettings, GrafanaConfig } from '@grafana/data';
 
 export interface HttpSettingsBaseProps {
   /** The configuration object of the data source */
@@ -12,4 +12,6 @@ export interface HttpSettingsProps extends HttpSettingsBaseProps {
   defaultUrl: string;
   /** Show the http access help box */
   showAccessOptions?: boolean;
+  /** The grafana configuration map */
+  config?: GrafanaConfig;
 }

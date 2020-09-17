@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { css, cx } from 'emotion';
-import { DataSourceSettings, SelectableValue } from '@grafana/data'; // eslint-disable-next-line no-restricted-imports
-import { config } from '@grafana/runtime';
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { HttpProxySettings } from './HttpProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
@@ -57,7 +56,7 @@ const HttpAccessHelp = () => (
 );
 
 export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
-  const { defaultUrl, dataSourceConfig, onChange, showAccessOptions } = props;
+  const { defaultUrl, dataSourceConfig, onChange, showAccessOptions, config } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
   const theme = useTheme();
@@ -191,7 +190,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
             />
           </div>
 
-          {config.sigv4AuthEnabled && (
+          {config?.sigv4AuthEnabled && (
             <div className="gf-form-inline">
               <Switch
                 label="Sigv4 auth"
