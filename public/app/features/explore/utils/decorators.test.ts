@@ -322,12 +322,12 @@ describe('decorateWithTableResult', () => {
         expect: panelData => {
           const result = panelData.tableResult;
 
-          expect(result.fields[0].name).toBe('Time');
-          expect(result.fields[1].name).toBe('A-series');
-          expect(result.fields[2].name).toBe('B-series');
-          expect(result.fields[0].values.toArray()).toEqual([100, 200, 300]);
-          expect(result.fields[1].values.toArray()).toEqual([4, 5, 6]);
-          expect(result.fields[2].values.toArray()).toEqual([4, 5, 6]);
+          expect(result?.fields[0].name).toBe('Time');
+          expect(result?.fields[1].name).toBe('A-series');
+          expect(result?.fields[2].name).toBe('B-series');
+          expect(result?.fields[0].values.toArray()).toEqual([100, 200, 300]);
+          expect(result?.fields[1].values.toArray()).toEqual([4, 5, 6]);
+          expect(result?.fields[2].values.toArray()).toEqual([4, 5, 6]);
         },
         done,
       });
@@ -504,9 +504,10 @@ describe('decorateWithLogsResult', () => {
   describe('when used without error but logs frames are empty', () => {
     it('then the graphResult should be null', done => {
       const panelData = createExplorePanelData({ logsFrames: [] });
+      const state = ({} as unknown) as ExploreItemState;
 
       observableTester().subscribeAndExpectOnNext({
-        observable: of(panelData).pipe(decorateWithLogsResult({})),
+        observable: of(panelData).pipe(decorateWithLogsResult(state)),
         expect: panelData => {
           expect(panelData.logsResult).toBeNull();
         },
@@ -519,9 +520,10 @@ describe('decorateWithLogsResult', () => {
     it('then the graphResult should be null', done => {
       const { logs } = getTestContext();
       const panelData = createExplorePanelData({ error: {}, logsFrames: [logs] });
+      const state = ({} as unknown) as ExploreItemState;
 
       observableTester().subscribeAndExpectOnNext({
-        observable: of(panelData).pipe(decorateWithLogsResult({})),
+        observable: of(panelData).pipe(decorateWithLogsResult(state)),
         expect: panelData => {
           expect(panelData.logsResult).toBeNull();
         },
