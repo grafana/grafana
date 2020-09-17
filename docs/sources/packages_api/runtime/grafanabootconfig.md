@@ -52,6 +52,7 @@ import { GrafanaBootConfig } from '@grafana/runtime';
 |  [externalUserMngLinkUrl](#externalusermnglinkurl-property) |  | <code>string</code> |  |
 |  [featureToggles](#featuretoggles-property) |  | <code>FeatureToggles</code> |  |
 |  [ldapEnabled](#ldapenabled-property) |  | <code>boolean</code> |  |
+|  [sigv4AuthEnabled](#sigv4authenabled-property) |  | <code>boolean</code> |  |
 |  [licenseInfo](#licenseinfo-property) |  | <code>LicenseInfo</code> |  |
 |  [loginError](#loginerror-property) |  | <code>any</code> |  |
 |  [loginHint](#loginhint-property) |  | <code>any</code> |  |
@@ -268,6 +269,14 @@ featureToggles: FeatureToggles;
 
 ```typescript
 ldapEnabled: boolean;
+```
+
+### sigv4AuthEnabled property
+
+<b>Signature</b>
+
+```typescript
+sigv4AuthEnabled: boolean;
 ```
 
 ### licenseInfo property
