@@ -19,5 +19,5 @@ _Field overrides_ can be added in the **Overrides** tab in the panel editor. The
 
 Standard options
 Table options
-Apply options to all fields
-Override one or more fields
+Configure all fields
+Configure specific fields
