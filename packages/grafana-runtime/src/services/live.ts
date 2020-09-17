@@ -5,10 +5,16 @@ import { Observable } from 'rxjs';
  */
 export interface ChannelHandler<T = any> {
   /**
-   * Process the raw message from the server before broadcasting it
-   * to all subscribeers on this channel
+   * Indicate if the channel should try to publish to the service.  Even when
+   * this is enabled, the backend support for the channel may not support publish
    */
-  onPublish(msg: any): T;
+  allowPublish?: boolean;
+
+  /**
+   * Process the raw message from the server before broadcasting it
+   * to the channel stream
+   */
+  onMessageReceived(msg: any): T;
 }
 
 // export interface SubscriptionEvents {
@@ -35,12 +41,18 @@ export interface GrafanaLiveSrv {
   getConnectionState(): Observable<boolean>;
 
   /**
-   * Configure a channel with the given setup
+   * Register channel support on a given path.  Plugins should call this function
+   * on initalization to specify which paths should support streaming responses.
+   *
+   * If the path ends in "*" it will will be applied to everything with this prefix
+   *
+   * Optionally define custom behavior for the channel
    */
-  initChannel<T>(channel: string, handler: ChannelHandler<T>): void;
+  registerChannelSupport<T>(plugin: string, path: string, handler?: ChannelHandler<T>): void;
 
   /**
-   * Subscribe to activity on a given channel
+   * Subscribe to activity on a given channel.  The channel is identified by a plugin and path:
+   *   `${pluginId}/path`
    */
   getChannelStream<T>(channel: string): Observable<T>;
 

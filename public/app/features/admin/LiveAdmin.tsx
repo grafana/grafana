@@ -20,7 +20,7 @@ interface State {
 
 export class LiveAdmin extends PureComponent<Props, State> {
   state: State = {
-    channel: 'random-2s-stream',
+    channel: 'grafana/random-2s-stream',
     text: '', // publish text to a channel
   };
 
