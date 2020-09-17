@@ -117,26 +117,8 @@ class GraphElement {
     }
 
     const { values, min, max, avg, current, total } = this.panel.legend;
-    const {
-      alignAsTable,
-      rightSide,
-      sideWidth,
-      sort,
-      sortDesc,
-      hideEmpty,
-      hideZero,
-      hideSeriesWithNoPoint,
-    } = this.panel.legend;
-    const legendOptions = {
-      alignAsTable,
-      rightSide,
-      sideWidth,
-      sort,
-      sortDesc,
-      hideEmpty,
-      hideZero,
-      hideSeriesWithNoPoint,
-    };
+    const { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.panel.legend;
+    const legendOptions = { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero };
     const valueOptions = { values, min, max, avg, current, total };
     const legendProps: GraphLegendProps = {
       seriesList: this.data,

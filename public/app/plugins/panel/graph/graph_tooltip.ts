@@ -36,10 +36,9 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     let lower = 0;
     let upper = series.data.length - 1;
     let middle;
-    const shouldHideSerieWithNoPoint = panel && panel.legend && panel.legend.hideSeriesWithNoPoint;
     while (true) {
       if (lower > upper) {
-        if (shouldHideSerieWithNoPoint && (series.data[series.data.length - 1][0] < posX || series.data[0][0] > posX)) {
+        if (series.data[series.data.length - 1][0] < posX || series.data[0][0] > posX) {
           return null;
         }
         return Math.max(upper, 0);
