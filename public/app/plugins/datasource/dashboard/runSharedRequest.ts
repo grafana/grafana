@@ -26,7 +26,6 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
       return undefined;
     }
 
-    const currentPanel = dashboard.getPanelById(options.panelId)!;
     const listenToPanel = dashboard.getPanelById(listenToPanelId);
 
     if (!listenToPanel) {
@@ -43,7 +42,7 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
 
     // If we are in fullscreen the other panel will not execute any queries
     // So we have to trigger it from here
-    if (currentPanel.isViewing || currentPanel.isEditing) {
+    if (!listenToPanel.isInView) {
       const { datasource, targets } = listenToPanel;
       const modified = {
         ...options,
