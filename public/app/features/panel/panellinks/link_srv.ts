@@ -76,7 +76,7 @@ const valueVars = [
 ];
 
 const buildLabelPath = (label: string) => {
-  return label.indexOf('.') > -1 || label.trim().indexOf(' ') > -1 ? `["${label}"]` : `.${label}`;
+  return label.includes('.') || label.trim().includes(' ') ? `["${label}"]` : `.${label}`;
 };
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
