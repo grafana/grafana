@@ -1,8 +1,9 @@
-import { DataSourcePlugin, StandardChannelHandler } from '@grafana/data';
+import { DataSourcePlugin } from '@grafana/data';
 import { TestDataDataSource } from './datasource';
 import { TestDataQueryCtrl } from './query_ctrl';
 import { TestInfoTab } from './TestInfoTab';
 import { ConfigEditor } from './ConfigEditor';
+import { testDataChannelSupport } from './channels';
 
 class TestDataAnnotationsQueryCtrl {
   annotation: any;
@@ -14,17 +15,7 @@ export const plugin = new DataSourcePlugin(TestDataDataSource)
   .setConfigEditor(ConfigEditor)
   .setQueryCtrl(TestDataQueryCtrl)
   .setAnnotationQueryCtrl(TestDataAnnotationsQueryCtrl)
-  .setLiveSupport({
-    getChannelHandler: (path: string) => {
-      if (path === 'random-2s-stream') {
-        return StandardChannelHandler;
-      }
-      if (path === 'random-flakey-stream') {
-        return StandardChannelHandler;
-      }
-      return null; // not supported
-    },
-  })
+  .setChannelSupport(testDataChannelSupport)
   .addConfigPage({
     title: 'Setup',
     icon: 'list-ul',

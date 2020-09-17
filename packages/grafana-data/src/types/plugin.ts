@@ -1,6 +1,6 @@
 import { ComponentClass } from 'react';
 import { KeyValue } from './data';
-import { LiveChannelSupport } from './live';
+import { ChannelSupport } from './live';
 
 export enum PluginState {
   alpha = 'alpha', // Only included it `enable_alpha` is true
@@ -140,8 +140,8 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   // This is set if the plugin system had errors loading the plugin
   loadError?: boolean;
 
-  // Live support
-  liveSupport?: LiveChannelSupport;
+  // Live streaming support
+  channelSupport?: ChannelSupport;
 
   // Config control (app/datasource)
   angularConfigCtrl?: any;
@@ -158,8 +158,11 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
     return this;
   }
 
-  setLiveSupport(support: LiveChannelSupport) {
-    this.liveSupport = support;
+  /**
+   * Specify how the plugin should support paths within the live streaming environment
+   */
+  setChannelSupport(support: ChannelSupport) {
+    this.channelSupport = support;
     return this;
   }
 

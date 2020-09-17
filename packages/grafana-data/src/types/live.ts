@@ -3,31 +3,41 @@
  */
 export interface ChannelHandler<T = any> {
   /**
+   * Callback once subscribed
+   */
+  onSubscribe?: (ctx: any) => void;
+
+  /**
+   * Callback once subscribed
+   */
+  onUnsubscribe?: (ctx: any) => void;
+
+  /**
    * Process the raw message from the server before broadcasting it
    * to the channel stream
    */
-  onMessageReceived(msg: any): T;
+  onMessageReceived?: (msg: any) => T;
+
+  /**
+   * Error in the channel
+   */
+  onError?: (ctx: any) => void;
+
+  /**
+   * Callback once subscribed
+   */
+  onJoin?: (ctx: any) => void;
+
+  /**
+   * Callback once subscribed
+   */
+  onLeave?: (ctx: any) => void;
 }
-
-// NOTE: this is actually backed by centrefuge type:
-//
-// export interface SubscriptionEvents {
-//   publish?: (ctx: PublicationContext) => void;
-//   join?: (ctx: JoinLeaveContext) => void;
-//   leave?: (ctx: JoinLeaveContext) => void;
-//   subscribe?: (ctx: SubscribeSuccessContext) => void;
-//   error?: (ctx: SubscribeErrorContext) => void;
-//   unsubscribe?: (ctx: UnsubscribeContext) => void;
-// }
-
-export const StandardChannelHandler: ChannelHandler = {
-  onMessageReceived: v => v, // Just pass the object along
-};
 
 /**
  * @experimental
  */
-export interface LiveChannelSupport {
+export interface ChannelSupport {
   /**
    * Get the channel handler for this plugin or null if the channel shoudl not be opened
    */
