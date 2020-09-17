@@ -156,11 +156,12 @@ class CentrifugeSrv implements GrafanaLiveSrv {
   }
 
   private async getChannelSupport(pluginId: string): Promise<LiveChannelSupport> {
-    return loadPlugin(pluginId).then(plugin => {
-      if (!plugin.liveSupport) {
-        return Promise.reject('Plugin does not have live support configured');
-      }
-      return plugin.liveSupport;
+    const plugin = await loadPlugin(pluginId);
+    if (!plugin.liveSupport) {
+      throw new Error('Plugin does not have live support configured');
+    }
+
+    return plugin.liveSupport;
     });
   }
 
