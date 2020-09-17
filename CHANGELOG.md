@@ -7,7 +7,7 @@
   * **Elasticsearch**: Add support for date_nanos type. [#27538](https://github.com/grafana/grafana/pull/27538), [@Elfo404](https://github.com/Elfo404)
   * **Elasticsearch**: Allow fields starting with underscore. [#27520](https://github.com/grafana/grafana/pull/27520), [@Elfo404](https://github.com/Elfo404)
   * **Elasticsearch**: Increase maximum geohash aggregation precision to 12. [#27539](https://github.com/grafana/grafana/pull/27539), [@Elfo404](https://github.com/Elfo404)
-  * **Org API**: enrich add user to org endpoints with user ID in the response. [#27551](https://github.com/grafana/grafana/pull/27551), [@AgnesToulet](https://github.com/AgnesToulet)
+  * **Org API**: Enrich add user to org endpoints with user ID in the response. [#27551](https://github.com/grafana/grafana/pull/27551), [@AgnesToulet](https://github.com/AgnesToulet)
   * **Postgres**: Support request cancellation properly (Uses new backendSrv.fetch Observable request API). [#27478](https://github.com/grafana/grafana/pull/27478), [@hugohaggmark](https://github.com/hugohaggmark)
   * **Provisioning**: Remove provisioned dashboards without parental reader. [#26143](https://github.com/grafana/grafana/pull/26143), [@nabokihms](https://github.com/nabokihms)
   * **Variables**: Limit rendering of options in dropdown to improve search performance. [#27525](https://github.com/grafana/grafana/pull/27525), [@guoqn](https://github.com/guoqn)
