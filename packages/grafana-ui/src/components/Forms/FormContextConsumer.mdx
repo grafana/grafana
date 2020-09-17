@@ -1,0 +1,40 @@
+import { Meta, Props } from '@storybook/addon-docs/blocks';
+import { FormContextConsumer } from './FormContextConsumer';
+
+<Meta title="MDX|FormContextConsumer" component={FormContextConsumer} />
+
+# FormContextConsumer
+
+`FormContextConsumer` provides a way to access form utility methods in a nested part of the component heirarchy without having to use prop drilling. It exposes the functionality from `useFormContext` in [react-hook-form](https://react-hook-form.com/api#useFormContext). `FormContextConsumer` must be wrapped at some level by a `<Form>` element.
+
+### Usage
+
+```jsx
+import { Form, FormContextConsumer, Input, FieldSet, Field } from '@grafana/ui';
+
+<Form onSubmit={values => console.log('Submit', values)}>
+  {() => (
+    <div>
+      <FormContextConsumer>
+        {({ register }) => {
+          return (
+            <FieldSet label="Details">
+              <Field label="Name">
+                <Input ref={register} name="name" />
+              </Field>
+              <Field label="Email">
+                <Input ref={register} name="email" />
+              </Field>
+            </FieldSet>
+          );
+        }}
+      </FormContextConsumer>
+      <Button variant="primary">Save</Button>
+    </div>
+  )}
+</Form>;
+```
+
+### Props
+
+<Props of={FormContextConsumer} />

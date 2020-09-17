@@ -1,5 +1,5 @@
 import React, { HTMLProps, useEffect } from 'react';
-import { useForm, Mode, OnSubmit, DeepPartial } from 'react-hook-form';
+import { useForm, Mode, OnSubmit, DeepPartial, FormContext } from 'react-hook-form';
 import { FormAPI } from '../../types';
 import { css } from 'emotion';
 
@@ -24,7 +24,17 @@ export function Form<T>({
   maxWidth = 400,
   ...htmlProps
 }: FormProps<T>) {
-  const { handleSubmit, register, errors, control, triggerValidation, getValues, formState, watch } = useForm<T>({
+  const {
+    handleSubmit,
+    register,
+    errors,
+    control,
+    triggerValidation,
+    getValues,
+    formState,
+    watch,
+    ...otherFormMethods
+  } = useForm<T>({
     mode: validateOn,
     defaultValues,
   });
@@ -36,15 +46,27 @@ export function Form<T>({
   }, []);
 
   return (
-    <form
-      className={css`
-        max-width: ${maxWidth}px;
-        width: 100%;
-      `}
-      onSubmit={handleSubmit(onSubmit)}
-      {...htmlProps}
+    <FormContext
+      handleSubmit={handleSubmit}
+      register={register}
+      errors={errors}
+      control={control}
+      triggerValidation={triggerValidation}
+      getValues={getValues}
+      formState={formState}
+      watch={watch}
+      {...otherFormMethods}
     >
-      {children({ register, errors, control, getValues, formState, watch })}
-    </form>
+      <form
+        className={css`
+          max-width: ${maxWidth}px;
+          width: 100%;
+        `}
+        onSubmit={handleSubmit(onSubmit)}
+        {...htmlProps}
+      >
+        {children({ register, errors, control, getValues, formState, watch })}
+      </form>
+    </FormContext>
   );
 }
