@@ -21,9 +21,7 @@ export interface ChannelHandler<T = any> {
 // }
 
 export const StandardChannelHandler: ChannelHandler = {
-  onMessageReceived: (v: any) => {
-    return v; // Just pass the object along
-  },
+  onMessageReceived: v => v, // Just pass the object along
 };
 
 /**
