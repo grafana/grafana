@@ -1,8 +1,9 @@
-import { toDataFrame, FieldType } from '@grafana/data';
+import { FieldType, toDataFrame } from '@grafana/data';
 import { getAnnotationsFromData } from './standardAnnotationSupport';
+import { observableTester } from '../../../test/helpers/observableTester';
 
 describe('DataFrame to annotations', () => {
-  test('simple conversion', () => {
+  test('simple conversion', done => {
     const frame = toDataFrame({
       fields: [
         { type: FieldType.time, values: [1, 2, 3] },
@@ -11,37 +12,32 @@ describe('DataFrame to annotations', () => {
       ],
     });
 
-    const events = getAnnotationsFromData([frame]);
-    expect(events).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "tags": Array [
-            "aaa",
-            "bbb",
-          ],
-          "text": "t1",
-          "time": 1,
-        },
-        Object {
-          "tags": Array [
-            "bbb",
-            "ccc",
-          ],
-          "text": "t2",
-          "time": 2,
-        },
-        Object {
-          "tags": Array [
-            "zyz",
-          ],
-          "text": "t3",
-          "time": 3,
-        },
-      ]
-    `);
+    observableTester().subscribeAndExpectOnNext({
+      observable: getAnnotationsFromData([frame]),
+      expect: events => {
+        expect(events).toEqual([
+          {
+            tags: ['aaa', 'bbb'],
+            text: 't1',
+            time: 1,
+          },
+          {
+            tags: ['bbb', 'ccc'],
+            text: 't2',
+            time: 2,
+          },
+          {
+            tags: ['zyz'],
+            text: 't3',
+            time: 3,
+          },
+        ]);
+      },
+      done,
+    });
   });
 
-  test('explicit mappins', () => {
+  test('explicit mappins', done => {
     const frame = toDataFrame({
       fields: [
         { name: 'time1', values: [111, 222, 333] },
@@ -51,33 +47,36 @@ describe('DataFrame to annotations', () => {
       ],
     });
 
-    const events = getAnnotationsFromData([frame], {
-      text: { value: 'bbbbb' },
-      time: { value: 'time2' },
-      timeEnd: { value: 'time1' },
-      title: { value: 'aaaaa' },
+    observableTester().subscribeAndExpectOnNext({
+      observable: getAnnotationsFromData([frame], {
+        text: { value: 'bbbbb' },
+        time: { value: 'time2' },
+        timeEnd: { value: 'time1' },
+        title: { value: 'aaaaa' },
+      }),
+      expect: events => {
+        expect(events).toEqual([
+          {
+            text: 'b1',
+            time: 100,
+            timeEnd: 111,
+            title: 'a1',
+          },
+          {
+            text: 'b2',
+            time: 200,
+            timeEnd: 222,
+            title: 'a2',
+          },
+          {
+            text: 'b3',
+            time: 300,
+            timeEnd: 333,
+            title: 'a3',
+          },
+        ]);
+      },
+      done,
     });
-    expect(events).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "text": "b1",
-          "time": 100,
-          "timeEnd": 111,
-          "title": "a1",
-        },
-        Object {
-          "text": "b2",
-          "time": 200,
-          "timeEnd": 222,
-          "title": "a2",
-        },
-        Object {
-          "text": "b3",
-          "time": 300,
-          "timeEnd": 333,
-          "title": "a3",
-        },
-      ]
-    `);
   });
 });
