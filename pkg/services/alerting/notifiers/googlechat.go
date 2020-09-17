@@ -196,7 +196,7 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	// nest the required structs
 	res1D := &outerStruct{
-		PreviewText: evalContext.GetNotificationTitle(),
+		PreviewText:  evalContext.GetNotificationTitle(),
 		FallbackText: evalContext.GetNotificationTitle(),
 		Cards: []card{
 			{
