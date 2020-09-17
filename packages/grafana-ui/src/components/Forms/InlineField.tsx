@@ -1,7 +1,7 @@
 import React, { InputHTMLAttributes, FC } from 'react';
 import { cx, css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '../../themes';
+import { useTheme } from '../../themes';
 import { InlineFormLabel } from './InlineFormLabel';
 import { PopoverContent } from '../Tooltip/Tooltip';
 
@@ -22,6 +22,8 @@ export interface Props extends Omit<InputHTMLAttributes<HTMLDivElement>, 'classN
   disabled?: boolean;
   /** Custom styles for the field */
   className?: string;
+  /** Make the field's child to fill the width of the row. Equivalent to setting `flex-grow:1` on the field*/
+  grow?: boolean;
 }
 
 /**
@@ -29,18 +31,20 @@ export interface Props extends Omit<InputHTMLAttributes<HTMLDivElement>, 'classN
  * custom inputEl if required in which case inputWidth and inputProps are ignored.
  */
 export const InlineField: FC<Props> = ({
+  children,
   label,
   tooltip,
   labelWidth = 6,
-  children,
-  className,
   invalid,
-  disabled,
   loading,
+  disabled,
+  className,
+  grow = false,
 }) => {
-  const styles = useStyles(getStyles);
+  const theme = useTheme();
+  const styles = getStyles(theme, grow);
+  const child = React.Children.only(children);
   let inputId;
-  const child = React.Children.map(children, c => c)[0];
 
   if (child) {
     inputId = (child as React.ReactElement<{ id?: string }>).props.id;
@@ -64,7 +68,7 @@ export const InlineField: FC<Props> = ({
 
 InlineField.displayName = 'InlineField';
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme, grow: boolean) => {
   return {
     container: css`
       display: flex;
@@ -72,6 +76,7 @@ const getStyles = (theme: GrafanaTheme) => {
       align-items: flex-start;
       text-align: left;
       position: relative;
+      flex-grow: ${grow ? 1 : 'unset'};
 
       * {
         :focus {

@@ -28,3 +28,11 @@ export const withTooltip = () => {
     </InlineField>
   );
 };
+
+export const grow = () => {
+  return (
+    <InlineField label="Label" grow>
+      <Input placeholder="Inline input" />
+    </InlineField>
+  );
+};
