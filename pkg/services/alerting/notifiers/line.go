@@ -72,7 +72,7 @@ func (ln *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
 	}
 
 	form := url.Values{}
-	body := fmt.Sprintf("%s - %s\n", evalContext.GetNotificationTitle(), ruleURL)
+	body := fmt.Sprintf("%s - %s\n%s", evalContext.GetNotificationTitle(), ruleURL, evalContext.Rule.Message)
 	form.Add("message", body)
 
 	if ln.NeedsImage() && evalContext.ImagePublicURL != "" {
