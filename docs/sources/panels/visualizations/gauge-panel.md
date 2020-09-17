@@ -17,7 +17,7 @@ Gauge is a single value panel that can repeat a gauge for every series, column o
 
 Gauge visualizations allow you to apply:
 
-- [Data transformations]({{< relref "../transformations.md" >}})
+- [Data transformations]({{< relref "../transformations/prereq.md" >}})
 - [Field options and overrides]({{< relref "../field-options.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
