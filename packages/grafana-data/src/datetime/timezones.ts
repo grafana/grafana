@@ -30,6 +30,7 @@ export interface TimeZoneInfo {
   countries: TimeZoneCountry[];
   abbreviation: string;
   offsetInMins: number;
+  ianaName: string;
 }
 
 export interface GroupedTimeZones {
@@ -98,6 +99,7 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
     case InternalTimeZones.utc: {
       return {
         name: 'Coordinated Universal Time',
+        ianaName: 'UTC',
         zone,
         countries: [],
         abbreviation: 'UTC, GMT',
@@ -115,6 +117,7 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
         abbreviation: '',
         offsetInMins: 0,
         ...info,
+        ianaName: (info as TimeZoneInfo).ianaName,
         name: 'Default',
         zone,
       };
@@ -130,6 +133,7 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
         offsetInMins: new Date().getTimezoneOffset(),
         ...info,
         name: 'Browser Time',
+        ianaName: (info as TimeZoneInfo).ianaName,
         zone,
       };
     }
@@ -148,13 +152,13 @@ const abbrevationWithoutOffset = (abbrevation: string): string => {
 
 const mapToInfo = (timeZone: TimeZone, timestamp: number): TimeZoneInfo | undefined => {
   const momentTz = moment.tz.zone(timeZone);
-
   if (!momentTz) {
     return undefined;
   }
 
   return {
     name: timeZone,
+    ianaName: momentTz.name,
     zone: timeZone,
     countries: countriesByTimeZone[timeZone] ?? [],
     abbreviation: abbrevationWithoutOffset(momentTz.abbr(timestamp)),
