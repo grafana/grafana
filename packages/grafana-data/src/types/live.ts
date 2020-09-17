@@ -40,7 +40,7 @@ export interface ChannelHandler<T = any> {
  */
 export interface ChannelSupport {
   /**
-   * Get the channel handler for this plugin or null if the channel shoudl not be opened
+   * Get the channel handler for this plugin or null if the channel should not be opened
    */
   getChannelHandler(path: string): ChannelHandler | null;
 
