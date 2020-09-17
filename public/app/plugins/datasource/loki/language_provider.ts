@@ -29,6 +29,7 @@ const NS_IN_MS = 1000000;
 export const LABEL_REFRESH_INTERVAL = 1000 * 30; // 30sec
 
 const wrapLabel = (label: string) => ({ label, filterText: `\"${label}\"` });
+
 export const rangeToParams = (range: AbsoluteTimeRange) => ({ start: range.from * NS_IN_MS, end: range.to * NS_IN_MS });
 
 export type LokiHistoryItem = HistoryItem<LokiQuery>;
@@ -287,13 +288,13 @@ export default class LokiLanguageProvider extends LanguageProvider {
         context = 'context-label-values';
         suggestions.push({
           label: `Label values for "${labelKey}"`,
-          items: labelValues[labelKey].map(wrapLabel),
+          // Filter to prevent previously selected values from being repeatedly suggested
+          items: labelValues[labelKey].map(wrapLabel).filter(({ filterText }) => filterText !== text),
         });
       }
     } else {
       // Label keys
       const labelKeys = labelValues ? Object.keys(labelValues) : DEFAULT_KEYS;
-
       if (labelKeys) {
         const possibleKeys = _.difference(labelKeys, existingKeys);
         if (possibleKeys.length) {
