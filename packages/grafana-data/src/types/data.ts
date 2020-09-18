@@ -132,27 +132,6 @@ export enum NullValueMode {
   AsZero = 'null as zero',
 }
 
-export interface AnnotationEvent {
-  id?: string;
-  annotation?: any;
-  dashboardId?: number;
-  panelId?: number;
-  userId?: number;
-  login?: string;
-  email?: string;
-  avatarUrl?: string;
-  time?: number;
-  timeEnd?: number;
-  isRegion?: boolean;
-  title?: string;
-  text?: string;
-  type?: string;
-  tags?: string[];
-
-  // Currently used to merge annotations from alerts and dashboard
-  source?: any; // source.type === 'dashboard'
-}
-
 /**
  * Describes and API for exposing panel specific data configurations.
  */
