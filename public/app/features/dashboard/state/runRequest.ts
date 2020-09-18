@@ -120,7 +120,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
   // Build a map of possible query targets
   let queryTopics: KeyValue<DataTopic> | undefined = undefined;
   for (const target of request.targets) {
-    if (target.dataTopic && target.dataTopic !== DataTopic.Data) {
+    if (target.dataTopic) {
       if (!queryTopics) {
         queryTopics = {};
       }

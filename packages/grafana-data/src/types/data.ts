@@ -16,7 +16,6 @@ export enum LoadingState {
 }
 
 export enum DataTopic {
-  Data = 'data', // or undefined
   Annotations = 'annotations',
   Exemplars = 'exemplars',
 }
