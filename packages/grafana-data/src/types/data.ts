@@ -15,6 +15,12 @@ export enum LoadingState {
   Error = 'Error',
 }
 
+export enum DataTopic {
+  Data = 'data', // or undefined
+  Annotations = 'annotations',
+  Exemplars = 'exemplars',
+}
+
 export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';
 
 export interface QueryResultMeta {
@@ -32,6 +38,12 @@ export interface QueryResultMeta {
 
   /** Currently used to show results in Explore only in preferred visualisation option */
   preferredVisualisationType?: PreferredVisualisationType;
+
+  /**
+   * Optionally identify which topic the frame should be assigned to.
+   * A value specified in the response will override what the request asked for.
+   */
+  dataTopic?: DataTopic;
 
   /**
    * This is the raw query sent to the underlying system.  All macros and templating

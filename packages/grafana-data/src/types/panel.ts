@@ -27,6 +27,12 @@ export interface PanelData {
   /** Contains data frames with field overrides applied */
   series: DataFrame[];
 
+  /** A list of annotation items */
+  annotations?: DataFrame[];
+
+  /** A list of exemplar data */
+  exemplars?: DataFrame[];
+
   /** Request contains the queries and properties sent to the datasource */
   request?: DataQueryRequest;
 
