@@ -15,12 +15,14 @@ For example, you could change the number of decimal places shown in all fields b
 
 ## Change a field option
 
+You can change as many options as you want to.
+
 1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
 1. Click the **Field** tab.
-1. Find the option you want to change. You can define: 
+1. Find the option you want to change. You can define:
    - [Standard field options]({{< relref "standard-field-options.md" >}}),apply to all visualizations that allow transformations.
    - [Table field options]({{< relref "table-options.md" >}}), which only apply to table visualizations.
-1. Enter options by adding values in the fields. To return options to default values, delete the white text in the fields.
+1. Add options by adding values in the fields. To return options to default values, delete the white text in the fields.
 1. When finished, click **Save** to save all panel edits to the dashboard.
 
 ## Field option example
