@@ -59,6 +59,7 @@ func (a *queryEndpointAdapter) Query(ctx context.Context, ds *models.DataSource,
 			DataSourceInstanceSettings: instanceSettings,
 		},
 		Queries: []backend.DataQuery{},
+		Headers: query.Headers,
 	}
 
 	for _, q := range query.Queries {

@@ -122,6 +122,8 @@ export class DataSourceWithBackend<
   /**
    * Override to skip executing a query
    *
+   * @returns false if the query should be skipped
+   *
    * @virtual
    */
   filterQuery?(query: TQuery): boolean;

@@ -77,7 +77,7 @@ export class NewsPanel extends PureComponent<Props, State> {
         {news.map((item, index) => {
           return (
             <div key={index} className={styles.item}>
-              <a href={item.link} target="_blank">
+              <a href={textUtil.sanitizeUrl(item.link)} target="_blank">
                 <div className={styles.title}>{item.title}</div>
                 <div className={styles.date}>{dateTimeFormat(item.date, { format: 'MMM DD' })} </div>
               </a>

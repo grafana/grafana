@@ -33,7 +33,7 @@ describe('when rendering table', () => {
       { text: 'Colored' },
       { text: 'Undefined' },
       { text: 'String' },
-      { text: 'United', unit: 'bps' },
+      { text: 'United', unit: 'decbps' },
       { text: 'Sanitized' },
       { text: 'Link' },
       { text: 'Array' },
@@ -246,7 +246,7 @@ describe('when rendering table', () => {
 
     it('number column with unit specified should ignore style unit', () => {
       const html = renderer.renderCell(5, 0, 1230);
-      expect(html).toBe('<td>1.23 kbps</td>');
+      expect(html).toBe('<td>1.23 kb/s</td>');
     });
 
     it('number column should be formated', () => {
@@ -477,7 +477,7 @@ describe('when rendering table with different patterns', () => {
 });
 
 describe('when rendering cells with different alignment options', () => {
-  const cases = [
+  const cases: Array<[string, boolean, string | null, string]> = [
     //align, preserve fmt, color mode, expected
     ['', false, null, '<td>42</td>'],
     ['invalid_option', false, null, '<td>42</td>'],

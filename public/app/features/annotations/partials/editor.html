@@ -117,7 +117,15 @@
 
     <h5 class="section-heading">Query</h5>
     <rebuild-on-change property="ctrl.currentDatasource">
-      <plugin-component type="annotations-query-ctrl"> </plugin-component>
+      <!-- Legacy angular -->
+      <plugin-component ng-if="!ctrl.currentDatasource.annotations" type="annotations-query-ctrl"> </plugin-component>
+
+      <!-- React query editor -->
+      <standard-annotation-editor
+        ng-if="ctrl.currentDatasource.annotations"
+        annotation="ctrl.currentAnnotation"
+        datasource="ctrl.currentDatasource"
+        change="ctrl.onAnnotationChange" />
     </rebuild-on-change>
 
     <div class="gf-form">
