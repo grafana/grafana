@@ -228,22 +228,6 @@ export class TemplateSrv implements BaseTemplateSrv {
     return scopedVar.value;
   }
 
-  replaceToList(target: string, scopedVars: ScopedVars): string[] {
-    return TemplateSrv.cartesianProduct(
-      this.replaceWithoutFormatting(target, scopedVars).map(t => {
-        if (_.isArray(t.value)) {
-          return t.value.map(v => this.formatValue(v, t.format, t.variable, t.text));
-        } else {
-          return [this.formatValue(t.value, t.format, t.variable, t.text)];
-        }
-      })
-    ).map(t => t.join(''));
-  }
-
-  private static cartesianProduct(arr: any[][]) {
-    return arr.reduce((a, b) => a.map(x => b.map(y => x.concat(y))).reduce((a, b) => a.concat(b), []), [[]]);
-  }
-
   private getVariableText(variableName: string, value: any, scopedVars: ScopedVars) {
     const scopedVar = scopedVars[variableName];
 
@@ -265,6 +249,18 @@ export class TemplateSrv implements BaseTemplateSrv {
     return this.replaceWithoutFormatting(target, scopedVars, format)
       .map(t => this.formatValue(t.value, t.format, t.variable, t.text))
       .join('');
+  }
+
+  replaceToList(target: string, scopedVars: ScopedVars): string[] {
+    return TemplateSrv.cartesianProduct(
+      this.replaceWithoutFormatting(target, scopedVars).map(t =>
+        (_.isArray(t.value) ? t.value : [t.value]).map(v => this.formatValue(v, t.format, t.variable, t.text))
+      )
+    ).map(t => t.join(''));
+  }
+
+  private static cartesianProduct(arr: any[][]) {
+    return arr.reduce((a, b) => a.map(x => b.map(y => x.concat(y))).reduce((a, b) => a.concat(b), []), [[]]);
   }
 
   private replaceWithoutFormatting(target: string, scopedVars?: ScopedVars, format?: string | Function): TargetToken[] {
