@@ -79,7 +79,7 @@ export const fieldTypeMatcherItem: FieldMatcherUIRegistryItem<string> = {
   id: FieldMatcherID.byType,
   component: FieldTypeMatcherEditor,
   matcher: fieldMatchers.get(FieldMatcherID.byType),
-  name: 'Filter by type',
-  description: 'Set properties for fields matching a type',
+  name: 'Fields with type',
+  description: 'Set properties for fields of a specific type (number, string, boolean)',
   optionsToLabel: options => options,
 };

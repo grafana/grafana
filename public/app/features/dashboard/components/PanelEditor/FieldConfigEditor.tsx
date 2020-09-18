@@ -78,7 +78,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
           // TODO:  apply matcher to retrieve fields
           return (
             <OverrideEditor
-              name={`${fieldMatchersUI.get(o.matcher.id).name}`}
+              name={`Override ${i + 1}`}
               key={`${o.matcher.id}/${i}`}
               data={data}
               override={o}
@@ -97,7 +97,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
       <Container padding="md">
         <ValuePicker
           icon="plus"
-          label="Add override"
+          label="Add an override for"
           variant="secondary"
           options={fieldMatchersUI
             .list()

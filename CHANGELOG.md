@@ -1,3 +1,30 @@
+# 7.2.0-beta2 (2020-09-17)
+
+### Features / Enhancements
+  * **API**: Enrich add user to org endpoints with user ID in the response. [#27551](https://github.com/grafana/grafana/pull/27551), [@AgnesToulet](https://github.com/AgnesToulet)
+  * **API**: Enrich responses and improve error handling for alerting API endpoints. [#27550](https://github.com/grafana/grafana/pull/27550), [@AgnesToulet](https://github.com/AgnesToulet)
+  * **Auth**: Replace maximum inactive/lifetime settings of days to duration. [#27150](https://github.com/grafana/grafana/pull/27150), [@Hansuuuuuuuuuu](https://github.com/Hansuuuuuuuuuu)
+  * **Dashboard**: Support configuring default timezone via config file. [#27404](https://github.com/grafana/grafana/pull/27404), [@woutersmeenk](https://github.com/woutersmeenk)
+  * **Elasticsearch**: Add support for date_nanos type. [#27538](https://github.com/grafana/grafana/pull/27538), [@Elfo404](https://github.com/Elfo404)
+  * **Elasticsearch**: Allow fields starting with underscore. [#27520](https://github.com/grafana/grafana/pull/27520), [@Elfo404](https://github.com/Elfo404)
+  * **Elasticsearch**: Increase maximum geohash aggregation precision to 12. [#27539](https://github.com/grafana/grafana/pull/27539), [@Elfo404](https://github.com/Elfo404)
+  * **Field config**: Add support for paths in default field config setup. [#27570](https://github.com/grafana/grafana/pull/27570), [@dprokop](https://github.com/dprokop)
+  * **Postgres**: Support request cancellation properly (Uses new backendSrv.fetch Observable request API). [#27478](https://github.com/grafana/grafana/pull/27478), [@hugohaggmark](https://github.com/hugohaggmark)
+  * **Provisioning**: Remove provisioned dashboards without parental reader. [#26143](https://github.com/grafana/grafana/pull/26143), [@nabokihms](https://github.com/nabokihms)
+  * **Variables**: Limit rendering of options in dropdown to improve search performance. [#27525](https://github.com/grafana/grafana/pull/27525), [@guoqn](https://github.com/guoqn)
+  * **Units**: Binary-prefixed data rates. [#27022](https://github.com/grafana/grafana/pull/27022), [@Berbe](https://github.com/Berbe)
+
+  ### Bug Fixes
+  * **Admin**: Fixes close('X') button layout issue in API keys page. [#27625](https://github.com/grafana/grafana/pull/27625), [@nikasvan](https://github.com/nikasvan)
+  * **Alerting**: Fix integration key so it's stored encrypted for Pagerduty notifier. [#27484](https://github.com/grafana/grafana/pull/27484), [@marefr](https://github.com/marefr)
+  * **Annotations**: Fixes issue with showing error notice for cancelled annotation queries. [#27557](https://github.com/grafana/grafana/pull/27557), [@torkelo](https://github.com/torkelo)
+  * **Azure/Insights**: Fix handling of legacy dimension values. [#27513](https://github.com/grafana/grafana/pull/27513), [@marefr](https://github.com/marefr)
+  * **DataLinks**: Respects display name and adds field quoting. [#27616](https://github.com/grafana/grafana/pull/27616), [@hugohaggmark](https://github.com/hugohaggmark)
+  * **ImageRendering**: Fix rendering panel using shared query in png, PDF reports and embedded scenarios. [#27628](https://github.com/grafana/grafana/pull/27628), [@torkelo](https://github.com/torkelo)
+  * **InputControl**: Fixed using InputControl in unit tests from plugins. [#27615](https://github.com/grafana/grafana/pull/27615), [@torkelo](https://github.com/torkelo)
+  * **NewsPanel**: Fixed XSS issue when rendering rss links. [#27612](https://github.com/grafana/grafana/pull/27612), [@torkelo](https://github.com/torkelo)
+  * **Transforms**: Fix for issue in labels to fields transform where the new option value field name did not work properly. [#27501](https://github.com/grafana/grafana/pull/27501), [@torkelo](https://github.com/torkelo)
+
 # 7.2.0-beta1 (2020-09-09)
 
 ### Breaking changes
