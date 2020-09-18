@@ -16,7 +16,7 @@ export interface Props extends Omit<HTMLProps<HTMLLabelElement>, 'children' | 'c
   /** Custom width for the label */
   width?: number | 'auto';
   /** A toggle to apply query keyword styling to the label */
-  queryKeyword?: boolean;
+  isKeyword?: boolean;
   /** @deprecated */
   /** This prop is deprecated and is not used anymore */
   isFocused?: boolean;
@@ -31,11 +31,11 @@ export const InlineFormLabel: FunctionComponent<Props> = ({
   htmlFor,
   tooltip,
   width,
-  queryKeyword,
+  isKeyword,
   ...rest
 }) => {
   const theme = useTheme();
-  const styles = getStyles(theme, width, queryKeyword);
+  const styles = getStyles(theme, width, isKeyword);
 
   return (
     <label className={cx(styles.label, className)} {...rest}>
@@ -49,7 +49,7 @@ export const InlineFormLabel: FunctionComponent<Props> = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme, width?: number | 'auto', queryKeyword = false) => {
+const getStyles = (theme: GrafanaTheme, width?: number | 'auto', isKeyword = false) => {
   return {
     label: css`
       display: flex;
@@ -67,7 +67,7 @@ const getStyles = (theme: GrafanaTheme, width?: number | 'auto', queryKeyword = 
       border: none;
       // Keep the spacer at 16 px for compatibility
       width: ${width ? (width !== 'auto' ? `${16 * width}px` : width) : '100%'};
-      color: ${queryKeyword ? theme.colors.textBlue : 'inherit'};
+      color: ${isKeyword ? theme.colors.textBlue : 'inherit'};
     `,
     icon: css`
       flex-grow: 0;

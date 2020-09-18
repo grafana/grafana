@@ -24,6 +24,8 @@ export interface Props extends Omit<InputHTMLAttributes<HTMLDivElement>, 'classN
   className?: string;
   /** Make the field's child to fill the width of the row. Equivalent to setting `flex-grow:1` on the field*/
   grow?: boolean;
+  /** A toggle to apply query keyword styling to the label */
+  isKeyword?: boolean;
 }
 
 /**
@@ -39,7 +41,8 @@ export const InlineField: FC<Props> = ({
   loading,
   disabled,
   className,
-  grow = false,
+  grow,
+  isKeyword,
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme, grow);
@@ -51,7 +54,7 @@ export const InlineField: FC<Props> = ({
   }
   const labelElement =
     typeof label === 'string' ? (
-      <InlineFormLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId}>
+      <InlineFormLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId} isKeyword={isKeyword}>
         {label}
       </InlineFormLabel>
     ) : (
@@ -68,7 +71,7 @@ export const InlineField: FC<Props> = ({
 
 InlineField.displayName = 'InlineField';
 
-const getStyles = (theme: GrafanaTheme, grow: boolean) => {
+const getStyles = (theme: GrafanaTheme, grow?: boolean) => {
   return {
     container: css`
       display: flex;
