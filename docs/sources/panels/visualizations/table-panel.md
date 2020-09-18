@@ -29,3 +29,4 @@ Table visualizations allow you to apply:
 
 - **Show header -** Show or hide column names imported from your data source.
 - [Table field options]({{< relref "../field-options/table-field-options.md" >}}) allow you to change [field options]({{< relref "../field-options/_index.md" >}}) such as column width, alignment, and cell display mode.
+- [Filter table columns]({{< relref "../field-options/filter-table-columns.md" >}}) - You can temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values.

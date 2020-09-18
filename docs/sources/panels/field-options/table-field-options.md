@@ -30,8 +30,6 @@ By default, Grafana automatically calculates the column width based on the cell 
 
 For example, if you enter `100` in the field, then when you click outside the field, all the columns will be set to 100 pixels wide.
 
-DFP NOTE - ADD IMAGES
-
 ## Cell display mode
 
 By default, Grafana automatically chooses display settings. You can override the settings by choosing one of the following options to change all fields.
@@ -55,3 +53,7 @@ The gauge is split up in small cells that are lit or unlit.
 ### JSON view
 
 Shows value formatted as code. If a value is an object the JSON view allowing browsing the JSON object will appear on hover
+
+## Column filter
+
+Turn this on to enable table field filters. For more information, refer to [Filter table columns]({{< relref "filter-table-columns.md" >}}).
