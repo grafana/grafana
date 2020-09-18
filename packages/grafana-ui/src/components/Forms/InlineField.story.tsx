@@ -61,3 +61,19 @@ export const withSelect = () => {
     </InlineField>
   );
 };
+
+export const multiple = () => {
+  return (
+    <>
+      <InlineField label="Field 1">
+        <Input placeholder="Inline input" />
+      </InlineField>
+      <InlineField label="Field 2">
+        <Input placeholder="Inline input" />
+      </InlineField>
+      <InlineField label="Field 3" fill>
+        <Input placeholder="Inline input" />
+      </InlineField>
+    </>
+  );
+};

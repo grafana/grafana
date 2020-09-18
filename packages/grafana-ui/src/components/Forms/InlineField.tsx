@@ -44,7 +44,7 @@ export const InlineField: FC<Props> = ({
   isKeyword,
 }) => {
   const theme = useTheme();
-  const styles = getStyles(theme, grow, fill);
+  const styles = getStyles(theme, grow);
   const fillStyles = getInlineLabelStyles(theme, { grow: true }).label;
   const child = React.Children.only(children);
   let inputId;
@@ -74,7 +74,7 @@ export const InlineField: FC<Props> = ({
 
 InlineField.displayName = 'InlineField';
 
-const getStyles = (theme: GrafanaTheme, grow?: boolean, fill?: boolean) => {
+const getStyles = (theme: GrafanaTheme, grow?: boolean) => {
   return {
     container: css`
       display: flex;
@@ -83,7 +83,7 @@ const getStyles = (theme: GrafanaTheme, grow?: boolean, fill?: boolean) => {
       text-align: left;
       position: relative;
       flex: ${grow ? 1 : 0} 0 auto;
-      margin: 0 ${fill ? theme.spacing.xs : 0} ${theme.spacing.xs} 0;
+      margin: 0 ${theme.spacing.xs} ${theme.spacing.xs} 0;
 
       * {
         :focus {
