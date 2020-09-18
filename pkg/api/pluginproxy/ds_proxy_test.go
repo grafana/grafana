@@ -68,7 +68,7 @@ func TestDSRouteRule(t *testing.T) {
 						},
 					},
 					{
-						Path: "api/restricted",
+						Path:    "api/restricted",
 						ReqRole: models.ROLE_ADMIN,
 					},
 				},
@@ -120,14 +120,13 @@ func TestDSRouteRule(t *testing.T) {
 				})
 			})
 
-			Convey("When matching route path with no url", func () {
-
+			Convey("When matching route path with no url", func() {
 				proxy, err := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
 				So(err, ShouldBeNil)
 				proxy.route = plugin.Routes[4]
 				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
 
-				Convey("Should not replace request url", func () {
+				Convey("Should not replace request url", func() {
 					So(req.URL.String(), ShouldEqual, "http://localhost/asd")
 				})
 			})
