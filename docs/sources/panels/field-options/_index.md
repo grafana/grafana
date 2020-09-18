@@ -16,20 +16,18 @@ Field options allow you to change how the data is displayed in your visualizatio
 
 ## Field options
 
-_Field options_, both standard and custom, can be found in the **Field** tab in the panel editor. Changes on this tab apply to all fields (i.e. series/columns). For example, if you change the unit to percentage, then all fields with numeric values are displayed in percentages. [Apply a field option](#configure-all-fields).
+_Field options_, both standard and custom, can be found in the Field tab in the panel editor. Changes on this tab apply to all fields (i.e. series/columns). For example, if you change the unit to percentage, then all fields with numeric values are displayed in percentages. Learn how to apply a field option in [Configure all fields](configure-all-fields.md).
 
 ## Field overrides
 
-_Field overrides_ can be added in the **Overrides** tab in the panel editor. There you can add the same options as you find in the **Field** tab, but they are only applied to specific fields. [Apply an override](#override-a-field).
+_Field overrides_ can be added in the Overrides tab in the panel editor. There you can add the same options as you find in the Field tab, but they are only applied to specific fields. Learn how to apply an override in [Configure specific fields](configure-specific-fields.md).
 
-## Configure fields
+## Available field options and overrides
 
+Field option types are common to both field options and field overrides. The only difference is whether the change will apply to all fields (apply in the Field tab) or to a subset of fields (apply in the Overrides tab).
 
-
-Standard options
-Table options
-Configure all fields
-Configure specific fields
+- [Standard field options]({{< relref "standard-field-options.md" >}}) apply to all visualizations that allow transformations.
+- [Table field options]({{< relref "table-options.md" >}}), which only apply to table visualizations.
 
 ## Examples
 
