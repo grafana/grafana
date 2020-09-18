@@ -23,6 +23,8 @@ export interface Props extends Omit<HTMLProps<HTMLLabelElement>, 'children' | 'c
   /** @deprecated */
   /** This prop is deprecated and is not used anymore */
   isInvalid?: boolean;
+  /** Fill the width of the container. Equivalent to setting `flex-grow:1` */
+  grow?: boolean;
 }
 
 export const InlineFormLabel: FunctionComponent<Props> = ({
@@ -32,10 +34,11 @@ export const InlineFormLabel: FunctionComponent<Props> = ({
   tooltip,
   width,
   isKeyword,
+  grow,
   ...rest
 }) => {
   const theme = useTheme();
-  const styles = getStyles(theme, width, isKeyword);
+  const styles = getInlineLabelStyles(theme, { width, isKeyword, grow });
 
   return (
     <label className={cx(styles.label, className)} {...rest}>
@@ -49,7 +52,14 @@ export const InlineFormLabel: FunctionComponent<Props> = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme, width?: number | 'auto', isKeyword = false) => {
+interface StyleOptions {
+  width?: number | 'auto';
+  isKeyword?: boolean;
+  grow?: boolean;
+}
+
+export const getInlineLabelStyles = (theme: GrafanaTheme, options: StyleOptions) => {
+  const { width, isKeyword = false, grow = false } = options;
   return {
     label: css`
       display: flex;
@@ -68,6 +78,7 @@ const getStyles = (theme: GrafanaTheme, width?: number | 'auto', isKeyword = fal
       // Keep the spacer at 16 px for compatibility
       width: ${width ? (width !== 'auto' ? `${16 * width}px` : width) : '100%'};
       color: ${isKeyword ? theme.colors.textBlue : 'inherit'};
+      flex-grow: ${grow ? 1 : 'unset'};
     `,
     icon: css`
       flex-grow: 0;

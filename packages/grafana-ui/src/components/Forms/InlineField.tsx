@@ -2,7 +2,7 @@ import React, { InputHTMLAttributes, FC } from 'react';
 import { cx, css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme } from '../../themes';
-import { InlineFormLabel } from './InlineFormLabel';
+import { getInlineLabelStyles, InlineFormLabel } from './InlineFormLabel';
 import { PopoverContent } from '../Tooltip/Tooltip';
 
 export interface Props extends Omit<InputHTMLAttributes<HTMLDivElement>, 'className' | 'css'> {
@@ -22,16 +22,14 @@ export interface Props extends Omit<InputHTMLAttributes<HTMLDivElement>, 'classN
   disabled?: boolean;
   /** Custom styles for the field */
   className?: string;
-  /** Make the field's child to fill the width of the row. Equivalent to setting `flex-grow:1` on the field*/
+  /** Make the field's child to fill the width of the row. Equivalent to setting `flex-grow:1` on the field */
   grow?: boolean;
   /** A toggle to apply query keyword styling to the label */
   isKeyword?: boolean;
+  /** Fill the remaining width of the row with the label's background */
+  fill?: boolean;
 }
 
-/**
- * Default form field including label used in Grafana UI. Default input element is simple <input />. You can also pass
- * custom inputEl if required in which case inputWidth and inputProps are ignored.
- */
 export const InlineField: FC<Props> = ({
   children,
   label,
@@ -42,10 +40,12 @@ export const InlineField: FC<Props> = ({
   disabled,
   className,
   grow,
+  fill,
   isKeyword,
 }) => {
   const theme = useTheme();
-  const styles = getStyles(theme, grow);
+  const styles = getStyles(theme, grow, fill);
+  const fillStyles = getInlineLabelStyles(theme, { grow: true }).label;
   const child = React.Children.only(children);
   let inputId;
 
@@ -62,16 +62,19 @@ export const InlineField: FC<Props> = ({
     );
 
   return (
-    <div className={cx(styles.container, className)}>
-      {labelElement}
-      {React.cloneElement(children, { invalid, disabled, loading })}
-    </div>
+    <>
+      <div className={cx(styles.container, className)}>
+        {labelElement}
+        {React.cloneElement(children, { invalid, disabled, loading })}
+      </div>
+      {fill && <div className={fillStyles} />}
+    </>
   );
 };
 
 InlineField.displayName = 'InlineField';
 
-const getStyles = (theme: GrafanaTheme, grow?: boolean) => {
+const getStyles = (theme: GrafanaTheme, grow?: boolean, fill?: boolean) => {
   return {
     container: css`
       display: flex;
@@ -79,7 +82,8 @@ const getStyles = (theme: GrafanaTheme, grow?: boolean) => {
       align-items: flex-start;
       text-align: left;
       position: relative;
-      flex-grow: ${grow ? 1 : 'unset'};
+      flex: ${grow ? 1 : 0} 0 auto;
+      margin: 0 ${fill ? theme.spacing.xs : 0} ${theme.spacing.xs} 0;
 
       * {
         :focus {
