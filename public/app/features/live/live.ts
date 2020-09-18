@@ -5,6 +5,7 @@ import { Observable, Subject, BehaviorSubject, from } from 'rxjs';
 import { share, finalize, mergeMap, take } from 'rxjs/operators';
 import { ChannelHandler, ChannelSupport } from '@grafana/data';
 import { loadPlugin } from '../plugins/PluginPage';
+import { coreGrafanaSupport } from './channels';
 
 interface Channel<T = any> {
   plugin: string;
@@ -133,6 +134,10 @@ class CentrifugeSrv implements GrafanaLiveSrv {
   }
 
   private async getChannelSupport(pluginId: string): Promise<ChannelSupport> {
+    if (pluginId === 'grafana') {
+      return Promise.resolve(coreGrafanaSupport);
+    }
+
     const plugin = await loadPlugin(pluginId);
     if (!plugin.channelSupport) {
       throw new Error('Plugin does not have live support configured');
