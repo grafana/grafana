@@ -146,6 +146,7 @@ export { Legend } from './Forms/Legend';
 export { FieldSet } from './Forms/FieldSet';
 export { FieldValidationMessage } from './Forms/FieldValidationMessage';
 export { InlineField } from './Forms/InlineField';
+export { InlineLabel } from './Forms/InlineLabel';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';

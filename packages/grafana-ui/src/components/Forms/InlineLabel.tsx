@@ -27,7 +27,7 @@ export interface Props extends Omit<HTMLProps<HTMLLabelElement>, 'children' | 'c
   grow?: boolean;
 }
 
-export const InlineFormLabel: FunctionComponent<Props> = ({
+export const InlineLabel: FunctionComponent<Props> = ({
   children,
   className,
   htmlFor,
