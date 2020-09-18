@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -490,6 +491,49 @@ func TestUserAuthToken(t *testing.T) {
 			getTime = time.Now
 		})
 	})
+
+	Convey("Test user concurrent session limit", t, func() {
+		userID := int64(10)
+
+		Convey("When the session limit is disabled", func() {
+			ctx := createTestContext(t)
+			userAuthTokenService := ctx.tokenService
+
+			_, err := ctx.createSomeAuthTokensWithSeenAtNow(userID, concurrentSessionLimit)
+			So(err, ShouldBeNil)
+
+			Convey("Once the limit is exceeded no token is revoked", func() {
+				_, err := userAuthTokenService.CreateToken(context.Background(), userID, "192.168.10.11:1234", "some user agent")
+				So(err, ShouldBeNil)
+
+				tokenCount, err := userAuthTokenService.ActiveTokenCount(context.Background())
+				So(err, ShouldBeNil)
+				So(tokenCount, ShouldEqual, concurrentSessionLimit+1)
+			})
+		})
+
+		Convey("When the session limit is enabled", func() {
+			ctx := createTestContext(t)
+			userAuthTokenService := ctx.tokenService
+			userAuthTokenService.Cfg.FeatureToggles = map[string]bool{concurrentSessionLimitKey: true}
+
+			userTokens, err := ctx.createSomeAuthTokensWithSeenAtNow(userID, concurrentSessionLimit)
+			So(err, ShouldBeNil)
+
+			Convey("Once the limit is exceeded the least frequently used token is revoked", func() {
+				_, err := userAuthTokenService.CreateToken(context.Background(), userID, "192.168.10.11:1234", "some user agent")
+				So(err, ShouldBeNil)
+
+				tokenCount, err := userAuthTokenService.ActiveTokenCount(context.Background())
+				So(err, ShouldBeNil)
+				So(tokenCount, ShouldEqual, concurrentSessionLimit)
+
+				_, err = userAuthTokenService.GetUserToken(context.Background(), userID, userTokens[0].Id)
+				So(err, ShouldEqual, models.ErrUserTokenNotFound)
+			})
+		})
+
+	})
 }
 
 func createTestContext(t *testing.T) *testContext {
@@ -555,4 +599,38 @@ func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {
 		return false, err
 	}
 	return rowsAffected == 1, nil
+}
+
+func (c *testContext) updateSeenAt(id, seenAt int64) (bool, error) {
+	sess := c.sqlstore.NewSession()
+	res, err := sess.Exec("UPDATE user_auth_token SET seen_at = ? WHERE id = ?", seenAt, id)
+	if err != nil {
+		return false, err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return rowsAffected == 1, nil
+}
+
+func (c *testContext) createSomeAuthTokensWithSeenAtNow(userID int64, amount int) ([]*models.UserToken, error) {
+	userTokens := make([]*models.UserToken, amount)
+
+	for i := 0; i < amount; i++ {
+		userToken, err := c.tokenService.CreateToken(context.Background(), userID, "192.168.10.11:1234", "some user agent")
+		if err != nil {
+			return nil, err
+		}
+
+		updated, err := c.updateSeenAt(userToken.Id, time.Now().UnixNano())
+		if !updated || err != nil {
+			return nil, fmt.Errorf("error while updating auth token seen_at: %v", err)
+		}
+
+		userTokens[i] = userToken
+	}
+
+	return userTokens, nil
 }
