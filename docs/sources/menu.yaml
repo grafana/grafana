@@ -167,6 +167,13 @@
       name: Transformations
     - link: /panels/field-options/
       name: Field options
+      children:
+        - link: /panels/field-options/
+          name: Field options and overrides
+        - link: /panels/field-options/configure-all-fields/
+          name: Configure all fields
+        - link: /panels/field-options/configure-specific-fields/
+          name: Configure specific fields     
     - link: /panels/panel-editor/
       name: Panel editor
     - name: Visualizations

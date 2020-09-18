@@ -1,13 +1,13 @@
 +++
 title = "Configure all field"
-keywords = ["grafana", "field options", "documentation", "format fields"]
+keywords = ["grafana", "field options", "documentation", "format fields", "change all fields"]
 type = "docs"
-weight = 300
+weight = 200
 +++
 
 # Configure all fields
 
-To change how all fields display data, you can change an option in the **Field** tab. In the **Overrides** tab you then override that for specific fields.
+To change how all fields display data, you can change an option in the Field tab. In the Overrides tab, you can then override the field options for [specific fields]({{< relref "configure-specific-fields.md" >}}).
 
 For example, you could change the number of decimal places shown in all fields by changing the **Decimals** option. For more information about options, refer to:
    - [Standard field options]({{< relref "standard-field-options.md" >}}), apply to all visualizations that allow transformations.

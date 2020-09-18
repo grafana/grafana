@@ -3,7 +3,7 @@ title = "Field options and overrides"
 type = "docs"
 aliases = ["/docs/grafana/latest/panels/field-configuration-options/", "/docs/grafana/latest/panels/field-options/"]
 [menu.docs]
-weight = 100
+weight = 500
 +++
 
 # Field options and overrides
