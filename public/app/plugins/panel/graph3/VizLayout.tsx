@@ -110,13 +110,6 @@ export const VizLayout: React.FC<VizLayoutProps> = ({ children, width, height })
   const [leftSlotRef, leftSlotBBox] = useMeasure();
   const [rightSlotRef, rightSlotBBox] = useMeasure();
   const [canvasSlotRef, canvasSlotBBox] = useMeasure();
-  const [activeSlots, setActiveSlots] = useState<Record<VizLayoutSlots, HTMLElement | null>>({
-    top: null,
-    left: null,
-    right: null,
-    bottom: null,
-    canvas: null,
-  });
 
   // public fluent API exposed via render prop to build the layout
   const builder = useMemo(

@@ -5,6 +5,7 @@ import {
   FieldConfig,
   FieldType,
   formattedValueToString,
+  getColorFromHexRgbOrName,
   getFieldDisplayName,
   getTimeField,
   getTimeZoneInfo,
@@ -143,12 +144,17 @@ export const buildSeriesConfig = (
       });
     }
 
+    const seriesColor =
+      field.config.color && field.config.color.fixedColor
+        ? getColorFromHexRgbOrName(field.config.color.fixedColor)
+        : colors[seriesIdx];
+
     series.push({
       scale,
       label: getFieldDisplayName(field, data),
-      stroke: colors[seriesIdx],
+      stroke: seriesColor,
       fill: config.custom?.fill.alpha
-        ? tinycolor(colors[seriesIdx])
+        ? tinycolor(seriesColor)
             .setAlpha(config.custom?.fill.alpha)
             .toRgbString()
         : undefined,
@@ -232,7 +238,6 @@ export const preparePlotData = (data: DataFrame): uPlot.AlignedData => {
     plotData.push(values);
   }
 
-  console.log('Prepared Data:', plotData);
   return plotData;
 };
 

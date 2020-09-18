@@ -1,7 +1,7 @@
-import { PanelPlugin } from '@grafana/data';
+import { FieldColorMode, FieldConfigProperty, PanelPlugin, STANDARD_FIELD_OPTIONS } from '@grafana/data';
+import { GraphCustomFieldConfig } from '@grafana/ui';
 import { GraphPanel } from './GraphPanel';
 import { Options } from './types';
-import { GraphCustomFieldConfig } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPanel)
   .useFieldConfig({
@@ -128,6 +128,10 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           defaultValue: true,
         });
     },
+    standardOptions: STANDARD_FIELD_OPTIONS,
+    standardOptionsDefaults: {
+      color: { mode: FieldColorMode.Fixed },
+    },
   })
   .setPanelOptions(builder => {
     builder
@@ -163,18 +167,22 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
         name: 'Display legend as table',
         description: '',
         defaultValue: false,
+        showIf: c => c.legend.isVisible,
       })
       .addRadio({
         category: ['Legend'],
         path: 'legend.placement',
         name: 'Legend placement',
         description: '',
-        defaultValue: 'under',
+        defaultValue: 'bottom',
         settings: {
           options: [
-            { value: 'under', label: 'Below graph' },
-            { value: 'right', label: 'Right to the graph' },
+            { value: 'left', label: 'Left' },
+            { value: 'top', label: 'Top' },
+            { value: 'bottom', label: 'Bottom' },
+            { value: 'right', label: 'Right' },
           ],
         },
+        showIf: c => c.legend.isVisible,
       });
   });

@@ -1,13 +1,7 @@
 import { LegendOptions, GraphTooltipOptions } from '@grafana/ui';
-import { YAxis } from '@grafana/data';
 
 export type NullValuesMode = 'null' | 'connected' | 'asZero';
-
-export interface SeriesOptions {
-  color?: string;
-  yAxis?: YAxis;
-  [key: string]: any;
-}
+export type LegendPlacement = 'top' | 'bottom' | 'left' | 'right';
 
 export interface GraphOptions {
   // Redraw as time passes
@@ -16,23 +10,12 @@ export interface GraphOptions {
 
 export interface Options {
   graph: GraphOptions;
-  legend: LegendOptions & GraphLegendEditorLegendOptions;
-  series: {
-    [alias: string]: SeriesOptions;
-  };
+  legend: Omit<LegendOptions, 'placement'> &
+    GraphLegendEditorLegendOptions & {
+      placement: LegendPlacement;
+    };
   tooltipOptions: GraphTooltipOptions;
 }
-
-export const defaults: Options = {
-  graph: {},
-  legend: {
-    asTable: false,
-    isVisible: true,
-    placement: 'under',
-  },
-  series: {},
-  tooltipOptions: { mode: 'single' },
-};
 
 export interface GraphLegendEditorLegendOptions extends LegendOptions {
   stats?: string[];

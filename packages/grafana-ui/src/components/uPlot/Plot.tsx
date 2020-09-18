@@ -1,12 +1,13 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { css } from 'emotion';
 import uPlot from 'uplot';
 import 'uplot/dist/uPlot.min.css';
 
 import { useTheme } from '../../themes';
-import { buildPlotContext, PlotContext, PlotPluginsContext, PlotDataContext } from './context';
-import { buildPlotConfig, pluginLog, preparePlotData } from './utils';
-import { PlotPlugin, PlotProps } from './types';
+import { buildPlotContext, PlotContext } from './context';
+import { buildPlotConfig, preparePlotData } from './utils';
+import { usePlotPlugins } from './hooks';
+import { PlotProps } from './types';
 
 // uPlot abstraction responsible for plot initialisation, setup and refresh
 // Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
@@ -22,37 +23,14 @@ export const UPlotChart: React.FC<PlotProps> = props => {
   const [plotData, setPlotData] = useState<uPlot.AlignedData>();
   // uPlot config
   const [config, setConfig] = useState<uPlot.Options>();
-  // map of registered plugins (via children);
-  const [plugins, setPlugins] = useState<Record<string, PlotPlugin>>({});
-
-  const registerPlugin = useCallback(
-    (plugin: PlotPlugin) => {
-      pluginLog(plugin.id, false, 'register');
-      if (plugins.hasOwnProperty(plugin.id)) {
-        throw new Error(`${plugin.id} that is already registered`);
-      }
-      setPlugins(plugs => {
-        return {
-          ...plugs,
-          [plugin.id]: plugin,
-        };
-      });
-
-      return () => {
-        setPlugins(plugs => {
-          pluginLog(plugin.id, false, 'unregister');
-          delete plugs[plugin.id];
-          return {
-            ...plugs,
-          };
-        });
-      };
-    },
-    [setPlugins]
-  );
+  // uPlot plugins API hook
+  const { plugins, registerPlugin } = usePlotPlugins();
 
   useEffect(() => {
-    // Creates array of datapoints to be consumed by uPLot
+    if (!canvasRef || !canvasRef.current) {
+      return;
+    }
+    // Creates array of datapoints to be consumed by uPlot
     const data = preparePlotData(props.data);
     // Creates series, axes and scales config
     const config = buildPlotConfig(props, props.data, theme);
@@ -66,9 +44,13 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 
     setConfig(config);
     setPlotData(data);
-  }, [props.data, plugins]);
+  }, [props.data, plugins, canvasRef.current]);
 
   useEffect(() => {
+    if (!canvasRef) {
+      throw new Error('Cannot render graph without canvas!');
+    }
+
     if (!config || !plotData) {
       plotInstance?.destroy();
       return;
@@ -79,8 +61,14 @@ export const UPlotChart: React.FC<PlotProps> = props => {
       plotInstance.destroy();
     }
 
-    if (canvasRef && canvasRef.current) {
+    if (canvasRef.current) {
+      if (config.width === 0 || config.height === 0) {
+        console.log(config.width, config.height);
+        return;
+      }
+
       console.log('Initializing plot', config, plotData);
+
       setPlotInstance(new uPlot(config, plotData, canvasRef.current));
     }
 
@@ -90,11 +78,10 @@ export const UPlotChart: React.FC<PlotProps> = props => {
         plotInstance.destroy();
       }
     };
-  }, [config]);
+  }, [config, canvasRef.current]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (plotInstance) {
-      console.log('Updating plot size', props.width, props.height);
       plotInstance.setSize({
         width: props.width,
         height: props.height,
@@ -102,23 +89,21 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     }
   }, [props.width, props.height]);
 
+  const plotCtx = useMemo(() => {
+    return buildPlotContext(registerPlugin, canvasRef, props.data, plotInstance);
+  }, [registerPlugin, canvasRef, props.data, plotInstance]);
+
   return (
-    <PlotDataContext.Provider value={{ data: props.data }}>
-      <PlotPluginsContext.Provider value={{ registerPlugin }}>
-        <PlotContext.Provider value={buildPlotContext(plotInstance)}>
-          <div
-            className={css`
-              width: ${props.width}px;
-              height: ${props.height}px;
-              position: relative;
-            `}
-          >
-            <div ref={canvasRef} />
-            {/* render plugins provided as children */}
-            {props.children}
-          </div>
-        </PlotContext.Provider>
-      </PlotPluginsContext.Provider>
-    </PlotDataContext.Provider>
+    <PlotContext.Provider value={plotCtx}>
+      <div
+        className={css`
+          position: relative;
+          width: ${props.width}px;
+          height: ${props.height}px;
+        `}
+      >
+        {props.children}
+      </div>
+    </PlotContext.Provider>
   );
 };
