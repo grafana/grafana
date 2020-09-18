@@ -244,7 +244,7 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models
 			seen_at = 0,
 			user_agent = ?,
 			client_ip = ?,
-f			prev_auth_token = case when auth_token_seen = ? then auth_token else prev_auth_token end,
+			prev_auth_token = case when auth_token_seen = ? then auth_token else prev_auth_token end,
 			auth_token = ?,
 			auth_token_seen = ?,
 			rotated_at = ?
