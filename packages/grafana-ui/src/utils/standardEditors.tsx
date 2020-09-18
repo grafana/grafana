@@ -18,6 +18,8 @@ import {
   valueMappingsOverrideProcessor,
   ThresholdsMode,
   TimeZone,
+  identityOverrideProcessor,
+  FieldColor,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
@@ -200,22 +202,22 @@ export const getStandardFieldConfigs = () => {
     getItemsCount: value => (value ? value.length : 0),
   };
 
-  // const color: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
-  //   id: 'color',
-  //   path: 'color',
-  //   name: 'Color',
-  //   description: 'Customise color',
-  //   editor: standardEditorsRegistry.get('color').editor as any,
-  //   override: standardEditorsRegistry.get('color').editor as any,
-  //   process: identityOverrideProcessor,
-  //   settings: {
-  //     placeholder: '-',
-  //   },
-  //   shouldApply: () => true,
-  //   category: ['Color & thresholds'],
-  // };
+  const color: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
+    id: 'color',
+    path: 'color',
+    name: 'Color',
+    description: 'Customise color',
+    editor: standardEditorsRegistry.get('color').editor as any,
+    override: standardEditorsRegistry.get('color').editor as any,
+    process: identityOverrideProcessor,
+    settings: {
+      placeholder: '-',
+    },
+    shouldApply: field => field.type !== FieldType.time,
+    category,
+  };
 
-  return [unit, min, max, decimals, displayName, noValue, thresholds, mappings, links];
+  return [unit, min, max, decimals, displayName, noValue, thresholds, mappings, links, color];
 };
 
 /**
@@ -285,7 +287,7 @@ export const getStandardOptionEditors = () => {
     editor: ValueMappingsValueEditor as any,
   };
 
-  const color: StandardEditorsRegistryItem<string> = {
+  const color: StandardEditorsRegistryItem<FieldColor> = {
     id: 'color',
     name: 'Color',
     description: 'Allows color selection',

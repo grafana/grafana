@@ -8,6 +8,7 @@ import {
   Field,
   FieldColorMode,
   FieldConfig,
+  FieldConfigProperty,
   FieldConfigPropertyItem,
   FieldOverrideContext,
   FieldType,
@@ -137,7 +138,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       // Anything in the field config that's not set by the datasource
       // will be filled in by panel's field configuration
       setFieldConfigDefaults(config, source.defaults, context);
-
       // Find any matching rules and then override
       for (const rule of override) {
         if (rule.match(field, frame, options.data!)) {
@@ -286,9 +286,9 @@ const processFieldConfigValue = (
   context: FieldOverrideEnv
 ) => {
   const currentConfig = get(destination, fieldConfigProperty.path);
-
   if (currentConfig === null || currentConfig === undefined) {
     const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
+    // console.log(item);
     if (!item) {
       return;
     }
@@ -459,3 +459,16 @@ export function applyRawFieldOverrides(data: DataFrame[]): DataFrame[] {
 
   return newData;
 }
+
+export const STANDARD_FIELD_OPTIONS = [
+  FieldConfigProperty.Unit,
+  FieldConfigProperty.Min,
+  FieldConfigProperty.Max,
+  FieldConfigProperty.Decimals,
+  FieldConfigProperty.DisplayName,
+  FieldConfigProperty.NoValue,
+  FieldConfigProperty.Thresholds,
+  FieldConfigProperty.Mappings,
+  FieldConfigProperty.Links,
+  FieldConfigProperty.Color,
+];
