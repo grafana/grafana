@@ -2,7 +2,7 @@ import React, { InputHTMLAttributes, FC } from 'react';
 import { cx, css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme } from '../../themes';
-import { getInlineLabelStyles, InlineFormLabel } from './InlineFormLabel';
+import { getInlineLabelStyles, InlineLabel } from './InlineLabel';
 import { PopoverContent } from '../Tooltip/Tooltip';
 
 export interface Props extends Omit<InputHTMLAttributes<HTMLDivElement>, 'className' | 'css'> {
@@ -54,9 +54,9 @@ export const InlineField: FC<Props> = ({
   }
   const labelElement =
     typeof label === 'string' ? (
-      <InlineFormLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId} isKeyword={isKeyword}>
+      <InlineLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId} isKeyword={isKeyword}>
         {label}
-      </InlineFormLabel>
+      </InlineLabel>
     ) : (
       label
     );

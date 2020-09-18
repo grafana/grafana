@@ -1,5 +1,5 @@
 import React, { InputHTMLAttributes, FunctionComponent } from 'react';
-import { InlineFormLabel } from '../Forms/InlineFormLabel';
+import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { PopoverContent } from '../Tooltip/Tooltip';
 import { cx } from 'emotion';
 

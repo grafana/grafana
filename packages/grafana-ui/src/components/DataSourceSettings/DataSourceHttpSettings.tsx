@@ -10,7 +10,7 @@ import { Input } from '../Forms/Legacy/Input/Input';
 import { Switch } from '../Forms/Legacy/Switch/Switch';
 import { Icon } from '../Icon/Icon';
 import { FormField } from '../FormField/FormField';
-import { InlineFormLabel } from '../Forms/InlineFormLabel';
+import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { TagsInput } from '../TagsInput/TagsInput';
 import { useTheme } from '../../themes';
 import { HttpSettingsProps } from './types';
