@@ -532,7 +532,6 @@ func TestUserAuthToken(t *testing.T) {
 				So(err, ShouldEqual, models.ErrUserTokenNotFound)
 			})
 		})
-
 	})
 }
 
