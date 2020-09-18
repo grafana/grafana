@@ -1,5 +1,5 @@
 import React, { ReactNode, useCallback } from 'react';
-import cloneDeep from 'lodash/cloneDeep';
+import { get as lodashGet, cloneDeep } from 'lodash';
 import {
   DataFrame,
   DocsId,
@@ -146,9 +146,9 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
       const defaults = config.defaults;
       const value = item.isCustom
         ? defaults.custom
-          ? defaults.custom[item.path]
+          ? lodashGet(defaults.custom, item.path)
           : undefined
-        : (defaults as any)[item.path];
+        : lodashGet(defaults, item.path);
 
       let label: ReactNode | undefined = (
         <Label description={item.description} category={item.category?.slice(1)}>
