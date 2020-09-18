@@ -22,7 +22,7 @@ The table panel is very flexible, supporting multiple modes for time series and 
 Table visualizations allow you to apply:
 
 - [Data transformations]({{< relref "../transformations.md" >}})
-- [Field options and overrides]({{< relref "../field-options.md" >}})
+- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options
@@ -72,5 +72,4 @@ By default, Grafana automatically chooses display settings. You can override the
 
 ### Display original string value
 
-Grafana can sometime be too aggressive in parsing strings and displaying them as numbers. To make Grafana show the original
-string create a field override and add a unit property with the `string` unit.
+Grafana can sometime be too aggressive in parsing strings and displaying them as numbers. To make Grafana show the original string create a field override and add a unit property with the `string` unit.

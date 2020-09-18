@@ -72,7 +72,7 @@ You can now dynamically apply value filters to any table column. This option is 
 
 You can now add override rules that use a regex matcher to choose which fields to apply rules to.
 
-The [Field options]({{< relref "../panels/field-options.md" >}}) content has been updated as a result of these changes.
+The [Field options]({{< relref "../panels/field-options/_index.md" >}}) content has been updated as a result of these changes.
 
 ## New transformations and enhancements
 
