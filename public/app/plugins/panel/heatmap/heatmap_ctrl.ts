@@ -290,7 +290,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
   // This should only be called from the snapshot callback
   onSnapshotLoad(dataList: LegacyResponseData[]) {
-    this.onDataFramesReceived(getProcessedDataFrames(dataList));
+    this.onDataFramesReceived(getProcessedDataFrames(dataList).series);
   }
 
   // Directly support DataFrame
