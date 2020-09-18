@@ -90,6 +90,12 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, userId int64, cl
 		return nil, err
 	}
 
+	err = s.revokeOldUserTokens(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
 	userAuthToken.UnhashedToken = token
 
 	s.log.Debug("user auth token created", "tokenId", userAuthToken.Id, "userId", userAuthToken.UserId, "clientIP", userAuthToken.ClientIp, "userAgent", userAuthToken.UserAgent, "authToken", userAuthToken.AuthToken)
@@ -238,7 +244,7 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models
 			seen_at = 0,
 			user_agent = ?,
 			client_ip = ?,
-			prev_auth_token = case when auth_token_seen = ? then auth_token else prev_auth_token end,
+f			prev_auth_token = case when auth_token_seen = ? then auth_token else prev_auth_token end,
 			auth_token = ?,
 			auth_token_seen = ?,
 			rotated_at = ?
@@ -402,6 +408,35 @@ func (s *UserAuthTokenService) createdAfterParam() int64 {
 
 func (s *UserAuthTokenService) rotatedAfterParam() int64 {
 	return getTime().Add(-s.Cfg.LoginMaxInactiveLifetime).Unix()
+}
+
+const (
+	concurrentSessionLimit    = 3
+	concurrentSessionLimitKey = "concurrentSessionLimit"
+)
+
+func (s *UserAuthTokenService) isConcurrentSessionLimitEnabled() bool {
+	return s.Cfg.FeatureToggles[concurrentSessionLimitKey]
+}
+
+func (s *UserAuthTokenService) revokeOldUserTokens(ctx context.Context) error {
+	if !s.isConcurrentSessionLimitEnabled() {
+		return nil
+	}
+
+	return s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		result, err := dbSession.Exec("DELETE FROM user_auth_token WHERE id NOT IN (SELECT id FROM user_auth_token WHERE seen_at <> 0 ORDER BY seen_at DESC LIMIT ?) AND seen_at <> 0;", concurrentSessionLimit-1)
+		if err != nil {
+			return err
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err == nil && rowsAffected > 0 {
+			s.log.Debug("old user tokens revoked due to concurrent session limit", "count", rowsAffected)
+		}
+
+		return nil
+	})
 }
 
 func hashToken(token string) string {
