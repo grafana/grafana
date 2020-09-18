@@ -267,19 +267,18 @@ export class TemplateSrv implements BaseTemplateSrv {
     this.regex.lastIndex = 0;
     let lastIndex = 0;
     let tokens: TargetToken[] = [];
-    let regexExec = this.regex.exec(target);
-    while (regexExec !== null) {
-      if (regexExec.index > lastIndex) {
-        tokens.push({ value: target.substring(lastIndex, regexExec.index) });
-      }
-      tokens = tokens.concat(this.replaceVariable(regexExec, scopedVars, format));
+    let regexExec;
+    while ((regexExec = this.regex.exec(target)) !== null) {
+      tokens.push(...TemplateSrv.nonVariableToken(target, lastIndex, regexExec.index));
+      tokens.push(...this.replaceVariable(regexExec, scopedVars, format));
       lastIndex = this.regex.lastIndex;
-      regexExec = lastIndex === 0 ? null : this.regex.exec(target);
     }
-    if (target.length > lastIndex) {
-      tokens.push({ value: target.substring(lastIndex, target.length) });
-    }
+    tokens.push(...TemplateSrv.nonVariableToken(target, lastIndex, target.length));
     return tokens;
+  }
+
+  private static nonVariableToken(target: string, indexStart: number, indexEnd: number): TargetToken[] {
+    return indexEnd > indexStart ? [{ value: target.substring(indexStart, indexEnd) }] : [];
   }
 
   private replaceVariable(regexExec: any, scopedVars?: ScopedVars, format?: string | Function): TargetToken[] {
