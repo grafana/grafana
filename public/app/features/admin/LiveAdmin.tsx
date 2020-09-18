@@ -4,10 +4,11 @@ import { connect } from 'react-redux';
 import { StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
-import { NavModel, SelectableValue, FeatureState } from '@grafana/data';
+import { NavModel, SelectableValue, FeatureState, AppEvents } from '@grafana/data';
 import { LivePanel } from './LivePanel';
 import { Select, Input, Button, FeatureInfoBox, Container } from '@grafana/ui';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
+import { appEvents } from 'app/core/core';
 
 interface Props {
   navModel: NavModel;
@@ -53,7 +54,7 @@ export class LiveAdmin extends PureComponent<Props, State> {
           console.log('PUBLISHED', text, v);
         })
         .catch(err => {
-          console.log('ERROR', err);
+          appEvents.emit(AppEvents.alertError, ['Publish error', `${err}`]);
         });
     }
     this.setState({ text: '' });

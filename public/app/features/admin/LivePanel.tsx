@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable, PartialObserver } from 'rxjs';
-import { tap } from 'rxjs/operators';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 
 interface Props {
@@ -44,15 +43,17 @@ export class LivePanel extends PureComponent<Props, State> {
 
     try {
       const idx = channel.indexOf('/');
+      if (idx < 1 || idx === channel.length - 1) {
+        throw 'Invalid channel path';
+      }
       const plugin = channel.substring(0, idx);
       const path = channel.substring(idx + 1);
 
-      const stream = srv
-        .getChannelStream(plugin, path)
-        .pipe(tap(() => this.setState({ connected: true, count: 0, lastTime: 0, lastBody: '' })));
+      const stream = srv.getChannelStream(plugin, path);
+      this.setState({ connected: true, count: 0, lastTime: 0, lastBody: '' });
       this.subscription = stream.subscribe(this.observer);
     } catch (err) {
-      this.setState({ connected: false, count: 0, lastTime: 0, lastBody: 'ERROR: ' + err });
+      this.setState({ connected: false, count: 0, lastTime: Date.now(), lastBody: 'ERROR: ' + err });
     }
   };
 
