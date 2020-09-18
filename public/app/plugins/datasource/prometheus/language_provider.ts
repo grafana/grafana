@@ -116,7 +116,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     const tRange = this.datasource.getTimeRange();
     const params = new URLSearchParams({
-      'match[]': name,
       start: tRange['start'].toString(),
       end: tRange['end'].toString(),
     });
@@ -414,7 +413,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   fetchLabelValues = async (key: string): Promise<Record<string, string[]>> => {
     const tRange = this.datasource.getTimeRange();
     const params = new URLSearchParams({
-      'match[]': name,
       start: tRange['start'].toString(),
       end: tRange['end'].toString(),
     });
