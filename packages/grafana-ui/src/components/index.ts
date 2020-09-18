@@ -145,6 +145,7 @@ export { Field } from './Forms/Field';
 export { Legend } from './Forms/Legend';
 export { FieldSet } from './Forms/FieldSet';
 export { FieldValidationMessage } from './Forms/FieldValidationMessage';
+export { InlineField } from './Forms/InlineField';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';
@@ -167,7 +168,7 @@ export { TimeRangeInput } from './TimePicker/TimeRangeInput';
 // Legacy forms
 
 // Export this until we've figured out a good approach to inline form styles.
-export { InlineFormLabel } from './Forms/InlineFormLabel';
+export { InlineFormLabel } from './FormLabel/FormLabel';
 
 // Select
 import { Select, AsyncSelect } from './Forms/Legacy/Select/Select';
