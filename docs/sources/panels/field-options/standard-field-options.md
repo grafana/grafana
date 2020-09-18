@@ -1,28 +1,45 @@
++++
+title = "Standard field options"
+keywords = ["grafana", "table options", "documentation", "format tables"]
+type = "docs"
+weight = 400
++++
 
-
-## Field options
+# Standard Field options
 
 This section explains all available field options. They are listed in alphabetical order.
 
 Most field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
-### Standard field options
-
 You can apply standard field options to most of the built-in Grafana panels. Some older panels and community panels that have yet to update to the new panel and data model will be missing either all or some of these field options.
 
-### Decimals
+- [Standard Field options](#standard-field-options)
+  - [Decimals](#decimals)
+  - [Data links](#data-links)
+  - [Display name](#display-name)
+  - [Max](#max)
+  - [Min](#min)
+  - [No value](#no-value)
+  - [Unit](#unit)
+  - [Custom units](#custom-units)
+    - [String unit](#string-unit)
+  - [Thresholds](#thresholds)
+  - [Value mapping](#value-mapping)
+
+
+## Decimals
 
 Number of decimals to render value with. Leave empty for Grafana to use the number of decimals provided by the data source.
 
 To change this setting, type a number in the field and then click outside the field or press Enter.
 
-### Data links
+## Data links
 
 Lets you control the URL to which a value or visualization link.
 
 For more information and instructions, refer to [Data links]({{< relref "../../linking/data-links.md" >}}).
 
-### Display name
+## Display name
 
 Lets you set the display title of all fields. You can use [variables]({{< relref "../../variables/templates-and-variables.md" >}}) in the field title.
 
@@ -40,23 +57,23 @@ Given a field with a name of Temp, and labels of {"Loc"="PBI", "Sensor"="3"}
 
 If the value is an empty string after rendering the expression for a particular field, then the default display method is used.
 
-### Max
+## Max
 
 Lets you set the maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields
 
-### Min
+## Min
 
 Lets you set the minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields
 
-### No value
+## No value
 
 Enter what Grafana should display if the field value is empty or null.
 
-### Unit
+## Unit
 
 Lets you choose what unit a field should use. Click in the **Unit** field, then drill down until you find the unit you want. The unit you select is applied to all fields except time.
 
-### Custom units
+## Custom units
 
 You can use the unit dropdown to also specify custom units, custom prefix or suffix and date time formats.
 
@@ -75,18 +92,18 @@ You can also paste a native emoji in the unit picker and pick it as a custom uni
 
 {{< docs-imagebox img="/img/docs/v66/custom_unit_burger2.png" max-width="600px" caption="Custom unit emoji" >}}
 
-#### String unit
+### String unit
 
 Grafana can sometime be too aggressive in parsing strings and displaying them as numbers. To make Grafana show the original
 string create a field override and add a unit property with the `string` unit.
 
-### Thresholds
+## Thresholds
 
 Thresholds allow you to change the color of a field based on the value.
 
 For more information and instructions, refer to [Thresholds]({{< relref "../thresholds.md" >}}).
 
-### Value mapping
+## Value mapping
 
 Lets you set rules that translate a field value or range of values into explicit text. You can add more than one value mapping.
 
@@ -94,4 +111,3 @@ Lets you set rules that translate a field value or range of values into explicit
   - **Value -** Enter a value. If the field value is greater than or equal to the value, then the **Text** is displayed.
   - **From** and **To -** Enter a range. If the field value is between or equal to the values in the range, then the **Text** is displayed.
 - **Text -** Text that is displayed if the conditions are met in a field. This field accepts variables.
-

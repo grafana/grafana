@@ -1,6 +1,7 @@
 +++
 title = "Field options and overrides"
 type = "docs"
+keywords = ["grafana", "field options", "documentation", "format fields"]
 aliases = ["/docs/grafana/latest/panels/field-configuration-options/", "/docs/grafana/latest/panels/field-options/"]
 [menu.docs]
 weight = 500
@@ -26,8 +27,8 @@ _Field overrides_ can be added in the Overrides tab in the panel editor. There y
 
 Field option types are common to both field options and field overrides. The only difference is whether the change will apply to all fields (apply in the Field tab) or to a subset of fields (apply in the Overrides tab).
 
-- [Standard field options]({{< relref "standard-field-options.md" >}}) apply to all visualizations that allow transformations.
-- [Table field options]({{< relref "table-options.md" >}}), which only apply to table visualizations.
+- [Standard field options]({{< relref "standard-field-options.md" >}}) apply to all panel visualizations that allow transformations.
+- [Table field options]({{< relref "table-field-options.md" >}}), which only apply to table panel visualizations.
 
 ## Examples
 

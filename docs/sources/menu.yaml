@@ -173,7 +173,11 @@
         - link: /panels/field-options/configure-all-fields/
           name: Configure all fields
         - link: /panels/field-options/configure-specific-fields/
-          name: Configure specific fields     
+          name: Configure specific fields
+        - link: /panels/field-options/standard-field-options/
+          name: Standard field options
+        - link: /panels/field-options/table-field-options/
+          name: Table field options
     - link: /panels/panel-editor/
       name: Panel editor
     - name: Visualizations
