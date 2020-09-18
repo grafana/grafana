@@ -18,6 +18,7 @@ export const ConfigEditor = (props: Props) => {
       jsonData: {
         ...options.jsonData,
         timeField: options.jsonData.timeField || '@timestamp',
+        includeFrozen: options.jsonData.includeFrozen ?? false,
         esVersion,
         maxConcurrentShardRequests:
           options.jsonData.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(esVersion),

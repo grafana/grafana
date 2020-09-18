@@ -9,6 +9,7 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   logMessageField?: string;
   logLevelField?: string;
   dataLinks?: DataLinkConfig[];
+  includeFrozen?: boolean;
 }
 
 export interface ElasticsearchAggregation {
