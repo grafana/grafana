@@ -6,7 +6,7 @@ export const ImageCell: FC<TableCellProps> = props => {
 
   return (
     <div className={tableStyles.tableCell}>
-      <img src={cell.value} />
+      <img src={cell.value} className={tableStyles.imageCell} />
     </div>
   );
 };
