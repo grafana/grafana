@@ -2,23 +2,58 @@ import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { styleMixins, stylesFactory } from '../../themes';
 import { getScrollbarWidth } from '../../utils';
+import { FieldTextAlignment } from './types';
+import { ContentPosition } from 'csstype';
+
+export interface GetCellStyleOptions {
+  color?: string;
+  background?: string;
+  align?: FieldTextAlignment;
+}
 
 export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
   const { palette, colors } = theme;
   const headerBg = theme.colors.bg2;
   const borderColor = theme.colors.border1;
   const resizerColor = theme.isLight ? palette.blue95 : palette.blue77;
-  const padding = 6;
+  const cellPadding = 6;
   const lineHeight = theme.typography.lineHeight.md;
   const bodyFontSize = 14;
-  const cellHeight = padding * 2 + bodyFontSize * lineHeight;
+  const cellHeight = cellPadding * 2 + bodyFontSize * lineHeight;
   const rowHoverBg = styleMixins.hoverColor(theme.colors.bg1, theme);
   const scollbarWidth = getScrollbarWidth();
+
+  const getCellStyle = (color?: string, background?: string, justify?: ContentPosition) => {
+    return css`
+      padding: 0 ${cellPadding}px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: ${justify};
+
+      ${color ? `color: ${color};` : ''};
+      ${background ? `background: ${background};` : ''};
+
+      &:hover {
+        overflow: visible;
+        width: auto;
+        box-shadow: 0 0 2px ${theme.colors.formFocusOutline};
+        background: ${background ?? rowHoverBg};
+        z-index: 1;
+      }
+    `;
+  };
 
   return {
     theme,
     cellHeight,
-    cellPadding: padding,
+    getCellStyle,
+    cellPadding,
     cellHeightInner: bodyFontSize * lineHeight,
     rowHeight: cellHeight + 2,
     table: css`
@@ -36,7 +71,7 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
       position: relative;
     `,
     headerCell: css`
-      padding: ${padding}px;
+      padding: ${cellPadding}px;
       overflow: hidden;
       white-space: nowrap;
       color: ${colors.textBlue};
@@ -70,37 +105,20 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
     tableCellWrapper: css`
       border-right: 1px solid ${borderColor};
       display: inline-flex;
-      align-items: center;
       height: 100%;
 
       &:last-child {
         border-right: none;
 
         > div {
-          padding-right: ${scollbarWidth + padding}px;
+          padding-right: ${scollbarWidth + cellPadding}px;
         }
       }
     `,
     tableCellLink: css`
       text-decoration: underline;
     `,
-    tableCell: css`
-      padding: ${padding}px;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-      flex: 1;
-      width: 100%;
-      height: 100%;
-
-      &:hover {
-        overflow: visible;
-        width: auto;
-        box-shadow: 0 0 2px ${theme.colors.formFocusOutline};
-        background: ${rowHoverBg};
-        z-index: 1;
-      }
-    `,
+    tableCell: getCellStyle(),
     imageCell: css`
       height: 100%;
     `,

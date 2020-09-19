@@ -1,5 +1,5 @@
 import { CellProps } from 'react-table';
-import { Field } from '@grafana/data';
+import { DisplayValue, Field } from '@grafana/data';
 import { TableStyles } from './styles';
 import { FC } from 'react';
 
@@ -42,6 +42,7 @@ export interface TableSortByFieldState {
 
 export interface TableCellProps extends CellProps<any> {
   tableStyles: TableStyles;
+  getCellStyle: (displayValue: DisplayValue) => string;
   field: Field;
 }
 
