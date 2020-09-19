@@ -110,6 +110,16 @@ export const getTableStyles = stylesFactory(
         white-space: nowrap;
         overflow: hidden;
         flex: 1;
+        width: 100%;
+        height: 100%;
+
+        &:hover {
+          overflow: visible;
+          width: auto;
+          box-shadow: 0 0 2px ${theme.colors.formFocusOutline};
+          background: ${rowHoverBg};
+          z-index: 1;
+        }
       `,
       overflow: css`
         overflow: hidden;

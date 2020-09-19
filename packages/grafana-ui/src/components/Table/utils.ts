@@ -17,6 +17,7 @@ import { BarGaugeCell } from './BarGaugeCell';
 import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types';
 import { withTableStyles } from './withTableStyles';
 import { JSONViewCell } from './JSONViewCell';
+import { ImageCell } from './ImageCell';
 
 export function getTextAlign(field?: Field): TextAlignProperty {
   if (!field) {
@@ -100,6 +101,8 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
       return withTableStyles(DefaultCell, getTextColorStyle);
     case TableCellDisplayMode.ColorBackground:
       return withTableStyles(DefaultCell, getBackgroundColorStyle);
+    case TableCellDisplayMode.Image:
+      return ImageCell;
     case TableCellDisplayMode.LcdGauge:
     case TableCellDisplayMode.BasicGauge:
     case TableCellDisplayMode.GradientGauge:
