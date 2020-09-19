@@ -19,10 +19,7 @@ import { Observable, BehaviorSubject, Subject, throwError, of } from 'rxjs';
  * Internal class that maps Centrifuge support to GrafanaLive
  */
 export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements LiveChannel<TMessage, TPublish> {
-  readonly currentStatus: LiveChannelStatus = {
-    timestamp: Date.now(),
-    connected: false,
-  };
+  readonly currentStatus: LiveChannelStatus;
 
   readonly opened = Date.now();
   readonly id: string;
@@ -31,7 +28,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
   readonly path: string;
 
   readonly stream = new Subject<TMessage>();
-  readonly status = new BehaviorSubject<LiveChannelStatus>(this.currentStatus);
+  readonly status: BehaviorSubject<LiveChannelStatus>;
 
   // When presense is enabled (rarely), this will be initalized
   private presense?: Subject<LiveChannelPresense>;
@@ -46,6 +43,13 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
     this.scope = scope;
     this.namespace = namespace;
     this.path = path;
+
+    this.currentStatus = {
+      id,
+      timestamp: Date.now(),
+      connected: false,
+    };
+    this.status = new BehaviorSubject<LiveChannelStatus>(this.currentStatus);
   }
 
   // This should only be called when centrifuge is connected
@@ -240,6 +244,7 @@ export function getErrorChannel(
   path: string
 ): LiveChannel {
   const errorStatus: LiveChannelStatus = {
+    id,
     timestamp: Date.now(),
     connected: false,
     shutdown: true,

@@ -1,13 +1,18 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable, PartialObserver } from 'rxjs';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
+import { LiveChannel, LiveChannelConfig, LiveChannelScope, LiveChannelStatus } from '@grafana/data';
 
 interface Props {
-  channel: string;
+  scope: LiveChannelScope;
+  namespace: string;
+  path: string;
+  config?: LiveChannelConfig;
 }
 
 interface State {
-  connected: boolean;
+  channel?: LiveChannel;
+  status: LiveChannelStatus;
   count: number;
   lastTime: number;
   lastBody: string;
@@ -15,14 +20,15 @@ interface State {
 
 export class LivePanel extends PureComponent<Props, State> {
   state: State = {
-    connected: false,
+    status: { id: '?', connected: false, timestamp: Date.now() },
     count: 0,
     lastTime: 0,
     lastBody: '',
   };
-  subscription?: Unsubscribable;
+  streamSubscription?: Unsubscribable;
+  statusSubscription?: Unsubscribable;
 
-  observer: PartialObserver<any> = {
+  streamObserver: PartialObserver<any> = {
     next: (msg: any) => {
       this.setState({
         count: this.state.count + 1,
@@ -32,29 +38,29 @@ export class LivePanel extends PureComponent<Props, State> {
     },
   };
 
+  statusObserver: PartialObserver<LiveChannelStatus> = {
+    next: (status: LiveChannelStatus) => {
+      this.setState({ status });
+    },
+  };
+
   startSubscription = () => {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-      this.subscription = undefined;
+    const { scope, namespace, path } = this.props;
+    const channel = getGrafanaLiveSrv().getChannel(scope, namespace, path);
+    if (this.state.channel === channel) {
+      return; // no change!
     }
 
-    const srv = getGrafanaLiveSrv();
-    const { channel } = this.props;
-
-    try {
-      const idx = channel.indexOf('/');
-      if (idx < 1 || idx === channel.length - 1) {
-        throw 'Invalid channel path';
-      }
-      const plugin = channel.substring(0, idx);
-      const path = channel.substring(idx + 1);
-
-      const stream = srv.getChannelStream(plugin, path);
-      this.setState({ connected: true, count: 0, lastTime: 0, lastBody: '' });
-      this.subscription = stream.subscribe(this.observer);
-    } catch (err) {
-      this.setState({ connected: false, count: 0, lastTime: Date.now(), lastBody: 'ERROR: ' + err });
+    if (this.streamSubscription) {
+      this.streamSubscription.unsubscribe();
     }
+    if (this.statusSubscription) {
+      this.statusSubscription.unsubscribe();
+    }
+
+    this.streamSubscription = channel.getStream().subscribe(this.streamObserver);
+    this.statusSubscription = channel.getStatus().subscribe(this.statusObserver);
+    this.setState({ channel });
   };
 
   componentDidMount = () => {
@@ -62,23 +68,29 @@ export class LivePanel extends PureComponent<Props, State> {
   };
 
   componentWillUnmount() {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-      this.subscription = undefined;
+    if (this.streamSubscription) {
+      this.streamSubscription.unsubscribe();
+    }
+    if (this.statusSubscription) {
+      this.statusSubscription.unsubscribe();
     }
   }
 
   componentDidUpdate(oldProps: Props) {
-    if (oldProps.channel !== this.props.channel) {
-      this.startSubscription();
-    }
+    // if (oldProps.channel !== this.props.channel) {
+    //   this.startSubscription();
+    // }
   }
 
   render() {
-    const { lastBody, lastTime, count } = this.state;
+    const { lastBody, lastTime, count, status } = this.state;
+    const { config } = this.props;
 
     return (
       <div>
+        <h5>Status: (config:{config ? 'true' : 'false'})</h5>
+        <pre>{JSON.stringify(status)}</pre>
+
         <h5>Count: {count}</h5>
         {lastTime > 0 && (
           <>

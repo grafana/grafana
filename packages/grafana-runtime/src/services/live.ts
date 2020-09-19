@@ -23,11 +23,11 @@ export interface GrafanaLiveSrv {
    * Multiple requests for this channel will return the same object until
    * the channel is shutdown
    */
-  getChannel<TMessage, TPublish, TPresense>(
+  getChannel<TMessage, TPublish>(
     scope: LiveChannelScope,
     namespace: string,
     path: string
-  ): LiveChannel<TMessage, TPublish, TPresense>;
+  ): LiveChannel<TMessage, TPublish>;
 }
 
 let singletonInstance: GrafanaLiveSrv;

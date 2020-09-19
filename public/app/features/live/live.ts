@@ -1,10 +1,15 @@
 import Centrifuge from 'centrifuge/dist/centrifuge.protobuf';
 import SockJS from 'sockjs-client';
-import { GrafanaLiveSrv, setGrafanaLiveSrv, config } from '@grafana/runtime';
+import { GrafanaLiveSrv, setGrafanaLiveSrv, getGrafanaLiveSrv, config } from '@grafana/runtime';
 import { BehaviorSubject } from 'rxjs';
 import { LiveChannel, LiveChannelScope } from '@grafana/data';
 import { CentrifugeLiveChannel, getErrorChannel } from './channel';
-import { grafanaLiveScopes, GrafanaLiveScope } from './scopes';
+import {
+  GrafanaLiveScope,
+  grafanaLiveCoreFeatures,
+  GrafanaLiveDataSourceScope,
+  GrafanaLivePluginScope,
+} from './scopes';
 import { registerLiveFeatures } from './features';
 
 export class CentrifugeSrv implements GrafanaLiveSrv {
@@ -13,6 +18,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
   readonly centrifuge: Centrifuge;
   readonly connectionState: BehaviorSubject<boolean>;
   readonly connectionBlocker: Promise<void>;
+  readonly scopes: Record<LiveChannelScope, GrafanaLiveScope>;
 
   constructor() {
     this.centrifuge = new Centrifuge(`${config.appUrl}live/sockjs`, {
@@ -31,6 +37,12 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
       };
       this.centrifuge.addListener('connect', connectListener);
     });
+
+    this.scopes = {
+      [LiveChannelScope.Grafana]: grafanaLiveCoreFeatures,
+      [LiveChannelScope.DataSource]: new GrafanaLiveDataSourceScope(),
+      [LiveChannelScope.Plugin]: new GrafanaLivePluginScope(),
+    };
 
     // Register global listeners
     this.centrifuge.on('connect', this.onConnect);
@@ -71,7 +83,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
       return channel;
     }
 
-    const scope = grafanaLiveScopes[scopeId];
+    const scope = this.scopes[scopeId];
     if (!scope) {
       return getErrorChannel('invalid scope', id, scopeId, namespace, path);
     }
@@ -94,6 +106,9 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
 
   private async initChannel(scope: GrafanaLiveScope, channel: CentrifugeLiveChannel): Promise<void> {
     const support = await scope.getChannelSupport(channel.namespace);
+    if (!support) {
+      throw new Error(channel.namespace + 'does not support streaming');
+    }
     const config = support.getChannelConfig(channel.path);
     if (!config) {
       throw new Error('unknown path: ' + channel.path);
@@ -126,6 +141,10 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
   getConnectionState() {
     return this.connectionState.asObservable();
   }
+}
+
+export function getGrafanaLiveCentrifugeSrv() {
+  return getGrafanaLiveSrv() as CentrifugeSrv;
 }
 
 export function initGrafanaLive() {

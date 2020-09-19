@@ -1,4 +1,7 @@
 import { LiveChannelScope, LiveChannelSupport, SelectableValue } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { config } from 'app/core/config';
+import { loadPlugin } from '../plugins/PluginPage';
 
 export abstract class GrafanaLiveScope {
   constructor(protected scope: LiveChannelScope) {}
@@ -6,7 +9,7 @@ export abstract class GrafanaLiveScope {
   /**
    * Load the real namespaces
    */
-  abstract async getChannelSupport(namespace: string): Promise<LiveChannelSupport>;
+  abstract async getChannelSupport(namespace: string): Promise<LiveChannelSupport | undefined>;
 
   /**
    * List the possible values within this scope
@@ -52,7 +55,9 @@ class GrafanaLiveCoreScope extends GrafanaLiveScope {
 }
 export const grafanaLiveCoreFeatures = new GrafanaLiveCoreScope();
 
-class GrafanaLiveDataSourceScope extends GrafanaLiveScope {
+export class GrafanaLiveDataSourceScope extends GrafanaLiveScope {
+  names?: Array<SelectableValue<string>>;
+
   constructor() {
     super(LiveChannelScope.DataSource);
   }
@@ -61,18 +66,41 @@ class GrafanaLiveDataSourceScope extends GrafanaLiveScope {
    * Load the real namespaces
    */
   async getChannelSupport(namespace: string) {
-    return Promise.reject('unknown!');
+    const ds = await getDataSourceSrv().get(namespace);
+    return ds.channelSupport;
   }
 
   /**
    * List the possible values within this scope
    */
-  listNamespaces() {
-    return Promise.resolve([]);
+  async listNamespaces() {
+    if (this.names) {
+      return Promise.resolve(this.names);
+    }
+    const names: Array<SelectableValue<string>> = [];
+    for (const [key, ds] of Object.entries(config.datasources)) {
+      if (ds.meta.live) {
+        try {
+          const s = this.getChannelSupport(key); // ds.name or ID?
+          if (s) {
+            names.push({
+              label: ds.name,
+              value: ds.type,
+              description: ds.type,
+            });
+          }
+        } catch (err) {
+          err.isHandled = true;
+        }
+      }
+    }
+    return (this.names = names);
   }
 }
 
-class GrafanaLivePluginScope extends GrafanaLiveScope {
+export class GrafanaLivePluginScope extends GrafanaLiveScope {
+  names?: Array<SelectableValue<string>>;
+
   constructor() {
     super(LiveChannelScope.Plugin);
   }
@@ -81,19 +109,38 @@ class GrafanaLivePluginScope extends GrafanaLiveScope {
    * Load the real namespaces
    */
   async getChannelSupport(namespace: string) {
-    return Promise.reject('unknown!');
+    const plugin = await loadPlugin(namespace);
+    if (!plugin.channelSupport) {
+      throw new Error('Unknown plugin: ' + namespace);
+    }
+    return plugin.channelSupport;
   }
 
   /**
    * List the possible values within this scope
    */
-  listNamespaces() {
-    return Promise.resolve([]);
+  async listNamespaces() {
+    if (this.names) {
+      return Promise.resolve(this.names);
+    }
+    const names: Array<SelectableValue<string>> = [];
+    // TODO add list to config
+    for (const [key, panel] of Object.entries(config.panels)) {
+      if (panel.live) {
+        try {
+          const s = this.getChannelSupport(key); // ds.name or ID?
+          if (s) {
+            names.push({
+              label: panel.name,
+              value: key,
+              description: panel.info?.description,
+            });
+          }
+        } catch (err) {
+          err.isHandled = true;
+        }
+      }
+    }
+    return (this.names = names);
   }
 }
-
-export const grafanaLiveScopes: Record<LiveChannelScope, GrafanaLiveScope> = {
-  [LiveChannelScope.Grafana]: grafanaLiveCoreFeatures,
-  [LiveChannelScope.DataSource]: new GrafanaLiveDataSourceScope(),
-  [LiveChannelScope.Plugin]: new GrafanaLivePluginScope(),
-};

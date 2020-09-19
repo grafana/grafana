@@ -53,6 +53,11 @@ export interface LiveChannelConfig<T = any> {
  */
 export interface LiveChannelStatus {
   /**
+   * {scope}/{namespace}/{path}
+   */
+  id: string;
+
+  /**
    * unix millies timestamp for the last status change
    */
   timestamp: number;
