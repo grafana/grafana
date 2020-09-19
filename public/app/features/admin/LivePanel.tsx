@@ -1,7 +1,9 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable, PartialObserver } from 'rxjs';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
-import { LiveChannel, LiveChannelConfig, LiveChannelScope, LiveChannelStatus } from '@grafana/data';
+import { AppEvents, LiveChannel, LiveChannelConfig, LiveChannelScope, LiveChannelStatus } from '@grafana/data';
+import { Input, Button } from '@grafana/ui';
+import { appEvents } from 'app/core/core';
 
 interface Props {
   scope: LiveChannelScope;
@@ -16,6 +18,7 @@ interface State {
   count: number;
   lastTime: number;
   lastBody: string;
+  text: string; // for publish!
 }
 
 export class LivePanel extends PureComponent<Props, State> {
@@ -24,6 +27,7 @@ export class LivePanel extends PureComponent<Props, State> {
     count: 0,
     lastTime: 0,
     lastBody: '',
+    text: '',
   };
   streamSubscription?: Unsubscribable;
   statusSubscription?: Unsubscribable;
@@ -82,9 +86,32 @@ export class LivePanel extends PureComponent<Props, State> {
     // }
   }
 
+  onTextChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ text: event.target.value });
+  };
+
+  onPublish = () => {
+    const { text, channel } = this.state;
+    if (text && channel) {
+      const msg = {
+        line: text,
+      };
+
+      channel.publish!(msg)
+        .then(v => {
+          console.log('PUBLISHED', text, v);
+        })
+        .catch(err => {
+          appEvents.emit(AppEvents.alertError, ['Publish error', `${err}`]);
+        });
+    }
+    this.setState({ text: '' });
+  };
+
   render() {
-    const { lastBody, lastTime, count, status } = this.state;
+    const { lastBody, lastTime, count, status, text } = this.state;
     const { config } = this.props;
+    const showPublish = config && config.canPublish && config.canPublish();
 
     return (
       <div>
@@ -101,6 +128,16 @@ export class LivePanel extends PureComponent<Props, State> {
               </div>
             )}
           </>
+        )}
+
+        {showPublish && (
+          <div>
+            <h3>Write to channel</h3>
+            <Input value={text} onChange={this.onTextChanged} />
+            <Button onClick={this.onPublish} variant={text ? 'primary' : 'secondary'}>
+              Publish
+            </Button>
+          </div>
         )}
       </div>
     );
