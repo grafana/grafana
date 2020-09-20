@@ -125,10 +125,6 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
     imageCell: css`
       height: 100%;
     `,
-    overflow: css`
-      overflow: hidden;
-      text-overflow: ellipsis;
-    `,
     resizeHandle: css`
       label: resizeHandle;
       cursor: col-resize !important;

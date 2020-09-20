@@ -44,6 +44,7 @@ export interface TableCellProps extends CellProps<any> {
   tableStyles: TableStyles;
   getCellStyle: (displayValue: DisplayValue) => string;
   field: Field;
+  onCellFilterAdded: TableFilterActionCallback;
 }
 
 export type CellComponent = FC<TableCellProps>;
