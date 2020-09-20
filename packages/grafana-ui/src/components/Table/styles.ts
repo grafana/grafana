@@ -118,7 +118,6 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
         background-color: ${rowHoverBg};
       }
     `,
-    //tableCell: getCellStyle(),
     imageCell: css`
       height: 100%;
     `,
@@ -147,15 +146,15 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
         label: filterWrapper;
         display: none;
         justify-content: flex-end;
-        cursor: pointer;
         flex-grow: 1;
-        opacity: 0.5;
+        opacity: 0.6;
         padding-left: ${theme.spacing.xxs};
       `,
       'cell-filter-actions'
     ),
     filterItem: css`
       label: filterItem;
+      cursor: pointer;
       padding: 0 ${theme.spacing.xxs};
     `,
   };
