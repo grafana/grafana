@@ -8,8 +8,7 @@ import { TableCellProps } from './types';
 import { GrafanaTheme } from '@grafana/data';
 
 export const JSONViewCell: FC<TableCellProps> = props => {
-  const { cell, tableStyles } = props;
-  const cellProps = cell.getCellProps();
+  const { cell, tableStyles, cellProps } = props;
 
   const txt = css`
     cursor: pointer;

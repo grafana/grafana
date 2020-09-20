@@ -1,4 +1,4 @@
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { styleMixins, stylesFactory } from '../../themes';
 import { getScrollbarWidth } from '../../utils';
@@ -41,6 +41,10 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
         box-shadow: 0 0 2px ${theme.colors.formFocusOutline};
         background: ${background ?? rowHoverBg};
         z-index: 1;
+
+        .cell-filter-actions  {
+          display: inline-flex;
+        }
       }
     `;
   };
@@ -137,6 +141,22 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
       &:hover {
         opacity: 1;
       }
+    `,
+    filterWrapper: cx(
+      css`
+        label: filterWrapper;
+        display: none;
+        justify-content: flex-end;
+        cursor: pointer;
+        flex-grow: 1;
+        opacity: 0.5;
+        padding-left: ${theme.spacing.xxs};
+      `,
+      'cell-filter-actions'
+    ),
+    filterItem: css`
+      label: filterItem;
+      padding: 0 ${theme.spacing.xxs};
     `,
   };
 });

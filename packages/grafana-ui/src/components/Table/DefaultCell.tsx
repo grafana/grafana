@@ -4,17 +4,15 @@ import { DisplayValue, Field, formattedValueToString, LinkModel } from '@grafana
 import { TableCellDisplayMode, TableCellProps } from './types';
 import tinycolor from 'tinycolor2';
 import { TableStyles } from './styles';
+import { FilterActions } from './FilterActions';
 
 export const DefaultCell: FC<TableCellProps> = props => {
   const { field, cell, tableStyles, row, cellProps } = props;
 
-  if (!field.display) {
-    return null;
-  }
-
-  const displayValue = field.display(cell.value);
+  const displayValue = field.display!(cell.value);
   const value = formattedValueToString(displayValue);
   const cellStyle = getCellStyle(tableStyles, field, displayValue);
+  const showFilters = field.config.filterable;
 
   let link: LinkModel<any> | undefined;
   let onClick: MouseEventHandler<HTMLAnchorElement> | undefined;
@@ -43,6 +41,7 @@ export const DefaultCell: FC<TableCellProps> = props => {
           {value}
         </a>
       )}
+      {showFilters && cell.value && <FilterActions {...props} />}
     </div>
   );
 };

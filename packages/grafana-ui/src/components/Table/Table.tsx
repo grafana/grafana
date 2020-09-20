@@ -14,7 +14,7 @@ import {
   useTable,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import { getColumns, getTextAlign } from './utils';
+import { getColumns } from './utils';
 import { useTheme } from '../../themes';
 import {
   TableColumnResizeActionCallback,
@@ -220,35 +220,6 @@ export const Table: FC<Props> = memo((props: Props) => {
 });
 
 Table.displayName = 'Table';
-
-function renderCell(
-  cell: Cell,
-  data: DataFrame,
-  index: number,
-  tableStyles: TableStyles,
-  onCellFilterAdded?: TableFilterActionCallback
-): React.ReactNode {
-  const field = data.fields[index];
-  const cellProps = cell.getCellProps();
-
-  if (!field.display) {
-    return null;
-  }
-
-  if (cellProps.style) {
-    cellProps.style.minWidth = cellProps.style.width;
-    cellProps.style.justifyContent = (cell.column as any).justifyContent;
-  }
-
-  cellProps.key = index;
-
-  return cell.render('Cell', {
-    field: data.fields[index],
-    tableStyles,
-    onCellFilterAdded,
-    cellProps,
-  });
-}
 
 function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) {
   const headerProps = column.getHeaderProps();
