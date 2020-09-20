@@ -26,6 +26,7 @@ import { getTableStyles, TableStyles } from './styles';
 import { Icon } from '../Icon/Icon';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Filter } from './Filter';
+import { TableCell } from './TableCell';
 
 const COLUMN_MIN_WIDTH = 150;
 
@@ -169,9 +170,15 @@ export const Table: FC<Props> = memo((props: Props) => {
       prepareRow(row);
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
-          {row.cells.map((cell: Cell, index: number) =>
-            cell.render('Cell', { field: data.fields[index], tableStyles, onCellFilterAdded })
-          )}
+          {row.cells.map((cell: Cell, index: number) => (
+            <TableCell
+              key={index}
+              field={data.fields[index]}
+              tableStyles={tableStyles}
+              cell={cell}
+              onCellFilterAdded={onCellFilterAdded}
+            />
+          ))}
         </div>
       );
     },
@@ -214,6 +221,35 @@ export const Table: FC<Props> = memo((props: Props) => {
 
 Table.displayName = 'Table';
 
+function renderCell(
+  cell: Cell,
+  data: DataFrame,
+  index: number,
+  tableStyles: TableStyles,
+  onCellFilterAdded?: TableFilterActionCallback
+): React.ReactNode {
+  const field = data.fields[index];
+  const cellProps = cell.getCellProps();
+
+  if (!field.display) {
+    return null;
+  }
+
+  if (cellProps.style) {
+    cellProps.style.minWidth = cellProps.style.width;
+    cellProps.style.justifyContent = (cell.column as any).justifyContent;
+  }
+
+  cellProps.key = index;
+
+  return cell.render('Cell', {
+    field: data.fields[index],
+    tableStyles,
+    onCellFilterAdded,
+    cellProps,
+  });
+}
+
 function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) {
   const headerProps = column.getHeaderProps();
 
@@ -222,7 +258,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) 
   }
 
   headerProps.style.position = 'absolute';
-  headerProps.style.justifyContent = getTextAlign(field);
+  headerProps.style.justifyContent = (column as any).justifyContent;
 
   return (
     <div className={tableStyles.headerCell} {...headerProps}>

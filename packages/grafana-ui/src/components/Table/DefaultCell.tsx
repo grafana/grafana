@@ -4,16 +4,14 @@ import { DisplayValue, Field, formattedValueToString, LinkModel } from '@grafana
 import { TableCellDisplayMode, TableCellProps } from './types';
 import tinycolor from 'tinycolor2';
 import { TableStyles } from './styles';
-import { getTextAlign } from './utils';
 
 export const DefaultCell: FC<TableCellProps> = props => {
-  const { field, cell, tableStyles, row } = props;
+  const { field, cell, tableStyles, row, cellProps } = props;
 
   if (!field.display) {
     return null;
   }
 
-  const cellProps = cell.getCellProps();
   const displayValue = field.display(cell.value);
   const value = formattedValueToString(displayValue);
   const cellStyle = getCellStyle(tableStyles, field, displayValue);
@@ -37,21 +35,11 @@ export const DefaultCell: FC<TableCellProps> = props => {
     };
   }
 
-  if (cellProps.style) {
-    cellProps.style.minWidth = cellProps.style.width;
-  }
-
   return (
     <div {...cellProps} className={cellStyle}>
       {!link && <div className={tableStyles.cellText}>{value}</div>}
       {link && (
-        <a
-          href={link.href}
-          onClick={onClick}
-          target={link.target}
-          title={link.title}
-          className={tableStyles.tableCellLink}
-        >
+        <a href={link.href} onClick={onClick} target={link.target} title={link.title} className={tableStyles.cellLink}>
           {value}
         </a>
       )}
@@ -60,10 +48,8 @@ export const DefaultCell: FC<TableCellProps> = props => {
 };
 
 function getCellStyle(tableStyles: TableStyles, field: Field, displayValue: DisplayValue) {
-  let textAlign = getTextAlign(field);
-
   if (field.config.custom?.displayMode === TableCellDisplayMode.ColorText) {
-    return tableStyles.getCellStyle({ color: displayValue.color, justify: textAlign });
+    return tableStyles.buildCellContainerStyle(displayValue.color);
   }
 
   if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground) {
@@ -73,12 +59,8 @@ function getCellStyle(tableStyles: TableStyles, field: Field, displayValue: Disp
       .spin(5)
       .toRgbString();
 
-    return tableStyles.getCellStyle({
-      color: 'white',
-      background: `linear-gradient(120deg, ${bgColor2}, ${displayValue.color})`,
-      justify: textAlign,
-    });
+    return tableStyles.buildCellContainerStyle('white', `linear-gradient(120deg, ${bgColor2}, ${displayValue.color})`);
   }
 
-  return tableStyles.getCellStyle({ justify: textAlign });
+  return tableStyles.cellContainer;
 }

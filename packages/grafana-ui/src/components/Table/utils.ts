@@ -26,9 +26,9 @@ export function getTextAlign(field?: Field): ContentPosition {
 
     switch (custom.align) {
       case 'right':
-        return 'flex-start';
-      case 'left':
         return 'flex-end';
+      case 'left':
+        return 'flex-start';
       case 'center':
         return 'center';
     }
@@ -79,6 +79,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       width: fieldTableOptions.width,
       minWidth: 50,
       filter: memoizeOne(filterByValue),
+      justifyContent: getTextAlign(field),
     });
   }
 

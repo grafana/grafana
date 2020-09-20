@@ -1,7 +1,7 @@
 import { CellProps } from 'react-table';
 import { DisplayValue, Field } from '@grafana/data';
 import { TableStyles } from './styles';
-import { FC } from 'react';
+import { CSSProperties, FC } from 'react';
 
 export interface TableFieldOptions {
   width: number;
@@ -42,6 +42,7 @@ export interface TableSortByFieldState {
 
 export interface TableCellProps extends CellProps<any> {
   tableStyles: TableStyles;
+  cellProps: CSSProperties;
   getCellStyle: (displayValue: DisplayValue) => string;
   field: Field;
   onCellFilterAdded: TableFilterActionCallback;

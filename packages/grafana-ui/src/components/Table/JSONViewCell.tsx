@@ -30,7 +30,7 @@ export const JSONViewCell: FC<TableCellProps> = props => {
   const content = <JSONTooltip value={value} />;
 
   return (
-    <div {...cellProps} className={tableStyles.getCellStyle()}>
+    <div {...cellProps} className={tableStyles.cellContainer}>
       <Tooltip placement="auto" content={content} theme="info-alt">
         <div className={cx(tableStyles.cellText, txt)}>{displayValue}</div>
       </Tooltip>

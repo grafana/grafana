@@ -2,13 +2,6 @@ import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { styleMixins, stylesFactory } from '../../themes';
 import { getScrollbarWidth } from '../../utils';
-import { ContentPosition } from 'csstype';
-
-export interface GetCellStyleOptions {
-  color?: string;
-  background?: string;
-  justify?: ContentPosition;
-}
 
 export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
   const { palette, colors } = theme;
@@ -22,18 +15,17 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
   const rowHoverBg = styleMixins.hoverColor(theme.colors.bg1, theme);
   const scollbarWidth = getScrollbarWidth();
 
-  const getCellStyle = (cellOptions: GetCellStyleOptions = {}) => {
+  const buildCellContainerStyle = (color?: string, background?: string) => {
     return css`
       padding: ${cellPadding}px;
       width: 100%;
       height: 100%;
       display: flex;
       align-items: center;
-      justify-content: ${cellOptions.justify};
       border-right: 1px solid ${borderColor};
 
-      ${cellOptions.color ? `color: ${cellOptions.color};` : ''};
-      ${cellOptions.background ? `background: ${cellOptions.background};` : ''};
+      ${color ? `color: ${color};` : ''};
+      ${background ? `background: ${background};` : ''};
 
       &:last-child {
         border-right: none;
@@ -47,7 +39,7 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
         overflow: visible;
         width: auto !important;
         box-shadow: 0 0 2px ${theme.colors.formFocusOutline};
-        background: ${cellOptions.background ?? rowHoverBg};
+        background: ${background ?? rowHoverBg};
         z-index: 1;
       }
     `;
@@ -56,7 +48,7 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     theme,
     cellHeight,
-    getCellStyle,
+    buildCellContainerStyle,
     cellPadding,
     cellHeightInner: bodyFontSize * lineHeight,
     rowHeight: cellHeight + 2,
@@ -94,12 +86,21 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       margin-right: ${theme.spacing.xs};
     `,
+    cellContainer: buildCellContainerStyle(),
     cellText: css`
       cursor: text;
       overflow: hidden;
       text-overflow: ellipsis;
       user-select: text;
       white-space: nowrap;
+    `,
+    cellLink: css`
+      cursor: pointer;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: text;
+      white-space: nowrap;
+      text-decoration: underline;
     `,
     headerFilter: css`
       label: headerFilter;
@@ -112,14 +113,6 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
       &:hover {
         background-color: ${rowHoverBg};
       }
-    `,
-    tableCellLink: css`
-      cursor: text;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      user-select: text;
-      white-space: nowrap;
-      text-decoration: underline;
     `,
     //tableCell: getCellStyle(),
     imageCell: css`
