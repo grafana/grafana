@@ -1,6 +1,6 @@
 import { Column, Row } from 'react-table';
 import memoizeOne from 'memoize-one';
-import { ContentPosition, TextAlignProperty } from 'csstype';
+import { ContentPosition } from 'csstype';
 import {
   DataFrame,
   Field,

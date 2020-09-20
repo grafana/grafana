@@ -8,9 +8,18 @@ import { getTextAlign } from './utils';
 
 export const DefaultCell: FC<TableCellProps> = props => {
   const { field, cell, tableStyles, row } = props;
-  let link: LinkModel<any> | undefined;
 
-  const displayValue = field.display!(cell.value);
+  if (!field.display) {
+    return null;
+  }
+
+  const cellProps = cell.getCellProps();
+  const displayValue = field.display(cell.value);
+  const value = formattedValueToString(displayValue);
+  const cellStyle = getCellStyle(tableStyles, field, displayValue);
+
+  let link: LinkModel<any> | undefined;
+  let onClick: MouseEventHandler<HTMLAnchorElement> | undefined;
 
   if (field.getLinks) {
     link = field.getLinks({
@@ -18,16 +27,7 @@ export const DefaultCell: FC<TableCellProps> = props => {
     })[0];
   }
 
-  const value = formattedValueToString(displayValue);
-
-  let cellStyle = getCellStyle(tableStyles, field, displayValue);
-
-  if (!link) {
-    return <div className={cellStyle}>{value}</div>;
-  }
-
-  let onClick: MouseEventHandler<HTMLAnchorElement> | undefined;
-  if (link.onClick) {
+  if (link && link.onClick) {
     onClick = event => {
       // Allow opening in new tab
       if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
@@ -37,17 +37,24 @@ export const DefaultCell: FC<TableCellProps> = props => {
     };
   }
 
+  if (cellProps.style) {
+    cellProps.style.minWidth = cellProps.style.width;
+  }
+
   return (
-    <div className={cellStyle}>
-      <a
-        href={link.href}
-        onClick={onClick}
-        target={link.target}
-        title={link.title}
-        className={tableStyles.tableCellLink}
-      >
-        {value}
-      </a>
+    <div {...cellProps} className={cellStyle}>
+      {!link && <div className={tableStyles.cellText}>{value}</div>}
+      {link && (
+        <a
+          href={link.href}
+          onClick={onClick}
+          target={link.target}
+          title={link.title}
+          className={tableStyles.tableCellLink}
+        >
+          {value}
+        </a>
+      )}
     </div>
   );
 };
@@ -56,7 +63,7 @@ function getCellStyle(tableStyles: TableStyles, field: Field, displayValue: Disp
   let textAlign = getTextAlign(field);
 
   if (field.config.custom?.displayMode === TableCellDisplayMode.ColorText) {
-    return tableStyles.getCellStyle(displayValue.color, undefined, textAlign);
+    return tableStyles.getCellStyle({ color: displayValue.color, justify: textAlign });
   }
 
   if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground) {
@@ -66,8 +73,12 @@ function getCellStyle(tableStyles: TableStyles, field: Field, displayValue: Disp
       .spin(5)
       .toRgbString();
 
-    return tableStyles.getCellStyle('white', `linear-gradient(120deg, ${bgColor2}, ${displayValue.color})`);
+    return tableStyles.getCellStyle({
+      color: 'white',
+      background: `linear-gradient(120deg, ${bgColor2}, ${displayValue.color})`,
+      justify: textAlign,
+    });
   }
 
-  return tableStyles.getCellStyle(undefined, undefined, textAlign);
+  return tableStyles.getCellStyle({ justify: textAlign });
 }

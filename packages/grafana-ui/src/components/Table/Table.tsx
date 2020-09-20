@@ -23,7 +23,6 @@ import {
   TableSortByFieldState,
 } from './types';
 import { getTableStyles, TableStyles } from './styles';
-import { TableCell } from './TableCell';
 import { Icon } from '../Icon/Icon';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Filter } from './Filter';
@@ -170,15 +169,9 @@ export const Table: FC<Props> = memo((props: Props) => {
       prepareRow(row);
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
-          {row.cells.map((cell: Cell, index: number) => (
-            <TableCell
-              key={index}
-              field={data.fields[index]}
-              tableStyles={tableStyles}
-              cell={cell}
-              onCellFilterAdded={onCellFilterAdded}
-            />
-          ))}
+          {row.cells.map((cell: Cell, index: number) =>
+            cell.render('Cell', { field: data.fields[index], tableStyles, onCellFilterAdded })
+          )}
         </div>
       );
     },

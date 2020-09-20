@@ -32,6 +32,7 @@ export const BarGaugeCell: FC<TableCellProps> = props => {
     };
   }
 
+  const cellProps = cell.getCellProps();
   const displayValue = field.display(cell.value);
   let barGaugeMode = BarGaugeDisplayMode.Gradient;
 
@@ -49,7 +50,7 @@ export const BarGaugeCell: FC<TableCellProps> = props => {
   }
 
   return (
-    <div className={tableStyles.tableCell}>
+    <div {...cellProps} className={tableStyles.getCellStyle()}>
       <BarGauge
         width={width}
         height={tableStyles.cellHeightInner}
