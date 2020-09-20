@@ -38,7 +38,7 @@ export const FilterableTableCell: FC<FilterableTableCellProps> = ({
 
   return (
     <div {...cellProps} className={tableStyles.tableCellWrapper} onMouseOver={onMouseOver} onMouseLeave={onMouseLeave}>
-      {renderCell(cell, field, tableStyles)}
+      {cell.render('Cell', { field, tableStyles })}
       {showFilters && cell.value && (
         <div className={styles.filterWrapper}>
           <div className={styles.filterItem}>

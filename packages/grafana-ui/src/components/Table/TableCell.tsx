@@ -30,10 +30,7 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellFilterAdd
 
   return (
     <div {...cellProps} className={tableStyles.tableCellWrapper}>
-      {renderCell(cell, field, tableStyles)}
+      {cell.render('Cell', { field, tableStyles })}
     </div>
   );
 };
-
-export const renderCell = (cell: Cell, field: Field, tableStyles: TableStyles) =>
-  cell.render('Cell', { field, tableStyles });

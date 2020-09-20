@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, MouseEventHandler } from 'react';
 import { DisplayValue, Field, formattedValueToString, LinkModel } from '@grafana/data';
 
 import { TableCellDisplayMode, TableCellProps } from './types';
@@ -26,21 +26,22 @@ export const DefaultCell: FC<TableCellProps> = props => {
     return <div className={cellStyle}>{value}</div>;
   }
 
+  let onClick: MouseEventHandler<HTMLAnchorElement> | undefined;
+  if (link.onClick) {
+    onClick = event => {
+      // Allow opening in new tab
+      if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
+        event.preventDefault();
+        link!.onClick(event);
+      }
+    };
+  }
+
   return (
     <div className={cellStyle}>
       <a
         href={link.href}
-        onClick={
-          link.onClick
-            ? event => {
-                // Allow opening in new tab
-                if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
-                  event.preventDefault();
-                  link!.onClick(event);
-                }
-              }
-            : undefined
-        }
+        onClick={onClick}
         target={link.target}
         title={link.title}
         className={tableStyles.tableCellLink}
@@ -50,6 +51,7 @@ export const DefaultCell: FC<TableCellProps> = props => {
     </div>
   );
 };
+
 function getCellStyle(tableStyles: TableStyles, field: Field, displayValue: DisplayValue) {
   let textAlign = getTextAlign(field);
 
