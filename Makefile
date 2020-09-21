@@ -96,7 +96,7 @@ golangci-lint: scripts/go/bin/golangci-lint
 		$(GO_FILES)
 
 tidy-check:
-	@echo "check whether the go.mod and go.sum are consistent"
+	@echo "check whether go.mod and go.sum are consistent"
 	@scripts/tidy-check.sh
 
 lint-go: golangci-lint revive revive-strict tidy-check # Run all code checks for backend.

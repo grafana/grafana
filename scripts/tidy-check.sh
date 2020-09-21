@@ -1,8 +1,8 @@
 #!/bin/bash
 set -eo pipefail
 
-# Check Go is properly installed and available
-command -v go >/dev/null 2>&1 || { echo 'please install go or use image that has it'; exit 1; }
+# Verify that Go is properly installed and available
+command -v go >/dev/null 2>&1 || { echo 'please install Go or use an image that has it'; exit 1; }
 
 backup_go_mod_files()
 {
