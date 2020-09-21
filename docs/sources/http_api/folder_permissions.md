@@ -138,7 +138,7 @@ HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
 Content-Length: 35
 
-{"message":"Folder permissions updated"}
+{"message":"Folder permissions updated","id":1,"title":"Department ABC"}
 ```
 
 Status Codes:

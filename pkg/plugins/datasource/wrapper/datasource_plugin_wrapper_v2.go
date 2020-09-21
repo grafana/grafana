@@ -59,6 +59,7 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 			DataSourceInstanceSettings: backend.ToProto().DataSourceInstanceSettings(instanceSettings),
 		},
 		Queries: []*pluginv2.DataQuery{},
+		Headers: query.Headers,
 	}
 
 	for _, q := range query.Queries {

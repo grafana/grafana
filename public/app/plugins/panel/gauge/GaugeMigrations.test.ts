@@ -22,7 +22,7 @@ describe('Gauge Panel Migrations', () => {
           {
             color: 'green',
             index: 0,
-            value: null,
+            value: -Infinity,
           },
           {
             color: '#EAB839',

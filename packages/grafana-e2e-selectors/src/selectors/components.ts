@@ -103,7 +103,9 @@ export const Components = {
   },
   TransformTab: {
     content: 'Transform editor tab content',
-    newTransform: (title: string) => `New transform ${title}`,
+    newTransform: (name: string) => `New transform ${name}`,
+    transformationEditor: (name: string) => `Transformation editor ${name}`,
+    transformationEditorDebugger: (name: string) => `Transformation editor debugger ${name}`,
   },
   Transforms: {
     Reduce: {
@@ -144,4 +146,11 @@ export const Components = {
     container: 'Time zone picker select container',
   },
   QueryField: { container: 'Query field' },
+  ValuePicker: {
+    select: (name: string) => `Value picker select ${name}`,
+  },
+  Search: {
+    section: 'Search section',
+    items: 'Search items',
+  },
 };

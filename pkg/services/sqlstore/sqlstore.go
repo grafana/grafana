@@ -96,11 +96,13 @@ func (ss *SqlStore) Init() error {
 
 	// Init repo instances
 	annotations.SetRepository(&SqlAnnotationRepo{})
+	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: 100, log: log.New("annotationcleaner")})
 	ss.Bus.SetTransactionManager(ss)
 
 	// Register handlers
 	ss.addUserQueryAndCommandHandlers()
 	ss.addAlertNotificationUidByIdHandler()
+	ss.addPreferencesQueryAndCommandHandlers()
 
 	err = ss.logOrgsNotice()
 	if err != nil {

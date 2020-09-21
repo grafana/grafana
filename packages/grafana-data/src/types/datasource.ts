@@ -3,7 +3,8 @@ import { ComponentType } from 'react';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { PanelData } from './panel';
 import { LogRowModel } from './logs';
-import { AnnotationEvent, KeyValue, LoadingState, TableData, TimeSeries } from './data';
+import { AnnotationEvent, AnnotationSupport } from './annotations';
+import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
@@ -266,13 +267,23 @@ export abstract class DataSourceApi<
 
   showContextToggle?(row?: LogRowModel): boolean;
 
+  interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
+
   /**
-   * Can be optionally implemented to allow datasource to be a source of annotations for dashboard. To be visible
-   * in the annotation editor `annotations` capability also needs to be enabled in plugin.json.
+   * An annotation processor allows explict control for how annotations are managed.
+   *
+   * It is only necessary to configure an annotation processor if the default behavior is not desirable
+   */
+  annotations?: AnnotationSupport<TQuery>;
+
+  /**
+   * Can be optionally implemented to allow datasource to be a source of annotations for dashboard.
+   * This function will only be called if an angular {@link AnnotationsQueryCtrl} is configured and
+   * the {@link annotations} is undefined
+   *
+   * @deprecated -- prefer using {@link AnnotationSupport}
    */
   annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
-
-  interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
 }
 
 export interface MetadataInspectorProps<
@@ -398,6 +409,12 @@ export interface DataQuery {
   datasource?: string | null;
 }
 
+export enum DataQueryErrorType {
+  Cancelled = 'cancelled',
+  Timeout = 'timeout',
+  Unknown = 'unknown',
+}
+
 export interface DataQueryError {
   data?: {
     message?: string;
@@ -407,7 +424,7 @@ export interface DataQueryError {
   status?: string;
   statusText?: string;
   refId?: string;
-  cancelled?: boolean;
+  type?: DataQueryErrorType;
 }
 
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
@@ -537,15 +554,14 @@ export interface DataSourceSelectItem {
 
 /**
  * Options passed to the datasource.annotationQuery method. See docs/plugins/developing/datasource.md
+ *
+ * @deprecated -- use {@link AnnotationSupport}
  */
 export interface AnnotationQueryRequest<MoreOptions = {}> {
   range: TimeRange;
   rangeRaw: RawTimeRange;
-
   // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
   dashboard: any;
-
-  // The annotation query, typically extends DataQuery
   annotation: {
     datasource: string;
     enable: boolean;

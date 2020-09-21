@@ -378,8 +378,13 @@ describe('ElasticDatasource', function(this: any) {
               mappings: {
                 metricsets: {
                   _all: {},
+                  _meta: {
+                    test: 'something',
+                  },
                   properties: {
                     '@timestamp': { type: 'date' },
+                    __timestamp: { type: 'date' },
+                    '@timestampnano': { type: 'date_nanos' },
                     beat: {
                       properties: {
                         name: {
@@ -426,6 +431,8 @@ describe('ElasticDatasource', function(this: any) {
       const fields = _.map(fieldObjects, 'text');
       expect(fields).toEqual([
         '@timestamp',
+        '__timestamp',
+        '@timestampnano',
         'beat.name.raw',
         'beat.name',
         'beat.hostname',
@@ -455,7 +462,7 @@ describe('ElasticDatasource', function(this: any) {
       });
 
       const fields = _.map(fieldObjects, 'text');
-      expect(fields).toEqual(['@timestamp']);
+      expect(fields).toEqual(['@timestamp', '__timestamp', '@timestampnano']);
     });
   });
 
@@ -855,6 +862,69 @@ describe('ElasticDatasource', function(this: any) {
 
       const query = ((dataSource as any).post as jest.Mock).mock.calls[0][1];
       expect(typeof JSON.parse(query.split('\n')[1]).query.bool.filter[0].range['@time'].gte).toBe('number');
+    });
+  });
+
+  describe('getMultiSearchUrl', () => {
+    describe('When esVersion >= 70', () => {
+      it('Should add correct params to URL if "includeFrozen" is enabled', () => {
+        const datasSurce = new ElasticDatasource(
+          {
+            jsonData: {
+              esVersion: 70,
+              includeFrozen: true,
+            },
+          } as DataSourceInstanceSettings<ElasticsearchOptions>,
+          templateSrv,
+          timeSrv
+        );
+
+        expect(datasSurce.getMultiSearchUrl()).toMatch(/ignore_throttled=false/);
+      });
+
+      it('Should NOT add ignore_throttled if "includeFrozen" is disabled', () => {
+        const datasSurce = new ElasticDatasource(
+          {
+            jsonData: {
+              esVersion: 70,
+              includeFrozen: false,
+            },
+          } as DataSourceInstanceSettings<ElasticsearchOptions>,
+          templateSrv,
+          timeSrv
+        );
+
+        expect(datasSurce.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
+      });
+    });
+
+    describe('When esVersion <= 70', () => {
+      it('Should NOT add ignore_throttled params regardless of includeFrozen', () => {
+        const datasSurceWithIncludeFrozen = new ElasticDatasource(
+          {
+            jsonData: {
+              esVersion: 60,
+              includeFrozen: true,
+            },
+          } as DataSourceInstanceSettings<ElasticsearchOptions>,
+          templateSrv,
+          timeSrv
+        );
+
+        const datasSurceWithoutIncludeFrozen = new ElasticDatasource(
+          {
+            jsonData: {
+              esVersion: 60,
+              includeFrozen: false,
+            },
+          } as DataSourceInstanceSettings<ElasticsearchOptions>,
+          templateSrv,
+          timeSrv
+        );
+
+        expect(datasSurceWithIncludeFrozen.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
+        expect(datasSurceWithoutIncludeFrozen.getMultiSearchUrl()).not.toMatch(/ignore_throttled=false/);
+      });
     });
   });
 });

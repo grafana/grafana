@@ -16,6 +16,8 @@ import {
   PanelEvents,
   PanelPlugin,
   ScopedVars,
+  ThresholdsConfig,
+  ThresholdsMode,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
@@ -114,7 +116,6 @@ export class PanelModel implements DataConfigSource {
   collapsed?: boolean;
 
   panels?: any;
-  soloMode?: boolean;
   targets: DataQuery[];
   transformations?: DataTransformerConfig[];
   datasource: string | null;
@@ -140,6 +141,7 @@ export class PanelModel implements DataConfigSource {
   isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
+
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
@@ -203,6 +205,7 @@ export class PanelModel implements DataConfigSource {
   getOptions() {
     return this.options;
   }
+
   getFieldConfig() {
     return this.fieldConfig;
   }
@@ -309,28 +312,14 @@ export class PanelModel implements DataConfigSource {
     if (plugin.angularConfigCtrl) {
       return;
     }
+
     this.options = _.mergeWith({}, plugin.defaults, this.options || {}, (objValue: any, srcValue: any): any => {
       if (_.isArray(srcValue)) {
         return srcValue;
       }
     });
 
-    this.fieldConfig = {
-      defaults: _.mergeWith(
-        {},
-        plugin.fieldConfigDefaults.defaults,
-        this.fieldConfig ? this.fieldConfig.defaults : {},
-        (objValue: any, srcValue: any): any => {
-          if (_.isArray(srcValue)) {
-            return srcValue;
-          }
-        }
-      ),
-      overrides: [
-        ...plugin.fieldConfigDefaults.overrides,
-        ...(this.fieldConfig && this.fieldConfig.overrides ? this.fieldConfig.overrides : []),
-      ],
-    };
+    this.fieldConfig = applyFieldConfigDefaults(this.fieldConfig, this.plugin!.fieldConfigDefaults);
   }
 
   pluginLoaded(plugin: PanelPlugin) {
@@ -498,6 +487,51 @@ export class PanelModel implements DataConfigSource {
    * */
   getSavedId(): number {
     return this.editSourceId ?? this.id;
+  }
+}
+
+function applyFieldConfigDefaults(fieldConfig: FieldConfigSource, defaults: FieldConfigSource): FieldConfigSource {
+  const result: FieldConfigSource = {
+    defaults: _.mergeWith(
+      {},
+      defaults.defaults,
+      fieldConfig ? fieldConfig.defaults : {},
+      (objValue: any, srcValue: any): any => {
+        if (_.isArray(srcValue)) {
+          return srcValue;
+        }
+      }
+    ),
+    overrides: fieldConfig?.overrides ?? [],
+  };
+
+  // Thresholds base values are null in JSON but need to be converted to -Infinity
+  if (result.defaults.thresholds) {
+    fixThresholds(result.defaults.thresholds);
+  }
+
+  for (const override of result.overrides) {
+    for (const property of override.properties) {
+      if (property.id === 'thresholds') {
+        fixThresholds(property.value as ThresholdsConfig);
+      }
+    }
+  }
+
+  return result;
+}
+
+function fixThresholds(thresholds: ThresholdsConfig) {
+  if (!thresholds.mode) {
+    thresholds.mode = ThresholdsMode.Absolute;
+  }
+
+  if (!thresholds.steps) {
+    thresholds.steps = [];
+  } else if (thresholds.steps.length) {
+    // First value is always -Infinity
+    // JSON saves it as null
+    thresholds.steps[0].value = -Infinity;
   }
 }
 
