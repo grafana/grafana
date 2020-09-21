@@ -172,8 +172,6 @@
           name: Prerequisites
         - link: /panels/transformations/apply/
           name: Apply a Transformation
-        - link: /panels/transformations/execution-order/
-          name: Order of Transformations
         - link: /panels/transformations/types-options/
           name: Transformation Types and Options
         - link: /panels/transformations/debug/

@@ -27,6 +27,6 @@ To apply a transformation:
 
    {{< docs-imagebox img="/img/docs/transformations/transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
-3. Optionaly, Click the trash can icon to remove a transformation.
+3. Optionaly, click the trash can icon to remove a transformation.
 
    To troubleshoot any issue, click the bug icon. For more information, see [Debug  transformations]({{< relref "debug.md" >}}).

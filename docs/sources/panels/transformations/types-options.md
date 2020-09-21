@@ -10,17 +10,17 @@ weight = 300
 # Transformation types and options
 
 Grafana comes with the following transformations:
-
-    - [Reduce](#reduce)
-    - [Merge](#merge)
-    - [Filter by name](#filter-by-name)
-    - [Filter data by query](#filter-data-by-query)
-    - [Organize fields](#organize-fields)
-    - [Join by field (outer join)](#join-by-field-outer-join)
-    - [Add field from calculation](#add-field-from-calculation)
-    - [Labels to fields](#labels-to-fields)
-    - [Group By](#group-by)
-    - [Series to rows](#series-to-rows)
+  
+  - [Reduce](#reduce)
+  - [Merge](#merge)
+  - [Filter by name](#filter-by-name)
+  - [Filter data by query](#filter-data-by-query)
+  - [Organize fields](#organize-fields)
+  - [Join by field (outer join)](#join-by-field-outer-join)
+  - [Add field from calculation](#add-field-from-calculation)
+  - [Labels to fields](#labels-to-fields)
+  - [Group By](#group-by)
+  - [Series to rows](#series-to-rows)
 
 Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
 
