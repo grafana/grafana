@@ -829,6 +829,7 @@ jobs:
               ./pkg/services/provisioning/notifiers/... \
               ./pkg/services/provisioning/values/... \
               ./pkg/plugins/backendplugin/...
+            ./scripts/tidy-check.sh
 
   test-frontend:
     executor: node

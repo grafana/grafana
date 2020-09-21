@@ -4,7 +4,7 @@
 
 -include local/Makefile
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go revive golangci-lint test-go test-js test run run-frontend clean devenv devenv-down revive-strict protobuf help
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go revive golangci-lint tidy-check test-go test-js test run run-frontend clean devenv devenv-down revive-strict protobuf help
 
 GO = GO111MODULE=on go
 GO_FILES ?= ./pkg/...
@@ -95,7 +95,11 @@ golangci-lint: scripts/go/bin/golangci-lint
 		--config ./scripts/go/configs/.golangci.toml \
 		$(GO_FILES)
 
-lint-go: golangci-lint revive revive-strict # Run all code checks for backend.
+tidy-check:
+	@echo "check whether go.mod and go.sum are consistent"
+	@scripts/tidy-check.sh
+
+lint-go: golangci-lint revive revive-strict tidy-check # Run all code checks for backend.
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 shellcheck: $(SH_FILES) ## Run checks for shell scripts.

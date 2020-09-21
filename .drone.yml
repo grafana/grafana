@@ -34,6 +34,7 @@ steps:
   - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
+  - ./scripts/tidy-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -257,6 +258,7 @@ steps:
   - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
+  - ./scripts/tidy-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
