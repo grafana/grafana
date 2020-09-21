@@ -127,15 +127,20 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     // @todo instead wait for '@pluginModule'
     e2e().wait(2000);
 
-    if (!isExplore) {
+    // There is no usable data when the query is empty,
+    // and Cypress had an issue with some plugins where the request wasn't noticed, despite occuring in manual tests
+    if (isEdit) {
       // Avoid cache flakiness (where @chartData isn't requested)
+      // @todo this may not be necessary anymore
       e2e()
         .get('.refresh-picker-buttons .btn')
         .first()
         .click({ force: true });
 
       e2e().wait('@chartData');
+    }
 
+    if (!isExplore) {
       // `panelTitle` is needed to edit the panel, and unlikely to have its value changed at that point
       const changeTitle = panelTitle && !isEdit;
 
