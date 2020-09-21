@@ -854,6 +854,7 @@ jobs:
           key: v2-yarn-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
+      - install-grabpl
       - run:
           name: frontend tests
           command: |
@@ -891,6 +892,7 @@ jobs:
       - run:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
+      - install-grabpl
       - run:
           name: back-end tests
           command: |
