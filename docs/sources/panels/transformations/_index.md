@@ -17,7 +17,7 @@ The transformations feature is accessible from the **Transform** tab of the Graf
 
 Transformations sometimes result in data that cannot be graphed. When that happens, Grafana displays a suggestion on the visualization that you can click to switch to table visualization. This often helps you better understand what the transformation is doing to your data.
 
-## Order of Transformations
+## Order of transformations
 
 In case there are multiple transformations, Grafana applies them in the exact sequence in which they are listed on the screen. Each transformation creates a new result set that is passed onto the next transformation in the pipeline for processing.
 

@@ -7,6 +7,6 @@ parent = "tranformations"
 weight = 300
 +++
 
-## Remove Transformations
+## Remove a transformation
 
  Click the trash can icon to remove a transformation.

@@ -8,7 +8,7 @@ weight = 300
 +++
 
 
-# Apply a Transformation
+# Apply a transformation
 
 You can apply transformations from the Transform tab of the Grafana panel editor, which is located next to the Queries tab.
 

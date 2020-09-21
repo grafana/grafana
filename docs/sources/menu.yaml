@@ -171,13 +171,13 @@
         - link: /panels/transformations/prereq/
           name: Prerequisites
         - link: /panels/transformations/apply/
-          name: Apply a Transformation
+          name: Apply a transformation
         - link: /panels/transformations/types-options/
-          name: Transformation Types and Options
+          name: Transformation types and options
         - link: /panels/transformations/debug/
-          name: Debug Transformations
+          name: Debug transformations
         - link: /panels/transformations/remove/
-          name: Remove a Transformation
+          name: Remove a transformation
     - link: /panels/field-options/
       name: Field options
     - link: /panels/panel-editor/

@@ -3,7 +3,7 @@ title = "Transformation Types and Options"
 type = "docs"
 [menu.docs]
 identifier = "transformation_types_and_options"
-parent = "panels"
+parent = "transformations"
 weight = 300
 +++
 
