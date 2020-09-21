@@ -23,6 +23,7 @@ The main highlights are:
   - [**Added table column filters**]({{< relref "#added-table-column-filters" >}})
   - [**New field override selection options**]({{< relref "#new-field-override-selection-options" >}})
 - [**New transformations and enhancements**]({{< relref "#new-transformations-and-enhancements" >}})
+- [**Drag to reorder queries**]({{< relref "#drag-to-reorder-queries" >}})
 - [**Inspect queries in Explore**]({{< relref "#inspect-queries-in-explore" >}})
 - [**$__rate_interval for Prometheus**]({{< relref "#__rate_interval-for-prometheus" >}})
 - [**Toggle parsed Loki fields**]({{< relref "#toggle-parsed-loki-fields" >}})
@@ -80,9 +81,15 @@ Grafana 7.2 includes the following transformation enhancements:
 
 - A new [Group By]({{< relref "../panels/transformations.md#group-by">}}) transformation that allows you to group by multiple fields and add any number of aggregations for other fields.
 - The [Labels to fields]({{< relref "../panels/transformations.md#labels-to-fields">}}) transformation now allows you to pick one label and use that as the name of the value field.
-- You can now move transformations up and down. Remember that transformations are processed in the order they are listed in the UI, so think before you move something!
+- You can drag transformations to reorder them. Remember that transformations are processed in the order they are listed in the UI, so think before you move something!
 
 {{< docs-imagebox img="/img/docs/v72/transformations.gif" max-width="800px" caption="Group by and reordering of transformations" >}}
+
+## Drag to reorder queries
+
+The up and down arrows, which were previously the only way to change query order, have been removed. Instead, there is now a grab icon that allows you to drag and drop queries in a list to change their order.
+
+{{< docs-imagebox img="/img/docs/v72/drag-queries.gif" max-width="800px" caption="Drag to reorder queries" >}}
 
 ## Inspect queries in Explore
 
