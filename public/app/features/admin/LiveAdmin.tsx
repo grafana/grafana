@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import { css } from 'emotion';
 import { StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
@@ -13,7 +14,7 @@ import {
   LiveChannelSupport,
 } from '@grafana/data';
 import { LivePanel } from './LivePanel';
-import { Select, FeatureInfoBox, Container } from '@grafana/ui';
+import { Select, FeatureInfoBox, Container, HorizontalGroup } from '@grafana/ui';
 import { getGrafanaLiveCentrifugeSrv } from '../live/live';
 
 interface Props {
@@ -176,18 +177,36 @@ export class LiveAdmin extends PureComponent<Props, State> {
             <br />
             <br />
           </Container>
-          <h2>Scope</h2>
-          <Select options={scopes} value={scopes.find(s => s.value === scope)} onChange={this.onScopeChanged} />
+
+          <div
+            className={css`
+              width: 100%;
+              display: flex;
+              > div {
+                margin-right: 8px;
+                min-width: 150px;
+              }
+            `}
+          >
+            <div>
+              <h5>Scope</h5>
+              <Select options={scopes} value={scopes.find(s => s.value === scope)} onChange={this.onScopeChanged} />
+            </div>
+            <div>
+              <h5>Namespace</h5>
+              <Select
+                options={namespaces}
+                value={namespaces.find(s => s.value === namespace) || ''}
+                onChange={this.onNamespaceChanged}
+              />
+            </div>
+            <div>
+              <h5>Path</h5>
+              <Select options={paths} value={paths.find(s => s.value === path) || ''} onChange={this.onPathChanged} />
+            </div>
+          </div>
           <br />
-          <h2>Namespace</h2>
-          <Select
-            options={namespaces}
-            value={namespaces.find(s => s.value === namespace) || ''}
-            onChange={this.onNamespaceChanged}
-          />
           <br />
-          <h2>Paths</h2>
-          <Select options={paths} value={paths.find(s => s.value === path) || ''} onChange={this.onPathChanged} />
           {scope && namespace && path && <LivePanel scope={scope} namespace={namespace} path={path} config={config} />}
         </Page.Contents>
       </Page>

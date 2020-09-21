@@ -81,9 +81,9 @@ export class LivePanel extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(oldProps: Props) {
-    // if (oldProps.channel !== this.props.channel) {
-    //   this.startSubscription();
-    // }
+    if (oldProps.config !== this.props.config) {
+      this.startSubscription();
+    }
   }
 
   onTextChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,7 +115,7 @@ export class LivePanel extends PureComponent<Props, State> {
 
     return (
       <div>
-        <h5>Status: (config:{config ? 'true' : 'false'})</h5>
+        <h5>Status: {config ? '' : '(no config)'}</h5>
         <pre>{JSON.stringify(status)}</pre>
 
         <h5>Count: {count}</h5>
