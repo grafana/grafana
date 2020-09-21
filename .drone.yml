@@ -26,7 +26,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.5.8
+    GRABPL_VERSION: 0.5.9
 
 - name: lint-backend
   image: grafana/build-container:1.2.26
@@ -34,6 +34,7 @@ steps:
   - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
+  - ./scripts/tidy-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -249,7 +250,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.5.8
+    GRABPL_VERSION: 0.5.9
 
 - name: lint-backend
   image: grafana/build-container:1.2.26
@@ -257,6 +258,7 @@ steps:
   - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
+  - ./scripts/tidy-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -523,7 +525,7 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.8/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.9/windows/grabpl.exe -OutFile grabpl.exe
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/oss/master/grafana-7.2.0-9fffe273pre.windows-amd64.zip -OutFile grafana.zip
   - cp C:\App\nssm-2.24.zip .
   - ./grabpl.exe windows-installer --edition oss grafana.zip
