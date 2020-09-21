@@ -110,12 +110,20 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 					}
 				}
 
+				timeField := data.NewField("timestamp", nil, []*time.Time{})
+				timeField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
+
+				frameName := formatAlias(query, query.Stats, tags, label)
+				valueField := data.NewField("value", tags, []*float64{})
+				valueField.SetConfig(&data.FieldConfig{DisplayName: frameName})
+
 				emptyFrame := data.Frame{
-					Name: formatAlias(query, query.Stats, tags, label),
+					Name: frameName,
 					Fields: []*data.Field{
-						data.NewField("timestamp", nil, []float64{}),
-						data.NewField("value", tags, []*float64{}),
+						timeField,
+						valueField,
 					},
+					RefID: query.RefId,
 				}
 				frames = append(frames, &emptyFrame)
 			}
@@ -146,29 +154,36 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 				}
 			}
 
-			timestamps := []float64{}
+			timestamps := []*time.Time{}
 			points := []*float64{}
 			for j, t := range metricDataResult.Timestamps {
 				if j > 0 {
 					expectedTimestamp := metricDataResult.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
 					if expectedTimestamp.Before(*t) {
-						timestamps = append(timestamps, float64(expectedTimestamp.Unix()*1000))
+						timestamps = append(timestamps, &expectedTimestamp)
 						points = append(points, nil)
 					}
 				}
 				val := metricDataResult.Values[j]
 				plog.Debug("Handling timestamp", "timestamp", t, "value", *val)
-				timestamps = append(timestamps, float64(t.Unix()*1000))
+				timestamps = append(timestamps, t)
 				points = append(points, val)
 			}
 
-			fields := []*data.Field{
-				data.NewField("timestamp", nil, timestamps),
-				data.NewField("value", tags, points),
-			}
+			timeField := data.NewField("timestamp", nil, timestamps)
+			timeField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
+
+			frameName := formatAlias(query, query.Stats, tags, label)
+			valueField := data.NewField("value", tags, points)
+			valueField.SetConfig(&data.FieldConfig{DisplayName: frameName})
+
 			frame := data.Frame{
-				Name:   formatAlias(query, query.Stats, tags, label),
-				Fields: fields,
+				Name: frameName,
+				Fields: []*data.Field{
+					timeField,
+					valueField,
+				},
+				RefID: query.RefId,
 			}
 			frames = append(frames, &frame)
 		}
