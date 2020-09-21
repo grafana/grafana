@@ -23,7 +23,7 @@ export const ColorValueEditor: React.FC<FieldConfigEditorProps<string, ColorFiel
   const color = value || (item.defaultValue as string) || theme.colors.panelBg;
 
   return (
-    <ColorPicker color={color} onChange={onChange} enableNamedColors={!settings.disableNamedColors}>
+    <ColorPicker color={color} onChange={onChange} enableNamedColors={!settings?.disableNamedColors}>
       {({ ref, showColorPicker, hideColorPicker }) => {
         return (
           <div className={styles.spot} onBlur={hideColorPicker}>
@@ -36,9 +36,9 @@ export const ColorValueEditor: React.FC<FieldConfigEditorProps<string, ColorFiel
               />
             </div>
             <div className={styles.colorText} onClick={showColorPicker}>
-              {value ?? settings.textWhenUndefined ?? 'Pick Color'}
+              {value ?? settings?.textWhenUndefined ?? 'Pick Color'}
             </div>
-            {value && settings.allowUndefined && (
+            {value && settings?.allowUndefined && (
               <Icon className={styles.trashIcon} name="trash-alt" onClick={() => onChange(undefined)} />
             )}
           </div>
