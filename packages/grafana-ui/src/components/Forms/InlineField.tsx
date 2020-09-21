@@ -1,11 +1,11 @@
-import React, { InputHTMLAttributes, FC } from 'react';
+import React, { HTMLProps, FC } from 'react';
 import { cx, css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme } from '../../themes';
 import { getInlineLabelStyles, InlineLabel } from './InlineLabel';
 import { PopoverContent } from '../Tooltip/Tooltip';
 
-export interface Props extends Omit<InputHTMLAttributes<HTMLDivElement>, 'className' | 'css'> {
+export interface Props extends Omit<HTMLProps<HTMLDivElement>, 'className' | 'css' | 'label'> {
   /** Form input element, i.e Input or Switch */
   children: React.ReactElement;
   /** Label for the field. If it's html elements and not a string */
@@ -42,6 +42,7 @@ export const InlineField: FC<Props> = ({
   grow,
   fill,
   isKeyword,
+  ...htmlProps
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme, grow);
@@ -63,11 +64,15 @@ export const InlineField: FC<Props> = ({
 
   return (
     <>
-      <div className={cx(styles.container, className)}>
+      <div className={cx(styles.container, className)} {...htmlProps}>
         {labelElement}
         {React.cloneElement(children, { invalid, disabled, loading })}
       </div>
-      {fill && <div className={fillStyles} />}
+      {fill && (
+        <div className={cx(styles.container, styles.fillContainer)}>
+          <div className={fillStyles} />
+        </div>
+      )}
     </>
   );
 };
@@ -84,14 +89,14 @@ const getStyles = (theme: GrafanaTheme, grow?: boolean) => {
       position: relative;
       flex: ${grow ? 1 : 0} 0 auto;
       margin: 0 ${theme.spacing.xs} ${theme.spacing.xs} 0;
+    `,
+    wrapper: css`
+      display: flex;
+      width: 100%;
+    `,
 
-      * {
-        :focus {
-          // Keep the focus outline inset
-          box-shadow: none;
-          border-color: ${theme.palette.blue95};
-        }
-      }
+    fillContainer: css`
+      flex-grow: 1;
     `,
   };
 };
