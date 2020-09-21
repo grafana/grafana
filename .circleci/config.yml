@@ -1154,7 +1154,7 @@ workflows:
           requires:
             - lint-go
       - test-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: test-enterprise-backend
           edition: enterprise
           requires:
@@ -1164,7 +1164,7 @@ workflows:
           name: test-oss-frontend
           edition: oss
       - test-frontend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: test-enterprise-frontend
           edition: enterprise
       - mysql-integration-test:
