@@ -1217,14 +1217,14 @@ workflows:
           filters: *filter-master-or-release
           requires:
             - lint-go
-            - test-backend
-            - test-frontend
+            - test-oss-backend
+            - test-oss-frontend
       - postgres-integration-test:
           filters: *filter-master-or-release
           requires:
             - lint-go
-            - test-backend
-            - test-frontend
+            - test-oss-backend
+            - test-oss-frontend
       - package-oss:
           filters: *filter-master-or-release
           requires:
@@ -1238,8 +1238,8 @@ workflows:
             - build-oss-backend-linux-x64
             - build-oss-backend-linux-x64-musl
             - build-oss-frontend
-            - test-backend
-            - test-frontend
+            - test-oss-backend
+            - test-oss-frontend
             - codespell
             - shellcheck
             - build-oss-plugins
@@ -1256,8 +1256,8 @@ workflows:
             - build-enterprise-backend-linux-x64
             - build-enterprise-backend-linux-x64-musl
             - build-enterprise-frontend
-            - test-backend
-            - test-frontend
+            - test-enterprise-backend
+            - test-enterprise-frontend
             - codespell
             - shellcheck
             - build-enterprise-plugins
@@ -1304,8 +1304,8 @@ workflows:
       - publish-storybook:
           filters: *filter-master-or-release
           requires:
-            - test-backend
-            - test-frontend
+            - test-oss-backend
+            - test-oss-frontend
       - build-docker-images:
           filters: *filter-master-or-release
           name: build-oss-docker-images
