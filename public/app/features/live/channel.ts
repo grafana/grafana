@@ -4,6 +4,9 @@ import {
   LiveChannelScope,
   LiveChannelStatus,
   LiveChannelPresense,
+  LiveChannelJoinLeave,
+  LiveChannelMessage,
+  LiveChannelConnectionState,
 } from '@grafana/data';
 import Centrifuge, {
   JoinLeaveContext,
@@ -13,7 +16,7 @@ import Centrifuge, {
   SubscriptionEvents,
   UnsubscribeContext,
 } from 'centrifuge/dist/centrifuge.protobuf';
-import { Observable, BehaviorSubject, Subject, throwError, of } from 'rxjs';
+import { Subject, of, merge } from 'rxjs';
 
 /**
  * Internal class that maps Centrifuge support to GrafanaLive
@@ -27,8 +30,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
   readonly namespace: string;
   readonly path: string;
 
-  readonly stream = new Subject<TMessage>();
-  readonly status: BehaviorSubject<LiveChannelStatus>;
+  readonly stream = new Subject<LiveChannelMessage<TMessage>>();
 
   // When presense is enabled (rarely), this will be initalized
   private presense?: Subject<LiveChannelPresense>;
@@ -43,13 +45,11 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
     this.scope = scope;
     this.namespace = namespace;
     this.path = path;
-
     this.currentStatus = {
       id,
-      timestamp: Date.now(),
-      connected: false,
+      timestamp: this.opened,
+      state: LiveChannelConnectionState.Pending,
     };
-    this.status = new BehaviorSubject<LiveChannelStatus>(this.currentStatus);
   }
 
   // This should only be called when centrifuge is connected
@@ -69,65 +69,65 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
         if (this.currentStatus.error) {
           this.currentStatus.timestamp = Date.now();
           delete this.currentStatus.error;
-          this.status.next({ ...this.currentStatus });
+          this.sendStatus();
         }
       },
       error: (ctx: SubscribeErrorContext) => {
         this.currentStatus.timestamp = Date.now();
         this.currentStatus.error = ctx.error;
-        this.status.next({ ...this.currentStatus });
+        this.sendStatus();
       },
       subscribe: (ctx: SubscribeSuccessContext) => {
         this.currentStatus.timestamp = Date.now();
-        this.currentStatus.connected = true;
-        this.status.next({ ...this.currentStatus });
+        this.currentStatus.state = LiveChannelConnectionState.Connected;
+        this.sendStatus();
       },
       unsubscribe: (ctx: UnsubscribeContext) => {
         this.currentStatus.timestamp = Date.now();
-        this.currentStatus.connected = false;
-        this.status.next({ ...this.currentStatus });
+        this.currentStatus.state = LiveChannelConnectionState.Disconnected;
+        this.sendStatus();
       },
     };
 
     if (config.hasPresense) {
-      this.presense = new Subject<LiveChannelPresense>();
       events.join = (ctx: JoinLeaveContext) => {
-        this.presense!.next({
-          action: 'join',
+        const message: LiveChannelJoinLeave = {
           user: ctx.info.user,
+        };
+        this.stream.next({
+          type: 'join',
+          message,
         });
       };
       events.leave = (ctx: JoinLeaveContext) => {
-        this.presense!.next({
-          action: 'leave',
+        const message: LiveChannelJoinLeave = {
           user: ctx.info.user,
+        };
+        this.stream.next({
+          type: 'leave',
+          message,
         });
       };
-
-      this.getPresense = () => this.presense!.asObservable();
     }
-
     return events;
   }
 
-  /**
-   * Get the channel status
-   */
-  getStatus() {
-    return this.status.asObservable();
+  private sendStatus() {
+    this.stream.next({ type: 'status', message: { ...this.currentStatus } });
   }
 
   /**
    * Get the stream of events and
    */
   getStream() {
-    return this.stream.asObservable();
+    const status: LiveChannelMessage<TMessage> = { type: 'status', message: { ...this.currentStatus } };
+    return merge(of(status), this.stream.asObservable());
   }
 
   /**
-   * This is configured if presense is supported
+   * This is configured by the server when the config supports presense
    */
-  getPresense?: () => Observable<LiveChannelPresense>;
+  getPresense?: () => Promise<LiveChannelPresense>;
 
   /**
    * This is configured by the server when config supports writing
@@ -138,7 +138,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
    * This will close and terminate all streams for this channel
    */
   disconnect() {
-    this.currentStatus.shutdown = true;
+    this.currentStatus.state = LiveChannelConnectionState.Shutdown;
     this.currentStatus.timestamp = Date.now();
 
     if (this.subscription) {
@@ -152,8 +152,8 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
       this.presense.complete();
     }
 
-    this.status.next({ ...this.currentStatus });
-    this.status.complete();
+    this.stream.next({ type: 'status', message: { ...this.currentStatus } });
+    this.stream.complete();
 
     if (this.shutdownCallback) {
       this.shutdownCallback();
@@ -166,76 +166,6 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
   }
 }
 
-// export function initChannel<TMessage = any, TPublish = any, TPresense = any>() {
-//   let currentStatus: LiveChannelStatus = {
-//     timestamp: Date.now(),
-//     connected: false,
-//   };
-//   const satus: Subject<LiveChannelStatus> = new BehaviorSubject(currentStatus);
-//   const stream: Subject<TMessage> = new Subject();
-//   const disconnect: () => {};
-
-//   return {
-//     disconnect,
-//   };
-// }
-
-// export class Channel<TMessage = any, TPublish = any, TPresense = any>
-//   implements LiveChannel<TMessage, TPublish, TPresense> {
-//   // plugin: string;
-//   // path: string;
-//   // subject: Subject<T>; // private
-//   // stream: Observable<T>; // shared
-//   // handler: ChannelHandler;
-//   // subscription: Centrifuge.Subscription;
-
-//   /** The fully qualified channel id: ${scope}/${namespace}/${path} */
-//   readonly id: string;
-
-//   /** The scope for this channel */
-//   readonly scope: LiveChannelScope;
-
-//   /** datasourceId/plugin name/feature depending on scope */
-//   readonly namespace: string;
-
-//   /** additional qualifier */
-//   readonly path: string;
-
-//   /** Static definition of the channel definition.  This may describe the channel usage */
-//   config: LiveChannelConfig;
-
-//   constructor() {}
-
-//   /**
-//    * Get the channel status
-//    */
-//   getStatus: () => Observable<LiveChannelStatus>;
-
-//   /**
-//    * Get the stream of events and
-//    */
-//   getStream: () => Observable<TMessage>;
-
-//   /**
-//    * Indication of the presense indicator.
-//    *
-//    * NOTE: This feature is supported by a limited set of channels
-//    */
-//   getPresense?: () => Observable<TPresense>;
-
-//   /**
-//    * Write a message into the channel
-//    *
-//    * NOTE: This feature is supported by a limited set of channels
-//    */
-//   publish?: (msg: TPublish) => Promise<any>;
-
-//   /**
-//    * This will close and terminate all streams for this channel
-//    */
-//   disconnect: () => void;
-// }
-
 export function getErrorChannel(
   msg: string,
   id: string,
@@ -246,8 +176,7 @@ export function getErrorChannel(
   const errorStatus: LiveChannelStatus = {
     id,
     timestamp: Date.now(),
-    connected: false,
-    shutdown: true,
+    state: LiveChannelConnectionState.Invalid,
     error: msg,
   };
 
@@ -258,11 +187,12 @@ export function getErrorChannel(
     namespace,
     path,
 
-    // Using status will return a valid object
-    getStatus: () => of(errorStatus),
-
     // return an error
-    getStream: () => throwError(msg),
+    getStream: () =>
+      of({
+        type: 'status',
+        message: errorStatus,
+      }),
 
     // already disconnected
     disconnect: () => {},

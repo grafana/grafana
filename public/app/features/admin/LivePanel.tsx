@@ -1,7 +1,15 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable, PartialObserver } from 'rxjs';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
-import { AppEvents, LiveChannel, LiveChannelConfig, LiveChannelScope, LiveChannelStatus } from '@grafana/data';
+import {
+  AppEvents,
+  LiveChannel,
+  LiveChannelConfig,
+  LiveChannelConnectionState,
+  LiveChannelMessage,
+  LiveChannelScope,
+  LiveChannelStatus,
+} from '@grafana/data';
 import { Input, Button } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 
@@ -23,28 +31,25 @@ interface State {
 
 export class LivePanel extends PureComponent<Props, State> {
   state: State = {
-    status: { id: '?', connected: false, timestamp: Date.now() },
+    status: { id: '?', state: LiveChannelConnectionState.Pending, timestamp: Date.now() },
     count: 0,
     lastTime: 0,
     lastBody: '',
     text: '',
   };
-  streamSubscription?: Unsubscribable;
-  statusSubscription?: Unsubscribable;
+  subscription?: Unsubscribable;
 
-  streamObserver: PartialObserver<any> = {
-    next: (msg: any) => {
-      this.setState({
-        count: this.state.count + 1,
-        lastTime: Date.now(),
-        lastBody: JSON.stringify(msg),
-      });
-    },
-  };
-
-  statusObserver: PartialObserver<LiveChannelStatus> = {
-    next: (status: LiveChannelStatus) => {
-      this.setState({ status });
+  streamObserver: PartialObserver<LiveChannelMessage> = {
+    next: (msg: LiveChannelMessage) => {
+      if (msg.type === 'status') {
+        this.setState({ status: msg.message as LiveChannelStatus });
+      } else {
+        this.setState({
+          count: this.state.count + 1,
+          lastTime: Date.now(),
+          lastBody: JSON.stringify(msg),
+        });
+      }
     },
   };
 
@@ -55,15 +60,11 @@ export class LivePanel extends PureComponent<Props, State> {
       return; // no change!
     }
 
-    if (this.streamSubscription) {
-      this.streamSubscription.unsubscribe();
-    }
-    if (this.statusSubscription) {
-      this.statusSubscription.unsubscribe();
+    if (this.subscription) {
+      this.subscription.unsubscribe();
     }
 
-    this.streamSubscription = channel.getStream().subscribe(this.streamObserver);
-    this.statusSubscription = channel.getStatus().subscribe(this.statusObserver);
+    this.subscription = channel.getStream().subscribe(this.streamObserver);
     this.setState({ channel });
   };
 
@@ -72,11 +73,8 @@ export class LivePanel extends PureComponent<Props, State> {
   };
 
   componentWillUnmount() {
-    if (this.streamSubscription) {
-      this.streamSubscription.unsubscribe();
-    }
-    if (this.statusSubscription) {
-      this.statusSubscription.unsubscribe();
+    if (this.subscription) {
+      this.subscription.unsubscribe();
     }
   }
 

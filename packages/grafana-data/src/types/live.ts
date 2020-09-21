@@ -48,6 +48,19 @@ export interface LiveChannelConfig<T = any> {
   processMessage?: (msg: any) => T;
 }
 
+export enum LiveChannelConnectionState {
+  /** The connection is not yet established */
+  Pending = 'pending',
+  /** Connected to the channel */
+  Connected = 'connected',
+  /** Disconnected from the channel.  The channel will reconnect when possible */
+  Disconnected = 'disconnected',
+  /** Was at some point connected, and will not try to reconnect */
+  Shutdown = 'shutdown',
+  /** Channel configuraiton was invalid and will not connect */
+  Invalid = 'invalid',
+}
+
 /**
  * @experimental
  */
@@ -67,12 +80,7 @@ export interface LiveChannelStatus {
    * This may be false while the connections get established or if the network is lost
    * As long as the `shutdown` flag is not set, the connection will try to reestablish
    */
-  connected: boolean;
-
-  /**
-   * Indicate that the channel will not recived any updates and should be discarded
-   */
-  shutdown?: any;
+  state: LiveChannelConnectionState;
 
   /**
    * The last error.
@@ -85,9 +93,20 @@ export interface LiveChannelStatus {
 /**
  * @experimental
  */
-export interface LiveChannelPresense {
-  action: 'join' | 'leave';
+export interface LiveChannelJoinLeave {
   user: any;
+}
+
+/**
+ * @experimental
+ */
+export interface LiveChannelPresense {
+  users: any;
+}
+
+export interface LiveChannelMessage<TMessage = any> {
+  type: 'status' | 'message' | 'join' | 'leave';
+  message: TMessage | LiveChannelStatus | LiveChannelJoinLeave;
 }
 
 /**
@@ -113,21 +132,16 @@ export interface LiveChannel<TMessage = any, TPublish = any> {
   config?: LiveChannelConfig;
 
   /**
-   * Get the channel status
+   * Watch all events in this channel
    */
-  getStatus: () => Observable<LiveChannelStatus>;
+  getStream: () => Observable<LiveChannelMessage<TMessage>>;
 
   /**
-   * Get the stream of events and
-   */
-  getStream: () => Observable<TMessage>;
-
-  /**
-   * Indication of the presense indicator.
+   * For channels that support presense, this will request the current state from the server.
    *
-   * NOTE: This feature is supported by a limited set of channels
+   * Join and leave messages will be sent to the open stream
    */
-  getPresense?: () => Observable<LiveChannelPresense>;
+  getPresense?: () => Promise<LiveChannelPresense>;
 
   /**
    * Write a message into the channel
@@ -137,7 +151,7 @@ export interface LiveChannel<TMessage = any, TPublish = any> {
   publish?: (msg: TPublish) => Promise<any>;
 
   /**
-   * This will close and terminate all streams for this channel
+   * This will close and terminate this channel
    */
   disconnect: () => void;
 }
