@@ -131,7 +131,7 @@ export class PanelHeader extends Component<Props, State> {
   render() {
     const { panel, scopedVars, error, isViewing, isEditing, data, alertState } = this.props;
     const { menuItems } = this.state;
-    const title = templateSrv.replaceWithText(panel.title, scopedVars);
+    const title = templateSrv.replace(panel.title, scopedVars, 'text');
 
     const panelHeaderClass = classNames({
       'panel-header': true,
