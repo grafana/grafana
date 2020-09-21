@@ -14,7 +14,7 @@ import {
   LiveChannelSupport,
 } from '@grafana/data';
 import { LivePanel } from './LivePanel';
-import { Select, FeatureInfoBox, Container, HorizontalGroup } from '@grafana/ui';
+import { Select, FeatureInfoBox, Container } from '@grafana/ui';
 import { getGrafanaLiveCentrifugeSrv } from '../live/live';
 
 interface Props {
