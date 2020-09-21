@@ -860,16 +860,13 @@ jobs:
           command: |
             if [[ -n $CIRCLE_TAG ]]; then
               # A release build
-              /tmp/grabpl test-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
-                $CIRCLE_TAG
+              ./scripts/circle-test-frontend.sh --edition << parameters.edition >> $CIRCLE_TAG
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
-              /tmp/grabpl test-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
-                v7.0.0-test
+              ./scripts/circle-test-frontend.sh --edition << parameters.edition >> v7.0.0-test
             else
               # A master build
-              /tmp/grabpl test-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
-                --build-id $CIRCLE_WORKFLOW_ID
+              ./scripts/circle-test-frontend.sh --edition << parameters.edition >> --build-id $CIRCLE_WORKFLOW_ID
             fi
       - store_test_results:
           path: reports/junit
