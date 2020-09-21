@@ -7,7 +7,7 @@ start=$(date +%s)
 
 export TEST_MAX_WORKERS=2
 
-/tmp/grabpl test-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" $*
+/tmp/grabpl test-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" "$@"
 
 end=$(date +%s)
 seconds=$((end - start))
