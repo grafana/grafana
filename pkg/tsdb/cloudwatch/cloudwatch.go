@@ -379,7 +379,7 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 	case defaultAuthType:
 		at = authTypeDefault
 	default:
-		plog.Warn("Unrecognized AWS authentication type %q", atStr)
+		plog.Warn("Unrecognized AWS authentication type", "type", atStr)
 	}
 
 	return &datasourceInfo{
