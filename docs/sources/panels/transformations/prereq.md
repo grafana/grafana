@@ -1,18 +1,19 @@
 +++
-title = "Transformations Prerequisites"
+title = "Prerequisites"
 type = "docs"
 [menu.docs]
 identifier = "transformations_prerequisites"
-parent = "panels"
+parent = "transformations"
 weight = 300
 +++
 
-## Transformations Prerequisites
+# Prerequisites
 
-Before you configure and apply transformations, all of the following must be true:
+Before you can configure and apply transformations:
 
-- You have entered a query and returned data from a data source. For more information on queries, refer to [Queries]({{< relref "../queries.md" >}}).
-- You have applied a visualization that supports queries. Examples are:
+- You must have entered a query and returned data from a data source. For more information on queries, refer to [Queries]({{< relref "../queries.md" >}}).
+  
+- You must have applied a visualization that supports queries. Examples are:
   - [Bar gauge]({{< relref "../visualizations/bar-gauge-panel.md" >}})
   - [Gauge]({{< relref "../visualizations/gauge-panel.md" >}})
   - [Graph]({{< relref "../visualizations/graph-panel.md" >}})

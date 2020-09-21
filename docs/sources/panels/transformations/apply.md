@@ -1,9 +1,9 @@
 +++
-title = "Apply Transformation"
+title = "Apply a Transformation"
 type = "docs"
 [menu.docs]
 identifier = "apply_transformation"
-parent = "panels"
+parent = "tranformations"
 weight = 300
 +++
 
@@ -19,18 +19,14 @@ To apply a transformation:
 1. Click the **Transform** tab.
 1. Click a transformation to select it.
 
-   A transformation row displays. You can configure the transformation options here.
+   A transformation row displays. You can configure the transformation options here. For more information, refer to [Transformation types and options]({{< relref "types-options.md" >}}).
 
-1. Click **Add transformation** to apply another transformation.
+2. Click **Add transformation** to apply another transformation.
 
    This next transformation acts on the result set returned by the previous transformation.
 
    {{< docs-imagebox img="/img/docs/transformations/transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
-1. Optionaly, Click the trash can icon to remove a transformation.
+3. Optionaly, Click the trash can icon to remove a transformation.
 
-## Troubleshooting
-
-   To troubleshoot any issue, click the bug icon to [debug your transformations](#debug-transformations).
-
-   Click the trash can icon to remove a transformation.
+   To troubleshoot any issue, click the bug icon. For more information, see [Debug  transformations]({{< relref "debug.md" >}}).
