@@ -250,6 +250,7 @@ def lint_backend_step(edition):
             'golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...',
             'revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...',
             './scripts/revive-strict',
+            './scripts/tidy-check.sh',
         ],
     }
 
