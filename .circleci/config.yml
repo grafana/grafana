@@ -48,7 +48,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.5.8
+            VERSION=0.5.9
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -829,8 +829,12 @@ jobs:
               ./pkg/services/provisioning/notifiers/... \
               ./pkg/services/provisioning/values/... \
               ./pkg/plugins/backendplugin/...
+            ./scripts/tidy-check.sh
 
   test-frontend:
+    parameters:
+      edition:
+        type: string
     executor: node
     steps:
       - checkout
@@ -850,10 +854,20 @@ jobs:
           key: v2-yarn-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
+      - install-grabpl
       - run:
           name: frontend tests
           command: |
-            ./scripts/circle-test-frontend.sh
+            if [[ -n $CIRCLE_TAG ]]; then
+              # A release build
+              ./scripts/circle-test-frontend.sh --edition << parameters.edition >> $CIRCLE_TAG
+            elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
+              # We're testing the release pipeline
+              ./scripts/circle-test-frontend.sh --edition << parameters.edition >> v7.0.0-test
+            else
+              # A master build
+              ./scripts/circle-test-frontend.sh --edition << parameters.edition >> --build-id $CIRCLE_WORKFLOW_ID
+            fi
       - store_test_results:
           path: reports/junit
       - run:
@@ -867,14 +881,31 @@ jobs:
 
   test-backend:
     executor: go
+    parameters:
+      edition:
+        type: string
     steps:
       - checkout
       - run:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
+      - install-grabpl
       - run:
-          name: build backend and run go tests
-          command: "./scripts/circle-test-backend.sh"
+          name: back-end tests
+          command: |
+            if [[ -n $CIRCLE_TAG ]]; then
+              # A release build
+              /tmp/grabpl test-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
+                $CIRCLE_TAG
+            elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
+              # We're testing the release pipeline
+              /tmp/grabpl test-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
+                v7.0.0-test
+            else
+              # A master build
+              /tmp/grabpl test-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
+                --build-id $CIRCLE_WORKFLOW_ID
+            fi
       - run:
           name: CI job failed
           command: "./scripts/ci-job-failed.sh"
@@ -1164,22 +1195,36 @@ workflows:
           filters: *filter-master-or-release
       - test-backend:
           filters: *filter-master-or-release
+          name: test-oss-backend
+          edition: oss
+          requires:
+            - lint-go
+      - test-backend:
+          filters: *filter-master-or-release
+          name: test-enterprise-backend
+          edition: enterprise
           requires:
             - lint-go
       - test-frontend:
           filters: *filter-master-or-release
+          name: test-oss-frontend
+          edition: oss
+      - test-frontend:
+          filters: *filter-master-or-release
+          name: test-enterprise-frontend
+          edition: enterprise
       - mysql-integration-test:
           filters: *filter-master-or-release
           requires:
             - lint-go
-            - test-backend
-            - test-frontend
+            - test-oss-backend
+            - test-oss-frontend
       - postgres-integration-test:
           filters: *filter-master-or-release
           requires:
             - lint-go
-            - test-backend
-            - test-frontend
+            - test-oss-backend
+            - test-oss-frontend
       - package-oss:
           filters: *filter-master-or-release
           requires:
@@ -1193,8 +1238,8 @@ workflows:
             - build-oss-backend-linux-x64
             - build-oss-backend-linux-x64-musl
             - build-oss-frontend
-            - test-backend
-            - test-frontend
+            - test-oss-backend
+            - test-oss-frontend
             - codespell
             - shellcheck
             - build-oss-plugins
@@ -1211,8 +1256,8 @@ workflows:
             - build-enterprise-backend-linux-x64
             - build-enterprise-backend-linux-x64-musl
             - build-enterprise-frontend
-            - test-backend
-            - test-frontend
+            - test-enterprise-backend
+            - test-enterprise-frontend
             - codespell
             - shellcheck
             - build-enterprise-plugins
@@ -1259,8 +1304,8 @@ workflows:
       - publish-storybook:
           filters: *filter-master-or-release
           requires:
-            - test-backend
-            - test-frontend
+            - test-oss-backend
+            - test-oss-frontend
       - build-docker-images:
           filters: *filter-master-or-release
           name: build-oss-docker-images
