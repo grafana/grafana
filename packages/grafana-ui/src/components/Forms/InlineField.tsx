@@ -34,7 +34,7 @@ export const InlineField: FC<Props> = ({
   children,
   label,
   tooltip,
-  labelWidth = 6,
+  labelWidth = 'auto',
   invalid,
   loading,
   disabled,

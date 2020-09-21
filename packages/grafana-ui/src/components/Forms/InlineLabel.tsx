@@ -75,8 +75,7 @@ export const getInlineLabelStyles = (theme: GrafanaTheme, options: StyleOptions)
       margin-right: ${theme.spacing.xs};
       border-radius: ${theme.border.radius.md};
       border: none;
-      // Keep the spacer at 16 px for compatibility
-      width: ${width ? (width !== 'auto' ? `${16 * width}px` : width) : '100%'};
+      width: ${width ? (width !== 'auto' ? `${8 * width}px` : width) : '100%'};
       color: ${isKeyword ? theme.colors.textBlue : 'inherit'};
       flex-grow: ${grow ? 1 : 'unset'};
     `,

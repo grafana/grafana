@@ -32,12 +32,12 @@ export const single = () => {
         <InlineField label="Label Row 2">
           <Input placeholder="Label" />
         </InlineField>
-        <InlineField label="Label Row 2 Grow" grow labelWidth={8}>
+        <InlineField label="Label Row 2 Grow" grow>
           <Input placeholder="Label" />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Label Filled" fill>
+        <InlineField label="Label Filled 1" fill>
           <Input placeholder="Label" />
         </InlineField>
       </InlineFieldRow>
