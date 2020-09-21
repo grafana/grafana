@@ -44,4 +44,45 @@ func addTempUserMigrations(mg *Migrator) {
 		{Name: "status", Type: DB_Varchar, Length: 20},
 		{Name: "remote_addr", Type: DB_Varchar, Length: 255, Nullable: true},
 	}))
+
+	tempUserV2 := Table{
+		Name: "temp_user",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			{Name: "version", Type: DB_Int, Nullable: false},
+			{Name: "email", Type: DB_NVarchar, Length: 190},
+			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: true},
+			{Name: "role", Type: DB_NVarchar, Length: 20, Nullable: true},
+			{Name: "code", Type: DB_NVarchar, Length: 190},
+			{Name: "status", Type: DB_Varchar, Length: 20},
+			{Name: "invited_by_user_id", Type: DB_BigInt, Nullable: true},
+			{Name: "email_sent", Type: DB_Bool},
+			{Name: "email_sent_on", Type: DB_DateTime, Nullable: true},
+			{Name: "remote_addr", Type: DB_Varchar, Length: 255, Nullable: true},
+			{Name: "created", Type: DB_Int, Default: "0", Nullable: false},
+			{Name: "updated", Type: DB_Int, Default: "0", Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"email"}, Type: IndexType},
+			{Cols: []string{"org_id"}, Type: IndexType},
+			{Cols: []string{"code"}, Type: IndexType},
+			{Cols: []string{"status"}, Type: IndexType},
+		},
+	}
+
+	addTableReplaceMigrations(mg, tempUserV1, tempUserV2, 2, map[string]string{
+		"id":                 "id",
+		"org_id":             "org_id",
+		"version":            "version",
+		"email":              "email",
+		"name":               "name",
+		"role":               "role",
+		"code":               "code",
+		"status":             "status",
+		"invited_by_user_id": "invited_by_user_id",
+		"email_sent":         "email_sent",
+		"email_sent_on":      "email_sent_on",
+		"remote_addr":        "remote_addr",
+	})
 }

@@ -37,8 +37,8 @@ func CreateTempUser(cmd *models.CreateTempUserCommand) error {
 			RemoteAddr:      cmd.RemoteAddr,
 			InvitedByUserId: cmd.InvitedByUserId,
 			EmailSentOn:     time.Now(),
-			Created:         time.Now(),
-			Updated:         time.Now(),
+			Created:         time.Now().Unix(),
+			Updated:         time.Now().Unix(),
 		}
 
 		if _, err := sess.Insert(user); err != nil {
@@ -136,10 +136,8 @@ func GetTempUserByCode(query *models.GetTempUserByCodeQuery) error {
 
 func ExpireOldUserInvites(cmd *models.ExpireTempUsersCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		var rawSql = "UPDATE temp_user SET status = ? WHERE created <= ? AND status != ?"
-		expiredStatus := string(models.TmpUserExpired)
-
-		if result, err := sess.Exec(rawSql, expiredStatus, cmd.OlderThan, expiredStatus); err != nil {
+		var rawSql = "UPDATE temp_user SET status = ?, updated = ? WHERE created <= ? AND status = ?"
+		if result, err := sess.Exec(rawSql, string(models.TmpUserExpired), time.Now().Unix(), cmd.OlderThan.Unix(), string(models.TmpUserInvitePending)); err != nil {
 			return err
 		} else if cmd.NumExpired, err = result.RowsAffected(); err != nil {
 			return err

@@ -36,8 +36,8 @@ type TempUser struct {
 	Code        string
 	RemoteAddr  string
 
-	Created time.Time
-	Updated time.Time
+	Created int64
+	Updated int64
 }
 
 // ---------------------
@@ -62,7 +62,8 @@ type UpdateTempUserStatusCommand struct {
 }
 
 type ExpireTempUsersCommand struct {
-	OlderThan  time.Time
+	OlderThan time.Time
+
 	NumExpired int64
 }
 

@@ -62,7 +62,7 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 
 				So(err, ShouldBeNil)
 				So(query.Result[0].EmailSent, ShouldBeTrue)
-				So(query.Result[0].EmailSentOn, ShouldHappenOnOrAfter, (query.Result[0].Created))
+				So(query.Result[0].EmailSentOn.UTC(), ShouldHappenOnOrAfter, (query.Result[0].Created.UTC()))
 			})
 
 			Convey("Should be able expire temp user", func() {
