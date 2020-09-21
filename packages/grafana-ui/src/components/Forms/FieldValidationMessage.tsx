@@ -1,11 +1,12 @@
 import React from 'react';
-import { useTheme, stylesFactory } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
+import { useTheme, stylesFactory } from '../../themes';
 
 export interface FieldValidationMessageProps {
   children: string;
+  /** Override component style */
   className?: string;
 }
 
