@@ -90,7 +90,7 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, userId int64, cl
 		return nil, err
 	}
 
-	err = s.revokeOldUserTokens(ctx)
+	err = s.revokeOldUserTokens(ctx, userId)
 
 	if err != nil {
 		return nil, err
@@ -419,13 +419,27 @@ func (s *UserAuthTokenService) isConcurrentSessionLimitEnabled() bool {
 	return s.Cfg.FeatureToggles[concurrentSessionLimitKey]
 }
 
-func (s *UserAuthTokenService) revokeOldUserTokens(ctx context.Context) error {
+func (s *UserAuthTokenService) revokeOldUserTokens(ctx context.Context, userId int64) error {
 	if !s.isConcurrentSessionLimitEnabled() {
 		return nil
 	}
 
 	return s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		result, err := dbSession.Exec("DELETE FROM user_auth_token WHERE id NOT IN (SELECT id FROM user_auth_token WHERE seen_at <> 0 ORDER BY seen_at DESC LIMIT ?) AND seen_at <> 0;", concurrentSessionLimit-1)
+		sql := `
+		DELETE
+		FROM user_auth_token
+		WHERE id NOT IN
+			(
+			  SELECT id
+			  FROM user_auth_token
+			  WHERE user_id = ?
+			  ORDER BY seen_at DESC
+			  LIMIT ?
+			)
+		AND user_id = ?
+		AND seen_at != 0;`
+
+		result, err := dbSession.Exec(sql, userId, concurrentSessionLimit-1, userId)
 		if err != nil {
 			return err
 		}
