@@ -54,6 +54,43 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			So(cmd.Result.Id, ShouldNotEqual, 0)
 			dashId := cmd.Result.Id
 
+			Convey("Deleting orphaned provisioned dashboards", func() {
+				anotherCmd := &models.SaveProvisionedDashboardCommand{
+					DashboardCmd: &models.SaveDashboardCommand{
+						OrgId:    1,
+						IsFolder: false,
+						FolderId: folderCmd.Result.Id,
+						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							"id":    nil,
+							"title": "another_dashboard",
+						}),
+					},
+					DashboardProvisioning: &models.DashboardProvisioning{
+						Name:       "another_reader",
+						ExternalId: "/var/grafana.json",
+						Updated:    now.Unix(),
+					},
+				}
+
+				err := SaveProvisionedDashboard(anotherCmd)
+				So(err, ShouldBeNil)
+
+				query := &models.GetDashboardsQuery{DashboardIds: []int64{anotherCmd.Result.Id}}
+				err = GetDashboards(query)
+				So(err, ShouldBeNil)
+				So(query.Result, ShouldNotBeNil)
+
+				deleteCmd := &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: []string{"default"}}
+				So(DeleteOrphanedProvisionedDashboards(deleteCmd), ShouldBeNil)
+
+				query = &models.GetDashboardsQuery{DashboardIds: []int64{cmd.Result.Id, anotherCmd.Result.Id}}
+				err = GetDashboards(query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 1)
+				So(query.Result[0].Id, ShouldEqual, dashId)
+			})
+
 			Convey("Can query for provisioned dashboards", func() {
 				query := &models.GetProvisionedDashboardDataQuery{Name: "default"}
 				err := GetProvisionedDashboardDataQuery(query)

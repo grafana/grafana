@@ -86,7 +86,7 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
           <h2 className="page-sub-heading">Edit notification channel</h2>
           {notificationChannel && notificationChannel.id > 0 ? (
             <Form
-              width={600}
+              maxWidth={600}
               onSubmit={this.onSubmit}
               defaultValues={{
                 ...notificationChannel,

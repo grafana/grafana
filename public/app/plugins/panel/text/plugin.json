@@ -6,7 +6,6 @@
   "skipDataQuery": true,
 
   "info": {
-    "version": "7.1.0",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"

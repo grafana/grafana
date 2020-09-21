@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -313,4 +314,50 @@ func TestParseAppUrlAndSubUrl(t *testing.T) {
 		require.Equal(t, tc.expectedAppURL, appURL)
 		require.Equal(t, tc.expectedAppSubURL, appSubURL)
 	}
+}
+func TestAuthDurationSettings(t *testing.T) {
+	f := ini.Empty()
+	cfg := NewCfg()
+	sec, err := f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_inactive_lifetime_days", "10")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_inactive_lifetime_duration", "")
+	require.NoError(t, err)
+	maxInactiveDaysTest, _ := time.ParseDuration("240h")
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
+	require.Equal(t, maxInactiveDaysTest, cfg.LoginMaxInactiveLifetime)
+
+	f = ini.Empty()
+	sec, err = f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_inactive_lifetime_duration", "824h")
+	require.NoError(t, err)
+	maxInactiveDurationTest, _ := time.ParseDuration("824h")
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
+	require.Equal(t, maxInactiveDurationTest, cfg.LoginMaxInactiveLifetime)
+
+	f = ini.Empty()
+	sec, err = f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_days", "24")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_duration", "")
+	require.NoError(t, err)
+	maxLifetimeDaysTest, _ := time.ParseDuration("576h")
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
+	require.Equal(t, maxLifetimeDaysTest, cfg.LoginMaxLifetime)
+
+	f = ini.Empty()
+	sec, err = f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_duration", "824h")
+	require.NoError(t, err)
+	maxLifetimeDurationTest, _ := time.ParseDuration("824h")
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
+	require.Equal(t, maxLifetimeDurationTest, cfg.LoginMaxLifetime)
 }
