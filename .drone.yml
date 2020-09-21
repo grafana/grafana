@@ -84,7 +84,7 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.2.26
   commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id  --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
   depends_on:
   - initialize
   - lint-backend
@@ -252,6 +252,17 @@ steps:
     DOCKERIZE_VERSION: 0.6.1
     GRABPL_VERSION: 0.5.8
 
+- name: trigger-enterprise-downstream
+  image: plugins/downstream
+  settings:
+    params:
+    - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    repositories:
+    - grafana/grafana-enterprise
+    server: https://drone.grafana.net
+    token:
+      from_secret: drone_token
+
 - name: lint-backend
   image: grafana/build-container:1.2.26
   commands:
@@ -318,7 +329,7 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.2.26
   commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id  --no-pull-enterprise
   depends_on:
   - initialize
   - lint-backend

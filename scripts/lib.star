@@ -78,6 +78,7 @@ def master_pipelines(edition):
         },
     ]
     steps = [
+        enterprise_downstream_step(edition),
         lint_backend_step(edition),
         codespell_step(),
         shellcheck_step(),
@@ -234,6 +235,27 @@ def init_steps(edition, platform):
         },
     ]
 
+def enterprise_downstream_step(edition):
+    if edition == 'enterprise':
+        return None
+
+    return {
+        'name': 'trigger-enterprise-downstream',
+        'image': 'plugins/downstream',
+        'settings': {
+            'server': 'https://drone.grafana.net',
+            'token': {
+                'from_secret': 'drone_token',
+            },
+            'repositories': [
+                'grafana/grafana-enterprise',
+            ],
+            'params': [
+                'BUILD_NUMBER=${DRONE_BUILD_NUMBER}',
+            ],
+        },
+    }
+
 def lint_backend_step(edition):
     return {
         'name': 'lint-backend',
@@ -290,6 +312,11 @@ def publish_storybook_step(edition):
     }
 
 def build_backend_step(edition, variants=None):
+    if edition == 'enterprise':
+        build_number = '$${SOURCE_BUILD_NUMBER}'
+    else:
+        build_number = '${DRONE_BUILD_NUMBER}'
+
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
     else:
@@ -304,8 +331,8 @@ def build_backend_step(edition, variants=None):
         ],
         'commands': [
             # TODO: Convert number of jobs to percentage
-            './bin/grabpl build-backend --jobs 8 --edition {} --build-id $DRONE_BUILD_NUMBER{} --no-pull-enterprise'.format(
-                edition, variants_str
+            './bin/grabpl build-backend --jobs 8 --edition {} --build-id {} --no-pull-enterprise'.format(
+                edition, variants_str, build_number
             ),
         ],
     }
