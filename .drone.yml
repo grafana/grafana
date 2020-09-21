@@ -26,7 +26,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.5.9
+    GRABPL_VERSION: 0.5.10
 
 - name: lint-backend
   image: grafana/build-container:1.2.26
@@ -84,7 +84,8 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.2.26
   commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
+  - "if [[ -n $${SOURCE_BUILD_NUMBER} ]]; then\n  BUILD_NUMBER=$${SOURCE_BUILD_NUMBER}\nelse\n  BUILD_NUMBER=${DRONE_BUILD_NUMBER}\nfi"
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $${BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
   depends_on:
   - initialize
   - lint-backend
@@ -93,7 +94,8 @@ steps:
 - name: build-frontend
   image: grafana/build-container:1.2.26
   commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
+  - "if [[ -n $${SOURCE_BUILD_NUMBER} ]]; then\n  BUILD_NUMBER=$${SOURCE_BUILD_NUMBER}\nelse\n  BUILD_NUMBER=${DRONE_BUILD_NUMBER}\nfi"
+  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id $${BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - initialize
   - test-frontend
@@ -109,7 +111,8 @@ steps:
 - name: package
   image: grafana/build-container:1.2.26
   commands:
-  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64
+  - "if [[ -n $${SOURCE_BUILD_NUMBER} ]]; then\n  BUILD_NUMBER=$${SOURCE_BUILD_NUMBER}\nelse\n  BUILD_NUMBER=${DRONE_BUILD_NUMBER}\nfi"
+  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id $${BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64
   depends_on:
   - build-backend
   - build-frontend
@@ -250,13 +253,14 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.5.9
+    GRABPL_VERSION: 0.5.10
 
 - name: trigger-enterprise-downstream
   image: plugins/downstream
   settings:
     params:
-    - BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    - SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    - SOURCE_COMMIT=${DRONE_COMMIT}
     repositories:
     - grafana/grafana-enterprise
     server: https://drone.grafana.net
@@ -329,7 +333,8 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.2.26
   commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  - "if [[ -n $${SOURCE_BUILD_NUMBER} ]]; then\n  BUILD_NUMBER=$${SOURCE_BUILD_NUMBER}\nelse\n  BUILD_NUMBER=${DRONE_BUILD_NUMBER}\nfi"
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $${BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - initialize
   - lint-backend
@@ -338,7 +343,8 @@ steps:
 - name: build-frontend
   image: grafana/build-container:1.2.26
   commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
+  - "if [[ -n $${SOURCE_BUILD_NUMBER} ]]; then\n  BUILD_NUMBER=$${SOURCE_BUILD_NUMBER}\nelse\n  BUILD_NUMBER=${DRONE_BUILD_NUMBER}\nfi"
+  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id $${BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - initialize
   - test-frontend
@@ -357,7 +363,8 @@ steps:
 - name: package
   image: grafana/build-container:1.2.26
   commands:
-  - ./bin/grabpl package --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise --sign
+  - "if [[ -n $${SOURCE_BUILD_NUMBER} ]]; then\n  BUILD_NUMBER=$${SOURCE_BUILD_NUMBER}\nelse\n  BUILD_NUMBER=${DRONE_BUILD_NUMBER}\nfi"
+  - ./bin/grabpl package --jobs 8 --edition oss --build-id $${BUILD_NUMBER} --no-pull-enterprise --sign
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
@@ -534,15 +541,16 @@ steps:
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
   commands:
+  - "if (Test-Path env:SOURCE_BUILD_NUMBER) {\n  $$buildNumber=$$env:SOURCE_BUILD_NUMBER\n} else {\n  $$buildNumber=$$env:DRONE_BUILD_NUMBER\n}"
   - $$gcpKey = $$env:GCP_KEY
   - "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json"
   - dos2unix gcpkey.json
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.9/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.10/windows/grabpl.exe -OutFile grabpl.exe
   - cp C:\App\nssm-2.24.zip .
-  - ./grabpl.exe windows-installer --edition oss --build-id $DRONE_BUILD_NUMBER
+  - ./grabpl.exe windows-installer --edition oss --build-id $$buildNumber
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://grafana-downloads/oss/master/
   - gsutil cp $$fname.sha256 gs://grafana-downloads/oss/master/
