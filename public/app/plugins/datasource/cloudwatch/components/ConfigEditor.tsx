@@ -151,7 +151,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                   <Input
                     className="width-30"
                     placeholder="default"
-                    value={options.jsonData.database}
+                    value={options.database}
                     onChange={onUpdateDatasourceOption(this.props, 'database')}
                   />
                 </div>
