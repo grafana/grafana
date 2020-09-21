@@ -260,12 +260,20 @@ Starting from Grafana v7.0.0, the cookie path does not include the trailing slas
 
 Before Grafana v7.2 alert notification channels did not store sensitive settings/secrets such as API tokens and password encrypted in the database. In Grafana v7.2, creating a new alert notification channel will store sensitive settings encrypted in the database.
 
-Currently the following alert notifiers have been updated to support storing their sensitive settings encrypted:
+The following alert notifiers have been updated to support storing their sensitive settings encrypted:
 - Slack (URL and Token)
 - Pagerduty (Integration Key)
 - Webhook (Password)
 - Prometheus Alertmanager (Basic Auth Password)
+- Opsgenie (API Key)
+- Sensu (Password)
+- Telegram (BOT API Token)
+- LINE (token)
+- Pushover (API Token, User key)
+- Threema Gateway (API Secret)
 
 For existing alert notification channels, there is no automatic migration of storing sensitive settings encrypted, and they will continue to work as before. Migration must be done manually. Opening a configured alert notification channel in the UI and saving it will store sensitive settings encrypted and at the same time reset the historic unencrypted setting of that alert notification channel in the database.
+
+> Please note that when migrating a notification channel and later downgrading Grafana to an earlier version, the notification channel will not be able to read stored sensitive settings and by that not function as expected.
 
 For provisioning of alert notification channels, refer to [Alert notification channels]({{< relref "../administration/provisioning.md#alert-notification-channels" >}}).
