@@ -331,8 +331,8 @@ def build_backend_step(edition, variants=None):
         ],
         'commands': [
             # TODO: Convert number of jobs to percentage
-            './bin/grabpl build-backend --jobs 8 --edition {} --build-id {} --no-pull-enterprise'.format(
-                edition, variants_str, build_number
+            './bin/grabpl build-backend --jobs 8 --edition {} --build-id {}{} --no-pull-enterprise'.format(
+                edition, build_number, variants_str,
             ),
         ],
     }
