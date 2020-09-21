@@ -115,9 +115,6 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
       type,
       config: f.config || {},
       values: this.creator(buffer),
-      labels: f.labels,
-      display: f.display,
-      getLinks: f.getLinks,
     };
 
     if (type === FieldType.other) {
