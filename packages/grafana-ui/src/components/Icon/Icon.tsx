@@ -19,6 +19,7 @@ export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
 const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
+      label: Icon;
       display: inline-block;
     `,
     icon: css`
