@@ -64,7 +64,7 @@ export class TeamPicker extends Component<Props, State> {
     const { onSelected, className } = this.props;
     const { isLoading } = this.state;
     return (
-      <div className="user-picker">
+      <div className="user-picker" data-testid="teamPicker">
         <AsyncSelect
           isLoading={isLoading}
           defaultOptions={true}
