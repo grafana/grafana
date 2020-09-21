@@ -3,7 +3,7 @@ title = "Remove Transformations"
 type = "docs"
 [menu.docs]
 identifier = "remove-transformations"
-parent = "tranformations"
+parent = "transformations"
 weight = 300
 +++
 

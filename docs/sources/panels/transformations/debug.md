@@ -3,7 +3,7 @@ title = "Debug Transformations"
 type = "docs"
 [menu.docs]
 identifier = "debug-transformations"
-parent = "tranformations"
+parent = "transformations"
 weight = 300
 +++
 
