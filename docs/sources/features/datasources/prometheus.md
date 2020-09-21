@@ -33,7 +33,7 @@ To access Prometheus settings, hover your mouse over the **Configuration** (gear
 
 ## Prometheus query editor
 
-Below you can find Prometheus query editor options for editor in dashboards and in Explore.
+Below you can find information and options for Prometheus query editor in dashboard and in Explore.
 
 ### Query editor in dashboards
 
@@ -55,7 +55,7 @@ Open a graph in edit mode by clicking the title > Edit (or by pressing `e` key w
 
 > **Note:** Grafana modifies the request dates for queries to align them with the dynamically calculated step. This ensures consistent display of metrics data, but it can result in a small gap of data at the right edge of a graph.
 
-#### Instant queries
+#### Instant queries in dashboards
 
 The Prometheus data source allows you to run "instant" queries, which query only the latest value.
 You can visualize the results in a table panel to see all available labels of a timeseries.
