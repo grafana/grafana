@@ -1,4 +1,4 @@
-import { FieldColorMode, FieldConfigProperty, PanelPlugin, STANDARD_FIELD_OPTIONS } from '@grafana/data';
+import { FieldColorMode, PanelPlugin, STANDARD_FIELD_OPTIONS } from '@grafana/data';
 import { GraphCustomFieldConfig } from '@grafana/ui';
 import { GraphPanel } from './GraphPanel';
 import { Options } from './types';
@@ -45,7 +45,7 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
         .addSelect({
           path: 'points.radius',
           name: 'Point radius',
-          defaultValue: 5,
+          defaultValue: 4,
           settings: {
             options: [
               { value: 1, label: '1 • thin' },
@@ -71,7 +71,7 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
         .addSelect({
           path: 'fill.alpha',
           name: 'Fill area opacity',
-          defaultValue: 0,
+          defaultValue: 0.1,
           settings: {
             options: [
               { value: 0, label: 'No Fill' },
@@ -126,6 +126,19 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           category: ['Axis'],
           description: '',
           defaultValue: true,
+        })
+        .addRadio({
+          path: 'nullValues',
+          name: 'Display null values as',
+          description: '',
+          defaultValue: 'null',
+          settings: {
+            options: [
+              { value: 'null', label: 'null' },
+              { value: 'connected', label: 'Connected' },
+              { value: 'asZero', label: 'Zero' },
+            ],
+          },
         });
     },
     standardOptions: STANDARD_FIELD_OPTIONS,

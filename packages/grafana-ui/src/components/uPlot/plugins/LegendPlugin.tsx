@@ -17,6 +17,7 @@ export const LegendPlugin: React.FC<LegendPluginProps> = ({ placement, displayMo
   const legendItems: LegendItem[] = [];
 
   let seriesIdx = 0;
+
   for (let i = 0; i < data.fields.length; i++) {
     const field = data.fields[i];
 

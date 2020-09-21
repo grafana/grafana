@@ -43,7 +43,7 @@ export const SelectionPlugin: React.FC<SelectionPluginProps> = ({ onSelect, onDi
       onSelect(selection);
     }
   }, [selection]);
-  //
+
   const clearSelection = useCallback(() => {
     setSelection(null);
   }, [setSelection]);
@@ -60,9 +60,9 @@ export const SelectionPlugin: React.FC<SelectionPluginProps> = ({ onSelect, onDi
             min,
             max,
             bbox: {
-              left: u.ctx.canvas.left + u.select.left,
-              top: u.ctx.canvas.top,
-              height: u.ctx.canvas.height,
+              left: u.bbox.left / window.devicePixelRatio + u.select.left,
+              top: u.bbox.top / window.devicePixelRatio,
+              height: u.bbox.height / window.devicePixelRatio,
               width: u.select.width,
             },
           });

@@ -45,6 +45,7 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
     <VizLayout width={width} height={height}>
       {({ builder, getLayout }) => {
         const layout = getLayout();
+        // when all layout slots are ready we can calculate the canvas(actual viz) size
         const canvasSize = layout.isReady
           ? {
               width: width - (layout.left.width + layout.right.width),

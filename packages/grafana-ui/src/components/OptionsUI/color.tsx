@@ -32,7 +32,7 @@ export const ColorValueEditor: React.FC<FieldConfigEditorProps<FieldColor, Color
   );
 
   return (
-    <ColorPicker color={color || ''} onChange={onValueChange} enableNamedColors={!settings.disableNamedColors}>
+    <ColorPicker color={color || ''} onChange={onValueChange} enableNamedColors={!settings?.disableNamedColors}>
       {({ ref, showColorPicker, hideColorPicker }) => {
         return (
           <div className={styles.spot} onBlur={hideColorPicker}>

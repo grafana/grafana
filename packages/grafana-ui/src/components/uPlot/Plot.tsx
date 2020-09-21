@@ -61,14 +61,12 @@ export const UPlotChart: React.FC<PlotProps> = props => {
       plotInstance.destroy();
     }
 
+    if (config.width === 0 || config.height === 0) {
+      return;
+    }
+
     if (canvasRef.current) {
-      if (config.width === 0 || config.height === 0) {
-        console.log(config.width, config.height);
-        return;
-      }
-
       console.log('Initializing plot', config, plotData);
-
       setPlotInstance(new uPlot(config, plotData, canvasRef.current));
     }
 
@@ -78,7 +76,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
         plotInstance.destroy();
       }
     };
-  }, [config, canvasRef.current]);
+  }, [config, canvasRef]);
 
   useLayoutEffect(() => {
     if (plotInstance) {

@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { css } from 'emotion';
 import { useMeasure } from './useMeasure';
 import { LayoutBuilder, LayoutRendererComponent } from './LayoutBuilder';
+import { CustomScrollbar } from '@grafana/ui';
 
 type UseMeasureRect = Pick<DOMRectReadOnly, 'x' | 'y' | 'top' | 'left' | 'right' | 'bottom' | 'height' | 'width'>;
 
@@ -58,30 +59,61 @@ interface VizLayoutProps {
  * +-----------------------------------------------+
  *
  */
-const VizLayoutRenderer: LayoutRendererComponent<VizLayoutSlots> = ({ slots, refs }) => {
+const VizLayoutRenderer: LayoutRendererComponent<VizLayoutSlots> = ({ slots, refs, width, height }) => {
   return (
     <div
       className={css`
-        height: 100%;
+        height: ${height}px;
+        width: ${width}px;
         display: flex;
-        sflex-grow: 1;
+        flex-grow: 1;
         flex-direction: column;
       `}
     >
-      {slots.top && <div ref={refs.top}>{slots.top}</div>}
+      {slots.top && (
+        <div
+          ref={refs.top}
+          className={css`
+            width: 100%;
+            max-height: 35%;
+            align-self: top;
+          `}
+        >
+          <CustomScrollbar>{slots.top}</CustomScrollbar>
+        </div>
+      )}
 
       {(slots.left || slots.right || slots.canvas) && (
         <div
           className={css`
             label: INNER;
             display: flex;
-            flex-grow: 1;
             flex-direction: row;
+            width: 100%;
+            height: 100%;
           `}
         >
-          {slots.left && <div ref={refs.left}>{slots.left}</div>}
+          {slots.left && (
+            <div
+              ref={refs.left}
+              className={css`
+                max-height: 100%;
+              `}
+            >
+              <CustomScrollbar>{slots.left}</CustomScrollbar>
+            </div>
+          )}
           {slots.canvas && <div>{slots.canvas}</div>}
-          {slots.right && <div ref={refs.right}>{slots.right}</div>}
+          {slots.right && (
+            <div
+              ref={refs.right}
+              className={css`
+                max-height: 100%;
+              `}
+            >
+              <CustomScrollbar>{slots.right}</CustomScrollbar>
+            </div>
+          )}
         </div>
       )}
       {slots.bottom && (
@@ -89,10 +121,10 @@ const VizLayoutRenderer: LayoutRendererComponent<VizLayoutSlots> = ({ slots, ref
           ref={refs.bottom}
           className={css`
             width: 100%;
-            align-self: end;
+            max-height: 35%;
           `}
         >
-          {slots.bottom}
+          <CustomScrollbar>{slots.bottom}</CustomScrollbar>
         </div>
       )}
     </div>
@@ -114,14 +146,19 @@ export const VizLayout: React.FC<VizLayoutProps> = ({ children, width, height })
   // public fluent API exposed via render prop to build the layout
   const builder = useMemo(
     () =>
-      new LayoutBuilder(VizLayoutRenderer, {
-        top: topSlotRef,
-        bottom: bottomSlotRef,
-        left: leftSlotRef,
-        right: rightSlotRef,
-        canvas: canvasSlotRef,
-      }),
-    [bottomSlotBBox, topSlotBBox, leftSlotBBox, rightSlotBBox]
+      new LayoutBuilder(
+        VizLayoutRenderer,
+        {
+          top: topSlotRef,
+          bottom: bottomSlotRef,
+          left: leftSlotRef,
+          right: rightSlotRef,
+          canvas: canvasSlotRef,
+        },
+        width,
+        height
+      ),
+    [bottomSlotBBox, topSlotBBox, leftSlotBBox, rightSlotBBox, width, height]
   );
 
   // memoized map of layout slot bboxes, used for exposing correct bboxes when the layout is ready
@@ -142,20 +179,23 @@ export const VizLayout: React.FC<VizLayoutProps> = ({ children, width, height })
   useLayoutEffect(() => {
     // layout is ready by now
     const currentLayout = builder.getLayout();
+
     // map active layout slots to corresponding bboxes
     let nextDimensions: Partial<Record<VizLayoutSlots, UseMeasureRect>> = {};
     for (const key of Object.keys(currentLayout)) {
       nextDimensions[key as VizLayoutSlots] = bboxMap[key as VizLayoutSlots];
     }
 
-    setDimensions({
+    const nextState = {
       // first, reset all bboxes to defaults
       ...DEFAULT_VIZ_LAYOUT_STATE,
       // set layout to ready
       isReady: true,
       // update state with active slot bboxes
       ...nextDimensions,
-    });
+    };
+
+    setDimensions(nextState);
   }, [bottomSlotBBox, topSlotBBox, leftSlotBBox, rightSlotBBox, width, height]);
 
   // returns current state of the layout, bounding rects of all slots to be rendered
@@ -169,9 +209,13 @@ export const VizLayout: React.FC<VizLayoutProps> = ({ children, width, height })
         label: PanelVizLayout;
         width: ${width}px;
         height: ${height}px;
+        overflow: hidden;
       `}
     >
-      {children({ builder: builder, getLayout })}
+      {children({
+        builder: builder,
+        getLayout,
+      })}
     </div>
   );
 };

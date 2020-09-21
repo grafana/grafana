@@ -6,6 +6,8 @@ interface CanvasProps {
   height?: number;
 }
 
+// Ref element to render the uPlot canvas to
+// This is a required child of Plot component!
 export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
   const plot = usePlotContext();
   if (!plot) {
@@ -14,3 +16,5 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
 
   return <div ref={plot.canvasRef} />;
 };
+
+Canvas.displayName = 'Canvas';

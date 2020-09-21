@@ -3,6 +3,8 @@ import React from 'react';
 export interface LayoutRendererComponentProps<T extends string> {
   slots: Partial<Record<T, React.ReactNode | null>>;
   refs: Record<T, (i: any) => void>;
+  width: number;
+  height: number;
 }
 
 export type LayoutRendererComponent<T extends string> = React.ComponentType<LayoutRendererComponentProps<T>>;
@@ -11,7 +13,12 @@ export type LayoutRendererComponent<T extends string> = React.ComponentType<Layo
 export class LayoutBuilder<T extends string> {
   private layout: Partial<Record<T, React.ReactNode | null>> = {};
 
-  constructor(private renderer: LayoutRendererComponent<T>, private refsMap: Record<T, (i: any) => void>) {}
+  constructor(
+    private renderer: LayoutRendererComponent<T>,
+    private refsMap: Record<T, (i: any) => void>,
+    private width: number,
+    private height: number
+  ) {}
 
   getLayout() {
     return this.layout;
@@ -38,6 +45,8 @@ export class LayoutBuilder<T extends string> {
     return React.createElement(this.renderer, {
       slots: this.layout,
       refs: this.refsMap,
+      width: this.width,
+      height: this.height,
     });
   }
 }
