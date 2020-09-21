@@ -165,8 +165,8 @@
       name: Queries
     - link: /panels/transformations/
       name: Transformations
-    - link: /panels/field-configuration-options/
-      name: Field config options
+    - link: /panels/field-options/
+      name: Field options
     - link: /panels/panel-editor/
       name: Panel editor
     - name: Visualizations
@@ -466,6 +466,8 @@
           link: /developers/plugins/metadata/
         - name: Data frames
           link: /developers/plugins/data-frames/
+        - name: Working with data frames
+          link: /developers/plugins/working-with-data-frames/
         - name: Add support for variables
           link: /developers/plugins/add-support-for-variables/
         - name: Add support for annotations

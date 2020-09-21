@@ -84,9 +84,9 @@ func instrumentRoundtrip(datasourceName string, next http.RoundTripper) promhttp
 				promhttp.InstrumentRoundTripperInFlight(requestInFlight, next))).
 			RoundTrip(r)
 
-		// we avoid measing contentlength less the zero because it indicates
+		// we avoid measuring contentlength less than zero because it indicates
 		// that the content size is unknown. https://godoc.org/github.com/badu/http#Response
-		if res.ContentLength > 0 {
+		if res != nil && res.ContentLength > 0 {
 			responseSizeSummary.Observe(float64(res.ContentLength))
 		}
 

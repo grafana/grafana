@@ -7,10 +7,13 @@ import DatasourceSrv from '../plugins/datasource_srv';
 import appEvents from 'app/core/app_events';
 import { AppEvents } from '@grafana/data';
 
+// Registeres the angular directive
+import './components/StandardAnnotationQueryEditor';
+
 export class AnnotationsEditorCtrl {
   mode: any;
   datasources: any;
-  annotations: any;
+  annotations: any[];
   currentAnnotation: any;
   currentDatasource: any;
   currentIsNew: any;
@@ -68,6 +71,19 @@ export class AnnotationsEditorCtrl {
       this.currentDatasource = newDatasource;
     });
   }
+
+  /**
+   * Called from the react editor
+   */
+  onAnnotationChange = (annotation: any) => {
+    const currentIndex = this.dashboard.annotations.list.indexOf(this.currentAnnotation);
+    if (currentIndex >= 0) {
+      this.dashboard.annotations.list[currentIndex] = annotation;
+    } else {
+      console.warn('updating annotatoin, but not in the dashboard', annotation);
+    }
+    this.currentAnnotation = annotation;
+  };
 
   edit(annotation: any) {
     this.currentAnnotation = annotation;

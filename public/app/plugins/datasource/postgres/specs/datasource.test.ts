@@ -1,8 +1,14 @@
-import { PostgresDatasource } from '../datasource';
+import { of } from 'rxjs';
+import { TestScheduler } from 'rxjs/testing';
+import { FetchResponse } from '@grafana/runtime';
 import { dateTime, toUtc } from '@grafana/data';
+
+import { PostgresDatasource } from '../datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
+import { TimeSrv } from '../../../../features/dashboard/services/TimeSrv';
+import { observableTester } from '../../../../../test/helpers/observableTester';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -10,76 +16,266 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('PostgreSQLDatasource', () => {
-  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
-
-  beforeEach(() => {
+  const fetchMock = jest.spyOn(backendSrv, 'fetch');
+  const setupTestContext = (data: any) => {
     jest.clearAllMocks();
-  });
+    fetchMock.mockImplementation(() => of(createFetchResponse(data)));
 
-  const instanceSettings = { name: 'postgresql' };
-
-  const templateSrv: TemplateSrv = new TemplateSrv();
-  const raw = {
-    from: toUtc('2018-04-25 10:00'),
-    to: toUtc('2018-04-25 11:00'),
-  };
-  const ctx = {
-    timeSrvMock: {
+    const templateSrv: TemplateSrv = new TemplateSrv();
+    const raw = {
+      from: toUtc('2018-04-25 10:00'),
+      to: toUtc('2018-04-25 11:00'),
+    };
+    const timeSrvMock = ({
       timeRange: () => ({
         from: raw.from,
         to: raw.to,
         raw: raw,
       }),
-    },
-  } as any;
+    } as unknown) as TimeSrv;
+    const variable = { ...initialCustomVariableModelState };
+    const ds = new PostgresDatasource({ name: 'dsql' }, templateSrv, timeSrvMock);
 
-  beforeEach(() => {
-    ctx.ds = new PostgresDatasource(instanceSettings, templateSrv, ctx.timeSrvMock);
-  });
+    return { ds, templateSrv, timeSrvMock, variable };
+  };
 
-  describe('When performing annotationQuery', () => {
-    let results: any;
+  // https://rxjs-dev.firebaseapp.com/guide/testing/marble-testing
+  const runMarbleTest = (args: {
+    options: any;
+    values: { [marble: string]: FetchResponse };
+    marble: string;
+    expectedValues: { [marble: string]: any };
+    expectedMarble: string;
+  }) => {
+    const { expectedValues, expectedMarble, options, values, marble } = args;
+    const scheduler: TestScheduler = new TestScheduler((actual, expected) => {
+      expect(actual).toEqual(expected);
+    });
 
-    const annotationName = 'MyAnno';
+    const { ds } = setupTestContext({});
 
-    const options = {
-      annotation: {
-        name: annotationName,
-        rawQuery: 'select time, title, text, tags from table;',
-      },
-      range: {
-        from: dateTime(1432288354),
-        to: dateTime(1432288401),
-      },
-    };
+    scheduler.run(({ cold, expectObservable }) => {
+      const source = cold(marble, values);
+      jest.clearAllMocks();
+      fetchMock.mockImplementation(() => source);
 
-    const response = {
-      results: {
-        MyAnno: {
-          refId: annotationName,
-          tables: [
+      const result = ds.query(options);
+      expectObservable(result).toBe(expectedMarble, expectedValues);
+    });
+  };
+
+  describe('When performing a time series query', () => {
+    it('should transform response correctly', () => {
+      const options = {
+        range: {
+          from: dateTime(1432288354),
+          to: dateTime(1432288401),
+        },
+        targets: [
+          {
+            format: 'time_series',
+            rawQuery: true,
+            rawSql: 'select time, metric from grafana_metric',
+            refId: 'A',
+            datasource: 'gdev-ds',
+          },
+        ],
+      };
+
+      const data = {
+        results: {
+          A: {
+            refId: 'A',
+            meta: {
+              executedQueryString: 'select time, metric from grafana_metric',
+              rowCount: 0,
+            },
+            series: [
+              {
+                name: 'America',
+                points: [[30.226249741223704, 1599643351085]],
+              },
+            ],
+            tables: null,
+            dataframes: null,
+          },
+        },
+      };
+
+      const values = { a: createFetchResponse(data) };
+      const marble = '-a|';
+      const expectedMarble = '-a|';
+      const expectedValues = {
+        a: {
+          data: [
             {
-              columns: [{ text: 'time' }, { text: 'text' }, { text: 'tags' }],
-              rows: [
-                [1432288355, 'some text', 'TagA,TagB'],
-                [1432288390, 'some text2', ' TagB , TagC'],
-                [1432288400, 'some text3'],
-              ],
+              datapoints: [[30.226249741223704, 1599643351085]],
+              meta: {
+                executedQueryString: 'select time, metric from grafana_metric',
+                rowCount: 0,
+              },
+              refId: 'A',
+              target: 'America',
             },
           ],
         },
-      },
-    };
+      };
 
-    beforeEach(() => {
-      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+      runMarbleTest({ options, marble, values, expectedMarble, expectedValues });
+    });
+  });
 
-      ctx.ds.annotationQuery(options).then((data: any) => {
-        results = data;
+  describe('When performing a table query', () => {
+    it('should transform response correctly', () => {
+      const options = {
+        range: {
+          from: dateTime(1432288354),
+          to: dateTime(1432288401),
+        },
+        targets: [
+          {
+            format: 'table',
+            rawQuery: true,
+            rawSql: 'select time, metric, value from grafana_metric',
+            refId: 'A',
+            datasource: 'gdev-ds',
+          },
+        ],
+      };
+
+      const data = {
+        results: {
+          A: {
+            refId: 'A',
+            meta: {
+              executedQueryString: 'select time, metric, value from grafana_metric',
+              rowCount: 1,
+            },
+            series: null,
+            tables: [
+              {
+                columns: [
+                  {
+                    text: 'time',
+                  },
+                  {
+                    text: 'metric',
+                  },
+                  {
+                    text: 'value',
+                  },
+                ],
+                rows: [[1599643351085, 'America', 30.226249741223704]],
+              },
+            ],
+            dataframes: null,
+          },
+        },
+      };
+
+      const values = { a: createFetchResponse(data) };
+      const marble = '-a|';
+      const expectedMarble = '-a|';
+      const expectedValues = {
+        a: {
+          data: [
+            {
+              columns: [
+                {
+                  text: 'time',
+                },
+                {
+                  text: 'metric',
+                },
+                {
+                  text: 'value',
+                },
+              ],
+              rows: [[1599643351085, 'America', 30.226249741223704]],
+              type: 'table',
+              refId: 'A',
+              meta: {
+                executedQueryString: 'select time, metric, value from grafana_metric',
+                rowCount: 1,
+              },
+            },
+          ],
+        },
+      };
+
+      runMarbleTest({ options, marble, values, expectedMarble, expectedValues });
+    });
+  });
+
+  describe('When performing a query with hidden target', () => {
+    it('should return empty result and backendSrv.fetch should not be called', done => {
+      const options = {
+        range: {
+          from: dateTime(1432288354),
+          to: dateTime(1432288401),
+        },
+        targets: [
+          {
+            format: 'table',
+            rawQuery: true,
+            rawSql: 'select time, metric, value from grafana_metric',
+            refId: 'A',
+            datasource: 'gdev-ds',
+            hide: true,
+          },
+        ],
+      };
+
+      const { ds } = setupTestContext({});
+
+      observableTester().subscribeAndExpectOnNextAndComplete({
+        observable: ds.query(options),
+        expectOnNext: value => {
+          expect(value).toEqual({ data: [] });
+        },
+        expectOnComplete: () => {
+          expect(fetchMock).not.toHaveBeenCalled();
+        },
+        done,
       });
     });
+  });
 
-    it('should return annotation list', () => {
+  describe('When performing annotationQuery', () => {
+    it('should return annotation list', async () => {
+      const annotationName = 'MyAnno';
+      const options = {
+        annotation: {
+          name: annotationName,
+          rawQuery: 'select time, title, text, tags from table;',
+        },
+        range: {
+          from: dateTime(1432288354),
+          to: dateTime(1432288401),
+        },
+      };
+      const data = {
+        results: {
+          MyAnno: {
+            refId: annotationName,
+            tables: [
+              {
+                columns: [{ text: 'time' }, { text: 'text' }, { text: 'tags' }],
+                rows: [
+                  [1432288355, 'some text', 'TagA,TagB'],
+                  [1432288390, 'some text2', ' TagB , TagC'],
+                  [1432288400, 'some text3'],
+                ],
+              },
+            ],
+          },
+        },
+      };
+
+      const { ds } = setupTestContext(data);
+
+      const results = await ds.annotationQuery(options);
+
       expect(results.length).toBe(3);
 
       expect(results[0].text).toBe('some text');
@@ -94,38 +290,33 @@ describe('PostgreSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery', () => {
-    let results: any;
-    const query = 'select * from atable';
-    const response = {
-      results: {
-        tempvar: {
-          meta: {
-            rowCount: 3,
-          },
-          refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [
-                ['aTitle', 'some text'],
-                ['aTitle2', 'some text2'],
-                ['aTitle3', 'some text3'],
-              ],
+    it('should return list of all column values', async () => {
+      const query = 'select * from atable';
+      const data = {
+        results: {
+          tempvar: {
+            meta: {
+              rowCount: 3,
             },
-          ],
+            refId: 'tempvar',
+            tables: [
+              {
+                columns: [{ text: 'title' }, { text: 'text' }],
+                rows: [
+                  ['aTitle', 'some text'],
+                  ['aTitle2', 'some text2'],
+                  ['aTitle3', 'some text3'],
+                ],
+              },
+            ],
+          },
         },
-      },
-    };
+      };
 
-    beforeEach(() => {
-      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+      const { ds } = setupTestContext(data);
 
-      ctx.ds.metricFindQuery(query).then((data: any) => {
-        results = data;
-      });
-    });
+      const results = await ds.metricFindQuery(query, {});
 
-    it('should return list of all column values', () => {
       expect(results.length).toBe(6);
       expect(results[0].text).toBe('aTitle');
       expect(results[5].text).toBe('some text3');
@@ -133,214 +324,201 @@ describe('PostgreSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery with $__searchFilter and a searchFilter is given', () => {
-    let results: any;
-    let calledWith: any = {};
-    const query = "select title from atable where title LIKE '$__searchFilter'";
-    const response = {
-      results: {
-        tempvar: {
-          meta: {
-            rowCount: 3,
-          },
-          refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [
-                ['aTitle', 'some text'],
-                ['aTitle2', 'some text2'],
-                ['aTitle3', 'some text3'],
-              ],
+    it('should return list of all column values', async () => {
+      const query = "select title from atable where title LIKE '$__searchFilter'";
+      const data = {
+        results: {
+          tempvar: {
+            meta: {
+              rowCount: 3,
             },
-          ],
+            refId: 'tempvar',
+            tables: [
+              {
+                columns: [{ text: 'title' }, { text: 'text' }],
+                rows: [
+                  ['aTitle', 'some text'],
+                  ['aTitle2', 'some text2'],
+                  ['aTitle3', 'some text3'],
+                ],
+              },
+            ],
+          },
         },
-      },
-    };
+      };
 
-    beforeEach(() => {
-      datasourceRequestMock.mockImplementation(options => {
-        calledWith = options;
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      const { ds } = setupTestContext(data);
 
-      ctx.ds.metricFindQuery(query, { searchFilter: 'aTit' }).then((data: any) => {
-        results = data;
-      });
-    });
+      const results = await ds.metricFindQuery(query, { searchFilter: 'aTit' });
 
-    it('should return list of all column values', () => {
-      expect(datasourceRequestMock).toBeCalledTimes(1);
-      expect(calledWith.data.queries[0].rawSql).toBe("select title from atable where title LIKE 'aTit%'");
-      expect(results.length).toBe(6);
+      expect(fetchMock).toBeCalledTimes(1);
+      expect(fetchMock.mock.calls[0][0].data.queries[0].rawSql).toBe(
+        "select title from atable where title LIKE 'aTit%'"
+      );
+      expect(results).toEqual([
+        { text: 'aTitle' },
+        { text: 'some text' },
+        { text: 'aTitle2' },
+        { text: 'some text2' },
+        { text: 'aTitle3' },
+        { text: 'some text3' },
+      ]);
     });
   });
 
   describe('When performing metricFindQuery with $__searchFilter but no searchFilter is given', () => {
-    let results: any;
-    let calledWith: any = {};
-    const query = "select title from atable where title LIKE '$__searchFilter'";
-    const response = {
-      results: {
-        tempvar: {
-          meta: {
-            rowCount: 3,
-          },
-          refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [
-                ['aTitle', 'some text'],
-                ['aTitle2', 'some text2'],
-                ['aTitle3', 'some text3'],
-              ],
+    it('should return list of all column values', async () => {
+      const query = "select title from atable where title LIKE '$__searchFilter'";
+      const data = {
+        results: {
+          tempvar: {
+            meta: {
+              rowCount: 3,
             },
-          ],
+            refId: 'tempvar',
+            tables: [
+              {
+                columns: [{ text: 'title' }, { text: 'text' }],
+                rows: [
+                  ['aTitle', 'some text'],
+                  ['aTitle2', 'some text2'],
+                  ['aTitle3', 'some text3'],
+                ],
+              },
+            ],
+          },
         },
-      },
-    };
+      };
 
-    beforeEach(() => {
-      datasourceRequestMock.mockImplementation(options => {
-        calledWith = options;
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      const { ds } = setupTestContext(data);
 
-      ctx.ds.metricFindQuery(query, {}).then((data: any) => {
-        results = data;
-      });
-    });
+      const results = await ds.metricFindQuery(query, {});
 
-    it('should return list of all column values', () => {
-      expect(datasourceRequestMock).toBeCalledTimes(1);
-      expect(calledWith.data.queries[0].rawSql).toBe("select title from atable where title LIKE '%'");
-      expect(results.length).toBe(6);
+      expect(fetchMock).toBeCalledTimes(1);
+      expect(fetchMock.mock.calls[0][0].data.queries[0].rawSql).toBe("select title from atable where title LIKE '%'");
+      expect(results).toEqual([
+        { text: 'aTitle' },
+        { text: 'some text' },
+        { text: 'aTitle2' },
+        { text: 'some text2' },
+        { text: 'aTitle3' },
+        { text: 'some text3' },
+      ]);
     });
   });
 
   describe('When performing metricFindQuery with key, value columns', () => {
-    let results: any;
-    const query = 'select * from atable';
-    const response = {
-      results: {
-        tempvar: {
-          meta: {
-            rowCount: 3,
-          },
-          refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: '__value' }, { text: '__text' }],
-              rows: [
-                ['value1', 'aTitle'],
-                ['value2', 'aTitle2'],
-                ['value3', 'aTitle3'],
-              ],
+    it('should return list of as text, value', async () => {
+      const query = 'select * from atable';
+      const data = {
+        results: {
+          tempvar: {
+            meta: {
+              rowCount: 3,
             },
-          ],
+            refId: 'tempvar',
+            tables: [
+              {
+                columns: [{ text: '__value' }, { text: '__text' }],
+                rows: [
+                  ['value1', 'aTitle'],
+                  ['value2', 'aTitle2'],
+                  ['value3', 'aTitle3'],
+                ],
+              },
+            ],
+          },
         },
-      },
-    };
+      };
 
-    beforeEach(() => {
-      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+      const { ds } = setupTestContext(data);
 
-      ctx.ds.metricFindQuery(query).then((data: any) => {
-        results = data;
-      });
-    });
+      const results = await ds.metricFindQuery(query, {});
 
-    it('should return list of as text, value', () => {
-      expect(results.length).toBe(3);
-      expect(results[0].text).toBe('aTitle');
-      expect(results[0].value).toBe('value1');
-      expect(results[2].text).toBe('aTitle3');
-      expect(results[2].value).toBe('value3');
+      expect(results).toEqual([
+        { text: 'aTitle', value: 'value1' },
+        { text: 'aTitle2', value: 'value2' },
+        { text: 'aTitle3', value: 'value3' },
+      ]);
     });
   });
 
   describe('When performing metricFindQuery with key, value columns and with duplicate keys', () => {
-    let results: any;
-    const query = 'select * from atable';
-    const response = {
-      results: {
-        tempvar: {
-          meta: {
-            rowCount: 3,
-          },
-          refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: '__text' }, { text: '__value' }],
-              rows: [
-                ['aTitle', 'same'],
-                ['aTitle', 'same'],
-                ['aTitle', 'diff'],
-              ],
+    it('should return list of unique keys', async () => {
+      const query = 'select * from atable';
+      const data = {
+        results: {
+          tempvar: {
+            meta: {
+              rowCount: 3,
             },
-          ],
+            refId: 'tempvar',
+            tables: [
+              {
+                columns: [{ text: '__text' }, { text: '__value' }],
+                rows: [
+                  ['aTitle', 'same'],
+                  ['aTitle', 'same'],
+                  ['aTitle', 'diff'],
+                ],
+              },
+            ],
+          },
         },
-      },
-    };
+      };
 
-    beforeEach(() => {
-      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+      const { ds } = setupTestContext(data);
 
-      ctx.ds.metricFindQuery(query).then((data: any) => {
-        results = data;
-      });
-      //ctx.$rootScope.$apply();
-    });
+      const results = await ds.metricFindQuery(query, {});
 
-    it('should return list of unique keys', () => {
-      expect(results.length).toBe(1);
-      expect(results[0].text).toBe('aTitle');
-      expect(results[0].value).toBe('same');
+      expect(results).toEqual([{ text: 'aTitle', value: 'same' }]);
     });
   });
 
   describe('When interpolating variables', () => {
-    beforeEach(() => {
-      ctx.variable = { ...initialCustomVariableModelState };
-    });
-
     describe('and value is a string', () => {
       it('should return an unquoted value', () => {
-        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual('abc');
+        const { ds, variable } = setupTestContext({});
+        expect(ds.interpolateVariable('abc', variable)).toEqual('abc');
       });
     });
 
     describe('and value is a number', () => {
       it('should return an unquoted value', () => {
-        expect(ctx.ds.interpolateVariable(1000, ctx.variable)).toEqual(1000);
+        const { ds, variable } = setupTestContext({});
+        expect(ds.interpolateVariable((1000 as unknown) as string, variable)).toEqual(1000);
       });
     });
 
     describe('and value is an array of strings', () => {
       it('should return comma separated quoted values', () => {
-        expect(ctx.ds.interpolateVariable(['a', 'b', 'c'], ctx.variable)).toEqual("'a','b','c'");
+        const { ds, variable } = setupTestContext({});
+        expect(ds.interpolateVariable(['a', 'b', 'c'], variable)).toEqual("'a','b','c'");
       });
     });
 
     describe('and variable allows multi-value and is a string', () => {
       it('should return a quoted value', () => {
-        ctx.variable.multi = true;
-        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
+        const { ds, variable } = setupTestContext({});
+        variable.multi = true;
+        expect(ds.interpolateVariable('abc', variable)).toEqual("'abc'");
       });
     });
 
     describe('and variable contains single quote', () => {
       it('should return a quoted value', () => {
-        ctx.variable.multi = true;
-        expect(ctx.ds.interpolateVariable("a'bc", ctx.variable)).toEqual("'a''bc'");
-        expect(ctx.ds.interpolateVariable("a'b'c", ctx.variable)).toEqual("'a''b''c'");
+        const { ds, variable } = setupTestContext({});
+        variable.multi = true;
+        expect(ds.interpolateVariable("a'bc", variable)).toEqual("'a''bc'");
+        expect(ds.interpolateVariable("a'b'c", variable)).toEqual("'a''b''c'");
       });
     });
 
     describe('and variable allows all and is a string', () => {
       it('should return a quoted value', () => {
-        ctx.variable.includeAll = true;
-        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
+        const { ds, variable } = setupTestContext({});
+        variable.includeAll = true;
+        expect(ds.interpolateVariable('abc', variable)).toEqual("'abc'");
       });
     });
   });
@@ -363,11 +541,14 @@ describe('PostgreSQLDatasource', () => {
         rawSql,
         rawQuery: true,
       };
+      const { templateSrv, ds } = setupTestContext({});
+
       templateSrv.init([
         { type: 'query', name: 'summarize', current: { value: '1m' } },
         { type: 'query', name: 'host', current: { value: 'a' } },
       ]);
-      expect(ctx.ds.targetContainsTemplate(query)).toBeTruthy();
+
+      expect(ds.targetContainsTemplate(query)).toBeTruthy();
     });
 
     it('given query that only contains global template variable it should return false', () => {
@@ -386,11 +567,26 @@ describe('PostgreSQLDatasource', () => {
         rawSql,
         rawQuery: true,
       };
+      const { templateSrv, ds } = setupTestContext({});
+
       templateSrv.init([
         { type: 'query', name: 'summarize', current: { value: '1m' } },
         { type: 'query', name: 'host', current: { value: 'a' } },
       ]);
-      expect(ctx.ds.targetContainsTemplate(query)).toBeFalsy();
+
+      expect(ds.targetContainsTemplate(query)).toBeFalsy();
     });
   });
+});
+
+const createFetchResponse = <T>(data: T): FetchResponse<T> => ({
+  data,
+  status: 200,
+  url: 'http://localhost:3000/api/query',
+  config: { url: 'http://localhost:3000/api/query' },
+  type: 'basic',
+  statusText: 'Ok',
+  redirected: false,
+  headers: ({} as unknown) as Headers,
+  ok: true,
 });
