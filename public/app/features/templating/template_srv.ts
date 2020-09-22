@@ -266,7 +266,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   private static cartesianProduct(arr: any[][]) {
-    return arr.reduce((a, b) => a.map(x => b.map(y => x.concat(y))).reduce((a, b) => a.concat(b), []), [[]]);
+    return arr.reduce((acc, curr) => acc.flatMap(a => curr.map(c => a.concat([c]))), [[]]);
   }
 
   private targetTokens(target: string, scopedVars?: ScopedVars, format?: string | Function): TargetToken[] {
