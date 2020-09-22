@@ -252,7 +252,7 @@ Grafana now requires backend plugins to be signed. If a backend plugin is not si
 
 ### Cookie path
 
-Starting from Grafana v7.0.0, the cookie path does not include the trailing slash if Grafana is served from a subpath in order to align with [RFC 6265](https://tools.ietf.org/html/rfc6265#section-5.1.4). However, stale session cookies (set before the upgrade) can result in unsuccessful logins because they cannot be deleted during the standard login phase due to the changed cookie path. Therefore users experiencing login problems are advised to manually delete old session cookies, or administrators can fix this for all users by changing the [`login_cookie_name`]({{< relref "../administration/#login-cookie-name" >}}), so the old cookie would get ignored.
+Starting from Grafana v7.0.0, the cookie path does not include the trailing slash if Grafana is served from a subpath in order to align with [RFC 6265](https://tools.ietf.org/html/rfc6265#section-5.1.4). However, stale session cookies (set before the upgrade) can result in unsuccessful logins because they can not be deleted during the standard login phase due to the changed cookie path. Therefore users experiencing login problems are advised to manually delete old session cookies, or administrators can fix this for all users by changing the [`login_cookie_name`]({{< relref "../administration/#login-cookie-name" >}}), so the old cookie would get ignored.
 
 ## Upgrading to v7.2
 
