@@ -1357,7 +1357,7 @@ Mode `context` will cluster using incognito pages.
 
 ### rendering_clustering_max_concurrency
 
-When rendering_mode = clustered you can define maximum number of browser instances/incognito pages that can execute concurrently..
+When rendering_mode = clustered you can define maximum number of browser instances/incognito pages that can execute concurrently.
 
 ### rendering_viewport_max_width
 
