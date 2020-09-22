@@ -19,7 +19,7 @@ func TestDatabaseStorageGarbageCollection(t *testing.T) {
 
 	obj := &CacheableStruct{String: "foolbar"}
 
-	//set time.now to 2 weeks ago
+	// set time.now to 2 weeks ago
 	var err error
 	getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
 	err = db.Set("key1", obj, 1000*time.Second)
