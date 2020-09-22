@@ -17,7 +17,7 @@ interface GraphPanelProps extends PanelProps<Options> {}
 
 const TIME_FIELD_NAME = 'Time';
 
-export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
+export const GraphPanel: React.FC<GraphPanelProps> = ({
   data,
   timeRange,
   timeZone,
@@ -68,9 +68,12 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
         return (
           <UPlotChart data={alignedData} timeRange={timeRange} timeZone={timeZone} {...canvasSize}>
             {builder.addSlot('canvas', <Canvas />).render()}
-            <ZoomPlugin onZoom={onChangeTimeRange} />
             <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
+            <ZoomPlugin onZoom={onChangeTimeRange} />
             <ContextMenuPlugin />
+
+            {/* TODO: */}
+            {/*<AnnotationsEditorPlugin />*/}
           </UPlotChart>
         );
       }}

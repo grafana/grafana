@@ -69,9 +69,11 @@ export {
   BigValueTextMode,
 } from './BigValue/BigValue';
 
-export { UPlotChart } from './uPlot/Plot';
 export { GraphCustomFieldConfig } from './uPlot/types';
+export { UPlotChart } from './uPlot/Plot';
+export { Canvas } from './uPlot/Canvas';
 export * from './uPlot/plugins';
+
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';

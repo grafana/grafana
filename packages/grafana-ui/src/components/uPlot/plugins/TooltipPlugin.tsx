@@ -1,6 +1,6 @@
 import React from 'react';
 import { Portal } from '../../Portal/Portal';
-import { usePlotCanvas, usePlotContext, usePlotData } from '../context';
+import { usePlotContext, usePlotData } from '../context';
 import { CursorPlugin } from './CursorPlugin';
 import { SeriesTable } from '../../Graph/GraphTooltip/SeriesTable';
 import { FieldType, formattedValueToString, getDisplayProcessor, getFieldDisplayName, TimeZone } from '@grafana/data';
@@ -15,12 +15,7 @@ interface TooltipPluginProps {
 export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', timeZone }) => {
   const pluginId = 'PlotTooltip';
   const plotContext = usePlotContext();
-  const plotCanvas = usePlotCanvas();
   const { data, getField, getXAxisFields } = usePlotData();
-
-  if (!plotContext || !plotContext.series || !plotCanvas) {
-    return null;
-  }
 
   const xAxisFields = getXAxisFields();
   // assuming single x-axis
@@ -30,14 +25,18 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
   return (
     <CursorPlugin id={pluginId}>
       {({ focusedSeriesIdx, focusedPointIdx, coords }) => {
+        if (!plotContext || !plotContext.series) {
+          return null;
+        }
+
         let tooltip = null;
 
-        // no cursor interaction
+        // when no no cursor interaction
         if (focusedPointIdx === null) {
           return null;
         }
 
-        // if interacting with a point in single mode
+        // when interacting with a point in single mode
         if (mode === 'single' && focusedSeriesIdx !== null) {
           const xVal = xAxisFmt(xAxisFields[0]!.values.get(focusedPointIdx)).text;
           const field = getField(focusedSeriesIdx);
@@ -47,7 +46,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
               series={[
                 {
                   // stroke is typed as CanvasRenderingContext2D['strokeStyle'] - we are using strings only for now
-                  color: plotContext!.series![focusedSeriesIdx!].stroke as string,
+                  color: plotContext.series![focusedSeriesIdx!].stroke as string,
                   label: getFieldDisplayName(field, data),
                   value: fieldFmt(field.values.get(focusedPointIdx)).text,
                 },
@@ -71,7 +70,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
                   ...agg,
                   {
                     // stroke is typed as CanvasRenderingContext2D['strokeStyle'] - we are using strings only for now
-                    color: plotContext!.series![i].stroke as string,
+                    color: plotContext.series![i].stroke as string,
                     label: getFieldDisplayName(f, data),
                     value: formattedValueToString(f.display!(f.values.get(focusedPointIdx!))),
                     isActive: focusedSeriesIdx === i,

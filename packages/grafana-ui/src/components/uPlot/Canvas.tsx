@@ -1,5 +1,5 @@
 import React from 'react';
-import { usePlotContext } from '../context';
+import { usePlotContext } from './context';
 
 interface CanvasProps {
   width?: number;

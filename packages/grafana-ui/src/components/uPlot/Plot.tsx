@@ -1,11 +1,10 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import 'uplot/dist/uPlot.min.css';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { css } from 'emotion';
 import uPlot from 'uplot';
-import 'uplot/dist/uPlot.min.css';
-
 import { useTheme } from '../../themes';
 import { buildPlotContext, PlotContext } from './context';
-import { buildPlotConfig, preparePlotData } from './utils';
+import { buildPlotConfig, pluginLog, preparePlotData, shouldReinitialisePlot } from './utils';
 import { usePlotPlugins } from './hooks';
 import { PlotProps } from './types';
 
@@ -20,54 +19,71 @@ export const UPlotChart: React.FC<PlotProps> = props => {
   const [plotInstance, setPlotInstance] = useState<uPlot>();
 
   // Array with current plot data points, calculated when data frame is passed to a plot
-  const [plotData, setPlotData] = useState<uPlot.AlignedData>();
+  // const [plotData, setPlotData] = useState<uPlot.AlignedData>();
   // uPlot config
-  const [config, setConfig] = useState<uPlot.Options>();
+  const [currentPlotConfig, setCurrentPlotConfig] = useState<uPlot.Options>();
+
   // uPlot plugins API hook
-  const { plugins, registerPlugin } = usePlotPlugins();
+  const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
 
-  useEffect(() => {
-    if (!canvasRef || !canvasRef.current) {
-      return;
-    }
-    // Creates array of datapoints to be consumed by uPlot
-    const data = preparePlotData(props.data);
-    // Creates series, axes and scales config
-    const config = buildPlotConfig(props, props.data, theme);
-
-    config.plugins = [
-      ...config.plugins,
-      ...Object.entries(plugins).map(p => ({
-        hooks: p[1].hooks,
-      })),
-    ];
-
-    setConfig(config);
-    setPlotData(data);
-  }, [props.data, plugins, canvasRef.current]);
-
-  useEffect(() => {
-    if (!canvasRef) {
-      throw new Error('Cannot render graph without canvas!');
-    }
-
-    if (!config || !plotData) {
-      plotInstance?.destroy();
+  // Main function initialising uPlot. If final config is not settled it will do nothing
+  // Will destroy existing uPlot instance
+  const initPlot = useCallback(() => {
+    if (!currentPlotConfig || !canvasRef?.current) {
       return;
     }
 
     if (plotInstance) {
-      console.log('uPlot - destroy instance');
+      pluginLog('uPlot core', false, 'destroying existing instance due to reinitialisation');
       plotInstance.destroy();
     }
 
-    if (config.width === 0 || config.height === 0) {
+    const data = preparePlotData(props.data);
+
+    pluginLog('uPlot core', false, 'initialized with', data, currentPlotConfig);
+
+    setPlotInstance(new uPlot(currentPlotConfig, data, canvasRef.current));
+  }, [props, currentPlotConfig, arePluginsReady, canvasRef.current, plotInstance]);
+
+  const hasConfigChanged = useCallback(() => {
+    const config = buildPlotConfig(props, props.data, plugins, theme);
+    if (!currentPlotConfig) {
+      return false;
+    }
+
+    return shouldReinitialisePlot(currentPlotConfig, config);
+  }, [props, props.data, currentPlotConfig]);
+
+  // Initialise uPlot when config changes
+  useEffect(() => {
+    if (!currentPlotConfig) {
+      return;
+    }
+    initPlot();
+  }, [currentPlotConfig]);
+
+  // Destroy uPlot on when components unmounts
+  useEffect(() => {
+    return () => {
+      if (plotInstance) {
+        pluginLog('uPlot core', false, 'destroying existing instance due to unmount');
+        plotInstance.destroy();
+      }
+    };
+  }, [plotInstance]);
+
+  // Effect performed when all plugins have registered. Final config is set triggering plot initialisation
+  useEffect(() => {
+    if (!canvasRef) {
+      throw new Error('Cannot render graph without canvas! Render Canvas as a child of Plot component.');
+    }
+
+    if (!arePluginsReady) {
       return;
     }
 
     if (canvasRef.current) {
-      console.log('Initializing plot', config, plotData);
-      setPlotInstance(new uPlot(config, plotData, canvasRef.current));
+      setCurrentPlotConfig(buildPlotConfig(props, props.data, plugins, theme));
     }
 
     return () => {
@@ -76,8 +92,26 @@ export const UPlotChart: React.FC<PlotProps> = props => {
         plotInstance.destroy();
       }
     };
-  }, [config, canvasRef]);
+  }, [arePluginsReady]);
 
+  // When data changes try to be clever about config updates, needs some more love
+  useEffect(() => {
+    const data = preparePlotData(props.data);
+    const config = buildPlotConfig(props, props.data, plugins, theme);
+
+    // See if series configs changes, re-initialise if necessary
+    // this is a minimal check, need to update for field config cleverness ;)
+    if (hasConfigChanged()) {
+      setCurrentPlotConfig(config); // will trigger uPlot reinitialisation
+      return;
+    } else {
+      pluginLog('uPlot core', true, 'updating plot data(throttled log!)');
+      // If config hasn't changed just update uPlot's data
+      plotInstance?.setData(data);
+    }
+  }, [props.data, props.timeRange]);
+
+  // When size props changed update plot size synchronously
   useLayoutEffect(() => {
     if (plotInstance) {
       plotInstance.setSize({
@@ -85,8 +119,9 @@ export const UPlotChart: React.FC<PlotProps> = props => {
         height: props.height,
       });
     }
-  }, [props.width, props.height]);
+  }, [plotInstance, props.width, props.height]);
 
+  // Memoize plot context
   const plotCtx = useMemo(() => {
     return buildPlotContext(registerPlugin, canvasRef, props.data, plotInstance);
   }, [registerPlugin, canvasRef, props.data, plotInstance]);
