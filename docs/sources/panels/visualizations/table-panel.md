@@ -37,8 +37,6 @@ In the **Field** tab you can set table specific display options that will affect
 
 ### Column alignment
 
-This custom field option applies only to table visualizations.
-
 Choose how Grafana should align cell contents:
 
 - Auto (default)
@@ -48,15 +46,11 @@ Choose how Grafana should align cell contents:
 
 ### Column width
 
-This custom field option applies only to table visualizations.
-
 By default, Grafana automatically calculates the column width based on the cell contents. In this field option, can override the setting and define the width for all columns in pixels.
 
 For example, if you enter `100` in the field, then when you click outside the field, all the columns will be set to 100 pixels wide.
 
 #### Cell display mode
-
-This custom field option applies only to table visualizations.
 
 By default, Grafana automatically chooses display settings. You can override the settings by choosing one of the following options to change all fields.
 
