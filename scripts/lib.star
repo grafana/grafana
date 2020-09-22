@@ -511,6 +511,15 @@ def package_step(edition, variants=None, sign=False, is_downstream=False):
             'GRAFANA_API_KEY': {
                 'from_secret': 'grafana_api_key',
             },
+            'GPG_PRIV_KEY': {
+                'from_secret': 'gpg_priv_key',
+            },
+            'GPG_PUB_KEY': {
+                'from_secret': 'gpg_pub_key',
+            },
+            'GPG_KEY_PASSWORD': {
+                'from_secret': 'gpg_key_password',
+            },
         }
         test_args = ''
     else:
