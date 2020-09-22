@@ -4,7 +4,6 @@ import {
   dateTime,
   ExploreMode,
   LoadingState,
-  LogsDedupStrategy,
   RawTimeRange,
   UrlQueryMap,
   ExploreUrlState,
@@ -260,12 +259,6 @@ export const setup = (urlStateOverrides?: any) => {
     range: {
       from: '',
       to: '',
-    },
-    ui: {
-      dedupStrategy: LogsDedupStrategy.none,
-      showingGraph: false,
-      showingTable: false,
-      showingLogs: false,
     },
   };
   const urlState: ExploreUrlState = { ...urlStateDefaults, ...urlStateOverrides };
@@ -539,47 +532,6 @@ describe('Explore reducer', () => {
                   urlState: {
                     ...initialState.left.urlState,
                     queries: [{ expr: '{__filename__="some.log"}' }],
-                  },
-                },
-              };
-
-              reducerTester<ExploreState>()
-                .givenReducer(exploreReducer, stateWithDifferentDataSource)
-                .whenActionIsDispatched(
-                  updateLocation({
-                    query: {
-                      left: serializedUrlState,
-                    },
-                    path: '/explore',
-                  })
-                )
-                .thenStateShouldEqual(expectedState);
-            });
-          });
-
-          describe('and ui differs', () => {
-            it('then it should return update ui', () => {
-              const { initialState, serializedUrlState } = setup();
-              const expectedState = {
-                ...initialState,
-                left: {
-                  ...initialState.left,
-                  update: {
-                    ...initialState.left.update,
-                    ui: true,
-                  },
-                },
-              };
-              const stateWithDifferentDataSource: any = {
-                ...initialState,
-                left: {
-                  ...initialState.left,
-                  urlState: {
-                    ...initialState.left.urlState,
-                    ui: {
-                      ...initialState.left.urlState!.ui,
-                      showingGraph: true,
-                    },
                   },
                 },
               };

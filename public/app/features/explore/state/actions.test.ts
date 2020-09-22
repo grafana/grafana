@@ -1,5 +1,5 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { DataQuery, DefaultTimeZone, LogsDedupStrategy, toUtc, ExploreUrlState } from '@grafana/data';
+import { DataQuery, DefaultTimeZone, toUtc, ExploreUrlState } from '@grafana/data';
 
 import { cancelQueries, loadDatasource, navigateToExplore, refreshExplore } from './actions';
 import { ExploreId, ExploreUpdateState } from 'app/types';
@@ -12,7 +12,6 @@ import {
   loadDatasourceReadyAction,
   scanStopAction,
   setQueriesAction,
-  updateUIStateAction,
 } from './actionTypes';
 import { Emitter } from 'app/core/core';
 import { makeInitialUpdateState } from './reducers';
@@ -63,14 +62,12 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
   const exploreId = ExploreId.left;
   const containerWidth = 1920;
   const eventBridge = {} as Emitter;
-  const ui = { dedupStrategy: LogsDedupStrategy.none, showingGraph: false, showingLogs: false, showingTable: false };
   const timeZone = DefaultTimeZone;
   const range = testRange;
   const urlState: ExploreUrlState = {
     datasource: 'some-datasource',
     queries: [],
     range: range.raw,
-    ui,
   };
   const updateDefaults = makeInitialUpdateState();
   const update = { ...updateDefaults, ...updateOverides };
@@ -89,7 +86,6 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
         datasourceInstance: { name: 'some-datasource' },
         queries: [] as DataQuery[],
         range,
-        ui,
         refreshInterval: {
           label: 'Off',
           value: 0,
@@ -102,7 +98,6 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
     initialState,
     exploreId,
     range,
-    ui,
     containerWidth,
     eventBridge,
   };
@@ -112,7 +107,7 @@ describe('refreshExplore', () => {
   describe('when explore is initialized', () => {
     describe('and update datasource is set', () => {
       it('then it should dispatch initializeExplore', async () => {
-        const { exploreId, ui, initialState, containerWidth, eventBridge } = setup({ datasource: true });
+        const { exploreId, initialState, containerWidth, eventBridge } = setup({ datasource: true });
 
         const dispatchedActions = await thunkTester(initialState)
           .givenThunk(refreshExplore)
@@ -129,20 +124,6 @@ describe('refreshExplore', () => {
         expect(payload.range.to).toEqual(testRange.to);
         expect(payload.range.raw.from).toEqual(testRange.raw.from);
         expect(payload.range.raw.to).toEqual(testRange.raw.to);
-        expect(payload.ui).toEqual(ui);
-      });
-    });
-
-    describe('and update ui is set', () => {
-      it('then it should dispatch updateUIStateAction', async () => {
-        const { exploreId, initialState, ui } = setup({ ui: true });
-
-        const dispatchedActions = await thunkTester(initialState)
-          .givenThunk(refreshExplore)
-          .whenThunkIsDispatched(exploreId);
-
-        expect(dispatchedActions[0].type).toEqual(updateUIStateAction.type);
-        expect(dispatchedActions[0].payload).toEqual({ ...ui, exploreId });
       });
     });
 
