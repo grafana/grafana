@@ -39,10 +39,10 @@ func TestDatabaseStorageGarbageCollection(t *testing.T) {
 	err = db.Set("key5", obj, 1000*time.Second)
 	assert.Equal(t, err, nil)
 
-	//run GC
+	// run GC
 	db.internalRunGC()
 
-	//try to read values
+	// try to read values
 	_, err = db.Get("key1")
 	assert.Equal(t, err, ErrCacheItemNotFound, "expected cache item not found. got: ", err)
 	_, err = db.Get("key2")

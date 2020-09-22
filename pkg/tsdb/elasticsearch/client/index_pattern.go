@@ -239,11 +239,11 @@ var datePatternReplacements = map[string]string{
 	"ZZ":   "-0700",                   // stdNumTZ -0700 -0600 ... +0600 +0700
 	"X":    "<stdUnix>",               // Seconds since unix epoch 1360013296
 	"LT":   "3:04 PM",                 // 8:30 PM
-	"L":    "01/02/2006",              //09/04/1986
-	"l":    "1/2/2006",                //9/4/1986
-	"ll":   "Jan 2 2006",              //Sep 4 1986
-	"lll":  "Jan 2 2006 3:04 PM",      //Sep 4 1986 8:30 PM
-	"llll": "Mon, Jan 2 2006 3:04 PM", //Thu, Sep 4 1986 8:30 PM
+	"L":    "01/02/2006",              // 09/04/1986
+	"l":    "1/2/2006",                // 9/4/1986
+	"ll":   "Jan 2 2006",              // Sep 4 1986
+	"lll":  "Jan 2 2006 3:04 PM",      // Sep 4 1986 8:30 PM
+	"llll": "Mon, Jan 2 2006 3:04 PM", // Thu, Sep 4 1986 8:30 PM
 }
 
 func formatDate(t time.Time, pattern string) string {
