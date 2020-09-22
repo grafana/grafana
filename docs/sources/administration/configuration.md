@@ -1120,7 +1120,7 @@ May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
 
 Default value is `false`.
 
-Controls whether or not to use Zipkin's span propagation format (with `x-b3-` HTTP headers). By default, Jaeger's format is used.
+Controls whether use or not to use Zipkin's span propagation format (with `x-b3-` HTTP headers). By default, Jaeger's format is used.
 
 Can be set with the environment variable and value `JAEGER_PROPAGATION=b3`.
 
