@@ -12,7 +12,7 @@ weight = 100
 
 # Change the default home dashboard
 
-You can change the default dashboard on the organization, team and user level. The home dashboard you set for the whole organization is the one all users will see by default. The team dashboard applies to all users assigned to the team in Grafana. The team dashboard overrides the organization dashboard settings. Personal dashboard settings override team dashboard settings. 
+You can change the default dashboard at the organization, team and user level. The home dashboard you set for the whole organization is the one all users will see by default. The team dashboard applies to all users assigned to the team in Grafana. The team dashboard overrides the organization dashboard settings. Personal dashboard settings override team dashboard settings. 
 
 ## Set the home dashboard for your organization
 
