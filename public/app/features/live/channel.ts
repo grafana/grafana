@@ -108,6 +108,14 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
           message,
         });
       };
+
+      this.getPresense = () => {
+        return this.subscription!.presence().then(v => {
+          return {
+            users: Object.keys(v.presence),
+          };
+        });
+      };
     }
     return events;
   }
@@ -143,6 +151,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
 
     if (this.subscription) {
       this.subscription.unsubscribe();
+      this.subscription.removeAllListeners(); // they keep all listeners attached after unsubscribe
       this.subscription = undefined;
     }
 

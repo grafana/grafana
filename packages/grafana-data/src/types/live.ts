@@ -17,7 +17,7 @@ export enum LiveChannelScope {
 /**
  * @experimental
  */
-export interface LiveChannelConfig<T = any> {
+export interface LiveChannelConfig<TMessage = any> {
   /**
    * The path definition.  either static, or it may contain variables identifed with {varname}
    */
@@ -44,8 +44,8 @@ export interface LiveChannelConfig<T = any> {
    */
   canPublish?: () => boolean;
 
-  /** convert the stream message into a message that should be broadcast */
-  processMessage?: (msg: any) => T;
+  /** convert the raw stream message into a message that should be broadcast */
+  processMessage?: (msg: any) => TMessage;
 }
 
 export enum LiveChannelConnectionState {

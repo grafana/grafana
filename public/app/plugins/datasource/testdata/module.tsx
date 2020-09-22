@@ -3,7 +3,6 @@ import { TestDataDataSource } from './datasource';
 import { TestDataQueryCtrl } from './query_ctrl';
 import { TestInfoTab } from './TestInfoTab';
 import { ConfigEditor } from './ConfigEditor';
-import { testDataChannelSupport } from './channels';
 
 class TestDataAnnotationsQueryCtrl {
   annotation: any;
@@ -15,7 +14,6 @@ export const plugin = new DataSourcePlugin(TestDataDataSource)
   .setConfigEditor(ConfigEditor)
   .setQueryCtrl(TestDataQueryCtrl)
   .setAnnotationQueryCtrl(TestDataAnnotationsQueryCtrl)
-  .setChannelSupport(testDataChannelSupport)
   .addConfigPage({
     title: 'Setup',
     icon: 'list-ul',
