@@ -129,33 +129,6 @@ export class LiveAdmin extends PureComponent<Props, State> {
     }
   };
 
-  // onTextChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   this.setState({ text: event.target.value });
-  // };
-
-  // onPublish = () => {
-  //   const { text, channel } = this.state;
-  //   if (text) {
-  //     const msg = {
-  //       line: text,
-  //     };
-  //     const idx = channel.indexOf('/');
-  //     const plugin = channel.substring(0, idx);
-  //     const path = channel.substring(idx + 1);
-
-  //     const srv = getGrafanaLiveSrv();
-  //     srv
-  //       .publish(plugin, path, msg)
-  //       .then(v => {
-  //         console.log('PUBLISHED', text, v);
-  //       })
-  //       .catch(err => {
-  //         appEvents.emit(AppEvents.alertError, ['Publish error', `${err}`]);
-  //       });
-  //   }
-  //   this.setState({ text: '' });
-  // };
-
   render() {
     const { navModel } = this.props;
     const { scope, namespace, namespaces, path, paths, config } = this.state;
