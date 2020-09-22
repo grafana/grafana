@@ -62,7 +62,7 @@ The data you want to visualize can come from many different places and it is usu
 
 By chaining a simple set of point and click [transformations]({{< relref "../panels/transformations/_index.md" >}}), users will be able join, pivot, filter, re-name and do calculations to get the results they need. Perfect for operations across queries or data sources missing essential data transformations.
 
-[Transformations]({{< relref "../panels/transformations/_index.md" >}}) also adds the ability to do maths across queries. Lots of data sources do not support this natively so being able to do it in Grafana is a powerful feature.
+[Transformations]({{< relref "../panels/transformations/_index.md" >}}) also adds the ability to do maths across queries. Lots of data sources do not support this natively, so being able to do it in Grafana is a powerful feature.
 
 For users with large dashboards or with heavy queries, being able to reuse the query result from one panel in another panel can be a huge performance gain for slow queries (e.g log or sql queries). From the data source menu in the query editor, you can choose the `--dashboard--` option and then choose the query result from another panel on the same dashboard.
 

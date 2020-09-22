@@ -168,16 +168,10 @@
       children:
         - link: /panels/transformations/
           name: Overview
-        - link: /panels/transformations/prereq/
-          name: Prerequisites
-        - link: /panels/transformations/apply/
-          name: Apply a transformation
+        - link: /panels/transformations/apply-transformations/
+          name: Apply transformations
         - link: /panels/transformations/types-options/
           name: Transformation types and options
-        - link: /panels/transformations/debug/
-          name: Debug transformations
-        - link: /panels/transformations/remove/
-          name: Remove a transformation
     - link: /panels/field-options/
       name: Field options
     - link: /panels/panel-editor/
