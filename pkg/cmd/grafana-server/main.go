@@ -38,7 +38,6 @@ import (
 var version = "5.0.0"
 var commit = "NA"
 var buildBranch = "master"
-
 var buildstamp string
 
 type exitWithCode struct {
