@@ -174,7 +174,7 @@ Data sources store passwords and basic auth passwords in secureJsonData encrypte
 will keep working with unencrypted passwords. If you want to migrate to encrypted storage for your existing data sources
 you can do that by:
 
-- For data sources created through UI, you need to go to data source config, re enter the password or basic auth
+- For data sources created through UI, you need to go to data source config, reenter the password or basic auth
 password and save the data source.
 - For data sources created by provisioning, you need to update your config file and use secureJsonData.password or
 secureJsonData.basicAuthPassword field. See [provisioning docs]({{< relref "../administration/provisioning" >}}) for example of current
