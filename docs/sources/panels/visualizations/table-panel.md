@@ -69,4 +69,4 @@ string create a field override and add a unit property with the `string` unit.
 
 ### Annotations
 
-> **Note:** Annotations are not currently supported in the new table panel.
+Annotations are not currently supported in the new table panel. This might be added back in a future release.
