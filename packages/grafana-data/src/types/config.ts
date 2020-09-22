@@ -34,6 +34,7 @@ export interface BuildInfo {
 export interface FeatureToggles {
   live: boolean;
   expressions: boolean;
+  ngalert: boolean;
 
   /**
    * @remarks
