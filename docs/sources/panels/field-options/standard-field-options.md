@@ -9,7 +9,7 @@ weight = 400
 
 This section explains all available field options. They are listed in alphabetical order.
 
-You can apply standard field options to most built-in Grafana panels. Some older panels and community panels that have not updateded to the new panel and data model will be missing either all or some of these field options.
+You can apply standard field options to most built-in Grafana panels. Some older panels and community panels that have not updated to the new panel and data model will be missing either all or some of these field options.
 
 Most field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
