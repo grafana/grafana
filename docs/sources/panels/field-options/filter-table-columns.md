@@ -14,9 +14,9 @@ If you turn on the **Column filter** in [Table options](table-field-options.md),
 ## Turn on column filtering
 
 1. In Grafana, navigate to the dashboard with the table with the columns that you want to filter.
-2. On the table panel you want to filter, [open the panel editor]({{< relref "../panel-editor.md#open-the-panel-editor" >}}).
-3. Click the **Field** tab.
-4. In Table options, turn on the **Column filter** option.
+1. On the table panel you want to filter, [open the panel editor]({{< relref "../panel-editor.md#open-the-panel-editor" >}}).
+1. Click the **Field** tab.
+1. In Table options, turn on the **Column filter** option.
 
 A filter icon appears next to each column title.
 
