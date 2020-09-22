@@ -804,7 +804,7 @@ def get_windows_steps(edition, version_mode, is_downstream):
             ])
         steps.insert(0, {
             'name': 'clone',
-            'image': git_image,
+            'image': 'grafana/ci-wix:0.1.1',
             'environment': {
                 'GITHUB_TOKEN': {
                     'from_secret': 'github_token',
@@ -814,7 +814,7 @@ def get_windows_steps(edition, version_mode, is_downstream):
         })
         steps.insert(1, {
             'name': 'initialize',
-            'image': build_image,
+            'image': 'grafana/ci-wix:0.1.1',
             'depends_on': [
                 'clone',
             ],
