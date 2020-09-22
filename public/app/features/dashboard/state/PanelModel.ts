@@ -6,6 +6,7 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 import templateSrv from 'app/features/templating/template_srv';
 // Types
 import {
+  AppEvent,
   DataConfigSource,
   DataLink,
   DataQuery,
@@ -23,6 +24,7 @@ import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
 import { PanelQueryRunner } from './PanelQueryRunner';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import { CoreEvents } from '../../../types';
 
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
@@ -382,6 +384,16 @@ export class PanelModel implements DataConfigSource {
     }
   }
 
+  updateQueries(queries: DataQuery[]) {
+    if (this.targets.length > queries.length) {
+      this.events.emit(CoreEvents.queryRemoved);
+    } else {
+      this.events.emit(CoreEvents.queryAdded);
+    }
+
+    this.targets = queries;
+  }
+
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
     query.refId = getNextRefIdChar(this.targets);
@@ -461,6 +473,11 @@ export class PanelModel implements DataConfigSource {
   }
 
   setTransformations(transformations: DataTransformerConfig[]) {
+    if (this.transformations && this.transformations.length > transformations.length) {
+      this.events.emit(CoreEvents.transformationRemoved);
+    } else {
+      this.events.emit(CoreEvents.transformationAdded);
+    }
     this.transformations = transformations;
     this.resendLastResult();
   }
@@ -487,6 +504,14 @@ export class PanelModel implements DataConfigSource {
    * */
   getSavedId(): number {
     return this.editSourceId ?? this.id;
+  }
+
+  on<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
+    this.events.on(event, callback);
+  }
+
+  off<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
+    this.events.off(event, callback);
   }
 }
 
