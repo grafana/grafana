@@ -27,7 +27,7 @@ type kqlMacroEngine struct {
 //   - $__contains(col, 'val1','val2') -> col in ('val1', 'val2')
 //   - $__escapeMulti('\\vm\eth0\Total','\\vm\eth2\Total') -> @'\\vm\eth0\Total',@'\\vm\eth2\Total'
 
-//KqlInterpolate interpolates macros for Kusto Query Language (KQL) queries
+// KqlInterpolate interpolates macros for Kusto Query Language (KQL) queries
 func KqlInterpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, kql string, defaultTimeField ...string) (string, error) {
 	engine := kqlMacroEngine{}
 
@@ -46,7 +46,7 @@ func (m *kqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRang
 
 	var macroError error
 
-	//First pass for the escapeMulti macro
+	// First pass for the escapeMulti macro
 	kql = m.ReplaceAllStringSubmatchFunc(escapeMultiRegex, kql, func(groups []string) string {
 		args := []string{}
 
@@ -58,7 +58,7 @@ func (m *kqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRang
 		return fmt.Sprintf("@%s", expr)
 	})
 
-	//second pass for all the other macros
+	// second pass for all the other macros
 	kql = m.ReplaceAllStringSubmatchFunc(rExp, kql, func(groups []string) string {
 		args := []string{}
 		if len(groups) > 2 {

@@ -71,9 +71,9 @@ type Alert struct {
 	PanelId        int64
 	Name           string
 	Message        string
-	Severity       string //Unused
+	Severity       string // Unused
 	State          AlertStateType
-	Handler        int64 //Unused
+	Handler        int64 // Unused
 	Silenced       bool
 	ExecutionError string
 	Frequency      int64
@@ -113,7 +113,7 @@ func (this *Alert) ContainsUpdates(other *Alert) bool {
 		result = result || string(json1) != string(json2)
 	}
 
-	//don't compare .State! That would be insane.
+	// don't compare .State! That would be insane.
 	return result
 }
 
@@ -180,7 +180,7 @@ type SetAlertStateCommand struct {
 	Result Alert
 }
 
-//Queries
+// Queries
 type GetAlertsQuery struct {
 	OrgId        int64
 	State        []string
