@@ -54,7 +54,7 @@ let singletonInstance: GrafanaLiveSrv;
 
 /**
  * Used during startup by Grafana to set the GrafanaLiveSrv so it is available
- * via the the {@link getGrafanaLiveSrv} to the rest of the application.
+ * via the {@link getGrafanaLiveSrv} to the rest of the application.
  *
  * @internal
  */
