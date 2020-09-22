@@ -5,12 +5,6 @@ alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
 grabpl_version = '0.5.10'
 
-set_build_no_cmd = """if [[ -n $${SOURCE_BUILD_NUMBER} ]]; then
-  BUILD_NUMBER=$${SOURCE_BUILD_NUMBER}
-else
-  BUILD_NUMBER=${DRONE_BUILD_NUMBER}
-fi"""
-
 def pr_pipelines(edition):
     services = [
         {
@@ -61,6 +55,40 @@ def pr_pipelines(edition):
         ),
     ]
 
+def master_steps(edition, is_downstream=False):
+    publish = edition != 'enterprise' or is_downstream
+    steps = [
+        enterprise_downstream_step(edition),
+        lint_backend_step(edition),
+        codespell_step(),
+        shellcheck_step(),
+        test_backend_step(),
+        test_frontend_step(),
+        frontend_metrics_step(edition=edition),
+        build_backend_step(edition=edition, is_downstream=is_downstream),
+        build_frontend_step(edition=edition, is_downstream=is_downstream),
+        build_plugins_step(edition=edition, sign=True),
+        package_step(edition=edition, sign=True, is_downstream=is_downstream),
+        e2e_tests_server_step(),
+        e2e_tests_step(),
+        build_storybook_step(edition=edition),
+        publish_storybook_step(edition=edition),
+        build_docs_website_step(),
+        copy_packages_for_docker_step(),
+        build_docker_images_step(edition=edition, publish=publish),
+        build_docker_images_step(edition=edition, ubuntu=True, publish=publish),
+        postgres_integration_tests_step(),
+        mysql_integration_tests_step(),
+        release_next_npm_packages_step(edition),
+        publish_packages_step(edition, is_downstream),
+        deploy_to_kubernetes_step(edition, is_downstream),
+    ]
+    windows_steps = [
+        windows_installer_step(edition=edition, version_mode='master', is_downstream=is_downstream),
+    ]
+
+    return steps, windows_steps
+
 def master_pipelines(edition):
     services = [
         {
@@ -83,50 +111,38 @@ def master_pipelines(edition):
             },
         },
     ]
-    steps = [
-        enterprise_downstream_step(edition),
-        lint_backend_step(edition),
-        codespell_step(),
-        shellcheck_step(),
-        test_backend_step(),
-        test_frontend_step(),
-        frontend_metrics_step(edition=edition),
-        build_backend_step(edition=edition),
-        build_frontend_step(edition=edition),
-        build_plugins_step(edition=edition, sign=True),
-        package_step(edition=edition, sign=True),
-        e2e_tests_server_step(),
-        e2e_tests_step(),
-        build_storybook_step(edition=edition),
-        publish_storybook_step(edition=edition),
-        build_docs_website_step(),
-        copy_packages_for_docker_step(),
-        build_docker_images_step(edition=edition, publish=True),
-        build_docker_images_step(edition=edition, ubuntu=True, publish=True),
-        postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
-        release_next_npm_packages_step(edition),
-        publish_packages_step(edition),
-        deploy_to_kubernetes_step(edition),
-    ]
-    windows_steps = [
-        windows_installer_step(edition=edition, version_mode='master'),
-    ]
     trigger = {
         'event': ['push',],
         'branch': 'master',
     }
-    return [
+    steps, windows_steps = master_steps(edition=edition)
+    pipelines = [
         pipeline(
             name='build-master', edition=edition, trigger=trigger, services=services, steps=steps
         ),
         pipeline(
-            name='windows-installer-master', edition=edition, trigger=trigger,
-            steps=windows_steps, platform='windows', depends_on=['build-master'],
+            name='windows-installer-master', edition=edition, trigger=trigger, steps=windows_steps, platform='windows',
+            depends_on=['build-master'],
         ),
     ]
+    if edition == 'enterprise':
+        # Add downstream enterprise pipelines triggerable from OSS builds
+        trigger = {
+            'event': ['custom',],
+        }
+        steps, windows_steps = master_steps(edition=edition, is_downstream=True)
+        pipelines.append(pipeline(
+            name='build-master-downstream', edition=edition, trigger=trigger, services=services, steps=steps,
+            is_downstream=True,
+        ))
+        pipelines.append(pipeline(
+            name='windows-installer-master-downstream', edition=edition, trigger=trigger, steps=windows_steps,
+            platform='windows', depends_on=['build-master-downstream'], is_downstream=True,
+        ))
 
-def pipeline(name, edition, trigger, steps, services=[], platform='linux', depends_on=[]):
+    return pipelines
+
+def pipeline(name, edition, trigger, steps, services=[], platform='linux', depends_on=[], is_downstream=False):
     if platform != 'windows':
         platform_conf = {
             'os': 'linux',
@@ -146,7 +162,7 @@ def pipeline(name, edition, trigger, steps, services=[], platform='linux', depen
         'name': name,
         'trigger': trigger,
         'services': services,
-        'steps': init_steps(edition, platform) + steps,
+        'steps': init_steps(edition, platform, is_downstream=is_downstream) + steps,
         'depends_on': depends_on,
     }
 
@@ -158,7 +174,7 @@ def pipeline(name, edition, trigger, steps, services=[], platform='linux', depen
 
     return pipeline
 
-def init_steps(edition, platform):
+def init_steps(edition, platform, is_downstream=False):
     if platform == 'windows':
         return [
             {
@@ -185,6 +201,10 @@ def init_steps(edition, platform):
         'yarn install --frozen-lockfile --no-progress',
     ]
     if edition == 'enterprise':
+        if is_downstream:
+            source_commit = ' $${SOURCE_COMMIT}'
+        else:
+            source_commit = ''
         return [
             identify_runner_step,
             {
@@ -216,7 +236,7 @@ def init_steps(edition, platform):
                     'chmod +x grabpl',
                     'mv grabpl /tmp',
                     'mv grafana-enterprise /tmp/',
-                    '/tmp/grabpl init-enterprise /tmp/grafana-enterprise $${SOURCE_COMMIT}',
+                    '/tmp/grabpl init-enterprise /tmp/grafana-enterprise{}'.format(source_commit),
                     'mkdir bin',
                     'mv /tmp/grabpl bin/'
                 ] + common_cmds,
@@ -318,7 +338,11 @@ def publish_storybook_step(edition):
         ],
     }
 
-def build_backend_step(edition, variants=None):
+def build_backend_step(edition, variants=None, is_downstream=False):
+    if not is_downstream:
+        build_no = '${DRONE_BUILD_NUMBER}'
+    else:
+        build_no = '$${SOURCE_BUILD_NUMBER}'
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
     else:
@@ -332,15 +356,18 @@ def build_backend_step(edition, variants=None):
             'test-backend',
         ],
         'commands': [
-            set_build_no_cmd,
             # TODO: Convert number of jobs to percentage
-            './bin/grabpl build-backend --jobs 8 --edition {} --build-id $${{BUILD_NUMBER}}{} --no-pull-enterprise'.format(
-                edition, variants_str,
+            './bin/grabpl build-backend --jobs 8 --edition {} --build-id {}{} --no-pull-enterprise'.format(
+                edition, build_no, variants_str,
             ),
         ],
     }
 
-def build_frontend_step(edition):
+def build_frontend_step(edition, is_downstream=False):
+    if not is_downstream:
+        build_no = '${DRONE_BUILD_NUMBER}'
+    else:
+        build_no = '$${SOURCE_BUILD_NUMBER}'
     return {
         'name': 'build-frontend',
         'image': build_image,
@@ -349,10 +376,9 @@ def build_frontend_step(edition):
             'test-frontend',
         ],
         'commands': [
-            set_build_no_cmd,
             # TODO: Use percentage for num jobs
             './bin/grabpl build-frontend --jobs 8 --no-install-deps --edition {} '.format(edition) +
-                '--build-id $${BUILD_NUMBER} --no-pull-enterprise',
+                '--build-id {} --no-pull-enterprise'.format(build_no),
         ],
     }
 
@@ -470,7 +496,11 @@ def shellcheck_step():
         ],
     }
 
-def package_step(edition, variants=None, sign=False):
+def package_step(edition, variants=None, sign=False, is_downstream=False):
+    if not is_downstream:
+        build_no = '${DRONE_BUILD_NUMBER}'
+    else:
+        build_no = '$${SOURCE_BUILD_NUMBER}'
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
     else:
@@ -502,10 +532,9 @@ def package_step(edition, variants=None, sign=False):
         ],
         'environment': env,
         'commands': [
-            set_build_no_cmd,
             # TODO: Use percentage for jobs
             '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) +
-                '--build-id $${{BUILD_NUMBER}} --no-pull-enterprise{}{}'.format(variants_str, sign_args),
+                '--build-id {} --no-pull-enterprise{}{}'.format(build_no, variants_str, sign_args),
         ],
     }
 
@@ -664,8 +693,8 @@ def release_next_npm_packages_step(edition):
         ],
     }
 
-def deploy_to_kubernetes_step(edition):
-    if edition != 'enterprise':
+def deploy_to_kubernetes_step(edition, is_downstream):
+    if edition != 'enterprise' or not is_downstream:
         return None
 
     return {
@@ -674,12 +703,20 @@ def deploy_to_kubernetes_step(edition):
         'depends_on': [
             'build-docker-images',
         ],
+        'environment': {
+            'CIRCLE_TOKEN': {
+                'from_secret': 'deployment_tools_circle_token',
+            },
+        },
         'commands': [
             './bin/grabpl deploy-to-k8s',
         ],
     }
 
-def publish_packages_step(edition):
+def publish_packages_step(edition, is_downstream):
+    if edition == 'enterprise' and not is_downstream:
+        return None
+
     return {
         'name': 'publish-packages',
         'image': publish_image,
@@ -689,15 +726,45 @@ def publish_packages_step(edition):
             'mysql-integration-tests',
             'postgres-integration-tests',
         ],
+        'environment': {
+            'GCP_GRAFANA_UPLOAD_KEY': {
+                'from_secret': 'gcp_key',
+            },
+            'GRAFANA_COM_API_KEY': {
+                'from_secret': 'grafana_api_key',
+            },
+        },
         'commands': [
             './bin/grabpl publish-packages --edition {}'.format(edition),
         ],
     }
 
-def windows_installer_step(edition, version_mode):
+def windows_installer_step(edition, version_mode, is_downstream):
     sfx = ''
     if edition == 'enterprise':
         sfx = '-enterprise'
+    if not is_downstream:
+        build_no = 'DRONE_BUILD_NUMBER'
+    else:
+        build_no = 'SOURCE_BUILD_NUMBER'
+    commands = [
+        '$$gcpKey = $$env:GCP_KEY',
+        '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json',
+        # gcloud fails to read the file unless converted with dos2unix
+        'dos2unix gcpkey.json',
+        'gcloud auth activate-service-account --key-file=gcpkey.json',
+        'rm gcpkey.json',
+        '$$ProgressPreference = "SilentlyContinue"',
+        'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
+        'cp C:\\App\\nssm-2.24.zip .',
+        './grabpl.exe windows-installer --edition {} --build-id $$env:{}'.format(edition, build_no),
+    ]
+    if edition != 'enterprise' or is_downstream:
+        commands.extend([
+            '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
+            'gsutil cp $$fname gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
+            'gsutil cp $$fname.sha256 gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
+        ])
     return {
         'name': 'build-windows-installer',
         'image': 'grafana/ci-wix:0.1.1',
@@ -706,24 +773,5 @@ def windows_installer_step(edition, version_mode):
                 'from_secret': 'gcp_key',
             },
         },
-        'commands': [
-            """if (Test-Path env:SOURCE_BUILD_NUMBER) {
-  $$buildNumber=$$env:SOURCE_BUILD_NUMBER
-} else {
-  $$buildNumber=$$env:DRONE_BUILD_NUMBER
-}""",
-            '$$gcpKey = $$env:GCP_KEY',
-            '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json',
-            # gcloud fails to read the file unless converted with dos2unix
-            'dos2unix gcpkey.json',
-            'gcloud auth activate-service-account --key-file=gcpkey.json',
-            'rm gcpkey.json',
-            '$$ProgressPreference = "SilentlyContinue"',
-            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
-            'cp C:\\App\\nssm-2.24.zip .',
-            './grabpl.exe windows-installer --edition {} --build-id $$buildNumber'.format(edition),
-            '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
-            'gsutil cp $$fname gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
-            'gsutil cp $$fname.sha256 gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
-        ],
+        'commands': commands,
     }
