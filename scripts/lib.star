@@ -3,7 +3,7 @@ publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.2.0'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
-grabpl_version = '0.5.8'
+grabpl_version = '0.5.9'
 
 def pr_pipelines(edition):
     services = [
@@ -250,6 +250,7 @@ def lint_backend_step(edition):
             'golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...',
             'revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...',
             './scripts/revive-strict',
+            './scripts/tidy-check.sh',
         ],
     }
 

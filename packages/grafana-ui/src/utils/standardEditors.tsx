@@ -148,7 +148,7 @@ export const getStandardFieldConfigs = () => {
         { value: 80, color: 'red' },
       ],
     },
-    shouldApply: field => field.type === FieldType.number,
+    shouldApply: () => true,
     category: ['Thresholds'],
     getItemsCount: value => (value ? value.steps.length : 0),
   };
