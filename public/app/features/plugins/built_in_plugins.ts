@@ -56,6 +56,7 @@ import * as logsPanel from 'app/plugins/panel/logs/module';
 import * as newsPanel from 'app/plugins/panel/news/module';
 import * as homeLinksPanel from 'app/plugins/panel/homelinks/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
+import * as dashgenPanel from 'app/plugins/panel/dashgen/module';
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -97,6 +98,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/logs/module': logsPanel,
   'app/plugins/panel/homelinks/module': homeLinksPanel,
   'app/plugins/panel/welcome/module': welcomeBanner,
+  'app/plugins/panel/dashgen/module': dashgenPanel,
 };
 
 export default builtInPlugins;

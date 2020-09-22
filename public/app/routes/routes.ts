@@ -63,6 +63,17 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
         component: importDashboardPage,
       },
     })
+    // type is the plugin type and slug is the path
+    .when('/dashboard/p/:type/:slug*', {
+      template: '<react-container />',
+      //@ts-ignore
+      pageClass: 'page-dashboard',
+      routeInfo: DashboardRouteInfo.Plugin,
+      reloadOnSearch: false,
+      resolve: {
+        component: importDashboardPage,
+      },
+    })
     .when('/dashboard/new', {
       template: '<react-container />',
       //@ts-ignore

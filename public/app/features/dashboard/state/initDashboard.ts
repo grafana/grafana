@@ -29,6 +29,8 @@ import { DashboardModel } from './DashboardModel';
 import { DataQuery, locationUtil } from '@grafana/data';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
+import { loadPlugin } from 'app/features/plugins/PluginPage';
+import { DashboardLoaderSupport } from '../types';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -107,6 +109,14 @@ async function fetchDashboard(
       case DashboardRouteInfo.New: {
         return getNewDashboardModelData(args.urlFolderId);
       }
+      case DashboardRouteInfo.Plugin: {
+        const plugin = await loadPlugin(args.urlType!);
+        const support = (plugin as any).dashboardSupport as DashboardLoaderSupport;
+        if (!support) {
+          throw { message: `plugin: ${plugin.meta.id} does not support dashboards` };
+        }
+        return support.loadDashboard(args.urlSlug!).toPromise();
+      }
       default:
         throw { message: 'Unknown route ' + args.routeInfo };
     }
@@ -115,6 +125,8 @@ async function fetchDashboard(
     if (err.cancelled) {
       return null;
     }
+    // Avoid the automatic popup
+    err.handled = true;
 
     dispatch(dashboardInitFailed({ message: 'Failed to fetch dashboard', error: err }));
     console.error(err);
