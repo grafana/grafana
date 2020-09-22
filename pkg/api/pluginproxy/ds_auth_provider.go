@@ -13,7 +13,7 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-//ApplyRoute should use the plugin route data to set auth headers and custom headers
+// ApplyRoute should use the plugin route data to set auth headers and custom headers
 func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.AppPluginRoute, ds *models.DataSource) {
 	proxyPath = strings.TrimPrefix(proxyPath, route.Path)
 

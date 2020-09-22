@@ -218,7 +218,7 @@ func init() {
 			queryRes := tsdb.NewQueryResult()
 
 			stringInput := query.Model.Get("stringInput").MustString()
-			stringInput = strings.Replace(stringInput, " ", "", -1)
+			stringInput = strings.ReplaceAll(stringInput, " ", "")
 
 			values := []null.Float{}
 			for _, strVal := range strings.Split(stringInput, ",") {

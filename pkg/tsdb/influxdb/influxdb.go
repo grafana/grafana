@@ -18,7 +18,7 @@ import (
 )
 
 type InfluxDBExecutor struct {
-	//*models.DataSource
+	// *models.DataSource
 	QueryParser    *InfluxdbQueryParser
 	ResponseParser *ResponseParser
 }

@@ -28,7 +28,7 @@ type UsageReport struct {
 }
 
 func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
-	version := strings.Replace(setting.BuildVersion, ".", "_", -1)
+	version := strings.ReplaceAll(setting.BuildVersion, ".", "_")
 
 	metrics := map[string]interface{}{}
 

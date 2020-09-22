@@ -423,9 +423,9 @@ type AnnotationCleanupSettings struct {
 }
 
 func envKey(sectionName string, keyName string) string {
-	sN := strings.ToUpper(strings.Replace(sectionName, ".", "_", -1))
-	sN = strings.Replace(sN, "-", "_", -1)
-	kN := strings.ToUpper(strings.Replace(keyName, ".", "_", -1))
+	sN := strings.ToUpper(strings.ReplaceAll(sectionName, ".", "_"))
+	sN = strings.ReplaceAll(sN, "-", "_")
+	kN := strings.ToUpper(strings.ReplaceAll(keyName, ".", "_"))
 	envKey := fmt.Sprintf("GF_%s_%s", sN, kN)
 	return envKey
 }
