@@ -16,7 +16,7 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.26
   commands:
-  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.10/grabpl
   - chmod +x grabpl
   - mkdir -p bin
   - mv grabpl bin
@@ -26,7 +26,6 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.5.10
 
 - name: lint-backend
   image: grafana/build-container:1.2.26
@@ -240,7 +239,7 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.26
   commands:
-  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.10/grabpl
   - chmod +x grabpl
   - mkdir -p bin
   - mv grabpl bin
@@ -250,7 +249,6 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.5.10
 
 - name: trigger-enterprise-downstream
   image: plugins/downstream
@@ -549,7 +547,7 @@ steps:
 - name: identify-runner
   image: mcr.microsoft.com/windows:1809
   commands:
-  - echo $Env:DRONE_RUNNER_NAME
+  - echo $env:DRONE_RUNNER_NAME
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -559,8 +557,6 @@ steps:
   - dos2unix gcpkey.json
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
-  - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.10/windows/grabpl.exe -OutFile grabpl.exe
   - cp C:\App\nssm-2.24.zip .
   - ./grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]

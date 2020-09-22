@@ -4,6 +4,8 @@ grafana_docker_image = 'grafana/drone-grafana-docker:0.3.1'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
 grabpl_version = '0.5.10'
+git_image = 'alpine/git:v2.26.2'
+dockerize_version = '0.6.1'
 
 def pr_pipelines(edition):
     services = [
@@ -83,9 +85,7 @@ def master_steps(edition, is_downstream=False):
         publish_packages_step(edition, is_downstream),
         deploy_to_kubernetes_step(edition, is_downstream),
     ]
-    windows_steps = [
-        windows_installer_step(edition=edition, version_mode='master', is_downstream=is_downstream),
-    ]
+    windows_steps = get_windows_steps(edition=edition, version_mode='master', is_downstream=is_downstream)
 
     return steps, windows_steps
 
@@ -181,7 +181,7 @@ def init_steps(edition, platform, is_downstream=False):
                 'name': 'identify-runner',
                 'image': windows_image,
                 'commands': [
-                    'echo $Env:DRONE_RUNNER_NAME',
+                    'echo $env:DRONE_RUNNER_NAME',
                 ],
             },
         ]
@@ -209,7 +209,7 @@ def init_steps(edition, platform, is_downstream=False):
             identify_runner_step,
             {
                 'name': 'clone',
-                'image': 'alpine/git:v2.26.2',
+                'image': git_image,
                 'environment': {
                     'GITHUB_TOKEN': {
                         'from_secret': 'github_token',
@@ -225,14 +225,15 @@ def init_steps(edition, platform, is_downstream=False):
                 'name': 'initialize',
                 'image': build_image,
                 'environment': {
-                    'GRABPL_VERSION': grabpl_version,
-                    'DOCKERIZE_VERSION': '0.6.1',
+                    'DOCKERIZE_VERSION': dockerize_version,
                 },
                 'depends_on': [
                     'clone',
                 ],
                 'commands': [
-                    'curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl',
+                    'curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
+                        grabpl_version
+                    ),
                     'chmod +x grabpl',
                     'mv grabpl /tmp',
                     'mv grafana-enterprise /tmp/',
@@ -249,11 +250,12 @@ def init_steps(edition, platform, is_downstream=False):
             'name': 'initialize',
             'image': build_image,
             'environment': {
-                'GRABPL_VERSION': grabpl_version,
-                'DOCKERIZE_VERSION': '0.6.1',
+                'DOCKERIZE_VERSION': dockerize_version,
             },
             'commands': [
-                'curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl',
+                'curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
+                    grabpl_version
+                ),
                 'chmod +x grabpl',
                 'mkdir -p bin',
                 'mv grabpl bin',
@@ -748,7 +750,12 @@ def publish_packages_step(edition, is_downstream):
         ],
     }
 
-def windows_installer_step(edition, version_mode, is_downstream):
+def get_windows_steps(edition, version_mode, is_downstream):
+    if not is_downstream:
+        source_commit = ''
+    else:
+        source_commit = ' $$env:SOURCE_COMMIT'
+
     sfx = ''
     if edition == 'enterprise':
         sfx = '-enterprise'
@@ -763,8 +770,6 @@ def windows_installer_step(edition, version_mode, is_downstream):
         'dos2unix gcpkey.json',
         'gcloud auth activate-service-account --key-file=gcpkey.json',
         'rm gcpkey.json',
-        '$$ProgressPreference = "SilentlyContinue"',
-        'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
         'cp C:\\App\\nssm-2.24.zip .',
         './grabpl.exe windows-installer --edition {} --build-id $$env:{}'.format(edition, build_no),
     ]
@@ -774,13 +779,51 @@ def windows_installer_step(edition, version_mode, is_downstream):
             'gsutil cp $$fname gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
             'gsutil cp $$fname.sha256 gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
         ])
-    return {
-        'name': 'build-windows-installer',
-        'image': 'grafana/ci-wix:0.1.1',
-        'environment': {
-            'GCP_KEY': {
-                'from_secret': 'gcp_key',
+    steps = [
+        {
+            'name': 'build-windows-installer',
+            'image': 'grafana/ci-wix:0.1.1',
+            'environment': {
+                'GCP_KEY': {
+                    'from_secret': 'gcp_key',
+                },
             },
+            'commands': commands,
         },
-        'commands': commands,
-    }
+    ]
+
+    if edition == 'enterprise':
+        # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
+        commands = [
+            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
+        ]
+        if not is_downstream:
+            commands.extend([
+                'cd grafana-enterprise',
+                'git checkout ${DRONE_COMMIT}',
+            ])
+        steps.insert(0, {
+            'name': 'clone',
+            'image': git_image,
+            'environment': {
+                'GITHUB_TOKEN': {
+                    'from_secret': 'github_token',
+                },
+            },
+            'commands': commands,
+        })
+        steps.insert(1, {
+            'name': 'initialize',
+            'image': build_image,
+            'depends_on': [
+                'clone',
+            ],
+            'commands': [
+                '$$ProgressPreference = "SilentlyContinue"',
+                'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
+                './grabpl.exe init-enterprise grafana-enterprise{}'.format(source_commit),
+                'rm -r -force grafana-enterprise',
+            ],
+        })
+
+    return steps
