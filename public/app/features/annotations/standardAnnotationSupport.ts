@@ -175,8 +175,8 @@ export function getAnnotationsFromData(data: DataFrame[], options?: AnnotationEv
         }
       }
 
-      if (v !== undefined) {
-        if (f.split) {
+      if (!(v === null || v === undefined)) {
+        if (v && f.split) {
           v = (v as string).split(',');
         }
         (anno as any)[f.key] = v;

@@ -37,7 +37,6 @@ import {
   refreshExplore,
   scanStart,
   setQueries,
-  toggleGraph,
   updateTimeRange,
 } from './state/actions';
 
@@ -114,11 +113,8 @@ export interface ExploreProps {
   logsResult?: LogsModel;
   loading?: boolean;
   absoluteRange: AbsoluteTimeRange;
-  showingGraph?: boolean;
-  showingTable?: boolean;
   timeZone?: TimeZone;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
-  toggleGraph: typeof toggleGraph;
   queryResponse: PanelData;
   originPanelId: number;
   addQueryRow: typeof addQueryRow;
@@ -269,11 +265,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.props.scanStopAction({ exploreId: this.props.exploreId });
   };
 
-  onToggleGraph = (showingGraph: boolean) => {
-    const { toggleGraph, exploreId } = this.props;
-    toggleGraph(exploreId, showingGraph);
-  };
-
   onUpdateTimeRange = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
@@ -321,8 +312,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       graphResult,
       loading,
       absoluteRange,
-      showingGraph,
-      showingTable,
       timeZone,
       queryResponse,
       syncedTimes,
@@ -396,10 +385,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                               absoluteRange={absoluteRange}
                               isStacked={false}
                               showPanel={true}
-                              showingGraph={showingGraph}
-                              showingTable={showingTable}
                               timeZone={timeZone}
-                              onToggleGraph={this.onToggleGraph}
                               onUpdateTimeRange={this.onUpdateTimeRange}
                               showBars={false}
                               showLines={true}
@@ -484,8 +470,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showTable,
     showTrace,
     loading,
-    showingGraph,
-    showingTable,
     absoluteRange,
     queryResponse,
   } = item;
@@ -514,8 +498,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     graphResult: graphResult ?? undefined,
     logsResult: logsResult ?? undefined,
     loading,
-    showingGraph,
-    showingTable,
     absoluteRange,
     queryResponse,
     originPanelId,
@@ -537,7 +519,6 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   scanStopAction,
   setQueries,
   updateTimeRange,
-  toggleGraph,
   addQueryRow,
 };
 

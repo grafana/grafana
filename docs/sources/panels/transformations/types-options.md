@@ -169,6 +169,7 @@ This would result in a table like this:
 | 2020-07-07 11:34:20 | Server B | EU         | 2     |
 
 **Value field name**
+
 If you selected Server as the **Value field name**, then you would get one field for every value of the Server label.
 
 | Time                | Datacenter | Server A | Server B |
