@@ -1,27 +1,16 @@
-import React, { HTMLProps, FC } from 'react';
+import React, { FC } from 'react';
 import { cx, css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme } from '../../themes';
 import { getInlineLabelStyles, InlineLabel } from './InlineLabel';
 import { PopoverContent } from '../Tooltip/Tooltip';
+import { FieldProps } from './Field';
 
-export interface Props extends Omit<HTMLProps<HTMLDivElement>, 'className' | 'css' | 'label'> {
-  /** Form input element, i.e Input or Switch */
-  children: React.ReactElement;
-  /** Label for the field. If it's html elements and not a string */
-  label?: React.ReactNode;
+export interface Props extends Omit<FieldProps, 'css'> {
   /** Content for the label's tooltip */
   tooltip?: PopoverContent;
   /** Custom width for the label */
   labelWidth?: number | 'auto';
-  /** Indicates if field is in invalid state */
-  invalid?: boolean;
-  /** Indicates if field is in loading state */
-  loading?: boolean;
-  /** Indicates if field is disabled */
-  disabled?: boolean;
-  /** Custom styles for the field */
-  className?: string;
   /** Make the field's child to fill the width of the row. Equivalent to setting `flex-grow:1` on the field */
   grow?: boolean;
   /** A toggle to apply query keyword styling to the label */
