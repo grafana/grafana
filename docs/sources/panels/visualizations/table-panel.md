@@ -21,7 +21,7 @@ The table panel is very flexible, supporting multiple modes for time series and 
 
 Table visualizations allow you to apply:
 
-- [Data transformations]({{< relref "../transformations/prereq.md" >}})
+- [Data transformations]({{< relref "../transformations/_index.md" >}})
 - [Field options and overrides]({{< relref "../field-options.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 

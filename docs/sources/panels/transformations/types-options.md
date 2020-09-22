@@ -1,5 +1,5 @@
 +++
-title = "Transformation Types and Options"
+title = "Transformation types and options"
 type = "docs"
 [menu.docs]
 identifier = "transformation_types_and_options"
@@ -161,7 +161,7 @@ Example: Given a query result of two time series
 1: labels Server=Server A, Datacenter=EU
 2: labels Server=Server B, Datacenter=EU
 
-This would result in a table like this
+This would result in a table like this:
 
 | Time                | Server   | Datacenter | Value |
 | ------------------- | -------- | ---------- | ----- |
@@ -169,7 +169,8 @@ This would result in a table like this
 | 2020-07-07 11:34:20 | Server B | EU         | 2     |
 
 **Value field name**
-If you selected Server as in the **Value field name**, then you would get one field for every value of the Server label.
+
+If you selected Server as the **Value field name**, then you would get one field for every value of the Server label.
 
 | Time                | Datacenter | Server A | Server B |
 | ------------------- | ---------- | -------- | -------- |
