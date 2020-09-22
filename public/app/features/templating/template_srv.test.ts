@@ -308,17 +308,37 @@ describe('templateSrv', () => {
 
     it('should properly return all possible values', () => {
       const target = _templateSrv.replaceToList('prefix-$var-${var2:percentencode}-${series.nested.field}-suffix', {
-        series: { value: { name: 'scoped', nested: { field: ['nested1', 'nested2'] } } },
+        series: { value: { name: 'scoped', nested: { field: ['nested?1', 'nested?2'] } } },
       });
       expect(target).toStrictEqual([
-        'prefix-replaced?-replaced%3F3-nested1-suffix',
-        'prefix-replaced?-replaced%3F3-nested2-suffix',
-        'prefix-replaced?-replaced%3F4-nested1-suffix',
-        'prefix-replaced?-replaced%3F4-nested2-suffix',
-        'prefix-replaced?2-replaced%3F3-nested1-suffix',
-        'prefix-replaced?2-replaced%3F3-nested2-suffix',
-        'prefix-replaced?2-replaced%3F4-nested1-suffix',
-        'prefix-replaced?2-replaced%3F4-nested2-suffix',
+        'prefix-replaced?-replaced%3F3-nested?1-suffix',
+        'prefix-replaced?-replaced%3F3-nested?2-suffix',
+        'prefix-replaced?-replaced%3F4-nested?1-suffix',
+        'prefix-replaced?-replaced%3F4-nested?2-suffix',
+        'prefix-replaced?2-replaced%3F3-nested?1-suffix',
+        'prefix-replaced?2-replaced%3F3-nested?2-suffix',
+        'prefix-replaced?2-replaced%3F4-nested?1-suffix',
+        'prefix-replaced?2-replaced%3F4-nested?2-suffix',
+      ]);
+    });
+
+    it('should properly return all possible values with given format', () => {
+      const target = _templateSrv.replaceToList(
+        'prefix-$var-${var2}-${series.nested.field}-suffix',
+        {
+          series: { value: { name: 'scoped', nested: { field: ['nested?1', 'nested?2'] } } },
+        },
+        'percentencode'
+      );
+      expect(target).toStrictEqual([
+        'prefix-replaced%3F-replaced%3F3-nested%3F1-suffix',
+        'prefix-replaced%3F-replaced%3F3-nested%3F2-suffix',
+        'prefix-replaced%3F-replaced%3F4-nested%3F1-suffix',
+        'prefix-replaced%3F-replaced%3F4-nested%3F2-suffix',
+        'prefix-replaced%3F2-replaced%3F3-nested%3F1-suffix',
+        'prefix-replaced%3F2-replaced%3F3-nested%3F2-suffix',
+        'prefix-replaced%3F2-replaced%3F4-nested%3F1-suffix',
+        'prefix-replaced%3F2-replaced%3F4-nested%3F2-suffix',
       ]);
     });
   });

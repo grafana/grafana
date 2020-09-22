@@ -246,14 +246,20 @@ export class TemplateSrv implements BaseTemplateSrv {
     if (!target) {
       return target ?? '';
     }
-    return this.replaceWithoutFormatting(target, scopedVars, format)
+    return this.targetTokens(target, scopedVars, format)
       .map(t => this.formatValue(t.value, t.format, t.variable, t.text))
       .join('');
   }
 
-  replaceToList(target: string, scopedVars: ScopedVars): string[] {
+  /**
+   * Returns all possible interpolated values for the given target.
+   * Each variable value is formatted individually,
+   * so formats are not used to join multiple values but
+   * only for single-value formatting, e.g. for escaping or text representation.
+   */
+  replaceToList(target: string, scopedVars?: ScopedVars, format?: string | Function): string[] {
     return TemplateSrv.cartesianProduct(
-      this.replaceWithoutFormatting(target, scopedVars).map(t =>
+      this.targetTokens(target, scopedVars, format).map(t =>
         (_.isArray(t.value) ? t.value : [t.value]).map(v => this.formatValue(v, t.format, t.variable, t.text))
       )
     ).map(t => t.join(''));
@@ -263,27 +269,27 @@ export class TemplateSrv implements BaseTemplateSrv {
     return arr.reduce((a, b) => a.map(x => b.map(y => x.concat(y))).reduce((a, b) => a.concat(b), []), [[]]);
   }
 
-  private replaceWithoutFormatting(target: string, scopedVars?: ScopedVars, format?: string | Function): TargetToken[] {
+  private targetTokens(target: string, scopedVars?: ScopedVars, format?: string | Function): TargetToken[] {
     this.regex.lastIndex = 0;
     let lastIndex = 0;
     let tokens: TargetToken[] = [];
-    let regexExec;
-    while ((regexExec = this.regex.exec(target)) !== null) {
-      tokens.push(...TemplateSrv.nonVariableToken(target, lastIndex, regexExec.index));
-      tokens.push(...this.replaceVariable(regexExec, scopedVars, format));
+    let variableRegexMatch;
+    while ((variableRegexMatch = this.regex.exec(target)) !== null) {
+      tokens.push(...this.nonVariableToken(target, lastIndex, variableRegexMatch.index));
+      tokens.push(this.variableToken(variableRegexMatch, scopedVars, format));
       lastIndex = this.regex.lastIndex;
     }
-    tokens.push(...TemplateSrv.nonVariableToken(target, lastIndex, target.length));
+    tokens.push(...this.nonVariableToken(target, lastIndex, target.length));
     return tokens;
   }
 
-  private static nonVariableToken(target: string, indexStart: number, indexEnd: number): TargetToken[] {
+  private nonVariableToken(target: string, indexStart: number, indexEnd: number): TargetToken[] {
     return indexEnd > indexStart ? [{ value: target.substring(indexStart, indexEnd) }] : [];
   }
 
-  private replaceVariable(regexExec: any, scopedVars?: ScopedVars, format?: string | Function): TargetToken[] {
+  private variableToken(variableRegexMatch: any, scopedVars?: ScopedVars, format?: string | Function): TargetToken {
     let match, var1, var2, fmt2, var3, fieldPath, fmt3;
-    [match, var1, var2, fmt2, var3, fieldPath, fmt3] = regexExec;
+    [match, var1, var2, fmt2, var3, fieldPath, fmt3] = variableRegexMatch;
     const variableName = var1 || var2 || var3;
     const variable = this.getVariableAtIndex(variableName);
     const fmt = fmt2 || fmt3 || format;
@@ -292,17 +298,17 @@ export class TemplateSrv implements BaseTemplateSrv {
       const value = this.getVariableValue(variableName, fieldPath, scopedVars);
       const text = this.getVariableText(variableName, value, scopedVars);
       if (value !== null && value !== undefined) {
-        return [{ value: value, format: fmt, variable: variable, text: text }];
+        return { value: value, format: fmt, variable: variable, text: text };
       }
     }
 
     if (!variable) {
-      return [{ value: match }];
+      return { value: match };
     }
 
     const systemValue = this.grafanaVariables[variable.current.value];
     if (systemValue) {
-      return [{ value: systemValue, format: fmt, variable: variable }];
+      return { value: systemValue, format: fmt, variable: variable };
     }
 
     let value = variable.current.value;
@@ -313,7 +319,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       text = ALL_VARIABLE_TEXT;
       // skip formatting of custom all values
       if (variable.allValue) {
-        return [{ value: value }];
+        return { value: value };
       }
     }
 
@@ -322,11 +328,11 @@ export class TemplateSrv implements BaseTemplateSrv {
         [variableName]: { value, text },
       });
       if (fieldValue !== null && fieldValue !== undefined) {
-        return [{ value: fieldValue, format: fmt, variable: variable, text: text }];
+        return { value: fieldValue, format: fmt, variable: variable, text: text };
       }
     }
 
-    return [{ value: value, format: fmt, variable: variable, text: text }];
+    return { value: value, format: fmt, variable: variable, text: text };
   }
 
   isAllValue(value: any) {
