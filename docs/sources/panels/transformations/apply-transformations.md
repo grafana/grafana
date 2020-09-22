@@ -31,7 +31,8 @@ To apply a transformation:
 
 To remove a transformation that is no longer needed, click the trash can icon.
 
-## Debug transformations 
+## Debug transformations
+
 To see the input and the output result sets of the transformation, click the bug icon on the right side of the transformation row
 Grafana displays the transformation debug view below the transformation row.
 {{< docs-imagebox img="/img/docs/transformations/debug-transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
