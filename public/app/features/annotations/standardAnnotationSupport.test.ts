@@ -5,9 +5,9 @@ describe('DataFrame to annotations', () => {
   test('simple conversion', () => {
     const frame = toDataFrame({
       fields: [
-        { type: FieldType.time, values: [1, 2, 3] },
-        { name: 'first string field', values: ['t1', 't2', 't3'] },
-        { name: 'tags', values: ['aaa,bbb', 'bbb,ccc', 'zyz'] },
+        { type: FieldType.time, values: [1, 2, 3, 4, 5] },
+        { name: 'first string field', values: ['t1', 't2', 't3', null, undefined] },
+        { name: 'tags', values: ['aaa,bbb', 'bbb,ccc', 'zyz', null, undefined] },
       ],
     });
 
@@ -36,6 +36,12 @@ describe('DataFrame to annotations', () => {
           ],
           "text": "t3",
           "time": 3,
+        },
+        Object {
+          "time": 4,
+        },
+        Object {
+          "time": 5,
         },
       ]
     `);
