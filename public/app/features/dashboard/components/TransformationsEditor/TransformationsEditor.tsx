@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Alert,
   Button,
   Container,
   CustomScrollbar,
@@ -10,14 +11,14 @@ import {
   VerticalGroup,
 } from '@grafana/ui';
 import {
+  DataFrame,
   DataTransformerConfig,
+  DocsId,
   GrafanaTheme,
+  PanelData,
   SelectableValue,
   standardTransformersRegistry,
   transformDataFrame,
-  DataFrame,
-  PanelData,
-  DocsId,
 } from '@grafana/data';
 import { TransformationOperationRow } from './TransformationOperationRow';
 import { Card, CardProps } from '../../../../core/components/Card/Card';
@@ -27,6 +28,8 @@ import { Unsubscribable } from 'rxjs';
 import { PanelModel } from '../../state';
 import { getDocsLink } from 'app/core/utils/docsLinks';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
+import { AppNotificationSeverity } from '../../../../types';
 
 interface TransformationsEditorProps {
   panel: PanelModel;
@@ -285,14 +288,27 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
   }
 
   render() {
+    const {
+      panel: { alert },
+    } = this.props;
     const { transformations } = this.state;
 
     const hasTransforms = transformations.length > 0;
+
+    if (!hasTransforms && alert) {
+      return <PanelNotSupported message="Transformations can't be used on a panel with existing alerts" />;
+    }
 
     return (
       <CustomScrollbar autoHeightMin="100%">
         <Container padding="md">
           <div aria-label={selectors.components.TransformTab.content}>
+            {hasTransforms && alert ? (
+              <Alert
+                severity={AppNotificationSeverity.Error}
+                title="Transformations can't be used on a panel with alerts"
+              />
+            ) : null}
             {!hasTransforms && this.renderNoAddedTransformsState()}
             {hasTransforms && this.renderTransformationEditors()}
             {hasTransforms && this.renderTransformationSelector()}
