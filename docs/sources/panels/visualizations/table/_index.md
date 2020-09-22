@@ -32,3 +32,7 @@ Table visualizations allow you to apply:
   {{< docs-imagebox img="/img/docs/tables/sort-descending.png" max-width="500px" caption="Sort descending" class="docs-image--no-shadow" >}}
 - [Table field options]({{< relref "table-field-options.md" >}}) allow you to change [field options]({{< relref "../../field-options/_index.md" >}}) such as column width, alignment, and cell display mode.
 - [Filter table columns]({{< relref "filter-table-columns.md" >}}) - You can temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values.
+
+## Annotation support
+
+Annotations are not currently supported in the new table panel. This might be added back in a future release.
