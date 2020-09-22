@@ -90,7 +90,7 @@ def master_pipelines(edition):
         shellcheck_step(),
         test_backend_step(),
         test_frontend_step(),
-        frontend_metrics_step(),
+        frontend_metrics_step(edition=edition),
         build_backend_step(edition=edition),
         build_frontend_step(edition=edition),
         build_plugins_step(edition=edition, sign=True),
@@ -412,7 +412,10 @@ def test_frontend_step():
         ],
     }
 
-def frontend_metrics_step():
+def frontend_metrics_step(edition):
+    if edition == 'enterprise':
+        return None
+
     return {
         'name': 'frontend-metrics',
         'image': build_image,
