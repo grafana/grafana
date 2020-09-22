@@ -34,9 +34,10 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
-const version = "5.0.0"
-const commit = "NA"
-const buildBranch = "master"
+// The following variables cannot be constants, since they can be overridden through the -X link flag
+var version = "5.0.0"
+var commit = "NA"
+var buildBranch = "master"
 
 var buildstamp string
 
@@ -118,8 +119,7 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 		}
 		defer f.Close()
 
-		err = trace.Start(f)
-		if err != nil {
+		if err := trace.Start(f); err != nil {
 			panic(err)
 		}
 		defer trace.Stop()
