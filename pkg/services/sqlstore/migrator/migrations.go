@@ -201,7 +201,7 @@ type CopyTableDataMigration struct {
 	targetTable string
 	sourceCols  []string
 	targetCols  []string
-	//colMap      map[string]string
+	// colMap      map[string]string
 }
 
 func NewCopyTableDataMigration(targetTable string, sourceTable string, colMap map[string]string) *CopyTableDataMigration {
