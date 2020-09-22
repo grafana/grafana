@@ -573,6 +573,13 @@ def build_docker_images_step(edition, archs=None, ubuntu=False, publish=False):
         'edition': edition,
         'ubuntu': ubuntu,
     }
+    if publish:
+        settings['username'] = {
+            'from_secret': 'docker_user',
+        }
+        settings['password'] = {
+            'from_secret': 'docker_password',
+        }
     if archs:
         settings['archs'] = ','.join(archs)
     return {

@@ -434,6 +434,10 @@ steps:
   image: grafana/drone-grafana-docker:0.3.1
   settings:
     edition: oss
+    password:
+      from_secret: docker_password
+    username:
+      from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
 
@@ -441,7 +445,11 @@ steps:
   image: grafana/drone-grafana-docker:0.3.1
   settings:
     edition: oss
+    password:
+      from_secret: docker_password
     ubuntu: true
+    username:
+      from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
 
