@@ -31,7 +31,7 @@ Provider | Support | Role mapping | Team sync<br> *(Enterprise only)* | Active s
 
 Grafana of course has a built in user authentication system with password authentication enabled by default. You can
 disable authentication by enabling anonymous access. You can also hide login form and only allow login through an auth
-provider (listed above). There is also options for allowing self sign up.
+provider (listed above). There are also options for allowing self sign up.
 
 ### Login and short-lived tokens
 
