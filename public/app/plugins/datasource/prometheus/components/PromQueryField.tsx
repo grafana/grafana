@@ -326,7 +326,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     return (
       <>
         <div className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1">
-          <div className="gf-form flex-shrink-0">
+          <div className="gf-form flex-shrink-0 min-width-5">
             <ButtonCascader options={metricsOptions} disabled={buttonDisabled} onChange={this.onChangeMetrics}>
               {chooserText}
             </ButtonCascader>
