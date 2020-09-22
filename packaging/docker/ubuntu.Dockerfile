@@ -46,9 +46,11 @@ RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
     cp "$GF_PATHS_HOME/conf/sample.ini" "$GF_PATHS_CONFIG" && \
     cp "$GF_PATHS_HOME/conf/ldap.toml" /etc/grafana/ldap.toml && \
     chown -R grafana:grafana "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
-    chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
+    chgrp -R 0 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
+    chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
+    chmod -R g=u "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 
 COPY ./run.sh /run.sh
 
-USER grafana
+USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]
