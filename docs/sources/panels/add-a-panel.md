@@ -58,7 +58,7 @@ Our Grafana Fundamentals tutorial is a great place to start, or you can learn mo
 
 - Learn more about [panel editor]({{< relref "panel-editor.md" >}}) options.
 - Add more [queries]({{< relref "queries.md" >}}).
-- [Transform]({{< relref "transformations.md" >}}) your data.
+- [Transform]({{< relref "transformations/_index.md" >}}) your data.
 - [Configure]({{< relref "field-options.md" >}}) how your results are displayed in the visualization.
 - If you made a graph panel, set up an [alert]({{< relref "../alerting/alerts-overview.md" >}}).
 - Create [templates and variables]({{< relref "../variables/templates-and-variables.md" >}}).

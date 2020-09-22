@@ -79,8 +79,8 @@ The [Field options]({{< relref "../panels/field-options.md" >}}) content has bee
 
 Grafana 7.2 includes the following transformation enhancements:
 
-- A new [Group By]({{< relref "../panels/transformations.md#group-by">}}) transformation that allows you to group by multiple fields and add any number of aggregations for other fields.
-- The [Labels to fields]({{< relref "../panels/transformations.md#labels-to-fields">}}) transformation now allows you to pick one label and use that as the name of the value field.
+- A new [Group By]({{< relref "../panels/transformations/types-options.md#group-by">}}) transformation that allows you to group by multiple fields and add any number of aggregations for other fields.
+- The [Labels to fields]({{< relref "../panels/transformations/types-options.md#labels-to-fields">}}) transformation now allows you to pick one label and use that as the name of the value field.
 - You can drag transformations to reorder them. Remember that transformations are processed in the order they are listed in the UI, so think before you move something!
 
 {{< docs-imagebox img="/img/docs/v72/transformations.gif" max-width="800px" caption="Group by and reordering of transformations" >}}
