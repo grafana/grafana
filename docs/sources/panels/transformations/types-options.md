@@ -26,7 +26,7 @@ Keep reading for detailed descriptions of each type of transformation and the op
 
 ## Reduce
 
-Apply a _Reduce_ transformation when you want to simplify your results down to one value. Reduce basically removes time component. If visualized as a table, it reduces a column down to one row (value).
+Apply a _Reduce_ transformation when you want to simplify your results down to one value. Reduce removes the time component. If visualized as a table, it reduces a column down to one row (value).
 
 In the **Calculations** field, enter one or more calculation types. Click to see a list of calculation choices. For information about available calculations, refer to the [Calculation list]({{< relref "../calculations-list.md" >}}).
 
