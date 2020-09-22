@@ -9,12 +9,12 @@ weight = 600
 
 > **Note:** This feature is available in Grafana 7.2+.
 
-If you turn on the **Column filter** in [Table options](table-field-options.md), then you can filter table options.
+If you turn on the **Column filter** in [Table options]({{< relref "table-field-options.md" >}}), then you can filter table options.
 
 ## Turn on column filtering
 
 1. In Grafana, navigate to the dashboard with the table with the columns that you want to filter.
-1. On the table panel you want to filter, [open the panel editor]({{< relref "../panel-editor.md#open-the-panel-editor" >}}).
+1. On the table panel you want to filter, [open the panel editor]({{< relref "../../panel-editor.md#open-the-panel-editor" >}}).
 1. Click the **Field** tab.
 1. In Table options, turn on the **Column filter** option.
 

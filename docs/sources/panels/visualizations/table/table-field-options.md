@@ -7,13 +7,13 @@ weight = 500
 
 # Table field options
 
-This section explains all available table field options. They are listed in the same order as in Grafana. Options listed in this topic apply only to [Table panel visualizations]({{< relref "../visualizations/table-panel.md" >}}).
+This section explains all available table field options. They are listed in the same order as in Grafana. Options listed in this topic apply only to table panel visualizations.
 
 Most field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
 For more information about applying these options, refer to:
-- [Configure all fields]({{< relref "configure-all-fields.md" >}})
-- [Configure specific fields]({{< relref "configure-specific-fields.md" >}})
+- [Configure all fields]({{< relref "../../field-options/configure-all-fields.md" >}})
+- [Configure specific fields]({{< relref "../../field-options/configure-specific-fields.md" >}})
 
 ## Column alignment
 
