@@ -486,6 +486,7 @@ export interface MetricFindValue {
 export interface DataSourceJsonData {
   authType?: string;
   defaultRegion?: string;
+  profile?: string;
 }
 
 /**
