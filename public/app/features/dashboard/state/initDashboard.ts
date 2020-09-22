@@ -125,8 +125,6 @@ async function fetchDashboard(
     if (err.cancelled) {
       return null;
     }
-    // Avoid the automatic popup
-    err.handled = true;
 
     dispatch(dashboardInitFailed({ message: 'Failed to fetch dashboard', error: err }));
     console.error(err);
