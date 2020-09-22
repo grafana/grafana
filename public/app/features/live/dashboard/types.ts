@@ -1,26 +1,17 @@
-export enum DashboardUpdateMode {
-  Ignore = 'ignore',
-  AutoUpdate = 'update',
-  ShowNotice = 'notice',
-  Ask = 'ask', // The default
-}
-
 export enum DashboardEventAction {
   Saved = 'saved',
-  Editing = 'editing', // Sent when someone goes to the editor
+  EditingStarted = 'editing-started', // Sent when someone (who can save!) opens the editor
+  EditingCanceled = 'editing-cancelled', // Sent when someone discards changes, or unsubscribes while editing
   Deleted = 'deleted',
 }
 
 export interface DashboardEvent {
   uid: string;
   action: DashboardEventAction;
-  userId: number;
-  sessionId?: string;
-}
+  userId?: number;
+  userName?: string;
+  message?: string;
 
-/**
- * This gets saved in local storage
- */
-export interface DashboardWatchSettings {
-  updateMode: DashboardUpdateMode;
+  /** If anyone is activly editing the dashboard */
+  editorIsOpen?: boolean;
 }

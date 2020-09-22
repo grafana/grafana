@@ -4,10 +4,8 @@ import { Subscription } from 'rxjs';
 import { appEvents } from 'app/core/core';
 import { AppEvents } from '@grafana/data';
 import { CoreEvents } from 'app/types';
-import { DashboardWatcherSettings } from './DashboardWatcherSettings';
-import { DashboardWatchSettings } from './types';
-import store from 'app/core/store';
-import { DashboardEvent, DashboardEventAction, DashboardUpdateMode } from './types';
+import { DashboardChangedModal } from './DashboardChangedModal';
+import { DashboardEvent, DashboardEventAction } from './types';
 
 const dashboardChannelHandler: ChannelHandler<DashboardEvent> = {
   onPublish: (v: DashboardEvent) => {
@@ -15,21 +13,17 @@ const dashboardChannelHandler: ChannelHandler<DashboardEvent> = {
   },
 };
 
-const LOCAL_STORAGE_KEY = 'grafana.live.dashboard';
-
 class DashboardWatcher {
   uid?: string;
   sub?: Subscription;
   ignoreSave?: boolean;
-  settings: DashboardWatchSettings;
+  editing = false;
 
-  constructor() {
-    this.settings = store.getObject(LOCAL_STORAGE_KEY, { updateMode: DashboardUpdateMode.Ask });
-  }
-
-  saveSettings(settings: DashboardWatchSettings) {
-    store.setObject(LOCAL_STORAGE_KEY, settings);
-    this.settings = settings;
+  setEditingState(state: boolean) {
+    if (this.editing !== state) {
+      console.log('TODO broadcast!');
+    }
+    this.editing = state;
   }
 
   watch(uid: string, editing?: boolean) {
@@ -68,26 +62,14 @@ class DashboardWatcher {
       if (event.action === DashboardEventAction.Saved) {
         const dash = getDashboardSrv().getCurrent();
         if (dash.uid === event.uid && !this.ignoreSave) {
-          switch (this.settings.updateMode) {
-            case DashboardUpdateMode.Ignore: {
-              console.log('Ignore dashboard update', event);
-              break;
-            }
-            case DashboardUpdateMode.ShowNotice: {
-              appEvents.emit(AppEvents.alertSuccess, ['Dashboard updated']);
-              break;
-            }
-            case DashboardUpdateMode.AutoUpdate: {
-              appEvents.emit(AppEvents.alertSuccess, ['Dashboard updated']);
-              this.reloadPage();
-              break;
-            }
-            case DashboardUpdateMode.Ask:
-            default:
-              appEvents.emit(CoreEvents.showModalReact, {
-                component: DashboardWatcherSettings,
-                props: { event },
-              });
+          if (this.editing) {
+            appEvents.emit(CoreEvents.showModalReact, {
+              component: DashboardChangedModal,
+              props: { event },
+            });
+          } else {
+            appEvents.emit(AppEvents.alertSuccess, ['Dashboard updated']);
+            this.reloadPage();
           }
         }
         this.ignoreSave = false;
