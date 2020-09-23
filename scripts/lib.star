@@ -6,6 +6,7 @@ windows_image = 'mcr.microsoft.com/windows:1809'
 grabpl_version = '0.5.10'
 git_image = 'alpine/git:v2.26.2'
 dockerize_version = '0.6.1'
+wix_image = 'grafana/ci-wix:0.1.1'
 
 def pr_pipelines(edition):
     services = [
@@ -782,7 +783,7 @@ def get_windows_steps(edition, version_mode, is_downstream):
     steps = [
         {
             'name': 'build-windows-installer',
-            'image': 'grafana/ci-wix:0.1.1',
+            'image': wix_image,
             'environment': {
                 'GCP_KEY': {
                     'from_secret': 'gcp_key',
@@ -804,7 +805,7 @@ def get_windows_steps(edition, version_mode, is_downstream):
             ])
         steps.insert(0, {
             'name': 'clone',
-            'image': 'grafana/ci-wix:0.1.1',
+            'image': wix_image,
             'environment': {
                 'GITHUB_TOKEN': {
                     'from_secret': 'github_token',
@@ -814,7 +815,7 @@ def get_windows_steps(edition, version_mode, is_downstream):
         })
         steps.insert(1, {
             'name': 'initialize',
-            'image': 'grafana/ci-wix:0.1.1',
+            'image': wix_image,
             'depends_on': [
                 'clone',
             ],
