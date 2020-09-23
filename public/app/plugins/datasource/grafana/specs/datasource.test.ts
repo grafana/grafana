@@ -8,12 +8,6 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
-jest.mock('app/features/templating/template_srv', () => ({
-  replace: (val: string) => {
-    return val.replace('$var2', 'replaced__delimiter__replaced2').replace('$var', 'replaced');
-  },
-}));
-
 describe('grafana data source', () => {
   const getMock = jest.spyOn(backendSrv, 'get');
 
@@ -30,7 +24,13 @@ describe('grafana data source', () => {
         return Promise.resolve([]);
       });
 
-      ds = new GrafanaDatasource({} as DataSourceInstanceSettings);
+      const templateSrvStub = {
+        replace: (val: string) => {
+          return val.replace('$var2', 'replaced__delimiter__replaced2').replace('$var', 'replaced');
+        },
+      };
+
+      ds = new GrafanaDatasource({} as DataSourceInstanceSettings, templateSrvStub as any);
     });
 
     describe('with tags that have template variables', () => {

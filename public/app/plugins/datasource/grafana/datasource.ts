@@ -2,11 +2,13 @@ import _ from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
 import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 
-import templateSrv from 'app/features/templating/template_srv';
+import defaultTemplateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 
 class GrafanaDatasource extends DataSourceApi<any> {
-  /** @ngInject */
-  constructor(instanceSettings: DataSourceInstanceSettings) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings,
+    private readonly templateSrv: TemplateSrv = defaultTemplateSrv
+  ) {
     super(instanceSettings);
   }
 
@@ -66,7 +68,7 @@ class GrafanaDatasource extends DataSourceApi<any> {
       const delimiter = '__delimiter__';
       const tags = [];
       for (const t of params.tags) {
-        const renderedValues = templateSrv.replace(t, {}, (value: any) => {
+        const renderedValues = this.templateSrv.replace(t, {}, (value: any) => {
           if (typeof value === 'string') {
             return value;
           }

@@ -316,3 +316,5 @@ export function getTimeSrv(): TimeSrv {
 }
 
 coreModule.service('timeSrv', TimeSrv);
+
+export default getTimeSrv();

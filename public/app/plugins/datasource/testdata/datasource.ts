@@ -24,13 +24,16 @@ import { queryMetricTree } from './metricTree';
 import { from, merge, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { runStream } from './runStreams';
-import templateSrv from 'app/features/templating/template_srv';
+import defaultTemplateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 
 type TestData = TimeSeries | TableData;
 
 export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
-  constructor(instanceSettings: DataSourceInstanceSettings) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings,
+    private readonly templateSrv: TemplateSrv = defaultTemplateSrv
+  ) {
     super(instanceSettings);
   }
 
@@ -63,7 +66,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
             intervalMs: options.intervalMs,
             maxDataPoints: options.maxDataPoints,
             datasourceId: this.id,
-            alias: templateSrv.replace(target.alias || '', options.scopedVars),
+            alias: this.templateSrv.replace(target.alias || '', options.scopedVars),
           });
       }
     }
@@ -173,7 +176,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
   metricFindQuery(query: string, options: any) {
     return new Promise<MetricFindValue[]>((resolve, reject) => {
       setTimeout(() => {
-        const interpolatedQuery = templateSrv.replace(
+        const interpolatedQuery = this.templateSrv.replace(
           query,
           getSearchFilterScopedVar({ query, wildcardChar: '*', options })
         );
