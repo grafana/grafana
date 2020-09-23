@@ -141,8 +141,8 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 		}
 
 		body := string(reqBody)
-		body = strings.Replace(body, "$__interval_ms", strconv.FormatInt(r.interval.Milliseconds(), 10), -1)
-		body = strings.Replace(body, "$__interval", r.interval.Text, -1)
+		body = strings.ReplaceAll(body, "$__interval_ms", strconv.FormatInt(r.interval.Milliseconds(), 10))
+		body = strings.ReplaceAll(body, "$__interval", r.interval.Text)
 
 		payload.WriteString(body + "\n")
 	}
@@ -308,12 +308,20 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 }
 
 func (c *baseClientImpl) getMultiSearchQueryParameters() string {
+	var qs []string
+
 	if c.version >= 70 {
 		maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(5)
-		return fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests)
+		qs = append(qs, fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests))
+
+		includeFrozen := c.getSettings().Get("includeFrozen").MustBool(false)
+
+		if includeFrozen {
+			qs = append(qs, "ignore_throttled=false")
+		}
 	}
 
-	return ""
+	return strings.Join(qs, "&")
 }
 
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {

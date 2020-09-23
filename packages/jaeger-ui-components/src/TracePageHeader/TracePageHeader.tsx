@@ -130,6 +130,10 @@ const getStyles = createStyle((theme: Theme) => {
       font-size: 1.78em;
       margin-right: 0.15em;
     `,
+    TracePageHeaderTraceId: css`
+      label: TracePageHeaderTraceId;
+      white-space: nowrap;
+    `,
   };
 });
 
@@ -238,7 +242,7 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
   const title = (
     <h1 className={cx(styles.TracePageHeaderTitle, canCollapse && styles.TracePageHeaderTitleCollapsible)}>
       <TraceName traceName={getTraceName(trace.spans)} />{' '}
-      <small className={uTxMuted}>{trace.traceID.slice(0, 7)}</small>
+      <small className={cx(styles.TracePageHeaderTraceId, uTxMuted)}>{trace.traceID}</small>
     </h1>
   );
 

@@ -165,6 +165,13 @@
       name: Queries
     - link: /panels/transformations/
       name: Transformations
+      children:
+        - link: /panels/transformations/
+          name: Overview
+        - link: /panels/transformations/apply-transformations/
+          name: Apply transformations
+        - link: /panels/transformations/types-options/
+          name: Transformation types and options
     - link: /panels/field-options/
       name: Field options
     - link: /panels/panel-editor/
