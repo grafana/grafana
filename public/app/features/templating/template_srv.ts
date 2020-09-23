@@ -265,8 +265,13 @@ export class TemplateSrv implements BaseTemplateSrv {
     ).map(t => t.join(''));
   }
 
-  private static cartesianProduct(arr: any[][]) {
-    return arr.reduce((acc, curr) => acc.flatMap(a => curr.map(c => a.concat([c]))), [[]]);
+  /**
+   * Returns the cartesian product (https://en.wikipedia.org/wiki/Cartesian_product) of the arrays.
+   * For example, cartesianProduct([[1, 2, 3], ["a", "b"]]) returns [[1,"a"],[1,"b"],[2,"a"],[2,"b"],[3,"a"],[3,"b"]]
+   */
+  // could be replaced by https://github.com/d3/d3-array#cross from d3-array v2.0.0
+  private static cartesianProduct(arrays: any[][]): any[][] {
+    return arrays.reduce((res, current) => res.flatMap(r => current.map(c => r.concat([c]))), [[]]);
   }
 
   private targetTokens(target: string, scopedVars?: ScopedVars, format?: string | Function): TargetToken[] {
