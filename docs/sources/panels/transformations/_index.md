@@ -29,7 +29,7 @@ Before you can configure and apply transformations:
 
 - You must have entered a query and returned data from a data source. For more information on queries, refer to [Queries]({{< relref "../queries.md" >}}).
   
-- You must have applied a visualization that supports queries. Examples are:
+- You must have applied a visualization that supports your queries. Different transformations can result in a data structure that only some visualizations can render. For example, the visualization cannot show reduced data (that results from the Reduce transform). In case  your current visualization does not show you what you expect after applying a transform, switch to the Table visualization to check the result. For more information on visualizations, refer to:
   - [Bar gauge]({{< relref "../visualizations/bar-gauge-panel.md" >}})
   - [Gauge]({{< relref "../visualizations/gauge-panel.md" >}})
   - [Graph]({{< relref "../visualizations/graph-panel.md" >}})
