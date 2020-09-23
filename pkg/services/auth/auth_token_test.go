@@ -20,6 +20,7 @@ func TestUserAuthToken(t *testing.T) {
 	Convey("Test user auth token", t, func() {
 		ctx := createTestContext(t)
 		userAuthTokenService := ctx.tokenService
+		userAuthTokenService.ConcurrencyLimit = &NoConcurrencyLimits{}
 		userID := int64(10)
 
 		t := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
@@ -494,12 +495,15 @@ func TestUserAuthToken(t *testing.T) {
 
 	Convey("Test user concurrent session limit", t, func() {
 		userID := int64(10)
+		maxConcurrentSessions := 3
+		totalConcurrentSessions := 4
 
 		Convey("When the session limit is disabled", func() {
 			ctx := createTestContext(t)
 			userAuthTokenService := ctx.tokenService
+			userAuthTokenService.ConcurrencyLimit = &NoConcurrencyLimits{}
 
-			_, err := ctx.createSomeAuthTokensWithSeenAtNow(userID, concurrentSessionLimit)
+			_, err := ctx.createSomeAuthTokensWithSeenAtNow(userID, maxConcurrentSessions)
 			So(err, ShouldBeNil)
 
 			Convey("Once the limit is exceeded no token is revoked", func() {
@@ -508,16 +512,16 @@ func TestUserAuthToken(t *testing.T) {
 
 				tokenCount, err := userAuthTokenService.ActiveTokenCount(context.Background())
 				So(err, ShouldBeNil)
-				So(tokenCount, ShouldEqual, concurrentSessionLimit+1)
+				So(tokenCount, ShouldEqual, totalConcurrentSessions)
 			})
 		})
 
 		Convey("When the session limit is enabled", func() {
 			ctx := createTestContext(t)
 			userAuthTokenService := ctx.tokenService
-			userAuthTokenService.Cfg.FeatureToggles = map[string]bool{concurrentSessionLimitKey: true}
+			userAuthTokenService.ConcurrencyLimit = &concurrencyLimitedUpTo3{}
 
-			userTokens, err := ctx.createSomeAuthTokensWithSeenAtNow(userID, concurrentSessionLimit)
+			userTokens, err := ctx.createSomeAuthTokensWithSeenAtNow(userID, maxConcurrentSessions)
 			So(err, ShouldBeNil)
 
 			Convey("Once the limit is exceeded the least frequently used token is revoked", func() {
@@ -526,7 +530,7 @@ func TestUserAuthToken(t *testing.T) {
 
 				tokenCount, err := userAuthTokenService.ActiveTokenCount(context.Background())
 				So(err, ShouldBeNil)
-				So(tokenCount, ShouldEqual, concurrentSessionLimit)
+				So(tokenCount, ShouldEqual, maxConcurrentSessions)
 
 				_, err = userAuthTokenService.GetUserToken(context.Background(), userID, userTokens[0].Id)
 				So(err, ShouldEqual, models.ErrUserTokenNotFound)
@@ -632,4 +636,14 @@ func (c *testContext) createSomeAuthTokensWithSeenAtNow(userID int64, amount int
 	}
 
 	return userTokens, nil
+}
+
+type concurrencyLimitedUpTo3 struct{}
+
+func (*concurrencyLimitedUpTo3) ConcurrentSessionsAreLimited() bool {
+	return true
+}
+
+func (*concurrencyLimitedUpTo3) MaxConcurrentSessions() int {
+	return 3
 }

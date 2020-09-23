@@ -28,6 +28,7 @@ const urgentRotateTime = 1 * time.Minute
 type UserAuthTokenService struct {
 	SQLStore          *sqlstore.SqlStore            `inject:""`
 	ServerLockService *serverlock.ServerLockService `inject:""`
+	ConcurrencyLimit  ConcurrencyLimit              `inject:""`
 	Cfg               *setting.Cfg                  `inject:""`
 	log               log.Logger
 }
@@ -90,10 +91,13 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, userId int64, cl
 		return nil, err
 	}
 
-	err = s.revokeOldUserTokens(ctx, userId)
+	if s.ConcurrencyLimit.ConcurrentSessionsAreLimited() {
+		maxConcurrentSessions := s.ConcurrencyLimit.MaxConcurrentSessions()
 
-	if err != nil {
-		return nil, err
+		err = s.revokeOldUserTokens(ctx, userId, maxConcurrentSessions)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	userAuthToken.UnhashedToken = token
@@ -410,20 +414,7 @@ func (s *UserAuthTokenService) rotatedAfterParam() int64 {
 	return getTime().Add(-s.Cfg.LoginMaxInactiveLifetime).Unix()
 }
 
-const (
-	concurrentSessionLimit    = 3
-	concurrentSessionLimitKey = "concurrentSessionLimit"
-)
-
-func (s *UserAuthTokenService) isConcurrentSessionLimitEnabled() bool {
-	return s.Cfg.FeatureToggles[concurrentSessionLimitKey]
-}
-
-func (s *UserAuthTokenService) revokeOldUserTokens(ctx context.Context, userId int64) error {
-	if !s.isConcurrentSessionLimitEnabled() {
-		return nil
-	}
-
+func (s *UserAuthTokenService) revokeOldUserTokens(ctx context.Context, userId int64, maxConcurrentSessions int) error {
 	return s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		sql := `
 		DELETE
@@ -439,7 +430,7 @@ func (s *UserAuthTokenService) revokeOldUserTokens(ctx context.Context, userId i
 		AND user_id = ?
 		AND seen_at != 0;`
 
-		result, err := dbSession.Exec(sql, userId, concurrentSessionLimit-1, userId)
+		result, err := dbSession.Exec(sql, userId, maxConcurrentSessions-1, userId)
 		if err != nil {
 			return err
 		}
