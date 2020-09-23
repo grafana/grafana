@@ -63,7 +63,9 @@ class DashboardWatcher {
             console.log('dashboard event for differnt dashboard?', event, dash);
             return;
           }
-          if (this.editing) {
+
+          const changeTracker = getLegacyAngularInjector().get<any>('unsavedChangesSrv').tracker;
+          if (this.editing || changeTracker.hasChanges()) {
             appEvents.emit(CoreEvents.showModalReact, {
               component: DashboardChangedModal,
               props: { event },
