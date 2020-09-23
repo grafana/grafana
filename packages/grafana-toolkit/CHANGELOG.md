@@ -1,3 +1,8 @@
+# 7.2.0 (2020-09-23)
+
+### Bug Fixes
+* **grafana/toolkit**: avoid path.resolve with globby in moveStaticFiles. [#27670](https://github.com/grafana/grafana/pull/27670), [@kennytm](https://github.com/kennytm)
+
 # 7.0.0 (2020-05-18)
 
 ### Bug Fixes

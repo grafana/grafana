@@ -119,9 +119,9 @@ Azure Monitor examples:
 - `{{ namespace }}` = replaced with the value of the Namespace (e.g. Microsoft.Compute/virtualMachines)
 - `{{ resourcename }}` = replaced with the value of the Resource Name
 - `{{ metric }}` = replaced with metric name (e.g. Percentage CPU)
-- `{{ dimensionname }}` = *Legacy as of 7.1+ (for backwards compatibility)* replaced with the first dimension's key/label (as sorted by the key/label) (e.g. blobtype)
-- `{{ dimensionvalue }}` = *Legacy as of 7.1+ (for backwards compatibility)* replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
-- `{{ arbitraryDim }}` = *Available in 7.1+* replaced with the value of the corresponding dimension. (e.g. `{{ blobtype }}` becomes BlockBlob)
+- `{{ dimensionname }}` = _Legacy as of 7.1+ (for backwards compatibility)_ replaced with the first dimension's key/label (as sorted by the key/label) (e.g. blobtype)
+- `{{ dimensionvalue }}` = _Legacy as of 7.1+ (for backwards compatibility)_ replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
+- `{{ arbitraryDim }}` = _Available in 7.1+_ replaced with the value of the corresponding dimension. (e.g. `{{ blobtype }}` becomes BlockBlob)
 
 ### Create template variables for Azure Monitor
 
@@ -188,10 +188,10 @@ Application Insights examples:
 
 ### Alias patterns for Application Insights
 
-- `{{ groupbyvalue }}` = *Legacy as of 7.1+ (for backwards compatibility)* replaced with the first dimension's key/label (as sorted by the key/label)
-- `{{ groupbyname }}` = *Legacy as of 7.1+ (for backwards compatibility)* replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
+- `{{ groupbyvalue }}` = _Legacy as of 7.1+ (for backwards compatibility)_ replaced with the first dimension's key/label (as sorted by the key/label)
+- `{{ groupbyname }}` = _Legacy as of 7.1+ (for backwards compatibility)_ replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
 - `{{ metric }}` = replaced with metric name (e.g. requests/count)
-- `{{ arbitraryDim }}` = *Available in 7.1+* replaced with the value of the corresponding dimension. (e.g. `{{ client/city }}` becomes Chicago)
+- `{{ arbitraryDim }}` = _Available in 7.1+_ replaced with the value of the corresponding dimension. (e.g. `{{ client/city }}` becomes Chicago)
 
 ### Filter expressions for Application Insights
 
@@ -289,7 +289,7 @@ The default display name format is:
 
 `metricName{dimensionName=dimensionValue,dimensionTwoName=DimensionTwoValue}`
 
-This can be customized by using the [display name field configuration option]({{< relref "../../panels/field-configuration-options.md#display-name" >}}).
+This can be customized by using the [display name field option]({{< relref "../../panels/field-options.md#display-name" >}}).
 
 ### Azure Log Analytics macros
 

@@ -26,7 +26,7 @@ The main highlights are:
 - [**Explore** New tracing UI and support for visualizing Jaeger and Zipkin traces.]({{< relref "#new-tracing-ui" >}})
 - [**Enterprise** Usage insights, Presence indicator, and Auth improvements.]({{< relref "#grafana-enterprise" >}})
 - [**Transformations** Transformations and simple Math operations for all data sources.]({{< relref "#transformations" >}})
-- [**Field overrides** Automatically configure panels with data from queries.]({{< relref "#field-configuration-options-and-overrides" >}})
+- [**Field overrides** Automatically configure panels with data from queries.]({{< relref "#field-options-and-overrides" >}})
 - [**Table** New Table panel.]({{< relref "#table-panel" >}})
 - [**Plugins** New plugins platform.]({{< relref "#plugins-platform" >}})
 - [**Tutorials** New tutorials section.]({{< relref "#new-tutorials" >}})
@@ -60,9 +60,9 @@ In the future we will add more workflows and integrations so that correlating be
 
 The data you want to visualize can come from many different places and it is usually not in exactly the right form. Users can now transform non-time series data into tables (e.g., JSON files or even simple lookup tables) in seconds without any customization or additional overhead. They can then combine non-time series data with any other data in Grafana; data from an external database or a panel that already exists in one of their current dashboards.
 
-By chaining a simple set of point and click [transformations]({{< relref "../panels/transformations.md" >}}), users will be able join, pivot, filter, re-name and do calculations to get the results they need. Perfect for operations across queries or data sources missing essential data transformations.
+By chaining a simple set of point and click [transformations]({{< relref "../panels/transformations/_index.md" >}}), users will be able join, pivot, filter, re-name and do calculations to get the results they need. Perfect for operations across queries or data sources missing essential data transformations.
 
-[Transformations]({{< relref "../panels/transformations.md" >}}) also adds the ability to do maths across queries. Lots of data sources do not support this natively so being able to do it in Grafana is a powerful feature.
+[Transformations]({{< relref "../panels/transformations/_index.md" >}}) also adds the ability to do maths across queries. Lots of data sources do not support this natively, so being able to do it in Grafana is a powerful feature.
 
 For users with large dashboards or with heavy queries, being able to reuse the query result from one panel in another panel can be a huge performance gain for slow queries (e.g log or sql queries). From the data source menu in the query editor, you can choose the `--dashboard--` option and then choose the query result from another panel on the same dashboard.
 
@@ -80,9 +80,9 @@ We are also introducing a new shared data model for both time series and table d
 - **Outer join:** Joins many time series/tables by a field. This can be used to outer join multiple time series on the _time_ field to show many time series in one table.
 - **Add field from calculation:** This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Can be used to calculate the difference between two series or fields and add the result to a new field. Or multiply one field with another another and add the result to a new field.
 
-Learn more about this feature in [Transformations]({{< relref "../panels/transformations.md" >}}).
+Learn more about this feature in [Transformations]({{< relref "../panels/transformations/_index.md" >}}).
 
-## Field configuration options and overrides
+## Field options and overrides
 
 With Grafana 7.0 we are introducing a new, unified data configuration system that powers a consistent UI for setting data options across visualizations as well as making all data display settings data driven and overridable. This new option architecture and UI will make all panels have a consistent set of options and behaviors for attributes like `unit`, `min`, `max`, `thresholds`, `links`, `decimals` or `value mappings`. Not only that but all these options will share a consistent UI for specifying override rules and is extensible for custom panel specific options.
 
@@ -90,7 +90,7 @@ Up until now the overrides were available only for Graph and Table panel(via Col
 
 This feature enables even more powerful visualizations and fine grained control over how the data is displayed.
 
-Learn more about this feature in [Field configuration options]({{< relref "../panels/field-configuration-options.md" >}}).
+Learn more about this feature in [Field options]({{< relref "../panels/field-options.md" >}}).
 
 ## Inspect panels and export data to CSV
 
