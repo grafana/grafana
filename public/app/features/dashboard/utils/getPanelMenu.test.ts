@@ -171,14 +171,14 @@ describe('getPanelMenu', () => {
     const testUrl = '/testUrl';
     const windowOpen = jest.fn();
     let event: any;
-    let explore: PanelMenuItem | undefined;
+    let explore: PanelMenuItem;
     let navigateSpy: any;
 
     beforeAll(() => {
       const panel = new PanelModel({});
       const dashboard = new DashboardModel({});
       const menuItems = getPanelMenu(dashboard, panel);
-      explore = menuItems.find(item => item.text === 'Explore');
+      explore = menuItems.find(item => item.text === 'Explore') as PanelMenuItem;
       navigateSpy = jest.spyOn(actions, 'navigateToExplore');
       window.open = windowOpen;
 
@@ -191,9 +191,7 @@ describe('getPanelMenu', () => {
     });
 
     it('should navigate to url without subUrl', () => {
-      if (explore?.onClick) {
-        explore.onClick(event);
-      }
+      explore.onClick!(event);
 
       const openInNewWindow = navigateSpy.mock.calls[0][1].openInNewWindow;
 
@@ -204,10 +202,7 @@ describe('getPanelMenu', () => {
 
     it('should navigate to url with subUrl', () => {
       config.appSubUrl = testSubUrl;
-
-      if (explore?.onClick) {
-        explore.onClick(event);
-      }
+      explore.onClick!(event);
 
       const openInNewWindow = navigateSpy.mock.calls[0][1].openInNewWindow;
 
