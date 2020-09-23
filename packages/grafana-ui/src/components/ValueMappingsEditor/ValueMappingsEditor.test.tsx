@@ -11,7 +11,7 @@ const setup = (spy?: any, propOverrides?: object) => {
         spy(mappings);
       }
     },
-    valueMappings: [
+    value: [
       { id: 1, type: MappingType.ValueToText, value: '20', text: 'Ok' },
       { id: 2, type: MappingType.RangeToText, from: '21', to: '30', text: 'Meh' },
     ],
