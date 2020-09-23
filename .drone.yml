@@ -255,9 +255,6 @@ trigger:
   event:
   - pull_request
 
-depends_on:
-- test-pr
-
 ---
 kind: pipeline
 type: docker

@@ -60,7 +60,6 @@ def pr_pipelines(edition):
         ),
         pipeline(
             name='windows-pr', edition=edition, trigger=trigger, steps=windows_steps, platform='windows',
-            depends_on=['test-pr'],
         ),
     ]
 
@@ -840,7 +839,7 @@ def get_windows_steps(edition, version_mode, is_downstream=False):
         ]
         steps[1]['commands'].extend([
             # Need to move grafana-enterprise out of the way, so directory is empty and can be cloned into
-            'mv grafana-enterprise C:\\App\\grafana-enterprise',
+            'mv -force grafana-enterprise C:\\App\\grafana-enterprise',
             'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise{}'.format(source_commit)
         ])
 
