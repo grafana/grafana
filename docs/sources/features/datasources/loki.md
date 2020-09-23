@@ -176,7 +176,7 @@ datasources:
       maxLines: 1000
 ```
 
-Here's another with basic auth and derived field. Keep in mind that `$` character needs to be escaped in yaml values as it is used to interpolate environment variables:
+Here's another with basic auth and derived field. Keep in mind that `$` character needs to be escaped in YAML values as it is used to interpolate environment variables:
 
 ```yaml
 apiVersion: 1
