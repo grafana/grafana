@@ -1,11 +1,19 @@
 import { getGrafanaLiveSrv, getLegacyAngularInjector } from '@grafana/runtime';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 import { appEvents } from 'app/core/core';
-import { AppEvents, LiveChannel, LiveChannelScope, LiveChannelEvent, LiveChannelConfig } from '@grafana/data';
+import {
+  AppEvents,
+  LiveChannel,
+  LiveChannelScope,
+  LiveChannelEvent,
+  LiveChannelConfig,
+  LiveChannelConnectionState,
+} from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { DashboardChangedModal } from './DashboardChangedModal';
 import { DashboardEvent, DashboardEventAction } from './types';
 import { CoreGrafanaLiveFeature } from '../scopes';
+import { sessionId } from '../live';
 
 class DashboardWatcher {
   channel?: LiveChannel<DashboardEvent>;
@@ -15,13 +23,29 @@ class DashboardWatcher {
   editing = false;
 
   setEditingState(state: boolean) {
-    if (this.editing !== state) {
-      console.log('TODO broadcast!');
-    }
+    const changed = (this.editing = state);
     this.editing = state;
+
+    if (changed) {
+      this.sendEditingState();
+    }
   }
 
-  watch(uid: string, editing?: boolean) {
+  private sendEditingState() {
+    if (!this.channel?.publish) {
+      return;
+    }
+
+    const msg: DashboardEvent = {
+      sessionId,
+      uid: this.uid!,
+      action: this.editing ? DashboardEventAction.EditingStarted : DashboardEventAction.EditingCanceled,
+      message: 'user (name)',
+    };
+    this.channel!.publish!(msg);
+  }
+
+  watch(uid: string) {
     const live = getGrafanaLiveSrv();
     if (!live) {
       return;
@@ -35,7 +59,7 @@ class DashboardWatcher {
       this.uid = uid;
     }
 
-    console.log('Watch', uid, editing);
+    console.log('Watch', uid);
   }
 
   leave() {
@@ -51,30 +75,54 @@ class DashboardWatcher {
 
   observer = {
     next: (event: LiveChannelEvent<DashboardEvent>) => {
+      // Send the editing state when connection starts
+      if (event.status && this.editing && event.status.state === LiveChannelConnectionState.Connected) {
+        this.sendEditingState();
+      }
+
       if (event.message) {
-        if (event.message.action === DashboardEventAction.Saved) {
-          if (this.ignoreSave) {
-            this.ignoreSave = false;
+        if (event.message.sessionId === sessionId) {
+          return; // skip internal messages
+        }
+
+        const { action } = event.message;
+        switch (action) {
+          case DashboardEventAction.EditingStarted:
+          case DashboardEventAction.Saved: {
+            if (this.ignoreSave) {
+              this.ignoreSave = false;
+              return;
+            }
+
+            const dash = getDashboardSrv().getCurrent();
+            if (dash.uid !== event.message.uid) {
+              console.log('dashboard event for differnt dashboard?', event, dash);
+              return;
+            }
+
+            const changeTracker = getLegacyAngularInjector().get<any>('unsavedChangesSrv').tracker;
+            const showPopup = this.editing || changeTracker.hasChanges();
+
+            if (action === DashboardEventAction.Saved) {
+              if (showPopup) {
+                appEvents.emit(CoreEvents.showModalReact, {
+                  component: DashboardChangedModal,
+                  props: { event },
+                });
+              } else {
+                appEvents.emit(AppEvents.alertSuccess, ['Dashboard updated']);
+                this.reloadPage();
+              }
+            } else if (showPopup) {
+              if (action === DashboardEventAction.EditingStarted) {
+                appEvents.emit(AppEvents.alertWarning, [
+                  'Another session is editing this dashboard',
+                  event.message.message,
+                ]);
+              }
+            }
             return;
           }
-
-          const dash = getDashboardSrv().getCurrent();
-          if (dash.uid !== event.message.uid) {
-            console.log('dashboard event for differnt dashboard?', event, dash);
-            return;
-          }
-
-          const changeTracker = getLegacyAngularInjector().get<any>('unsavedChangesSrv').tracker;
-          if (this.editing || changeTracker.hasChanges()) {
-            appEvents.emit(CoreEvents.showModalReact, {
-              component: DashboardChangedModal,
-              props: { event },
-            });
-          } else {
-            appEvents.emit(AppEvents.alertSuccess, ['Dashboard updated']);
-            this.reloadPage();
-          }
-          return;
         }
       }
       console.log('DashboardEvent EVENT', event);
@@ -99,6 +147,7 @@ export function getDashboardChannelsFeature(): CoreGrafanaLiveFeature {
     description: 'Dashboard change events',
     variables: [{ value: 'uid', label: '${uid}', description: 'unique id for a dashboard' }],
     hasPresense: true,
+    canPublish: () => true,
   };
 
   return {
@@ -106,8 +155,8 @@ export function getDashboardChannelsFeature(): CoreGrafanaLiveFeature {
     support: {
       getChannelConfig: (path: string) => {
         return {
-          path,
-          hasPresense: true,
+          ...dashboardConfig,
+          path, // set the real path
         };
       },
       getSupportedPaths: () => [dashboardConfig],

@@ -12,6 +12,18 @@ import {
 } from './scopes';
 import { registerLiveFeatures } from './features';
 
+export const sessionId =
+  (window as any)?.grafanaBootData?.user?.id +
+  '/' +
+  Date.now().toString(16) +
+  '/' +
+  // Math.random()
+  //   .toString(36)
+  //   .substring(2, 15) +
+  Math.random()
+    .toString(36)
+    .substring(2, 15);
+
 export class CentrifugeSrv implements GrafanaLiveSrv {
   readonly open = new Map<string, CentrifugeLiveChannel>();
 
@@ -24,6 +36,9 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
     this.centrifuge = new Centrifuge(`${config.appUrl}live/sockjs`, {
       debug: true,
       sockjs: SockJS,
+    });
+    this.centrifuge.setConnectData({
+      sessionId,
     });
     this.centrifuge.connect(); // do connection
     this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
@@ -113,12 +128,12 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
     if (!config) {
       throw new Error('unknown path: ' + channel.path);
     }
+    if (config.canPublish && config.canPublish()) {
+      channel.publish = (data: any) => this.centrifuge.publish(channel.id, data);
+    }
     const events = channel.initalize(config);
     if (!this.centrifuge.isConnected()) {
       await this.connectionBlocker;
-    }
-    if (config.canPublish && config.canPublish()) {
-      channel.publish = (data: any) => this.centrifuge.publish(channel.id, data);
     }
     channel.subscription = this.centrifuge.subscribe(channel.id, events);
     return;

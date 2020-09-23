@@ -9,8 +9,8 @@ export interface DashboardEvent {
   uid: string;
   action: DashboardEventAction;
   userId?: number;
-  userName?: string;
   message?: string;
+  sessionId?: string;
 
   /** If anyone is activly editing the dashboard */
   editorIsOpen?: boolean;
