@@ -1,8 +1,8 @@
 import React from 'react';
 import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui';
-const { Select, Input, FormField, Switch } = LegacyForms;
+const { Select, Input, FormField } = LegacyForms;
 import { ElasticsearchOptions } from '../types';
-import { DataSourceSettings, onUpdateDatasourceJsonDataOptionChecked, SelectableValue } from '@grafana/data';
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
 
 const indexPatternTypes = [
   { label: 'No pattern', value: 'none' },
@@ -144,29 +144,11 @@ export const ElasticDetails = (props: Props) => {
             />
           </div>
         </div>
-        {value.jsonData.esVersion >= 70 && (
-          <div className="gf-form-group">
-            <div className="gf-form-inline">
-              <Switch
-                label="Include Frozen Indices"
-                checked={value.jsonData.includeFrozen ?? false}
-                onChange={onUpdateDatasourceJsonDataOptionChecked(
-                  {
-                    options: value,
-                    onOptionsChange: onChange,
-                  },
-                  'includeFrozen'
-                )}
-              />
-            </div>
-          </div>
-        )}
       </div>
     </>
   );
 };
 
-// TODO: Use change handlers from @grafana/data
 const changeHandler = (
   key: keyof DataSourceSettings<ElasticsearchOptions>,
   value: Props['value'],
@@ -178,7 +160,6 @@ const changeHandler = (
   });
 };
 
-// TODO: Use change handlers from @grafana/data
 const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['value'], onChange: Props['onChange']) => (
   event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
 ) => {

@@ -250,7 +250,6 @@ func TestClient(t *testing.T) {
 				"maxConcurrentShardRequests": 100,
 				"timeField":                  "@timestamp",
 				"interval":                   "Daily",
-				"includeFrozen":              true,
 			}),
 		}, func(sc *scenarioContext) {
 			sc.responseBody = `{
@@ -272,7 +271,6 @@ func TestClient(t *testing.T) {
 					So(sc.request, ShouldNotBeNil)
 					So(sc.request.Method, ShouldEqual, http.MethodPost)
 					So(sc.request.URL.Path, ShouldEqual, "/_msearch")
-					So(sc.request.URL.RawQuery, ShouldNotContainSubstring, "ignore_throttled=")
 
 					So(sc.requestBody, ShouldNotBeNil)
 
@@ -314,7 +312,6 @@ func TestClient(t *testing.T) {
 				"maxConcurrentShardRequests": 6,
 				"timeField":                  "@timestamp",
 				"interval":                   "Daily",
-				"includeFrozen":              true,
 			}),
 		}, func(sc *scenarioContext) {
 			sc.responseBody = `{
@@ -336,8 +333,7 @@ func TestClient(t *testing.T) {
 					So(sc.request, ShouldNotBeNil)
 					So(sc.request.Method, ShouldEqual, http.MethodPost)
 					So(sc.request.URL.Path, ShouldEqual, "/_msearch")
-					So(sc.request.URL.RawQuery, ShouldContainSubstring, "max_concurrent_shard_requests=6")
-					So(sc.request.URL.RawQuery, ShouldContainSubstring, "ignore_throttled=false")
+					So(sc.request.URL.RawQuery, ShouldEqual, "max_concurrent_shard_requests=6")
 
 					So(sc.requestBody, ShouldNotBeNil)
 
@@ -354,7 +350,6 @@ func TestClient(t *testing.T) {
 					So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-2018.05.15")
 					So(jHeader.Get("ignore_unavailable").MustBool(false), ShouldEqual, true)
 					So(jHeader.Get("search_type").MustString(), ShouldEqual, "query_then_fetch")
-					So(jHeader.Get("ignore_throttled").MustBool(), ShouldBeFalse)
 
 					Convey("and replace $__interval variable", func() {
 						So(jBody.GetPath("aggs", "2", "aggs", "1", "avg", "script").MustString(), ShouldEqual, "15000*@hostname")
