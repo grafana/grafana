@@ -1,7 +1,7 @@
 // Libraries
 import { map, throttleTime } from 'rxjs/operators';
 import { identity } from 'rxjs';
-import { ActionCreatorWithPayload, PayloadAction } from '@reduxjs/toolkit';
+import { PayloadAction } from '@reduxjs/toolkit';
 import { DataSourceSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import {
@@ -77,10 +77,6 @@ import {
   splitCloseAction,
   splitOpenAction,
   syncTimesAction,
-  toggleGraphAction,
-  ToggleGraphPayload,
-  toggleTableAction,
-  ToggleTablePayload,
   updateDatasourceInstanceAction,
   updateUIStateAction,
   changeLoadingStateAction,
@@ -429,8 +425,6 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       queryResponse,
       querySubscription,
       history,
-      showingGraph,
-      showingTable,
     } = exploreItemState;
 
     if (!hasNonEmptyQuery(queries)) {
@@ -461,8 +455,6 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       // maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
       maxDataPoints: containerWidth,
       liveStreaming: live,
-      showingGraph,
-      showingTable,
     };
 
     const datasourceName = exploreItemState.requestedDatasourceName;
@@ -577,9 +569,9 @@ export const stateSave = (): ThunkResult<void> => {
       queries: left.queries.map(clearQueryKeys),
       range: toRawTimeRange(left.range),
       ui: {
-        showingGraph: left.showingGraph,
+        showingGraph: true,
         showingLogs: true,
-        showingTable: left.showingTable,
+        showingTable: true,
         dedupStrategy: left.dedupStrategy,
       },
     };
@@ -590,9 +582,9 @@ export const stateSave = (): ThunkResult<void> => {
         queries: right.queries.map(clearQueryKeys),
         range: toRawTimeRange(right.range),
         ui: {
-          showingGraph: right.showingGraph,
+          showingGraph: true,
           showingLogs: true,
-          showingTable: right.showingTable,
+          showingTable: true,
           dedupStrategy: right.dedupStrategy,
         },
       };
@@ -752,46 +744,6 @@ export function syncTimes(exploreId: ExploreId): ThunkResult<void> {
     dispatch(stateSave());
   };
 }
-
-/**
- * Creates action to collapse graph/logs/table panel. When panel is collapsed,
- * queries won't be run
- */
-const togglePanelActionCreator = (
-  actionCreator: ActionCreatorWithPayload<ToggleGraphPayload> | ActionCreatorWithPayload<ToggleTablePayload>
-) => (exploreId: ExploreId, isPanelVisible: boolean): ThunkResult<void> => {
-  return dispatch => {
-    let uiFragmentStateUpdate: Partial<ExploreUIState>;
-    const shouldRunQueries = !isPanelVisible;
-
-    switch (actionCreator.type) {
-      case toggleGraphAction.type:
-        uiFragmentStateUpdate = { showingGraph: !isPanelVisible };
-        break;
-      case toggleTableAction.type:
-        uiFragmentStateUpdate = { showingTable: !isPanelVisible };
-        break;
-    }
-
-    dispatch(actionCreator({ exploreId }));
-    // The switch further up is exhaustive so uiFragmentStateUpdate should definitely be initialized
-    dispatch(updateExploreUIState(exploreId, uiFragmentStateUpdate!));
-
-    if (shouldRunQueries) {
-      dispatch(runQueries(exploreId));
-    }
-  };
-};
-
-/**
- * Expand/collapse the graph result viewer. When collapsed, graph queries won't be run.
- */
-export const toggleGraph = togglePanelActionCreator(toggleGraphAction);
-
-/**
- * Expand/collapse the table result viewer. When collapsed, table queries won't be run.
- */
-export const toggleTable = togglePanelActionCreator(toggleTableAction);
 
 /**
  * Change logs deduplication strategy and update URL.

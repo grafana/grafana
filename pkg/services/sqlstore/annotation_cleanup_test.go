@@ -102,7 +102,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 		})
 	})
 
-	//create some test annotations
+	// create some test annotations
 	a := annotations.Item{
 		DashboardId: 1,
 		OrgId:       1,
