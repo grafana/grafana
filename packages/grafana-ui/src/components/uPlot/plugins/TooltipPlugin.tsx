@@ -2,7 +2,7 @@ import React from 'react';
 import { Portal } from '../../Portal/Portal';
 import { usePlotContext, usePlotData } from '../context';
 import { CursorPlugin } from './CursorPlugin';
-import { SeriesTable } from '../../Graph/GraphTooltip/SeriesTable';
+import { SeriesTable, SeriesTableRowProps } from '../../Graph/GraphTooltip/SeriesTable';
 import { FieldType, formattedValueToString, getDisplayProcessor, getFieldDisplayName, TimeZone } from '@grafana/data';
 import { TooltipContainer } from '../../Chart/TooltipContainer';
 import { TooltipMode } from '../../Chart/Tooltip';
@@ -60,7 +60,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
           const xVal = xAxisFmt(xAxisFields[0].values.get(focusedPointIdx)).text;
           tooltip = (
             <SeriesTable
-              series={data.fields.reduce((agg, f, i) => {
+              series={data.fields.reduce<SeriesTableRowProps[]>((agg, f, i) => {
                 // skipping time field and non-numeric fields
                 if (f.type === FieldType.time || f.type !== FieldType.number) {
                   return agg;
