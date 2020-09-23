@@ -549,6 +549,12 @@ steps:
   commands:
   - echo $env:DRONE_RUNNER_NAME
 
+- name: initialize
+  image: grafana/ci-wix:0.1.1
+  commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.10/windows/grabpl.exe -OutFile C:\App\grabpl.exe
+
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
   commands:
@@ -558,13 +564,15 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - ./grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
+  - C:\App\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://grafana-downloads/oss/master/
   - gsutil cp $$fname.sha256 gs://grafana-downloads/oss/master/
   environment:
     GCP_KEY:
       from_secret: gcp_key
+  depends_on:
+  - initialize
 
 trigger:
   branch:
