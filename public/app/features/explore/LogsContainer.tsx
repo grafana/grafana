@@ -20,7 +20,7 @@ import {
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 
-import { splitOpen, updateTimeRange } from './state/actions';
+import { changeDedupStrategy, splitOpen, updateTimeRange } from './state/actions';
 import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
 import { deduplicatedRowsSelector } from 'app/features/explore/state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
@@ -50,6 +50,7 @@ interface LogsContainerProps {
   scanning?: boolean;
   scanRange?: RawTimeRange;
   toggleLogLevelAction: typeof toggleLogLevelAction;
+  changeDedupStrategy: typeof changeDedupStrategy;
   dedupStrategy: LogsDedupStrategy;
   width: number;
   isLive: boolean;
@@ -68,7 +69,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   };
 
   handleDedupStrategyChange = (dedupStrategy: LogsDedupStrategy) => {
-    console.log('NEED TO CHANGE DEDUP STRATEGY');
+    this.props.changeDedupStrategy(this.props.exploreId, dedupStrategy);
   };
 
   handleToggleLogLevel = (hiddenLogLevels: LogLevel[]) => {
@@ -206,6 +207,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
 }
 
 const mapDispatchToProps = {
+  changeDedupStrategy,
   toggleLogLevelAction,
   updateTimeRange,
   splitOpen,

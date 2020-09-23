@@ -13,6 +13,7 @@ import {
   PanelData,
   QueryFixAction,
   TimeRange,
+  LogsDedupStrategy,
 } from '@grafana/data';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 
@@ -164,6 +165,11 @@ export interface ResetExplorePayload {
   force?: boolean;
 }
 
+export interface ChangeDedupStrategyPayload {
+  exploreId: ExploreId;
+  dedupStrategy: LogsDedupStrategy;
+}
+
 /**
  * Adds a query row after the row with the given index.
  */
@@ -302,3 +308,5 @@ export const changeRangeAction = createAction<ChangeRangePayload>('explore/chang
 export const changeLoadingStateAction = createAction<ChangeLoadingStatePayload>('changeLoadingState');
 
 export const setPausedStateAction = createAction<SetPausedStatePayload>('explore/setPausedState');
+
+export const changeDedupStrategyAction = createAction<ChangeDedupStrategyPayload>('explore/changeDedupStrategyAction');

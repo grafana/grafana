@@ -16,6 +16,7 @@ import {
   RawTimeRange,
   TimeRange,
   ExploreUrlState,
+  LogsDedupStrategy,
 } from '@grafana/data';
 // Services & Utils
 import store from 'app/core/store';
@@ -78,6 +79,8 @@ import {
   updateDatasourceInstanceAction,
   changeLoadingStateAction,
   cancelQueriesAction,
+  changeDedupStrategyAction,
+  ChangeDedupStrategyPayload,
 } from './actionTypes';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
@@ -210,6 +213,16 @@ export function changeRefreshInterval(
 ): PayloadAction<ChangeRefreshIntervalPayload> {
   return changeRefreshIntervalAction({ exploreId, refreshInterval });
 }
+
+/**
+ * Change logs deduplication strategy.
+ */
+export const changeDedupStrategy = (
+  exploreId: ExploreId,
+  dedupStrategy: LogsDedupStrategy
+): PayloadAction<ChangeDedupStrategyPayload> => {
+  return changeDedupStrategyAction({ exploreId, dedupStrategy });
+};
 
 /**
  * Clear all queries and results.

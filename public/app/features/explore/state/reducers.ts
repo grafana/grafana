@@ -62,6 +62,7 @@ import {
   toggleLogLevelAction,
   updateDatasourceInstanceAction,
   cancelQueriesAction,
+  changeDedupStrategyAction,
 } from './actionTypes';
 import { ResultProcessor } from '../utils/ResultProcessor';
 import { updateLocation } from '../../../core/actions';
@@ -232,6 +233,14 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
   if (highlightLogsExpressionAction.match(action)) {
     const { expressions } = action.payload;
     return { ...state, logsHighlighterExpressions: expressions };
+  }
+
+  if (changeDedupStrategyAction.match(action)) {
+    const { dedupStrategy } = action.payload;
+    return {
+      ...state,
+      dedupStrategy,
+    };
   }
 
   if (initializeExploreAction.match(action)) {
