@@ -64,7 +64,7 @@ export class UserPicker extends Component<Props, State> {
     const { isLoading } = this.state;
 
     return (
-      <div className="user-picker">
+      <div className="user-picker" data-testid="userPicker">
         <AsyncSelect
           className={className}
           isLoading={isLoading}

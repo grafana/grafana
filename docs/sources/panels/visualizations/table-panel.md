@@ -15,13 +15,11 @@ The table panel is very flexible, supporting multiple modes for time series and 
 
 {{< figure src="/img/docs/v72/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
 
-> **Note:** Annotations are not currently supported in the table panel.
-
 ## Data and field options
 
 Table visualizations allow you to apply:
 
-- [Data transformations]({{< relref "../transformations.md" >}})
+- [Data transformations]({{< relref "../transformations/_index.md" >}})
 - [Field options and overrides]({{< relref "../field-options.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
@@ -39,8 +37,6 @@ In the **Field** tab you can set table specific display options that will affect
 
 ### Column alignment
 
-This custom field option applies only to table visualizations.
-
 Choose how Grafana should align cell contents:
 
 - Auto (default)
@@ -50,15 +46,11 @@ Choose how Grafana should align cell contents:
 
 ### Column width
 
-This custom field option applies only to table visualizations.
-
 By default, Grafana automatically calculates the column width based on the cell contents. In this field option, can override the setting and define the width for all columns in pixels.
 
 For example, if you enter `100` in the field, then when you click outside the field, all the columns will be set to 100 pixels wide.
 
 #### Cell display mode
-
-This custom field option applies only to table visualizations.
 
 By default, Grafana automatically chooses display settings. You can override the settings by choosing one of the following options to change all fields.
 
@@ -74,3 +66,7 @@ By default, Grafana automatically chooses display settings. You can override the
 
 Grafana can sometime be too aggressive in parsing strings and displaying them as numbers. To make Grafana show the original
 string create a field override and add a unit property with the `string` unit.
+
+### Annotations
+
+Annotations are not currently supported in the new table panel. This might be added back in a future release.

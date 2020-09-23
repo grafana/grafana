@@ -719,7 +719,7 @@ Refer to [Auth proxy authentication]({{< relref "../auth/auth-proxy.md" >}}) for
 
 ## [auth.ldap]
 
-Refer to [LDAO authentication]({{< relref "../auth/ldap.md" >}}) for detailed instructions.
+Refer to [LDAP authentication]({{< relref "../auth/ldap.md" >}}) for detailed instructions.
 
 <hr />
 
@@ -1271,7 +1271,7 @@ If the remote HTTP image renderer service runs on a different server than the Gr
 ### concurrent_render_request_limit
 
 Concurrent render request limit affects when the /render HTTP endpoint is used. Rendering many images at the same time can overload the server,
-which this setting can help protect against by only allowing a certain amount of concurrent requests. Default is `30`.
+which this setting can help protect against by only allowing a certain number of concurrent requests. Default is `30`.
 
 ## [panels]
 
@@ -1281,7 +1281,7 @@ Set to `true` if you want to test alpha panels that are not yet ready for genera
 
 ### disable_sanitize_html
 
-If set to true Grafana will allow script tags in text panels. Not recommended as it enable XSS vulnerabilities. Default is false. This settings was introduced in Grafana v6.0.
+If set to true Grafana will allow script tags in text panels. Not recommended as it enables XSS vulnerabilities. Default is false. This setting was introduced in Grafana v6.0.
 
 ## [plugins]
 
@@ -1357,7 +1357,7 @@ Mode `context` will cluster using incognito pages.
 
 ### rendering_clustering_max_concurrency
 
-When rendering_mode = clustered you can define maximum number of browser instances/incognito pages that can execute concurrently..
+When rendering_mode = clustered you can define the maximum number of browser instances/incognito pages that can execute concurrently.
 
 ### rendering_viewport_max_width
 

@@ -68,7 +68,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				notifier, notifierErr := NewOpsGenieNotifier(model) //unhandled error
+				notifier, notifierErr := NewOpsGenieNotifier(model) // unhandled error
 
 				opsgenieNotifier := notifier.(*OpsGenieNotifier)
 
