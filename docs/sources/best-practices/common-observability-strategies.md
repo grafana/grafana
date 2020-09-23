@@ -18,7 +18,7 @@ A logical strategy allows you to make uniform dashboards and scale your observab
 
 - The USE method tells you how happy your machines are, the RED method tells you how happy your users are.
 - USE reports on causes of issues. 
-- RED reports on user experience and is more likely to report symptoms of problems.
+- RED reports on user experience and is more likely to report symptoms of the problems.
 - The best practice of alerting is to alert on symptoms rather than causes, so alerting should be done on RED dashboards.
 
 ## USE method
