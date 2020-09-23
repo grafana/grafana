@@ -8,11 +8,12 @@ export interface PluginTestOptions {
   watch: boolean;
   testPathPattern?: string;
   testNamePattern?: string;
+  maxWorkers?: string;
 }
 
 export const testPlugin = useSpinner<PluginTestOptions>(
   'Running tests',
-  async ({ updateSnapshot, coverage, watch, testPathPattern, testNamePattern }) => {
+  async ({ updateSnapshot, coverage, watch, testPathPattern, testNamePattern, maxWorkers }) => {
     const testConfig = loadJestPluginConfig();
 
     const cliConfig = {
@@ -23,6 +24,7 @@ export const testPlugin = useSpinner<PluginTestOptions>(
       testPathPattern: testPathPattern ? [testPathPattern] : [],
       testNamePattern: testNamePattern ? [testNamePattern] : [],
       passWithNoTests: true,
+      maxWorkers,
     };
 
     // @ts-ignore
