@@ -1810,17 +1810,16 @@ describe('prepareTargets', () => {
   });
 
   describe('when run from Explore', () => {
-    describe('and both Graph and Table are shown', () => {
+    describe('when query type Both is selected', () => {
       it('then it should return both instant and time series related objects', () => {
         const target: PromQuery = {
           refId: 'A',
           expr: 'up',
+          range: true,
+          instant: true,
         };
 
-        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore, {
-          showingGraph: true,
-          showingTable: true,
-        });
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
 
         expect(queries.length).toBe(2);
         expect(activeTargets.length).toBe(2);
@@ -1868,33 +1867,16 @@ describe('prepareTargets', () => {
       });
     });
 
-    describe('and both Graph and Table are hidden', () => {
-      it('then it should return empty arrays', () => {
+    describe('when query type Instant is selected', () => {
+      it('then it should just add targets', () => {
         const target: PromQuery = {
           refId: 'A',
           expr: 'up',
-          showingGraph: false,
-          showingTable: false,
+          instant: true,
+          range: false,
         };
 
-        const { queries, activeTargets } = getPrepareTargetsContext(target, CoreApp.Explore);
-
-        expect(queries.length).toBe(0);
-        expect(activeTargets.length).toBe(0);
-      });
-    });
-
-    describe('and Graph is hidden', () => {
-      it('then it should return only intant related objects', () => {
-        const target: PromQuery = {
-          refId: 'A',
-          expr: 'up',
-        };
-
-        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore, {
-          showingGraph: false,
-          showingTable: true,
-        });
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
 
         expect(queries.length).toBe(1);
         expect(activeTargets.length).toBe(1);
@@ -1908,55 +1890,43 @@ describe('prepareTargets', () => {
           hinting: undefined,
           instant: true,
           refId: target.refId,
-          requestId: panelId + target.refId + '_instant',
+          requestId: panelId + target.refId,
           start,
           step: 1,
         });
-        expect(activeTargets[0]).toEqual({
-          ...target,
-          format: 'table',
-          instant: true,
-          requestId: panelId + target.refId + '_instant',
-          valueWithRefId: true,
-        });
+        expect(activeTargets[0]).toEqual(target);
       });
     });
+  });
 
-    describe('and Table is hidden', () => {
-      it('then it should return only time series related objects', () => {
-        const target: PromQuery = {
-          refId: 'A',
-          expr: 'up',
-        };
+  describe('when query type Range is selected', () => {
+    it('then it should just add targets', () => {
+      const target: PromQuery = {
+        refId: 'A',
+        expr: 'up',
+        range: true,
+        instant: false,
+      };
 
-        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore, {
-          showingGraph: true,
-          showingTable: false,
-        });
+      const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
 
-        expect(queries.length).toBe(1);
-        expect(activeTargets.length).toBe(1);
-        expect(queries[0]).toEqual({
-          end,
-          expr: 'up',
-          headers: {
-            'X-Dashboard-Id': undefined,
-            'X-Panel-Id': panelId,
-          },
-          hinting: undefined,
-          instant: false,
-          refId: target.refId,
-          requestId: panelId + target.refId,
-          start,
-          step: 1,
-        });
-        expect(activeTargets[0]).toEqual({
-          ...target,
-          format: 'time_series',
-          instant: false,
-          requestId: panelId + target.refId,
-        });
+      expect(queries.length).toBe(1);
+      expect(activeTargets.length).toBe(1);
+      expect(queries[0]).toEqual({
+        end,
+        expr: 'up',
+        headers: {
+          'X-Dashboard-Id': undefined,
+          'X-Panel-Id': panelId,
+        },
+        hinting: undefined,
+        instant: false,
+        refId: target.refId,
+        requestId: panelId + target.refId,
+        start,
+        step: 1,
       });
+      expect(activeTargets[0]).toEqual(target);
     });
   });
 });
