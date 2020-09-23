@@ -209,8 +209,8 @@
         - link: /panels/visualizations/table-panel/
           name: Table
           children:
-          - link: Overview
-            name: /panels/table/
+          - name: Overview
+            link: /panels/table/
           - link: /panels/table/table-field-options/
             name: Table field options
           - link: /panels/tables/filter-table-columns/
