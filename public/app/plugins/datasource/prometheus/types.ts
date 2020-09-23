@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
 import { FetchError } from '@grafana/runtime';
 
 export interface PromQuery extends DataQuery {
@@ -89,6 +89,21 @@ export type PromValue = [number, any];
 export function isFetchErrorResponse(response: any): response is FetchError {
   return 'cancelled' in response;
 }
+
+export interface TransformOptions {
+  format?: string;
+  step?: number;
+  legendFormat?: string;
+  start: number;
+  end: number;
+  query: string;
+  responseListLength: number;
+  scopedVars?: ScopedVars;
+  refId: string;
+  valueWithRefId?: boolean;
+  meta: QueryResultMeta;
+}
+
 export interface PromLabelQueryResponse {
   data: {
     status: string;

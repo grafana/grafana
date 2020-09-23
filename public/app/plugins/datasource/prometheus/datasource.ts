@@ -1,6 +1,3 @@
-// Libraries
-import cloneDeep from 'lodash/cloneDeep';
-// Services & Utils
 import {
   AnnotationEvent,
   CoreApp,
@@ -12,22 +9,24 @@ import {
   dateMath,
   DateTime,
   LoadingState,
+  rangeUtil,
   ScopedVars,
   TimeRange,
-  TimeSeries,
-  rangeUtil,
 } from '@grafana/data';
-import { forkJoin, merge, Observable, of, throwError, pipe } from 'rxjs';
+import { BackendSrvRequest, FetchError, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { safeStringifyValue } from 'app/core/utils/explore';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import templateSrv from 'app/features/templating/template_srv';
+import defaults from 'lodash/defaults';
+import cloneDeep from 'lodash/cloneDeep';
+import { forkJoin, merge, Observable, of, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
-
-import PrometheusMetricFindQuery from './metric_find_query';
-import { ResultTransformer } from './result_transformer';
-import PrometheusLanguageProvider from './language_provider';
-import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import addLabelToQuery from './add_label_to_query';
-import { getQueryHints } from './query_hints';
+import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
-// Types
+import PrometheusMetricFindQuery from './metric_find_query';
+import { getQueryHints } from './query_hints';
+import { ResultTransformer } from './result_transformer';
 import {
   isFetchErrorResponse,
   PromDataErrorResponse,
@@ -38,12 +37,8 @@ import {
   PromQuery,
   PromQueryRequest,
   PromVectorData,
+  TransformOptions,
 } from './types';
-import { safeStringifyValue } from 'app/core/utils/explore';
-import templateSrv from 'app/features/templating/template_srv';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import TableModel from 'app/core/table_model';
-import { defaults } from 'lodash';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 
@@ -161,7 +156,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   processResult = (
-    response: any,
+    response: FetchResponse<PromDataSuccessResponse>,
     query: PromQueryRequest,
     target: PromQuery,
     responseListLength: number,
@@ -169,7 +164,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     mixedQueries?: boolean
   ) => {
     // Keeping original start/end for transformers
-    const transformerOptions = {
+    const transformerOptions: TransformOptions = {
       format: target.format,
       step: query.step,
       legendFormat: target.legendFormat,
@@ -297,7 +292,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     requestId: string,
     scopedVars: ScopedVars
   ) {
-    const observables: Array<Observable<Array<TableModel | TimeSeries>>> = queries.map((query, index) => {
+    const observables = queries.map((query, index) => {
       const target = activeTargets[index];
 
       const filterAndMapResponse = pipe(
@@ -309,14 +304,14 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       );
 
       if (query.instant) {
-        this.performInstantQuery(query, end).pipe(filterAndMapResponse);
+        return this.performInstantQuery(query, end).pipe(filterAndMapResponse);
       }
 
       return this.performTimeSeriesQuery(query, query.start, query.end).pipe(filterAndMapResponse);
     });
 
     return forkJoin(observables).pipe(
-      map((results: Array<Array<TableModel | TimeSeries>>) => {
+      map(results => {
         const data = results.reduce((result, current) => {
           return [...result, ...current];
         }, []);

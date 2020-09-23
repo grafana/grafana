@@ -1,47 +1,56 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
-import { TimeSeries, FieldType, Labels, formatLabels, QueryResultMeta } from '@grafana/data';
+import { TimeSeries, FieldType, Labels, formatLabels, QueryResultMeta, toDataFrame } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { PromDataSuccessResponse, PromMatrixData, TransformOptions } from './types';
+import { FetchResponse } from '@grafana/runtime';
 
 export class ResultTransformer {
   constructor(private templateSrv: TemplateSrv) {}
 
-  transform(response: any, options: any): Array<TableModel | TimeSeries> {
-    const prometheusResult = response.data.data.result;
+  transform(response: FetchResponse<PromDataSuccessResponse>, options: TransformOptions) {
+    const prometheusResult = response.data.data;
+
+    if (!prometheusResult.result) {
+      return [];
+    }
 
     if (options.format === 'table') {
-      return [
-        this.transformMetricDataToTable(
-          prometheusResult,
-          options.responseListLength,
-          options.refId,
-          options.meta,
-          options.valueWithRefId
-        ),
-      ];
-    } else if (prometheusResult && options.format === 'heatmap') {
+      const tableData = this.transformMetricDataToTable(
+        prometheusResult.result,
+        options.responseListLength,
+        options.refId,
+        options.meta,
+        options.valueWithRefId
+      );
+      return [toDataFrame(tableData)];
+    }
+
+    if (options.format === 'heatmap') {
       let seriesList: TimeSeries[] = [];
-      for (const metricData of prometheusResult) {
+      for (const metricData of (prometheusResult as PromMatrixData).result) {
         seriesList.push(this.transformMetricData(metricData, options, options.start, options.end));
       }
       seriesList.sort(sortSeriesByLabel);
       seriesList = this.transformToHistogramOverTime(seriesList);
-      return seriesList;
-    } else if (prometheusResult) {
-      const seriesList: TimeSeries[] = [];
-      for (const metricData of prometheusResult) {
-        if (response.data.data.resultType === 'matrix') {
-          seriesList.push(this.transformMetricData(metricData, options, options.start, options.end));
-        } else if (response.data.data.resultType === 'vector') {
-          seriesList.push(this.transformInstantMetricData(metricData, options));
-        }
-      }
-      return seriesList;
+      return seriesList.map(timeSeries => toDataFrame(timeSeries));
     }
-    return [];
+
+    const seriesList: TimeSeries[] = [];
+
+    if (prometheusResult.resultType === 'matrix') {
+      for (const metricData of prometheusResult.result) {
+        seriesList.push(this.transformMetricData(metricData, options, options.start, options.end));
+      }
+    } else if (prometheusResult.resultType === 'vector') {
+      for (const metricData of prometheusResult.result) {
+        seriesList.push(this.transformInstantMetricData(metricData, options));
+      }
+    }
+    return seriesList.map(timeSeries => toDataFrame(timeSeries));
   }
 
-  transformMetricData(metricData: any, options: any, start: number, end: number): TimeSeries {
+  transformMetricData(metricData: PromMatrixData['result'][0], options: any, start: number, end: number): TimeSeries {
     const dps = [];
     const { name, labels, title } = this.createLabelInfo(metricData.metric, options);
 
@@ -59,7 +68,7 @@ export class ResultTransformer {
         dpValue = null;
       }
 
-      const timestamp = parseFloat(value[0]) * 1000;
+      const timestamp = value[0] * 1000;
       for (let t = baseTimestamp; t < timestamp; t += stepMs) {
         dps.push([null, t]);
       }
