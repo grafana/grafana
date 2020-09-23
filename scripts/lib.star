@@ -771,7 +771,7 @@ def get_windows_steps(edition, version_mode, is_downstream=False):
         build_no = 'SOURCE_BUILD_NUMBER'
     installer_commands = [
         'cp C:\\App\\nssm-2.24.zip .',
-        'C:\\App\\grabpl.exe windows-installer --edition {} --build-id $$env:{}'.format(edition, build_no),
+        '.\\grabpl.exe windows-installer --edition {} --build-id $$env:{}'.format(edition, build_no),
     ]
     env = {}
     if version_mode == 'master':
@@ -800,7 +800,7 @@ def get_windows_steps(edition, version_mode, is_downstream=False):
             'image': wix_image,
             'commands': [
                 '$$ProgressPreference = "SilentlyContinue"',
-                'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile C:\\App\\grabpl.exe'.format(grabpl_version),
+                'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
             ],
         },
         {
@@ -840,7 +840,9 @@ def get_windows_steps(edition, version_mode, is_downstream=False):
         steps[1]['commands'].extend([
             # Need to move grafana-enterprise out of the way, so directory is empty and can be cloned into
             'mv -force grafana-enterprise C:\\App\\grafana-enterprise',
-            'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise{}'.format(source_commit)
+            'mv -force grabpl.exe C:\\App\\grabpl.exe',
+            'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise{}'.format(source_commit),
+            'cp C:\\App\\grabpl.exe grabpl.exe',
         ])
 
     return steps
