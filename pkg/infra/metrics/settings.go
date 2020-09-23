@@ -48,14 +48,14 @@ func (im *InternalMetricsService) parseGraphiteSettings() error {
 		ErrorHandling:   graphitebridge.ContinueOnError,
 	}
 
-	safeInstanceName := strings.Replace(setting.InstanceName, ".", "_", -1)
+	safeInstanceName := strings.ReplaceAll(setting.InstanceName, ".", "_")
 	prefix := graphiteSection.Key("prefix").Value()
 
 	if prefix == "" {
 		prefix = "prod.grafana.%(instance_name)s."
 	}
 
-	bridgeCfg.Prefix = strings.Replace(prefix, "%(instance_name)s", safeInstanceName, -1)
+	bridgeCfg.Prefix = strings.ReplaceAll(prefix, "%(instance_name)s", safeInstanceName)
 
 	im.graphiteCfg = bridgeCfg
 	return nil

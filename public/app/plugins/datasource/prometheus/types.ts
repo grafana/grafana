@@ -4,6 +4,7 @@ export interface PromQuery extends DataQuery {
   expr: string;
   format?: string;
   instant?: boolean;
+  range?: boolean;
   hinting?: boolean;
   interval?: string;
   intervalFactor?: number;

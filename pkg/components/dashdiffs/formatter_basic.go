@@ -155,7 +155,7 @@ func (b *BasicDiff) Basic(lines []*JSONLine) []*BasicBlock {
 					b.Block.Changes = append(b.Block.Changes, b.Change)
 
 				default:
-					//ok
+					// ok
 				}
 
 				// otherwise, we're dealing with a change at a deeper level. We

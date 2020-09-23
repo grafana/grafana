@@ -126,14 +126,6 @@ export interface SyncTimesPayload {
   syncedTimes: boolean;
 }
 
-export interface ToggleTablePayload {
-  exploreId: ExploreId;
-}
-
-export interface ToggleGraphPayload {
-  exploreId: ExploreId;
-}
-
 export interface UpdateUIStatePayload extends Partial<ExploreUIState> {
   exploreId: ExploreId;
 }
@@ -295,16 +287,6 @@ export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUp
  * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
  */
 export const updateUIStateAction = createAction<UpdateUIStatePayload>('explore/updateUIState');
-
-/**
- * Expand/collapse the table result viewer. When collapsed, table queries won't be run.
- */
-export const toggleTableAction = createAction<ToggleTablePayload>('explore/toggleTable');
-
-/**
- * Expand/collapse the graph result viewer. When collapsed, graph queries won't be run.
- */
-export const toggleGraphAction = createAction<ToggleGraphPayload>('explore/toggleGraph');
 
 /**
  * Updates datasource instance before datasouce loading has started
