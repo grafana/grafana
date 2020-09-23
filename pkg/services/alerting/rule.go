@@ -139,8 +139,9 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 		jsonModel := simplejson.NewFromAny(v)
 		if id, err := jsonModel.Get("id").Int64(); err == nil {
 			uid, err := translateNotificationIDToUID(id, ruleDef.OrgId)
-			// err != nil in the most cases means that the notifier is obsolete
-			if err == nil {
+			if err != nil {
+				logger.Error("Unable to translate notification id to uid", "error", err.Error(), "dashboardId", model.DashboardID, "alertId", model.ID, "panelId", model.PanelID, "notificationId", id)
+			} else {
 				model.Notifications = append(model.Notifications, uid)
 			}
 		} else if uid, err := jsonModel.Get("uid").String(); err == nil {
