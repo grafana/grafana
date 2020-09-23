@@ -52,6 +52,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   logLevelField?: string;
   dataLinks: DataLinkConfig[];
   languageProvider: LanguageProvider;
+  customQueryParameters: string;
 
   /** @ngInject */
   constructor(
@@ -79,6 +80,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     this.logMessageField = settingsData.logMessageField || '';
     this.logLevelField = settingsData.logLevelField || '';
     this.dataLinks = settingsData.dataLinks || [];
+    this.customQueryParameters = settingsData.customQueryParameters ?? '';
 
     if (this.logMessageField === '') {
       this.logMessageField = undefined;
@@ -559,11 +561,17 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   getMultiSearchUrl() {
+    const searchParams: string[] = [];
+
     if (this.esVersion >= 70 && this.maxConcurrentShardRequests) {
-      return `_msearch?max_concurrent_shard_requests=${this.maxConcurrentShardRequests}`;
+      searchParams.push(`max_concurrent_shard_requests=${this.maxConcurrentShardRequests}`);
     }
 
-    return '_msearch';
+    if (this.customQueryParameters !== '') {
+      searchParams.push(this.customQueryParameters);
+    }
+
+    return (`_msearch?` + searchParams.join('&')).replace(/\?+$/, '');
   }
 
   metricFindQuery(query: any) {

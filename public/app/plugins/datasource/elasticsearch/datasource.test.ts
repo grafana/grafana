@@ -864,6 +864,24 @@ describe('ElasticDatasource', function(this: any) {
       expect(typeof JSON.parse(query.split('\n')[1]).query.bool.filter[0].range['@time'].gte).toBe('number');
     });
   });
+
+  describe('getMultiSearchUrl', () => {
+    it('Should append custom query parameters from config', () => {
+      const customQueryParameters = 'my_param=1';
+      const dataSource = new ElasticDatasource(
+        {
+          jsonData: {
+            esVersion: 70,
+            customQueryParameters,
+          },
+        } as DataSourceInstanceSettings<ElasticsearchOptions>,
+        templateSrv,
+        timeSrv
+      );
+
+      expect(dataSource.getMultiSearchUrl()).toContain(customQueryParameters);
+    });
+  });
 });
 
 describe('enhanceDataFrame', () => {

@@ -75,6 +75,17 @@ export const ElasticDetails = (props: Props) => {
           />
         </div>
 
+        <div className="gf-form max-width-25">
+          <FormField
+            labelWidth={10}
+            inputWidth={15}
+            label="Custom Query Parameters"
+            value={value.jsonData.customQueryParameters || ''}
+            onChange={jsonDataChangeHandler('customQueryParameters', value, onChange)}
+            placeholder="Eg. my_param=my_value"
+          />
+        </div>
+
         <div className="gf-form">
           <span className="gf-form-select-wrapper">
             <FormField

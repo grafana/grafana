@@ -312,6 +312,7 @@ func TestClient(t *testing.T) {
 				"maxConcurrentShardRequests": 6,
 				"timeField":                  "@timestamp",
 				"interval":                   "Daily",
+				"customQueryParameters":      "my_param=my_value",
 			}),
 		}, func(sc *scenarioContext) {
 			sc.responseBody = `{
@@ -333,7 +334,8 @@ func TestClient(t *testing.T) {
 					So(sc.request, ShouldNotBeNil)
 					So(sc.request.Method, ShouldEqual, http.MethodPost)
 					So(sc.request.URL.Path, ShouldEqual, "/_msearch")
-					So(sc.request.URL.RawQuery, ShouldEqual, "max_concurrent_shard_requests=6")
+					So(sc.request.URL.RawQuery, ShouldContainSubstring, "max_concurrent_shard_requests=6")
+					So(sc.request.URL.RawQuery, ShouldContainSubstring, "my_param=my_value")
 
 					So(sc.requestBody, ShouldNotBeNil)
 
