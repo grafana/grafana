@@ -3,10 +3,9 @@ import {
   LiveChannel,
   LiveChannelScope,
   LiveChannelStatus,
-  LiveChannelPresense,
-  LiveChannelJoinLeave,
-  LiveChannelMessage,
+  LiveChannelEvent,
   LiveChannelConnectionState,
+  LiveChannelPresenseStatus,
 } from '@grafana/data';
 import Centrifuge, {
   JoinLeaveContext,
@@ -30,10 +29,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
   readonly namespace: string;
   readonly path: string;
 
-  readonly stream = new Subject<LiveChannelMessage<TMessage>>();
-
-  // When presense is enabled (rarely), this will be initalized
-  private presense?: Subject<LiveChannelPresense>;
+  readonly stream = new Subject<LiveChannelEvent<TMessage>>();
 
   /** Static definition of the channel definition.  This may describe the channel usage */
   config?: LiveChannelConfig;
@@ -64,7 +60,6 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
       // This means a message was recieved from the server
       publish: (ctx: PublicationContext) => {
         this.stream.next({
-          type: 'message',
           message: prepare(ctx.data),
         });
 
@@ -94,21 +89,19 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
 
     if (config.hasPresense) {
       events.join = (ctx: JoinLeaveContext) => {
-        const joinleave: LiveChannelJoinLeave = {
-          user: ctx.info.user,
-        };
         this.stream.next({
-          type: 'join',
-          joinleave,
+          presense: {
+            action: 'join',
+            user: ctx.info.user,
+          },
         });
       };
       events.leave = (ctx: JoinLeaveContext) => {
-        const joinleave: LiveChannelJoinLeave = {
-          user: ctx.info.user,
-        };
         this.stream.next({
-          type: 'leave',
-          joinleave,
+          presense: {
+            action: 'leave',
+            user: ctx.info.user,
+          },
         });
       };
 
@@ -124,21 +117,21 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
   }
 
   private sendStatus() {
-    this.stream.next({ type: 'status', status: { ...this.currentStatus } });
+    this.stream.next({ status: { ...this.currentStatus } });
   }
 
   /**
    * Get the stream of events and
    */
   getStream() {
-    const status: LiveChannelMessage<TMessage> = { type: 'status', status: { ...this.currentStatus } };
+    const status = { status: { ...this.currentStatus } };
     return merge(of(status), this.stream.asObservable());
   }
 
   /**
    * This is configured by the server when the config supports presense
    */
-  getPresense?: () => Promise<LiveChannelPresense>;
+  getPresense?: () => Promise<LiveChannelPresenseStatus>;
 
   /**
    * This is configured by the server when config supports writing
@@ -160,11 +153,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
 
     this.stream.complete();
 
-    if (this.presense) {
-      this.presense.complete();
-    }
-
-    this.stream.next({ type: 'status', status: { ...this.currentStatus } });
+    this.stream.next({ status: { ...this.currentStatus } });
     this.stream.complete();
 
     if (this.shutdownCallback) {

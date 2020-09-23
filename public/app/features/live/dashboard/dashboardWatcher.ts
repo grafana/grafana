@@ -1,7 +1,7 @@
 import { getGrafanaLiveSrv, getLegacyAngularInjector } from '@grafana/runtime';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 import { appEvents } from 'app/core/core';
-import { AppEvents, LiveChannel, LiveChannelScope, LiveChannelMessage, LiveChannelConfig } from '@grafana/data';
+import { AppEvents, LiveChannel, LiveChannelScope, LiveChannelEvent, LiveChannelConfig } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { DashboardChangedModal } from './DashboardChangedModal';
 import { DashboardEvent, DashboardEventAction } from './types';
@@ -50,17 +50,16 @@ class DashboardWatcher {
   }
 
   observer = {
-    next: (msg: LiveChannelMessage<DashboardEvent>) => {
-      if (msg.type === 'message') {
-        const event = msg.message as DashboardEvent;
-        if (event.action === DashboardEventAction.Saved) {
+    next: (event: LiveChannelEvent<DashboardEvent>) => {
+      if (event.message) {
+        if (event.message.action === DashboardEventAction.Saved) {
           if (this.ignoreSave) {
             this.ignoreSave = false;
             return;
           }
 
           const dash = getDashboardSrv().getCurrent();
-          if (dash.uid !== event.uid) {
+          if (dash.uid !== event.message.uid) {
             console.log('dashboard event for differnt dashboard?', event, dash);
             return;
           }
@@ -76,7 +75,7 @@ class DashboardWatcher {
           return;
         }
       }
-      console.log('DashboardEvent EVENT', msg);
+      console.log('DashboardEvent EVENT', event);
     },
   };
 

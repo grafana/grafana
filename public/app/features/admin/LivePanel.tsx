@@ -6,7 +6,7 @@ import {
   LiveChannel,
   LiveChannelConfig,
   LiveChannelConnectionState,
-  LiveChannelMessage,
+  LiveChannelEvent,
   LiveChannelScope,
   LiveChannelStatus,
 } from '@grafana/data';
@@ -39,15 +39,15 @@ export class LivePanel extends PureComponent<Props, State> {
   };
   subscription?: Unsubscribable;
 
-  streamObserver: PartialObserver<LiveChannelMessage> = {
-    next: (msg: LiveChannelMessage) => {
-      if (msg.type === 'status') {
-        this.setState({ status: msg.message as LiveChannelStatus });
+  streamObserver: PartialObserver<LiveChannelEvent> = {
+    next: (event: LiveChannelEvent) => {
+      if (event.status) {
+        this.setState({ status: event.status });
       } else {
         this.setState({
           count: this.state.count + 1,
           lastTime: Date.now(),
-          lastBody: JSON.stringify(msg),
+          lastBody: JSON.stringify(event),
         });
       }
     },

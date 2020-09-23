@@ -93,22 +93,22 @@ export interface LiveChannelStatus {
 /**
  * @experimental
  */
-export interface LiveChannelJoinLeave {
+export interface LiveChannelPresenseEvent {
+  action: 'join' | 'leave';
   user: any;
 }
 
 /**
  * @experimental
  */
-export interface LiveChannelPresense {
+export interface LiveChannelPresenseStatus {
   users: any;
 }
 
-export interface LiveChannelMessage<TMessage = any> {
-  type: 'status' | 'message' | 'join' | 'leave';
-  message?: TMessage;
+export interface LiveChannelEvent<TMessage = any> {
   status?: LiveChannelStatus;
-  joinleave?: LiveChannelJoinLeave;
+  message?: TMessage;
+  presense?: LiveChannelPresenseEvent;
 }
 
 /**
@@ -136,14 +136,14 @@ export interface LiveChannel<TMessage = any, TPublish = any> {
   /**
    * Watch all events in this channel
    */
-  getStream: () => Observable<LiveChannelMessage<TMessage>>;
+  getStream: () => Observable<LiveChannelEvent<TMessage>>;
 
   /**
    * For channels that support presense, this will request the current state from the server.
    *
    * Join and leave messages will be sent to the open stream
    */
-  getPresense?: () => Promise<LiveChannelPresense>;
+  getPresense?: () => Promise<LiveChannelPresenseStatus>;
 
   /**
    * Write a message into the channel
