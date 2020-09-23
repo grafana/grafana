@@ -88,8 +88,8 @@ FROM debian:stretch-20200908
 ENV GOVERSION=1.15.1 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=12.18.3-1nodesource1 \
-    YARNVERSION=1.22.4-1 \
+    NODEVERSION=12.18.4-1nodesource1 \
+    YARNVERSION=1.22.5-1 \
     GO111MODULE=on
 
 # Use ARG so as not to persist environment variable in image
