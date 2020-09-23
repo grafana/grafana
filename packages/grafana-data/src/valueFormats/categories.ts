@@ -20,6 +20,7 @@ import {
   toNanoSeconds,
   toSeconds,
   toTimeTicks,
+  dateTimeSystemFormatter,
 } from './dateTimeFormatters';
 import { toHex, sci, toHex0x, toPercent, toPercentUnit } from './arithmeticFormatters';
 import { binaryPrefix, currency, SIPrefix } from './symbolFormatters';
@@ -184,6 +185,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Datetime US', id: 'dateTimeAsUS', fn: dateTimeAsUS },
       { name: 'Datetime US (No date if today)', id: 'dateTimeAsUSNoDateIfToday', fn: dateTimeAsUSNoDateIfToday },
       { name: 'Datetime local', id: 'dateTimeAsLocal', fn: getDateTimeAsLocalFormat() },
+      { name: 'Datetime default', id: 'dateTimeAsSystem', fn: dateTimeSystemFormatter },
       { name: 'From Now', id: 'dateTimeFromNow', fn: dateTimeFromNow },
     ],
   },
