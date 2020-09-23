@@ -37,8 +37,7 @@ The main highlights are:
 
 You can now customize how dates are formatted in Grafana. Custom date formats apply to the time range picker, graphs, and other panel visualizations.
 
-This screenshot shows both a custom full date format with a 12 hour clock and am/pm suffix. The graph is also
-showing same 12-hour clock format and a customized month and day format compared to the Grafana default `MM/DD` format.
+This screenshot shows both a custom full date format with a 12 hour clock and am/pm suffix. The graph is also showing the same 12-hour clock format and a customized month and day format compared to the Grafana default `MM/DD` format.
 
 {{< docs-imagebox img="/img/docs/v72/date_formats.png" max-width="800px" caption="Custom date time formats" >}}
 
@@ -92,6 +91,8 @@ Grafana 7.2 includes the following transformation enhancements:
 The up and down arrows, which were previously the only way to change query order, have been removed. Instead, there is now a grab icon that allows you to drag and drop queries in a list to change their order.
 
 {{< docs-imagebox img="/img/docs/v72/drag-queries.gif" max-width="800px" caption="Drag to reorder queries" >}}
+
+The [Queries]({{< relref "../panels/queries.md" >}}) topic has been updated as a result of this change.
 
 ## Inspect queries in Explore
 
