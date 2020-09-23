@@ -29,11 +29,13 @@ Before you can configure and apply transformations:
 
 - You must have entered a query and returned data from a data source. For more information on queries, refer to [Queries]({{< relref "../queries.md" >}}).
   
-- You must have applied a visualization that supports queries. Examples are:
-  - [Bar gauge]({{< relref "../visualizations/bar-gauge-panel.md" >}})
-  - [Gauge]({{< relref "../visualizations/gauge-panel.md" >}})
-  - [Graph]({{< relref "../visualizations/graph-panel.md" >}})
-  - [Heatmap]({{< relref "../visualizations/heatmap.md" >}})
-  - [Logs]({{< relref "../visualizations/logs-panel.md" >}})
-  - [Stat]({{< relref "../visualizations/stat-panel.md" >}})
-  - [Table]({{< relref "../visualizations/table-panel.md" >}})
+- You must have applied a visualization that supports your query.  Different transformations can produce data structure that only some visualizations show. For example the Graph visualization cannot show reduced data (that results from the reduce transform). As a good practice, always switch to Table to check the result of a transform if what your current visualization does not show what you expect after applying a transform.
+
+  Grafana supports the following types of visualizations:
+    - [Bar gauge]({{< relref "../visualizations/bar-gauge-panel.md" >}})
+    - [Gauge]({{< relref "../visualizations/gauge-panel.md" >}})
+    - [Graph]({{< relref "../visualizations/graph-panel.md" >}})
+    - [Heatmap]({{< relref "../visualizations/heatmap.md" >}})
+    - [Logs]({{< relref "../visualizations/logs-panel.md" >}})
+    - [Stat]({{< relref "../visualizations/stat-panel.md" >}})
+    - [Table]({{< relref "../visualizations/table-panel.md" >}})
