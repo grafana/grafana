@@ -29,7 +29,7 @@ export const ValueMappingsEditor: React.FC<Props> = ({ value, onChange, children
   };
 
   const onRemove = (index: number) => {
-    onChange(value.filter((_, i) => i === index));
+    onChange(value.filter((_, i) => i !== index));
   };
 
   const onMappingChange = (update: ValueMapping) => {
