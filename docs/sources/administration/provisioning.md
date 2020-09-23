@@ -338,7 +338,7 @@ providers:
 
 ## Alert Notification Channels
 
-Alert Notification Channels can be provisioned by adding one or more yaml config files in the [`provisioning/notifiers`](/administration/configuration/#provisioning) directory.
+Alert Notification Channels can be provisioned by adding one or more YAML config files in the [`provisioning/notifiers`](/administration/configuration/#provisioning) directory.
 
 Each config file can contain the following top-level fields:
 
