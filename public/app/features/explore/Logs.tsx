@@ -266,8 +266,6 @@ export class Logs extends PureComponent<Props, State> {
             absoluteRange={visibleRange || absoluteRange}
             isStacked={true}
             showPanel={false}
-            showingGraph={true}
-            showingTable={true}
             timeZone={timeZone}
             showBars={true}
             showLines={false}

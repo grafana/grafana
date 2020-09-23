@@ -243,7 +243,7 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 			case *diff.Object:
 				switch value.(type) {
 				case map[string]interface{}:
-					//ok
+					// ok
 				default:
 					return errors.New("Type mismatch")
 				}
@@ -268,7 +268,7 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 			case *diff.Array:
 				switch value.(type) {
 				case []interface{}:
-					//ok
+					// ok
 				default:
 					return errors.New("Type mismatch")
 				}
