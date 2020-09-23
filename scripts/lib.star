@@ -50,11 +50,17 @@ def pr_pipelines(edition):
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
     ]
+    windows_steps = get_windows_steps(edition=edition, version_mode='pr')
+    trigger = {
+        'event': ['pull_request',],
+    }
     return [
         pipeline(
-            name='test-pr', edition=edition, trigger={
-                'event': ['pull_request',],
-            }, services=services, steps=steps
+            name='test-pr', edition=edition, trigger=trigger, services=services, steps=steps
+        ),
+        pipeline(
+            name='windows-pr', edition=edition, trigger=trigger, steps=windows_steps, platform='windows',
+            depends_on=['test-pr'],
         ),
     ]
 
@@ -122,7 +128,7 @@ def master_pipelines(edition):
             name='build-master', edition=edition, trigger=trigger, services=services, steps=steps
         ),
         pipeline(
-            name='windows-installer-master', edition=edition, trigger=trigger, steps=windows_steps, platform='windows',
+            name='windows-master', edition=edition, trigger=trigger, steps=windows_steps, platform='windows',
             depends_on=['build-master'],
         ),
     ]
@@ -137,7 +143,7 @@ def master_pipelines(edition):
             is_downstream=True,
         ))
         pipelines.append(pipeline(
-            name='windows-installer-master-downstream', edition=edition, trigger=trigger, steps=windows_steps,
+            name='windows-master-downstream', edition=edition, trigger=trigger, steps=windows_steps,
             platform='windows', depends_on=['build-master-downstream'], is_downstream=True,
         ))
 
@@ -751,7 +757,7 @@ def publish_packages_step(edition, is_downstream):
         ],
     }
 
-def get_windows_steps(edition, version_mode, is_downstream):
+def get_windows_steps(edition, version_mode, is_downstream=False):
     if not is_downstream:
         source_commit = ''
     else:
@@ -765,21 +771,30 @@ def get_windows_steps(edition, version_mode, is_downstream):
     else:
         build_no = 'SOURCE_BUILD_NUMBER'
     installer_commands = [
-        '$$gcpKey = $$env:GCP_KEY',
-        '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json',
-        # gcloud fails to read the file unless converted with dos2unix
-        'dos2unix gcpkey.json',
-        'gcloud auth activate-service-account --key-file=gcpkey.json',
-        'rm gcpkey.json',
         'cp C:\\App\\nssm-2.24.zip .',
         'C:\\App\\grabpl.exe windows-installer --edition {} --build-id $$env:{}'.format(edition, build_no),
     ]
-    if edition != 'enterprise' or is_downstream:
-        installer_commands.extend([
-            '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
-            'gsutil cp $$fname gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
-            'gsutil cp $$fname.sha256 gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
-        ])
+    env = {}
+    if version_mode == 'master':
+        installer_commands = [
+            '$$gcpKey = $$env:GCP_KEY',
+            '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json',
+            # gcloud fails to read the file unless converted with dos2unix
+            'dos2unix gcpkey.json',
+            'gcloud auth activate-service-account --key-file=gcpkey.json',
+            'rm gcpkey.json',
+        ] + installer_commands
+        env = {
+            'GCP_KEY': {
+                'from_secret': 'gcp_key',
+            },
+        }
+        if edition != 'enterprise' or is_downstream:
+            installer_commands.extend([
+                '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
+                'gsutil cp $$fname gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
+                'gsutil cp $$fname.sha256 gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
+            ])
     steps = [
         {
             'name': 'initialize',
@@ -792,11 +807,7 @@ def get_windows_steps(edition, version_mode, is_downstream):
         {
             'name': 'build-windows-installer',
             'image': wix_image,
-            'environment': {
-                'GCP_KEY': {
-                    'from_secret': 'gcp_key',
-                },
-            },
+            'environment': env,
             'commands': installer_commands,
             'depends_on': [
                 'initialize',

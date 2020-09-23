@@ -224,6 +224,43 @@ trigger:
 ---
 kind: pipeline
 type: docker
+name: windows-pr
+
+platform:
+  os: windows
+  arch: amd64
+  version: 1809
+
+steps:
+- name: identify-runner
+  image: mcr.microsoft.com/windows:1809
+  commands:
+  - echo $env:DRONE_RUNNER_NAME
+
+- name: initialize
+  image: grafana/ci-wix:0.1.1
+  commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.10/windows/grabpl.exe -OutFile C:\App\grabpl.exe
+
+- name: build-windows-installer
+  image: grafana/ci-wix:0.1.1
+  commands:
+  - cp C:\App\nssm-2.24.zip .
+  - C:\App\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
+  depends_on:
+  - initialize
+
+trigger:
+  event:
+  - pull_request
+
+depends_on:
+- test-pr
+
+---
+kind: pipeline
+type: docker
 name: build-master
 
 platform:
@@ -536,7 +573,7 @@ trigger:
 ---
 kind: pipeline
 type: docker
-name: windows-installer-master
+name: windows-master
 
 platform:
   os: windows
