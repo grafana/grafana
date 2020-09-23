@@ -86,8 +86,8 @@ func (hs *HTTPServer) Init() error {
 		hs.Live = node
 
 		// Spit random walk to example
-		go live.RunRandomCSV(hs.Live, "random-2s-stream", 2000, 0)
-		go live.RunRandomCSV(hs.Live, "random-flakey-stream", 400, .6)
+		go live.RunRandomCSV(hs.Live, "grafana/testdata/random-2s-stream", 2000, 0)
+		go live.RunRandomCSV(hs.Live, "grafana/testdata/random-flakey-stream", 400, .6)
 	}
 
 	hs.macaron = hs.newMacaron()

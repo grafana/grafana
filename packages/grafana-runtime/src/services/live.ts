@@ -1,24 +1,5 @@
+import { LiveChannel, LiveChannelScope } from '@grafana/data';
 import { Observable } from 'rxjs';
-
-/**
- * @experimental
- */
-export interface ChannelHandler<T = any> {
-  /**
-   * Process the raw message from the server before broadcasting it
-   * to all subscribeers on this channel
-   */
-  onPublish(msg: any): T;
-}
-
-// export interface SubscriptionEvents {
-//   publish?: (ctx: PublicationContext) => void;
-//   join?: (ctx: JoinLeaveContext) => void;
-//   leave?: (ctx: JoinLeaveContext) => void;
-//   subscribe?: (ctx: SubscribeSuccessContext) => void;
-//   error?: (ctx: SubscribeErrorContext) => void;
-//   unsubscribe?: (ctx: UnsubscribeContext) => void;
-// }
 
 /**
  * @experimental
@@ -30,24 +11,23 @@ export interface GrafanaLiveSrv {
   isConnected(): boolean;
 
   /**
-   * Listen for changes to the connection state
+   * Listen for changes to the main service
    */
   getConnectionState(): Observable<boolean>;
 
   /**
-   * Configure a channel with the given setup
+   * Get a channel.  If the scope, namespace, or path is invalid, a shutdown
+   * channel will be returned with an error state indicated in its status.
+   *
+   * This is a singleton instance that stays active until explicitly shutdown.
+   * Multiple requests for this channel will return the same object until
+   * the channel is shutdown
    */
-  initChannel<T>(channel: string, handler: ChannelHandler<T>): void;
-
-  /**
-   * Subscribe to activity on a given channel
-   */
-  getChannelStream<T>(channel: string): Observable<T>;
-
-  /**
-   * Send data to a channel.  This feature is disabled for most channels and will return an error
-   */
-  publish<T>(channel: string, data: any): Promise<T>;
+  getChannel<TMessage, TPublish>(
+    scope: LiveChannelScope,
+    namespace: string,
+    path: string
+  ): LiveChannel<TMessage, TPublish>;
 }
 
 let singletonInstance: GrafanaLiveSrv;
