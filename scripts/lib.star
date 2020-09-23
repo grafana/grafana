@@ -796,12 +796,12 @@ def get_windows_steps(edition, version_mode, is_downstream):
     if edition == 'enterprise':
         # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
         commands = [
-            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
+            'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
         ]
         if not is_downstream:
             commands.extend([
                 'cd grafana-enterprise',
-                'git checkout ${DRONE_COMMIT}',
+                'git checkout $$env:DRONE_COMMIT',
             ])
         steps.insert(0, {
             'name': 'clone',
