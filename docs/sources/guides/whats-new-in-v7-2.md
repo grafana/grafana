@@ -26,7 +26,7 @@ The main highlights are:
 - [**Drag to reorder queries**]({{< relref "#drag-to-reorder-queries" >}})
 - [**Inspect queries in Explore**]({{< relref "#inspect-queries-in-explore" >}})
 - [**$__rate_interval for Prometheus**]({{< relref "#__rate_interval-for-prometheus" >}})
-- [**Toggle parsed Loki fields**]({{< relref "#toggle-parsed-loki-fields" >}})
+- [**Toggle parsed log fields**]({{< relref "#toggle-parsed-log-fields" >}})
 - [**Sensitive alert channel settings are now encrypted**]({{< relref "#sensitive-alert-channel-settings-are-now-encrypted" >}})
 - [**Grafana Enterprise features**]({{< relref "#grafana-enterprise-features" >}})
   - [**Report time range**]({{< relref "#report-time-range" >}})
@@ -99,11 +99,13 @@ You can enjoy all the details query inspector gave you in dashboards now in Expl
 
 You can now use the new variable `$__rate_interval` in Prometheus for rate functions mainly. `$__rate_interval` in general is one scrape interval larger than `$__interval` but is never smaller than four times the scrape interval (which is 15s by default). See the [Prometheus data source]({{< relref "../features/datasources/prometheus.md#using-__rate_interval-variable" >}}) for more details.
 
-## Toggle parsed Loki fields
+## Toggle parsed log fields
 
-With this awesome contribution from one of our community members, you can now toggle parsed fields in Explore.
+With this awesome contribution from one of our community members, you can now toggle parsed fields in Explore if your logs are structured in `json` or `logfmt`.
 
 {{< docs-imagebox img="/img/docs/v72/explore-toggle-parsed-fields.gif" max-width="800px" caption="Toggling parsed fields in Explore" >}}
+
+The [Toggle parsed fields]({{< relref "../features/explore/index.md#toggle-parsed-fields" >}}) section has been added to [Explore]({{< relref "../features/explore/index.md" >}}) as a result of this feature.
 
 ## Sensitive alert channel settings are now encrypted
 
