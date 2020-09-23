@@ -1,7 +1,5 @@
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20200803-slim AS toolchain
-
-ARG OSX_SDK_URL
+FROM debian:stretch-20200908-slim AS toolchain
 
 ENV OSX_MIN=10.10 \
     CTNG=1.24.0 \
@@ -49,7 +47,7 @@ RUN apt-get update && \
         lzma-dev
 RUN git clone https://github.com/tpoechtrager/osxcross.git /tmp/osxcross && \
       cd /tmp/osxcross && git reset --hard $OSX_CROSS_REV
-RUN curl -fL "${OSX_SDK_URL}" -o /tmp/osxcross/tarballs/$(echo "${OSX_SDK_URL}" | grep -E 'MacOSX[^?]+' -o)
+COPY MacOSX10.15.sdk.tar.xz /tmp/osxcross/tarballs/
 RUN ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil
 RUN UNATTENDED=1 OSX_VERSION_MIN=${OSX_MIN} /tmp/osxcross/build.sh
 RUN rm -rf /tmp/osxcross/target/SDK/*/usr/share && \
@@ -85,7 +83,7 @@ RUN mv golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64/golangci-lint /tmp/
 
 # Base image to crossbuild grafana.
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20200803
+FROM debian:stretch-20200908
 
 ENV GOVERSION=1.15.1 \
     PATH=/usr/local/go/bin:$PATH \
