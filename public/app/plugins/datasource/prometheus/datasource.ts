@@ -1,5 +1,6 @@
 // Libraries
 import cloneDeep from 'lodash/cloneDeep';
+import LRU from 'lru-cache';
 // Services & Utils
 import {
   AnnotationEvent,
@@ -66,7 +67,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   directUrl: string;
   basicAuth: any;
   withCredentials: any;
-  metricsNameCache: any;
+  metricsNameCache = new LRU<string, string[]>(10);
   interval: string;
   queryTimeout: string;
   httpMethod: string;
@@ -522,17 +523,36 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   };
 
   async performSuggestQuery(query: string, cache = false) {
-    if (cache && this.metricsNameCache?.expire > Date.now()) {
-      return this.metricsNameCache.data.filter((metricName: any) => metricName.indexOf(query) !== 1);
+    let range = this.getTimeRange();
+    const params = new URLSearchParams({
+      start: range.start.toString(),
+      end: range.end.toString(),
+    });
+    const baseURL = '/api/v1/label/__name__/values';
+    const url = `${baseURL}?${params.toString()}`;
+
+    // Round down a minute.
+    params.set('start', (range.start - (range.start % 60)).toString());
+    // Round up a minute.
+    params.set('end', (range.end - (range.end % 60) + 60).toString());
+    const cacheKey = `${baseURL}?${params.toString()}`;
+
+    let value: string[] = [];
+    if (cache) {
+      let val = this.metricsNameCache.get(cacheKey);
+      if (val) {
+        return val.filter((metricName: any) => metricName.indexOf(query) !== 1);
+      }
+
+      const response: PromLabelQueryResponse = await this.metadataRequest(url);
+      value = response.data.data;
+      this.metricsNameCache.set(cacheKey, value);
+    } else {
+      const response: PromLabelQueryResponse = await this.metadataRequest(url);
+      value = response.data.data;
     }
 
-    const response: PromLabelQueryResponse = await this.metadataRequest('/api/v1/label/__name__/values');
-    this.metricsNameCache = {
-      data: response.data.data,
-      expire: Date.now() + 60 * 1000,
-    };
-
-    return response.data.data.filter(metricName => metricName.indexOf(query) !== 1);
+    return value.filter((metricName: any) => metricName.indexOf(query) !== 1);
   }
 
   metricFindQuery(query: string) {
