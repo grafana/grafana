@@ -69,11 +69,13 @@ You can now dynamically apply value filters to any table column. This option is 
 
 {{< docs-imagebox img="/img/docs/v72/table_column_filters.png" max-width="800px" caption="Table column filters" >}}
 
+[Filter table columns]({{< relref "../panels/visualizations/table/filter-table-columns.md" >}}) has been added as a result of this feature.
+
 ### New field override selection options
 
 You can now add override rules that use a regex matcher to choose which fields to apply rules to.
 
-The [Field options]({{< relref "../panels/field-options.md" >}}) content has been updated as a result of these changes.
+The [Field options]({{< relref "../panels/field-options/_index.md" >}}) content and [Configure specific fields]({{< relref "../panels/field-options/configure-specific-fields.md" >}}) have been updated as a result of these changes.
 
 ## New transformations and enhancements
 
