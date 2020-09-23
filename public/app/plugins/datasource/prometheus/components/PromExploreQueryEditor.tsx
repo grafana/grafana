@@ -14,7 +14,7 @@ import { PromExploreExtraField } from './PromExploreExtraField';
 export type Props = ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions>;
 
 export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
-  const { query, data, datasource, history, onChange, onRunQuery } = props;
+  const { range, query, data, datasource, history, onChange, onRunQuery } = props;
 
   function onChangeQueryStep(value: string) {
     const { query, onChange } = props;
@@ -52,6 +52,7 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
       <PromQueryField
         datasource={datasource}
         query={query}
+        range={range}
         onRunQuery={onRunQuery}
         onChange={onChange}
         onBlur={() => {}}
