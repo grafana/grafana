@@ -372,7 +372,7 @@ It's now possible to configure data sources using config files with Grafana's pr
 
 Here are some provisioning examples for this data source.
 
-### Using credentials profile name (non default) 
+### Using credentials profile name (non-default) 
 
 ```yaml
 apiVersion: 1

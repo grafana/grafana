@@ -114,7 +114,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const { regions } = this.state;
     const { options } = this.props;
     const secureJsonData = (options.secureJsonData || {}) as CloudWatchSecureJsonData;
-    var profile = options.jsonData.profile;
+    let profile = options.jsonData.profile;
     if (!profile) {
       profile = options.database;
     }
