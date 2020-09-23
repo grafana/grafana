@@ -1,4 +1,5 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { FetchError } from '@grafana/runtime';
 
 export interface PromQuery extends DataQuery {
   expr: string;
@@ -40,4 +41,58 @@ export interface PromMetricsMetadataItem {
 
 export interface PromMetricsMetadata {
   [metric: string]: PromMetricsMetadataItem[];
+}
+
+export interface PromDataSuccessResponse<T = PromData> {
+  status: 'success';
+  data: T;
+}
+
+export interface PromDataErrorResponse<T = PromData> {
+  status: 'error';
+  errorType: string;
+  error: string;
+  data: T;
+}
+
+export type PromData = PromMatrixData | PromVectorData | PromScalarData;
+
+export interface PromVectorData {
+  resultType: 'vector';
+  result: Array<{
+    metric: {
+      __name__?: string;
+      [index: string]: any;
+    };
+    value: PromValue;
+  }>;
+}
+
+export interface PromMatrixData {
+  resultType: 'matrix';
+  result: Array<{
+    metric: {
+      __name__?: string;
+      [index: string]: any;
+    };
+    values: PromValue[];
+  }>;
+}
+
+export interface PromScalarData {
+  resultType: 'scalar';
+  result: PromValue;
+}
+
+export type PromValue = [number, any];
+
+export function isFetchErrorResponse(response: any): response is FetchError {
+  return 'cancelled' in response;
+}
+export interface PromLabelQueryResponse {
+  data: {
+    status: string;
+    data: string[];
+  };
+  cancelled?: boolean;
 }

@@ -7,7 +7,6 @@ import {
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
-  DataQueryResponseData,
   DataSourceApi,
   DataSourceInstanceSettings,
   dateMath,
@@ -18,18 +17,28 @@ import {
   TimeSeries,
   rangeUtil,
 } from '@grafana/data';
-import { forkJoin, merge, Observable, of, throwError } from 'rxjs';
+import { forkJoin, merge, Observable, of, throwError, pipe } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
 // Types
-import { PromOptions, PromQuery, PromQueryRequest } from './types';
+import {
+  isFetchErrorResponse,
+  PromDataErrorResponse,
+  PromDataSuccessResponse,
+  PromLabelQueryResponse,
+  PromMatrixData,
+  PromOptions,
+  PromQuery,
+  PromQueryRequest,
+  PromVectorData,
+} from './types';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import templateSrv from 'app/features/templating/template_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -37,26 +46,6 @@ import TableModel from 'app/core/table_model';
 import { defaults } from 'lodash';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
-
-export interface PromDataQueryResponse {
-  data: {
-    status: string;
-    data: {
-      resultType: string;
-      results?: DataQueryResponseData[];
-      result?: DataQueryResponseData[];
-    };
-  };
-  cancelled?: boolean;
-}
-
-export interface PromLabelQueryResponse {
-  data: {
-    status: string;
-    data: string[];
-  };
-  cancelled?: boolean;
-}
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
@@ -276,11 +265,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const subQueries = queries.map((query, index) => {
       const target = activeTargets[index];
 
-      let observable = query.instant
-        ? this.performInstantQuery(query, end)
-        : this.performTimeSeriesQuery(query, query.start, query.end);
-
-      return observable.pipe(
+      const filterAndMapResponse = pipe(
         // Decrease the counter here. We assume that each request returns only single value and then completes
         // (should hold until there is some streaming requests involved).
         tap(() => runningQueriesCount--),
@@ -294,6 +279,12 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           } as DataQueryResponse;
         })
       );
+
+      if (query.instant) {
+        return this.performInstantQuery(query, end).pipe(filterAndMapResponse);
+      }
+
+      return this.performTimeSeriesQuery(query, query.start, query.end).pipe(filterAndMapResponse);
     });
 
     return merge(...subQueries);
@@ -309,17 +300,19 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const observables: Array<Observable<Array<TableModel | TimeSeries>>> = queries.map((query, index) => {
       const target = activeTargets[index];
 
-      let observable = query.instant
-        ? this.performInstantQuery(query, end)
-        : this.performTimeSeriesQuery(query, query.start, query.end);
-
-      return observable.pipe(
+      const filterAndMapResponse = pipe(
         filter((response: any) => (response.cancelled ? false : true)),
         map((response: any) => {
           const data = this.processResult(response, query, target, queries.length, scopedVars);
           return data;
         })
       );
+
+      if (query.instant) {
+        this.performInstantQuery(query, end).pipe(filterAndMapResponse);
+      }
+
+      return this.performTimeSeriesQuery(query, query.start, query.end).pipe(filterAndMapResponse);
     });
 
     return forkJoin(observables).pipe(
@@ -458,8 +451,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
     }
 
-    return this._request(url, data, { requestId: query.requestId, headers: query.headers }).pipe(
-      catchError(err => {
+    return this._request<PromDataSuccessResponse<PromMatrixData>>(url, data, {
+      requestId: query.requestId,
+      headers: query.headers,
+    }).pipe(
+      catchError((err: FetchError<PromDataErrorResponse<PromMatrixData>>) => {
         if (err.cancelled) {
           return of(err);
         }
@@ -486,8 +482,12 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
     }
 
-    return this._request(url, data, { requestId: query.requestId, headers: query.headers }).pipe(
-      catchError(err => {
+    // This can return a scalar data as well
+    return this._request<PromDataSuccessResponse<PromVectorData>>(url, data, {
+      requestId: query.requestId,
+      headers: query.headers,
+    }).pipe(
+      catchError((err: FetchError<PromDataErrorResponse<PromVectorData>>) => {
         if (err.cancelled) {
           return of(err);
         }
@@ -596,15 +596,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const query = this.createQuery(queryModel, queryOptions, start, end);
 
     const self = this;
-    const response: PromDataQueryResponse = await this.performTimeSeriesQuery(
-      query,
-      query.start,
-      query.end
-    ).toPromise();
+    const response = await this.performTimeSeriesQuery(query, query.start, query.end).toPromise();
     const eventList: AnnotationEvent[] = [];
     const splitKeys = tagKeys.split(',');
 
-    if (response.cancelled) {
+    if (isFetchErrorResponse(response) && response.cancelled) {
       return [];
     }
 
@@ -627,8 +623,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         value[0] = timestampValue;
       });
 
-      const activeValues = series.values.filter((value: Record<number, string>) => parseFloat(value[1]) >= 1);
-      const activeValuesTimestamps: number[] = activeValues.map((value: number[]) => value[0]);
+      const activeValues = series.values.filter(value => parseFloat(value[1]) >= 1);
+      const activeValuesTimestamps = activeValues.map(value => value[0]);
 
       // Instead of creating singular annotation for each active event we group events into region if they are less
       // then `step` apart.
@@ -683,7 +679,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const response = await this.performInstantQuery(query, now / 1000).toPromise();
     return response.data.status === 'success'
       ? { status: 'success', message: 'Data source is working' }
-      : { status: 'error', message: response.error };
+      : { status: 'error', message: response.data.error };
   }
 
   interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
