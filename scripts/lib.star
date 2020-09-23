@@ -769,31 +769,6 @@ def get_windows_steps(edition, version_mode, is_downstream=False):
         build_no = 'DRONE_BUILD_NUMBER'
     else:
         build_no = 'SOURCE_BUILD_NUMBER'
-    installer_commands = [
-        'cp C:\\App\\nssm-2.24.zip .',
-        '.\\grabpl.exe windows-installer --edition {} --build-id $$env:{}'.format(edition, build_no),
-    ]
-    env = {}
-    if version_mode == 'master':
-        installer_commands = [
-            '$$gcpKey = $$env:GCP_KEY',
-            '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json',
-            # gcloud fails to read the file unless converted with dos2unix
-            'dos2unix gcpkey.json',
-            'gcloud auth activate-service-account --key-file=gcpkey.json',
-            'rm gcpkey.json',
-        ] + installer_commands
-        env = {
-            'GCP_KEY': {
-                'from_secret': 'gcp_key',
-            },
-        }
-        if edition != 'enterprise' or is_downstream:
-            installer_commands.extend([
-                '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
-                'gsutil cp $$fname gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
-                'gsutil cp $$fname.sha256 gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
-            ])
     steps = [
         {
             'name': 'initialize',
@@ -803,16 +778,37 @@ def get_windows_steps(edition, version_mode, is_downstream=False):
                 'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
             ],
         },
-        {
+    ]
+    if version_mode == 'master':
+        installer_commands = [
+            '$$gcpKey = $$env:GCP_KEY',
+            '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json',
+            # gcloud fails to read the file unless converted with dos2unix
+            'dos2unix gcpkey.json',
+            'gcloud auth activate-service-account --key-file=gcpkey.json',
+            'rm gcpkey.json',
+            'cp C:\\App\\nssm-2.24.zip .',
+            '.\\grabpl.exe windows-installer --edition {} --build-id $$env:{}'.format(edition, build_no),
+        ]
+        if edition != 'enterprise' or is_downstream:
+            installer_commands.extend([
+                '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
+                'gsutil cp $$fname gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
+                'gsutil cp $$fname.sha256 gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
+            ])
+        steps.append({
             'name': 'build-windows-installer',
             'image': wix_image,
-            'environment': env,
+            'environment': {
+                'GCP_KEY': {
+                    'from_secret': 'gcp_key',
+                },
+            },
             'commands': installer_commands,
             'depends_on': [
                 'initialize',
             ],
-        },
-    ]
+        })
 
     if edition == 'enterprise':
         # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
@@ -839,8 +835,10 @@ def get_windows_steps(edition, version_mode, is_downstream=False):
         ]
         steps[1]['commands'].extend([
             # Need to move grafana-enterprise out of the way, so directory is empty and can be cloned into
-            'mv -force grafana-enterprise C:\\App\\grafana-enterprise',
-            'mv -force grabpl.exe C:\\App\\grabpl.exe',
+            'cp -r grafana-enterprise C:\\App\\grafana-enterprise',
+            'rm -r -force grafana-enterprise',
+            'cp grabpl.exe C:\\App\\grabpl.exe',
+            'rm -force grabpl.exe',
             'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise{}'.format(source_commit),
             'cp C:\\App\\grabpl.exe grabpl.exe',
         ])
