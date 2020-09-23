@@ -1,4 +1,4 @@
-build_image = 'grafana/build-container:1.2.26'
+build_image = 'grafana/build-container:1.2.27'
 publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.2.0'
 alpine_image = 'alpine:3.12'

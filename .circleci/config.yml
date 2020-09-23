@@ -33,7 +33,7 @@ executors:
       - image: srclosson/grafana-plugin-ci-e2e:latest
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.26
+      - image: grafana/build-container:1.2.27
   grafana-publish:
     docker:
       - image: grafana/grafana-ci-deploy:1.2.5
