@@ -100,7 +100,7 @@ The top header has gotten a major streamlining in Grafana V2.0.
 5. `Save dashboard`: Save the current Dashboard with the current name.
 6. `Settings`: Manage Dashboard settings and features such as Templating, Annotations and the name.
 
-> **Note** In Grafana v2.0 when you change the title of a dashboard and then save it it will no
+> **Note** In Grafana v2.0 when you change the title of a dashboard and then save it, it will no
 > longer create a new Dashboard. It will just change the name for the current Dashboard.
 > To change name and create a new Dashboard use the `Save As...` menu option
 
