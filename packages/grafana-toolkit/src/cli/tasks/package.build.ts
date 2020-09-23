@@ -3,7 +3,6 @@ import execa = require('execa');
 import * as fs from 'fs';
 // @ts-ignore
 import * as path from 'path';
-import { resolve as resolvePath } from 'path';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 import { Task, TaskRunner } from './task';
@@ -89,13 +88,13 @@ const moveFiles = () => {
   })();
 };
 
-const moveStaticFiles = async (pkg: any, cwd: string) => {
+const moveStaticFiles = async (pkg: any) => {
   if (pkg.name.endsWith('/ui')) {
-    const staticFiles = await globby(resolvePath(process.cwd(), 'src/**/*.+(png|svg|gif|jpg)'));
+    const staticFiles = await globby('src/**/*.{png,svg,gif,jpg}');
     return useSpinner<void>(`Moving static files`, async () => {
       const promises = staticFiles.map(file => {
         return new Promise((resolve, reject) => {
-          fs.copyFile(file, `${cwd}/compiled/${file.replace(`${cwd}/src`, '')}`, (err: any) => {
+          fs.copyFile(file, file.replace(/^src/, 'compiled'), (err: any) => {
             if (err) {
               reject(err);
               return;
@@ -130,7 +129,7 @@ const buildTaskRunner: TaskRunner<PackageBuildOptions> = async ({ scope }) => {
 
       await clean();
       await compile();
-      await moveStaticFiles(pkg, cwd);
+      await moveStaticFiles(pkg);
       await rollup();
       await preparePackage(pkg);
       await moveFiles();
