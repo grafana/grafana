@@ -2248,5 +2248,6 @@
   "timezone": "Africa/Accra",
   "title": "Graph NG - tests",
   "uid": "TkZXxlNG3",
-  "version": 61
+  "version": 61,
+  "tags": ["gdev", "panel-tests", "graph"]
 }
