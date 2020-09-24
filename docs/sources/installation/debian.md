@@ -167,7 +167,7 @@ Start Grafana by running:
 - Installs configuration file to `/etc/grafana/grafana.ini`
 - Installs systemd service (if systemd is available) name `grafana-server.service`
 - The default configuration sets the log file at `/var/log/grafana/grafana.log`
-- The default configuration specifies an sqlite3 db at `/var/lib/grafana/grafana.db`
+- The default configuration specifies a SQLite3 db at `/var/lib/grafana/grafana.db`
 - Installs HTML/JS/CSS and other Grafana files at `/usr/share/grafana`
 
 ## Next steps
