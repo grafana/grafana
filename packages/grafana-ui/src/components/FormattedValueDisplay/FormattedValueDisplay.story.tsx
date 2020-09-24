@@ -4,7 +4,7 @@ import { withCenteredStory } from '@grafana/ui/src/utils/storybook/withCenteredS
 import mdx from './FormattedValueDisplay.mdx';
 
 export default {
-  title: 'Others/FormattedValueDisplay',
+  title: 'Visualizations/FormattedValueDisplay',
   component: FormattedValueDisplay,
   decorators: [withCenteredStory],
   parameters: {
