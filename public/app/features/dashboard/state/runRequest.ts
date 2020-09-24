@@ -1,6 +1,6 @@
 // Libraries
 import { Observable, of, timer, merge, from } from 'rxjs';
-import { flatten, map as lodashMap, isArray, isString } from 'lodash';
+import { map as isArray, isString } from 'lodash';
 import { map, catchError, takeUntil, mapTo, share, finalize, tap } from 'rxjs/operators';
 // Utils & Services
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -17,8 +17,6 @@ import {
   toDataFrame,
   DataFrame,
   guessFieldTypes,
-  DataTopic,
-  KeyValue,
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
 import { emitDataRequestEvent } from './analyticsProcessor';
@@ -35,11 +33,7 @@ interface RunningQueryState {
 /*
  * This function should handle composing a PanelData from multiple responses
  */
-export function processResponsePacket(
-  packet: DataQueryResponse,
-  state: RunningQueryState,
-  queryTopics?: KeyValue<DataTopic>
-): RunningQueryState {
+export function processResponsePacket(packet: DataQueryResponse, state: RunningQueryState): RunningQueryState {
   const request = state.panelData.request!;
   const packets: MapOfResponsePackets = {
     ...state.packets,
@@ -60,29 +54,32 @@ export function processResponsePacket(
       }
     : range;
 
-  const combinedData = flatten(
-    lodashMap(packets, (packet: DataQueryResponse) => {
-      if (packet.error) {
-        loadingState = LoadingState.Error;
-        error = packet.error;
+  const series: DataQueryResponseData[] = [];
+  const annotations: DataQueryResponseData[] = [];
+
+  for (const key in packets) {
+    const packet = packets[key];
+
+    if (packet.error) {
+      loadingState = LoadingState.Error;
+      error = packet.error;
+    }
+
+    if (packet.data && packet.data.length) {
+      for (const dataItem of packet.data) {
+        if (dataItem.meta?.dataTopic) {
+          annotations.push(dataItem);
+        }
+
+        series.push(dataItem);
       }
-      if (queryTopics && packet.data) {
-        return packet.data.map(f => {
-          const topic = queryTopics[f.refId];
-          if (topic && f.meta?.dataTopic !== topic) {
-            // TODO-- savely set the topic
-            console.log('SET TOPIC', f, topic);
-          }
-          return f;
-        });
-      }
-      return packet.data;
-    })
-  );
+    }
+  }
 
   const panelData = {
     state: loadingState,
-    series: combinedData,
+    series,
+    annotations,
     error,
     request,
     timeRange,
@@ -117,17 +114,6 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
     return of(state.panelData);
   }
 
-  // Build a map of possible query targets
-  let queryTopics: KeyValue<DataTopic> | undefined = undefined;
-  for (const target of request.targets) {
-    if (target.dataTopic) {
-      if (!queryTopics) {
-        queryTopics = {};
-      }
-      queryTopics[target.refId] = target.dataTopic;
-    }
-  }
-
   const dataObservable = callQueryMethod(datasource, request).pipe(
     // Transform response packets into PanelData with merged results
     map((packet: DataQueryResponse) => {
@@ -137,7 +123,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
 
       request.endTime = Date.now();
 
-      state = processResponsePacket(packet, state, queryTopics);
+      state = processResponsePacket(packet, state);
 
       return state.panelData;
     }),
@@ -183,22 +169,17 @@ export function callQueryMethod(datasource: DataSourceApi, request: DataQueryReq
   return from(returnVal);
 }
 
-interface PartialToptics {
-  series: DataFrame[];
-  annotations?: DataFrame[];
-  exemplars?: DataFrame[];
-}
-
 /**
  * All panels will be passed tables that have our best guess at column type set
  *
  * This is also used by PanelChrome for snapshot support
  */
-export function getProcessedDataFrames(results?: DataQueryResponseData[]): PartialToptics {
-  const processed: PartialToptics = { series: [] };
-  if (!isArray(results)) {
-    return processed;
+export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataFrame[] {
+  if (!results || !isArray(results)) {
+    return [];
   }
+
+  const dataFrames: DataFrame[] = [];
 
   for (const result of results) {
     const dataFrame = guessFieldTypes(toDataFrame(result));
@@ -210,33 +191,14 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): Parti
       }
     }
 
-    switch (dataFrame.meta?.dataTopic) {
-      case DataTopic.Annotations: {
-        if (!processed.annotations) {
-          processed.annotations = [dataFrame];
-        } else {
-          processed.annotations.push(dataFrame);
-        }
-        break;
-      }
-      case DataTopic.Exemplars: {
-        if (!processed.exemplars) {
-          processed.exemplars = [dataFrame];
-        } else {
-          processed.exemplars.push(dataFrame);
-        }
-        break;
-      }
-      default:
-        processed.series.push(dataFrame);
-    }
+    dataFrames.push(dataFrame);
   }
 
-  return processed;
+  return dataFrames;
 }
 
 export function preProcessPanelData(data: PanelData, lastResult?: PanelData): PanelData {
-  const { series } = data;
+  const { series, annotations } = data;
 
   //  for loading states with no data, use last result
   if (data.state === LoadingState.Loading && series.length === 0) {
@@ -253,12 +215,14 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
 
   // Make sure the data frames are properly formatted
   const STARTTIME = performance.now();
-  const processed = getProcessedDataFrames(series);
+  const processedDataFrames = getProcessedDataFrames(series);
+  const annotationsProcessed = annotations ? getProcessedDataFrames(annotations) : undefined;
   const STOPTIME = performance.now();
 
   return {
     ...data,
-    ...processed,
+    series: processedDataFrames,
+    annotations: annotationsProcessed,
     timings: { dataProcessingTime: STOPTIME - STARTTIME },
   };
 }

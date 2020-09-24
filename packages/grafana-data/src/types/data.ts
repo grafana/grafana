@@ -2,7 +2,7 @@ import { FieldConfig } from './dataFrame';
 import { DataTransformerConfig } from './transformations';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
 
-export type KeyValue<T = any> = { [s: string]: T };
+export type KeyValue<T = any> = Record<string, T>;
 
 /**
  * Represent panel data loading state.
@@ -17,7 +17,6 @@ export enum LoadingState {
 
 export enum DataTopic {
   Annotations = 'annotations',
-  Exemplars = 'exemplars',
 }
 
 export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';

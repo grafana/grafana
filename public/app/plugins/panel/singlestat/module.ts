@@ -151,7 +151,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   onSnapshotLoad(dataList: LegacyResponseData[]) {
-    this.onFramesReceived(getProcessedDataFrames(dataList).series);
+    this.onFramesReceived(getProcessedDataFrames(dataList));
   }
 
   onFramesReceived(frames: DataFrame[]) {
