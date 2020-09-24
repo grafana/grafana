@@ -372,7 +372,7 @@ It's now possible to configure data sources using config files with Grafana's pr
 
 Here are some provisioning examples for this data source.
 
-### Using a credentials file
+### Using credentials profile name (non-default) 
 
 ```yaml
 apiVersion: 1
@@ -384,6 +384,7 @@ datasources:
       authType: credentials
       defaultRegion: eu-west-2
       customMetricsNamespaces: 'CWAgent,CustomNameSpace'
+      profile: secondary
 ```
 
 ### Using `accessKey` and `secretKey`
