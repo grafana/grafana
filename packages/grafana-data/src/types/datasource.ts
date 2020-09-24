@@ -9,6 +9,7 @@ import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
 import { CoreApp } from './app';
+import { VariableSupport } from './variables';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -219,6 +220,8 @@ export abstract class DataSourceApi<
 
   /**
    * Variable query action.
+   *
+   * @deprecated -- prefer using {@link VariableSupport}
    */
   metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]>;
 
@@ -284,6 +287,12 @@ export abstract class DataSourceApi<
    * @deprecated -- prefer using {@link AnnotationSupport}
    */
   annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
+
+  /**
+   * Collection of variable specific functionality
+   *
+   */
+  variables?: VariableSupport<TQuery>;
 }
 
 export interface MetadataInspectorProps<
@@ -483,6 +492,7 @@ export interface QueryHint {
 
 export interface MetricFindValue {
   text: string;
+  value?: string;
   expandable?: boolean;
 }
 
