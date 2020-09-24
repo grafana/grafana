@@ -6,6 +6,7 @@ import {
   dateTime,
   LoadingState,
   PanelData,
+  DataTopic,
 } from '@grafana/data';
 import { Observable, Subscriber, Subscription } from 'rxjs';
 import { runRequest } from './runRequest';
@@ -249,6 +250,25 @@ describe('runRequest', () => {
       expect(ctx.results[0].timeRange.to.valueOf()).toBe(ctx.results[0].request?.range?.to.valueOf());
 
       expectThatRangeHasNotMutated(ctx);
+    });
+  });
+
+  runRequestScenario('With annotations dataTopic', ctx => {
+    ctx.setup(() => {
+      ctx.start();
+      ctx.emitPacket({
+        data: [{ name: 'DataA-1' } as DataFrame],
+        key: 'A',
+      });
+      ctx.emitPacket({
+        data: [{ name: 'DataA-2', meta: { dataTopic: DataTopic.Annotations } } as DataFrame],
+        key: 'B',
+      });
+    });
+
+    it('should seperate annotations results', () => {
+      expect(ctx.results[1].annotations?.length).toBe(1);
+      expect(ctx.results[1].series.length).toBe(1);
     });
   });
 });
