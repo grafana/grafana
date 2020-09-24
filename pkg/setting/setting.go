@@ -305,7 +305,7 @@ type Cfg struct {
 	DateFormats DateFormats
 
 	// User
-	UserInviteMaxLifetimeDays int
+	UserInviteMaxLifetime time.Duration
 
 	// Annotations
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
@@ -1058,6 +1058,19 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 
 	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
+
+	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
+	userInviteMaxLifetimeDuration, err := gtime.ParseInterval(userInviteMaxLifetimeVal)
+	if err != nil {
+		return err
+	}
+
+	cfg.UserInviteMaxLifetime = userInviteMaxLifetimeDuration
+	if cfg.UserInviteMaxLifetime < time.Hour*1 {
+		cfg.UserInviteMaxLifetime = time.Hour * 1
+	} else if cfg.UserInviteMaxLifetime > time.Hour*24*7 {
+		cfg.UserInviteMaxLifetime = time.Hour * 24 * 7
+	}
 
 	return nil
 }

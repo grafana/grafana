@@ -140,7 +140,7 @@ func (srv *CleanUpService) deleteOldLoginAttempts() {
 }
 
 func (srv *CleanUpService) expireOldUserInvites() {
-	maxInviteLifetime := time.Duration(srv.Cfg.UserInviteMaxLifetimeDays) * 24 * time.Hour
+	maxInviteLifetime := srv.Cfg.UserInviteMaxLifetime
 
 	cmd := models.ExpireTempUsersCommand{
 		OlderThan: time.Now().Add(-maxInviteLifetime),
