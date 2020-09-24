@@ -122,6 +122,7 @@ export const buildSeriesConfig = (
     const field = data.fields[i];
     const config = field.config as FieldConfig<GraphCustomFieldConfig>;
     const customConfig = config.custom;
+    console.log(customConfig);
     const fmt = field.display ?? defaultFormatter;
 
     if (i === timeIndex || field.type !== FieldType.number) {
@@ -134,13 +135,13 @@ export const buildSeriesConfig = (
       scales[scale] = {};
       axes.push({
         scale,
-        label: config.custom?.axis.label,
+        label: config.custom?.axis?.label,
         show: true,
-        size: config.custom?.axis.width || 80,
+        size: config.custom?.axis?.width || 80,
         stroke: theme.colors.text,
-        side: config.custom?.axis.side || 3,
+        side: config.custom?.axis?.side || 3,
         grid: {
-          show: config.custom?.axis.grid,
+          show: config.custom?.axis?.grid,
           stroke: theme.palette.gray4,
           width: 1 / devicePixelRatio,
         },
@@ -149,23 +150,23 @@ export const buildSeriesConfig = (
     }
 
     const seriesColor =
-      customConfig?.line.color && customConfig?.line.color.fixedColor
-        ? getColorFromHexRgbOrName(customConfig.line.color.fixedColor)
+      customConfig?.line?.color && customConfig?.line?.color.fixedColor
+        ? getColorFromHexRgbOrName(customConfig.line?.color.fixedColor)
         : colors[seriesIdx];
 
     series.push({
       scale,
       label: getFieldDisplayName(field, data),
       stroke: seriesColor,
-      fill: customConfig?.fill.alpha
+      fill: customConfig?.fill?.alpha
         ? tinycolor(seriesColor)
-            .setAlpha(customConfig?.fill.alpha)
+            .setAlpha(customConfig?.fill?.alpha)
             .toRgbString()
         : undefined,
-      width: customConfig?.line.show ? customConfig?.line.width || 1 : 0,
+      width: customConfig?.line?.show ? customConfig?.line?.width || 1 : 0,
       points: {
-        show: customConfig?.points.show,
-        size: customConfig?.points.radius || 5,
+        show: customConfig?.points?.show,
+        size: customConfig?.points?.radius || 5,
       },
       spanGaps: customConfig?.nullValues === 'connected',
     });
