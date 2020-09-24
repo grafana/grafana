@@ -173,7 +173,16 @@
         - link: /panels/transformations/types-options/
           name: Transformation types and options
     - link: /panels/field-options/
-      name: Field options
+      name: Field options and overrides
+      children:
+        - link: /panels/field-options/
+          name: Overview
+        - link: /panels/field-options/configure-all-fields/
+          name: Configure all fields
+        - link: /panels/field-options/configure-specific-fields/
+          name: Configure specific fields
+        - link: /panels/field-options/standard-field-options/
+          name: Standard field options
     - link: /panels/panel-editor/
       name: Panel editor
     - name: Visualizations
@@ -199,6 +208,13 @@
           name: Stat
         - link: /panels/visualizations/table-panel/
           name: Table
+          children:
+          - name: Overview
+            link: /panels/visualizations/table/
+          - link: /panels/visualizations/table/table-field-options/
+            name: Table field options
+          - link: /panels/visualizations/tables/filter-table-columns/
+            name: Filter table columns
         - link: /panels/visualizations/text-panel/
           name: Text
     - link: /panels/thresholds/
@@ -230,7 +246,7 @@
       name: Export and import
     - link: /dashboards/dashboard_history/
       name: Dashboard version history
-    - name: Keyboard Shortcuts
+    - name: Keyboard shortcuts
       link: /features/shortcuts/
     - name: Reporting
       link: /features/reporting/
