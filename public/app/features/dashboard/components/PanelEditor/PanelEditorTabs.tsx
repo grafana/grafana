@@ -23,16 +23,12 @@ export class PanelEditorTabs extends PureComponent<PanelEditorTabsProps> {
     panel.on(CoreEvents.queryRemoved, this.triggerForceUpdate);
     panel.on(CoreEvents.transformationAdded, this.triggerForceUpdate);
     panel.on(CoreEvents.transformationRemoved, this.triggerForceUpdate);
-    panel.on(CoreEvents.alertAdded, this.triggerForceUpdate);
-    panel.on(CoreEvents.alertRemoved, this.triggerForceUpdate);
   }
 
   componentWillUnmount() {
     const { panel } = this.props;
     panel.off(CoreEvents.queryAdded, this.triggerForceUpdate);
     panel.off(CoreEvents.queryRemoved, this.triggerForceUpdate);
-    panel.off(CoreEvents.alertAdded, this.triggerForceUpdate);
-    panel.off(CoreEvents.alertRemoved, this.triggerForceUpdate);
     panel.off(CoreEvents.transformationAdded, this.triggerForceUpdate);
     panel.off(CoreEvents.transformationRemoved, this.triggerForceUpdate);
   }

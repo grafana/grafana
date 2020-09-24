@@ -425,7 +425,6 @@ export class AlertTabCtrl {
   }
 
   enable = () => {
-    appEvents.emit(CoreEvents.alertAdded);
     this.panel.alert = {};
     this.initModel();
     this.panel.alert.for = '5m'; //default value for new alerts. for existing alerts we use 0m to avoid breaking changes
