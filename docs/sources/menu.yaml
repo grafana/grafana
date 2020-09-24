@@ -213,7 +213,7 @@
             link: /panels/visualizations/table/
           - link: /panels/visualizations/table/table-field-options/
             name: Table field options
-          - link: /panels/visualizations/tables/filter-table-columns/
+          - link: /panels/visualizations/table/filter-table-columns/
             name: Filter table columns
         - link: /panels/visualizations/text-panel/
           name: Text
