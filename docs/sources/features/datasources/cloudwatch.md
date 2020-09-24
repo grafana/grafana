@@ -34,7 +34,7 @@ build dashboards or use Explore with CloudWatch metrics and CloudWatch Logs.
 | _Auth Provider_            | Specify the provider to get credentials.                                                                                 |
 | _Credentials_ profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.                  |
 | _Assume Role Arn_          | Specify the ARN of the role to assume                                                                                    |
-| _External ID_              | If you are assuming a role in another account, that has been created with an external ID, specify the exterrnal ID here. |
+| _External ID_              | If you are assuming a role in another account, that has been created with an external ID, specify the external ID here. |
 
 ## Authentication
 
@@ -234,7 +234,7 @@ To import the pre-configured dashboards, go to the configuration page of your Cl
 
 ## Templated queries
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
+Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
 See the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
