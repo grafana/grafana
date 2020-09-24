@@ -69,6 +69,7 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
       for (const dataItem of packet.data) {
         if (dataItem.meta?.dataTopic) {
           annotations.push(dataItem);
+          continue;
         }
 
         series.push(dataItem);
