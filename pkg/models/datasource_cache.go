@@ -160,9 +160,9 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	// Set default next round tripper to the default transport
 	var next http.RoundTripper = transport
 
-	// Add Sigv4 middleware if enabled, which will then defer to the default transport
-	if ds.JsonData != nil && ds.JsonData.Get("sigv4Auth").MustBool() && setting.Sigv4AuthEnabled {
-		next = ds.sigv4Middleware(transport)
+	// Add SigV4 middleware if enabled, which will then defer to the default transport
+	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool() && setting.SigV4AuthEnabled {
+		next = ds.sigV4Middleware(transport)
 	}
 
 	dsTransport := &dataSourceTransport{
@@ -180,10 +180,10 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	return dsTransport, nil
 }
 
-func (ds *DataSource) sigv4Middleware(next http.RoundTripper) http.RoundTripper {
+func (ds *DataSource) sigV4Middleware(next http.RoundTripper) http.RoundTripper {
 	decrypted := ds.SecureJsonData.Decrypt()
 
-	return &Sigv4Middleware{
+	return &SigV4Middleware{
 		Config: &Config{
 			AccessKey:     decrypted["accessKey"],
 			SecretKey:     decrypted["secretKey"],

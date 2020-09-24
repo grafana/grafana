@@ -1,7 +1,7 @@
 package models
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -19,7 +19,7 @@ const (
 	ARN         AuthType = "arn"
 )
 
-type Sigv4Middleware struct {
+type SigV4Middleware struct {
 	Config *Config
 	Next   http.RoundTripper
 }
@@ -38,7 +38,7 @@ type Config struct {
 	Region string
 }
 
-func (m *Sigv4Middleware) RoundTrip(req *http.Request) (*http.Response, error) {
+func (m *SigV4Middleware) RoundTrip(req *http.Request) (*http.Response, error) {
 	_, err := m.signRequest(req)
 	if err != nil {
 		return nil, err
@@ -51,28 +51,29 @@ func (m *Sigv4Middleware) RoundTrip(req *http.Request) (*http.Response, error) {
 	return m.Next.RoundTrip(req)
 }
 
-func (m *Sigv4Middleware) signRequest(req *http.Request) (http.Header, error) {
-	creds := m.credentials()
-	if creds == nil {
-		return nil, errors.New("invalid credentials option")
+func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
+	creds, err := m.credentials()
+	if err != nil {
+		return nil, err
 	}
 
+	fmt.Println("SIGNING!")
 	signer := v4.NewSigner(creds)
 	return signer.Sign(req, nil, "grafana", m.Config.Region, time.Now())
 }
 
-func (m *Sigv4Middleware) credentials() *credentials.Credentials {
+func (m *SigV4Middleware) credentials() (*credentials.Credentials, error) {
 	authType := AuthType(m.Config.AuthType)
 
 	switch authType {
 	case Keys:
-		return credentials.NewStaticCredentials(m.Config.AccessKey, m.Config.SecretKey, "")
+		return credentials.NewStaticCredentials(m.Config.AccessKey, m.Config.SecretKey, ""), nil
 	case Credentials:
-		return credentials.NewSharedCredentials("", m.Config.Profile)
+		return credentials.NewSharedCredentials("", m.Config.Profile), nil
 	case ARN:
 		s := session.Must(session.NewSession())
-		return stscreds.NewCredentials(s, m.Config.AssumeRoleARN)
+		return stscreds.NewCredentials(s, m.Config.AssumeRoleARN), nil
 	}
 
-	return nil
+	return nil, fmt.Errorf("invalid auth type %s was specified", authType)
 }

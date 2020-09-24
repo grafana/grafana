@@ -12,7 +12,7 @@ import { Icon } from '../Icon/Icon';
 import { FormField } from '../FormField/FormField';
 import { FormLabel } from '../FormLabel/FormLabel';
 import { TagsInput } from '../TagsInput/TagsInput';
-import { Sigv4AuthSettings } from './Sigv4AuthSettings';
+import { SigVersion4AuthSettings } from './SigV4AuthSettings';
 import { useTheme } from '../../themes';
 import { HttpSettingsProps } from './types';
 
@@ -190,15 +190,15 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
             />
           </div>
 
-          {config?.sigv4AuthEnabled && (
+          {config?.sigV4AuthEnabled && (
             <div className="gf-form-inline">
               <Switch
-                label="Sigv4 auth"
+                label="SigV4 auth"
                 labelClass="width-13"
-                checked={dataSourceConfig.jsonData.sigv4Auth || false}
+                checked={dataSourceConfig.jsonData.sigV4Auth || false}
                 onChange={event => {
                   onSettingsChange({
-                    jsonData: { ...dataSourceConfig.jsonData, sigv4Auth: event!.currentTarget.checked },
+                    jsonData: { ...dataSourceConfig.jsonData, sigV4Auth: event!.currentTarget.checked },
                   });
                 }}
               />
@@ -221,7 +221,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
           </>
         )}
 
-        {dataSourceConfig.jsonData.sigv4Auth && <Sigv4AuthSettings {...props} />}
+        {dataSourceConfig.jsonData.sigV4Auth && <SigVersion4AuthSettings {...props} />}
 
         {(dataSourceConfig.jsonData.tlsAuth || dataSourceConfig.jsonData.tlsAuthWithCACert) && (
           <TLSAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />

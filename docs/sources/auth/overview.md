@@ -142,3 +142,12 @@ URL to redirect the user to after signing out from Grafana. This can for example
 [auth]
 signout_redirect_url =
 ```
+
+### Signature Version 4 Authentication
+
+Set to `true` to enable the AWS Signature Version 4 Authentication option for HTTP-based datasources. 
+
+```bash
+[auth]
+sigv4_auth_enabled = true
+```

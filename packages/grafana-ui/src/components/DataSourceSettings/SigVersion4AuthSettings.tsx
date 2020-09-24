@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { Button, InlineFormLabel, Input } from '..';
 import Select from '../Forms/Legacy/Select/Select';
 
-export const Sigv4AuthSettings: React.FC<HttpSettingsProps> = props => {
+export const SigVersion4AuthSettings: React.FC<HttpSettingsProps> = props => {
   const { dataSourceConfig } = props;
 
   const authProviderOptions = [

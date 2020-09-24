@@ -291,12 +291,16 @@ func TestDataSourceDecryptionCache(t *testing.T) {
 	})
 }
 
-func TestDataSourceSigv4Auth(t *testing.T) {
+func TestDataSourceSigV4Auth(t *testing.T) {
 	Convey("When caching a datasource proxy with middleware", t, func() {
 		clearDSProxyCache()
-		setting.Sigv4AuthEnabled = true
+		origEnabled := setting.SigV4AuthEnabled
+		setting.SigV4AuthEnabled = true
+		t.Cleanup(func() {
+			setting.SigV4AuthEnabled = origEnabled
+		})
 
-		json, err := simplejson.NewJson([]byte(`{ "sigv4Auth": true }`))
+		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
 		So(err, ShouldBeNil)
 
 		ds := DataSource{
@@ -306,25 +310,29 @@ func TestDataSourceSigv4Auth(t *testing.T) {
 		t, err := ds.GetHttpTransport()
 		So(err, ShouldBeNil)
 
-		Convey("Sigv4 is in middleware chain if configured in JsonData", func() {
-			m1, ok := interface{}(t.next).(*Sigv4Middleware)
+		Convey("SigV4 is in middleware chain if configured in JsonData", func() {
+			m1, ok := (t.next).(*SigV4Middleware)
 			So(ok, ShouldEqual, true)
 
-			_, ok = interface{}(m1.Next).(*http.Transport)
+			_, ok = (m1.Next).(*http.Transport)
 			So(ok, ShouldEqual, true)
 		})
 	})
 
 	Convey("When caching a datasource proxy with middleware", t, func() {
 		clearDSProxyCache()
-		setting.Sigv4AuthEnabled = true
+		origEnabled := setting.SigV4AuthEnabled
+		setting.SigV4AuthEnabled = true
+		t.Cleanup(func() {
+			setting.SigV4AuthEnabled = origEnabled
+		})
 
 		ds := DataSource{}
 
 		t, err := ds.GetHttpTransport()
 		So(err, ShouldBeNil)
 
-		Convey("Should not include sigv4 middleware if not configured in JsonData", func() {
+		Convey("Should not include sigV4 middleware if not configured in JsonData", func() {
 			_, ok := interface{}(t.next).(*http.Transport)
 			So(ok, ShouldEqual, true)
 		})
@@ -332,9 +340,13 @@ func TestDataSourceSigv4Auth(t *testing.T) {
 
 	Convey("When caching a datasource proxy with middleware", t, func() {
 		clearDSProxyCache()
-		setting.Sigv4AuthEnabled = false
+		origEnabled := setting.SigV4AuthEnabled
+		setting.SigV4AuthEnabled = false
+		t.Cleanup(func() {
+			setting.SigV4AuthEnabled = origEnabled
+		})
 
-		json, err := simplejson.NewJson([]byte(`{ "sigv4Auth": true }`))
+		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
 		So(err, ShouldBeNil)
 
 		ds := DataSource{
@@ -344,7 +356,7 @@ func TestDataSourceSigv4Auth(t *testing.T) {
 		t, err := ds.GetHttpTransport()
 		So(err, ShouldBeNil)
 
-		Convey("Should not include sigv4 middleware if not configured in app config", func() {
+		Convey("Should not include sigV4 middleware if not configured in app config", func() {
 			_, ok := interface{}(t.next).(*http.Transport)
 			So(ok, ShouldEqual, true)
 		})
