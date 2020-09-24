@@ -1065,6 +1065,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 		return err
 	}
 
+	// Minimum supported lifetime is 1 hour, and the maximum is 1 week
 	cfg.UserInviteMaxLifetime = userInviteMaxLifetimeDuration
 	if cfg.UserInviteMaxLifetime < time.Hour*1 {
 		cfg.UserInviteMaxLifetime = time.Hour * 1
