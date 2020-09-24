@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/live"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -265,15 +264,12 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	// Tell everyone listening that the dashboard changed
 	if hs.Live != nil {
-		msg, err := json.Marshal(live.DashboardEvent{
-			UID:    dashboard.Uid,
-			Action: live.DASHBOARD_ACTION_SAVED,
-			UserID: c.UserId,
-		})
+		err := hs.Live.GrafanaScope.Dashboards.DashboardSaved(
+			dashboard.Uid,
+			c.UserId,
+		)
 		if err != nil {
 			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
-		} else {
-			hs.Live.Publish("grafana/dashboard/"+dashboard.Uid, msg)
 		}
 	}
 
