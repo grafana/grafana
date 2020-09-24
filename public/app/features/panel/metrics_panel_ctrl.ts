@@ -35,6 +35,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   dataList: LegacyResponseData[];
   querySubscription?: Unsubscribable | null;
   useDataFrames = false;
+  panelData?: PanelData;
 
   constructor($scope: any, $injector: any) {
     super($scope, $injector);
@@ -130,6 +131,8 @@ class MetricsPanelCtrl extends PanelCtrl {
   // Updates the response with information from the stream
   panelDataObserver = {
     next: (data: PanelData) => {
+      this.panelData = data;
+
       if (data.state === LoadingState.Error) {
         this.loading = false;
         this.processDataError(data.error);

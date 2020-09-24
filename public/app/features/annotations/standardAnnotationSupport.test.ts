@@ -63,6 +63,7 @@ describe('DataFrame to annotations', () => {
       timeEnd: { value: 'time1' },
       title: { value: 'aaaaa' },
     });
+
     expect(events).toMatchInlineSnapshot(`
       Array [
         Object {

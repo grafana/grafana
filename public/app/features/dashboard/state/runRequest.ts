@@ -16,6 +16,7 @@ import {
   dateMath,
   toDataFrame,
   DataFrame,
+  DataTopic,
   guessFieldTypes,
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
@@ -67,7 +68,7 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 
     if (packet.data && packet.data.length) {
       for (const dataItem of packet.data) {
-        if (dataItem.meta?.dataTopic) {
+        if (dataItem.meta?.dataTopic === DataTopic.Annotations) {
           annotations.push(dataItem);
           continue;
         }
@@ -217,7 +218,7 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
   // Make sure the data frames are properly formatted
   const STARTTIME = performance.now();
   const processedDataFrames = getProcessedDataFrames(series);
-  const annotationsProcessed = annotations ? getProcessedDataFrames(annotations) : undefined;
+  const annotationsProcessed = getProcessedDataFrames(annotations);
   const STOPTIME = performance.now();
 
   return {
