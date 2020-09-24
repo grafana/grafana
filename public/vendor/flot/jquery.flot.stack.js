@@ -83,17 +83,14 @@ charts or filled areas).
                 l = newpoints.length;
 
                 if (i < points.length && points[i] == null) {
-                    // copy gaps
-                    for (m = 0; m < ps; ++m)
-                        newpoints.push(points[i + m]);
-                    i += ps;
-                }
-                else if (i >= points.length) {
                     // take the remaining points from the previous series
                     for (m = 0; m < ps; ++m)
                         newpoints.push(otherpoints[j + m]);
                     if (withbottom)
                         newpoints[l + 2] = otherpoints[j + accumulateOffset];
+                    i += ps;
+                }
+                else if (i >= points.length) {
                     j += otherps;
                 }
                 else if (j >= otherpoints.length) {
