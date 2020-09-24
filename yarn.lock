@@ -7505,6 +7505,11 @@ angular-bindonce@0.3.1:
   resolved "https://registry.yarnpkg.com/angular-bindonce/-/angular-bindonce-0.3.1.tgz#af19574abd43f608b9236a302cc5ce49d71dc9c6"
   integrity sha1-rxlXSr1D9gi5I2owLMXOSdcdycY=
 
+angular-mocks@1.6.6:
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/angular-mocks/-/angular-mocks-1.6.6.tgz#c93018e7838c6dc5ceaf1a6bcf9be13c830ea515"
+  integrity sha1-yTAY54OMbcXOrxprz5vhPIMOpRU=
+
 angular-native-dragdrop@1.2.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/angular-native-dragdrop/-/angular-native-dragdrop-1.2.2.tgz#d646c6b75b131c48073c3f6e36a225b2726d8bae"
