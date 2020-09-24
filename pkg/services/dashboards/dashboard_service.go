@@ -244,7 +244,7 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, 
 		return nil, err
 	}
 
-	//alerts
+	// alerts
 	err = dr.updateAlerting(cmd, dto)
 	if err != nil {
 		return nil, err
