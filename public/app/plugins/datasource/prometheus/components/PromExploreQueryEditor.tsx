@@ -3,13 +3,12 @@ import { css } from 'emotion';
 
 // Types
 import { ExploreQueryFieldProps } from '@grafana/data';
-import { RadioButtonGroup } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
 
 import PromQueryField from './PromQueryField';
-import { PromExploreExtraField } from './PromExploreExtraField';
+import { StepField, QueryTypeField } from './PromExploreExtraFields';
 
 export type Props = ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions>;
 
@@ -48,62 +47,29 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
   }
 
   return (
-    <>
-      <PromQueryField
-        datasource={datasource}
-        query={query}
-        onRunQuery={onRunQuery}
-        onChange={onChange}
-        onBlur={() => {}}
-        history={history}
-        data={data}
-        ExtraFieldElement={
-          <PromExploreExtraField
-            label={'Step'}
-            onChangeFunc={onStepChange}
-            onKeyDownFunc={onReturnKeyDown}
-            value={query.interval || ''}
-            hasTooltip={true}
-            tooltipContent={
-              'Time units can be used here, for example: 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)'
-            }
+    <PromQueryField
+      datasource={datasource}
+      query={query}
+      onRunQuery={onRunQuery}
+      onChange={onChange}
+      onBlur={() => {}}
+      history={history}
+      data={data}
+      ExtraFieldElement={
+        <div
+          className={css`
+            display: flex;
+            flex-wrap: wrap;
+          `}
+        >
+          <QueryTypeField
+            selected={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
+            onQueryTypeChange={onQueryTypeChange}
           />
-        }
-      />
-      <PromExploreRadioButton
-        selected={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
-        onQueryTypeChange={onQueryTypeChange}
-      />
-    </>
-  );
-};
-
-type PromExploreRadioButtonProps = {
-  selected: string;
-  onQueryTypeChange: (value: string) => void;
-};
-
-const PromExploreRadioButton: React.FunctionComponent<PromExploreRadioButtonProps> = ({
-  selected,
-  onQueryTypeChange,
-}) => {
-  const rangeOptions = [
-    { value: 'range', label: 'Range' },
-    { value: 'instant', label: 'Instant' },
-    { value: 'both', label: 'Both' },
-  ];
-
-  return (
-    <div
-      className={css`
-        display: flex;
-      `}
-    >
-      <button className={`gf-form-label gf-form-label--btn width-5`}>
-        <span className="btn-title">Query type</span>
-      </button>
-      <RadioButtonGroup options={rangeOptions} value={selected} onChange={onQueryTypeChange} />
-    </div>
+          <StepField onChangeFunc={onStepChange} onKeyDownFunc={onReturnKeyDown} value={query.interval || ''} />
+        </div>
+      }
+    />
   );
 };
 
