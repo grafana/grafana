@@ -55,6 +55,7 @@ func (g *TestdataSupplier) GetHandlerForPath(path string) (models.ChannelHandler
 			channel:     channel,
 		}, nil
 	}
+
 	return nil, fmt.Errorf("unknown channel")
 }
 

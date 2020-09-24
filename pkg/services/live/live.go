@@ -55,6 +55,9 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	glive.GrafanaScope.Dashboards = &dash
 	glive.GrafanaScope.Features["dashboard"] = &dash
 
+	tds := features.CreateTestdataSupplier(glive.Publish)
+	glive.GrafanaScope.Features["testdata"] = &tds
+
 	// We use default config here as starting point. Default config contains
 	// reasonable values for available options.
 	cfg := centrifuge.DefaultConfig
@@ -66,12 +69,14 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	cfg.ChannelOptionsFunc = func(channel string) (centrifuge.ChannelOptions, bool, error) {
 		handler, err := glive.GetChannelHandler(channel)
 		if err != nil {
+			logger.Error("ChannelOptionsFunc", "channel", channel, "err", err)
 			if err.Error() == "404" { // ????
 				return centrifuge.ChannelOptions{}, false, nil
 			}
 			return centrifuge.ChannelOptions{}, true, err
 		}
-		return handler.GetChannelOptions(channel), true, nil
+		opts := handler.GetChannelOptions(channel)
+		return opts, true, nil
 	}
 
 	// Node is the core object in Centrifuge library responsible for many useful
@@ -218,8 +223,8 @@ func InitalizeBroker() (*GrafanaLive, error) {
 // GetChannelHandler gives threadsafe access to the channel
 func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, error) {
 	g.channelsMu.RLock()
-	defer g.channelsMu.RUnlock()
 	c, ok := g.channels[channel]
+	g.channelsMu.RUnlock() // defer? but then you can't lock further down
 	if ok {
 		return c, nil
 	}
@@ -229,6 +234,7 @@ func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, 
 	if err != nil {
 		return nil, err
 	}
+	logger.Info("initChannel", "channel", channel, "id", id)
 
 	g.channelsMu.Lock()
 	defer g.channelsMu.Unlock()
