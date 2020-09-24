@@ -278,6 +278,14 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
+		Id:   "annotations",
+		Name: "Annotations",
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			return tsdb.NewQueryResult()
+		},
+	})
+
+	registerScenario(&Scenario{
 		Id:   "table_static",
 		Name: "Table Static",
 

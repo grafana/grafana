@@ -15,33 +15,43 @@ describe('DataFrame to annotations', () => {
     expect(events).toMatchInlineSnapshot(`
       Array [
         Object {
+          "color": "red",
           "tags": Array [
             "aaa",
             "bbb",
           ],
           "text": "t1",
           "time": 1,
+          "type": "default",
         },
         Object {
+          "color": "red",
           "tags": Array [
             "bbb",
             "ccc",
           ],
           "text": "t2",
           "time": 2,
+          "type": "default",
         },
         Object {
+          "color": "red",
           "tags": Array [
             "zyz",
           ],
           "text": "t3",
           "time": 3,
+          "type": "default",
         },
         Object {
+          "color": "red",
           "time": 4,
+          "type": "default",
         },
         Object {
+          "color": "red",
           "time": 5,
+          "type": "default",
         },
       ]
     `);
@@ -63,25 +73,32 @@ describe('DataFrame to annotations', () => {
       timeEnd: { value: 'time1' },
       title: { value: 'aaaaa' },
     });
+
     expect(events).toMatchInlineSnapshot(`
       Array [
         Object {
+          "color": "red",
           "text": "b1",
           "time": 100,
           "timeEnd": 111,
           "title": "a1",
+          "type": "default",
         },
         Object {
+          "color": "red",
           "text": "b2",
           "time": 200,
           "timeEnd": 222,
           "title": "a2",
+          "type": "default",
         },
         Object {
+          "color": "red",
           "text": "b3",
           "time": 300,
           "timeEnd": 333,
           "title": "a3",
+          "type": "default",
         },
       ]
     `);

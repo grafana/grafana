@@ -203,6 +203,8 @@ export class AnnotationsSrv {
 
     for (const item of results) {
       item.source = annotation;
+      item.color = annotation.iconColor;
+      item.type = annotation.name;
       item.isRegion = item.timeEnd && item.time !== item.timeEnd;
     }
 
