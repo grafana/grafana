@@ -19,8 +19,8 @@ The Stat panel shows a one large stat value with an optional graph sparkline. Yo
 
 Stat visualizations allow you to apply:
 
-- [Data transformations]({{< relref "../transformations.md" >}})
-- [Field options and overrides]({{< relref "../field-options.md" >}})
+- [Data transformations]({{< relref "../transformations/_index.md" >}})
+- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Automatic layout adjustment

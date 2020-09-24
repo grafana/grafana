@@ -983,7 +983,7 @@ func TestMSSQL(t *testing.T) {
 				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
 				columns := queryResult.Tables[0].Rows[0]
 
-				//Should be in milliseconds
+				// Should be in milliseconds
 				So(columns[0].(float64), ShouldEqual, float64(dt.UnixNano()/1e6))
 			})
 
@@ -1013,7 +1013,7 @@ func TestMSSQL(t *testing.T) {
 				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
 				columns := queryResult.Tables[0].Rows[0]
 
-				//Should be in milliseconds
+				// Should be in milliseconds
 				So(columns[0].(int64), ShouldEqual, dt.Unix()*1000)
 			})
 
@@ -1043,7 +1043,7 @@ func TestMSSQL(t *testing.T) {
 				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
 				columns := queryResult.Tables[0].Rows[0]
 
-				//Should be in milliseconds
+				// Should be in milliseconds
 				So(columns[0].(int64), ShouldEqual, dt.Unix()*1000)
 			})
 
@@ -1073,7 +1073,7 @@ func TestMSSQL(t *testing.T) {
 				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
 				columns := queryResult.Tables[0].Rows[0]
 
-				//Should be in milliseconds
+				// Should be in milliseconds
 				So(columns[0].(float64), ShouldEqual, float64(dt.Unix()*1000))
 			})
 
@@ -1101,7 +1101,7 @@ func TestMSSQL(t *testing.T) {
 				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
 				columns := queryResult.Tables[0].Rows[0]
 
-				//Should be in milliseconds
+				// Should be in milliseconds
 				So(columns[0], ShouldBeNil)
 			})
 
@@ -1129,7 +1129,7 @@ func TestMSSQL(t *testing.T) {
 				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
 				columns := queryResult.Tables[0].Rows[0]
 
-				//Should be in milliseconds
+				// Should be in milliseconds
 				So(columns[0], ShouldBeNil)
 			})
 		})

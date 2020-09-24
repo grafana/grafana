@@ -40,23 +40,23 @@ func TestExtractFiles(t *testing.T) {
 		err := extractFiles(archive, "grafana-simple-json-datasource", pluginDir, false)
 		require.NoError(t, err)
 
-		//File in zip has permissions 755
+		// File in zip has permissions 755
 		fileInfo, err := os.Stat(filepath.Join(pluginDir, "grafana-simple-json-datasource",
 			"simple-plugin_darwin_amd64"))
 		require.NoError(t, err)
 		assert.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
 
-		//File in zip has permission 755
+		// File in zip has permission 755
 		fileInfo, err = os.Stat(pluginDir + "/grafana-simple-json-datasource/simple-plugin_linux_amd64")
 		require.NoError(t, err)
 		assert.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
 
-		//File in zip has permission 644
+		// File in zip has permission 644
 		fileInfo, err = os.Stat(pluginDir + "/grafana-simple-json-datasource/simple-plugin_windows_amd64.exe")
 		require.NoError(t, err)
 		assert.Equal(t, "-rw-r--r--", fileInfo.Mode().String())
 
-		//File in zip has permission 755
+		// File in zip has permission 755
 		fileInfo, err = os.Stat(pluginDir + "/grafana-simple-json-datasource/non-plugin-binary")
 		require.NoError(t, err)
 		assert.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
