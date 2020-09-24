@@ -32,7 +32,7 @@ Check out the [configuration]({{< relref "configuration.md" >}}) page for more i
 
 It is possible to use environment variable interpolation in all 3 provisioning config types. Allowed syntax
 is either `$ENV_VAR_NAME` or `${ENV_VAR_NAME}` and can be used only for values not for keys or bigger parts
-of the configs. It is not available in the dashboards definition files just the dashboard provisioning
+of the configs. It is not available in the dashboard's definition files just the dashboard provisioning
 configuration.
 Example:
 
