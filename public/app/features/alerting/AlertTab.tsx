@@ -109,7 +109,6 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   onAddAlert = () => {
     this.panelCtrl._enableAlert();
     this.component.digest();
-    this.forceUpdate();
   };
 
   switchToQueryTab = () => {

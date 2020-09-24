@@ -18,21 +18,23 @@ interface PanelEditorTabsProps {
 
 export class PanelEditorTabs extends PureComponent<PanelEditorTabsProps> {
   componentDidMount() {
-    this.props.panel.on(CoreEvents.queryAdded, this.triggerForceUpdate);
-    this.props.panel.on(CoreEvents.queryRemoved, this.triggerForceUpdate);
-    this.props.panel.on(CoreEvents.alertAdded, this.triggerForceUpdate);
-    this.props.panel.on(CoreEvents.alertRemoved, this.triggerForceUpdate);
-    this.props.panel.on(CoreEvents.transformationAdded, this.triggerForceUpdate);
-    this.props.panel.on(CoreEvents.transformationRemoved, this.triggerForceUpdate);
+    const { panel } = this.props;
+    panel.on(CoreEvents.queryAdded, this.triggerForceUpdate);
+    panel.on(CoreEvents.queryRemoved, this.triggerForceUpdate);
+    panel.on(CoreEvents.transformationAdded, this.triggerForceUpdate);
+    panel.on(CoreEvents.transformationRemoved, this.triggerForceUpdate);
+    panel.on(CoreEvents.alertAdded, this.triggerForceUpdate);
+    panel.on(CoreEvents.alertRemoved, this.triggerForceUpdate);
   }
 
   componentWillUnmount() {
-    this.props.panel.off(CoreEvents.queryAdded, this.triggerForceUpdate);
-    this.props.panel.off(CoreEvents.queryRemoved, this.triggerForceUpdate);
-    this.props.panel.off(CoreEvents.alertAdded, this.triggerForceUpdate);
-    this.props.panel.off(CoreEvents.alertRemoved, this.triggerForceUpdate);
-    this.props.panel.off(CoreEvents.transformationAdded, this.triggerForceUpdate);
-    this.props.panel.off(CoreEvents.transformationRemoved, this.triggerForceUpdate);
+    const { panel } = this.props;
+    panel.off(CoreEvents.queryAdded, this.triggerForceUpdate);
+    panel.off(CoreEvents.queryRemoved, this.triggerForceUpdate);
+    panel.off(CoreEvents.alertAdded, this.triggerForceUpdate);
+    panel.off(CoreEvents.alertRemoved, this.triggerForceUpdate);
+    panel.off(CoreEvents.transformationAdded, this.triggerForceUpdate);
+    panel.off(CoreEvents.transformationRemoved, this.triggerForceUpdate);
   }
 
   triggerForceUpdate = () => {
