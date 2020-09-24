@@ -1,6 +1,6 @@
 import React from 'react';
 import uPlot from 'uplot';
-import { DataFrame, TimeRange, TimeZone } from '@grafana/data';
+import { DataFrame, FieldColor, TimeRange, TimeZone } from '@grafana/data';
 import { NullValuesMode } from '../../../../../public/app/plugins/panel/graph3/types';
 
 export enum MicroPlotAxisSide {
@@ -20,6 +20,7 @@ interface AxisConfig {
 interface LineConfig {
   show: boolean;
   width: number;
+  color: FieldColor;
 }
 interface PointConfig {
   show: boolean;

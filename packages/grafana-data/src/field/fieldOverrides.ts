@@ -8,7 +8,6 @@ import {
   Field,
   FieldColorMode,
   FieldConfig,
-  FieldConfigProperty,
   FieldConfigPropertyItem,
   FieldOverrideContext,
   FieldType,
@@ -459,16 +458,3 @@ export function applyRawFieldOverrides(data: DataFrame[]): DataFrame[] {
 
   return newData;
 }
-
-export const STANDARD_FIELD_OPTIONS = [
-  FieldConfigProperty.Unit,
-  FieldConfigProperty.Min,
-  FieldConfigProperty.Max,
-  FieldConfigProperty.Decimals,
-  FieldConfigProperty.DisplayName,
-  FieldConfigProperty.NoValue,
-  FieldConfigProperty.Thresholds,
-  FieldConfigProperty.Mappings,
-  FieldConfigProperty.Links,
-  FieldConfigProperty.Color,
-];

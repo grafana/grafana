@@ -1,4 +1,10 @@
-import { FieldColorMode, PanelPlugin, STANDARD_FIELD_OPTIONS } from '@grafana/data';
+import {
+  FieldColor,
+  FieldColorMode,
+  identityOverrideProcessor,
+  PanelPlugin,
+  standardEditorsRegistry,
+} from '@grafana/data';
 import { GraphCustomFieldConfig } from '@grafana/ui';
 import { GraphPanel } from './GraphPanel';
 import { Options } from './types';
@@ -7,6 +13,18 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
   .useFieldConfig({
     useCustomConfig: builder => {
       builder
+        // TODO:  Until we fix standard color property let's do it the custom editor way
+        .addCustomEditor<{}, FieldColor>({
+          path: 'line.color',
+          id: 'line.color',
+          name: 'Series color',
+          shouldApply: () => true,
+          settings: {},
+          defaultValue: { mode: FieldColorMode.Fixed },
+          editor: standardEditorsRegistry.get('color').editor as any,
+          override: standardEditorsRegistry.get('color').editor as any,
+          process: identityOverrideProcessor,
+        })
         .addBooleanSwitch({
           path: 'line.show',
           name: 'Show lines',
@@ -141,10 +159,6 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           },
         });
     },
-    standardOptions: STANDARD_FIELD_OPTIONS,
-    standardOptionsDefaults: {
-      color: { mode: FieldColorMode.Fixed },
-    },
   })
   .setPanelOptions(builder => {
     builder
@@ -161,12 +175,12 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           ],
         },
       })
-      .addBooleanSwitch({
-        path: 'graph.realTimeUpdates',
-        name: 'Real time updates',
-        description: 'continue to update the graph so the time axis matches the clock.',
-        defaultValue: false,
-      })
+      // .addBooleanSwitch({
+      //   path: 'graph.realTimeUpdates',
+      //   name: 'Real time updates',
+      //   description: 'continue to update the graph so the time axis matches the clock.',
+      //   defaultValue: false,
+      // })
       .addBooleanSwitch({
         category: ['Legend'],
         path: 'legend.isVisible',

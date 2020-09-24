@@ -121,6 +121,7 @@ export const buildSeriesConfig = (
   for (let i = 0; i < data.fields.length; i++) {
     const field = data.fields[i];
     const config = field.config as FieldConfig<GraphCustomFieldConfig>;
+    const customConfig = config.custom;
     const fmt = field.display ?? defaultFormatter;
 
     if (i === timeIndex || field.type !== FieldType.number) {
@@ -148,25 +149,25 @@ export const buildSeriesConfig = (
     }
 
     const seriesColor =
-      field.config.color && field.config.color.fixedColor
-        ? getColorFromHexRgbOrName(field.config.color.fixedColor)
+      customConfig?.line.color && customConfig?.line.color.fixedColor
+        ? getColorFromHexRgbOrName(customConfig.line.color.fixedColor)
         : colors[seriesIdx];
 
     series.push({
       scale,
       label: getFieldDisplayName(field, data),
       stroke: seriesColor,
-      fill: config.custom?.fill.alpha
+      fill: customConfig?.fill.alpha
         ? tinycolor(seriesColor)
-            .setAlpha(config.custom?.fill.alpha)
+            .setAlpha(customConfig?.fill.alpha)
             .toRgbString()
         : undefined,
-      width: config.custom?.line.show ? config.custom?.line.width || 1 : 0,
+      width: customConfig?.line.show ? customConfig?.line.width || 1 : 0,
       points: {
-        show: config.custom?.points.show,
-        size: config.custom?.points.radius || 5,
+        show: customConfig?.points.show,
+        size: customConfig?.points.radius || 5,
       },
-      spanGaps: config.custom?.nullValues === 'connected',
+      spanGaps: customConfig?.nullValues === 'connected',
     });
     seriesIdx += 1;
   }
