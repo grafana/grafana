@@ -7,6 +7,7 @@ import {
   RawTimeRange,
   UrlQueryMap,
   ExploreUrlState,
+  LogsDedupStrategy,
 } from '@grafana/data';
 
 import {
@@ -29,6 +30,7 @@ import {
   updateDatasourceInstanceAction,
   addQueryRowAction,
   removeQueryRowAction,
+  changeDedupStrategyAction,
 } from './actionTypes';
 import { updateLocation } from '../../../core/actions';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
@@ -177,6 +179,24 @@ describe('Explore item reducer', () => {
             absoluteRange: { from: 1546297200000, to: 1546383600000 },
             range: { from: dateTime('2019-01-01'), to: dateTime('2019-01-02'), raw: { from: 'now-1d', to: 'now' } },
           } as unknown) as ExploreItemState);
+      });
+    });
+  });
+
+  describe('changing dedup strategy', () => {
+    describe('when changeDedupStrategyAction is dispatched', () => {
+      it('then it should set correct dedup strategy in state', () => {
+        const initialState = makeExploreItemState();
+
+        reducerTester<ExploreItemState>()
+          .givenReducer(itemReducer, initialState)
+          .whenActionIsDispatched(
+            changeDedupStrategyAction({ exploreId: ExploreId.left, dedupStrategy: LogsDedupStrategy.exact })
+          )
+          .thenStateShouldEqual({
+            ...makeExploreItemState(),
+            dedupStrategy: LogsDedupStrategy.exact,
+          });
       });
     });
   });

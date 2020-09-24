@@ -193,6 +193,11 @@ export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeS
 export const changeRefreshIntervalAction = createAction<ChangeRefreshIntervalPayload>('explore/changeRefreshInterval');
 
 /**
+ * Change deduplication strategy for logs.
+ */
+export const changeDedupStrategyAction = createAction<ChangeDedupStrategyPayload>('explore/changeDedupStrategyAction');
+
+/**
  * Clear all queries and results.
  */
 export const clearQueriesAction = createAction<ClearQueriesPayload>('explore/clearQueries');
@@ -308,5 +313,3 @@ export const changeRangeAction = createAction<ChangeRangePayload>('explore/chang
 export const changeLoadingStateAction = createAction<ChangeLoadingStatePayload>('changeLoadingState');
 
 export const setPausedStateAction = createAction<SetPausedStatePayload>('explore/setPausedState');
-
-export const changeDedupStrategyAction = createAction<ChangeDedupStrategyPayload>('explore/changeDedupStrategyAction');
