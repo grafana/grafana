@@ -190,7 +190,7 @@ this new setting.
 
 In 6.2 we completely removed the backend session storage since we replaced the previous login session implementation with an auth token.
 If you are using Auth proxy with LDAP, a shared cached is used in Grafana, so you might want to configure [remote_cache] instead. If not,
-Grafana will fallback to using the database as a shared cache.
+Grafana will fall back to using the database as a shared cache.
 
 ### Upgrading Elasticsearch to v7.0+
 
