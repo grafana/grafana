@@ -3,7 +3,7 @@ import _ from 'lodash';
 // Utils
 import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import templateSrv from 'app/features/templating/template_srv';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 // Types
 import {
   AppEvent,
@@ -478,7 +478,7 @@ export class PanelModel implements DataConfigSource {
     if (extraVars) {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
-    return templateSrv.replace(value, vars, format);
+    return getTemplateSrv().replace(value, vars, format);
   }
 
   resendLastResult() {

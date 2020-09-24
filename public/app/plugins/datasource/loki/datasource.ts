@@ -24,10 +24,9 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
+import { getTemplateSrv, TemplateSrv, BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
-import defaultTemplateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
-import defaultTimeSrv, { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { lokiResultsToTableModel, lokiStreamResultToDataFrame, processRangeQueryResponse } from './result_transformer';
 import { getHighlighterExpressionsFromQuery } from './query_utils';
@@ -65,8 +64,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
-    private readonly templateSrv: TemplateSrv = defaultTemplateSrv,
-    private readonly timeSrv: TimeSrv = defaultTimeSrv
+    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly timeSrv: TimeSrv = getTimeSrv()
   ) {
     super(instanceSettings);
 

@@ -3,7 +3,7 @@ import { validateVariableSelectionState } from '../state/actions';
 import { QueryVariableModel, VariableRefresh } from '../types';
 import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import templateSrv from '../../templating/template_srv';
+import { getTemplateSrv } from '../../templating/template_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import appEvents from '../../../core/app_events';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';
@@ -138,5 +138,5 @@ const getTemplatedRegex = (variable: QueryVariableModel): string => {
     return '';
   }
 
-  return templateSrv.replace(variable.regex, {}, 'regex');
+  return getTemplateSrv().replace(variable.regex, {}, 'regex');
 };

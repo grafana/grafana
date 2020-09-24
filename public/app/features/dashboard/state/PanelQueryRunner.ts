@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 
 // Services & Utils
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import templateSrv from 'app/features/templating/template_srv';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { runRequest, preProcessPanelData } from './runRequest';
 import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
 
@@ -164,7 +164,7 @@ export class PanelQueryRunner {
         return query;
       });
 
-      const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
+      const lowerIntervalLimit = minInterval ? getTemplateSrv().replace(minInterval, request.scopedVars) : ds.interval;
       const norm = rangeUtil.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,

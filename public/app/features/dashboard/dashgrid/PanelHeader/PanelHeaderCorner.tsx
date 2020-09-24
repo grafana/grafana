@@ -5,7 +5,7 @@ import { Tooltip, PopoverContent } from '@grafana/ui';
 import { getLocationSrv } from '@grafana/runtime';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import templateSrv from 'app/features/templating/template_srv';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { InspectTab } from '../../components/Inspector/types';
 
@@ -45,7 +45,7 @@ export class PanelHeaderCorner extends Component<Props> {
   getInfoContent = (): JSX.Element => {
     const { panel } = this.props;
     const markdown = panel.description || '';
-    const interpolatedMarkdown = templateSrv.replace(markdown, panel.scopedVars);
+    const interpolatedMarkdown = getTemplateSrv().replace(markdown, panel.scopedVars);
     const markedInterpolatedMarkdown = renderMarkdown(interpolatedMarkdown);
     const links = this.props.links && this.props.links.getLinks(panel);
 

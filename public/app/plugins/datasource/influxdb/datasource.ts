@@ -19,7 +19,7 @@ import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
 import { InfluxQuery, InfluxOptions, InfluxVersion } from './types';
-import defaultTemplateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getBackendSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { FluxQueryEditor } from './components/FluxQueryEditor';
@@ -40,7 +40,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
-    private readonly templateSrv: TemplateSrv = defaultTemplateSrv
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
 

@@ -21,8 +21,8 @@ import {
   DataQueryErrorType,
 } from '@grafana/data';
 import { getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
-import defaultTemplateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
-import defaultTimeSrv, { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ThrottlingErrorMessage } from './components/ThrottlingErrorMessage';
 import memoizedDebounce from './memoizedDebounce';
 import {
@@ -85,8 +85,8 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
-    private readonly templateSrv: TemplateSrv = defaultTemplateSrv,
-    private readonly timeSrv: TimeSrv = defaultTimeSrv
+    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly timeSrv: TimeSrv = getTimeSrv()
   ) {
     super(instanceSettings);
     this.type = 'cloudwatch';

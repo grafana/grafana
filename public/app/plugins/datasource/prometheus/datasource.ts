@@ -26,8 +26,8 @@ import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';
-import defaultTemplateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
-import defaultTimeSrv, { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
@@ -78,8 +78,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
-    private readonly templateSrv: TemplateSrv = defaultTemplateSrv,
-    private readonly timeSrv: TimeSrv = defaultTimeSrv
+    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly timeSrv: TimeSrv = getTimeSrv()
   ) {
     super(instanceSettings);
 

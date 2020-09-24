@@ -4,27 +4,21 @@ import { ElasticDatasource } from './datasource';
 import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
 import { ElasticsearchOptions } from './types';
 import { TemplateSrv } from '../../../features/templating/template_srv';
-import { getTimeSrv, TimeSrv } from '../../../features/dashboard/services/TimeSrv';
-import { getTemplateSrv } from '@grafana/runtime';
+import { TimeSrv } from '../../../features/dashboard/services/TimeSrv';
 
-jest.mock('app/features/templating/template_srv', () => {
-  return {
-    getAdhocFilters: jest.fn(() => [] as any[]),
-    replace: jest.fn((a: string) => a),
-  };
-});
+const templateSrvStub = {
+  getAdhocFilters: jest.fn(() => [] as any[]),
+  replace: jest.fn((a: string) => a),
+} as any;
 
-jest.mock('app/features/dashboard/services/TimeSrv', () => ({
-  __esModule: true,
-  getTimeSrv: jest.fn().mockReturnValue({
-    timeRange(): any {
-      return {
-        from: dateTime(1531468681),
-        to: dateTime(1531489712),
-      };
-    },
-  }),
-}));
+const timeSrvStub = {
+  timeRange(): any {
+    return {
+      from: dateTime(1531468681),
+      to: dateTime(1531489712),
+    };
+  },
+} as any;
 
 const dataSource = new ElasticDatasource(
   {
@@ -36,8 +30,8 @@ const dataSource = new ElasticDatasource(
       timeField: '@time',
     },
   } as DataSourceInstanceSettings<ElasticsearchOptions>,
-  getTemplateSrv() as TemplateSrv,
-  getTimeSrv() as TimeSrv
+  templateSrvStub as TemplateSrv,
+  timeSrvStub as TimeSrv
 );
 describe('transform prometheus query to elasticsearch query', () => {
   it('Prometheus query with exact equals labels ( 2 labels ) and metric __name__', () => {

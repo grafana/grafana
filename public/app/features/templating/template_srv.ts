@@ -336,4 +336,4 @@ export class TemplateSrv implements BaseTemplateSrv {
 // Expose the template srv
 const srv = new TemplateSrv();
 setTemplateSrv(srv);
-export default srv;
+export const getTemplateSrv = () => srv;

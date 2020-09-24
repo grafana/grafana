@@ -13,7 +13,7 @@ import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
 import { Observable, from, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import defaultTimeSrv, { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { serializeParams } from 'app/core/utils/fetch';
 
 export type JaegerQuery = {
@@ -21,10 +21,7 @@ export type JaegerQuery = {
 } & DataQuery;
 
 export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
-  constructor(
-    private instanceSettings: DataSourceInstanceSettings,
-    private readonly timeSrv: TimeSrv = defaultTimeSrv
-  ) {
+  constructor(private instanceSettings: DataSourceInstanceSettings, private readonly timeSrv: TimeSrv = getTimeSrv()) {
     super(instanceSettings);
   }
 

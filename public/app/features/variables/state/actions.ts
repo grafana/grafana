@@ -30,7 +30,7 @@ import {
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './types';
 import { appEvents } from 'app/core/core';
 import { contextSrv } from 'app/core/services/context_srv';
-import templateSrv from '../../templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
 import { isMulti } from '../guard';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -89,7 +89,7 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
       dispatch(addVariable(toVariablePayload(model, { global: false, index: orderIndex++, model })));
     }
 
-    templateSrv.updateTimeRange(getTimeSrv().timeRange());
+    getTemplateSrv().updateTimeRange(getTimeSrv().timeRange());
 
     for (let index = 0; index < getVariables(getState()).length; index++) {
       dispatch(addInitLock(toVariablePayload(getVariables(getState())[index])));
@@ -458,13 +458,13 @@ export const variableUpdated = (
 };
 
 export interface OnTimeRangeUpdatedDependencies {
-  templateSrv: typeof templateSrv;
+  templateSrv: TemplateSrv;
   appEvents: typeof appEvents;
 }
 
 export const onTimeRangeUpdated = (
   timeRange: TimeRange,
-  dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrv, appEvents: appEvents }
+  dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: getTemplateSrv(), appEvents: appEvents }
 ): ThunkResult<Promise<void>> => async (dispatch, getState) => {
   dependencies.templateSrv.updateTimeRange(timeRange);
   const variablesThatNeedRefresh = getVariables(getState()).filter(variable => {

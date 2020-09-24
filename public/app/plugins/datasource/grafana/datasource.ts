@@ -1,13 +1,11 @@
 import _ from 'lodash';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
-
-import defaultTemplateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 
 class GrafanaDatasource extends DataSourceApi<any> {
   constructor(
     instanceSettings: DataSourceInstanceSettings,
-    private readonly templateSrv: TemplateSrv = defaultTemplateSrv
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
   }
