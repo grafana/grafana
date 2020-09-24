@@ -5,6 +5,7 @@ import { Field, FieldConfig, FieldType, GrafanaTheme, Threshold, ThresholdsMode 
 import { getScaleCalculator, sortThresholds } from './scale';
 import { ArrayVector } from '../vector';
 import { validateFieldConfig } from './fieldOverrides';
+import { systemDateFormats } from '../datetime';
 
 function getDisplayProcessorFromConfig(config: FieldConfig) {
   return getDisplayProcessor({
@@ -291,6 +292,23 @@ describe('Date display options', () => {
       },
     });
     expect(processor(0).text).toEqual('1970');
+  });
+
+  it('Should use system date format by default', () => {
+    const currentFormat = systemDateFormats.fullDate;
+    systemDateFormats.fullDate = 'YYYY-MM';
+
+    const processor = getDisplayProcessor({
+      timeZone: 'utc',
+      field: {
+        type: FieldType.time,
+        config: {},
+      },
+    });
+
+    expect(processor(0).text).toEqual('1970-01');
+
+    systemDateFormats.fullDate = currentFormat;
   });
 
   it('should handle ISO string dates', () => {

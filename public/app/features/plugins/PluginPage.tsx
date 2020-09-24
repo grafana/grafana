@@ -42,7 +42,7 @@ export function getLoadingNav(): NavModel {
   };
 }
 
-function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
+export function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
   return getPluginSettings(pluginId).then(info => {
     if (info.type === PluginType.app) {
       return importAppPlugin(info);
