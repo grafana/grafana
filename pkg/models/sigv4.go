@@ -57,7 +57,6 @@ func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
 		return nil, err
 	}
 
-	fmt.Println("SIGNING!")
 	signer := v4.NewSigner(creds)
 	return signer.Sign(req, nil, "grafana", m.Config.Region, time.Now())
 }
