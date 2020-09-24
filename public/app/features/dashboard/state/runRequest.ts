@@ -91,12 +91,11 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 }
 
 /**
- * a combined PanelData response.
- * It will
- *  * Merge multiple responses into a single DataFrame array based on the packet key
- *  * Will emi * This function handles the excecution of requests & and processes the single or multiple response packets into
-t a loading state if no response after 50ms
- *  * Cancel any still running network requests on unsubscribe (using request.requestId)
+ * This function handles the excecution of requests & and processes the single or multiple response packets into
+ * a combined PanelData response. It will
+ *  Merge multiple responses into a single DataFrame array based on the packet key
+ *  Will emit a loading state if no response after 50ms
+ *  Cancel any still running network requests on unsubscribe (using request.requestId)
  */
 export function runRequest(datasource: DataSourceApi, request: DataQueryRequest): Observable<PanelData> {
   let state: RunningQueryState = {
