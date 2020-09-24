@@ -522,10 +522,10 @@ steps:
   depends_on:
   - end-to-end-tests
 
-- name: publish-packages
+- name: upload-packages
   image: grafana/grafana-ci-deploy:1.2.6
   commands:
-  - ./bin/grabpl publish-packages --edition oss
+  - ./bin/grabpl upload-packages --edition oss
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -614,5 +614,50 @@ trigger:
 
 depends_on:
 - build-master
+
+---
+kind: pipeline
+type: docker
+name: publish-master
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: identify-runner
+  image: alpine:3.12
+  commands:
+  - echo $DRONE_RUNNER_NAME
+
+- name: initialize
+  image: grafana/build-container:1.2.27
+  commands:
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.10/grabpl
+  - chmod +x grabpl
+  - mkdir -p bin
+  - mv grabpl bin
+  environment:
+    DOCKERIZE_VERSION: 0.6.1
+
+- name: publish-packages
+  image: grafana/grafana-ci-deploy:1.2.6
+  commands:
+  - ./bin/grabpl publish-packages --edition oss
+  environment:
+    GRAFANA_COM_API_KEY:
+      from_secret: grafana_api_key
+  depends_on:
+  - upload-packages
+
+trigger:
+  branch:
+  - master
+  event:
+  - push
+
+depends_on:
+- build-master
+- windows-master
 
 ...
