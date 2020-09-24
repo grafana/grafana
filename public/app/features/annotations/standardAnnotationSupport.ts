@@ -161,7 +161,8 @@ export function getAnnotationsFromData(data: DataFrame[], options?: AnnotationEv
 
   for (let i = 0; i < frame.length; i++) {
     const anno: AnnotationEvent = {
-      source: { type: 'todo-fix-me', iconColor: 'red' },
+      type: 'default',
+      color: 'red',
     };
 
     for (const f of fields) {
