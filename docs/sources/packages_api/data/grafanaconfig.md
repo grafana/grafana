@@ -57,7 +57,6 @@ import { GrafanaConfig } from '@grafana/data';
 |  [panels](#panels-property) | <code>{</code><br/><code>        [key: string]: PanelPluginMeta;</code><br/><code>    }</code> |  |
 |  [passwordHint](#passwordhint-property) | <code>any</code> |  |
 |  [pluginsToPreload](#pluginstopreload-property) | <code>string[]</code> |  |
-|  [sigV4AuthEnabled](#sigv4authenabled-property) | <code>boolean</code> |  |
 |  [samlEnabled](#samlenabled-property) | <code>boolean</code> |  |
 |  [theme](#theme-property) | <code>GrafanaTheme</code> |  |
 |  [verifyEmailEnabled](#verifyemailenabled-property) | <code>boolean</code> |  |
@@ -322,14 +321,6 @@ passwordHint: any;
 
 ```typescript
 pluginsToPreload: string[];
-```
-
-### sigV4AuthEnabled property
-
-<b>Signature</b>
-
-```typescript
-sigV4AuthEnabled: boolean;
 ```
 
 ### samlEnabled property
