@@ -158,7 +158,7 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	}
 
 	// Set default next round tripper to the default transport
-	var next http.RoundTripper = transport
+	next := http.RoundTripper(transport)
 
 	// Add SigV4 middleware if enabled, which will then defer to the default transport
 	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool() && setting.SigV4AuthEnabled {
