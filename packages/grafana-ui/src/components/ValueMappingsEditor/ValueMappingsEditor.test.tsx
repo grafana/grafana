@@ -11,7 +11,7 @@ const setup = (spy?: any, propOverrides?: object) => {
         spy(mappings);
       }
     },
-    valueMappings: [
+    value: [
       { id: 1, type: MappingType.ValueToText, value: '20', text: 'Ok' },
       { id: 2, type: MappingType.RangeToText, from: '21', to: '30', text: 'Meh' },
     ],
@@ -64,11 +64,11 @@ describe('Next id to add', () => {
     ]);
   });
 
-  it('should default to 0', () => {
+  it('should default to id 1', () => {
     const onChangeSpy = jest.fn();
-    const wrapper = setup(onChangeSpy, { valueMappings: [] });
+    const wrapper = setup(onChangeSpy, { value: [] });
     const add = wrapper.find('*[aria-label="ValueMappingsEditor add mapping button"]');
     add.at(0).simulate('click');
-    expect(onChangeSpy).toBeCalledWith([{ id: 0, type: MappingType.ValueToText, from: '', to: '', text: '' }]);
+    expect(onChangeSpy).toBeCalledWith([{ id: 1, type: MappingType.ValueToText, from: '', to: '', text: '' }]);
   });
 });

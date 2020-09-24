@@ -21,7 +21,7 @@ You can apply thresholds to the following visualizations:
 - [Gauge]({{< relref "visualizations/gauge-panel.md" >}})
 - [Graph]({{< relref "visualizations/graph-panel.md" >}})
 - [Stat]({{< relref "visualizations/stat-panel.md" >}})
-- [Table]({{< relref "visualizations/table-panel.md" >}})
+- [Table]({{< relref "visualizations/table/_index.md" >}})
 
 ## Default thresholds
 

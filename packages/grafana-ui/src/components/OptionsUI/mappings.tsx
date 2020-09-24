@@ -17,6 +17,6 @@ export class ValueMappingsValueEditor extends React.PureComponent<
       value = [];
     }
 
-    return <ValueMappingsEditor valueMappings={value} onChange={onChange} />;
+    return <ValueMappingsEditor value={value} onChange={onChange} />;
   }
 }
