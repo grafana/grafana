@@ -277,7 +277,7 @@ steps:
     DOCKERIZE_VERSION: 0.6.1
 
 - name: trigger-enterprise-downstream
-  image: plugins/downstream
+  image: grafana/drone-downstream
   settings:
     params:
     - SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}

@@ -275,7 +275,7 @@ def enterprise_downstream_step(edition):
 
     return {
         'name': 'trigger-enterprise-downstream',
-        'image': 'plugins/downstream',
+        'image': 'grafana/drone-downstream',
         'settings': {
             'server': 'https://drone.grafana.net',
             'token': {
