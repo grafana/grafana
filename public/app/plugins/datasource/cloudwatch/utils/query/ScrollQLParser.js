@@ -2664,7 +2664,6 @@ StatsGroupFieldIdContext.prototype.fieldId = function() {
   return this.getTypedRuleContext(FieldIdContext, 0);
 };
 StatsGroupFieldIdContext.prototype.enterRule = function(listener) {
-  console.log(this);
   if (listener instanceof ScrollQLParserListener) {
     listener.enterStatsGroupFieldId(this);
   }
