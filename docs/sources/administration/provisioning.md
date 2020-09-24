@@ -161,6 +161,7 @@ Since not all datasources have the same configuration settings we only have the 
 | assumeRoleArn           | string  | Cloudwatch                                                       | ARN of Assume Role                                                                          |
 | defaultRegion           | string  | Cloudwatch                                                       | AWS region                                                                                  |
 | customMetricsNamespaces | string  | Cloudwatch                                                       | Namespaces of Custom Metrics                                                                |
+| profile                 | string  | Cloudwatch                                                       | Custom credentials profile
 | tsdbVersion             | string  | OpenTSDB                                                         | Version                                                                                     |
 | tsdbResolution          | string  | OpenTSDB                                                         | Resolution                                                                                  |
 | sslmode                 | string  | PostgreSQL                                                       | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full'                                 |
