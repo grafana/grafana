@@ -225,16 +225,26 @@ export default function SpanDetail(props: SpanDetailProps) {
             label="Stack trace"
             data={stackTraces}
             isOpen={isStackTracesOpen}
-            TextComponent={textComponentProps => (
-              <TextArea
-                className={styles.Textarea}
-                style={{ cursor: 'unset' }}
-                readOnly
-                cols={10}
-                rows={10}
-                value={textComponentProps.data}
-              />
-            )}
+            TextComponent={textComponentProps => {
+              let text;
+              if (textComponentProps.data?.length > 1) {
+                text = textComponentProps.data
+                  .map((stackTrace, index) => `StackTrace ${index + 1}:\n${stackTrace}`)
+                  .join('\n');
+              } else {
+                text = textComponentProps.data?.[0];
+              }
+              return (
+                <TextArea
+                  className={styles.Textarea}
+                  style={{ cursor: 'unset' }}
+                  readOnly
+                  cols={10}
+                  rows={10}
+                  value={text}
+                />
+              );
+            }}
             onToggle={() => stackTracesToggle(spanID)}
           />
         )}

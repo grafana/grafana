@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { css } from 'emotion';
-import { Alert, Button, IconName, CustomScrollbar, Container, HorizontalGroup, ConfirmModal, Modal } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, Container, CustomScrollbar, HorizontalGroup, IconName, Modal } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
 import { getAlertingValidationMessage } from './getAlertingValidationMessage';
@@ -14,8 +13,7 @@ import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
 import { AppNotificationSeverity, StoreState } from 'app/types';
-import { updateLocation } from 'app/core/actions';
-import { PanelEditorTabId } from '../dashboard/components/PanelEditor/types';
+import { PanelNotSupported } from '../dashboard/components/PanelEditor/PanelNotSupported';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -26,9 +24,7 @@ interface ConnectedProps {
   angularPanelComponent?: AngularComponent | null;
 }
 
-interface DispatchProps {
-  updateLocation: typeof updateLocation;
-}
+interface DispatchProps {}
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
 
@@ -102,44 +98,19 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
     );
 
     if (validationMessage) {
-      this.setState({ validationMessage: validationMessage });
+      this.setState({ validationMessage });
     }
   }
 
   onAddAlert = () => {
     this.panelCtrl._enableAlert();
     this.component.digest();
-  };
-
-  switchToQueryTab = () => {
-    const { updateLocation } = this.props;
-    updateLocation({ query: { tab: PanelEditorTabId.Query }, partial: true });
+    this.forceUpdate();
   };
 
   onToggleModal = (prop: keyof Omit<State, 'validationMessage'>) => {
     const value = this.state[prop];
     this.setState({ ...this.state, [prop]: !value });
-  };
-
-  renderValidationMessage = () => {
-    const { validationMessage } = this.state;
-
-    return (
-      <div
-        className={css`
-          width: 508px;
-          margin: 128px auto;
-        `}
-      >
-        <h2>{validationMessage}</h2>
-        <br />
-        <div className="gf-form-group">
-          <Button size={'md'} variant={'secondary'} icon="arrow-left" onClick={this.switchToQueryTab}>
-            Go back to Queries
-          </Button>
-        </div>
-      </div>
-    );
   };
 
   renderTestRule = () => {
@@ -216,7 +187,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
     const hasTransformations = transformations && transformations.length > 0;
 
     if (!alert && validationMessage) {
-      return this.renderValidationMessage();
+      return <PanelNotSupported message={validationMessage} />;
     }
 
     const model = {
@@ -271,6 +242,6 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   };
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { updateLocation };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {};
 
 export const AlertTab = connect(mapStateToProps, mapDispatchToProps)(UnConnectedAlertTab);

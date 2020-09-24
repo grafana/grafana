@@ -375,7 +375,7 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 				if len(otherMetrics) > 1 {
 					metricName += " " + metric.Field
 					if metric.Type == "bucket_script" {
-						//Use the formula in the column name
+						// Use the formula in the column name
 						metricName = metric.Settings.Get("script").MustString("")
 					}
 				}
@@ -484,7 +484,7 @@ func (rp *responseParser) getSeriesName(series *tsdb.TimeSeries, target *Query, 
 					for name, pipelineAgg := range metric.PipelineVariables {
 						for _, m := range target.Metrics {
 							if m.ID == pipelineAgg {
-								metricName = strings.Replace(metricName, "params."+name, describeMetric(m.Type, m.Field), -1)
+								metricName = strings.ReplaceAll(metricName, "params."+name, describeMetric(m.Type, m.Field))
 							}
 						}
 					}

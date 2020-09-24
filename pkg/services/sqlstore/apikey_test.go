@@ -42,7 +42,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 		})
 
 		t.Run("Add an expiring key", func(t *testing.T) {
-			//expires in one hour
+			// expires in one hour
 			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "expiring-in-an-hour", Key: "asd2", SecondsToLive: 3600}
 			err := AddApiKey(&cmd)
 			assert.Nil(t, err)
@@ -62,7 +62,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 		})
 
 		t.Run("Add a key with negative lifespan", func(t *testing.T) {
-			//expires in one day
+			// expires in one day
 			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "key-with-negative-lifespan", Key: "asd3", SecondsToLive: -3600}
 			err := AddApiKey(&cmd)
 			assert.EqualError(t, err, models.ErrInvalidApiKeyExpiration.Error())
@@ -73,17 +73,17 @@ func TestApiKeyDataAccess(t *testing.T) {
 		})
 
 		t.Run("Add keys", func(t *testing.T) {
-			//never expires
+			// never expires
 			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "key1", Key: "key1", SecondsToLive: 0}
 			err := AddApiKey(&cmd)
 			assert.Nil(t, err)
 
-			//expires in 1s
+			// expires in 1s
 			cmd = models.AddApiKeyCommand{OrgId: 1, Name: "key2", Key: "key2", SecondsToLive: 1}
 			err = AddApiKey(&cmd)
 			assert.Nil(t, err)
 
-			//expires in one hour
+			// expires in one hour
 			cmd = models.AddApiKeyCommand{OrgId: 1, Name: "key3", Key: "key3", SecondsToLive: 3600}
 			err = AddApiKey(&cmd)
 			assert.Nil(t, err)

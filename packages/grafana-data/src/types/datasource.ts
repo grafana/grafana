@@ -9,6 +9,7 @@ import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
 import { CoreApp } from './app';
+import { LiveChannelSupport } from './live';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -284,6 +285,15 @@ export abstract class DataSourceApi<
    * @deprecated -- prefer using {@link AnnotationSupport}
    */
   annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
+
+  /**
+   * Define live streaming behavior within this datasource settings
+   *
+   * Note: `plugin.json` must also define `live: true`
+   *
+   * @experimental
+   */
+  channelSupport?: LiveChannelSupport;
 }
 
 export interface MetadataInspectorProps<
@@ -453,6 +463,9 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   // Explore state used by various datasources
   liveStreaming?: boolean;
+  /**
+   * @deprecated showingGraph and showingTable are always set to true and set to true
+   */
   showingGraph?: boolean;
   showingTable?: boolean;
 }
