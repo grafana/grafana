@@ -14,7 +14,7 @@ import {
   useTable,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import { getColumns, getHeaderAlign } from './utils';
+import { getColumns } from './utils';
 import { useTheme } from '../../themes';
 import {
   TableColumnResizeActionCallback,
@@ -23,10 +23,10 @@ import {
   TableSortByFieldState,
 } from './types';
 import { getTableStyles, TableStyles } from './styles';
-import { TableCell } from './TableCell';
 import { Icon } from '../Icon/Icon';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Filter } from './Filter';
+import { TableCell } from './TableCell';
 
 const COLUMN_MIN_WIDTH = 150;
 
@@ -229,7 +229,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, field?: Field) 
   }
 
   headerProps.style.position = 'absolute';
-  headerProps.style.justifyContent = getHeaderAlign(field);
+  headerProps.style.justifyContent = (column as any).justifyContent;
 
   return (
     <div className={tableStyles.headerCell} {...headerProps}>
