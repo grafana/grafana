@@ -17,6 +17,7 @@ import {
   UnitFieldConfigSettings,
   unitOverrideProcessor,
 } from '../field';
+import { FieldColor } from '../types';
 
 /**
  * Fluent API for declarative creation of field config option editors
@@ -91,7 +92,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
   }
 
   addColorPicker<TSettings = any>(
-    config: FieldConfigEditorConfig<TOptions, TSettings & ColorFieldConfigSettings, string>
+    config: FieldConfigEditorConfig<TOptions, TSettings & ColorFieldConfigSettings, FieldColor>
   ) {
     return this.addCustomEditor({
       ...config,
