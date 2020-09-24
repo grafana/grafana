@@ -10,7 +10,7 @@ weight = 300
 # Transformation types and options
 
 Grafana comes with the following transformations:
-  
+
   - [Reduce](#reduce)
   - [Filter by name](#filter-by-name)
   - [Filter data by query](#filter-data-by-query)
@@ -211,15 +211,12 @@ This transformation goes in two steps. First you specify one or multiple fields 
 | 2020-07-07 11:34:20 | **server 1** | 80              | Shutdown      |
 | 2020-07-07 09:28:06 | **server 1** | 80              | OK            |
 | 2020-07-07 09:23:07 | **server 1** | 86              | OK            |
-
-|
-| 2020-07-07 10:32:20 | server 2 | 90 | Overload
-| 2020-07-07 09:30:05 | server 2 | 88 | OK
-| 2020-07-07 09:25:05 | server 2 | 88 | OK
-|
-| 2020-07-07 11:34:20 | **_server 3_** | 62 | OK
-| 2020-07-07 10:31:22 | **_server 3_** | 55 | OK
-| 2020-07-07 09:30:57 | **_server 3_** | 62 | Rebooting
+| 2020-07-07 10:32:20 | server 2 | 90 | Overload |
+| 2020-07-07 09:30:05 | server 2 | 88 | OK |
+| 2020-07-07 09:25:05 | server 2 | 88 | OK |
+| 2020-07-07 11:34:20 | **_server 3_** | 62 | OK |
+| 2020-07-07 10:31:22 | **_server 3_** | 55 | OK |
+| 2020-07-07 09:30:57 | **_server 3_** | 62 | Rebooting |
 
 All rows with the same value of Server ID are grouped together.
 
