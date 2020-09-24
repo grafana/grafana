@@ -88,12 +88,16 @@ def master_steps(edition, is_downstream=False):
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
         release_next_npm_packages_step(edition),
-        publish_packages_step(edition, is_downstream),
+        upload_packages_step(edition, is_downstream),
         deploy_to_kubernetes_step(edition, is_downstream),
     ]
     windows_steps = get_windows_steps(edition=edition, version_mode='master', is_downstream=is_downstream)
 
-    return steps, windows_steps
+    publish_steps = [
+        publish_packages_step(edition, is_downstream),
+    ]
+
+    return steps, windows_steps, publish_steps
 
 def master_pipelines(edition):
     services = [
@@ -121,7 +125,7 @@ def master_pipelines(edition):
         'event': ['push',],
         'branch': 'master',
     }
-    steps, windows_steps = master_steps(edition=edition)
+    steps, windows_steps, publish_steps = master_steps(edition=edition)
     pipelines = [
         pipeline(
             name='build-master', edition=edition, trigger=trigger, services=services, steps=steps
@@ -131,12 +135,17 @@ def master_pipelines(edition):
             depends_on=['build-master'],
         ),
     ]
+    if edition != 'enterprise':
+        pipelines.append(pipeline(
+            name='publish-master', edition=edition, trigger=trigger, steps=publish_steps,
+            depends_on=['build-master', 'windows-master',], install_deps=False,
+        ))
     if edition == 'enterprise':
         # Add downstream enterprise pipelines triggerable from OSS builds
         trigger = {
             'event': ['custom',],
         }
-        steps, windows_steps = master_steps(edition=edition, is_downstream=True)
+        steps, windows_steps, publish_steps = master_steps(edition=edition, is_downstream=True)
         pipelines.append(pipeline(
             name='build-master-downstream', edition=edition, trigger=trigger, services=services, steps=steps,
             is_downstream=True,
@@ -145,10 +154,15 @@ def master_pipelines(edition):
             name='windows-master-downstream', edition=edition, trigger=trigger, steps=windows_steps,
             platform='windows', depends_on=['build-master-downstream'], is_downstream=True,
         ))
+        pipelines.append(pipeline(
+            name='publish-master-downstream', edition=edition, trigger=trigger, steps=publish_steps,
+            depends_on=['build-master-downstream', 'windows-master-downstream'], is_downstream=True, install_deps=False,
+        ))
 
     return pipelines
 
-def pipeline(name, edition, trigger, steps, services=[], platform='linux', depends_on=[], is_downstream=False):
+def pipeline(name, edition, trigger, steps, services=[], platform='linux', depends_on=[], is_downstream=False,
+    install_deps=True):
     if platform != 'windows':
         platform_conf = {
             'os': 'linux',
@@ -168,7 +182,7 @@ def pipeline(name, edition, trigger, steps, services=[], platform='linux', depen
         'name': name,
         'trigger': trigger,
         'services': services,
-        'steps': init_steps(edition, platform, is_downstream=is_downstream) + steps,
+        'steps': init_steps(edition, platform, is_downstream=is_downstream, install_deps=install_deps) + steps,
         'depends_on': depends_on,
     }
 
@@ -180,7 +194,7 @@ def pipeline(name, edition, trigger, steps, services=[], platform='linux', depen
 
     return pipeline
 
-def init_steps(edition, platform, is_downstream=False):
+def init_steps(edition, platform, is_downstream=False, install_deps=True):
     if platform == 'windows':
         return [
             {
@@ -200,12 +214,15 @@ def init_steps(edition, platform, is_downstream=False):
         ],
     }
 
-    common_cmds = [
-        'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
-        'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
-        'rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
-        'yarn install --frozen-lockfile --no-progress',
-    ]
+    if install_deps:
+        common_cmds = [
+            'curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
+            'tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
+            'rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
+            'yarn install --frozen-lockfile --no-progress',
+        ]
+    else:
+        common_cmds = []
     if edition == 'enterprise':
         if is_downstream:
             source_commit = ' $${SOURCE_COMMIT}'
@@ -730,12 +747,12 @@ def deploy_to_kubernetes_step(edition, is_downstream):
         ],
     }
 
-def publish_packages_step(edition, is_downstream):
+def upload_packages_step(edition, is_downstream):
     if edition == 'enterprise' and not is_downstream:
         return None
 
     return {
-        'name': 'publish-packages',
+        'name': 'upload-packages',
         'image': publish_image,
         'depends_on': [
             'package',
@@ -758,6 +775,26 @@ def publish_packages_step(edition, is_downstream):
             },
             'GPG_KEY_PASSWORD': {
                 'from_secret': 'gpg_key_password',
+            },
+        },
+        'commands': [
+            './bin/grabpl upload-packages --edition {}'.format(edition),
+        ],
+    }
+
+def publish_packages_step(edition, is_downstream):
+    if edition == 'enterprise' and not is_downstream:
+        return None
+
+    return {
+        'name': 'publish-packages',
+        'image': publish_image,
+        'depends_on': [
+            'upload-packages',
+        ],
+        'environment': {
+            'GRAFANA_COM_API_KEY': {
+                'from_secret': 'grafana_api_key',
             },
         },
         'commands': [
