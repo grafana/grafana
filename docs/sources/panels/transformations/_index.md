@@ -36,4 +36,4 @@ Before you can configure and apply transformations:
   - [Heatmap]({{< relref "../visualizations/heatmap.md" >}})
   - [Logs]({{< relref "../visualizations/logs-panel.md" >}})
   - [Stat]({{< relref "../visualizations/stat-panel.md" >}})
-  - [Table]({{< relref "../visualizations/table-panel.md" >}})ß
+  - [Table]({{< relref "../visualizations/table/_index.md" >}})
