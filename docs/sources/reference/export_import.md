@@ -76,7 +76,7 @@ Example:
       "value": "collectd",
       "description": ""
     }
-  ],
+  ]
 }
 
 ```
