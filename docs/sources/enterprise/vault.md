@@ -15,7 +15,7 @@ weight = 700
 If you manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault), you can use them for [Configuration]({{< relref "../administration/configuration.md" >}})
 and [Provisioning]({{< relref "../administration/provisioning.md" >}}).
 
-> **Note:** If you have Grafana set up for [high availability]({{< relref "../tutorials/ha_setup.md" >}}), then we advise not to use dynamic secrets for provisioning files.
+> **Note:** If you have Grafana [set up for high availability]({{< relref "../administration/set-up-for-high-availability.md" >}}), then we advise not to use dynamic secrets for provisioning files.
 > Each Grafana instance is responsible for renewing its own leases. Your data source leases might expire when one of your Grafana servers shuts down.
 
 ## Configuration
@@ -24,8 +24,7 @@ Before using Vault, you need to activate it by providing a URL, authentication m
 and a token for your Vault service. Grafana automatically renews the service token if it is renewable and
 set up with a limited lifetime.
 
-If you're using short-lived leases, then you can also configure how often Grafana should renew the lease and for
-how long. We recommend keeping the defaults unless you run into problems.
+If you're using short-lived leases, then you can also configure how often Grafana should renew the lease and for how long. We recommend keeping the defaults unless you run into problems.
 
 ```ini
 [keystore.vault]
