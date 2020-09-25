@@ -6,7 +6,7 @@ import { Icon } from '../Icon/Icon';
 import { useTheme } from '../../themes';
 import { LabelProps } from './Label';
 
-export interface Props extends Omit<LabelProps, 'css'> {
+export interface Props extends Omit<LabelProps, 'css' | 'description' | 'category'> {
   /** Content for the labels tooltip. If provided, an info icon with the tooltip content
    * will be displayed */
   tooltip?: PopoverContent;
@@ -18,21 +18,11 @@ export interface Props extends Omit<LabelProps, 'css'> {
   /** @deprecated */
   /** This prop is deprecated and is not used anymore */
   isInvalid?: boolean;
-  /** Fill the width of the container. Equivalent to setting `flex-grow:1` */
-  grow?: boolean;
 }
 
-export const InlineLabel: FunctionComponent<Props> = ({
-  children,
-  className,
-  htmlFor,
-  tooltip,
-  width,
-  grow,
-  ...rest
-}) => {
+export const InlineLabel: FunctionComponent<Props> = ({ children, className, htmlFor, tooltip, width, ...rest }) => {
   const theme = useTheme();
-  const styles = getInlineLabelStyles(theme, { width, grow });
+  const styles = getInlineLabelStyles(theme, width);
 
   return (
     <label className={cx(styles.label, className)} {...rest}>
@@ -46,14 +36,7 @@ export const InlineLabel: FunctionComponent<Props> = ({
   );
 };
 
-interface StyleOptions {
-  width?: number | 'auto';
-  isKeyword?: boolean;
-  grow?: boolean;
-}
-
-export const getInlineLabelStyles = (theme: GrafanaTheme, options: StyleOptions) => {
-  const { width, grow = false } = options;
+export const getInlineLabelStyles = (theme: GrafanaTheme, width?: number | 'auto') => {
   return {
     label: css`
       display: flex;
@@ -71,7 +54,6 @@ export const getInlineLabelStyles = (theme: GrafanaTheme, options: StyleOptions)
       border: none;
       width: ${width ? (width !== 'auto' ? `${8 * width}px` : width) : '100%'};
       color: ${theme.colors.textHeading};
-      flex-grow: ${grow ? 1 : 'unset'};
     `,
     icon: css`
       flex-grow: 0;

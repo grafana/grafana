@@ -6,7 +6,7 @@ import { InlineLabel } from './InlineLabel';
 import { PopoverContent } from '../Tooltip/Tooltip';
 import { FieldProps } from './Field';
 
-export interface Props extends Omit<FieldProps, 'css'> {
+export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'description' | 'error'> {
   /** Content for the label's tooltip */
   tooltip?: PopoverContent;
   /** Custom width for the label */
