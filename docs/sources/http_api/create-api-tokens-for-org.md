@@ -4,8 +4,7 @@ type = "docs"
 keywords = ["grafana", "tutorials", "API", "Token", "Org", "Organization"]
 aliases =["/docs/grafana/latest/tutorials/api_org_token_howto/"]
 [menu.docs]
-parent = "tutorials"
-weight = 10
+weight = 150
 +++
 
 # Create API tokens and dashboards for an organization

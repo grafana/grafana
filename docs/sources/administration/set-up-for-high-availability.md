@@ -4,8 +4,7 @@ type = "docs"
 keywords = ["grafana", "tutorials", "HA", "high availability"]
 aliases = ["/docs/grafana/latest/tutorials/ha_setup/"]
 [menu.docs]
-parent = "tutorials"
-weight = 10
+weight = 1200
 +++
 
 # Set up Grafana for high availability
