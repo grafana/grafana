@@ -52,7 +52,7 @@ The new internal linking feature for Elasticsearch allows you to link to other d
 
 ## Transformations
 
-We have added a new **Merge on time** transform that can combine many time series or table results. Unlike the join transform this combines the result into one table even when the time values does not align / match.
+We have added a new **Merge on time** transform that can combine many time series or table results. Unlike the join transform, this combines the result into one table even when the time values do not align / match.
 
 The new table panel introduced in 7.0 was missing a few features that the old table panel had. This feature, along with ad hoc filtering, means that the new table panel has achieved feature parity with the old table panel.
 
@@ -85,7 +85,7 @@ Additionally, the Raw Edit mode for Application Insights Analytics has been repl
 
 ## Deep linking for Google Cloud Monitoring (formerly named Google Stackdriver) data source
 
-A new feature in Grafana 7.1 is [deep linking from Grafana panels to the Metrics Explorer in Gooogle Cloud Console]({{<relref "../features/datasources/cloudmonitoring.md#deep-linking-from-grafana-panels-to-the-metrics-explorer-in-google-cloud-console">}}). Click on a time series in the panel to see a context menu with a link to View in Metrics explorer in Google Cloud Console. Clicking that link opens the Metrics explorer in the Monitoring Google Cloud Console and runs the query from the Grafana panel there.
+A new feature in Grafana 7.1 is [deep linking from Grafana panels to the Metrics Explorer in Google Cloud Console]({{<relref "../features/datasources/cloudmonitoring.md#deep-linking-from-grafana-panels-to-the-metrics-explorer-in-google-cloud-console">}}). Click on a time series in the panel to see a context menu with a link to View in Metrics explorer in Google Cloud Console. Clicking that link opens the Metrics explorer in the Monitoring Google Cloud Console and runs the query from the Grafana panel there.
 
 ## Time range picker update
 
