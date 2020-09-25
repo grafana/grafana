@@ -5,13 +5,13 @@ import { stylesFactory, useTheme } from '../../themes';
 import { Badge, BadgeProps } from '../Badge/Badge';
 import { css } from 'emotion';
 
-interface FeatureInfoBoxI extends Omit<InfoBoxProps, 'branded' | 'title' | 'urlTitle'> {
+interface FeatureInfoBoxProps extends Omit<InfoBoxProps, 'branded' | 'title' | 'urlTitle'> {
   title: string;
   featureState?: FeatureState;
 }
 
 export const FeatureInfoBox = React.memo(
-  React.forwardRef<HTMLDivElement, FeatureInfoBoxI>(({ title, featureState, ...otherProps }, ref) => {
+  React.forwardRef<HTMLDivElement, FeatureInfoBoxProps>(({ title, featureState, ...otherProps }, ref) => {
     const theme = useTheme();
     const styles = getFeatureInfoBoxStyles(theme);
 
