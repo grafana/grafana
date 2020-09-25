@@ -1,6 +1,6 @@
 import {
   FieldColor,
-  FieldColorMode,
+  FieldConfigProperty,
   identityOverrideProcessor,
   PanelPlugin,
   standardEditorsRegistry,
@@ -11,6 +11,16 @@ import { Options } from './types';
 
 export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPanel)
   .useFieldConfig({
+    standardOptions: [
+      // FieldConfigProperty.Min,
+      // FieldConfigProperty.Max,
+      FieldConfigProperty.Unit,
+      FieldConfigProperty.DisplayName,
+      FieldConfigProperty.Decimals,
+      // NOT:  FieldConfigProperty.Thresholds,
+      FieldConfigProperty.Mappings,
+    ],
+
     useCustomConfig: builder => {
       builder
         // TODO:  Until we fix standard color property let's do it the custom editor way
@@ -19,8 +29,11 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           id: 'line.color',
           name: 'Series color',
           shouldApply: () => true,
-          settings: {},
-          defaultValue: { mode: FieldColorMode.Fixed },
+          settings: {
+            allowUndefined: true,
+            textWhenUndefined: 'Automatic',
+          },
+          defaultValue: undefined,
           editor: standardEditorsRegistry.get('color').editor as any,
           override: standardEditorsRegistry.get('color').editor as any,
           process: identityOverrideProcessor,
