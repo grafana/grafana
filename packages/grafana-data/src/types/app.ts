@@ -1,11 +1,12 @@
 import { ComponentClass } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
-import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
+import { GrafanaPlugin, PluginIncludeType, PluginMeta } from './plugin';
 
 export enum CoreApp {
   Dashboard = 'dashboard',
   Explore = 'explore',
+  Variables = 'variables',
 }
 
 export interface AppRootProps<T = KeyValue> {

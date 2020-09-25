@@ -1,4 +1,15 @@
-import { AppEvents, DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
+import { Subject, Subscription } from 'rxjs';
+import { filter, map, takeUntil } from 'rxjs/operators';
+import { v4 as uuidv4 } from 'uuid';
+import {
+  AppEvents,
+  CoreApp,
+  DataQueryRequest,
+  DataSourceApi,
+  DataSourcePluginMeta,
+  DataSourceSelectItem,
+  DefaultTimeRange,
+} from '@grafana/data';
 import { validateVariableSelectionState } from '../state/actions';
 import { QueryVariableModel, VariableRefresh } from '../types';
 import { ThunkResult } from '../../../types';
@@ -14,6 +25,128 @@ import { variableAdapters } from '../adapters';
 import { changeVariableProp } from '../state/sharedReducer';
 import { updateVariableOptions, updateVariableTags } from './reducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
+import { runRequest } from '../../dashboard/state/runRequest';
+import { dispatch, getState } from '../../../store/store';
+
+const updateOptionsRequests = new Subject<{
+  identifier: VariableIdentifier;
+  dataSource: DataSourceApi;
+  searchFilter?: string;
+}>();
+
+updateOptionsRequests.subscribe(args => {
+  const { dataSource, identifier, searchFilter } = args;
+  const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
+  try {
+    const range =
+      variableInState.refresh === VariableRefresh.onTimeRangeChanged ? getTimeSrv().timeRange() : DefaultTimeRange;
+    const targets = [
+      {
+        datasource: dataSource.name,
+        refId: `${dataSource.name}-${variableInState.id}`,
+        variableQuery: variableInState.query,
+      },
+    ];
+
+    const request: DataQueryRequest = {
+      targets,
+      app: CoreApp.Variables,
+      range,
+      scopedVars: {
+        searchFilter: { text: searchFilter ?? '', value: searchFilter ?? '' },
+        variable: { text: variableInState.current.text, value: variableInState.current.value },
+      },
+      requestId: uuidv4(),
+      intervalMs: 0,
+      timezone: 'utc',
+      interval: '',
+      startTime: Date.now(),
+    };
+
+    const subscriptions = new Subscription();
+    subscriptions.add(
+      runRequest(dataSource, request)
+        .pipe(
+          map(panelData => panelData.series),
+          dataSource.variables!.toMetricFindValues(),
+          takeUntil(
+            updateOptionsRequests.pipe(
+              filter(args => {
+                let cancelRequest = false;
+
+                if (args.identifier.id === identifier.id) {
+                  cancelRequest = true;
+                }
+
+                return cancelRequest;
+              })
+            )
+          )
+        )
+        .subscribe({
+          next: results => {
+            console.log(`results from ${identifier.id}`, results);
+            const templatedRegex = getTemplatedRegex(variableInState);
+            dispatch(updateVariableOptions(toVariablePayload(variableInState, { results, templatedRegex })));
+          },
+          error: err => {
+            throw err;
+          },
+          complete: () => {
+            console.log(`complete from ${identifier.id}`);
+            subscriptions.unsubscribe();
+          },
+        })
+    );
+  } catch (err) {
+    console.error(err);
+    if (err.data && err.data.message) {
+      err.message = err.data.message;
+    }
+    if (getState().templating.editor.id === identifier.id) {
+      dispatch(addVariableEditorError({ errorProp: 'update', errorText: err.message }));
+    }
+    appEvents.emit(AppEvents.alertError, ['Templating', 'Template variables could not be initialized: ' + err.message]);
+  }
+});
+
+export const updateOptionsFromMetricFindValue = (
+  identifier: VariableIdentifier,
+  dataSource: DataSourceApi,
+  searchFilter?: string
+): ThunkResult<void> => async (dispatch, getState) => {
+  const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
+  try {
+    const beforeUid = getState().templating.transaction.uid;
+
+    if (!dataSource.metricFindQuery) {
+      return;
+    }
+
+    const results = await dataSource.metricFindQuery(
+      variableInState.query,
+      getLegacyQueryOptions(variableInState, searchFilter)
+    );
+
+    const afterUid = getState().templating.transaction.uid;
+    if (beforeUid !== afterUid) {
+      // we started another batch before this metricFindQuery finished let's abort
+      return;
+    }
+
+    const templatedRegex = getTemplatedRegex(variableInState);
+    await dispatch(updateVariableOptions(toVariablePayload(variableInState, { results, templatedRegex })));
+  } catch (err) {
+    console.error(err);
+    if (err.data && err.data.message) {
+      err.message = err.data.message;
+    }
+    if (getState().templating.editor.id === identifier.id) {
+      dispatch(addVariableEditorError({ errorProp: 'update', errorText: err.message }));
+    }
+    appEvents.emit(AppEvents.alertError, ['Templating', 'Template variables could not be initialized: ' + err.message]);
+  }
+};
 
 export const updateQueryVariableOptions = (
   identifier: VariableIdentifier,
@@ -22,33 +155,23 @@ export const updateQueryVariableOptions = (
   return async (dispatch, getState) => {
     const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
     try {
-      const beforeUid = getState().templating.transaction.uid;
       if (getState().templating.editor.id === variableInState.id) {
         dispatch(removeVariableEditorError({ errorProp: 'update' }));
       }
+
       const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');
-      const queryOptions: any = { range: undefined, variable: variableInState, searchFilter };
-      if (variableInState.refresh === VariableRefresh.onTimeRangeChanged) {
-        queryOptions.range = getTimeSrv().timeRange();
+
+      if (dataSource.variables) {
+        updateOptionsRequests.next({ identifier, dataSource, searchFilter });
+      } else {
+        await dispatch(updateOptionsFromMetricFindValue(identifier, dataSource, searchFilter));
       }
 
-      if (!dataSource.metricFindQuery) {
-        return;
-      }
-
-      const results = await dataSource.metricFindQuery(variableInState.query, queryOptions);
-
-      const afterUid = getState().templating.transaction.uid;
-      if (beforeUid !== afterUid) {
-        // we started another batch before this metricFindQuery finished let's abort
-        return;
-      }
-
-      const templatedRegex = getTemplatedRegex(variableInState);
-      await dispatch(updateVariableOptions(toVariablePayload(variableInState, { results, templatedRegex })));
-
-      if (variableInState.useTags) {
-        const tagResults = await dataSource.metricFindQuery(variableInState.tagsQuery, queryOptions);
+      if (variableInState.useTags && dataSource.metricFindQuery) {
+        const tagResults = await dataSource.metricFindQuery(
+          variableInState.tagsQuery,
+          getLegacyQueryOptions(variableInState, searchFilter)
+        );
         await dispatch(updateVariableTags(toVariablePayload(variableInState, tagResults)));
       }
 
@@ -139,4 +262,13 @@ const getTemplatedRegex = (variable: QueryVariableModel): string => {
   }
 
   return templateSrv.replace(variable.regex, {}, 'regex');
+};
+
+const getLegacyQueryOptions = (variable: QueryVariableModel, searchFilter?: string) => {
+  const queryOptions: any = { range: undefined, variable, searchFilter };
+  if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
+    queryOptions.range = getTimeSrv().timeRange();
+  }
+
+  return queryOptions;
 };

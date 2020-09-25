@@ -28,11 +28,13 @@ export * from './flot';
 export * from './trace';
 export * from './explore';
 export * from './live';
+export * from './variables';
 
 import * as AppEvents from './appEvents';
 import { AppEvent } from './appEvents';
+import * as PanelEvents from './panelEvents';
+
 export { AppEvent, AppEvents };
 
-import * as PanelEvents from './panelEvents';
 export { PanelEvents };
 export { GrafanaConfig, BuildInfo, FeatureToggles, LicenseInfo } from './config';
