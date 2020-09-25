@@ -269,7 +269,7 @@ GROUP BY
 ORDER BY 1
 ```
 
-When above query are used in a graph panel the result will be two series named `Metric A` and `Metric B` with an average of `valueOne` plotted over `time`.
+When above query is used in a graph panel the result will be two series named `Metric A` and `Metric B` with an average of `valueOne` plotted over `time`.
 Any two series lacking a value in a 3 minute window will render a line between those two lines. You'll notice that the graph to the right never goes down to zero.
 
 <div class="clearfix"></div>
