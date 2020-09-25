@@ -195,7 +195,7 @@ Once the result is returned, the log panel shows a list of log rows and a bar ch
 
 ### Filter search
 
-To add a filter click the plus icon to the right of the `Measurements/Fields` button or a condition. You can remove tag filters by clicking on the first select and choosing `--remove filter--`.
+To add a filter, click the plus icon to the right of the `Measurements/Fields` button or a condition. You can remove tag filters by clicking on the first select and choosing `--remove filter--`.
 
 ## Templating
 
@@ -208,7 +208,7 @@ types of template variables.
 
 ### Query variable
 
-If you add a template variable of the type `Query` you can write a InfluxDB exploration (meta data) query. These queries can
+If you add a template variable of the type `Query` you can write an InfluxDB exploration (meta data) query. These queries can
 return things like measurement names, key names or key values.
 
 For example you can have a variable that contains all values for tag `hostname` if you specify a query like this in the templating variable *Query* setting.
