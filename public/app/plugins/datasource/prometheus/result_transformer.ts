@@ -1,10 +1,10 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
 import { TimeSeries, FieldType, Labels, formatLabels, QueryResultMeta } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 export class ResultTransformer {
-  constructor(private templateSrv: TemplateSrv) {}
+  constructor(private readonly templateSrv: TemplateSrv = getTemplateSrv()) {}
 
   transform(response: any, options: any): Array<TableModel | TimeSeries> {
     const prometheusResult = response.data.data.result;

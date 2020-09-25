@@ -1,5 +1,6 @@
 import { PluginMeta } from '@grafana/data';
 import { PanelPlugin } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 
 export interface PluginDashboard {
   dashboardId: number;
@@ -34,5 +35,5 @@ export interface VariableQueryProps {
   query: any;
   onChange: (query: any, definition: string) => void;
   datasource: any;
-  templateSrv: any;
+  templateSrv: TemplateSrv;
 }

@@ -4,7 +4,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import DefaultVariableQueryEditor from '../variables/editor/DefaultVariableQueryEditor';
 import { DataSourcePluginMeta } from '@grafana/data';
-import { TemplateSrv } from '../templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 
 async function loadComponent(meta: DataSourcePluginMeta) {
   const dsPlugin = await importDataSourcePlugin(meta);

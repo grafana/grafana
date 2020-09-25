@@ -2,7 +2,7 @@ import React, { ChangeEvent, PureComponent } from 'react';
 import { InlineFormLabel, LegacyForms } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { getTemplateSrv } from '../../templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
 import { QueryVariableEditorState } from './reducer';

@@ -1,9 +1,9 @@
 // Libraries
 import _ from 'lodash';
 // Utils
+import { getTemplateSrv } from '@grafana/runtime';
 import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import { getTemplateSrv } from 'app/features/templating/template_srv';
 // Types
 import {
   AppEvent,

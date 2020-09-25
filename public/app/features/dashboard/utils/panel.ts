@@ -14,7 +14,7 @@ import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 
 // Services
-import { getTemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 
 // Constants
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';

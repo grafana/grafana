@@ -4,8 +4,8 @@ import { ReplaySubject, Unsubscribable, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 // Services & Utils
+import { getTemplateSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { runRequest, preProcessPanelData } from './runRequest';
 import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
 

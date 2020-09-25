@@ -3,10 +3,10 @@ import classNames from 'classnames';
 import { Icon } from '@grafana/ui';
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
-import { getTemplateSrv } from 'app/features/templating/template_srv';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
 import { RowOptionsButton } from '../RowOptions/RowOptionsButton';
+import { getTemplateSrv } from '@grafana/runtime';
 
 export interface DashboardRowProps {
   panel: PanelModel;

@@ -2,13 +2,12 @@ import React, { Component } from 'react';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
 import { DataLink, LoadingState, PanelData, PanelMenuItem, QueryResultMetaNotice, ScopedVars } from '@grafana/data';
-import { AngularComponent } from '@grafana/runtime';
+import { AngularComponent, getTemplateSrv } from '@grafana/runtime';
 import { ClickOutsideWrapper, Icon, Tooltip } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
-import { getTemplateSrv } from 'app/features/templating/template_srv';
 
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';

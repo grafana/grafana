@@ -2,7 +2,7 @@ import React from 'react';
 import { LegacyForms } from '@grafana/ui';
 const { Input } = LegacyForms;
 
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 import { SelectableValue } from '@grafana/data';
 
 import CloudMonitoringDatasource from '../datasource';
