@@ -60,10 +60,7 @@ export type PromData = PromMatrixData | PromVectorData | PromScalarData;
 export interface PromVectorData {
   resultType: 'vector';
   result: Array<{
-    metric: {
-      __name__?: string;
-      [index: string]: any;
-    };
+    metric: PromMetric;
     value: PromValue;
   }>;
 }
@@ -71,10 +68,7 @@ export interface PromVectorData {
 export interface PromMatrixData {
   resultType: 'matrix';
   result: Array<{
-    metric: {
-      __name__?: string;
-      [index: string]: any;
-    };
+    metric: PromMetric;
     values: PromValue[];
   }>;
 }
@@ -85,6 +79,11 @@ export interface PromScalarData {
 }
 
 export type PromValue = [number, any];
+
+export interface PromMetric {
+  __name__?: string;
+  [index: string]: any;
+}
 
 export function isFetchErrorResponse(response: any): response is FetchError {
   return 'cancelled' in response;

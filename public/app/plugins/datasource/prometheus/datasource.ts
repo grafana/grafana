@@ -26,7 +26,6 @@ import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getQueryHints } from './query_hints';
-import { ResultTransformer } from './result_transformer';
 import {
   isFetchErrorResponse,
   PromDataErrorResponse,
@@ -39,6 +38,7 @@ import {
   PromVectorData,
   TransformOptions,
 } from './types';
+import { getOriginalMetricName, renderTemplate, transform } from './result_transformer';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 
@@ -56,7 +56,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
   lookupsDisabled: boolean;
-  resultTransformer: ResultTransformer;
   customQueryParameters: any;
 
   constructor(instanceSettings: DataSourceInstanceSettings<PromOptions>) {
@@ -71,7 +70,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.directUrl = instanceSettings.jsonData.directUrl;
-    this.resultTransformer = new ResultTransformer(templateSrv);
     this.ruleMappings = {};
     this.languageProvider = new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
@@ -182,7 +180,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         preferredVisualisationType: target.instant ? 'table' : mixedQueries ? 'graph' : undefined,
       },
     };
-    const series = this.resultTransformer.transform(response, transformerOptions);
+    const series = transform(response, transformerOptions);
 
     return series;
   };
@@ -589,8 +587,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
 
     const query = this.createQuery(queryModel, queryOptions, start, end);
-
-    const self = this;
     const response = await this.performTimeSeriesQuery(query, query.start, query.end).toPromise();
     const eventList: AnnotationEvent[] = [];
     const splitKeys = tagKeys.split(',');
@@ -642,9 +638,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           time: timestamp,
           timeEnd: timestamp,
           annotation,
-          title: self.resultTransformer.renderTemplate(titleFormat, series.metric),
+          title: renderTemplate(titleFormat, series.metric),
           tags,
-          text: self.resultTransformer.renderTemplate(textFormat, series.metric),
+          text: renderTemplate(textFormat, series.metric),
         };
       }
 
@@ -762,7 +758,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   getOriginalMetricName(labelData: { [key: string]: string }) {
-    return this.resultTransformer.getOriginalMetricName(labelData);
+    return getOriginalMetricName(labelData);
   }
 }
 
