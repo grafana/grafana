@@ -173,9 +173,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       range,
     } = this.props;
 
-    var refreshed = false;
-    if (!_.isNil(range) && !_.isNil(prevProps.range)) {
-      const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range?.to.valueOf() };
+    let refreshed = false;
+    if (range && prevProps.range) {
+      const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
       const prevAbsoluteRange: AbsoluteTimeRange = {
         from: prevProps.range.from.valueOf(),
         to: prevProps.range.to.valueOf(),
