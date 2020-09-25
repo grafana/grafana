@@ -38,6 +38,7 @@ Ready to learn more? Check out our other tutorials:
 
 - [Build a panel plugin with D3.js]({{< relref "../../../../../tutorials/build-a-panel-plugin-with-d3.md" >}})
 
+
 ### Guides
 
 Improve an existing plugin with one of our guides:
@@ -60,6 +61,10 @@ Deepen your knowledge through a series of high-level overviews of plugin concept
 ### UI library
 
 Explore the many UI components in our [Grafana UI library](https://developers.grafana.com/ui).
+
+### Examples
+
+For inspiration, check out our [plugin examples](https://github.com/grafana/grafana-plugin-examples).
 
 ### API reference
 
