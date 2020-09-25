@@ -78,7 +78,7 @@ We are also introducing a new shared data model for both time series and table d
 - **Organize fields:** Allows the user to re-order, hide, or rename fields / columns. Useful when data source doesn't allow overrides for visualizing data.
 - **Labels to fields:** Groups series by time and returns labels or tags as fields. Useful for showing time series with labels in a table where each label key becomes a separate column.
 - **Outer join:** Joins many time series/tables by a field. This can be used to outer join multiple time series on the _time_ field to show many time series in one table.
-- **Add field from calculation:** This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Can be used to calculate the difference between two series or fields and add the result to a new field. Or multiply one field with another another and add the result to a new field.
+- **Add field from calculation:** This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Can be used to calculate the difference between two series or fields and add the result to a new field. Or multiply one field with another and add the result to a new field.
 
 Learn more about this feature in [Transformations]({{< relref "../panels/transformations/_index.md" >}}).
 
