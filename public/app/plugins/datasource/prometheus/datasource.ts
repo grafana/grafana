@@ -522,39 +522,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return error;
   };
 
-  async performSuggestQuery(query: string, cache = false) {
-    let range = this.getTimeRange();
-    const params = new URLSearchParams({
-      start: range.start.toString(),
-      end: range.end.toString(),
-    });
-    const baseURL = '/api/v1/label/__name__/values';
-    const url = `${baseURL}?${params.toString()}`;
-
-    // Round down a minute.
-    params.set('start', (range.start - (range.start % 60)).toString());
-    // Round up a minute.
-    params.set('end', (range.end - (range.end % 60) + 60).toString());
-    const cacheKey = `${baseURL}?${params.toString()}`;
-
-    let value: string[] = [];
-    if (cache) {
-      let val = this.metricsNameCache.get(cacheKey);
-      if (val) {
-        return val.filter((metricName: any) => metricName.indexOf(query) !== 1);
-      }
-
-      const response: PromLabelQueryResponse = await this.metadataRequest(url);
-      value = response.data.data;
-      this.metricsNameCache.set(cacheKey, value);
-    } else {
-      const response: PromLabelQueryResponse = await this.metadataRequest(url);
-      value = response.data.data;
-    }
-
-    return value.filter((metricName: any) => metricName.indexOf(query) !== 1);
-  }
-
   metricFindQuery(query: string) {
     if (!query) {
       return Promise.resolve([]);
