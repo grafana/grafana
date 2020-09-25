@@ -6,7 +6,7 @@ import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
 
 function createDefaultMetric(id = 0): ElasticsearchAggregation {
-  return { type: 'count', field: 'select field', id: (id + 1).toString() };
+  return { type: 'count', field: 'select field', id: id + 1, hide: true };
 }
 
 export class ElasticMetricAggCtrl {

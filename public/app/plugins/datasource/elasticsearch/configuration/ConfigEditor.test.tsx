@@ -20,9 +20,7 @@ describe('ConfigEditor', () => {
 
   it('should set defaults', () => {
     const options = createDefaultConfigOptions();
-    //@ts-ignore
     delete options.jsonData.esVersion;
-    //@ts-ignore
     delete options.jsonData.timeField;
     delete options.jsonData.maxConcurrentShardRequests;
 

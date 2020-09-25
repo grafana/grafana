@@ -1,5 +1,5 @@
 import * as queryDef from './query_def';
-import { ElasticsearchAggregation } from './types';
+import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
 
 export class ElasticQueryBuilder {
   timeField: string;
@@ -183,7 +183,7 @@ export class ElasticQueryBuilder {
     }
   }
 
-  build(target: any, adhocFilters?: any, queryString?: string) {
+  build(target: ElasticsearchQuery, adhocFilters?: any, queryString?: string) {
     // make sure query has defaults;
     target.metrics = target.metrics || [queryDef.defaultMetricAgg()];
     target.bucketAggs = target.bucketAggs || [queryDef.defaultBucketAgg()];
@@ -391,7 +391,7 @@ export class ElasticQueryBuilder {
     return query;
   }
 
-  getLogsQuery(target: any, adhocFilters?: any, querystring?: string) {
+  getLogsQuery(target: ElasticsearchQuery, adhocFilters?: any, querystring?: string) {
     let query: any = {
       size: 0,
       query: {

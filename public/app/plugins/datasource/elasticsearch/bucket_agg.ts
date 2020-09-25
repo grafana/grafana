@@ -32,7 +32,7 @@ export class ElasticBucketAggCtrl {
     );
 
     $scope.init = () => {
-      $scope.agg = bucketAggs[$scope.index] || {};
+      $scope.agg = bucketAggs[$scope.index];
       $scope.validateModel();
     };
 

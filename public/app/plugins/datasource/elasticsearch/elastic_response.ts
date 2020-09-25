@@ -10,15 +10,15 @@ import {
   MutableDataFrame,
   PreferredVisualisationType,
 } from '@grafana/data';
-import { ElasticsearchAggregation } from './types';
+import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
 
 export class ElasticResponse {
-  constructor(private targets: any, private response: any) {
+  constructor(private targets: ElasticsearchQuery[], private response: any) {
     this.targets = targets;
     this.response = response;
   }
 
-  processMetrics(esAgg: any, target: any, seriesList: any, props: any) {
+  processMetrics(esAgg: any, target: ElasticsearchQuery, seriesList: any, props: any) {
     let metric, y, i, bucket, value;
     let newSeries: any;
 
@@ -30,7 +30,7 @@ export class ElasticResponse {
 
       switch (metric.type) {
         case 'count': {
-          newSeries = { datapoints: [], metric: 'count', props: props, refId: target.refId };
+          newSeries = { datapoints: [], metric: 'count', props: props };
           for (i = 0; i < esAgg.buckets.length; i++) {
             bucket = esAgg.buckets[i];
             value = bucket.doc_count;
@@ -53,7 +53,6 @@ export class ElasticResponse {
               metric: 'p' + percentileName,
               props: props,
               field: metric.field,
-              refId: target.refId,
             };
 
             for (i = 0; i < esAgg.buckets.length; i++) {
@@ -77,7 +76,6 @@ export class ElasticResponse {
               metric: statName,
               props: props,
               field: metric.field,
-              refId: target.refId,
             };
 
             for (i = 0; i < esAgg.buckets.length; i++) {
@@ -103,7 +101,6 @@ export class ElasticResponse {
             field: metric.field,
             metricId: metric.id,
             props: props,
-            refId: target.refId,
           };
           for (i = 0; i < esAgg.buckets.length; i++) {
             bucket = esAgg.buckets[i];
@@ -124,7 +121,13 @@ export class ElasticResponse {
     }
   }
 
-  processAggregationDocs(esAgg: any, aggDef: ElasticsearchAggregation, target: any, table: any, props: any) {
+  processAggregationDocs(
+    esAgg: any,
+    aggDef: ElasticsearchAggregation,
+    target: ElasticsearchQuery,
+    table: any,
+    props: any
+  ) {
     // add columns
     if (table.columns.length === 0) {
       for (const propKey of _.keys(props)) {
@@ -203,7 +206,7 @@ export class ElasticResponse {
 
   // This is quite complex
   // need to recurse down the nested buckets to build series
-  processBuckets(aggs: any, target: any, seriesList: any, table: TableModel, props: any, depth: any) {
+  processBuckets(aggs: any, target: ElasticsearchQuery, seriesList: any, table: any, props: any, depth: any) {
     let bucket, aggDef: any, esAgg, aggId;
     const maxDepth = target.bucketAggs.length - 1;
 
@@ -248,7 +251,7 @@ export class ElasticResponse {
     return metricDef ? metricDef.text : metric;
   }
 
-  private getSeriesName(series: any, target: any, metricTypeCount: any) {
+  private getSeriesName(series: any, target: ElasticsearchQuery, metricTypeCount: any) {
     let metricName = this.getMetricName(series.metric);
 
     if (target.alias) {
@@ -318,7 +321,7 @@ export class ElasticResponse {
     return name.trim() + ' ' + metricName;
   }
 
-  nameSeries(seriesList: any, target: any) {
+  nameSeries(seriesList: any, target: ElasticsearchQuery) {
     const metricTypeCount = _.uniq(_.map(seriesList, 'metric')).length;
 
     for (let i = 0; i < seriesList.length; i++) {
@@ -327,13 +330,12 @@ export class ElasticResponse {
     }
   }
 
-  processHits(hits: { total: { value: any }; hits: any[] }, seriesList: any[], target: any) {
+  processHits(hits: { total: { value: any }; hits: any[] }, seriesList: any[]) {
     const hitsTotal = typeof hits.total === 'number' ? hits.total : hits.total.value; // <- Works with Elasticsearch 7.0+
 
     const series: any = {
-      target: target.refId,
+      target: 'docs',
       type: 'docs',
-      refId: target.refId,
       datapoints: [],
       total: hitsTotal,
       filterable: true,
@@ -363,7 +365,7 @@ export class ElasticResponse {
     seriesList.push(series);
   }
 
-  trimDatapoints(aggregations: any, target: any) {
+  trimDatapoints(aggregations: any, target: ElasticsearchQuery) {
     const histogram: any = _.find(target.bucketAggs, { type: 'date_histogram' });
 
     const shouldDropFirstAndLast = histogram && histogram.settings && histogram.settings.trimEdges;
@@ -395,7 +397,11 @@ export class ElasticResponse {
   }
 
   getTimeSeries() {
-    if (this.targets.some((target: any) => target.metrics.some((metric: any) => metric.type === 'raw_data'))) {
+    if (
+      this.targets.some((target: ElasticsearchQuery) =>
+        target.metrics.some((metric: any) => metric.type === 'raw_data')
+      )
+    ) {
       return this.processResponseToDataFrames(false);
     }
     return this.processResponseToSeries();
@@ -442,8 +448,6 @@ export class ElasticResponse {
           if (isLogsRequest) {
             series = addPreferredVisualisationType(series, 'logs');
           }
-          const target = this.targets[n];
-          series.refId = target.refId;
           dataFrame.push(series);
         }
       }
@@ -459,9 +463,7 @@ export class ElasticResponse {
         this.nameSeries(tmpSeriesList, target);
 
         if (table.rows.length > 0) {
-          const series = toDataFrame(table);
-          series.refId = target.refId;
-          dataFrame.push(series);
+          dataFrame.push(toDataFrame(table));
         }
 
         for (let y = 0; y < tmpSeriesList.length; y++) {
@@ -472,7 +474,6 @@ export class ElasticResponse {
             series = addPreferredVisualisationType(series, 'graph');
           }
 
-          series.refId = target.refId;
           dataFrame.push(series);
         }
       }
@@ -486,21 +487,19 @@ export class ElasticResponse {
 
     for (let i = 0; i < this.response.responses.length; i++) {
       const response = this.response.responses[i];
-      const target = this.targets[i];
-
       if (response.error) {
         throw this.getErrorFromElasticResponse(this.response, response.error);
       }
 
       if (response.hits && response.hits.hits.length > 0) {
-        this.processHits(response.hits, seriesList, target);
+        this.processHits(response.hits, seriesList);
       }
 
       if (response.aggregations) {
         const aggregations = response.aggregations;
+        const target = this.targets[i];
         const tmpSeriesList: any[] = [];
         const table = new TableModel();
-        table.refId = target.refId;
 
         this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
         this.trimDatapoints(tmpSeriesList, target);

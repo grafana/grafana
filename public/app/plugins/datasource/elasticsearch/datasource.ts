@@ -338,7 +338,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   testDatasource() {
     // validate that the index exist and has date field
-    return this.getFields({ type: 'date' }).then(
+    return this.getFields('date').then(
       (dateFields: any) => {
         const timeField: any = _.find(dateFields, { text: this.timeField });
         if (!timeField) {
@@ -446,7 +446,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return ELASTIC_META_FIELDS.includes(fieldName);
   }
 
-  getFields(query: any) {
+  async getFields(type?: string) {
     const configuredEsVersion = this.esVersion;
     return this.get('/_mapping').then((result: any) => {
       const typeMap: any = {
@@ -455,24 +455,23 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         integer: 'number',
         long: 'number',
         date: 'date',
-        date_nanos: 'date',
         string: 'string',
         text: 'string',
         scaled_float: 'number',
         nested: 'nested',
       };
 
-      const shouldAddField = (obj: any, key: string, query: any) => {
+      const shouldAddField = (obj: any, key: string) => {
         if (this.isMetadataField(key)) {
           return false;
         }
 
-        if (!query.type) {
+        if (!type) {
           return true;
         }
 
         // equal query type filter, or via typemap translation
-        return query.type === obj.type || query.type === typeMap[obj.type];
+        return type === obj.type || type === typeMap[obj.type];
       };
 
       // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total
@@ -498,7 +497,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
             const fieldName = fieldNameParts.concat(key).join('.');
 
             // Hide meta-fields and check field type
-            if (shouldAddField(subObj, key, query)) {
+            if (shouldAddField(subObj, key)) {
               fields[fieldName] = {
                 text: fieldName,
                 type: subObj.type,
@@ -527,9 +526,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       }
 
       // transform to array
-      return _.map(fields, value => {
-        return value;
-      });
+      return Object.values(fields).map(({ text }) => ({ label: text, value: text }));
     });
   }
 
@@ -568,27 +565,27 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return '_msearch';
   }
 
-  metricFindQuery(query: any) {
-    query = angular.fromJson(query);
-    if (query) {
-      if (query.find === 'fields') {
-        query.field = this.templateSrv.replace(query.field, {}, 'lucene');
-        return this.getFields(query);
-      }
+  // metricFindQuery(query: any) {
+  //   query = angular.fromJson(query);
+  //   if (query) {
+  //     if (query.find === 'fields') {
+  //       query.field = this.templateSrv.replace(query.field, {}, 'lucene');
+  //       return this.getFields(query);
+  //     }
 
-      if (query.find === 'terms') {
-        query.field = this.templateSrv.replace(query.field, {}, 'lucene');
-        query.query = this.templateSrv.replace(query.query || '*', {}, 'lucene');
-        return this.getTerms(query);
-      }
-    }
+  //     if (query.find === 'terms') {
+  //       query.field = this.templateSrv.replace(query.field, {}, 'lucene');
+  //       query.query = this.templateSrv.replace(query.query || '*', {}, 'lucene');
+  //       return this.getTerms(query);
+  //     }
+  //   }
 
-    return Promise.resolve([]);
-  }
+  //   return Promise.resolve([]);
+  // }
 
-  getTagKeys() {
-    return this.getFields({});
-  }
+  // getTagKeys() {
+  //   return this.getFields({});
+  // }
 
   getTagValues(options: any) {
     return this.getTerms({ field: options.key, query: '*' });
