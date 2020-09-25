@@ -6,6 +6,7 @@ import {
   AdHocVariableModel,
   ConstantVariableModel,
   CustomVariableModel,
+  MappingVariableModel,
   DataSourceVariableModel,
   IntervalVariableModel,
   QueryVariableModel,
@@ -18,6 +19,7 @@ import { VariablesState } from './state/variablesReducer';
 import { VariablePickerProps } from './pickers/types';
 import { createQueryVariableAdapter } from './query/adapter';
 import { createCustomVariableAdapter } from './custom/adapter';
+import { createMappingVariableAdapter } from './mapping/adapter';
 import { createTextBoxVariableAdapter } from './textbox/adapter';
 import { createConstantVariableAdapter } from './constant/adapter';
 import { createDataSourceVariableAdapter } from './datasource/adapter';
@@ -48,12 +50,14 @@ export type VariableModels =
   | ConstantVariableModel
   | DataSourceVariableModel
   | IntervalVariableModel
-  | AdHocVariableModel;
+  | AdHocVariableModel
+  | MappingVariableModel;
 export type VariableTypeRegistry<Model extends VariableModel = VariableModel> = Registry<VariableAdapter<Model>>;
 
 export const getDefaultVariableAdapters = () => [
   createQueryVariableAdapter(),
   createCustomVariableAdapter(),
+  createMappingVariableAdapter(),
   createTextBoxVariableAdapter(),
   createConstantVariableAdapter(),
   createDataSourceVariableAdapter(),
