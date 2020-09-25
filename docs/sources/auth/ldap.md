@@ -200,8 +200,8 @@ Users with nested/recursive group membership must have an LDAP server that suppo
 and configure `group_search_filter` in a way that it returns the groups the submitted username is a member of.
 
 To configure `group_search_filter`:
-* You can set `group_search_base_dns` to specify where the matching groups are defined.
-* If you do not use `group_search_base_dns`, then the previously defined `search_base_dns` is used.
+- You can set `group_search_base_dns` to specify where the matching groups are defined.
+- If you do not use `group_search_base_dns`, then the previously defined `search_base_dns` is used.
 
 **Active Directory example:**
 
@@ -320,9 +320,9 @@ org_role = "Viewer"
 
 Assuming the following Active Directory server setup:
 
-* IP address: `10.0.0.1`
-* Domain: `CORP`
-* DNS name: `corp.local`
+- IP address: `10.0.0.1`
+- Domain: `CORP`
+- DNS name: `corp.local`
 
 **LDAP specific configuration file (ldap.toml):**
 ```bash

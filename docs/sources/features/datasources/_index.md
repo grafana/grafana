@@ -21,19 +21,19 @@ The query language and capabilities of each data source are obviously very diffe
 
 The following data sources are officially supported:
 
-* [AWS CloudWatch]({{< relref "cloudwatch.md" >}})
-* [Azure Monitor]({{< relref "azuremonitor.md" >}})
-* [Elasticsearch]({{< relref "elasticsearch.md" >}})
-* [Google Cloud Monitoring]({{< relref "cloudmonitoring.md" >}})
-* [Graphite]({{< relref "graphite.md" >}})
-* [InfluxDB]({{< relref "influxdb.md" >}})
-* [Loki]({{< relref "loki.md" >}})
-* [Microsoft SQL Server (MSSQL)]({{< relref "mssql.md" >}})
-* [MySQL]({{< relref "mysql.md" >}})
-* [OpenTSDB]({{< relref "opentsdb.md" >}})
-* [PostgreSQL]({{< relref "postgres.md" >}})
-* [Prometheus]({{< relref "prometheus.md" >}})
-* [Testdata]({{< relref "testdata.md" >}})
+- [AWS CloudWatch]({{< relref "cloudwatch.md" >}})
+- [Azure Monitor]({{< relref "azuremonitor.md" >}})
+- [Elasticsearch]({{< relref "elasticsearch.md" >}})
+- [Google Cloud Monitoring]({{< relref "cloudmonitoring.md" >}})
+- [Graphite]({{< relref "graphite.md" >}})
+- [InfluxDB]({{< relref "influxdb.md" >}})
+- [Loki]({{< relref "loki.md" >}})
+- [Microsoft SQL Server (MSSQL)]({{< relref "mssql.md" >}})
+- [MySQL]({{< relref "mysql.md" >}})
+- [OpenTSDB]({{< relref "opentsdb.md" >}})
+- [PostgreSQL]({{< relref "postgres.md" >}})
+- [Prometheus]({{< relref "prometheus.md" >}})
+- [Testdata]({{< relref "testdata.md" >}})
 
 In addition to the data sources that you have configured in your Grafana, there are three special data sources available:
 

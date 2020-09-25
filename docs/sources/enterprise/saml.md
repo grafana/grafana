@@ -22,20 +22,20 @@ The SAML single-sign-on (SSO) standard is varied and flexible. Our implementatio
 
 Grafana supports the following SAML 2.0 bindings:
 
-* From the Service Provider (SP) to the Identity Provider (IdP):
+- From the Service Provider (SP) to the Identity Provider (IdP):
   - `HTTP-POST` binding
   - `HTTP-Redirect` binding
 
-* From the Identity Provider (IdP) to the Service Provider (SP):
+- From the Identity Provider (IdP) to the Service Provider (SP):
   - `HTTP-POST` binding
 
 In terms of security:
-* Grafana supports signed and encrypted assertions. 
-* Grafana does not support signed or encrypted requests.
+- Grafana supports signed and encrypted assertions. 
+- Grafana does not support signed or encrypted requests.
 
 In terms of initiation: 
-* Grafana supports SP-initiated requests.
-* Grafana does not support IdP-initiated request.
+- Grafana supports SP-initiated requests.
+- Grafana does not support IdP-initiated request.
 
 ## Set up SAML authentication
 
@@ -72,8 +72,8 @@ Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) fo
 The SAML SSO standard uses asymmetric encryption to exchange information between the SP (Grafana) and the IdP. To perform such encryption, you need a public part and a private part. In this case, the X.509 certificate provides the public part, while the private key provides the private part.
 
 Grafana supports two ways of specifying both the `certificate` and `private_key`. 
-* Without a suffix (`certificate` or `private_key`), the configuration assumes you've supplied the base64-encoded file contents. 
-* With the `_path` suffix (`certificate_path` or `private_key_path`), then Grafana treats the value entered as a file path and attempts to read the file from the file system.
+- Without a suffix (`certificate` or `private_key`), the configuration assumes you've supplied the base64-encoded file contents. 
+- With the `_path` suffix (`certificate_path` or `private_key_path`), then Grafana treats the value entered as a file path and attempts to read the file from the file system.
 
 You can only use one form of each configuration option. Using multiple forms, such as both `certificate` and `certificate_path`, results in an error.
 
@@ -82,9 +82,9 @@ You can only use one form of each configuration option. Using multiple forms, su
 You also need to define the public part of the IdP for message verification. The SAML IdP metadata XML defines where and how Grafana exchanges user information.
 
 Grafana supports three ways of specifying the IdP metadata. 
-* Without a suffix `idp_metadata`, Grafana assumes base64-encoded XML file contents.
-* With the `_path` suffix, Grafana assumes a file path and attempts to read the file from the file system.
-* With the `_url` suffix, Grafana assumes a URL and attempts to load the metadata from the given location.
+- Without a suffix `idp_metadata`, Grafana assumes base64-encoded XML file contents.
+- With the `_path` suffix, Grafana assumes a file path and attempts to read the file from the file system.
+- With the `_url` suffix, Grafana assumes a URL and attempts to load the metadata from the given location.
 
 ### Maximum issue delay
 
@@ -104,8 +104,8 @@ For the SAML integration to work correctly, you need to make the IdP aware of th
 
 The integration provides two key endpoints as part of Grafana:
 
-* The `/saml/metadata` endpoint, which contains the SP metadata. You can either download and upload it manually, or youmake the IdP request it directly from the endpoint. Some providers name it Identifier or Entity ID.
-* The `/saml/acs` endpoint, which is intended to receive the ACS (Assertion Customer Service) callback. Some providers name it SSO URL or Reply URL.
+- The `/saml/metadata` endpoint, which contains the SP metadata. You can either download and upload it manually, or youmake the IdP request it directly from the endpoint. Some providers name it Identifier or Entity ID.
+- The `/saml/acs` endpoint, which is intended to receive the ACS (Assertion Customer Service) callback. Some providers name it SSO URL or Reply URL.
 
 ### Assertion mapping
 
@@ -171,8 +171,8 @@ org_mapping = Engineering:2, Sales:3
 
 You can specify multiple organizations both for the IdP and Grafana:
 
-* `org_mapping = Engineering:2, Sales:2` to map users from `Engineering` and `Sales` to `2` in Grafana.
-* `org_mapping = Engineering:2, Engineering:3` to assign `Engineering` to both `2` and `3` in Grafana.
+- `org_mapping = Engineering:2, Sales:2` to map users from `Engineering` and `Sales` to `2` in Grafana.
+- `org_mapping = Engineering:2, Engineering:3` to assign `Engineering` to both `2` and `3` in Grafana.
 
 ### Configure allowed organizations
 

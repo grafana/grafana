@@ -49,10 +49,10 @@ For more information about writing a query for your data source, refer to the sp
 
 The Query tab consists of the following elements:
 
-* Data source selector
-* Query options
-* Query inspector button
-* Query editor list
+- Data source selector
+- Query options
+- Query inspector button
+- Query editor list
 
 {{< docs-imagebox img="/img/docs/queries/query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
 

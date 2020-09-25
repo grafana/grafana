@@ -2,9 +2,9 @@
 
 This folder contains useful scripts and configuration so you can:
 
-* Configure data sources in Grafana for development.
-* Configure dashboards for development and test scenarios.
-* Create docker-compose file with databases and fake data.
+- Configure data sources in Grafana for development.
+- Configure dashboards for development and test scenarios.
+- Create docker-compose file with databases and fake data.
 
 ## Install Docker
 

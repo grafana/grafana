@@ -32,11 +32,11 @@ Big thumbs up!
 
 This release adds **five** new alert notifications channels, all of them contributed by the community.
 
-* Hipchat
-* Telegram
-* LINE
-* Pushover
-* Threema
+- Hipchat
+- Telegram
+- LINE
+- Pushover
+- Threema
 
 ### Templating
 

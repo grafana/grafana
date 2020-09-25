@@ -13,10 +13,10 @@ Team members and their access to repositories is maintained through [GitHub team
 ## Proposing changes
 
 Examples of proposed changes are overarching architecture, component design, and specific code or graphical elements. Proposed changes SHOULD cover the big picture and intention, but individual parts SHOULD be split into the smallest possible changes. Changes SHOULD be based on and target the master branch. Depending on size of the proposed change, each change SHOULD be discussed, in increasing order of change size and complexity:
-* Directly in a RR (Pull Request) - this MAY be done, but SHOULD not be the common case.
-* Issue
-* Developer mailing list
-* Design document, shared via Google Docs, accessible to at least all team members.
+- Directly in a RR (Pull Request) - this MAY be done, but SHOULD not be the common case.
+- Issue
+- Developer mailing list
+- Design document, shared via Google Docs, accessible to at least all team members.
 
 Significant changes MUST be discussed and agreed upon with the relevant subsystem maintainers.
 
@@ -24,17 +24,17 @@ Significant changes MUST be discussed and agreed upon with the relevant subsyste
 
 Depending on the size and complexity of a PR, different requirements MUST be applied. Any team member contributing substantially to a PR MUST NOT count against review requirements.
 Commits MUST be merged into master using PRs. They MUST NOT be merged into master directly.
-* Every merge MUST be approved by at least one team member.
-* Non-trivial changes MUST be approved by at least
-  * two team members, or
-  * one subsystem maintainer.
-* Significant changes MUST be approved by at least
-  * two team members, AND
-  * the relevant subsystem maintainer.
+- Every merge MUST be approved by at least one team member.
+- Non-trivial changes MUST be approved by at least
+  - two team members, or
+  - one subsystem maintainer.
+- Significant changes MUST be approved by at least
+  - two team members, AND
+  - the relevant subsystem maintainer.
 
 PRs MUST be [reviewed](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/reviewing-changes-in-pull-requests) and [approved](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/approving-a-pull-request-with-required-reviews) via GitHub’s review system.
-* Reviewers MAY write comments if approving
-* Reviewers MUST write comments if rejecting a PR or if requesting changes.
+- Reviewers MAY write comments if approving
+- Reviewers MUST write comments if rejecting a PR or if requesting changes.
 
 Once a PR is approved as per above, any team member MAY merge the PR.
 
@@ -45,28 +45,28 @@ Once a PR is approved as per above, any team member MAY merge the PR.
 Grafana uses trunk-based development.
 
 In particular, we found that the following principles match how we work:
-* Master and release branches MUST always build without failure.
-* Branches SHOULD be merged often. Larger changes SHOULD be activated with feature flags until they are ready. Long-lived development branches SHOULD be avoided.
-* Changes MAY be enabled by default once they are in a complete state
-* Changes which span multiple PRs MUST be described in an overarching issue or Google Doc.
+- Master and release branches MUST always build without failure.
+- Branches SHOULD be merged often. Larger changes SHOULD be activated with feature flags until they are ready. Long-lived development branches SHOULD be avoided.
+- Changes MAY be enabled by default once they are in a complete state
+- Changes which span multiple PRs MUST be described in an overarching issue or Google Doc.
 
 ## Releases
 
 Releases MUST follow [Semantic Versioning](https://semver.org/) in naming and SHOULD follow Semantic Versioning as closely as reasonably possible for non-library software.
 
 Release branches MUST be split from the following branches.
-* MAJOR release branches MUST be based on master.
-* MINOR release branches MUST be based on master.
-* PATCH release branches MUST be split from the relevant MINOR release branch’s most current PATCH
+- MAJOR release branches MUST be based on master.
+- MINOR release branches MUST be based on master.
+- PATCH release branches MUST be split from the relevant MINOR release branch’s most current PATCH
 
 Security releases follow the same process but MUST be prepared in secret. Security releases MUST NOT include changes which are not related to the security fix. Normal release processes MUST accommodate the security release process. SECURITY.md MUST be followed.
 
 PRs intended for inclusion in the next PATCH release MUST be labeled with `cherry-pick-needed` so they can be picked up by automated release tooling.
 
 Releases follow the following cadence
-* MAJOR: Yearly
-* MINOR: Every 4-6 weeks
-* PATCH: As needed
+- MAJOR: Yearly
+- MINOR: Every 4-6 weeks
+- PATCH: As needed
 
 Releases SHOULD NOT be delayed by pending changes.
 

@@ -18,12 +18,12 @@ For more information about configuration options related to Grafana metrics, ref
 
 When enabled, Grafana exposes a number of metrics, including:
 
-* Active Grafana instances
-* Number of dashboards, users, and playlists
-* HTTP status codes
-* Requests by routing group
-* Grafana active alerts
-* Grafana performance
+- Active Grafana instances
+- Number of dashboards, users, and playlists
+- HTTP status codes
+- Requests by routing group
+- Grafana active alerts
+- Grafana performance
 
 ## Pull metrics from Grafana into Prometheus
 
