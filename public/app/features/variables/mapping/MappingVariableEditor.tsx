@@ -57,9 +57,6 @@ class MappingVariableEditorUnconnected extends PureComponent<Props> {
               required
               aria-label="Variable editor Form Mapping Query field"
             />
-            <Button icon="plus" onClick={this.onAddQueryClick} variant="secondary" aria-label={'add-query'}>
-              Value Mapping
-            </Button>
           </div>
         </div>
         <SelectionOptionsEditor
