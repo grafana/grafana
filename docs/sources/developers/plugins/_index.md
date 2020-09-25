@@ -38,7 +38,6 @@ Ready to learn more? Check out our other tutorials:
 
 - [Build a panel plugin with D3.js]({{< relref "../../../../../tutorials/build-a-panel-plugin-with-d3.md" >}})
 
-
 ### Guides
 
 Improve an existing plugin with one of our guides:
