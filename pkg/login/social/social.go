@@ -258,8 +258,8 @@ func GetOAuthHttpClient(name string) (*http.Client, error) {
 
 	if info.TlsClientCert != "" || info.TlsClientKey != "" {
 		cert, err := tls.LoadX509KeyPair(info.TlsClientCert, info.TlsClientKey)
-		logger.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
 		if err != nil {
+			logger.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
 			return nil, fmt.Errorf("Failed to setup TlsClientCert")
 		}
 
