@@ -180,7 +180,7 @@ You can view the interpolated version of a query with the Query Inspector.
 
 > Only available in Grafana v6.3+.
 
-Querying and displaying log data from InfluxDB is available via [Explore]({{< relref "../explore" >}}).
+Querying and displaying log data from InfluxDB is available via [Explore]({{< relref "../../explore" >}}).
 
 ![](/img/docs/v63/influxdb_explore_logs.png)
 
