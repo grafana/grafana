@@ -385,12 +385,7 @@ export class PanelModel implements DataConfigSource {
   }
 
   updateQueries(queries: DataQuery[]) {
-    if (this.targets.length > queries.length) {
-      this.events.emit(CoreEvents.queryRemoved);
-    } else {
-      this.events.emit(CoreEvents.queryAdded);
-    }
-
+    this.events.emit(CoreEvents.queryChanged);
     this.targets = queries;
   }
 
@@ -473,11 +468,7 @@ export class PanelModel implements DataConfigSource {
   }
 
   setTransformations(transformations: DataTransformerConfig[]) {
-    if (this.transformations && this.transformations.length > transformations.length) {
-      this.events.emit(CoreEvents.transformationRemoved);
-    } else {
-      this.events.emit(CoreEvents.transformationAdded);
-    }
+    this.events.emit(CoreEvents.transformationChanged);
     this.transformations = transformations;
     this.resendLastResult();
   }

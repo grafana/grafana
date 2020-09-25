@@ -157,7 +157,5 @@ export const closeTimepicker = eventFactory('closeTimepicker');
 
 export const routeUpdated = eventFactory('$routeUpdate');
 
-export const queryAdded = eventFactory('queryAdded');
-export const queryRemoved = eventFactory('queryRemoved');
-export const transformationAdded = eventFactory('transformationAdded');
-export const transformationRemoved = eventFactory('transformationRemoved');
+export const queryChanged = eventFactory('queryChanged');
+export const transformationChanged = eventFactory('transformationChanged');

@@ -19,18 +19,14 @@ interface PanelEditorTabsProps {
 export class PanelEditorTabs extends PureComponent<PanelEditorTabsProps> {
   componentDidMount() {
     const { panel } = this.props;
-    panel.on(CoreEvents.queryAdded, this.triggerForceUpdate);
-    panel.on(CoreEvents.queryRemoved, this.triggerForceUpdate);
-    panel.on(CoreEvents.transformationAdded, this.triggerForceUpdate);
-    panel.on(CoreEvents.transformationRemoved, this.triggerForceUpdate);
+    panel.on(CoreEvents.queryChanged, this.triggerForceUpdate);
+    panel.on(CoreEvents.transformationChanged, this.triggerForceUpdate);
   }
 
   componentWillUnmount() {
     const { panel } = this.props;
-    panel.off(CoreEvents.queryAdded, this.triggerForceUpdate);
-    panel.off(CoreEvents.queryRemoved, this.triggerForceUpdate);
-    panel.off(CoreEvents.transformationAdded, this.triggerForceUpdate);
-    panel.off(CoreEvents.transformationRemoved, this.triggerForceUpdate);
+    panel.off(CoreEvents.queryChanged, this.triggerForceUpdate);
+    panel.off(CoreEvents.transformationChanged, this.triggerForceUpdate);
   }
 
   triggerForceUpdate = () => {
