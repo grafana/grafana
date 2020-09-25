@@ -237,6 +237,12 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           this.createQuery(instantTarget, options, start, end),
           this.createQuery(rangeTarget, options, start, end)
         );
+      } else if (target.instant && options.app === CoreApp.Explore) {
+        // If running only instant query in Explore, format as table
+        const instantTarget: any = cloneDeep(target);
+        instantTarget.format = 'table';
+        queries.push(this.createQuery(instantTarget, options, start, end));
+        activeTargets.push(instantTarget);
       } else {
         queries.push(this.createQuery(target, options, start, end));
         activeTargets.push(target);
