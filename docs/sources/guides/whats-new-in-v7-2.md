@@ -37,8 +37,7 @@ The main highlights are:
 
 You can now customize how dates are formatted in Grafana. Custom date formats apply to the time range picker, graphs, and other panel visualizations.
 
-This screenshot shows both a custom full date format with a 12 hour clock and am/pm suffix. The graph is also
-showing same 12-hour clock format and a customized month and day format compared to the Grafana default `MM/DD` format.
+This screenshot shows both a custom full date format with a 12 hour clock and am/pm suffix. The graph is also showing the same 12-hour clock format and a customized month and day format compared to the Grafana default `MM/DD` format.
 
 {{< docs-imagebox img="/img/docs/v72/date_formats.png" max-width="800px" caption="Custom date time formats" >}}
 
@@ -69,11 +68,13 @@ You can now dynamically apply value filters to any table column. This option is 
 
 {{< docs-imagebox img="/img/docs/v72/table_column_filters.png" max-width="800px" caption="Table column filters" >}}
 
+[Filter table columns]({{< relref "../panels/visualizations/table/filter-table-columns.md" >}}) has been added as a result of this feature.
+
 ### New field override selection options
 
 You can now add override rules that use a regex matcher to choose which fields to apply rules to.
 
-The [Field options]({{< relref "../panels/field-options.md" >}}) content has been updated as a result of these changes.
+The [Field options]({{< relref "../panels/field-options/_index.md" >}}) content and [Configure specific fields]({{< relref "../panels/field-options/configure-specific-fields.md" >}}) have been updated as a result of these changes.
 
 ## New transformations and enhancements
 
@@ -91,9 +92,11 @@ The up and down arrows, which were previously the only way to change query order
 
 {{< docs-imagebox img="/img/docs/v72/drag-queries.gif" max-width="800px" caption="Drag to reorder queries" >}}
 
+The [Queries]({{< relref "../panels/queries.md" >}}) topic has been updated as a result of this change.
+
 ## Inspect queries in Explore
 
-You can enjoy all the details query inspector gave you in dashboards now in Explore as well. You can open query inspector tab with the button next to query history. See [Query inspector in Explore]({{< relref "../features/explore/index.md#query-inspector" >}}) for more details.
+You can enjoy all the details query inspector gave you in dashboards now in Explore as well. You can open query inspector tab with the button next to query history. See [Query inspector in Explore]({{< relref "../explore/index.md#query-inspector" >}}) for more details.
 
 ## \$\_\_rate_interval for Prometheus
 
@@ -105,7 +108,7 @@ With this awesome contribution from one of our community members, you can now to
 
 {{< docs-imagebox img="/img/docs/v72/explore-toggle-parsed-fields.gif" max-width="800px" caption="Toggling parsed fields in Explore" >}}
 
-The [Toggle parsed fields]({{< relref "../features/explore/index.md#toggle-parsed-fields" >}}) section has been added to [Explore]({{< relref "../features/explore/index.md" >}}) as a result of this feature.
+The [Toggle parsed fields]({{< relref "../explore/index.md#toggle-parsed-fields" >}}) section has been added to [Explore]({{< relref "../explore/index.md" >}}) as a result of this feature.
 
 ## Sensitive alert channel settings are now encrypted
 

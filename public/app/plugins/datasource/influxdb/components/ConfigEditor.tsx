@@ -46,7 +46,7 @@ export class ConfigEditor extends PureComponent<Props> {
   onVersionChanged = (selected: SelectableValue<InfluxVersion>) => {
     const { options, onOptionsChange } = this.props;
 
-    const copy = {
+    const copy: any = {
       ...options,
       jsonData: {
         ...options.jsonData,

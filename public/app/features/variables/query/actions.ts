@@ -91,7 +91,7 @@ export const initQueryVariableEditor = (identifier: VariableIdentifier): ThunkRe
   if (!variable.datasource) {
     return;
   }
-  dispatch(changeQueryVariableDataSource(toVariableIdentifier(variable), variable.datasource));
+  await dispatch(changeQueryVariableDataSource(toVariableIdentifier(variable), variable.datasource));
 };
 
 export const changeQueryVariableDataSource = (

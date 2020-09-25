@@ -115,16 +115,16 @@ export class EventManager {
         // add properties used by jquery flot events
         item.min = item.time;
         item.max = item.time;
-        item.eventType = item.source.name;
+        item.eventType = item.type;
 
         if (item.newState) {
           item.eventType = '$__' + item.newState;
           continue;
         }
 
-        if (!types[item.source.name]) {
-          types[item.source.name] = {
-            color: item.source.iconColor,
+        if (!types[item.type]) {
+          types[item.type] = {
+            color: item.color,
             position: 'BOTTOM',
             markerSize: 5,
           };

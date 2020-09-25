@@ -84,7 +84,7 @@ Identifier | Description
 > Only available in Grafana v6.3+.
 
 There are two parameters, `Message field name` and `Level field name`, that can optionally be configured from the data source settings page that determine
-which fields will be used for log messages and log levels when visualizing logs in [Explore]({{< relref "../explore" >}}).
+which fields will be used for log messages and log levels when visualizing logs in [Explore]({{< relref "../../explore" >}}).
 
 For example, if you're using a default setup of Filebeat for shipping logs to Elasticsearch the following configuration should work:
 
@@ -197,7 +197,7 @@ Tags | Optional field name to use for event tags (can be an array or a CSV strin
 
 > Only available in Grafana v6.3+.
 
-Querying and displaying log data from Elasticsearch is available via [Explore]({{< relref "../explore" >}}).
+Querying and displaying log data from Elasticsearch is available via [Explore]({{< relref "../../explore" >}}).
 
 ![](/img/docs/v63/elasticsearch_explore_logs.png)
 

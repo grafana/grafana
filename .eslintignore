@@ -1,0 +1,7 @@
+node_modules
+compiled
+build
+vendor
+devenv
+data
+dist

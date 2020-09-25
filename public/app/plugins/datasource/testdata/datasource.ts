@@ -14,6 +14,9 @@ import {
   MetricFindValue,
   TableData,
   TimeSeries,
+  TimeRange,
+  DataTopic,
+  AnnotationEvent,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
 import { getBackendSrv, toDataQueryError } from '@grafana/runtime';
@@ -40,20 +43,28 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
       if (target.hide) {
         continue;
       }
-      if (target.scenarioId === 'streaming_client') {
-        streams.push(runStream(target, options));
-      } else if (target.scenarioId === 'grafana_api') {
-        streams.push(runGrafanaAPI(target, options));
-      } else if (target.scenarioId === 'arrow') {
-        streams.push(runArrowFile(target, options));
-      } else {
-        queries.push({
-          ...target,
-          intervalMs: options.intervalMs,
-          maxDataPoints: options.maxDataPoints,
-          datasourceId: this.id,
-          alias: templateSrv.replace(target.alias || '', options.scopedVars),
-        });
+
+      switch (target.scenarioId) {
+        case 'streaming_client':
+          streams.push(runStream(target, options));
+          break;
+        case 'grafana_api':
+          streams.push(runGrafanaAPI(target, options));
+          break;
+        case 'arrow':
+          streams.push(runArrowFile(target, options));
+          break;
+        case 'annotations':
+          streams.push(this.annotationDataTopicTest(target, options));
+          break;
+        default:
+          queries.push({
+            ...target,
+            intervalMs: options.intervalMs,
+            maxDataPoints: options.maxDataPoints,
+            datasourceId: this.id,
+            alias: templateSrv.replace(target.alias || '', options.scopedVars),
+          });
       }
     }
 
@@ -109,23 +120,36 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
     return { data, error };
   }
 
-  annotationQuery(options: any) {
-    let timeWalker = options.range.from.valueOf();
-    const to = options.range.to.valueOf();
-    const events = [];
-    const eventCount = 10;
-    const step = (to - timeWalker) / eventCount;
+  annotationDataTopicTest(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
+    return new Observable<DataQueryResponse>(observer => {
+      const events = this.buildFakeAnnotationEvents(req.range, 10);
+      const dataFrame = new ArrayDataFrame(events);
+      dataFrame.meta = { dataTopic: DataTopic.Annotations };
 
-    for (let i = 0; i < eventCount; i++) {
+      observer.next({ key: target.refId, data: [dataFrame] });
+    });
+  }
+
+  buildFakeAnnotationEvents(range: TimeRange, count: number): AnnotationEvent[] {
+    let timeWalker = range.from.valueOf();
+    const to = range.to.valueOf();
+    const events = [];
+    const step = (to - timeWalker) / count;
+
+    for (let i = 0; i < count; i++) {
       events.push({
-        annotation: options.annotation,
         time: timeWalker,
         text: 'This is the text, <a href="https://grafana.com">Grafana.com</a>',
         tags: ['text', 'server'],
       });
       timeWalker += step;
     }
-    return Promise.resolve(events);
+
+    return events;
+  }
+
+  annotationQuery(options: any) {
+    return Promise.resolve(this.buildFakeAnnotationEvents(options.range, 10));
   }
 
   getQueryDisplayText(query: TestDataQuery) {
