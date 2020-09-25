@@ -2,12 +2,13 @@
 title = "Setup Grafana for high availability"
 type = "docs"
 keywords = ["grafana", "tutorials", "HA", "high availability"]
+aliases = ["/docs/grafana/latest/tutorials/ha_setup/"]
 [menu.docs]
 parent = "tutorials"
 weight = 10
 +++
 
-# How to setup Grafana for high availability
+# Set up Grafana for high availability
 
 Setting up Grafana for high availability is fairly simple. You just need a shared database for storing dashboard, users,
 and other persistent data. So the default embedded SQLite database will not work, you will have to switch to

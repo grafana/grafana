@@ -103,7 +103,7 @@
     - name: Jaeger instrumentation
       link: /administration/jaeger-instrumentation/
     - name: Set up Grafana for high availability
-      link: /tutorials/ha_setup/
+      link: /administration/set-up-for-high-availability/
     - name: Change home dashboard
       link: /administration/change-home-dashboard/
 - name: Manage users
@@ -424,7 +424,7 @@
     - name: API Authentication
       link: /http_api/auth/
     - name: Create API Tokens and Dashboards for a Specific Organization
-      link: /tutorials/api_org_token_howto/
+      link: /http_api/create-api-tokens-for-org/
     - name: cURL examples
       link: /http_api/curl-examples/
     - name: Admin API
