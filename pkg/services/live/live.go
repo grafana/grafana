@@ -40,8 +40,8 @@ type GrafanaLive struct {
 	GrafanaScope CoreGrafanaScope
 }
 
-// InitalizeBroker initializes the broker and starts listening for requests.
-func InitalizeBroker() (*GrafanaLive, error) {
+// InitializeBroker initializes the broker and starts listening for requests.
+func InitializeBroker() (*GrafanaLive, error) {
 	glive := &GrafanaLive{
 		channels:   make(map[string]models.ChannelHandler),
 		channelsMu: sync.RWMutex{},
@@ -50,7 +50,7 @@ func InitalizeBroker() (*GrafanaLive, error) {
 		},
 	}
 
-	// Initalize the main features
+	// Initialize the main features
 	dash := features.CreateDashboardHandler(glive.Publish)
 	glive.GrafanaScope.Dashboards = &dash
 	glive.GrafanaScope.Features["dashboard"] = &dash

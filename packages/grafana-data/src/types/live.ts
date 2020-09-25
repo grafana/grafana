@@ -85,7 +85,7 @@ export interface LiveChannelStatus {
   /**
    * The last error.
    *
-   * This will remain in the status until a new message is succesfully recieved from the channel
+   * This will remain in the status until a new message is succesfully received from the channel
    */
   error?: any;
 }

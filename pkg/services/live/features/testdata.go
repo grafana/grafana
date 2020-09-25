@@ -25,7 +25,7 @@ type TestdataSupplier struct {
 	publisher models.ChannelPublisher
 }
 
-// CreateTestdataSupplier Initalize a dashboard handler
+// CreateTestdataSupplier Initialize a dashboard handler
 func CreateTestdataSupplier(p models.ChannelPublisher) TestdataSupplier {
 	return TestdataSupplier{
 		publisher: p,
@@ -77,7 +77,7 @@ func (g *testdataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscrib
 	return nil
 }
 
-// OnPublish called when an event is recieved from the websocket
+// OnPublish called when an event is received from the websocket
 func (g *testdataRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
 	return nil, fmt.Errorf("can not publish to testdata")
 }

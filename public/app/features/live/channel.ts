@@ -57,7 +57,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
     const prepare = config.processMessage ? config.processMessage : (v: any) => v;
 
     const events: SubscriptionEvents = {
-      // This means a message was recieved from the server
+      // This means a message was received from the server
       publish: (ctx: PublicationContext) => {
         this.stream.next({
           message: prepare(ctx.data),

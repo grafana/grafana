@@ -23,7 +23,7 @@ func TestParseChannelIdentifier(t *testing.T) {
 	}
 
 	// Check an invalid identifier
-	ident, err = ParseChannelIdentifier("aaa/bbb")
+	_, err = ParseChannelIdentifier("aaa/bbb")
 	if err == nil {
 		t.FailNow()
 	}

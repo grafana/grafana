@@ -78,7 +78,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
         continue;
       }
 
-      // Initalize the list of queries
+      // Initialize the list of queries
       let q = byType[target.queryType];
       if (!q) {
         q = _.cloneDeep(options);

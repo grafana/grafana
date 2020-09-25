@@ -20,7 +20,7 @@ type DashboardHandler struct {
 	publisher models.ChannelPublisher
 }
 
-// CreateDashboardHandler Initalize a dashboard handler
+// CreateDashboardHandler Initialize a dashboard handler
 func CreateDashboardHandler(p models.ChannelPublisher) DashboardHandler {
 	return DashboardHandler{
 		publisher: p,
@@ -46,7 +46,7 @@ func (g *DashboardHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscr
 	return nil
 }
 
-// OnPublish called when an event is recieved from the websocket
+// OnPublish called when an event is received from the websocket
 func (g *DashboardHandler) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
 	// TODO -- verify and keep track of editors?
 	return e.Data, nil

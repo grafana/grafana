@@ -79,7 +79,7 @@ func (hs *HTTPServer) Init() error {
 
 	// Set up a websocket broker
 	if hs.Cfg.IsLiveEnabled() { // feature flag
-		node, err := live.InitalizeBroker()
+		node, err := live.InitializeBroker()
 		if err != nil {
 			return err
 		}

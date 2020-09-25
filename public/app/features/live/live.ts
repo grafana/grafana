@@ -109,7 +109,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
     };
     this.open.set(id, channel);
 
-    // Initalize the channel in the bacground
+    // Initialize the channel in the bacground
     this.initChannel(scope, channel).catch(err => {
       channel?.shutdownWithError(err);
       this.open.delete(id);
