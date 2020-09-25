@@ -9,6 +9,7 @@ import (
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/live/features"
 )
 
@@ -265,10 +266,17 @@ func (g *GrafanaLive) initChannel(id ChannelIdentifier) (models.ChannelHandler, 
 	}
 
 	if id.Scope == "plugin" {
-		return nil, fmt.Errorf("todo... find plugin: %s", id.Namespace)
+		p, ok := plugins.Plugins[id.Namespace]
+		if ok {
+			h := &PluginHandler{
+				Plugin: p,
+			}
+			return h.GetHandlerForPath(id.Path)
+		}
+		return nil, fmt.Errorf("unknown plugin: %s", id.Namespace)
 	}
 
-	return nil, fmt.Errorf("todo todo todo")
+	return nil, fmt.Errorf("invalid scope: %s", id.Scope)
 }
 
 // Publish sends the data to the channel without checking permissions etc
