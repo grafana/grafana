@@ -2,11 +2,11 @@
 title = "Explore"
 keywords = ["explore", "loki", "logs"]
 type = "docs"
+aliases = ["/docs/grafana/latest/features/explore/"]
 [menu.docs]
 name = "Explore"
 identifier = "explore"
-parent = "features"
-weight = 5
+weight = 900
 +++
 
 # Explore

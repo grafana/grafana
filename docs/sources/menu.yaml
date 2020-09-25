@@ -255,7 +255,7 @@
     - link: /reference/scripting/
       name: Scripted dashboards
 - name: Explore
-  link: /features/explore/
+  link: /explore/
 - name: Alerting
   link: /alerting/
   children:
