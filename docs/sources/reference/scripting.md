@@ -37,7 +37,7 @@ dashboard.panels.push({
     h: 10,
     w: 24,
     x: 0,
-    y: 10,
+    y: 10
   },
   targets: [
     {
@@ -45,8 +45,8 @@ dashboard.panels.push({
     },
     {
       target: "randomWalk('random walk2')",
-    },
-  ],
+    }
+  ]
 });
 
 return dashboard;
