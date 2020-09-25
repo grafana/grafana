@@ -13,8 +13,6 @@ export interface Props extends Omit<FieldProps, 'css'> {
   labelWidth?: number | 'auto';
   /** Make the field's child to fill the width of the row. Equivalent to setting `flex-grow:1` on the field */
   grow?: boolean;
-  /** A toggle to apply query keyword styling to the label */
-  isKeyword?: boolean;
   /** Fill the remaining width of the row with the label's background */
   fill?: boolean;
 }
@@ -30,7 +28,6 @@ export const InlineField: FC<Props> = ({
   className,
   grow,
   fill,
-  isKeyword,
   ...htmlProps
 }) => {
   const theme = useTheme();
@@ -44,7 +41,7 @@ export const InlineField: FC<Props> = ({
   }
   const labelElement =
     typeof label === 'string' ? (
-      <InlineLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId} isKeyword={isKeyword}>
+      <InlineLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId}>
         {label}
       </InlineLabel>
     ) : (

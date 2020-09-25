@@ -12,8 +12,6 @@ export interface Props extends Omit<LabelProps, 'css'> {
   tooltip?: PopoverContent;
   /** Custom width for the label */
   width?: number | 'auto';
-  /** A toggle to apply query keyword styling to the label */
-  isKeyword?: boolean;
   /** @deprecated */
   /** This prop is deprecated and is not used anymore */
   isFocused?: boolean;
@@ -30,12 +28,11 @@ export const InlineLabel: FunctionComponent<Props> = ({
   htmlFor,
   tooltip,
   width,
-  isKeyword,
   grow,
   ...rest
 }) => {
   const theme = useTheme();
-  const styles = getInlineLabelStyles(theme, { width, isKeyword, grow });
+  const styles = getInlineLabelStyles(theme, { width, grow });
 
   return (
     <label className={cx(styles.label, className)} {...rest}>
@@ -56,7 +53,7 @@ interface StyleOptions {
 }
 
 export const getInlineLabelStyles = (theme: GrafanaTheme, options: StyleOptions) => {
-  const { width, isKeyword = false, grow = false } = options;
+  const { width, grow = false } = options;
   return {
     label: css`
       display: flex;
@@ -73,7 +70,7 @@ export const getInlineLabelStyles = (theme: GrafanaTheme, options: StyleOptions)
       border-radius: ${theme.border.radius.md};
       border: none;
       width: ${width ? (width !== 'auto' ? `${8 * width}px` : width) : '100%'};
-      color: ${isKeyword ? theme.colors.textBlue : 'inherit'};
+      color: ${theme.colors.textHeading};
       flex-grow: ${grow ? 1 : 'unset'};
     `,
     icon: css`
