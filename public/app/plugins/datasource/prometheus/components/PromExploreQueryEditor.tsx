@@ -1,5 +1,4 @@
 import React, { memo, FC } from 'react';
-import { css } from 'emotion';
 
 // Types
 import { ExploreQueryFieldProps } from '@grafana/data';
@@ -8,7 +7,7 @@ import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
 
 import PromQueryField from './PromQueryField';
-import { StepField, QueryTypeField } from './PromExploreExtraFields';
+import PromExploreExtraField from './PromExploreExtraField';
 
 export type Props = ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions>;
 
@@ -40,12 +39,6 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
     onChange(nextQuery);
   }
 
-  function onReturnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') {
-      onRunQuery();
-    }
-  }
-
   return (
     <PromQueryField
       datasource={datasource}
@@ -56,18 +49,12 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
       history={history}
       data={data}
       ExtraFieldElement={
-        <div
-          className={css`
-            display: flex;
-            flex-wrap: wrap;
-          `}
-        >
-          <QueryTypeField
-            selected={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
-            onQueryTypeChange={onQueryTypeChange}
-          />
-          <StepField onChangeFunc={onStepChange} onKeyDownFunc={onReturnKeyDown} value={query.interval || ''} />
-        </div>
+        <PromExploreExtraField
+          queryType={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
+          stepValue={query.interval || ''}
+          onQueryTypeChange={onQueryTypeChange}
+          onStepChange={onStepChange}
+        />
       }
     />
   );
