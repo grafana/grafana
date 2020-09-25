@@ -44,16 +44,16 @@ To install a nightly build, or to install the latest version of Grafana  without
 
    > **Note:** The downloads page lists only finished releases. If you want to install a beta version, click [Nightly ] **Nightly Builds** and then select a version.
 
-2. Select an **Edition**.
+1. Select an **Edition**.
    * **Open Source** - Functionally identical to the enterprise version, but you will need to download the enterprise version if you want enterprise features.
    * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
-3. Click **Mac**.
-4. Open a terminal and download the binary using the cURL command. The following example shows Grafana 7.1.5 version:
+1. Click **Mac**.
+1. Open a terminal and download the binary using the cURL command. The following example shows Grafana 7.1.5 version:
    ```bash
    curl -O https://dl.grafana.com/oss/release/grafana-7.1.5.darwin-amd64.tar.gz
       ```
-5.  Untar the gz file and copy the files to the location of your preference.
-6.  To start Grafana service, go to the directory and run the command:
+1.  Untar the gz file and copy the files to the location of your preference.
+1.  To start Grafana service, go to the directory and run the command:
       ```bash
       ./bin/grafana-server web
       ```
