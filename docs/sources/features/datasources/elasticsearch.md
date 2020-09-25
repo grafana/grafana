@@ -42,7 +42,7 @@ All requests will be made from the browser to Grafana backend/server which in tu
 All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
 
 If you select Browser access you must update your Elasticsearch configuration to allow other domains to access
-Elasticsearch from the browser. You do this by specifying these to options in your **elasticsearch.yml** config file.
+Elasticsearch from the browser. You do this by specifying these two options in your **elasticsearch.yml** config file.
 
 ```bash
 http.cors.enabled: true
