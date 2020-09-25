@@ -39,6 +39,7 @@ describe('GraphCtrl', () => {
     ctx.ctrl.events = {
       emit: () => {},
     };
+    ctx.ctrl.panelData = {};
     ctx.ctrl.annotationsSrv = {
       getAnnotations: () => Promise.resolve({}),
     };

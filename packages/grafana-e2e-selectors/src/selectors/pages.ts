@@ -133,4 +133,7 @@ export const Pages = {
       navBar: () => '.explore-toolbar',
     },
   },
+  SoloPanel: {
+    url: (page: string) => `/d-solo/${page}`,
+  },
 };

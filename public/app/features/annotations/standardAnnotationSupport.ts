@@ -11,7 +11,7 @@ import {
   FieldType,
   getFieldDisplayName,
   KeyValue,
-  transformDataFrame,
+  standardTransformers,
 } from '@grafana/data';
 
 import isString from 'lodash/isString';
@@ -56,19 +56,12 @@ export function singleFrameFromPanelData(data: DataFrame[]): Observable<DataFram
   if (!data?.length) {
     return of(undefined);
   }
+
   if (data.length === 1) {
     return of(data[0]);
   }
 
-  return transformDataFrame(
-    [
-      {
-        id: 'seriesToColumns',
-        options: { byField: 'Time' },
-      },
-    ],
-    data
-  ).pipe(map(d => d[0]));
+  return standardTransformers.mergeTransformer.transformer({}, data).pipe(map(d => d[0]));
 }
 
 interface AnnotationEventFieldSetter {
@@ -122,6 +115,7 @@ export function getAnnotationsFromData(
       let hasTime = false;
       let hasText = false;
       const byName: KeyValue<Field> = {};
+
       for (const f of frame.fields) {
         const name = getFieldDisplayName(f, frame);
         byName[name.toLowerCase()] = f;
@@ -132,11 +126,14 @@ export function getAnnotationsFromData(
       }
 
       const fields: AnnotationEventFieldSetter[] = [];
+
       for (const evts of annotationEventNames) {
         const opt = options[evts.key] || {}; //AnnotationEventFieldMapping
+
         if (opt.source === AnnotationEventFieldSource.Skip) {
           continue;
         }
+
         const setter: AnnotationEventFieldSetter = { key: evts.key, split: evts.split };
 
         if (opt.source === AnnotationEventFieldSource.Text) {
@@ -144,6 +141,7 @@ export function getAnnotationsFromData(
         } else {
           const lower = (opt.value || evts.key).toLowerCase();
           setter.field = byName[lower];
+
           if (!setter.field && evts.field) {
             setter.field = evts.field(frame);
           }
@@ -165,10 +163,16 @@ export function getAnnotationsFromData(
 
       // Add each value to the string
       const events: AnnotationEvent[] = [];
+
       for (let i = 0; i < frame.length; i++) {
-        const anno: AnnotationEvent = {};
+        const anno: AnnotationEvent = {
+          type: 'default',
+          color: 'red',
+        };
+
         for (const f of fields) {
           let v: any = undefined;
+
           if (f.text) {
             v = f.text; // TODO support templates!
           } else if (f.field) {
@@ -181,15 +185,17 @@ export function getAnnotationsFromData(
             }
           }
 
-          if (v !== undefined) {
-            if (f.split) {
-              v = (v as string).split(',');
+          if (v !== null && v !== undefined) {
+            if (f.split && typeof v === 'string') {
+              v = v.split(',');
             }
             (anno as any)[f.key] = v;
           }
         }
+
         events.push(anno);
       }
+
       return events;
     })
   );

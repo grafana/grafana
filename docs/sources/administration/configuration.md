@@ -719,7 +719,7 @@ Refer to [Auth proxy authentication]({{< relref "../auth/auth-proxy.md" >}}) for
 
 ## [auth.ldap]
 
-Refer to [LDAO authentication]({{< relref "../auth/ldap.md" >}}) for detailed instructions.
+Refer to [LDAP authentication]({{< relref "../auth/ldap.md" >}}) for detailed instructions.
 
 <hr />
 
@@ -1271,7 +1271,7 @@ If the remote HTTP image renderer service runs on a different server than the Gr
 ### concurrent_render_request_limit
 
 Concurrent render request limit affects when the /render HTTP endpoint is used. Rendering many images at the same time can overload the server,
-which this setting can help protect against by only allowing a certain amount of concurrent requests. Default is `30`.
+which this setting can help protect against by only allowing a certain number of concurrent requests. Default is `30`.
 
 ## [panels]
 
@@ -1281,7 +1281,7 @@ Set to `true` if you want to test alpha panels that are not yet ready for genera
 
 ### disable_sanitize_html
 
-If set to true Grafana will allow script tags in text panels. Not recommended as it enable XSS vulnerabilities. Default is false. This settings was introduced in Grafana v6.0.
+If set to true Grafana will allow script tags in text panels. Not recommended as it enables XSS vulnerabilities. Default is false. This setting was introduced in Grafana v6.0.
 
 ## [plugins]
 
@@ -1357,7 +1357,7 @@ Mode `context` will cluster using incognito pages.
 
 ### rendering_clustering_max_concurrency
 
-When rendering_mode = clustered you can define maximum number of browser instances/incognito pages that can execute concurrently..
+When rendering_mode = clustered you can define the maximum number of browser instances/incognito pages that can execute concurrently.
 
 ### rendering_viewport_max_width
 
@@ -1395,9 +1395,9 @@ Keys of alpha features to enable, separated by space. Available alpha features a
 
 ## [date_formats]
 
-> The date format options below are only available in Grafana v7.2+
+> **Note:** The date format options below are only available in Grafana v7.2+.
 
-This section controls system wide defaults for date formats used in time ranges, graphs and date input boxes.
+This section controls system-wide defaults for date formats used in time ranges, graphs, and date input boxes.
 
 The format patterns use [Moment.js](https://momentjs.com/docs/#/displaying/) formatting tokens.
 
@@ -1407,8 +1407,8 @@ Full date format used by time range picker and in other places where a full date
 
 ### intervals
 
-These intervals formats are used in the graph to show only a partial date or time. For example if there are only
-minutes between y-axis tick labels then the `interval_minute` format is used.
+These intervals formats are used in the graph to show only a partial date or time. For example, if there are only
+minutes between Y-axis tick labels then the `interval_minute` format is used.
 
 Defaults
 
@@ -1423,9 +1423,8 @@ interval_year = YYYY
 
 ### use_browser_locale
 
-Set this to `true` to have date formats be automatically be derived from browser locale. Defaults to `false`. This
-is an experimental feature right now with a few problems that remain unsolved.
+Set this to `true` to have date formats automatically derived from your browser location. Defaults to `false`. This is an experimental feature.
 
 ### default_timezone
 
-Used as the default timezone for user preferences. Can be either `browser` for the browser local timezone or a timezone name from IANA Time Zone database, e.g. `UTC` or `Europe/Amsterdam` etc.
+Used as the default time zone for user preferences. Can be either `browser` for the browser local time zone or a time zone name from the IANA Time Zone database, such as `UTC` or `Europe/Amsterdam`.

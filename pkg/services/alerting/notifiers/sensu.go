@@ -95,7 +95,7 @@ func (sn *SensuNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("ruleId", evalContext.Rule.ID)
 	// Sensu alerts cannot have spaces in them
-	bodyJSON.Set("name", strings.Replace(evalContext.Rule.Name, " ", "_", -1))
+	bodyJSON.Set("name", strings.ReplaceAll(evalContext.Rule.Name, " ", "_"))
 	// Sensu alerts require a source. We set it to the user-specified value (optional),
 	// else we fallback and use the grafana ruleID.
 	if sn.Source != "" {

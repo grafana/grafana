@@ -32,7 +32,7 @@ Check out the [configuration]({{< relref "configuration.md" >}}) page for more i
 
 It is possible to use environment variable interpolation in all 3 provisioning config types. Allowed syntax
 is either `$ENV_VAR_NAME` or `${ENV_VAR_NAME}` and can be used only for values not for keys or bigger parts
-of the configs. It is not available in the dashboards definition files just the dashboard provisioning
+of the configs. It is not available in the dashboard's definition files just the dashboard provisioning
 configuration.
 Example:
 
@@ -65,7 +65,7 @@ Currently we do not provide any scripts/manifests for configuring Grafana. Rathe
 
 > This feature is available from v5.0
 
-It's possible to manage data sources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/administration/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the data source already exists, then Grafana updates it to match the configuration file. The config file can also contain a list of data sources that should be deleted. That list is called `deleteDatasources`. Grafana will delete data sources listed in `deleteDatasources` before inserting/updating those in the `datasource` list.
+It's possible to manage data sources in Grafana by adding one or more YAML config files in the [`provisioning/datasources`](/administration/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will get added or updated during start up. If the data source already exists, then Grafana updates it to match the configuration file. The config file can also contain a list of data sources that should be deleted. That list is called `deleteDatasources`. Grafana will delete data sources listed in `deleteDatasources` before inserting/updating those in the `datasource` list.
 
 ### Running Multiple Grafana Instances
 
@@ -161,6 +161,7 @@ Since not all datasources have the same configuration settings we only have the 
 | assumeRoleArn           | string  | Cloudwatch                                                       | ARN of Assume Role                                                                          |
 | defaultRegion           | string  | Cloudwatch                                                       | AWS region                                                                                  |
 | customMetricsNamespaces | string  | Cloudwatch                                                       | Namespaces of Custom Metrics                                                                |
+| profile                 | string  | Cloudwatch                                                       | Custom credentials profile
 | tsdbVersion             | string  | OpenTSDB                                                         | Version                                                                                     |
 | tsdbResolution          | string  | OpenTSDB                                                         | Resolution                                                                                  |
 | sslmode                 | string  | PostgreSQL                                                       | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full'                                 |
@@ -296,9 +297,9 @@ Note: The JSON definition in the input field when using `Copy JSON to Clipboard`
 
 ### Reusable Dashboard URLs
 
-If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards betweens Grafana instances and provisioning Grafana from configuration without breaking the URLs given since the new dashboard URL uses the uid as identifier.
+If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards between Grafana instances and provisioning Grafana from configuration without breaking the URLs given since the new dashboard URL uses the uid as identifier.
 When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
-By default Grafana will delete dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
+By default, Grafana will delete dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
 
 > **Note.** Provisioning allows you to overwrite existing dashboards
 > which leads to problems if you re-use settings that are supposed to be unique.
@@ -338,7 +339,7 @@ providers:
 
 ## Alert Notification Channels
 
-Alert Notification Channels can be provisioned by adding one or more yaml config files in the [`provisioning/notifiers`](/administration/configuration/#provisioning) directory.
+Alert Notification Channels can be provisioned by adding one or more YAML config files in the [`provisioning/notifiers`](/administration/configuration/#provisioning) directory.
 
 Each config file can contain the following top-level fields:
 

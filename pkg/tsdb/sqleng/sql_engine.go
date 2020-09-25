@@ -207,10 +207,10 @@ var Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string)
 	}
 	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval)
 
-	sql = strings.Replace(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10), -1)
-	sql = strings.Replace(sql, "$__interval", interval.Text, -1)
-	sql = strings.Replace(sql, "$__unixEpochFrom()", fmt.Sprintf("%d", timeRange.GetFromAsSecondsEpoch()), -1)
-	sql = strings.Replace(sql, "$__unixEpochTo()", fmt.Sprintf("%d", timeRange.GetToAsSecondsEpoch()), -1)
+	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
+	sql = strings.ReplaceAll(sql, "$__interval", interval.Text)
+	sql = strings.ReplaceAll(sql, "$__unixEpochFrom()", fmt.Sprintf("%d", timeRange.GetFromAsSecondsEpoch()))
+	sql = strings.ReplaceAll(sql, "$__unixEpochTo()", fmt.Sprintf("%d", timeRange.GetToAsSecondsEpoch()))
 
 	return sql, nil
 }
