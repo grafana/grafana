@@ -33,13 +33,13 @@ The data source can access metrics from four different services. You can configu
 
 1. Accessed from the Grafana main menu, newly installed data sources can be added immediately within the Data Sources section. Next, click the "Add data source" button in the upper right. The Azure Monitor data source will be available for selection in the Cloud section in the list of data sources.
 
-2. In the name field, Grafana will automatically fill in a name for the data source - `Azure Monitor` or something like `Azure Monitor - 3`. If you are going to configure multiple data sources then change the name to something more informative.
+2. In the name field, Grafana will automatically fill in a name for the data source - `Azure Monitor` or something like `Azure Monitor - 3`. If you are going to configure multiple data sources, then change the name to something more informative.
 
 3. If you are using Azure Monitor, you need 4 pieces of information from the Azure portal (see link above for detailed instructions):
 
    - **Tenant Id** (Azure Active Directory -> Properties -> Directory ID)
    - **Client Id** (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
-   - **Client Secret** ( Azure Active Directory -> App Registrations -> Choose your app -> Keys)
+   - **Client Secret** (Azure Active Directory -> App Registrations -> Choose your app -> Keys)
    - **Default Subscription Id** (Subscriptions -> Choose subscription -> Overview -> Subscription ID)
 
 4. Paste these four items into the fields in the Azure Monitor API Details section:
