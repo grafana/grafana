@@ -166,7 +166,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       range,
     } = this.props;
 
-    if (languageProvider !== prevProps.datasource.languageProvider || range !== prevProps.range) {
+    if (languageProvider !== prevProps.datasource.languageProvider || !_.isEqual(range, prevProps.range)) {
       this.refreshMetrics();
     }
 
