@@ -64,7 +64,7 @@ describe('InfluxLogsQueryField', () => {
     const wrapper = getInfluxLogsQueryField();
     // Looks strange but we do async stuff in didMount and this will push the stack at the end of eval loop, effectively
     // waiting for the didMount to finish.
-    await Promise.resolve();
+    await new Promise(resolve => setImmediate(resolve));
     wrapper.update();
     const cascader = wrapper.find(ButtonCascader);
     expect(cascader.prop('options')).toEqual([
