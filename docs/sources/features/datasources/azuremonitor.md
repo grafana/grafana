@@ -86,7 +86,7 @@ Starting in Grafana 7.1, Insights Analytics replaced the former edit mode from w
 
 The Azure Monitor service provides metrics for all the Azure services that you have running. It helps you understand how your applications on Azure are performing and to proactively find issues affecting your applications.
 
-If your Azure Monitor credentials give you access to multiple subscriptions then choose the appropriate subscription first.
+If your Azure Monitor credentials give you access to multiple subscriptions, then choose the appropriate subscription first.
 
 Examples of metrics that you can get from the service are:
 
@@ -211,10 +211,10 @@ Use the one of the following queries in the `Query` field in the Variable edit v
 Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
-| Name                               | Description                                                |
-| ---------------------------------- | ---------------------------------------------------------- |
-| _AppInsightsMetricNames()_         | Returns a list of metric names.                            |
-| _AppInsightsGroupBys(aMetricName)_ | Returns a list of group bys for the specified metric name. |
+| Name                               | Description                                                  |
+| ---------------------------------- | ------------------------------------------------------------ |
+| _AppInsightsMetricNames()_         | Returns a list of metric names.                              |
+| _AppInsightsGroupBys(aMetricName)_ | Returns a list of "group bys" for the specified metric name. |
 
 Examples:
 
