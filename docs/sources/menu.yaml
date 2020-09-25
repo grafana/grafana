@@ -224,9 +224,9 @@
     - link: /panels/calculations-list/
       name: Calculations list
 - name: Dashboards
-  link: /dashboard/
+  link: /dashboards/
   children:
-    - link: dashboard/
+    - link: /dashboards/
       name: Overview
     - link: /dashboards/annotations/
       name: Annotations
@@ -247,9 +247,9 @@
     - link: /dashboards/dashboard_history/
       name: Dashboard version history
     - name: Keyboard shortcuts
-      link: /features/shortcuts/
+      link: /dashboards/shortcuts/
     - name: Reporting
-      link: /features/reporting/
+      link: /dashboards/reporting/
     - link: /reference/dashboard/
       name: JSON Model
     - link: /reference/scripting/
