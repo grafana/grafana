@@ -36,11 +36,6 @@ export const single = () => {
           <Input placeholder="Label" />
         </InlineField>
       </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField label="Label Filled 1" fill>
-          <Input placeholder="Label" />
-        </InlineField>
-      </InlineFieldRow>
     </div>
   );
 };

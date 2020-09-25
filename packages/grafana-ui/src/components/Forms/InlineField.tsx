@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { cx, css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme } from '../../themes';
-import { getInlineLabelStyles, InlineLabel } from './InlineLabel';
+import { InlineLabel } from './InlineLabel';
 import { PopoverContent } from '../Tooltip/Tooltip';
 import { FieldProps } from './Field';
 
@@ -13,8 +13,6 @@ export interface Props extends Omit<FieldProps, 'css'> {
   labelWidth?: number | 'auto';
   /** Make the field's child to fill the width of the row. Equivalent to setting `flex-grow:1` on the field */
   grow?: boolean;
-  /** Fill the remaining width of the row with the label's background */
-  fill?: boolean;
 }
 
 export const InlineField: FC<Props> = ({
@@ -27,12 +25,10 @@ export const InlineField: FC<Props> = ({
   disabled,
   className,
   grow,
-  fill,
   ...htmlProps
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme, grow);
-  const fillStyles = getInlineLabelStyles(theme, { grow: true }).label;
   const child = React.Children.only(children);
   let inputId;
 
@@ -49,17 +45,10 @@ export const InlineField: FC<Props> = ({
     );
 
   return (
-    <>
-      <div className={cx(styles.container, className)} {...htmlProps}>
-        {labelElement}
-        {React.cloneElement(children, { invalid, disabled, loading })}
-      </div>
-      {fill && (
-        <div className={cx(styles.container, styles.fillContainer)}>
-          <div className={fillStyles} />
-        </div>
-      )}
-    </>
+    <div className={cx(styles.container, className)} {...htmlProps}>
+      {labelElement}
+      {React.cloneElement(children, { invalid, disabled, loading })}
+    </div>
   );
 };
 

@@ -39,14 +39,6 @@ export const grow = () => {
   );
 };
 
-export const filled = () => {
-  return (
-    <InlineField label="Filled field" fill>
-      <Input placeholder="Inline input" />
-    </InlineField>
-  );
-};
-
 export const withSelect = () => {
   return (
     <InlineField label="Select option">
@@ -71,7 +63,7 @@ export const multiple = () => {
       <InlineField label="Field 2">
         <Input placeholder="Inline input" />
       </InlineField>
-      <InlineField label="Field 3" fill>
+      <InlineField label="Field 3">
         <Input placeholder="Inline input" />
       </InlineField>
     </>
