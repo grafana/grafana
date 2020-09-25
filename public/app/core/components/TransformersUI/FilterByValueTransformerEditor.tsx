@@ -11,7 +11,7 @@ import {
   SelectableValue,
   FieldType,
 } from '@grafana/data';
-import { Select, Button, RadioButtonGroup, stylesFactory } from '@grafana/ui';
+import { Select, Button, Input, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   FilterByValueTransformerOptions,
@@ -19,7 +19,6 @@ import {
 } from '@grafana/data/src/transformations/transformers/filterByValue';
 
 import { valueFiltersRegistry, ValueFilterID } from '@grafana/data/src/transformations/valueFilters';
-import { getValueFilterArgsComponent } from './ValueFiltersComponents';
 
 interface RowProps {
   fieldNameOptions: Array<SelectableValue<string>>;
@@ -51,22 +50,17 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
 
   const filterInfo = valueFiltersRegistry.get(config.filterType);
   const filterInstance = filterInfo.getInstance({
-    filterArgs: config.filterArgs,
+    filterExpression: config.filterExpression,
     fieldType: fieldType,
   });
+  const filterValid = filterInstance.isValid;
 
   const fieldNameInvalid = config.fieldName !== null && !fieldNameOptions.find(item => item.value === config.fieldName);
   const filterTypeInvalid =
     !fieldNameInvalid && filterInfo.supportedFieldTypes && !filterInfo.supportedFieldTypes.includes(fieldType);
+  const filterExpressionInvalid =
+    config.filterExpression !== '' && !fieldNameInvalid && !filterTypeInvalid && !filterValid;
 
-  const onArgsChange = useCallback(
-    (filterArgs: Record<string, any>) => {
-      onConfigChange({ ...config, filterArgs });
-    },
-    [onConfigChange, config]
-  );
-
-  const filterArgsComponent = getValueFilterArgsComponent(config.filterType);
   return (
     <div className="gf-form-inline">
       <div className="gf-form gf-form-spacing">
@@ -88,7 +82,7 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
         />
       </div>
       <div className="gf-form gf-form-spacing">
-        <div className="gf-form-label width-4">Match</div>
+        <div className="gf-form-label width-8">Match</div>
         <Select
           invalid={filterTypeInvalid}
           className="width-8"
@@ -96,20 +90,24 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
           options={filterTypeOptions}
           value={config.filterType}
           onChange={value => {
-            onConfigChange({
-              ...config,
-              filterType: (value.value as ValueFilterID) ?? ValueFilterID.regex,
-            });
+            onConfigChange({ ...config, filterType: (value.value as ValueFilterID) ?? ValueFilterID.regex });
           }}
           menuPlacement="bottom"
         />
       </div>
-      {(filterArgsComponent &&
-        filterArgsComponent({
-          onArgsChange,
-          filterArgs: config.filterArgs,
-          invalidArgs: filterInstance?.invalidArgs ?? ({} as Record<string, boolean>),
-        })) || <div className="gf-form--grow"></div>}
+      <div className="gf-form gf-form--grow gf-form-spacing ">
+        {filterInfo.placeholder && (
+          <Input
+            className="flex-grow-1"
+            invalid={filterExpressionInvalid}
+            defaultValue={config.filterExpression || undefined}
+            placeholder={filterInfo.placeholder}
+            onBlur={event => {
+              onConfigChange({ ...config, filterExpression: event.currentTarget.value });
+            }}
+          />
+        )}
+      </div>
       <div className="gf-form">
         <Button icon="times" onClick={onDelete} style={{ height: '100%' }} size="sm" variant="secondary" />
       </div>
@@ -136,7 +134,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
     let valueFilters = cloneDeep(options.valueFilters);
     valueFilters.push({
       fieldName: null,
-      filterArgs: {},
+      filterExpression: null,
       filterType: ValueFilterID.regex,
     });
 
