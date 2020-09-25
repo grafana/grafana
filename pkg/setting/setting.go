@@ -79,18 +79,20 @@ var (
 	LogConfigs []util.DynMap
 
 	// Http server options
-	Protocol           Scheme
-	Domain             string
-	HttpAddr, HttpPort string
-	SshPort            int
-	CertFile, KeyFile  string
-	SocketPath         string
-	RouterLogging      bool
-	DataProxyLogging   bool
-	DataProxyTimeout   int
-	StaticRootPath     string
-	EnableGzip         bool
-	EnforceDomain      bool
+	Protocol                 Scheme
+	Domain                   string
+	HttpAddr, HttpPort       string
+	SshPort                  int
+	CertFile, KeyFile        string
+	SocketPath               string
+	RouterLogging            bool
+	DataProxyLogging         bool
+	DataProxyTimeout         int
+	DataProxyKeepAlive       int
+	DataProxyIdleConnTimeout int
+	StaticRootPath           string
+	EnableGzip               bool
+	EnforceDomain            bool
 
 	// Security settings.
 	SecretKey                         string
