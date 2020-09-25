@@ -49,7 +49,7 @@ Use the following options to refine your visualization:
   - **Auto -** If only a single value is shown (no repeat), then the value is centered. If multiple series or rows are shown, then the value is left-aligned.
   - **Center -** Stat value is centered.
 - **Text mode** (Only available in Grafana 7.1+.)
-  - **Auto -** If the data contains multiple series or fields, show both name and value..
+  - **Auto -** If the data contains multiple series or fields, show both name and value.
   - **Value -** Show only value, never name. Name is displayed in the hover tooltip instead.
   - **Value and name -** Always show value and name.
   - **Name -** Show name instead of value. Value is displayed in the hover tooltip.
