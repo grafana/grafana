@@ -246,7 +246,7 @@ WHERE
 ORDER BY 1
 ```
 
-When above query are used in a graph panel the result will be two series named `valueOne` and `valueTwo` with value of `valueOne` and `valueTwo` plotted over `time`.
+When above query is used in a graph panel the result will be two series named `valueOne` and `valueTwo` with value of `valueOne` and `valueTwo` plotted over `time`.
 
 <div class="clearfix"></div>
 
