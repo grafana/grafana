@@ -224,9 +224,9 @@
     - link: /panels/calculations-list/
       name: Calculations list
 - name: Dashboards
-  link: /features/dashboard/
+  link: /dashboard/
   children:
-    - link: /features/dashboard/dashboards/
+    - link: dashboard/
       name: Overview
     - link: /dashboards/annotations/
       name: Annotations
