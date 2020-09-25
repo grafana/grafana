@@ -12,6 +12,6 @@ export interface HttpSettingsProps extends HttpSettingsBaseProps {
   defaultUrl: string;
   /** Show the http access help box */
   showAccessOptions?: boolean;
-  /** The grafana configuration map */
-  config?: GrafanaConfig;
+  /** Enable the SigV4 auth toggle option */
+  sigV4AuthToggleEnabled?: boolean;
 }

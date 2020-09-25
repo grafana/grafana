@@ -15,7 +15,7 @@ export const ConfigEditor = (props: Props) => {
         dataSourceConfig={options}
         showAccessOptions={true}
         onChange={onOptionsChange}
-        config={config}
+        sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
       />
 
       <PromSettings options={options} onOptionsChange={onOptionsChange} />

@@ -140,3 +140,4 @@ URL to redirect the user to after signing out from Grafana. This can for example
 [auth]
 signout_redirect_url =
 ```
+

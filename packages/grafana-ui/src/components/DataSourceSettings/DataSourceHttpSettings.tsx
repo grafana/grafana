@@ -56,7 +56,7 @@ const HttpAccessHelp = () => (
 );
 
 export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
-  const { defaultUrl, dataSourceConfig, onChange, showAccessOptions, config } = props;
+  const { defaultUrl, dataSourceConfig, onChange, showAccessOptions, sigV4AuthToggleEnabled } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
   const theme = useTheme();
@@ -190,7 +190,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
             />
           </div>
 
-          {config?.sigV4AuthEnabled && (
+          {sigV4AuthToggleEnabled && (
             <div className="gf-form-inline">
               <Switch
                 label="SigV4 auth"
