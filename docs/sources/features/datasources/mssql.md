@@ -325,8 +325,8 @@ Another option is a query that can create a key/value variable. The query should
 SELECT hostname __text, id __value FROM host
 ```
 
-You can also create nested variables. For example if you had another variable named `region`. Then you could have
-the hosts variable only show hosts from the current selected region with a query like this (if `region` is a multi-value variable then use the `IN` comparison operator rather than `=` to match against multiple values):
+You can also create nested variables. For example, if you had another variable named `region`. Then you could have
+the hosts variable only show hosts from the current selected region with a query like this (if `region` is a multi-value variable, then use the `IN` comparison operator rather than `=` to match against multiple values):
 
 ```sql
 SELECT hostname FROM host WHERE region IN ($region)
@@ -452,7 +452,7 @@ Please note that any macro function will not work inside a stored procedure.
 ### Examples
 
 {{< docs-imagebox img="/img/docs/v51/mssql_metrics_graph.png" class="docs-image--no-shadow docs-image--right" >}}
-For the following examples the database table is defined in [Time series queries](#time-series-queries). Let's say that we want to visualize 4 series in a graph panel, i.e. all combinations of columns `valueOne`, `valueTwo` and `measurement`. Graph panel to the right visualizes what we want to achieve. To solve this we actually need to use two queries:
+For the following examples the database table is defined in [Time series queries](#time-series-queries). Let's say that we want to visualize 4 series in a graph panel, i.e. all combinations of columns `valueOne`, `valueTwo` and `measurement`. Graph panel to the right visualizes what we want to achieve. To solve this, we actually need to use two queries:
 
 **First query:**
 
