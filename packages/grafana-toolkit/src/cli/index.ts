@@ -139,8 +139,9 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:build')
     .description('Prepares plugin dist package')
+    .option('--coverage', 'Run code coverage', false)
     .action(async cmd => {
-      await execTask(pluginBuildTask)({ coverage: false, silent: true });
+      await execTask(pluginBuildTask)({ coverage: cmd.coverage, silent: true });
     });
 
   program
