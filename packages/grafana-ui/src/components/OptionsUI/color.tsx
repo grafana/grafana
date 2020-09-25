@@ -22,7 +22,7 @@ export const ColorValueEditor: React.FC<FieldConfigEditorProps<FieldColor, Color
   const theme = getTheme();
   const styles = getStyles(theme);
 
-  const color = value.fixedColor || item.defaultValue?.fixedColor;
+  const color = value?.fixedColor || item.defaultValue?.fixedColor;
 
   const onValueChange = useCallback(
     color => {
@@ -41,7 +41,7 @@ export const ColorValueEditor: React.FC<FieldConfigEditorProps<FieldColor, Color
                 ref={ref}
                 onClick={showColorPicker}
                 onMouseLeave={hideColorPicker}
-                color={color ? getColorFromHexRgbOrName(color, theme.type) : ''}
+                color={color ? getColorFromHexRgbOrName(color, theme.type) : theme.colors.formInputBorder}
               />
             </div>
             <div className={styles.colorText} onClick={showColorPicker}>
