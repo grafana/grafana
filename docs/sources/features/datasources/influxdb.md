@@ -211,13 +211,13 @@ types of template variables.
 If you add a template variable of the type `Query` you can write an InfluxDB exploration (meta data) query. These queries can
 return things like measurement names, key names or key values.
 
-For example you can have a variable that contains all values for tag `hostname` if you specify a query like this in the templating variable *Query* setting.
+For example, you can have a variable that contains all values for tag `hostname` if you specify a query like this in the templating variable *Query* setting.
 
 ```sql
 SHOW TAG VALUES WITH KEY = "hostname"
 ```
 
-You can also create nested variables. For example if you had another variable, for example `region`. Then you could have
+You can also create nested variables. For example, if you had another variable, for example `region`. Then you could have
 the hosts variable only show hosts from the current selected region with a query like this:
 
 ```sql
