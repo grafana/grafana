@@ -1,18 +1,20 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import PromExploreExtraField, { PromExploreExtraFieldProps } from './PromExploreExtraField';
+import { PromExploreExtraFieldProps, PromExploreExtraField } from './PromExploreExtraField';
 
 const setup = (propOverrides?: PromExploreExtraFieldProps) => {
   const queryType = 'range';
   const stepValue = '1';
   const onStepChange = jest.fn();
   const onQueryTypeChange = jest.fn();
+  const onKeyDownFunc = jest.fn();
 
   const props: any = {
     queryType,
     stepValue,
     onStepChange,
     onQueryTypeChange,
+    onKeyDownFunc,
   };
 
   Object.assign(props, propOverrides);

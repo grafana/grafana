@@ -3,7 +3,8 @@
 exports[`PromExploreQueryEditor should render component 1`] = `
 <PromQueryField
   ExtraFieldElement={
-    <Memo(PromExploreExtraField)
+    <Memo
+      onKeyDownFunc={[Function]}
       onQueryTypeChange={[Function]}
       onStepChange={[Function]}
       queryType="range"

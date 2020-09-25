@@ -7,7 +7,7 @@ import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
 
 import PromQueryField from './PromQueryField';
-import PromExploreExtraField from './PromExploreExtraField';
+import { PromExploreExtraField } from './PromExploreExtraField';
 
 export type Props = ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions>;
 
@@ -23,6 +23,12 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
   function onStepChange(e: React.SyntheticEvent<HTMLInputElement>) {
     if (e.currentTarget.value !== query.interval) {
       onChangeQueryStep(e.currentTarget.value);
+    }
+  }
+
+  function onReturnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' && (e.shiftKey || e.ctrlKey)) {
+      onRunQuery();
     }
   }
 
@@ -54,6 +60,7 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
           stepValue={query.interval || ''}
           onQueryTypeChange={onQueryTypeChange}
           onStepChange={onStepChange}
+          onKeyDownFunc={onReturnKeyDown}
         />
       }
     />
