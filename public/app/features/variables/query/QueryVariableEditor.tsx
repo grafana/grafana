@@ -30,7 +30,7 @@ interface DispatchProps {
   changeVariableMultiValue: typeof changeVariableMultiValue;
 }
 
-type Props = OwnProps & ConnectedProps & DispatchProps;
+export type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export interface State {
   regex: string | null;
