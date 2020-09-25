@@ -1,4 +1,4 @@
-import { DataSourceSettings, GrafanaConfig } from '@grafana/data';
+import { DataSourceSettings } from '@grafana/data';
 
 export interface HttpSettingsBaseProps {
   /** The configuration object of the data source */
@@ -12,6 +12,6 @@ export interface HttpSettingsProps extends HttpSettingsBaseProps {
   defaultUrl: string;
   /** Show the http access help box */
   showAccessOptions?: boolean;
-  /** Enable the SigV4 auth toggle option */
+  /** Show the SigV4 auth toggle option */
   sigV4AuthToggleEnabled?: boolean;
 }
