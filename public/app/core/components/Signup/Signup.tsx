@@ -8,13 +8,13 @@ import appEvents from 'app/core/app_events';
 import { AppEvents } from '@grafana/data';
 
 interface SignupDTO {
-  name: string;
+  name?: string;
   email: string;
   username: string;
   orgName?: string;
   password: string;
   code: string;
-  confirm: string;
+  confirm?: string;
 }
 
 interface ConnectedProps {

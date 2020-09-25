@@ -93,7 +93,7 @@ describe('Chart Tooltip', () => {
         // +--------------------++------+
         //                       |origin|
         //                       +------+
-        expect(styleAttribute).toContain('translate3d(890px, 590px, 0)');
+        expect(styleAttribute).toContain('translate3d(910px, 610px, 0)');
       });
     });
   });
