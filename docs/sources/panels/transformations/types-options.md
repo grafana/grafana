@@ -152,7 +152,7 @@ In the example below, I added two fields together and named them Sum.
 
 ## Labels to fields
 
-> **Note:** In order to apply this transformation, your query needs to returns labeled fields.
+> **Note:** In order to apply this transformation, your query needs to return labeled fields.
 
 When you select this transformation, Grafana automatically transforms all labeled data into fields.
 
