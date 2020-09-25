@@ -52,7 +52,7 @@ The new internal linking feature for Elasticsearch allows you to link to other d
 
 ## Transformations
 
-We have added a new **Merge on time** transform that can combine many time series or table results. Unlike the join transform this combines the result into one table even when the time values do not align / match.
+We have added a new **Merge on time** transform that can combine many time series or table results. Unlike the join transform, this combines the result into one table even when the time values do not align / match.
 
 The new table panel introduced in 7.0 was missing a few features that the old table panel had. This feature, along with ad hoc filtering, means that the new table panel has achieved feature parity with the old table panel.
 
