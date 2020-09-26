@@ -187,7 +187,7 @@ for annotation events.
 
 Name | Description
 ------------ | -------------
-Query | You can leave the search query blank or specify a lucene query
+Query | You can leave the search query blank or specify a lucene query.
 Time | The name of the time field, needs to be date field.
 Time End | Optional name of the time end field needs to be date field. If set, then annotations will be marked as a region between time and time-end.
 Text | Event description field.
