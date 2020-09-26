@@ -10,11 +10,7 @@ weight = 500
 
 # Install on macOS
 
-This page explains how to install Grafana and get the service running on your macOS. It has the following topics:  
-   - [Install with Homebrew](#install-with-homebrew)
-   - [Install standalone macOS binaries](#install-standalone-macos-binaries)
-   - [Next steps](#next-steps)
-   - [Upgrade](#upgrade)
+This page explains how to install Grafana and get the service running on your macOS.
 
 **Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Before you perform an upgrade, read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on updating an existing installation.
 
