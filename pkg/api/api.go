@@ -19,6 +19,7 @@ func (hs *HTTPServer) registerRoutes() {
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL()
+	redirectFromShortUrl := middleware.ShortUrlRedirect()
 	quota := middleware.Quota(hs.QuotaService)
 	bind := binding.Bind
 
@@ -387,7 +388,7 @@ func (hs *HTTPServer) registerRoutes() {
 		// short urls
 		apiRoute.Group("/goto", func(shortUrlRoute routing.RouteRegister) {
 			shortUrlRoute.Post("/", bind(dtos.CreateShortUrlForm{}), Wrap(hs.CreateShortUrl))
-			shortUrlRoute.Get("/:uid", Wrap(GetShortUrlPath))
+			shortUrlRoute.Get("/:uid", redirectFromShortUrl, hs.Index)
 		})
 	}, reqSignedIn)
 
