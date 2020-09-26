@@ -13,7 +13,7 @@ func init() {
 
 func GetFullUrlByUid(query *models.GetFullUrlQuery) error {
 	var shortUrl models.ShortUrl
-	exists, err := x.Where("uid=?", query.Uid).Get(&shortUrl)
+	exists, err := x.Where("org_id=? AND uid=?", query.OrgId, query.Uid).Get(&shortUrl)
 	if err != nil {
 		return err
 	}
@@ -29,17 +29,19 @@ func GetFullUrlByUid(query *models.GetFullUrlQuery) error {
 func UpdateShortUrlLastSeenAt(cmd *models.UpdateShortUrlLastSeenAtCommand) error {
 	now := getTime().Unix()
 	var shortUrl = models.ShortUrl{
+		OrgId:      cmd.OrgId,
 		Uid:        cmd.Uid,
 		LastSeenAt: now,
 	}
 
-	_, err := x.ID(cmd.Uid).Update(&shortUrl)
+	_, err := x.Where("org_id=? AND uid=?", shortUrl.OrgId, shortUrl.Uid).Update(&shortUrl)
 	return err
 }
 
 func CreateShortUrl(command *models.CreateShortUrlCommand) error {
 	now := getTime().Unix()
 	shortUrl := models.ShortUrl{
+		OrgId:     command.OrgId,
 		Uid:       command.Uid,
 		Path:      command.Path,
 		CreatedBy: command.CreatedBy,

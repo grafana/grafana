@@ -25,6 +25,7 @@ var NewShortUrlService = func(orgId int64, user *models.SignedInUser) ShortUrlSe
 
 func (dr *shortUrlServiceImpl) buildCreateShortUrlCommand(path string) (*models.CreateShortUrlCommand, error) {
 	cmd := &models.CreateShortUrlCommand{
+		OrgId:     dr.user.OrgId,
 		Uid:       util.GenerateShortUID(),
 		Path:      path,
 		CreatedBy: dr.user.UserId,
@@ -34,7 +35,7 @@ func (dr *shortUrlServiceImpl) buildCreateShortUrlCommand(path string) (*models.
 }
 
 func (dr *shortUrlServiceImpl) GetFullUrlByUID(uid string) (string, error) {
-	query := models.GetFullUrlQuery{Uid: uid}
+	query := models.GetFullUrlQuery{OrgId: dr.user.OrgId, Uid: uid}
 	if err := bus.Dispatch(&query); err != nil {
 		return "", err
 	}

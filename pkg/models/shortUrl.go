@@ -9,6 +9,8 @@ var (
 )
 
 type ShortUrl struct {
+	Id         int64
+	OrgId      int64
 	Uid        string
 	Path       string
 	CreatedBy  int64
@@ -20,6 +22,7 @@ type ShortUrl struct {
 // COMMANDS
 
 type CreateShortUrlCommand struct {
+	OrgId     int64  `json:"orgId"`
 	Uid       string `json:"uid"`
 	Path      string `json:"path"`
 	CreatedBy int64  `json:"userId"`
@@ -28,7 +31,8 @@ type CreateShortUrlCommand struct {
 }
 
 type UpdateShortUrlLastSeenAtCommand struct {
-	Uid string
+	OrgId int64
+	Uid   string
 }
 
 // ---------------------
@@ -36,7 +40,8 @@ type UpdateShortUrlLastSeenAtCommand struct {
 //
 
 type GetFullUrlQuery struct {
-	Uid string
+	OrgId int64
+	Uid   string
 
 	Result *ShortUrl
 }
