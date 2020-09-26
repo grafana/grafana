@@ -2,9 +2,11 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"gopkg.in/macaron.v1"
 )
@@ -28,6 +30,6 @@ func ShortUrlRedirect() macaron.Handler {
 			ctx.Error(404, "Error")
 			return
 		}
-		c.Redirect(cmd.Result.Path, 302)
+		c.Redirect(setting.ToAbsUrl(strings.TrimPrefix(cmd.Result.Path, "/")), 302)
 	}
 }
