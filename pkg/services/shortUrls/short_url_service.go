@@ -1,7 +1,6 @@
 package shortUrls
 
 import (
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/models"
@@ -9,8 +8,8 @@ import (
 )
 
 type ShortUrlService interface {
-	GetFullUrlByUID(uid string) (string, error)
-	CreateShortUrl(cmd *dtos.CreateShortUrlForm) (string, error)
+	GetFullUrlByUID(orgId int64, uid string) (string, error)
+	CreateShortUrl(orgId int64, path string) (string, error)
 }
 
 type shortUrlServiceImpl struct {
@@ -23,9 +22,9 @@ var NewShortUrlService = func(orgId int64, user *models.SignedInUser) ShortUrlSe
 	}
 }
 
-func (dr *shortUrlServiceImpl) buildCreateShortUrlCommand(path string) (*models.CreateShortUrlCommand, error) {
+func (dr *shortUrlServiceImpl) buildCreateShortUrlCommand(orgId int64, path string) (*models.CreateShortUrlCommand, error) {
 	cmd := &models.CreateShortUrlCommand{
-		OrgId:     dr.user.OrgId,
+		OrgId:     orgId,
 		Uid:       util.GenerateShortUID(),
 		Path:      path,
 		CreatedBy: dr.user.UserId,
@@ -34,8 +33,8 @@ func (dr *shortUrlServiceImpl) buildCreateShortUrlCommand(path string) (*models.
 	return cmd, nil
 }
 
-func (dr *shortUrlServiceImpl) GetFullUrlByUID(uid string) (string, error) {
-	query := models.GetFullUrlQuery{OrgId: dr.user.OrgId, Uid: uid}
+func (dr *shortUrlServiceImpl) GetFullUrlByUID(orgId int64, uid string) (string, error) {
+	query := models.GetFullUrlQuery{OrgId: orgId, Uid: uid}
 	if err := bus.Dispatch(&query); err != nil {
 		return "", err
 	}
@@ -47,8 +46,8 @@ func (dr *shortUrlServiceImpl) GetFullUrlByUID(uid string) (string, error) {
 	return query.Result.Path, nil
 }
 
-func (dr *shortUrlServiceImpl) CreateShortUrl(cmd *dtos.CreateShortUrlForm) (string, error) {
-	createShortUrlCmd, err := dr.buildCreateShortUrlCommand(cmd.Path)
+func (dr *shortUrlServiceImpl) CreateShortUrl(orgId int64, path string) (string, error) {
+	createShortUrlCmd, err := dr.buildCreateShortUrlCommand(orgId, path)
 	if err != nil {
 		return "", err
 	}
