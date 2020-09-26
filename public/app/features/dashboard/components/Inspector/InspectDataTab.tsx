@@ -10,18 +10,7 @@ import {
   toCSV,
   transformDataFrame,
 } from '@grafana/data';
-import {
-  Button,
-  Container,
-  Field,
-  HorizontalGroup,
-  Icon,
-  Select,
-  Switch,
-  Table,
-  VerticalGroup,
-  Modal,
-} from '@grafana/ui';
+import { Button, Container, Field, HorizontalGroup, Icon, Select, Switch, Table, VerticalGroup } from '@grafana/ui';
 import { CSVConfig } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -50,7 +39,7 @@ interface State {
   transformId: DataTransformerID;
   dataFrameIndex: number;
   transformationOptions: Array<SelectableValue<DataTransformerID>>;
-  showExportModal: boolean;
+  downloadForExcel: boolean;
 }
 
 export class InspectDataTab extends PureComponent<Props, State> {
@@ -62,7 +51,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       dataFrameIndex: 0,
       transformId: DataTransformerID.noop,
       transformationOptions: buildTransformationOptions(),
-      showExportModal: false,
+      downloadForExcel: false,
     };
   }
 
@@ -176,6 +165,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
       }
     }
 
+    if (this.state.downloadForExcel) {
+      parts.push('Excel header');
+    }
+
     return parts.join(', ');
   }
 
@@ -253,6 +246,12 @@ export class InspectDataTab extends PureComponent<Props, State> {
                   />
                 </Field>
               )}
+              <Field label="Download for Excel" description="Adds header to CSV for use with Excel">
+                <Switch
+                  value={this.state.downloadForExcel}
+                  onChange={() => this.setState({ downloadForExcel: !this.state.downloadForExcel })}
+                />
+              </Field>
             </HorizontalGroup>
           </VerticalGroup>
         </div>
@@ -289,33 +288,13 @@ export class InspectDataTab extends PureComponent<Props, State> {
           <div className={styles.dataDisplayOptions}>{this.renderDataOptions(dataFrames)}</div>
           <Button
             variant="primary"
-            onClick={() => this.setState({ showExportModal: true })}
+            onClick={() => this.exportCsv(dataFrames[dataFrameIndex], { useExcelHeader: this.state.downloadForExcel })}
             className={css`
               margin-bottom: 10px;
             `}
           >
             Download CSV
           </Button>
-          <Modal title="Use Excel header?" isOpen={this.state.showExportModal}>
-            <HorizontalGroup justify="center">
-              <Button
-                onClick={() => {
-                  this.exportCsv(dataFrames[dataFrameIndex], { useExcelHeader: true });
-                  this.setState({ showExportModal: false });
-                }}
-              >
-                Yes
-              </Button>
-              <Button
-                onClick={() => {
-                  this.exportCsv(dataFrames[dataFrameIndex]);
-                  this.setState({ showExportModal: false });
-                }}
-              >
-                No
-              </Button>
-            </HorizontalGroup>
-          </Modal>
         </div>
         <Container grow={1}>
           <AutoSizer>
