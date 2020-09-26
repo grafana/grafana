@@ -393,7 +393,7 @@ This setting also applies to core backend HTTP data sources where query requests
 
 Interval between sends of TCP keepalive requests. Default is 30 seconds.
 
-### timeidle_conn_timeoutout
+### idle_conn_timeout
 
 The length of time that idle connections will be maintained. Default is 90 seconds.
 
