@@ -389,6 +389,14 @@ How long the data proxy should wait before timing out. Default is 30 seconds.
 
 This setting also applies to core backend HTTP data sources where query requests use an HTTP client with timeout set.
 
+### keep_alive
+
+Interval between sends of TCP keepalive requests. Default is 30 seconds.
+
+### timeidle_conn_timeoutout
+
+The length of time that idle connections will be maintained. Default is 90 seconds.
+
 ### send_user_header
 
 If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request. Default is `false`.
