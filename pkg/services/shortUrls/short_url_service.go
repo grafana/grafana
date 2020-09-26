@@ -1,8 +1,6 @@
 package shortUrls
 
 import (
-	"time"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -30,7 +28,6 @@ func (dr *shortUrlServiceImpl) buildCreateShortUrlCommand(path string) (*models.
 		Uid:       util.GenerateShortUID(),
 		Path:      path,
 		CreatedBy: dr.user.UserId,
-		CreatedAt: time.Now(),
 	}
 
 	return cmd, nil

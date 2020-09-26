@@ -1,8 +1,6 @@
 package sqlstore
 
 import (
-	"time"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -29,9 +27,10 @@ func GetFullUrlByUid(query *models.GetFullUrlQuery) error {
 }
 
 func UpdateShortUrlLastSeenAt(cmd *models.UpdateShortUrlLastSeenAtCommand) error {
+	now := getTime().Unix()
 	var shortUrl = models.ShortUrl{
 		Uid:        cmd.Uid,
-		LastSeenAt: time.Now(),
+		LastSeenAt: now,
 	}
 
 	_, err := x.ID(cmd.Uid).Update(&shortUrl)
@@ -39,11 +38,12 @@ func UpdateShortUrlLastSeenAt(cmd *models.UpdateShortUrlLastSeenAtCommand) error
 }
 
 func CreateShortUrl(command *models.CreateShortUrlCommand) error {
+	now := getTime().Unix()
 	shortUrl := models.ShortUrl{
 		Uid:       command.Uid,
 		Path:      command.Path,
 		CreatedBy: command.CreatedBy,
-		CreatedAt: command.CreatedAt,
+		CreatedAt: now,
 	}
 
 	_, err := x.Insert(&shortUrl)
