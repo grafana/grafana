@@ -80,6 +80,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/import/dashboard", reqSignedIn, hs.Index)
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
+	r.Get("/goto/:uid", redirectFromShortUrl, hs.Index)
 
 	r.Get("/explore", reqSignedIn, middleware.EnsureEditorOrViewerCanEdit, hs.Index)
 
@@ -386,10 +387,7 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/metrics/error", Wrap(GenerateError))
 
 		// short urls
-		apiRoute.Group("/goto", func(shortUrlRoute routing.RouteRegister) {
-			shortUrlRoute.Post("/", bind(dtos.CreateShortUrlForm{}), Wrap(hs.CreateShortUrl))
-			shortUrlRoute.Get("/:uid", redirectFromShortUrl, hs.Index)
-		})
+		apiRoute.Post("/goto/", bind(dtos.CreateShortUrlForm{}), Wrap(hs.CreateShortUrl))
 	}, reqSignedIn)
 
 	// admin api

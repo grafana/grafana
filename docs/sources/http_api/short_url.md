@@ -11,35 +11,7 @@ parent = "http_api"
 
 # Short URL API
 
-This API can be used to create and resolve shortened URLs. This allows URLs containing complex query parameters to be represented by smaller, simpler URLs of the format `/api/goto/:uid`.
-
-## Redirect to full path from short URL
-
-`GET /api/goto/:uid`
-
-Redirects to the URL path associated with the given UID if it exists. Otherwise redirects to `/notfound`.
-
-**Example request:**
-
-```http
-GET /api/goto/abcde HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example response:**
-
-```http
-HTTP/1.1 302
-Content-Type: application/json
-
-Location: /d/TxKARsmGz/new-dashboard?orgId=1&from=1599389322894&to=1599410922894
-```
-
-Status codes:
-
-- **302** – Redirect to resolved URL path
+This API can be used to create shortened URLs. This allows URLs containing complex query parameters to be represented by smaller, simpler URLs of the format `/goto/:uid`.
 
 ## Create short URL
 

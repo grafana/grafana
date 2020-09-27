@@ -17,17 +17,11 @@ func ShortUrlRedirect() macaron.Handler {
 		ctx := c.Data["ctx"].(*models.ReqContext)
 
 		if !util.IsValidShortUID(c.Params(":uid")) {
-			ctx.Error(404, "Malformed")
 			return
 		}
 
 		cmd := models.GetFullUrlQuery{OrgId: ctx.OrgId, Uid: shortUrlUid}
 		if err := bus.Dispatch(&cmd); err != nil {
-			if err == models.ErrShortUrlNotFound {
-				ctx.Error(404, "Not found")
-				return
-			}
-			ctx.Error(404, "Error")
 			return
 		}
 		c.Redirect(setting.ToAbsUrl(strings.TrimPrefix(cmd.Result.Path, "/")), 302)
