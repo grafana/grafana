@@ -73,10 +73,6 @@ function transformToDataFrame(data: MatrixOrVectorResult, options: TransformOpti
     let baseTimestamp = options.start * 1000;
     const dps: PromValue[] = [];
 
-    if (data.values === undefined) {
-      throw new Error('Prometheus heatmap error: data should be a time series');
-    }
-
     for (const value of data.values) {
       let dpValue: number | null = parseFloat(value[1]);
 
@@ -243,15 +239,15 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     le30    30  10  35    =>    10  0   5
     */
   for (let i = seriesList.length - 1; i > 0; i--) {
-    const topSeries = seriesList[i].fields.find(s => s.name === TIME_SERIES_TIME_FIELD_NAME);
-    const bottomSeries = seriesList[i - 1].fields.find(s => s.name === TIME_SERIES_TIME_FIELD_NAME);
+    const topSeries = seriesList[i].fields.find(s => s.name === TIME_SERIES_VALUE_FIELD_NAME);
+    const bottomSeries = seriesList[i - 1].fields.find(s => s.name === TIME_SERIES_VALUE_FIELD_NAME);
     if (!topSeries || !bottomSeries) {
       throw new Error('Prometheus heatmap transform error: data should be a time series');
     }
 
     for (let j = 0; j < topSeries.values.length; j++) {
       const bottomPoint = bottomSeries.values.get(j) || [0];
-      topSeries.values.get(j)[0]! -= bottomPoint[0]!;
+      topSeries.values.toArray()[j] -= bottomPoint;
     }
   }
 

@@ -3,7 +3,7 @@ import { transform } from './result_transformer';
 
 describe('Prometheus Result Transformer', () => {
   describe('When nothing is returned', () => {
-    test('should return empty series', () => {
+    test('should return empty array', () => {
       const response = {
         status: 'success',
         data: {
@@ -14,7 +14,7 @@ describe('Prometheus Result Transformer', () => {
       const series = transform({ data: response } as any, {} as any);
       expect(series).toEqual([]);
     });
-    test('should return empty table', () => {
+    test('should return empty array', () => {
       const response = {
         status: 'success',
         data: {
@@ -49,7 +49,7 @@ describe('Prometheus Result Transformer', () => {
       },
     };
 
-    it('should return table model', () => {
+    it('should return data frame', () => {
       const result = transform(
         { data: response } as any,
         {
@@ -72,7 +72,7 @@ describe('Prometheus Result Transformer', () => {
       expect(result[0].refId).toBe('A');
     });
 
-    it('should column title include refId if response count is more than 2', () => {
+    it('should include refId if response count is more than 2', () => {
       const result = transform(
         { data: response } as any,
         {
@@ -100,7 +100,7 @@ describe('Prometheus Result Transformer', () => {
       },
     };
 
-    it('should return table model', () => {
+    it('should return data frame', () => {
       const result = transform({ data: response } as any, { format: 'table' } as any);
       expect(result[0].fields[0].values.toArray()).toEqual([1443454528000]);
       expect(result[0].fields[0].name).toBe('Time');
@@ -112,7 +112,7 @@ describe('Prometheus Result Transformer', () => {
       expect(result[0].fields[3].name).toEqual('Value');
     });
 
-    it('should return table model with le label values parsed as numbers', () => {
+    it('should return le label values parsed as numbers', () => {
       const response = {
         status: 'success',
         data: {
@@ -130,7 +130,7 @@ describe('Prometheus Result Transformer', () => {
     });
   });
 
-  describe('When resultFormat is time series and instant = true', () => {
+  describe('When instant = true', () => {
     const response = {
       status: 'success',
       data: {
@@ -144,157 +144,99 @@ describe('Prometheus Result Transformer', () => {
       },
     };
 
-    it('should return time series', () => {
+    it('should return data frame', () => {
       const result: DataFrame[] = transform({ data: response } as any, {} as any);
       expect(result[0].name).toBe('test{job="testjob"}');
     });
   });
 
-  // describe.skip('When resultFormat is heatmap', () => {
-  //   const response = {
-  //     status: 'success',
-  //     data: {
-  //       resultType: 'matrix',
-  //       result: [
-  //         {
-  //           metric: { __name__: 'test', job: 'testjob', le: '1' },
-  //           values: [
-  //             [1445000010, '10'],
-  //             [1445000020, '10'],
-  //             [1445000030, '0'],
-  //           ],
-  //         },
-  //         {
-  //           metric: { __name__: 'test', job: 'testjob', le: '2' },
-  //           values: [
-  //             [1445000010, '20'],
-  //             [1445000020, '10'],
-  //             [1445000030, '30'],
-  //           ],
-  //         },
-  //         {
-  //           metric: { __name__: 'test', job: 'testjob', le: '3' },
-  //           values: [
-  //             [1445000010, '30'],
-  //             [1445000020, '10'],
-  //             [1445000030, '40'],
-  //           ],
-  //         },
-  //       ],
-  //     },
-  //   };
+  describe('When resultFormat is heatmap', () => {
+    const getResponse = (result: any) => ({
+      status: 'success',
+      data: {
+        resultType: 'matrix',
+        result,
+      },
+    });
 
-  //   it('should convert cumulative histogram to regular', () => {
-  //     const options = {
-  //       format: 'heatmap',
-  //       start: 1445000010,
-  //       end: 1445000030,
-  //       legendFormat: '{{le}}',
-  //     };
+    const options = {
+      format: 'heatmap',
+      start: 1445000010,
+      end: 1445000030,
+      legendFormat: '{{le}}',
+    };
 
-  //     const result = transform({ data: response }, options);
-  //     expect(result).toEqual([
-  //       {
-  //         target: '1',
-  //         title: '1',
-  //         query: undefined,
-  //         datapoints: [
-  //           [10, 1445000010000],
-  //           [10, 1445000020000],
-  //           [0, 1445000030000],
-  //         ],
-  //         tags: { __name__: 'test', job: 'testjob', le: '1' },
-  //       },
-  //       {
-  //         target: '2',
-  //         title: '2',
-  //         query: undefined,
-  //         datapoints: [
-  //           [10, 1445000010000],
-  //           [0, 1445000020000],
-  //           [30, 1445000030000],
-  //         ],
-  //         tags: { __name__: 'test', job: 'testjob', le: '2' },
-  //       },
-  //       {
-  //         target: '3',
-  //         title: '3',
-  //         query: undefined,
-  //         datapoints: [
-  //           [10, 1445000010000],
-  //           [0, 1445000020000],
-  //           [10, 1445000030000],
-  //         ],
-  //         tags: { __name__: 'test', job: 'testjob', le: '3' },
-  //       },
-  //     ]);
-  //   });
+    it('should convert cumulative histogram to regular', () => {
+      const response = getResponse([
+        {
+          metric: { __name__: 'test', job: 'testjob', le: '1' },
+          values: [
+            [1445000010, '10'],
+            [1445000020, '10'],
+            [1445000030, '0'],
+          ],
+        },
+        {
+          metric: { __name__: 'test', job: 'testjob', le: '2' },
+          values: [
+            [1445000010, '20'],
+            [1445000020, '10'],
+            [1445000030, '30'],
+          ],
+        },
+        {
+          metric: { __name__: 'test', job: 'testjob', le: '3' },
+          values: [
+            [1445000010, '30'],
+            [1445000020, '10'],
+            [1445000030, '40'],
+          ],
+        },
+      ]);
 
-  //   it('should handle missing datapoints', () => {
-  //     const seriesList = [
-  //       {
-  //         datapoints: [
-  //           [1, 1000],
-  //           [2, 2000],
-  //         ],
-  //       },
-  //       {
-  //         datapoints: [
-  //           [2, 1000],
-  //           [5, 2000],
-  //           [1, 3000],
-  //         ],
-  //       },
-  //       {
-  //         datapoints: [
-  //           [3, 1000],
-  //           [7, 2000],
-  //         ],
-  //       },
-  //     ];
-  //     const expected = [
-  //       {
-  //         datapoints: [
-  //           [1, 1000],
-  //           [2, 2000],
-  //         ],
-  //       },
-  //       {
-  //         datapoints: [
-  //           [1, 1000],
-  //           [3, 2000],
-  //           [1, 3000],
-  //         ],
-  //       },
-  //       {
-  //         datapoints: [
-  //           [1, 1000],
-  //           [2, 2000],
-  //         ],
-  //       },
-  //     ];
-  //     const result = transformToHistogramOverTime(seriesList);
-  //     expect(result).toEqual(expected);
-  //   });
+      const result = transform({ data: response } as any, options as any);
+      expect(result[0].fields[0].values.toArray()).toEqual([1445000010000, 1445000020000, 1445000030000]);
+      expect(result[0].fields[1].values.toArray()).toEqual([10, 10, 0]);
+      expect(result[1].fields[0].values.toArray()).toEqual([1445000010000, 1445000020000, 1445000030000]);
+      expect(result[1].fields[1].values.toArray()).toEqual([10, 0, 30]);
+      expect(result[2].fields[0].values.toArray()).toEqual([1445000010000, 1445000020000, 1445000030000]);
+      expect(result[2].fields[1].values.toArray()).toEqual([10, 0, 10]);
+    });
 
-  //   it('should throw error when data in wrong format', () => {
-  //     const seriesList = [{ rows: [] as any[] }, { datapoints: [] as any[] }];
-  //     expect(() => {
-  //       transformToHistogramOverTime(seriesList);
-  //     }).toThrow();
-  //   });
+    it('should handle missing datapoints', () => {
+      const response = getResponse([
+        {
+          metric: { __name__: 'test', job: 'testjob', le: '1' },
+          values: [
+            [1445000010, '1'],
+            [1445000020, '2'],
+          ],
+        },
+        {
+          metric: { __name__: 'test', job: 'testjob', le: '2' },
+          values: [
+            [1445000010, '2'],
+            [1445000020, '5'],
+            [1445000030, '1'],
+          ],
+        },
+        {
+          metric: { __name__: 'test', job: 'testjob', le: '3' },
+          values: [
+            [1445000010, '3'],
+            [1445000020, '7'],
+          ],
+        },
+      ]);
+      const result = transform({ data: response } as any, options as any);
+      expect(result[0].fields[1].values.toArray()).toEqual([1, 2]);
+      expect(result[1].fields[1].values.toArray()).toEqual([1, 3, 1]);
+      expect(result[2].fields[1].values.toArray()).toEqual([1, 2]);
+    });
+  });
 
-  //   it('should throw error when prometheus returned non-timeseries', () => {
-  //     // should be { metric: {}, values: [] } for timeseries
-  //     const metricData = { metric: {}, value: [] as any[] };
-  //     expect(() => {
-  //       transformMetricData(metricData, { step: 1 }, 1000, 2000);
-  //     }).toThrow();
-  //   });
-  // });
-
-  describe('When resultFormat is time series', () => {
-    it('should transform matrix into timeseries', () => {
+  describe('When the response is a matrix', () => {
+    it('should transform into a data frame', () => {
       const response = {
         status: 'success',
         data: {
@@ -312,7 +254,6 @@ describe('Prometheus Result Transformer', () => {
         },
       };
       const options: any = {
-        format: 'timeseries',
         start: 0,
         end: 2,
         refId: 'B',
@@ -324,7 +265,7 @@ describe('Prometheus Result Transformer', () => {
       expect(result[0].name).toBe('test{job="testjob"}');
     });
 
-    it('should fill timeseries with null values', () => {
+    it('should fill null values', () => {
       const response = {
         status: 'success',
         data: {
@@ -341,7 +282,6 @@ describe('Prometheus Result Transformer', () => {
         },
       };
       const options: any = {
-        format: 'timeseries',
         step: 1,
         start: 0,
         end: 2,
@@ -371,7 +311,6 @@ describe('Prometheus Result Transformer', () => {
       };
 
       const options: any = {
-        format: 'timeseries',
         step: 1,
         start: 0,
         end: 2,
@@ -399,7 +338,6 @@ describe('Prometheus Result Transformer', () => {
       };
 
       const options: any = {
-        format: 'timeseries',
         step: 1,
         query: 'Some query',
         start: 0,
@@ -427,7 +365,6 @@ describe('Prometheus Result Transformer', () => {
         },
       };
       const options: any = {
-        format: 'timeseries',
         step: 2,
         start: 0,
         end: 8,
