@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 // Components
-import { Form, InlineFormLabel, Input, InputControl, InlineFieldRow, InlineField, Select } from '@grafana/ui';
+import { Form, Input, InputControl, InlineFieldRow, InlineField, Select } from '@grafana/ui';
 import { dateMath, dateTime, QueryEditorProps, SelectableValue } from '@grafana/data';
 
 // Types
@@ -50,7 +50,7 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
   return (
     <>
       <InlineFieldRow>
-        <InlineField labelWidth={7} label="Scenario">
+        <InlineField labelWidth={14} label="Scenario">
           <Select
             options={options}
             value={options.find(item => item.value === query.scenarioId)}
@@ -59,7 +59,7 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
           />
         </InlineField>
         {currentScenario?.stringInput && (
-          <InlineField labelWidth={7} label="String Input">
+          <InlineField label="String Input">
             <Input
               id="stringInput"
               name="stringInput"
@@ -69,7 +69,7 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
             />
           </InlineField>
         )}
-        <InlineField labelWidth={7} label="Alias">
+        <InlineField label="Alias">
           <Input
             id="alias"
             type="text"
@@ -82,7 +82,6 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
         </InlineField>
         {showLabels && (
           <InlineField
-            labelWidth={7}
             label="Labels"
             tooltip={
               <>
@@ -133,19 +132,15 @@ const ManualEntryEditor = ({ onChange, query }) => {
   console.log('dd', dateMath.parse(dateTime()));
 
   return (
-    <Form onSubmit={addPoint} maxWidth="auto">
+    <Form onSubmit={addPoint} maxWidth="none">
       {({ register, control, watch }) => {
         const selectedPoint = watch('selectedPoint');
         return (
-          <div style={{ display: 'flex' }}>
-            <div className="gf-form">
-              <InlineFormLabel htmlFor="newPointValue" className="query-keyword" width={7}>
-                New value
-              </InlineFormLabel>
+          <InlineFieldRow>
+            <InlineField label="New value" labelWidth={14}>
               <Input type="number" placeholder="value" id="newPointValue" name="newPointValue" ref={register} />
-              <InlineFormLabel htmlFor="newPointTime" className="query-keyword">
-                Time
-              </InlineFormLabel>
+            </InlineField>
+            <InlineField label="Time">
               <Input
                 id="newPointTime"
                 placeholder="time"
@@ -153,8 +148,9 @@ const ManualEntryEditor = ({ onChange, query }) => {
                 ref={register}
                 defaultValue={dateTime().format()}
               />
-              <button className="btn btn-secondary gf-form-btn">Add</button>
-              <InlineFormLabel className="query-keyword">All values</InlineFormLabel>
+            </InlineField>
+            <button className="btn btn-secondary gf-form-btn">Add</button>
+            <InlineField label="All values">
               <InputControl
                 control={control}
                 as={Select}
@@ -166,19 +162,16 @@ const ManualEntryEditor = ({ onChange, query }) => {
                   return value;
                 }}
               />
-            </div>
+            </InlineField>
 
             {selectedPoint?.value && (
-              <div className="gf-form gf-form">
+              <InlineField>
                 <button type="button" className="btn btn-danger gf-form-btn" onClick={deletePoint}>
                   Delete
                 </button>
-              </div>
+              </InlineField>
             )}
-            <div className="gf-form gf-form--grow" style={{ flex: 1 }}>
-              <div className="gf-form-label gf-form-label--grow" />
-            </div>
-          </div>
+          </InlineFieldRow>
         );
       }}
     </Form>
