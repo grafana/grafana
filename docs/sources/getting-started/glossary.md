@@ -29,6 +29,12 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
     </td>
   </tr>
   <tr>
+    <td style="vertical-align: top">Exemplar</td>
+    <td>
+      An exemplar is any data that serves as a detailed example of data used to create an aggregation. A common type of examplars is a trace that references an aggregated metric.
+    </td>
+  </tr>
+  <tr>
     <td style="vertical-align: top">Graph</td>
     <td>
       A commonly-used visualization that displays data as points, lines, or bars.
@@ -67,6 +73,12 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
     <td style="vertical-align: top">Time series</td>
     <td>
       A series of measurements, ordered by time. Time series are stored in data sources and returned as the result of a query.
+    </td>
+  </tr>
+  <tr>
+    <td style="vertical-align: top">Trace</td>
+    <td>
+      An observed execution path of a request through a distributed system.
     </td>
   </tr>
   <tr>
