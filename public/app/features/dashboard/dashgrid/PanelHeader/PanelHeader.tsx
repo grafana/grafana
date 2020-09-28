@@ -92,7 +92,7 @@ export class PanelHeader extends Component<Props, State> {
     this.props.panel.getQueryRunner().cancelQuery();
   };
 
-  private renderLoadingState(state: LoadingState): JSX.Element {
+  private renderLoadingState(state: LoadingState): JSX.Element | undefined {
     if (state === LoadingState.Loading) {
       return (
         <div className="panel-loading" onClick={this.onCancelQuery}>
@@ -102,7 +102,7 @@ export class PanelHeader extends Component<Props, State> {
         </div>
       );
     }
-    if (state !== LoadingState.Streaming) {
+    if (state === LoadingState.Streaming) {
       return (
         <div className="panel-loading" onClick={this.onCancelQuery}>
           <Tooltip content="Streaming (unsubscribe)">
@@ -117,7 +117,7 @@ export class PanelHeader extends Component<Props, State> {
         </div>
       );
     }
-    return <></>;
+    return;
   }
 
   openInspect = (e: React.SyntheticEvent, tab: string) => {
