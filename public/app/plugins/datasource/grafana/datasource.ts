@@ -9,7 +9,7 @@ import {
 
 import isArray from 'lodash/isArray';
 
-import { GrafanaQuery, GrafanaAnnotaitonQuery, GrafanaAnnotationType } from './types';
+import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType } from './types';
 import { getBackendSrv, getTemplateSrv, toDataQueryResponse } from '@grafana/runtime';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
@@ -53,7 +53,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
 
   annotationQuery(options: AnnotationQueryRequest<GrafanaQuery>): Promise<AnnotationEvent[]> {
     const templateSrv = getTemplateSrv();
-    const annotation = (options.annotation as unknown) as GrafanaAnnotaitonQuery;
+    const annotation = (options.annotation as unknown) as GrafanaAnnotationQuery;
     const params: any = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),

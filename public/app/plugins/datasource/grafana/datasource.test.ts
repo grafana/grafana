@@ -2,7 +2,7 @@ import { DataSourceInstanceSettings, dateTime, AnnotationQueryRequest } from '@g
 
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { GrafanaDatasource } from './datasource';
-import { GrafanaQuery, GrafanaAnnotaitonQuery, GrafanaAnnotationType } from './types';
+import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -79,7 +79,7 @@ describe('grafana data source', () => {
   });
 });
 
-function setupAnnotationQueryOptions(annotation: Partial<GrafanaAnnotaitonQuery>, dashboard?: { id: number }) {
+function setupAnnotationQueryOptions(annotation: Partial<GrafanaAnnotationQuery>, dashboard?: { id: number }) {
   return ({
     annotation,
     dashboard,

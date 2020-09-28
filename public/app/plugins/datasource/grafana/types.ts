@@ -28,7 +28,7 @@ export enum GrafanaAnnotationType {
   Tags = 'tags',
 }
 
-export interface GrafanaAnnotaitonQuery extends AnnotationQuery<GrafanaQuery> {
+export interface GrafanaAnnotationQuery extends AnnotationQuery<GrafanaQuery> {
   type: GrafanaAnnotationType; // tags
   limit: number; // 100
   tags?: string[];
