@@ -331,7 +331,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               {chooserText}
             </ButtonCascader>
           </div>
-          <div className={'gf-form gf-form--grow flex-shrink-1 min-width-15'}>
+          <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
