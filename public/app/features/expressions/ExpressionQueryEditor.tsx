@@ -139,23 +139,23 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
             <InlineField label="Function">
               <Select options={reducerTypes} value={reducer} onChange={this.onSelectReducer} width={25} />
             </InlineField>
-            <InlineField label="Fields">
+            <InlineField label="Input">
               <Input onChange={this.onExpressionChange} value={query.expression} width={25} />
             </InlineField>
           </InlineFieldRow>
         )}
         {query.type === GELQueryType.resample && (
           <InlineFieldRow>
-            <InlineField label="Series">
+            <InlineField label="Input">
               <Input onChange={this.onExpressionChange} value={query.expression} width={25} />
             </InlineField>
-            <InlineField label="Rule">
+            <InlineField label="Window">
               <Input onChange={this.onRuleChange} value={query.rule} width={25} />
             </InlineField>
-            <InlineField label="Downsample function">
+            <InlineField label="Downsample">
               <Select options={downsamplingTypes} value={downsampler} onChange={this.onSelectDownsampler} width={25} />
             </InlineField>
-            <InlineField label="Upsample function">
+            <InlineField label="Upsample">
               <Select options={upsamplingTypes} value={upsampler} onChange={this.onSelectUpsampler} width={25} />
             </InlineField>
           </InlineFieldRow>
