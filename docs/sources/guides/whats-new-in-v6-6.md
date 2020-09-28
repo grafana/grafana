@@ -32,7 +32,7 @@ Grafana 6.6 comes with a lot of new features and enhancements:
 - **Graphite:** Added Metrictank dashboard to Graphite datasource
 - **Loki:** Support for template variable queries
 - **Postgres/MySQL/MSSQL:** Added support for region annotations
-- [**Security:** Added disabled option for cookie samesite attribute]({{< relref "#cookie-management-modifications" >}})
+- [**Security:** Added disabled option for cookie sameSite attribute]({{< relref "#cookie-management-modifications" >}})
 - **TablePanel, GraphPanel:** Exclude hidden columns from CSV
 - [**Enterprise:** White labeling]({{< relref "#enterprise-white-labeling" >}})
 - [**Enterprise:** APT and YUM repositories]({{< relref "#enterprise-apt-and-yum-repositories" >}})
@@ -44,7 +44,7 @@ Grafana 6.6 comes with a lot of new features and enhancements:
 
 {{< docs-imagebox img="/img/docs/v66/stat_panel_dark2.png" max-width="1024px" caption="Stat panel" >}}
 
-This release adds a new panel named `Stat`. This panel is designed to replace the current `Singlestat` as the primary way to show big single number panels along with a sparkline. This panel is of course building on our new panel infrastructure and option design. So you can use the new threshold UI and data links. It also supports the same repeating feature as the Gauge and  Bar Gauge panels, meaning it will repeat a separate visualization for every series or row
+This release adds a new panel named `Stat`. This panel is designed to replace the current `Singlestat` as the primary way to show big single number panels along with a sparkline. This panel is of course building on our new panel infrastructure and option design. So, you can use the new threshold UI and data links. It also supports the same repeating feature as the Gauge and  Bar Gauge panels, meaning it will repeat a separate visualization for every series or row
 in the query result.
 
 Key features:
