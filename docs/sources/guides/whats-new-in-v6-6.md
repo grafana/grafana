@@ -32,7 +32,7 @@ Grafana 6.6 comes with a lot of new features and enhancements:
 - **Graphite:** Added Metrictank dashboard to Graphite datasource
 - **Loki:** Support for template variable queries
 - **Postgres/MySQL/MSSQL:** Added support for region annotations
-- [**Security:** Added disabled option for cookie samesite attribute]({{< relref "#cookie-management-modifications" >}})
+- [**Security:** Added disabled option for cookie sameSite attribute]({{< relref "#cookie-management-modifications" >}})
 - **TablePanel, GraphPanel:** Exclude hidden columns from CSV
 - [**Enterprise:** White labeling]({{< relref "#enterprise-white-labeling" >}})
 - [**Enterprise:** APT and YUM repositories]({{< relref "#enterprise-apt-and-yum-repositories" >}})
@@ -44,7 +44,7 @@ Grafana 6.6 comes with a lot of new features and enhancements:
 
 {{< docs-imagebox img="/img/docs/v66/stat_panel_dark2.png" max-width="1024px" caption="Stat panel" >}}
 
-This release adds a new panel named `Stat`. This panel is designed to replace the current `Singlestat` as the primary way to show big single number panels along with a sparkline. This panel is of course building on our new panel infrastructure and option design. So you can use the new threshold UI and data links. It also supports the same repeating feature as the Gauge and  Bar Gauge panels, meaning it will repeat a separate visualization for every series or row
+This release adds a new panel named `Stat`. This panel is designed to replace the current `Singlestat` as the primary way to show big single number panels along with a sparkline. This panel is of course building on our new panel infrastructure and option design. So, you can use the new threshold UI and data links. It also supports the same repeating feature as the Gauge and  Bar Gauge panels, meaning it will repeat a separate visualization for every series or row
 in the query result.
 
 Key features:
@@ -81,7 +81,7 @@ You can also paste a native emoji in the unit picker and pick it as a custom uni
 
 ## Bar Gauge unfilled option
 
-The Bar Gauge visualization has a new display option: `Unfilled`. This new option is enabled by default, so it will change how this visualization is displayed on old dashboards. If you prefer the old default -- in which an unfilled area is not shown and the value follows directly after -- you have to update the visualization settings.
+The Bar Gauge visualization has a new display option: `Unfilled`. This new option is enabled by default, so it will change how this visualization is displayed on old dashboards. If you prefer the old default -- in which an unfilled area is not shown, and the value follows directly after -- you have to update the visualization settings.
 {{< docs-imagebox img="/img/docs/v66/bar_gauge_unfilled.png" max-width="900px" caption="Bar gauge unfilled" >}}
 
 ## New time picker
@@ -182,7 +182,7 @@ We recommend all users to install the Enterprise Edition of Grafana, which can b
 
 ## Stackdriver: Meta labels
 
-From now on it will be possible to utilize meta data label in group bys, filters and in the alias field. Unfortunaltey there's no API to retrieve all the labels, but the group by field dropdown comes with a pre-defined list of common system labels. User labels cannot be pre-defined, but it's possible to enter them manually in the group by field. If a meta data label, user label or system label, is included in the group by segment, it will be possible to create filters based on it and to expand its value on the alias field.
+From now on it will be possible to utilize meta data label in "group bys", filters and in the alias field. Unfortunately, there's no API to retrieve all the labels, but the group by field dropdown comes with a pre-defined list of common system labels. User labels cannot be pre-defined, but it's possible to enter them manually in the group by field. If a meta data label, user label or system label, is included in the group by segment, it will be possible to create filters based on it and to expand its value on the alias field.
 
 {{< docs-imagebox img="/img/docs/v66/metadatalabels.gif" max-width="800px" caption="Stackdriver meta labels" >}}
 
