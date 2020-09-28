@@ -32,8 +32,3 @@ export interface GrafanaAnnotaitonQuery extends AnnotationQuery<GrafanaQuery> {
   type: GrafanaAnnotationType; // tags
   limit: number; // 100
 }
-
-export const annotationTypes: Array<SelectableValue<GrafanaAnnotationType>> = [
-  { text: 'Dashboard', value: GrafanaAnnotationType.Dashboard },
-  { text: 'Tags', value: GrafanaAnnotationType.Tags },
-];
