@@ -31,4 +31,6 @@ export enum GrafanaAnnotationType {
 export interface GrafanaAnnotaitonQuery extends AnnotationQuery<GrafanaQuery> {
   type: GrafanaAnnotationType; // tags
   limit: number; // 100
+  tags?: string[];
+  matchAny?: boolean; // By default Grafana only shows annotations that match all tags in the query. Enabling this returns annotations that match any of the tags in the query.
 }
