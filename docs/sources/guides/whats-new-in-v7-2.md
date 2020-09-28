@@ -32,6 +32,7 @@ The main highlights are:
   - [**Report time range**]({{< relref "#report-time-range" >}})
   - [**Organization-wide report settings**]({{< relref "#organization-wide-report-settings" >}})
   - [**Report grid layout**]({{< relref "#report-grid-layout" >}})
+- [**X-Ray data source plugin**]({{< relref "#x-ray-data-source-plugin" >}})
 
 ## New date formatting options added
 
@@ -157,3 +158,7 @@ Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELO
 In collaboration with Microsoft, we have improved the usability of our ADX datasource plugin by adding a visual query builder. The goal is to make it easier for users, regardless of their previous knowledge of writing KQL (Kusto Query Language) queries, to query and visualize their data.
 
 {{< docs-imagebox img="/img/docs/v72/adx-ds.png" max-width="800px" caption="ADX visual query builder" >}}
+
+### X-Ray data source plugin
+
+We are glad to announce our very first version of our data source plugin for AWS X-Ray. You can use the plugin to visualize traces, look at analytics tables, and insight summaries. For more information look at [plugin's page](https://grafana.com/grafana/plugins/grafana-x-ray-datasource).
