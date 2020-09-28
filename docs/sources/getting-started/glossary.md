@@ -31,7 +31,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">Exemplar</td>
     <td>
-      An exemplar is any data that serves as a detailed example of data used to create an aggregation. A common type of examplars is a trace that references an aggregated metric.
+      An exemplar is any data that serves as a detailed example of data used to create an aggregation. A common type of examplar is a trace that references an aggregated metric.
     </td>
   </tr>
   <tr>
