@@ -12,14 +12,14 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
 
   query(request: DataQueryRequest<GrafanaQuery>): Observable<DataQueryResponse> {
     const { intervalMs, maxDataPoints, range, requestId } = request;
+
+    // Yes, this implementaiton ignores multiple targets!  But that matches exisitng behavior
     const params: Record<string, any> = {
       intervalMs,
       maxDataPoints,
+      from: range.from.valueOf(),
+      to: range.to.valueOf(),
     };
-    if (range) {
-      params.from = range.from.valueOf(); //.toString();
-      params.to = range.to.valueOf(); //.toString();
-    }
 
     return getBackendSrv()
       .fetch({

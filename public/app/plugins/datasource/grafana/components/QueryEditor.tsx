@@ -1,12 +1,10 @@
 import defaults from 'lodash/defaults';
 
-import React, { ChangeEvent, PureComponent } from 'react';
-import { InlineField, LegacyForms, Select } from '@grafana/ui';
+import React, { PureComponent } from 'react';
+import { InlineField, Select } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
-
-const { FormField } = LegacyForms;
 
 type Props = QueryEditorProps<GrafanaDatasource, GrafanaQuery>;
 
@@ -19,25 +17,11 @@ export class QueryEditor extends PureComponent<Props> {
     },
   ];
 
-  // onQueryTextChange = (event: ChangeEvent<HTMLInputElement>) => {
-  //   const { onChange, query } = this.props;
-  //   onChange({ ...query, queryText: event.target.value });
-  // };
-
-  // onConstantChange = (event: ChangeEvent<HTMLInputElement>) => {
-  //   const { onChange, query, onRunQuery } = this.props;
-  //   onChange({ ...query, constant: parseFloat(event.target.value) });
-  //   // executes the query
-  //   onRunQuery();
-  // };
-
   onQueryTypeChange = (sel: SelectableValue<GrafanaQueryType>) => {
     const { onChange, query, onRunQuery } = this.props;
     onChange({ ...query, queryType: sel.value! });
     onRunQuery();
   };
-
-  //
 
   render() {
     const query = defaults(this.props.query, defaultQuery);
