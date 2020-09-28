@@ -1,39 +1,41 @@
-import _ from 'lodash';
-import { getBackendSrv } from '@grafana/runtime';
-import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
+import { DataQueryRequest, DataQueryResponse, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 
-import templateSrv from 'app/features/templating/template_srv';
+import { GrafanaQuery } from './types';
+import { getBackendSrv, getTemplateSrv, toDataQueryResponse } from '@grafana/runtime';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 
-class GrafanaDatasource extends DataSourceApi<any> {
-  /** @ngInject */
+export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
   }
 
-  query(options: any) {
+  query(request: DataQueryRequest<GrafanaQuery>): Observable<DataQueryResponse> {
+    const { intervalMs, maxDataPoints, range, requestId } = request;
+    const params: Record<string, any> = {
+      intervalMs,
+      maxDataPoints,
+    };
+    if (range) {
+      params.from = range.from.valueOf(); //.toString();
+      params.to = range.to.valueOf(); //.toString();
+    }
+
     return getBackendSrv()
-      .get('/api/tsdb/testdata/random-walk', {
-        from: options.range.from.valueOf(),
-        to: options.range.to.valueOf(),
-        intervalMs: options.intervalMs,
-        maxDataPoints: options.maxDataPoints,
+      .fetch({
+        url: '/api/tsdb/testdata/random-walk',
+        method: 'GET',
+        params,
+        requestId,
       })
-      .then((res: any) => {
-        const data: any[] = [];
-
-        if (res.results) {
-          _.forEach(res.results, queryRes => {
-            for (const series of queryRes.series) {
-              data.push({
-                target: series.name,
-                datapoints: series.points,
-              });
-            }
-          });
-        }
-
-        return { data: data };
-      });
+      .pipe(
+        map((rsp: any) => {
+          return toDataQueryResponse(rsp);
+        }),
+        catchError(err => {
+          return of(toDataQueryResponse(err));
+        })
+      );
   }
 
   metricFindQuery(options: any) {
@@ -41,6 +43,7 @@ class GrafanaDatasource extends DataSourceApi<any> {
   }
 
   annotationQuery(options: any) {
+    const templateSrv = getTemplateSrv();
     const params: any = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
@@ -91,5 +94,3 @@ class GrafanaDatasource extends DataSourceApi<any> {
     return Promise.resolve();
   }
 }
-
-export { GrafanaDatasource };
