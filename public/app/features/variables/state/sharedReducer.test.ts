@@ -3,24 +3,23 @@ import { default as lodashDefaults } from 'lodash/defaults';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import {
-  addInitLock,
   addVariable,
   changeVariableOrder,
   changeVariableProp,
   duplicateVariable,
-  removeInitLock,
   removeVariable,
-  resolveInitLock,
   setCurrentVariableValue,
   sharedReducer,
   storeNewVariable,
+  variableInitCompleted,
+  variableInitFetching,
+  variableInitReset,
 } from './sharedReducer';
-import { QueryVariableModel, VariableHide } from '../types';
+import { QueryVariableModel, VariableHide, VariableInitPhase } from '../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NEW_VARIABLE_ID, toVariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { initialQueryVariableModelState } from '../query/reducer';
-import { Deferred } from '../../../core/utils/deferred';
 import { getVariableState, getVariableTestContext } from './helpers';
 import { initialVariablesState, VariablesState } from './variablesReducer';
 import { changeVariableNameSucceeded } from '../editor/reducer';
@@ -356,79 +355,57 @@ describe('sharedReducer', () => {
     });
   });
 
-  describe('when addInitLock is dispatched', () => {
+  describe('when variableInitReset is dispatched', () => {
     it('then state should be correct', () => {
       const adapter = createQueryVariableAdapter();
-      const { initialState } = getVariableTestContext(adapter, {});
+      const { initialState } = getVariableTestContext(adapter, { initPhase: VariableInitPhase.Completed, error: {} });
       const payload = toVariablePayload({ id: '0', type: 'query' });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(addInitLock(payload))
-        .thenStatePredicateShouldEqual(resultingState => {
-          // we need to remove initLock because instances will no be reference equal
-          const { initLock, ...resultingRest } = resultingState[0];
-          const expectedState = cloneDeep(initialState);
-          delete expectedState[0].initLock;
-          expect(resultingRest).toEqual(expectedState[0]);
-          // make sure that initLock is defined
-          expect(resultingState[0].initLock!).toBeDefined();
-          expect(resultingState[0].initLock!.promise).toBeDefined();
-          expect(resultingState[0].initLock!.resolve).toBeDefined();
-          expect(resultingState[0].initLock!.reject).toBeDefined();
-          return true;
-        });
-    });
-  });
-
-  describe('when resolveInitLock is dispatched', () => {
-    it('then state should be correct', () => {
-      const initLock = ({
-        resolve: jest.fn(),
-        reject: jest.fn(),
-        promise: jest.fn(),
-      } as unknown) as Deferred;
-      const adapter = createQueryVariableAdapter();
-      const { initialState } = getVariableTestContext(adapter, { initLock });
-      const payload = toVariablePayload({ id: '0', type: 'query' });
-      reducerTester<VariablesState>()
-        .givenReducer(sharedReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(resolveInitLock(payload))
-        .thenStatePredicateShouldEqual(resultingState => {
-          // we need to remove initLock because instances will no be reference equal
-          const { initLock, ...resultingRest } = resultingState[0];
-          const expectedState = cloneDeep(initialState);
-          delete expectedState[0].initLock;
-          expect(resultingRest).toEqual(expectedState[0]);
-          // make sure that initLock is defined
-          expect(resultingState[0].initLock!).toBeDefined();
-          expect(resultingState[0].initLock!.promise).toBeDefined();
-          expect(resultingState[0].initLock!.resolve).toBeDefined();
-          expect(resultingState[0].initLock!.resolve).toHaveBeenCalledTimes(1);
-          expect(resultingState[0].initLock!.reject).toBeDefined();
-          return true;
-        });
-    });
-  });
-
-  describe('when removeInitLock is dispatched', () => {
-    it('then state should be correct', () => {
-      const initLock = ({
-        resolve: jest.fn(),
-        reject: jest.fn(),
-        promise: jest.fn(),
-      } as unknown) as Deferred;
-      const adapter = createQueryVariableAdapter();
-      const { initialState } = getVariableTestContext(adapter, { initLock });
-      const payload = toVariablePayload({ id: '0', type: 'query' });
-      reducerTester<VariablesState>()
-        .givenReducer(sharedReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(removeInitLock(payload))
+        .whenActionIsDispatched(variableInitReset(payload))
         .thenStateShouldEqual({
           ...initialState,
-          '0': {
+          '0': ({
             ...initialState[0],
-            initLock: null,
-          },
+            initPhase: VariableInitPhase.NotStarted,
+            error: null,
+          } as unknown) as QueryVariableModel,
+        });
+    });
+  });
+
+  describe('when variableInitFetching is dispatched', () => {
+    it('then state should be correct', () => {
+      const adapter = createQueryVariableAdapter();
+      const { initialState } = getVariableTestContext(adapter, { initPhase: VariableInitPhase.Completed });
+      const payload = toVariablePayload({ id: '0', type: 'query' });
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(variableInitFetching(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '0': ({
+            ...initialState[0],
+            initPhase: VariableInitPhase.Fetching,
+          } as unknown) as QueryVariableModel,
+        });
+    });
+  });
+
+  describe('when variableInitCompleted is dispatched', () => {
+    it('then state should be correct', () => {
+      const adapter = createQueryVariableAdapter();
+      const { initialState } = getVariableTestContext(adapter, { initPhase: VariableInitPhase.Fetching });
+      const payload = toVariablePayload({ id: '0', type: 'query' });
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(variableInitCompleted(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '0': ({
+            ...initialState[0],
+            initPhase: VariableInitPhase.Completed,
+          } as unknown) as QueryVariableModel,
         });
     });
   });

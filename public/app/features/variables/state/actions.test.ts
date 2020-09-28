@@ -20,13 +20,13 @@ import {
   validateVariableSelectionState,
 } from './actions';
 import {
-  addInitLock,
   addVariable,
   changeVariableProp,
-  removeInitLock,
   removeVariable,
-  resolveInitLock,
   setCurrentVariableValue,
+  variableInitCompleted,
+  variableInitFetching,
+  variableInitReset,
 } from './sharedReducer';
 import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload } from './types';
 import {
@@ -98,16 +98,16 @@ describe('shared actions', () => {
           // because uuid are dynamic we need to get the uuid from the resulting state
           // an alternative would be to add our own uuids in the model above instead
           expect(dispatchedActions[4]).toEqual(
-            addInitLock(toVariablePayload({ ...query, id: dispatchedActions[4].payload.id }))
+            variableInitReset(toVariablePayload({ ...query, id: dispatchedActions[4].payload.id }))
           );
           expect(dispatchedActions[5]).toEqual(
-            addInitLock(toVariablePayload({ ...constant, id: dispatchedActions[5].payload.id }))
+            variableInitReset(toVariablePayload({ ...constant, id: dispatchedActions[5].payload.id }))
           );
           expect(dispatchedActions[6]).toEqual(
-            addInitLock(toVariablePayload({ ...custom, id: dispatchedActions[6].payload.id }))
+            variableInitReset(toVariablePayload({ ...custom, id: dispatchedActions[6].payload.id }))
           );
           expect(dispatchedActions[7]).toEqual(
-            addInitLock(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
+            variableInitReset(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
           );
 
           return true;
@@ -132,32 +132,54 @@ describe('shared actions', () => {
         .whenAsyncActionIsDispatched(processVariables(), true);
 
       await tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
-        expect(dispatchedActions.length).toEqual(8);
+        expect(dispatchedActions.length).toEqual(12);
 
         expect(dispatchedActions[0]).toEqual(
-          resolveInitLock(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
+          variableInitFetching(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
         );
+
         expect(dispatchedActions[1]).toEqual(
-          resolveInitLock(toVariablePayload({ ...constant, id: dispatchedActions[1].payload.id }))
+          variableInitCompleted(toVariablePayload({ ...query, id: dispatchedActions[1].payload.id }))
         );
+
         expect(dispatchedActions[2]).toEqual(
-          resolveInitLock(toVariablePayload({ ...custom, id: dispatchedActions[2].payload.id }))
+          variableInitFetching(toVariablePayload({ ...constant, id: dispatchedActions[2].payload.id }))
         );
+
         expect(dispatchedActions[3]).toEqual(
-          resolveInitLock(toVariablePayload({ ...textbox, id: dispatchedActions[3].payload.id }))
+          variableInitCompleted(toVariablePayload({ ...constant, id: dispatchedActions[3].payload.id }))
         );
 
         expect(dispatchedActions[4]).toEqual(
-          removeInitLock(toVariablePayload({ ...query, id: dispatchedActions[4].payload.id }))
+          variableInitFetching(toVariablePayload({ ...custom, id: dispatchedActions[4].payload.id }))
         );
+
         expect(dispatchedActions[5]).toEqual(
-          removeInitLock(toVariablePayload({ ...constant, id: dispatchedActions[5].payload.id }))
+          variableInitCompleted(toVariablePayload({ ...custom, id: dispatchedActions[5].payload.id }))
         );
+
         expect(dispatchedActions[6]).toEqual(
-          removeInitLock(toVariablePayload({ ...custom, id: dispatchedActions[6].payload.id }))
+          variableInitFetching(toVariablePayload({ ...textbox, id: dispatchedActions[6].payload.id }))
         );
+
         expect(dispatchedActions[7]).toEqual(
-          removeInitLock(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
+          variableInitCompleted(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
+        );
+
+        expect(dispatchedActions[8]).toEqual(
+          variableInitReset(toVariablePayload({ ...query, id: dispatchedActions[8].payload.id }))
+        );
+
+        expect(dispatchedActions[9]).toEqual(
+          variableInitReset(toVariablePayload({ ...constant, id: dispatchedActions[9].payload.id }))
+        );
+
+        expect(dispatchedActions[10]).toEqual(
+          variableInitReset(toVariablePayload({ ...custom, id: dispatchedActions[10].payload.id }))
+        );
+
+        expect(dispatchedActions[11]).toEqual(
+          variableInitReset(toVariablePayload({ ...textbox, id: dispatchedActions[11].payload.id }))
         );
 
         return true;
@@ -578,12 +600,13 @@ describe('shared actions', () => {
           expect(dispatchedActions[4]).toEqual(
             addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
           );
-          expect(dispatchedActions[5]).toEqual(addInitLock(toVariablePayload(constant)));
-          expect(dispatchedActions[6]).toEqual(resolveInitLock(toVariablePayload(constant)));
-          expect(dispatchedActions[7]).toEqual(removeInitLock(toVariablePayload(constant)));
+          expect(dispatchedActions[5]).toEqual(variableInitReset(toVariablePayload(constant)));
+          expect(dispatchedActions[6]).toEqual(variableInitFetching(toVariablePayload(constant)));
+          expect(dispatchedActions[7]).toEqual(variableInitCompleted(toVariablePayload(constant)));
+          expect(dispatchedActions[8]).toEqual(variableInitReset(toVariablePayload(constant)));
 
-          expect(dispatchedActions[8]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 9;
+          expect(dispatchedActions[9]).toEqual(variablesCompleteTransaction({ uid }));
+          return dispatchedActions.length === 10;
         });
       });
     });
@@ -618,11 +641,12 @@ describe('shared actions', () => {
           expect(dispatchedActions[6]).toEqual(
             addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
           );
-          expect(dispatchedActions[7]).toEqual(addInitLock(toVariablePayload(constant)));
-          expect(dispatchedActions[8]).toEqual(resolveInitLock(toVariablePayload(constant)));
-          expect(dispatchedActions[9]).toEqual(removeInitLock(toVariablePayload(constant)));
-          expect(dispatchedActions[10]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 11;
+          expect(dispatchedActions[7]).toEqual(variableInitReset(toVariablePayload(constant)));
+          expect(dispatchedActions[8]).toEqual(variableInitFetching(toVariablePayload(constant)));
+          expect(dispatchedActions[9]).toEqual(variableInitCompleted(toVariablePayload(constant)));
+          expect(dispatchedActions[10]).toEqual(variableInitReset(toVariablePayload(constant)));
+          expect(dispatchedActions[11]).toEqual(variablesCompleteTransaction({ uid }));
+          return dispatchedActions.length === 12;
         });
       });
     });

@@ -7,7 +7,7 @@ import { createCustomVariableAdapter } from '../custom/adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
 import { initDashboardTemplating, processVariable } from './actions';
-import { resolveInitLock, setCurrentVariableValue } from './sharedReducer';
+import { setCurrentVariableValue, variableInitCompleted, variableInitFetching } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload } from './types';
 import { VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
@@ -114,7 +114,8 @@ describe('processVariable', () => {
           .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(custom), queryParams), true);
 
         await tester.thenDispatchedActionsShouldEqual(
-          resolveInitLock(toVariablePayload({ type: 'custom', id: 'custom' }))
+          variableInitFetching(toVariablePayload({ type: 'custom', id: 'custom' })),
+          variableInitCompleted(toVariablePayload({ type: 'custom', id: 'custom' }))
         );
       });
     });
@@ -129,10 +130,11 @@ describe('processVariable', () => {
           .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(custom), queryParams), true);
 
         await tester.thenDispatchedActionsShouldEqual(
+          variableInitFetching(toVariablePayload({ type: 'custom', id: 'custom' })),
           setCurrentVariableValue(
             toVariablePayload({ type: 'custom', id: 'custom' }, { option: { text: 'B', value: 'B', selected: false } })
           ),
-          resolveInitLock(toVariablePayload({ type: 'custom', id: 'custom' }))
+          variableInitCompleted(toVariablePayload({ type: 'custom', id: 'custom' }))
         );
       });
     });
@@ -154,7 +156,8 @@ describe('processVariable', () => {
             .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
           await tester.thenDispatchedActionsShouldEqual(
-            resolveInitLock(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))
+            variableInitFetching(toVariablePayload({ type: 'query', id: 'queryNoDepends' })),
+            variableInitCompleted(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))
           );
         });
       });
@@ -170,6 +173,7 @@ describe('processVariable', () => {
               .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
             await tester.thenDispatchedActionsShouldEqual(
+              variableInitFetching(toVariablePayload({ type: 'query', id: 'queryNoDepends' })),
               updateVariableOptions(
                 toVariablePayload(
                   { type: 'query', id: 'queryNoDepends' },
@@ -189,7 +193,7 @@ describe('processVariable', () => {
                   { option: { text: 'A', value: 'A', selected: false } }
                 )
               ),
-              resolveInitLock(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))
+              variableInitCompleted(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))
             );
           });
         });
@@ -210,13 +214,14 @@ describe('processVariable', () => {
             .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
           await tester.thenDispatchedActionsShouldEqual(
+            variableInitFetching(toVariablePayload({ type: 'query', id: 'queryNoDepends' })),
             setCurrentVariableValue(
               toVariablePayload(
                 { type: 'query', id: 'queryNoDepends' },
                 { option: { text: 'B', value: 'B', selected: false } }
               )
             ),
-            resolveInitLock(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))
+            variableInitCompleted(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))
           );
         });
       });
@@ -236,6 +241,7 @@ describe('processVariable', () => {
               .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
             await tester.thenDispatchedActionsShouldEqual(
+              variableInitFetching(toVariablePayload({ type: 'query', id: 'queryNoDepends' })),
               updateVariableOptions(
                 toVariablePayload(
                   { type: 'query', id: 'queryNoDepends' },
@@ -261,7 +267,7 @@ describe('processVariable', () => {
                   { option: { text: 'B', value: 'B', selected: false } }
                 )
               ),
-              resolveInitLock(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))
+              variableInitCompleted(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))
             );
           });
         });
@@ -290,7 +296,8 @@ describe('processVariable', () => {
           );
 
           await tester.thenDispatchedActionsShouldEqual(
-            resolveInitLock(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))
+            variableInitFetching(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })),
+            variableInitCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))
           );
         });
       });
@@ -311,6 +318,7 @@ describe('processVariable', () => {
             );
 
             await tester.thenDispatchedActionsShouldEqual(
+              variableInitFetching(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })),
               updateVariableOptions(
                 toVariablePayload(
                   { type: 'query', id: 'queryDependsOnCustom' },
@@ -330,7 +338,7 @@ describe('processVariable', () => {
                   { option: { text: 'AA', value: 'AA', selected: false } }
                 )
               ),
-              resolveInitLock(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))
+              variableInitCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))
             );
           });
         });
@@ -356,13 +364,14 @@ describe('processVariable', () => {
           );
 
           await tester.thenDispatchedActionsShouldEqual(
+            variableInitFetching(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })),
             setCurrentVariableValue(
               toVariablePayload(
                 { type: 'query', id: 'queryDependsOnCustom' },
                 { option: { text: 'AB', value: 'AB', selected: false } }
               )
             ),
-            resolveInitLock(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))
+            variableInitCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))
           );
         });
       });
@@ -387,6 +396,7 @@ describe('processVariable', () => {
             );
 
             await tester.thenDispatchedActionsShouldEqual(
+              variableInitFetching(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })),
               updateVariableOptions(
                 toVariablePayload(
                   { type: 'query', id: 'queryDependsOnCustom' },
@@ -412,7 +422,7 @@ describe('processVariable', () => {
                   { option: { text: 'AB', value: 'AB', selected: false } }
                 )
               ),
-              resolveInitLock(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))
+              variableInitCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))
             );
           });
         });

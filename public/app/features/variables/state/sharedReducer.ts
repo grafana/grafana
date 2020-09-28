@@ -3,11 +3,10 @@ import cloneDeep from 'lodash/cloneDeep';
 import { default as lodashDefaults } from 'lodash/defaults';
 
 import { VariableType } from '@grafana/data';
-import { VariableModel, VariableOption, VariableWithOptions } from '../types';
+import { VariableInitPhase, VariableModel, VariableOption, VariableWithOptions } from '../types';
 import { AddVariable, getInstanceState, NEW_VARIABLE_ID, VariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
-import { Deferred } from '../../../core/utils/deferred';
 import { initialVariablesState, VariablesState } from './variablesReducer';
 import { isQuery } from '../guard';
 
@@ -29,27 +28,45 @@ const sharedReducerSlice = createSlice({
 
       state[id] = variable;
     },
-    addInitLock: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
+    variableInitReset: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState(state, action.payload.id);
-      instanceState.initLock = new Deferred();
-    },
-    resolveInitLock: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const instanceState = getInstanceState(state, action.payload.id);
-
       if (!instanceState) {
         // we might have cancelled a batch so then this state has been removed
         return;
       }
-      instanceState.initLock?.resolve();
+      instanceState.initPhase = VariableInitPhase.NotStarted;
+      instanceState.error = null;
     },
-    removeInitLock: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
+    variableInitFetching: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState(state, action.payload.id);
-
+      instanceState.initPhase = VariableInitPhase.Fetching;
+    },
+    variableInitCompleted: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
+      const instanceState = getInstanceState(state, action.payload.id);
       if (!instanceState) {
         // we might have cancelled a batch so then this state has been removed
         return;
       }
-      instanceState.initLock = null;
+      instanceState.initPhase = VariableInitPhase.Completed;
+      instanceState.error = null;
+    },
+    variableInitCancelled: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
+      const instanceState = getInstanceState(state, action.payload.id);
+      if (!instanceState) {
+        // we might have cancelled a batch so then this state has been removed
+        return;
+      }
+      instanceState.initPhase = VariableInitPhase.Cancelled;
+      instanceState.error = null;
+    },
+    variableInitFailed: (state: VariablesState, action: PayloadAction<VariablePayload<{ error: any }>>) => {
+      const instanceState = getInstanceState(state, action.payload.id);
+      if (!instanceState) {
+        // we might have cancelled a batch so then this state has been removed
+        return;
+      }
+      instanceState.initPhase = VariableInitPhase.Failed;
+      instanceState.error = action.payload.data.error;
     },
     removeVariable: (state: VariablesState, action: PayloadAction<VariablePayload<{ reIndex: boolean }>>) => {
       delete state[action.payload.id];
@@ -173,7 +190,6 @@ const sharedReducerSlice = createSlice({
 export const sharedReducer = sharedReducerSlice.reducer;
 
 export const {
-  addInitLock,
   removeVariable,
   addVariable,
   changeVariableProp,
@@ -182,8 +198,11 @@ export const {
   duplicateVariable,
   setCurrentVariableValue,
   changeVariableType,
-  removeInitLock,
-  resolveInitLock,
+  variableInitReset,
+  variableInitFetching,
+  variableInitCompleted,
+  variableInitCancelled,
+  variableInitFailed,
 } = sharedReducerSlice.actions;
 
 const hasTags = (option: VariableOption): boolean => {

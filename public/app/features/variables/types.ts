@@ -1,5 +1,5 @@
-import { Deferred } from '../../core/utils/deferred';
-import { VariableModel as BaseVariableModel } from '@grafana/data';
+import { VariableModel as BaseVariableModel, VariableType } from '@grafana/data';
+import { NEW_VARIABLE_ID } from './state/types';
 
 export enum VariableRefresh {
   never,
@@ -119,11 +119,33 @@ export interface SystemVariable<TProps extends { toString: () => string }> exten
   current: { value: TProps };
 }
 
+export enum VariableInitPhase {
+  NotStarted = 'Not started',
+  Fetching = 'Fetching',
+  Failed = 'Failed',
+  Cancelled = 'Cancelled',
+  Completed = 'Completed',
+}
+
 export interface VariableModel extends BaseVariableModel {
   id: string;
   global: boolean;
   hide: VariableHide;
   skipUrlSync: boolean;
   index: number;
-  initLock?: Deferred | null;
+  initPhase: VariableInitPhase;
+  error?: any;
 }
+
+export const initialVariableModelState: VariableModel = {
+  id: NEW_VARIABLE_ID,
+  name: '',
+  label: null,
+  type: ('' as unknown) as VariableType,
+  global: false,
+  index: -1,
+  hide: VariableHide.dontHide,
+  skipUrlSync: false,
+  initPhase: VariableInitPhase.NotStarted,
+  error: null,
+};

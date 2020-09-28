@@ -4,10 +4,12 @@ import angular from 'angular';
 
 import {
   DashboardVariableModel,
+  initialVariableModelState,
   OrgVariableModel,
   QueryVariableModel,
   UserVariableModel,
   VariableHide,
+  VariableInitPhase,
   VariableModel,
   VariableOption,
   VariableRefresh,
@@ -20,12 +22,12 @@ import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
 import { notifyApp, updateLocation } from 'app/core/actions';
 import {
-  addInitLock,
   addVariable,
   changeVariableProp,
-  removeInitLock,
-  resolveInitLock,
   setCurrentVariableValue,
+  variableInitCompleted,
+  variableInitFetching,
+  variableInitReset,
 } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './types';
 import { appEvents } from 'app/core/core';
@@ -46,6 +48,7 @@ import { getBackendSrv } from '../../../core/services/backend_srv';
 import { cleanVariables } from './variablesReducer';
 import isEqual from 'lodash/isEqual';
 import { getCurrentText } from '../utils';
+import { store } from 'app/store/store';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -92,7 +95,7 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
     templateSrv.updateTimeRange(getTimeSrv().timeRange());
 
     for (let index = 0; index < getVariables(getState()).length; index++) {
-      dispatch(addInitLock(toVariablePayload(getVariables(getState())[index])));
+      dispatch(variableInitReset(toVariablePayload(getVariables(getState())[index])));
     }
   };
 };
@@ -100,14 +103,13 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
 export const addSystemTemplateVariables = (dashboard: DashboardModel): ThunkResult<void> => {
   return (dispatch, getState) => {
     const dashboardModel: DashboardVariableModel = {
+      ...initialVariableModelState,
       id: '__dashboard',
       name: '__dashboard',
-      label: null,
       type: 'system',
       index: -3,
       skipUrlSync: true,
       hide: VariableHide.hideVariable,
-      global: false,
       current: {
         value: {
           name: dashboard.title,
@@ -128,14 +130,13 @@ export const addSystemTemplateVariables = (dashboard: DashboardModel): ThunkResu
     );
 
     const orgModel: OrgVariableModel = {
+      ...initialVariableModelState,
       id: '__org',
       name: '__org',
-      label: null,
       type: 'system',
       index: -2,
       skipUrlSync: true,
       hide: VariableHide.hideVariable,
-      global: false,
       current: {
         value: {
           name: contextSrv.user.orgName,
@@ -150,14 +151,13 @@ export const addSystemTemplateVariables = (dashboard: DashboardModel): ThunkResu
     );
 
     const userModel: UserVariableModel = {
+      ...initialVariableModelState,
       id: '__user',
       name: '__user',
-      label: null,
       type: 'system',
       index: -1,
       skipUrlSync: true,
       hide: VariableHide.hideVariable,
-      global: false,
       current: {
         value: {
           login: contextSrv.user.login,
@@ -184,7 +184,7 @@ export const changeVariableMultiValue = (identifier: VariableIdentifier, multi: 
 };
 
 export const processVariableDependencies = async (variable: VariableModel, state: StoreState) => {
-  let dependencies: Array<Promise<any>> = [];
+  let dependencies: VariableModel[] = [];
 
   for (const otherVariable of getVariables(state)) {
     if (variable === otherVariable) {
@@ -193,12 +193,38 @@ export const processVariableDependencies = async (variable: VariableModel, state
 
     if (variableAdapters.getIfExists(variable.type)) {
       if (variableAdapters.get(variable.type).dependsOn(variable, otherVariable)) {
-        dependencies.push(otherVariable.initLock!.promise);
+        dependencies.push(otherVariable);
       }
     }
   }
 
-  await Promise.all(dependencies);
+  if (!isWaitingForDependencies(dependencies, state)) {
+    return;
+  }
+
+  await new Promise(resolve => {
+    const unsubscribe = store.subscribe(() => {
+      if (!isWaitingForDependencies(dependencies, store.getState())) {
+        unsubscribe();
+        resolve();
+      }
+    });
+  });
+};
+
+const isWaitingForDependencies = (dependencies: VariableModel[], state: StoreState): boolean => {
+  if (dependencies.length === 0) {
+    return false;
+  }
+
+  const variables = getVariables(state);
+  const notCompletedDependencies = dependencies.filter(d =>
+    variables.some(
+      v => v.id === d.id && (v.initPhase === VariableInitPhase.NotStarted || v.initPhase === VariableInitPhase.Fetching)
+    )
+  );
+
+  return notCompletedDependencies.length > 0;
 };
 
 export const processVariable = (
@@ -209,10 +235,11 @@ export const processVariable = (
     const variable = getVariable(identifier.id, getState());
     await processVariableDependencies(variable, getState());
 
+    dispatch(variableInitFetching(toVariablePayload(variable)));
     const urlValue = queryParams['var-' + variable.name];
     if (urlValue !== void 0) {
       await variableAdapters.get(variable.type).setValueFromUrl(variable, urlValue ?? '');
-      dispatch(resolveInitLock(toVariablePayload(variable)));
+      dispatch(variableInitCompleted(toVariablePayload(variable)));
       return;
     }
 
@@ -223,12 +250,12 @@ export const processVariable = (
         refreshableVariable.refresh === VariableRefresh.onTimeRangeChanged
       ) {
         await variableAdapters.get(variable.type).updateOptions(refreshableVariable);
-        dispatch(resolveInitLock(toVariablePayload(variable)));
+        dispatch(variableInitCompleted(toVariablePayload(variable)));
         return;
       }
     }
 
-    dispatch(resolveInitLock(toVariablePayload(variable)));
+    dispatch(variableInitCompleted(toVariablePayload(variable)));
   };
 };
 
@@ -242,7 +269,7 @@ export const processVariables = (): ThunkResult<Promise<void>> => {
     await Promise.all(promises);
 
     for (let index = 0; index < getVariables(getState()).length; index++) {
-      dispatch(removeInitLock(toVariablePayload(getVariables(getState())[index])));
+      dispatch(variableInitReset(toVariablePayload(getVariables(getState())[index])));
     }
   };
 };
@@ -427,7 +454,7 @@ export const variableUpdated = (
   return (dispatch, getState) => {
     // if there is a variable lock ignore cascading update because we are in a boot up scenario
     const variable = getVariable(identifier.id, getState());
-    if (variable.initLock) {
+    if (variable.initPhase === VariableInitPhase.Fetching) {
       return Promise.resolve();
     }
 
