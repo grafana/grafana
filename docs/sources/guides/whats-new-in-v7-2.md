@@ -161,4 +161,4 @@ In collaboration with Microsoft, we have improved the usability of our ADX datas
 
 ### X-Ray data source plugin
 
-We are glad to announce our very first version of our data source plugin for AWS X-Ray. You can use the plugin to visualize traces, look at analytics tables, and insight summaries. For more information look at [plugin's page](https://grafana.com/grafana/plugins/grafana-x-ray-datasource).
+We are pleased to announce our very first version of our data source plugin for AWS X-Ray. You can use this plugin to visualize traces, look at analytics tables, and see insight summaries. For more information, refer to the [X-Ray data source](https://grafana.com/grafana/plugins/grafana-x-ray-datasource) plugin page.
