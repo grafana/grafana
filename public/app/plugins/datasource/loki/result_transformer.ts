@@ -19,7 +19,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 
-import { getTemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import {

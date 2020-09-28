@@ -1,9 +1,9 @@
 import { AppEvents, DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { validateVariableSelectionState } from '../state/actions';
 import { QueryVariableModel, VariableRefresh } from '../types';
 import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { getTemplateSrv } from '../../templating/template_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import appEvents from '../../../core/app_events';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';

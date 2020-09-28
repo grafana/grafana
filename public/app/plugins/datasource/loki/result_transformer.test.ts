@@ -2,6 +2,8 @@ import { CircularDataFrame, FieldCache, FieldType, MutableDataFrame } from '@gra
 import { LokiStreamResult, LokiTailResponse, LokiStreamResponse, LokiResultType, TransformerOptions } from './types';
 import * as ResultTransformer from './result_transformer';
 import { enhanceDataFrame } from './result_transformer';
+import { setTemplateSrv } from '@grafana/runtime';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 const streamResult: LokiStreamResult[] = [
   {
@@ -32,6 +34,10 @@ const lokiResponse: LokiStreamResponse = {
 };
 
 describe('loki result transformer', () => {
+  beforeAll(() => {
+    setTemplateSrv(new TemplateSrv());
+  });
+
   afterAll(() => {
     jest.restoreAllMocks();
   });
