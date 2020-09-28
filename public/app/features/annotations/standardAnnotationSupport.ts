@@ -2,8 +2,7 @@ import {
   DataFrame,
   AnnotationQuery,
   AnnotationSupport,
-  PanelData,
-  transformDataFrame,
+  standardTransformers,
   FieldType,
   Field,
   KeyValue,
@@ -43,31 +42,24 @@ export const standardAnnotationSupport: AnnotationSupport = {
   /**
    * When the standard frame > event processing is insufficient, this allows explicit control of the mappings
    */
-  processEvents: (anno: AnnotationQuery, data: DataFrame) => {
-    return getAnnotationsFromFrame(data, anno.mappings);
+  processEvents: (anno: AnnotationQuery, data: DataFrame[]) => {
+    return getAnnotationsFromData(data, anno.mappings);
   },
 };
 
 /**
  * Flatten all panel data into a single frame
  */
-export function singleFrameFromPanelData(rsp: PanelData): DataFrame | undefined {
-  if (!rsp?.series?.length) {
+export function singleFrameFromPanelData(data: DataFrame[]): DataFrame | undefined {
+  if (!data?.length) {
     return undefined;
   }
-  if (rsp.series.length === 1) {
-    return rsp.series[0];
+
+  if (data.length === 1) {
+    return data[0];
   }
 
-  return transformDataFrame(
-    [
-      {
-        id: 'seriesToColumns',
-        options: { byField: 'Time' },
-      },
-    ],
-    rsp.series
-  )[0];
+  return standardTransformers.mergeTransformer.transformer({})(data)[0];
 }
 
 interface AnnotationEventFieldSetter {
@@ -108,7 +100,9 @@ export const annotationEventNames: AnnotationFieldInfo[] = [
   // { key: 'email' },
 ];
 
-export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationEventMappings): AnnotationEvent[] {
+export function getAnnotationsFromData(data: DataFrame[], options?: AnnotationEventMappings): AnnotationEvent[] {
+  const frame = singleFrameFromPanelData(data);
+
   if (!frame?.length) {
     return [];
   }
@@ -116,6 +110,7 @@ export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationEv
   let hasTime = false;
   let hasText = false;
   const byName: KeyValue<Field> = {};
+
   for (const f of frame.fields) {
     const name = getFieldDisplayName(f, frame);
     byName[name.toLowerCase()] = f;
@@ -126,11 +121,14 @@ export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationEv
   }
 
   const fields: AnnotationEventFieldSetter[] = [];
+
   for (const evts of annotationEventNames) {
     const opt = options[evts.key] || {}; //AnnotationEventFieldMapping
+
     if (opt.source === AnnotationEventFieldSource.Skip) {
       continue;
     }
+
     const setter: AnnotationEventFieldSetter = { key: evts.key, split: evts.split };
 
     if (opt.source === AnnotationEventFieldSource.Text) {
@@ -138,6 +136,7 @@ export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationEv
     } else {
       const lower = (opt.value || evts.key).toLowerCase();
       setter.field = byName[lower];
+
       if (!setter.field && evts.field) {
         setter.field = evts.field(frame);
       }
@@ -159,10 +158,16 @@ export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationEv
 
   // Add each value to the string
   const events: AnnotationEvent[] = [];
+
   for (let i = 0; i < frame.length; i++) {
-    const anno: AnnotationEvent = {};
+    const anno: AnnotationEvent = {
+      type: 'default',
+      color: 'red',
+    };
+
     for (const f of fields) {
       let v: any = undefined;
+
       if (f.text) {
         v = f.text; // TODO support templates!
       } else if (f.field) {
@@ -175,14 +180,16 @@ export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationEv
         }
       }
 
-      if (v !== undefined) {
-        if (f.split) {
-          v = (v as string).split(',');
+      if (v !== null && v !== undefined) {
+        if (f.split && typeof v === 'string') {
+          v = v.split(',');
         }
         (anno as any)[f.key] = v;
       }
     }
+
     events.push(anno);
   }
+
   return events;
 }

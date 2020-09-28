@@ -49,6 +49,7 @@ Improve an existing plugin with one of our guides:
 - [Build a logs data source plugin]({{< relref "build-a-logs-data-source-plugin.md" >}})
 - [Build a streaming data source plugin]({{< relref "build-a-streaming-data-source-plugin.md" >}})
 - [Error handling]({{< relref "error-handling.md" >}})
+- [Working with data frames]({{< relref "working-with-data-frames.md" >}})
 
 ### Concepts
 
@@ -59,6 +60,10 @@ Deepen your knowledge through a series of high-level overviews of plugin concept
 ### UI library
 
 Explore the many UI components in our [Grafana UI library](https://developers.grafana.com/ui).
+
+### Examples
+
+For inspiration, check out our [plugin examples](https://github.com/grafana/grafana-plugin-examples).
 
 ### API reference
 

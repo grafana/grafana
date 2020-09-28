@@ -101,6 +101,9 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   }
 
   return options.data.map((frame, index) => {
+    // Need to define this new frame here as it's passed to the getLinkSupplier function inside the fields loop
+    const newFrame: DataFrame = { ...frame };
+
     const scopedVars: ScopedVars = {
       __series: { text: 'Series', value: { name: getFrameDisplayName(frame, index) } }, // might be missing
     };
@@ -134,7 +137,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       // Anything in the field config that's not set by the datasource
       // will be filled in by panel's field configuration
       setFieldConfigDefaults(config, source.defaults, context);
-
       // Find any matching rules and then override
       for (const rule of override) {
         if (rule.match(field, frame, options.data!)) {
@@ -206,7 +208,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
       // Attach data links supplier
       f.getLinks = getLinksSupplier(
-        frame,
+        newFrame,
         f,
         fieldScopedVars,
         context.replaceVariables,
@@ -220,10 +222,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       return f;
     });
 
-    return {
-      ...frame,
-      fields,
-    };
+    newFrame.fields = fields;
+    return newFrame;
   });
 }
 
@@ -285,9 +285,9 @@ const processFieldConfigValue = (
   context: FieldOverrideEnv
 ) => {
   const currentConfig = get(destination, fieldConfigProperty.path);
-
   if (currentConfig === null || currentConfig === undefined) {
     const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
+    // console.log(item);
     if (!item) {
       return;
     }

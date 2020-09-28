@@ -160,7 +160,7 @@ func (e *OpenTsdbExecutor) buildMetric(query *tsdb.Query) map[string]interface{}
 	if !disableDownsampling {
 		downsampleInterval := query.Model.Get("downsampleInterval").MustString()
 		if downsampleInterval == "" {
-			downsampleInterval = "1m" //default value for blank
+			downsampleInterval = "1m" // default value for blank
 		}
 		downsample := downsampleInterval + "-" + query.Model.Get("downsampleAggregator").MustString()
 		if query.Model.Get("downsampleFillPolicy").MustString() != "none" {
