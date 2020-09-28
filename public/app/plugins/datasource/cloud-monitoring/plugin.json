@@ -7,6 +7,17 @@
   "metrics": true,
   "alerting": true,
   "annotations": true,
+  "includes": [
+    { "type": "dashboard", "name": "BigQuery Query Monitoring", "path": "dashboards/BigQuery Query Monitoring.json" },
+    { "type": "dashboard", "name": "Cloud SQL Monitoring", "path": "dashboards/Cloud SQL Monitoring.json" },
+    { "type": "dashboard", "name": "GCE VM Instance Monitoring", "path": "dashboards/GCE VM Instance Monitoring.json" },
+    { "type": "dashboard", "name": "GKE Cluster Monitoring", "path": "dashboards/GKE Cluster Monitoring.json" },
+    {
+      "type": "dashboard",
+      "name": "HTTP_S Load Balancer Monitoring",
+      "path": "dashboards/HTTP_S Load Balancer Monitoring.json"
+    }
+  ],
   "queryOptions": {
     "maxDataPoints": true,
     "cacheTimeout": true
