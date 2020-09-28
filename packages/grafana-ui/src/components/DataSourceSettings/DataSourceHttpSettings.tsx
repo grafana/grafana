@@ -10,7 +10,7 @@ import { Input } from '../Forms/Legacy/Input/Input';
 import { Switch } from '../Forms/Legacy/Switch/Switch';
 import { Icon } from '../Icon/Icon';
 import { FormField } from '../FormField/FormField';
-import { FormLabel } from '../FormLabel/FormLabel';
+import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { TagsInput } from '../TagsInput/TagsInput';
 import { useTheme } from '../../themes';
 import { HttpSettingsProps } from './types';
@@ -148,12 +148,12 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
           )}
           {dataSourceConfig.access === 'proxy' && (
             <div className="gf-form">
-              <FormLabel
+              <InlineFormLabel
                 width={11}
                 tooltip="Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
               >
                 Whitelisted Cookies
-              </FormLabel>
+              </InlineFormLabel>
               <TagsInput
                 tags={dataSourceConfig.jsonData.keepCookies}
                 onChange={cookies =>
