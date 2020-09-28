@@ -164,6 +164,9 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
           e2e.components.PluginVisualization.item(visualizationName)
             .scrollIntoView()
             .click();
+
+          // @todo wait for '@pluginModule' if not a core visualization and not already loaded
+          e2e().wait(2000);
         }
 
         // Consistently closed
