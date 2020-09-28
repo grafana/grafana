@@ -1,20 +1,9 @@
 // Libraries
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 // Components
-import {
-  Field,
-  Form,
-  HorizontalGroup,
-  Icon,
-  InlineFormLabel,
-  Input,
-  InputControl,
-  LegacyForms,
-  Select,
-  Tooltip,
-} from '@grafana/ui';
+import { Form, InlineFormLabel, Input, InputControl, InlineFieldRow, InlineField, Select } from '@grafana/ui';
 import { dateMath, dateTime, QueryEditorProps, SelectableValue } from '@grafana/data';
 
 // Types
@@ -60,23 +49,17 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
 
   return (
     <>
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <InlineFormLabel className="query-keyword" width={7}>
-            Scenario
-          </InlineFormLabel>
+      <InlineFieldRow>
+        <InlineField labelWidth={7} label="Scenario">
           <Select
             options={options}
             value={options.find(item => item.value === query.scenarioId)}
             onChange={onScenarioChange}
             width={32}
           />
-        </div>
+        </InlineField>
         {currentScenario?.stringInput && (
-          <div className="gf-form">
-            <InlineFormLabel htmlFor="stringInput" className="query-keyword" width={7}>
-              String Input
-            </InlineFormLabel>
+          <InlineField labelWidth={7} label="String Input">
             <Input
               id="stringInput"
               name="stringInput"
@@ -84,12 +67,9 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
               value={query.stringInput}
               onChange={onInputChange}
             />
-          </div>
+          </InlineField>
         )}
-        <div className="gf-form">
-          <InlineFormLabel htmlFor="alias" className="query-keyword" width={7}>
-            Alias
-          </InlineFormLabel>
+        <InlineField labelWidth={7} label="Alias">
           <Input
             id="alias"
             type="text"
@@ -99,42 +79,34 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
             value={query.alias}
             onChange={onInputChange}
           />
-        </div>
-        <div className="gf-form gf-form--grow">
-          {showLabels ? (
-            <>
-              <InlineFormLabel
-                htmlFor="labels"
-                className="query-keyword"
-                width={7}
-                tooltip={
-                  <>
-                    Set labels using a key=value syntax:
-                    <br />
-                    {`{ key = "value", key2 = "value" }`}
-                    <br />
-                    key="value", key2="value"
-                    <br />
-                    key=value, key2=value
-                    <br />
-                  </>
-                }
-              >
-                Labels
-              </InlineFormLabel>
-              <Input
-                id="labels"
-                name="labels"
-                onChange={onInputChange}
-                value={query?.labels}
-                placeholder="key=value, key2=value2"
-              />
-            </>
-          ) : (
-            <div className="gf-form-label gf-form-label--grow" />
-          )}
-        </div>
-      </div>
+        </InlineField>
+        {showLabels && (
+          <InlineField
+            labelWidth={7}
+            label="Labels"
+            tooltip={
+              <>
+                Set labels using a key=value syntax:
+                <br />
+                {`{ key = "value", key2 = "value" }`}
+                <br />
+                key="value", key2="value"
+                <br />
+                key=value, key2=value
+                <br />
+              </>
+            }
+          >
+            <Input
+              id="labels"
+              name="labels"
+              onChange={onInputChange}
+              value={query?.labels}
+              placeholder="key=value, key2=value2"
+            />
+          </InlineField>
+        )}
+      </InlineFieldRow>
 
       {currentScenario.id === 'manual_entry' && <ManualEntryEditor onChange={onChange} query={query} />}
     </>
