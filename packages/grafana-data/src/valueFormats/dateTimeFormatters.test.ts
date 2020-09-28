@@ -12,6 +12,7 @@ import {
   toDurationInHoursMinutesSeconds,
   toDurationInDaysHoursMinutesSeconds,
   toNanoSeconds,
+  toSeconds,
 } from './dateTimeFormatters';
 import { formattedValueToString } from './valueFormats';
 import { toUtc, dateTime } from '../datetime/moment_wrapper';
@@ -329,5 +330,13 @@ describe('to nanoseconds', () => {
     const tenDays = toNanoSeconds(864000000000000);
     expect(tenDays.text).toBe('10');
     expect(tenDays.suffix).toBe(' day');
+  });
+});
+
+describe('seconds', () => {
+  it('should show 0 as 0', () => {
+    const zeroSeconds = toSeconds(0);
+    expect(zeroSeconds.text).toBe('0');
+    expect(zeroSeconds.suffix).toBe(' s');
   });
 });

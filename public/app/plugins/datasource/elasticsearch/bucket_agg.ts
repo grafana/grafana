@@ -32,7 +32,7 @@ export class ElasticBucketAggCtrl {
     );
 
     $scope.init = () => {
-      $scope.agg = bucketAggs[$scope.index];
+      $scope.agg = bucketAggs[$scope.index] || {};
       $scope.validateModel();
     };
 
@@ -144,8 +144,8 @@ export class ElasticBucketAggCtrl {
           break;
         }
         case 'geohash_grid': {
-          // limit precision to 7
-          settings.precision = Math.max(Math.min(settings.precision, 7), 1);
+          // limit precision to 12
+          settings.precision = Math.max(Math.min(settings.precision, 12), 1);
           settingsLinkText = 'Precision: ' + settings.precision;
           break;
         }

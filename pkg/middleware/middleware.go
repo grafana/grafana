@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
@@ -178,8 +179,12 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 		ctx.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,
+			"err", err,
 		)
 
+		if err == models.ErrUserNotFound {
+			err = login.ErrInvalidCredentials
+		}
 		ctx.JsonApiErr(401, errStringInvalidUsernamePassword, err)
 		return true
 	}
@@ -256,22 +261,21 @@ func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.User
 		}
 
 		if rotated {
-			WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetimeDays)
+			WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetime)
 		}
 	}
 }
 
-func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays int) {
+func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetime time.Duration) {
 	if setting.Env == setting.DEV {
 		ctx.Logger.Info("New token", "unhashed token", value)
 	}
 
 	var maxAge int
-	if maxLifetimeDays <= 0 {
+	if maxLifetime <= 0 {
 		maxAge = -1
 	} else {
-		maxAgeHours := (time.Duration(setting.LoginMaxLifetimeDays) * 24 * time.Hour) + time.Hour
-		maxAge = int(maxAgeHours.Seconds())
+		maxAge = int(maxLifetime.Seconds())
 	}
 
 	WriteCookie(ctx.Resp, setting.LoginCookieName, url.QueryEscape(value), maxAge, newCookieOptions)

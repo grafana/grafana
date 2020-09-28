@@ -1,15 +1,13 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-// @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
-import _ from 'lodash';
-
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DataQuery, PanelData, DataSourceSelectItem } from '@grafana/data';
 import { DashboardModel } from '../state/DashboardModel';
 import { QueryEditorRow } from './QueryEditorRow';
 import { addQuery } from 'app/core/utils/query';
+import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 interface Props {
   // The query configuration
@@ -44,16 +42,6 @@ export class QueryEditorRows extends PureComponent<Props> {
     panel.refresh();
   };
 
-  onMoveQuery = (query: DataQuery, direction: number) => {
-    const { queries, onChangeQueries, panel } = this.props;
-
-    const index = _.indexOf(queries, query);
-    // @ts-ignore
-    _.move(queries, index, index + direction);
-    onChangeQueries(queries);
-    panel.refresh();
-  };
-
   onChangeQuery(query: DataQuery, index: number) {
     const { queries, onChangeQueries } = this.props;
 
@@ -76,24 +64,56 @@ export class QueryEditorRows extends PureComponent<Props> {
     );
   }
 
+  onDragEnd = (result: DropResult) => {
+    const { queries, onChangeQueries, panel } = this.props;
+
+    if (!result || !result.destination) {
+      return;
+    }
+
+    const startIndex = result.source.index;
+    const endIndex = result.destination.index;
+    if (startIndex === endIndex) {
+      return;
+    }
+
+    const update = Array.from(queries);
+    const [removed] = update.splice(startIndex, 1);
+    update.splice(endIndex, 0, removed);
+    onChangeQueries(update);
+    panel.refresh();
+  };
+
   render() {
     const { props } = this;
-    return props.queries.map((query, index) => (
-      <QueryEditorRow
-        dataSourceValue={query.datasource || props.datasource.value}
-        id={query.refId}
-        index={index}
-        key={query.refId}
-        panel={props.panel}
-        dashboard={props.dashboard}
-        data={props.data}
-        query={query}
-        onChange={query => this.onChangeQuery(query, index)}
-        onRemoveQuery={this.onRemoveQuery}
-        onAddQuery={this.onAddQuery}
-        onMoveQuery={this.onMoveQuery}
-        inMixedMode={props.datasource.meta.mixed}
-      />
-    ));
+    return (
+      <DragDropContext onDragEnd={this.onDragEnd}>
+        <Droppable droppableId="transformations-list" direction="vertical">
+          {provided => {
+            return (
+              <div ref={provided.innerRef} {...provided.droppableProps}>
+                {props.queries.map((query, index) => (
+                  <QueryEditorRow
+                    dataSourceValue={query.datasource || props.datasource.value}
+                    id={query.refId}
+                    index={index}
+                    key={query.refId}
+                    panel={props.panel}
+                    dashboard={props.dashboard}
+                    data={props.data}
+                    query={query}
+                    onChange={query => this.onChangeQuery(query, index)}
+                    onRemoveQuery={this.onRemoveQuery}
+                    onAddQuery={this.onAddQuery}
+                    inMixedMode={props.datasource.meta.mixed}
+                  />
+                ))}
+                {provided.placeholder}
+              </div>
+            );
+          }}
+        </Droppable>
+      </DragDropContext>
+    );
   }
 }

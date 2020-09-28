@@ -68,7 +68,7 @@ func NewFileWriter() *FileLogWriter {
 		Filename: "",
 		Format:   log15.LogfmtFormat(),
 		Maxlines: 1000000,
-		Maxsize:  1 << 28, //256 MB
+		Maxsize:  1 << 28, // 256 MB
 		Daily:    true,
 		Maxdays:  7,
 		Rotate:   true,

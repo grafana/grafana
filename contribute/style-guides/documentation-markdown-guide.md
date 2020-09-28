@@ -24,15 +24,14 @@ Start your document with a single ``#`` for the title of the page. Add the sub-h
 
 **Example:** It is ``**important**`` to use GitHub Flavored Markdown emoji consistently.
 
-* Make text ``*emphasized*`` using single `` _underscores_`` or a single asterisk.
+* Make text ``_emphasized_`` using single `` _underscores_``. Do not use the single asterisk, it can be easily confused with bold.
 
-**Example:** GitHub Flavored Markdown emoji should _only_ appear in specific cases.
+**Example:** GitHub-flavored markdown emoji should _only_ appear in specific cases.
 
 
 ## Links and references
 
-Create links to other website by wrapping the display text in square brackets, and
-the web URL in curved brackets.
+Create links to other website by wrapping the display text in square brackets, and the web URL in curved brackets.
 
 \[text to display](www.website.com)
 
@@ -40,7 +39,7 @@ the web URL in curved brackets.
 
 ## Block quotes
 
-Include Block quotes inside text using right-facing arrows:
+Include block quotes inside text using right-facing arrows:
 
 **Example**
 
@@ -117,13 +116,13 @@ The list above will always display as:
 ### Unordered lists
 
 Build a list of points - an unordered or unnumbered list - by
-using "\*" characters.
+using "\-" (hyphen) characters.
 
 **Example**
 
-* First
-* Another item
-* The last list item
+- First
+- Another item
+- The last list item
 
 ## Images
 
@@ -135,10 +134,8 @@ This follows the format of "!", alt text wrapped in "[]" and the link URL wrappe
 
 ## Comments
 
-You can include comments that will not appear in published markdown using the
-following syntax:
+You can include comments that will not appear in published markdown using the following syntax:
 
 \[comment]: <> (Comment text to display)
 
-The word "comment" wrapped in "[]" followed by a ":", a space, "<>", and then
-the comment itself wrapped in "()".
+The word "comment" wrapped in "[]" followed by a ":", a space, "<>", and then the comment itself wrapped in "()".

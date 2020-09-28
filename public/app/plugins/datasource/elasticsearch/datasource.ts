@@ -8,7 +8,10 @@ import {
   DataFrame,
   ScopedVars,
   DataLink,
+  PluginMeta,
+  DataQuery,
 } from '@grafana/data';
+import LanguageProvider from './language_provider';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
@@ -18,6 +21,20 @@ import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
+
+// Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
+// custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
+const ELASTIC_META_FIELDS = [
+  '_index',
+  '_type',
+  '_id',
+  '_source',
+  '_size',
+  '_field_names',
+  '_ignored',
+  '_routing',
+  '_meta',
+];
 
 export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions> {
   basicAuth?: string;
@@ -34,6 +51,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   logMessageField?: string;
   logLevelField?: string;
   dataLinks: DataLinkConfig[];
+  languageProvider: LanguageProvider;
 
   /** @ngInject */
   constructor(
@@ -69,6 +87,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     if (this.logLevelField === '') {
       this.logLevelField = undefined;
     }
+    this.languageProvider = new LanguageProvider(this);
   }
 
   private request(method: string, url: string, data?: undefined) {
@@ -98,6 +117,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         }
         throw err;
       });
+  }
+
+  async importQueries(queries: DataQuery[], originMeta: PluginMeta): Promise<ElasticsearchQuery[]> {
+    return this.languageProvider.importQueries(queries, originMeta.id);
   }
 
   /**
@@ -417,6 +440,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
   }
 
+  isMetadataField(fieldName: string) {
+    return ELASTIC_META_FIELDS.includes(fieldName);
+  }
+
   getFields(query: any) {
     const configuredEsVersion = this.esVersion;
     return this.get('/_mapping').then((result: any) => {
@@ -426,14 +453,15 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         integer: 'number',
         long: 'number',
         date: 'date',
+        date_nanos: 'date',
         string: 'string',
         text: 'string',
         scaled_float: 'number',
         nested: 'nested',
       };
 
-      function shouldAddField(obj: any, key: any, query: any) {
-        if (key[0] === '_') {
+      const shouldAddField = (obj: any, key: string, query: any) => {
+        if (this.isMetadataField(key)) {
           return false;
         }
 
@@ -443,7 +471,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
         // equal query type filter, or via typemap translation
         return query.type === obj.type || query.type === typeMap[obj.type];
-      }
+      };
 
       // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total
       const fieldNameParts: any = [];

@@ -1,6 +1,16 @@
+import { PanelMenuItem } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../state';
 import { getPanelMenu } from './getPanelMenu';
 import { describe } from '../../../../test/lib/common';
+import { setStore } from 'app/store/store';
+import config from 'app/core/config';
+import * as actions from 'app/features/explore/state/actions';
+
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    hasAccessToExplore: () => true,
+  },
+}));
 
 describe('getPanelMenu', () => {
   it('should return the correct panel menu items', () => {
@@ -27,6 +37,12 @@ describe('getPanelMenu', () => {
           "onClick": [Function],
           "shortcut": "p s",
           "text": "Share",
+        },
+        Object {
+          "iconClassName": "compass",
+          "onClick": [Function],
+          "shortcut": "x",
+          "text": "Explore",
         },
         Object {
           "iconClassName": "info-circle",
@@ -103,6 +119,12 @@ describe('getPanelMenu', () => {
             "text": "Share",
           },
           Object {
+            "iconClassName": "compass",
+            "onClick": [Function],
+            "shortcut": "x",
+            "text": "Explore",
+          },
+          Object {
             "iconClassName": "info-circle",
             "onClick": [Function],
             "shortcut": "i",
@@ -141,6 +163,52 @@ describe('getPanelMenu', () => {
           },
         ]
       `);
+    });
+  });
+
+  describe('onNavigateToExplore', () => {
+    const testSubUrl = '/testSubUrl';
+    const testUrl = '/testUrl';
+    const windowOpen = jest.fn();
+    let event: any;
+    let explore: PanelMenuItem;
+    let navigateSpy: any;
+
+    beforeAll(() => {
+      const panel = new PanelModel({});
+      const dashboard = new DashboardModel({});
+      const menuItems = getPanelMenu(dashboard, panel);
+      explore = menuItems.find(item => item.text === 'Explore') as PanelMenuItem;
+      navigateSpy = jest.spyOn(actions, 'navigateToExplore');
+      window.open = windowOpen;
+
+      event = {
+        ctrlKey: true,
+        preventDefault: jest.fn(),
+      };
+
+      setStore({ dispatch: jest.fn() } as any);
+    });
+
+    it('should navigate to url without subUrl', () => {
+      explore.onClick!(event);
+
+      const openInNewWindow = navigateSpy.mock.calls[0][1].openInNewWindow;
+
+      openInNewWindow(testUrl);
+
+      expect(windowOpen).toHaveBeenLastCalledWith(testUrl);
+    });
+
+    it('should navigate to url with subUrl', () => {
+      config.appSubUrl = testSubUrl;
+      explore.onClick!(event);
+
+      const openInNewWindow = navigateSpy.mock.calls[0][1].openInNewWindow;
+
+      openInNewWindow(testUrl);
+
+      expect(windowOpen).toHaveBeenLastCalledWith(`${testSubUrl}${testUrl}`);
     });
   });
 });

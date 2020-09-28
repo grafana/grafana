@@ -1,9 +1,16 @@
 import kbn from 'app/core/utils/kbn';
 import { Registry, RegistryItem, VariableModel, textUtil, dateTime } from '@grafana/data';
 import { map, isArray, replace } from 'lodash';
+import { formatVariableLabel } from '../variables/shared/formatVariable';
+
+export interface FormatOptions {
+  value: any;
+  text: string;
+  args: string[];
+}
 
 export interface FormatRegistryItem extends RegistryItem {
-  formatter(value: any, args: string[], variable: VariableModel): string;
+  formatter(options: FormatOptions, variable: VariableModel): string;
 }
 
 export const formatRegistry = new Registry<FormatRegistryItem>(() => {
@@ -12,7 +19,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: 'lucene',
       name: 'Lucene',
       description: 'Values are lucene escaped and multi-valued variables generate an OR expression',
-      formatter: value => {
+      formatter: ({ value }) => {
         if (typeof value === 'string') {
           return luceneEscape(value);
         }
@@ -32,13 +39,13 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: 'raw',
       name: 'raw',
       description: 'Keep value as is',
-      formatter: value => value,
+      formatter: ({ value }) => value,
     },
     {
       id: 'regex',
       name: 'Regex',
       description: 'Values are regex escaped and multi-valued variables generate a (<value>|<value>) expression',
-      formatter: value => {
+      formatter: ({ value }) => {
         if (typeof value === 'string') {
           return kbn.regexEscape(value);
         }
@@ -54,7 +61,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: 'pipe',
       name: 'Pipe',
       description: 'Values are seperated by | character',
-      formatter: value => {
+      formatter: ({ value }) => {
         if (typeof value === 'string') {
           return value;
         }
@@ -65,7 +72,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: 'distributed',
       name: 'Distributed',
       description: 'Multiple values are formatted like variable=value',
-      formatter: (value, args, variable) => {
+      formatter: ({ value }, variable) => {
         if (typeof value === 'string') {
           return value;
         }
@@ -84,7 +91,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: 'csv',
       name: 'Csv',
       description: 'Comma seperated values',
-      formatter: (value, args, variable) => {
+      formatter: ({ value }) => {
         if (isArray(value)) {
           return value.join(',');
         }
@@ -95,7 +102,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: 'html',
       name: 'HTML',
       description: 'HTML escaping of values',
-      formatter: (value, args, variable) => {
+      formatter: ({ value }) => {
         if (isArray(value)) {
           return textUtil.escapeHtml(value.join(', '));
         }
@@ -106,7 +113,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: 'json',
       name: 'JSON',
       description: 'JSON stringify valu',
-      formatter: (value, args, variable) => {
+      formatter: ({ value }) => {
         return JSON.stringify(value);
       },
     },
@@ -114,7 +121,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: 'percentencode',
       name: 'Percent encode',
       description: 'Useful for url escaping values',
-      formatter: (value, args, variable) => {
+      formatter: ({ value }) => {
         // like glob, but url escaped
         if (isArray(value)) {
           return encodeURIComponentStrict('{' + value.join(',') + '}');
@@ -126,7 +133,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: 'singlequote',
       name: 'Single quote',
       description: 'Single quoted values',
-      formatter: (value, args, variable) => {
+      formatter: ({ value }) => {
         // escape single quotes with backslash
         const regExp = new RegExp(`'`, 'g');
         if (isArray(value)) {
@@ -139,7 +146,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: 'doublequote',
       name: 'Double quote',
       description: 'Double quoted values',
-      formatter: (value, args, variable) => {
+      formatter: ({ value }) => {
         // escape double quotes with backslash
         const regExp = new RegExp('"', 'g');
         if (isArray(value)) {
@@ -152,7 +159,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: 'sqlstring',
       name: 'SQL string',
       description: 'SQL string quoting and commas for use in IN statements and other scenarios',
-      formatter: (value, args, variable) => {
+      formatter: ({ value }) => {
         // escape single quotes by pairing them
         const regExp = new RegExp(`'`, 'g');
         if (isArray(value)) {
@@ -165,7 +172,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: 'date',
       name: 'Date',
       description: 'Format date in different ways',
-      formatter: (value, args, variable) => {
+      formatter: ({ value, args }) => {
         const arg = args[0] ?? 'iso';
 
         switch (arg) {
@@ -184,11 +191,29 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
       id: 'glob',
       name: 'Glob',
       description: 'Format multi valued variables using glob syntax, example {value1,value2}',
-      formatter: (value, args, variable) => {
+      formatter: ({ value }) => {
         if (isArray(value) && value.length > 1) {
           return '{' + value.join(',') + '}';
         }
         return value;
+      },
+    },
+    {
+      id: 'text',
+      name: 'Text',
+      description: 'Format variables in their text representation. Example in multi variable scenario A + B + C.',
+      formatter: (options, variable) => {
+        if (typeof options.text === 'string') {
+          return options.text;
+        }
+
+        const current = (variable as any)?.current;
+
+        if (!current) {
+          return options.value;
+        }
+
+        return formatVariableLabel(variable);
       },
     },
   ];

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func ValidateOrgAlert(c *models.ReqContext) {
@@ -287,11 +288,10 @@ func UpdateAlertNotification(c *models.ReqContext, cmd models.UpdateAlertNotific
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == models.ErrAlertNotificationNotFound {
+			return Error(404, err.Error(), err)
+		}
 		return Error(500, "Failed to update alert notification", err)
-	}
-
-	if cmd.Result == nil {
-		return Error(404, "Alert notification not found", nil)
 	}
 
 	query := models.GetAlertNotificationsQuery{
@@ -316,11 +316,10 @@ func UpdateAlertNotificationByUID(c *models.ReqContext, cmd models.UpdateAlertNo
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == models.ErrAlertNotificationNotFound {
+			return Error(404, err.Error(), nil)
+		}
 		return Error(500, "Failed to update alert notification", err)
-	}
-
-	if cmd.Result == nil {
-		return Error(404, "Alert notification not found", nil)
 	}
 
 	query := models.GetAlertNotificationsWithUidQuery{
@@ -390,6 +389,9 @@ func DeleteAlertNotification(c *models.ReqContext) Response {
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == models.ErrAlertNotificationNotFound {
+			return Error(404, err.Error(), nil)
+		}
 		return Error(500, "Failed to delete alert notification", err)
 	}
 
@@ -403,13 +405,19 @@ func DeleteAlertNotificationByUID(c *models.ReqContext) Response {
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == models.ErrAlertNotificationNotFound {
+			return Error(404, err.Error(), nil)
+		}
 		return Error(500, "Failed to delete alert notification", err)
 	}
 
-	return Success("Notification deleted")
+	return JSON(200, util.DynMap{
+		"message": "Notification deleted",
+		"id":      cmd.DeletedAlertNotificationId,
+	})
 }
 
-//POST /api/alert-notifications/test
+// POST /api/alert-notifications/test
 func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) Response {
 	cmd := &alerting.NotificationTestCommand{
 		OrgID:          c.OrgId,
@@ -430,7 +438,7 @@ func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) Re
 	return Success("Test notification sent")
 }
 
-//POST /api/alerts/:alertId/pause
+// POST /api/alerts/:alertId/pause
 func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 	alertID := c.ParamsInt64("alertId")
 	result := make(map[string]interface{})
@@ -483,7 +491,7 @@ func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 	return JSON(200, result)
 }
 
-//POST /api/admin/pause-all-alerts
+// POST /api/admin/pause-all-alerts
 func PauseAllAlerts(c *models.ReqContext, dto dtos.PauseAllAlertsCommand) Response {
 	updateCmd := models.PauseAllAlertCommand{
 		Paused: dto.Paused,

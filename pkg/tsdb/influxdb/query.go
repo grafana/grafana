@@ -30,10 +30,10 @@ func (query *Query) Build(queryContext *tsdb.TsdbQuery) (string, error) {
 	calculator := tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{})
 	interval := calculator.Calculate(queryContext.TimeRange, query.Interval)
 
-	res = strings.Replace(res, "$timeFilter", query.renderTimeFilter(queryContext), -1)
-	res = strings.Replace(res, "$interval", interval.Text, -1)
-	res = strings.Replace(res, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10), -1)
-	res = strings.Replace(res, "$__interval", interval.Text, -1)
+	res = strings.ReplaceAll(res, "$timeFilter", query.renderTimeFilter(queryContext))
+	res = strings.ReplaceAll(res, "$interval", interval.Text)
+	res = strings.ReplaceAll(res, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
+	res = strings.ReplaceAll(res, "$__interval", interval.Text)
 	return res, nil
 }
 
@@ -51,7 +51,7 @@ func (query *Query) renderTags() []string {
 			str += " "
 		}
 
-		//If the operator is missing we fall back to sensible defaults
+		// If the operator is missing we fall back to sensible defaults
 		if tag.Operator == "" {
 			if regexpOperatorPattern.Match([]byte(tag.Value)) {
 				tag.Operator = "=~"
@@ -68,7 +68,7 @@ func (query *Query) renderTags() []string {
 		case "<", ">":
 			textValue = tag.Value
 		default:
-			textValue = fmt.Sprintf("'%s'", strings.Replace(tag.Value, `\`, `\\`, -1))
+			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
 		}
 
 		res = append(res, fmt.Sprintf(`%s"%s" %s %s`, str, tag.Key, tag.Operator, textValue))
@@ -143,7 +143,7 @@ func (query *Query) renderGroupBy(queryContext *tsdb.TsdbQuery) string {
 		}
 
 		if i > 0 && group.Type != "fill" {
-			groupBy += ", " //fill is so very special. fill is a creep, fill is a weirdo
+			groupBy += ", " // fill is so very special. fill is a creep, fill is a weirdo
 		} else {
 			groupBy += " "
 		}

@@ -13,7 +13,7 @@ import (
 )
 
 func TestPasswordMigrationCommand(t *testing.T) {
-	//setup datasources with password, basic_auth and none
+	// setup datasources with password, basic_auth and none
 	sqlstore := sqlstore.InitTestDB(t)
 	session := sqlstore.NewSession()
 	defer session.Close()
@@ -45,13 +45,13 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	_, err = session.Exec("update data_source set secure_json_data = null where name = 'influxdb'")
 	require.NoError(t, err)
 
-	//run migration
+	// run migration
 	c, err := commandstest.NewCliContext(map[string]string{})
 	require.Nil(t, err)
 	err = EncryptDatasourcePasswords(c, sqlstore)
 	require.NoError(t, err)
 
-	//verify that no datasources still have password or basic_auth
+	// verify that no datasources still have password or basic_auth
 	var dss []*models.DataSource
 	err = session.SQL("select * from data_source").Find(&dss)
 	require.NoError(t, err)

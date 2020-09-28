@@ -1,8 +1,11 @@
 import React from 'react';
-import { mount } from 'enzyme';
-import { Tag } from '@grafana/ui';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { SearchItem, Props } from './SearchItem';
 import { DashboardSearchItemType } from '../types';
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
 
 const data = {
   id: 1,
@@ -22,31 +25,41 @@ const setup = (propOverrides?: Partial<Props>) => {
     item: data,
     onTagSelected: jest.fn(),
     editable: false,
-    //@ts-ignore
-    onToggleAllChecked: jest.fn(),
   };
 
   Object.assign(props, propOverrides);
 
-  const wrapper = mount(<SearchItem {...props} />);
-  const instance = wrapper.instance();
-
-  return {
-    wrapper,
-    instance,
-  };
+  render(<SearchItem {...props} />);
 };
 
 describe('SearchItem', () => {
   it('should render the item', () => {
-    const { wrapper } = setup({});
-    expect(wrapper.find({ 'aria-label': 'Dashboard search item Test 1' })).toHaveLength(1);
-    expect(wrapper.findWhere(comp => comp.type() === 'div' && comp.text() === 'Test 1')).toHaveLength(1);
+    setup();
+    expect(screen.getAllByLabelText('Dashboard search item Test 1')).toHaveLength(1);
+    expect(screen.getAllByText('Test 1')).toHaveLength(1);
+  });
+
+  it('should mark item as checked', () => {
+    const mockedOnToggleChecked = jest.fn();
+    setup({ editable: true, onToggleChecked: mockedOnToggleChecked });
+    const checkbox = screen.getByRole('checkbox');
+    expect(checkbox).not.toBeChecked();
+    fireEvent.click(checkbox);
+    expect(mockedOnToggleChecked).toHaveBeenCalledTimes(1);
+    expect(mockedOnToggleChecked).toHaveBeenCalledWith(data);
+    expect(screen.getByRole('checkbox')).toBeChecked();
   });
 
   it("should render item's tags", () => {
-    // @ts-ignore
-    const { wrapper } = setup({});
-    expect(wrapper.find(Tag)).toHaveLength(2);
+    setup();
+    expect(screen.getAllByText(/tag/i)).toHaveLength(2);
+  });
+
+  it('should select the tag on tag click', () => {
+    const mockOnTagSelected = jest.fn();
+    setup({ onTagSelected: mockOnTagSelected });
+    fireEvent.click(screen.getByText('Tag1'));
+    expect(mockOnTagSelected).toHaveBeenCalledTimes(1);
+    expect(mockOnTagSelected).toHaveBeenCalledWith('Tag1');
   });
 });

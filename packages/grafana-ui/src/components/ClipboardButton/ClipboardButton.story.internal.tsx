@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-
+import { text } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ClipboardButton } from './ClipboardButton';
 import { Input } from '../Forms/Legacy/Input/Input';
-import { text } from '@storybook/addon-knobs';
+import mdx from './ClipboardButton.mdx';
 
 const getKnobs = () => {
   return {
@@ -38,6 +38,11 @@ export default {
   title: 'Buttons/ClipboardButton',
   component: ClipboardButton,
   decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 export const copyToClipboard = () => <Wrapper />;
