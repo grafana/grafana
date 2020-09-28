@@ -51,6 +51,30 @@ const AGGREGATION_OPERATORS: CompletionItem[] = [
 
 export const RANGE_VEC_FUNCTIONS = [
   {
+    insertText: 'avg_over_time',
+    label: 'avg_over_time',
+    detail: 'avg_over_time(range-vector)',
+    documentation: 'The average of all values in the specified interval.',
+  },
+  {
+    insertText: 'min_over_time',
+    label: 'min_over_time',
+    detail: 'min_over_time(range-vector)',
+    documentation: 'The minimum of all values in the specified interval.',
+  },
+  {
+    insertText: 'max_over_time',
+    label: 'max_over_time',
+    detail: 'max_over_time(range-vector)',
+    documentation: 'The maximum of all values in the specified interval.',
+  },
+  {
+    insertText: 'sum_over_time',
+    label: 'sum_over_time',
+    detail: 'sum_over_time(range-vector)',
+    documentation: 'The sum of all values in the specified interval.',
+  },
+  {
     insertText: 'count_over_time',
     label: 'count_over_time',
     detail: 'count_over_time(range-vector)',
