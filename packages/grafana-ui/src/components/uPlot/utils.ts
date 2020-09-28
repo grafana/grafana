@@ -81,6 +81,24 @@ export const preparePlotData = (data: DataFrame): uPlot.AlignedData => {
   return plotData;
 };
 
+const isPlottingTime = (config: uPlot.Options) => {
+  let isTimeSeries = false;
+
+  if (!config.scales) {
+    return false;
+  }
+
+  for (let i = 0; i < Object.keys(config.scales).length; i++) {
+    const key = Object.keys(config.scales)[i];
+    if (config.scales[key].time === true) {
+      isTimeSeries = true;
+      break;
+    }
+  }
+
+  return isTimeSeries;
+};
+
 /**
  * Based on two config objects indicates whether or not uPlot needs reinitialisation
  * This COULD be done based on data frames, but keeping it this way for now as a simplification
@@ -91,6 +109,10 @@ export const shouldReinitialisePlot = (prevConfig?: uPlot.Options, config?: uPlo
   }
 
   if (!prevConfig && config) {
+    return true;
+  }
+
+  if (isPlottingTime(config!) && prevConfig!.tzDate !== config!.tzDate) {
     return true;
   }
   // reinitialise when number of series, scales or axes changes

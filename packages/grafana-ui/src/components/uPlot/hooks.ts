@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PlotPlugin } from './types';
 import { pluginLog } from './utils';
 import uPlot from 'uplot';
+import { getTimeZoneInfo, TimeZone } from '@grafana/data';
 
 export const usePlotPlugins = () => {
   /**
@@ -92,13 +93,24 @@ export const DEFAULT_PLOT_CONFIG = {
   },
   hooks: {},
 };
-export const usePlotConfig = (width: number, height: number) => {
+export const usePlotConfig = (width: number, height: number, timeZone: TimeZone) => {
   const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
-
   const [seriesConfig, setSeriesConfig] = useState<uPlot.Series[]>([{}]);
   const [axesConfig, setAxisConfig] = useState<uPlot.Axis[]>([]);
   const [scalesConfig, setScaleConfig] = useState<Record<string, uPlot.Scale>>({});
   const [currentConfig, setCurrentConfig] = useState<uPlot.Options>();
+
+  const tzDate = useMemo(() => {
+    let fmt = undefined;
+
+    const tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
+
+    if (tz) {
+      fmt = (ts: number) => uPlot.tzDate(new Date(ts * 1e3), tz);
+    }
+
+    return fmt;
+  }, [timeZone]);
 
   const defaultConfig = useMemo(() => {
     return {
@@ -108,9 +120,9 @@ export const usePlotConfig = (width: number, height: number) => {
       plugins: Object.entries(plugins).map(p => ({
         hooks: p[1].hooks,
       })),
-      // tzDate,
+      tzDate,
     } as any;
-  }, [plugins, width, height]);
+  }, [plugins, width, height, tzDate]);
 
   useEffect(() => {
     if (!arePluginsReady) {

@@ -16,7 +16,11 @@ export const UPlotChart: React.FC<PlotProps> = props => {
   const [plotInstance, setPlotInstance] = useState<uPlot>();
 
   // uPlot config API
-  const { currentConfig, addSeries, addAxis, addScale, registerPlugin } = usePlotConfig(props.width, props.height);
+  const { currentConfig, addSeries, addAxis, addScale, registerPlugin } = usePlotConfig(
+    props.width,
+    props.height,
+    props.timeZone
+  );
 
   const prevConfig = usePrevious(currentConfig);
 
@@ -54,6 +58,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     if (!currentConfig) {
       return;
     }
+
     if (shouldReinitialisePlot(prevConfig, currentConfig)) {
       const instance = initPlot();
       if (!instance) {
@@ -63,7 +68,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     } else {
       updateData();
     }
-  }, [props.data, props.timeRange, currentConfig, setPlotInstance]);
+  }, [props.data, props.timeRange, props.timeZone, currentConfig, setPlotInstance]);
 
   // When size props changed update plot size synchronously
   useLayoutEffect(() => {
