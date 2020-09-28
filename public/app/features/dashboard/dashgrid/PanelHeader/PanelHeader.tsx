@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
 import { DataLink, LoadingState, PanelData, PanelMenuItem, QueryResultMetaNotice, ScopedVars } from '@grafana/data';
-import { AngularComponent } from '@grafana/runtime';
+import { AngularComponent, config } from '@grafana/runtime';
 import { ClickOutsideWrapper, Icon, Tooltip } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -15,6 +15,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { getPanelMenu } from 'app/features/dashboard/utils/getPanelMenu';
 import { updateLocation } from 'app/core/actions';
+import { css } from 'emotion';
 
 export interface Props {
   panel: PanelModel;
@@ -101,11 +102,17 @@ export class PanelHeader extends Component<Props, State> {
         </div>
       );
     }
-    if (state === LoadingState.Streaming) {
+    if (state !== LoadingState.Streaming) {
       return (
         <div className="panel-loading" onClick={this.onCancelQuery}>
           <Tooltip content="Streaming (unsubscribe)">
-            <Icon name="circle" type="mono" />
+            <Icon
+              name="circle"
+              type="mono"
+              className={css`
+                color: ${config.theme.colors.textFaint};
+              `}
+            />
           </Tooltip>
         </div>
       );
