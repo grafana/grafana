@@ -1,7 +1,8 @@
 import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
 
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { GrafanaDatasource } from '../datasource';
+import { GrafanaDatasource } from './datasource';
+import { GrafanaQuery, GrafanaAnnotaitonQuery, GrafanaAnnotationType } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -87,5 +88,5 @@ function setupAnnotationQueryOptions(annotation: { tags: string[]; type?: string
       to: dateTime(1432288401),
     },
     rangeRaw: { from: 'now-24h', to: 'now' },
-  };
+  } as AnnotationQueryRequest<GrafanaQuery>;
 }
