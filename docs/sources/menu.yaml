@@ -103,7 +103,7 @@
     - name: Jaeger instrumentation
       link: /administration/jaeger-instrumentation/
     - name: Set up Grafana for high availability
-      link: /tutorials/ha_setup/
+      link: /administration/set-up-for-high-availability/
     - name: Change home dashboard
       link: /administration/change-home-dashboard/
 - name: Manage users
@@ -163,6 +163,8 @@
       name: Add panel
     - link: /panels/queries/
       name: Queries
+    - link: /panels/share-query-results/
+      name: Share query results
     - link: /panels/transformations/
       name: Transformations
       children:
@@ -209,12 +211,12 @@
         - link: /panels/visualizations/table-panel/
           name: Table
           children:
-          - name: Overview
-            link: /panels/visualizations/table/
-          - link: /panels/visualizations/table/table-field-options/
-            name: Table field options
-          - link: /panels/visualizations/tables/filter-table-columns/
-            name: Filter table columns
+            - name: Overview
+              link: /panels/visualizations/table/
+            - link: /panels/visualizations/table/table-field-options/
+              name: Table field options
+            - link: /panels/visualizations/table/filter-table-columns/
+              name: Filter table columns
         - link: /panels/visualizations/text-panel/
           name: Text
     - link: /panels/thresholds/
@@ -224,9 +226,9 @@
     - link: /panels/calculations-list/
       name: Calculations list
 - name: Dashboards
-  link: /features/dashboard/
+  link: /dashboards/
   children:
-    - link: /features/dashboard/dashboards/
+    - link: /dashboards/
       name: Overview
     - link: /dashboards/annotations/
       name: Annotations
@@ -247,15 +249,15 @@
     - link: /dashboards/dashboard_history/
       name: Dashboard version history
     - name: Keyboard shortcuts
-      link: /features/shortcuts/
+      link: /dashboards/shortcuts/
     - name: Reporting
-      link: /features/reporting/
+      link: /dashboards/reporting/
     - link: /reference/dashboard/
       name: JSON Model
     - link: /reference/scripting/
       name: Scripted dashboards
 - name: Explore
-  link: /features/explore/
+  link: /explore/
 - name: Alerting
   link: /alerting/
   children:
@@ -424,7 +426,7 @@
     - name: API Authentication
       link: /http_api/auth/
     - name: Create API Tokens and Dashboards for a Specific Organization
-      link: /tutorials/api_org_token_howto/
+      link: /http_api/create-api-tokens-for-org/
     - name: cURL examples
       link: /http_api/curl-examples/
     - name: Admin API

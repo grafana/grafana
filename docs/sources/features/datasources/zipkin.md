@@ -13,7 +13,7 @@ weight = 2
 # Zipkin data source
 
 Grafana ships with built-in support for Zipkin, an open source, distributed tracing system.
-Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore" >}}).
+Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../../explore" >}}).
 
 ## Adding the data source
 To access Zipkin settings, click the **Configuration** (gear) icon, then click **Data Sources**, and then click **Zipkin**.
@@ -30,7 +30,7 @@ To access Zipkin settings, click the **Configuration** (gear) icon, then click *
 
 ## Query traces
 
-Querying and displaying traces from Zipkin is available via [Explore]({{< relref "../explore" >}}).
+Querying and displaying traces from Zipkin is available via [Explore]({{< relref "../../explore" >}}).
 
 {{< docs-imagebox img="/img/docs/v70/zipkin-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor" >}}
 
@@ -49,4 +49,4 @@ Zipkin annotations are shown in the trace view as logs with annotation value sho
 
 ## Linking Trace ID from logs
 
-You can link to Zipkin trace from logs in Loki by configuring a derived field with internal link. See [Loki documentation]({{< relref "./loki#derived-fields" >}}) for details.
+You can link to Zipkin trace from logs in Loki by configuring a derived field with internal link. See [Loki documentation]({{< relref "loki#derived-fields" >}}) for details.
