@@ -145,27 +145,20 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
           </InlineFieldRow>
         )}
         {query.type === GELQueryType.resample && (
-          <>
-            <InlineFieldRow>
-              <InlineField label="Series">
-                <Input onChange={this.onExpressionChange} value={query.expression} width={25} />
-              </InlineField>
-              <InlineField label="Rule">
-                <Input onChange={this.onRuleChange} value={query.rule} width={25} />
-              </InlineField>
-              <InlineField label="Downsample function">
-                <Select
-                  options={downsamplingTypes}
-                  value={downsampler}
-                  onChange={this.onSelectDownsampler}
-                  width={25}
-                />
-              </InlineField>
-              <InlineField label="Upsample function">
-                <Select options={upsamplingTypes} value={upsampler} onChange={this.onSelectUpsampler} width={25} />
-              </InlineField>
-            </InlineFieldRow>
-          </>
+          <InlineFieldRow>
+            <InlineField label="Series">
+              <Input onChange={this.onExpressionChange} value={query.expression} width={25} />
+            </InlineField>
+            <InlineField label="Rule">
+              <Input onChange={this.onRuleChange} value={query.rule} width={25} />
+            </InlineField>
+            <InlineField label="Downsample function">
+              <Select options={downsamplingTypes} value={downsampler} onChange={this.onSelectDownsampler} width={25} />
+            </InlineField>
+            <InlineField label="Upsample function">
+              <Select options={upsamplingTypes} value={upsampler} onChange={this.onSelectUpsampler} width={25} />
+            </InlineField>
+          </InlineFieldRow>
         )}
       </div>
     );
