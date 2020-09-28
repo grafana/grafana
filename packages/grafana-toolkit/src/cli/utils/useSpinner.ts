@@ -1,8 +1,8 @@
 import ora = require('ora');
 
-type FnToSpin<T> = (options: T) => Promise<void>;
+type FnToSpin<T> = (options: T) => Promise<any>;
 
-export const useSpinner = <T = any>(spinnerLabel: string, fn: FnToSpin<T>, killProcess = true) => {
+export function useSpinner<T = void>(spinnerLabel: string, fn: FnToSpin<T>, killProcess = true) {
   return async (options: T) => {
     const spinner = ora(spinnerLabel);
     spinner.start();
@@ -17,4 +17,4 @@ export const useSpinner = <T = any>(spinnerLabel: string, fn: FnToSpin<T>, killP
       }
     }
   };
-};
+}

@@ -9,10 +9,10 @@ const path = require('path');
 let distDir: string, cwd: string;
 
 // @ts-ignore
-export const clean = useSpinner<void>('Cleaning', async () => await execa('npm', ['run', 'clean']));
+export const clean = useSpinner('Cleaning', async () => await execa('npm', ['run', 'clean']));
 
 // @ts-ignore
-const compile = useSpinner<void>('Compiling sources', async () => {
+const compile = useSpinner('Compiling sources', async () => {
   try {
     await execa('tsc', ['-p', './tsconfig.json']);
   } catch (e) {
@@ -64,7 +64,7 @@ const copyFiles = () => {
     'src/config/jest.plugin.config.local.js',
   ];
   // @ts-ignore
-  return useSpinner<void>(`Moving ${files.join(', ')} files`, async () => {
+  return useSpinner(`Moving ${files.join(', ')} files`, async () => {
     const promises = files.map(file => {
       return new Promise((resolve, reject) => {
         const basedir = path.dirname(`${distDir}/${file}`);
@@ -88,7 +88,7 @@ const copyFiles = () => {
 const copySassFiles = () => {
   const files = ['_variables.generated.scss', '_variables.dark.generated.scss', '_variables.light.generated.scss'];
   // @ts-ignore
-  return useSpinner<void>(`Copy scss files ${files.join(', ')} files`, async () => {
+  return useSpinner(`Copy scss files ${files.join(', ')} files`, async () => {
     const sassDir = path.resolve(cwd, '../../public/sass/');
     const promises = files.map(file => {
       return new Promise((resolve, reject) => {
