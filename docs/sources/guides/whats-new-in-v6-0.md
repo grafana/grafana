@@ -22,7 +22,7 @@ The main highlights are:
 - [New Panel Editor UX]({{< relref "#new-panel-editor" >}}) improves panel editing
     and enables easy switching between different visualizations.
 - [Google Stackdriver data source]({{< relref "#google-stackdriver-data-source" >}}) is out of beta and is officially released.
-- [Azure Monitor]({{< relref "#azure-monitor-data-source" >}}) plugin is ported from being an external plugin to being a core data source
+- [Azure Monitor]({{< relref "#azure-monitor-data-source" >}}) plugin is ported from being an external plugin to be a core data source
 - [React Plugin]({{< relref "#react-panels-query-editors" >}}) support enables an easier way to build plugins.
 - [Named Colors]({{< relref "#named-colors" >}}) in our new improved color picker.
 - [Removal of user session storage]({{< relref "#easier-to-deploy-improved-security" >}}) makes Grafana easier to deploy and improves security.
