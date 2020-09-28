@@ -127,7 +127,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       });
     }
 
-    // @todo instead wait for '@pluginModule'
+    // @todo instead wait for '@pluginModule' if not already loaded
     e2e().wait(2000);
 
     // There is no usable data when the query is empty,
