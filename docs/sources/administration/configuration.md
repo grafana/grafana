@@ -395,7 +395,7 @@ Interval between sends of TCP keepalive requests. Default is 30 seconds.
 
 ### idle_conn_timeout
 
-The length of time that idle connections will be maintained. Default is 90 seconds.
+The length of time that Grafana maintains idle connections. Default is 90 seconds.
 
 ### send_user_header
 
