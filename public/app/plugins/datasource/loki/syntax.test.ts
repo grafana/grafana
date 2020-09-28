@@ -18,6 +18,9 @@ describe('Loki syntax', () => {
     expect(Prism.highlight('{key="value"}#test', syntax, 'loki')).toBe(
       '<span class="token context-labels"><span class="token punctuation">{</span><span class="token label-key attr-name">key</span>=<span class="token label-value attr-value">"value"</span></span><span class="token punctuation">}</span><span class="token comment">#test</span>'
     );
+    expect(Prism.highlight('{key="value"', syntax, 'loki')).toBe(
+      '<span class="token context-labels"><span class="token punctuation">{</span><span class="token label-key attr-name">key</span>=<span class="token label-value attr-value">"value"</span></span>'
+    );
   });
   it('should highlight functions in Loki query correctly', () => {
     expect(Prism.highlight('rate({key="value"}[5m])', syntax, 'loki')).toBe(
