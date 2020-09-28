@@ -10,14 +10,11 @@ import globby from 'globby';
 
 let distDir: string, cwd: string;
 
-// @ts-ignore
-export const clean = useSpinner<void>('Cleaning', async () => await execa('npm', ['run', 'clean']));
+export const clean = useSpinner('Cleaning', () => execa('npm', ['run', 'clean']));
 
-// @ts-ignore
-const compile = useSpinner<void>('Compiling sources', () => execa('tsc', ['-p', './tsconfig.build.json']));
+const compile = useSpinner('Compiling sources', () => execa('tsc', ['-p', './tsconfig.build.json']));
 
-// @ts-ignore
-const rollup = useSpinner<void>('Bundling', () => execa('npm', ['run', 'bundle']));
+const rollup = useSpinner('Bundling', () => execa('npm', ['run', 'bundle']));
 
 interface SavePackageOptions {
   path: string;
@@ -69,9 +66,7 @@ const preparePackage = async (pkg: any) => {
 
 const moveFiles = () => {
   const files = ['README.md', 'CHANGELOG.md', 'index.js'];
-
-  // @ts-ignore
-  return useSpinner<void>(`Moving ${files.join(', ')} files`, async () => {
+  return useSpinner(`Moving ${files.join(', ')} files`, async () => {
     const promises = files.map(file => {
       return new Promise((resolve, reject) => {
         fs.copyFile(`${cwd}/${file}`, `${distDir}/${file}`, err => {
@@ -91,7 +86,7 @@ const moveFiles = () => {
 const moveStaticFiles = async (pkg: any) => {
   if (pkg.name.endsWith('/ui')) {
     const staticFiles = await globby('src/**/*.{png,svg,gif,jpg}');
-    return useSpinner<void>(`Moving static files`, async () => {
+    return useSpinner(`Moving static files`, async () => {
       const promises = staticFiles.map(file => {
         return new Promise((resolve, reject) => {
           fs.copyFile(file, file.replace(/^src/, 'compiled'), (err: any) => {
