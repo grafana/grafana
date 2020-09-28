@@ -32,7 +32,9 @@ The main highlights are:
   - [**Report time range**]({{< relref "#report-time-range" >}})
   - [**Organization-wide report settings**]({{< relref "#organization-wide-report-settings" >}})
   - [**Report grid layout**]({{< relref "#report-grid-layout" >}})
-- [**X-Ray data source plugin**]({{< relref "#x-ray-data-source-plugin" >}})
+- [**What's new in other parts of the Grafana ecosystem**]({{< relref "#whats-new-in-other-parts-of-the-grafana-ecosystem">}})
+  - [**ADX (Azure Data Explorer) plugin**]({{< relref "#adx-azure-data-explorer-plugin">}})
+  - [**X-Ray data source plugin**]({{< relref "#x-ray-data-source-plugin" >}})
 
 ## New date formatting options added
 
