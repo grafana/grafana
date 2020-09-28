@@ -214,13 +214,15 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 }
 
 func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, timeRange *tsdb.TimeRange, debug bool) *tsdb.TsdbQuery {
+	queryModel := c.Query.Model
 	req := &tsdb.TsdbQuery{
 		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
 			{
 				RefId:      "A",
-				Model:      c.Query.Model,
+				Model:      queryModel,
 				DataSource: datasource,
+				QueryType:  queryModel.Get("queryType").MustString(""),
 			},
 		},
 		Headers: map[string]string{

@@ -10,17 +10,17 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-// QueryOptions represents datasource configuration options
-type QueryOptions struct {
+// queryOptions represents datasource configuration options
+type queryOptions struct {
 	Bucket        string `json:"bucket"`
 	DefaultBucket string `json:"defaultBucket"`
 	Organization  string `json:"organization"`
 }
 
-// QueryModel represents a spreadsheet query.
-type QueryModel struct {
+// queryModel represents a query.
+type queryModel struct {
 	RawQuery string       `json:"query"`
-	Options  QueryOptions `json:"options"`
+	Options  queryOptions `json:"options"`
 
 	// Not from JSON
 	TimeRange     backend.TimeRange `json:"-"`
@@ -31,8 +31,8 @@ type QueryModel struct {
 // The following is commented out but kept as it should be useful when
 // restoring this code to be closer to the SDK's models.
 
-// func GetQueryModel(query backend.DataQuery) (*QueryModel, error) {
-// 	model := &QueryModel{}
+// func GetQueryModel(query backend.DataQuery) (*queryModel, error) {
+// 	model := &queryModel{}
 
 // 	err := json.Unmarshal(query.JSON, &model)
 // 	if err != nil {
@@ -46,17 +46,16 @@ type QueryModel struct {
 // 	return model, nil
 // }
 
-// GetQueryModelTSDB builds a QueryModel from tsdb.Query information and datasource configuration (dsInfo).
-func GetQueryModelTSDB(query *tsdb.Query, timeRange *tsdb.TimeRange, dsInfo *models.DataSource) (*QueryModel, error) {
-	model := &QueryModel{}
+// getQueryModelTSDB builds a queryModel from tsdb.Query information and datasource configuration (dsInfo).
+func getQueryModelTSDB(query *tsdb.Query, timeRange *tsdb.TimeRange, dsInfo *models.DataSource) (*queryModel, error) {
+	model := &queryModel{}
 	queryBytes, err := query.Model.Encode()
 	if err != nil {
 		return nil, fmt.Errorf("failed to re-encode the flux query into JSON: %w", err)
 	}
 
-	err = json.Unmarshal(queryBytes, &model)
-	if err != nil {
-		return nil, fmt.Errorf("error reading query: %s", err.Error())
+	if err := json.Unmarshal(queryBytes, &model); err != nil {
+		return nil, fmt.Errorf("error reading query: %w", err)
 	}
 	if model.Options.DefaultBucket == "" {
 		model.Options.DefaultBucket = dsInfo.JsonData.Get("defaultBucket").MustString("")
@@ -67,14 +66,15 @@ func GetQueryModelTSDB(query *tsdb.Query, timeRange *tsdb.TimeRange, dsInfo *mod
 	if model.Options.Organization == "" {
 		model.Options.Organization = dsInfo.JsonData.Get("organization").MustString("")
 	}
+
 	startTime, err := timeRange.ParseFrom()
-	if err != nil {
-		return nil, err
+	if err != nil && timeRange.From != "" {
+		return nil, fmt.Errorf("error reading startTime: %w", err)
 	}
 
 	endTime, err := timeRange.ParseTo()
-	if err != nil {
-		return nil, err
+	if err != nil && timeRange.To != "" {
+		return nil, fmt.Errorf("error reading endTime: %w", err)
 	}
 
 	// Copy directly from the well typed query
@@ -83,6 +83,12 @@ func GetQueryModelTSDB(query *tsdb.Query, timeRange *tsdb.TimeRange, dsInfo *mod
 		To:   endTime,
 	}
 	model.MaxDataPoints = query.MaxDataPoints
+	if model.MaxDataPoints == 0 {
+		model.MaxDataPoints = 10000 // 10k/series should be a reasonable place to abort!
+	}
 	model.Interval = time.Millisecond * time.Duration(query.IntervalMs)
+	if model.Interval.Milliseconds() == 0 {
+		model.Interval = time.Millisecond // 1ms
+	}
 	return model, nil
 }

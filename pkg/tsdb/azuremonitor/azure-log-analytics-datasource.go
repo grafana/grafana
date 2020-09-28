@@ -184,7 +184,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	if query.ResultFormat == "time_series" {
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
-			wideFrame, err := data.LongToWide(frame, &data.FillMissing{})
+			wideFrame, err := data.LongToWide(frame, nil)
 			if err == nil {
 				frame = wideFrame
 			} else {
@@ -259,7 +259,7 @@ func (ar *AzureLogAnalyticsResponse) GetPrimaryResultTable() (*AzureLogAnalytics
 			return &t, nil
 		}
 	}
-	return nil, fmt.Errorf("no data as PrimaryResult table is missing from the the response")
+	return nil, fmt.Errorf("no data as PrimaryResult table is missing from the response")
 }
 
 func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (AzureLogAnalyticsResponse, error) {

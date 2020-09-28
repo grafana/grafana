@@ -12,6 +12,10 @@ import (
 )
 
 func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*data.Frame, error) {
+	if response == nil {
+		return nil, fmt.Errorf("response is nil, cannot convert log results to data frames")
+	}
+
 	nonEmptyRows := make([][]*cloudwatchlogs.ResultField, 0)
 	// Sometimes CloudWatch can send empty rows
 	for _, row := range response.Results {
@@ -94,12 +98,44 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 		}
 	}
 
+	queryStats := make([]data.QueryStat, 0)
+	if response.Statistics != nil {
+		if response.Statistics.BytesScanned != nil {
+			queryStats = append(queryStats, data.QueryStat{
+				FieldConfig: data.FieldConfig{DisplayName: "Bytes scanned"},
+				Value:       *response.Statistics.BytesScanned,
+			})
+		}
+
+		if response.Statistics.RecordsScanned != nil {
+			queryStats = append(queryStats, data.QueryStat{
+				FieldConfig: data.FieldConfig{DisplayName: "Records scanned"},
+				Value:       *response.Statistics.RecordsScanned,
+			})
+		}
+
+		if response.Statistics.RecordsMatched != nil {
+			queryStats = append(queryStats, data.QueryStat{
+				FieldConfig: data.FieldConfig{DisplayName: "Records matched"},
+				Value:       *response.Statistics.RecordsMatched,
+			})
+		}
+	}
+
 	frame := data.NewFrame("CloudWatchLogsResponse", newFields...)
 	frame.Meta = &data.FrameMeta{
-		Custom: map[string]interface{}{
-			"Status":     *response.Status,
-			"Statistics": *response.Statistics,
-		},
+		Stats:  nil,
+		Custom: nil,
+	}
+
+	if len(queryStats) > 0 {
+		frame.Meta.Stats = queryStats
+	}
+
+	if response.Status != nil {
+		frame.Meta.Custom = map[string]interface{}{
+			"Status": *response.Status,
+		}
 	}
 
 	// Results aren't guaranteed to come ordered by time (ascending), so we need to sort
@@ -139,6 +175,7 @@ func groupResults(results *data.Frame, groupingFieldNames []string) ([]*data.Fra
 		if _, exists := groupedDataFrames[groupKey]; !exists {
 			newFrame := results.EmptyCopy()
 			newFrame.Name = groupKey
+			newFrame.Meta = results.Meta
 			groupedDataFrames[groupKey] = newFrame
 		}
 

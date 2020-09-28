@@ -11,7 +11,7 @@ import (
 	"xorm.io/xorm"
 )
 
-// WithTransactionalDbSession calls the callback with an session within a transaction
+// WithTransactionalDbSession calls the callback with a session within a transaction.
 func (ss *SqlStore) WithTransactionalDbSession(ctx context.Context, callback dbTransactionFunc) error {
 	return inTransactionWithRetryCtx(ctx, ss.engine, callback, 0)
 }

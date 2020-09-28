@@ -26,6 +26,7 @@ export interface Props {
   /** Set to true if the component rendered within in drawer content has its own scroll */
   scrollableContent?: boolean;
 
+  /** Callback for closing the drawer */
   onClose: () => void;
 }
 

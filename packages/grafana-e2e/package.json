@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/e2e",
-  "version": "7.2.0-pre.0",
+  "version": "7.3.0-pre.0",
   "description": "Grafana End-to-End Test Library",
   "keywords": [
     "cli",
@@ -24,7 +24,6 @@
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled",
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
-    "lint": "eslint cypress/ src/ --ext=.js,.ts,.tsx",
     "open": "cypress open",
     "start": "cypress run --headless --browser chrome",
     "test": "pushd test && node ../dist/bin/grafana-e2e.js run",
@@ -45,17 +44,17 @@
   "types": "src/index.ts",
   "dependencies": {
     "@cypress/webpack-preprocessor": "4.1.3",
-    "@grafana/e2e-selectors": "7.2.0-pre.0",
+    "@grafana/e2e-selectors": "7.3.0-pre.0",
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@mochajs/json-file-reporter": "^1.2.0",
     "blink-diff": "1.0.13",
     "commander": "5.0.0",
-    "cypress": "^4.9.0",
+    "cypress": "^4.12.1",
     "cypress-file-upload": "^4.0.7",
     "execa": "4.0.0",
     "resolve-as-bin": "2.1.0",
     "ts-loader": "6.2.1",
-    "typescript": "3.9.3",
+    "typescript": "4.0.2",
     "yaml": "^1.8.3"
   }
 }

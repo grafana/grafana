@@ -1,6 +1,14 @@
 {
-  "extends": ["@grafana/eslint-config"],
   "rules": {
-    "no-restricted-imports": [2, "^@grafana/runtime.*"]
-  }
+    "no-restricted-imports": ["error", { "patterns": ["@grafana/runtime"] }]
+  },
+  "overrides": [
+    {
+      "files": ["./**/*.{ts,tsx}"],
+      "rules": {
+        "react-hooks/rules-of-hooks": "off",
+        "react-hooks/exhaustive-deps": "off"
+      }
+    }
+  ]
 }

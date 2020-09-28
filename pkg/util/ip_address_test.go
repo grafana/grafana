@@ -3,133 +3,98 @@ package util
 import (
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-	"golang.org/x/xerrors"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestParseIPAddress(t *testing.T) {
-	Convey("Test parse ip address", t, func() {
-		addr, err := ParseIPAddress("192.168.0.140:456")
-		So(err, ShouldBeNil)
-		So(addr, ShouldEqual, "192.168.0.140")
-
-		addr, err = ParseIPAddress("192.168.0.140")
-		So(err, ShouldBeNil)
-		So(addr, ShouldEqual, "192.168.0.140")
-
-		addr, err = ParseIPAddress("[::1]:456")
-		So(err, ShouldBeNil)
-		So(addr, ShouldEqual, "::1")
-
-		addr, err = ParseIPAddress("[::1]")
-		So(err, ShouldBeNil)
-		So(addr, ShouldEqual, "::1")
-	})
-
-	Convey("Invalid address", t, func() {
-		_, err := ParseIPAddress("[::1")
-		So(err, ShouldBeError, xerrors.Errorf(
-			"Failed to split network address '[::1' by host and port: Malformed IPv6 address: '[::1'"))
-
-		_, err = ParseIPAddress("::1]")
-		So(err, ShouldBeError, xerrors.Errorf(
-			"Failed to split network address '::1]' by host and port: net.SplitHostPort failed for '::1]': address ::1]: too many colons in address"))
-
-		_, err = ParseIPAddress("")
-		So(err, ShouldBeError, xerrors.Errorf(
-			"Failed to split network address '' by host and port: Input is empty"))
-	})
-
-	Convey("Loopback address", t, func() {
-		addr, err := ParseIPAddress("127.0.0.1")
-		So(err, ShouldBeNil)
-		So(addr, ShouldEqual, "127.0.0.1")
-
-		addr, err = ParseIPAddress("[::1]")
-		So(err, ShouldBeNil)
-		So(addr, ShouldEqual, "::1")
-	})
+func TestParseIPAddress_Valid(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{input: "127.0.0.1", expected: "127.0.0.1"},
+		{input: "192.168.0.140:456", expected: "192.168.0.140"},
+		{input: "192.168.0.140", expected: "192.168.0.140"},
+		{input: "[::1]:456", expected: "::1"},
+		{input: "[::1]", expected: "::1"},
+	}
+	for _, testcase := range tests {
+		addr, err := ParseIPAddress(testcase.input)
+		require.NoError(t, err)
+		assert.Equal(t, testcase.expected, addr)
+	}
 }
 
-func TestSplitHostPortDefault(t *testing.T) {
-	Convey("Test split ip address to host and port", t, func() {
-		addr, err := SplitHostPortDefault("192.168.0.140:456", "", "")
-		So(err, ShouldBeNil)
-		So(addr.Host, ShouldEqual, "192.168.0.140")
-		So(addr.Port, ShouldEqual, "456")
-
-		addr, err = SplitHostPortDefault("192.168.0.140", "", "123")
-		So(err, ShouldBeNil)
-		So(addr.Host, ShouldEqual, "192.168.0.140")
-		So(addr.Port, ShouldEqual, "123")
-
-		addr, err = SplitHostPortDefault("[::1]:456", "", "")
-		So(err, ShouldBeNil)
-		So(addr.Host, ShouldEqual, "::1")
-		So(addr.Port, ShouldEqual, "456")
-
-		addr, err = SplitHostPortDefault("[::1]", "", "123")
-		So(err, ShouldBeNil)
-		So(addr.Host, ShouldEqual, "::1")
-		So(addr.Port, ShouldEqual, "123")
-
-		addr, err = SplitHostPortDefault(":456", "1.2.3.4", "")
-		So(err, ShouldBeNil)
-		So(addr.Host, ShouldEqual, "1.2.3.4")
-		So(addr.Port, ShouldEqual, "456")
-
-		addr, err = SplitHostPortDefault("xyz.rds.amazonaws.com", "", "123")
-		So(err, ShouldBeNil)
-		So(addr.Host, ShouldEqual, "xyz.rds.amazonaws.com")
-		So(addr.Port, ShouldEqual, "123")
-
-		addr, err = SplitHostPortDefault("xyz.rds.amazonaws.com:123", "", "")
-		So(err, ShouldBeNil)
-		So(addr.Host, ShouldEqual, "xyz.rds.amazonaws.com")
-		So(addr.Port, ShouldEqual, "123")
-
-		addr, err = SplitHostPortDefault("", "localhost", "1433")
-		So(err, ShouldBeNil)
-		So(addr.Host, ShouldEqual, "localhost")
-		So(addr.Port, ShouldEqual, "1433")
-	})
+func TestParseIPAddress_Invalid(t *testing.T) {
+	tests := []struct {
+		input string
+		err   string
+	}{
+		{
+			input: "[::1",
+			err:   "failed to split network address \"[::1\" by host and port: Malformed IPv6 address: '[::1'",
+		},
+		{
+			input: "::1]",
+			err:   "failed to split network address \"::1]\" by host and port: net.SplitHostPort failed for '::1]': address ::1]: too many colons in address",
+		},
+		{
+			input: "",
+			err:   "failed to split network address \"\" by host and port: Input is empty",
+		},
+	}
+	for _, testcase := range tests {
+		addr, err := ParseIPAddress(testcase.input)
+		assert.EqualError(t, err, testcase.err)
+		assert.Empty(t, addr)
+	}
 }
 
-func TestSplitHostPort(t *testing.T) {
-	Convey("Test split ip address to host and port", t, func() {
-		addr, err := SplitHostPort("192.168.0.140:456")
-		So(err, ShouldBeNil)
-		So(addr.Host, ShouldEqual, "192.168.0.140")
-		So(addr.Port, ShouldEqual, "456")
+func TestSplitHostPortDefault_Valid(t *testing.T) {
+	tests := []struct {
+		input       string
+		defaultHost string
+		defaultPort string
 
-		addr, err = SplitHostPort("192.168.0.140")
-		So(err, ShouldBeNil)
-		So(addr.Host, ShouldEqual, "192.168.0.140")
-		So(addr.Port, ShouldEqual, "")
+		host string
+		port string
+	}{
+		{input: "192.168.0.140:456", defaultHost: "", defaultPort: "", host: "192.168.0.140", port: "456"},
+		{input: "192.168.0.140", defaultHost: "", defaultPort: "123", host: "192.168.0.140", port: "123"},
+		{input: "[::1]:456", defaultHost: "", defaultPort: "", host: "::1", port: "456"},
+		{input: "[::1]", defaultHost: "", defaultPort: "123", host: "::1", port: "123"},
+		{input: ":456", defaultHost: "1.2.3.4", defaultPort: "", host: "1.2.3.4", port: "456"},
+		{input: "xyz.rds.amazonaws.com", defaultHost: "", defaultPort: "123", host: "xyz.rds.amazonaws.com", port: "123"},
+		{input: "xyz.rds.amazonaws.com:123", defaultHost: "", defaultPort: "", host: "xyz.rds.amazonaws.com", port: "123"},
+		{input: "", defaultHost: "localhost", defaultPort: "1433", host: "localhost", port: "1433"},
+	}
 
-		addr, err = SplitHostPort("[::1]:456")
-		So(err, ShouldBeNil)
-		So(addr.Host, ShouldEqual, "::1")
-		So(addr.Port, ShouldEqual, "456")
+	for _, testcase := range tests {
+		addr, err := SplitHostPortDefault(testcase.input, testcase.defaultHost, testcase.defaultPort)
+		assert.NoError(t, err)
+		assert.Equal(t, testcase.host, addr.Host)
+		assert.Equal(t, testcase.port, addr.Port)
+	}
+}
 
-		addr, err = SplitHostPort("[::1]")
-		So(err, ShouldBeNil)
-		So(addr.Host, ShouldEqual, "::1")
-		So(addr.Port, ShouldEqual, "")
-
-		addr, err = SplitHostPort(":456")
-		So(err, ShouldBeNil)
-		So(addr.Host, ShouldEqual, "")
-		So(addr.Port, ShouldEqual, "456")
-
-		addr, err = SplitHostPort("xyz.rds.amazonaws.com")
-		So(err, ShouldBeNil)
-		So(addr.Host, ShouldEqual, "xyz.rds.amazonaws.com")
-		So(addr.Port, ShouldEqual, "")
-
-		addr, err = SplitHostPort("xyz.rds.amazonaws.com:123")
-		So(err, ShouldBeNil)
-		So(addr.Host, ShouldEqual, "xyz.rds.amazonaws.com")
-		So(addr.Port, ShouldEqual, "123")
-	})
+func TestSplitHostPort_Valid(t *testing.T) {
+	tests := []struct {
+		input string
+		host  string
+		port  string
+	}{
+		{input: "192.168.0.140:456", host: "192.168.0.140", port: "456"},
+		{input: "192.168.0.140", host: "192.168.0.140", port: ""},
+		{input: "[::1]:456", host: "::1", port: "456"},
+		{input: "[::1]", host: "::1", port: ""},
+		{input: ":456", host: "", port: "456"},
+		{input: "xyz.rds.amazonaws.com", host: "xyz.rds.amazonaws.com", port: ""},
+		{input: "xyz.rds.amazonaws.com:123", host: "xyz.rds.amazonaws.com", port: "123"},
+	}
+	for _, testcase := range tests {
+		addr, err := SplitHostPort(testcase.input)
+		require.NoError(t, err)
+		assert.Equal(t, testcase.host, addr.Host)
+		assert.Equal(t, testcase.port, addr.Port)
+	}
 }

@@ -18,7 +18,7 @@ import { VerticalGroup } from '../Layout/Layout';
 import { DraggableMappingRow } from './DraggableMappingRow';
 
 export interface Props {
-  valueMappings?: ValueMapping[];
+  value: ValueMapping[];
   onChange: (valueMappings: ValueMapping[]) => void;
 }
 

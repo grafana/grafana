@@ -139,8 +139,9 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:build')
     .description('Prepares plugin dist package')
+    .option('--coverage', 'Run code coverage', false)
     .action(async cmd => {
-      await execTask(pluginBuildTask)({ coverage: false, silent: true });
+      await execTask(pluginBuildTask)({ coverage: cmd.coverage, silent: true });
     });
 
   program
@@ -194,9 +195,12 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:ci-package')
+    .option('--signing-admin', 'Use the admin API endpoint for signing the manifest.', false)
     .description('Create a zip packages for the plugin')
     .action(async cmd => {
-      await execTask(ciPackagePluginTask)({});
+      await execTask(ciPackagePluginTask)({
+        signingAdmin: cmd.signingAdmin,
+      });
     });
 
   program

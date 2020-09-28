@@ -100,6 +100,10 @@ Available options:
 
 This command creates a production-ready build of your plugin.
 
+Available options:
+
+- `--coverage` - Reports code coverage after the test step of the build.
+
 ## FAQ
 
 ### Which version of grafana-toolkit should I use?

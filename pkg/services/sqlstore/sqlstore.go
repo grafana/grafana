@@ -70,7 +70,7 @@ func (ss *SqlStore) Init() error {
 
 	engine, err := ss.getEngine()
 	if err != nil {
-		return fmt.Errorf("Fail to connect to database: %v", err)
+		return errutil.Wrap("failed to connect to database", err)
 	}
 
 	ss.engine = engine
@@ -91,51 +91,24 @@ func (ss *SqlStore) Init() error {
 	}
 
 	if err := migrator.Start(); err != nil {
-		return fmt.Errorf("Migration failed err: %v", err)
+		return errutil.Wrap("migration failed", err)
 	}
 
 	// Init repo instances
 	annotations.SetRepository(&SqlAnnotationRepo{})
+	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: 100, log: log.New("annotationcleaner")})
 	ss.Bus.SetTransactionManager(ss)
 
 	// Register handlers
 	ss.addUserQueryAndCommandHandlers()
 	ss.addAlertNotificationUidByIdHandler()
-
-	err = ss.logOrgsNotice()
-	if err != nil {
-		return err
-	}
+	ss.addPreferencesQueryAndCommandHandlers()
 
 	if ss.skipEnsureDefaultOrgAndUser {
 		return nil
 	}
 
 	return ss.ensureMainOrgAndAdminUser()
-}
-
-func (ss *SqlStore) logOrgsNotice() error {
-	type targetCount struct {
-		Count int64
-	}
-
-	return ss.WithDbSession(context.Background(), func(session *DBSession) error {
-		resp := make([]*targetCount, 0)
-		if err := session.SQL("select count(id) as Count from org").Find(&resp); err != nil {
-			return err
-		}
-
-		if resp[0].Count > 1 {
-			ss.log.Warn(`[Deprecation notice]`)
-			ss.log.Warn(`Fewer than 1% of Grafana installations use organizations, and we feel that most of those`)
-			ss.log.Warn(`users would have a better experience using Teams instead. As such, we are considering de-emphasizing`)
-			ss.log.Warn(`and eventually deprecating Organizations in a future Grafana release. If you would like to provide`)
-			ss.log.Warn(`feedback or describe your need, please do so in the issue linked below`)
-			ss.log.Warn(`https://github.com/grafana/grafana/issues/24588`)
-		}
-
-		return nil
-	})
 }
 
 func (ss *SqlStore) ensureMainOrgAndAdminUser() error {

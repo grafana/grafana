@@ -8,11 +8,7 @@ import { TableCellProps } from './types';
 import { GrafanaTheme } from '@grafana/data';
 
 export const JSONViewCell: FC<TableCellProps> = props => {
-  const { field, cell, tableStyles } = props;
-
-  if (!field.display) {
-    return null;
-  }
+  const { cell, tableStyles, cellProps } = props;
 
   const txt = css`
     cursor: pointer;
@@ -21,6 +17,7 @@ export const JSONViewCell: FC<TableCellProps> = props => {
 
   let value = cell.value;
   let displayValue = value;
+
   if (isString(value)) {
     try {
       value = JSON.parse(value);
@@ -28,11 +25,13 @@ export const JSONViewCell: FC<TableCellProps> = props => {
   } else {
     displayValue = JSON.stringify(value);
   }
+
   const content = <JSONTooltip value={value} />;
+
   return (
-    <div className={cx(txt, tableStyles.tableCell)}>
+    <div {...cellProps} className={tableStyles.cellContainer}>
       <Tooltip placement="auto" content={content} theme="info-alt">
-        <div className={tableStyles.overflow}>{displayValue}</div>
+        <div className={cx(tableStyles.cellText, txt)}>{displayValue}</div>
       </Tooltip>
     </div>
   );

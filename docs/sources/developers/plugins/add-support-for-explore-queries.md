@@ -5,7 +5,7 @@ type = "docs"
 
 # Add support for Explore queries
 
-This guide explains how to improve support for [Explore]({{< relref "../../features/explore/index.md" >}}) to an existing data source plugin.
+This guide explains how to improve support for [Explore]({{< relref "../../explore/index.md" >}}) to an existing data source plugin.
 
 This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "../../../../../tutorials/build-a-data-source-plugin.md" >}}).
 

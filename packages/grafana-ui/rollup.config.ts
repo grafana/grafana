@@ -35,6 +35,7 @@ const buildCjsPackage = ({ env }) => {
       'monaco-editor', // Monaco should not be used directly
       'monaco-editor/esm/vs/editor/editor.api', // Monaco should not be used directly
       'react-monaco-editor',
+      'jquery', // required to use jquery.plot, which is assigned externally
     ],
     plugins: [
       commonjs({
@@ -79,6 +80,7 @@ const buildCjsPackage = ({ env }) => {
             'Cell',
             'useResizeColumns',
             'useAbsoluteLayout',
+            'useFilters',
           ],
           '../../node_modules/react-is/index.js': ['isValidElementType', 'isContextConsumer'],
         },

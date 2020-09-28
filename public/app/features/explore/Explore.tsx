@@ -28,6 +28,7 @@ import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
+import ExploreQueryInspector from './ExploreQueryInspector';
 import {
   addQueryRow,
   changeSize,
@@ -36,7 +37,6 @@ import {
   refreshExplore,
   scanStart,
   setQueries,
-  toggleGraph,
   updateTimeRange,
 } from './state/actions';
 
@@ -113,11 +113,8 @@ export interface ExploreProps {
   logsResult?: LogsModel;
   loading?: boolean;
   absoluteRange: AbsoluteTimeRange;
-  showingGraph?: boolean;
-  showingTable?: boolean;
   timeZone?: TimeZone;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
-  toggleGraph: typeof toggleGraph;
   queryResponse: PanelData;
   originPanelId: number;
   addQueryRow: typeof addQueryRow;
@@ -128,8 +125,13 @@ export interface ExploreProps {
   showTrace: boolean;
 }
 
+enum ExploreDrawer {
+  RichHistory,
+  QueryInspector,
+}
+
 interface ExploreState {
-  showRichHistory: boolean;
+  openDrawer?: ExploreDrawer;
 }
 
 /**
@@ -164,7 +166,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     super(props);
     this.exploreEvents = new Emitter();
     this.state = {
-      showRichHistory: false,
+      openDrawer: undefined,
     };
   }
 
@@ -263,11 +265,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.props.scanStopAction({ exploreId: this.props.exploreId });
   };
 
-  onToggleGraph = (showingGraph: boolean) => {
-    const { toggleGraph, exploreId } = this.props;
-    toggleGraph(exploreId, showingGraph);
-  };
-
   onUpdateTimeRange = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
@@ -276,7 +273,15 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   toggleShowRichHistory = () => {
     this.setState(state => {
       return {
-        showRichHistory: !state.showRichHistory,
+        openDrawer: state.openDrawer === ExploreDrawer.RichHistory ? undefined : ExploreDrawer.RichHistory,
+      };
+    });
+  };
+
+  toggleShowQueryInspector = () => {
+    this.setState(state => {
+      return {
+        openDrawer: state.openDrawer === ExploreDrawer.QueryInspector ? undefined : ExploreDrawer.QueryInspector,
       };
     });
   };
@@ -307,8 +312,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       graphResult,
       loading,
       absoluteRange,
-      showingGraph,
-      showingTable,
       timeZone,
       queryResponse,
       syncedTimes,
@@ -319,7 +322,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       showLogs,
       showTrace,
     } = this.props;
-    const { showRichHistory } = this.state;
+    const { openDrawer } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
     const styles = getStyles(theme);
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
@@ -328,6 +331,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     // gets an error without a refID, so non-query-row-related error, like a connection error
     const queryErrors = queryResponse.error ? [queryResponse.error] : undefined;
     const queryError = getFirstNonQueryRowSpecificError(queryErrors);
+
+    const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
+    const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
 
     return (
       <div className={exploreClass} ref={this.getRef} aria-label={selectors.pages.Explore.General.container}>
@@ -343,8 +349,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 //TODO:unification
                 addQueryRowButtonHidden={false}
                 richHistoryButtonActive={showRichHistory}
+                queryInspectorButtonActive={showQueryInspector}
                 onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                 onClickRichHistoryButton={this.toggleShowRichHistory}
+                onClickQueryInspectorButton={this.toggleShowQueryInspector}
               />
             </div>
             <ErrorContainer queryError={queryError} />
@@ -370,16 +378,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                         <>
                           {showMetrics && (
                             <ExploreGraphPanel
+                              ariaLabel={selectors.pages.Explore.General.graph}
                               series={graphResult}
                               width={width}
                               loading={loading}
                               absoluteRange={absoluteRange}
                               isStacked={false}
                               showPanel={true}
-                              showingGraph={showingGraph}
-                              showingTable={showingTable}
                               timeZone={timeZone}
-                              onToggleGraph={this.onToggleGraph}
                               onUpdateTimeRange={this.onUpdateTimeRange}
                               showBars={false}
                               showLines={true}
@@ -387,6 +393,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           )}
                           {showTable && (
                             <TableContainer
+                              ariaLabel={selectors.pages.Explore.General.table}
                               width={width}
                               exploreId={exploreId}
                               onCellFilterAdded={
@@ -419,6 +426,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                           width={width}
                           exploreId={exploreId}
                           onClose={this.toggleShowRichHistory}
+                        />
+                      )}
+                      {showQueryInspector && (
+                        <ExploreQueryInspector
+                          exploreId={exploreId}
+                          width={width}
+                          onClose={this.toggleShowQueryInspector}
                         />
                       )}
                     </ErrorBoundaryAlert>
@@ -456,8 +470,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showTable,
     showTrace,
     loading,
-    showingGraph,
-    showingTable,
     absoluteRange,
     queryResponse,
   } = item;
@@ -486,8 +498,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     graphResult: graphResult ?? undefined,
     logsResult: logsResult ?? undefined,
     loading,
-    showingGraph,
-    showingTable,
     absoluteRange,
     queryResponse,
     originPanelId,
@@ -509,7 +519,6 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   scanStopAction,
   setQueries,
   updateTimeRange,
-  toggleGraph,
   addQueryRow,
 };
 

@@ -363,10 +363,9 @@ func (server *Server) getSearchRequest(
 
 	search := ""
 	for _, login := range logins {
-		query := strings.Replace(
+		query := strings.ReplaceAll(
 			server.Config.SearchFilter,
 			"%s", ldap.EscapeFilter(login),
-			-1,
 		)
 
 		search += query
@@ -425,6 +424,12 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
 			}
 		}
+	}
+
+	// If there are group org mappings configured, but no matching mappings,
+	// the user will not be able to login and will be disabled
+	if len(server.Config.Groups) > 0 && len(extUser.OrgRoles) == 0 {
+		extUser.IsDisabled = true
 	}
 
 	return extUser, nil
@@ -503,10 +508,9 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 			)
 		}
 
-		filter := strings.Replace(
+		filter := strings.ReplaceAll(
 			config.GroupSearchFilter, "%s",
 			ldap.EscapeFilter(filterReplace),
-			-1,
 		)
 
 		server.log.Info("Searching for user's groups", "filter", filter)

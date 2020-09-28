@@ -153,7 +153,7 @@ func TestAnnotations(t *testing.T) {
 					OrgId:       1,
 					DashboardId: 1,
 					From:        1,
-					To:          15, //this will exclude the second test annotation
+					To:          15, // this will exclude the second test annotation
 					Tags:        []string{"outage", "error"},
 				})
 

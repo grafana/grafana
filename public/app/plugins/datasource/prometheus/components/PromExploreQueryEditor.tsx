@@ -27,9 +27,22 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
   }
 
   function onReturnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && (e.shiftKey || e.ctrlKey)) {
       onRunQuery();
     }
+  }
+
+  function onQueryTypeChange(value: string) {
+    const { query, onChange } = props;
+    let nextQuery;
+    if (value === 'instant') {
+      nextQuery = { ...query, instant: true, range: false };
+    } else if (value === 'range') {
+      nextQuery = { ...query, instant: false, range: true };
+    } else {
+      nextQuery = { ...query, instant: true, range: true };
+    }
+    onChange(nextQuery);
   }
 
   return (
@@ -43,14 +56,11 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
       data={data}
       ExtraFieldElement={
         <PromExploreExtraField
-          label={'Step'}
-          onChangeFunc={onStepChange}
+          queryType={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
+          stepValue={query.interval || ''}
+          onQueryTypeChange={onQueryTypeChange}
+          onStepChange={onStepChange}
           onKeyDownFunc={onReturnKeyDown}
-          value={query.interval || ''}
-          hasTooltip={true}
-          tooltipContent={
-            'Time units can be used here, for example: 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)'
-          }
         />
       }
     />

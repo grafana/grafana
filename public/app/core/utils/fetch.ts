@@ -1,25 +1,19 @@
 import { BackendSrvRequest } from '@grafana/runtime';
 import omitBy from 'lodash/omitBy';
+import { deprecationWarning } from '@grafana/data';
 
 export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
   const method = options.method;
   const headers = parseHeaders(options);
   const isAppJson = isContentTypeApplicationJson(headers);
   const body = parseBody(options, isAppJson);
-
-  if (options?.withCredentials) {
-    return {
-      method,
-      headers,
-      body,
-      credentials: 'include',
-    };
-  }
+  const credentials = parseCredentials(options);
 
   return {
     method,
     headers,
     body,
+    credentials,
   };
 };
 
@@ -113,4 +107,21 @@ export const parseUrlFromOptions = (options: BackendSrvRequest): string => {
   const cleanParams = omitBy(options.params, v => v === undefined || (v && v.length === 0));
   const serializedParams = serializeParams(cleanParams);
   return options.params && serializedParams.length ? `${options.url}?${serializedParams}` : options.url;
+};
+
+export const parseCredentials = (options: BackendSrvRequest): RequestCredentials => {
+  if (!options) {
+    return options;
+  }
+
+  if (options.credentials) {
+    return options.credentials;
+  }
+
+  if (options.withCredentials) {
+    deprecationWarning('BackendSrvRequest', 'withCredentials', 'credentials');
+    return 'include';
+  }
+
+  return 'same-origin';
 };

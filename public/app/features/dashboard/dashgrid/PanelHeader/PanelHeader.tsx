@@ -131,7 +131,7 @@ export class PanelHeader extends Component<Props, State> {
   render() {
     const { panel, scopedVars, error, isViewing, isEditing, data, alertState } = this.props;
     const { menuItems } = this.state;
-    const title = templateSrv.replaceWithText(panel.title, scopedVars);
+    const title = templateSrv.replace(panel.title, scopedVars, 'text');
 
     const panelHeaderClass = classNames({
       'panel-header': true,
@@ -177,12 +177,10 @@ export class PanelHeader extends Component<Props, State> {
                   size="sm"
                 />
               )}
-              <span className="panel-title-text">
-                {title}
-                <Icon name="angle-down" className="panel-menu-toggle" />
-              </span>
+              <span className="panel-title-text">{title}</span>
+              <Icon name="angle-down" className="panel-menu-toggle" />
               {this.state.panelMenuOpen && (
-                <ClickOutsideWrapper onClick={this.closeMenu}>
+                <ClickOutsideWrapper onClick={this.closeMenu} parent={document}>
                   <PanelHeaderMenu items={menuItems} />
                 </ClickOutsideWrapper>
               )}

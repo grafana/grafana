@@ -1,27 +1,33 @@
 import {
+  applyFieldOverrides,
+  applyRawFieldOverrides,
   FieldOverrideEnv,
   findNumericFieldMinMax,
-  setFieldConfigDefaults,
-  setDynamicConfigValue,
-  applyFieldOverrides,
   getLinksSupplier,
+  setDynamicConfigValue,
+  setFieldConfigDefaults,
 } from './fieldOverrides';
 import { MutableDataFrame, toDataFrame } from '../dataframe';
 import {
+  DataFrame,
+  Field,
+  FieldColorMode,
   FieldConfig,
   FieldConfigPropertyItem,
-  GrafanaTheme,
-  FieldType,
-  DataFrame,
   FieldConfigSource,
+  FieldType,
+  GrafanaTheme,
   InterpolateFunction,
+  ThresholdsMode,
+  ScopedVars,
 } from '../types';
-import { Registry } from '../utils';
+import { locationUtil, Registry } from '../utils';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
 import { FieldMatcherID } from '../transformations';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getFieldDisplayName } from './fieldState';
-import { locationUtil } from '../utils';
+import { ArrayVector } from '../vector';
+import { getDisplayProcessor } from './displayProcessor';
 
 const property1: any = {
   id: 'custom.property1', // Match field properties
@@ -59,6 +65,16 @@ export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<Fiel
   return [property1, property2, property3, shouldApplyFalse, ...mockStandardProperties()];
 });
 
+locationUtil.initialize({
+  getConfig: () => {
+    return { appSubUrl: '/subUrl' } as any;
+  },
+  // @ts-ignore
+  buildParamsFromVariables: () => {},
+  // @ts-ignore
+  getTimeRangeForUrl: () => {},
+});
+
 describe('Global MinMax', () => {
   it('find global min max', () => {
     const f0 = new MutableDataFrame();
@@ -88,6 +104,7 @@ describe('applyFieldOverrides', () => {
     defaults: {
       unit: 'xyz',
       decimals: 2,
+      links: [{ title: 'link', url: '${__value.text}' }],
     },
     overrides: [
       {
@@ -127,11 +144,7 @@ describe('applyFieldOverrides', () => {
         Object {
           "__field": Object {
             "text": "Field",
-            "value": Object {
-              "formattedLabels": "",
-              "labels": undefined,
-              "name": "A message",
-            },
+            "value": Object {},
           },
           "__series": Object {
             "text": "Series",
@@ -146,11 +159,7 @@ describe('applyFieldOverrides', () => {
         Object {
           "__field": Object {
             "text": "Field",
-            "value": Object {
-              "formattedLabels": "",
-              "labels": undefined,
-              "name": "B info",
-            },
+            "value": Object {},
           },
           "__series": Object {
             "text": "Series",
@@ -246,6 +255,28 @@ describe('applyFieldOverrides', () => {
 
     // Don't Automatically pick the min value
     expect(config.min).toEqual(-20);
+  });
+
+  it('getLinks should use applied field config', () => {
+    const replaceVariablesCalls: any[] = [];
+
+    const data = applyFieldOverrides({
+      data: [f0], // the frame
+      fieldConfig: src as FieldConfigSource, // defaults + overrides
+      replaceVariables: ((value: string, variables: ScopedVars) => {
+        replaceVariablesCalls.push(variables);
+        return value;
+      }) as InterpolateFunction,
+      getDataSourceSettingsByUid: undefined as any,
+      theme: (undefined as any) as GrafanaTheme,
+      autoMinMax: true,
+      fieldConfigRegistry: customFieldRegistry,
+    })[0];
+
+    data.fields[1].getLinks!({ valueRowIndex: 0 });
+
+    expect(data.fields[1].config.decimals).toEqual(1);
+    expect(replaceVariablesCalls[0].__value.value.text).toEqual('100.0');
   });
 });
 
@@ -549,5 +580,193 @@ describe('getLinksSupplier', () => {
         onClick: undefined,
       })
     );
+  });
+});
+
+describe('applyRawFieldOverrides', () => {
+  const getNumberFieldConfig = () => ({
+    custom: {},
+    thresholds: {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        {
+          color: 'green',
+          value: (null as unknown) as number,
+        },
+        {
+          color: 'red',
+          value: 80,
+        },
+      ],
+    },
+    mappings: [],
+    color: {
+      mode: FieldColorMode.Thresholds,
+    },
+    min: 0,
+    max: 1599124316808,
+  });
+
+  const getEmptyConfig = () => ({
+    custom: {},
+    mappings: [],
+  });
+
+  const getDisplayValue = (frames: DataFrame[], frameIndex: number, fieldIndex: number) => {
+    const field = frames[frameIndex].fields[fieldIndex];
+    const value = field.values.get(0);
+    return field.display!(value);
+  };
+
+  const expectRawDataDisplayValue = (frames: DataFrame[], frameIndex: number) => {
+    expect(getDisplayValue(frames, frameIndex, 0)).toEqual({ text: '1599045551050', numeric: null });
+    expect(getDisplayValue(frames, frameIndex, 1)).toEqual({ text: '3.14159265359', numeric: null });
+    expect(getDisplayValue(frames, frameIndex, 2)).toEqual({ text: '0', numeric: null });
+    expect(getDisplayValue(frames, frameIndex, 3)).toEqual({ text: '0', numeric: null });
+    expect(getDisplayValue(frames, frameIndex, 4)).toEqual({ text: 'A - string', numeric: null });
+    expect(getDisplayValue(frames, frameIndex, 5)).toEqual({ text: '1599045551050', numeric: null });
+  };
+
+  const expectFormattedDataDisplayValue = (frames: DataFrame[], frameIndex: number) => {
+    expect(getDisplayValue(frames, frameIndex, 0)).toEqual({
+      color: '#F2495C',
+      numeric: 1599045551050,
+      prefix: undefined,
+      suffix: undefined,
+      text: '1599045551050',
+      threshold: {
+        color: 'red',
+        value: 80,
+      },
+    });
+
+    expect(getDisplayValue(frames, frameIndex, 1)).toEqual({
+      color: '#73BF69',
+      numeric: 3.14159265359,
+      prefix: undefined,
+      suffix: undefined,
+      text: '3.142',
+      threshold: {
+        color: 'green',
+        value: null,
+      },
+    });
+
+    expect(getDisplayValue(frames, frameIndex, 2)).toEqual({
+      color: '#73BF69',
+      numeric: 0,
+      prefix: undefined,
+      suffix: undefined,
+      text: '0',
+      threshold: {
+        color: 'green',
+        value: null,
+      },
+    });
+
+    expect(getDisplayValue(frames, frameIndex, 3)).toEqual({
+      numeric: 0,
+      prefix: undefined,
+      suffix: undefined,
+      text: '0',
+    });
+
+    expect(getDisplayValue(frames, frameIndex, 4)).toEqual({
+      numeric: NaN,
+      prefix: undefined,
+      suffix: undefined,
+      text: 'A - string',
+    });
+
+    expect(getDisplayValue(frames, frameIndex, 5)).toEqual({
+      numeric: 1599045551050,
+      prefix: undefined,
+      suffix: undefined,
+      text: '2020-09-02 11:19:11',
+    });
+  };
+
+  describe('when called', () => {
+    it('then all fields should have their display processor replaced with the raw display processor', () => {
+      const numberAsEpoc: Field = {
+        name: 'numberAsEpoc',
+        type: FieldType.number,
+        values: new ArrayVector([1599045551050]),
+        config: getNumberFieldConfig(),
+      };
+
+      const numberWithDecimals: Field = {
+        name: 'numberWithDecimals',
+        type: FieldType.number,
+        values: new ArrayVector([3.14159265359]),
+        config: {
+          ...getNumberFieldConfig(),
+          decimals: 3,
+        },
+      };
+
+      const numberAsBoolean: Field = {
+        name: 'numberAsBoolean',
+        type: FieldType.number,
+        values: new ArrayVector([0]),
+        config: getNumberFieldConfig(),
+      };
+
+      const boolean: Field = {
+        name: 'boolean',
+        type: FieldType.boolean,
+        values: new ArrayVector([0]),
+        config: getEmptyConfig(),
+      };
+
+      const string: Field = {
+        name: 'string',
+        type: FieldType.boolean,
+        values: new ArrayVector(['A - string']),
+        config: getEmptyConfig(),
+      };
+
+      const datetime: Field = {
+        name: 'datetime',
+        type: FieldType.time,
+        values: new ArrayVector([1599045551050]),
+        config: {
+          unit: 'dateTimeAsIso',
+        },
+      };
+
+      const dataFrameA: DataFrame = toDataFrame({
+        fields: [numberAsEpoc, numberWithDecimals, numberAsBoolean, boolean, string, datetime],
+      });
+
+      dataFrameA.fields[0].display = getDisplayProcessor({ field: dataFrameA.fields[0] });
+      dataFrameA.fields[1].display = getDisplayProcessor({ field: dataFrameA.fields[1] });
+      dataFrameA.fields[2].display = getDisplayProcessor({ field: dataFrameA.fields[2] });
+      dataFrameA.fields[3].display = getDisplayProcessor({ field: dataFrameA.fields[3] });
+      dataFrameA.fields[4].display = getDisplayProcessor({ field: dataFrameA.fields[4] });
+      dataFrameA.fields[5].display = getDisplayProcessor({ field: dataFrameA.fields[5], timeZone: 'utc' });
+
+      const dataFrameB: DataFrame = toDataFrame({
+        fields: [numberAsEpoc, numberWithDecimals, numberAsBoolean, boolean, string, datetime],
+      });
+
+      dataFrameB.fields[0].display = getDisplayProcessor({ field: dataFrameB.fields[0] });
+      dataFrameB.fields[1].display = getDisplayProcessor({ field: dataFrameB.fields[1] });
+      dataFrameB.fields[2].display = getDisplayProcessor({ field: dataFrameB.fields[2] });
+      dataFrameB.fields[3].display = getDisplayProcessor({ field: dataFrameB.fields[3] });
+      dataFrameB.fields[4].display = getDisplayProcessor({ field: dataFrameB.fields[4] });
+      dataFrameB.fields[5].display = getDisplayProcessor({ field: dataFrameB.fields[5], timeZone: 'utc' });
+
+      const data = [dataFrameA, dataFrameB];
+      const rawData = applyRawFieldOverrides(data);
+
+      // expect raw data is correct
+      expectRawDataDisplayValue(rawData, 0);
+      expectRawDataDisplayValue(rawData, 1);
+
+      // expect the original data is still the same
+      expectFormattedDataDisplayValue(data, 0);
+      expectFormattedDataDisplayValue(data, 1);
+    });
   });
 });

@@ -205,7 +205,7 @@ If there are two flags being used to set the homepath and the config file path, 
 To correct this, use the `--homepath` global option to specify the Grafana default homepath for this command:
 
 ```bash
-grafana-cli --homepath "/usr/share/grafana" admin reset-admin-password <new password>
+grafana-cli admin reset-admin-password --homepath "/usr/share/grafana" <new password>
 ```
 
 If you have not lost the admin password, we recommend that you change the user password either in the User Preferences or in the Server Admin > User tab.

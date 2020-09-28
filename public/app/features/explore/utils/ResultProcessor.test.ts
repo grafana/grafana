@@ -197,6 +197,24 @@ describe('ResultProcessor', () => {
         expect(result.fields[1].values.toArray()).toEqual([4, 5, 6]);
         expect(result.fields[2].values.toArray()).toEqual([4, 5, 6]);
       });
+
+      it('should not override fields display property when filled', () => {
+        const { resultProcessor, dataFrames } = testContext({
+          dataFrames: [
+            toDataFrame({
+              name: 'A-series',
+              refId: 'A',
+              fields: [{ name: 'Text', type: FieldType.string, values: ['someText'] }],
+            }),
+          ],
+        });
+        const displayFunctionMock = jest.fn();
+        dataFrames[0].fields[0].display = displayFunctionMock;
+
+        const data = resultProcessor.getTableResult();
+
+        expect(data?.fields[0].display).toBe(displayFunctionMock);
+      });
     });
 
     describe('when calling getLogsResult', () => {
@@ -280,7 +298,7 @@ describe('ResultProcessor', () => {
               timeField: {
                 name: 'Time',
                 type: 'time',
-                config: { unit: 'time:YYYY-MM-DD HH:mm:ss' },
+                config: {},
                 values: new ArrayVector([0]),
                 index: 0,
                 display: expect.anything(),

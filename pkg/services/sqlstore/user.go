@@ -68,6 +68,11 @@ func CreateUser(ctx context.Context, cmd *models.CreateUserCommand) error {
 			cmd.Email = cmd.Login
 		}
 
+		exists, _ := sess.Where("email=? OR login=?", cmd.Email, cmd.Login).Get(&models.User{})
+		if exists {
+			return models.ErrUserAlreadyExists
+		}
+
 		// create user
 		user := models.User{
 			Email:         cmd.Email,
@@ -555,7 +560,7 @@ func DeleteUser(cmd *models.DeleteUserCommand) error {
 }
 
 func deleteUserInTransaction(sess *DBSession, cmd *models.DeleteUserCommand) error {
-	//Check if user exists
+	// Check if user exists
 	user := models.User{Id: cmd.UserId}
 	has, err := sess.Get(&user)
 	if err != nil {

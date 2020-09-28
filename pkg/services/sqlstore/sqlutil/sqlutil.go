@@ -11,6 +11,7 @@ type TestDB struct {
 }
 
 func Sqlite3TestDB() TestDB {
+	// To run all tests in a local test database, set ConnStr to "grafana_test.db"
 	return TestDB{
 		DriverName: "sqlite3",
 		ConnStr:    ":memory:",
