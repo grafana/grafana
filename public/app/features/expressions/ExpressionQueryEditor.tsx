@@ -126,7 +126,7 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
 
     return (
       <div>
-        <InlineField label="GEL type">
+        <InlineField label="Operation">
           <Select options={gelTypes} value={selected} onChange={this.onSelectGELType} width={25} />
         </InlineField>
         {query.type === GELQueryType.math && (
