@@ -49,6 +49,24 @@ const AGGREGATION_OPERATORS: CompletionItem[] = [
   },
 ];
 
+export const PARSERS = [
+  {
+    label: 'json',
+    insertText: 'json',
+    documentation: 'Extracting labels from the log line using json parser.',
+  },
+  {
+    label: 'regexp',
+    insertText: 'regexp',
+    documentation: 'Extracting labels from the log line using regexp parser.',
+  },
+  {
+    label: 'logfmt',
+    insertText: 'logfmt',
+    documentation: 'Extracting labels from the log line using logfmt parser.',
+  },
+];
+
 export const RANGE_VEC_FUNCTIONS = [
   {
     insertText: 'avg_over_time',
@@ -127,6 +145,10 @@ const tokenizer: Grammar = {
     },
   },
   function: new RegExp(`\\b(?:${FUNCTIONS.map(f => f.label).join('|')})(?=\\s*\\()`, 'i'),
+  parser: {
+    pattern: new RegExp(`\(?<=\| ?)${PARSERS.map(f => f.label).join('|')}`, 'i'),
+    alias: 'keyword',
+  },
   'context-range': [
     {
       pattern: /\[[^\]]*(?=\])/, // [1m]
