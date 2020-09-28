@@ -1,6 +1,5 @@
 import { defaults } from 'lodash';
-import { Observable, partition, merge, of } from 'rxjs';
-import { map, tap, mergeMap, catchError, delay } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 import {
   DataQueryRequest,
@@ -14,7 +13,6 @@ import {
 
 import { TestDataQuery, StreamingQuery } from './types';
 import { getRandomLine } from './LogIpsum';
-import { getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 
 export const defaultQuery: StreamingQuery = {
   type: 'signal',
@@ -24,11 +22,7 @@ export const defaultQuery: StreamingQuery = {
   bands: 1,
 };
 
-export function runStream(
-  target: TestDataQuery,
-  req: DataQueryRequest<TestDataQuery>,
-  datasourceId: number
-): Observable<DataQueryResponse> {
+export function runStream(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
   const query = defaults(target.stream, defaultQuery);
   if ('signal' === query.type) {
     return runSignalStream(target, query, req);
@@ -38,9 +32,6 @@ export function runStream(
   }
   if ('fetch' === query.type) {
     return runFetchStream(target, query, req);
-  }
-  if ('fetch2' === query.type) {
-    return getNextRequest(req, datasourceId);
   }
   throw new Error(`Unknown Stream Type: ${query.type}`);
 }
@@ -244,67 +235,3 @@ export function runFetchStream(
     };
   });
 }
-
-export function runFetch2Stream(
-  req: DataQueryRequest<TestDataQuery>,
-  datasourceId: number
-): Observable<DataQueryResponse> {
-  const to = Date.now();
-  return getBackendSrv().fetch({
-    url: '/api/tsdb/query',
-    method: 'POST',
-    data: {
-      to: `${to}`,
-      from: `${to - 6000}`,
-      queries: [{ ...req, datasourceId, refId: 'A', scenarioId: 'random_walk' }],
-    },
-  });
-}
-
-const getNextRequest = (req: DataQueryRequest<TestDataQuery>, datasourceId: number): Observable<DataQueryResponse> => {
-  return new Observable<DataQueryResponse>(subscriber => {
-    const now = Date.now();
-    console.log('Start new request', now);
-    const responseStream = getBackendSrv()
-      .fetch({
-        url: '/api/tsdb/query',
-        method: 'POST',
-        data: {
-          to: `${now}`,
-          from: `${now - 6000}`,
-          queries: [{ ...req, datasourceId, refId: 'A', scenarioId: 'random_walk' }],
-        },
-      })
-      .pipe(
-        map((rsp: any) => {
-          return toDataQueryResponse(rsp);
-        }),
-        catchError(err => {
-          return of(toDataQueryResponse(err));
-        })
-      );
-
-    const [continueStream, completeStream] = partition(responseStream, ({ state }) => state !== LoadingState.Error);
-    const result = merge(
-      completeStream.pipe(
-        map(response => {
-          console.log('DONE (had an error)');
-          return response; // no change
-        })
-      ),
-      continueStream.pipe(
-        tap(response => subscriber.next({ ...response, state: LoadingState.Streaming })), // send the current resutls to the panel
-        delay(1000), // wait a sec...
-        mergeMap(response => {
-          // Go make another request!
-          return getNextRequest(req, datasourceId);
-        })
-      )
-    ).subscribe(subscriber);
-
-    return () => {
-      console.log('unsubscribed...');
-      result.unsubscribe();
-    };
-  });
-};

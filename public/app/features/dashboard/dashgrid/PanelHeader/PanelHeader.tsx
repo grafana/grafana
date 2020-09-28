@@ -105,7 +105,7 @@ export class PanelHeader extends Component<Props, State> {
       return (
         <div className="panel-loading" onClick={this.onCancelQuery}>
           <Tooltip content="Streaming (unsubscribe)">
-            <Icon name="circle" />
+            <Icon name="circle" type="mono" />
           </Tooltip>
         </div>
       );
