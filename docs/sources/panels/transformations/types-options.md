@@ -44,7 +44,7 @@ After I apply the transformation, there is no time value and each column has bee
 
 > **Note:** This transformation is only available in Grafana 7.1+.
 
-Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contains the same data. For information, refer to [Table panel]({{< relref "../visualizations/table/_index.md" >}}).
+Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../visualizations/table/_index.md" >}}).
 
 In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the transformation.
 
@@ -152,7 +152,7 @@ In the example below, I added two fields together and named them Sum.
 
 ## Labels to fields
 
-> **Note:** In order to apply this transformation, your query needs to returns labeled fields.
+> **Note:** In order to apply this transformation, your query needs to return labeled fields.
 
 When you select this transformation, Grafana automatically transforms all labeled data into fields.
 
