@@ -8,9 +8,9 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
   const { dataSourceConfig } = props;
 
   const authProviderOptions = [
+    { label: 'AWS SDK Default', value: 'default' },
     { label: 'Access & secret key', value: 'keys' },
     { label: 'Credentials file', value: 'credentials' },
-    { label: 'ARN', value: 'arn' },
   ] as SelectableValue[];
 
   const regions = [
@@ -88,7 +88,12 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">
-            <InlineFormLabel className="width-14">Auth Provider</InlineFormLabel>
+            <InlineFormLabel
+              className="width-14"
+              tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS or if you've attached an IAM role to your EC2 instance."
+            >
+              Authentication Provider
+            </InlineFormLabel>
             <Select
               className="width-30"
               value={authProviderOptions.find(
@@ -186,21 +191,24 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
             )}
           </div>
         )}
-        {dataSourceConfig.jsonData.authType === 'arn' && (
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel className="width-14" tooltip="ARN of Assume Role">
-                Assume Role ARN
-              </InlineFormLabel>
-              <div className="width-30">
-                <Input
-                  className="width-30"
-                  placeholder="arn:aws:iam:*"
-                  value={dataSourceConfig.jsonData.assumeRoleArn || ''}
-                  onChange={e => onJsonDataChange('assumeRoleArn', e.currentTarget.value)}
-                />
-              </div>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <InlineFormLabel
+              className="width-14"
+              tooltip="ARN of role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all."
+            >
+              Assume Role ARN
+            </InlineFormLabel>
+            <div className="width-30">
+              <Input
+                className="width-30"
+                placeholder="arn:aws:iam:*"
+                value={dataSourceConfig.jsonData.assumeRoleArn || ''}
+                onChange={e => onJsonDataChange('assumeRoleArn', e.currentTarget.value)}
+              />
             </div>
+          </div>
+          <div className="gf-form-inline">
             <div className="gf-form">
               <InlineFormLabel
                 className="width-14"
@@ -218,7 +226,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
               </div>
             </div>
           </div>
-        )}
+        </div>
         <div className="gf-form-inline">
           <div className="gf-form">
             <InlineFormLabel

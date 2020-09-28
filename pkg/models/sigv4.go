@@ -5,18 +5,23 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws"
+
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
+
+	"github.com/aws/aws-sdk-go/aws/defaults"
+
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 )
 
 type AuthType string
 
 const (
+	Default     AuthType = "default"
 	Keys        AuthType = "keys"
 	Credentials AuthType = "credentials"
-	ARN         AuthType = "arn"
 )
 
 type SigV4Middleware struct {
@@ -29,13 +34,12 @@ type Config struct {
 
 	Profile string
 
-	AssumeRoleARN string
-	ExternalID    string
-
 	AccessKey string
 	SecretKey string
 
-	Region string
+	AssumeRoleARN string
+	ExternalID    string
+	Region        string
 }
 
 func (m *SigV4Middleware) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -64,14 +68,22 @@ func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
 func (m *SigV4Middleware) credentials() (*credentials.Credentials, error) {
 	authType := AuthType(m.Config.AuthType)
 
+	if m.Config.AssumeRoleARN != "" {
+		s, err := session.NewSession(&aws.Config{Region: aws.String(m.Config.Region)})
+		if err != nil {
+			return nil, err
+		}
+
+		return stscreds.NewCredentials(s, m.Config.AssumeRoleARN), nil
+	}
+
 	switch authType {
 	case Keys:
 		return credentials.NewStaticCredentials(m.Config.AccessKey, m.Config.SecretKey, ""), nil
 	case Credentials:
 		return credentials.NewSharedCredentials("", m.Config.Profile), nil
-	case ARN:
-		s := session.Must(session.NewSession())
-		return stscreds.NewCredentials(s, m.Config.AssumeRoleARN), nil
+	case Default:
+		return defaults.CredChain(defaults.Config(), defaults.Handlers()), nil
 	}
 
 	return nil, fmt.Errorf("invalid auth type %s was specified", authType)
