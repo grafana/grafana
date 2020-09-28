@@ -1,6 +1,6 @@
 FROM alpine
 RUN apk update
-RUN apk add rsync git bash
+RUN apk add rsync git bash yarn
 
 COPY entrypoint.sh /entrypoint.sh
 
