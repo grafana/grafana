@@ -1,4 +1,4 @@
-import { AnnotationQuery, DataQuery, SelectableValue } from '@grafana/data';
+import { AnnotationQuery, DataQuery } from '@grafana/data';
 
 //----------------------------------------------
 // Query
