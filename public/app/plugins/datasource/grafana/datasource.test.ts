@@ -7,12 +7,11 @@ import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType } from './t
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
-}));
-
-jest.mock('app/features/templating/template_srv', () => ({
-  replace: (val: string) => {
-    return val.replace('$var2', 'replaced__delimiter__replaced2').replace('$var', 'replaced');
-  },
+  getTemplateSrv: () => ({
+    replace: (val: string) => {
+      return val.replace('$var2', 'replaced__delimiter__replaced2').replace('$var', 'replaced');
+    },
+  }),
 }));
 
 describe('grafana data source', () => {
