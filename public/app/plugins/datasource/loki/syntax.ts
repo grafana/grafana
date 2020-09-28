@@ -149,7 +149,7 @@ const tokenizer: Grammar = {
     },
   ],
   number: /\b-?\d+((\.\d*)?([eE][+-]?\d+)?)?\b/,
-  operator: new RegExp(`/&&?|\\|?\\||!=?|<(?:=>?|<|>)?|>[>=]?`, 'i'),
+  operator: /( \|= ?)|( \|\~ ?)|( != ?)|( !\~ ?)|( \| )/gi,
   punctuation: /[{}()`,.]/,
 };
 
