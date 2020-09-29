@@ -45,8 +45,9 @@ export const customVariableSlice = createSlice({
           key = key.replace(/\\:/g, ':');
           value = value.replace(/\\:/g, ':');
           return { text: key.trim(), value: value.trim(), selected: false };
+        } else {
+          return { text: text.trim(), value: text.trim(), selected: false };
         }
-        return { text: text.trim(), value: text.trim(), selected: false };
       });
 
       if (includeAll) {
