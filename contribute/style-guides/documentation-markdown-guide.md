@@ -1,14 +1,10 @@
 # Markdown style guide
 
-This guide for Markdown style helps keep contributions consistent across all documentation
-created for Grafana products. Refer to the guide and update its sections as needed when a
-Subject Matter Expert answers a question on Markdown style, or a decision is made about
-how to apply Markdown.
+This guide for Markdown style helps keep contributions consistent across all documentation created for Grafana products. Refer to the guide and update its sections as needed when a Subject Matter Expert answers a question on Markdown style, or a decision is made about how to apply Markdown.
 
 ## Headers
 
-In Markdown, the number of "#" symbols creates different heading levels, similar to
-HTML heading levels:
+In Markdown, the number of "#" symbols creates different heading levels, similar to HTML heading levels:
 
 **Example**
 
@@ -49,8 +45,7 @@ Include block quotes inside text using right-facing arrows:
 
 ## Code blocks
 
-Code blocks written with markdown can show off syntax highlighting specific
-to different languages. Use three back tics to create a code block:
+Code blocks written with markdown can show off syntax highlighting specific to different languages. Use three back tics to create a code block:
 
 ```
 function testNum(a) {
@@ -62,8 +57,7 @@ function testNum(a) {
 }
 ```
 
-Write the name of the language after the first set of back tics, no spaces,
-to show specific syntax highlighting. For example; "\```javascript" produces the following:
+Write the name of the language after the first set of back tics, no spaces, to show specific syntax highlighting. For example; "\```javascript" produces the following:
 
 ```javascript
 function testNum(a) {
@@ -76,10 +70,7 @@ function testNum(a) {
 ```
 ## Tables
 
-Construct a table by typing the table headings, and separating them with
-a "|" character. Then, add a second line of dashes ("-") separated by
-another "|" character. When constructing the table cells, separate each cell data with another
-"|".
+Construct a table by typing the table headings, and separating them with a "|" character. Then, add a second line of dashes ("-") separated by another "|" character. When constructing the table cells, separate each cell data with another "|".
 
 **Example**
 
@@ -115,8 +106,7 @@ The list above will always display as:
 
 ### Unordered lists
 
-Build a list of points - an unordered or unnumbered list - by
-using "\-" (hyphen) characters.
+Build a list of points - an unordered or unnumbered list - by using "\-" (hyphen) characters.
 
 **Example**
 
@@ -134,10 +124,8 @@ This follows the format of "!", alt text wrapped in "[]" and the link URL wrappe
 
 ## Comments
 
-You can include comments that will not appear in published markdown using the
-following syntax:
+You can include comments that will not appear in published markdown using the following syntax:
 
 \[comment]: <> (Comment text to display)
 
-The word "comment" wrapped in "[]" followed by a ":", a space, "<>", and then
-the comment itself wrapped in "()".
+The word "comment" wrapped in "[]" followed by a ":", a space, "<>", and then the comment itself wrapped in "()".
