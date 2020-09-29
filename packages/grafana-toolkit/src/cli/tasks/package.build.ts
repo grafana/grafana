@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 import { Task, TaskRunner } from './task';
 import globby from 'globby';
+import series from 'p-series';
 
 let distDir: string, cwd: string;
 
@@ -98,7 +99,7 @@ const buildTaskRunner: TaskRunner<PackageBuildOptions> = async ({ scope }) => {
     };
   });
 
-  await Promise.all(scopes.map(s => s()));
+  await series(scopes);
 };
 
 export const buildPackageTask = new Task<PackageBuildOptions>('Package build', buildTaskRunner);
