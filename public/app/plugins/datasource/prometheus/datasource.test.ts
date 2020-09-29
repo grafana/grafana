@@ -203,26 +203,6 @@ describe('PrometheusDatasource', () => {
     });
   });
 
-  describe('When performing performSuggestQuery', () => {
-    it('should cache response', async () => {
-      fetchMock.mockImplementation(() =>
-        of({
-          status: 'success',
-          data: { data: ['value1', 'value2', 'value3'] },
-        })
-      );
-
-      let results = await ds.performSuggestQuery('value', true);
-
-      expect(results).toHaveLength(3);
-
-      fetchMock.mockImplementation(jest.fn());
-      results = await ds.performSuggestQuery('value', true);
-
-      expect(results).toHaveLength(3);
-    });
-  });
-
   describe('When converting prometheus histogram to heatmap format', () => {
     let query: any;
     beforeEach(() => {

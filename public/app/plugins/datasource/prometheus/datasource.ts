@@ -1,5 +1,6 @@
 // Libraries
 import cloneDeep from 'lodash/cloneDeep';
+import LRU from 'lru-cache';
 // Services & Utils
 import {
   AnnotationEvent,
@@ -66,7 +67,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   directUrl: string;
   basicAuth: any;
   withCredentials: any;
-  metricsNameCache: any;
+  metricsNameCache = new LRU<string, string[]>(10);
   interval: string;
   queryTimeout: string;
   httpMethod: string;
@@ -526,20 +527,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     return error;
   };
-
-  async performSuggestQuery(query: string, cache = false) {
-    if (cache && this.metricsNameCache?.expire > Date.now()) {
-      return this.metricsNameCache.data.filter((metricName: any) => metricName.indexOf(query) !== 1);
-    }
-
-    const response: PromLabelQueryResponse = await this.metadataRequest('/api/v1/label/__name__/values');
-    this.metricsNameCache = {
-      data: response.data.data,
-      expire: Date.now() + 60 * 1000,
-    };
-
-    return response.data.data.filter(metricName => metricName.indexOf(query) !== 1);
-  }
 
   metricFindQuery(query: string) {
     if (!query) {
