@@ -163,6 +163,8 @@
       name: Add panel
     - link: /panels/queries/
       name: Queries
+    - link: /panels/share-query-results/
+      name: Share query results
     - link: /panels/transformations/
       name: Transformations
       children:
@@ -209,12 +211,12 @@
         - link: /panels/visualizations/table-panel/
           name: Table
           children:
-          - name: Overview
-            link: /panels/visualizations/table/
-          - link: /panels/visualizations/table/table-field-options/
-            name: Table field options
-          - link: /panels/visualizations/table/filter-table-columns/
-            name: Filter table columns
+            - name: Overview
+              link: /panels/visualizations/table/
+            - link: /panels/visualizations/table/table-field-options/
+              name: Table field options
+            - link: /panels/visualizations/table/filter-table-columns/
+              name: Filter table columns
         - link: /panels/visualizations/text-panel/
           name: Text
     - link: /panels/thresholds/

@@ -17,8 +17,9 @@ import { BackendSrvRequest, FetchError, FetchResponse, getBackendSrv } from '@gr
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv from 'app/features/templating/template_srv';
-import defaults from 'lodash/defaults';
 import cloneDeep from 'lodash/cloneDeep';
+import defaults from 'lodash/defaults';
+import LRU from 'lru-cache';
 import { forkJoin, merge, Observable, of, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import addLabelToQuery from './add_label_to_query';
@@ -26,11 +27,11 @@ import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getQueryHints } from './query_hints';
+import { getOriginalMetricName, renderTemplate, transform } from './result_transformer';
 import {
   isFetchErrorResponse,
   PromDataErrorResponse,
   PromDataSuccessResponse,
-  PromLabelQueryResponse,
   PromMatrixData,
   PromOptions,
   PromQuery,
@@ -38,7 +39,6 @@ import {
   PromVectorData,
   TransformOptions,
 } from './types';
-import { getOriginalMetricName, renderTemplate, transform } from './result_transformer';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 
@@ -50,7 +50,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   directUrl: string;
   basicAuth: any;
   withCredentials: any;
-  metricsNameCache: any;
+  metricsNameCache = new LRU<string, string[]>(10);
   interval: string;
   queryTimeout: string;
   httpMethod: string;
@@ -520,20 +520,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     return error;
   };
-
-  async performSuggestQuery(query: string, cache = false) {
-    if (cache && this.metricsNameCache?.expire > Date.now()) {
-      return this.metricsNameCache.data.filter((metricName: any) => metricName.indexOf(query) !== 1);
-    }
-
-    const response: PromLabelQueryResponse = await this.metadataRequest('/api/v1/label/__name__/values');
-    this.metricsNameCache = {
-      data: response.data.data,
-      expire: Date.now() + 60 * 1000,
-    };
-
-    return response.data.data.filter(metricName => metricName.indexOf(query) !== 1);
-  }
 
   metricFindQuery(query: string) {
     if (!query) {
