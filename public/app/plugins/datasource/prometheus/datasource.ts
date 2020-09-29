@@ -36,6 +36,7 @@ import {
   PromOptions,
   PromQuery,
   PromQueryRequest,
+  PromScalarData,
   PromVectorData,
   TransformOptions,
 } from './types';
@@ -482,12 +483,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
     }
 
-    // This can return a scalar data as well
-    return this._request<PromDataSuccessResponse<PromVectorData>>(url, data, {
+    return this._request<PromDataSuccessResponse<PromVectorData | PromScalarData>>(url, data, {
       requestId: query.requestId,
       headers: query.headers,
     }).pipe(
-      catchError((err: FetchError<PromDataErrorResponse<PromVectorData>>) => {
+      catchError((err: FetchError<PromDataErrorResponse<PromVectorData | PromScalarData>>) => {
         if (err.cancelled) {
           return of(err);
         }
