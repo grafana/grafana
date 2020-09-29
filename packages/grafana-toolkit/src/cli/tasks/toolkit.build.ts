@@ -8,7 +8,7 @@ const path = require('path');
 
 let distDir: string, cwd: string;
 
-export const clean = () => useSpinner('Cleaning', () => execa('npm', ['run', 'clean']));
+const clean = () => useSpinner('Cleaning', () => execa('npm', ['run', 'clean']));
 
 const compile = () =>
   useSpinner('Compiling sources', async () => {
@@ -20,7 +20,7 @@ const compile = () =>
     }
   });
 
-export const savePackage = ({ path, pkg }: { path: string; pkg: {} }) =>
+const savePackage = ({ path, pkg }: { path: string; pkg: {} }) =>
   useSpinner('Updating package.json', async () => {
     new Promise((resolve, reject) => {
       fs.writeFile(path, JSON.stringify(pkg, null, 2), err => {

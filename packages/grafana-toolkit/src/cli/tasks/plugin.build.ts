@@ -22,9 +22,10 @@ interface Fixable {
   fix?: boolean;
 }
 
-export const bundlePlugin = (options: PluginBundleOptions) => useSpinner('Compiling...', () => bundleFn(options));
+const bundlePlugin = (options: PluginBundleOptions) => useSpinner('Compiling...', () => bundleFn(options));
 
-export const clean = () => useSpinner('Cleaning', () => rimraf(`${process.cwd()}/dist`));
+// @ts-ignore
+const clean = () => useSpinner('Cleaning', () => rimraf(`${process.cwd()}/dist`));
 
 const copyIfNonExistent = (srcPath: string, destPath: string) =>
   copyFile(srcPath, destPath, COPYFILE_EXCL)

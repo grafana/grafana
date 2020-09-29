@@ -10,7 +10,7 @@ import series from 'p-series';
 
 let distDir: string, cwd: string;
 
-export const clean = () => useSpinner('Cleaning', () => execa('npm', ['run', 'clean']));
+const clean = () => useSpinner('Cleaning', () => execa('npm', ['run', 'clean']));
 
 const compile = () => useSpinner('Compiling sources', () => execa('tsc', ['-p', './tsconfig.build.json']));
 
@@ -21,7 +21,7 @@ interface SavePackageOptions {
   pkg: {};
 }
 
-export const savePackage = ({ path, pkg }: SavePackageOptions) =>
+const savePackage = ({ path, pkg }: SavePackageOptions) =>
   useSpinner('Updating package.json', () => fs.writeFile(path, JSON.stringify(pkg, null, 2)));
 
 const preparePackage = async (pkg: any) => {
