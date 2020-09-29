@@ -2,9 +2,15 @@ import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getRootReducer } from '../state/helpers';
-import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../types';
+import { QueryVariableModel, VariableHide, VariableLoadingState, VariableRefresh, VariableSort } from '../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from '../state/types';
-import { addVariable, changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
+import {
+  addVariable,
+  changeVariableProp,
+  setCurrentVariableValue,
+  variableStateCompleted,
+  variableStateFetching,
+} from '../state/sharedReducer';
 import { TemplatingState } from '../state/reducers';
 import {
   changeQueryVariableDataSource,
@@ -435,23 +441,16 @@ describe('query actions', () => {
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
       const update = { results: optionsMetrics, templatedRegex: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [clearError, changeQuery, changeDefinition, updateOptions, updateTags, setOption] = actions;
-        const expectedNumberOfActions = 6;
-
-        expect(clearError).toEqual(removeVariableEditorError({ errorProp: 'query' }));
-        expect(changeQuery).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query }))
-        );
-        expect(changeDefinition).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
-        );
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
-        expect(updateTags).toEqual(updateVariableTags(toVariablePayload(variable, tagsMetrics)));
-        expect(setOption).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        removeVariableEditorError({ errorProp: 'query' }),
+        changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query })),
+        changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition })),
+        variableStateFetching(toVariablePayload(variable)),
+        updateVariableOptions(toVariablePayload(variable, update)),
+        updateVariableTags(toVariablePayload(variable, tagsMetrics)),
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        variableStateCompleted(toVariablePayload(variable))
+      );
     });
   });
 
@@ -473,22 +472,15 @@ describe('query actions', () => {
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
       const update = { results: optionsMetrics, templatedRegex: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [clearError, changeQuery, changeDefinition, updateOptions, setOption] = actions;
-        const expectedNumberOfActions = 5;
-
-        expect(clearError).toEqual(removeVariableEditorError({ errorProp: 'query' }));
-        expect(changeQuery).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query }))
-        );
-        expect(changeDefinition).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
-        );
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
-        expect(setOption).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        removeVariableEditorError({ errorProp: 'query' }),
+        changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query })),
+        changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition })),
+        variableStateFetching(toVariablePayload(variable)),
+        updateVariableOptions(toVariablePayload(variable, update)),
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        variableStateCompleted(toVariablePayload(variable))
+      );
     });
   });
 
@@ -509,22 +501,15 @@ describe('query actions', () => {
       const option = createOption('A');
       const update = { results: optionsMetrics, templatedRegex: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [clearError, changeQuery, changeDefinition, updateOptions, setOption] = actions;
-        const expectedNumberOfActions = 5;
-
-        expect(clearError).toEqual(removeVariableEditorError({ errorProp: 'query' }));
-        expect(changeQuery).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query }))
-        );
-        expect(changeDefinition).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
-        );
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
-        expect(setOption).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        removeVariableEditorError({ errorProp: 'query' }),
+        changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query })),
+        changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition })),
+        variableStateFetching(toVariablePayload(variable)),
+        updateVariableOptions(toVariablePayload(variable, update)),
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        variableStateCompleted(toVariablePayload(variable))
+      );
     });
   });
 
@@ -588,6 +573,7 @@ function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableMode
     regex: '',
     multi: true,
     includeAll: true,
+    state: VariableLoadingState.NotStarted,
     ...(extend ?? {}),
   };
 }

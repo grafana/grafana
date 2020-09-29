@@ -75,7 +75,7 @@ const getOnTimeRangeUpdatedContext = (args: { update?: boolean; throw?: boolean 
     .fn()
     .mockReturnValueOnce(initialState)
     .mockReturnValue(state);
-  const dispatchMock = jest.fn();
+  const dispatchMock = args.throw ? jest.fn().mockRejectedValue('Something broke') : jest.fn().mockResolvedValue({});
 
   return {
     range,
@@ -105,7 +105,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
 
       await onTimeRangeUpdated(range, dependencies)(dispatchMock, getStateMock, undefined);
 
-      expect(dispatchMock).toHaveBeenCalledTimes(0);
+      expect(dispatchMock).toHaveBeenCalledTimes(1);
       expect(getStateMock).toHaveBeenCalledTimes(4);
       expect(updateTimeRangeMock).toHaveBeenCalledTimes(1);
       expect(updateTimeRangeMock).toHaveBeenCalledWith(range);
@@ -130,7 +130,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
 
       await onTimeRangeUpdated(range, dependencies)(dispatchMock, getStateMock, undefined);
 
-      expect(dispatchMock).toHaveBeenCalledTimes(0);
+      expect(dispatchMock).toHaveBeenCalledTimes(1);
       expect(getStateMock).toHaveBeenCalledTimes(3);
       expect(updateTimeRangeMock).toHaveBeenCalledTimes(1);
       expect(updateTimeRangeMock).toHaveBeenCalledWith(range);
@@ -155,7 +155,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
 
       await onTimeRangeUpdated(range, dependencies)(dispatchMock, getStateMock, undefined);
 
-      expect(dispatchMock).toHaveBeenCalledTimes(0);
+      expect(dispatchMock).toHaveBeenCalledTimes(1);
       expect(getStateMock).toHaveBeenCalledTimes(1);
       expect(updateTimeRangeMock).toHaveBeenCalledTimes(1);
       expect(updateTimeRangeMock).toHaveBeenCalledWith(range);

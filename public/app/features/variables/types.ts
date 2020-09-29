@@ -119,10 +119,11 @@ export interface SystemVariable<TProps extends { toString: () => string }> exten
   current: { value: TProps };
 }
 
-export enum VariableInitPhase {
+export enum VariableLoadingState {
   NotStarted = 'Not started',
   Fetching = 'Fetching',
   Completed = 'Completed',
+  Failed = 'Failed',
 }
 
 export interface VariableModel extends BaseVariableModel {
@@ -131,8 +132,8 @@ export interface VariableModel extends BaseVariableModel {
   hide: VariableHide;
   skipUrlSync: boolean;
   index: number;
-  initPhase: VariableInitPhase;
-  error?: any;
+  state: VariableLoadingState;
+  error: any | null;
 }
 
 export const initialVariableModelState: VariableModel = {
@@ -144,6 +145,6 @@ export const initialVariableModelState: VariableModel = {
   index: -1,
   hide: VariableHide.dontHide,
   skipUrlSync: false,
-  initPhase: VariableInitPhase.NotStarted,
+  state: VariableLoadingState.NotStarted,
   error: null,
 };

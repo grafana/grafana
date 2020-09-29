@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { initialVariableModelState, SystemVariable, VariableHide, VariableInitPhase } from '../types';
+import { initialVariableModelState, SystemVariable, VariableHide, VariableLoadingState } from '../types';
 import { VariableAdapter } from '../adapters';
 import { VariablePickerProps } from '../pickers/types';
 import { VariableEditorProps } from '../editor/types';
@@ -15,7 +15,7 @@ export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<an
       hide: VariableHide.hideVariable,
       skipUrlSync: true,
       current: { value: { toString: () => '' } },
-      initPhase: VariableInitPhase.Completed,
+      state: VariableLoadingState.Completed,
     },
     reducer: (state: any, action: any) => state,
     picker: (null as unknown) as ComponentType<VariablePickerProps>,

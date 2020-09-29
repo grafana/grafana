@@ -24,9 +24,9 @@ import {
   changeVariableProp,
   removeVariable,
   setCurrentVariableValue,
-  variableInitCompleted,
-  variableInitFetching,
-  variableInitReset,
+  variableStateCompleted,
+  variableStateFetching,
+  variableStateNotStarted,
 } from './sharedReducer';
 import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload } from './types';
 import {
@@ -98,16 +98,16 @@ describe('shared actions', () => {
           // because uuid are dynamic we need to get the uuid from the resulting state
           // an alternative would be to add our own uuids in the model above instead
           expect(dispatchedActions[4]).toEqual(
-            variableInitReset(toVariablePayload({ ...query, id: dispatchedActions[4].payload.id }))
+            variableStateNotStarted(toVariablePayload({ ...query, id: dispatchedActions[4].payload.id }))
           );
           expect(dispatchedActions[5]).toEqual(
-            variableInitReset(toVariablePayload({ ...constant, id: dispatchedActions[5].payload.id }))
+            variableStateNotStarted(toVariablePayload({ ...constant, id: dispatchedActions[5].payload.id }))
           );
           expect(dispatchedActions[6]).toEqual(
-            variableInitReset(toVariablePayload({ ...custom, id: dispatchedActions[6].payload.id }))
+            variableStateNotStarted(toVariablePayload({ ...custom, id: dispatchedActions[6].payload.id }))
           );
           expect(dispatchedActions[7]).toEqual(
-            variableInitReset(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
+            variableStateNotStarted(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
           );
 
           return true;
@@ -128,6 +128,7 @@ describe('shared actions', () => {
         preloadedState: { templating: ({} as unknown) as TemplatingState, location: { query: {} } },
       })
         .givenRootReducer(getTemplatingAndLocationRootReducer())
+        .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
         .whenActionIsDispatched(initDashboardTemplating(list))
         .whenAsyncActionIsDispatched(processVariables(), true);
 
@@ -135,35 +136,35 @@ describe('shared actions', () => {
         expect(dispatchedActions.length).toEqual(8);
 
         expect(dispatchedActions[0]).toEqual(
-          variableInitFetching(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
+          variableStateFetching(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
         );
 
         expect(dispatchedActions[1]).toEqual(
-          variableInitCompleted(toVariablePayload({ ...query, id: dispatchedActions[1].payload.id }))
+          variableStateCompleted(toVariablePayload({ ...query, id: dispatchedActions[1].payload.id }))
         );
 
         expect(dispatchedActions[2]).toEqual(
-          variableInitFetching(toVariablePayload({ ...constant, id: dispatchedActions[2].payload.id }))
+          variableStateFetching(toVariablePayload({ ...constant, id: dispatchedActions[2].payload.id }))
         );
 
         expect(dispatchedActions[3]).toEqual(
-          variableInitCompleted(toVariablePayload({ ...constant, id: dispatchedActions[3].payload.id }))
+          variableStateCompleted(toVariablePayload({ ...constant, id: dispatchedActions[3].payload.id }))
         );
 
         expect(dispatchedActions[4]).toEqual(
-          variableInitFetching(toVariablePayload({ ...custom, id: dispatchedActions[4].payload.id }))
+          variableStateFetching(toVariablePayload({ ...custom, id: dispatchedActions[4].payload.id }))
         );
 
         expect(dispatchedActions[5]).toEqual(
-          variableInitCompleted(toVariablePayload({ ...custom, id: dispatchedActions[5].payload.id }))
+          variableStateCompleted(toVariablePayload({ ...custom, id: dispatchedActions[5].payload.id }))
         );
 
         expect(dispatchedActions[6]).toEqual(
-          variableInitFetching(toVariablePayload({ ...textbox, id: dispatchedActions[6].payload.id }))
+          variableStateFetching(toVariablePayload({ ...textbox, id: dispatchedActions[6].payload.id }))
         );
 
         expect(dispatchedActions[7]).toEqual(
-          variableInitCompleted(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
+          variableStateCompleted(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
         );
 
         return true;
@@ -584,9 +585,9 @@ describe('shared actions', () => {
           expect(dispatchedActions[4]).toEqual(
             addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
           );
-          expect(dispatchedActions[5]).toEqual(variableInitReset(toVariablePayload(constant)));
-          expect(dispatchedActions[6]).toEqual(variableInitFetching(toVariablePayload(constant)));
-          expect(dispatchedActions[7]).toEqual(variableInitCompleted(toVariablePayload(constant)));
+          expect(dispatchedActions[5]).toEqual(variableStateNotStarted(toVariablePayload(constant)));
+          expect(dispatchedActions[6]).toEqual(variableStateFetching(toVariablePayload(constant)));
+          expect(dispatchedActions[7]).toEqual(variableStateCompleted(toVariablePayload(constant)));
 
           expect(dispatchedActions[8]).toEqual(variablesCompleteTransaction({ uid }));
           return dispatchedActions.length === 9;
@@ -624,9 +625,9 @@ describe('shared actions', () => {
           expect(dispatchedActions[6]).toEqual(
             addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
           );
-          expect(dispatchedActions[7]).toEqual(variableInitReset(toVariablePayload(constant)));
-          expect(dispatchedActions[8]).toEqual(variableInitFetching(toVariablePayload(constant)));
-          expect(dispatchedActions[9]).toEqual(variableInitCompleted(toVariablePayload(constant)));
+          expect(dispatchedActions[7]).toEqual(variableStateNotStarted(toVariablePayload(constant)));
+          expect(dispatchedActions[8]).toEqual(variableStateFetching(toVariablePayload(constant)));
+          expect(dispatchedActions[9]).toEqual(variableStateCompleted(toVariablePayload(constant)));
           expect(dispatchedActions[10]).toEqual(variablesCompleteTransaction({ uid }));
           return dispatchedActions.length === 11;
         });

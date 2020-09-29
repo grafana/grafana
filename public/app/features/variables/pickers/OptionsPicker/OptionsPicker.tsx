@@ -7,7 +7,7 @@ import { VariableInput } from '../shared/VariableInput';
 import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, toggleAndFetchTag } from './actions';
 import { OptionsPickerState, showOptions, toggleAllOptions, toggleOption } from './reducer';
 import {
-  VariableInitPhase,
+  VariableLoadingState,
   VariableOption,
   VariableTag,
   VariableWithMultiSupport,
@@ -73,7 +73,7 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
 
     const linkText = formatVariableLabel(variable);
     const tags = getSelectedTags(variable);
-    const loading = variable.initPhase === VariableInitPhase.Fetching;
+    const loading = variable.state === VariableLoadingState.Fetching;
 
     return <VariableLink text={linkText} tags={tags} onClick={this.onShowOptions} loading={loading} />;
   }

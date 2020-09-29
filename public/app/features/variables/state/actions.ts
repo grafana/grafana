@@ -1,6 +1,6 @@
+import angular from 'angular';
 import castArray from 'lodash/castArray';
 import { AppEvents, TimeRange, UrlQueryMap, UrlQueryValue } from '@grafana/data';
-import angular from 'angular';
 
 import {
   DashboardVariableModel,
@@ -9,7 +9,7 @@ import {
   QueryVariableModel,
   UserVariableModel,
   VariableHide,
-  VariableInitPhase,
+  VariableLoadingState,
   VariableModel,
   VariableOption,
   VariableRefresh,
@@ -25,9 +25,10 @@ import {
   addVariable,
   changeVariableProp,
   setCurrentVariableValue,
-  variableInitCompleted,
-  variableInitFetching,
-  variableInitReset,
+  variableStateCompleted,
+  variableStateFailed,
+  variableStateFetching,
+  variableStateNotStarted,
 } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './types';
 import { appEvents } from 'app/core/core';
@@ -95,7 +96,7 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
     templateSrv.updateTimeRange(getTimeSrv().timeRange());
 
     for (let index = 0; index < getVariables(getState()).length; index++) {
-      dispatch(variableInitReset(toVariablePayload(getVariables(getState())[index])));
+      dispatch(variableStateNotStarted(toVariablePayload(getVariables(getState())[index])));
     }
   };
 };
@@ -220,7 +221,7 @@ const isWaitingForDependencies = (dependencies: VariableModel[], state: StoreSta
   const variables = getVariables(state);
   const notCompletedDependencies = dependencies.filter(d =>
     variables.some(
-      v => v.id === d.id && (v.initPhase === VariableInitPhase.NotStarted || v.initPhase === VariableInitPhase.Fetching)
+      v => v.id === d.id && (v.state === VariableLoadingState.NotStarted || v.state === VariableLoadingState.Fetching)
     )
   );
 
@@ -235,11 +236,9 @@ export const processVariable = (
     const variable = getVariable(identifier.id, getState());
     await processVariableDependencies(variable, getState());
 
-    dispatch(variableInitFetching(toVariablePayload(variable)));
     const urlValue = queryParams['var-' + variable.name];
     if (urlValue !== void 0) {
       await variableAdapters.get(variable.type).setValueFromUrl(variable, urlValue ?? '');
-      dispatch(variableInitCompleted(toVariablePayload(variable)));
       return;
     }
 
@@ -249,13 +248,14 @@ export const processVariable = (
         refreshableVariable.refresh === VariableRefresh.onDashboardLoad ||
         refreshableVariable.refresh === VariableRefresh.onTimeRangeChanged
       ) {
-        await variableAdapters.get(variable.type).updateOptions(refreshableVariable);
-        dispatch(variableInitCompleted(toVariablePayload(variable)));
+        await dispatch(updateOptions(toVariableIdentifier(refreshableVariable)));
         return;
       }
     }
 
-    dispatch(variableInitCompleted(toVariablePayload(variable)));
+    // for variables that aren't updated via url or refresh let's simulate the same state changes
+    dispatch(variableStateFetching(toVariablePayload(variable)));
+    dispatch(variableStateCompleted(toVariablePayload(variable)));
   };
 };
 
@@ -278,7 +278,7 @@ export const setOptionFromUrl = (
     const variable = getVariable(identifier.id, getState());
     if (variable.hasOwnProperty('refresh') && (variable as QueryVariableModel).refresh !== VariableRefresh.never) {
       // updates options
-      await variableAdapters.get(variable.type).updateOptions(variable);
+      await dispatch(updateOptions(toVariableIdentifier(variable)));
     }
 
     // get variable from state
@@ -448,9 +448,10 @@ export const variableUpdated = (
   emitChangeEvents: boolean
 ): ThunkResult<Promise<void>> => {
   return (dispatch, getState) => {
-    // if there is a variable lock ignore cascading update because we are in a boot up scenario
     const variableInState = getVariable(identifier.id, getState());
-    if (variableInState.initPhase === VariableInitPhase.Fetching) {
+
+    // if we're initializing variables ignore cascading update because we are in a boot up scenario
+    if (getState().templating.transaction.status === TransactionStatus.Fetching) {
       return Promise.resolve();
     }
 
@@ -466,7 +467,7 @@ export const variableUpdated = (
           return Promise.resolve();
         }
 
-        return variableAdapters.get(variable.type).updateOptions(variable);
+        return dispatch(updateOptions(toVariableIdentifier(variable)));
       });
     }
     return Promise.all(promises).then(() => {
@@ -499,15 +500,22 @@ export const onTimeRangeUpdated = (
     return false;
   });
 
-  const promises = variablesThatNeedRefresh.map(async (variable: VariableWithOptions) => {
-    const previousOptions = variable.options.slice();
-    await variableAdapters.get(variable.type).updateOptions(variable);
-    const updatedVariable = getVariable<VariableWithOptions>(variable.id, getState());
-    if (angular.toJson(previousOptions) !== angular.toJson(updatedVariable.options)) {
-      const dashboard = getState().dashboard.getModel();
-      dashboard?.templateVariableValueUpdated();
-    }
-  });
+  const promises = variablesThatNeedRefresh.map(
+    (variable: VariableWithOptions) =>
+      new Promise((resolve, reject) => {
+        const previousOptions = variable.options.slice();
+        dispatch(updateOptions(toVariableIdentifier(variable)))
+          .then(() => {
+            const updatedVariable = getVariable<VariableWithOptions>(variable.id, getState());
+            if (angular.toJson(previousOptions) !== angular.toJson(updatedVariable.options)) {
+              const dashboard = getState().dashboard.getModel();
+              dashboard?.templateVariableValueUpdated();
+            }
+            resolve();
+          })
+          .catch(error => reject(error));
+      })
+  );
 
   try {
     await Promise.all(promises);
@@ -604,4 +612,19 @@ export const cancelVariables = (
 ): ThunkResult<void> => dispatch => {
   dependencies.getBackendSrv().cancelAllInFlightRequests();
   dispatch(cleanUpVariables());
+};
+
+export const updateOptions = (identifier: VariableIdentifier): ThunkResult<Promise<void>> => async (
+  dispatch,
+  getState
+) => {
+  const variableInState = getVariable(identifier.id, getState());
+  try {
+    dispatch(variableStateFetching(toVariablePayload(variableInState)));
+    await variableAdapters.get(variableInState.type).updateOptions(variableInState);
+    dispatch(variableStateCompleted(toVariablePayload(variableInState)));
+  } catch (error) {
+    dispatch(variableStateFailed(toVariablePayload(variableInState, { error })));
+    throw error;
+  }
 };

@@ -1,5 +1,5 @@
 import { AppEvents, DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
-import { validateVariableSelectionState } from '../state/actions';
+import { updateOptions, validateVariableSelectionState } from '../state/actions';
 import { QueryVariableModel, VariableRefresh } from '../types';
 import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
@@ -10,7 +10,6 @@ import { importDataSourcePlugin } from '../../plugins/plugin_loader';
 import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
 import { getVariable } from '../state/selectors';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
-import { variableAdapters } from '../adapters';
 import { changeVariableProp } from '../state/sharedReducer';
 import { updateVariableOptions, updateVariableTags } from './reducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
@@ -126,7 +125,7 @@ export const changeQueryVariableQuery = (
   dispatch(removeVariableEditorError({ errorProp: 'query' }));
   dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
   dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition })));
-  await variableAdapters.get(identifier.type).updateOptions(variableInState);
+  await dispatch(updateOptions(identifier));
 };
 
 const getTemplatedRegex = (variable: QueryVariableModel): string => {

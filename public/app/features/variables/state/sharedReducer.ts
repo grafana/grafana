@@ -3,7 +3,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { default as lodashDefaults } from 'lodash/defaults';
 
 import { VariableType } from '@grafana/data';
-import { VariableInitPhase, VariableModel, VariableOption, VariableWithOptions } from '../types';
+import { VariableLoadingState, VariableModel, VariableOption, VariableWithOptions } from '../types';
 import { AddVariable, getInstanceState, NEW_VARIABLE_ID, VariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
@@ -28,27 +28,33 @@ const sharedReducerSlice = createSlice({
 
       state[id] = variable;
     },
-    variableInitReset: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
+    variableStateNotStarted: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
+      const instanceState = getInstanceState(state, action.payload.id);
+      instanceState.state = VariableLoadingState.NotStarted;
+      instanceState.error = null;
+    },
+    variableStateFetching: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
+      const instanceState = getInstanceState(state, action.payload.id);
+      instanceState.state = VariableLoadingState.Fetching;
+      instanceState.error = null;
+    },
+    variableStateCompleted: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState(state, action.payload.id);
       if (!instanceState) {
         // we might have cancelled a batch so then this state has been removed
         return;
       }
-      instanceState.initPhase = VariableInitPhase.NotStarted;
+      instanceState.state = VariableLoadingState.Completed;
       instanceState.error = null;
     },
-    variableInitFetching: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const instanceState = getInstanceState(state, action.payload.id);
-      instanceState.initPhase = VariableInitPhase.Fetching;
-    },
-    variableInitCompleted: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
+    variableStateFailed: (state: VariablesState, action: PayloadAction<VariablePayload<{ error: any }>>) => {
       const instanceState = getInstanceState(state, action.payload.id);
       if (!instanceState) {
         // we might have cancelled a batch so then this state has been removed
         return;
       }
-      instanceState.initPhase = VariableInitPhase.Completed;
-      instanceState.error = null;
+      instanceState.state = VariableLoadingState.Failed;
+      instanceState.error = action.payload.data.error;
     },
     removeVariable: (state: VariablesState, action: PayloadAction<VariablePayload<{ reIndex: boolean }>>) => {
       delete state[action.payload.id];
@@ -180,9 +186,10 @@ export const {
   duplicateVariable,
   setCurrentVariableValue,
   changeVariableType,
-  variableInitReset,
-  variableInitFetching,
-  variableInitCompleted,
+  variableStateNotStarted,
+  variableStateFetching,
+  variableStateCompleted,
+  variableStateFailed,
 } = sharedReducerSlice.actions;
 
 const hasTags = (option: VariableOption): boolean => {

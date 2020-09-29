@@ -11,11 +11,12 @@ import {
   setCurrentVariableValue,
   sharedReducer,
   storeNewVariable,
-  variableInitCompleted,
-  variableInitFetching,
-  variableInitReset,
+  variableStateCompleted,
+  variableStateFailed,
+  variableStateFetching,
+  variableStateNotStarted,
 } from './sharedReducer';
-import { QueryVariableModel, VariableHide, VariableInitPhase } from '../types';
+import { QueryVariableModel, VariableHide, VariableLoadingState } from '../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NEW_VARIABLE_ID, toVariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
@@ -355,56 +356,86 @@ describe('sharedReducer', () => {
     });
   });
 
-  describe('when variableInitReset is dispatched', () => {
+  describe('when variableStateNotStarted is dispatched', () => {
     it('then state should be correct', () => {
       const adapter = createQueryVariableAdapter();
-      const { initialState } = getVariableTestContext(adapter, { initPhase: VariableInitPhase.Completed, error: {} });
+      const { initialState } = getVariableTestContext(adapter, {
+        state: VariableLoadingState.Completed,
+        error: 'Some error',
+      });
       const payload = toVariablePayload({ id: '0', type: 'query' });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(variableInitReset(payload))
+        .whenActionIsDispatched(variableStateNotStarted(payload))
         .thenStateShouldEqual({
           ...initialState,
           '0': ({
             ...initialState[0],
-            initPhase: VariableInitPhase.NotStarted,
+            state: VariableLoadingState.NotStarted,
             error: null,
           } as unknown) as QueryVariableModel,
         });
     });
   });
 
-  describe('when variableInitFetching is dispatched', () => {
+  describe('when variableStateFetching is dispatched', () => {
     it('then state should be correct', () => {
       const adapter = createQueryVariableAdapter();
-      const { initialState } = getVariableTestContext(adapter, { initPhase: VariableInitPhase.Completed });
+      const { initialState } = getVariableTestContext(adapter, {
+        state: VariableLoadingState.Completed,
+        error: 'Some error',
+      });
       const payload = toVariablePayload({ id: '0', type: 'query' });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(variableInitFetching(payload))
+        .whenActionIsDispatched(variableStateFetching(payload))
         .thenStateShouldEqual({
           ...initialState,
           '0': ({
             ...initialState[0],
-            initPhase: VariableInitPhase.Fetching,
+            state: VariableLoadingState.Fetching,
+            error: null,
           } as unknown) as QueryVariableModel,
         });
     });
   });
 
-  describe('when variableInitCompleted is dispatched', () => {
+  describe('when variableStateCompleted is dispatched', () => {
     it('then state should be correct', () => {
       const adapter = createQueryVariableAdapter();
-      const { initialState } = getVariableTestContext(adapter, { initPhase: VariableInitPhase.Fetching });
+      const { initialState } = getVariableTestContext(adapter, {
+        state: VariableLoadingState.Fetching,
+        error: 'Some error',
+      });
       const payload = toVariablePayload({ id: '0', type: 'query' });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(initialState))
-        .whenActionIsDispatched(variableInitCompleted(payload))
+        .whenActionIsDispatched(variableStateCompleted(payload))
         .thenStateShouldEqual({
           ...initialState,
           '0': ({
             ...initialState[0],
-            initPhase: VariableInitPhase.Completed,
+            state: VariableLoadingState.Completed,
+            error: null,
+          } as unknown) as QueryVariableModel,
+        });
+    });
+  });
+
+  describe('when variableStateFailed is dispatched', () => {
+    it('then state should be correct', () => {
+      const adapter = createQueryVariableAdapter();
+      const { initialState } = getVariableTestContext(adapter, { state: VariableLoadingState.Fetching });
+      const payload = toVariablePayload({ id: '0', type: 'query' }, { error: 'Some error' });
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(variableStateFailed(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '0': ({
+            ...initialState[0],
+            state: VariableLoadingState.Failed,
+            error: 'Some error',
           } as unknown) as QueryVariableModel,
         });
     });
