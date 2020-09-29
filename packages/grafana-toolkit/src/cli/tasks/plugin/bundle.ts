@@ -9,7 +9,7 @@ export interface PluginBundleOptions {
   yarnlink?: boolean;
 }
 
-// export const bundlePlugin = useSpinner<PluginBundleOptions>('Bundle plugin', ({ watch }) => {
+// export const bundlePlugin = ({ watch, production }: PluginBundleOptions) => useSpinner('Bundle plugin', async () => {
 export const bundlePlugin = async ({ watch, production }: PluginBundleOptions) => {
   const compiler = webpack(
     await loadWebpackConfig({

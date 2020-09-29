@@ -10,9 +10,8 @@ export interface PluginTestOptions {
   testNamePattern?: string;
 }
 
-export const testPlugin = useSpinner<PluginTestOptions>(
-  'Running tests',
-  async ({ updateSnapshot, coverage, watch, testPathPattern, testNamePattern }) => {
+export const testPlugin = ({ updateSnapshot, coverage, watch, testPathPattern, testNamePattern }: PluginTestOptions) =>
+  useSpinner('Running tests', async () => {
     const testConfig = loadJestPluginConfig();
 
     const cliConfig = {
@@ -38,5 +37,4 @@ export const testPlugin = useSpinner<PluginTestOptions>(
         throw new Error('Tests failed');
       }
     }
-  }
-);
+  });
