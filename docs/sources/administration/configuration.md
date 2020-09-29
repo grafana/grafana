@@ -399,7 +399,7 @@ The length of time that Grafana will wait for a succussful TLS handshake with th
 
 ### expect_continue_timeout_seconds
 
-The length of time that Grafana will wait for response headers after initial request headers are written and the request contains the header "Expect: 100-continue". A value of 0 will result in the body being sent immediately. Default is 1 second.
+The length of time that Grafana will wait for response headers after initial request headers are written and the request contains the header `Expect: 100-continue`. A value of 0 will result in the body being sent immediately. Default is 1 second.
 
 ### max_idle_connections
 
