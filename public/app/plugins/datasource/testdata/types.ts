@@ -12,7 +12,9 @@ export interface TestDataQuery extends DataQuery {
   stringInput: string;
   points?: any[];
   stream?: StreamingQuery;
-  pulseWave: PulseWaveQuery;
+  pulseWave?: PulseWaveQuery;
+  csvWave: any;
+  labels?: string;
 }
 
 export interface StreamingQuery {
@@ -25,9 +27,9 @@ export interface StreamingQuery {
 }
 
 export interface PulseWaveQuery {
-  timeStep: number;
-  onCount: number;
-  offCount: number;
-  onValue: number;
-  offValue: number;
+  timeStep?: number;
+  onCount?: number;
+  offCount?: number;
+  onValue?: number;
+  offValue?: number;
 }

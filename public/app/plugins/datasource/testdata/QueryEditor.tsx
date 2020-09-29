@@ -11,6 +11,7 @@ import { StreamingClientEditor, ManualEntryEditor, RandomWalkEditor } from './co
 import { TestDataDataSource } from './datasource';
 import { TestDataQuery, Scenario } from './types';
 import { PredictablePulseEditor } from './components/PredictablePulseEditor';
+import { CSVWaveEditor } from './components/CSVWaveEditor';
 
 const showLabelsFor = ['random_walk', 'predictable_pulse', 'predictable_csv_wave'];
 const endpoints = [
@@ -66,6 +67,11 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
   const onPulseWaveChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     onChange({ ...query, pulseWave: { ...query.pulseWave, [name]: value } });
+  };
+
+  const onCSVWaveChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    onChange({ ...query, csvWave: { ...query.csvWave, [name]: value } });
   };
 
   const options = useMemo(() => (scenarioList || []).map(item => ({ label: item.name, value: item.id })), [
@@ -149,6 +155,7 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
       {/*TODO check arrow scenario*/}
 
       {scenarioId === 'predictable_pulse' && <PredictablePulseEditor onChange={onPulseWaveChange} query={query} />}
+      {scenarioId === 'predictable_csv_wave' && <CSVWaveEditor onChange={onCSVWaveChange} query={query} />}
     </>
   );
 };
