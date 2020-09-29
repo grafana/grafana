@@ -142,7 +142,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     document.body.style.cursor = 'row-resize';
   };
 
-  onDiplayModeChange = (mode: DisplayMode) => {
+  onDisplayModeChange = (mode: DisplayMode) => {
     const { updatePanelEditorUIState } = this.props;
     updatePanelEditorUIState({
       mode: mode,
@@ -184,6 +184,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       </div>
     );
   };
+
   renderHorizontalSplit(styles: EditorStyles) {
     const { dashboard, panel, tabs, uiState } = this.props;
     return tabs.length > 0 ? (
@@ -230,7 +231,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           {this.renderTemplateVariables(styles)}
 
           <HorizontalGroup>
-            <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDiplayModeChange} />
+            <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
             <DashNavTimeControls
               dashboard={dashboard}
               location={location}
@@ -348,7 +349,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
   const panel = state.panelEditor.getPanel();
   const { plugin } = getPanelStateById(state.dashboard, panel.id);
 

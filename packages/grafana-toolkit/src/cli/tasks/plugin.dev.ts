@@ -11,7 +11,7 @@ const bundlePlugin = useSpinner<PluginBundleOptions>('Bundling plugin in dev mod
   return bundleFn(options);
 });
 
-const yarnlink = useSpinner<void>('Linking local toolkit', async () => {
+const yarnlink = useSpinner('Linking local toolkit', async () => {
   try {
     // Make sure we are not using package.json defined toolkit
     await execa('yarn', ['remove', '@grafana/toolkit']);

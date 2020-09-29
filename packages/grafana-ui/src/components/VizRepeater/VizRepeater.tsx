@@ -152,7 +152,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
 
     const repeaterStyle: React.CSSProperties = {
       display: 'flex',
-      overflow: minVizHeight ? 'hidden scroll' : 'visible',
+      overflow: minVizHeight ? 'hidden auto' : 'hidden',
     };
 
     let vizHeight = height;
