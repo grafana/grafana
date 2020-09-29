@@ -17,15 +17,6 @@ export function rangeToMinMax(timeRange: RawTimeRange): [number, number] {
 }
 
 export const buildPlotConfig = (props: PlotProps, plugins: Record<string, PlotPlugin>): uPlot.Options => {
-  // let tzDate;
-  // When plotting time series use correct timezone for timestamps
-  // if (seriesConfig.scales.x.time) {
-  //   const tz = getTimeZoneInfo(props.timeZone, Date.now())?.ianaName;
-  //   if (tz) {
-  //     tzDate = (ts: number) => uPlot.tzDate(new Date(ts * 1e3), tz);
-  //   }
-  // }
-
   return {
     width: props.width,
     height: props.height,
@@ -44,7 +35,6 @@ export const buildPlotConfig = (props: PlotProps, plugins: Record<string, PlotPl
       hooks: p[1].hooks,
     })),
     hooks: {},
-    // tzDate,
   } as any;
 };
 

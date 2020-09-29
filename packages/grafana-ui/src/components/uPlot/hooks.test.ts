@@ -3,37 +3,38 @@ import { renderHook, act } from '@testing-library/react-hooks';
 
 describe('usePlotConfig', () => {
   it('returns default plot config', async () => {
-    const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0));
+    const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
     await waitForNextUpdate();
 
     expect(result.current.currentConfig).toMatchInlineSnapshot(`
-        Object {
-          "axes": Array [],
-          "cursor": Object {
-            "focus": Object {
-              "prox": 30,
-            },
-          },
+      Object {
+        "axes": Array [],
+        "cursor": Object {
           "focus": Object {
-            "alpha": 1,
+            "prox": 30,
           },
-          "height": 0,
-          "hooks": Object {},
-          "legend": Object {
-            "show": false,
-          },
-          "plugins": Array [],
-          "scales": Object {},
-          "series": Array [
-            Object {},
-          ],
-          "width": 0,
-        }
-      `);
+        },
+        "focus": Object {
+          "alpha": 1,
+        },
+        "height": 0,
+        "hooks": Object {},
+        "legend": Object {
+          "show": false,
+        },
+        "plugins": Array [],
+        "scales": Object {},
+        "series": Array [
+          Object {},
+        ],
+        "tzDate": [Function],
+        "width": 0,
+      }
+    `);
   });
   describe('series config', () => {
     it('should add series', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0));
+      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addSeries = result.current.addSeries;
 
       act(() => {
@@ -43,7 +44,7 @@ describe('usePlotConfig', () => {
       });
       await waitForNextUpdate();
 
-      expect(result.current.currentConfig.series).toHaveLength(2);
+      expect(result.current.currentConfig?.series).toHaveLength(2);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
         Object {
           "axes": Array [],
@@ -68,13 +69,14 @@ describe('usePlotConfig', () => {
               "stroke": "#ff0000",
             },
           ],
+          "tzDate": [Function],
           "width": 0,
         }
       `);
     });
 
     it('should update series', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0));
+      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addSeries = result.current.addSeries;
 
       act(() => {
@@ -88,7 +90,7 @@ describe('usePlotConfig', () => {
       });
       await waitForNextUpdate();
 
-      expect(result.current.currentConfig.series).toHaveLength(2);
+      expect(result.current.currentConfig?.series).toHaveLength(2);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
         Object {
           "axes": Array [],
@@ -113,13 +115,14 @@ describe('usePlotConfig', () => {
               "stroke": "#00ff00",
             },
           ],
+          "tzDate": [Function],
           "width": 0,
         }
       `);
     });
 
     it('should remove series', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0));
+      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addSeries = result.current.addSeries;
 
       act(() => {
@@ -131,7 +134,7 @@ describe('usePlotConfig', () => {
       });
       await waitForNextUpdate();
 
-      expect(result.current.currentConfig.series).toHaveLength(1);
+      expect(result.current.currentConfig?.series).toHaveLength(1);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
         Object {
           "axes": Array [],
@@ -153,6 +156,7 @@ describe('usePlotConfig', () => {
           "series": Array [
             Object {},
           ],
+          "tzDate": [Function],
           "width": 0,
         }
       `);
@@ -161,7 +165,7 @@ describe('usePlotConfig', () => {
 
   describe('axis config', () => {
     it('should add axis', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0));
+      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addAxis = result.current.addAxis;
 
       act(() => {
@@ -171,7 +175,7 @@ describe('usePlotConfig', () => {
       });
       await waitForNextUpdate();
 
-      expect(result.current.currentConfig.axes).toHaveLength(1);
+      expect(result.current.currentConfig?.axes).toHaveLength(1);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
         Object {
           "axes": Array [
@@ -197,13 +201,14 @@ describe('usePlotConfig', () => {
           "series": Array [
             Object {},
           ],
+          "tzDate": [Function],
           "width": 0,
         }
       `);
     });
 
     it('should update axis', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0));
+      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addAxis = result.current.addAxis;
 
       act(() => {
@@ -217,7 +222,7 @@ describe('usePlotConfig', () => {
       });
       await waitForNextUpdate();
 
-      expect(result.current.currentConfig.axes).toHaveLength(1);
+      expect(result.current.currentConfig?.axes).toHaveLength(1);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
         Object {
           "axes": Array [
@@ -243,13 +248,14 @@ describe('usePlotConfig', () => {
           "series": Array [
             Object {},
           ],
+          "tzDate": [Function],
           "width": 0,
         }
       `);
     });
 
     it('should remove axis', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0));
+      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addAxis = result.current.addAxis;
 
       act(() => {
@@ -261,7 +267,7 @@ describe('usePlotConfig', () => {
       });
       await waitForNextUpdate();
 
-      expect(result.current.currentConfig.axes).toHaveLength(0);
+      expect(result.current.currentConfig?.axes).toHaveLength(0);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
         Object {
           "axes": Array [],
@@ -283,6 +289,7 @@ describe('usePlotConfig', () => {
           "series": Array [
             Object {},
           ],
+          "tzDate": [Function],
           "width": 0,
         }
       `);
@@ -291,7 +298,7 @@ describe('usePlotConfig', () => {
 
   describe('scales config', () => {
     it('should add scale', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0));
+      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addScale = result.current.addScale;
 
       act(() => {
@@ -301,7 +308,7 @@ describe('usePlotConfig', () => {
       });
       await waitForNextUpdate();
 
-      expect(Object.keys(result.current.currentConfig.scales)).toHaveLength(1);
+      expect(Object.keys(result.current.currentConfig?.scales!)).toHaveLength(1);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
         Object {
           "axes": Array [],
@@ -327,13 +334,14 @@ describe('usePlotConfig', () => {
           "series": Array [
             Object {},
           ],
+          "tzDate": [Function],
           "width": 0,
         }
       `);
     });
 
     it('should update scale', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0));
+      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addScale = result.current.addScale;
 
       act(() => {
@@ -347,7 +355,7 @@ describe('usePlotConfig', () => {
       });
       await waitForNextUpdate();
 
-      expect(Object.keys(result.current.currentConfig.scales)).toHaveLength(1);
+      expect(Object.keys(result.current.currentConfig?.scales!)).toHaveLength(1);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
         Object {
           "axes": Array [],
@@ -373,13 +381,14 @@ describe('usePlotConfig', () => {
           "series": Array [
             Object {},
           ],
+          "tzDate": [Function],
           "width": 0,
         }
       `);
     });
 
     it('should remove scale', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0));
+      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addScale = result.current.addScale;
 
       act(() => {
@@ -391,7 +400,7 @@ describe('usePlotConfig', () => {
       });
       await waitForNextUpdate();
 
-      expect(Object.keys(result.current.currentConfig.axes)).toHaveLength(0);
+      expect(Object.keys(result.current.currentConfig?.scales!)).toHaveLength(0);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
         Object {
           "axes": Array [],
@@ -413,6 +422,7 @@ describe('usePlotConfig', () => {
           "series": Array [
             Object {},
           ],
+          "tzDate": [Function],
           "width": 0,
         }
       `);
@@ -421,7 +431,7 @@ describe('usePlotConfig', () => {
 
   describe('plugins config', () => {
     it('should register plugin', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0));
+      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const registerPlugin = result.current.registerPlugin;
 
       act(() => {
@@ -432,7 +442,7 @@ describe('usePlotConfig', () => {
       });
       await waitForNextUpdate();
 
-      expect(Object.keys(result.current.currentConfig.plugins)).toHaveLength(1);
+      expect(Object.keys(result.current.currentConfig?.plugins!)).toHaveLength(1);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
         Object {
           "axes": Array [],
@@ -458,16 +468,17 @@ describe('usePlotConfig', () => {
           "series": Array [
             Object {},
           ],
+          "tzDate": [Function],
           "width": 0,
         }
       `);
     });
 
     it('should unregister plugin', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0));
+      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const registerPlugin = result.current.registerPlugin;
 
-      let unregister;
+      let unregister: () => void;
       act(() => {
         unregister = registerPlugin({
           id: 'testPlugin',
@@ -476,13 +487,13 @@ describe('usePlotConfig', () => {
       });
       await waitForNextUpdate();
 
-      expect(Object.keys(result.current.currentConfig.plugins)).toHaveLength(1);
+      expect(Object.keys(result.current.currentConfig?.plugins!)).toHaveLength(1);
 
       act(() => {
         unregister();
       });
 
-      expect(Object.keys(result.current.currentConfig.plugins)).toHaveLength(0);
+      expect(Object.keys(result.current.currentConfig?.plugins!)).toHaveLength(0);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
         Object {
           "axes": Array [],
@@ -504,6 +515,7 @@ describe('usePlotConfig', () => {
           "series": Array [
             Object {},
           ],
+          "tzDate": [Function],
           "width": 0,
         }
       `);
