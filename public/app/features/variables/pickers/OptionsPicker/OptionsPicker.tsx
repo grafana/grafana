@@ -6,7 +6,13 @@ import { VariableLink } from '../shared/VariableLink';
 import { VariableInput } from '../shared/VariableInput';
 import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, toggleAndFetchTag } from './actions';
 import { OptionsPickerState, showOptions, toggleAllOptions, toggleOption } from './reducer';
-import { VariableOption, VariableTag, VariableWithMultiSupport, VariableWithOptions } from '../../types';
+import {
+  VariableInitPhase,
+  VariableOption,
+  VariableTag,
+  VariableWithMultiSupport,
+  VariableWithOptions,
+} from '../../types';
 import { VariableOptions } from '../shared/VariableOptions';
 import { isQuery } from '../../guard';
 import { VariablePickerProps } from '../types';
@@ -67,8 +73,9 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
 
     const linkText = formatVariableLabel(variable);
     const tags = getSelectedTags(variable);
+    const loading = variable.initPhase === VariableInitPhase.Fetching;
 
-    return <VariableLink text={linkText} tags={tags} onClick={this.onShowOptions} />;
+    return <VariableLink text={linkText} tags={tags} onClick={this.onShowOptions} loading={loading} />;
   }
 
   renderOptions(showOptions: boolean, picker: OptionsPickerState) {
