@@ -22,16 +22,16 @@ export interface NestedScene extends GridElement {
 }
 
 export interface VizPanel extends GridElement {
-  id: string;
   type: 'viz';
+  id: string;
   vizId: string;
   title: string;
   data: Observable<PanelData>;
 }
 
 export interface ComponentPanel extends GridElement {
-  id: string;
   type: 'component';
+  id: string;
   gridPos: GridPos;
   component: ComponentType;
 }
