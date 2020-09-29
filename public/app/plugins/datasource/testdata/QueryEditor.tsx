@@ -1,9 +1,9 @@
 // Libraries
-import React, { ChangeEvent, useMemo } from 'react';
+import React, { ChangeEvent, FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 // Components
-import { Input, InlineFieldRow, InlineField, Select } from '@grafana/ui';
+import { Input, InlineFieldRow, InlineField, Select, TextArea } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { StreamingClientEditor, ManualEntryEditor, RandomWalkEditor } from './components';
 
@@ -12,6 +12,7 @@ import { TestDataDataSource } from './datasource';
 import { TestDataQuery, Scenario } from './types';
 import { PredictablePulseEditor } from './components/PredictablePulseEditor';
 import { CSVWaveEditor } from './components/CSVWaveEditor';
+import { defaultQuery } from './constants';
 
 const showLabelsFor = ['random_walk', 'predictable_pulse', 'predictable_csv_wave'];
 const endpoints = [
@@ -32,12 +33,16 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
     return datasource.getScenarios();
   }, []);
 
-  const currentScenario = useMemo(
-    () => scenarioList?.find(scenario => scenario.id === (query.scenarioId || 'random_walk')),
-    [scenarioList, query]
-  );
+  query = { ...defaultQuery, ...query };
 
-  query.stringInput = (query.stringInput || currentScenario?.stringInput) ?? '';
+  const currentScenario = useMemo(() => scenarioList?.find(scenario => scenario.id === query.scenarioId), [
+    scenarioList,
+    query,
+  ]);
+  const scenarioId = currentScenario?.id;
+  query.stringInput =
+    scenarioId === 'grafana_api' ? 'datasources' : (query.stringInput || currentScenario?.stringInput) ?? '';
+
   const onScenarioChange = (item: SelectableValue<string>) => {
     onChange({
       ...query,
@@ -46,8 +51,8 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
     });
   };
 
-  const onInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  const onInputChange = (e: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target as HTMLInputElement | HTMLTextAreaElement;
     onChange({ ...query, [name]: value });
   };
 
@@ -83,7 +88,6 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
     return null;
   }
 
-  const scenarioId = currentScenario?.id;
   return (
     <>
       <InlineFieldRow>
@@ -149,10 +153,26 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
       {scenarioId === 'streaming_client' && <StreamingClientEditor onChange={onStreamClientChange} query={query} />}
       {scenarioId === 'grafana_api' && (
         <InlineField labelWidth={14} label="Endpoint">
-          <Select options={endpoints} onChange={onEndPointChange} />
+          <Select
+            options={endpoints}
+            onChange={onEndPointChange}
+            width={32}
+            value={endpoints.find(ep => ep.value === query.stringInput)}
+          />
         </InlineField>
       )}
-      {/*TODO check arrow scenario*/}
+
+      {scenarioId === 'arrow' && (
+        <InlineField grow>
+          <TextArea
+            name="stringInput"
+            value={query.stringInput}
+            rows={10}
+            placeholder="Copy base64 text data from query result"
+            onChange={onInputChange}
+          />
+        </InlineField>
+      )}
 
       {scenarioId === 'predictable_pulse' && <PredictablePulseEditor onChange={onPulseWaveChange} query={query} />}
       {scenarioId === 'predictable_csv_wave' && <CSVWaveEditor onChange={onCSVWaveChange} query={query} />}
