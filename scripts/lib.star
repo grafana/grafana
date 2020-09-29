@@ -841,7 +841,7 @@ def get_windows_steps(edition, version_mode, is_downstream=False):
             installer_commands.extend([
                 '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
                 'gsutil cp $$fname gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
-                'gsutil cp $$fname.sha256 gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
+                'gsutil cp "$$fname.sha256" gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
             ])
         steps.append({
             'name': 'build-windows-installer',

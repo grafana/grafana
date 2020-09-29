@@ -600,7 +600,7 @@ steps:
   - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://grafana-downloads/oss/master/
-  - gsutil cp $$fname.sha256 gs://grafana-downloads/oss/master/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/master/
   environment:
     GCP_KEY:
       from_secret: gcp_key
