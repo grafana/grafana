@@ -113,7 +113,7 @@ This command creates a signed MANIFEST.txt file which Grafana uses to validate t
 
 Available options:
 
-- `--signatureType` - The [type of Signature]() you are generating: `private`, `community` or `commercial`
+- `--signatureType` - The [type of Signature](https://grafana.com/legal/plugins/) you are generating: `private`, `community` or `commercial`
 - `--rootUrls` - For private signatures, a list of the Grafana instance URLs that the plugin will be used on
 
 To generate a signature, you will need to sign up for a free account on https://grafana.com, create an API key with the Plugin Publisher role, and pass that in the `GRAFANA_API_KEY` environment variable.
