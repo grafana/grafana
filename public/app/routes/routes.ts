@@ -224,6 +224,14 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           ),
       },
     })
+    .when('/dyndash/:name', {
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "DynDashPage"*/ 'app/features/dyndash/DynDashPage')),
+      },
+    })
     .when('/explore', {
       template: '<react-container />',
       reloadOnSearch: false,
