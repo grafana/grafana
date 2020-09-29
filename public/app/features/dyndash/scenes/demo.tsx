@@ -5,12 +5,12 @@ import { Observable, of, Subscription } from 'rxjs';
 import { Scene, ScenePanel, VizPanel } from '../models';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { runRequest } from 'app/features/dashboard/state/runRequest';
-import { map } from 'rxjs/operators';
+import { map, mergeMap } from 'rxjs/operators';
 
 export function getDemoScene(name: string): Observable<Scene> {
   return new Observable(observer => {
     const scene = {
-      title: 'Demo scene',
+      title: `Demo scene: ${name}`,
       panels: getDemoPanels(),
     };
 
@@ -25,15 +25,10 @@ function getDemoPanels(): Observable<ScenePanel[]> {
     const onButtonHit = () => {
       panels.push({
         id: panels.length.toString(),
-        type: 'viz',
-        title: 'Demo panel ' + panels.length,
-        vizId: 'bar-gauge',
-        gridPos: { x: 0, y: 0, w: 12, h: 5 },
-        data: of({
-          state: LoadingState.Done,
-          series: [],
-          timeRange: {} as TimeRange,
-        } as PanelData),
+        type: 'scene',
+        title: 'Nested scene',
+        gridPos: { x: 0, y: 3, w: 12, h: 10 },
+        panels: getDemoScene('nested').pipe(mergeMap(scene => scene.panels)),
       });
       observer.next([...panels]);
     };
@@ -43,7 +38,7 @@ function getDemoPanels(): Observable<ScenePanel[]> {
         id: 'nestedScene',
         type: 'scene',
         title: 'Query scene',
-        gridPos: { x: 0, y: 0, w: 12, h: 10 },
+        gridPos: { x: 0, y: 3, w: 12, h: 10 },
         panels: getQueryPanels(),
       });
       observer.next([...panels]);
@@ -54,7 +49,7 @@ function getDemoPanels(): Observable<ScenePanel[]> {
       type: 'viz',
       title: 'Demo panel',
       vizId: 'bar-gauge',
-      gridPos: { x: 0, y: 0, w: 12, h: 2 },
+      gridPos: { x: 0, y: 0, w: 12, h: 3 },
       data: of({
         state: LoadingState.Done,
         series: [],
