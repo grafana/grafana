@@ -86,6 +86,7 @@
     "node-sass": "^4.13.1",
     "optimize-css-assets-webpack-plugin": "^5.0.3",
     "ora": "^4.0.3",
+    "p-series": "^2.1.0",
     "pixelmatch": "^5.1.0",
     "pngjs": "^3.4.0",
     "postcss-flexbugs-fixes": "4.2.0",
