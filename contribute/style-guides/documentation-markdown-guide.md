@@ -22,25 +22,24 @@ Start your document with a single ``#`` for the title of the page. Add the sub-h
 
 - Make text **bold** using two asterisks.
 
-**Example:** It is ``**important**`` to use GitHub Flavored Markdown emoji consistently.
+**Example:** It is ``**important**`` to use GitHub-flavored Markdown emoji consistently.
 
-- Make text ``*emphasized*`` using single `` _underscores_`` or a single asterisk.
+- Make text ``_emphasized_`` using single `` _underscores_``. Do not use the single asterisk, it can be easily confused with bold.
 
-**Example:** GitHub Flavored Markdown emoji should _only_ appear in specific cases.
+**Example:** GitHub-flavored markdown emoji should _only_ appear in specific cases.
 
 
 ## Links and references
 
-Create links to other website by wrapping the display text in square brackets, and
-the web URL in curved brackets.
+Create links to other website by wrapping the display text in square brackets, and the web URL in curved brackets.
 
 \[text to display](www.website.com)
 
-**Example:** For more information on including emoji in GitHub flavored Markdown, refer to the [webfx page on emoji](https://www.webfx.com/tools/emoji-cheat-sheet/) for a list of emoji.
+**Example:** For more information on including emoji in GitHub-flavored markdown, refer to the [webfx page on emoji](https://www.webfx.com/tools/emoji-cheat-sheet/) for a list of emoji.
 
 ## Block quotes
 
-Include Block quotes inside text using right-facing arrows:
+Include block quotes inside text using right-facing arrows:
 
 **Example**
 
@@ -117,7 +116,7 @@ The list above will always display as:
 ### Unordered lists
 
 Build a list of points - an unordered or unnumbered list - by
-using "\-" characters.
+using "\-" (hyphen) characters.
 
 **Example**
 
