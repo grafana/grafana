@@ -43,8 +43,13 @@ RUN if [ `arch` = "x86_64" ]; then \
 
 COPY --from=0 /tmp/grafana "$GF_PATHS_HOME"
 
-RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
-    adduser -S -u $GF_UID -G grafana "$GF_GID" && \
+RUN if [ ! $(getent group "$GF_GID") ]; then \
+      addgroup -S -g $GF_GID grafana; \
+    fi
+
+RUN export GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
+    mkdir -p "$GF_PATHS_HOME/.aws" && \
+    adduser -S -u $GF_UID -G "$GF_GID_NAME" grafana && \
     mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
              "$GF_PATHS_PROVISIONING/dashboards" \
              "$GF_PATHS_PROVISIONING/notifiers" \
@@ -54,8 +59,8 @@ RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
              "$GF_PATHS_DATA" && \
     cp "$GF_PATHS_HOME/conf/sample.ini" "$GF_PATHS_CONFIG" && \
     cp "$GF_PATHS_HOME/conf/ldap.toml" /etc/grafana/ldap.toml && \
-    chown -R "grafana:$GF_GID" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
-    chgrp -R "$GF_GID" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
+    chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
+    chgrp -R "$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
     chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
     chmod -R g=u "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 
