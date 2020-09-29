@@ -43,20 +43,16 @@ export function transform(response: FetchResponse<PromDataSuccessResponse>, opti
     return [tableData];
   }
 
-  if (options.format === 'heatmap') {
-    const dataFrame: DataFrame[] = [];
+  const dataFrame: DataFrame[] = [];
 
-    prometheusResult.result.forEach((data: MatrixOrVectorResult) =>
-      dataFrame.push(transformToDataFrame(data, options))
-    );
+  prometheusResult.result.forEach((data: MatrixOrVectorResult) => dataFrame.push(transformToDataFrame(data, options)));
+
+  if (options.format === 'heatmap') {
     dataFrame.sort(sortSeriesByLabel);
     const seriesList = transformToHistogramOverTime(dataFrame);
     return seriesList;
   }
 
-  const dataFrame: DataFrame[] = [];
-
-  prometheusResult.result.forEach((data: MatrixOrVectorResult) => dataFrame.push(transformToDataFrame(data, options)));
   return dataFrame;
 }
 
