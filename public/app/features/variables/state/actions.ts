@@ -467,7 +467,7 @@ export const variableUpdated = (
           return Promise.resolve();
         }
 
-        return dispatch(updateOptions(toVariableIdentifier(variable)));
+        return dispatch(updateOptions(toVariableIdentifier(variable), false));
       });
     }
     return Promise.all(promises).then(() => {
@@ -614,11 +614,26 @@ export const cancelVariables = (
   dispatch(cleanUpVariables());
 };
 
-export const updateOptions = (identifier: VariableIdentifier): ThunkResult<Promise<void>> => async (
-  dispatch,
-  getState
-) => {
+export const updateOptions = (
+  identifier: VariableIdentifier,
+  awaitUpdateOptions = true
+): ThunkResult<Promise<void>> => async (dispatch, getState) => {
   const variableInState = getVariable(identifier.id, getState());
+
+  if (!awaitUpdateOptions) {
+    dispatch(variableStateFetching(toVariablePayload(variableInState)));
+    return variableAdapters
+      .get(variableInState.type)
+      .updateOptions(variableInState)
+      .then(() => {
+        dispatch(variableStateCompleted(toVariablePayload(variableInState)));
+      })
+      .catch(error => {
+        dispatch(variableStateFailed(toVariablePayload(variableInState, { error })));
+        throw error;
+      });
+  }
+
   try {
     dispatch(variableStateFetching(toVariablePayload(variableInState)));
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
