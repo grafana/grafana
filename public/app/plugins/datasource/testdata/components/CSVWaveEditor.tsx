@@ -22,11 +22,12 @@ const fields = [
 export const CSVWaveEditor = ({ onChange, query }: EditorProps) => {
   return (
     <InlineFieldRow>
-      {fields.map(({ label, id, type, placeholder, tooltip }) => {
+      {fields.map(({ label, id, type, placeholder, tooltip }, index) => {
+        const grow = index === fields.length - 1;
         return (
-          <InlineField label={label} labelWidth={14} key={id} tooltip={tooltip}>
+          <InlineField label={label} labelWidth={14} key={id} tooltip={tooltip} grow={grow}>
             <Input
-              width={32}
+              width={grow ? undefined : 32}
               type={type}
               id={`csvWave.${id}`}
               value={query?.[id]}
