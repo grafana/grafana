@@ -4,9 +4,9 @@ import { connect } from 'react-redux';
 
 // Types
 import { StoreState } from 'app/types';
-import { getScene } from './examples/examples';
-import { Scene } from './state/models';
-import { SceneView } from './SceneView';
+import { getDemoScene } from './scenes/demo';
+import { Scene } from './models';
+import { SceneView } from './components/SceneView';
 
 export interface Props {
   name: string;
@@ -16,7 +16,7 @@ export const DynDashPageUnconnected: FC<Props> = ({ name }) => {
   const [scene, setScene] = useState<Scene | null>(null);
 
   useEffect(() => {
-    const subscription = getScene(name).subscribe({
+    const subscription = getDemoScene(name).subscribe({
       next: scene => setScene(scene),
     });
 
@@ -27,7 +27,11 @@ export const DynDashPageUnconnected: FC<Props> = ({ name }) => {
     return <h2>Loading...</h2>;
   }
 
-  return <SceneView model={scene} />;
+  return (
+    <div className="dashboard-container">
+      <SceneView model={scene} />
+    </div>
+  );
 };
 
 export const mapStateToProps = (state: StoreState) => ({
