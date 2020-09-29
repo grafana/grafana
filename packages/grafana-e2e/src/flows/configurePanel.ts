@@ -121,7 +121,10 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       .as('chartData');
 
     if (dataSourceName) {
-      selectOption(e2e.components.DataSourcePicker.container(), dataSourceName);
+      selectOption({
+        container: e2e.components.DataSourcePicker.container(),
+        optionText: dataSourceName,
+      });
     }
 
     // @todo instead wait for '@pluginModule'

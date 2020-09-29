@@ -34,6 +34,7 @@ export interface AnnotationEvent {
   text?: string;
   type?: string;
   tags?: string[];
+  color?: string;
 
   // Currently used to merge annotations from alerts and dashboard
   source?: any; // source.type === 'dashboard'
@@ -49,7 +50,7 @@ export enum AnnotationEventFieldSource {
 }
 
 export interface AnnotationEventFieldMapping {
-  source?: AnnotationEventFieldSource; // defautls to 'field'
+  source?: AnnotationEventFieldSource; // defaults to 'field'
   value?: string;
   regex?: string;
 }

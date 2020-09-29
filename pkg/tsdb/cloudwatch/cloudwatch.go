@@ -382,9 +382,14 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 		plog.Warn("Unrecognized AWS authentication type", "type", atStr)
 	}
 
+	profile := e.DataSource.JsonData.Get("profile").MustString()
+	if profile == "" {
+		profile = e.DataSource.Database // legacy support
+	}
+
 	return &datasourceInfo{
 		Region:        region,
-		Profile:       e.DataSource.Database,
+		Profile:       profile,
 		AuthType:      at,
 		AssumeRoleARN: assumeRoleARN,
 		ExternalID:    externalID,

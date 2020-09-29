@@ -18,7 +18,7 @@ weight = 6
 > Viewing Loki data in dashboard panels is supported in Grafana v6.4+.
 
 Grafana ships with built-in support for Loki, Grafana's log aggregation system.
-Just add it as a data source and you are ready to query your log data in [Explore]({{< relref "../explore" >}}).
+Just add it as a data source and you are ready to query your log data in [Explore]({{< relref "../../explore" >}}).
 
 ## Adding the data source
 
@@ -43,7 +43,7 @@ The Derived Fields configuration allows you to:
 * Add fields parsed from the log message.
 * Add a link that uses the value of the field.
 
-You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/features/explore/#labels-and-parsed-fields).
+You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/explore/#labels-and-parsed-fields).
 {{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
 Each derived field consists of:
 
@@ -60,13 +60,13 @@ The new field with the link shown in log details:
 
 ## Querying Logs
 
-Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../../panels/visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a [LogQL](https://grafana.com/docs/loki/latest/logql/) query to display your logs.
+Querying and displaying log data from Loki is available via [Explore]({{< relref "../../explore" >}}), and with the [logs panel]({{< relref "../../panels/visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a [LogQL](https://grafana.com/docs/loki/latest/logql/) query to display your logs.
 
 ### Log Queries
 
 A log query consists of two parts: **log stream selector**, and a **search expression**. For performance reasons you need to start by choosing a log stream by selecting a log label.
 
-The Logs Explorer (the `Log labels` button) next to the query field shows a list of labels of available log streams. An alternative way to write a query is to use the query field's autocomplete - you start by typing a left curly brace `{` and the autocomplete menu will suggest a list of labels. Press the `enter` key to execute the query.
+The Logs Explorer (the `Log labels` button) next to the query field shows a list of labels of available log streams. An alternative way to write a query is to use the query field's autocomplete - you start by typing a left curly brace `{` and the autocomplete menu will suggest a list of labels. Press the `Enter` key to execute the query.
 
 Once the result is returned, the log panel shows a list of log rows and a bar chart where the x-axis shows the time and the y-axis shows the frequency/count.
 
@@ -128,7 +128,7 @@ The following filter types are currently supported:
 
 ## Live tailing
 
-Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore]({{< relref "../explore/#loki-specific-features" >}}).
+Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore]({{< relref "../../explore/#loki-specific-features" >}}).
 
 Note that Live Tailing relies on two Websocket connections: one between the browser and the Grafana server, and another between the Grafana server and the Loki server. If you run any reverse proxies, please configure them accordingly. The following example for Apache2 can be used for proxying between the browser and the Grafana server:
 ```

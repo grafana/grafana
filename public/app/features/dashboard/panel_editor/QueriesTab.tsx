@@ -161,7 +161,9 @@ export class QueriesTab extends PureComponent<Props, State> {
    * Sets the queries for the panel
    */
   onUpdateQueries = (queries: DataQuery[]) => {
-    this.props.panel.targets = queries;
+    this.props.panel.updateQueries(queries);
+
+    // Need to force update to rerender query rows.
     this.forceUpdate();
   };
 

@@ -2,14 +2,14 @@
 title = "API Tutorial: Create API tokens and dashboards for an organization"
 type = "docs"
 keywords = ["grafana", "tutorials", "API", "Token", "Org", "Organization"]
+aliases =["/docs/grafana/latest/tutorials/api_org_token_howto/"]
 [menu.docs]
-parent = "tutorials"
-weight = 10
+weight = 150
 +++
 
-# API Tutorial: Create API tokens and dashboards for an organization
+# Create API tokens and dashboards for an organization
 
-Use the Grafana API to setup new Grafana organizations or to add dynamically generated dashboards to an existing organization.
+Use the Grafana API to set up new Grafana organizations or to add dynamically generated dashboards to an existing organization.
 
 ## Authentication
 

@@ -61,6 +61,10 @@ Deepen your knowledge through a series of high-level overviews of plugin concept
 
 Explore the many UI components in our [Grafana UI library](https://developers.grafana.com/ui).
 
+### Examples
+
+For inspiration, check out our [plugin examples](https://github.com/grafana/grafana-plugin-examples).
+
 ### API reference
 
 Learn more about Grafana options and packages.
