@@ -1,19 +1,24 @@
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
 import { fieldReducers, reduceField, ReducerID } from '../fieldReducer';
-import { alwaysFieldMatcher } from '../matchers/predicates';
+import { alwaysFieldMatcher, notTimeFieldMatcher } from '../matchers/predicates';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { ArrayVector } from '../../vector/ArrayVector';
 import { KeyValue } from '../../types/data';
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { getFieldMatcher } from '../matchers';
-import { FieldMatcherID } from '../matchers/ids';
-import { filterFieldsTransformer } from './filter';
 import { getFieldDisplayName } from '../../field';
+
+export enum ReduceTransformerMode {
+  SeriesToRows = 'seriesToRows', // default
+  ReduceField = 'reduceField', // same structure, add additional row for each type
+}
 
 export interface ReduceTransformerOptions {
   reducers: ReducerID[];
   fields?: MatcherConfig; // Assume all fields
+  mode?: ReduceTransformerMode;
+  includeTimeField?: boolean;
 }
 
 export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = {
@@ -29,15 +34,57 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
    * be applied, just return the input series
    */
   transformer: (options: ReduceTransformerOptions) => {
-    const matcher = options.fields ? getFieldMatcher(options.fields) : alwaysFieldMatcher;
+    const matcher = options.fields
+      ? getFieldMatcher(options.fields)
+      : options.includeTimeField && options.mode === ReduceTransformerMode.ReduceField
+      ? alwaysFieldMatcher
+      : notTimeFieldMatcher;
     const calculators = options.reducers && options.reducers.length ? fieldReducers.list(options.reducers) : [];
     const reducers = calculators.map(c => c.id);
 
     return (data: DataFrame[]) => {
       const processed: DataFrame[] = [];
 
-      for (let seriesIndex = 0; seriesIndex < data.length; seriesIndex++) {
-        const series = data[seriesIndex];
+      // Collapse all matching fields into a single row
+      if (options.mode === ReduceTransformerMode.ReduceField) {
+        for (const series of data) {
+          const fields: Field[] = [];
+          for (const field of series.fields) {
+            if (matcher(field, series, data)) {
+              const results = reduceField({
+                field,
+                reducers,
+              });
+              for (const reducer of reducers) {
+                const value = results[reducer];
+                const copy = {
+                  ...field,
+                  value: new ArrayVector([value]),
+                };
+                copy.state = undefined;
+                if (reducers.length > 1) {
+                  if (!copy.labels) {
+                    copy.labels = {};
+                  }
+                  copy.labels['reducer'] = reducer;
+                }
+                fields.push(copy);
+              }
+            }
+          }
+          if (fields.length) {
+            processed.push({
+              ...series,
+              fields,
+              length: 1, // always one row
+            });
+          }
+        }
+
+        return processed;
+      }
+
+      for (const series of data) {
         const values: ArrayVector[] = [];
         const fields: Field[] = [];
         const byId: KeyValue<ArrayVector> = {};
@@ -65,10 +112,6 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
 
         for (let i = 0; i < series.fields.length; i++) {
           const field = series.fields[i];
-
-          if (field.type === FieldType.time) {
-            continue;
-          }
 
           if (matcher(field, series, data)) {
             const results = reduceField({
@@ -103,8 +146,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
         });
       }
 
-      const withoutTime = filterFieldsTransformer.transformer({ exclude: { id: FieldMatcherID.time } })(processed);
-      return mergeResults(withoutTime);
+      return mergeResults(processed);
     };
   },
 };
