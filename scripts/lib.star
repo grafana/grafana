@@ -791,7 +791,7 @@ def publish_packages_step(edition, is_downstream):
         'name': 'publish-packages',
         'image': publish_image,
         'depends_on': [
-            'upload-packages',
+            'initialize',
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': {
