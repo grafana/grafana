@@ -267,10 +267,6 @@ export const processVariables = (): ThunkResult<Promise<void>> => {
     );
 
     await Promise.all(promises);
-
-    for (let index = 0; index < getVariables(getState()).length; index++) {
-      dispatch(variableInitReset(toVariablePayload(getVariables(getState())[index])));
-    }
   };
 };
 
@@ -453,15 +449,15 @@ export const variableUpdated = (
 ): ThunkResult<Promise<void>> => {
   return (dispatch, getState) => {
     // if there is a variable lock ignore cascading update because we are in a boot up scenario
-    const variable = getVariable(identifier.id, getState());
-    if (variable.initPhase === VariableInitPhase.Fetching) {
+    const variableInState = getVariable(identifier.id, getState());
+    if (variableInState.initPhase === VariableInitPhase.Fetching) {
       return Promise.resolve();
     }
 
     const variables = getVariables(getState());
     const g = createGraph(variables);
 
-    const node = g.getNode(variable.name);
+    const node = g.getNode(variableInState.name);
     let promises: Array<Promise<any>> = [];
     if (node) {
       promises = node.getOptimizedInputEdges().map(e => {
@@ -469,10 +465,10 @@ export const variableUpdated = (
         if (!variable) {
           return Promise.resolve();
         }
+
         return variableAdapters.get(variable.type).updateOptions(variable);
       });
     }
-
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
         const dashboard = getState().dashboard.getModel();

@@ -50,24 +50,6 @@ const sharedReducerSlice = createSlice({
       instanceState.initPhase = VariableInitPhase.Completed;
       instanceState.error = null;
     },
-    variableInitCancelled: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const instanceState = getInstanceState(state, action.payload.id);
-      if (!instanceState) {
-        // we might have cancelled a batch so then this state has been removed
-        return;
-      }
-      instanceState.initPhase = VariableInitPhase.Cancelled;
-      instanceState.error = null;
-    },
-    variableInitFailed: (state: VariablesState, action: PayloadAction<VariablePayload<{ error: any }>>) => {
-      const instanceState = getInstanceState(state, action.payload.id);
-      if (!instanceState) {
-        // we might have cancelled a batch so then this state has been removed
-        return;
-      }
-      instanceState.initPhase = VariableInitPhase.Failed;
-      instanceState.error = action.payload.data.error;
-    },
     removeVariable: (state: VariablesState, action: PayloadAction<VariablePayload<{ reIndex: boolean }>>) => {
       delete state[action.payload.id];
       if (!action.payload.data.reIndex) {
@@ -201,8 +183,6 @@ export const {
   variableInitReset,
   variableInitFetching,
   variableInitCompleted,
-  variableInitCancelled,
-  variableInitFailed,
 } = sharedReducerSlice.actions;
 
 const hasTags = (option: VariableOption): boolean => {

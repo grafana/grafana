@@ -132,7 +132,7 @@ describe('shared actions', () => {
         .whenAsyncActionIsDispatched(processVariables(), true);
 
       await tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
-        expect(dispatchedActions.length).toEqual(12);
+        expect(dispatchedActions.length).toEqual(8);
 
         expect(dispatchedActions[0]).toEqual(
           variableInitFetching(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
@@ -164,22 +164,6 @@ describe('shared actions', () => {
 
         expect(dispatchedActions[7]).toEqual(
           variableInitCompleted(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
-        );
-
-        expect(dispatchedActions[8]).toEqual(
-          variableInitReset(toVariablePayload({ ...query, id: dispatchedActions[8].payload.id }))
-        );
-
-        expect(dispatchedActions[9]).toEqual(
-          variableInitReset(toVariablePayload({ ...constant, id: dispatchedActions[9].payload.id }))
-        );
-
-        expect(dispatchedActions[10]).toEqual(
-          variableInitReset(toVariablePayload({ ...custom, id: dispatchedActions[10].payload.id }))
-        );
-
-        expect(dispatchedActions[11]).toEqual(
-          variableInitReset(toVariablePayload({ ...textbox, id: dispatchedActions[11].payload.id }))
         );
 
         return true;
@@ -603,10 +587,9 @@ describe('shared actions', () => {
           expect(dispatchedActions[5]).toEqual(variableInitReset(toVariablePayload(constant)));
           expect(dispatchedActions[6]).toEqual(variableInitFetching(toVariablePayload(constant)));
           expect(dispatchedActions[7]).toEqual(variableInitCompleted(toVariablePayload(constant)));
-          expect(dispatchedActions[8]).toEqual(variableInitReset(toVariablePayload(constant)));
 
-          expect(dispatchedActions[9]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 10;
+          expect(dispatchedActions[8]).toEqual(variablesCompleteTransaction({ uid }));
+          return dispatchedActions.length === 9;
         });
       });
     });
@@ -644,9 +627,8 @@ describe('shared actions', () => {
           expect(dispatchedActions[7]).toEqual(variableInitReset(toVariablePayload(constant)));
           expect(dispatchedActions[8]).toEqual(variableInitFetching(toVariablePayload(constant)));
           expect(dispatchedActions[9]).toEqual(variableInitCompleted(toVariablePayload(constant)));
-          expect(dispatchedActions[10]).toEqual(variableInitReset(toVariablePayload(constant)));
-          expect(dispatchedActions[11]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 12;
+          expect(dispatchedActions[10]).toEqual(variablesCompleteTransaction({ uid }));
+          return dispatchedActions.length === 11;
         });
       });
     });

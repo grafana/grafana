@@ -122,8 +122,6 @@ export interface SystemVariable<TProps extends { toString: () => string }> exten
 export enum VariableInitPhase {
   NotStarted = 'Not started',
   Fetching = 'Fetching',
-  Failed = 'Failed',
-  Cancelled = 'Cancelled',
   Completed = 'Completed',
 }
 
