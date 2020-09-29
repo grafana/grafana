@@ -148,86 +148,95 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone)
     });
   }, [defaultConfig, seriesConfig, axesConfig, scalesConfig]);
 
-  const addSeries = (s: uPlot.Series) => {
-    let index = 0;
-    setSeriesConfig(sc => {
-      index = sc.length;
-      return [...sc, s];
-    });
+  const addSeries = useCallback(
+    (s: uPlot.Series) => {
+      let index = 0;
+      setSeriesConfig(sc => {
+        index = sc.length;
+        return [...sc, s];
+      });
 
-    return {
-      removeSeries: () => {
-        setSeriesConfig(c => {
-          const tmp = [...c];
-          tmp.splice(index);
-          return tmp;
-        });
-      },
-      updateSeries: (config: uPlot.Series) => {
-        setSeriesConfig(c => {
-          const tmp = [...c];
-          tmp[index] = config;
-          return tmp;
-        });
-      },
-    };
-  };
+      return {
+        removeSeries: () => {
+          setSeriesConfig(c => {
+            const tmp = [...c];
+            tmp.splice(index);
+            return tmp;
+          });
+        },
+        updateSeries: (config: uPlot.Series) => {
+          setSeriesConfig(c => {
+            const tmp = [...c];
+            tmp[index] = config;
+            return tmp;
+          });
+        },
+      };
+    },
+    [setCurrentConfig]
+  );
 
-  const addAxis = (a: uPlot.Axis) => {
-    let index = 0;
-    setAxisConfig(ac => {
-      index = ac.length;
-      return [...ac, a];
-    });
+  const addAxis = useCallback(
+    (a: uPlot.Axis) => {
+      let index = 0;
+      setAxisConfig(ac => {
+        index = ac.length;
+        return [...ac, a];
+      });
 
-    return {
-      removeAxis: () => {
-        setAxisConfig(a => {
-          const tmp = [...a];
-          tmp.splice(index);
-          return tmp;
-        });
-      },
-      updateAxis: (config: uPlot.Axis) => {
-        setAxisConfig(a => {
-          const tmp = [...a];
-          tmp[index] = config;
-          return tmp;
-        });
-      },
-    };
-  };
+      return {
+        removeAxis: () => {
+          setAxisConfig(a => {
+            const tmp = [...a];
+            tmp.splice(index);
+            return tmp;
+          });
+        },
+        updateAxis: (config: uPlot.Axis) => {
+          setAxisConfig(a => {
+            const tmp = [...a];
+            tmp[index] = config;
+            return tmp;
+          });
+        },
+      };
+    },
+    [setAxisConfig]
+  );
 
-  const addScale = (scaleKey: string, s: uPlot.Scale) => {
-    let key = scaleKey;
+  const addScale = useCallback(
+    (scaleKey: string, s: uPlot.Scale) => {
+      let key = scaleKey;
 
-    setScaleConfig(sc => {
-      const tmp = { ...sc };
-      tmp[key] = s;
-      return tmp;
-    });
+      setScaleConfig(sc => {
+        const tmp = { ...sc };
+        tmp[key] = s;
+        return tmp;
+      });
 
-    return {
-      removeScale: () => {
-        setScaleConfig(sc => {
-          const tmp = { ...sc };
-          if (tmp[key]) {
-            delete tmp[key];
-          }
-          return tmp;
-        });
-      },
-      updateScale: (config: uPlot.Scale) => {
-        setScaleConfig(sc => {
-          const tmp = { ...sc };
-          if (tmp[key]) {
-            tmp[key] = config;
-          }
-          return tmp;
-        });
-      },
-    };
-  };
+      return {
+        removeScale: () => {
+          setScaleConfig(sc => {
+            const tmp = { ...sc };
+            if (tmp[key]) {
+              delete tmp[key];
+            }
+            return tmp;
+          });
+        },
+        updateScale: (config: uPlot.Scale) => {
+          setScaleConfig(sc => {
+            const tmp = { ...sc };
+            if (tmp[key]) {
+              tmp[key] = config;
+            }
+            return tmp;
+          });
+        },
+      };
+    },
+    [setScaleConfig]
+  );
 
   return {
     addSeries,

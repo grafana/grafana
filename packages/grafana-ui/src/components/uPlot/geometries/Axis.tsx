@@ -44,7 +44,7 @@ export const Axis: React.FC<AxisProps> = props => {
     values,
   } = props;
 
-  const getConfig = useCallback(() => {
+  const getConfig = () => {
     let config: uPlot.Axis = {
       scale: scaleKey,
       label,
@@ -61,7 +61,7 @@ export const Axis: React.FC<AxisProps> = props => {
     };
 
     return config;
-  }, [props]);
+  };
   useAxisConfig(getConfig);
 
   return null;

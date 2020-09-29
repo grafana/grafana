@@ -1,5 +1,3 @@
-import { TimeZone } from '@grafana/data';
-
 export interface LineProps {
   scaleKey: string;
   stroke: string;
@@ -33,5 +31,4 @@ export interface AxisProps {
 export interface ScaleProps {
   scaleKey: string;
   time?: boolean;
-  timeZone?: TimeZone;
 }

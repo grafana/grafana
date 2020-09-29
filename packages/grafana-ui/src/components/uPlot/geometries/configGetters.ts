@@ -1,9 +1,10 @@
 import { AreaProps, LineProps, PointProps } from './types';
 import tinycolor from 'tinycolor2';
+import { getColorFromHexRgbOrName } from '@grafana/data';
 
 export const getAreaConfig = (props: AreaProps) => {
   const fill = props.fill
-    ? tinycolor(props.color)
+    ? tinycolor(getColorFromHexRgbOrName(props.color))
         .setAlpha(props.fill)
         .toRgbString()
     : undefined;

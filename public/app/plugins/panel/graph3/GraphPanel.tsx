@@ -139,6 +139,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
       scales.push(<Scale scaleKey={scale} />);
       axes.push(
         <Axis
+          key={`axis-${scale}-${i}`}
           scaleKey={scale}
           label={config.custom?.axis?.label}
           size={config.custom?.axis?.width}
@@ -157,6 +158,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
     if (customConfig?.line?.show) {
       seriesGeometry.push(
         <Line
+          key={`line-${scale}-${i}`}
           scaleKey={scale}
           stroke={seriesColor}
           width={customConfig?.line.show ? customConfig?.line.width || 1 : 0}
@@ -165,14 +167,22 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
     }
 
     if (customConfig?.points?.show) {
-      seriesGeometry.push(<Point scaleKey={scale} size={customConfig?.points?.radius} stroke={seriesColor} />);
+      seriesGeometry.push(
+        <Point key={`point-${scale}-${i}`} scaleKey={scale} size={customConfig?.points?.radius} stroke={seriesColor} />
+      );
     }
 
     if (customConfig?.fill?.alpha) {
-      seriesGeometry.push(<Area scaleKey={scale} fill={customConfig?.fill.alpha} color={seriesColor} />);
+      seriesGeometry.push(
+        <Area key={`area-${scale}-${i}`} scaleKey={scale} fill={customConfig?.fill.alpha} color={seriesColor} />
+      );
     }
     if (seriesGeometry.length > 1) {
-      geometries.push(<SeriesGeometry scaleKey={scale}>{seriesGeometry}</SeriesGeometry>);
+      geometries.push(
+        <SeriesGeometry key={`seriesGeometry-${scale}-${i}`} scaleKey={scale}>
+          {seriesGeometry}
+        </SeriesGeometry>
+      );
     } else {
       geometries.push(seriesGeometry);
     }

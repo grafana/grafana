@@ -33,12 +33,12 @@ const useScaleConfig = (scaleKey: string, getConfig: () => any) => {
 export const Scale: React.FC<ScaleProps> = props => {
   const { scaleKey, time } = props;
 
-  const getConfig = useCallback(() => {
+  const getConfig = () => {
     let config: uPlot.Scale = {
       time: !!time,
     };
     return config;
-  }, [props]);
+  };
 
   useScaleConfig(scaleKey, getConfig);
 

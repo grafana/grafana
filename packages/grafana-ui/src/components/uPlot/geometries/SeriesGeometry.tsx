@@ -43,7 +43,7 @@ const geometriesConfigGetters: Record<string, (props: any) => {}> = {
 };
 
 export const SeriesGeometry: React.FC<{ scaleKey: string; children: React.ReactElement[] }> = props => {
-  const getConfig = useCallback(() => {
+  const getConfig = () => {
     let config: uPlot.Series = {
       points: {
         show: false,
@@ -66,7 +66,7 @@ export const SeriesGeometry: React.FC<{ scaleKey: string; children: React.ReactE
     });
 
     return config;
-  }, [props]);
+  };
 
   useSeriesGeometry(getConfig);
 
