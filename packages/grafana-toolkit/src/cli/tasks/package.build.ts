@@ -10,21 +10,19 @@ import series from 'p-series';
 
 let distDir: string, cwd: string;
 
-export const clean = useSpinner('Cleaning', () => execa('npm', ['run', 'clean']));
+export const clean = () => useSpinner('Cleaning', () => execa('npm', ['run', 'clean']));
 
-const compile = useSpinner('Compiling sources', () => execa('tsc', ['-p', './tsconfig.build.json']));
+const compile = () => useSpinner('Compiling sources', () => execa('tsc', ['-p', './tsconfig.build.json']));
 
-const rollup = useSpinner('Bundling', () => execa('npm', ['run', 'bundle']));
+const bundle = () => useSpinner('Bundling', () => execa('npm', ['run', 'bundle']));
 
 interface SavePackageOptions {
   path: string;
   pkg: {};
 }
 
-export const savePackage = useSpinner<SavePackageOptions>(
-  'Updating package.json',
-  ({ path, pkg }: SavePackageOptions) => fs.writeFile(path, JSON.stringify(pkg, null, 2))
-);
+export const savePackage = ({ path, pkg }: SavePackageOptions) =>
+  useSpinner('Updating package.json', () => fs.writeFile(path, JSON.stringify(pkg, null, 2)));
 
 const preparePackage = async (pkg: any) => {
   pkg.main = 'index.js';
@@ -58,7 +56,7 @@ const moveFiles = () => {
   return useSpinner(`Moving ${files.join(', ')} files`, () => {
     const promises = files.map(file => fs.copyFile(`${cwd}/${file}`, `${distDir}/${file}`));
     return Promise.all(promises);
-  })();
+  });
 };
 
 const moveStaticFiles = async (pkg: any) => {
@@ -67,7 +65,7 @@ const moveStaticFiles = async (pkg: any) => {
       const staticFiles = await globby('src/**/*.{png,svg,gif,jpg}');
       const promises = staticFiles.map(file => fs.copyFile(file, file.replace(/^src/, 'compiled')));
       await Promise.all(promises);
-    })();
+    });
   }
 };
 
@@ -93,7 +91,7 @@ const buildTaskRunner: TaskRunner<PackageBuildOptions> = async ({ scope }) => {
       await clean();
       await compile();
       await moveStaticFiles(pkg);
-      await rollup();
+      await bundle();
       await preparePackage(pkg);
       await moveFiles();
     };
