@@ -78,9 +78,10 @@ describe('Language completion provider', () => {
       ];
       const result = await instance.provideCompletionItems(input, { history });
       expect(result.context).toBeUndefined();
-      expect(result.suggestions.length).toEqual(2);
+      expect(result.suggestions.length).toEqual(3);
       expect(result.suggestions[0].label).toEqual('History');
       expect(result.suggestions[1].label).toEqual('Functions');
+      expect(result.suggestions[2].label).toEqual('Parsers');
     });
   });
 

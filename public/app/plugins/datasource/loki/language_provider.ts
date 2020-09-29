@@ -9,7 +9,7 @@ import {
   selectorRegexp,
   processLabels,
 } from 'app/plugins/datasource/prometheus/language_utils';
-import syntax, { FUNCTIONS } from './syntax';
+import syntax, { FUNCTIONS, PARSERS } from './syntax';
 
 // Types
 import { LokiQuery } from './types';
@@ -217,6 +217,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
       prefixMatch: true,
       label: 'Functions',
       items: FUNCTIONS.map(suggestion => ({ ...suggestion, kind: 'function' })),
+    });
+
+    suggestions.push({
+      prefixMatch: true,
+      label: 'Parsers',
+      items: PARSERS.map(suggestion => ({ ...suggestion, kind: 'parsers' })),
     });
 
     return { suggestions };
