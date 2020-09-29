@@ -96,7 +96,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { datasource, query, data } = this.props;
+    const { datasource, query, range, data } = this.props;
     const { formatOption, instant, interval, intervalFactorOption, legendFormat } = this.state;
 
     return (
@@ -104,6 +104,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
         <PromQueryField
           datasource={datasource}
           query={query}
+          range={range}
           onRunQuery={this.onRunQuery}
           onChange={this.onFieldChange}
           history={[]}
