@@ -3,8 +3,9 @@ import React, { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 // Components
-import { Form, Input, InputControl, InlineFieldRow, InlineField, Select } from '@grafana/ui';
-import { dateMath, dateTime, QueryEditorProps, SelectableValue } from '@grafana/data';
+import { Input, InlineFieldRow, InlineField, Select } from '@grafana/ui';
+import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { StreamingClientEditor, ManualEntryEditor, RandomWalkEditor } from './components';
 
 // Types
 import { TestDataDataSource } from './datasource';
@@ -36,6 +37,11 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
   const onInputChange = (e: any) => {
     const { name, value } = e.target;
     onChange({ ...query, [name]: value });
+  };
+
+  const onStreamClientChange = (e: any) => {
+    const { name, value } = e.target;
+    onChange({ ...query, stream: { ...query.stream, [name]: value } });
   };
 
   const options = useMemo(() => (scenarioList || []).map(item => ({ label: item.name, value: item.id })), [
@@ -107,104 +113,11 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
         )}
       </InlineFieldRow>
 
-      {currentScenario.id === 'manual_entry' && <ManualEntryEditor onChange={onChange} query={query} />}
-      {currentScenario.id === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
+      {currentScenario?.id === 'manual_entry' && <ManualEntryEditor onChange={onChange} query={query} />}
+      {currentScenario?.id === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
+      {currentScenario?.id === 'streaming_client' && (
+        <StreamingClientEditor onChange={onStreamClientChange} query={query} />
+      )}
     </>
-  );
-};
-
-const ManualEntryEditor = ({ onChange, query }: Partial<Props>) => {
-  const addPoint = point => {
-    let points = query.points || [];
-    const newPointTime = dateMath.parse(point.newPointTime);
-    points = [...points, [point.newPointValue, newPointTime.valueOf()]].sort((a, b) => a[1] - b[1]);
-    console.log('p', point, points);
-  };
-
-  const deletePoint = () => {};
-
-  const points = (query.points || []).map((point, index) => {
-    return {
-      text: dateTime(point[1]).format('MMMM Do YYYY, H:mm:ss') + ' : ' + point[0],
-      value: index,
-    };
-  });
-
-  return (
-    <Form onSubmit={addPoint} maxWidth="none">
-      {({ register, control, watch }) => {
-        const selectedPoint = watch('selectedPoint');
-        return (
-          <InlineFieldRow>
-            <InlineField label="New value" labelWidth={14}>
-              <Input type="number" placeholder="value" id="newPointValue" name="newPointValue" ref={register} />
-            </InlineField>
-            <InlineField label="Time">
-              <Input
-                id="newPointTime"
-                placeholder="time"
-                name="newPointTime"
-                ref={register}
-                defaultValue={dateTime().format()}
-              />
-            </InlineField>
-            <button className="btn btn-secondary gf-form-btn">Add</button>
-            <InlineField label="All values">
-              <InputControl
-                control={control}
-                as={Select}
-                options={points}
-                width={16}
-                name="selectedPoint"
-                onChange={value => {
-                  console.log('v', value);
-                  return value;
-                }}
-              />
-            </InlineField>
-
-            {selectedPoint?.value && (
-              <InlineField>
-                <button type="button" className="btn btn-danger gf-form-btn" onClick={deletePoint}>
-                  Delete
-                </button>
-              </InlineField>
-            )}
-          </InlineFieldRow>
-        );
-      }}
-    </Form>
-  );
-};
-
-const randomWalkFields = [
-  { label: 'Series count', id: 'seriesCount', placeholder: '1', min: 1, step: 1 },
-  { label: 'Start value', id: 'startValue', placeholder: 'auto', step: 1 },
-  { label: 'Spread', id: 'spread', placeholder: '1', min: 0.5, step: 0.1 },
-  { label: 'Noise', id: 'noise', placeholder: '0', min: 0, step: 0.1 },
-  { label: 'Min', id: 'min', placeholder: 'none', step: 0.1 },
-  { label: 'Max', id: 'max', placeholder: 'none', step: 0.1 },
-];
-
-const RandomWalkEditor = ({ onChange, query }: Partial<Props>) => {
-  return (
-    <InlineFieldRow>
-      {randomWalkFields.map(({ label, id, min, step, placeholder }) => {
-        return (
-          <InlineField label={label} labelWidth={14} key={id}>
-            <Input
-              width={32}
-              type="number"
-              id={id}
-              min={min}
-              step={step}
-              value={query?.[id]}
-              placeholder={placeholder}
-              onChange={onChange}
-            />
-          </InlineField>
-        );
-      })}
-    </InlineFieldRow>
   );
 };
