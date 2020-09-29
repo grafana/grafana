@@ -1,9 +1,15 @@
 import React from 'react';
 import { Label } from './Label';
+import mdx from './Label.mdx';
 
 export default {
   title: 'Forms/Label',
   component: Label,
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 export const simple = () => {

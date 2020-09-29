@@ -9,7 +9,7 @@ weight = 150
 
 # Create API tokens and dashboards for an organization
 
-Use the Grafana API to setup new Grafana organizations or to add dynamically generated dashboards to an existing organization.
+Use the Grafana API to set up new Grafana organizations or to add dynamically generated dashboards to an existing organization.
 
 ## Authentication
 

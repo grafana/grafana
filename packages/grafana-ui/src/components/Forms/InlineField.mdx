@@ -1,0 +1,17 @@
+import { Props } from "@storybook/addon-docs/blocks";
+import { InlineField } from "./InlineField";
+
+# InlineField
+
+A basic component for rendering form elements, like `Input`, `Select`, `Checkbox`, etc, inline together with `InlineLabel`. If the child element has `id` specified, the label's `htmlFor` attribute, pointing to the id, will be added.
+The width of the `InlineLabel` can be modified via `labelWidth` prop. If `tooltip` prop is provided, an info icon with supplied tooltip content will be rendered inside the label.
+
+# Usage
+
+```jsx
+<InlineField label="Inline field">
+  <Input placeholder="Inline input" />
+</InlineField>
+```
+
+<Props of={InlineField} />
