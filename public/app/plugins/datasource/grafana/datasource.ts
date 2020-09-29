@@ -7,8 +7,6 @@ import {
   DataSourceInstanceSettings,
 } from '@grafana/data';
 
-import isArray from 'lodash/isArray';
-
 import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType } from './types';
 import { getBackendSrv, getTemplateSrv, toDataQueryResponse } from '@grafana/runtime';
 import { Observable, of } from 'rxjs';
@@ -73,7 +71,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
       delete params.tags;
     } else {
       // require at least one tag
-      if (!isArray(annotation.tags) || annotation.tags.length === 0) {
+      if (!Array.isArray(annotation.tags) || annotation.tags.length === 0) {
         return Promise.resolve([]);
       }
       const delimiter = '__delimiter__';
