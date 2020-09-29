@@ -108,7 +108,7 @@ In this example we use Apache as a reverse proxy in front of Grafana. Apache han
     </VirtualHost>
 ```
 
-- The first 4 lines of the virtualhost configuration are standard, so we won’t go into detail      on what they do.
+- The first four lines of the virtualhost configuration are standard, so we won’t go into detail on what they do.
 
 - We use a **\<proxy>** configuration block for applying our authentication rules to every proxied request. These rules include requiring basic authentication where user:password credentials are stored in the **/etc/apache2/grafana_htpasswd** file. This file can be created with the `htpasswd` command.
 
