@@ -3,7 +3,7 @@ publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.1'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
-grabpl_version = '0.5.10'
+grabpl_version = '0.5.12'
 git_image = 'alpine/git:v2.26.2'
 dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
@@ -791,7 +791,7 @@ def publish_packages_step(edition, is_downstream):
         'name': 'publish-packages',
         'image': publish_image,
         'depends_on': [
-            'upload-packages',
+            'initialize',
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': {
@@ -841,7 +841,7 @@ def get_windows_steps(edition, version_mode, is_downstream=False):
             installer_commands.extend([
                 '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
                 'gsutil cp $$fname gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
-                'gsutil cp $$fname.sha256 gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
+                'gsutil cp "$$fname.sha256" gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
             ])
         steps.append({
             'name': 'build-windows-installer',
