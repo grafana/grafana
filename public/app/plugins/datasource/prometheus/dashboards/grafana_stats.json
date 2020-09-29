@@ -441,7 +441,7 @@
       ],
       "targets": [
         {
-          "expr": "topk(1, grafana_info)",
+          "expr": "topk(1, grafana_info or grafana_build_info)",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 2,

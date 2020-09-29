@@ -42,7 +42,7 @@ All requests will be made from the browser to Grafana backend/server which in tu
 All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
 
 If you select Browser access you must update your Elasticsearch configuration to allow other domains to access
-Elasticsearch from the browser. You do this by specifying these to options in your **elasticsearch.yml** config file.
+Elasticsearch from the browser. You do this by specifying these two options in your **elasticsearch.yml** config file.
 
 ```bash
 http.cors.enabled: true
@@ -84,7 +84,7 @@ Identifier | Description
 > Only available in Grafana v6.3+.
 
 There are two parameters, `Message field name` and `Level field name`, that can optionally be configured from the data source settings page that determine
-which fields will be used for log messages and log levels when visualizing logs in [Explore]({{< relref "../explore" >}}).
+which fields will be used for log messages and log levels when visualizing logs in [Explore]({{< relref "../../explore" >}}).
 
 For example, if you're using a default setup of Filebeat for shipping logs to Elasticsearch the following configuration should work:
 
@@ -187,9 +187,9 @@ for annotation events.
 
 Name | Description
 ------------ | -------------
-Query | You can leave the search query blank or specify a lucene query
+Query | You can leave the search query blank or specify a lucene query.
 Time | The name of the time field, needs to be date field.
-Time End | Optional name of the time end field, needs to be date field. If set, then annotations will be marked as a regions between time and time-end.
+Time End | Optional name of the time end field needs to be date field. If set, then annotations will be marked as a region between time and time-end.
 Text | Event description field.
 Tags | Optional field name to use for event tags (can be an array or a CSV string).
 
@@ -197,7 +197,7 @@ Tags | Optional field name to use for event tags (can be an array or a CSV strin
 
 > Only available in Grafana v6.3+.
 
-Querying and displaying log data from Elasticsearch is available via [Explore]({{< relref "../explore" >}}).
+Querying and displaying log data from Elasticsearch is available via [Explore]({{< relref "../../explore" >}}).
 
 ![](/img/docs/v63/elasticsearch_explore_logs.png)
 

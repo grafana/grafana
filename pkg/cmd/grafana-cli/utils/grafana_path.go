@@ -64,7 +64,7 @@ func returnOsDefault(currentOs string) string {
 		return "/var/db/grafana/plugins"
 	case "openbsd":
 		return "/var/grafana/plugins"
-	default: //"linux"
+	default: // "linux"
 		return "/var/lib/grafana/plugins"
 	}
 }

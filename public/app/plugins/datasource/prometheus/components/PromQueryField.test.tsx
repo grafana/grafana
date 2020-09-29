@@ -1,12 +1,11 @@
-import { mount } from 'enzyme';
 // @ts-ignore
 import RCCascader from 'rc-cascader';
 import React from 'react';
 import PromQlLanguageProvider, { DEFAULT_LOOKUP_METRICS_THRESHOLD } from '../language_provider';
 import PromQueryField, { groupMetricsByPrefix, RECORDING_RULES_GROUP } from './PromQueryField';
-import { ButtonCascader } from '@grafana/ui';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { PromOptions } from '../types';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 describe('PromQueryField', () => {
   beforeAll(() => {
@@ -21,7 +20,7 @@ describe('PromQueryField', () => {
       },
     } as unknown) as DataSourceInstanceSettings<PromOptions>;
 
-    const queryField = mount(
+    const queryField = render(
       <PromQueryField
         // @ts-ignore
         datasource={datasource}
@@ -32,11 +31,11 @@ describe('PromQueryField', () => {
       />
     );
 
-    expect(queryField.find(ButtonCascader).length).toBe(1);
+    expect(queryField.getAllByRole('button')).toHaveLength(1);
   });
 
   it('renders a disabled metrics chooser if lookups are disabled in datasource settings', () => {
-    const queryField = mount(
+    const queryField = render(
       <PromQueryField
         // @ts-ignore
         datasource={{ lookupsDisabled: true }}
@@ -47,12 +46,8 @@ describe('PromQueryField', () => {
       />
     );
 
-    expect(
-      queryField
-        .find(ButtonCascader)
-        .find('button')
-        .props().disabled
-    ).toBe(true);
+    const bcButton = queryField.getByRole('button');
+    expect(bcButton).toBeDisabled();
   });
 
   it('refreshes metrics when the data source changes', async () => {
@@ -68,7 +63,7 @@ describe('PromQueryField', () => {
       },
     } as unknown) as PromQlLanguageProvider;
 
-    const queryField = mount(
+    const queryField = render(
       <PromQueryField
         // @ts-ignore
         datasource={{
@@ -80,29 +75,36 @@ describe('PromQueryField', () => {
         history={[]}
       />
     );
-    await Promise.resolve();
 
-    const cascader = queryField.find<RCCascader>(RCCascader);
-    cascader.simulate('click');
-    const cascaderNode: HTMLElement = cascader.instance().getPopupDOMNode();
-
-    for (const item of Array.from(cascaderNode.getElementsByTagName('li'))) {
-      expect(metrics.includes(item.innerHTML)).toBe(true);
+    let cascader = await queryField.findByRole('button');
+    fireEvent.keyDown(cascader, { keyCode: 40 });
+    let listNodes = screen.getAllByRole('menuitem');
+    for (const node of listNodes) {
+      expect(metrics).toContain(node.innerHTML);
     }
 
     const changedMetrics = ['baz', 'moo'];
-    queryField.setProps({
-      datasource: {
-        languageProvider: {
-          ...languageProvider,
-          metrics: changedMetrics,
-        },
-      },
-    });
-    await Promise.resolve();
+    queryField.rerender(
+      <PromQueryField
+        datasource={{
+          //@ts-ignore
+          languageProvider: {
+            ...languageProvider,
+            metrics: changedMetrics,
+          },
+        }}
+        query={{ expr: '', refId: '' }}
+        onRunQuery={() => {}}
+        onChange={() => {}}
+        history={[]}
+      />
+    );
 
-    for (const item of Array.from(cascaderNode.getElementsByTagName('li'))) {
-      expect(changedMetrics.includes(item.innerHTML)).toBe(true);
+    cascader = await queryField.findByRole('button');
+    fireEvent.keyDown(cascader, { keyCode: 40 });
+    listNodes = screen.getAllByRole('menuitem');
+    for (const node of listNodes) {
+      expect(changedMetrics).toContain(node.innerHTML);
     }
   });
 });

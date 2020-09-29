@@ -79,7 +79,7 @@ func (ds *RemoteCache) Init() error {
 
 // Run start the backend processes for cache clients
 func (ds *RemoteCache) Run(ctx context.Context) error {
-	//create new interface if more clients need GC jobs
+	// create new interface if more clients need GC jobs
 	backgroundjob, ok := ds.client.(registry.BackgroundService)
 	if ok {
 		return backgroundjob.Run(ctx)
