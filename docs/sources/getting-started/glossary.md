@@ -78,7 +78,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">Trace</td>
     <td>
-      An observed execution path of a request through a distributed system.
+      An observed execution path of a request through a distributed system. For more information, refer to [What is Distributed Tracing?](https://opentracing.io/docs/overview/what-is-tracing/).
     </td>
   </tr>
   <tr>
