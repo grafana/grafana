@@ -164,14 +164,13 @@ export const HEADER_ITEMS = [
   {
     key: 'timestamp',
     label: 'Trace Start',
-    renderer: (trace: Trace) => {
-      const styles = getStyles(useTheme());
+    renderer: (trace: Trace, styles?: ReturnType<typeof getStyles>) => {
       const dateStr = formatDatetime(trace.startTime);
       const match = dateStr.match(/^(.+)(:\d\d\.\d+)$/);
       return match ? (
-        <span className={styles.TracePageHeaderOverviewItemValue}>
+        <span className={styles?.TracePageHeaderOverviewItemValue}>
           {match[1]}
-          <span className={styles.TracePageHeaderOverviewItemValueDetail}>{match[2]}</span>
+          <span className={styles?.TracePageHeaderOverviewItemValueDetail}>{match[2]}</span>
         </span>
       ) : (
         dateStr
@@ -223,21 +222,25 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     hideSearchButtons,
   } = props;
 
+  const styles = getStyles(useTheme());
+  const links = useMemo(() => {
+    if (!trace) {
+      return [];
+    }
+    return getTraceLinks(trace);
+  }, [trace]);
+
   if (!trace) {
     return null;
   }
-
-  const links = useMemo(() => getTraceLinks(trace), [trace]);
 
   const summaryItems =
     !hideSummary &&
     !slimView &&
     HEADER_ITEMS.map(item => {
       const { renderer, ...rest } = item;
-      return { ...rest, value: renderer(trace) };
+      return { ...rest, value: renderer(trace, styles) };
     });
-
-  const styles = getStyles(useTheme());
 
   const title = (
     <h1 className={cx(styles.TracePageHeaderTitle, canCollapse && styles.TracePageHeaderTitleCollapsible)}>

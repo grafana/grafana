@@ -2,11 +2,11 @@
 title = "Explore"
 keywords = ["explore", "loki", "logs"]
 type = "docs"
+aliases = ["/docs/grafana/latest/features/explore/"]
 [menu.docs]
 name = "Explore"
 identifier = "explore"
-parent = "features"
-weight = 5
+weight = 900
 +++
 
 # Explore
@@ -145,9 +145,9 @@ Click on the filter button <span title="Filter for label" class="logs-label__ico
 
 Along with metrics, Explore allows you to investigate your logs with the following data sources:
 
-- [Loki](../datasources/loki)
-- [InfluxDB](../datasources/influxdb)
-- [Elasticsearch](../datasources/elasticsearch)
+- [Loki](../features/datasources/loki)
+- [InfluxDB](../features/datasources/influxdb)
+- [Elasticsearch](../features/datasources/elasticsearch)
 
 ### Visualization options
 
@@ -181,11 +181,19 @@ You can change the order of received logs from the default descending order (new
 
 Each log row has an extendable area with its labels and parsed fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
 
+### Toggle parsed fields
+
+> **Note:** This feature is only available in Grafana 7.2+.
+
+If your logs are structured in `json` or `logfmt`, then you can show or hide parsed fields. Expand a log line and then click the eye icon to show or hide fields.
+
+{{< docs-imagebox img="/img/docs/explore/parsed-fields-7-2.gif" max-width="800px" caption="Toggling parsed fields in Explore" >}}
+
 ### Loki-specific features
 
 As mentioned, one of the log integrations is for the new open source log aggregation system from Grafana Labs - [Loki](https://github.com/grafana/loki). Loki is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels. Read more about Grafana Loki [here](https://github.com/grafana/loki) or the Grafana Labs hosted variant: [Grafana Cloud Logs](https://grafana.com/loki).
 
-See [Loki's data source documentation](../datasources/loki) on how to query for log data.
+See [Loki's data source documentation](../features/datasources/loki) on how to query for log data.
 
 #### Switch from metrics to logs
 
@@ -215,8 +223,8 @@ While in Live tail view new logs will come from the bottom of the screen and wil
 
 You can visualize traces from tracing data sources in explore. Data sources currently supported:
 
-- [Jaeger]({{< relref "datasources/jaeger.md" >}})
-- [Zipkin]({{< relref "datasources/zipkin.md" >}})
+- [Jaeger]({{< relref "../features/datasources/jaeger.md" >}})
+- [Zipkin]({{< relref "../features/datasources/zipkin.md" >}})
 
 For information about how to use the query editor see documentation for specific data source.
 
@@ -278,7 +286,7 @@ the arrow next to the button to reveal a "Return to panel with changes" menu ite
 ## Query inspector
 
 To help with debugging queries, Explore allows you to investigate query requests and responses, as well as query statistics, via the Query inspector.
-This functionality is similar to the panel inspector [Stats tab]({{< relref "../../panels/inspect-panel.md#inspect-query-performance" >}}) and
-[Query tab]({{< relref "../../panels/inspect-panel.md##view-raw-request-and-response-to-data-source" >}}).
+This functionality is similar to the panel inspector [Stats tab]({{< relref "../panels/inspect-panel.md#inspect-query-performance" >}}) and
+[Query tab]({{< relref "../panels/inspect-panel.md##view-raw-request-and-response-to-data-source" >}}).
 
 {{< docs-imagebox img="/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" caption="Screenshot of the query inspector button in Explore" >}}

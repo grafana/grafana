@@ -1848,7 +1848,7 @@ describe('prepareTargets', () => {
     });
 
     describe('when query type Instant is selected', () => {
-      it('then it should just add targets', () => {
+      it('then it should target and modify its format to table', () => {
         const target: PromQuery = {
           refId: 'A',
           expr: 'up',
@@ -1874,7 +1874,7 @@ describe('prepareTargets', () => {
           start,
           step: 1,
         });
-        expect(activeTargets[0]).toEqual(target);
+        expect(activeTargets[0]).toEqual({ ...target, format: 'table' });
       });
     });
   });

@@ -4,11 +4,12 @@ import { GrafanaPlugin, PluginMeta } from './plugin';
 import { PanelData } from './panel';
 import { LogRowModel } from './logs';
 import { AnnotationEvent, AnnotationSupport } from './annotations';
-import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
+import { KeyValue, LoadingState, TableData, TimeSeries, DataTopic } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
 import { CoreApp } from './app';
+import { LiveChannelSupport } from './live';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -284,6 +285,15 @@ export abstract class DataSourceApi<
    * @deprecated -- prefer using {@link AnnotationSupport}
    */
   annotationQuery?(options: AnnotationQueryRequest<TQuery>): Promise<AnnotationEvent[]>;
+
+  /**
+   * Define live streaming behavior within this datasource settings
+   *
+   * Note: `plugin.json` must also define `live: true`
+   *
+   * @experimental
+   */
+  channelSupport?: LiveChannelSupport;
 }
 
 export interface MetadataInspectorProps<
@@ -403,6 +413,11 @@ export interface DataQuery {
   queryType?: string;
 
   /**
+   * The data topic resuls should be attached to
+   */
+  dataTopic?: DataTopic;
+
+  /**
    * For mixed data sources the selected datasource is on the query level.
    * For non mixed scenarios this is undefined.
    */
@@ -489,6 +504,7 @@ export interface MetricFindValue {
 export interface DataSourceJsonData {
   authType?: string;
   defaultRegion?: string;
+  profile?: string;
 }
 
 /**
