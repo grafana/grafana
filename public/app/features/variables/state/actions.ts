@@ -630,7 +630,6 @@ export const updateOptions = (
       })
       .catch(error => {
         dispatch(variableStateFailed(toVariablePayload(variableInState, { error })));
-        throw error;
       });
   }
 
@@ -639,7 +638,8 @@ export const updateOptions = (
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
     dispatch(variableStateCompleted(toVariablePayload(variableInState)));
   } catch (error) {
+    console.error(error);
     dispatch(variableStateFailed(toVariablePayload(variableInState, { error })));
-    throw error;
+    dispatch(notifyApp(createErrorNotification('Templating', 'Error updating options: ' + error.message)));
   }
 };

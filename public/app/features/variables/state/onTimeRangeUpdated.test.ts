@@ -10,6 +10,7 @@ import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { VariableRefresh } from '../types';
 import { constantBuilder, intervalBuilder } from '../shared/testing/builders';
+import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 
 variableAdapters.setInit(() => [createIntervalVariableAdapter(), createConstantVariableAdapter()]);
 
@@ -141,6 +142,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
   });
 
   describe('and updateOptions throws', () => {
+    silenceConsoleOutput();
     it('then correct dependencies are called', async () => {
       const {
         range,

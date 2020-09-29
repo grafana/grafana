@@ -9,6 +9,7 @@ import {
   changeVariableProp,
   setCurrentVariableValue,
   variableStateCompleted,
+  variableStateFailed,
   variableStateFetching,
 } from '../state/sharedReducer';
 import { TemplatingState } from '../state/reducers';
@@ -27,6 +28,9 @@ import {
 } from '../editor/reducer';
 import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
 import { expect } from 'test/lib/common';
+import { updateOptions } from '../state/actions';
+import { notifyApp } from '../../../core/reducers/appNotification';
+import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 
 const mocks: Record<string, any> = {
   datasource: {
@@ -221,6 +225,7 @@ describe('query actions', () => {
   });
 
   describe('when updateQueryVariableOptions is dispatched and fails for variable open in editor', () => {
+    silenceConsoleOutput();
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true, useTags: false });
       const error = { message: 'failed to fetch metrics' };
@@ -231,15 +236,23 @@ describe('query actions', () => {
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
+        .whenAsyncActionIsDispatched(updateOptions(toVariablePayload(variable)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [clearErrors, errorOccurred] = actions;
-        const expectedNumberOfActions = 2;
+      tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
+        const expectedNumberOfActions = 5;
 
-        expect(errorOccurred).toEqual(addVariableEditorError({ errorProp: 'update', errorText: error.message }));
-        expect(clearErrors).toEqual(removeVariableEditorError({ errorProp: 'update' }));
-        return actions.length === expectedNumberOfActions;
+        expect(dispatchedActions[0]).toEqual(variableStateFetching(toVariablePayload(variable)));
+        expect(dispatchedActions[1]).toEqual(removeVariableEditorError({ errorProp: 'update' }));
+        expect(dispatchedActions[2]).toEqual(addVariableEditorError({ errorProp: 'update', errorText: error.message }));
+        expect(dispatchedActions[3]).toEqual(
+          variableStateFailed(toVariablePayload(variable, { error: { message: 'failed to fetch metrics' } }))
+        );
+        expect(dispatchedActions[4].type).toEqual(notifyApp.type);
+        expect(dispatchedActions[4].payload.title).toEqual('Templating');
+        expect(dispatchedActions[4].payload.text).toEqual('Error updating options: failed to fetch metrics');
+        expect(dispatchedActions[4].payload.severity).toEqual('error');
+
+        return dispatchedActions.length === expectedNumberOfActions;
       });
     });
   });
@@ -574,6 +587,7 @@ function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableMode
     multi: true,
     includeAll: true,
     state: VariableLoadingState.NotStarted,
+    error: null,
     ...(extend ?? {}),
   };
 }

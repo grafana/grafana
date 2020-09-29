@@ -1,11 +1,10 @@
-import { AppEvents, DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
 import { updateOptions, validateVariableSelectionState } from '../state/actions';
 import { QueryVariableModel, VariableRefresh } from '../types';
 import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import templateSrv from '../../templating/template_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import appEvents from '../../../core/app_events';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';
 import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
 import { getVariable } from '../state/selectors';
@@ -13,6 +12,7 @@ import { addVariableEditorError, changeVariableEditorExtended, removeVariableEdi
 import { changeVariableProp } from '../state/sharedReducer';
 import { updateVariableOptions, updateVariableTags } from './reducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
+import { toDataQueryError } from '@grafana/runtime';
 
 export const updateQueryVariableOptions = (
   identifier: VariableIdentifier,
@@ -59,17 +59,12 @@ export const updateQueryVariableOptions = (
         await dispatch(validateVariableSelectionState(toVariableIdentifier(variableInState)));
       }
     } catch (err) {
-      console.error(err);
-      if (err.data && err.data.message) {
-        err.message = err.data.message;
-      }
+      const error = toDataQueryError(err);
       if (getState().templating.editor.id === variableInState.id) {
-        dispatch(addVariableEditorError({ errorProp: 'update', errorText: err.message }));
+        dispatch(addVariableEditorError({ errorProp: 'update', errorText: error.message }));
       }
-      appEvents.emit(AppEvents.alertError, [
-        'Templating',
-        'Template variables could not be initialized: ' + err.message,
-      ]);
+
+      throw error;
     }
   };
 };
