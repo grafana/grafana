@@ -124,7 +124,7 @@ In this example we use Apache as a reverse proxy in front of Grafana. Apache han
 
 ## Full walkthrough using Docker.
 
-For this example, we use the official Grafana docker image available at [Docker Hub](https://hub.docker.com/r/grafana/grafana/)
+For this example, we use the official Grafana Docker image available at [Docker Hub](https://hub.docker.com/r/grafana/grafana/).
 
 - Create a file `grafana.ini` with the following contents
 
