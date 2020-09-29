@@ -5,6 +5,7 @@ import * as path from 'path';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 import { Task, TaskRunner } from './task';
+import { cloneDeep } from 'lodash';
 import globby from 'globby';
 import series from 'p-series';
 
@@ -25,6 +26,8 @@ const savePackage = ({ path, pkg }: SavePackageOptions) =>
   useSpinner('Updating package.json', () => fs.writeFile(path, JSON.stringify(pkg, null, 2)));
 
 const preparePackage = async (pkg: any) => {
+  pkg = cloneDeep(pkg); // avoid mutations
+
   pkg.main = 'index.js';
   pkg.types = 'index.d.ts';
 
