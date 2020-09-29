@@ -26,7 +26,7 @@ jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
 }));
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as any),
   reportMetaAnalytics: jest.fn(),
 }));
 
@@ -34,7 +34,7 @@ const mockGetUrlSearchParams = jest.fn(() => {
   return {};
 });
 jest.mock('@grafana/data', () => ({
-  ...((jest.requireActual('@grafana/data') as unknown) as object),
+  ...(jest.requireActual('@grafana/data') as any),
   urlUtil: {
     getUrlSearchParams: () => mockGetUrlSearchParams(),
   },
