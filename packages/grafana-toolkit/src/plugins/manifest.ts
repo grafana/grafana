@@ -5,7 +5,7 @@ import { ManifestInfo } from './types';
 
 const MANIFEST_FILE = 'MANIFEST.txt';
 
-async function* walk(dir: string, baseDir: string): Promise<string> {
+async function* walk(dir: string, baseDir: string): AsyncGenerator<string, any, any> {
   for await (const d of await (fs.promises as any).opendir(dir)) {
     const entry = path.join(dir, d.name);
     if (d.isDirectory()) {
@@ -33,7 +33,7 @@ export async function buildManifest(dir: string): Promise<ManifestInfo> {
     files: {},
   } as ManifestInfo;
 
-  for await (const p of walk(dir, dir)) {
+  for await (const p of await walk(dir, dir)) {
     if (p === MANIFEST_FILE) {
       continue;
     }
