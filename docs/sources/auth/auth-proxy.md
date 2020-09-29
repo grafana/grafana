@@ -122,7 +122,7 @@ In this example we use Apache as a reverse proxy in front of Grafana. Apache han
 
 - The last 3 lines are then just standard reverse proxy configuration to direct all authenticated requests to our Grafana server running on port 3000.
 
-## Full walk through using Docker.
+## Full walkthrough using Docker.
 
 For this example, we use the official Grafana docker image available at [Docker Hub](https://hub.docker.com/r/grafana/grafana/)
 
