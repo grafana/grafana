@@ -352,6 +352,13 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/states-for-dashboard", Wrap(GetAlertStatesForDashboard))
 		})
 
+		if hs.Cfg.IsNgAlertEnabled() {
+			apiRoute.Group("/alert-definitions", func(alertDefinitions routing.RouteRegister) {
+				//alertDefinitions.Post("/eval", reqEditorRole, bind(dtos.EvalAlertConditionsCommand{}), Wrap(hs.AlertDefinitionEval))
+				alertDefinitions.Post("/eval/:alertDefinitionID", reqEditorRole, Wrap(hs.AlertDefinitionEval))
+			})
+		}
+
 		apiRoute.Get("/alert-notifiers", reqEditorRole, Wrap(GetAlertNotifiers))
 
 		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {
