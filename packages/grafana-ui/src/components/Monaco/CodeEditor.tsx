@@ -8,8 +8,6 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
 type Props = CodeEditorProps & Themeable;
 
-console.log('CodeEditor/monaco loaded');
-
 class UnthemedCodeEditor extends React.PureComponent<Props> {
   completionCancel?: monaco.IDisposable;
 
