@@ -160,7 +160,7 @@ steps:
   - package
 
 - name: build-docker-images
-  image: grafana/drone-grafana-docker:0.3.1
+  image: grafana/drone-grafana-docker:0.3.2
   settings:
     archs: amd64
     dry_run: true
@@ -455,7 +455,7 @@ steps:
   - package
 
 - name: build-docker-images
-  image: grafana/drone-grafana-docker:0.3.1
+  image: grafana/drone-grafana-docker:0.3.2
   settings:
     edition: oss
     password:
@@ -466,7 +466,7 @@ steps:
   - copy-packages-for-docker
 
 - name: build-docker-images-ubuntu
-  image: grafana/drone-grafana-docker:0.3.1
+  image: grafana/drone-grafana-docker:0.3.2
   settings:
     edition: oss
     password:
