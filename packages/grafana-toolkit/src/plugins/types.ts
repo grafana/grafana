@@ -94,7 +94,7 @@ export interface ManifestInfo {
   // signedByOrg: string; << filled in by the server
   // signedByOrgName: string; << filled in by the server
   signatureType?: string; // filled in by the server if not specified
-  rootUrls?: array<string>; // for private signatures
+  rootUrls?: string[]; // for private signatures
   plugin: string;
   version: string;
   files: Record<string, string>;

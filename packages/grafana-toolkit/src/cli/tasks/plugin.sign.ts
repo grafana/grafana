@@ -4,7 +4,7 @@ import { Task, TaskRunner } from './task';
 
 interface PluginSignOptions {
   signatureType?: string;
-  rootUrls?: array<string>;
+  rootUrls?: string[];
 }
 
 const pluginSignRunner: TaskRunner<PluginSignOptions> = async ({ signatureType, rootUrls }) => {

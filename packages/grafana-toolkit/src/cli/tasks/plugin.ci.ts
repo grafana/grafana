@@ -28,7 +28,7 @@ export interface PluginCIOptions {
   finish?: boolean;
   upload?: boolean;
   signatureType?: string;
-  rootUrls?: array<string>;
+  rootUrls?: string[];
 }
 
 /**

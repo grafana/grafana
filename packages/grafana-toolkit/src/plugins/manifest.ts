@@ -5,8 +5,8 @@ import { ManifestInfo } from './types';
 
 const MANIFEST_FILE = 'MANIFEST.txt';
 
-async function* walk(dir: string, baseDir: string) {
-  for await (const d of await fs.promises.opendir(dir)) {
+async function* walk(dir: string, baseDir: string): Promise<string> {
+  for await (const d of await (fs.promises as any).opendir(dir)) {
     const entry = path.join(dir, d.name);
     if (d.isDirectory()) {
       yield* await walk(entry, baseDir);
