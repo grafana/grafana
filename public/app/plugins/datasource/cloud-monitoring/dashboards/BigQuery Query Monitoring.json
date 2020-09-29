@@ -1414,12 +1414,7 @@
           "selectedQueryType": "projects",
           "selectedSLOService": "",
           "selectedService": "actions.googleapis.com",
-          "sloServices": [
-            {
-              "name": "gae:raintank-dev_default",
-              "value": "gae:raintank-dev_default"
-            }
-          ]
+          "sloServices": []
         },
         "refresh": 1,
         "regex": "",
