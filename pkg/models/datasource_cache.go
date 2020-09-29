@@ -149,9 +149,9 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 			Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
 			KeepAlive: time.Duration(setting.DataProxyKeepAlive) * time.Second,
 		}).Dial,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		MaxIdleConns:          100,
+		TLSHandshakeTimeout:   time.Duration(setting.DataProxyTlsHandshakeTimeout) * time.Second,
+		ExpectContinueTimeout: time.Duration(setting.DataProxyExpectContinueTimeout) * time.Second,
+		MaxIdleConns:          setting.DataProxyMaxIdleConns,
 		IdleConnTimeout:       time.Duration(setting.DataProxyIdleConnTimeout) * time.Second,
 	}
 

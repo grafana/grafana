@@ -389,11 +389,23 @@ How long the data proxy should wait before timing out. Default is 30 seconds.
 
 This setting also applies to core backend HTTP data sources where query requests use an HTTP client with timeout set.
 
-### keep_alive
+### keep_alive_seconds
 
 Interval between sends of TCP keepalive requests. Default is 30 seconds.
 
-### idle_conn_timeout
+### tls_handshake_timeout_seconds
+
+The length of time that Grafana will wait for a succussful TLS handshake with the datasource. Default is 10 seconds.
+
+### expect_continue_timeout_seconds
+
+The length of time that Grafana will wait for response headers after initial request headers are written and the request contains the header "Expect: 100-continue". A value of 0 will result in the body being sent immediately. Default is 1 second.
+
+### max_idle_connections
+
+The maximim number of idle connections that Grafana will maintain. Default is 100.
+
+### idle_conn_timeout_seconds
 
 The length of time that Grafana maintains idle connections. Default is 90 seconds.
 
