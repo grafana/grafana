@@ -10,7 +10,7 @@ weight = 300
 # Transformation types and options
 
 Grafana comes with the following transformations:
-  
+
   - [Reduce](#reduce)
   - [Filter by name](#filter-by-name)
   - [Filter data by query](#filter-data-by-query)
@@ -44,7 +44,7 @@ After I apply the transformation, there is no time value and each column has bee
 
 > **Note:** This transformation is only available in Grafana 7.1+.
 
-Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contains the same data. For information, refer to [Table panel]({{< relref "../visualizations/table/_index.md" >}}).
+Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../visualizations/table/_index.md" >}}).
 
 In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the transformation.
 
@@ -152,7 +152,7 @@ In the example below, I added two fields together and named them Sum.
 
 ## Labels to fields
 
-> **Note:** In order to apply this transformation, your query needs to returns labeled fields.
+> **Note:** In order to apply this transformation, your query needs to return labeled fields.
 
 When you select this transformation, Grafana automatically transforms all labeled data into fields.
 
@@ -211,15 +211,12 @@ This transformation goes in two steps. First you specify one or multiple fields 
 | 2020-07-07 11:34:20 | **server 1** | 80              | Shutdown      |
 | 2020-07-07 09:28:06 | **server 1** | 80              | OK            |
 | 2020-07-07 09:23:07 | **server 1** | 86              | OK            |
-
-|
-| 2020-07-07 10:32:20 | server 2 | 90 | Overload
-| 2020-07-07 09:30:05 | server 2 | 88 | OK
-| 2020-07-07 09:25:05 | server 2 | 88 | OK
-|
-| 2020-07-07 11:34:20 | **_server 3_** | 62 | OK
-| 2020-07-07 10:31:22 | **_server 3_** | 55 | OK
-| 2020-07-07 09:30:57 | **_server 3_** | 62 | Rebooting
+| 2020-07-07 10:32:20 | server 2 | 90 | Overload |
+| 2020-07-07 09:30:05 | server 2 | 88 | OK |
+| 2020-07-07 09:25:05 | server 2 | 88 | OK |
+| 2020-07-07 11:34:20 | **_server 3_** | 62 | OK |
+| 2020-07-07 10:31:22 | **_server 3_** | 55 | OK |
+| 2020-07-07 09:30:57 | **_server 3_** | 62 | Rebooting |
 
 All rows with the same value of Server ID are grouped together.
 
