@@ -25,7 +25,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">Data source</td>
     <td>
-      A file, database, or service providing the data. Grafana supports a several data sources by default, and can be extended to support additional ones through plugins.
+      A file, database, or service providing the data. Grafana supports a several data sources by default, and can be extended to support additional data sources through plugins.
     </td>
   </tr>
   <tr>
