@@ -14,11 +14,7 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
   let done = false;
 
   return (data: PanelData) => {
-    if (!data.request || done) {
-      return;
-    }
-
-    if (data.request.app === CoreApp.Explore) {
+    if (!data.request || done || data.request.app === CoreApp.Explore) {
       return;
     }
 
