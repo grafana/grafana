@@ -146,7 +146,7 @@ Besides these changes we have also made security improvements regarding Cross-Si
 - Cookies are per default using the [SameSite](/administration/configuration/#cookie-samesite) attribute to protect against CSRF attacks
 - Script tags in text panels are per default [disabled](/administration/configuration/#disable-sanitize-html) to protect against XSS attacks
 
-> If you're using [Auth Proxy Authentication](/auth/auth-proxy/) you still need to have user sessions set up and configured
+> **Note:** If you're using [Auth Proxy Authentication](/auth/auth-proxy/) you still need to have user sessions set up and configured
 but our goal is to remove this requirement in the near future.
 
 ## Named Colors
