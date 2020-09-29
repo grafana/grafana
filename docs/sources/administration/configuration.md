@@ -403,7 +403,7 @@ The length of time that Grafana will wait for response headers after initial req
 
 ### max_idle_connections
 
-The maximim number of idle connections that Grafana will maintain. Default is 100.
+The maximum number of idle connections that Grafana will maintain. Default is 100.
 
 ### idle_conn_timeout_seconds
 
