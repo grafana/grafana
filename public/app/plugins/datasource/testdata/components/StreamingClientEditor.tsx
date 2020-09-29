@@ -50,7 +50,27 @@ export const StreamingClientEditor = ({ onChange, query }: Partial<Props>) => {
 
       {query?.stream?.type === 'fetch' && (
         <InlineField label="URL" labelWidth={14} grow>
-          <Input type="text" id="stream.url" value={query?.stream?.url} placeholder="Fetch URL" onChange={onChange} />
+          <Input
+            type="text"
+            name="url"
+            id="stream.url"
+            value={query?.stream?.url}
+            placeholder="Fetch URL"
+            onChange={onChange}
+          />
+        </InlineField>
+      )}
+
+      {query?.stream?.type === 'logs' && (
+        <InlineField label="Lines" labelWidth={14}>
+          <Input
+            type="number"
+            id="lines"
+            name="lines"
+            value={query?.stream?.url}
+            placeholder="10"
+            onChange={onChange}
+          />
         </InlineField>
       )}
     </InlineFieldRow>

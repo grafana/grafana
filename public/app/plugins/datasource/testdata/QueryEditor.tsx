@@ -12,6 +12,11 @@ import { TestDataDataSource } from './datasource';
 import { TestDataQuery, Scenario } from './types';
 
 const showLabelsFor = ['random_walk', 'predictable_pulse', 'predictable_csv_wave'];
+const endpoints = [
+  { value: 'datasources', label: 'Data Sources' },
+  { value: 'search', label: 'Search' },
+  { value: 'annotations', label: 'Annotations' },
+];
 
 type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
 
@@ -39,9 +44,17 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
     onChange({ ...query, [name]: value });
   };
 
+  const onEndPointChange = ({ value }: SelectableValue) => {
+    onChange({ ...query, stringInput: value });
+  };
+
   const onStreamClientChange = (e: any) => {
     const { name, value } = e.target;
-    onChange({ ...query, stream: { ...query.stream, [name]: value } });
+    if (name !== 'lines') {
+      onChange({ ...query, stream: { ...query.stream, [name]: value } });
+    } else {
+      onChange({ ...query, [name]: value });
+    }
   };
 
   const options = useMemo(() => (scenarioList || []).map(item => ({ label: item.name, value: item.id })), [
@@ -53,6 +66,7 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
     return null;
   }
 
+  const scenarioId = currentScenario?.id;
   return (
     <>
       <InlineFieldRow>
@@ -113,11 +127,15 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
         )}
       </InlineFieldRow>
 
-      {currentScenario?.id === 'manual_entry' && <ManualEntryEditor onChange={onChange} query={query} />}
-      {currentScenario?.id === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
-      {currentScenario?.id === 'streaming_client' && (
-        <StreamingClientEditor onChange={onStreamClientChange} query={query} />
+      {scenarioId === 'manual_entry' && <ManualEntryEditor onChange={onChange} query={query} />}
+      {scenarioId === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
+      {scenarioId === 'streaming_client' && <StreamingClientEditor onChange={onStreamClientChange} query={query} />}
+      {scenarioId === 'grafana_api' && (
+        <InlineField labelWidth={14} label="Endpoint">
+          <Select options={endpoints} onChange={onEndPointChange} />
+        </InlineField>
       )}
+      {/*TODO check arrow scenario*/}
     </>
   );
 };
