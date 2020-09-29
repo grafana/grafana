@@ -1,8 +1,7 @@
 // Libraries
 import React, { PureComponent, ChangeEvent } from 'react';
 
-import { InlineFormLabel, LegacyForms } from '@grafana/ui';
-const { Select, FormField } = LegacyForms;
+import { InlineField, InlineFieldRow, Input, Select, TextArea } from '@grafana/ui';
 import { SelectableValue, ReducerID, QueryEditorProps } from '@grafana/data';
 
 // Types
@@ -127,32 +126,39 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
 
     return (
       <div>
-        <div className="form-field">
-          <Select options={gelTypes} value={selected} onChange={this.onSelectGELType} />
-          {query.type === GELQueryType.reduce && (
-            <>
-              <InlineFormLabel width={5}>Function:</InlineFormLabel>
-              <Select options={reducerTypes} value={reducer} onChange={this.onSelectReducer} />
-              <FormField label="Fields:" labelWidth={5} onChange={this.onExpressionChange} value={query.expression} />
-            </>
-          )}
-        </div>
+        <InlineField label="Operation">
+          <Select options={gelTypes} value={selected} onChange={this.onSelectGELType} width={25} />
+        </InlineField>
         {query.type === GELQueryType.math && (
-          <textarea value={query.expression} onChange={this.onExpressionChange} className="gf-form-input" rows={2} />
+          <InlineField label="Expression">
+            <TextArea value={query.expression} onChange={this.onExpressionChange} rows={2} />
+          </InlineField>
+        )}
+        {query.type === GELQueryType.reduce && (
+          <InlineFieldRow>
+            <InlineField label="Function">
+              <Select options={reducerTypes} value={reducer} onChange={this.onSelectReducer} width={25} />
+            </InlineField>
+            <InlineField label="Input">
+              <Input onChange={this.onExpressionChange} value={query.expression} width={25} />
+            </InlineField>
+          </InlineFieldRow>
         )}
         {query.type === GELQueryType.resample && (
-          <>
-            <div>
-              <FormField label="Series:" labelWidth={5} onChange={this.onExpressionChange} value={query.expression} />
-              <FormField label="Rule:" labelWidth={5} onChange={this.onRuleChange} value={query.rule} />
-            </div>
-            <div>
-              <InlineFormLabel width={12}>Downsample Function:</InlineFormLabel>
-              <Select options={downsamplingTypes} value={downsampler} onChange={this.onSelectDownsampler} />
-              <InlineFormLabel width={12}>Upsample Function:</InlineFormLabel>
-              <Select options={upsamplingTypes} value={upsampler} onChange={this.onSelectUpsampler} />
-            </div>
-          </>
+          <InlineFieldRow>
+            <InlineField label="Input">
+              <Input onChange={this.onExpressionChange} value={query.expression} width={25} />
+            </InlineField>
+            <InlineField label="Window">
+              <Input onChange={this.onRuleChange} value={query.rule} width={25} />
+            </InlineField>
+            <InlineField label="Downsample">
+              <Select options={downsamplingTypes} value={downsampler} onChange={this.onSelectDownsampler} width={25} />
+            </InlineField>
+            <InlineField label="Upsample">
+              <Select options={upsamplingTypes} value={upsampler} onChange={this.onSelectUpsampler} width={25} />
+            </InlineField>
+          </InlineFieldRow>
         )}
       </div>
     );

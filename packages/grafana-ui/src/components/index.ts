@@ -69,6 +69,11 @@ export {
   BigValueTextMode,
 } from './BigValue/BigValue';
 
+export { GraphCustomFieldConfig } from './uPlot/types';
+export { UPlotChart } from './uPlot/Plot';
+export { Canvas } from './uPlot/Canvas';
+export * from './uPlot/plugins';
+
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';
@@ -93,6 +98,7 @@ export {
 export { Alert, AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
 export { Collapse, ControlledCollapse } from './Collapse/Collapse';
+export { CollapsableSection } from './Collapse/CollapsableSection';
 export { LogLabels } from './Logs/LogLabels';
 export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
@@ -144,6 +150,9 @@ export { Field } from './Forms/Field';
 export { Legend } from './Forms/Legend';
 export { FieldSet } from './Forms/FieldSet';
 export { FieldValidationMessage } from './Forms/FieldValidationMessage';
+export { InlineField } from './Forms/InlineField';
+export { InlineLabel } from './Forms/InlineLabel';
+export { InlineFieldRow } from './Forms/InlineFieldRow';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';

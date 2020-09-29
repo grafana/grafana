@@ -1,12 +1,10 @@
-const esModule = '@iconscout/react-unicons|monaco-editor/esm/vs';
+process.env.TZ = 'UTC';
 
 module.exports = {
   verbose: false,
   transform: {
     '^.+\\.(ts|tsx|js|jsx)$': 'ts-jest',
-    [`(${esModule}).+\\.js$`]: 'babel-jest',
   },
-  transformIgnorePatterns: [`/node_modules/(?!${esModule})`],
   moduleDirectories: ['node_modules', 'public'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
@@ -18,5 +16,7 @@ module.exports = {
   moduleNameMapper: {
     '\\.svg': '<rootDir>/public/test/mocks/svg.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
+    'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
   },
+  watchPathIgnorePatterns: ['<rootDir>/node_modules/'],
 };

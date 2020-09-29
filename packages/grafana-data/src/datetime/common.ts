@@ -13,6 +13,13 @@ export interface DateTimeOptions {
    * user is used.
    */
   timeZone?: TimeZone;
+
+  /**
+   * Specify a {@link https://momentjs.com/docs/#/displaying/format | momentjs} format to
+   * use a custom formatting pattern or parsing pattern. If no format is set,
+   * then system configured default format is used.
+   */
+  format?: string;
 }
 
 /**

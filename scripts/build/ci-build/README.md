@@ -21,4 +21,8 @@ The image is based on Debian Stretch, since we want an older Linux distribution 
 
 ## Build/Publish Docker Image
 In order to build and publish the Grafana build Docker image, execute the following:
-`./build-deploy.sh`.
+
+```
+# Download MacOSX10.15.sdk.tar.xz from our private GCS bucket into this directory
+./build-deploy.sh
+```

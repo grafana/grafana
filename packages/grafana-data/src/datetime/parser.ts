@@ -4,6 +4,7 @@ import { DateTimeInput, DateTime, isDateTime } from './moment_wrapper';
 import { DateTimeOptions, getTimeZone } from './common';
 import { parse, isValid } from './datemath';
 import { lowerCase } from 'lodash';
+import { systemDateFormats } from './formats';
 
 /**
  * The type that describes options that can be passed when parsing a date and time value.
@@ -25,7 +26,7 @@ type DateTimeParser<T extends DateTimeOptions = DateTimeOptions> = (value: DateT
 /**
  * Helper function to parse a number, text or Date to a DateTime value. If a timeZone is supplied the incoming value
  * is parsed with that timeZone as a base. The only exception to this is if the passed value is in a UTC-based
- * format. Then it will use UTC as the base. Examples on UTC-based values are Unix epoch and ISO formatted strings.
+ * format. Then it will use UTC as the base. If no format is specified the current system format will be assumed.
  *
  * It can also parse the Grafana quick date and time format, e.g. now-6h will be parsed as Date.now() - 6 hours and
  * returned as a valid DateTime value.
@@ -59,7 +60,20 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
     return parsed || (moment() as DateTime);
   }
 
-  return parseOthers(value, options);
+  const timeZone = getTimeZone(options);
+  const zone = moment.tz.zone(timeZone);
+  const format = options?.format ?? systemDateFormats.fullDate;
+
+  if (zone && zone.name) {
+    return moment.tz(value, format, zone.name) as DateTime;
+  }
+
+  switch (lowerCase(timeZone)) {
+    case 'utc':
+      return moment.utc(value, format) as DateTime;
+    default:
+      return moment(value, format) as DateTime;
+  }
 };
 
 const parseOthers = (value: DateTimeInput, options?: DateTimeOptionsWhenParsing): DateTime => {

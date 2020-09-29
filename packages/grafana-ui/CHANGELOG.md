@@ -1,3 +1,8 @@
+# 7.2.0 (2020-09-23)
+
+### Features / Enhancements
+* **grafana/ui**: Do not bundle jQuery. [#27667](https://github.com/grafana/grafana/pull/27667), [@kennytm](https://github.com/kennytm)
+
 # 7.1.0-beta1 (2020-07-01)
 
 ### Features / Enhancements

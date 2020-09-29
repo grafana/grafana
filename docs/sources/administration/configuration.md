@@ -189,8 +189,6 @@ Folder that contains [provisioning]({{< relref "provisioning.md" >}}) config fil
 
 `http`,`https`,`h2` or `socket`
 
-> **Note:** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for SSL termination.
-
 ### http_addr
 
 The IP address to bind to. If empty will bind to all interfaces
@@ -230,8 +228,6 @@ callback URL to be correct).
 > case add the subpath to the end of this URL setting.
 
 ### serve_from_sub_path
-
-> Available in Grafana 6.3+.
 
 Serve Grafana from subpath specified in `root_url` setting. By default it is set to `false` for compatibility reasons.
 
@@ -723,7 +719,7 @@ Refer to [Auth proxy authentication]({{< relref "../auth/auth-proxy.md" >}}) for
 
 ## [auth.ldap]
 
-Refer to [LDAO authentication]({{< relref "../auth/ldap.md" >}}) for detailed instructions.
+Refer to [LDAP authentication]({{< relref "../auth/ldap.md" >}}) for detailed instructions.
 
 <hr />
 
@@ -976,11 +972,48 @@ Sets the minimum interval between rule evaluations. Default value is `1`.
 
 > **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 
+### max_annotation_age =
+
+Configures for how long alert annotations are stored. Default is 0, which keeps them forever.
+This setting should be expressed as a duration. Examples: 6h (hours), 10d (days), 2w (weeks), 1M (month).
+
+### max_annotations_to_keep =
+
+Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
+
+<hr>
+
+## [annotations.dashboard]
+
+Dashboard annotations means that annotations are associated with the dashboard they are created on.
+
+### max_age
+
+Configures how long dashboard annotations are stored. Default is 0, which keeps them forever.
+This setting should be expressed as a duration. Examples: 6h (hours), 10d (days), 2w (weeks), 1M (month).
+
+### max_annotations_to_keep
+
+Configures max number of dashboard annotations that Grafana stores. Default value is 0, which keeps all dashboard annotations.
+
+## [annotations.api]
+
+API annotations means that the annotations have been created using the API without any association with a dashboard.
+
+### max_age
+
+Configures how long Grafana stores API annotations. Default is 0, which keeps them forever.
+This setting should be expressed as a duration. Examples: 6h (hours), 10d (days), 2w (weeks), 1M (month).
+
+### max_annotations_to_keep
+
+Configures max number of API annotations that Grafana keeps. Default value is 0, which keeps all API annotations.
+
 <hr>
 
 ## [explore]
 
-For more information about this feature, refer to [Explore]({{< relref "../features/explore/index.md" >}}).
+For more information about this feature, refer to [Explore]({{< relref "../explore/index.md" >}}).
 
 ### enabled
 
@@ -1182,7 +1215,7 @@ Optional URL to send to users in notifications. If the string contains the seque
 Optional path to JSON key file associated with a Google service account to authenticate and authorize. If no value is provided it tries to use the [application default credentials](https://cloud.google.com/docs/authentication/production#finding_credentials_automatically).
 Service Account keys can be created and downloaded from https://console.developers.google.com/permissions/serviceaccounts.
 
-Service Account should have "Storage Object Writer" role. The access control model of the bucket needs to be "Set object-level and bucket-level permissions". Grafana itself will make the images public readable.
+Service Account should have "Storage Object Writer" role. The access control model of the bucket needs to be "Set object-level and bucket-level permissions". Grafana itself will make the images public readable when signed urls are not enabled.
 
 ### bucket
 
@@ -1191,6 +1224,15 @@ Bucket Name on Google Cloud Storage.
 ### path
 
 Optional extra path inside bucket.
+
+### enable_signed_urls
+
+If set to true, Grafana creates a [signed URL](https://cloud.google.com/storage/docs/access-control/signed-urls] for
+the image uploaded to Google Cloud Storage.
+
+### signed_url_expiration
+
+Sets the signed URL expiration, which defaults to seven days.
 
 ## [external_image_storage.azure_blob]
 
@@ -1229,7 +1271,7 @@ If the remote HTTP image renderer service runs on a different server than the Gr
 ### concurrent_render_request_limit
 
 Concurrent render request limit affects when the /render HTTP endpoint is used. Rendering many images at the same time can overload the server,
-which this setting can help protect against by only allowing a certain amount of concurrent requests. Default is `30`.
+which this setting can help protect against by only allowing a certain number of concurrent requests. Default is `30`.
 
 ## [panels]
 
@@ -1239,7 +1281,7 @@ Set to `true` if you want to test alpha panels that are not yet ready for genera
 
 ### disable_sanitize_html
 
-If set to true Grafana will allow script tags in text panels. Not recommended as it enable XSS vulnerabilities. Default is false. This settings was introduced in Grafana v6.0.
+If set to true Grafana will allow script tags in text panels. Not recommended as it enables XSS vulnerabilities. Default is false. This setting was introduced in Grafana v6.0.
 
 ## [plugins]
 
@@ -1315,7 +1357,7 @@ Mode `context` will cluster using incognito pages.
 
 ### rendering_clustering_max_concurrency
 
-When rendering_mode = clustered you can define maximum number of browser instances/incognito pages that can execute concurrently..
+When rendering_mode = clustered you can define the maximum number of browser instances/incognito pages that can execute concurrently.
 
 ### rendering_viewport_max_width
 
@@ -1349,4 +1391,40 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`, `standaloneAlerts`
+Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
+
+## [date_formats]
+
+> **Note:** The date format options below are only available in Grafana v7.2+.
+
+This section controls system-wide defaults for date formats used in time ranges, graphs, and date input boxes.
+
+The format patterns use [Moment.js](https://momentjs.com/docs/#/displaying/) formatting tokens.
+
+### full_date
+
+Full date format used by time range picker and in other places where a full date is rendered.
+
+### intervals
+
+These intervals formats are used in the graph to show only a partial date or time. For example, if there are only
+minutes between Y-axis tick labels then the `interval_minute` format is used.
+
+Defaults
+
+```
+interval_second = HH:mm:ss
+interval_minute = HH:mm
+interval_hour = MM/DD HH:mm
+interval_day = MM/DD
+interval_month = YYYY-MM
+interval_year = YYYY
+```
+
+### use_browser_locale
+
+Set this to `true` to have date formats automatically derived from your browser location. Defaults to `false`. This is an experimental feature.
+
+### default_timezone
+
+Used as the default time zone for user preferences. Can be either `browser` for the browser local time zone or a time zone name from the IANA Time Zone database, such as `UTC` or `Europe/Amsterdam`.

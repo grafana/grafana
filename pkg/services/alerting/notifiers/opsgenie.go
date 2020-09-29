@@ -18,48 +18,6 @@ func init() {
 		Description: "Sends notifications to OpsGenie",
 		Heading:     "OpsGenie settings",
 		Factory:     NewOpsGenieNotifier,
-		OptionsTemplate: `
-		<h3 class="page-heading">OpsGenie settings</h3>
-		<div class="gf-form">
-			<label class="gf-form-label max-width-14">API Key</label>
-			<div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.apiKey">
-				<input type="text"
-					required
-					class="gf-form-input max-width-22"
-					ng-init="ctrl.model.secureSettings.apiKey = ctrl.model.settings.apiKey || null; ctrl.model.settings.apiKey = null;"
-					ng-model="ctrl.model.secureSettings.apiKey"
-					placeholder="OpsGenie API Key"
-					data-placement="right">
-				</input>
-			</div>
-			<div class="gf-form" ng-if="ctrl.model.secureFields.apiKey">
-			  <input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
-			  <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.apiKey = false">reset</a>
-			</div>
-		</div>
-		<div class="gf-form">
-			<span class="gf-form-label width-14">Alert API Url</span>
-			<input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.apiUrl" placeholder="https://api.opsgenie.com/v2/alerts"></input>
-		</div>
-		<div class="gf-form">
-			<gf-form-switch
-				class="gf-form"
-				label="Auto close incidents"
-				label-class="width-14"
-				checked="ctrl.model.settings.autoClose"
-				tooltip="Automatically close alerts in OpsGenie once the alert goes back to ok.">
-			</gf-form-switch>
-		</div>
-		<div class="gf-form">
-			<gf-form-switch
-				class="gf-form"
-				label="Override priority"
-				label-class="width-14"
-				checked="ctrl.model.settings.overridePriority"
-				tooltip="Allow the alert priority to be set using the og_priority tag">
-			</gf-form-switch>
-  		</div>
-`,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "API Key",
@@ -68,6 +26,7 @@ func init() {
 				Placeholder:  "OpsGenie API Key",
 				PropertyName: "apiKey",
 				Required:     true,
+				Secure:       true,
 			},
 			{
 				Label:        "Alert API Url",
@@ -79,12 +38,12 @@ func init() {
 			},
 			{
 				Label:        "Auto close incidents",
-				Element:      alerting.ElementTypeSwitch,
+				Element:      alerting.ElementTypeCheckbox,
 				Description:  "Automatically close alerts in OpsGenie once the alert goes back to ok.",
 				PropertyName: "autoClose",
 			}, {
 				Label:        "Override priority",
-				Element:      alerting.ElementTypeSwitch,
+				Element:      alerting.ElementTypeCheckbox,
 				Description:  "Allow the alert priority to be set using the og_priority tag",
 				PropertyName: "overridePriority",
 			},

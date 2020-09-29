@@ -326,12 +326,12 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     return (
       <>
         <div className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1">
-          <div className="gf-form flex-shrink-0">
+          <div className="gf-form flex-shrink-0 min-width-5">
             <ButtonCascader options={metricsOptions} disabled={buttonDisabled} onChange={this.onChangeMetrics}>
               {chooserText}
             </ButtonCascader>
           </div>
-          <div className={'gf-form gf-form--grow flex-shrink-1 min-width-15 explore-input-margin'}>
+          <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
@@ -346,8 +346,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               syntaxLoaded={syntaxLoaded}
             />
           </div>
-          {ExtraFieldElement}
         </div>
+        {ExtraFieldElement}
         {hint ? (
           <div className="query-row-break">
             <div className="prom-query-field-info text-warning">

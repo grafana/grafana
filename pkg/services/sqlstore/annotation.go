@@ -23,9 +23,7 @@ func validateTimeRange(item *annotations.Item) error {
 		item.Epoch = item.EpochEnd
 	}
 	if item.EpochEnd < item.Epoch {
-		tmp := item.Epoch
-		item.Epoch = item.EpochEnd
-		item.EpochEnd = tmp
+		item.Epoch, item.EpochEnd = item.EpochEnd, item.Epoch
 	}
 	return nil
 }

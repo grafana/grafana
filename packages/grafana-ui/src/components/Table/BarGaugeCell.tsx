@@ -18,11 +18,7 @@ const defaultScale: ThresholdsConfig = {
 };
 
 export const BarGaugeCell: FC<TableCellProps> = props => {
-  const { field, column, tableStyles, cell } = props;
-
-  if (!field.display) {
-    return null;
-  }
+  const { field, column, tableStyles, cell, cellProps } = props;
 
   let { config } = field;
   if (!config.thresholds) {
@@ -32,7 +28,7 @@ export const BarGaugeCell: FC<TableCellProps> = props => {
     };
   }
 
-  const displayValue = field.display(cell.value);
+  const displayValue = field.display!(cell.value);
   let barGaugeMode = BarGaugeDisplayMode.Gradient;
 
   if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.LcdGauge) {
@@ -49,7 +45,7 @@ export const BarGaugeCell: FC<TableCellProps> = props => {
   }
 
   return (
-    <div className={tableStyles.tableCell}>
+    <div {...cellProps} className={tableStyles.cellContainer}>
       <BarGauge
         width={width}
         height={tableStyles.cellHeightInner}

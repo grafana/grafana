@@ -80,7 +80,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
       background: ${theme.colors.formInputBg};
       border: 1px solid ${theme.colors.formInputBorder};
       position: absolute;
-      top: 1px;
+      top: 2px;
       left: 0;
 
       &:hover {

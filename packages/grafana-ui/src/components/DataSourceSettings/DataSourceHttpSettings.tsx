@@ -1,20 +1,19 @@
 import React, { useState, useCallback } from 'react';
-import { SelectableValue } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { useTheme } from '../../themes';
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { HttpProxySettings } from './HttpProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
-import { DataSourceSettings } from '@grafana/data';
-import { HttpSettingsProps } from './types';
 import { CustomHeadersSettings } from './CustomHeadersSettings';
 import { Select } from '../Forms/Legacy/Select/Select';
 import { Input } from '../Forms/Legacy/Input/Input';
+import { Switch } from '../Forms/Legacy/Switch/Switch';
 import { Icon } from '../Icon/Icon';
 import { FormField } from '../FormField/FormField';
-import { FormLabel } from '../FormLabel/FormLabel';
-import { Switch } from '../Forms/Legacy/Switch/Switch';
+import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { TagsInput } from '../TagsInput/TagsInput';
+import { useTheme } from '../../themes';
+import { HttpSettingsProps } from './types';
 
 const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
   {
@@ -149,12 +148,12 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
           )}
           {dataSourceConfig.access === 'proxy' && (
             <div className="gf-form">
-              <FormLabel
+              <InlineFormLabel
                 width={11}
                 tooltip="Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
               >
                 Whitelisted Cookies
-              </FormLabel>
+              </InlineFormLabel>
               <TagsInput
                 tags={dataSourceConfig.jsonData.keepCookies}
                 onChange={cookies =>

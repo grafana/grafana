@@ -36,9 +36,9 @@ With Grafana 7.0, we released a new tool for making it easier to develop plugins
 
 For more information, refer to [@grafana/toolkit](https://www.npmjs.com/package/@grafana/toolkit).
 
-### Field configuration options
+### Field options
 
-Grafana 7.0 introduced the concept of [_field configuration options_]({{< relref "../../panels/field-configuration-options.md#field-configuration-options" >}}), a new way of configuring your data before it gets visualized. Since this was not available in previous versions, any plugin that enables field-based configuration will not work in previous versions of Grafana.
+Grafana 7.0 introduced the concept of [_field options_]({{< relref "../../panels/field-options/_index.md#field-options" >}}), a new way of configuring your data before it gets visualized. Since this was not available in previous versions, any plugin that enables field-based configuration will not work in previous versions of Grafana.
 
 For plugins prior to Grafana 7.0, all options are considered _Display options_. The tab for field configuration isn't available.
 
@@ -55,7 +55,7 @@ To learn more, refer to [Backend plugins]({{< relref "backend" >}}).
 There are several benefits in using the new plugin platform.
 
 - **Better performance:** Components written in React are more responsive.
-- **Support for field configuration options:** By migrating to the new data frame format, you can leverage the new field configuration options to let users customize their data and display options.
+- **Support for field options:** By migrating to the new data frame format, you can leverage the new field options to let users customize their data and display options.
 
 ## Compatibility between Grafana versions
 
@@ -73,7 +73,7 @@ For example:
 
 ### target and jsonData are unchanged
 
-The query model, `target`, and the configuration model, jsonData,  are still the same. This means that if you use the same query model and configuration for your plugin, then the migrated plugin will use existing queries and configuration. You don’t have to worry about breaking existing dashboards.
+The query model, `target`, and the configuration model, jsonData, are still the same. This means that if you use the same query model and configuration for your plugin, then the migrated plugin will use existing queries and configuration. You don’t have to worry about breaking existing dashboards.
 
 ## Migrate a plugin from Angular to React
 
@@ -120,7 +120,7 @@ interface Props extends PanelProps<SimpleOptions> {}
 
 export const MyPanel: React.FC<Props> = ({ options, data, width, height }) => {
   // ...
-}
+};
 ```
 
 ### Migrate a data source plugin

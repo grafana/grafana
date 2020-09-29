@@ -13,6 +13,7 @@ import {
   ExploreMode,
   LogsDedupStrategy,
   sortLogsResult,
+  DataQueryErrorType,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { LocationUpdate } from '@grafana/runtime';
@@ -59,9 +60,7 @@ import {
   SplitCloseActionPayload,
   splitOpenAction,
   syncTimesAction,
-  toggleGraphAction,
   toggleLogLevelAction,
-  toggleTableAction,
   updateDatasourceInstanceAction,
   updateUIStateAction,
   cancelQueriesAction,
@@ -105,8 +104,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
     to: null,
   } as any,
   scanning: false,
-  showingGraph: true,
-  showingTable: true,
   loading: false,
   queryKeys: [],
   urlState: null,
@@ -408,24 +405,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
     return { ...state, ...action.payload };
   }
 
-  if (toggleGraphAction.match(action)) {
-    const showingGraph = !state.showingGraph;
-    if (showingGraph) {
-      return { ...state, showingGraph };
-    }
-
-    return { ...state, showingGraph };
-  }
-
-  if (toggleTableAction.match(action)) {
-    const showingTable = !state.showingTable;
-    if (showingTable) {
-      return { ...state, showingTable };
-    }
-
-    return { ...state, showingTable };
-  }
-
   if (queriesImportedAction.match(action)) {
     const { queries } = action.payload;
     return {
@@ -510,7 +489,13 @@ export const processQueryResponse = (
   const { request, state: loadingState, series, error } = response;
 
   if (error) {
-    if (error.cancelled) {
+    if (error.type === DataQueryErrorType.Timeout) {
+      return {
+        ...state,
+        queryResponse: response,
+        loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
+      };
+    } else if (error.type === DataQueryErrorType.Cancelled) {
       return state;
     }
 
