@@ -3,7 +3,7 @@ publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.1'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
-grabpl_version = '0.5.12'
+grabpl_version = '0.5.13'
 git_image = 'alpine/git:v2.26.2'
 dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
@@ -626,7 +626,7 @@ def copy_packages_for_docker_step():
             'package',
         ],
         'commands': [
-            'cp dist/*.tar.gz packaging/docker/',
+            'cp dist/*.tar.gz* packaging/docker/',
         ],
     }
 
@@ -787,6 +787,11 @@ def publish_packages_step(edition, is_downstream):
     if edition == 'enterprise' and not is_downstream:
         return None
 
+    if not is_downstream:
+        build_no = '${DRONE_BUILD_NUMBER}'
+    else:
+        build_no = '$${SOURCE_BUILD_NUMBER}'
+
     return {
         'name': 'publish-packages',
         'image': publish_image,
@@ -799,7 +804,7 @@ def publish_packages_step(edition, is_downstream):
             },
         },
         'commands': [
-            './bin/grabpl publish-packages --edition {}'.format(edition),
+            './bin/grabpl publish-packages --edition {} --build-id {}'.format(edition, build_no),
         ],
     }
 
