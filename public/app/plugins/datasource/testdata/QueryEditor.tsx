@@ -1,5 +1,5 @@
 // Libraries
-import React, { useMemo } from 'react';
+import React, { ChangeEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 // Components
@@ -10,6 +10,7 @@ import { StreamingClientEditor, ManualEntryEditor, RandomWalkEditor } from './co
 // Types
 import { TestDataDataSource } from './datasource';
 import { TestDataQuery, Scenario } from './types';
+import { PredictablePulseEditor } from './components/PredictablePulseEditor';
 
 const showLabelsFor = ['random_walk', 'predictable_pulse', 'predictable_csv_wave'];
 const endpoints = [
@@ -17,6 +18,11 @@ const endpoints = [
   { value: 'search', label: 'Search' },
   { value: 'annotations', label: 'Annotations' },
 ];
+
+export interface EditorProps {
+  onChange: any;
+  query: any;
+}
 
 type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
 
@@ -39,7 +45,7 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
     });
   };
 
-  const onInputChange = (e: any) => {
+  const onInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     onChange({ ...query, [name]: value });
   };
@@ -48,13 +54,18 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
     onChange({ ...query, stringInput: value });
   };
 
-  const onStreamClientChange = (e: any) => {
-    const { name, value } = e.target;
+  const onStreamClientChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target as HTMLInputElement;
     if (name !== 'lines') {
       onChange({ ...query, stream: { ...query.stream, [name]: value } });
     } else {
-      onChange({ ...query, [name]: value });
+      onInputChange(e);
     }
+  };
+
+  const onPulseWaveChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    onChange({ ...query, pulseWave: { ...query.pulseWave, [name]: value } });
   };
 
   const options = useMemo(() => (scenarioList || []).map(item => ({ label: item.name, value: item.id })), [
@@ -136,6 +147,8 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
         </InlineField>
       )}
       {/*TODO check arrow scenario*/}
+
+      {scenarioId === 'predictable_pulse' && <PredictablePulseEditor onChange={onPulseWaveChange} query={query} />}
     </>
   );
 };

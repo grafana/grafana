@@ -1,6 +1,7 @@
-import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import React from 'react';
+import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
+import { EditorProps } from '../QueryEditor';
 
 const streamingClientFields = [
   { label: 'Speed (ms)', id: 'speed', placeholder: 'value', min: 10, step: 10 },
@@ -15,12 +16,8 @@ const types = [
   { value: 'logs', label: 'Logs' },
   { value: 'fetch', label: 'Fetch' },
 ];
-export interface Props {
-  onChange: any;
-  query: any;
-}
 
-export const StreamingClientEditor = ({ onChange, query }: Partial<Props>) => {
+export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
   const onSelectChange = ({ value }: SelectableValue) => {
     onChange({ target: { name: 'type', value } });
   };

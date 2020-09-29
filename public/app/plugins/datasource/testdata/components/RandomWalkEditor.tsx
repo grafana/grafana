@@ -1,5 +1,6 @@
 import React from 'react';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { EditorProps } from '../QueryEditor';
 
 const randomWalkFields = [
   { label: 'Series count', id: 'seriesCount', placeholder: '1', min: 1, step: 1 },
@@ -10,12 +11,7 @@ const randomWalkFields = [
   { label: 'Max', id: 'max', placeholder: 'none', step: 0.1 },
 ];
 
-export interface Props {
-  onChange: any;
-  query: any;
-}
-
-export const RandomWalkEditor = ({ onChange, query }: Partial<Props>) => {
+export const RandomWalkEditor = ({ onChange, query }: EditorProps) => {
   return (
     <InlineFieldRow>
       {randomWalkFields.map(({ label, id, min, step, placeholder }) => {

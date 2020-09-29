@@ -1,13 +1,9 @@
 import React from 'react';
 import { dateMath, dateTime } from '@grafana/data';
 import { Form, InlineField, InlineFieldRow, Input, InputControl, Select } from '@grafana/ui';
+import { EditorProps } from '../QueryEditor';
 
-export interface Props {
-  onChange: any;
-  query: any;
-}
-
-export const ManualEntryEditor = ({ onChange, query }: Partial<Props>) => {
+export const ManualEntryEditor = ({ onChange, query }: EditorProps) => {
   const addPoint = point => {
     let points = query.points || [];
     const newPointTime = dateMath.parse(point.newPointTime);

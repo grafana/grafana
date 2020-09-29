@@ -12,6 +12,7 @@ export interface TestDataQuery extends DataQuery {
   stringInput: string;
   points?: any[];
   stream?: StreamingQuery;
+  pulseWave: PulseWaveQuery;
 }
 
 export interface StreamingQuery {
@@ -21,4 +22,12 @@ export interface StreamingQuery {
   noise: number; // wiggle around the signal for min/max
   bands?: number; // number of bands around the middle band
   url?: string; // the Fetch URL
+}
+
+export interface PulseWaveQuery {
+  timeStep: number;
+  onCount: number;
+  offCount: number;
+  onValue: number;
+  offValue: number;
 }
