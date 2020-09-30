@@ -5,7 +5,7 @@ ARG GRAFANA_TGZ="grafana-latest.linux-x64.tar.gz"
 
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
-RUN mkdir /tmp/grafana && tar xfz /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
+RUN mkdir /tmp/grafana && tar xzf /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
 
 FROM ${BASE_IMAGE}
 
