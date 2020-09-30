@@ -5,7 +5,7 @@ keywords = ["grafana", "configuration", "documentation", "docker"]
 type = "docs"
 [menu.docs]
 name = "Configure Grafana Docker image"
-identifier = "docker"
+identifier = "configure-docker"
 parent = "administration"
 weight = 400
 +++

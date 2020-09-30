@@ -12,7 +12,7 @@ weight = 20
 
 # Install Grafana
 
-This section discusses the hardware and software requirements as well as the process of installing Grafana on different operating systems.
+This section discusses the hardware and software requirements as well as the process of installing Grafana on different operating systems. This section has the following topics:
 
 - [Requirements]({{< relref "requirements" >}})
 - [Install on Debian or Ubuntu]({{< relref "debian" >}})

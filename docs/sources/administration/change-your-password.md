@@ -4,6 +4,8 @@ description = "How to change your Grafana password"
 keywords = ["grafana", "password", "change", "preferences"]
 type = "docs"
 [menu.docs]
+identifier = "change-your-password"
+parent = "administration"
 weight = 100
 +++
 

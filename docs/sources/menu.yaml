@@ -48,6 +48,8 @@
 - name: Administration
   link: /administration/
   children:
+    - name: Administration Tasks
+      link: /administration/admin/
     - name: Change password
       link: /administration/change-your-password/
     - name: Change preferences
