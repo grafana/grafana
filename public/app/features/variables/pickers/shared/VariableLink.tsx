@@ -32,7 +32,7 @@ export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, tags, 
         title={text}
       >
         <VariableLinkText tags={tags} text={text} />
-        <Icon className="panel-loading__spinner spin-clockwise" name="sync" />
+        <Icon className="spin-clockwise" name="sync" size="xs" />
       </div>
     );
   }

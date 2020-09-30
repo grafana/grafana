@@ -1,12 +1,12 @@
 import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
 import isEqual from 'lodash/isEqual';
 import { AppEvents, VariableType } from '@grafana/data';
-import { InlineFormLabel } from '@grafana/ui';
+import { Icon, InlineFormLabel } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { variableAdapters } from '../adapters';
 import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
-import { VariableHide, VariableModel } from '../types';
+import { VariableHide, VariableLoadingState, VariableModel } from '../types';
 import { appEvents } from '../../../core/core';
 import { VariableValuesPreview } from './VariableValuesPreview';
 import { changeVariableName, onEditorAdd, onEditorUpdate, variableEditorMount, variableEditorUnMount } from './actions';
@@ -110,11 +110,13 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
   };
 
   render() {
+    const { variable } = this.props;
     const EditorToRender = variableAdapters.get(this.props.variable.type).editor;
     if (!EditorToRender) {
       return null;
     }
     const newVariable = this.props.variable.id && this.props.variable.id === NEW_VARIABLE_ID;
+    const loading = variable.state === VariableLoadingState.Fetching;
 
     return (
       <div>
@@ -203,24 +205,15 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
           <VariableValuesPreview variable={this.props.variable} />
 
           <div className="gf-form-button-row p-y-0">
-            {!newVariable && (
-              <button
-                type="submit"
-                className="btn btn-primary"
-                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.updateButton}
-              >
-                Update
-              </button>
-            )}
-            {newVariable && (
-              <button
-                type="submit"
-                className="btn btn-primary"
-                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.addButton}
-              >
-                Add
-              </button>
-            )}
+            <button
+              type="submit"
+              className="btn btn-primary"
+              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
+              disabled={loading}
+            >
+              {newVariable ? 'Add' : 'Update'}
+              {loading ? <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} /> : null}
+            </button>
           </div>
         </form>
       </div>

@@ -218,6 +218,8 @@ describe('processVariable', () => {
             .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
           await tester.thenDispatchedActionsShouldEqual(
+            variableStateFetching(toVariablePayload({ type: 'query', id: 'queryNoDepends' })),
+            variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryNoDepends' })),
             setCurrentVariableValue(
               toVariablePayload(
                 { type: 'query', id: 'queryNoDepends' },
@@ -366,6 +368,8 @@ describe('processVariable', () => {
           );
 
           await tester.thenDispatchedActionsShouldEqual(
+            variableStateFetching(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })),
+            variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })),
             setCurrentVariableValue(
               toVariablePayload(
                 { type: 'query', id: 'queryDependsOnCustom' },

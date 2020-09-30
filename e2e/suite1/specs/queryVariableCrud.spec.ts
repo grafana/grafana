@@ -4,7 +4,7 @@ import { e2e } from '@grafana/e2e';
 // several it functions. Very important to keep the order of these it functions because they have dependency in the order
 // https://github.com/cypress-io/cypress/issues/5987
 // https://github.com/cypress-io/cypress/issues/6023#issuecomment-574031655
-describe.skip('Variables', () => {
+describe('Variables', () => {
   let lastUid = '';
   let lastData = '';
   let variables: VariablesData[] = [
@@ -30,15 +30,11 @@ describe.skip('Variables', () => {
     if (!lastUid || !lastData) {
       e2e.flows.addDataSource();
       e2e.flows.addDashboard();
+      lastUid = 'test';
+      lastData = 'test';
     } else {
-      e2e.setScenarioContext({ lastAddedDataSource: lastData, lastAddedDashboardUid: lastUid });
+      e2e.flows.openDashboard();
     }
-
-    e2e.getScenarioContext().then(({ lastAddedDashboardUid, lastAddedDataSource }: any) => {
-      e2e.flows.openDashboard({ uid: lastAddedDashboardUid });
-      lastUid = lastAddedDashboardUid;
-      lastData = lastAddedDataSource;
-    });
   });
 
   it(`asserts defaults`, () => {
@@ -254,7 +250,7 @@ const createQueryVariable = ({ name, label, dataSourceName, query }: CreateQuery
     expect(input.attr('placeholder')).equals('blank = auto');
     expect(input.val()).equals('');
   });
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.addButton().click();
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
 };
 
 const assertVariableLabelAndComponent = ({ label, options, selectedOption }: VariablesData) => {

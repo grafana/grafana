@@ -281,6 +281,12 @@ export const setOptionFromUrl = (
       await dispatch(updateOptions(toVariableIdentifier(variable)));
     }
 
+    if (variable.hasOwnProperty('refresh') && (variable as QueryVariableModel).refresh === VariableRefresh.never) {
+      // for variables that have refresh to never simulate the same state changes
+      dispatch(variableStateFetching(toVariablePayload(variable)));
+      dispatch(variableStateCompleted(toVariablePayload(variable)));
+    }
+
     // get variable from state
     const variableFromState = getVariable<VariableWithOptions>(variable.id, getState());
     if (!variableFromState) {
