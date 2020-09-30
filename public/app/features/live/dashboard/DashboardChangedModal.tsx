@@ -40,7 +40,7 @@ export class DashboardChangedModal extends PureComponent<Props, State> {
     },
   };
 
-  acceptDelte: ActionInfo = {
+  acceptDelete: ActionInfo = {
     label: 'Discard Local changes',
     description: 'view grafana homepage',
     action: () => {
