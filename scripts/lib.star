@@ -145,6 +145,12 @@ def master_pipelines(edition):
             name='publish-master', edition=edition, trigger=trigger, steps=publish_steps,
             depends_on=['build-master', 'windows-master',], install_deps=False, version_mode=version_mode,
         ))
+
+        notifyTrigger = { 'status': ['failure'] }
+        pipelines.append(notifyPipeline(
+            name='notify-master', slackChannel='grafana-ci-notifications', trigger=notifyTrigger,
+            depends_on=['build-master', 'windows-master', 'publish-master'],
+        ))
     if edition == 'enterprise':
         # Add downstream enterprise pipelines triggerable from OSS builds
         trigger = {
@@ -204,6 +210,22 @@ def pipeline(
 
     return pipeline
 
+def notifyPipeline(name, slackChannel, trigger, depends_on=[]):
+    return {
+        'kind': 'pipeline',
+        'type': 'docker',
+        'platform': {
+            'os': 'linux',
+            'arch': 'amd64',
+        },
+        'name': name,
+        'trigger': trigger,
+        'steps': [
+            slack_step(slackChannel),
+        ],
+        'depends_on': depends_on,
+    }
+
 def slack_step(channel):
     return {
         'name': 'slack',
@@ -214,9 +236,6 @@ def slack_step(channel):
             },
             'channel': channel,
             'template': 'Build {{build.number}} failed: {{build.link}}',
-        },
-        'when': {
-            'status': ['failure',],
         },
     }
 
@@ -292,8 +311,7 @@ def init_steps(edition, platform, version_mode, is_downstream=False, install_dep
                 ] + common_cmds,
             },
         ]
-        if version_mode == 'master':
-            steps.append(slack_step(channel='grafana-enterprise-ci-failures'))
+
         return steps
 
     steps = [
@@ -314,9 +332,6 @@ def init_steps(edition, platform, version_mode, is_downstream=False, install_dep
             ] + common_cmds,
         },
     ]
-
-    if version_mode == 'master':
-        steps.append(slack_step(channel='grafana-ci-failures'))
 
     return steps
 
