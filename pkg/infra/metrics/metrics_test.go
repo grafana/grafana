@@ -23,6 +23,7 @@ func TestLabelNameSanitization(t *testing.T) {
 		if tc.err {
 			assert.Error(t, err)
 		} else {
+			require.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
 		}
 	}
