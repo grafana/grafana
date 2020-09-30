@@ -348,6 +348,7 @@ steps:
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
+  failure: ignore
   depends_on:
   - initialize
 

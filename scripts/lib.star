@@ -478,6 +478,7 @@ def frontend_metrics_step(edition):
                 'from_secret': 'grafana_misc_stats_api_key',
             },
         },
+        'failure': 'ignore',
         'commands': [
             './scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}',
         ],
