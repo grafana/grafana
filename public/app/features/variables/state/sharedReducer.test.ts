@@ -69,6 +69,8 @@ describe('sharedReducer', () => {
             label: 'Label-0',
             skipUrlSync: false,
             global: false,
+            state: VariableLoadingState.NotStarted,
+            error: null,
           },
           '2': {
             id: '2',
@@ -79,6 +81,8 @@ describe('sharedReducer', () => {
             label: 'Label-2',
             skipUrlSync: false,
             global: false,
+            state: VariableLoadingState.NotStarted,
+            error: null,
           },
         });
     });
@@ -101,6 +105,8 @@ describe('sharedReducer', () => {
             label: 'Label-0',
             skipUrlSync: false,
             global: false,
+            state: VariableLoadingState.NotStarted,
+            error: null,
           },
           '2': {
             id: '2',
@@ -111,6 +117,8 @@ describe('sharedReducer', () => {
             label: 'Label-2',
             skipUrlSync: false,
             global: false,
+            state: VariableLoadingState.NotStarted,
+            error: null,
           },
         });
     });
@@ -133,6 +141,8 @@ describe('sharedReducer', () => {
             label: 'Label-0',
             skipUrlSync: false,
             global: false,
+            state: VariableLoadingState.NotStarted,
+            error: null,
           },
           '1': {
             id: '1',
@@ -143,6 +153,8 @@ describe('sharedReducer', () => {
             label: 'Label-1',
             skipUrlSync: false,
             global: false,
+            state: VariableLoadingState.NotStarted,
+            error: null,
           },
           '2': {
             id: '2',
@@ -153,6 +165,8 @@ describe('sharedReducer', () => {
             label: 'Label-2',
             skipUrlSync: false,
             global: false,
+            state: VariableLoadingState.NotStarted,
+            error: null,
           },
           '11': {
             ...initialQueryVariableModelState,
@@ -182,6 +196,8 @@ describe('sharedReducer', () => {
             label: 'Label-0',
             skipUrlSync: false,
             global: false,
+            state: VariableLoadingState.NotStarted,
+            error: null,
           },
           '1': {
             id: '1',
@@ -192,6 +208,8 @@ describe('sharedReducer', () => {
             label: 'Label-1',
             skipUrlSync: false,
             global: false,
+            state: VariableLoadingState.NotStarted,
+            error: null,
           },
           '2': {
             id: '2',
@@ -202,6 +220,8 @@ describe('sharedReducer', () => {
             label: 'Label-2',
             skipUrlSync: false,
             global: false,
+            state: VariableLoadingState.NotStarted,
+            error: null,
           },
         });
     });
@@ -224,6 +244,8 @@ describe('sharedReducer', () => {
             label: 'Label-0',
             skipUrlSync: false,
             global: false,
+            state: VariableLoadingState.NotStarted,
+            error: null,
           },
           '1': {
             id: '1',
@@ -234,6 +256,8 @@ describe('sharedReducer', () => {
             label: 'Label-1',
             skipUrlSync: false,
             global: false,
+            state: VariableLoadingState.NotStarted,
+            error: null,
           },
           '2': {
             id: '2',
@@ -244,6 +268,8 @@ describe('sharedReducer', () => {
             label: 'Label-2',
             skipUrlSync: false,
             global: false,
+            state: VariableLoadingState.NotStarted,
+            error: null,
           },
           [NEW_VARIABLE_ID]: {
             id: NEW_VARIABLE_ID,
@@ -254,6 +280,8 @@ describe('sharedReducer', () => {
             label: `Label-${NEW_VARIABLE_ID}`,
             skipUrlSync: false,
             global: false,
+            state: VariableLoadingState.NotStarted,
+            error: null,
           },
           [11]: {
             ...initialQueryVariableModelState,
