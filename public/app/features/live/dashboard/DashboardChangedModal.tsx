@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Modal, VerticalGroup } from '@grafana/ui';
+import { Modal, stylesFactory, VerticalGroup } from '@grafana/ui';
 import { css } from 'emotion';
 import { dashboardWatcher } from './dashboardWatcher';
 import { config } from '@grafana/runtime';
@@ -97,7 +97,7 @@ export class DashboardChangedModal extends PureComponent<Props, State> {
   }
 }
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     modal: css`
       width: 500px;
@@ -109,4 +109,4 @@ const getStyles = (theme: GrafanaTheme) => {
       color: ${theme.colors.textWeak};
     `,
   };
-};
+});
