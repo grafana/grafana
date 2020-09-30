@@ -19,23 +19,6 @@ type templateData struct {
 	SecureJsonData map[string]string
 }
 
-func updateURL(route *plugins.AppPluginRoute, orgId int64, appID string) (string, error) {
-	query := models.GetPluginSettingByIdQuery{OrgId: orgId, PluginId: appID}
-	if err := bus.Dispatch(&query); err != nil {
-		return "", err
-	}
-
-	data := templateData{
-		JsonData:       query.Result.JsonData,
-		SecureJsonData: query.Result.SecureJsonData.Decrypt(),
-	}
-	interpolated, err := InterpolateString(route.URL, data)
-	if err != nil {
-		return "", err
-	}
-	return interpolated, err
-}
-
 // NewApiPluginProxy create a plugin proxy
 func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appID string, cfg *setting.Cfg) *httputil.ReverseProxy {
 	targetURL, _ := url.Parse(route.URL)
@@ -80,7 +63,7 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 		}
 
 		if len(route.URL) > 0 {
-			interpolatedURL, err := updateURL(route, ctx.OrgId, appID)
+			interpolatedURL, err := InterpolateString(route.URL, data)
 			if err != nil {
 				ctx.JsonApiErr(500, "Could not interpolate plugin route url", err)
 			}
