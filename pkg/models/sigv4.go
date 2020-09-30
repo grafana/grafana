@@ -56,38 +56,45 @@ func (m *SigV4Middleware) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
-	creds, err := m.credentials()
+	signer, err := m.signer()
 	if err != nil {
 		return nil, err
 	}
 
-	signer := v4.NewSigner(creds)
 	return signer.Sign(req, nil, "grafana", m.Config.Region, time.Now())
 }
 
-func (m *SigV4Middleware) credentials() (*credentials.Credentials, error) {
-	authType := AuthType(m.Config.AuthType)
-
-	creds := defaults.CredChain(defaults.Config(), defaults.Handlers())
-	switch authType {
-	case Keys:
-		creds = credentials.NewStaticCredentials(m.Config.AccessKey, m.Config.SecretKey, "")
-	case Credentials:
-		creds = credentials.NewSharedCredentials("", m.Config.Profile)
-	default:
-		return nil, fmt.Errorf("unrecognized authType: %s", authType)
+func (m *SigV4Middleware) signer() (*v4.Signer, error) {
+	c, err := m.credentials()
+	if err != nil {
+		return nil, err
 	}
 
 	if m.Config.AssumeRoleARN != "" {
 		s, err := session.NewSession(&aws.Config{
 			Region:      aws.String(m.Config.Region),
-			Credentials: creds},
+			Credentials: c},
 		)
 		if err != nil {
 			return nil, err
 		}
-		return stscreds.NewCredentials(s, m.Config.AssumeRoleARN), nil
+		return v4.NewSigner(stscreds.NewCredentials(s, m.Config.AssumeRoleARN)), nil
 	}
 
-	return creds, nil
+	return v4.NewSigner(c), nil
+}
+
+func (m *SigV4Middleware) credentials() (*credentials.Credentials, error) {
+	authType := AuthType(m.Config.AuthType)
+
+	switch authType {
+	case Default:
+		return defaults.CredChain(defaults.Config(), defaults.Handlers()), nil
+	case Keys:
+		return credentials.NewStaticCredentials(m.Config.AccessKey, m.Config.SecretKey, ""), nil
+	case Credentials:
+		return credentials.NewSharedCredentials("", m.Config.Profile), nil
+	}
+
+	return nil, fmt.Errorf("unrecognized authType: %s", authType)
 }
