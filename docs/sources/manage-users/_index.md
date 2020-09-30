@@ -4,7 +4,7 @@ type = "docs"
 [menu.docs]
 name = "Manage users"
 identifier = "manage-users"
-weight = 3
+weight = 4
 +++
 
 # Manage users

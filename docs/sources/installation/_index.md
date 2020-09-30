@@ -10,7 +10,7 @@ identifier = "installation"
 weight = 20
 +++
 
-## Install Grafana
+# Install Grafana
 
 This section discusses the hardware and software requirements as well as the process of installing Grafana on different operating systems.
 
@@ -20,4 +20,3 @@ This section discusses the hardware and software requirements as well as the pro
 - [Install on macOS]({{< relref "mac" >}})
 - [Install on Windows]({{< relref "windows" >}})
 - [Run Docker image]({{< relref "docker" >}})
-  
