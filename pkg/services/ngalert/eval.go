@@ -158,16 +158,21 @@ func (ng *AlertNG) LoadAlertConditions(alertDefinitionID int64, signedInUser *mo
 					query.Set("datasourceId", ds.Id)
 				}
 
-				if query.Get("orgId").MustString() == "" { // GEL requires orgID
+				if query.Get("orgId").MustString() == "" { // GEL requires orgID inside the query JSON
+					// need to decide which organisation id is expected there
+					// in grafana queries is passed the signed in user organisation id:
+					// https://github.com/grafana/grafana/blob/34a355fe542b511ed02976523aa6716aeb00bde6/packages/grafana-runtime/src/utils/DataSourceWithBackend.ts#L60
+					// but I think that it should be datasource org id instead
 					query.Set("orgId", 0)
 				}
 
-				if query.Get("maxDataPoints").MustString() == "" { // GEL requires orgID
+				if query.Get("maxDataPoints").MustString() == "" { // GEL requires maxDataPoints inside the query JSON
 					query.Set("maxDataPoints", 100)
 				}
 
 				// intervalMS is calculated by the frontend
-				if query.Get("intervalMs").MustString() == "" { // GEL requires orgID
+				// should we do something similar?
+				if query.Get("intervalMs").MustString() == "" { // GEL requires intervalMs inside the query JSON
 					query.Set("intervalMs", 1000)
 				}
 
@@ -179,7 +184,6 @@ func (ng *AlertNG) LoadAlertConditions(alertDefinitionID int64, signedInUser *mo
 					Model:         query,
 					DataSource:    ds,
 				})
-				fmt.Printf(">>> query: %+v\n", conditions.QueriesAndExpressions[i])
 			}
 		}
 	}
@@ -193,9 +197,6 @@ func (ng *AlertNG) LoadAlertConditions(alertDefinitionID int64, signedInUser *mo
 
 // Execute runs the WarnCondition and CritCondtion expressions or queries.
 func (conditions *Conditions) Execute(ctx AlertExecCtx, fromStr, toStr string) (*ExecutionResult, error) {
-	blob, _ := json.Marshal(conditions)
-	fmt.Println(">>>> Execute conditions: ", string(blob))
-
 	result := ExecutionResult{}
 
 	request := &tsdb.TsdbQuery{
@@ -228,9 +229,6 @@ func EvaluateExecutionResult(results *ExecutionResult) (EvalResults, error) {
 	evalResults := make([]EvalResult, 0)
 	labels := make(map[string]bool)
 	for _, f := range results.Results {
-		t, _ := f.StringTable(5, 5)
-		fmt.Println(">>>> EvaluateExecutionResult: ", t)
-
 		rowLen, err := f.RowLen()
 		if err != nil {
 			return nil, fmt.Errorf("Unable to get frame row length")
