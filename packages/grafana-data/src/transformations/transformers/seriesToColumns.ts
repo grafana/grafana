@@ -2,7 +2,7 @@ import { DataFrame, DataTransformerInfo, Field } from '../../types';
 import { DataTransformerID } from './ids';
 import { MutableDataFrame } from '../../dataframe';
 import { ArrayVector } from '../../vector';
-import { getFieldDisplayName } from '../../field/fieldState';
+import { getFieldDisplayName, getFrameDisplayName } from '../../field/fieldState';
 
 export interface SeriesToColumnsOptions {
   byField?: string;
@@ -37,9 +37,15 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
         }
 
         let labels = sourceField.labels ?? {};
+        let fieldName = sourceField.name;
 
         if (frame.name) {
           labels = { ...labels, name: frame.name };
+        }
+
+        if (!frame.name) {
+          frame.name = getFrameDisplayName(frame, frameIndex);
+          fieldName = getFieldDisplayName(sourceField, frame, data);
         }
 
         allFields.push({
@@ -47,6 +53,7 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
           sourceField,
           newField: {
             ...sourceField,
+            name: fieldName,
             state: null,
             values: new ArrayVector([]),
             labels,

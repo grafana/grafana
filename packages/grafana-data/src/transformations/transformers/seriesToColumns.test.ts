@@ -346,4 +346,61 @@ describe('SeriesToColumns Transformer', () => {
       },
     ]);
   });
+
+  // https://github.com/grafana/grafana/issues/27781
+  it('joins if metric name is the same and frames have no names', () => {
+    const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+      id: DataTransformerID.seriesToColumns,
+      options: {
+        byField: 'field1',
+      },
+    };
+
+    const frame1 = toDataFrame({
+      fields: [
+        { name: 'field1', type: FieldType.string, values: ['abc', 'bcd'] },
+        { name: 'value', type: FieldType.number, values: [1, 2] },
+      ],
+    });
+
+    const frame2 = toDataFrame({
+      fields: [
+        { name: 'field1', type: FieldType.string, values: ['abc', 'bcd'] },
+        { name: 'value', type: FieldType.number, values: [4, 6] },
+      ],
+    });
+
+    const filtered = transformDataFrame([cfg], [frame1, frame2])[0];
+    expect(filtered.fields).toEqual([
+      {
+        name: 'field1',
+        type: 'string',
+        values: new ArrayVector(['abc', 'bcd']),
+        config: {},
+        state: {
+          displayName: 'field1',
+        },
+      },
+      {
+        name: 'Series (0) value',
+        type: 'number',
+        values: new ArrayVector([1, 2]),
+        config: {},
+        state: {
+          displayName: 'Series (0) value',
+        },
+        labels: {},
+      },
+      {
+        name: 'Series (1) value',
+        type: 'number',
+        values: new ArrayVector([4, 6]),
+        config: {},
+        state: {
+          displayName: 'Series (1) value',
+        },
+        labels: {},
+      },
+    ]);
+  });
 });
