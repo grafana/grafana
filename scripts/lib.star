@@ -791,7 +791,7 @@ def release_next_npm_packages_step(edition):
             },
         },
         'commands': [
-            'npx lerna bootstrap',
+            './node_modules/.bin/lerna bootstrap',
             'echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc',
             './scripts/circle-release-next-packages.sh',
         ],
