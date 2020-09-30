@@ -223,6 +223,7 @@ func (conditions *Conditions) Execute(ctx AlertExecCtx, fromStr, toStr string) (
 // each column is a string type that holds a string representing its state.
 func EvaluateExecutionResult(results *ExecutionResult) (EvalResults, error) {
 	evalResults := make([]EvalResult, 0)
+	labels := make(map[string]bool)
 	for _, f := range results.Results {
 		t, _ := f.StringTable(5, 5)
 		fmt.Println(">>>> EvaluateExecutionResult: ", t)
@@ -242,6 +243,13 @@ func EvaluateExecutionResult(results *ExecutionResult) (EvalResults, error) {
 		if f.Fields[0].Type() != data.FieldTypeNullableFloat64 {
 			return nil, fmt.Errorf("Invalid frame %v: field type %v", f.Name, f.Fields[0].Type())
 		}
+
+		labelsStr := f.Fields[0].Labels.String()
+		_, ok := labels[labelsStr]
+		if ok {
+			return nil, fmt.Errorf("Invalid frame %v: frames cannot uniquely be identified by its labels: %q", f.Name, labelsStr)
+		}
+		labels[labelsStr] = true
 
 		state := Normal
 		val, ok := f.Fields[0].ConcreteAt(0)
