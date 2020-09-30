@@ -5,6 +5,7 @@ keywords = ["grafana", "alerting", "guide", "rules", "view"]
 type = "docs"
 [menu.docs]
 name = "View alerts"
+identifier = "view-alerts"
 parent = "alerting"
 weight = 400
 +++

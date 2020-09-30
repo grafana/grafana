@@ -4,7 +4,7 @@ type = "docs"
 [menu.docs]
 identifier = "alerting"
 parent = "features"
-weight = 6
+weight = 100
 +++
 
 # Alerts overview
