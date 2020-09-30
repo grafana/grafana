@@ -8,7 +8,7 @@ This can be especially useful for publishing static website, such as with
 [GitHub Pages](https://pages.github.com/), from built files in other job
 steps, such as [Doxygen](http://www.doxygen.nl/) generated HTML files.
 
-**NOTE**: GitHub currently requires the use of a Personal Access Token for
+> **Note:** GitHub currently requires the use of a Personal Access Token for
 pushing to other repositories. Pushing to the current repository should work
 with the always-available GitHub Token (available via
 `{{ secrets.GITHUB_TOKEN }}`. If pushing to another repository, a Personal
