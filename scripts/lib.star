@@ -146,9 +146,9 @@ def master_pipelines(edition):
             depends_on=['build-master', 'windows-master',], install_deps=False, version_mode=version_mode,
         ))
 
-        notifyTrigger = dict(trigger, status = ['failure'])
+        notify_trigger = dict(trigger, status = ['failure'])
         pipelines.append(notifyPipeline(
-            name='notify-master', slackChannel='grafana-ci-notifications', trigger=notifyTrigger,
+            name='notify-master', slackChannel='grafana-ci-notifications', trigger=notify_trigger,
             depends_on=['build-master', 'windows-master', 'publish-master'],
         ))
     if edition == 'enterprise':
