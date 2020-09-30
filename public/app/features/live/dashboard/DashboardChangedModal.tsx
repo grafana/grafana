@@ -4,6 +4,7 @@ import { css } from 'emotion';
 import { dashboardWatcher } from './dashboardWatcher';
 import { config } from '@grafana/runtime';
 import { DashboardEvent, DashboardEventAction } from './types';
+import { GrafanaTheme } from '@grafana/data';
 
 interface Props {
   event?: DashboardEvent;
@@ -56,30 +57,21 @@ export class DashboardChangedModal extends PureComponent<Props, State> {
   render() {
     const { event } = this.props;
     const { dismiss } = this.state;
-    const radioClass = css`
-      cursor: pointer;
-      width: 100%;
-      padding: 20px;
-      background: ${config.theme.colors.dropdownBg};
-
-      &:hover {
-        background: ${config.theme.colors.formCheckboxBgCheckedHover};
-      }
-    `;
+    const styles = getStyles(config.theme);
 
     const isDelete = event?.action === DashboardEventAction.Deleted;
 
-    const options = isDelete ? [this.continueEditing, this.acceptDelte] : [this.continueEditing, this.discardAndReload];
+    const options = isDelete
+      ? [this.continueEditing, this.acceptDelete]
+      : [this.continueEditing, this.discardAndReload];
 
     return (
       <Modal
-        isOpen={!!!dismiss}
+        isOpen={!dismiss}
         title="Dashboard Changed"
         icon="copy"
         onDismiss={this.onDismiss}
-        className={css`
-          width: 500px;
-        `}
+        className={styles.modal}
       >
         <div>
           {isDelete ? (
@@ -91,7 +83,7 @@ export class DashboardChangedModal extends PureComponent<Props, State> {
           <VerticalGroup>
             {options.map(opt => {
               return (
-                <div key={opt.label} onClick={opt.action} className={radioClass}>
+                <div key={opt.label} onClick={opt.action} className={styles.radioItem}>
                   <h3>{opt.label}</h3>
                   {opt.description}
                 </div>
@@ -104,3 +96,17 @@ export class DashboardChangedModal extends PureComponent<Props, State> {
     );
   }
 }
+
+const getStyles = (theme: GrafanaTheme) => {
+  return {
+    modal: css`
+      width: 500px;
+    `,
+    radioItem: css`
+      margin: 0;
+      margin-left: ${theme.spacing.md};
+      font-size: ${theme.typography.size.sm};
+      color: ${theme.colors.textWeak};
+    `,
+  };
+};
