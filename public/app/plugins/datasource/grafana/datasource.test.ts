@@ -1,17 +1,17 @@
-import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import { DataSourceInstanceSettings, dateTime, AnnotationQueryRequest } from '@grafana/data';
 
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { GrafanaDatasource } from '../datasource';
+import { GrafanaDatasource } from './datasource';
+import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
-}));
-
-jest.mock('app/features/templating/template_srv', () => ({
-  replace: (val: string) => {
-    return val.replace('$var2', 'replaced__delimiter__replaced2').replace('$var', 'replaced');
-  },
+  getTemplateSrv: () => ({
+    replace: (val: string) => {
+      return val.replace('$var2', 'replaced__delimiter__replaced2').replace('$var', 'replaced');
+    },
+  }),
 }));
 
 describe('grafana data source', () => {
@@ -61,7 +61,7 @@ describe('grafana data source', () => {
     describe('with type dashboard', () => {
       const options = setupAnnotationQueryOptions(
         {
-          type: 'dashboard',
+          type: GrafanaAnnotationType.Dashboard,
           tags: ['tag1'],
         },
         { id: 1 }
@@ -78,8 +78,8 @@ describe('grafana data source', () => {
   });
 });
 
-function setupAnnotationQueryOptions(annotation: { tags: string[]; type?: string }, dashboard?: { id: number }) {
-  return {
+function setupAnnotationQueryOptions(annotation: Partial<GrafanaAnnotationQuery>, dashboard?: { id: number }) {
+  return ({
     annotation,
     dashboard,
     range: {
@@ -87,5 +87,5 @@ function setupAnnotationQueryOptions(annotation: { tags: string[]; type?: string
       to: dateTime(1432288401),
     },
     rangeRaw: { from: 'now-24h', to: 'now' },
-  };
+  } as unknown) as AnnotationQueryRequest<GrafanaQuery>;
 }
