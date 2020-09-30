@@ -16,7 +16,7 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.27
   commands:
-  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.13/grabpl
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.14/grabpl
   - chmod +x grabpl
   - mkdir -p bin
   - mv grabpl bin
@@ -249,7 +249,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.13/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.14/windows/grabpl.exe -OutFile grabpl.exe
 
 trigger:
   event:
@@ -273,7 +273,7 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.27
   commands:
-  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.13/grabpl
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.14/grabpl
   - chmod +x grabpl
   - mkdir -p bin
   - mv grabpl bin
@@ -547,7 +547,6 @@ steps:
   environment:
     NPM_TOKEN:
       from_secret: npm_token
-  failure: ignore
   depends_on:
   - end-to-end-tests
 
@@ -614,7 +613,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.13/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.14/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -662,7 +661,7 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.27
   commands:
-  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.13/grabpl
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.14/grabpl
   - chmod +x grabpl
   - mkdir -p bin
   - mv grabpl bin
