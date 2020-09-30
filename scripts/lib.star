@@ -147,7 +147,7 @@ def master_pipelines(edition):
         ))
 
         notify_trigger = dict(trigger, status = ['failure'])
-        pipelines.append(notifyPipeline(
+        pipelines.append(notify_pipeline(
             name='notify-master', slack_channel='grafana-ci-notifications', trigger=notify_trigger,
             depends_on=['build-master', 'windows-master', 'publish-master'],
         ))
@@ -172,7 +172,7 @@ def master_pipelines(edition):
         ))
 
         notify_trigger = dict(trigger, status = ['failure'])
-        pipelines.append(notifyPipeline(
+        pipelines.append(notify_pipeline(
             name='notify-master-downstream', slack_channel='grafana-enterprise-ci-notifications', trigger=notify_trigger,
             depends_on=['build-master-downstream', 'windows-master-downstream', 'publish-master-downstream'],
         ))
@@ -216,7 +216,7 @@ def pipeline(
 
     return pipeline
 
-def notifyPipeline(name, slack_channel, trigger, depends_on=[]):
+def notify_pipeline(name, slack_channel, trigger, depends_on=[]):
     return {
         'kind': 'pipeline',
         'type': 'docker',
