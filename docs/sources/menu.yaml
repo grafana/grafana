@@ -238,8 +238,8 @@
       name: Playlist
     - link: /dashboards/search/
       name: Search
-    - link: /reference/share_dashboard/
-      name: Sharing a dashboard
+    - link: /dashboards/share-dashboard/
+      name: Share dashboard
     - link: /reference/share_panel/
       name: Sharing a panel
     - link: /dashboards/time-range-controls/
