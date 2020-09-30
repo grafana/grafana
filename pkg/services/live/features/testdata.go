@@ -100,7 +100,7 @@ func (g *testdataRunner) runRandomCSV() {
 
 	for t := range ticker.C {
 		if rand.Float64() <= g.dropPercent {
-			continue //
+			continue
 		}
 		delta := rand.Float64() - 0.5
 		walker += delta
