@@ -36,7 +36,6 @@ export const customVariableSlice = createSlice({
       const instanceState = getInstanceState<CustomVariableModel>(state, action.payload.id);
       const { includeAll, query } = instanceState;
       const match = query.match(/(?:\\,|[^,])+/g) ?? [];
-      
       const options = match.map(text => {
         text = text.replace(/\\,/g, ',');
         const textMatch = text.match(/(?:\\:|[^:])+/g) ?? [];
