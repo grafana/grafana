@@ -51,7 +51,7 @@ More information [here](https://community.grafana.com/t/using-grafanas-query-ins
 
 ### Breaking change
 
-* **InfluxDB/Elasticsearch**: The panel and data source option named "Group by time interval" is now named "Min time interval" and does now always define a lower limit for the auto group by time. Without having to use `>` prefix (that prefix still works). This should in theory have close to zero actual impact on existing dashboards. It does mean that if you used this setting to define a hard group by time interval of, say "1d", if you zoomed to a time range wide enough the time range could increase above the "1d" range as the setting is now always considered a lower limit.
+* **InfluxDB/Elasticsearch**: The panel and data source option named "Group by time interval" is now named "Min time interval" and does now always define a lower limit for the auto group by time. Without having to use `>` prefix (that prefix still works). This should in theory has close to zero actual impact on existing dashboards. It does mean that if you used this setting to define a hard group by time interval of, say "1d", if you zoomed to a time range wide enough the time range could increase above the "1d" range as the setting is now always considered a lower limit.
 
 This option is now renamed (and moved to Options sub section above your queries):
 ![image|519x120](upload://ySjHOVpavV6yk9LHQxL9nq2HIsT.png)
