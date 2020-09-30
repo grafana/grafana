@@ -52,6 +52,9 @@ def pr_pipelines(edition):
         mysql_integration_tests_step(),
     ]
     windows_steps = get_windows_steps(edition=edition, version_mode=version_mode)
+    if edition == 'enterprise':
+        steps.append(benchmark_ldap_step())
+        services.append(ldap_service())
     trigger = {
         'event': ['pull_request',],
     }
@@ -130,6 +133,11 @@ def master_pipelines(edition):
         'branch': 'master',
     }
     steps, windows_steps, publish_steps = master_steps(edition=edition)
+
+    if edition == 'enterprise':
+        steps.append(benchmark_ldap_step())
+        services.append(ldap_service())
+
     pipelines = [
         pipeline(
             name='build-master', edition=edition, trigger=trigger, services=services, steps=steps,
@@ -360,6 +368,33 @@ def lint_backend_step(edition):
             './scripts/revive-strict',
             './scripts/tidy-check.sh',
         ],
+    }
+
+def benchmark_ldap_step():
+    return {
+        'name': 'benchmark-ldap',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+        ],
+        'environment': {
+	  'LDAP_HOSTNAME': 'ldap',
+        },
+        'commands': [
+            './bin/dockerize -wait tcp://ldap:389 -timeout 120s',
+            'go test -benchmem -run=^$ ./pkg/extensions/ldapsync -bench "^(Benchmark50Users)$"',
+        ],
+    }
+
+def ldap_service():
+    return {
+        'name': 'ldap',
+        'image': 'osixia/openldap:1.4.0',
+        'environment': {
+          'LDAP_ADMIN_PASSWORD': 'grafana',
+          'LDAP_DOMAIN': 'grafana.org',
+          'SLAPD_ADDITIONAL_MODULES': 'memberof',
+        },
     }
 
 def build_storybook_step(edition):
