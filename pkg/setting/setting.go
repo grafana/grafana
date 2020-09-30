@@ -88,7 +88,7 @@ var (
 	RouterLogging                  bool
 	DataProxyLogging               bool
 	DataProxyTimeout               int
-	DataProxyTlsHandshakeTimeout   int
+	DataProxyTLSHandshakeTimeout   int
 	DataProxyExpectContinueTimeout int
 	DataProxyMaxIdleConns          int
 	DataProxyKeepAlive             int
@@ -688,7 +688,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	DataProxyLogging = dataproxy.Key("logging").MustBool(false)
 	DataProxyTimeout = dataproxy.Key("timeout").MustInt(30)
 	DataProxyKeepAlive = dataproxy.Key("keep_alive_seconds").MustInt(30)
-	DataProxyTlsHandshakeTimeout = dataproxy.Key("tls_handshake_timeout_seconds").MustInt(10)
+	DataProxyTLSHandshakeTimeout = dataproxy.Key("tls_handshake_timeout_seconds").MustInt(10)
 	DataProxyExpectContinueTimeout = dataproxy.Key("expect_continue_timeout_seconds").MustInt(1)
 	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt(100)
 	DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
