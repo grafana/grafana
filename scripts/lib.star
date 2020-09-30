@@ -9,6 +9,7 @@ dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
 
 def pr_pipelines(edition):
+    version_mode = 'pr'
     services = [
         {
             'name': 'postgres',
@@ -50,16 +51,18 @@ def pr_pipelines(edition):
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
     ]
-    windows_steps = get_windows_steps(edition=edition, version_mode='pr')
+    windows_steps = get_windows_steps(edition=edition, version_mode=version_mode)
     trigger = {
         'event': ['pull_request',],
     }
     return [
         pipeline(
-            name='test-pr', edition=edition, trigger=trigger, services=services, steps=steps
+            name='test-pr', edition=edition, trigger=trigger, services=services, steps=steps,
+            version_mode=version_mode,
         ),
         pipeline(
             name='windows-pr', edition=edition, trigger=trigger, steps=windows_steps, platform='windows',
+            version_mode=version_mode,
         ),
     ]
 
@@ -100,6 +103,7 @@ def master_steps(edition, is_downstream=False):
     return steps, windows_steps, publish_steps
 
 def master_pipelines(edition):
+    version_mode = 'master'
     services = [
         {
             'name': 'postgres',
@@ -128,17 +132,18 @@ def master_pipelines(edition):
     steps, windows_steps, publish_steps = master_steps(edition=edition)
     pipelines = [
         pipeline(
-            name='build-master', edition=edition, trigger=trigger, services=services, steps=steps
+            name='build-master', edition=edition, trigger=trigger, services=services, steps=steps,
+            version_mode=version_mode,
         ),
         pipeline(
             name='windows-master', edition=edition, trigger=trigger, steps=windows_steps, platform='windows',
-            depends_on=['build-master'],
+            depends_on=['build-master'], version_mode=version_mode,
         ),
     ]
     if edition != 'enterprise':
         pipelines.append(pipeline(
             name='publish-master', edition=edition, trigger=trigger, steps=publish_steps,
-            depends_on=['build-master', 'windows-master',], install_deps=False,
+            depends_on=['build-master', 'windows-master',], install_deps=False, version_mode=version_mode,
         ))
     if edition == 'enterprise':
         # Add downstream enterprise pipelines triggerable from OSS builds
@@ -148,21 +153,24 @@ def master_pipelines(edition):
         steps, windows_steps, publish_steps = master_steps(edition=edition, is_downstream=True)
         pipelines.append(pipeline(
             name='build-master-downstream', edition=edition, trigger=trigger, services=services, steps=steps,
-            is_downstream=True,
+            is_downstream=True, version_mode=version_mode,
         ))
         pipelines.append(pipeline(
             name='windows-master-downstream', edition=edition, trigger=trigger, steps=windows_steps,
-            platform='windows', depends_on=['build-master-downstream'], is_downstream=True,
+            platform='windows', depends_on=['build-master-downstream'], is_downstream=True, version_mode=version_mode,
         ))
         pipelines.append(pipeline(
             name='publish-master-downstream', edition=edition, trigger=trigger, steps=publish_steps,
             depends_on=['build-master-downstream', 'windows-master-downstream'], is_downstream=True, install_deps=False,
+            version_mode=version_mode,
         ))
 
     return pipelines
 
-def pipeline(name, edition, trigger, steps, services=[], platform='linux', depends_on=[], is_downstream=False,
-    install_deps=True):
+def pipeline(
+    name, edition, trigger, steps, version_mode, services=[], platform='linux', depends_on=[],
+    is_downstream=False, install_deps=True,
+    ):
     if platform != 'windows':
         platform_conf = {
             'os': 'linux',
@@ -182,7 +190,9 @@ def pipeline(name, edition, trigger, steps, services=[], platform='linux', depen
         'name': name,
         'trigger': trigger,
         'services': services,
-        'steps': init_steps(edition, platform, is_downstream=is_downstream, install_deps=install_deps) + steps,
+        'steps': init_steps(
+            edition, platform, is_downstream=is_downstream, install_deps=install_deps, version_mode=version_mode,
+        ) + steps,
         'depends_on': depends_on,
     }
 
@@ -194,7 +204,23 @@ def pipeline(name, edition, trigger, steps, services=[], platform='linux', depen
 
     return pipeline
 
-def init_steps(edition, platform, is_downstream=False, install_deps=True):
+def slack_step(channel):
+    return {
+        'name': 'slack',
+        'image': 'plugins/slack',
+        'settings': {
+            'webhook': {
+                'from_secret': 'slack_webhook',
+            },
+            'channel': channel,
+            'template': 'Build {{build.number}} failed: {{build.link}}',
+        },
+        'when': {
+            'status': ['failure',],
+        },
+    }
+
+def init_steps(edition, platform, version_mode, is_downstream=False, install_deps=True):
     if platform == 'windows':
         return [
             {
@@ -228,7 +254,7 @@ def init_steps(edition, platform, is_downstream=False, install_deps=True):
             source_commit = ' $${SOURCE_COMMIT}'
         else:
             source_commit = ''
-        return [
+        steps = [
             identify_runner_step,
             {
                 'name': 'clone',
@@ -266,8 +292,11 @@ def init_steps(edition, platform, is_downstream=False, install_deps=True):
                 ] + common_cmds,
             },
         ]
+        if version_mode == 'master':
+            steps.append(slack_step(channel='grafana-enterprise-ci-failures'))
+        return steps
 
-    return [
+    steps = [
         identify_runner_step,
         {
             'name': 'initialize',
@@ -285,6 +314,11 @@ def init_steps(edition, platform, is_downstream=False, install_deps=True):
             ] + common_cmds,
         },
     ]
+
+    if version_mode == 'master':
+        steps.append(slack_step(channel='grafana-ci-failures'))
+
+    return steps
 
 def enterprise_downstream_step(edition):
     if edition == 'enterprise':
