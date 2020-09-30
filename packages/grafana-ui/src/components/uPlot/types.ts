@@ -1,7 +1,8 @@
 import React from 'react';
 import uPlot from 'uplot';
 import { DataFrame, FieldColor, TimeRange, TimeZone } from '@grafana/data';
-import { NullValuesMode } from '../../../../../public/app/plugins/panel/graph3/types';
+
+export type NullValuesMode = 'null' | 'connected' | 'asZero';
 
 export enum MicroPlotAxisSide {
   top = 0,
