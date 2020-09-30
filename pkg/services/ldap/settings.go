@@ -3,6 +3,7 @@ package ldap
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"sync"
 
 	"github.com/BurntSushi/toml"
@@ -138,6 +139,8 @@ func readConfig(configFile string) (*Config, error) {
 		return nil, fmt.Errorf("LDAP enabled but no LDAP servers defined in config file")
 	}
 
+	ldapHost := os.Getenv("GRAFANA_LDAP_HOST")
+
 	// set default org id
 	for _, server := range result.Servers {
 		err = assertNotEmptyCfg(server.SearchFilter, "search_filter")
@@ -153,6 +156,10 @@ func readConfig(configFile string) (*Config, error) {
 			if groupMap.OrgId == 0 {
 				groupMap.OrgId = 1
 			}
+		}
+
+		if ldapHost != "" {
+			server.Host = ldapHost
 		}
 	}
 
