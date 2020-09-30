@@ -1,4 +1,4 @@
-import 'uplot/dist/uPlot.min.css';
+//import 'uplot/dist/uPlot.min.css';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { css } from 'emotion';
 import uPlot from 'uplot';
