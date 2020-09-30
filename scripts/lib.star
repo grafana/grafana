@@ -667,7 +667,7 @@ def build_docs_website_step():
         'image': 'grafana/docs-base:latest',
         'depends_on': [
             'initialize',
-            'generate-fronted-package-docs',
+            'generate-frontend-package-docs',
         ],
         'commands': [
             'mkdir -p /hugo/content/docs/grafana',
