@@ -4,13 +4,10 @@
 set -eo pipefail
 
 report_reference_docs_metrics() {
-  # $1 = branch that the script is running on.
-  # $2 = number of warnings in current version of the code.
-
-  if [ "${1}" == "master" ]; then
-  ./scripts/ci-metrics-publisher.sh \
-    grafana.ci-code.reference-docs.warnings="$2"
-  fi
+  # $1 = number of warnings in current version of the code.
+  echo "Metrics: {
+    \"grafana.ci-code.reference-docs.warnings\": \"$1\"
+  }"
 }
 
 pretty_print_result_of_report() {
@@ -48,4 +45,4 @@ if [ "$WARNINGS_COUNT" -lt $WARNINGS_COUNT_LIMIT ]; then
 fi
 
 pretty_print_result_of_report "API Extractor total warnings: $WARNINGS_COUNT"
-report_reference_docs_metrics "$CIRCLE_BRANCH" "$WARNINGS_COUNT"
+report_reference_docs_metrics "$WARNINGS_COUNT"

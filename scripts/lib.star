@@ -45,6 +45,7 @@ def pr_pipelines(edition):
         e2e_tests_server_step(),
         e2e_tests_step(),
         build_storybook_step(edition),
+        generate_packages_docs(edition=edition, lint=True),
         build_docs_website_step(),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, archs=['amd64',]),
@@ -84,6 +85,7 @@ def master_steps(edition, is_downstream=False):
         e2e_tests_step(),
         build_storybook_step(edition=edition),
         publish_storybook_step(edition=edition),
+        generate_packages_docs(edition=edition, lint=False),
         build_docs_website_step(),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, publish=publish),
@@ -441,6 +443,38 @@ def build_frontend_step(edition, is_downstream=False):
         ],
     }
 
+def generate_packages_docs(edition, lint=False):
+    if edition == 'enterprise':
+        return None
+
+    if lint:
+        return {
+            'name': 'generate-packages-docs',
+            'image': build_image,
+            'depends_on': [
+                'build-frontend'
+            ],
+            'environment': {
+                'GRAFANA_MISC_STATS_API_KEY': {
+                    'from_secret': 'grafana_misc_stats_api_key',
+                },
+            },
+            'commands': [
+                './scripts/ci-reference-docs-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}',
+            ],
+        }
+    else:
+        return {
+            'name': 'generate-packages-docs',
+            'image': build_image,
+            'depends_on': [
+                'build-frontend'
+            ],
+            'commands': [
+                './scripts/ci-reference-docs-build.sh'
+            ]
+        }
+
 def build_plugins_step(edition, sign=False):
     if sign:
         env = {
@@ -645,6 +679,7 @@ def build_docs_website_step():
         'image': 'grafana/docs-base:latest',
         'depends_on': [
             'initialize',
+            'generate-packages-docs',
         ],
         'commands': [
             'mkdir -p /hugo/content/docs/grafana',
