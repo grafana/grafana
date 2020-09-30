@@ -68,23 +68,26 @@ func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
 func (m *SigV4Middleware) credentials() (*credentials.Credentials, error) {
 	authType := AuthType(m.Config.AuthType)
 
+	creds := defaults.CredChain(defaults.Config(), defaults.Handlers())
+	switch authType {
+	case Keys:
+		creds = credentials.NewStaticCredentials(m.Config.AccessKey, m.Config.SecretKey, "")
+	case Credentials:
+		creds = credentials.NewSharedCredentials("", m.Config.Profile)
+	default:
+		return nil, fmt.Errorf("unrecognized authType: %s", authType)
+	}
+
 	if m.Config.AssumeRoleARN != "" {
-		s, err := session.NewSession(&aws.Config{Region: aws.String(m.Config.Region)})
+		s, err := session.NewSession(&aws.Config{
+			Region:      aws.String(m.Config.Region),
+			Credentials: creds},
+		)
 		if err != nil {
 			return nil, err
 		}
-
 		return stscreds.NewCredentials(s, m.Config.AssumeRoleARN), nil
 	}
 
-	switch authType {
-	case Keys:
-		return credentials.NewStaticCredentials(m.Config.AccessKey, m.Config.SecretKey, ""), nil
-	case Credentials:
-		return credentials.NewSharedCredentials("", m.Config.Profile), nil
-	case Default:
-		return defaults.CredChain(defaults.Config(), defaults.Handlers()), nil
-	}
-
-	return nil, fmt.Errorf("invalid auth type %s was specified", authType)
+	return creds, nil
 }
