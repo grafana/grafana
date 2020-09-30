@@ -48,7 +48,7 @@ screen for that specific time period in your Dashboard is saved in the JSON of t
 Sharing a Snapshot is similar to sharing a link to a screenshot of your dashboard, only way better (they'll look great at any screen resolution, you can hover over series,
 even zoom in). Also they are fast to load as they aren't actually connected to any live Data Sources in any way.
 
-They're a great way to communicate about a particular incident with specific people who aren't Users of your Grafana instance. You can also use them to show off your dashboards over the Internet.
+They're a great way to communicate about a particular incident with specific people who aren't users of your Grafana instance. You can also use them to show off your dashboards over the Internet.
 
 ![](/img/docs/v2/dashboard_snapshot_dialog.png)
 
