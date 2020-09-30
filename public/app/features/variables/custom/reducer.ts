@@ -41,9 +41,7 @@ export const customVariableSlice = createSlice({
         text = text.replace(/\\,/g, ',');
         const textMatch = text.match(/(?:\\:|[^:])+/g) ?? [];
         if (textMatch.length > 1) {
-          let [key, value] = textMatch;
-          key = key.replace(/\\:/g, ':');
-          value = value.replace(/\\:/g, ':');
+          const [key, value] = textMatch;
           return { text: key.trim(), value: value.trim(), selected: false };
         } else {
           return { text: text.trim(), value: text.trim(), selected: false };
