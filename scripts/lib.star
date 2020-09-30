@@ -171,6 +171,12 @@ def master_pipelines(edition):
             version_mode=version_mode,
         ))
 
+        notify_trigger = dict(trigger, status = ['failure'])
+        pipelines.append(notifyPipeline(
+            name='notify-master-downstream', slack_channel='grafana-enterprise-ci-notifications', trigger=notify_trigger,
+            depends_on=['build-master-downstream', 'windows-master-downstream', 'publish-master-downstream'],
+        ))
+
     return pipelines
 
 def pipeline(
