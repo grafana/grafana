@@ -146,10 +146,7 @@ steps:
 - name: generate-packages-docs
   image: grafana/build-container:1.2.27
   commands:
-  - ./scripts/ci-reference-docs-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
-  environment:
-    GRAFANA_MISC_STATS_API_KEY:
-      from_secret: grafana_misc_stats_api_key
+  - ./scripts/ci-reference-docs-metrics.sh
   depends_on:
   - build-frontend
 

@@ -454,13 +454,8 @@ def generate_packages_docs(edition, lint=False):
             'depends_on': [
                 'build-frontend'
             ],
-            'environment': {
-                'GRAFANA_MISC_STATS_API_KEY': {
-                    'from_secret': 'grafana_misc_stats_api_key',
-                },
-            },
             'commands': [
-                './scripts/ci-reference-docs-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}',
+                './scripts/ci-reference-docs-metrics.sh',
             ],
         }
     else:

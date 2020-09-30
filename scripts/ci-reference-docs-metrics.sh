@@ -3,13 +3,6 @@
 # abort if we get any error
 set -eo pipefail
 
-report_reference_docs_metrics() {
-  # $1 = number of warnings in current version of the code.
-  echo "Metrics: {
-    \"grafana.ci-code.reference-docs.warnings\": \"$1\"
-  }"
-}
-
 pretty_print_result_of_report() {
   # $1 = result of current report
 
@@ -45,4 +38,3 @@ if [ "$WARNINGS_COUNT" -lt $WARNINGS_COUNT_LIMIT ]; then
 fi
 
 pretty_print_result_of_report "API Extractor total warnings: $WARNINGS_COUNT"
-report_reference_docs_metrics "$WARNINGS_COUNT"
