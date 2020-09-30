@@ -6,14 +6,12 @@ import { AnnotationQuery, DataQuery } from '@grafana/data';
 
 export enum GrafanaQueryType {
   RandomWalk = 'randomWalk',
-  LiveMetrics = 'metrics',
+  RandomStream = 'randomStream',
+  HostMetrics = 'hostmetrics',
 }
 
 export interface GrafanaQuery extends DataQuery {
   queryType: GrafanaQueryType; // RandomWalk by default
-
-  // live metrics channel
-  channel?: string;
 }
 
 export const defaultQuery: GrafanaQuery = {

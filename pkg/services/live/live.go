@@ -90,9 +90,6 @@ func InitializeBroker() (*GrafanaLive, error) {
 	tds := features.CreateTestdataSupplier(glive.Publish)
 	glive.GrafanaScope.Features["testdata"] = &tds
 
-	mds := features.CreateMetricsSupplier(glive.Publish, node)
-	glive.GrafanaScope.Features["metrics"] = &mds
-
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
 	// different goroutines (belonging to different client connections). This is also
