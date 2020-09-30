@@ -5,22 +5,77 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  LiveChannelScope,
+  LiveChannelSupport,
 } from '@grafana/data';
 
-import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType } from './types';
-import { getBackendSrv, getTemplateSrv, toDataQueryResponse } from '@grafana/runtime';
+import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQueryType } from './types';
+import { getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, toDataQueryResponse } from '@grafana/runtime';
 import { Observable, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, filter } from 'rxjs/operators';
 
 export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
   }
 
-  query(request: DataQueryRequest<GrafanaQuery>): Observable<DataQueryResponse> {
-    const { intervalMs, maxDataPoints, range, requestId } = request;
+  // NOT real becasue GrafanaDatasource is not a real datasource
+  channelSupport: LiveChannelSupport = {
+    getChannelConfig: (path: string) => {
+      return {
+        path,
+      }; // nothing special -- but can listen on that channel
+    },
+    getSupportedPaths: () => [],
+  };
 
-    // Yes, this implementaiton ignores multiple targets!  But that matches exisitng behavior
+  query(request: DataQueryRequest<GrafanaQuery>): Observable<DataQueryResponse> {
+    const queries: Array<Observable<DataQueryResponse>> = [];
+    for (const target of request.targets) {
+      if (target.hide) {
+        continue;
+      }
+      if (target.queryType === GrafanaQueryType.LiveMetrics) {
+        queries.push(this.getChannelObserver(target.channel || 'live'));
+      } else {
+        queries.push(this.getRandomWalk(request));
+      }
+    }
+    if (queries.length === 1) {
+      return queries[0];
+    }
+    if (queries.length > 1) {
+      // HELP!
+      return queries[0];
+    }
+    return of(); // nothing
+  }
+
+  private getChannelObserver(path: string): Observable<DataQueryResponse> {
+    const live = getGrafanaLiveSrv();
+    if (!live) {
+      // This will only happen with the feature flag is not enabled
+      return of({ error: { message: 'Grafana live is not initalized' }, data: [] });
+    }
+
+    console.log('CONNCET', path);
+    return live
+      .getChannel(LiveChannelScope.Grafana, 'metrics', path)
+      .getStream()
+      .pipe(
+        filter(v => !!!v.message),
+        map(v => {
+          const r: DataQueryResponse = {
+            data: [],
+          };
+          console.log('MESSAGE', v, r);
+          return r;
+        })
+      );
+  }
+
+  private getRandomWalk(request: DataQueryRequest<GrafanaQuery>): Observable<DataQueryResponse> {
+    const { intervalMs, maxDataPoints, range, requestId } = request;
     const params: Record<string, any> = {
       intervalMs,
       maxDataPoints,

@@ -51,14 +51,6 @@ func InitializeBroker() (*GrafanaLive, error) {
 		},
 	}
 
-	// Initialize the main features
-	dash := features.CreateDashboardHandler(glive.Publish)
-	glive.GrafanaScope.Dashboards = &dash
-	glive.GrafanaScope.Features["dashboard"] = &dash
-
-	tds := features.CreateTestdataSupplier(glive.Publish)
-	glive.GrafanaScope.Features["testdata"] = &tds
-
 	// We use default config here as starting point. Default config contains
 	// reasonable values for available options.
 	cfg := centrifuge.DefaultConfig
@@ -89,6 +81,17 @@ func InitializeBroker() (*GrafanaLive, error) {
 		return nil, err
 	}
 	glive.node = node
+
+	// Initialize the main features
+	dash := features.CreateDashboardHandler(glive.Publish)
+	glive.GrafanaScope.Dashboards = &dash
+	glive.GrafanaScope.Features["dashboard"] = &dash
+
+	tds := features.CreateTestdataSupplier(glive.Publish)
+	glive.GrafanaScope.Features["testdata"] = &tds
+
+	mds := features.CreateMetricsSupplier(glive.Publish, node)
+	glive.GrafanaScope.Features["metrics"] = &mds
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from

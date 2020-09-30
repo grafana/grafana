@@ -1,6 +1,7 @@
 import { LiveChannelConfig } from '@grafana/data';
 import { getDashboardChannelsFeature } from './dashboard/dashboardWatcher';
 import { grafanaLiveCoreFeatures } from './scopes';
+import { grafanaLiveMetrics } from '../../plugins/datasource/grafana/live';
 
 export function registerLiveFeatures() {
   const channels = [
@@ -44,6 +45,12 @@ export function registerLiveFeatures() {
       getSupportedPaths: () => [chatConfig],
     },
     description: 'Experimental features',
+  });
+
+  grafanaLiveCoreFeatures.register({
+    name: 'metrics',
+    support: grafanaLiveMetrics,
+    description: 'Real-time server metrics',
   });
 
   // dashboard/*
