@@ -21,8 +21,6 @@ type templateData struct {
 
 // NewApiPluginProxy create a plugin proxy
 func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appID string, cfg *setting.Cfg) *httputil.ReverseProxy {
-	targetURL, _ := url.Parse(route.URL)
-
 	director := func(req *http.Request) {
 		query := models.GetPluginSettingByIdQuery{OrgId: ctx.OrgId, PluginId: appID}
 		if err := bus.Dispatch(&query); err != nil {
@@ -35,11 +33,21 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 			SecureJsonData: query.Result.SecureJsonData.Decrypt(),
 		}
 
+		interpolatedURL, err := InterpolateString(route.URL, data)
+		if err != nil {
+			ctx.JsonApiErr(500, "Could not interpolate plugin route url", err)
+			return
+		}
+		targetURL, err := url.Parse(interpolatedURL)
+		if err != nil {
+			ctx.JsonApiErr(500, "Could not parse url", err)
+			return
+		}
 		req.URL.Scheme = targetURL.Scheme
 		req.URL.Host = targetURL.Host
 		req.Host = targetURL.Host
-
 		req.URL.Path = util.JoinURLFragments(targetURL.Path, proxyPath)
+
 		// clear cookie headers
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
@@ -60,22 +68,6 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 		if err := AddHeaders(&req.Header, route, data); err != nil {
 			ctx.JsonApiErr(500, "Failed to render plugin headers", err)
 			return
-		}
-
-		if len(route.URL) > 0 {
-			interpolatedURL, err := InterpolateString(route.URL, data)
-			if err != nil {
-				ctx.JsonApiErr(500, "Could not interpolate plugin route url", err)
-			}
-			targetURL, err := url.Parse(interpolatedURL)
-			if err != nil {
-				ctx.JsonApiErr(500, "Could not parse custom url: %v", err)
-				return
-			}
-			req.URL.Scheme = targetURL.Scheme
-			req.URL.Host = targetURL.Host
-			req.Host = targetURL.Host
-			req.URL.Path = util.JoinURLFragments(targetURL.Path, proxyPath)
 		}
 
 		// reqBytes, _ := httputil.DumpRequestOut(req, true);
