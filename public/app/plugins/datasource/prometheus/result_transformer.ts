@@ -4,29 +4,64 @@ import {
   Field,
   FieldType,
   formatLabels,
+  MutableField,
+  ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
 import { FetchResponse } from '@grafana/runtime';
 import templateSrv from 'app/features/templating/template_srv';
 import {
+  isMatrixData,
+  MatrixOrVectorResult,
   PromDataSuccessResponse,
-  PromMatrixData,
   PromMetric,
+  PromQuery,
+  PromQueryRequest,
   PromValue,
-  PromVectorData,
   TransformOptions,
 } from './types';
 
-type MatrixOrVectorResult = PromMatrixData['result'][0] | PromVectorData['result'][0];
-
-export function transform(response: FetchResponse<PromDataSuccessResponse>, options: TransformOptions) {
+export function transform(
+  response: FetchResponse<PromDataSuccessResponse>,
+  transformOptions: {
+    query: PromQueryRequest;
+    target: PromQuery;
+    responseListLength: number;
+    scopedVars?: ScopedVars;
+    mixedQueries?: boolean;
+  }
+) {
+  // Create options object from transformOptions
+  const options: TransformOptions = {
+    format: transformOptions.target.format,
+    step: transformOptions.query.step,
+    legendFormat: transformOptions.target.legendFormat,
+    start: transformOptions.query.start,
+    end: transformOptions.query.end,
+    query: transformOptions.query.expr,
+    responseListLength: transformOptions.responseListLength,
+    scopedVars: transformOptions.scopedVars,
+    refId: transformOptions.target.refId,
+    valueWithRefId: transformOptions.target.valueWithRefId,
+    meta: {
+      /**
+       * Fix for showing of Prometheus results in Explore table.
+       * We want to show result of instant query always in table and result of range query based on target.runAll;
+       */
+      preferredVisualisationType: getPreferredVisualisationType(
+        transformOptions.query.instant,
+        transformOptions.mixedQueries
+      ),
+    },
+  };
   const prometheusResult = response.data.data;
 
   if (!prometheusResult.result) {
     return [];
   }
 
+  // Return early if result type is scalar
   if (prometheusResult.resultType === 'scalar') {
     return [
       {
@@ -38,33 +73,44 @@ export function transform(response: FetchResponse<PromDataSuccessResponse>, opti
     ];
   }
 
+  // Return early again if the format is table, this needs special transformation.
   if (options.format === 'table') {
     const tableData = transformMetricDataToTable(prometheusResult.result, options);
     return [tableData];
   }
 
+  // Process matrix and vector results to DataFrame
   const dataFrame: DataFrame[] = [];
-
   prometheusResult.result.forEach((data: MatrixOrVectorResult) => dataFrame.push(transformToDataFrame(data, options)));
 
+  // When format is heatmap use the already created data frames and transform it more
   if (options.format === 'heatmap') {
     dataFrame.sort(sortSeriesByLabel);
     const seriesList = transformToHistogramOverTime(dataFrame);
     return seriesList;
   }
 
+  // Return matrix or vector result as DataFrame[]
   return dataFrame;
 }
 
+function getPreferredVisualisationType(isInstantQuery?: boolean, mixedQueries?: boolean) {
+  if (isInstantQuery) {
+    return 'table';
+  }
+
+  return mixedQueries ? 'graph' : undefined;
+}
+
 /**
- * Transforms matrix and vector result from Prometheus to DataFrame
+ * Transforms matrix and vector result from Prometheus result to DataFrame
  */
 function transformToDataFrame(data: MatrixOrVectorResult, options: TransformOptions): DataFrame {
   const { name } = createLabelInfo(data.metric, options);
 
   const fields: Field[] = [];
 
-  if ('values' in data) {
+  if (isMatrixData(data)) {
     const stepMs = options.step ? options.step * 1000 : NaN;
     let baseTimestamp = options.start * 1000;
     const dps: PromValue[] = [];
@@ -124,38 +170,38 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
     }
   });
 
-  metricLabels.sort();
-
-  // Get all values
-  const allValues: PromValue[] = [];
-  md.forEach(d => {
-    if ('value' in d) {
-      allValues.push(d.value);
-    } else {
-      allValues.push(...d.values);
-    }
-  });
-
   const valueText = options.responseListLength > 1 || options.valueWithRefId ? `Value #${options.refId}` : 'Value';
 
-  const fields: Field[] = [
-    getTimeField(allValues),
-    ...metricLabels.map(label => {
-      return {
-        name: label,
-        config: { filterable: true },
-        type: FieldType.other,
-        values: new ArrayVector(md.map(d => getLabelValue(d.metric, label))),
-      };
-    }),
-    getValueField(allValues, valueText),
-  ];
+  const timeField = getTimeField([]);
+  const metricFields = metricLabels.sort().map(label => {
+    return {
+      name: label,
+      config: { filterable: true },
+      type: FieldType.other,
+      values: new ArrayVector(),
+    };
+  });
+  const valueField = getValueField([], valueText);
+
+  md.forEach(d => {
+    if (isMatrixData(d)) {
+      d.values.forEach(val => {
+        timeField.values.add(val[0] * 1000);
+        metricFields.forEach(metricField => metricField.values.add(getLabelValue(d.metric, metricField.name)));
+        valueField.values.add(parseFloat(val[1]));
+      });
+    } else {
+      timeField.values.add(d.value[0] * 1000);
+      metricFields.forEach(metricField => metricField.values.add(getLabelValue(d.metric, metricField.name)));
+      valueField.values.add(parseFloat(d.value[1]));
+    }
+  });
 
   return {
     meta: options.meta,
     refId: options.refId,
-    length: fields[0].values.length,
-    fields,
+    length: timeField.values.length,
+    fields: [timeField, ...metricFields, valueField],
   };
 }
 
@@ -169,7 +215,7 @@ function getLabelValue(metric: PromMetric, label: string): string | number {
   return '';
 }
 
-function getTimeField(data: PromValue[], isMs = false): Field {
+function getTimeField(data: PromValue[], isMs = false): MutableField {
   return {
     name: TIME_SERIES_TIME_FIELD_NAME,
     type: FieldType.time,
@@ -178,7 +224,11 @@ function getTimeField(data: PromValue[], isMs = false): Field {
   };
 }
 
-function getValueField(data: PromValue[], valueName: string = TIME_SERIES_VALUE_FIELD_NAME, parseValue = true): Field {
+function getValueField(
+  data: PromValue[],
+  valueName: string = TIME_SERIES_VALUE_FIELD_NAME,
+  parseValue = true
+): MutableField {
   return {
     name: valueName,
     type: FieldType.number,
@@ -193,17 +243,9 @@ function createLabelInfo(labels: { [key: string]: string }, options: TransformOp
     return { name: title, labels };
   }
 
-  let { __name__, ...labelsWithoutName } = labels;
-
-  let title = __name__ || '';
-
+  const { __name__, ...labelsWithoutName } = labels;
   const labelPart = formatLabels(labelsWithoutName);
-
-  if (!title && !labelPart) {
-    title = options.query;
-  }
-
-  title = `${__name__ ?? ''}${labelPart}`;
+  const title = `${__name__ ?? ''}${labelPart}`;
 
   return { name: title, labels: labelsWithoutName };
 }

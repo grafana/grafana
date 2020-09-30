@@ -13,7 +13,7 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchError, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv from 'app/features/templating/template_srv';
@@ -38,7 +38,6 @@ import {
   PromQueryRequest,
   PromScalarData,
   PromVectorData,
-  TransformOptions,
 } from './types';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
@@ -154,39 +153,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return templateSrv.variableExists(target.expr);
   }
 
-  processResult = (
-    response: FetchResponse<PromDataSuccessResponse>,
-    query: PromQueryRequest,
-    target: PromQuery,
-    responseListLength: number,
-    scopedVars?: ScopedVars,
-    mixedQueries?: boolean
-  ) => {
-    // Keeping original start/end for transformers
-    const transformerOptions: TransformOptions = {
-      format: target.format,
-      step: query.step,
-      legendFormat: target.legendFormat,
-      start: query.start,
-      end: query.end,
-      query: query.expr,
-      responseListLength,
-      scopedVars,
-      refId: target.refId,
-      valueWithRefId: target.valueWithRefId,
-      meta: {
-        /**
-         * Fix for showing of Prometheus results in Explore table.
-         * We want to show result of instant query always in table and result of range query based on target.runAll;
-         */
-        preferredVisualisationType: target.instant ? 'table' : mixedQueries ? 'graph' : undefined,
-      },
-    };
-    const series = transform(response, transformerOptions);
-
-    return series;
-  };
-
   prepareTargets = (options: DataQueryRequest<PromQuery>, start: number, end: number) => {
     const queries: PromQueryRequest[] = [];
     const activeTargets: PromQuery[] = [];
@@ -272,7 +238,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         tap(() => runningQueriesCount--),
         filter((response: any) => (response.cancelled ? false : true)),
         map((response: any) => {
-          const data = this.processResult(response, query, target, queries.length, undefined, mixedQueries);
+          const data = transform(response, { query, target, responseListLength: queries.length, mixedQueries });
           return {
             data,
             key: query.requestId,
@@ -304,7 +270,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       const filterAndMapResponse = pipe(
         filter((response: any) => (response.cancelled ? false : true)),
         map((response: any) => {
-          const data = this.processResult(response, query, target, queries.length, scopedVars);
+          const data = transform(response, { query, target, responseListLength: queries.length, scopedVars });
           return data;
         })
       );

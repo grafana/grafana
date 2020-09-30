@@ -89,6 +89,12 @@ export function isFetchErrorResponse(response: any): response is FetchError {
   return 'cancelled' in response;
 }
 
+export function isMatrixData(result: MatrixOrVectorResult): result is PromMatrixData['result'][0] {
+  return 'values' in result;
+}
+
+export type MatrixOrVectorResult = PromMatrixData['result'][0] | PromVectorData['result'][0];
+
 export interface TransformOptions {
   format?: string;
   step?: number;
