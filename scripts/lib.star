@@ -755,7 +755,6 @@ def release_next_npm_packages_step(edition):
                 'from_secret': 'npm_token',
             },
         },
-        'failure': 'ignore',
         'commands': [
             'npx lerna bootstrap',
             'echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc',
