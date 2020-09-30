@@ -604,6 +604,8 @@ func SanitizeLabelName(name string) (string, error) {
 	for i, b := range name {
 		if (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || (b >= '0' && b <= '9' && i > 0) {
 			out.WriteRune(b)
+		} else if b == ' ' {
+			out.WriteRune('_')
 		}
 	}
 

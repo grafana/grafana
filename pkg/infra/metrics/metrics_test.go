@@ -16,6 +16,7 @@ func TestLabelNameSanitization(t *testing.T) {
 		{input: "job._loal['", expected: "job_loal"},
 		{input: "", expected: "", err: true},
 		{input: ";;;", expected: "", err: true},
+		{input: "Data source", expected: "Data_source"},
 	}
 
 	for _, tc := range testcases {
