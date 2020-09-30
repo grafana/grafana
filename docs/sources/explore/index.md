@@ -6,7 +6,7 @@ aliases = ["/docs/grafana/latest/features/explore/"]
 [menu.docs]
 name = "Explore"
 identifier = "explore"
-weight = 900
+weight = 90
 +++
 
 # Explore

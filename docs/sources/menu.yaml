@@ -112,7 +112,7 @@
   link: /manage-users
   children:
     - link: /manage-users/
-      name: Manage users
+      name: Overview
     - link: /manage-users/add-or-remove-user/
       name: Add or remove a user
     - link: /manage-users/enable-or-disable-user/

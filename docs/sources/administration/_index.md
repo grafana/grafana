@@ -5,9 +5,9 @@ type = "docs"
 [menu.docs]
 name = "Administration"
 identifier = "admin"
-weight = 2
+weight = 20
 +++
 
 # Administration
 
-This section provides resources for Grafana administrators and users performing administrative tasks.
+This section provides resources for Grafana administrators, team administrators, and users performing administrative tasks.
