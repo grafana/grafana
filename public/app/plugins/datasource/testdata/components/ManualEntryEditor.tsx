@@ -2,26 +2,25 @@ import React from 'react';
 import { dateMath, dateTime, SelectableValue } from '@grafana/data';
 import { Form, InlineField, InlineFieldRow, Input, InputControl, Select } from '@grafana/ui';
 import { EditorProps } from '../QueryEditor';
-import { NewPoint, PointValue } from '../types';
+import { NewPoint } from '../types';
 
 interface Props extends EditorProps {
   onRunQuery: () => void;
 }
 
 export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
-  console.log('q', query);
   const addPoint = (point: NewPoint) => {
-    console.log('p', point);
     let points = query.points || [[]];
     const newPointTime = dateMath.parse(point.newPointTime);
     points = [...points, [Number(point.newPointValue), newPointTime!.valueOf()]].sort((a, b) => a[1] - b[1]);
     onChange({ ...query, points });
-    console.log('points', points);
     onRunQuery();
   };
 
   const deletePoint = (point: SelectableValue) => {
-    query.points = query.points.filter((p: PointValue[]) => p[0] !== point.value);
+    const points = query.points.filter((_, index) => index !== point.value);
+    onChange({ ...query, points });
+    onRunQuery();
   };
 
   const points = (query.points || []).map((point, index) => {
@@ -34,7 +33,7 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
   return (
     <Form onSubmit={addPoint} maxWidth="none">
       {({ register, control, watch }) => {
-        const selectedPoint = watch('selectedPoint');
+        const selectedPoint = watch('selectedPoint') as SelectableValue;
         return (
           <InlineFieldRow>
             <InlineField label="New value" labelWidth={14}>
@@ -71,7 +70,14 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
 
             {selectedPoint && (
               <InlineField>
-                <button type="button" className="btn btn-danger gf-form-btn" onClick={() => deletePoint(selectedPoint)}>
+                <button
+                  type="button"
+                  className="btn btn-danger gf-form-btn"
+                  onClick={() => {
+                    control.setValue('selectedPoint', [{ value: null, label: 'Select value' }]);
+                    deletePoint(selectedPoint);
+                  }}
+                >
                   Delete
                 </button>
               </InlineField>
