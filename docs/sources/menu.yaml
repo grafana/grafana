@@ -29,6 +29,8 @@
 - name: Installation
   link: /installation/
   children:
+    - name: Installation
+      link: /installation/installation/
     - name: Requirements
       link: /installation/requirements/
     - name: Install on Ubuntu/Debian

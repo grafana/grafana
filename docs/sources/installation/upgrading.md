@@ -7,7 +7,7 @@ type = "docs"
 name = "Upgrade Grafana"
 identifier = "upgrading"
 parent = "installation"
-weight = 800
+weight = 700
 +++
 
 # Upgrade Grafana
