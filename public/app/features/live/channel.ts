@@ -2,8 +2,9 @@ import {
   LiveChannelConfig,
   LiveChannel,
   LiveChannelScope,
-  LiveChannelStatus,
+  LiveChannelStatusEvent,
   LiveChannelEvent,
+  LiveChannelEventType,
   LiveChannelConnectionState,
   LiveChannelPresenseStatus,
 } from '@grafana/data';
@@ -21,7 +22,7 @@ import { Subject, of, merge } from 'rxjs';
  * Internal class that maps Centrifuge support to GrafanaLive
  */
 export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements LiveChannel<TMessage, TPublish> {
-  readonly currentStatus: LiveChannelStatus;
+  readonly currentStatus: LiveChannelStatusEvent;
 
   readonly opened = Date.now();
   readonly id: string;
@@ -42,6 +43,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
     this.namespace = namespace;
     this.path = path;
     this.currentStatus = {
+      type: LiveChannelEventType.Status,
       id,
       timestamp: this.opened,
       state: LiveChannelConnectionState.Pending,
@@ -60,6 +62,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
       // This means a message was received from the server
       publish: (ctx: PublicationContext) => {
         this.stream.next({
+          type: LiveChannelEventType.Message,
           message: prepare(ctx.data),
         });
 
@@ -89,20 +92,10 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
 
     if (config.hasPresense) {
       events.join = (ctx: JoinLeaveContext) => {
-        this.stream.next({
-          presense: {
-            action: 'join',
-            user: ctx.info.user,
-          },
-        });
+        this.stream.next({ type: LiveChannelEventType.Join, user: ctx.info.user });
       };
       events.leave = (ctx: JoinLeaveContext) => {
-        this.stream.next({
-          presense: {
-            action: 'leave',
-            user: ctx.info.user,
-          },
-        });
+        this.stream.next({ type: LiveChannelEventType.Leave, user: ctx.info.user });
       };
 
       this.getPresense = () => {
@@ -117,15 +110,14 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
   }
 
   private sendStatus() {
-    this.stream.next({ status: { ...this.currentStatus } });
+    this.stream.next({ ...this.currentStatus });
   }
 
   /**
    * Get the stream of events and
    */
   getStream() {
-    const status = { status: { ...this.currentStatus } };
-    return merge(of(status), this.stream.asObservable());
+    return merge(of({ ...this.currentStatus }), this.stream.asObservable());
   }
 
   /**
@@ -153,7 +145,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
 
     this.stream.complete();
 
-    this.stream.next({ status: { ...this.currentStatus } });
+    this.stream.next({ ...this.currentStatus });
     this.stream.complete();
 
     if (this.shutdownCallback) {
@@ -174,13 +166,6 @@ export function getErrorChannel(
   namespace: string,
   path: string
 ): LiveChannel {
-  const errorStatus: LiveChannelStatus = {
-    id,
-    timestamp: Date.now(),
-    state: LiveChannelConnectionState.Invalid,
-    error: msg,
-  };
-
   return {
     id,
     opened: Date.now(),
@@ -191,8 +176,11 @@ export function getErrorChannel(
     // return an error
     getStream: () =>
       of({
-        type: 'status',
-        message: errorStatus,
+        type: LiveChannelEventType.Status,
+        id,
+        timestamp: Date.now(),
+        state: LiveChannelConnectionState.Invalid,
+        error: msg,
       }),
 
     // already disconnected

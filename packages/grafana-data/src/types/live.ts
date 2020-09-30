@@ -61,10 +61,19 @@ export enum LiveChannelConnectionState {
   Invalid = 'invalid',
 }
 
+export enum LiveChannelEventType {
+  Status = 'status',
+  Join = 'join',
+  Leave = 'leave',
+  Message = 'message',
+}
+
 /**
  * @experimental
  */
-export interface LiveChannelStatus {
+export interface LiveChannelStatusEvent {
+  type: LiveChannelEventType.Status;
+
   /**
    * {scope}/{namespace}/{path}
    */
@@ -90,25 +99,48 @@ export interface LiveChannelStatus {
   error?: any;
 }
 
-/**
- * @experimental
- */
-export interface LiveChannelPresenseEvent {
-  action: 'join' | 'leave';
-  user: any;
+export interface LiveChannelJoinEvent {
+  type: LiveChannelEventType.Join;
+  user: any; // @experimental -- will be filled in when we improve the UI
+}
+
+export interface LiveChannelLeaveEvent {
+  type: LiveChannelEventType.Leave;
+  user: any; // @experimental -- will be filled in when we improve the UI
+}
+
+export interface LiveChannelMessageEvent<T> {
+  type: LiveChannelEventType.Message;
+  message: T;
+}
+
+export type LiveChannelEvent<T = any> =
+  | LiveChannelStatusEvent
+  | LiveChannelJoinEvent
+  | LiveChannelLeaveEvent
+  | LiveChannelMessageEvent<T>;
+
+export function isLiveChannelStatusEvent<T>(evt: LiveChannelEvent<T>): evt is LiveChannelStatusEvent {
+  return evt.type === LiveChannelEventType.Status;
+}
+
+export function isLiveChannelJoinEvent<T>(evt: LiveChannelEvent<T>): evt is LiveChannelJoinEvent {
+  return evt.type === LiveChannelEventType.Join;
+}
+
+export function isLiveChannelLeaveEvent<T>(evt: LiveChannelEvent<T>): evt is LiveChannelLeaveEvent {
+  return evt.type === LiveChannelEventType.Leave;
+}
+
+export function isLiveChannelMessageEvent<T>(evt: LiveChannelEvent<T>): evt is LiveChannelMessageEvent<T> {
+  return evt.type === LiveChannelEventType.Message;
 }
 
 /**
  * @experimental
  */
 export interface LiveChannelPresenseStatus {
-  users: any;
-}
-
-export interface LiveChannelEvent<TMessage = any> {
-  status?: LiveChannelStatus;
-  message?: TMessage;
-  presense?: LiveChannelPresenseEvent;
+  users: any; // @experimental -- will be filled in when we improve the UI
 }
 
 /**

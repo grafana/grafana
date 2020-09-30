@@ -3,12 +3,14 @@ import { Unsubscribable, PartialObserver } from 'rxjs';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 import {
   AppEvents,
+  isLiveChannelStatusEvent,
   LiveChannel,
   LiveChannelConfig,
   LiveChannelConnectionState,
   LiveChannelEvent,
+  LiveChannelEventType,
   LiveChannelScope,
-  LiveChannelStatus,
+  LiveChannelStatusEvent,
 } from '@grafana/data';
 import { Input, Button } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
@@ -22,7 +24,7 @@ interface Props {
 
 interface State {
   channel?: LiveChannel;
-  status: LiveChannelStatus;
+  status: LiveChannelStatusEvent;
   count: number;
   lastTime: number;
   lastBody: string;
@@ -31,7 +33,12 @@ interface State {
 
 export class LivePanel extends PureComponent<Props, State> {
   state: State = {
-    status: { id: '?', state: LiveChannelConnectionState.Pending, timestamp: Date.now() },
+    status: {
+      type: LiveChannelEventType.Status,
+      id: '?',
+      state: LiveChannelConnectionState.Pending,
+      timestamp: Date.now(),
+    },
     count: 0,
     lastTime: 0,
     lastBody: '',
@@ -41,8 +48,8 @@ export class LivePanel extends PureComponent<Props, State> {
 
   streamObserver: PartialObserver<LiveChannelEvent> = {
     next: (event: LiveChannelEvent) => {
-      if (event.status) {
-        this.setState({ status: event.status });
+      if (isLiveChannelStatusEvent(event)) {
+        this.setState({ status: event });
       } else {
         this.setState({
           count: this.state.count + 1,

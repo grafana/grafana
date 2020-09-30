@@ -8,6 +8,8 @@ import {
   LiveChannelEvent,
   LiveChannelConfig,
   LiveChannelConnectionState,
+  isLiveChannelStatusEvent,
+  isLiveChannelMessageEvent,
 } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { DashboardChangedModal } from './DashboardChangedModal';
@@ -76,11 +78,11 @@ class DashboardWatcher {
   observer = {
     next: (event: LiveChannelEvent<DashboardEvent>) => {
       // Send the editing state when connection starts
-      if (event.status && this.editing && event.status.state === LiveChannelConnectionState.Connected) {
+      if (isLiveChannelStatusEvent(event) && this.editing && event.state === LiveChannelConnectionState.Connected) {
         this.sendEditingState();
       }
 
-      if (event.message) {
+      if (isLiveChannelMessageEvent(event)) {
         if (event.message.sessionId === sessionId) {
           return; // skip internal messages
         }
