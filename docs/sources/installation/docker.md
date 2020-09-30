@@ -221,7 +221,7 @@ Refer to the [Getting Started]({{< relref "../getting-started/getting-started/" 
 
 ## Configure Docker image
 
-Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to [Configure a Grafana Docker image]({{< relref "../administration/configure-docker.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
 
 ## Configure Grafana
 

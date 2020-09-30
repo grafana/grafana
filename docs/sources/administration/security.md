@@ -7,7 +7,7 @@ type = "docs"
 name = "Security"
 identifier = "security"
 parent = "admin"
-weight = 2
+weight = 500
 +++
 
 # Security

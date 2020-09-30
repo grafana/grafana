@@ -7,7 +7,7 @@ type = "docs"
 name = "Configure Grafana Docker image"
 identifier = "docker"
 parent = "administration"
-weight = 650
+weight = 400
 +++
 
 # Configure a Grafana Docker image

@@ -55,9 +55,9 @@
     - name: Configuration
       link: /administration/configuration/
     - name: Configure Docker image
-      link: /installation/configure-docker/
+      link: /administration/configure-docker/
     - name: Security
-      link: /installation/security/
+      link: /administration/security/
     - name: Authentication
       link: /auth/
       children:
