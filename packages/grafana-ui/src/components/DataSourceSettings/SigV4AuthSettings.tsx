@@ -90,7 +90,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
           <div className="gf-form">
             <InlineFormLabel
               className="width-14"
-              tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS or if you've attached an IAM role to your EC2 instance."
+              tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
             >
               Authentication Provider
             </InlineFormLabel>
@@ -195,7 +195,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
           <div className="gf-form">
             <InlineFormLabel
               className="width-14"
-              tooltip="ARN of role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all."
+              tooltip="ARN of the role to assume. Specifying a role here ensures that the selected authentication provider is used to assume the role rather than using the credentials directly. Leave blank if you don't need to assume a role."
             >
               Assume Role ARN
             </InlineFormLabel>
@@ -212,7 +212,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
             <div className="gf-form">
               <InlineFormLabel
                 className="width-14"
-                tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
+                tooltip="If you are assuming a role in another account, that was created with an external ID, specify the external ID here."
               >
                 External ID
               </InlineFormLabel>
@@ -231,7 +231,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
           <div className="gf-form">
             <InlineFormLabel
               className="width-14"
-              tooltip="Specify the region, such as for US West (Oregon) use ` us-west-2 ` as the region."
+              tooltip="Specify the region, for example, use ` us-west-2 ` for US West (Oregon)."
             >
               Default Region
             </InlineFormLabel>
