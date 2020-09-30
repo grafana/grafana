@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 // InterpolateString accepts template data and return a string with substitutions
@@ -23,6 +24,40 @@ func InterpolateString(text string, data templateData) (string, error) {
 	}
 
 	return contentBuf.String(), nil
+}
+
+// AddHeaders interpolates route headers and injects them into the request headers
+func AddHeaders(reqHeaders *http.Header, route *plugins.AppPluginRoute, data templateData) error {
+	for _, header := range route.Headers {
+		interpolated, err := InterpolateString(header.Content, data)
+		if err != nil {
+			return err
+		}
+		reqHeaders.Set(header.Name, interpolated)
+	}
+
+	return nil
+}
+
+// AddQueryString interpolates route params and injects them into the request object
+func AddQueryString(req *http.Request, route *plugins.AppPluginRoute, data templateData) error {
+	q := req.URL.Query()
+	for _, param := range route.URLParams {
+		interpolatedName, err := InterpolateString(param.Name, data)
+		if err != nil {
+			return err
+		}
+
+		interpolatedContent, err := InterpolateString(param.Content, data)
+		if err != nil {
+			return err
+		}
+
+		q.Add(interpolatedName, interpolatedContent)
+	}
+	req.URL.RawQuery = q.Encode()
+
+	return nil
 }
 
 // Set the X-Grafana-User header if needed (and remove if not)
