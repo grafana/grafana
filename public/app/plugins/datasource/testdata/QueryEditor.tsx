@@ -23,13 +23,13 @@ const endpoints = [
 
 export interface EditorProps {
   onChange: any;
-  query: any;
+  query: TestDataQuery;
 }
 
 type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
 
-export const QueryEditor = ({ query, datasource, onChange }: Props) => {
-  const { loading, error, value: scenarioList } = useAsync<Scenario[]>(async () => {
+export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) => {
+  const { loading, value: scenarioList } = useAsync<Scenario[]>(async () => {
     return datasource.getScenarios();
   }, []);
 
@@ -49,11 +49,13 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
       stringInput: currentScenario?.stringInput ?? '',
       scenarioId: item.value!,
     });
+    onRunQuery();
   };
 
   const onInputChange = (e: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target as HTMLInputElement | HTMLTextAreaElement;
     onChange({ ...query, [name]: value });
+    onRunQuery();
   };
 
   const onEndPointChange = ({ value }: SelectableValue) => {
@@ -64,6 +66,7 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
     const { name, value } = e.target as HTMLInputElement;
     if (name !== 'lines') {
       onChange({ ...query, stream: { ...query.stream, [name]: value } });
+      onRunQuery();
     } else {
       onInputChange(e);
     }
@@ -110,8 +113,9 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
             />
           </InlineField>
         )}
-        <InlineField label="Alias">
+        <InlineField label="Alias" labelWidth={14}>
           <Input
+            width={32}
             id="alias"
             type="text"
             placeholder="optional"
@@ -124,6 +128,7 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
         {showLabels && (
           <InlineField
             label="Labels"
+            labelWidth={14}
             tooltip={
               <>
                 Set labels using a key=value syntax:
@@ -138,6 +143,7 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
             }
           >
             <Input
+              width={32}
               id="labels"
               name="labels"
               onChange={onInputChange}
@@ -148,7 +154,7 @@ export const QueryEditor = ({ query, datasource, onChange }: Props) => {
         )}
       </InlineFieldRow>
 
-      {scenarioId === 'manual_entry' && <ManualEntryEditor onChange={onChange} query={query} />}
+      {scenarioId === 'manual_entry' && <ManualEntryEditor onChange={onChange} query={query} onRunQuery={onRunQuery} />}
       {scenarioId === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
       {scenarioId === 'streaming_client' && <StreamingClientEditor onChange={onStreamClientChange} query={query} />}
       {scenarioId === 'grafana_api' && (

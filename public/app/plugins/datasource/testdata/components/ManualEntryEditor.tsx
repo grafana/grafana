@@ -1,21 +1,32 @@
 import React from 'react';
-import { dateMath, dateTime } from '@grafana/data';
+import { dateMath, dateTime, SelectableValue } from '@grafana/data';
 import { Form, InlineField, InlineFieldRow, Input, InputControl, Select } from '@grafana/ui';
 import { EditorProps } from '../QueryEditor';
+import { NewPoint, PointValue } from '../types';
 
-export const ManualEntryEditor = ({ onChange, query }: EditorProps) => {
-  const addPoint = point => {
-    let points = query.points || [];
+interface Props extends EditorProps {
+  onRunQuery: () => void;
+}
+
+export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
+  console.log('q', query);
+  const addPoint = (point: NewPoint) => {
+    console.log('p', point);
+    let points = query.points || [[]];
     const newPointTime = dateMath.parse(point.newPointTime);
-    points = [...points, [point.newPointValue, newPointTime.valueOf()]].sort((a, b) => a[1] - b[1]);
-    console.log('p', point, points);
+    points = [...points, [Number(point.newPointValue), newPointTime!.valueOf()]].sort((a, b) => a[1] - b[1]);
+    onChange({ ...query, points });
+    console.log('points', points);
+    onRunQuery();
   };
 
-  const deletePoint = () => {};
+  const deletePoint = (point: SelectableValue) => {
+    query.points = query.points.filter((p: PointValue[]) => p[0] !== point.value);
+  };
 
   const points = (query.points || []).map((point, index) => {
     return {
-      text: dateTime(point[1]).format('MMMM Do YYYY, H:mm:ss') + ' : ' + point[0],
+      label: dateTime(point[1]).format('MMMM Do YYYY, H:mm:ss') + ' : ' + point[0],
       value: index,
     };
   });
@@ -27,10 +38,18 @@ export const ManualEntryEditor = ({ onChange, query }: EditorProps) => {
         return (
           <InlineFieldRow>
             <InlineField label="New value" labelWidth={14}>
-              <Input type="number" placeholder="value" id="newPointValue" name="newPointValue" ref={register} />
-            </InlineField>
-            <InlineField label="Time">
               <Input
+                width={32}
+                type="number"
+                placeholder="value"
+                id="newPointValue"
+                name="newPointValue"
+                ref={register}
+              />
+            </InlineField>
+            <InlineField label="Time" labelWidth={14}>
+              <Input
+                width={32}
                 id="newPointTime"
                 placeholder="time"
                 name="newPointTime"
@@ -44,18 +63,15 @@ export const ManualEntryEditor = ({ onChange, query }: EditorProps) => {
                 control={control}
                 as={Select}
                 options={points}
-                width={16}
+                width={32}
                 name="selectedPoint"
-                onChange={value => {
-                  console.log('v', value);
-                  return value;
-                }}
+                onChange={value => value[0]}
               />
             </InlineField>
 
-            {selectedPoint?.value && (
+            {selectedPoint && (
               <InlineField>
-                <button type="button" className="btn btn-danger gf-form-btn" onClick={deletePoint}>
+                <button type="button" className="btn btn-danger gf-form-btn" onClick={() => deletePoint(selectedPoint)}>
                   Delete
                 </button>
               </InlineField>
