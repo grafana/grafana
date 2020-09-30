@@ -48,7 +48,7 @@ export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> =
     const newVariableInState = getVariable(NEW_VARIABLE_ID, getState());
     const id = newVariableInState.name;
     dispatch(storeNewVariable(toVariablePayload({ type: identifier.type, id })));
-    await updateOptions(identifier);
+    await dispatch(updateOptions(identifier));
     dispatch(switchToListMode());
     dispatch(removeVariable(toVariablePayload({ type: identifier.type, id: NEW_VARIABLE_ID }, { reIndex: false })));
   };

@@ -185,7 +185,7 @@ export const changeVariableMultiValue = (identifier: VariableIdentifier, multi: 
 };
 
 export const processVariableDependencies = async (variable: VariableModel, state: StoreState) => {
-  let dependencies: VariableModel[] = [];
+  const dependencies: VariableModel[] = [];
 
   for (const otherVariable of getVariables(state)) {
     if (variable === otherVariable) {
