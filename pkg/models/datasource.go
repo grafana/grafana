@@ -57,7 +57,7 @@ type DataSource struct {
 	BasicAuthUser     string                        `json:"basicAuthUser"`
 	BasicAuthPassword string                        `json:"basicAuthPassword"`
 	WithCredentials   bool                          `json:"withCredentials"`
-	IsDefault         bool                          `json:isDefault`
+	IsDefault         bool                          `json:"isDefault"`
 	JsonData          *simplejson.Json              `json:"jsonData"`
 	SecureJsonData    securejsondata.SecureJsonData `json:"secureJsonData"`
 	ReadOnly          bool                          `json:"readOnly"`

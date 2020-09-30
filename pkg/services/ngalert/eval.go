@@ -79,19 +79,16 @@ func (s State) String() string {
 	return [...]string{"Normal", "Warning", "Critical", "Error"}[s]
 }
 
-func (c Conditions) isValid() bool {
+// IsValid checks the conditions validity
+func (c Conditions) IsValid() bool {
 	/*
 		if c.WarnCondition == "" && c.CritCondition == "" {
 			return false
 		}
 	*/
 
-	if len(c.QueriesAndExpressions) == 0 {
-		return false
-	}
 	// TODO search for refIDs in QueriesAndExpressions
-
-	return true
+	return len(c.QueriesAndExpressions) != 0
 }
 
 // LoadAlertConditions returns a Conditions object for the given alertDefintionId.
@@ -187,11 +184,6 @@ func (ng *AlertNG) LoadAlertConditions(alertDefinitionID int64, signedInUser *mo
 			}
 		}
 	}
-	blob, err = json.Marshal(conditions)
-	if err != nil {
-		return nil, err
-	}
-
 	return &conditions, nil
 }
 
