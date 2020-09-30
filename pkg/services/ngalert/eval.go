@@ -193,6 +193,9 @@ func (ng *AlertNG) LoadAlertConditions(alertDefinitionID int64, signedInUser *mo
 
 // Execute runs the WarnCondition and CritCondtion expressions or queries.
 func (conditions *Conditions) Execute(ctx AlertExecCtx, fromStr, toStr string) (*ExecutionResult, error) {
+	blob, _ := json.Marshal(conditions)
+	fmt.Println(">>>> Execute conditions: ", string(blob))
+
 	result := ExecutionResult{}
 
 	request := &tsdb.TsdbQuery{
@@ -274,7 +277,5 @@ func (evalResults EvalResults) AsDataFrame() data.Frame {
 		fields = append(fields, data.NewField("", evalResult.Instance, []bool{evalResult.State == Normal}))
 	}
 	f := data.NewFrame("", fields...)
-	t, _ := f.StringTable(5, 5)
-	fmt.Println("<<<< AsDataFrame: ", t)
 	return *f
 }
