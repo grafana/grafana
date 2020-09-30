@@ -3,10 +3,13 @@ FROM ${BASE_IMAGE}
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
 
+# Make sure we have Gnu tar
+RUN apk add --no-cache tar
+
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
 # Change to tar xfzv to make tar print every file it extracts
-RUN mkdir /tmp/grafana && tar xfz /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
+RUN mkdir /tmp/grafana && tar xzf /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
 
 FROM ${BASE_IMAGE}
 
