@@ -11,7 +11,4 @@ export interface DashboardEvent {
   userId?: number;
   message?: string;
   sessionId?: string;
-
-  /** If anyone is activly editing the dashboard */
-  editorIsOpen?: boolean;
 }

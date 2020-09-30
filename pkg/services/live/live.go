@@ -84,11 +84,12 @@ func InitializeBroker() (*GrafanaLive, error) {
 
 	// Initialize the main features
 	dash := features.CreateDashboardHandler(glive.Publish)
+	tds := features.CreateTestdataSupplier(glive.Publish)
+
 	glive.GrafanaScope.Dashboards = &dash
 	glive.GrafanaScope.Features["dashboard"] = &dash
-
-	tds := features.CreateTestdataSupplier(glive.Publish)
 	glive.GrafanaScope.Features["testdata"] = &tds
+	glive.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{}
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
