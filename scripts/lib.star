@@ -832,7 +832,7 @@ def get_windows_steps(edition, version_mode, is_downstream=False):
             ],
         },
     ]
-    if version_mode == 'master':
+    if version_mode == 'master' and (edition != 'enterprise' or is_downstream):
         installer_commands = [
             '$$gcpKey = $$env:GCP_KEY',
             '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json',
@@ -842,13 +842,10 @@ def get_windows_steps(edition, version_mode, is_downstream=False):
             'rm gcpkey.json',
             'cp C:\\App\\nssm-2.24.zip .',
             '.\\grabpl.exe windows-installer --edition {} --build-id $$env:{}'.format(edition, build_no),
+            '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
+            'gsutil cp $$fname gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
+            'gsutil cp "$$fname.sha256" gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
         ]
-        if edition != 'enterprise' or is_downstream:
-            installer_commands.extend([
-                '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
-                'gsutil cp $$fname gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
-                'gsutil cp "$$fname.sha256" gs://grafana-downloads/{}/{}/'.format(edition, version_mode),
-            ])
         steps.append({
             'name': 'build-windows-installer',
             'image': wix_image,
