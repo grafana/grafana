@@ -17,4 +17,4 @@ yarn packages:docsToMarkdown
 
 # cleaning packages
 echo "cleaning up packages build files..."
-lerna run clean
+yarn packages:clean

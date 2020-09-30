@@ -143,7 +143,7 @@ steps:
   depends_on:
   - package
 
-- name: generate-packages-docs
+- name: generate-package-docs
   image: grafana/build-container:1.2.27
   commands:
   - ./scripts/ci-reference-docs-metrics.sh
@@ -158,7 +158,7 @@ steps:
   - cd /hugo && make prod
   depends_on:
   - initialize
-  - generate-packages-docs
+  - generate-package-docs
 
 - name: copy-packages-for-docker
   image: grafana/build-container:1.2.27
@@ -458,7 +458,7 @@ steps:
   depends_on:
   - build-storybook
 
-- name: generate-packages-docs
+- name: generate-package-docs
   image: grafana/build-container:1.2.27
   commands:
   - ./scripts/ci-reference-docs-build.sh
@@ -473,7 +473,7 @@ steps:
   - cd /hugo && make prod
   depends_on:
   - initialize
-  - generate-packages-docs
+  - generate-package-docs
 
 - name: copy-packages-for-docker
   image: grafana/build-container:1.2.27

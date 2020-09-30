@@ -27,13 +27,11 @@ WARNINGS_COUNT_LIMIT=900
 if [ "$WARNINGS_COUNT" -gt $WARNINGS_COUNT_LIMIT ]; then
   echo -e "API Extractor warnings/errors $WARNINGS_COUNT exceeded $WARNINGS_COUNT_LIMIT so failing build.\n"
   echo -e "Please go to: https://github.com/grafana/grafana/blob/master/contribute/style-guides/code-comments.md for more information on how to add code comments."
-  report_reference_docs_metrics "$CIRCLE_BRANCH" "$WARNINGS_COUNT"
   exit 1
 fi
 
 if [ "$WARNINGS_COUNT" -lt $WARNINGS_COUNT_LIMIT ]; then
   pretty_print_result_of_report "Wohoo! Fewer warnings compared to last build 🎉🎈🍾✨\n\nYou can lower the threshold from $WARNINGS_COUNT_LIMIT to $WARNINGS_COUNT in the:\nscripts/ci-reference-docs-metrics.sh"
-  report_reference_docs_metrics "$CIRCLE_BRANCH" "$WARNINGS_COUNT"
   exit 0
 fi
 
