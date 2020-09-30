@@ -22,18 +22,18 @@ build dashboards or use Explore with CloudWatch metrics and CloudWatch Logs.
 2. Click the `Add data source` button.
 3. Select `Cloudwatch` in the `Cloud` section.
 
-> NOTE: If at any moment you have issues with getting this data source to work and Grafana is giving you undescriptive errors then don't
+> **Note:** If at any moment you have issues with getting this data source to work and Grafana is giving you undescriptive errors then don't
 > forget to check your log file (try looking in /var/log/grafana/grafana.log).
 
-| Name                       | Description                                                                                                              |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| _Name_                     | The data source name. This is how you refer to the data source in panels and queries.                                    |
-| _Default_                  | Default data source means that it will be pre-selected for new panels.                                                   |
-| _Default Region_           | Used in query editor to set region (can be changed on per query basis)                                                   |
-| _Custom Metrics namespace_ | Specify the CloudWatch namespace of Custom metrics                                                                       |
-| _Auth Provider_            | Specify the provider to get credentials.                                                                                 |
-| _Credentials_ profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.                  |
-| _Assume Role Arn_          | Specify the ARN of the role to assume                                                                                    |
+| Name                       | Description                                                                                                             |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| _Name_                     | The data source name. This is how you refer to the data source in panels and queries.                                   |
+| _Default_                  | Default data source means that it will be pre-selected for new panels.                                                  |
+| _Default Region_           | Used in query editor to set region (can be changed on per query basis)                                                  |
+| _Custom Metrics namespace_ | Specify the CloudWatch namespace of Custom metrics                                                                      |
+| _Auth Provider_            | Specify the provider to get credentials.                                                                                |
+| _Credentials_ profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.                 |
+| _Assume Role Arn_          | Specify the ARN of the role to assume                                                                                   |
 | _External ID_              | If you are assuming a role in another account, that has been created with an external ID, specify the external ID here. |
 
 ## Authentication
@@ -45,7 +45,7 @@ server is running on AWS you can use IAM Roles and authentication will be handle
 
 See the AWS documentation on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
 
-> NOTE: AWS Role Switching as described [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html) is not supported at the moment.
+> **Note:** AWS Role Switching as described [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html) is not supported at the moment.
 
 ## IAM Policies
 
@@ -116,7 +116,7 @@ See the AWS documentation on [Configuring the AWS SDK for Go](https://docs.aws.a
 
 Create a file at `~/.aws/credentials`. That is the `HOME` path for user running grafana-server.
 
-> NOTE: If you think you have the credentials file in the right place but it is still not working then you might try moving your .aws file to '/usr/share/grafana/' and make sure your credentials file has at most 0644 permissions.
+> **Note:** If you think you have the credentials file in the right place but it is still not working then you might try moving your .aws file to '/usr/share/grafana/' and make sure your credentials file has at most 0644 permissions.
 
 Example content:
 
