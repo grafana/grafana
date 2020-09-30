@@ -244,7 +244,7 @@
       name: Sharing a panel
     - link: /dashboards/time-range-controls/
       name: Time range controls
-    - link: /reference/export_import/
+    - link: /dashboards/export-import/
       name: Export and import
     - link: /dashboards/dashboard_history/
       name: Dashboard version history
