@@ -153,6 +153,12 @@ def master_pipelines(edition):
             name='publish-master', edition=edition, trigger=trigger, steps=publish_steps,
             depends_on=['build-master', 'windows-master',], install_deps=False, version_mode=version_mode,
         ))
+
+        notify_trigger = dict(trigger, status = ['failure'])
+        pipelines.append(notify_pipeline(
+            name='notify-master', slack_channel='grafana-ci-notifications', trigger=notify_trigger,
+            depends_on=['build-master', 'windows-master', 'publish-master'],
+        ))
     if edition == 'enterprise':
         # Add downstream enterprise pipelines triggerable from OSS builds
         trigger = {
@@ -171,6 +177,12 @@ def master_pipelines(edition):
             name='publish-master-downstream', edition=edition, trigger=trigger, steps=publish_steps,
             depends_on=['build-master-downstream', 'windows-master-downstream'], is_downstream=True, install_deps=False,
             version_mode=version_mode,
+        ))
+
+        notify_trigger = dict(trigger, status = ['failure'])
+        pipelines.append(notify_pipeline(
+            name='notify-master-downstream', slack_channel='grafana-enterprise-ci-notifications', trigger=notify_trigger,
+            depends_on=['build-master-downstream', 'windows-master-downstream', 'publish-master-downstream'],
         ))
 
     return pipelines
@@ -212,6 +224,22 @@ def pipeline(
 
     return pipeline
 
+def notify_pipeline(name, slack_channel, trigger, depends_on=[]):
+    return {
+        'kind': 'pipeline',
+        'type': 'docker',
+        'platform': {
+            'os': 'linux',
+            'arch': 'amd64',
+        },
+        'name': name,
+        'trigger': trigger,
+        'steps': [
+            slack_step(slack_channel),
+        ],
+        'depends_on': depends_on,
+    }
+
 def slack_step(channel):
     return {
         'name': 'slack',
@@ -222,9 +250,6 @@ def slack_step(channel):
             },
             'channel': channel,
             'template': 'Build {{build.number}} failed: {{build.link}}',
-        },
-        'when': {
-            'status': ['failure',],
         },
     }
 
@@ -300,8 +325,7 @@ def init_steps(edition, platform, version_mode, is_downstream=False, install_dep
                 ] + common_cmds,
             },
         ]
-        if version_mode == 'master':
-            steps.append(slack_step(channel='grafana-enterprise-ci-failures'))
+
         return steps
 
     steps = [
@@ -322,9 +346,6 @@ def init_steps(edition, platform, version_mode, is_downstream=False, install_dep
             ] + common_cmds,
         },
     ]
-
-    if version_mode == 'master':
-        steps.append(slack_step(channel='grafana-ci-failures'))
 
     return steps
 
