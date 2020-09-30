@@ -1,27 +1,19 @@
 // Libraries
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC } from 'react';
 import { connect } from 'react-redux';
 
 // Types
 import { StoreState } from 'app/types';
 import { getDemoScene } from './scenes/demo';
-import { Scene } from './models';
 import { SceneView } from './components/SceneView';
+import { useObservable } from '@grafana/data';
 
 export interface Props {
   name: string;
 }
 
 export const DynDashPageUnconnected: FC<Props> = ({ name }) => {
-  const [scene, setScene] = useState<Scene | null>(null);
-
-  useEffect(() => {
-    const subscription = getDemoScene(name).subscribe({
-      next: scene => setScene(scene),
-    });
-
-    return subscription.unsubscribe;
-  }, []);
+  const scene = useObservable(getDemoScene(name), null);
 
   if (!scene) {
     return <h2>Loading...</h2>;
