@@ -4,7 +4,7 @@ import { e2e } from '@grafana/e2e';
 // several it functions. Very important to keep the order of these it functions because they have dependency in the order
 // https://github.com/cypress-io/cypress/issues/5987
 // https://github.com/cypress-io/cypress/issues/6023#issuecomment-574031655
-describe('Variables', () => {
+describe.skip('Variables', () => {
   let lastUid = '';
   let lastData = '';
   let variables: VariablesData[] = [
