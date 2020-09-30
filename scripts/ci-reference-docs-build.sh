@@ -18,3 +18,6 @@ yarn packages:docsToMarkdown
 # cleaning packages
 echo "cleaning up packages build files..."
 yarn packages:clean
+
+# exit successfully
+exit 0

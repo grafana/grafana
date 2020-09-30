@@ -36,3 +36,4 @@ if [ "$WARNINGS_COUNT" -lt $WARNINGS_COUNT_LIMIT ]; then
 fi
 
 pretty_print_result_of_report "API Extractor total warnings: $WARNINGS_COUNT"
+exit 0

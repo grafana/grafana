@@ -45,7 +45,7 @@ def pr_pipelines(edition):
         e2e_tests_server_step(),
         e2e_tests_step(),
         build_storybook_step(edition),
-        generate_package_docs(edition=edition, lint=True),
+        generate_frontend_package_docs(edition=edition, lint=True),
         build_docs_website_step(),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, archs=['amd64',]),
@@ -85,7 +85,7 @@ def master_steps(edition, is_downstream=False):
         e2e_tests_step(),
         build_storybook_step(edition=edition),
         publish_storybook_step(edition=edition),
-        generate_package_docs(edition=edition, lint=False),
+        generate_frontend_package_docs(edition=edition, lint=False),
         build_docs_website_step(),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, publish=publish),
@@ -443,32 +443,25 @@ def build_frontend_step(edition, is_downstream=False):
         ],
     }
 
-def generate_package_docs(edition, lint=False):
+def generate_frontend_package_docs(edition, lint=False):
     if edition == 'enterprise':
         return None
 
     if lint:
-        return {
-            'name': 'generate-package-docs',
-            'image': build_image,
-            'depends_on': [
-                'build-frontend'
-            ],
-            'commands': [
-                './scripts/ci-reference-docs-metrics.sh',
-            ],
-        }
+        script = './scripts/ci-reference-docs-lint.sh'
     else:
-        return {
-            'name': 'generate-package-docs',
-            'image': build_image,
-            'depends_on': [
-                'build-frontend'
-            ],
-            'commands': [
-                './scripts/ci-reference-docs-build.sh'
-            ]
-        }
+        script = './scripts/ci-reference-docs-build.sh'
+
+    return {
+        'name': 'generate-frontend-package-docs',
+        'image': build_image,
+        'depends_on': [
+            'build-frontend'
+        ],
+        'commands': [
+            script
+        ]
+    }
 
 def build_plugins_step(edition, sign=False):
     if sign:
@@ -674,7 +667,7 @@ def build_docs_website_step():
         'image': 'grafana/docs-base:latest',
         'depends_on': [
             'initialize',
-            'generate-package-docs',
+            'generate-fronted-package-docs',
         ],
         'commands': [
             'mkdir -p /hugo/content/docs/grafana',
