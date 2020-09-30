@@ -1,13 +1,14 @@
 +++
-title = "Sharing a Panel"
+title = "Share panel"
 keywords = ["grafana", "dashboard", "documentation", "sharing"]
 type = "docs"
+aliases = ["/docs/grafana/latest/reference/share_panel/"]
 [menu.docs]
 parent = "dashboard_features"
-weight = 6
+weight = 600
 +++
 
-# Share Panel
+# Share a panel
 
 Click a panel title to open the panel menu, then click share in the panel menu to open the Share Panel dialog. Here you have access to a link that will take you to exactly this panel with the current time range and selected template variables. Below are ways to share a panel.
 

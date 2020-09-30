@@ -240,8 +240,8 @@
       name: Search
     - link: /dashboards/share-dashboard/
       name: Share dashboard
-    - link: /reference/share_panel/
-      name: Sharing a panel
+    - link: /dashboards/share-panel/
+      name: Share a panel
     - link: /dashboards/time-range-controls/
       name: Time range controls
     - link: /dashboards/export-import/
