@@ -143,6 +143,16 @@ steps:
   depends_on:
   - package
 
+- name: generate-packages-docs
+  image: grafana/build-container:1.2.27
+  commands:
+  - ./scripts/ci-reference-docs-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
+  environment:
+    GRAFANA_MISC_STATS_API_KEY:
+      from_secret: grafana_misc_stats_api_key
+  depends_on:
+  - build-frontend
+
 - name: build-docs-website
   image: grafana/docs-base:latest
   commands:
@@ -151,6 +161,7 @@ steps:
   - cd /hugo && make prod
   depends_on:
   - initialize
+  - generate-packages-docs
 
 - name: copy-packages-for-docker
   image: grafana/build-container:1.2.27
@@ -450,6 +461,13 @@ steps:
   depends_on:
   - build-storybook
 
+- name: generate-packages-docs
+  image: grafana/build-container:1.2.27
+  commands:
+  - ./scripts/ci-reference-docs-build.sh
+  depends_on:
+  - build-frontend
+
 - name: build-docs-website
   image: grafana/docs-base:latest
   commands:
@@ -458,6 +476,7 @@ steps:
   - cd /hugo && make prod
   depends_on:
   - initialize
+  - generate-packages-docs
 
 - name: copy-packages-for-docker
   image: grafana/build-container:1.2.27
