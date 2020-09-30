@@ -31,6 +31,12 @@ export function buildParams(
 
   if (panel && !params.editPanel) {
     params.viewPanel = panel.id;
+    if (panel.scopedVars) {
+      Object.entries(panel.scopedVars).forEach(([key, value]) => {
+        params[`var-${key}`] = value.value;
+        params.viewPanel = panel.repeatPanelId;
+      });
+    }
   } else {
     delete params.viewPanel;
   }

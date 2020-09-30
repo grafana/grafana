@@ -113,6 +113,7 @@ export interface PanelModel<TOptions = any> {
   /** Version of the panel plugin */
   pluginVersion?: string;
   scopedVars?: ScopedVars;
+  repeatPanelId?: number;
 }
 
 /**
