@@ -252,8 +252,8 @@
       link: /dashboards/shortcuts/
     - name: Reporting
       link: /dashboards/reporting/
-    - link: /reference/dashboard/
-      name: JSON Model
+    - link: /dashboards/json-model/
+      name: JSON model
     - link: /reference/scripting/
       name: Scripted dashboards
 - name: Explore
