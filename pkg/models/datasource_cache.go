@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -72,7 +73,14 @@ type dataSourceTransport struct {
 
 func instrumentRoundtrip(datasourceName string, next http.RoundTripper) promhttp.RoundTripperFunc {
 	return promhttp.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
-		datasourceLabel := prometheus.Labels{"datasource": datasourceName}
+		datasourceLabelName, err := metrics.SanitizeLabelName(datasourceName)
+		// if the datasource named cannot be turned into a prometheus
+		// label we will skip instrumenting these metrics.
+		if err != nil {
+			return next.RoundTrip(r)
+		}
+
+		datasourceLabel := prometheus.Labels{"datasource": datasourceLabelName}
 
 		requestCounter := datasourceRequestCounter.MustCurryWith(datasourceLabel)
 		requestSummary := datasourceRequestSummary.MustCurryWith(datasourceLabel)
