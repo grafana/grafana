@@ -1,15 +1,16 @@
 +++
-title = "Scripted Dashboards"
+title = "Scripted dashboards"
 keywords = ["grafana", "dashboard", "documentation", "scripted"]
 type = "docs"
+aliases = ["/docs/grafana/latest/reference/scripting/"]
 [menu.docs]
 parent = "dashboard_features"
-weight = 9
+weight = 1500
 +++
 
-> This feature is deprecated and will be removed in a future release
+# Scripted dashboards
 
-# Scripted Dashboards
+> **Warning:** This feature is deprecated and will be removed in a future release.
 
 If you have lots of metric names that change (new servers etc) in a defined pattern it is irritating to constantly have to create new dashboards.
 
