@@ -531,7 +531,6 @@ steps:
   environment:
     NPM_TOKEN:
       from_secret: npm_token
-  failure: ignore
   depends_on:
   - end-to-end-tests
 
