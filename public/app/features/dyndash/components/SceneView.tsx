@@ -1,16 +1,18 @@
 import React, { FC, useEffect, useState } from 'react';
 import { SceneGrid } from './SceneGrid';
-import { Scene, ScenePanel } from '../models';
+import { Scene, SceneItem } from '../models';
+import { map, mergeAll, mergeMap } from 'rxjs/operators';
+import { combineLatest, concat, merge } from 'rxjs';
 
 export interface Props {
   model: Scene;
 }
 
 export const SceneView: FC<Props> = ({ model }) => {
-  const [panels, setPanels] = useState<ScenePanel[]>([]);
+  const [panels, setPanels] = useState<SceneItem[]>([]);
 
   useEffect(() => {
-    const subscription = model.panels.subscribe({
+    const subscription = model.panels.pipe(mergeMap(item => combineLatest(item))).subscribe({
       next: panels => setPanels(panels),
     });
 

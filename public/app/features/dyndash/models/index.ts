@@ -5,20 +5,20 @@ import { Observable } from 'rxjs';
 
 export interface Scene {
   title: string;
-  panels: Observable<ScenePanel[]>;
+  panels: Observable<SceneItemList>;
 }
 
-export type ScenePanel = VizPanel | NestedScene | ComponentPanel;
+export type SceneItemList = Array<Observable<SceneItem>>;
+
+export type SceneItem = VizPanel | ScenePanel | ComponentPanel;
 
 export interface GridElement {
   id: string;
   gridPos: GridPos;
 }
 
-export interface NestedScene extends GridElement {
+export interface ScenePanel extends GridElement, Scene {
   type: 'scene';
-  title: string;
-  panels: Observable<ScenePanel[]>;
 }
 
 export interface VizPanel extends GridElement {

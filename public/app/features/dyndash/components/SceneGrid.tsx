@@ -4,11 +4,11 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { SceneView } from './SceneView';
 import { SceneVizView } from './VizPanel';
-import { ScenePanel } from '../models';
+import { SceneItem } from '../models';
 import { ComponentView } from './ComponentView';
 
 export interface Props {
-  panels: ScenePanel[];
+  panels: SceneItem[];
 }
 
 export const SceneGrid: FC<Props> = ({ panels }) => {
@@ -56,7 +56,7 @@ export const SceneGrid: FC<Props> = ({ panels }) => {
 };
 
 interface PanelProps {
-  panel: ScenePanel;
+  panel: SceneItem;
 }
 
 const ScenePanelView: FC<PanelProps> = ({ panel }) => {
