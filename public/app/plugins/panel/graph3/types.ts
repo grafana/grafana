@@ -1,6 +1,5 @@
 import { LegendOptions, GraphTooltipOptions } from '@grafana/ui';
 
-export type NullValuesMode = 'null' | 'connected' | 'asZero';
 export type LegendPlacement = 'top' | 'bottom' | 'left' | 'right';
 
 export interface GraphOptions {
