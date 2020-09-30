@@ -608,7 +608,7 @@ func SanitizeLabelName(name string) (string, error) {
 	}
 
 	if out.Len() == 0 {
-		return "", errors.New("label name only contains invalid chars")
+		return "", fmt.Errorf("label name only contains invalid chars: %q", name)
 	}
 
 	return out.String(), nil
