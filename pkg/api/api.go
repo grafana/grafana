@@ -354,8 +354,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		if hs.Cfg.IsNgAlertEnabled() {
 			apiRoute.Group("/alert-definitions", func(alertDefinitions routing.RouteRegister) {
-				//alertDefinitions.Post("/eval", reqEditorRole, bind(dtos.EvalAlertConditionsCommand{}), Wrap(hs.AlertDefinitionEval))
-				alertDefinitions.Post("/eval/:alertDefinitionID", reqEditorRole, Wrap(hs.AlertDefinitionEval))
+				alertDefinitions.Post("/eval", reqEditorRole, bind(dtos.EvalAlertConditionsCommand{}), Wrap(hs.AlertDefinitionEval))
 			})
 		}
 

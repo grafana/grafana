@@ -46,9 +46,9 @@ type AlertExecCtx struct {
 
 // At least Warn or Crit condition must be non-empty
 type Conditions struct {
-	Condition string // refId/(alias?)
+	Condition string `json:"condition"`
 
-	QueriesAndExpressions []tsdb.Query
+	QueriesAndExpressions []tsdb.Query `json:"queriesAndExpressions"`
 }
 
 type ExecutionResult struct {
