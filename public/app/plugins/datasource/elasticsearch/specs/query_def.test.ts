@@ -2,50 +2,60 @@ import * as queryDef from '../query_def';
 
 describe('ElasticQueryDef', () => {
   describe('getPipelineAggOptions', () => {
-    describe('with zero targets', () => {
-      const response = queryDef.getPipelineAggOptions([]);
+    describe('with zero metrics', () => {
+      const response = queryDef.getPipelineAggOptions({ metrics: [] });
 
       test('should return zero', () => {
         expect(response.length).toBe(0);
       });
     });
 
-    describe('with count and sum targets', () => {
-      const targets = {
-        metrics: [
-          { type: 'count', field: '@value' },
-          { type: 'sum', field: '@value' },
-        ],
+    describe('with count and sum metrics', () => {
+      const currentAgg = { type: 'moving_avg', field: '@value', id: '3' };
+      const target = {
+        metrics: [{ type: 'count', field: '@value', id: '1' }, { type: 'sum', field: '@value', id: '2' }, currentAgg],
       };
 
-      const response = queryDef.getPipelineAggOptions(targets);
+      const response = queryDef.getPipelineAggOptions(target, currentAgg);
 
       test('should return zero', () => {
         expect(response.length).toBe(2);
       });
     });
 
-    describe('with count and moving average targets', () => {
-      const targets = {
-        metrics: [
-          { type: 'count', field: '@value' },
-          { type: 'moving_avg', field: '@value' },
-        ],
+    describe('with count and moving average metrics', () => {
+      const currentAgg = { type: 'moving_avg', field: '@value', id: '2' };
+      const target = {
+        metrics: [{ type: 'count', field: '@value', id: '1' }, currentAgg],
       };
 
-      const response = queryDef.getPipelineAggOptions(targets);
+      const response = queryDef.getPipelineAggOptions(target, currentAgg);
 
       test('should return one', () => {
         expect(response.length).toBe(1);
       });
     });
 
-    describe('with derivatives targets', () => {
-      const targets = {
-        metrics: [{ type: 'derivative', field: '@value' }],
+    describe('with multiple chained pipeline aggs', () => {
+      const currentAgg = { type: 'moving_avg', field: '2', id: '3' };
+      const target = {
+        metrics: [{ type: 'count', field: '@value', id: '1' }, { type: 'moving_avg', field: '1', id: '2' }, currentAgg],
       };
 
-      const response = queryDef.getPipelineAggOptions(targets);
+      const response = queryDef.getPipelineAggOptions(target, currentAgg);
+
+      test('should return two', () => {
+        expect(response.length).toBe(2);
+      });
+    });
+
+    describe('with derivatives metrics', () => {
+      const currentAgg = { type: 'derivative', field: '@value', id: '1' };
+      const target = {
+        metrics: [currentAgg],
+      };
+
+      const response = queryDef.getPipelineAggOptions(target, currentAgg);
 
       test('should return zero', () => {
         expect(response.length).toBe(0);

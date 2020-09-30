@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { Metric, Target } from './types';
 
 export const metricAggTypes = [
   { text: 'Count', value: 'count', requiresField: false },
@@ -207,14 +208,21 @@ export function isPipelineAggWithMultipleBucketPaths(metricType: any) {
   return false;
 }
 
-export function getPipelineAggOptions(targets: any) {
+export function getPipelineAggOptions(target: Target, agg?: Metric) {
   const result: any[] = [];
-  _.each(targets.metrics, metric => {
-    if (!isPipelineAgg(metric.type)) {
+  const { metrics } = target;
+  const initialAncestors = agg != null ? [agg.id] : ([] as string[]);
+  const ancestors = metrics.reduce((acc: string[], metric: Metric) => {
+    if (acc.includes(metric.field)) {
+      return [...acc, metric.id];
+    }
+    return acc;
+  }, initialAncestors);
+  metrics.forEach((metric: Metric) => {
+    if (!ancestors.includes(metric.id)) {
       result.push({ text: describeMetric(metric), value: metric.id });
     }
   });
-
   return result;
 }
 

@@ -31,3 +31,13 @@ export type DataLinkConfig = {
   url: string;
   datasourceUid?: string;
 };
+
+export interface Metric {
+  id: string;
+  type: string;
+  field: string;
+}
+
+export interface Target {
+  metrics: Metric[];
+}

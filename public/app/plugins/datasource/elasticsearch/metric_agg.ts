@@ -21,7 +21,7 @@ export class ElasticMetricAggCtrl {
     };
 
     $scope.updatePipelineAggOptions = () => {
-      $scope.pipelineAggOptions = queryDef.getPipelineAggOptions($scope.target);
+      $scope.pipelineAggOptions = queryDef.getPipelineAggOptions($scope.target, $scope.agg);
     };
 
     $rootScope.onAppEvent(
