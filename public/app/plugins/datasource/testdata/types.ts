@@ -23,6 +23,8 @@ export interface TestDataQuery extends DataQuery {
   pulseWave?: PulseWaveQuery;
   csvWave: any;
   labels?: string;
+  lines?: string;
+  levelColumn?: boolean;
 }
 
 export interface StreamingQuery {

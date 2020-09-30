@@ -3,7 +3,7 @@ import React, { ChangeEvent, FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 // Components
-import { Input, InlineFieldRow, InlineField, Select, TextArea } from '@grafana/ui';
+import { Input, InlineFieldRow, InlineField, Select, TextArea, Switch } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { StreamingClientEditor, ManualEntryEditor, RandomWalkEditor } from './components';
 
@@ -32,7 +32,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
   const { loading, value: scenarioList } = useAsync<Scenario[]>(async () => {
     return datasource.getScenarios();
   }, []);
-
   query = { ...defaultQuery, ...query };
 
   const currentScenario = useMemo(() => scenarioList?.find(scenario => scenario.id === query.scenarioId), [
@@ -40,8 +39,12 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     query,
   ]);
   const scenarioId = currentScenario?.id;
-  query.stringInput =
-    scenarioId === 'grafana_api' ? 'datasources' : (query.stringInput || currentScenario?.stringInput) ?? '';
+
+  if (scenarioId === 'grafana_api') {
+    query.stringInput = query.stringInput || 'datasources';
+  } else {
+    query.stringInput = currentScenario?.stringInput || query.stringInput;
+  }
 
   const onScenarioChange = (item: SelectableValue<string>) => {
     onChange({
@@ -54,33 +57,28 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
 
   const onInputChange = (e: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target as HTMLInputElement | HTMLTextAreaElement;
-    onChange({ ...query, [name]: value });
+    if (name === 'levelColumn') {
+      onChange({ ...query, levelColumn: (e.target as HTMLInputElement).checked });
+    } else {
+      onChange({ ...query, [name]: value });
+    }
+    onRunQuery();
+  };
+
+  const onFieldChange = (field: string) => (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target as HTMLInputElement;
+    onChange({ ...query, [field]: { ...query[field as keyof TestDataQuery], [name]: value } });
     onRunQuery();
   };
 
   const onEndPointChange = ({ value }: SelectableValue) => {
     onChange({ ...query, stringInput: value });
+    onRunQuery();
   };
 
-  const onStreamClientChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target as HTMLInputElement;
-    if (name !== 'lines') {
-      onChange({ ...query, stream: { ...query.stream, [name]: value } });
-      onRunQuery();
-    } else {
-      onInputChange(e);
-    }
-  };
-
-  const onPulseWaveChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    onChange({ ...query, pulseWave: { ...query.pulseWave, [name]: value } });
-  };
-
-  const onCSVWaveChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    onChange({ ...query, csvWave: { ...query.csvWave, [name]: value } });
-  };
+  const onStreamClientChange = onFieldChange('stream');
+  const onPulseWaveChange = onFieldChange('pulseWave');
+  const onCSVWaveChange = onFieldChange('csvWave');
 
   const options = useMemo(() => (scenarioList || []).map(item => ({ label: item.name, value: item.id })), [
     scenarioList,
@@ -105,6 +103,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         {currentScenario?.stringInput && (
           <InlineField label="String Input">
             <Input
+              width={32}
               id="stringInput"
               name="stringInput"
               placeholder={query.stringInput}
@@ -157,6 +156,24 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       {scenarioId === 'manual_entry' && <ManualEntryEditor onChange={onChange} query={query} onRunQuery={onRunQuery} />}
       {scenarioId === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
       {scenarioId === 'streaming_client' && <StreamingClientEditor onChange={onStreamClientChange} query={query} />}
+      {scenarioId === 'logs' && (
+        <InlineFieldRow>
+          <InlineField label="Lines" labelWidth={14}>
+            <Input
+              type="number"
+              name="lines"
+              value={query.lines || 10}
+              width={32}
+              onChange={onInputChange}
+              placeholder="10"
+            />
+          </InlineField>
+          <InlineField label="Level" labelWidth={14}>
+            <Switch onChange={onInputChange} name="levelColumn" value={!!query.levelColumn} />
+          </InlineField>
+        </InlineFieldRow>
+      )}
+
       {scenarioId === 'grafana_api' && (
         <InlineField labelWidth={14} label="Endpoint">
           <Select

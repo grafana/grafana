@@ -1,6 +1,7 @@
 import React from 'react';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 import { EditorProps } from '../QueryEditor';
+import { TestDataQuery } from '../types';
 
 const randomWalkFields = [
   { label: 'Series count', id: 'seriesCount', placeholder: '1', min: 1, step: 1 },
@@ -23,7 +24,7 @@ export const RandomWalkEditor = ({ onChange, query }: EditorProps) => {
               id={id}
               min={min}
               step={step}
-              value={query?.[id]}
+              value={query[id as keyof TestDataQuery]}
               placeholder={placeholder}
               onChange={onChange}
             />
