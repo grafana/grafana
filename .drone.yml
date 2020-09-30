@@ -680,6 +680,10 @@ steps:
       from_secret: slack_webhook
 
 trigger:
+  branch:
+  - master
+  event:
+  - push
   status:
   - failure
 
