@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { EditorProps } from '../QueryEditor';
@@ -9,7 +9,6 @@ const streamingClientFields = [
   { label: 'Spread', id: 'spread', placeholder: 'value', min: 0.5, step: 0.1 },
   { label: 'Noise', id: 'noise', placeholder: 'value', min: 0, step: 0.1 },
   { label: 'Bands', id: 'bands', placeholder: 'bands', min: 0, step: 1 },
-  { label: 'URL', id: 'url', placeholder: 'Fetch URL', type: 'text' },
 ];
 
 const types = [
@@ -22,6 +21,14 @@ export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
   const onSelectChange = ({ value }: SelectableValue) => {
     onChange({ target: { name: 'type', value } });
   };
+
+  // Convert values to numbers before saving
+  const onInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
+    onChange({ target: { name, value: parseFloat(value) } });
+  };
+
   return (
     <InlineFieldRow>
       <InlineField label="Type" labelWidth={14}>
@@ -40,7 +47,7 @@ export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
                 step={step}
                 value={query.stream?.[id as keyof StreamingQuery]}
                 placeholder={placeholder}
-                onChange={onChange}
+                onChange={onInputChange}
               />
             </InlineField>
           );
