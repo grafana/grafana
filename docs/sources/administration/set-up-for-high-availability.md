@@ -1,17 +1,16 @@
 +++
-title = "Setup Grafana for high availability"
+title = "Set up Grafana for high availability"
 type = "docs"
 keywords = ["grafana", "tutorials", "HA", "high availability"]
+aliases = ["/docs/grafana/latest/tutorials/ha_setup/"]
 [menu.docs]
-parent = "tutorials"
-weight = 10
+weight = 1200
 +++
 
-# How to setup Grafana for high availability
+# Set up Grafana for high availability
 
 Setting up Grafana for high availability is fairly simple. You just need a shared database for storing dashboard, users,
-and other persistent data. So the default embedded SQLite database will not work, you will have to switch to
-MySQL or Postgres.
+and other persistent data. So the default embedded SQLite database will not work, you will have to switch to MySQL or Postgres.
 
 <div class="text-center">
   <img src="/img/docs/tutorials/grafana-high-availability.png"  max-width= "800px" class="center" />
@@ -19,8 +18,8 @@ MySQL or Postgres.
 
 ## Configure multiple servers to use the same database
 
-First, you need to setup MySQL or Postgres on another server and configure Grafana to use that database.
-You can find the configuration for doing that in the [[database]]({{< relref "../administration/configuration.md" >}}#database) section in the grafana config.
+First, you need to set up MySQL or Postgres on another server and configure Grafana to use that database.
+You can find the configuration for doing that in the [[database]]({{< relref "../administration/configuration.md#database" >}}) section in the Grafana config.
 Grafana will now persist all long term data in the database. How to configure the database for high availability is out of scope for this guide. We recommend finding an expert on for the database you're using.
 
 ## Alerting

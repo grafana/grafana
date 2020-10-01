@@ -2,11 +2,11 @@
 title = "Explore"
 keywords = ["explore", "loki", "logs"]
 type = "docs"
+aliases = ["/docs/grafana/latest/features/explore/"]
 [menu.docs]
 name = "Explore"
 identifier = "explore"
-parent = "features"
-weight = 5
+weight = 900
 +++
 
 # Explore
@@ -78,7 +78,7 @@ By default, query history shows you the most recent queries. You can sort your h
    - Data source A-Z
    - Data source Z-A
 
-> Note: If you are in split mode, then the chosen sorting mode applies only to the active panel.
+> **Note:** If you are in split mode, then the chosen sorting mode applies only to the active panel.
 
 ### Filter query history
 
@@ -93,7 +93,7 @@ In **Query history** tab it is also possible to filter queries by date using the
 - By dragging top handle, adjust start date.
 - By dragging top handle, adjust end date.
 
-> Note: If you are in split mode, filters are applied only to your currently active panel.
+> **Note:** If you are in split mode, filters are applied only to your currently active panel.
 
 ### Search in query history
 
@@ -113,7 +113,7 @@ You can customize the query history in the Settings tab. Options are described i
 | Only show queries for data source currently active in Explore | True                                    |
 | Clear query history                                           | Permanently deletes all stored queries. |
 
-> Note: Query history settings are global, and applied to both panels in split mode.
+> **Note:** Query history settings are global, and applied to both panels in split mode.
 
 ## Prometheus-specific Features
 
@@ -145,9 +145,9 @@ Click on the filter button <span title="Filter for label" class="logs-label__ico
 
 Along with metrics, Explore allows you to investigate your logs with the following data sources:
 
-- [Loki](../datasources/loki)
-- [InfluxDB](../datasources/influxdb)
-- [Elasticsearch](../datasources/elasticsearch)
+- [Loki](../features/datasources/loki)
+- [InfluxDB](../features/datasources/influxdb)
+- [Elasticsearch](../features/datasources/elasticsearch)
 
 ### Visualization options
 
@@ -193,7 +193,7 @@ If your logs are structured in `json` or `logfmt`, then you can show or hide par
 
 As mentioned, one of the log integrations is for the new open source log aggregation system from Grafana Labs - [Loki](https://github.com/grafana/loki). Loki is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels. Read more about Grafana Loki [here](https://github.com/grafana/loki) or the Grafana Labs hosted variant: [Grafana Cloud Logs](https://grafana.com/loki).
 
-See [Loki's data source documentation](../datasources/loki) on how to query for log data.
+See [Loki's data source documentation](../features/datasources/loki) on how to query for log data.
 
 #### Switch from metrics to logs
 
@@ -223,8 +223,8 @@ While in Live tail view new logs will come from the bottom of the screen and wil
 
 You can visualize traces from tracing data sources in explore. Data sources currently supported:
 
-- [Jaeger]({{< relref "datasources/jaeger.md" >}})
-- [Zipkin]({{< relref "datasources/zipkin.md" >}})
+- [Jaeger]({{< relref "../features/datasources/jaeger.md" >}})
+- [Zipkin]({{< relref "../features/datasources/zipkin.md" >}})
 
 For information about how to use the query editor see documentation for specific data source.
 
@@ -286,7 +286,7 @@ the arrow next to the button to reveal a "Return to panel with changes" menu ite
 ## Query inspector
 
 To help with debugging queries, Explore allows you to investigate query requests and responses, as well as query statistics, via the Query inspector.
-This functionality is similar to the panel inspector [Stats tab]({{< relref "../../panels/inspect-panel.md#inspect-query-performance" >}}) and
-[Query tab]({{< relref "../../panels/inspect-panel.md##view-raw-request-and-response-to-data-source" >}}).
+This functionality is similar to the panel inspector [Stats tab]({{< relref "../panels/inspect-panel.md#inspect-query-performance" >}}) and
+[Query tab]({{< relref "../panels/inspect-panel.md##view-raw-request-and-response-to-data-source" >}}).
 
 {{< docs-imagebox img="/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" caption="Screenshot of the query inspector button in Explore" >}}

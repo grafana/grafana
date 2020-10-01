@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
+import { histogram } from 'd3';
 
 /**
  * Convert series into array of series values.
@@ -30,33 +31,16 @@ export function getSeriesValues(dataList: TimeSeries[]): number[] {
  * @param bucketSize
  */
 export function convertValuesToHistogram(values: number[], bucketSize: number, min: number, max: number): any[] {
-  const histogram: any = {};
-
   const minBound = getBucketBound(min, bucketSize);
   const maxBound = getBucketBound(max, bucketSize);
-  let bound = minBound;
-  let n = 0;
-  while (bound <= maxBound) {
-    histogram[bound] = 0;
-    bound = minBound + bucketSize * n;
-    n++;
-  }
 
-  for (let i = 0; i < values.length; i++) {
-    // filter out values outside the min and max boundaries
-    if (values[i] < min || values[i] > max) {
-      continue;
-    }
-    const bound = getBucketBound(values[i], bucketSize);
-    histogram[bound] = histogram[bound] + 1;
-  }
+  const histGenerator = histogram()
+    .domain([minBound, maxBound])
+    .thresholds(Math.round(max - min) / bucketSize);
 
-  const histogamSeries = _.map(histogram, (count, bound) => {
-    return [Number(bound), count];
+  return histGenerator(values).map(bin => {
+    return [bin.x0, bin.length];
   });
-
-  // Sort by Y axis values
-  return _.sortBy(histogamSeries, point => point[0]);
 }
 
 /**

@@ -1,8 +1,23 @@
 import { e2e } from '../index';
 
+export interface SelectOptionConfig {
+  clickToOpen?: boolean;
+  container: any;
+  forceClickOption?: boolean;
+  optionText: string | RegExp;
+}
+
 // @todo this actually returns type `Cypress.Chainable`
-export const selectOption = (select: any, optionText: string | RegExp, clickToOpen = true): any =>
-  select.within(() => {
+export const selectOption = (config: SelectOptionConfig): any => {
+  const fullConfig: SelectOptionConfig = {
+    clickToOpen: true,
+    forceClickOption: false,
+    ...config,
+  };
+
+  const { clickToOpen, container, forceClickOption, optionText } = fullConfig;
+
+  return container.within(() => {
     if (clickToOpen) {
       e2e()
         .get('[class$="-input-suffix"]')
@@ -20,8 +35,9 @@ export const selectOption = (select: any, optionText: string | RegExp, clickToOp
         }
       })
       .scrollIntoView()
-      .click();
+      .click({ force: forceClickOption });
     e2e()
       .root()
       .scrollIntoView();
   });
+};

@@ -188,7 +188,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
           renderItem={(item, index) => {
             return (
               <>
-                <ContextMenuGroup group={item} onClick={onClose} />
+                <ContextMenuGroupComponent group={item} onClick={onClose} />
               </>
             );
           }}
@@ -207,7 +207,7 @@ interface ContextMenuItemProps {
   className?: string;
 }
 
-const ContextMenuItem: React.FC<ContextMenuItemProps> = React.memo(
+const ContextMenuItemComponent: React.FC<ContextMenuItemProps> = React.memo(
   ({ url, icon, label, target, onClick, className }) => {
     const theme = useContext(ThemeContext);
     const styles = getContextMenuStyles(theme);
@@ -235,7 +235,7 @@ interface ContextMenuGroupProps {
   onClick?: () => void; // Used with 'onClose'
 }
 
-const ContextMenuGroup: React.FC<ContextMenuGroupProps> = ({ group, onClick }) => {
+const ContextMenuGroupComponent: React.FC<ContextMenuGroupProps> = ({ group, onClick }) => {
   const theme = useContext(ThemeContext);
   const styles = getContextMenuStyles(theme);
 
@@ -250,7 +250,7 @@ const ContextMenuGroup: React.FC<ContextMenuGroupProps> = ({ group, onClick }) =
         items={group.items || []}
         renderItem={item => {
           return (
-            <ContextMenuItem
+            <ContextMenuItemComponent
               url={item.url}
               label={item.label}
               target={item.target}

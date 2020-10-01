@@ -8,7 +8,7 @@ type = "docs"
 
 There’s a physical wire protocol that Grafana server uses to communicate with backend plugins. This is the contract between Grafana and backend plugins, that must be agreed upon for Grafana and a backend plugin to be able to communicate with each other. The plugin protocol is built on [gRPC](https://grpc.io/) and is defined in [Protocol Buffers (a.k.a., protobuf)](https://developers.google.com/protocol-buffers).
 
-We adwise for backend plugins to not be implemented directly against this protocol. Instead, prefer to use the [Grafana Plugin SDK for Go]({{< relref "grafana-plugin-sdk-for-go.md" >}}) that implements this protocol and provides higher level APIs.
+We advise for backend plugins to not be implemented directly against this protocol. Instead, prefer to use the [Grafana Plugin SDK for Go]({{< relref "grafana-plugin-sdk-for-go.md" >}}) that implements this protocol and provides higher level APIs.
 
 The plugin protocol is available in the [GitHub repository](https://github.com/grafana/grafana-plugin-sdk-go/blob/master/proto/backend.proto). The plugin protocol lives in the [Grafana Plugin SDK for Go]({{< relref "grafana-plugin-sdk-for-go.md" >}}) since Grafana itself uses parts of the SDK as a dependency.
 
