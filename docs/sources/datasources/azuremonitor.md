@@ -1,5 +1,5 @@
 +++
-title = "Using Azure Monitor in Grafana"
+title = "Azure Monitor"
 description = "Guide for using Azure Monitor in Grafana"
 keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
 type = "docs"
