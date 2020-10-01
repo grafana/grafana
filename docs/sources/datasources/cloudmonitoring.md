@@ -1,5 +1,5 @@
 +++
-title = "Using Google Cloud Monitoring in Grafana"
+title = "Cloud Monitoring"
 description = "Guide for using Google Cloud Monitoring in Grafana"
 keywords = ["grafana", "stackdriver", "google", "guide", "cloud", "monitoring"]
 type = "docs"
