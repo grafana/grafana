@@ -1,4 +1,4 @@
-package metrics
+package metricutil
 
 import (
 	"testing"
