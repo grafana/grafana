@@ -1154,7 +1154,7 @@ keep the default, just leave this empty. You must still provide a `region` value
 Set this to true to force path-style addressing in S3 requests, i.e., `http://s3.amazonaws.com/BUCKET/KEY`, instead
 of the default, which is virtual hosted bucket addressing when possible (`http://BUCKET.s3.amazonaws.com/KEY`).
 
-> Note: This option is specific to the Amazon S3 service.
+> **Note:** This option is specific to the Amazon S3 service.
 
 ### bucket_url
 
