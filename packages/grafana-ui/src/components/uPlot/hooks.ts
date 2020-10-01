@@ -36,11 +36,11 @@ export const usePlotPlugins = () => {
     (plugin: PlotPlugin) => {
       pluginLog(plugin.id, false, 'register');
 
-      if (plugins.hasOwnProperty(plugin.id)) {
-        throw new Error(`${plugin.id} that is already registered`);
-      }
-
       setPlugins(plugs => {
+        if (plugs.hasOwnProperty(plugin.id)) {
+          throw new Error(`${plugin.id} that is already registered`);
+        }
+
         return {
           ...plugs,
           [plugin.id]: plugin,
@@ -58,7 +58,7 @@ export const usePlotPlugins = () => {
         });
       };
     },
-    [setPlugins, plugins]
+    [setPlugins]
   );
 
   // When uPlot mounts let's check if there are any plugins pending registration
@@ -74,7 +74,7 @@ export const usePlotPlugins = () => {
 
   return {
     arePluginsReady,
-    plugins,
+    plugins: plugins || {},
     registerPlugin,
   };
 };

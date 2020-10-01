@@ -99,6 +99,9 @@ export const shouldReinitialisePlot = (prevConfig?: uPlot.Options, config?: uPlo
   }
 
   if (!prevConfig && config) {
+    if (config.width === 0 || config.height === 0) {
+      return false;
+    }
     return true;
   }
 
