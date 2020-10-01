@@ -82,5 +82,6 @@ describe('ManualEntryEditor', () => {
     select = screen.getByText('All values').nextSibling!;
     await fireEvent.keyDown(select, { keyCode: 40 });
     expect(screen.getAllByLabelText('Select option')).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
   });
 });

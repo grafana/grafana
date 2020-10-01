@@ -70,13 +70,13 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
               />
             </InlineField>
 
-            {selectedPoint && (
+            {selectedPoint?.value !== undefined && (
               <InlineField>
                 <button
                   type="button"
                   className="btn btn-danger gf-form-btn"
                   onClick={() => {
-                    control.setValue('selectedPoint', [{ value: null, label: 'Select value' }]);
+                    control.setValue('selectedPoint', [{ value: undefined, label: 'Select value' }]);
                     deletePoint(selectedPoint);
                   }}
                 >
