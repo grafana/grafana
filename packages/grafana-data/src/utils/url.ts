@@ -134,20 +134,7 @@ export const urlUtil = {
 
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
   if (compact) {
-    return JSON.stringify([
-      urlState.range.from,
-      urlState.range.to,
-      urlState.datasource,
-      ...urlState.queries,
-      {
-        ui: [
-          !!urlState.ui.showingGraph,
-          !!urlState.ui.showingLogs,
-          !!urlState.ui.showingTable,
-          urlState.ui.dedupStrategy,
-        ],
-      },
-    ]);
+    return JSON.stringify([urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.queries]);
   }
   return JSON.stringify(urlState);
 }

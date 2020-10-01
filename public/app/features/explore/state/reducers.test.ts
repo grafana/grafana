@@ -2,12 +2,11 @@ import {
   DataQuery,
   DataSourceApi,
   dateTime,
-  ExploreMode,
   LoadingState,
-  LogsDedupStrategy,
   RawTimeRange,
   UrlQueryMap,
   ExploreUrlState,
+  LogsDedupStrategy,
 } from '@grafana/data';
 
 import {
@@ -30,6 +29,7 @@ import {
   updateDatasourceInstanceAction,
   addQueryRowAction,
   removeQueryRowAction,
+  changeDedupStrategyAction,
 } from './actionTypes';
 import { updateLocation } from '../../../core/actions';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
@@ -98,7 +98,6 @@ describe('Explore item reducer', () => {
             graphResult: null,
             logsResult: null,
             tableResult: null,
-            supportedModes: [ExploreMode.Metrics, ExploreMode.Logs],
             latency: 0,
             loading: false,
             queryResponse: createEmptyQueryResponse(),
@@ -182,6 +181,24 @@ describe('Explore item reducer', () => {
     });
   });
 
+  describe('changing dedup strategy', () => {
+    describe('when changeDedupStrategyAction is dispatched', () => {
+      it('then it should set correct dedup strategy in state', () => {
+        const initialState = makeExploreItemState();
+
+        reducerTester<ExploreItemState>()
+          .givenReducer(itemReducer, initialState)
+          .whenActionIsDispatched(
+            changeDedupStrategyAction({ exploreId: ExploreId.left, dedupStrategy: LogsDedupStrategy.exact })
+          )
+          .thenStateShouldEqual({
+            ...makeExploreItemState(),
+            dedupStrategy: LogsDedupStrategy.exact,
+          });
+      });
+    });
+  });
+
   describe('query rows', () => {
     it('adds a new query row', () => {
       reducerTester<ExploreItemState>()
@@ -260,12 +277,6 @@ export const setup = (urlStateOverrides?: any) => {
     range: {
       from: '',
       to: '',
-    },
-    ui: {
-      dedupStrategy: LogsDedupStrategy.none,
-      showingGraph: false,
-      showingTable: false,
-      showingLogs: false,
     },
   };
   const urlState: ExploreUrlState = { ...urlStateDefaults, ...urlStateOverrides };
@@ -539,47 +550,6 @@ describe('Explore reducer', () => {
                   urlState: {
                     ...initialState.left.urlState,
                     queries: [{ expr: '{__filename__="some.log"}' }],
-                  },
-                },
-              };
-
-              reducerTester<ExploreState>()
-                .givenReducer(exploreReducer, stateWithDifferentDataSource)
-                .whenActionIsDispatched(
-                  updateLocation({
-                    query: {
-                      left: serializedUrlState,
-                    },
-                    path: '/explore',
-                  })
-                )
-                .thenStateShouldEqual(expectedState);
-            });
-          });
-
-          describe('and ui differs', () => {
-            it('then it should return update ui', () => {
-              const { initialState, serializedUrlState } = setup();
-              const expectedState = {
-                ...initialState,
-                left: {
-                  ...initialState.left,
-                  update: {
-                    ...initialState.left.update,
-                    ui: true,
-                  },
-                },
-              };
-              const stateWithDifferentDataSource: any = {
-                ...initialState,
-                left: {
-                  ...initialState.left,
-                  urlState: {
-                    ...initialState.left.urlState,
-                    ui: {
-                      ...initialState.left.urlState!.ui,
-                      showingGraph: true,
-                    },
                   },
                 },
               };
