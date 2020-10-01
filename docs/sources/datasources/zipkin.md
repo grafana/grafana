@@ -1,5 +1,5 @@
 +++
-title = "Using Zipkin in Grafana"
+title = "Zipkin"
 description = "Guide for using Zipkin in Grafana"
 keywords = ["grafana", "zipkin", "guide", "tracing"]
 type = "docs"
@@ -7,13 +7,13 @@ aliases = ["/docs/grafana/latest/datasources/zipkin"]
 [menu.docs]
 name = "Zipkin"
 parent = "datasources"
-weight = 2
+weight = 1500
 +++
 
 # Zipkin data source
 
 Grafana ships with built-in support for Zipkin, an open source, distributed tracing system.
-Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../../explore" >}}).
+Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore" >}}).
 
 ## Adding the data source
 To access Zipkin settings, click the **Configuration** (gear) icon, then click **Data Sources**, and then click **Zipkin**.
@@ -30,7 +30,7 @@ To access Zipkin settings, click the **Configuration** (gear) icon, then click *
 
 ## Query traces
 
-Querying and displaying traces from Zipkin is available via [Explore]({{< relref "../../explore" >}}).
+Querying and displaying traces from Zipkin is available via [Explore]({{< relref "../explore" >}}).
 
 {{< docs-imagebox img="/img/docs/v70/zipkin-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor" >}}
 
