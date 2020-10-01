@@ -22,14 +22,14 @@ const endpoints = [
 ];
 
 // Fields that need to be transformed to numbers
-const numberFields = ['lines'];
+const numberFields = ['lines', 'seriesCount'];
 
 export interface EditorProps {
   onChange: any;
   query: TestDataQuery;
 }
 
-type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
+export type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
 
 export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) => {
   const { loading, value: scenarioList } = useAsync<Scenario[]>(async () => {
@@ -53,10 +53,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       return;
     }
 
-    let stringInput = query.stringInput;
+    let stringInput;
 
     if (scenario.id === 'grafana_api') {
-      stringInput = stringInput || 'datasources';
+      stringInput = 'datasources';
     } else {
       stringInput = scenario.stringInput ?? '';
     }

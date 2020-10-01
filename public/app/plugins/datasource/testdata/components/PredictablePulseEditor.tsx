@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import { EditorProps } from '../QueryEditor';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
-import { TestDataQuery } from '../types';
+import { PulseWaveQuery } from '../types';
 
 const fields = [
   { label: 'Step', id: 'timeStep', placeholder: '60', tooltip: 'The number of seconds between datapoints.' },
@@ -27,6 +27,13 @@ const fields = [
 ];
 
 export const PredictablePulseEditor = ({ onChange, query }: EditorProps) => {
+  // Convert values to numbers before saving
+  const onInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
+    onChange({ target: { name, value: Number(value) } });
+  };
+
   return (
     <InlineFieldRow>
       {fields.map(({ label, id, placeholder, tooltip }) => {
@@ -35,10 +42,11 @@ export const PredictablePulseEditor = ({ onChange, query }: EditorProps) => {
             <Input
               width={32}
               type="number"
+              name={id}
               id={`pulseWave.${id}`}
-              value={query[id as keyof TestDataQuery]}
+              value={query.pulseWave?.[id as keyof PulseWaveQuery]}
               placeholder={placeholder}
-              onChange={onChange}
+              onChange={onInputChange}
             />
           </InlineField>
         );
