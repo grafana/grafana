@@ -1,7 +1,6 @@
 import { dateTime, TimeRange } from '@grafana/data';
 
 import { TemplateSrv } from '../../templating/template_srv';
-import { Emitter } from '../../../core/utils/emitter';
 import { onTimeRangeUpdated, OnTimeRangeUpdatedDependencies, setOptionAsCurrent } from './actions';
 import { DashboardModel } from '../../dashboard/state';
 import { DashboardState } from '../../../types';
@@ -26,82 +25,6 @@ import { notifyApp } from '../../../core/reducers/appNotification';
 import { expect } from '../../../../test/lib/common';
 
 variableAdapters.setInit(() => [createIntervalVariableAdapter(), createConstantVariableAdapter()]);
-
-const getOnTimeRangeUpdatedContext = (args: { update?: boolean; throw?: boolean }) => {
-  const range: TimeRange = {
-    from: dateTime(new Date().getTime()).subtract(1, 'minutes'),
-    to: dateTime(new Date().getTime()),
-    raw: {
-      from: 'now-1m',
-      to: 'now',
-    },
-  };
-  const updateTimeRangeMock = jest.fn();
-  const templateSrvMock = ({ updateTimeRange: updateTimeRangeMock } as unknown) as TemplateSrv;
-  const emitMock = jest.fn();
-  const appEventsMock = ({ emit: emitMock } as unknown) as Emitter;
-  const dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrvMock, appEvents: appEventsMock };
-  const templateVariableValueUpdatedMock = jest.fn();
-  const dashboard = ({
-    getModel: () =>
-      (({
-        templateVariableValueUpdated: templateVariableValueUpdatedMock,
-        startRefresh: startRefreshMock,
-      } as unknown) as DashboardModel),
-  } as unknown) as DashboardState;
-  const startRefreshMock = jest.fn();
-  const adapter = variableAdapters.get('interval');
-  adapter.updateOptions = args.throw ? jest.fn().mockRejectedValue('Something broke') : jest.fn().mockResolvedValue({});
-
-  // initial variable state
-  const initialVariable = intervalBuilder()
-    .withId('interval-0')
-    .withName('interval-0')
-    .withOptions('1m', '10m', '30m', '1h', '6h', '12h', '1d', '7d', '14d', '30d')
-    .withCurrent('1m')
-    .withRefresh(VariableRefresh.onTimeRangeChanged)
-    .build();
-
-  // the constant variable should be filtered out
-  const constant = constantBuilder()
-    .withId('constant-1')
-    .withName('constant-1')
-    .withOptions('a constant')
-    .withCurrent('a constant')
-    .build();
-  const initialState = {
-    templating: { variables: { '0': { ...initialVariable }, '1': { ...constant } } },
-    dashboard,
-  };
-
-  // updated variable state
-  const updatedVariable = intervalBuilder()
-    .withId('interval-0')
-    .withName('interval-0')
-    .withOptions('1m')
-    .withCurrent('1m')
-    .withRefresh(VariableRefresh.onTimeRangeChanged)
-    .build();
-
-  const variable = args.update ? { ...updatedVariable } : { ...initialVariable };
-  const state = { templating: { variables: { 'interval-0': variable, 'constant-1': { ...constant } } }, dashboard };
-  const getStateMock = jest
-    .fn()
-    .mockReturnValueOnce(initialState)
-    .mockReturnValue(state);
-  const dispatchMock = args.throw ? jest.fn().mockRejectedValue('Something broke') : jest.fn().mockResolvedValue({});
-
-  return {
-    range,
-    dependencies,
-    dispatchMock,
-    getStateMock,
-    updateTimeRangeMock,
-    templateVariableValueUpdatedMock,
-    startRefreshMock,
-    emitMock,
-  };
-};
 
 const getTestContext = () => {
   const interval = intervalBuilder()
