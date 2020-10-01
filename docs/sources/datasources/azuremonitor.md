@@ -7,7 +7,7 @@ aliases = ["/docs/grafana/latest/features/datasources/azuremonitor"]
 [menu.docs]
 name = "Azure Monitor"
 parent = "datasources"
-weight = 5
+weight = 300
 +++
 
 # Using Azure Monitor in Grafana
