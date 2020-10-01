@@ -28,8 +28,8 @@ When permissions are enabled for a data source in an organization, you restrict 
 **Enable permissions for a data source:**
 
 1. Navigate to **Configuration > Data Sources**.
-2. Select the data source you want to enable permissions for.
-3. On the Permissions tab, click **Enable**.
+1. Select the data source you want to enable permissions for.
+1. On the Permissions tab, click **Enable**.
 
 <div class="clearfix"></div>
 
@@ -44,10 +44,10 @@ After you have enabled permissions for a data source you can assign query permis
 **Assign query permission to users and teams:**
 
 1. Navigate to **Configuration > Data Sources**.
-2. Select the data source you want to assign query permissions for.
-3. On the Permissions tab, click **Add Permission**.
-4. Select **Team** or **User**.
-5. Select the entity you want to allow query access and then click **Save**.
+1. Select the data source you want to assign query permissions for.
+1. On the Permissions tab, click **Add Permission**.
+1. Select **Team** or **User**.
+1. Select the entity you want to allow query access and then click **Save**.
 
 <div class="clearfix"></div>
 
@@ -62,7 +62,7 @@ Note that *all* existing permissions created for the data source will be deleted
 **Disable permissions for a data source:**
 
 1. Navigate to **Configuration > Data Sources**.
-2. Select the data source you want to disable permissions for.
-3. On the Permissions tab, click **Disable Permissions**.
+1. Select the data source you want to disable permissions for.
+1. On the Permissions tab, click **Disable Permissions**.
 
 <div class="clearfix"></div>

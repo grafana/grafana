@@ -94,11 +94,11 @@ The top header has gotten a major streamlining in Grafana V2.0.
 <img class="no-shadow" src="/img/docs/v2/v2_top_nav_annotated.png">
 
 1. `Side menubar toggle` Toggle the side menubar on or off. This allows you to focus on the data presented on the Dashboard. The side menubar provides access to features unrelated to a Dashboard such as Users, Organizations, and Data Sources.
-2. `Dashboard dropdown` The main dropdown shows you which Dashboard you are currently viewing, and allows you to easily switch to a new Dashboard. From here you can also create a new Dashboard, Import existing Dashboards, and manage the Playlist.
-3. `Star Dashboard`: Star (or un-star) the current Dashboard. Starred Dashboards will show up on your own Home Dashboard by default, and are a convenient way to mark Dashboards that you're interested in.
-4. `Share Dashboard`: Share the current dashboard by creating a link or create a static Snapshot of it. Make sure the Dashboard is saved before sharing.
-5. `Save dashboard`: Save the current Dashboard with the current name.
-6. `Settings`: Manage Dashboard settings and features such as Templating, Annotations and the name.
+1. `Dashboard dropdown` The main dropdown shows you which Dashboard you are currently viewing, and allows you to easily switch to a new Dashboard. From here you can also create a new Dashboard, Import existing Dashboards, and manage the Playlist.
+1. `Star Dashboard`: Star (or un-star) the current Dashboard. Starred Dashboards will show up on your own Home Dashboard by default, and are a convenient way to mark Dashboards that you're interested in.
+1. `Share Dashboard`: Share the current dashboard by creating a link or create a static Snapshot of it. Make sure the Dashboard is saved before sharing.
+1. `Save dashboard`: Save the current Dashboard with the current name.
+1. `Settings`: Manage Dashboard settings and features such as Templating, Annotations and the name.
 
 > **Note:** In Grafana v2.0 when you change the title of a dashboard and then save it, it will no
 > longer create a new Dashboard. It will just change the name for the current Dashboard.

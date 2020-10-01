@@ -75,7 +75,7 @@ automatically be rendered for that data point. This should make it easier to und
 Grafana v5.4 adds support for customizing home dashboard, timezone and theme for teams, in addition to the existing customization on Organization and user Profile level.
 
 1. Specifying a preference on User Profile level will override preference on Team and/or Organization level
-2. Specifying a preference on Team level will override preference on Organization level.
+1. Specifying a preference on Team level will override preference on Organization level.
 
 ## Changelog
 

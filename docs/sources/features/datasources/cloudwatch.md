@@ -19,8 +19,8 @@ build dashboards or use Explore with CloudWatch metrics and CloudWatch Logs.
 ## Adding the data source
 
 1. In the side menu under the `Configuration` link, click on `Data Sources`.
-2. Click the `Add data source` button.
-3. Select `Cloudwatch` in the `Cloud` section.
+1. Click the `Add data source` button.
+1. Select `Cloudwatch` in the `Cloud` section.
 
 > **Note:** If at any moment you have issues with getting this data source to work and Grafana is giving you undescriptive errors then don't
 > forget to check your log file (try looking in /var/log/grafana/grafana.log).

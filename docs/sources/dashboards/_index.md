@@ -16,10 +16,10 @@ A _dashboard_ is a set of one or more panels organized and arranged into one or 
 <img src="/img/docs/v50/dashboard_annotated.png" class="no-shadow" width="700px">
 
 1. Zoom out time range
-2. Time picker dropdown. Here you can access relative time range options, auto refresh options and set custom absolute time ranges.
-3. Manual refresh button. Will cause all panels to refresh (fetch new data).
-4. Dashboard panel. Click the panel title to edit panels.
-5. Graph legend. You can change series colors, y-axis and series visibility directly from the legend.
+1. Time picker dropdown. Here you can access relative time range options, auto refresh options and set custom absolute time ranges.
+1. Manual refresh button. Will cause all panels to refresh (fetch new data).
+1. Dashboard panel. Click the panel title to edit panels.
+1. Graph legend. You can change series colors, y-axis and series visibility directly from the legend.
 
 ## Dashboard header
 
@@ -30,12 +30,12 @@ Click the new Dashboard link on the right side of the Dashboard picker. You now 
 The image above shows you the top header for a Dashboard.
 
 1. Side menubar toggle: This toggles the side menu, allowing you to focus on the data presented in the dashboard. The side menu provides access to features unrelated to a Dashboard such as Users, Organizations, and Data Sources.
-2. Dashboard dropdown: This dropdown shows you which Dashboard you are currently viewing, and allows you to easily switch to a new Dashboard. From here you can also create a new Dashboard or folder, import existing Dashboards, and manage Dashboard playlists.
-3. Add Panel: Adds a new panel to the current Dashboard
-4. Star Dashboard: Star (or unstar) the current Dashboard. Starred Dashboards will show up on your own Home Dashboard by default, and are a convenient way to mark Dashboards that you're interested in.
-5. Share Dashboard: Share the current dashboard by creating a link or create a static Snapshot of it. Make sure the Dashboard is saved before sharing.
-6. Save dashboard: The current Dashboard will be saved with the current Dashboard name.
-7. Settings: Manage Dashboard settings and features such as Templating and Annotations.
+1. Dashboard dropdown: This dropdown shows you which Dashboard you are currently viewing, and allows you to easily switch to a new Dashboard. From here you can also create a new Dashboard or folder, import existing Dashboards, and manage Dashboard playlists.
+1. Add Panel: Adds a new panel to the current Dashboard
+1. Star Dashboard: Star (or unstar) the current Dashboard. Starred Dashboards will show up on your own Home Dashboard by default, and are a convenient way to mark Dashboards that you're interested in.
+1. Share Dashboard: Share the current dashboard by creating a link or create a static Snapshot of it. Make sure the Dashboard is saved before sharing.
+1. Save dashboard: The current Dashboard will be saved with the current Dashboard name.
+1. Settings: Manage Dashboard settings and features such as Templating and Annotations.
 
 ## Manage dashboards
 
