@@ -3,7 +3,7 @@ title = "Add a query variable"
 type = "docs"
 aliases = ["/docs/grafana/latest/variables/add-query-variable.md"]
 [menu.docs]
-dentifier = "add-query-variable"
+identifier = "add-query-variable"
 parent = "variable-types"
 weight = 100
 +++
