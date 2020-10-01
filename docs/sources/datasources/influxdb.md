@@ -1,13 +1,13 @@
 +++
-title = "Using InfluxDB in Grafana"
+title = "InfluxDB"
 description = "Guide for using InfluxDB in Grafana"
 keywords = ["grafana", "influxdb", "guide", "flux"]
 type = "docs"
-aliases = ["/docs/grafana/latest/datasources/influxdb"]
+aliases = ["/docs/grafana/latest/features/datasources/influxdb"]
 [menu.docs]
 name = "InfluxDB"
 parent = "datasources"
-weight = 2
+weight = 700
 +++
 
 # Using InfluxDB in Grafana
@@ -180,7 +180,7 @@ You can view the interpolated version of a query with the Query Inspector.
 
 > Only available in Grafana v6.3+.
 
-Querying and displaying log data from InfluxDB is available via [Explore]({{< relref "../../explore" >}}).
+Querying and displaying log data from InfluxDB is available via [Explore]({{< relref "../explore" >}}).
 
 ![](/img/docs/v63/influxdb_explore_logs.png)
 
@@ -203,7 +203,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -262,7 +262,7 @@ be applied to all your InfluxDB queries.
 
 ## Annotations
 
-[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allows you to overlay rich event information on top of graphs. Add annotation queries using the Annotations view in the Dashboard menu.
+[Annotations]({{< relref "../dashboards/annotations.md" >}}) allows you to overlay rich event information on top of graphs. Add annotation queries using the Annotations view in the Dashboard menu.
 
 An example query:
 
@@ -274,7 +274,7 @@ For InfluxDB, you need to enter a query like the one in the example above. The `
 
 ## Configure the data source with provisioning
 
-You can now configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}}).
+You can now configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}).
 
 Here are some provisioning examples for this data source.
 
