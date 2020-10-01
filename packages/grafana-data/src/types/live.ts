@@ -36,7 +36,7 @@ export interface LiveChannelConfig<TMessage = any> {
   /**
    * The channel keeps track of who else is connected to the same channel
    */
-  hasPresense?: boolean;
+  hasPresence?: boolean;
 
   /**
    * This method will be defined if it is possible to publish in this channel.
@@ -61,10 +61,19 @@ export enum LiveChannelConnectionState {
   Invalid = 'invalid',
 }
 
+export enum LiveChannelEventType {
+  Status = 'status',
+  Join = 'join',
+  Leave = 'leave',
+  Message = 'message',
+}
+
 /**
  * @experimental
  */
-export interface LiveChannelStatus {
+export interface LiveChannelStatusEvent {
+  type: LiveChannelEventType.Status;
+
   /**
    * {scope}/{namespace}/{path}
    */
@@ -85,28 +94,53 @@ export interface LiveChannelStatus {
   /**
    * The last error.
    *
-   * This will remain in the status until a new message is succesfully recieved from the channel
+   * This will remain in the status until a new message is succesfully received from the channel
    */
   error?: any;
 }
 
-/**
- * @experimental
- */
-export interface LiveChannelJoinLeave {
-  user: any;
+export interface LiveChannelJoinEvent {
+  type: LiveChannelEventType.Join;
+  user: any; // @experimental -- will be filled in when we improve the UI
+}
+
+export interface LiveChannelLeaveEvent {
+  type: LiveChannelEventType.Leave;
+  user: any; // @experimental -- will be filled in when we improve the UI
+}
+
+export interface LiveChannelMessageEvent<T> {
+  type: LiveChannelEventType.Message;
+  message: T;
+}
+
+export type LiveChannelEvent<T = any> =
+  | LiveChannelStatusEvent
+  | LiveChannelJoinEvent
+  | LiveChannelLeaveEvent
+  | LiveChannelMessageEvent<T>;
+
+export function isLiveChannelStatusEvent<T>(evt: LiveChannelEvent<T>): evt is LiveChannelStatusEvent {
+  return evt.type === LiveChannelEventType.Status;
+}
+
+export function isLiveChannelJoinEvent<T>(evt: LiveChannelEvent<T>): evt is LiveChannelJoinEvent {
+  return evt.type === LiveChannelEventType.Join;
+}
+
+export function isLiveChannelLeaveEvent<T>(evt: LiveChannelEvent<T>): evt is LiveChannelLeaveEvent {
+  return evt.type === LiveChannelEventType.Leave;
+}
+
+export function isLiveChannelMessageEvent<T>(evt: LiveChannelEvent<T>): evt is LiveChannelMessageEvent<T> {
+  return evt.type === LiveChannelEventType.Message;
 }
 
 /**
  * @experimental
  */
-export interface LiveChannelPresense {
-  users: any;
-}
-
-export interface LiveChannelMessage<TMessage = any> {
-  type: 'status' | 'message' | 'join' | 'leave';
-  message: TMessage | LiveChannelStatus | LiveChannelJoinLeave;
+export interface LiveChannelPresenceStatus {
+  users: any; // @experimental -- will be filled in when we improve the UI
 }
 
 /**
@@ -134,14 +168,14 @@ export interface LiveChannel<TMessage = any, TPublish = any> {
   /**
    * Watch all events in this channel
    */
-  getStream: () => Observable<LiveChannelMessage<TMessage>>;
+  getStream: () => Observable<LiveChannelEvent<TMessage>>;
 
   /**
-   * For channels that support presense, this will request the current state from the server.
+   * For channels that support presence, this will request the current state from the server.
    *
    * Join and leave messages will be sent to the open stream
    */
-  getPresense?: () => Promise<LiveChannelPresense>;
+  getPresence?: () => Promise<LiveChannelPresenceStatus>;
 
   /**
    * Write a message into the channel

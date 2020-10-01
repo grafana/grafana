@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import {
   AnnotationEvent,
   AnnotationQueryRequest,
@@ -8,12 +9,15 @@ import {
 } from '@grafana/data';
 
 import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType } from './types';
-import { getBackendSrv, getTemplateSrv, toDataQueryResponse } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv, TemplateSrv, toDataQueryResponse } from '@grafana/runtime';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
 export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
-  constructor(instanceSettings: DataSourceInstanceSettings) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
   }
 
@@ -50,7 +54,6 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
   }
 
   annotationQuery(options: AnnotationQueryRequest<GrafanaQuery>): Promise<AnnotationEvent[]> {
-    const templateSrv = getTemplateSrv();
     const annotation = (options.annotation as unknown) as GrafanaAnnotationQuery;
     const params: any = {
       from: options.range.from.valueOf(),
@@ -77,7 +80,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
       const delimiter = '__delimiter__';
       const tags = [];
       for (const t of params.tags) {
-        const renderedValues = templateSrv.replace(t, {}, (value: any) => {
+        const renderedValues = this.templateSrv.replace(t, {}, (value: any) => {
           if (typeof value === 'string') {
             return value;
           }

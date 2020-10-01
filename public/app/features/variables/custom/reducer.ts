@@ -36,10 +36,15 @@ export const customVariableSlice = createSlice({
       const instanceState = getInstanceState<CustomVariableModel>(state, action.payload.id);
       const { includeAll, query } = instanceState;
       const match = query.match(/(?:\\,|[^,])+/g) ?? [];
-
       const options = match.map(text => {
         text = text.replace(/\\,/g, ',');
-        return { text: text.trim(), value: text.trim(), selected: false };
+        const textMatch = text.match(/(?:\\:|[^:])+/g) ?? [];
+        if (textMatch.length > 1) {
+          const [key, value] = textMatch;
+          return { text: key.trim(), value: value.trim(), selected: false };
+        } else {
+          return { text: text.trim(), value: text.trim(), selected: false };
+        }
       });
 
       if (includeAll) {

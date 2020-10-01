@@ -18,8 +18,8 @@ import { ElasticQueryBuilder } from './query_builder';
 import { toUtc } from '@grafana/data';
 import * as queryDef from './query_def';
 import { getBackendSrv } from '@grafana/runtime';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
@@ -53,11 +53,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   dataLinks: DataLinkConfig[];
   languageProvider: LanguageProvider;
 
-  /** @ngInject */
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
-    private templateSrv: TemplateSrv,
-    private timeSrv: TimeSrv
+    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly timeSrv: TimeSrv = getTimeSrv()
   ) {
     super(instanceSettings);
     this.basicAuth = instanceSettings.basicAuth;

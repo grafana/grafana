@@ -66,4 +66,4 @@ type MyService struct {
 }
 ```
 
-**Note:** Any injected dependency needs to be an exported field. Any unexported fields result in a runtime error.
+> **Note:** Any injected dependency needs to be an exported field. Any unexported fields result in a runtime error.

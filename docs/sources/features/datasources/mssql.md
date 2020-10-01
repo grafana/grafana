@@ -18,9 +18,9 @@ Grafana ships with a built-in Microsoft SQL Server (MSSQL) data source plugin th
 ## Adding the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.
-2. In the side menu under the `Configuration` link you should find a link named `Data Sources`.
-3. Click the `+ Add data source` button in the top header.
-4. Select *Microsoft SQL Server* from the *Type* dropdown.
+1. In the side menu under the `Configuration` link you should find a link named `Data Sources`.
+1. Click the `+ Add data source` button in the top header.
+1. Select *Microsoft SQL Server* from the *Type* dropdown.
 
 ### Data source options
 
@@ -84,10 +84,10 @@ You will find the MSSQL query editor in the metrics tab in Graph, Singlestat or 
 panel title, then edit. The editor allows you to define a SQL query to select data to be visualized.
 
 1. Select *Format as* `Time series` (for use in Graph or Singlestat panel's among others) or `Table` (for use in Table panel among others).
-2. This is the actual editor where you write your SQL queries.
-3. Show help section for MSSQL below the query editor.
-4. Show actual executed SQL query. Will be available first after a successful query has been executed.
-5. Add an additional query where an additional query editor will be displayed.
+1. This is the actual editor where you write your SQL queries.
+1. Show help section for MSSQL below the query editor.
+1. Show actual executed SQL query. Will be available first after a successful query has been executed.
+1. Add an additional query where an additional query editor will be displayed.
 
 <div class="clearfix"></div>
 
