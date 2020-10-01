@@ -16,9 +16,9 @@ Grafana ships with a built-in PostgreSQL data source plugin that allows you to q
 ## Adding the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.
-2. In the side menu under the `Configuration` icon you should find a link named `Data Sources`.
-3. Click the `+ Add data source` button in the top header.
-4. Select *PostgreSQL* from the *Type* dropdown.
+1. In the side menu under the `Configuration` icon you should find a link named `Data Sources`.
+1. Click the `+ Add data source` button in the top header.
+1. Select *PostgreSQL* from the *Type* dropdown.
 
 ### Data source options
 
