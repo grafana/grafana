@@ -3,6 +3,7 @@ title = "Security"
 description = "Security Docs"
 keywords = ["grafana", "security", "documentation"]
 type = "docs"
+aliases = ["/docs/grafana/latest/installation/security/"]
 [menu.docs]
 name = "Security"
 identifier = "security"
