@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { map } from 'rxjs/operators';
 import { MetricFindValue, TimeRange } from '@grafana/data';
-import { PromDataQueryResponse, PrometheusDatasource } from './datasource';
+import { PrometheusDatasource } from './datasource';
 import { PromQueryRequest } from './types';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
@@ -137,7 +137,7 @@ export default class PrometheusMetricFindQuery {
     const end = this.datasource.getPrometheusTime(this.range.to, true);
     const instantQuery: PromQueryRequest = { expr: query } as PromQueryRequest;
     return this.datasource.performInstantQuery(instantQuery, end).pipe(
-      map((result: PromDataQueryResponse) => {
+      map(result => {
         return _.map(result.data.data.result, metricData => {
           let text = metricData.metric.__name__ || '';
           delete metricData.metric.__name__;
