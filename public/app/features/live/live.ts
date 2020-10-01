@@ -125,7 +125,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
     if (!config) {
       throw new Error('unknown path: ' + channel.path);
     }
-    if (config.canPublish && config.canPublish()) {
+    if (config.canPublish?.()) {
       channel.publish = (data: any) => this.centrifuge.publish(channel.id, data);
     }
     const events = channel.initalize(config);
