@@ -1,12 +1,12 @@
 +++
-title = "Using PostgreSQL in Grafana"
+title = "PostgreSQL"
 description = "Guide for using PostgreSQL in Grafana"
 keywords = ["grafana", "postgresql", "guide"]
 type = "docs"
 [menu.docs]
 name = "PostgreSQL"
 parent = "datasources"
-weight = 7
+weight = 1200
 +++
 
 # Using PostgreSQL in Grafana
@@ -39,7 +39,7 @@ Name | Description
 
 ### Min time interval
 
-A lower limit for the [$__interval]({{< relref "../../variables/templates-and-variables/#the-interval-variable" >}}) and [$__interval_ms]({{< relref "../../variables/templates-and-variables/#the-interval-ms-variable" >}}) variables.
+A lower limit for the [$__interval]({{< relref "../variables/templates-and-variables/#the-interval-variable" >}}) and [$__interval_ms]({{< relref "../variables/templates-and-variables/#the-interval-ms-variable" >}}) variables.
 Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
@@ -240,7 +240,7 @@ ORDER BY time
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-Refer to [Templates and variables]({{< relref "../../variables/templates-and-variables.md" >}}) for an introduction to the templating feature and the different types of template variables.
+Refer to [Templates and variables]({{< relref "../variables/templates-and-variables.md" >}}) for an introduction to the templating feature and the different types of template variables.
 
 ### Query variable
 
@@ -331,11 +331,11 @@ Grafana automatically creates a quoted, comma-separated string for multi-value v
 
 `${servers:csv}`
 
-Read more about variable formatting options in the [Variables]({{< relref "../../variables/templates-and-variables.md#advanced-formatting-options" >}}) documentation.
+Read more about variable formatting options in the [Variables]({{< relref "../variables/templates-and-variables.md#advanced-formatting-options" >}}) documentation.
 
 ## Annotations
 
-[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+[Annotations]({{< relref "../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
 **Example query using time column with epoch values:**
 
@@ -393,7 +393,7 @@ conditions.
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
 
 Here are some provisioning examples for this data source.
 
