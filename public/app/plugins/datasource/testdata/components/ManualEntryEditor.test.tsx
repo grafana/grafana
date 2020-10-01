@@ -26,5 +26,8 @@ describe('ManualEntryEditor', () => {
     setup();
 
     expect(screen.getByLabelText(/New value/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Time/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Add/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/All values/i)).toBeInTheDocument();
   });
 });
