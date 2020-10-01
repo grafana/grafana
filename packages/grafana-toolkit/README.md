@@ -94,6 +94,7 @@ Available options:
 - `-u`, `--updateSnapshot` - Performs snapshots update.
 - `--testNamePattern=<regex>` - Runs test with names that match provided regex (https://jestjs.io/docs/en/cli#testnamepattern-regex).
 - `--testPathPattern=<regex>` - Runs test with paths that match provided regex (https://jestjs.io/docs/en/cli#testpathpattern-regex).
+- `--maxWorkers=<num>|<string>` - Limit number of Jest workers spawned (https://jestjs.io/docs/en/cli#--maxworkersnumstring)
 
 ### Build your plugin
 
@@ -187,7 +188,7 @@ import 'path/to/your/css_or_sass';
 
 The styles will be injected via `style` tag during runtime.
 
-> Note that imported static assets will be inlined as base64 URIs. _This can be subject of change in the future!_
+> **Note:** that imported static assets will be inlined as base64 URIs. _This can be subject of change in the future!_
 
 #### Theme-specific stylesheets
 
@@ -206,7 +207,7 @@ loadPluginCss({
 
 You must add `@grafana/runtime` to your plugin dependencies by running `yarn add @grafana/runtime` or `npm install @grafana/runtime`.
 
-> Note that in this case static files (png, svg, json, html) are all copied to dist directory when the plugin is bundled. Relative paths to those files does not change!
+> **Note:** that in this case static files (png, svg, json, html) are all copied to dist directory when the plugin is bundled. Relative paths to those files does not change!
 
 #### Emotion
 

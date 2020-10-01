@@ -29,6 +29,7 @@ export interface PluginCIOptions {
   upload?: boolean;
   signatureType?: string;
   rootUrls?: string[];
+  maxJestWorkers?: string;
 }
 
 /**
@@ -42,7 +43,7 @@ export interface PluginCIOptions {
  *  Anything that should be put into the final zip file should be put in:
  *   ~/ci/jobs/build_xxx/dist
  */
-const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish }) => {
+const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish, maxJestWorkers }) => {
   const start = Date.now();
 
   if (finish) {
@@ -60,7 +61,7 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish }) => {
     writeJobStats(start, workDir);
   } else {
     // Do regular build process with coverage
-    await pluginBuildRunner({ coverage: true });
+    await pluginBuildRunner({ coverage: true, maxJestWorkers });
   }
 };
 

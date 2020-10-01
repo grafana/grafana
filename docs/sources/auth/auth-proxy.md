@@ -8,7 +8,7 @@ aliases = ["/docs/grafana/latest/tutorials/authproxy/"]
 name = "Auth Proxy"
 identifier = "auth-proxy"
 parent = "authentication"
-weight = 2
+weight = 200
 +++
 
 # Auth Proxy Authentication

@@ -1,4 +1,5 @@
 import { LiveChannelConfig } from '@grafana/data';
+import { getDashboardChannelsFeature } from './dashboard/dashboardWatcher';
 import { grafanaLiveCoreFeatures } from './scopes';
 
 export function registerLiveFeatures() {
@@ -13,35 +14,34 @@ export function registerLiveFeatures() {
     },
   ];
 
-  grafanaLiveCoreFeatures.register(
-    'testdata',
-    {
+  grafanaLiveCoreFeatures.register({
+    name: 'testdata',
+    support: {
       getChannelConfig: (path: string) => {
         return channels.find(c => c.path === path);
       },
       getSupportedPaths: () => channels,
     },
-    'Test data generations'
-  );
+    description: 'Test data generations',
+  });
 
-  const chatConfig: LiveChannelConfig = {
-    path: 'chat',
-    description: 'Broadcast text messages to a channel',
+  const broadcastConfig: LiveChannelConfig = {
+    path: '${path}',
+    description: 'Broadcast any messages to a channel',
     canPublish: () => true,
-    hasPresense: true,
   };
 
-  grafanaLiveCoreFeatures.register(
-    'experimental',
-    {
+  grafanaLiveCoreFeatures.register({
+    name: 'broadcast',
+    support: {
       getChannelConfig: (path: string) => {
-        if ('chat' === path) {
-          return chatConfig;
-        }
-        throw new Error('invalid path: ' + path);
+        return broadcastConfig;
       },
-      getSupportedPaths: () => [chatConfig],
+      getSupportedPaths: () => [broadcastConfig],
     },
-    'Experimental features'
-  );
+    description: 'Broadcast will send/recieve any events on a channel',
+  });
+
+  // dashboard/*
+  grafanaLiveCoreFeatures.register(getDashboardChannelsFeature());
 }
