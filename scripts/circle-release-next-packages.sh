@@ -47,6 +47,6 @@ else
   done
 
   echo $'\nPublishing packages'
-  yarn packages:publishCanary
+  yarn packages:publishCanary --no-git-reset
 fi
 
