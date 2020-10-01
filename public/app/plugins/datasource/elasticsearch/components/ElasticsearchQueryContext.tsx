@@ -1,6 +1,6 @@
 import React, { createContext, FunctionComponent, useContext, useEffect } from 'react';
 import { ElasticDatasource } from '../datasource';
-import { defaultMetricAgg, metricAggregationConfig } from '../query_def';
+import { defaultBucketAgg, defaultMetricAgg, metricAggregationConfig } from '../query_def';
 import { ElasticsearchQuery, NormalizedElasticsearchQuery, isNormalized, MetricAggregation } from '../types';
 import { normalizeQuery } from '../utils';
 
@@ -39,6 +39,8 @@ interface Thing {
   addMetric: () => void;
   removeMetric: (index: number) => void;
   changeMetric: (index: number) => (newMetric: MetricAggregation) => void;
+  addBucketAggregation: () => void;
+  removeBucketAggregation: (index: number) => void;
   onQueryChange: (queryString: string) => void;
 }
 
@@ -80,6 +82,21 @@ export const useElasticsearchQuery = (): Thing => {
     });
   };
 
+  const addBucketAggregation = () => {
+    const lastId = query.bucketAggs[query.bucketAggs.length - 1].id;
+    onChange({
+      ...query,
+      bucketAggs: [...query.bucketAggs, defaultBucketAgg(lastId + 1)],
+    });
+  };
+
+  const removeBucketAggregation = (index: number) => {
+    onChange({
+      ...query,
+      bucketAggs: query.bucketAggs.slice(0, index).concat(query.bucketAggs.slice(index + 1)),
+    });
+  };
+
   const onQueryChange = (queryString: string) => {
     onChange({
       ...query,
@@ -87,7 +104,7 @@ export const useElasticsearchQuery = (): Thing => {
     });
   };
 
-  return { query, addMetric, removeMetric, changeMetric, onQueryChange };
+  return { query, addMetric, removeMetric, changeMetric, onQueryChange, addBucketAggregation, removeBucketAggregation };
 };
 
 export const useDatasource = () => {

@@ -15,7 +15,3 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, hidden: boolean) =>
     `,
   };
 });
-
-export const marginZero = css`
-  margin: 0;
-`;

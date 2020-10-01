@@ -2,6 +2,7 @@ import React, { ComponentProps, FunctionComponent } from 'react';
 import { InlineField, InlineFieldRow, Input, QueryField } from '@grafana/ui';
 import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { useElasticsearchQuery } from './ElasticsearchQueryContext';
+import { BucketAggregationsEditor } from './BucketAggregationsEditor';
 
 const labelsProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 15,
@@ -28,8 +29,7 @@ export const QueryEditorForm: FunctionComponent = () => {
       </InlineFieldRow>
 
       <MetricAggregationsEditor />
-
-      {/* TODO: Bucket Aggregations */}
+      <BucketAggregationsEditor />
     </>
   );
 };

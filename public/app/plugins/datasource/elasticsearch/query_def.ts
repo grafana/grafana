@@ -1,10 +1,11 @@
 import _ from 'lodash';
 import {
   ElasticsearchQuery,
-  ElasticsearchAggregation,
   MetricAggregation,
   MetricAggregationType,
   MetricsConfiguration,
+  BucketsConfiguration,
+  BucketAggregation,
 } from './types';
 
 export const metricAggregationConfig: MetricsConfiguration = {
@@ -102,13 +103,28 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
 };
 
-export const bucketAggTypes = [
-  { label: 'Terms', value: 'terms', requiresField: true },
-  { label: 'Filters', value: 'filters' },
-  { label: 'Geo Hash Grid', value: 'geohash_grid', requiresField: true },
-  { label: 'Date Histogram', value: 'date_histogram', requiresField: true },
-  { label: 'Histogram', value: 'histogram', requiresField: true },
-];
+export const bucketAggregationConfig: BucketsConfiguration = {
+  terms: {
+    label: 'Terms',
+    requiresField: true,
+  },
+  filters: {
+    label: 'Filters',
+    requiresField: false,
+  },
+  geohash_grid: {
+    label: 'Geo Hash Grid',
+    requiresField: true,
+  },
+  date_histogram: {
+    label: 'Date Histogram',
+    requiresField: true,
+  },
+  histogram: {
+    label: 'Histogram',
+    requiresField: true,
+  },
+};
 
 export const orderByOptions = [
   { text: 'Doc Count', value: '_count' },
@@ -225,20 +241,20 @@ export function isPipelineAggWithMultipleBucketPaths(metricType: MetricAggregati
   // return metricAggTypes.find(t => t.value === metricType && t.supportsMultipleBucketPaths) !== undefined;
 }
 
-export function getAncestors(target: ElasticsearchQuery, metric?: ElasticsearchAggregation) {
+export function getAncestors(target: ElasticsearchQuery, metric?: MetricAggregation) {
   const { metrics } = target;
   if (!metrics) {
     return (metric && [metric.id]) || [];
   }
   const initialAncestors = metric != null ? [metric.id] : ([] as string[]);
-  return metrics.reduce((acc: string[], metric: ElasticsearchAggregation) => {
+  return metrics.reduce((acc: string[], metric) => {
     const includedInField = (metric.field && acc.includes(metric.field)) || false;
     const includedInVariables = metric.pipelineVariables?.some(pv => acc.includes(pv?.pipelineAgg ?? ''));
     return includedInField || includedInVariables ? [...acc, metric.id] : acc;
   }, initialAncestors);
 }
 
-export function getPipelineAggOptions(target: ElasticsearchQuery, metric?: ElasticsearchAggregation) {
+export function getPipelineAggOptions(target: ElasticsearchQuery, metric?: MetricAggregation) {
   const { metrics } = target;
   if (!metrics) {
     return [];
@@ -276,7 +292,7 @@ export function describeOrder(order: string) {
   return def.text;
 }
 
-export function describeMetric(metric: ElasticsearchAggregation) {
+export function describeMetric(metric: MetricAggregation) {
   const def: any = _.find(metricAggTypes, { value: metric.type });
   if (!def.requiresField && !isPipelineAgg(metric.type)) {
     return def.text;
@@ -301,7 +317,7 @@ export function defaultMetricAgg(id = 1): MetricAggregation {
   return { type: 'count', id, hide: false };
 }
 
-export function defaultBucketAgg(id = 1): ElasticsearchAggregation {
+export function defaultBucketAgg(id = 1): BucketAggregation {
   return { type: 'date_histogram', id, settings: { interval: 'auto' }, hide: false };
 }
 

@@ -5,7 +5,8 @@ import React, { FunctionComponent, useCallback } from 'react';
 import { metricAggregationConfig } from '../../query_def';
 import { MetricAggregation, MetricAggregationType } from '../../types';
 import { useDatasource } from '../ElasticsearchQueryContext';
-import { getStyles, marginZero } from './styles';
+import { getStyles } from './styles';
+import { marginZero } from '../styles';
 
 const metricAggOptions: Array<SelectableValue<MetricAggregationType>> = Object.entries(metricAggregationConfig).map(
   ([key, { label }]) => ({

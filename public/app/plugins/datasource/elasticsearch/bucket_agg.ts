@@ -172,13 +172,13 @@ export class ElasticBucketAggCtrl {
       return queryDef.getOrderByOptions($scope.target);
     };
 
-    $scope.getFieldsInternal = () => {
-      if ($scope.agg.type === 'date_histogram') {
-        return $scope.getFields({ $fieldType: 'date' });
-      } else {
-        return $scope.getFields();
-      }
-    };
+    // $scope.getFieldsInternal = () => {
+    //   if ($scope.agg.type === 'date_histogram') {
+    //     return $scope.getFields({ $fieldType: 'date' });
+    //   } else {
+    //     return $scope.getFields();
+    //   }
+    // };
 
     $scope.getIntervalOptions = () => {
       return Promise.resolve(uiSegmentSrv.transformToSegments(true, 'interval')(queryDef.intervalOptions));
@@ -205,10 +205,10 @@ export class ElasticBucketAggCtrl {
       $scope.onChange();
     };
 
-    $scope.removeBucketAgg = () => {
-      bucketAggs.splice($scope.index, 1);
-      $scope.onChange();
-    };
+    // $scope.removeBucketAgg = () => {
+    //   bucketAggs.splice($scope.index, 1);
+    //   $scope.onChange();
+    // };
 
     $scope.init();
   }

@@ -30,14 +30,6 @@ export type MetricAggregationType =
 
 export type BucketAggregationType = 'terms' | 'filters' | 'geohash_grid' | 'date_histogram' | 'histogram';
 
-export interface MetricAggregation {
-  id: number;
-  type: MetricAggregationType;
-  hide: boolean;
-  field?: string;
-  settings?: unknown;
-}
-
 // TODO: Fix the stuff below here.
 interface MetricConfiguration {
   label: string;
@@ -49,32 +41,38 @@ interface MetricConfiguration {
   supportsMultipleBucketPaths?: boolean;
   isSingleMetric?: boolean;
 }
-export type MetricsConfiguration = Record<MetricAggregationType, MetricConfiguration>;
 
-export interface BucketAggregation {
+interface BucketConfiguration {
   label: string;
-  value: BucketAggregationType;
-  [key: string]: any;
+  requiresField: boolean;
 }
+export type MetricsConfiguration = Record<MetricAggregationType, MetricConfiguration>;
+export type BucketsConfiguration = Record<BucketAggregationType, BucketConfiguration>;
 
 export interface ElasticsearchAggregation {
   id: number;
   type: MetricAggregationType | BucketAggregationType;
-  settings?: any;
+  settings?: unknown;
   field?: string;
   pipelineVariables?: Array<{ name?: string; pipelineAgg?: string }>;
   hide: boolean;
 }
 
-export interface ElasticsearchBucketAggregation extends ElasticsearchAggregation {
+export interface BucketAggregation extends ElasticsearchAggregation {
   type: BucketAggregationType;
+}
+
+export interface MetricAggregation extends ElasticsearchAggregation {
+  type: MetricAggregationType;
+  hide: boolean;
+  settings?: unknown;
 }
 
 export interface ElasticsearchQuery extends DataQuery {
   isLogsQuery?: boolean;
   alias?: string;
   query?: string;
-  bucketAggs?: ElasticsearchBucketAggregation[];
+  bucketAggs?: BucketAggregation[];
   metrics?: MetricAggregation[];
   timeField?: string;
 }
