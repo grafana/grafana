@@ -9,7 +9,7 @@ parent = "variables"
 weight = 100
 +++
 
-# Variable syntax and types
+# Variable syntax
 
 Panel titles and metric queries can refer to variables using two different syntaxes:
 
