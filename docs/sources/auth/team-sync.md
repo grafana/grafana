@@ -7,7 +7,7 @@ type = "docs"
 [menu.docs]
 name = "Team Sync"
 parent = "authentication"
-weight = 5
+weight = 1200
 +++
 
 # Team sync
