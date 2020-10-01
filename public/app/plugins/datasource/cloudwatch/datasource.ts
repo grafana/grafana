@@ -18,6 +18,8 @@ import {
   TimeRange,
   toDataFrame,
   rangeUtil,
+  LiveChannelScope,
+  LiveChannelMessage,
 } from '@grafana/data';
 import { getBackendSrv, getGrafanaLiveSrv, toDataQueryResponse } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -41,7 +43,7 @@ import {
   isCloudWatchLogsQuery,
 } from './types';
 import { from, Observable, of, merge } from 'rxjs';
-import { catchError, finalize, map, mergeMap } from 'rxjs/operators';
+import { catchError, filter, finalize, map, mergeMap } from 'rxjs/operators';
 import { CloudWatchLanguageProvider } from './language_provider';
 
 import { VariableWithMultiSupport } from 'app/features/variables/types';
@@ -160,11 +162,12 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       queries: queryParams,
     };
     return this.getResponseChannel(requestParams).pipe(
-      map(response => {
+      filter(({ type }: LiveChannelMessage<any>) => type === 'message'),
+      map(({ type, message }: LiveChannelMessage<any>) => {
         const dataQueryResponse = toDataQueryResponse({
           data: {
             results: {
-              [response.refId]: response,
+              [message.refId]: message,
             },
           },
         });
@@ -816,7 +819,13 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
         url: '/api/tsdb/wsquery',
         data,
       })
-      .pipe(mergeMap(resp => srv.getChannelStream<any>(resp.data.channelName)));
+      .pipe(
+        mergeMap(resp => {
+          const [scope, namespace, channelName] = resp.data.channelName.split('/');
+          const channel = srv.getChannel(scope as LiveChannelScope, namespace, channelName);
+          return channel.getStream();
+        })
+      );
   }
 
   getDefaultRegion() {

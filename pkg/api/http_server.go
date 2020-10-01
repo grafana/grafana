@@ -73,7 +73,7 @@ type HTTPServer struct {
 	SearchService        *search.SearchService            `inject:""`
 	Live                 *live.GrafanaLive
 	Listener             net.Listener
-	SocketChannel        chan *RequestRun
+	SocketChannel        chan *ResultProvider
 }
 
 func (hs *HTTPServer) runRequests() {
@@ -82,7 +82,9 @@ func (hs *HTTPServer) runRequests() {
 		go func() {
 			for r := range res.Channel {
 				bytes, _ := json.Marshal(r)
-				hs.Live.Publish(res.ChannelName, bytes)
+				if ok := hs.Live.Publish(res.ChannelName, bytes); !ok {
+					hs.log.Info("Couldn't publish to " + res.ChannelName)
+				}
 			}
 		}()
 	}
@@ -98,7 +100,7 @@ func (hs *HTTPServer) Init() error {
 			return err
 		}
 		hs.Live = node
-		hs.SocketChannel = make(chan *RequestRun)
+		hs.SocketChannel = make(chan *ResultProvider)
 
 		// Spit random walk to example
 		go live.RunRandomCSV(hs.Live, "grafana/testdata/random-2s-stream", 2000, 0)

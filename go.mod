@@ -15,7 +15,7 @@ require (
 	cloud.google.com/go/storage v1.8.0
 	github.com/BurntSushi/toml v0.3.1
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
-	github.com/aws/aws-sdk-go v1.33.12
+	github.com/aws/aws-sdk-go v1.34.26
 	github.com/benbjohnson/clock v0.0.0-20161215174838-7dc76406b6d3
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
 	github.com/centrifugal/centrifuge v0.11.0

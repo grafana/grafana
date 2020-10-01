@@ -22,7 +22,7 @@ type WebsocketResponse struct {
 	ChannelName string `json:"channelName"`
 }
 
-type RequestRun struct {
+type ResultProvider struct {
 	Channel     chan *tsdb.QueryResult
 	ChannelName string
 }
@@ -209,8 +209,9 @@ func (hs *HTTPServer) QueryMetricsWS(c *models.ReqContext, reqDto dtos.MetricReq
 		return Error(500, "Metric request error", err)
 	}
 
-	channelName := uuid.Must(uuid.NewV4()).String()
-	hs.SocketChannel <- &RequestRun{
+	channelPrefix := "ds/" + ds.Name + "/"
+	channelName := channelPrefix + uuid.Must(uuid.NewV4()).String()
+	hs.SocketChannel <- &ResultProvider{
 		ChannelName: channelName,
 		Channel:     channel,
 	}

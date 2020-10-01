@@ -22,6 +22,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
+	"github.com/aws/aws-sdk-go/service/servicequotas"
+	"github.com/aws/aws-sdk-go/service/servicequotas/servicequotasiface"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -64,7 +66,7 @@ func init() {
 func newExecutor() *cloudWatchExecutor {
 	return &cloudWatchExecutor{
 		logsClientsByRegion: map[string]cloudwatchlogsiface.CloudWatchLogsAPI{},
-		queue:               make(chan bool, 4),
+		queues:              map[string](chan bool){},
 	}
 }
 
@@ -76,7 +78,8 @@ type cloudWatchExecutor struct {
 	rgtaClient          resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 	logsClientsByRegion map[string]cloudwatchlogsiface.CloudWatchLogsAPI
 	mtx                 sync.Mutex
-	queue               chan bool
+	queues              map[string](chan bool)
+	queueLock           sync.Mutex
 }
 
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
@@ -118,6 +121,14 @@ func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface
 	e.logsClientsByRegion[region] = logsClient
 
 	return logsClient, nil
+}
+
+func (e *cloudWatchExecutor) getServiceQuotasClient(region string) (servicequotasiface.ServiceQuotasAPI, error) {
+	sess, err := e.newSession(region)
+	if err != nil {
+		return nil, err
+	}
+	return newQuotasClient(sess), nil
 }
 
 func (e *cloudWatchExecutor) getEC2Client(region string) (ec2iface.EC2API, error) {
@@ -225,6 +236,25 @@ func (e *cloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	return result, err
 }
 
+func (e *cloudWatchExecutor) getQueue(region string) (chan bool, error) {
+	e.queueLock.Lock()
+	defer e.queueLock.Unlock()
+
+	if queue, ok := e.queues[region]; ok {
+		return queue, nil
+	}
+
+	concurrentQueriesQuota, err := e.fetchConcurrentQueriesQuota(region)
+	if err != nil {
+		plog.Info("Could not fetch quota")
+	}
+
+	queueChannel := make(chan bool, concurrentQueriesQuota)
+	e.queues[region] = queueChannel
+
+	return queueChannel, nil
+}
+
 func (e *cloudWatchExecutor) sendQueryResultsToChannel(ctx context.Context, channel chan *tsdb.QueryResult, query *tsdb.Query, timeRange *tsdb.TimeRange) error {
 	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
 	parameters := query.Model
@@ -234,8 +264,15 @@ func (e *cloudWatchExecutor) sendQueryResultsToChannel(ctx context.Context, chan
 		return err
 	}
 
-	e.queue <- true
-	defer func() { <-e.queue }()
+	queue, err := e.getQueue(region)
+	if err != nil {
+		plog.Info("Could not retrieve queue")
+		return err
+	}
+
+	e.addToQueue(region)
+	queue <- true
+	defer func() { <-queue }()
 
 	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, parameters, timeRange)
 	if err != nil {
@@ -331,6 +368,41 @@ func (e *cloudWatchExecutor) WebSocketQuery(ctx context.Context, dsInfo *models.
 	close(channel)
 
 	return nil
+}
+
+func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string) (int, error) {
+	client, err := e.getServiceQuotasClient(region)
+	if err != nil {
+		return 4, err
+	}
+
+	concurrentQueriesQuota, err := client.GetServiceQuota(&servicequotas.GetServiceQuotaInput{
+		ServiceCode: aws.String("logs"),
+		QuotaCode:   aws.String("L-32C48FBB"),
+	})
+
+	if err != nil {
+		return 4, err
+	}
+
+	if concurrentQueriesQuota != nil && concurrentQueriesQuota.Quota != nil {
+		return int(*concurrentQueriesQuota.Quota.Value), nil
+	}
+
+	defaultConcurrentQueriesQuota, err := client.GetAWSDefaultServiceQuota(&servicequotas.GetAWSDefaultServiceQuotaInput{
+		ServiceCode: aws.String("logs"),
+		QuotaCode:   aws.String("L-32C48FBB"),
+	})
+
+	if err != nil {
+		return 4, err
+	}
+
+	if defaultConcurrentQueriesQuota != nil && defaultConcurrentQueriesQuota.Quota != nil {
+		return int(*defaultConcurrentQueriesQuota.Quota.Value), nil
+	}
+
+	return 4, nil
 }
 
 func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
@@ -446,6 +518,16 @@ var newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 // Stubbable by tests.
 var newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 	client := cloudwatchlogs.New(sess)
+	client.Handlers.Send.PushFront(func(r *request.Request) {
+		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+	})
+
+	return client
+}
+
+// Service quotas client
+var newQuotasClient = func(sess *session.Session) servicequotasiface.ServiceQuotasAPI {
+	client := servicequotas.New(sess)
 	client.Handlers.Send.PushFront(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 	})
