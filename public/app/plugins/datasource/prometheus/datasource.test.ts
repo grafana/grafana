@@ -192,26 +192,6 @@ describe('PrometheusDatasource', () => {
     });
   });
 
-  describe('When performing performSuggestQuery', () => {
-    it('should cache response', async () => {
-      fetchMock.mockImplementation(() =>
-        of({
-          status: 'success',
-          data: { data: ['value1', 'value2', 'value3'] },
-        })
-      );
-
-      let results = await ds.performSuggestQuery('value', true);
-
-      expect(results).toHaveLength(3);
-
-      fetchMock.mockImplementation(jest.fn());
-      results = await ds.performSuggestQuery('value', true);
-
-      expect(results).toHaveLength(3);
-    });
-  });
-
   describe('When converting prometheus histogram to heatmap format', () => {
     let query: any;
     beforeEach(() => {
@@ -690,32 +670,32 @@ describe('PrometheusDatasource', () => {
 
     it('should be same length', () => {
       expect(results.data.length).toBe(2);
-      expect(results.data[0].datapoints.length).toBe((end - start) / step + 1);
-      expect(results.data[1].datapoints.length).toBe((end - start) / step + 1);
+      expect(results.data[0].length).toBe((end - start) / step + 1);
+      expect(results.data[1].length).toBe((end - start) / step + 1);
     });
 
     it('should fill null until first datapoint in response', () => {
-      expect(results.data[0].datapoints[0][1]).toBe(start * 1000);
-      expect(results.data[0].datapoints[0][0]).toBe(null);
-      expect(results.data[0].datapoints[1][1]).toBe((start + step * 1) * 1000);
-      expect(results.data[0].datapoints[1][0]).toBe(3846);
+      expect(results.data[0].fields[0].values.get(0)).toBe(start * 1000);
+      expect(results.data[0].fields[1].values.get(0)).toBe(null);
+      expect(results.data[0].fields[0].values.get(1)).toBe((start + step * 1) * 1000);
+      expect(results.data[0].fields[1].values.get(1)).toBe(3846);
     });
 
     it('should fill null after last datapoint in response', () => {
       const length = (end - start) / step + 1;
-      expect(results.data[0].datapoints[length - 2][1]).toBe((end - step * 1) * 1000);
-      expect(results.data[0].datapoints[length - 2][0]).toBe(3848);
-      expect(results.data[0].datapoints[length - 1][1]).toBe(end * 1000);
-      expect(results.data[0].datapoints[length - 1][0]).toBe(null);
+      expect(results.data[0].fields[0].values.get(length - 2)).toBe((end - step * 1) * 1000);
+      expect(results.data[0].fields[1].values.get(length - 2)).toBe(3848);
+      expect(results.data[0].fields[0].values.get(length - 1)).toBe(end * 1000);
+      expect(results.data[0].fields[1].values.get(length - 1)).toBe(null);
     });
 
     it('should fill null at gap between series', () => {
-      expect(results.data[0].datapoints[2][1]).toBe((start + step * 2) * 1000);
-      expect(results.data[0].datapoints[2][0]).toBe(null);
-      expect(results.data[1].datapoints[1][1]).toBe((start + step * 1) * 1000);
-      expect(results.data[1].datapoints[1][0]).toBe(null);
-      expect(results.data[1].datapoints[3][1]).toBe((start + step * 3) * 1000);
-      expect(results.data[1].datapoints[3][0]).toBe(null);
+      expect(results.data[0].fields[0].values.get(2)).toBe((start + step * 2) * 1000);
+      expect(results.data[0].fields[1].values.get(2)).toBe(null);
+      expect(results.data[1].fields[0].values.get(1)).toBe((start + step * 1) * 1000);
+      expect(results.data[1].fields[1].values.get(1)).toBe(null);
+      expect(results.data[1].fields[0].values.get(3)).toBe((start + step * 3) * 1000);
+      expect(results.data[1].fields[1].values.get(3)).toBe(null);
     });
   });
 

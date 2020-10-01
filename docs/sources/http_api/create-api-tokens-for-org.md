@@ -9,7 +9,7 @@ weight = 150
 
 # Create API tokens and dashboards for an organization
 
-Use the Grafana API to setup new Grafana organizations or to add dynamically generated dashboards to an existing organization.
+Use the Grafana API to set up new Grafana organizations or to add dynamically generated dashboards to an existing organization.
 
 ## Authentication
 
@@ -72,4 +72,4 @@ Using the Token that was created in the previous step, you can create a dashboar
   }' http://localhost:3000/api/dashboards/db
   ```
 
-  > **Note.** If you export a dashboard for sharing externally using the Share > Export menu in the Grafana UI, you cannot import that dashboard. Instead, click **View JSON** and save it to a file or fetch the JSON output through the API.
+  > **Note:** If you export a dashboard for sharing externally using the Share > Export menu in the Grafana UI, you cannot import that dashboard. Instead, click **View JSON** and save it to a file or fetch the JSON output through the API.

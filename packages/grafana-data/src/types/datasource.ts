@@ -331,6 +331,7 @@ export enum DataSourceStatus {
   Disconnected,
 }
 
+// TODO: not really needed but used as type in some data sources and in DataQueryRequest
 export enum ExploreMode {
   Logs = 'Logs',
   Metrics = 'Metrics',
@@ -469,7 +470,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   // Explore state used by various datasources
   liveStreaming?: boolean;
   /**
-   * @deprecated showingGraph and showingTable are always set to true and set to true
+   * @deprecated showingGraph and showingTable are always set to true
    */
   showingGraph?: boolean;
   showingTable?: boolean;
