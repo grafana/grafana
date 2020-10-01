@@ -54,6 +54,40 @@ describe('Check field state calculations (displayName and id)', () => {
     expect(title).toEqual('Series A Field 1');
   });
 
+  it('should add field index to name if field name exists more than once', () => {
+    const title = checkScenario({
+      frames: [
+        toDataFrame({
+          fields: [{ name: 'Value' }, { name: 'Value' }],
+        }),
+      ],
+    });
+    const title2 = checkScenario({
+      frames: [
+        toDataFrame({
+          fields: [{ name: 'Value' }, { name: 'Value' }],
+        }),
+      ],
+      fieldIndex: 1,
+    });
+
+    expect(title).toEqual('Value 1');
+    expect(title2).toEqual('Value 2');
+  });
+
+  it('should add field index to name if field name exists more than once', () => {
+    const title2 = checkScenario({
+      frames: [
+        toDataFrame({
+          fields: [{ name: 'A' }, { name: 'A' }],
+        }),
+      ],
+      fieldIndex: 1,
+    });
+
+    expect(title2).toEqual('A 2');
+  });
+
   it('should only use label value if only one label', () => {
     const title = checkScenario({
       frames: [
