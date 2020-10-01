@@ -8,7 +8,7 @@ aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
 name = "AWS Cloudwatch"
 identifier = "cloudwatch"
 parent = "datasources"
-weight = 5
+weight = 200
 +++
 
 # Using AWS CloudWatch in Grafana
@@ -203,7 +203,7 @@ To the right of the query input field is a CloudWatch Logs Insights link that op
 ### Using template variables
 
 As with several other data sources, the CloudWatch data source supports the use of template variables in queries.
-See the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+See the [Templating]({{< relref "../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Deep linking from Grafana panels to the CloudWatch console
 
@@ -214,7 +214,7 @@ If you're not currently logged in to the CloudWatch console, the link will forwa
 ### Alerting
 
 Since CloudWatch Logs queries can return numeric data, for example through the use of the `stats` command, alerts are supported.
-See the [Alerting]({{< relref "../../alerting/alerts-overview.md" >}}) documentation for more on Grafana alerts.
+See the [Alerting]({{< relref "../alerting/alerts-overview.md" >}}) documentation for more on Grafana alerts.
 
 ## Curated dashboards
 
@@ -236,7 +236,7 @@ To import the pre-configured dashboards, go to the configuration page of your Cl
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-See the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+See the [Templating]({{< relref "../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query variable
 
@@ -368,7 +368,7 @@ Please see the AWS documentation for [Service Quotas](https://docs.aws.amazon.co
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
 
 Here are some provisioning examples for this data source.
 
