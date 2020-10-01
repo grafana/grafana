@@ -22,7 +22,7 @@ const endpoints = [
 ];
 
 // Fields that need to be transformed to numbers
-const numberFields = ['lines', 'seriesCount'];
+const numberFields = ['lines', 'seriesCount', 'timeStep'];
 
 export interface EditorProps {
   onChange: any;
@@ -83,7 +83,8 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
 
   const onFieldChange = (field: string) => (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target as HTMLInputElement;
-    onChange({ ...query, [field]: { ...query[field as keyof TestDataQuery], [name]: value } });
+    const formattedValue = numberFields.includes(name) ? Number(value) : value;
+    onChange({ ...query, [field]: { ...query[field as keyof TestDataQuery], [name]: formattedValue } });
   };
 
   const onEndPointChange = ({ value }: SelectableValue) => {

@@ -1,7 +1,6 @@
 import React from 'react';
 import { EditorProps } from '../QueryEditor';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
-import { TestDataQuery } from '../types';
 
 const fields = [
   {
@@ -30,8 +29,9 @@ export const CSVWaveEditor = ({ onChange, query }: EditorProps) => {
             <Input
               width={grow ? undefined : 32}
               type={type}
+              name={id}
               id={`csvWave.${id}`}
-              value={query[id as keyof TestDataQuery]}
+              value={query.csvWave?.[id]}
               placeholder={placeholder}
               onChange={onChange}
             />
