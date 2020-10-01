@@ -3,7 +3,7 @@ title = "OpenTSDB"
 description = "Guide for using OpenTSDB in Grafana"
 keywords = ["grafana", "opentsdb", "guide"]
 type = "docs"
-aliases = ["/docs/grafana/latest/datasources/opentsdb",	"/docs/grafana/latest/features/opentsdb"]
+aliases = ["/docs/grafana/latest/features/opentsdb", "/docs/grafana/latest/features/datasources/opentsdb/"]
 [menu.docs]
 name = "OpenTSDB"
 parent = "datasources"
