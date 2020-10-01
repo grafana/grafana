@@ -36,7 +36,7 @@ export interface LiveChannelConfig<TMessage = any> {
   /**
    * The channel keeps track of who else is connected to the same channel
    */
-  hasPresense?: boolean;
+  hasPresence?: boolean;
 
   /**
    * This method will be defined if it is possible to publish in this channel.
@@ -139,7 +139,7 @@ export function isLiveChannelMessageEvent<T>(evt: LiveChannelEvent<T>): evt is L
 /**
  * @experimental
  */
-export interface LiveChannelPresenseStatus {
+export interface LiveChannelPresenceStatus {
   users: any; // @experimental -- will be filled in when we improve the UI
 }
 
@@ -171,11 +171,11 @@ export interface LiveChannel<TMessage = any, TPublish = any> {
   getStream: () => Observable<LiveChannelEvent<TMessage>>;
 
   /**
-   * For channels that support presense, this will request the current state from the server.
+   * For channels that support presence, this will request the current state from the server.
    *
    * Join and leave messages will be sent to the open stream
    */
-  getPresense?: () => Promise<LiveChannelPresenseStatus>;
+  getPresence?: () => Promise<LiveChannelPresenceStatus>;
 
   /**
    * Write a message into the channel

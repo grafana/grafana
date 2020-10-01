@@ -6,7 +6,7 @@ import {
   LiveChannelEvent,
   LiveChannelEventType,
   LiveChannelConnectionState,
-  LiveChannelPresenseStatus,
+  LiveChannelPresenceStatus,
 } from '@grafana/data';
 import Centrifuge, {
   JoinLeaveContext,
@@ -90,7 +90,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
       },
     };
 
-    if (config.hasPresense) {
+    if (config.hasPresence) {
       events.join = (ctx: JoinLeaveContext) => {
         this.stream.next({ type: LiveChannelEventType.Join, user: ctx.info.user });
       };
@@ -98,7 +98,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
         this.stream.next({ type: LiveChannelEventType.Leave, user: ctx.info.user });
       };
 
-      this.getPresense = () => {
+      this.getPresence = () => {
         return this.subscription!.presence().then(v => {
           return {
             users: Object.keys(v.presence),
@@ -121,9 +121,9 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
   }
 
   /**
-   * This is configured by the server when the config supports presense
+   * This is configured by the server when the config supports presence
    */
-  getPresense?: () => Promise<LiveChannelPresenseStatus>;
+  getPresence?: () => Promise<LiveChannelPresenceStatus>;
 
   /**
    * This is configured by the server when config supports writing
