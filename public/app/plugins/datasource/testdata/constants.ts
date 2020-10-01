@@ -14,7 +14,7 @@ export const defaultCSVWave: any = {
   valuesCSV: '0,0,2,2,1,1',
 };
 
-export const defaultQuery: Partial<TestDataQuery> = {
+export const defaultQuery: TestDataQuery = {
   points: [[]],
   stream: defaultStreamQuery,
   pulseWave: defaultPulse,
@@ -22,4 +22,5 @@ export const defaultQuery: Partial<TestDataQuery> = {
   stringInput: '',
   scenarioId: 'random_walk',
   lines: 10,
+  refId: '',
 };

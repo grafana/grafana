@@ -20,7 +20,7 @@ export interface Props extends Omit<LabelProps, 'css' | 'description' | 'categor
   isInvalid?: boolean;
 }
 
-export const InlineLabel: FunctionComponent<Props> = ({ children, className, htmlFor, tooltip, width, ...rest }) => {
+export const InlineLabel: FunctionComponent<Props> = ({ children, className, tooltip, width, ...rest }) => {
   const theme = useTheme();
   const styles = getInlineLabelStyles(theme, width);
 
