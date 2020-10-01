@@ -58,19 +58,6 @@ export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
           />
         </InlineField>
       )}
-
-      {query?.stream?.type === 'logs' && (
-        <InlineField label="Lines" labelWidth={14}>
-          <Input
-            type="number"
-            id="lines"
-            name="lines"
-            value={query?.stream?.url}
-            placeholder="10"
-            onChange={onChange}
-          />
-        </InlineField>
-      )}
     </InlineFieldRow>
   );
 };

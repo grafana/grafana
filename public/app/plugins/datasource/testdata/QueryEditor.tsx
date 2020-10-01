@@ -1,5 +1,5 @@
 // Libraries
-import React, { ChangeEvent, FormEvent, useMemo } from 'react';
+import React, { ChangeEvent, FormEvent, useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 // Components
@@ -21,6 +21,9 @@ const endpoints = [
   { value: 'annotations', label: 'Annotations' },
 ];
 
+// Fields that need to be transformed to numbers
+const numberFields = ['lines'];
+
 export interface EditorProps {
   onChange: any;
   query: TestDataQuery;
@@ -32,7 +35,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
   const { loading, value: scenarioList } = useAsync<Scenario[]>(async () => {
     return datasource.getScenarios();
   }, []);
-  query = { ...defaultQuery, ...query };
+
+  useEffect(() => {
+    onRunQuery();
+  }, [query]);
 
   const currentScenario = useMemo(() => scenarioList?.find(scenario => scenario.id === query.scenarioId), [
     scenarioList,
@@ -40,40 +46,48 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
   ]);
   const scenarioId = currentScenario?.id;
 
-  if (scenarioId === 'grafana_api') {
-    query.stringInput = query.stringInput || 'datasources';
-  } else {
-    query.stringInput = currentScenario?.stringInput || query.stringInput;
-  }
-
   const onScenarioChange = (item: SelectableValue<string>) => {
+    const scenario = scenarioList?.find(sc => sc.id === item.value);
+
+    if (!scenario) {
+      return;
+    }
+
+    let stringInput = query.stringInput;
+
+    if (scenario.id === 'grafana_api') {
+      stringInput = stringInput || 'datasources';
+    } else {
+      stringInput = scenario.stringInput ?? '';
+    }
+
     onChange({
       ...query,
-      stringInput: currentScenario?.stringInput ?? '',
       scenarioId: item.value!,
+      stringInput,
     });
-    onRunQuery();
   };
 
   const onInputChange = (e: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target as HTMLInputElement | HTMLTextAreaElement;
+    let newValue: Partial<TestDataQuery> = { [name]: value };
+
     if (name === 'levelColumn') {
-      onChange({ ...query, levelColumn: (e.target as HTMLInputElement).checked });
-    } else {
-      onChange({ ...query, [name]: value });
+      newValue = { levelColumn: (e.target as HTMLInputElement).checked };
+    } else if (numberFields.includes(name)) {
+      newValue = { [name]: Number(value) };
     }
-    onRunQuery();
+
+    onChange({ ...query, ...newValue });
   };
 
   const onFieldChange = (field: string) => (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target as HTMLInputElement;
     onChange({ ...query, [field]: { ...query[field as keyof TestDataQuery], [name]: value } });
-    onRunQuery();
   };
 
   const onEndPointChange = ({ value }: SelectableValue) => {
     onChange({ ...query, stringInput: value });
-    onRunQuery();
   };
 
   const onStreamClientChange = onFieldChange('stream');
@@ -89,6 +103,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     return null;
   }
 
+  query = { ...defaultQuery, ...query };
   return (
     <>
       <InlineFieldRow>
@@ -162,7 +177,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             <Input
               type="number"
               name="lines"
-              value={query.lines || 10}
+              value={query.lines}
               width={32}
               onChange={onInputChange}
               placeholder="10"

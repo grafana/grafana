@@ -21,5 +21,5 @@ export const defaultQuery: Partial<TestDataQuery> = {
   csvWave: defaultCSVWave,
   stringInput: '',
   scenarioId: 'random_walk',
-  lines: '10',
+  lines: 10,
 };
