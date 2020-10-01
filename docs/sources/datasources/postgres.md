@@ -3,6 +3,7 @@ title = "PostgreSQL"
 description = "Guide for using PostgreSQL in Grafana"
 keywords = ["grafana", "postgresql", "guide"]
 type = "docs"
+aliases = ["/docs/grafana/latest/features/datasources/postgres/"]
 [menu.docs]
 name = "PostgreSQL"
 parent = "datasources"
