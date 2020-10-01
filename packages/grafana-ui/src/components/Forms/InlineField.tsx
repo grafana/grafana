@@ -59,7 +59,7 @@ const getStyles = (theme: GrafanaTheme, grow?: boolean) => {
     container: css`
       display: flex;
       flex-direction: row;
-      align-items: flex-start;
+      align-items: center;
       text-align: left;
       position: relative;
       flex: ${grow ? 1 : 0} 0 auto;
