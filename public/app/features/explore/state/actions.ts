@@ -123,13 +123,11 @@ export function changeDatasource(
     const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
     const queries = getState().explore[exploreId].queries;
     const orgId = getState().user.orgId;
-    const datasourceVersion = newDataSourceInstance.getVersion && (await newDataSourceInstance.getVersion());
 
     dispatch(
       updateDatasourceInstanceAction({
         exploreId,
         datasourceInstance: newDataSourceInstance,
-        version: datasourceVersion,
       })
     );
 
