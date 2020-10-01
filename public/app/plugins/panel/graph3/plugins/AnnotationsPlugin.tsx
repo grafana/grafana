@@ -47,7 +47,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
       markers.push(
         <AnnotationMarker
           x={xpos}
-          key={`${annotation.time}-i`}
+          key={`${annotation.time}-${i}`}
           formatTime={timeFormatter}
           annotationEvent={annotation}
         />
