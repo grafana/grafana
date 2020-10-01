@@ -18,7 +18,6 @@ import { RefreshPicker } from '@grafana/ui';
 import { LocationUpdate } from '@grafana/runtime';
 
 import {
-  DEFAULT_UI_STATE,
   ensureQueries,
   generateNewKeyAndAddRefIdIfMissing,
   getQueryKeys,
@@ -30,6 +29,7 @@ import { ExploreId, ExploreItemState, ExploreState, ExploreUpdateState } from 'a
 import {
   addQueryRowAction,
   cancelQueriesAction,
+  changeDedupStrategyAction,
   changeLoadingStateAction,
   changeQueryAction,
   changeRangeAction,
@@ -62,7 +62,6 @@ import {
   syncTimesAction,
   toggleLogLevelAction,
   updateDatasourceInstanceAction,
-  updateUIStateAction,
 } from './actionTypes';
 import { updateLocation } from '../../../core/actions';
 import { Emitter } from 'app/core/core';
@@ -77,7 +76,6 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
   queries: false,
   range: false,
   mode: false,
-  ui: false,
 });
 
 /**
@@ -235,8 +233,16 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
     return { ...state, logsHighlighterExpressions: expressions };
   }
 
+  if (changeDedupStrategyAction.match(action)) {
+    const { dedupStrategy } = action.payload;
+    return {
+      ...state,
+      dedupStrategy,
+    };
+  }
+
   if (initializeExploreAction.match(action)) {
-    const { containerWidth, eventBridge, queries, range, ui, originPanelId } = action.payload;
+    const { containerWidth, eventBridge, queries, range, originPanelId } = action.payload;
     return {
       ...state,
       containerWidth,
@@ -245,7 +251,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       queries,
       initialized: true,
       queryKeys: getQueryKeys(queries, state.datasourceInstance),
-      ...ui,
       originPanelId,
       update: makeInitialUpdateState(),
     };
@@ -397,10 +402,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       queries: queries.slice(),
       queryKeys: getQueryKeys(queries, state.datasourceInstance),
     };
-  }
-
-  if (updateUIStateAction.match(action)) {
-    return { ...state, ...action.payload };
   }
 
   if (queriesImportedAction.match(action)) {
@@ -561,14 +562,13 @@ export const updateChildRefreshState = (
     return {
       ...state,
       urlState,
-      update: { datasource: false, queries: false, range: false, mode: false, ui: false },
+      update: { datasource: false, queries: false, range: false, mode: false },
     };
   }
 
   const datasource = _.isEqual(urlState ? urlState.datasource : '', state.urlState.datasource) === false;
   const queries = _.isEqual(urlState ? urlState.queries : [], state.urlState.queries) === false;
   const range = _.isEqual(urlState ? urlState.range : DEFAULT_RANGE, state.urlState.range) === false;
-  const ui = _.isEqual(urlState ? urlState.ui : DEFAULT_UI_STATE, state.urlState.ui) === false;
 
   return {
     ...state,
@@ -578,7 +578,6 @@ export const updateChildRefreshState = (
       datasource,
       queries,
       range,
-      ui,
     },
   };
 };

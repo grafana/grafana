@@ -80,7 +80,7 @@ export class DashboardModel {
   // ------------------
 
   // repeat process cycles
-  iteration: number;
+  iteration?: number;
   meta: DashboardMeta;
   events: Emitter;
 

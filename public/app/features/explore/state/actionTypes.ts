@@ -7,10 +7,10 @@ import {
   AbsoluteTimeRange,
   DataQuery,
   DataSourceApi,
-  ExploreUIState,
   HistoryItem,
   LoadingState,
   LogLevel,
+  LogsDedupStrategy,
   QueryFixAction,
   TimeRange,
 } from '@grafana/data';
@@ -55,7 +55,6 @@ export interface InitializeExplorePayload {
   eventBridge: Emitter;
   queries: DataQuery[];
   range: TimeRange;
-  ui: ExploreUIState;
   originPanelId?: number | null;
 }
 
@@ -125,10 +124,6 @@ export interface SyncTimesPayload {
   syncedTimes: boolean;
 }
 
-export interface UpdateUIStatePayload extends Partial<ExploreUIState> {
-  exploreId: ExploreId;
-}
-
 export interface UpdateDatasourceInstancePayload {
   exploreId: ExploreId;
   datasourceInstance: DataSourceApi;
@@ -169,6 +164,11 @@ export interface ResetExplorePayload {
   force?: boolean;
 }
 
+export interface ChangeDedupStrategyPayload {
+  exploreId: ExploreId;
+  dedupStrategy: LogsDedupStrategy;
+}
+
 /**
  * Adds a query row after the row with the given index.
  */
@@ -190,6 +190,11 @@ export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeS
  * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
  */
 export const changeRefreshIntervalAction = createAction<ChangeRefreshIntervalPayload>('explore/changeRefreshInterval');
+
+/**
+ * Change deduplication strategy for logs.
+ */
+export const changeDedupStrategyAction = createAction<ChangeDedupStrategyPayload>('explore/changeDedupStrategyAction');
 
 /**
  * Clear all queries and results.
@@ -282,10 +287,6 @@ export const splitOpenAction = createAction<SplitOpenPayload>('explore/splitOpen
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
 
 export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
-/**
- * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
- */
-export const updateUIStateAction = createAction<UpdateUIStatePayload>('explore/updateUIState');
 
 /**
  * Updates datasource instance before datasouce loading has started

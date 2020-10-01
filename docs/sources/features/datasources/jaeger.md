@@ -13,7 +13,7 @@ weight = 2
 # Jaeger data source
 
 Grafana ships with built-in support for Jaeger, which provides open source, end-to-end distributed tracing.
-Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore" >}}).
+Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../../explore/index.md" >}}).
 
 ## Adding the data source
 To access Jaeger settings, click the **Configuration** (gear) icon, then click **Data Sources**, and then click **Jaeger**.
@@ -30,7 +30,7 @@ To access Jaeger settings, click the **Configuration** (gear) icon, then click *
 
 ## Query traces
 
-You can query and display traces from Jaeger via [Explore]({{< relref "../explore/" >}}).
+You can query and display traces from Jaeger via [Explore]({{< relref "../../explore/index.md" >}}).
 
 {{< docs-imagebox img="/img/docs/v70/jaeger-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor" >}}
 
@@ -45,4 +45,4 @@ Use the trace selector to pick particular trace from all traces logged in the ti
 
 ## Linking Trace ID from logs
 
-You can link to Jaeger trace from logs in Loki by configuring a derived field with internal link. See the [Derived fields]({{< relref "./loki.md#derived-fields" >}}) section in the [Loki data source]({{< relref "./loki.md" >}}) documentation for details.
+You can link to Jaeger trace from logs in Loki by configuring a derived field with internal link. See the [Derived fields]({{< relref "loki.md#derived-fields" >}}) section in the [Loki data source]({{< relref "loki.md" >}}) documentation for details.

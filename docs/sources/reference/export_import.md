@@ -13,7 +13,7 @@ Grafana Dashboards can easily be exported and imported, either from the UI or fr
 
 ## Exporting a dashboard
 
-Dashboards are exported in Grafana JSON format, and contain everything you need (layout, variables, styles, data sources, queries, etc)to import the dashboard at a later time.
+Dashboards are exported in Grafana JSON format, and contain everything you need (layout, variables, styles, data sources, queries, etc) to import the dashboard at a later time.
 
 The export feature is accessed in the share window which you open by clicking the share button in the dashboard menu.
 
@@ -76,7 +76,7 @@ Example:
       "value": "collectd",
       "description": ""
     }
-  ],
+  ]
 }
 
 ```
@@ -90,7 +90,7 @@ These are then referenced in the dashboard panels like this:
         "panels": [
           {
             "type": "graph",
-            "datasource": "${DS_GRAPHITE}",
+            "datasource": "${DS_GRAPHITE}"
           }
         ]
       }

@@ -39,7 +39,7 @@ Each organization can have one or more data sources.
 
 All dashboards are owned by a particular organization.
 
- > Note: Most metric databases do not provide per-user series authentication. This means that organization data sources and dashboards are available to all users in a particular organization.
+ > **Note:** Most metric databases do not provide per-user series authentication. This means that organization data sources and dashboards are available to all users in a particular organization.
 
 Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information.
 

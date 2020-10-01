@@ -1,7 +1,7 @@
 import { getDashboardSrv } from '../services/DashboardSrv';
 import { DashboardModel } from './DashboardModel';
 
-import { PanelData, LoadingState, DataSourceApi } from '@grafana/data';
+import { PanelData, LoadingState, DataSourceApi, CoreApp, urlUtil } from '@grafana/data';
 
 import {
   reportMetaAnalytics,
@@ -14,11 +14,12 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
   let done = false;
 
   return (data: PanelData) => {
-    if (!data.request || done) {
+    if (!data.request || done || data.request.app === CoreApp.Explore) {
       return;
     }
 
-    if (data.request.exploreMode) {
+    const params = urlUtil.getUrlSearchParams();
+    if (params.editPanel != null) {
       return;
     }
 

@@ -191,7 +191,6 @@ export interface ExploreUpdateState {
   queries: boolean;
   range: boolean;
   mode: boolean;
-  ui: boolean;
 }
 
 export interface QueryOptions {
