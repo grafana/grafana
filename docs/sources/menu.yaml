@@ -332,58 +332,58 @@
   link: /whatsnew/
   children:
     - name: Version 7.2
-      link: /guides/whats-new-in-v7-2/
+      link: /whatsnew/whats-new-in-v7-2/
     - name: Version 7.1
-      link: /guides/whats-new-in-v7-1/
+      link: /whatsnew/whats-new-in-v7-1/
     - name: Version 7.0
-      link: /guides/whats-new-in-v7-0/
+      link: /whatsnew/whats-new-in-v7-0/
     - name: Version 6.7
-      link: /guides/whats-new-in-v6-7/
+      link: /whatsnew/whats-new-in-v6-7/
     - name: Version 6.6
-      link: /guides/whats-new-in-v6-6/
+      link: /whatsnew/whats-new-in-v6-6/
     - name: Version 6.5
-      link: /guides/whats-new-in-v6-5/
+      link: /whatsnew/whats-new-in-v6-5/
     - name: Version 6.4
-      link: /guides/whats-new-in-v6-4/
+      link: /whatsnew/whats-new-in-v6-4/
     - name: Version 6.3
-      link: /guides/whats-new-in-v6-3/
+      link: /whatsnew/whats-new-in-v6-3/
     - name: Version 6.2
-      link: /guides/whats-new-in-v6-2/
+      link: /whatsnew/whats-new-in-v6-2/
     - name: Version 6.1
-      link: /guides/whats-new-in-v6-1/
+      link: /whatsnew/whats-new-in-v6-1/
     - name: Version 6.0
-      link: /guides/whats-new-in-v6-0/
+      link: /whatsnew/whats-new-in-v6-0/
     - name: Old versions
       link: /whatsnew/
       children:
         - name: Version 5.4
-          link: /guides/whats-new-in-v5-4/
+          link: /whatsnew/whats-new-in-v5-4/
         - name: Version 5.3
-          link: /guides/whats-new-in-v5-3/
+          link: /whatsnew/whats-new-in-v5-3/
         - name: Version 5.2
-          link: /guides/whats-new-in-v5-2/
+          link: /whatsnew/whats-new-in-v5-2/
         - name: Version 5.1
-          link: /guides/whats-new-in-v5-1/
+          link: /whatsnew/whats-new-in-v5-1/
         - name: Version 5.0
-          link: /guides/whats-new-in-v5/
+          link: /whatsnew/whats-new-in-v5/
         - name: Version 4.6
-          link: /guides/whats-new-in-v4-6/
+          link: /whatsnew/whats-new-in-v4-6/
         - name: Version 4.5
-          link: /guides/whats-new-in-v4-5/
+          link: /whatsnew/whats-new-in-v4-5/
         - name: Version 4.4
-          link: /guides/whats-new-in-v4-4/
+          link: /whatsnew/whats-new-in-v4-4/
         - name: Version 4.3
-          link: /guides/whats-new-in-v4-3/
+          link: /whatsnew/whats-new-in-v4-3/
         - name: Version 4.2
-          link: /guides/whats-new-in-v4-2/
+          link: /whatsnew/whats-new-in-v4-2/
         - name: Version 4.1
-          link: /guides/whats-new-in-v4-1/
+          link: /whatsnew/whats-new-in-v4-1/
         - name: Version 4.0
-          link: /guides/whats-new-in-v4/
+          link: /whatsnew/whats-new-in-v4/
         - name: Version 3.1
-          link: /guides/whats-new-in-v3-1/
+          link: /whatsnew/whats-new-in-v3-1/
         - name: Version 3.0
-          link: /guides/whats-new-in-v3/
+          link: /whatsnew/whats-new-in-v3/
 - name: Grafana Enterprise
   link: /enterprise/
   children:
