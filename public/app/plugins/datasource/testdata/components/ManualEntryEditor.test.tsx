@@ -17,7 +17,7 @@ const setup = (testProps?: Partial<Props>) => {
     ...testProps,
   };
 
-  render(<ManualEntryEditor {...props} />);
+  return render(<ManualEntryEditor {...props} />);
 };
 
 describe('ManualEntryEditor', () => {
@@ -44,7 +44,7 @@ describe('ManualEntryEditor', () => {
   });
 
   it('should list selected points and delete selected ones', async () => {
-    setup({
+    const editor = setup({
       query: {
         ...defaultQuery,
         points: [
@@ -53,7 +53,7 @@ describe('ManualEntryEditor', () => {
         ],
       },
     });
-    const select = screen.getByText('All values').nextSibling!;
+    let select = screen.getByText('All values').nextSibling!;
     await fireEvent.keyDown(select, { keyCode: 40 });
     const points = screen.getAllByLabelText('Select option');
     expect(points).toHaveLength(2);
@@ -67,5 +67,20 @@ describe('ManualEntryEditor', () => {
     await waitFor(() => {
       expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ points: [[15, 1604340370000]] }));
     });
+
+    editor.rerender(
+      <ManualEntryEditor
+        query={{
+          ...defaultQuery,
+          points: [[15, 1604340370000]],
+        }}
+        onChange={jest.fn()}
+        onRunQuery={jest.fn()}
+      />
+    );
+
+    select = screen.getByText('All values').nextSibling!;
+    await fireEvent.keyDown(select, { keyCode: 40 });
+    expect(screen.getAllByLabelText('Select option')).toHaveLength(1);
   });
 });
