@@ -7,10 +7,12 @@ aliases = ["/docs/grafana/latest/installation/installation/", "/docs/grafana/v2.
 [menu.docs]
 name = "Installation"
 identifier = "installation"
-weight = 200
+weight = 30
 +++
 
-## Install Grafana
+# Install Grafana
+
+This section discusses the hardware and software requirements as well as the process of installing Grafana on different operating systems. This section has the following topics:
 
 - [Requirements]({{< relref "requirements" >}})
 - [Install on Debian or Ubuntu]({{< relref "debian" >}})
@@ -18,4 +20,3 @@ weight = 200
 - [Install on macOS]({{< relref "mac" >}})
 - [Install on Windows]({{< relref "windows" >}})
 - [Run Docker image]({{< relref "docker" >}})
-- [Nightly Builds](https://grafana.com/grafana/download)

@@ -29,6 +29,8 @@
 - name: Installation
   link: /installation/
   children:
+    - name: Installation
+      link: /installation/installation/
     - name: Requirements
       link: /installation/requirements/
     - name: Install on Ubuntu/Debian
@@ -46,6 +48,8 @@
 - name: Administration
   link: /administration/
   children:
+    - name: Administration Tasks
+      link: /administration/admin/
     - name: Change password
       link: /administration/change-your-password/
     - name: Change preferences
@@ -53,14 +57,16 @@
     - name: Configuration
       link: /administration/configuration/
     - name: Configure Docker image
-      link: /installation/configure-docker/
+      link: /administration/configure-docker/
     - name: Security
-      link: /installation/security/
+      link: /administration/security/
     - name: Authentication
       link: /auth/
       children:
         - link: /auth/overview/
           name: Overview
+        - link: /auth/grafana/
+          name: Grafana Authentication
         - link: /auth/auth-proxy/
           name: Auth Proxy
         - link: /auth/ldap/
@@ -291,8 +297,8 @@
 - name: Templates and variables
   link: /variables/
   children:
-    - link: /variables/templates-and-variables/
-      name: Overview
+    - link: /variables/syntax/
+      name: Variables syntax
     - link: /variables/variable-examples/
       name: Variable examples
     - name: Variable types
