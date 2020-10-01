@@ -52,7 +52,6 @@ else
   # build-frontend step in drone. We will only unpublish the previous 
   # canary version and publish the current built version as the new 
   # latest canary build.
-
   for PACKAGE in "${PACKAGES[@]}"
   do
     unpublish_previous_canary "$PACKAGE"
