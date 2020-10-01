@@ -1,6 +1,6 @@
 import angular from 'angular';
 import castArray from 'lodash/castArray';
-import { AppEvents, TimeRange, UrlQueryMap, UrlQueryValue } from '@grafana/data';
+import { AppEvents, LoadingState, TimeRange, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 
 import {
   DashboardVariableModel,
@@ -9,7 +9,6 @@ import {
   QueryVariableModel,
   UserVariableModel,
   VariableHide,
-  VariableLoadingState,
   VariableModel,
   VariableOption,
   VariableRefresh,
@@ -220,9 +219,7 @@ const isWaitingForDependencies = (dependencies: VariableModel[], state: StoreSta
 
   const variables = getVariables(state);
   const notCompletedDependencies = dependencies.filter(d =>
-    variables.some(
-      v => v.id === d.id && (v.state === VariableLoadingState.NotStarted || v.state === VariableLoadingState.Fetching)
-    )
+    variables.some(v => v.id === d.id && (v.state === LoadingState.NotStarted || v.state === LoadingState.Loading))
   );
 
   return notCompletedDependencies.length > 0;
@@ -254,7 +251,6 @@ export const processVariable = (
     }
 
     // for variables that aren't updated via url or refresh let's simulate the same state changes
-    dispatch(variableStateFetching(toVariablePayload(variable)));
     dispatch(variableStateCompleted(toVariablePayload(variable)));
   };
 };
@@ -283,7 +279,6 @@ export const setOptionFromUrl = (
 
     if (variable.hasOwnProperty('refresh') && (variable as QueryVariableModel).refresh === VariableRefresh.never) {
       // for variables that have refresh to never simulate the same state changes
-      dispatch(variableStateFetching(toVariablePayload(variable)));
       dispatch(variableStateCompleted(toVariablePayload(variable)));
     }
 
@@ -473,7 +468,7 @@ export const variableUpdated = (
           return Promise.resolve();
         }
 
-        return dispatch(updateOptions(toVariableIdentifier(variable), false));
+        return dispatch(updateOptions(toVariableIdentifier(variable)));
       });
     }
     return Promise.all(promises).then(() => {
@@ -620,25 +615,11 @@ export const cancelVariables = (
   dispatch(cleanUpVariables());
 };
 
-export const updateOptions = (
-  identifier: VariableIdentifier,
-  awaitUpdateOptions = true
-): ThunkResult<Promise<void>> => async (dispatch, getState) => {
+export const updateOptions = (identifier: VariableIdentifier): ThunkResult<Promise<void>> => async (
+  dispatch,
+  getState
+) => {
   const variableInState = getVariable(identifier.id, getState());
-
-  if (!awaitUpdateOptions) {
-    dispatch(variableStateFetching(toVariablePayload(variableInState)));
-    return variableAdapters
-      .get(variableInState.type)
-      .updateOptions(variableInState)
-      .then(() => {
-        dispatch(variableStateCompleted(toVariablePayload(variableInState)));
-      })
-      .catch(error => {
-        dispatch(variableStateFailed(toVariablePayload(variableInState, { error })));
-      });
-  }
-
   try {
     dispatch(variableStateFetching(toVariablePayload(variableInState)));
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);

@@ -115,10 +115,7 @@ describe('processVariable', () => {
           .whenActionIsDispatched(initDashboardTemplating(list))
           .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(custom), queryParams), true);
 
-        await tester.thenDispatchedActionsShouldEqual(
-          variableStateFetching(toVariablePayload(custom)),
-          variableStateCompleted(toVariablePayload(custom))
-        );
+        await tester.thenDispatchedActionsShouldEqual(variableStateCompleted(toVariablePayload(custom)));
       });
     });
 
@@ -157,10 +154,7 @@ describe('processVariable', () => {
             .whenActionIsDispatched(initDashboardTemplating(list))
             .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
-          await tester.thenDispatchedActionsShouldEqual(
-            variableStateFetching(toVariablePayload(queryNoDepends)),
-            variableStateCompleted(toVariablePayload(queryNoDepends))
-          );
+          await tester.thenDispatchedActionsShouldEqual(variableStateCompleted(toVariablePayload(queryNoDepends)));
         });
       });
 
@@ -218,7 +212,6 @@ describe('processVariable', () => {
             .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
           await tester.thenDispatchedActionsShouldEqual(
-            variableStateFetching(toVariablePayload({ type: 'query', id: 'queryNoDepends' })),
             variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryNoDepends' })),
             setCurrentVariableValue(
               toVariablePayload(
@@ -298,7 +291,6 @@ describe('processVariable', () => {
           );
 
           await tester.thenDispatchedActionsShouldEqual(
-            variableStateFetching(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })),
             variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))
           );
         });
@@ -368,7 +360,6 @@ describe('processVariable', () => {
           );
 
           await tester.thenDispatchedActionsShouldEqual(
-            variableStateFetching(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })),
             variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })),
             setCurrentVariableValue(
               toVariablePayload(

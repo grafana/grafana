@@ -1,5 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 import { default as lodashDefaults } from 'lodash/defaults';
+import { LoadingState } from '@grafana/data';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import {
@@ -16,7 +17,7 @@ import {
   variableStateFetching,
   variableStateNotStarted,
 } from './sharedReducer';
-import { QueryVariableModel, VariableHide, VariableLoadingState } from '../types';
+import { QueryVariableModel, VariableHide } from '../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NEW_VARIABLE_ID, toVariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
@@ -69,7 +70,7 @@ describe('sharedReducer', () => {
             label: 'Label-0',
             skipUrlSync: false,
             global: false,
-            state: VariableLoadingState.NotStarted,
+            state: LoadingState.NotStarted,
             error: null,
           },
           '2': {
@@ -81,7 +82,7 @@ describe('sharedReducer', () => {
             label: 'Label-2',
             skipUrlSync: false,
             global: false,
-            state: VariableLoadingState.NotStarted,
+            state: LoadingState.NotStarted,
             error: null,
           },
         });
@@ -105,7 +106,7 @@ describe('sharedReducer', () => {
             label: 'Label-0',
             skipUrlSync: false,
             global: false,
-            state: VariableLoadingState.NotStarted,
+            state: LoadingState.NotStarted,
             error: null,
           },
           '2': {
@@ -117,7 +118,7 @@ describe('sharedReducer', () => {
             label: 'Label-2',
             skipUrlSync: false,
             global: false,
-            state: VariableLoadingState.NotStarted,
+            state: LoadingState.NotStarted,
             error: null,
           },
         });
@@ -141,7 +142,7 @@ describe('sharedReducer', () => {
             label: 'Label-0',
             skipUrlSync: false,
             global: false,
-            state: VariableLoadingState.NotStarted,
+            state: LoadingState.NotStarted,
             error: null,
           },
           '1': {
@@ -153,7 +154,7 @@ describe('sharedReducer', () => {
             label: 'Label-1',
             skipUrlSync: false,
             global: false,
-            state: VariableLoadingState.NotStarted,
+            state: LoadingState.NotStarted,
             error: null,
           },
           '2': {
@@ -165,7 +166,7 @@ describe('sharedReducer', () => {
             label: 'Label-2',
             skipUrlSync: false,
             global: false,
-            state: VariableLoadingState.NotStarted,
+            state: LoadingState.NotStarted,
             error: null,
           },
           '11': {
@@ -196,7 +197,7 @@ describe('sharedReducer', () => {
             label: 'Label-0',
             skipUrlSync: false,
             global: false,
-            state: VariableLoadingState.NotStarted,
+            state: LoadingState.NotStarted,
             error: null,
           },
           '1': {
@@ -208,7 +209,7 @@ describe('sharedReducer', () => {
             label: 'Label-1',
             skipUrlSync: false,
             global: false,
-            state: VariableLoadingState.NotStarted,
+            state: LoadingState.NotStarted,
             error: null,
           },
           '2': {
@@ -220,7 +221,7 @@ describe('sharedReducer', () => {
             label: 'Label-2',
             skipUrlSync: false,
             global: false,
-            state: VariableLoadingState.NotStarted,
+            state: LoadingState.NotStarted,
             error: null,
           },
         });
@@ -244,7 +245,7 @@ describe('sharedReducer', () => {
             label: 'Label-0',
             skipUrlSync: false,
             global: false,
-            state: VariableLoadingState.NotStarted,
+            state: LoadingState.NotStarted,
             error: null,
           },
           '1': {
@@ -256,7 +257,7 @@ describe('sharedReducer', () => {
             label: 'Label-1',
             skipUrlSync: false,
             global: false,
-            state: VariableLoadingState.NotStarted,
+            state: LoadingState.NotStarted,
             error: null,
           },
           '2': {
@@ -268,7 +269,7 @@ describe('sharedReducer', () => {
             label: 'Label-2',
             skipUrlSync: false,
             global: false,
-            state: VariableLoadingState.NotStarted,
+            state: LoadingState.NotStarted,
             error: null,
           },
           [NEW_VARIABLE_ID]: {
@@ -280,7 +281,7 @@ describe('sharedReducer', () => {
             label: `Label-${NEW_VARIABLE_ID}`,
             skipUrlSync: false,
             global: false,
-            state: VariableLoadingState.NotStarted,
+            state: LoadingState.NotStarted,
             error: null,
           },
           [11]: {
@@ -388,7 +389,7 @@ describe('sharedReducer', () => {
     it('then state should be correct', () => {
       const adapter = createQueryVariableAdapter();
       const { initialState } = getVariableTestContext(adapter, {
-        state: VariableLoadingState.Completed,
+        state: LoadingState.Done,
         error: 'Some error',
       });
       const payload = toVariablePayload({ id: '0', type: 'query' });
@@ -399,7 +400,7 @@ describe('sharedReducer', () => {
           ...initialState,
           '0': ({
             ...initialState[0],
-            state: VariableLoadingState.NotStarted,
+            state: LoadingState.NotStarted,
             error: null,
           } as unknown) as QueryVariableModel,
         });
@@ -410,7 +411,7 @@ describe('sharedReducer', () => {
     it('then state should be correct', () => {
       const adapter = createQueryVariableAdapter();
       const { initialState } = getVariableTestContext(adapter, {
-        state: VariableLoadingState.Completed,
+        state: LoadingState.Done,
         error: 'Some error',
       });
       const payload = toVariablePayload({ id: '0', type: 'query' });
@@ -421,7 +422,7 @@ describe('sharedReducer', () => {
           ...initialState,
           '0': ({
             ...initialState[0],
-            state: VariableLoadingState.Fetching,
+            state: LoadingState.Loading,
             error: null,
           } as unknown) as QueryVariableModel,
         });
@@ -432,7 +433,7 @@ describe('sharedReducer', () => {
     it('then state should be correct', () => {
       const adapter = createQueryVariableAdapter();
       const { initialState } = getVariableTestContext(adapter, {
-        state: VariableLoadingState.Fetching,
+        state: LoadingState.Loading,
         error: 'Some error',
       });
       const payload = toVariablePayload({ id: '0', type: 'query' });
@@ -443,7 +444,7 @@ describe('sharedReducer', () => {
           ...initialState,
           '0': ({
             ...initialState[0],
-            state: VariableLoadingState.Completed,
+            state: LoadingState.Done,
             error: null,
           } as unknown) as QueryVariableModel,
         });
@@ -453,7 +454,7 @@ describe('sharedReducer', () => {
   describe('when variableStateFailed is dispatched', () => {
     it('then state should be correct', () => {
       const adapter = createQueryVariableAdapter();
-      const { initialState } = getVariableTestContext(adapter, { state: VariableLoadingState.Fetching });
+      const { initialState } = getVariableTestContext(adapter, { state: LoadingState.Loading });
       const payload = toVariablePayload({ id: '0', type: 'query' }, { error: 'Some error' });
       reducerTester<VariablesState>()
         .givenReducer(sharedReducer, cloneDeep(initialState))
@@ -462,7 +463,7 @@ describe('sharedReducer', () => {
           ...initialState,
           '0': ({
             ...initialState[0],
-            state: VariableLoadingState.Failed,
+            state: LoadingState.Error,
             error: 'Some error',
           } as unknown) as QueryVariableModel,
         });

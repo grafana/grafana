@@ -1,4 +1,4 @@
-import { VariableModel as BaseVariableModel, VariableType } from '@grafana/data';
+import { LoadingState, VariableModel as BaseVariableModel, VariableType } from '@grafana/data';
 import { NEW_VARIABLE_ID } from './state/types';
 
 export enum VariableRefresh {
@@ -119,20 +119,13 @@ export interface SystemVariable<TProps extends { toString: () => string }> exten
   current: { value: TProps };
 }
 
-export enum VariableLoadingState {
-  NotStarted = 'Not started',
-  Fetching = 'Fetching',
-  Completed = 'Completed',
-  Failed = 'Failed',
-}
-
 export interface VariableModel extends BaseVariableModel {
   id: string;
   global: boolean;
   hide: VariableHide;
   skipUrlSync: boolean;
   index: number;
-  state: VariableLoadingState;
+  state: LoadingState;
   error: any | null;
 }
 
@@ -145,6 +138,6 @@ export const initialVariableModelState: VariableModel = {
   index: -1,
   hide: VariableHide.dontHide,
   skipUrlSync: false,
-  state: VariableLoadingState.NotStarted,
+  state: LoadingState.NotStarted,
   error: null,
 };

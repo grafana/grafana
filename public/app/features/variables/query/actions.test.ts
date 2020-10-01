@@ -1,8 +1,10 @@
+import { LoadingState } from '@grafana/data';
+
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getRootReducer } from '../state/helpers';
-import { QueryVariableModel, VariableHide, VariableLoadingState, VariableRefresh, VariableSort } from '../types';
+import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from '../state/types';
 import {
   addVariable,
@@ -586,7 +588,7 @@ function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableMode
     regex: '',
     multi: true,
     includeAll: true,
-    state: VariableLoadingState.NotStarted,
+    state: LoadingState.NotStarted,
     error: null,
     ...(extend ?? {}),
   };

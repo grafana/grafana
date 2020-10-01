@@ -1,12 +1,12 @@
 import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
 import isEqual from 'lodash/isEqual';
-import { AppEvents, VariableType } from '@grafana/data';
+import { AppEvents, LoadingState, VariableType } from '@grafana/data';
 import { Icon, InlineFormLabel } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { variableAdapters } from '../adapters';
 import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
-import { VariableHide, VariableLoadingState, VariableModel } from '../types';
+import { VariableHide, VariableModel } from '../types';
 import { appEvents } from '../../../core/core';
 import { VariableValuesPreview } from './VariableValuesPreview';
 import { changeVariableName, onEditorAdd, onEditorUpdate, variableEditorMount, variableEditorUnMount } from './actions';
@@ -116,7 +116,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
       return null;
     }
     const newVariable = this.props.variable.id && this.props.variable.id === NEW_VARIABLE_ID;
-    const loading = variable.state === VariableLoadingState.Fetching;
+    const loading = variable.state === LoadingState.Loading;
 
     return (
       <div>

@@ -25,7 +25,6 @@ import {
   removeVariable,
   setCurrentVariableValue,
   variableStateCompleted,
-  variableStateFetching,
   variableStateNotStarted,
 } from './sharedReducer';
 import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload } from './types';
@@ -133,38 +132,22 @@ describe('shared actions', () => {
         .whenAsyncActionIsDispatched(processVariables(), true);
 
       await tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
-        expect(dispatchedActions.length).toEqual(8);
+        expect(dispatchedActions.length).toEqual(4);
 
         expect(dispatchedActions[0]).toEqual(
-          variableStateFetching(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
+          variableStateCompleted(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
         );
 
         expect(dispatchedActions[1]).toEqual(
-          variableStateCompleted(toVariablePayload({ ...query, id: dispatchedActions[1].payload.id }))
+          variableStateCompleted(toVariablePayload({ ...constant, id: dispatchedActions[1].payload.id }))
         );
 
         expect(dispatchedActions[2]).toEqual(
-          variableStateFetching(toVariablePayload({ ...constant, id: dispatchedActions[2].payload.id }))
+          variableStateCompleted(toVariablePayload({ ...custom, id: dispatchedActions[2].payload.id }))
         );
 
         expect(dispatchedActions[3]).toEqual(
-          variableStateCompleted(toVariablePayload({ ...constant, id: dispatchedActions[3].payload.id }))
-        );
-
-        expect(dispatchedActions[4]).toEqual(
-          variableStateFetching(toVariablePayload({ ...custom, id: dispatchedActions[4].payload.id }))
-        );
-
-        expect(dispatchedActions[5]).toEqual(
-          variableStateCompleted(toVariablePayload({ ...custom, id: dispatchedActions[5].payload.id }))
-        );
-
-        expect(dispatchedActions[6]).toEqual(
-          variableStateFetching(toVariablePayload({ ...textbox, id: dispatchedActions[6].payload.id }))
-        );
-
-        expect(dispatchedActions[7]).toEqual(
-          variableStateCompleted(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
+          variableStateCompleted(toVariablePayload({ ...textbox, id: dispatchedActions[3].payload.id }))
         );
 
         return true;
@@ -586,11 +569,10 @@ describe('shared actions', () => {
             addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
           );
           expect(dispatchedActions[5]).toEqual(variableStateNotStarted(toVariablePayload(constant)));
-          expect(dispatchedActions[6]).toEqual(variableStateFetching(toVariablePayload(constant)));
-          expect(dispatchedActions[7]).toEqual(variableStateCompleted(toVariablePayload(constant)));
+          expect(dispatchedActions[6]).toEqual(variableStateCompleted(toVariablePayload(constant)));
 
-          expect(dispatchedActions[8]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 9;
+          expect(dispatchedActions[7]).toEqual(variablesCompleteTransaction({ uid }));
+          return dispatchedActions.length === 8;
         });
       });
     });
@@ -626,10 +608,9 @@ describe('shared actions', () => {
             addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
           );
           expect(dispatchedActions[7]).toEqual(variableStateNotStarted(toVariablePayload(constant)));
-          expect(dispatchedActions[8]).toEqual(variableStateFetching(toVariablePayload(constant)));
-          expect(dispatchedActions[9]).toEqual(variableStateCompleted(toVariablePayload(constant)));
-          expect(dispatchedActions[10]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 11;
+          expect(dispatchedActions[8]).toEqual(variableStateCompleted(toVariablePayload(constant)));
+          expect(dispatchedActions[9]).toEqual(variablesCompleteTransaction({ uid }));
+          return dispatchedActions.length === 10;
         });
       });
     });

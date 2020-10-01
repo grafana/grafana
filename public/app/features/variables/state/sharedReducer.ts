@@ -2,8 +2,8 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import cloneDeep from 'lodash/cloneDeep';
 import { default as lodashDefaults } from 'lodash/defaults';
 
-import { VariableType } from '@grafana/data';
-import { VariableLoadingState, VariableModel, VariableOption, VariableWithOptions } from '../types';
+import { LoadingState, VariableType } from '@grafana/data';
+import { VariableModel, VariableOption, VariableWithOptions } from '../types';
 import { AddVariable, getInstanceState, NEW_VARIABLE_ID, VariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
@@ -30,12 +30,12 @@ const sharedReducerSlice = createSlice({
     },
     variableStateNotStarted: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState(state, action.payload.id);
-      instanceState.state = VariableLoadingState.NotStarted;
+      instanceState.state = LoadingState.NotStarted;
       instanceState.error = null;
     },
     variableStateFetching: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState(state, action.payload.id);
-      instanceState.state = VariableLoadingState.Fetching;
+      instanceState.state = LoadingState.Loading;
       instanceState.error = null;
     },
     variableStateCompleted: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
@@ -44,7 +44,7 @@ const sharedReducerSlice = createSlice({
         // we might have cancelled a batch so then this state has been removed
         return;
       }
-      instanceState.state = VariableLoadingState.Completed;
+      instanceState.state = LoadingState.Done;
       instanceState.error = null;
     },
     variableStateFailed: (state: VariablesState, action: PayloadAction<VariablePayload<{ error: any }>>) => {
@@ -53,7 +53,7 @@ const sharedReducerSlice = createSlice({
         // we might have cancelled a batch so then this state has been removed
         return;
       }
-      instanceState.state = VariableLoadingState.Failed;
+      instanceState.state = LoadingState.Error;
       instanceState.error = action.payload.data.error;
     },
     removeVariable: (state: VariablesState, action: PayloadAction<VariablePayload<{ reIndex: boolean }>>) => {

@@ -6,17 +6,12 @@ import { VariableLink } from '../shared/VariableLink';
 import { VariableInput } from '../shared/VariableInput';
 import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, toggleAndFetchTag } from './actions';
 import { OptionsPickerState, showOptions, toggleAllOptions, toggleOption } from './reducer';
-import {
-  VariableLoadingState,
-  VariableOption,
-  VariableTag,
-  VariableWithMultiSupport,
-  VariableWithOptions,
-} from '../../types';
+import { VariableOption, VariableTag, VariableWithMultiSupport, VariableWithOptions } from '../../types';
 import { VariableOptions } from '../shared/VariableOptions';
 import { isQuery } from '../../guard';
 import { VariablePickerProps } from '../types';
 import { formatVariableLabel } from '../../shared/formatVariable';
+import { LoadingState } from '@grafana/data';
 
 interface OwnProps extends VariablePickerProps<VariableWithMultiSupport> {}
 
@@ -73,7 +68,7 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
 
     const linkText = formatVariableLabel(variable);
     const tags = getSelectedTags(variable);
-    const loading = variable.state === VariableLoadingState.Fetching;
+    const loading = variable.state === LoadingState.Loading;
 
     return <VariableLink text={linkText} tags={tags} onClick={this.onShowOptions} loading={loading} />;
   }
