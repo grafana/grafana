@@ -20,9 +20,9 @@ This makes it much easier to verify functionality since the data can be shared v
 The `TestData DB` data source is not enabled by default. To enable it: 
 
 1. In the **Configuration** menu (small gear on the left side of the screen), click **Data Sources**. 
-2. Click **Add Data Source**.
-3. Search and click `TestData DB`.
-4. Click **Save & Test** to enable it.
+1. Click **Add Data Source**.
+1. Search and click `TestData DB`.
+1. Click **Save & Test** to enable it.
 
 ## Create mock data.
 
