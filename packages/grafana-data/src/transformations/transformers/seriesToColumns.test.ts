@@ -346,4 +346,55 @@ describe('SeriesToColumns Transformer', () => {
       },
     ]);
   });
+
+  it('handles duplicate field name', () => {
+    const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+      id: DataTransformerID.seriesToColumns,
+      options: {
+        byField: 'time',
+      },
+    };
+
+    const frame1 = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1] },
+        { name: 'temperature', type: FieldType.number, values: [10] },
+      ],
+    });
+
+    const frame2 = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1] },
+        { name: 'temperature', type: FieldType.number, values: [20] },
+      ],
+    });
+
+    const filtered = transformDataFrame([cfg], [frame1, frame2])[0];
+
+    expect(filtered.fields).toEqual([
+      {
+        name: 'time',
+        state: { displayName: 'time' },
+        type: FieldType.time,
+        values: new ArrayVector([1]),
+        config: {},
+      },
+      {
+        name: 'temperature',
+        state: { displayName: 'temperature 1' },
+        type: FieldType.number,
+        values: new ArrayVector([10]),
+        config: {},
+        labels: {},
+      },
+      {
+        name: 'temperature',
+        state: { displayName: 'temperature 2' },
+        type: FieldType.number,
+        values: new ArrayVector([20]),
+        config: {},
+        labels: {},
+      },
+    ]);
+  });
 });
