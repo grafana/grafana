@@ -2,12 +2,12 @@
 title = "TestData"
 keywords = ["grafana", "dashboard", "documentation", "panels", "testdata"]
 type = "docs"
+aliases = ["/docs/grafana/latest/features/datasources/testdata"]
 [menu.docs]
 name = "TestData"
 parent = "datasources"
-weight = 20
+weight = 1400
 +++
-
 
 # Grafana TestData DB
 
