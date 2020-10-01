@@ -4,5 +4,42 @@ import { BigValue } from './BigValue';
 <Meta title="MDX|BigValue" component={BigValue} />
 
 # BigValue
+Component for showing a value based on a [DisplayValue](https://grafana.com/docs/grafana/latest/packages_api/data/displayvalue/#displayvalue-interface).
 
+
+### Example usage
+An example usage is in the [Stat panel](https://grafana.com/docs/grafana/latest/panels/visualizations/stat-panel/).
+
+```tsx
+import { DisplayValue } from '@grafana/data';
+import {
+  BigValue,
+  BigValueColorMode,
+  BigValueGraphMode,
+  BigValueJustifyMode,
+  BigValueTextMode,
+  useTheme
+} from '@grafana/ui';
+
+const bigValue: DisplayValue = {
+  color: 'red',
+  value: '5000',
+  numeric: 5000,
+  title: 'Volume'
+};
+
+return (
+  <BigValue
+    theme={useTheme()}
+    justifyMode={BigValueJustifyMode.Auto}
+    graphMode={BigValueGraphMode.Area}
+    colorMode={BigValueColorMode.Value}
+    textMode={BigValueTextMode.Auto}
+    value={bigValue}
+  />
+);
+
+
+```
+### Props
 <Props of={BigValue} />

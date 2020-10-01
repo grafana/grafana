@@ -62,7 +62,7 @@ export interface Props extends Themeable {
   graphMode: BigValueGraphMode;
   /** Auto justify value and text or center it */
   justifyMode?: BigValueJustifyMode;
-  /** ??????  */
+  /** Factors that should influence the positioning of the text  */
   alignmentFactors?: DisplayValueAlignmentFactors;
   /** Specify which text should be visible in the BigValue */
   textMode?: BigValueTextMode;
