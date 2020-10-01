@@ -42,12 +42,13 @@ func (hs *HTTPServer) ConditionsEval(c *models.ReqContext, dto dtos.EvalAlertCon
 	})
 }
 
-// POST /api/alert-definitions/eval/:dashboardId/:panelId"
+// POST /api/alert-definitions/eval/:dashboardId/:panelId/:refId"
 func (hs *HTTPServer) AlertDefinitionEval(c *models.ReqContext) Response {
 	dashboardID := c.ParamsInt64(":dashboardID")
 	panelID := c.ParamsInt64(":panelID")
+	conditionRefID := c.Params(":refID")
 
-	conditions, err := hs.AlertNG.LoadAlertConditions(dashboardID, panelID, c.SignedInUser, c.SkipCache)
+	conditions, err := hs.AlertNG.LoadAlertConditions(dashboardID, panelID, conditionRefID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		return Error(400, "Failed to load conditions", err)
 	}

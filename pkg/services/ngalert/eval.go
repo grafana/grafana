@@ -92,7 +92,7 @@ func (c Conditions) IsValid() bool {
 }
 
 // LoadAlertConditions returns a Conditions object for the given alertDefintionId.
-func (ng *AlertNG) LoadAlertConditions(dashboardID int64, panelID int64, signedInUser *models.SignedInUser, skipCache bool) (*Conditions, error) {
+func (ng *AlertNG) LoadAlertConditions(dashboardID int64, panelID int64, conditionRefID string, signedInUser *models.SignedInUser, skipCache bool) (*Conditions, error) {
 	//func (ng *AlertNG) LoadAlertConditions(alertDefinitionID int64, signedInUser *models.SignedInUser, skipCache bool) (*Conditions, error) {
 	/*
 		getAlertByIDQuery := models.GetAlertByIdQuery{Id: alertDefinitionID}
@@ -116,7 +116,7 @@ func (ng *AlertNG) LoadAlertConditions(dashboardID int64, panelID int64, signedI
 	var dash minimalDashboard
 	err = json.Unmarshal(blob, &dash)
 	if err != nil {
-		return nil, errors.New("Failed to unmasrhal dashboard JSON")
+		return nil, errors.New("Failed to unmarshal dashboard JSON")
 	}
 
 	conditions := Conditions{}
@@ -127,9 +127,6 @@ func (ng *AlertNG) LoadAlertConditions(dashboardID int64, panelID int64, signedI
 			for i, query := range p.Targets {
 				refID := query.Get("refId").MustString("A")
 				queryDatasource := query.Get("datasource").MustString()
-				if queryDatasource == "__expr__" {
-					conditions.Condition = refID // for now use the last expression for condition
-				}
 
 				if i == 0 && queryDatasource != "__expr__" {
 					dsName := panelDatasource
@@ -189,6 +186,7 @@ func (ng *AlertNG) LoadAlertConditions(dashboardID int64, panelID int64, signedI
 			}
 		}
 	}
+	conditions.Condition = conditionRefID
 	return &conditions, nil
 }
 
