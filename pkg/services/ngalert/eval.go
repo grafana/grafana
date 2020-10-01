@@ -92,14 +92,19 @@ func (c Conditions) IsValid() bool {
 }
 
 // LoadAlertConditions returns a Conditions object for the given alertDefintionId.
-func (ng *AlertNG) LoadAlertConditions(alertDefinitionID int64, signedInUser *models.SignedInUser, skipCache bool) (*Conditions, error) {
-	getAlertByIDQuery := models.GetAlertByIdQuery{Id: alertDefinitionID}
-	if err := bus.Dispatch(&getAlertByIDQuery); err != nil {
-		return nil, err
-	}
+func (ng *AlertNG) LoadAlertConditions(dashboardID int64, panelID int64, signedInUser *models.SignedInUser, skipCache bool) (*Conditions, error) {
+	//func (ng *AlertNG) LoadAlertConditions(alertDefinitionID int64, signedInUser *models.SignedInUser, skipCache bool) (*Conditions, error) {
+	/*
+		getAlertByIDQuery := models.GetAlertByIdQuery{Id: alertDefinitionID}
+		if err := bus.Dispatch(&getAlertByIDQuery); err != nil {
+			return nil, err
+		}
+		dashboardID := getAlertByIDQuery.Result.DashboardId
+		panelID := getAlertByIDQuery.Result.PanelId
+	*/
 
 	// get queries from the dashboard (because GEL expressions cannot be stored in alerts so far)
-	getDashboardQuery := models.GetDashboardQuery{Id: getAlertByIDQuery.Result.DashboardId}
+	getDashboardQuery := models.GetDashboardQuery{Id: dashboardID}
 	if err := bus.Dispatch(&getDashboardQuery); err != nil {
 		return nil, err
 	}
@@ -116,7 +121,7 @@ func (ng *AlertNG) LoadAlertConditions(alertDefinitionID int64, signedInUser *mo
 
 	conditions := Conditions{}
 	for _, p := range dash.Panels {
-		if p.ID == getAlertByIDQuery.Result.PanelId {
+		if p.ID == panelID {
 			panelDatasource := p.Datasource
 			var ds *models.DataSource
 			for i, query := range p.Targets {
@@ -190,6 +195,9 @@ func (ng *AlertNG) LoadAlertConditions(alertDefinitionID int64, signedInUser *mo
 // Execute runs the WarnCondition and CritCondtion expressions or queries.
 func (conditions *Conditions) Execute(ctx AlertExecCtx, fromStr, toStr string) (*ExecutionResult, error) {
 	result := ExecutionResult{}
+	if !conditions.IsValid() {
+		return nil, fmt.Errorf("Invalid conditions")
+	}
 
 	request := &tsdb.TsdbQuery{
 		TimeRange: tsdb.NewTimeRange(fromStr, toStr),
@@ -205,7 +213,14 @@ func (conditions *Conditions) Execute(ctx AlertExecCtx, fromStr, toStr string) (
 		result.Error = err
 		return &result, err
 	}
+
 	conditionResult := resp.Results[conditions.Condition]
+	if conditionResult == nil {
+		err = fmt.Errorf("No GEL results")
+		result.Error = err
+		return &result, err
+	}
+
 	result.Results, err = conditionResult.Dataframes.Decoded()
 	if err != nil {
 		result.Error = err
