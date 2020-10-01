@@ -1,6 +1,6 @@
 import angular from 'angular';
 import castArray from 'lodash/castArray';
-import { AppEvents, LoadingState, TimeRange, UrlQueryMap, UrlQueryValue } from '@grafana/data';
+import { LoadingState, TimeRange, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 
 import {
   DashboardVariableModel,
@@ -15,7 +15,7 @@ import {
   VariableWithMultiSupport,
   VariableWithOptions,
 } from '../types';
-import { StoreState, ThunkResult } from '../../../types';
+import { AppNotification, StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
@@ -30,7 +30,6 @@ import {
   variableStateNotStarted,
 } from './sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './types';
-import { appEvents } from 'app/core/core';
 import { contextSrv } from 'app/core/services/context_srv';
 import templateSrv from '../../templating/template_srv';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
@@ -484,12 +483,11 @@ export const variableUpdated = (
 
 export interface OnTimeRangeUpdatedDependencies {
   templateSrv: typeof templateSrv;
-  appEvents: typeof appEvents;
 }
 
 export const onTimeRangeUpdated = (
   timeRange: TimeRange,
-  dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrv, appEvents: appEvents }
+  dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrv }
 ): ThunkResult<Promise<void>> => async (dispatch, getState) => {
   dependencies.templateSrv.updateTimeRange(timeRange);
   const variablesThatNeedRefresh = getVariables(getState()).filter(variable => {
@@ -501,21 +499,8 @@ export const onTimeRangeUpdated = (
     return false;
   });
 
-  const promises = variablesThatNeedRefresh.map(
-    (variable: VariableWithOptions) =>
-      new Promise((resolve, reject) => {
-        const previousOptions = variable.options.slice();
-        dispatch(updateOptions(toVariableIdentifier(variable)))
-          .then(() => {
-            const updatedVariable = getVariable<VariableWithOptions>(variable.id, getState());
-            if (angular.toJson(previousOptions) !== angular.toJson(updatedVariable.options)) {
-              const dashboard = getState().dashboard.getModel();
-              dashboard?.templateVariableValueUpdated();
-            }
-            resolve();
-          })
-          .catch(error => reject(error));
-      })
+  const promises = variablesThatNeedRefresh.map((variable: VariableWithOptions) =>
+    dispatch(timeRangeUpdated(toVariableIdentifier(variable)))
   );
 
   try {
@@ -524,7 +509,22 @@ export const onTimeRangeUpdated = (
     dashboard?.startRefresh();
   } catch (error) {
     console.error(error);
-    dependencies.appEvents.emit(AppEvents.alertError, ['Template variable service failed', error.message]);
+    dispatch(notifyApp(createVariableErrorNotification('Template variable service failed', error)));
+  }
+};
+
+const timeRangeUpdated = (identifier: VariableIdentifier): ThunkResult<Promise<void>> => async (dispatch, getState) => {
+  const variableInState = getVariable<VariableWithOptions>(identifier.id);
+  const previousOptions = variableInState.options.slice();
+
+  await dispatch(updateOptions(toVariableIdentifier(variableInState), true));
+
+  const updatedVariable = getVariable<VariableWithOptions>(identifier.id, getState());
+  const updatedOptions = updatedVariable.options;
+
+  if (angular.toJson(previousOptions) !== angular.toJson(updatedOptions)) {
+    const dashboard = getState().dashboard.getModel();
+    dashboard?.templateVariableValueUpdated();
   }
 };
 
@@ -597,7 +597,7 @@ export const initVariablesTransaction = (dashboardUid: string, dashboard: Dashbo
     // Mark update as complete
     dispatch(variablesCompleteTransaction({ uid: dashboardUid }));
   } catch (err) {
-    dispatch(notifyApp(createErrorNotification('Templating init failed', err)));
+    dispatch(notifyApp(createVariableErrorNotification('Templating init failed', err)));
     console.error(err);
   }
 };
@@ -615,7 +615,7 @@ export const cancelVariables = (
   dispatch(cleanUpVariables());
 };
 
-export const updateOptions = (identifier: VariableIdentifier): ThunkResult<Promise<void>> => async (
+export const updateOptions = (identifier: VariableIdentifier, rethrow = false): ThunkResult<Promise<void>> => async (
   dispatch,
   getState
 ) => {
@@ -625,8 +625,25 @@ export const updateOptions = (identifier: VariableIdentifier): ThunkResult<Promi
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
     dispatch(variableStateCompleted(toVariablePayload(variableInState)));
   } catch (error) {
-    console.error(error);
     dispatch(variableStateFailed(toVariablePayload(variableInState, { error })));
-    dispatch(notifyApp(createErrorNotification('Templating', 'Error updating options: ' + error.message)));
+
+    if (!rethrow) {
+      console.error(error);
+      dispatch(notifyApp(createVariableErrorNotification('Error updating options:', error, identifier)));
+    }
+
+    if (rethrow) {
+      throw error;
+    }
   }
 };
+
+export const createVariableErrorNotification = (
+  message: string,
+  error: any,
+  identifier?: VariableIdentifier
+): AppNotification =>
+  createErrorNotification(
+    `${identifier ? `Templating [${identifier.id}]` : 'Templating'}`,
+    `${message} ${error.message}`
+  );

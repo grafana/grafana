@@ -90,7 +90,7 @@ describe('interval actions', () => {
         );
 
         expect(dispatchedActions[3].type).toEqual(notifyApp.type);
-        expect(dispatchedActions[3].payload.title).toEqual('Templating');
+        expect(dispatchedActions[3].payload.title).toEqual('Templating [0]');
         expect(dispatchedActions[3].payload.text).toEqual(
           'Error updating options: Invalid interval string, has to be either unit-less or end with one of the following units: "y, M, w, d, h, m, s, ms"'
         );

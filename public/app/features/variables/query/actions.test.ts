@@ -250,7 +250,7 @@ describe('query actions', () => {
           variableStateFailed(toVariablePayload(variable, { error: { message: 'failed to fetch metrics' } }))
         );
         expect(dispatchedActions[4].type).toEqual(notifyApp.type);
-        expect(dispatchedActions[4].payload.title).toEqual('Templating');
+        expect(dispatchedActions[4].payload.title).toEqual('Templating [0]');
         expect(dispatchedActions[4].payload.text).toEqual('Error updating options: failed to fetch metrics');
         expect(dispatchedActions[4].payload.severity).toEqual('error');
 
