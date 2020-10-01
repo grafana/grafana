@@ -48,6 +48,16 @@ func (hs *HTTPServer) AlertDefinitionEval(c *models.ReqContext) Response {
 	panelID := c.ParamsInt64(":panelID")
 	conditionRefID := c.Params(":refID")
 
+	fromStr := c.Query("from")
+	if fromStr == "" {
+		fromStr = "now-3h"
+	}
+
+	toStr := c.Query("to")
+	if toStr == "" {
+		toStr = "now"
+	}
+
 	conditions, err := hs.AlertNG.LoadAlertConditions(dashboardID, panelID, conditionRefID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		return Error(400, "Failed to load conditions", err)
@@ -57,8 +67,7 @@ func (hs *HTTPServer) AlertDefinitionEval(c *models.ReqContext) Response {
 	defer cancelFn()
 
 	alertExecCtx := eval.AlertExecCtx{Ctx: alertCtx, SignedInUser: c.SignedInUser}
-	fromStr := "now-3h"
-	toStr := "now"
+
 	execResult, err := conditions.Execute(alertExecCtx, fromStr, toStr)
 	if err != nil {
 		return Error(400, "Failed to execute conditions", err)
