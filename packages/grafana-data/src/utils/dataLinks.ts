@@ -79,13 +79,6 @@ function generateInternalHref<T extends DataQuery = any>(datasourceName: string,
       range: range.raw,
       datasource: datasourceName,
       queries: [query],
-      // This should get overwritten if datasource does not support that mode and we do not know what mode is
-      // preferred anyway.
-      ui: {
-        showingGraph: true,
-        showingTable: true,
-        showingLogs: true,
-      },
     })}`
   );
 }

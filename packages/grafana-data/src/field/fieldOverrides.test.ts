@@ -575,8 +575,7 @@ describe('getLinksSupplier', () => {
     expect(links[0]).toEqual(
       expect.objectContaining({
         title: 'testDS',
-        href:
-          '/explore?left={"datasource":"testDS","queries":["12345"],"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}',
+        href: '/explore?left={"datasource":"testDS","queries":["12345"]}',
         onClick: undefined,
       })
     );
