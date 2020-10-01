@@ -42,7 +42,7 @@ func (hs *HTTPServer) ConditionsEval(c *models.ReqContext, dto dtos.EvalAlertCon
 	})
 }
 
-// POST /api/alert-definitions/eval/:dashboardId/:panelId/:refId"
+// GET /api/alert-definitions/eval/:dashboardId/:panelId/:refId"
 func (hs *HTTPServer) AlertDefinitionEval(c *models.ReqContext) Response {
 	dashboardID := c.ParamsInt64(":dashboardID")
 	panelID := c.ParamsInt64(":panelID")
