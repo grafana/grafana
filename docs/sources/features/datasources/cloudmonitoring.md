@@ -342,15 +342,17 @@ The link navigates the user first to the Google Account Chooser and after succes
 
 The updated Cloud Monitoring data source ships with pre-configured dashboards for five of the most popular GCP services:
 
-- BigQuery Query Monitoring
-- Cloud SQL Monitoring
-- GCE VM Instance Monitoring
-- GKE Cluster Monitoring
-- HTTP_S Load Balancer Monitoring
+1. BigQuery Query Monitoring
+1. Cloud SQL Monitoring
+1. GCE VM Instance Monitoring
+1. GKE Cluster Monitoring
+1. HTTP_S Load Balancer Monitoring
 
 To import the pre-configured dashboards, go to the configuration page of a Cloud monitoring data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use.
 The datasource of the newly created dashboard panels will be the one selected above.
+
 The dashboards have a template variable which is populated with the projects accessible by the configured service account every time the dashboard is loaded. After the dashboard is loaded, you can select the project you prefer from the drop-down list.
+
 To customize the dashboard, we recommend saving the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 
 {{< docs-imagebox img="/img/docs/v73/cloud-monitoring-dashboard-import.png" caption="Cloud Monitoring dashboard import" >}}
