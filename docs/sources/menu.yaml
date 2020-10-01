@@ -120,39 +120,39 @@
     - link: /manage-users/add-or-remove-user-from-team/
       name: Add or remove user from team
 - name: Data sources
-  link: /features/datasources/
+  link: /datasources/
   children:
-    - link: /features/datasources/add-a-data-source/
+    - link: /datasources/add-a-data-source/
       name: Add data source
-    - link: /features/datasources/cloudwatch/
+    - link: /datasources/cloudwatch/
       name: AWS Cloudwatch
-    - link: /features/datasources/azuremonitor/
+    - link: /datasources/azuremonitor/
       name: Azure Monitor
-    - link: /features/datasources/elasticsearch/
+    - link: /datasources/elasticsearch/
       name: Elasticsearch
-    - link: /features/datasources/cloudmonitoring/
+    - link: /datasources/cloudmonitoring/
       name: Google Cloud Monitoring
-    - link: /features/datasources/graphite/
+    - link: /datasources/graphite/
       name: Graphite
-    - link: /features/datasources/influxdb/
+    - link: /datasources/influxdb/
       name: InfluxDB
-    - link: /features/datasources/jaeger/
+    - link: /datasources/jaeger/
       name: Jaeger
-    - link: /features/datasources/loki/
+    - link: /datasources/loki/
       name: Loki
-    - link: /features/datasources/mssql/
+    - link: /datasources/mssql/
       name: Microsoft SQL Server
-    - link: /features/datasources/mysql/
+    - link: /datasources/mysql/
       name: MySQL
-    - link: /features/datasources/opentsdb/
+    - link: /datasources/opentsdb/
       name: OpenTSDB
-    - link: /features/datasources/postgres/
+    - link: /datasources/postgres/
       name: PostgreSQL
-    - link: /features/datasources/prometheus/
+    - link: /datasources/prometheus/
       name: Prometheus
-    - link: /features/datasources/testdata/
+    - link: /datasources/testdata/
       name: TestData DB
-    - link: /features/datasources/zipkin/
+    - link: /datasources/zipkin/
       name: Zipkin
 - name: Panels
   link: /panels/
