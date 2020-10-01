@@ -276,17 +276,6 @@ steps:
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
-- name: slack
-  image: plugins/slack
-  settings:
-    channel: grafana-ci-failures
-    template: "Build {{build.number}} failed: {{build.link}}"
-    webhook:
-      from_secret: slack_webhook
-  when:
-    status:
-    - failure
-
 - name: trigger-enterprise-downstream
   image: grafana/drone-downstream
   settings:
@@ -652,17 +641,6 @@ steps:
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
-- name: slack
-  image: plugins/slack
-  settings:
-    channel: grafana-ci-failures
-    template: "Build {{build.number}} failed: {{build.link}}"
-    webhook:
-      from_secret: slack_webhook
-  when:
-    status:
-    - failure
-
 - name: publish-packages
   image: grafana/grafana-ci-deploy:1.2.6
   commands:
@@ -682,5 +660,36 @@ trigger:
 depends_on:
 - build-master
 - windows-master
+
+---
+kind: pipeline
+type: docker
+name: notify-master
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: slack
+  image: plugins/slack
+  settings:
+    channel: grafana-ci-notifications
+    template: "Build {{build.number}} failed: {{build.link}}"
+    webhook:
+      from_secret: slack_webhook
+
+trigger:
+  branch:
+  - master
+  event:
+  - push
+  status:
+  - failure
+
+depends_on:
+- build-master
+- windows-master
+- publish-master
 
 ...
