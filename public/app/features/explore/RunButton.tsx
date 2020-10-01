@@ -7,6 +7,10 @@ import classNames from 'classnames';
 
 import { ResponsiveButton } from './ResponsiveButton';
 
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+
+export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
+
 const getStyles = memoizeOne(() => {
   return {
     selectButtonOverride: css`
@@ -18,7 +22,7 @@ const getStyles = memoizeOne(() => {
   };
 });
 
-type Props = {
+export type Props = {
   splitted: boolean;
   loading: boolean;
   isLive: boolean;
@@ -31,6 +35,7 @@ type Props = {
 export function RunButton(props: Props) {
   const { splitted, loading, onRun, onChangeRefreshInterval, refreshInterval, showDropdown, isLive } = props;
   const styles = getStyles();
+  const intervals = getTimeSrv().getValidIntervals(defaultIntervals);
 
   const runButton = (
     <ResponsiveButton
@@ -57,6 +62,7 @@ export function RunButton(props: Props) {
           styles.selectButtonOverride
         }`}
         refreshButton={runButton}
+        intervals={intervals}
       />
     );
   }
