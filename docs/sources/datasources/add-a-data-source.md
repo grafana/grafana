@@ -1,11 +1,12 @@
 +++
-title = "Add a data source"
+title = "Add data source"
 type = "docs"
+aliases = ["/docs/grafana/latest/features/datasources/add-a-data-source/"]
 [menu.docs]
 name = "Add a data source"
 identifier = "add_data_source"
 parent = "features"
-weight = 2
+weight = 100
 +++
 
 # Add a data source
@@ -26,6 +27,6 @@ Before you create your first dashboard, you need to add your data source. Follow
 
     {{< docs-imagebox img="/img/docs/v52/datasource-settings.png" max-width="700px" class="docs-image--no-shadow">}}
 
-1. In the **Type**, select the type of data source. See [Supported data sources]({{< relref "../../features/datasources/#supported-data-sources/" >}}) for more information and how to configure your data source settings.
+1. In the **Type**, select the type of data source. See [Supported data sources]({{< relref "datasources/#supported-data-sources/" >}}) for more information and how to configure your data source settings.
 
 1. Click **Save & Test**.

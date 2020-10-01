@@ -1,15 +1,15 @@
 +++
-title = "Data Sources"
+title = "Data sources"
 type = "docs"
 aliases = ["/docs/grafana/latest/datasources/overview/"]
 [menu.docs]
-name = "Data Sources"
+name = "Data sources"
 identifier = "datasources"
 parent = "features"
-weight = 5
+weight = 50
 +++
 
-# Data Source Overview
+# Data sources
 
 Grafana supports many different storage backends for your time series data (data source). Each data source has a specific Query Editor that is customized for the features and capabilities that the particular data source exposes.
 
