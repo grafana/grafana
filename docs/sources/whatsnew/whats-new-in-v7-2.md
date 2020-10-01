@@ -7,7 +7,7 @@ type = "docs"
 name = "Version 7.2"
 identifier = "v7.2"
 parent = "whatsnew"
-weight = -16
+weight = -15
 +++
 
 # What's new in Grafana v7.2

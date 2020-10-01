@@ -1,11 +1,12 @@
 +++
-title = "What's New in Grafana"
+title = "What's new in Grafana"
+aliases = ["/docs/grafana/latest/guides/"]
 [menu.docs]
 name = "What's New In Grafana"
 identifier = "whatsnew"
-weight = 5
+weight = 140
 +++
 
-# What's New
+# What's new
 
 This section contains pages with Grafana release notes.
