@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"time"
 
@@ -45,6 +46,7 @@ type PluginScanner struct {
 	cfg                  *setting.Cfg
 	requireSigned        bool
 	log                  log.Logger
+	plugins              map[string]*PluginBase
 }
 
 type PluginManager struct {
@@ -114,8 +116,7 @@ func (pm *PluginManager) Init() error {
 		}
 	}
 
-	// check plugin paths defined in config
-	if err := pm.checkPluginPaths(); err != nil {
+	if err := pm.scanPluginPaths(); err != nil {
 		return err
 	}
 
@@ -144,6 +145,19 @@ func (pm *PluginManager) Init() error {
 		}
 	}
 
+	// 2nd pass to fix up any descendant plugins' signatures, to correspond to their respective root plugins
+	for _, p := range Plugins {
+		if p.IsCorePlugin || p.Root == nil || p.Signature == PluginSignatureInternal ||
+			p.Signature == PluginSignatureValid {
+			pm.log.Debug("Not setting descendant plugin's signature to that of root", "plugin", p.Id,
+				"signature", p.Signature, "isCore", p.IsCorePlugin, "hasRoot", p.Root != nil)
+			continue
+		}
+
+		pm.log.Debug("Setting descendant plugin's signature to that of root", "plugin", p.Id, "root", p.Root.Id)
+		p.Signature = p.Root.Signature
+	}
+
 	return nil
 }
 
@@ -166,7 +180,8 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (pm *PluginManager) checkPluginPaths() error {
+// scanPluginPaths scans configured plugin paths.
+func (pm *PluginManager) scanPluginPaths() error {
 	for pluginID, settings := range pm.Cfg.PluginSettings {
 		path, exists := settings["path"]
 		if !exists || path == "" {
@@ -189,8 +204,10 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		cfg:                  pm.Cfg,
 		requireSigned:        requireSigned,
 		log:                  pm.log,
+		plugins:              map[string]*PluginBase{},
 	}
 
+	// 1st pass: Scan plugins, also mapping plugins to their respective directories
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			pm.log.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", pluginDir)
@@ -209,6 +226,25 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 	if len(scanner.errors) > 0 {
 		pm.log.Warn("Some plugins failed to load", "errors", scanner.errors)
 		pm.scanningErrors = scanner.errors
+	}
+
+	// 2nd pass: Detect any root plugins
+	for dpath, plugin := range scanner.plugins {
+		ancestors := strings.Split(dpath, string(filepath.Separator))
+		ancestors = ancestors[0 : len(ancestors)-1]
+
+		// Try to find any root plugin
+		aPath := ""
+		if runtime.GOOS != "windows" && filepath.IsAbs(dpath) {
+			aPath = "/"
+		}
+		for _, a := range ancestors {
+			aPath = filepath.Join(aPath, a)
+			if root, ok := scanner.plugins[aPath]; ok {
+				plugin.Root = root
+				break
+			}
+		}
 	}
 
 	return nil
@@ -239,13 +275,15 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 		return nil
 	}
 
-	if f.Name() == "plugin.json" {
-		err := scanner.loadPlugin(currentPath)
-		if err != nil {
-			scanner.log.Error("Failed to load plugin", "error", err, "pluginPath", filepath.Dir(currentPath))
-			scanner.errors = append(scanner.errors, err)
-		}
+	if f.Name() != "plugin.json" {
+		return nil
 	}
+
+	if err := scanner.loadPlugin(currentPath); err != nil {
+		scanner.log.Error("Failed to load plugin", "error", err, "pluginPath", filepath.Dir(currentPath))
+		scanner.errors = append(scanner.errors, err)
+	}
+
 	return nil
 }
 
@@ -336,7 +374,13 @@ func (scanner *PluginScanner) loadPlugin(pluginJsonFilePath string) error {
 		return err
 	}
 
-	return loader.Load(jsonParser, currentDir, scanner.backendPluginManager)
+	if err := loader.Load(jsonParser, currentDir, scanner.backendPluginManager); err != nil {
+		return err
+	}
+
+	// TODO: We should avoid loading the plugin a second time, and instead re-use pluginCommon
+	scanner.plugins[currentDir] = Plugins[pluginCommon.Id]
+	return nil
 }
 
 func (scanner *PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {

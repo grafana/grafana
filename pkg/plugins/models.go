@@ -69,6 +69,8 @@ type PluginBase struct {
 
 	GrafanaNetVersion   string `json:"-"`
 	GrafanaNetHasUpdate bool   `json:"-"`
+
+	Root *PluginBase
 }
 
 func (pb *PluginBase) registerPlugin(pluginDir string) error {
