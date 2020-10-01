@@ -41,9 +41,6 @@ export const DEFAULT_RANGE = {
 };
 
 export const DEFAULT_UI_STATE = {
-  showingTable: true,
-  showingGraph: true,
-  showingLogs: true,
   dedupStrategy: LogsDedupStrategy.none,
 };
 
@@ -189,13 +186,6 @@ enum ParseUrlStateIndex {
   SegmentsStart = 3,
 }
 
-enum ParseUiStateIndex {
-  Graph = 0,
-  Logs = 1,
-  Table = 2,
-  Strategy = 3,
-}
-
 export const safeParseJson = (text?: string): any | undefined => {
   if (!text) {
     return;
@@ -228,7 +218,6 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     datasource: null,
     queries: [],
     range: DEFAULT_RANGE,
-    ui: DEFAULT_UI_STATE,
     mode: null,
     originPanelId: null,
   };
@@ -254,18 +243,8 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
   const queries = parsedSegments.filter(segment => !isSegment(segment, 'ui', 'originPanelId'));
 
-  const uiState = parsedSegments.filter(segment => isSegment(segment, 'ui'))[0];
-  const ui = uiState
-    ? {
-        showingGraph: uiState.ui[ParseUiStateIndex.Graph],
-        showingLogs: uiState.ui[ParseUiStateIndex.Logs],
-        showingTable: uiState.ui[ParseUiStateIndex.Table],
-        dedupStrategy: uiState.ui[ParseUiStateIndex.Strategy],
-      }
-    : DEFAULT_UI_STATE;
-
   const originPanelId = parsedSegments.filter(segment => isSegment(segment, 'originPanelId'))[0];
-  return { datasource, queries, range, ui, originPanelId };
+  return { datasource, queries, range, originPanelId };
 }
 
 export function generateKey(index = 0): string {
