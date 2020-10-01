@@ -13,7 +13,7 @@ import (
 )
 
 // POST /api/alert-definitions/eval
-func (hs *HTTPServer) AlertDefinitionEval(c *models.ReqContext, dto dtos.EvalAlertConditionsCommand) Response {
+func (hs *HTTPServer) ConditionsEval(c *models.ReqContext, dto dtos.EvalAlertConditionsCommand) Response {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	defer cancelFn()
 
