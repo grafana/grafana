@@ -48,7 +48,7 @@ export const getInlineLabelStyles = (theme: GrafanaTheme, width?: number | 'auto
       font-size: ${theme.typography.size.sm};
       background-color: ${theme.colors.bg2};
       height: ${theme.height.md}px;
-      line-height: ${theme.height.md};
+      line-height: ${theme.height.md}px;
       margin-right: ${theme.spacing.xs};
       border-radius: ${theme.border.radius.md};
       border: none;
@@ -56,8 +56,6 @@ export const getInlineLabelStyles = (theme: GrafanaTheme, width?: number | 'auto
       color: ${theme.colors.textHeading};
     `,
     icon: css`
-      display: flex;
-      flex-grow: 0;
       color: ${theme.colors.textWeak};
       margin-left: 10px;
 
