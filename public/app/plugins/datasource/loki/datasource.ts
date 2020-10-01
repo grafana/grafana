@@ -137,15 +137,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         }
 
         return {
-          data: [
-            lokiResultsToTableModel(
-              response.data.data.result,
-              responseListLength,
-              `${target.refId}_instant`,
-              meta,
-              true
-            ),
-          ],
+          data: [lokiResultsToTableModel(response.data.data.result, responseListLength, target.refId, meta, true)],
           key: `${target.refId}_instant`,
         };
       }),
