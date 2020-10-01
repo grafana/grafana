@@ -1,5 +1,5 @@
 +++
-title = "Using Elasticsearch in Grafana"
+title = "Elasticsearch"
 description = "Guide for using Elasticsearch in Grafana"
 keywords = ["grafana", "elasticsearch", "guide"]
 type = "docs"
