@@ -116,7 +116,7 @@ will be shared soon.
 
 Built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) is officially released in Grafana 6.0. Beta support was added in Grafana 5.3 and we have added lots of improvements since then.
 
-To get started read the guide: [Using Google Stackdriver in Grafana]({{< relref "../features/datasources/cloudmonitoring/" >}}).
+To get started read the guide: [Using Google Stackdriver in Grafana]({{< relref "../datasources/cloudmonitoring/" >}}).
 
 ## Azure Monitor data source
 
@@ -124,7 +124,7 @@ One of the goals of the Grafana v6.0 release is to add support for the three maj
 
 The Azure Monitor data source integrates four Azure services with Grafana - Azure Monitor, Azure Log Analytics, Azure Application Insights and Azure Application Insights Analytics.
 
-Please read [Using Azure Monitor in Grafana documentation]({{< relref "../features/datasources/azuremonitor/" >}}) for more detailed information on how to get started and use it.
+Please read [Using Azure Monitor in Grafana documentation]({{< relref "../datasources/azuremonitor/" >}}) for more detailed information on how to get started and use it.
 
 ## Provisioning support for alert notifiers
 

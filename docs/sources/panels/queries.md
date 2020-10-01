@@ -43,7 +43,7 @@ SELECT hostname FROM host  WHERE region IN($region)
 query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
 ```
 
-For more information about writing a query for your data source, refer to the specific [Grafana data source]({{< relref "../features/datasources/_index.md" >}}) documentation.
+For more information about writing a query for your data source, refer to the specific [Grafana data source]({{< relref "../datasources/_index.md" >}}) documentation.
 
 ## Query tab UI
 
@@ -58,7 +58,7 @@ The Query tab consists of the following elements:
 
 ### Data source selector
 
-The data source selector is a drop-down list. Click it to select a data source you have added. When you create a panel, Grafana automatically selects your default data source. For more information about adding data sources, refer to [Add a data source]({{< relref "../features/datasources/add-a-data-source.md" >}}).
+The data source selector is a drop-down list. Click it to select a data source you have added. When you create a panel, Grafana automatically selects your default data source. For more information about adding data sources, refer to [Add a data source]({{< relref "../datasources/add-a-data-source.md" >}}).
 
 {{< docs-imagebox img="/img/docs/queries/data-source-selector-7-0.png" class="docs-image--no-shadow" max-width="250px" >}}
 

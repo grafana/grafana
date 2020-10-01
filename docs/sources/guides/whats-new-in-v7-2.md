@@ -102,7 +102,7 @@ You can enjoy all the details query inspector gave you in dashboards now in Expl
 
 ## \$\_\_rate_interval for Prometheus
 
-You can now use the new variable `$__rate_interval` in Prometheus for rate functions mainly. `$__rate_interval` in general is one scrape interval larger than `$__interval` but is never smaller than four times the scrape interval (which is 15s by default). See the [Prometheus data source]({{< relref "../features/datasources/prometheus.md#using-__rate_interval-variable" >}}) for more details.
+You can now use the new variable `$__rate_interval` in Prometheus for rate functions mainly. `$__rate_interval` in general is one scrape interval larger than `$__interval` but is never smaller than four times the scrape interval (which is 15s by default). See the [Prometheus data source]({{< relref "../datasources/prometheus.md#using-__rate_interval-variable" >}}) for more details.
 
 ## Toggle parsed log fields
 

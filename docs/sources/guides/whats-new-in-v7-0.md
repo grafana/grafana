@@ -181,7 +181,7 @@ It was released as a beta feature in Grafana 6.7. The feedback has been really p
 
 ## Stackdriver data source supports Service Monitoring
 
-[Service monitoring](https://cloud.google.com/service-monitoring) in Google Cloud Platform (GCP) enables you to monitor based on Service Level Objectives (SLOs) for your GCP services. The new SLO query builder in the Stackdriver data source allows you to display SLO data in Grafana. Read more about it in the [Stackdriver data source documentation]({{< relref "../features/datasources/cloudmonitoring/#slo-service-level-objective-queries" >}}).
+[Service monitoring](https://cloud.google.com/service-monitoring) in Google Cloud Platform (GCP) enables you to monitor based on Service Level Objectives (SLOs) for your GCP services. The new SLO query builder in the Stackdriver data source allows you to display SLO data in Grafana. Read more about it in the [Stackdriver data source documentation]({{< relref "../datasources/cloudmonitoring/#slo-service-level-objective-queries" >}}).
 
 ## Time zone support
 
@@ -191,7 +191,7 @@ You can now override the [time zone]({{< relref "../dashboards/time-range-contro
 
 The Azure Monitor data source supports multiple Azure services. Log Analytics queries in the data source now have alerting support too (Azure Monitor and Application Insights already had alerting support).
 
-A new feature is [deep linking from the graph panel to the Log Analytics query editor in the Azure Portal]({{< relref "../features/datasources/azuremonitor/#deep-linking-from-grafana-panels-to-the-log-analytics-query-editor-in-azure-portal" >}}). Click on a time series in the panel to see a context menu with a link to View in Azure Portal. Clicking that link opens the Azure Log Analytics query editor in the Azure Portal and runs the query from the Grafana panel.
+A new feature is [deep linking from the graph panel to the Log Analytics query editor in the Azure Portal]({{< relref "../datasources/azuremonitor/#deep-linking-from-grafana-panels-to-the-log-analytics-query-editor-in-azure-portal" >}}). Click on a time series in the panel to see a context menu with a link to View in Azure Portal. Clicking that link opens the Azure Log Analytics query editor in the Azure Portal and runs the query from the Grafana panel.
 
 ## Grafana Enterprise
 
