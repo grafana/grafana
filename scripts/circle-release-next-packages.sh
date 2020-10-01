@@ -12,8 +12,8 @@ function parse_git_hash() {
 
 function prepare_version_commit () {
   echo $'\nCommitting version changes. This commit will not be checked-in!'
-  git config --global user.email "circleci@grafana.com"
-  git config --global user.name "CirceCI"
+  git config --global user.email "drone@grafana.com"
+  git config --global user.name "Drone"
   git commit -am "Version commit"
 }
 
@@ -40,7 +40,7 @@ function unpublish_previous_canary () {
 
 # Get current version from lerna.json
 PACKAGE_VERSION=$(grep '"version"' lerna.json | cut -d '"' -f 4)
-# Get  current commit's short hash
+# Get current commit's short hash
 GIT_SHA=$(parse_git_hash)
 
 echo "Commit: ${GIT_SHA}"
@@ -54,7 +54,7 @@ if [ -z "$count" ]; then
 else
   echo "Changes detected in ${count} packages"
   echo "Releasing packages under ${PACKAGE_VERSION}-${GIT_SHA}"
-  npx lerna version "${PACKAGE_VERSION}-${GIT_SHA}" --exact --no-git-tag-version --no-push --force-publish -y
+  ./node_modules/.bin/lerna version "${PACKAGE_VERSION}-${GIT_SHA}" --exact --no-git-tag-version --no-push --force-publish -y
   echo $'\nGit status:'
   git status -s
 
