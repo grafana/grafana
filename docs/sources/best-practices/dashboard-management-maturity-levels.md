@@ -3,7 +3,9 @@ title = "Dashboard management maturity model"
 description = "Explanation of dashboard management maturity model"
 type = "docs"
 [menu.docs]
-weight = 200
+identifier = "best-management-for-maturity-model"
+parent = "best-practices"
+weight = 400
 +++
 
 # Dashboard management maturity model

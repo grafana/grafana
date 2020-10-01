@@ -5,7 +5,9 @@ keywords = ["grafana", "intro", "guide", "concepts", "methods"]
 aliases = ["/docs/grafana/latest/getting-started/strategies/"]
 type = "docs"
 [menu.docs]
-weight = 500
+identifier = "common-observability-strategies"
+parent = "best-practices"
+weight = 300
 +++
 
 # Common observability strategies
