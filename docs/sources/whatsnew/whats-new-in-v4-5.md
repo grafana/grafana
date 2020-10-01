@@ -3,6 +3,7 @@ title = "What's new in Grafana v4.5"
 description = "Feature and improvement highlights for Grafana v4.5"
 keywords = ["grafana", "new", "documentation", "4.5", "release notes"]
 type = "docs"
+aliases = ["/docs/grafana/latest/guides/whats-new-in-v4-5/"]
 [menu.docs]
 name = "Version 4.5"
 identifier = "v4.5"
