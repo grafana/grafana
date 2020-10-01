@@ -94,9 +94,13 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
   const onPulseWaveChange = onFieldChange('pulseWave');
   const onCSVWaveChange = onFieldChange('csvWave');
 
-  const options = useMemo(() => (scenarioList || []).map(item => ({ label: item.name, value: item.id })), [
-    scenarioList,
-  ]);
+  const options = useMemo(
+    () =>
+      (scenarioList || [])
+        .map(item => ({ label: item.name, value: item.id }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [scenarioList]
+  );
   const showLabels = useMemo(() => showLabelsFor.includes(query.scenarioId), [query]);
 
   if (loading) {
