@@ -79,15 +79,11 @@ func (hs *HTTPServer) Init() error {
 
 	// Set up a websocket broker
 	if hs.Cfg.IsLiveEnabled() { // feature flag
-		node, err := live.InitalizeBroker()
+		node, err := live.InitializeBroker()
 		if err != nil {
 			return err
 		}
 		hs.Live = node
-
-		// Spit random walk to example
-		go live.RunRandomCSV(hs.Live, "grafana/testdata/random-2s-stream", 2000, 0)
-		go live.RunRandomCSV(hs.Live, "grafana/testdata/random-flakey-stream", 400, .6)
 	}
 
 	hs.macaron = hs.newMacaron()
