@@ -1,13 +1,13 @@
 +++
-title = "Using Loki in Grafana"
+title = "Loki"
 description = "Guide for using Loki in Grafana"
 keywords = ["grafana", "loki", "logging", "guide"]
 type = "docs"
-aliases = ["/docs/grafana/latest/datasources/loki"]
+aliases = ["/docs/grafana/latest/features/datasources/loki"]
 [menu.docs]
 name = "Loki"
 parent = "datasources"
-weight = 6
+weight = 800
 +++
 
 # Using Loki in Grafana
@@ -18,7 +18,7 @@ weight = 6
 > Viewing Loki data in dashboard panels is supported in Grafana v6.4+.
 
 Grafana ships with built-in support for Loki, Grafana's log aggregation system.
-Just add it as a data source and you are ready to query your log data in [Explore]({{< relref "../../explore" >}}).
+Just add it as a data source and you are ready to query your log data in [Explore]({{< relref "../explore" >}}).
 
 ## Adding the data source
 
@@ -60,7 +60,7 @@ The new field with the link shown in log details:
 
 ## Querying Logs
 
-Querying and displaying log data from Loki is available via [Explore]({{< relref "../../explore" >}}), and with the [logs panel]({{< relref "../../panels/visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a [LogQL](https://grafana.com/docs/loki/latest/logql/) query to display your logs.
+Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../panels/visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a [LogQL](https://grafana.com/docs/loki/latest/logql/) query to display your logs.
 
 ### Log Queries
 
@@ -128,7 +128,7 @@ The following filter types are currently supported:
 
 ## Live tailing
 
-Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore]({{< relref "../../explore/#loki-specific-features" >}}).
+Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore]({{< relref "../explore/#loki-specific-features" >}}).
 
 Note that Live Tailing relies on two Websocket connections: one between the browser and the Grafana server, and another between the Grafana server and the Loki server. If you run any reverse proxies, please configure them accordingly. The following example for Apache2 can be used for proxying between the browser and the Grafana server:
 ```
@@ -149,7 +149,7 @@ log message you're interested in.
 
 Instead of hard-coding things like server, application and sensor name in your metric queries, you can use variables in their place. Variables are shown as drop-down select boxes at the top of the dashboard. These drop-down boxes make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../variables/templates-and-variables" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../variables/templates-and-variables" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ## Annotations
 
@@ -160,7 +160,7 @@ You can use any non-metric Loki query as a source for annotations. Log content w
 ## Configure the data source with provisioning
 
 You can set up the data source via config files with Grafana's provisioning system.
-You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
+You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
 
 Here is an example:
 
