@@ -154,7 +154,7 @@ Examples:
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-service-variables.png" class="docs-image--no-shadow" caption="Nested Azure Monitor Template Variables" >}}
 
-Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### List of supported Azure Monitor metrics
@@ -208,7 +208,7 @@ Examples:
 
 Use the one of the following queries in the `Query` field in the Variable edit view.
 
-Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 | Name                               | Description                                                  |
@@ -317,13 +317,13 @@ To make writing queries easier there are several Grafana macros that can be used
 
 There are also some Grafana variables that can be used in Azure Log Analytics queries:
 
-- `$__interval` - Grafana calculates the minimum time grain that can be used to group by time in queries. More details on how it works [here]({{< relref "../../variables/templates-and-variables.md#interval-variables" >}}). It returns a time grain like `5m` or `1h` that can be used in the bin function. E.g. `summarize count() by bin(TimeGenerated, $__interval)`
+- `$__interval` - Grafana calculates the minimum time grain that can be used to group by time in queries. More details on how it works [here]({{< relref "../../variables/syntax-types.md#interval-variables" >}}). It returns a time grain like `5m` or `1h` that can be used in the bin function. E.g. `summarize count() by bin(TimeGenerated, $__interval)`
 
 ### Templating with variables for Azure Log Analytics
 
 Any Log Analytics query that returns a list of values can be used in the `Query` field in the Variable edit view. There is also one Grafana function for Log Analytics that returns a list of workspaces.
 
-Refer to the [Variables]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
+Refer to the [Variables]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 | Name                                               | Description                                                                                            |

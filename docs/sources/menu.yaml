@@ -297,8 +297,8 @@
 - name: Templates and variables
   link: /variables/
   children:
-    - link: /variables/templates-and-variables/
-      name: Overview
+    - link: /variables/syntax-types/
+      name: Variables syntax and types
     - link: /variables/variable-examples/
       name: Variable examples
     - name: Variable types
