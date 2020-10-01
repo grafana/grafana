@@ -160,27 +160,19 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
     };
   }
 
-  const metricLabels: string[] = [];
-  // Collect all labels across all metrics
-  md.forEach(series => {
-    for (const label in series.metric) {
-      if (!metricLabels.some(metricLabel => metricLabel === label)) {
-        metricLabels.push(label);
-      }
-    }
-  });
-
   const valueText = options.responseListLength > 1 || options.valueWithRefId ? `Value #${options.refId}` : 'Value';
 
   const timeField = getTimeField([]);
-  const metricFields = metricLabels.sort().map(label => {
-    return {
-      name: label,
-      config: { filterable: true },
-      type: FieldType.other,
-      values: new ArrayVector(),
-    };
-  });
+  const metricFields = Object.keys(md.reduce((acc, series) => ({ ...acc, ...series.metric }), {}))
+    .sort()
+    .map(label => {
+      return {
+        name: label,
+        config: { filterable: true },
+        type: FieldType.other,
+        values: new ArrayVector(),
+      };
+    });
   const valueField = getValueField([], valueText);
 
   md.forEach(d => {
