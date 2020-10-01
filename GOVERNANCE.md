@@ -77,6 +77,7 @@ The current team members are:
 - Diana Sarlinska ([Grafana Labs](https://grafana.com/))
 - Dominik Prokop ([Grafana Labs](https://grafana.com/))
 - Emil Tullstedt ([Grafana Labs](https://grafana.com/))
+- Fredrik Enestad ([Soundtrack Your Brand](https://www.soundtrackyourbrand.com/))
 - Hugo Häggmark ([Grafana Labs](https://grafana.com/))
 - Ivana Huckova ([Grafana Labs](https://grafana.com/))
 - Jeroen Op 't Eynde ([Grafana Labs](https://grafana.com/))
