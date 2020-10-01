@@ -36,9 +36,10 @@ else
   echo "Changes detected in ${count} packages"
   echo "Starting to release latest canary version"
   
-  # frontend packages are already built by the build-frontend step
-  # in drone. So we will only unpublish the previous version and
-  # publish the current built version as the latest canary build.
+  # Frontend packages have already been versioned and built by the 
+  # build-frontend step in drone. We will only unpublish the previous 
+  # canary version and publish the current built version as the new 
+  # latest canary build.
 
   for PACKAGE in "${PACKAGES[@]}"
   do
