@@ -14,7 +14,7 @@ To see a list of available variables, type `$` in the data link **URL** field to
 
 > **Note:** These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
 
-You can also use template variables in your data links URLs, refer to [Templates and variables]({{< relref "../variables/templates-and-variables.md" >}}) for more information on template variables.
+You can also use template variables in your data links URLs, refer to [Templates and variables]({{< relref "../variables/_index.md" >}}) for more information on template variables.
 
 ## Time range panel variables
 

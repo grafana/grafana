@@ -5,8 +5,9 @@ keywords = ["Grafana", "alerting", "guide", "notifications"]
 type = "docs"
 [menu.docs]
 name = "Notifications"
+identifier = "alert-notification"
 parent = "alerting"
-weight = 200
+weight = 100
 +++
 
 # Alert notifications
