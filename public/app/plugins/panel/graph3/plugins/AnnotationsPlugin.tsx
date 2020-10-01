@@ -54,7 +54,20 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
       );
     }
 
-    return markers;
+    return (
+      <div
+        className={css`
+          position: absolute;
+          left: ${plotContext.u.bbox.left / window.devicePixelRatio}px;
+          top: ${plotContext.u.bbox.top / window.devicePixelRatio +
+            plotContext.u.bbox.height / window.devicePixelRatio}px;
+          width: ${plotContext.u.bbox.width / window.devicePixelRatio}px;
+          height: 14px;
+        `}
+      >
+        {markers}
+      </div>
+    );
   }, [annotationsData, timeFormatter, plotContext, renderCounter]);
 
   // For uPlot plugin to have access to lates annotation data we need to update the data ref
@@ -66,6 +79,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     const unregister = pluginsApi.registerPlugin({
       id: pluginId,
       hooks: {
+        // Render annotation lines on the canvas
         draw: u => {
           /**
            * We cannot rely on state value here, as it would require this effect to be dependent on the state value.
@@ -96,9 +110,6 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
           setRenderCounter(c => c + 1);
           return;
         },
-        ready: () => {
-          console.log('ready');
-        },
       },
     });
 
@@ -111,19 +122,5 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     return null;
   }
 
-  return (
-    <div>
-      <div
-        className={css`
-          position: absolute;
-          left: ${plotContext.canvas.plot.left}px;
-          top: ${plotContext.canvas.plot.top + plotContext.canvas.plot.height}px;
-          width: ${plotContext.canvas.plot.width}px;
-          height: 14px;
-        `}
-      >
-        {annotationMarkers}
-      </div>
-    </div>
-  );
+  return <div>{annotationMarkers}</div>;
 };
