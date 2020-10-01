@@ -78,7 +78,7 @@ By default, query history shows you the most recent queries. You can sort your h
    - Data source A-Z
    - Data source Z-A
 
-> Note: If you are in split mode, then the chosen sorting mode applies only to the active panel.
+> **Note:** If you are in split mode, then the chosen sorting mode applies only to the active panel.
 
 ### Filter query history
 
@@ -93,7 +93,7 @@ In **Query history** tab it is also possible to filter queries by date using the
 - By dragging top handle, adjust start date.
 - By dragging top handle, adjust end date.
 
-> Note: If you are in split mode, filters are applied only to your currently active panel.
+> **Note:** If you are in split mode, filters are applied only to your currently active panel.
 
 ### Search in query history
 
@@ -113,7 +113,7 @@ You can customize the query history in the Settings tab. Options are described i
 | Only show queries for data source currently active in Explore | True                                    |
 | Clear query history                                           | Permanently deletes all stored queries. |
 
-> Note: Query history settings are global, and applied to both panels in split mode.
+> **Note:** Query history settings are global, and applied to both panels in split mode.
 
 ## Prometheus-specific Features
 

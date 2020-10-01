@@ -27,12 +27,12 @@ Just add it as a data source and you are ready to query your log data in [Explor
 1. Click the `Add data source` button at the top.
 1. Select `Loki` from the list of data sources.
 
-> Note: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
+> **Note:** If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
 | Name            | Description                                                                                                                                   |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| _Name_          | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                                 |
-| _Default_       | Default data source means that it will be pre-selected for new panels.                                                                         |
+| _Name_          | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                               |
+| _Default_       | Default data source means that it will be pre-selected for new panels.                                                                        |
 | _URL_           | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
 | _Maximum lines_ | Upper limit for number of log lines returned by Loki (default is 1000). Decrease if your browser is sluggish when displaying logs in Explore. |
 
@@ -124,7 +124,7 @@ The following filter types are currently supported:
 * `|~` line matches regular expression.
 * `!~` line does not match regular expression.
 
-> Note: For more details about LogQL, Loki's query language, refer to the [documentation](https://grafana.com/docs/loki/latest/logql/)
+> **Note:** For more details about LogQL, Loki's query language, refer to the [documentation](https://grafana.com/docs/loki/latest/logql/)
 
 ## Live tailing
 
@@ -135,7 +135,7 @@ Note that Live Tailing relies on two Websocket connections: one between the brow
 ProxyPassMatch "^/(api/datasources/proxy/\d+/loki/api/v1/tail)" "ws://127.0.0.1:3000/$1"
 ```
 
-> Note: This feature is only available in Grafana v6.3+
+> **Note:** This feature is only available in Grafana v6.3+
 
 ## Log Context
 
@@ -143,7 +143,7 @@ When using a search expression as detailed above, you now have the ability to re
 By clicking the `Show Context` link on the filtered rows, you'll be able to investigate the log messages that came before and after the
 log message you're interested in.
 
-> Note: This feature is only available in Grafana v6.3+
+> **Note:** This feature is only available in Grafana v6.3+
 
 ## Templating
 
@@ -155,7 +155,7 @@ Check out the [Templating]({{< relref "../../variables/templates-and-variables" 
 
 You can use any non-metric Loki query as a source for annotations. Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
 
-> Note: Annotations for Loki are only available in Grafana v6.4+
+> **Note:** Annotations for Loki are only available in Grafana v6.4+
 
 ## Configure the data source with provisioning
 
