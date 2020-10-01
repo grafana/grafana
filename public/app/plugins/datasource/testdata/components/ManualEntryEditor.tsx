@@ -4,15 +4,16 @@ import { Form, InlineField, InlineFieldRow, Input, InputControl, Select } from '
 import { EditorProps } from '../QueryEditor';
 import { NewPoint } from '../types';
 
-interface Props extends EditorProps {
+export interface Props extends EditorProps {
   onRunQuery: () => void;
 }
 
 export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
   const addPoint = (point: NewPoint) => {
-    let points = query.points || [[]];
     const newPointTime = dateMath.parse(point.newPointTime);
-    points = [...points, [Number(point.newPointValue), newPointTime!.valueOf()]].sort((a, b) => a[1] - b[1]);
+    const points = [...query.points, [Number(point.newPointValue), newPointTime!.valueOf()]].sort(
+      (a, b) => a[1] - b[1]
+    );
     onChange({ ...query, points });
     onRunQuery();
   };
@@ -65,6 +66,7 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
                 width={32}
                 name="selectedPoint"
                 onChange={value => value[0]}
+                placeholder="Select point"
               />
             </InlineField>
 

@@ -15,7 +15,7 @@ export const defaultCSVWave: any = {
 };
 
 export const defaultQuery: TestDataQuery = {
-  points: [[]],
+  points: [],
   stream: defaultStreamQuery,
   pulseWave: defaultPulse,
   csvWave: defaultCSVWave,
