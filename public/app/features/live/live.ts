@@ -17,9 +17,6 @@ export const sessionId =
   '/' +
   Date.now().toString(16) +
   '/' +
-  // Math.random()
-  //   .toString(36)
-  //   .substring(2, 15) +
   Math.random()
     .toString(36)
     .substring(2, 15);
