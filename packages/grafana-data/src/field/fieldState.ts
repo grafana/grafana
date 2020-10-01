@@ -146,6 +146,7 @@ function getUniqueFieldName(field: Field, frame?: DataFrame) {
 
         if (dupeCount > 0) {
           dupeCount++;
+          break;
         }
       } else if (field.name === otherField.name) {
         dupeCount++;
