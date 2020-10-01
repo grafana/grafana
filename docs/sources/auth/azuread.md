@@ -7,7 +7,7 @@ type = "docs"
 name = "Azure AD"
 identifier = "azuread_oauth2"
 parent = "authentication"
-weight = 3
+weight = 700
 +++
 
 # Azure AD OAuth2 authentication

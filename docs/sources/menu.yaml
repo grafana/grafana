@@ -65,6 +65,8 @@
       children:
         - link: /auth/overview/
           name: Overview
+        - link: /auth/grafana/
+          name: Grafana Authentication
         - link: /auth/auth-proxy/
           name: Auth Proxy
         - link: /auth/ldap/

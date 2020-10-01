@@ -7,7 +7,7 @@ type = "docs"
 name = "Google"
 identifier = "google_oauth2"
 parent = "authentication"
-weight = 3
+weight = 600
 +++
 
 # Google OAuth2 Authentication

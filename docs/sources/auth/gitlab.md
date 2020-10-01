@@ -7,7 +7,7 @@ type = "docs"
 name = "GitLab"
 identifier = "gitlab_oauth"
 parent = "authentication"
-weight = 5
+weight = 900
 +++
 
 # GitLab OAuth2 Authentication

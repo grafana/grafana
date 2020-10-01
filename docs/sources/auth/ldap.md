@@ -8,7 +8,7 @@ aliases = ["/docs/grafana/latest/installation/ldap/"]
 name = "LDAP"
 identifier = "ldap"
 parent = "authentication"
-weight = 2
+weight = 300
 +++
 
 # LDAP Authentication
