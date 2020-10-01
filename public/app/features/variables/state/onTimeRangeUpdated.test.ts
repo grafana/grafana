@@ -66,12 +66,12 @@ const getTestContext = () => {
   const preloadedState = {
     dashboard,
     location: { query: '' },
-    templating: {
+    templating: ({
       variables: {
         'interval-0': { ...interval },
         'constant-1': { ...constant },
       },
-    },
+    } as unknown) as TemplatingState,
   };
 
   return {
@@ -131,7 +131,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
         updateTimeRangeMock,
         templateVariableValueUpdatedMock,
         startRefreshMock,
-      } = getTestContext(true);
+      } = getTestContext();
 
       const tester = await reduxTester<{ templating: TemplatingState }>({ preloadedState })
         .givenRootReducer(getRootReducer())
@@ -168,7 +168,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
         updateTimeRangeMock,
         templateVariableValueUpdatedMock,
         startRefreshMock,
-      } = getTestContext(true);
+      } = getTestContext();
 
       adapter.updateOptions = jest.fn().mockRejectedValue(new Error('Something broke'));
 
