@@ -7,13 +7,31 @@ Generally we follow the Airbnb [React Style Guide](https://github.com/airbnb/jav
 - [Frontend Style Guide](#frontend-style-guide)
   - [Table of Contents](#table-of-contents)
   - [Basic rules](#basic-rules)
-  - [Naming conventions](#naming-conventions)
-  - [File and directory naming conventions](#file-and-directory-naming-conventions)
-  - [Code organization](#code-organization)
-    - [Exports](#exports)
-  - [Comments](#comments)
+    - [Naming conventions](#naming-conventions)
+      - [Use `PascalCase` for:](#use-pascalcase-for)
+        - [Typescript class names](#typescript-class-names)
+        - [Types and interfaces](#types-and-interfaces)
+        - [Enums](#enums)
+      - [Use `camelCase` for:](#use-camelcase-for)
+        - [Functions](#functions)
+        - [Methods](#methods)
+        - [Variables](#variables)
+        - [React state and properties](#react-state-and-properties)
+        - [Emotion class names](#emotion-class-names)
+      - [Use `ALL_CAPS` for constants.](#use-all_caps-for-constants)
+      - [Use BEM convention for SASS styles.](#use-bem-convention-for-sass-styles)
+    - [Typing](#typing)
+    - [File and directory naming conventions](#file-and-directory-naming-conventions)
+    - [Code organization](#code-organization)
+      - [Exports](#exports)
+    - [Comments](#comments)
+    - [Linting](#linting)
   - [React](#react)
     - [Props](#props)
+        - [Name callback props and handlers with an "on" prefix.](#name-callback-props-and-handlers-with-an-on-prefix)
+        - [React Component definitions](#react-component-definitions)
+        - [React Component constructor](#react-component-constructor)
+        - [React Component defaultProps](#react-component-defaultprops)
   - [State management](#state-management)
   
   - [Proposal for removing or replacing Angular dependencies](https://github.com/grafana/grafana/pull/23048)
@@ -192,7 +210,7 @@ const stringArray: string[] = [];
 
 Specify function return types explicitly in new code. This improves readability by being able to tell what a function returns just by looking at the signature. It also prevents errors when a function's return type is broader than expected by the author. 
 
-> Note: We don't have linting for this enabled because of lots of old code that needs to be fixed first.
+> **Note:** We don't have linting for this enabled because of lots of old code that needs to be fixed first.
 
 ```typescript
 // bad
