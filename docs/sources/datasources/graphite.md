@@ -1,14 +1,14 @@
 +++
-title = "Using Graphite in Grafana"
+title = "Graphite"
 description = "Guide for using graphite in Grafana"
 keywords = ["grafana", "graphite", "guide"]
 type = "docs"
-aliases = ["/docs/grafana/latest/datasources/graphite"]
+aliases = ["/docs/grafana/latest/features/datasources/graphite"]
 [menu.docs]
 name = "Graphite"
 identifier = "graphite"
 parent = "datasources"
-weight = 1
+weight = 600
 +++
 
 # Using Graphite in Grafana
@@ -29,7 +29,7 @@ Name | The data source name. This is how you refer to the data source in panels 
 Default | Default data source means that it will be pre-selected for new panels.
 URL | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.
 Access | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
-Auth | Refer to [Authentication]({{< relref "../../auth/_index.md" >}}) for more information.
+Auth | Refer to [Authentication]({{< relref "../auth/_index.md" >}}) for more information.
 Basic Auth  | Enable basic authentication to the data source.
 User | User name for basic authentication.
 Password | Password for basic authentication.
@@ -125,7 +125,7 @@ Instead of hard-coding things like server, application, and sensor name in your 
 Variables are shown as drop-down select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-For more information, refer to [Variables and templates]({{< relref "../../variables/templates-and-variables.md" >}}).
+For more information, refer to [Variables and templates]({{< relref "../variables/templates-and-variables.md" >}}).
 
 Graphite 1.1 introduced tags and Grafana added support for Graphite queries with tags in version 5.0. To create a variable using tag values, use the Grafana functions `tags` and `tag_values`.
 
@@ -191,11 +191,11 @@ Example of a tag expression with regex formatting and using the Equal Tilde oper
 server=~${servers:regex}
 ```
 
-For more information, refer to [Advanced variable format options]({{< relref "../../variables/advanced-variable-format-options.md" >}}).
+For more information, refer to [Advanced variable format options]({{< relref "../variables/advanced-variable-format-options.md" >}}).
 
 ## Annotations
 
-[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Graphite supports two ways to query annotations. A regular metric query, for this you use the `Graphite query` textbox. A Graphite events query, use the `Graphite event tags` textbox,
@@ -203,11 +203,11 @@ specify a tag or wildcard (leave empty should also work)
 
 ## Get Grafana metrics into Graphite
 
-Grafana exposes metrics for Graphite on the `/metrics` endpoint. For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../../administration/metrics.md">}}).
+Grafana exposes metrics for Graphite on the `/metrics` endpoint. For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/metrics.md">}}).
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
 
 Here are some provisioning examples for this data source.
 
