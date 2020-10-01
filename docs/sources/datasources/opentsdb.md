@@ -1,5 +1,5 @@
 +++
-title = "Using OpenTSDB in Grafana"
+title = "OpenTSDB"
 description = "Guide for using OpenTSDB in Grafana"
 keywords = ["grafana", "opentsdb", "guide"]
 type = "docs"
@@ -7,7 +7,7 @@ aliases = ["/docs/grafana/latest/datasources/opentsdb",	"/docs/grafana/latest/fe
 [menu.docs]
 name = "OpenTSDB"
 parent = "datasources"
-weight = 19
+weight = 1100
 +++
 
 # Using OpenTSDB in Grafana
@@ -53,7 +53,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -90,7 +90,7 @@ For details on OpenTSDB metric queries, check out the official [OpenTSDB documen
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}})
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
 
 Here are some provisioning examples for this data source.
 
