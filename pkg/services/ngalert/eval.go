@@ -258,8 +258,8 @@ func EvaluateExecutionResult(results *ExecutionResult) (EvalResults, error) {
 		labels[labelsStr] = true
 
 		state := Normal
-		val, ok := f.Fields[0].ConcreteAt(0)
-		if ok && val != 0 {
+		val, err := f.Fields[0].FloatAt(0)
+		if err != nil || val != 0 {
 			state = Critical
 		}
 
@@ -277,7 +277,7 @@ func EvaluateExecutionResult(results *ExecutionResult) (EvalResults, error) {
 func (evalResults EvalResults) AsDataFrame() data.Frame {
 	fields := make([]*data.Field, 0)
 	for _, evalResult := range evalResults {
-		fields = append(fields, data.NewField("", evalResult.Instance, []bool{evalResult.State == Normal}))
+		fields = append(fields, data.NewField("", evalResult.Instance, []bool{evalResult.State != Normal}))
 	}
 	f := data.NewFrame("", fields...)
 	return *f
