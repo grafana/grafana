@@ -24,13 +24,12 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
+import { getTemplateSrv, TemplateSrv, BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { lokiResultsToTableModel, lokiStreamResultToDataFrame, processRangeQueryResponse } from './result_transformer';
 import { getHighlighterExpressionsFromQuery } from './query_utils';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import {
   LokiOptions,
@@ -63,8 +62,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   languageProvider: LanguageProvider;
   maxLines: number;
 
-  /** @ngInject */
-  constructor(private instanceSettings: DataSourceInstanceSettings<LokiOptions>, private templateSrv: TemplateSrv) {
+  constructor(
+    private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly timeSrv: TimeSrv = getTimeSrv()
+  ) {
     super(instanceSettings);
 
     this.languageProvider = new LanguageProvider(this);
@@ -294,7 +296,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const labelNamesRegex = /^label_names\(\)\s*$/;
     const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
 
-    const timeRange = range || getTimeSrv().timeRange();
+    const timeRange = range || this.timeSrv.timeRange();
     const params = rangeToParams({ from: timeRange.from.valueOf(), to: timeRange.to.valueOf() });
 
     const labelNames = query.match(labelNamesRegex);
