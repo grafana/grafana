@@ -238,13 +238,13 @@
       name: Playlist
     - link: /dashboards/search/
       name: Search
-    - link: /reference/share_dashboard/
-      name: Sharing a dashboard
-    - link: /reference/share_panel/
-      name: Sharing a panel
+    - link: /dashboards/share-dashboard/
+      name: Share dashboard
+    - link: /dashboards/share-panel/
+      name: Share a panel
     - link: /dashboards/time-range-controls/
       name: Time range controls
-    - link: /reference/export_import/
+    - link: /dashboards/export-import/
       name: Export and import
     - link: /dashboards/dashboard_history/
       name: Dashboard version history
@@ -252,9 +252,9 @@
       link: /dashboards/shortcuts/
     - name: Reporting
       link: /dashboards/reporting/
-    - link: /reference/dashboard/
-      name: JSON Model
-    - link: /reference/scripting/
+    - link: /dashboards/json-model/
+      name: JSON model
+    - link: /dashboards/scripted-dashboards/
       name: Scripted dashboards
 - name: Explore
   link: /explore/
