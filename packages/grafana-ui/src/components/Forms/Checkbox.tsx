@@ -25,7 +25,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
     description: cx(
       labelStyles.description,
       css`
-        line-height: 1.25px;
+        line-height: ${theme.typography.lineHeight.sm};
         padding-left: ${theme.spacing.formSpacingBase}px;
       `
     ),
