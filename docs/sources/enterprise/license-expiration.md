@@ -64,4 +64,4 @@ All the usage insights features are turned off, meaning that you won't be able t
 
 ### Vault integration
 
-Vault integration is not affected by an expired license.
+Grafana will fail to boot if the Vault integration is used with an expired license. Update the license or disable the Vault integration for Grafana to boot again.
