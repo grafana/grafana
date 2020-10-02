@@ -12,24 +12,18 @@ export default {
 const getKnobs = () => {
   return {
     datapoints: object('datapoints', [
-      {
-        numeric: 100,
-        text: '100',
-        color: '#7EB26D',
-      },
-      {
-        numeric: 200,
-        text: '200',
-        color: '#6ED0E0',
-      },
+      { numeric: 100, text: '100', title: 'USA' },
+      { numeric: 200, text: '200', title: 'Canada' },
+      { numeric: 20, text: '20', title: 'Sweden' },
+      { numeric: 50, text: '50', title: 'Spain' },
+      { numeric: 70, text: '70', title: 'Germeny' },
     ]),
-    pieType: select('pieType', [PieChartType.PIE, PieChartType.DONUT], PieChartType.PIE),
-    strokeWidth: number('strokeWidth', 1),
+    pieType: select('pieType', [PieChartType.Pie, PieChartType.Donut], PieChartType.Pie),
   };
 };
 
 export const basic = () => {
-  const { datapoints, pieType, strokeWidth } = getKnobs();
+  const { datapoints, pieType } = getKnobs();
 
-  return <PieChart width={200} height={400} values={datapoints} pieType={pieType} strokeWidth={strokeWidth} />;
+  return <PieChart width={500} height={500} values={datapoints} pieType={pieType} />;
 };
