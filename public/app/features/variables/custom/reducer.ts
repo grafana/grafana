@@ -1,31 +1,18 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { CustomVariableModel, VariableHide, VariableOption } from '../types';
-import {
-  ALL_VARIABLE_TEXT,
-  ALL_VARIABLE_VALUE,
-  getInstanceState,
-  NEW_VARIABLE_ID,
-  VariablePayload,
-} from '../state/types';
+import { CustomVariableModel, initialVariableModelState, VariableOption } from '../types';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, getInstanceState, VariablePayload } from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 
 export const initialCustomVariableModelState: CustomVariableModel = {
-  id: NEW_VARIABLE_ID,
-  global: false,
+  ...initialVariableModelState,
+  type: 'custom',
   multi: false,
   includeAll: false,
   allValue: null,
   query: '',
   options: [],
   current: {} as VariableOption,
-  name: '',
-  type: 'custom',
-  label: null,
-  hide: VariableHide.dontHide,
-  skipUrlSync: false,
-  index: -1,
-  initLock: null,
 };
 
 export const customVariableSlice = createSlice({
