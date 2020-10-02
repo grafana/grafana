@@ -8,10 +8,10 @@ The core maintainers of the Grafana project are responsible for categorizing all
 
 Triage helps ensure issues resolve quickly by:
 
-* Ensuring the issue's intent and purpose is conveyed precisely. This is necessary because it can be difficult for an issue to explain how an end user experiences a problem and what actions they took.
-* Giving a contributor the information they need before they commit to resolving an issue.
-* Lowering the issue count by preventing duplicate issues.
-* Streamlining the development process by preventing duplicate discussions.
+- Ensuring the issue's intent and purpose is conveyed precisely. This is necessary because it can be difficult for an issue to explain how an end user experiences a problem and what actions they took.
+- Giving a contributor the information they need before they commit to resolving an issue.
+- Lowering the issue count by preventing duplicate issues.
+- Streamlining the development process by preventing duplicate discussions.
 
 If you don't have the knowledge or time to code, consider helping with triage. The community will thank you for saving them time by spending some of yours.
 
@@ -112,9 +112,9 @@ In general, if the issue description and title is perceived as a question no mor
 
 To make it easier for everyone to understand and find issues they're searching for it's suggested as a general rule of thumbs to:
 
-* Make sure that issue titles are named to explain the subject of the issue, has a correct spelling and doesn't include irrelevant information and/or sensitive information.
-* Make sure that issue descriptions doesn't include irrelevant information, information from template that haven't been filled out and/or sensitive information.
-* Do your best effort to change title and description or request suggested changes by adding a comment.
+- Make sure that issue titles are named to explain the subject of the issue, has a correct spelling and doesn't include irrelevant information and/or sensitive information.
+- Make sure that issue descriptions doesn't include irrelevant information, information from template that haven't been filled out and/or sensitive information.
+- Do your best effort to change title and description or request suggested changes by adding a comment.
 
 > **Note:** Above rules is applicable to both new and existing issues of the Grafana project.
 
@@ -335,6 +335,6 @@ This will give you a structure of labels in the sidebar similar to the following
   - Grafana
 ```
 
-* All notifications you’ll need to read/take action on show up as unread in GitHub (mine) and its sub-labels.
-* All other notifications you don’t need to take action on show up as unread in GitHub (other) and its sub-labels
-  * This is convenient for issue triage and to follow the activity in the Grafana project.
+- All notifications you’ll need to read/take action on show up as unread in GitHub (mine) and its sub-labels.
+- All other notifications you don’t need to take action on show up as unread in GitHub (other) and its sub-labels
+  - This is convenient for issue triage and to follow the activity in the Grafana project.

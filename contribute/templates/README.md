@@ -26,19 +26,19 @@ Try to *chunk* your content. This means you should organize the document so that
 If I was writing content for a site called *Doggie handbook*, I might organize it like this. 
 
 **Concept**
-* What a dog is
-* Brief history of dogs
-* Why you might want a dog
-* Tasks dogs can be trained to do
+- What a dog is
+- Brief history of dogs
+- Why you might want a dog
+- Tasks dogs can be trained to do
   
 **Tasks**
-* Feed the dog
-* Groom the dog
-* Train the dog
+- Feed the dog
+- Groom the dog
+- Train the dog
 
 **Reference**
-* List of dog equipment you will need
-* Table of breeds that includes breed name, size range, short or long hair, and type of dog
+- List of dog equipment you will need
+- Table of breeds that includes breed name, size range, short or long hair, and type of dog
 
 ### Audience
 
