@@ -32,6 +32,7 @@ import {
   isFetchErrorResponse,
   PromDataErrorResponse,
   PromDataSuccessResponse,
+  PromExemplarData,
   PromMatrixData,
   PromOptions,
   PromQuery,
@@ -198,8 +199,14 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         queries.push(this.createQuery(instantTarget, options, start, end));
         activeTargets.push(instantTarget);
       } else {
-        queries.push(this.createQuery(target, options, start, end));
-        activeTargets.push(target);
+        const exemplarTarget: any = cloneDeep(target);
+        exemplarTarget.exemplar = true;
+        exemplarTarget.requestId += '_exemplar';
+        queries.push(
+          this.createQuery(target, options, start, end),
+          this.createQuery(exemplarTarget, options, start, end)
+        );
+        activeTargets.push(target, exemplarTarget);
       }
     }
 
@@ -255,6 +262,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         return this.performInstantQuery(query, end).pipe(filterAndMapResponse);
       }
 
+      if (query.exemplar) {
+        return this.getExemplars(query).pipe(filterAndMapResponse);
+      }
+
       return this.performTimeSeriesQuery(query, query.start, query.end).pipe(filterAndMapResponse);
     });
 
@@ -283,6 +294,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         return this.performInstantQuery(query, end).pipe(filterAndMapResponse);
       }
 
+      if (query.exemplar) {
+        return this.getExemplars(query).pipe(filterAndMapResponse);
+      }
+
       return this.performTimeSeriesQuery(query, query.start, query.end).pipe(filterAndMapResponse);
     });
 
@@ -304,6 +319,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const query: PromQueryRequest = {
       hinting: target.hinting,
       instant: target.instant,
+      exemplar: target.exemplar,
       step: 0,
       expr: '',
       requestId: target.requestId,
@@ -608,6 +624,15 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     });
 
     return eventList;
+  }
+
+  getExemplars(query: PromQueryRequest) {
+    const url = '/api/v1/query_exemplar';
+    return this._request<PromDataSuccessResponse<PromExemplarData>>(
+      url,
+      { query: query.expr },
+      { requestId: query.requestId, headers: query.headers }
+    );
   }
 
   async getTagKeys() {

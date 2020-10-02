@@ -1,6 +1,9 @@
 import {
+  AnnotationEvent,
+  ArrayDataFrame,
   ArrayVector,
   DataFrame,
+  DataTopic,
   Field,
   FieldType,
   formatLabels,
@@ -12,6 +15,7 @@ import {
 import { FetchResponse } from '@grafana/runtime';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 import {
+  isExemplarData,
   isMatrixData,
   MatrixOrVectorResult,
   PromDataSuccessResponse,
@@ -57,7 +61,23 @@ export function transform(
   };
   const prometheusResult = response.data.data;
 
-  if (!prometheusResult.result) {
+  if (isExemplarData(prometheusResult)) {
+    const events: AnnotationEvent[] = [];
+    prometheusResult.forEach(exemplarData => {
+      const data = exemplarData.exemplars.map(exemplar => {
+        return {
+          time: exemplar.timestamp,
+          text: exemplar.labels.traceID,
+        };
+      });
+      events.push(...data);
+    });
+    const dataFrame = new ArrayDataFrame(events);
+    dataFrame.meta = { dataTopic: DataTopic.Annotations };
+    return [dataFrame];
+  }
+
+  if (!prometheusResult?.result) {
     return [];
   }
 

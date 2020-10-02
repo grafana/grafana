@@ -6,6 +6,7 @@ export interface PromQuery extends DataQuery {
   format?: string;
   instant?: boolean;
   range?: boolean;
+  exemplar?: boolean;
   hinting?: boolean;
   interval?: string;
   intervalFactor?: number;
@@ -55,7 +56,23 @@ export interface PromDataErrorResponse<T = PromData> {
   data: T;
 }
 
-export type PromData = PromMatrixData | PromVectorData | PromScalarData;
+export type PromData = PromMatrixData | PromVectorData | PromScalarData | PromExemplarData[] | null;
+
+export interface Labels {
+  traceID: string;
+}
+
+export interface Exemplar {
+  labels: Labels;
+  value: number;
+  timestamp: number;
+  hasTimestamp: boolean;
+}
+
+export interface PromExemplarData {
+  seriesLabels: PromMetric;
+  exemplars: Exemplar[];
+}
 
 export interface PromVectorData {
   resultType: 'vector';
@@ -91,6 +108,13 @@ export function isFetchErrorResponse(response: any): response is FetchError {
 
 export function isMatrixData(result: MatrixOrVectorResult): result is PromMatrixData['result'][0] {
   return 'values' in result;
+}
+
+export function isExemplarData(result: PromData): result is PromExemplarData[] {
+  if (result == null || !Array.isArray(result)) {
+    return false;
+  }
+  return 'exemplars' in (result as any)[0];
 }
 
 export type MatrixOrVectorResult = PromMatrixData['result'][0] | PromVectorData['result'][0];
