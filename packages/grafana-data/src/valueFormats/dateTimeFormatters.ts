@@ -370,18 +370,13 @@ export const dateTimeAsIsoNoDateIfToday = toDateTimeValueFormatter('YYYY-MM-DD H
 export const dateTimeAsUS = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a');
 export const dateTimeAsUSNoDateIfToday = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a', 'h:mm:ss a');
 
-export function getDateTimeAsLocalFormat() {
-  return toDateTimeValueFormatter(
-    localTimeFormat({
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })
-  );
-}
+const localTimeOnlyFormatOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+const localDateTimeFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit', ...localTimeOnlyFormatOptions };
+export const dateTimeAsLocal = toDateTimeValueFormatter(localTimeFormat(localDateTimeFormatOptions));
+export const dateTimeAsLocalNoDateIfToday = toDateTimeValueFormatter(
+  localTimeFormat(localDateTimeFormatOptions),
+  localTimeFormat(localTimeOnlyFormatOptions)
+);
 
 export function dateTimeSystemFormatter(
   value: number,

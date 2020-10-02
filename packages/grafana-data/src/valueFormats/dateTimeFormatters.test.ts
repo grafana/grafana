@@ -3,6 +3,8 @@ import {
   dateTimeAsIsoNoDateIfToday,
   dateTimeAsUS,
   dateTimeAsUSNoDateIfToday,
+  dateTimeAsLocal,
+  dateTimeAsLocalNoDateIfToday,
   dateTimeFromNow,
   Interval,
   toClock,
@@ -72,6 +74,20 @@ describe('date time formats', () => {
     const expected = now.format('h:mm:ss a');
     const actual = dateTimeAsUSNoDateIfToday(now.valueOf(), 0, 0, 'utc');
     expect(actual.text).toBe(expected);
+  });
+
+  it('should skip date when today in Local Format', () => {
+    const now = dateTime();
+    const dateIncluded = dateTimeAsLocal(now.valueOf(), 0, 0);
+    const dateExcluded = dateTimeAsLocalNoDateIfToday(now.valueOf(), 0, 0);
+    expect(dateIncluded.text.length).toBeGreaterThan(dateExcluded.text.length);
+  });
+
+  it('should skip date when today in Local Format (date in UTC)', () => {
+    const now = toUtc();
+    const dateIncluded = dateTimeAsLocal(now.valueOf(), 0, 0);
+    const dateExcluded = dateTimeAsLocalNoDateIfToday(now.valueOf(), 0, 0);
+    expect(dateIncluded.text.length).toBeGreaterThan(dateExcluded.text.length);
   });
 
   it('should format as from now with days', () => {
