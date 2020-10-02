@@ -57,6 +57,17 @@ export interface LicenseInfo {
 }
 
 /**
+ * Describes Sentry integration config
+ *
+ * @public
+ */
+export interface Sentry {
+  enabled: boolean;
+  dsn: string;
+  customEndpoint: string;
+}
+
+/**
  * Describes all the different Grafana configuration values available for an instance.
  *
  * @public
@@ -101,4 +112,5 @@ export interface GrafanaConfig {
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
+  sentry: Sentry;
 }
