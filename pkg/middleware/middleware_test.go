@@ -44,7 +44,7 @@ func resetGetTime() {
 }
 
 func TestMiddleWareSecurityHeaders(t *testing.T) {
-	setting.ERR_TEMPLATE_NAME = errorTemplate
+	setting.ErrTemplateName = errorTemplate
 
 	Convey("Given the grafana middleware", t, func() {
 		middlewareScenario(t, "middleware should get correct x-xss-protection header", func(sc *scenarioContext) {
@@ -76,7 +76,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 }
 
 func TestMiddlewareContext(t *testing.T) {
-	setting.ERR_TEMPLATE_NAME = errorTemplate
+	setting.ErrTemplateName = errorTemplate
 
 	Convey("Given the grafana middleware", t, func() {
 		middlewareScenario(t, "middleware should add context to injector", func(sc *scenarioContext) {
