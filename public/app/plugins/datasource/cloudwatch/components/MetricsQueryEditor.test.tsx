@@ -6,7 +6,7 @@ import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { MetricsQueryEditor, normalizeQuery, Props } from './MetricsQueryEditor';
 import { CloudWatchDatasource } from '../datasource';
-import { CustomVariableModel, VariableHide } from '../../../../features/variables/types';
+import { CustomVariableModel, initialVariableModelState } from '../../../../features/variables/types';
 
 const setup = () => {
   const instanceSettings = {
@@ -15,6 +15,7 @@ const setup = () => {
 
   const templateSrv = new TemplateSrv();
   const variable: CustomVariableModel = {
+    ...initialVariableModelState,
     id: 'var3',
     index: 0,
     name: 'var3',
@@ -27,11 +28,7 @@ const setup = () => {
     multi: true,
     includeAll: false,
     query: '',
-    hide: VariableHide.dontHide,
     type: 'custom',
-    label: null,
-    skipUrlSync: false,
-    global: false,
   };
   templateSrv.init([variable]);
 
