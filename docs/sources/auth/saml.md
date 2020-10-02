@@ -7,7 +7,7 @@ type = "docs"
 [menu.docs]
 name = "SAML"
 parent = "authentication"
-weight = 5
+weight = 1100
 +++
 
 # SAML authentication

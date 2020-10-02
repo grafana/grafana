@@ -3,7 +3,9 @@ title = "Add a text box variable"
 type = "docs"
 aliases = ["/docs/grafana/latest/variables/add-text-box-variable.md"]
 [menu.docs]
-weight = 500
+identifier = "add-text-box-variable"
+parent = "variable-types"
+weight = 300
 +++
 
 # Add a text box variable

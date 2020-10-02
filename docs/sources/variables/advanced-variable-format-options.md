@@ -3,9 +3,9 @@ title = "Advanced variable format options"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
 type = "docs"
 [menu.docs]
-name = "advanced-variable-format-options"
+identifier = "advanced-variables-formats"
 parent = "variables"
-weight = 300
+weight = 600
 +++
 
 # Advanced variable format options

@@ -4,9 +4,9 @@ keywords = ["grafana", "templating", "documentation", "guide", "template", "vari
 type = "docs"
 aliases = ["/docs/grafana/latest/variables/global-variables.md"]
 [menu.docs]
-name = "global-variables"
-parent = "variables"
-weight = 200
+identifier = "global-variable"
+parent = "variable-types"
+weight = 900
 +++
 
 # Global variables

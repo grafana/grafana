@@ -6,7 +6,7 @@ aliases = ["/docs/grafana/latest/features/explore/"]
 [menu.docs]
 name = "Explore"
 identifier = "explore"
-weight = 900
+weight = 90
 +++
 
 # Explore
@@ -72,7 +72,7 @@ All queries that have been starred in the Query history tab are displayed in the
 By default, query history shows you the most recent queries. You can sort your history by date or by data source name in ascending or descending order.
 
 1. Click the **Sort queries by** field.
-2. Select one of the following options:
+1. Select one of the following options:
    - Newest first
    - Oldest first
    - Data source A-Z
@@ -85,7 +85,7 @@ By default, query history shows you the most recent queries. You can sort your h
 Filter query history in Query history and Starred tab by data source name:
 
 1. Click the **Filter queries for specific data source(s)** field.
-2. Select the data source for which you would like to filter your history. You can select multiple data sources.
+1. Select the data source for which you would like to filter your history. You can select multiple data sources.
 
 In **Query history** tab it is also possible to filter queries by date using the slider:
 
