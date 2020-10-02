@@ -64,7 +64,7 @@ export const UnProvidedVariablesUnknownGraphButton: FC<Props> = ({ identifier })
   );
 };
 
-export const VariablesUnknownGraphButton: FC<Props> = props => (
+export const VariablesUnknownButton: FC<Props> = props => (
   <Provider store={store}>
     <UnProvidedVariablesUnknownGraphButton {...props} />
   </Provider>

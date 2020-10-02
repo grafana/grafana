@@ -14,6 +14,7 @@ import { changeVariableOrder, duplicateVariable, removeVariable } from '../state
 import { VariableEditorList } from './VariableEditorList';
 import { DashboardModel } from '../../dashboard/state';
 import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
+import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
 
 interface OwnProps {}
 
@@ -99,14 +100,17 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
 
           <div className="page-action-bar__spacer" />
           {this.props.variables.length > 0 && variableToEdit === null && (
-            <a
-              type="button"
-              className="btn btn-primary"
-              onClick={this.onNewVariable}
-              aria-label={selectors.pages.Dashboard.Settings.Variables.List.newButton}
-            >
-              New
-            </a>
+            <>
+              <VariablesDependenciesButton />
+              <a
+                type="button"
+                className="btn btn-primary"
+                onClick={this.onNewVariable}
+                aria-label={selectors.pages.Dashboard.Settings.Variables.List.newButton}
+              >
+                New
+              </a>
+            </>
           )}
         </div>
 

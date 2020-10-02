@@ -66,7 +66,7 @@ export const UnProvidedVariableUsagesGraphButton: FC<Props> = ({ identifier }) =
   );
 };
 
-export const VariableUsagesGraphButton: FC<Props> = props => (
+export const VariableUsagesButton: FC<Props> = props => (
   <Provider store={store}>
     <UnProvidedVariableUsagesGraphButton {...props} />
   </Provider>

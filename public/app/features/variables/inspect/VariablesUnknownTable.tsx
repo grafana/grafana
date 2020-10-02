@@ -8,7 +8,7 @@ import { StoreState } from '../../../types';
 import { getVariables } from '../state/selectors';
 import { createUsagesNetwork, transformUsagesToNetwork } from './utils';
 import { store } from '../../../store/store';
-import { VariablesUnknownGraphButton } from './VariablesUnknownGraphButton';
+import { VariablesUnknownButton } from './VariablesUnknownButton';
 import { toVariableIdentifier } from '../state/types';
 
 interface OwnProps {}
@@ -61,7 +61,7 @@ export const UnProvidedVariablesUnknownTable: FC<Props> = props => {
                   <td style={{ width: '1%' }} />
                   <td style={{ width: '1%' }} />
                   <td style={{ width: '100%', textAlign: 'right' }} className="pointer max-width">
-                    <VariablesUnknownGraphButton identifier={toVariableIdentifier(variable)} />
+                    <VariablesUnknownButton identifier={toVariableIdentifier(variable)} />
                   </td>
                 </tr>
               );

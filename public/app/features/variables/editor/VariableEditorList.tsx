@@ -10,7 +10,7 @@ import { toVariableIdentifier, VariableIdentifier } from '../state/types';
 import { DashboardModel } from '../../dashboard/state';
 import { getVariableUsages } from '../inspect/utils';
 import { isAdHoc } from '../guard';
-import { VariableUsagesGraphButton } from '../inspect/VariableUsagesGraphButton';
+import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
 
 export interface Props {
   variables: VariableModel[];
@@ -123,7 +123,7 @@ export class VariableEditorList extends PureComponent<Props> {
                         </td>
 
                         <td style={{ width: '1%' }}>
-                          <VariableUsagesGraphButton identifier={toVariableIdentifier(variable)} />
+                          <VariableUsagesButton identifier={toVariableIdentifier(variable)} />
                         </td>
 
                         <td style={{ width: '1%' }}>
