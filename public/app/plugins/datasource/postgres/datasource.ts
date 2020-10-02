@@ -6,8 +6,8 @@ import { DataQueryResponse, ScopedVars } from '@grafana/data';
 
 import ResponseParser from './response_parser';
 import PostgresQuery from 'app/plugins/datasource/postgres/postgres_query';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
 import { PostgresMetricFindValue, PostgresQueryForInterpolation } from './types';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
@@ -20,11 +20,10 @@ export class PostgresDatasource {
   queryModel: PostgresQuery;
   interval: string;
 
-  /** @ngInject */
   constructor(
     instanceSettings: { name: any; id?: any; jsonData?: any },
-    private templateSrv: TemplateSrv,
-    private timeSrv: TimeSrv
+    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly timeSrv: TimeSrv = getTimeSrv()
   ) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;

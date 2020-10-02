@@ -2,7 +2,7 @@ import React, { ChangeEvent, PureComponent } from 'react';
 import { InlineFormLabel, LegacyForms } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
-import templateSrv from '../../templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
 import { QueryVariableEditorState } from './reducer';
@@ -185,7 +185,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
             <VariableQueryEditor
               datasource={this.props.editor.extended?.dataSource}
               query={this.props.variable.query}
-              templateSrv={templateSrv}
+              templateSrv={getTemplateSrv()}
               onChange={this.onQueryChange}
             />
           )}

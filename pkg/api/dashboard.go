@@ -262,6 +262,17 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 	}
 
+	// Tell everyone listening that the dashboard changed
+	if hs.Live != nil {
+		err := hs.Live.GrafanaScope.Dashboards.DashboardSaved(
+			dashboard.Uid,
+			c.UserId,
+		)
+		if err != nil {
+			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
+		}
+	}
+
 	c.TimeRequest(metrics.MApiDashboardSave)
 	return JSON(200, util.DynMap{
 		"status":  "success",

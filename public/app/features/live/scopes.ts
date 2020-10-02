@@ -17,6 +17,12 @@ export abstract class GrafanaLiveScope {
   abstract async listNamespaces(): Promise<Array<SelectableValue<string>>>;
 }
 
+export interface CoreGrafanaLiveFeature {
+  name: string;
+  support: LiveChannelSupport;
+  description: string;
+}
+
 class GrafanaLiveCoreScope extends GrafanaLiveScope {
   readonly features = new Map<string, LiveChannelSupport>();
   readonly namespaces: Array<SelectableValue<string>> = [];
@@ -25,14 +31,13 @@ class GrafanaLiveCoreScope extends GrafanaLiveScope {
     super(LiveChannelScope.Grafana);
   }
 
-  register(feature: string, support: LiveChannelSupport, description: string): GrafanaLiveCoreScope {
-    this.features.set(feature, support);
+  register(feature: CoreGrafanaLiveFeature) {
+    this.features.set(feature.name, feature.support);
     this.namespaces.push({
-      value: feature,
-      label: feature,
-      description,
+      value: feature.name,
+      label: feature.name,
+      description: feature.description,
     });
-    return this;
   }
 
   /**
