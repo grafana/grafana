@@ -1,12 +1,11 @@
 import React, { FC, useMemo } from 'react';
-import { useSelector } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
+
 import { StoreState } from '../../../types';
 import { getVariables } from '../state/selectors';
-import { VariableModel } from '../../templating/types';
-import { DashboardModel } from '../../dashboard/state';
 import { createUsagesNetwork } from './utils';
-import { FeatureInfoBox } from '@grafana/ui';
-import { FeatureState } from '@grafana/data';
+import { store } from '../../../store/store';
+import { useTheme } from '@grafana/ui';
 
 interface OwnProps {}
 
@@ -16,17 +15,15 @@ interface DispatchProps {}
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-export const VariablesUnknown: FC<Props> = props => {
-  const variables: VariableModel[] = useSelector((state: StoreState) => getVariables(state));
-  const dashboard: DashboardModel = useSelector((state: StoreState) => state.dashboard.getModel());
+export const UnProvidedVariablesUnknown: FC<Props> = props => {
+  const theme = useTheme();
+  const variables = useSelector((state: StoreState) => getVariables(state));
+  const dashboard = useSelector((state: StoreState) => state.dashboard.getModel());
   const { unknown } = useMemo(() => createUsagesNetwork(variables, dashboard), [variables, dashboard]);
 
   return (
-    <div>
-      <FeatureInfoBox title="Unknown" featureState={FeatureState.alpha}>
-        Unknown shows variables that don't exist any longer.
-      </FeatureInfoBox>
-
+    <div style={{ marginTop: theme.spacing.xl }}>
+      <h3 className="dashboard-settings__header">Unknown Variables</h3>
       {Object.keys(unknown).length > 0 && (
         <div>
           <table className="filter-table filter-table--hover">
@@ -60,3 +57,9 @@ export const VariablesUnknown: FC<Props> = props => {
     </div>
   );
 };
+
+export const VariablesUnknown: FC<Props> = props => (
+  <Provider store={store}>
+    <UnProvidedVariablesUnknown {...props} />
+  </Provider>
+);

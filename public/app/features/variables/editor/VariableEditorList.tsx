@@ -11,7 +11,7 @@ import { isAdHoc } from '../guard';
 
 export interface Props {
   variables: VariableModel[];
-  dashboard: DashboardModel;
+  dashboard: DashboardModel | null;
   onAddClick: (event: MouseEvent<HTMLAnchorElement>) => void;
   onEditClick: (identifier: VariableIdentifier) => void;
   onChangeVariableOrder: (identifier: VariableIdentifier, fromIndex: number, toIndex: number) => void;

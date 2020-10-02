@@ -249,7 +249,7 @@ const countLeaves = (object: any): number => {
 export const getVariableUsages = (
   variableId: string,
   variables: VariableModel[],
-  dashboard: DashboardModel
+  dashboard: DashboardModel | null
 ): number => {
   const { usages } = createUsagesNetwork(variables, dashboard);
   const usage = usages.find(usage => usage.variable.id === variableId);
