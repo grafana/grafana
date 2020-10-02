@@ -38,10 +38,6 @@ export async function buildManifest(dir: string): Promise<ManifestInfo> {
       continue;
     }
 
-    if (/\.(png|gif|svg)$/.test(p)) {
-      continue;
-    }
-
     manifest.files[p] = crypto
       .createHash('sha256')
       .update(fs.readFileSync(path.join(dir, p)))
