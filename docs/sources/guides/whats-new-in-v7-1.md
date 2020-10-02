@@ -58,7 +58,7 @@ The new table panel introduced in 7.0 was missing a few features that the old ta
 
 ## Ad hoc filtering in the new table panel
 
-[Ad hoc filtering]({{<relref "../variables/templates-and-variables/#ad-hoc-filters" >}}), a way to automatically add filters to queries without having to define template variables is now supported in the new Table panel.
+[Ad hoc filtering]({{<relref "../variables/variable-types/_index.md#ad-hoc-filters" >}}), a way to automatically add filters to queries without having to define template variables is now supported in the new Table panel.
 
 ## Stat panel text mode
 

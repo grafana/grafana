@@ -174,7 +174,7 @@ make build-docker-full
 
 The resulting image will be tagged as grafana/grafana:dev.
 
-**Note:** If you've already set up a local development environment, and you're running a `linux/amd64` machine, you can speed up building the Docker image:
+> **Note:** If you've already set up a local development environment, and you're running a `linux/amd64` machine, you can speed up building the Docker image:
 
 1. Build the frontend: `go run build.go build-frontend`.
 1. Build the Docker image: `make build-docker-dev`.

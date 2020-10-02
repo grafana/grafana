@@ -114,7 +114,14 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       return [];
     }
 
-    this.metrics = await this.request('/api/v1/label/__name__/values', []);
+    const tRange = this.datasource.getTimeRange();
+    const params = new URLSearchParams({
+      start: tRange['start'].toString(),
+      end: tRange['end'].toString(),
+    });
+    const url = `/api/v1/label/__name__/values?${params.toString()}`;
+
+    this.metrics = await this.request(url, []);
     this.lookupsDisabled = this.metrics.length > this.lookupMetricsThreshold;
     this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
     this.processHistogramMetrics(this.metrics);
@@ -404,7 +411,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   fetchLabelValues = async (key: string): Promise<Record<string, string[]>> => {
-    const data = await this.request(`/api/v1/label/${key}/values`, []);
+    const tRange = this.datasource.getTimeRange();
+    const params = new URLSearchParams({
+      start: tRange['start'].toString(),
+      end: tRange['end'].toString(),
+    });
+    const url = `/api/v1/label/${key}/values?${params.toString()}`;
+    const data = await this.request(url, []);
     return { [key]: data };
   };
 

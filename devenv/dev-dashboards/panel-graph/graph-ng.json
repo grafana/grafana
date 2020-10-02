@@ -22,9 +22,6 @@
       "datasource": null,
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "fixed"
-          },
           "custom": {
             "axis": {
               "grid": true,
@@ -40,7 +37,10 @@
             },
             "line": {
               "show": true,
-              "width": 1
+              "width": 1,
+              "color": {
+                "mode": "fixed"
+              }
             },
             "nullValues": "null",
             "points": {
@@ -355,9 +355,6 @@
           "datasource": "gdev-testdata",
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "fixed"
-              },
               "custom": {
                 "align": null,
                 "axis": {
@@ -374,7 +371,10 @@
                 },
                 "line": {
                   "show": true,
-                  "width": 1
+                  "width": 1,
+                  "color": {
+                    "mode": "fixed"
+                  }
                 },
                 "nullValues": "null",
                 "points": {
@@ -560,9 +560,6 @@
           "datasource": "gdev-testdata",
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "fixed"
-              },
               "custom": {
                 "align": null,
                 "axis": {
@@ -579,7 +576,10 @@
                 },
                 "line": {
                   "show": true,
-                  "width": 1
+                  "width": 1,
+                  "color": {
+                    "mode": "fixed"
+                  }
                 },
                 "nullValues": "null",
                 "points": {
@@ -678,9 +678,6 @@
           "datasource": "gdev-testdata",
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "fixed"
-              },
               "custom": {
                 "align": null,
                 "axis": {
@@ -697,7 +694,10 @@
                 },
                 "line": {
                   "show": true,
-                  "width": 1
+                  "width": 1,
+                  "color": {
+                    "mode": "fixed"
+                  }
                 },
                 "nullValues": "null",
                 "points": {
@@ -811,9 +811,6 @@
           "datasource": "gdev-testdata",
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "fixed"
-              },
               "custom": {
                 "align": null,
                 "axis": {
@@ -830,7 +827,10 @@
                 },
                 "line": {
                   "show": false,
-                  "width": 1
+                  "width": 1,
+                  "color": {
+                    "mode": "fixed"
+                  }
                 },
                 "nullValues": "null",
                 "points": {
@@ -899,7 +899,7 @@
                     "value": false
                   },
                   {
-                    "id": "color",
+                    "id": "custom.line.color",
                     "value": {
                       "fixedColor": "purple",
                       "mode": "fixed"
@@ -960,9 +960,6 @@
           "datasource": "gdev-testdata",
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "fixed"
-              },
               "custom": {
                 "align": null,
                 "axis": {
@@ -979,7 +976,10 @@
                 },
                 "line": {
                   "show": false,
-                  "width": 1
+                  "width": 1,
+                  "color": {
+                    "mode": "fixed"
+                  }
                 },
                 "nullValues": "null",
                 "points": {
@@ -1048,7 +1048,7 @@
                     "value": false
                   },
                   {
-                    "id": "color",
+                    "id": "custom.line.color",
                     "value": {
                       "fixedColor": "purple",
                       "mode": "fixed"
@@ -1109,9 +1109,6 @@
           "datasource": "gdev-testdata",
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "fixed"
-              },
               "custom": {
                 "align": null,
                 "axis": {
@@ -1128,7 +1125,10 @@
                 },
                 "line": {
                   "show": false,
-                  "width": 1
+                  "width": 1,
+                  "color": {
+                    "mode": "fixed"
+                  }
                 },
                 "nullValues": "null",
                 "points": {
@@ -1197,7 +1197,7 @@
                     "value": false
                   },
                   {
-                    "id": "color",
+                    "id": "custome.line.color",
                     "value": {
                       "fixedColor": "purple",
                       "mode": "fixed"
@@ -1258,9 +1258,6 @@
           "datasource": "gdev-testdata",
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "fixed"
-              },
               "custom": {
                 "align": null,
                 "axis": {
@@ -1277,7 +1274,10 @@
                 },
                 "line": {
                   "show": false,
-                  "width": 1
+                  "width": 1,
+                  "color": {
+                    "mode": "fixed"
+                  }
                 },
                 "nullValues": "null",
                 "points": {
@@ -1346,7 +1346,7 @@
                     "value": false
                   },
                   {
-                    "id": "color",
+                    "id": "custom.line.color",
                     "value": {
                       "fixedColor": "purple",
                       "mode": "fixed"
@@ -1422,9 +1422,6 @@
           "datasource": null,
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "fixed"
-              },
               "custom": {
                 "align": null,
                 "axis": {
@@ -1441,7 +1438,10 @@
                 },
                 "line": {
                   "show": true,
-                  "width": 1
+                  "width": 1,
+                  "color": {
+                    "mode": "fixed"
+                  }
                 },
                 "nullValues": "null",
                 "points": {
@@ -1506,9 +1506,6 @@
           "datasource": null,
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "fixed"
-              },
               "custom": {
                 "align": null,
                 "axis": {
@@ -1525,7 +1522,10 @@
                 },
                 "line": {
                   "show": true,
-                  "width": 1
+                  "width": 1,
+                  "color": {
+                    "mode": "fixed"
+                  }
                 },
                 "nullValues": "null",
                 "points": {
@@ -1590,9 +1590,6 @@
           "datasource": null,
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "fixed"
-              },
               "custom": {
                 "axis": {
                   "grid": true,
@@ -1608,7 +1605,10 @@
                 },
                 "line": {
                   "show": true,
-                  "width": 1
+                  "width": 1,
+                  "color": {
+                    "mode": "fixed"
+                  }
                 },
                 "nullValues": "null",
                 "points": {
@@ -1688,9 +1688,6 @@
           "datasource": "gdev-testdata",
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "fixed"
-              },
               "custom": {
                 "axis": {
                   "grid": true,
@@ -1706,7 +1703,10 @@
                 },
                 "line": {
                   "show": true,
-                  "width": 1
+                  "width": 1,
+                  "color": {
+                    "mode": "fixed"
+                  }
                 },
                 "nullValues": "null",
                 "points": {
@@ -1775,9 +1775,6 @@
           "datasource": "gdev-testdata",
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "fixed"
-              },
               "custom": {
                 "axis": {
                   "grid": true,
@@ -1798,7 +1795,10 @@
                     "show": false
                   },
                   "line": {
-                    "show": true
+                    "show": true,
+                    "color": {
+                      "mode": "fixed"
+                    }
                   },
                   "points": {
                     "radius": 8,
@@ -1879,9 +1879,6 @@
           "datasource": "gdev-testdata",
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "fixed"
-              },
               "custom": {
                 "axis": {
                   "grid": true,
@@ -1897,7 +1894,10 @@
                 },
                 "line": {
                   "show": true,
-                  "width": 1
+                  "width": 1,
+                  "color": {
+                    "mode": "fixed"
+                  }
                 },
                 "nullValues": "connected",
                 "points": {
@@ -1981,9 +1981,6 @@
           "datasource": "gdev-testdata",
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "fixed"
-              },
               "custom": {
                 "axis": {
                   "grid": true,
@@ -1999,7 +1996,10 @@
                 },
                 "line": {
                   "show": true,
-                  "width": 1
+                  "width": 1,
+                  "color": {
+                    "mode": "fixed"
+                  }
                 },
                 "nullValues": "null",
                 "points": {
@@ -2083,9 +2083,6 @@
           "datasource": "gdev-testdata",
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "fixed"
-              },
               "custom": {
                 "align": null,
                 "axis": {
@@ -2102,7 +2099,10 @@
                 },
                 "line": {
                   "show": false,
-                  "width": 1
+                  "width": 1,
+                  "color": {
+                    "mode": "fixed"
+                  }
                 },
                 "nullValues": "null",
                 "points": {
@@ -2175,7 +2175,7 @@
                     "value": false
                   },
                   {
-                    "id": "color",
+                    "id": "custom.line.color",
                     "value": {
                       "fixedColor": "purple",
                       "mode": "fixed"

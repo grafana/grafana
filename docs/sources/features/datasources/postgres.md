@@ -16,9 +16,9 @@ Grafana ships with a built-in PostgreSQL data source plugin that allows you to q
 ## Adding the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.
-2. In the side menu under the `Configuration` icon you should find a link named `Data Sources`.
-3. Click the `+ Add data source` button in the top header.
-4. Select *PostgreSQL* from the *Type* dropdown.
+1. In the side menu under the `Configuration` icon you should find a link named `Data Sources`.
+1. Click the `+ Add data source` button in the top header.
+1. Select *PostgreSQL* from the *Type* dropdown.
 
 ### Data source options
 
@@ -39,7 +39,7 @@ Name | Description
 
 ### Min time interval
 
-A lower limit for the [$__interval]({{< relref "../../variables/templates-and-variables/#the-interval-variable" >}}) and [$__interval_ms]({{< relref "../../variables/templates-and-variables/#the-interval-ms-variable" >}}) variables.
+A lower limit for the [$__interval]({{< relref "../../variables/variable-types/_index.md#the-interval-variable" >}}) and [$__interval_ms]({{< relref "../../variables/variable-types/_index.md#the-interval-ms-variable" >}}) variables.
 Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
@@ -144,7 +144,7 @@ Macro example | Description
 *`$__timeFilter(dateColumn)`* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:06:17Z'*
 *`$__timeFrom()`* | Will be replaced by the start of the currently active time selection. For example, *'2017-04-21T05:01:17Z'*
 *`$__timeTo()`* | Will be replaced by the end of the currently active time selection. For example, *'2017-04-21T05:06:17Z'*
-*`$__timeGroup(dateColumn,'5m')`* | Will be replaced by an expression usable in a GROUP BY clause. For example, *(extract(epoch from dateColumn)/300)::bigint*300*
+*`$__timeGroup(dateColumn,'5m')`* | Will be replaced by an expression usable in a GROUP BY clause. For example, *(extract(epoch from dateColumn)/300)::bigint\*300*
 *`$__timeGroup(dateColumn,'5m', 0)`* | Same as above but with a fill parameter so missing points in that series will be added by Grafana and 0 will be used as the value.
 *`$__timeGroup(dateColumn,'5m', NULL)`* | Same as above but NULL will be used as value for missing points.
 *`$__timeGroup(dateColumn,'5m', previous)`* | Same as above but the previous value in that series will be used as fill value. If no value has been seen yet, NULL will be used (only available in Grafana 5.3+).
@@ -240,7 +240,7 @@ ORDER BY time
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-Refer to [Templates and variables]({{< relref "../../variables/templates-and-variables.md" >}}) for an introduction to the templating feature and the different types of template variables.
+Refer to [Templates and variables]({{< relref "../../variables/_index.md" >}}) for an introduction to the templating feature and the different types of template variables.
 
 ### Query variable
 
@@ -331,7 +331,7 @@ Grafana automatically creates a quoted, comma-separated string for multi-value v
 
 `${servers:csv}`
 
-Read more about variable formatting options in the [Variables]({{< relref "../../variables/templates-and-variables.md#advanced-formatting-options" >}}) documentation.
+Read more about variable formatting options in the [Variables]({{< relref "../../variables/_index.md#advanced-formatting-options" >}}) documentation.
 
 ## Annotations
 

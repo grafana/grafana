@@ -185,11 +185,6 @@ export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
     range: { from: 'now-1h', to: 'now' },
     datasource: query.datasourceName,
     queries: query.queries,
-    ui: {
-      showingGraph: true,
-      showingLogs: true,
-      showingTable: true,
-    },
     context: 'explore',
   };
 

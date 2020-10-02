@@ -108,7 +108,7 @@ export interface FetchErrorDataProps {
 export interface FetchError<T extends FetchErrorDataProps = any> {
   status: number;
   statusText?: string;
-  data: T | string;
+  data: T;
   cancelled?: boolean;
   isHandled?: boolean;
   config: BackendSrvRequest;
