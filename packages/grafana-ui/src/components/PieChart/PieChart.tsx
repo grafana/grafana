@@ -1,11 +1,13 @@
-import React, { FC } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 import { DisplayValue, formattedValueToString, getColorFromHexRgbOrName, GrafanaTheme } from '@grafana/data';
-import { useTheme } from '../../themes/ThemeContext';
+import { useStyles, useTheme } from '../../themes/ThemeContext';
 import tinycolor from 'tinycolor2';
 import Pie, { PieArcDatum } from '@visx/shape/lib/shapes/Pie';
 import { Group } from '@visx/group';
 import { RadialGradient } from '@visx/gradient';
 import { useComponentInstanceId } from '../../utils/useComponetInstanceId';
+import { localPoint } from '@visx/event';
+import { css } from 'emotion';
 
 export enum PieChartType {
   Pie = 'pie',
@@ -22,6 +24,8 @@ export interface Props {
 export const PieChart: FC<Props> = ({ values, pieType, width, height }) => {
   const theme = useTheme();
   const componentInstanceId = useComponentInstanceId('PieChart');
+  const styles = useStyles(getStyles);
+  // const [hoverIndex, setHoverIndex] = useState();
 
   if (values.length < 0) {
     return <div>No data</div>;
@@ -40,6 +44,14 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height }) => {
   const donutThickness = pieType === PieChartType.Pie ? radius : 60;
   const getColor = (arc: PieArcDatum<DisplayValue>) => `url(#${getGradientId(arc.index)})`;
   const getKey = (arc: PieArcDatum<DisplayValue>) => arc.data.title ?? 'no title';
+
+  // const onMouseMove = useCallback(
+  //   (event: MouseEventHandler<DisplayValue>) => {
+  //     console.log('event', event.target);
+  //     console.log('localPooint', localPoint(event));
+  //   },
+  //   [values]
+  // );
 
   return (
     <svg width={width} height={height}>
@@ -72,12 +84,13 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height }) => {
               const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.4;
 
               return (
-                <g key={getKey(arc)}>
+                <g key={getKey(arc)} className={styles.svgArg}>
                   <path
                     d={pie.path({ ...arc })!}
                     fill={getColor(arc)}
                     stroke={theme.colors.panelBg}
                     strokeWidth={1}
+
                     //onClick={() => onClickDatum(arc)}
                     //onTouchStart={() => onClickDatum(arc)}
                   />
@@ -119,3 +132,15 @@ function getGradientColorTo(color: string, theme: GrafanaTheme) {
     .spin(-8)
     .toRgbString();
 }
+
+const getStyles = (theme: GrafanaTheme) => {
+  return {
+    svgArg: css`
+      transition: all 200ms ease-in-out;
+      &:hover {
+        transform: scale3d(1.05, 1.05, 1);
+        filter: contrast(120%);
+      }
+    `,
+  };
+};

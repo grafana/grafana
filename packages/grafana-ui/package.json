@@ -40,6 +40,7 @@
     "@types/react-table": "7.0.12",
     "@types/slate": "0.47.1",
     "@types/slate-react": "0.22.5",
+    "@visx/event": "^1.0.0",
     "@visx/gradient": "^1.0.0",
     "@visx/scale": "^1.0.0",
     "@visx/shape": "^1.0.0",
