@@ -42,10 +42,13 @@ func (e PluginNotFoundError) Error() string {
 	return fmt.Sprintf("Plugin with id %s not found", e.PluginId)
 }
 
+// PluginLoader can load a plugin.
 type PluginLoader interface {
+	// Load loads a plugin and registers it with the manager.
 	Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) error
 }
 
+// PluginBase is the base plugin type.
 type PluginBase struct {
 	Type         string             `json:"type"`
 	Name         string             `json:"name"`

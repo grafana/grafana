@@ -211,13 +211,11 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 	pm.log.Debug("Initial plugin loading done")
 
-	// 2nd pass: Detect root plugins and verify signatures
-	// Any plugin that descends from a root plugin may inherit the root's signature
+	// 2nd pass: Validate and register plugins
 	for dpath, plugin := range scanner.plugins {
+		// Try to find any root plugin
 		ancestors := strings.Split(dpath, string(filepath.Separator))
 		ancestors = ancestors[0 : len(ancestors)-1]
-
-		// Try to find any root plugin
 		aPath := ""
 		if runtime.GOOS != "windows" && filepath.IsAbs(dpath) {
 			aPath = "/"
