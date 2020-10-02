@@ -34,6 +34,8 @@ const (
 	defaultAuthType     = "default"
 	sharedCredsAuthType = "credentials"
 	keysAuthType        = "keys"
+	// Deprecated auth type
+	arnAuthType = "arn"
 )
 
 type datasourceInfo struct {
@@ -378,6 +380,9 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 		at = authTypeKeys
 	case defaultAuthType:
 		at = authTypeDefault
+	case arnAuthType:
+		at = authTypeDefault
+		plog.Warn("Authentication type \"arn\" is deprecated, falling back to default")
 	default:
 		plog.Warn("Unrecognized AWS authentication type", "type", atStr)
 	}
