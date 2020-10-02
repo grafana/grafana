@@ -1,9 +1,14 @@
-import React, { FC, useEffect, useRef } from 'react';
+import React, { FC, useEffect, useRef, useState } from 'react';
 import { select, pie, arc, event } from 'd3';
 import sum from 'lodash/sum';
 import { DisplayValue, formattedValueToString, getColorFromHexRgbOrName } from '@grafana/data';
 import { useTheme } from '../../themes/ThemeContext';
 import tinycolor from 'tinycolor2';
+import Pie, { ProvidedProps, PieArcDatum } from '@visx/shape/lib/shapes/Pie';
+import { scaleOrdinal } from '@visx/scale';
+import { Group } from '@visx/group';
+import { GradientPinkBlue } from '@visx/gradient';
+import { animated, useTransition, interpolate } from 'react-spring';
 
 export enum PieChartType {
   Pie = 'pie',
@@ -17,11 +22,136 @@ export interface Props {
   pieType: PieChartType;
 }
 
+const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+const getValue = (d: DisplayValue) => d.numeric;
+
 export const PieChart: FC<Props> = ({ values, pieType, width, height }) => {
-  const svgRef = useRef<SVGSVGElement | null>(null);
   const theme = useTheme();
 
-  useEffect(() => {
+  if (values.length < 0) {
+    return <div>No data</div>;
+  }
+
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
+  const radius = Math.min(innerWidth, innerHeight) / 2;
+  const centerY = innerHeight / 2;
+  const centerX = innerWidth / 2;
+  const donutThickness = 50;
+  const animate = true;
+
+  return (
+    <svg width={width} height={height}>
+      <GradientPinkBlue id="visx-pie-gradient" />
+      <rect rx={14} width={width} height={height} fill="url('#visx-pie-gradient')" />
+      <Group top={centerY + margin.top} left={centerX + margin.left}>
+        <Pie
+          data={values}
+          pieValue={getValue}
+          outerRadius={radius}
+          innerRadius={radius - donutThickness}
+          cornerRadius={3}
+          padAngle={0.005}
+        >
+          {pie => (
+            <AnimatedPie<DisplayValue>
+              {...pie}
+              animate={animate}
+              getKey={arc => arc.data.title!}
+              getColor={arc => arc.data.color!}
+            />
+          )}
+        </Pie>
+      </Group>
+    </svg>
+  );
+};
+
+// react-spring transition definitions
+type AnimatedStyles = { startAngle: number; endAngle: number; opacity: number };
+
+const fromLeaveTransition = ({ endAngle }: PieArcDatum<any>) => ({
+  // enter from 360° if end angle is > 180°
+  startAngle: endAngle > Math.PI ? 2 * Math.PI : 0,
+  endAngle: endAngle > Math.PI ? 2 * Math.PI : 0,
+  opacity: 0,
+});
+
+const enterUpdateTransition = ({ startAngle, endAngle }: PieArcDatum<any>) => ({
+  startAngle,
+  endAngle,
+  opacity: 1,
+});
+
+type AnimatedPieProps<Datum> = ProvidedProps<Datum> & {
+  animate?: boolean;
+  getKey: (d: PieArcDatum<Datum>) => string;
+  getColor: (d: PieArcDatum<Datum>) => string;
+  // onClickDatum: (d: PieArcDatum<Datum>) => void;
+  delay?: number;
+};
+
+function AnimatedPie<Datum>({ animate, arcs, path, getKey, getColor }: AnimatedPieProps<Datum>) {
+  const transitions = useTransition<PieArcDatum<Datum>, AnimatedStyles>(
+    arcs,
+    getKey,
+    // @ts-ignore react-spring doesn't like this overload
+    {
+      from: animate ? fromLeaveTransition : enterUpdateTransition,
+      enter: enterUpdateTransition,
+      update: enterUpdateTransition,
+      leave: animate ? fromLeaveTransition : enterUpdateTransition,
+    }
+  );
+  return (
+    <>
+      {transitions.map(
+        ({ item: arc, props, key }: { item: PieArcDatum<Datum>; props: AnimatedStyles; key: string }) => {
+          const [centroidX, centroidY] = path.centroid(arc);
+          const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.1;
+
+          return (
+            <g key={key}>
+              <animated.path
+                // compute interpolated path d attribute from intermediate angle values
+                d={interpolate([props.startAngle, props.endAngle], (startAngle, endAngle) =>
+                  path({
+                    ...arc,
+                    startAngle,
+                    endAngle,
+                  })
+                )}
+                fill={getColor(arc)}
+                //onClick={() => onClickDatum(arc)}
+                //onTouchStart={() => onClickDatum(arc)}
+              />
+              {hasSpaceForLabel && (
+                <animated.g style={{ opacity: props.opacity }}>
+                  <text
+                    fill="white"
+                    x={centroidX}
+                    y={centroidY}
+                    dy=".33em"
+                    fontSize={9}
+                    textAnchor="middle"
+                    pointerEvents="none"
+                  >
+                    {getKey(arc)}
+                  </text>
+                </animated.g>
+              )}
+            </g>
+          );
+        }
+      )}
+    </>
+  );
+}
+
+// {
+/*
+  
+   useEffect(() => {
     if (values.length === 0) {
       return;
     }
@@ -134,10 +264,7 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height }) => {
       <svg ref={svgRef} />
     </div>
   );
-};
-
-{
-  /* <div className="piechart-tooltip" ref={element => (this.tooltipElement = element)}>
+  <div className="piechart-tooltip" ref={element => (this.tooltipElement = element)}>
         <div className="piechart-tooltip-time">
           <div
             id="tooltip-value"
@@ -146,4 +273,4 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height }) => {
           />
         </div>
       </div> */
-}
+//}
