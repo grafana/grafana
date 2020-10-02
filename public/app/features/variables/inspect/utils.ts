@@ -53,7 +53,10 @@ export const createDependencyEdges = (variables: VariableModel[]): GraphEdge[] =
 };
 
 export const toVisNetworkNodes = (nodes: GraphNode[]): any[] => {
-  const nodesWithStyle: any[] = nodes.map(node => ({ ...node, shape: 'box' }));
+  const nodesWithStyle: any[] = nodes.map(node => ({
+    ...node,
+    shape: 'box',
+  }));
   return new vis.DataSet(nodesWithStyle);
 };
 
