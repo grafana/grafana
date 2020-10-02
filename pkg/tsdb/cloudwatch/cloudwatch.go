@@ -123,7 +123,7 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 		return nil, err
 	}
 
-	duration := 5 * time.Minute
+	duration := stscreds.DefaultDuration
 	expiration := time.Now().Add(duration)
 	if dsInfo.AssumeRoleARN != "" {
 		// We should assume a role in AWS
