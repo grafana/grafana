@@ -10,7 +10,6 @@ import (
 
 func TestSensuGoNotifier(t *testing.T) {
 	Convey("Sensu Go notifier tests", t, func() {
-
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`

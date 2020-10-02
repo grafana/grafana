@@ -65,7 +65,6 @@ func init() {
 			},
 		},
 	})
-
 }
 
 // NewSensuGoNotifier is the constructor for the Sensu Go Notifier.
@@ -143,11 +142,12 @@ func (sn *SensuGoNotifier) Notify(evalContext *alerting.EvalContext) error {
 	// Sensu GO requires that the check portion of the event have an interval
 	bodyJSON.SetPath([]string{"check", "interval"}, 86400)
 
-	if evalContext.Rule.State == "alerting" {
+	switch evalContext.Rule.State {
+	case "alerting":
 		bodyJSON.SetPath([]string{"check", "status"}, 2)
-	} else if evalContext.Rule.State == "no_data" {
+	case "no_data":
 		bodyJSON.SetPath([]string{"check", "status"}, 1)
-	} else {
+	default:
 		bodyJSON.SetPath([]string{"check", "status"}, 0)
 	}
 
