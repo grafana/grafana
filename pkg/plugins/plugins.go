@@ -404,7 +404,7 @@ func (s *PluginScanner) validateSignature(plugin *PluginBase) bool {
 				break
 			}
 		}
-		if setting.Env != setting.DEV && !allowUnsigned {
+		if setting.Env != setting.Dev && !allowUnsigned {
 			s.log.Debug("Plugin is unsigned", "id", plugin.Id)
 			s.errors = append(s.errors, fmt.Errorf("plugin %q is unsigned", plugin.Id))
 			return false
