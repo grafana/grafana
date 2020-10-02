@@ -5,7 +5,7 @@ export interface DateTimeBuiltinFormat {
   __momentBuiltinFormatBrand: any;
 }
 export const ISO_8601: DateTimeBuiltinFormat = moment.ISO_8601;
-export type DateTimeInput = Date | string | number | Array<string | number> | DateTime; // null | undefined
+export type DateTimeInput = Date | string | number | Array<string | number> | DateTime | null; // | undefined;
 export type FormatInput = string | DateTimeBuiltinFormat | undefined;
 export type DurationInput = string | number | DateTimeDuration;
 export type DurationUnit =
@@ -58,6 +58,7 @@ export interface DateTime extends Object {
   fromNow: (withoutSuffix?: boolean) => string;
   from: (formaInput: DateTimeInput) => string;
   isSame: (input?: DateTimeInput, granularity?: DurationUnit) => boolean;
+  isBefore: (input?: DateTimeInput) => boolean;
   isValid: () => boolean;
   local: () => DateTime;
   locale: (locale: string) => DateTime;
@@ -76,6 +77,10 @@ export interface DateTime extends Object {
 
 export const setLocale = (language: string) => {
   moment.locale(language);
+};
+
+export const getLocale = () => {
+  return moment.locale();
 };
 
 export const getLocaleData = (): DateTimeLocale => {

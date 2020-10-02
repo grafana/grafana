@@ -12,12 +12,18 @@ $column-horizontal-spacing: 10px;
 
 .logs-panel-controls {
   display: flex;
-  justify-items: flex-start;
-  align-items: center;
+  justify-content: space-between;
+  align-items: baseline;
   flex-wrap: wrap;
+  .logs-panel-controls-main {
+    display: flex;
+    justify-items: flex-start;
+    align-items: center;
+    flex-wrap: wrap;
 
-  > * {
-    margin-right: $spacer * 2;
+    > * {
+      margin-right: $spacer * 2;
+    }
   }
 }
 

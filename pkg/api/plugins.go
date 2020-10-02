@@ -266,20 +266,12 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) Response {
 	pluginID := c.Params("pluginId")
 	plugin, exists := plugins.Plugins[pluginID]
 	if !exists {
-		return Error(404, "Plugin not found, no installed plugin with that id", nil)
+		return Error(404, "Plugin not found", nil)
 	}
 
 	resp, err := hs.BackendPluginManager.CollectMetrics(c.Req.Context(), plugin.Id)
 	if err != nil {
-		if err == backendplugin.ErrPluginNotRegistered {
-			return Error(404, "Plugin not found", err)
-		}
-
-		if err == backendplugin.ErrDiagnosticsNotSupported {
-			return Error(404, "Health check not implemented", err)
-		}
-
-		return Error(500, "Collect plugin metrics failed", err)
+		return translatePluginRequestErrorToAPIError(err)
 	}
 
 	headers := make(http.Header)
@@ -300,7 +292,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 	pCtx, err := hs.getPluginContext(pluginID, c.SignedInUser)
 	if err != nil {
 		if err == ErrPluginNotFound {
-			return Error(404, "Plugin not found, no installed plugin with that id", nil)
+			return Error(404, "Plugin not found", nil)
 		}
 
 		return Error(500, "Failed to get plugin settings", err)
@@ -308,21 +300,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 
 	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pCtx)
 	if err != nil {
-		if err == backendplugin.ErrPluginNotRegistered {
-			return Error(404, "Plugin not found", err)
-		}
-
-		// Return status unknown instead?
-		if err == backendplugin.ErrDiagnosticsNotSupported {
-			return Error(404, "Health check not implemented", err)
-		}
-
-		// Return status unknown or error instead?
-		if err == backendplugin.ErrHealthCheckFailed {
-			return Error(500, "Plugin health check failed", err)
-		}
-
-		return Error(500, "Plugin healthcheck returned an unknown error", err)
+		return translatePluginRequestErrorToAPIError(err)
 	}
 
 	payload := map[string]interface{}{
@@ -341,7 +319,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 		payload["details"] = jsonDetails
 	}
 
-	if resp.Status != backendplugin.HealthStatusOk {
+	if resp.Status != backend.HealthStatusOk {
 		return JSON(503, payload)
 	}
 
@@ -357,7 +335,7 @@ func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 	pCtx, err := hs.getPluginContext(pluginID, c.SignedInUser)
 	if err != nil {
 		if err == ErrPluginNotFound {
-			c.JsonApiErr(404, "Plugin not found, no installed plugin with that id", nil)
+			c.JsonApiErr(404, "Plugin not found", nil)
 			return
 		}
 
@@ -384,4 +362,24 @@ func (hs *HTTPServer) getCachedPluginSettings(pluginID string, user *models.Sign
 
 	hs.CacheService.Set(cacheKey, query.Result, time.Second*5)
 	return query.Result, nil
+}
+
+func translatePluginRequestErrorToAPIError(err error) Response {
+	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
+		return Error(404, "Plugin not found", err)
+	}
+
+	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
+		return Error(404, "Not found", err)
+	}
+
+	if errors.Is(err, backendplugin.ErrHealthCheckFailed) {
+		return Error(500, "Plugin health check failed", err)
+	}
+
+	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
+		return Error(503, "Plugin unavailable", err)
+	}
+
+	return Error(500, "Plugin request failed", err)
 }

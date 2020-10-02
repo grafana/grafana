@@ -33,7 +33,7 @@ export const NetWorkGraph: FC<Props> = ({ nodes, edges, direction, width, height
 
   useEffect(() => {
     if (!ref) {
-      return null;
+      return;
     }
 
     const data = {

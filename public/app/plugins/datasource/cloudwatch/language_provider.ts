@@ -178,7 +178,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
   private handleCommand = async (
     commandToken: Token,
     curToken: Token,
-    context: TypeaheadContext
+    context?: TypeaheadContext
   ): Promise<TypeaheadOutput> => {
     const queryCommand = commandToken.content.toLowerCase();
     const prevToken = prevNonWhitespaceToken(curToken);
@@ -190,11 +190,11 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
 
     if (queryCommand === 'parse') {
       if (currentTokenIsFirstArg) {
-        return await this.getFieldCompletionItems(context.logGroupNames ?? []);
+        return await this.getFieldCompletionItems(context?.logGroupNames ?? []);
       }
     }
 
-    const currentTokenIsAfterCommandAndEmpty = isTokenType(commandToken.next, 'whitespace') && !commandToken.next.next;
+    const currentTokenIsAfterCommandAndEmpty = isTokenType(commandToken.next, 'whitespace') && !commandToken.next?.next;
     const currentTokenIsAfterCommand =
       currentTokenIsAfterCommandAndEmpty || nextNonWhitespaceToken(commandToken) === curToken;
 
@@ -207,7 +207,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     }
 
     if (['display', 'fields'].includes(queryCommand)) {
-      const typeaheadOutput = await this.getFieldCompletionItems(context.logGroupNames ?? []);
+      const typeaheadOutput = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
       typeaheadOutput.suggestions.push(...this.getFieldAndFilterFunctionCompletionItems().suggestions);
 
       return typeaheadOutput;
@@ -224,7 +224,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     }
 
     if (queryCommand === 'filter' && currentTokenIsFirstArg) {
-      const sugg = await this.getFieldCompletionItems(context.logGroupNames ?? []);
+      const sugg = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
       const boolFuncs = this.getBoolFuncCompletionItems();
       sugg.suggestions.push(...boolFuncs.suggestions);
       return sugg;
@@ -235,10 +235,10 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
   private async handleSortCommand(
     isFirstArgument: boolean,
     curToken: Token,
-    context: TypeaheadContext
+    context?: TypeaheadContext
   ): Promise<TypeaheadOutput> {
     if (isFirstArgument) {
-      return await this.getFieldCompletionItems(context.logGroupNames ?? []);
+      return await this.getFieldCompletionItems(context?.logGroupNames ?? []);
     } else if (isTokenType(prevNonWhitespaceToken(curToken), 'field-name')) {
       // suggest sort options
       return {

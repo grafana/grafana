@@ -1,13 +1,13 @@
 import { MssqlDatasource } from '../datasource';
 import { TimeSrvStub } from 'test/specs/helpers';
-import { CustomVariable } from 'app/features/templating/custom_variable';
 
 import { dateTime } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { backendSrv } from 'app/core/services/backend_srv';
+import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer'; // will use the version in __mocks__
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -245,7 +245,7 @@ describe('MSSQLDatasource', () => {
 
   describe('When interpolating variables', () => {
     beforeEach(() => {
-      ctx.variable = new CustomVariable({}, {} as any);
+      ctx.variable = { ...initialCustomVariableModelState };
     });
 
     describe('and value is a string', () => {

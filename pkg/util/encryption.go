@@ -6,8 +6,9 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
-	"golang.org/x/crypto/pbkdf2"
 	"io"
+
+	"golang.org/x/crypto/pbkdf2"
 )
 
 const saltLength = 8
@@ -60,7 +61,7 @@ func Encrypt(payload []byte, secret string) ([]byte, error) {
 	// The IV needs to be unique, but not secure. Therefore it's common to
 	// include it at the beginning of the ciphertext.
 	ciphertext := make([]byte, saltLength+aes.BlockSize+len(payload))
-	copy(ciphertext[:saltLength], []byte(salt))
+	copy(ciphertext[:saltLength], salt)
 	iv := ciphertext[saltLength : saltLength+aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
 		return nil, err

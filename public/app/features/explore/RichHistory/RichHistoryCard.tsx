@@ -8,7 +8,7 @@ import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { copyStringToClipboard, createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import appEvents from 'app/core/app_events';
-import { StoreState } from 'app/types';
+import { StoreState, CoreEvents } from 'app/types';
 
 import { changeDatasource, updateRichHistory, setQueries } from '../state/actions';
 export interface Props {
@@ -163,7 +163,7 @@ export function RichHistoryCard(props: Props) {
   const onRunQuery = async () => {
     const queriesToRun = query.queries;
     if (query.datasourceName !== datasourceInstance?.name) {
-      await changeDatasource(exploreId, query.datasourceName);
+      await changeDatasource(exploreId, query.datasourceName, { importQueries: true });
       setQueries(exploreId, queriesToRun);
     } else {
       setQueries(exploreId, queriesToRun);
@@ -183,8 +183,22 @@ export function RichHistoryCard(props: Props) {
   };
 
   const onDeleteQuery = () => {
-    updateRichHistory(query.ts, 'delete');
-    appEvents.emit(AppEvents.alertSuccess, ['Query deleted']);
+    // For starred queries, we want confirmation. For non-starred, we don't.
+    if (query.starred) {
+      appEvents.emit(CoreEvents.showConfirmModal, {
+        title: 'Delete',
+        text: 'Are you sure you want to permanently delete your starred query?',
+        yesText: 'Delete',
+        icon: 'trash-alt',
+        onConfirm: () => {
+          updateRichHistory(query.ts, 'delete');
+          appEvents.emit(AppEvents.alertSuccess, ['Query deleted']);
+        },
+      });
+    } else {
+      updateRichHistory(query.ts, 'delete');
+      appEvents.emit(AppEvents.alertSuccess, ['Query deleted']);
+    }
   };
 
   const onStarrQuery = () => {

@@ -38,10 +38,6 @@ export default class UiFindInput extends React.PureComponent<Props> {
     this.props.onChange('');
   };
 
-  componentWillUnmount(): void {
-    console.log('unomuet');
-  }
-
   render() {
     const { allowClear, inputProps, value } = this.props;
 

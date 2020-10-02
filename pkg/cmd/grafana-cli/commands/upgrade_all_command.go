@@ -35,11 +35,13 @@ func (cmd Command) upgradeAllCommand(c utils.CommandLine) error {
 	pluginsToUpgrade := make([]models.InstalledPlugin, 0)
 
 	for _, localPlugin := range localPlugins {
-		for _, remotePlugin := range remotePlugins.Plugins {
-			if localPlugin.Id == remotePlugin.Id {
-				if shouldUpgrade(localPlugin.Info.Version, &remotePlugin) {
-					pluginsToUpgrade = append(pluginsToUpgrade, localPlugin)
-				}
+		for _, p := range remotePlugins.Plugins {
+			remotePlugin := p
+			if localPlugin.Id != remotePlugin.Id {
+				continue
+			}
+			if shouldUpgrade(localPlugin.Info.Version, &remotePlugin) {
+				pluginsToUpgrade = append(pluginsToUpgrade, localPlugin)
 			}
 		}
 	}

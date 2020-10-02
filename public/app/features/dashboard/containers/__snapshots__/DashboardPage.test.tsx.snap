@@ -1,7 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`] = `
-<div>
+<div
+  className="dashboard-container"
+>
   <Connect(DashNav)
     $injector={Object {}}
     dashboard={
@@ -78,7 +80,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         ],
         "refresh": undefined,
         "revision": undefined,
-        "schemaVersion": 25,
+        "schemaVersion": 26,
         "snapshot": undefined,
         "style": "dark",
         "tags": Array [],
@@ -100,7 +102,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
     onAddPanel={[Function]}
   />
   <div
-    className="scroll-canvas scroll-canvas--dashboard"
+    className="dashboard-scroll"
   >
     <CustomScrollbar
       autoHeightMax="100%"
@@ -114,7 +116,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
       updateAfterMountMs={500}
     >
       <div
-        className="dashboard-container"
+        className="dashboard-content"
       >
         <SubMenu
           dashboard={
@@ -191,7 +193,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 25,
+              "schemaVersion": 26,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -209,6 +211,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "version": 0,
             }
           }
+          links={Array []}
         />
         <DashboardGrid
           dashboard={
@@ -285,7 +288,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 25,
+              "schemaVersion": 26,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -320,12 +323,36 @@ exports[`DashboardPage Dashboard is fetching slowly Should render slow init stat
   <div
     className="dashboard-loading__text"
   >
-    <Icon
-      className="fa-spin"
-      name="fa fa-spinner"
-    />
-     
-    Fetching
+    <Component
+      spacing="md"
+    >
+      <Component
+        align="center"
+        justify="center"
+        spacing="xs"
+      >
+        <Icon
+          className="fa-spin"
+          name="fa fa-spinner"
+        />
+         
+        Fetching
+      </Component>
+       
+      <Component
+        align="center"
+        justify="center"
+      >
+        <Button
+          icon="repeat"
+          onClick={[Function]}
+          size="md"
+          variant="secondary"
+        >
+          Cancel loading dashboard
+        </Button>
+      </Component>
+    </Component>
   </div>
 </div>
 `;
@@ -333,7 +360,9 @@ exports[`DashboardPage Dashboard is fetching slowly Should render slow init stat
 exports[`DashboardPage Given initial state Should render nothing 1`] = `""`;
 
 exports[`DashboardPage When dashboard has editview url state should render settings view 1`] = `
-<div>
+<div
+  className="dashboard-container"
+>
   <Connect(DashNav)
     $injector={Object {}}
     dashboard={
@@ -410,7 +439,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         ],
         "refresh": undefined,
         "revision": undefined,
-        "schemaVersion": 25,
+        "schemaVersion": 26,
         "snapshot": undefined,
         "style": "dark",
         "tags": Array [],
@@ -432,7 +461,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
     onAddPanel={[Function]}
   />
   <div
-    className="scroll-canvas scroll-canvas--dashboard"
+    className="dashboard-scroll"
   >
     <CustomScrollbar
       autoHeightMax="100%"
@@ -446,7 +475,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
       updateAfterMountMs={500}
     >
       <div
-        className="dashboard-container"
+        className="dashboard-content"
       >
         <SubMenu
           dashboard={
@@ -523,7 +552,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 25,
+              "schemaVersion": 26,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -541,6 +570,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "version": 0,
             }
           }
+          links={Array []}
         />
         <DashboardGrid
           dashboard={
@@ -617,7 +647,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 25,
+              "schemaVersion": 26,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -717,7 +747,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         ],
         "refresh": undefined,
         "revision": undefined,
-        "schemaVersion": 25,
+        "schemaVersion": 26,
         "snapshot": undefined,
         "style": "dark",
         "tags": Array [],

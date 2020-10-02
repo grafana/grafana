@@ -103,6 +103,50 @@ describe('ElasticQueryBuilder', () => {
         expect(secondLevel.aggs['5'].avg.field).toBe('@value');
       });
 
+      it('with term agg and valid min_doc_count', () => {
+        const query = builder.build(
+          {
+            metrics: [{ type: 'count', id: '1' }],
+            bucketAggs: [
+              {
+                type: 'terms',
+                field: '@host',
+                settings: { min_doc_count: 1 },
+                id: '2',
+              },
+              { type: 'date_histogram', field: '@timestamp', id: '3' },
+            ],
+          },
+          100,
+          '1000'
+        );
+
+        const firstLevel = query.aggs['2'];
+        expect(firstLevel.terms.min_doc_count).toBe(1);
+      });
+
+      it('with term agg and variable as min_doc_count', () => {
+        const query = builder.build(
+          {
+            metrics: [{ type: 'count', id: '1' }],
+            bucketAggs: [
+              {
+                type: 'terms',
+                field: '@host',
+                settings: { min_doc_count: '$min_doc_count' },
+                id: '2',
+              },
+              { type: 'date_histogram', field: '@timestamp', id: '3' },
+            ],
+          },
+          100,
+          '1000'
+        );
+
+        const firstLevel = query.aggs['2'];
+        expect(firstLevel.terms.min_doc_count).toBe('$min_doc_count');
+      });
+
       it('with metric percentiles', () => {
         const query = builder.build(
           {

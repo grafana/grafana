@@ -6,6 +6,7 @@ import {
   DataLinksContextMenu,
   VizRepeater,
   VizRepeaterRenderValueProps,
+  BigValueTextMode,
 } from '@grafana/ui';
 import {
   DisplayValueAlignmentFactors,
@@ -26,7 +27,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
     const { timeRange, options } = this.props;
-    const { value, alignmentFactors, width, height } = valueProps;
+    const { value, alignmentFactors, width, height, count } = valueProps;
     const { openMenu, targetClassName } = menuProps;
     let sparkline: BigValueSparkline | undefined;
 
@@ -48,10 +49,12 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     return (
       <BigValue
         value={value.display}
+        count={count}
         sparkline={sparkline}
         colorMode={options.colorMode}
         graphMode={options.graphMode}
         justifyMode={options.justifyMode}
+        textMode={this.getTextMode()}
         alignmentFactors={alignmentFactors}
         width={width}
         height={height}
@@ -61,21 +64,33 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
       />
     );
   };
+
+  getTextMode() {
+    const { options, fieldConfig, title } = this.props;
+
+    // If we have manually set displayName or panel title switch text mode to value and name
+    if (options.textMode === BigValueTextMode.Auto && (fieldConfig.defaults.displayName || !title)) {
+      return BigValueTextMode.ValueAndName;
+    }
+
+    return options.textMode;
+  }
+
   renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
     const { value } = valueProps;
     const { getLinks, hasLinks } = value;
 
-    if (!hasLinks) {
-      return this.renderComponent(valueProps, {});
+    if (hasLinks && getLinks) {
+      return (
+        <DataLinksContextMenu links={getLinks}>
+          {api => {
+            return this.renderComponent(valueProps, api);
+          }}
+        </DataLinksContextMenu>
+      );
     }
 
-    return (
-      <DataLinksContextMenu links={getLinks}>
-        {api => {
-          return this.renderComponent(valueProps, api);
-        }}
-      </DataLinksContextMenu>
-    );
+    return this.renderComponent(valueProps, {});
   };
 
   getValues = (): FieldDisplay[] => {

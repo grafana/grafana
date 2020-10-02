@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ConstantVariableModel, VariableHide, VariableOption } from '../../templating/types';
+import { ConstantVariableModel, VariableHide, VariableOption } from '../types';
 import { getInstanceState, NEW_VARIABLE_ID, VariablePayload } from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 

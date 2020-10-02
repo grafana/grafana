@@ -23,9 +23,31 @@ import { SelectFieldConfigSettings } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [options](#options-property) | <code>Array&lt;SelectableValue&lt;T&gt;&gt;</code> |  |
+|  [allowCustomValue](#allowcustomvalue-property) | <code>boolean</code> |  |
+|  [getOptions](#getoptions-property) | <code>(context: FieldOverrideContext) =&gt; Promise&lt;Array&lt;SelectableValue&lt;T&gt;&gt;&gt;</code> | Optionally use the context to define the options |
+|  [options](#options-property) | <code>Array&lt;SelectableValue&lt;T&gt;&gt;</code> | The default options |
+
+### allowCustomValue property
+
+<b>Signature</b>
+
+```typescript
+allowCustomValue?: boolean;
+```
+
+### getOptions property
+
+Optionally use the context to define the options
+
+<b>Signature</b>
+
+```typescript
+getOptions?: (context: FieldOverrideContext) => Promise<Array<SelectableValue<T>>>;
+```
 
 ### options property
+
+The default options
 
 <b>Signature</b>
 

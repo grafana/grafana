@@ -50,7 +50,7 @@ simplified query interface specifically designed for logs search.
 
 {{< docs-imagebox img="/img/docs/v63/elasticsearch_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
 
-Please read [Using Elasticsearch in Grafana](/features/datasources/elasticsearch/#querying-logs-beta) for more detailed information on how to get started and use it.
+Please read [Using Elasticsearch in Grafana]({{< relref "../features/datasources/elasticsearch/#elasticsearch-version" >}}) for more detailed information on how to get started and use it.
 
 ### InfluxDB logs support
 
@@ -59,7 +59,7 @@ simplified query interface specifically designed for logs search.
 
 {{< docs-imagebox img="/img/docs/v63/influxdb_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
 
-Please read [Using InfluxDB in Grafana](/features/datasources/influxdb/#querying-logs-beta) for more detailed information on how to get started and use it.
+Please read [Using InfluxDB in Grafana]({{< relref "../features/datasources/influxdb/#querying-logs-beta" >}}) for more detailed information on how to get started and use it.
 
 ## Data Links
 
@@ -82,7 +82,7 @@ Name | Description
 *${__series_name}* | The name of the time series (or table)
 *${__value_time}* | The time of the point your clicking on (in millisecond epoch)
 *${__url_time_range}* | Interpolates as the full time range (i.e. from=21312323412&to=21312312312)
-*${__all_variables}* | Adds all current variables (and current values) to the url
+*${__all_variables}* | Adds all current variables (and current values) to the URL
 
 You can then click on point in the Graph.
 

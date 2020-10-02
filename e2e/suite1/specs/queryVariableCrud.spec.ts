@@ -4,7 +4,7 @@ import { e2e } from '@grafana/e2e';
 // several it functions. Very important to keep the order of these it functions because they have dependency in the order
 // https://github.com/cypress-io/cypress/issues/5987
 // https://github.com/cypress-io/cypress/issues/6023#issuecomment-574031655
-describe('Variables', () => {
+describe.skip('Variables', () => {
   let lastUid = '';
   let lastData = '';
   let variables: VariablesData[] = [
@@ -35,7 +35,7 @@ describe('Variables', () => {
     }
 
     e2e.getScenarioContext().then(({ lastAddedDashboardUid, lastAddedDataSource }: any) => {
-      e2e.flows.openDashboard(lastAddedDashboardUid);
+      e2e.flows.openDashboard({ uid: lastAddedDashboardUid });
       lastUid = lastAddedDashboardUid;
       lastData = lastAddedDataSource;
     });

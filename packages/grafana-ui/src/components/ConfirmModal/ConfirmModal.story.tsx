@@ -2,7 +2,7 @@ import React from 'react';
 import { text, boolean, select } from '@storybook/addon-knobs';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { ConfirmModal } from './ConfirmModal';
+import { ConfirmModal } from '@grafana/ui';
 import mdx from './ConfirmModal.mdx';
 
 const getKnobs = () => {

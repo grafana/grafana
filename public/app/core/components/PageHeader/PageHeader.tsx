@@ -79,6 +79,7 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
                 key={`${child.url}-${index}`}
                 icon={child.icon as IconName}
                 onChangeTab={() => goToUrl(index)}
+                href={child.url}
               />
             )
           );

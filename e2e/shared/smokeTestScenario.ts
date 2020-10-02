@@ -7,9 +7,7 @@ export const smokeTestScenario = {
   addScenarioDashBoard: true,
   skipScenario: false,
   scenario: () => {
-    e2e.getScenarioContext().then(({ lastAddedDashboardUid }: any) => {
-      e2e.flows.openDashboard(lastAddedDashboardUid);
-    });
+    e2e.flows.openDashboard();
     e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
     e2e.pages.AddDashboard.addNewPanel().click();
 

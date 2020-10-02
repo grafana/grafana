@@ -348,7 +348,7 @@ export default class TimeSeries {
     this.scaledDecimals = scaledDecimals;
   }
 
-  formatValue(value: number) {
+  formatValue(value: number | null) {
     if (!_.isFinite(value)) {
       value = null; // Prevent NaN formatting
     }

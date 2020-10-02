@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-getValueFromDimension: (dimension: Dimension<any>, column: number, row: number) => any
+getValueFromDimension: (dimension: Dimension, column: number, row: number) => any
 ```
 <b>Import</b>
 

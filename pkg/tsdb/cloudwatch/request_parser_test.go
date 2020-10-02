@@ -211,7 +211,6 @@ func TestRequestParser(t *testing.T) {
 					So(res.Period, ShouldEqual, 86400)
 				})
 			})
-
 		})
 	})
 }

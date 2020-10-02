@@ -23,20 +23,22 @@ import { DataSourceWithBackend } from '@grafana/runtime';
 ```
 <b>Constructors</b>
 
-|  Constructor | Modifiers | Description |
-|  --- | --- | --- |
-|  [constructor(instanceSettings)](#constructor-instancesettings) |  | Constructs a new instance of the <code>DataSourceWithBackend</code> class |
+| Constructor                                                    | Modifiers | Description                                                               |
+| -------------------------------------------------------------- | --------- | ------------------------------------------------------------------------- |
+| [constructor(instanceSettings)](#constructor-instancesettings) |           | Constructs a new instance of the <code>DataSourceWithBackend</code> class |
 
 <b>Methods</b>
 
-|  Method | Modifiers | Description |
-|  --- | --- | --- |
-|  [applyTemplateVariables(query)](#applytemplatevariables-method) |  | Override to apply template variables |
-|  [callHealthCheck()](#callhealthcheck-method) |  | Run the datasource healthcheck |
-|  [getResource(path, params)](#getresource-method) |  | Make a GET request to the datasource resource path |
-|  [postResource(path, body)](#postresource-method) |  | Send a POST request to the datasource resource path |
-|  [query(request)](#query-method) |  | Ideally final -- any other implementation may not work as expected |
-|  [testDatasource()](#testdatasource-method) |  | Checks the plugin health |
+| Method                                                                      | Modifiers | Description                                                                                                                                                                                                                                                                                        |
+| --------------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [applyTemplateVariables(query, scopedVars)](#applytemplatevariables-method) |           | Override to apply template variables. The result is usually also <code>TQuery</code>, but sometimes this can be used to modify the query structure before sending to the backend.<!-- -->NOTE: if you do modify the structure or use template variables, alerting queries may not work as expected |
+| [callHealthCheck()](#callhealthcheck-method)                                |           | Run the datasource healthcheck                                                                                                                                                                                                                                                                     |
+| [filterQuery(query)](#filterquery-method)                                   |           | Override to skip executing a query                                                                                                                                                                                                                                                                 |
+| [getResource(path, params)](#getresource-method)                            |           | Make a GET request to the datasource resource path                                                                                                                                                                                                                                                 |
+| [postResource(path, body)](#postresource-method)                            |           | Send a POST request to the datasource resource path                                                                                                                                                                                                                                                |
+| [processResponse(res)](#processresponse-method)                             |           | Optionally augment the response before returning the results to the                                                                                                                                                                                                                                |
+| [query(request)](#query-method)                                             |           | Ideally final -- any other implementation may not work as expected                                                                                                                                                                                                                                 |
+| [testDatasource()](#testdatasource-method)                                  |           | Checks the plugin health                                                                                                                                                                                                                                                                           |
 
 ### constructor(instanceSettings)
 
@@ -49,29 +51,32 @@ constructor(instanceSettings: DataSourceInstanceSettings<TOptions>);
 ```
 <b>Parameters</b>
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  instanceSettings | <code>DataSourceInstanceSettings&lt;TOptions&gt;</code> |  |
+| Parameter        | Type                                                    | Description |
+| ---------------- | ------------------------------------------------------- | ----------- |
+| instanceSettings | <code>DataSourceInstanceSettings&lt;TOptions&gt;</code> |             |
 
 ### applyTemplateVariables method
 
-Override to apply template variables
+Override to apply template variables. The result is usually also `TQuery`<!-- -->, but sometimes this can be used to modify the query structure before sending to the backend.
+
+> **Note:** if you do modify the structure or use template variables, alerting queries may not work as expected
 
 <b>Signature</b>
 
 ```typescript
 /** @virtual */
-applyTemplateVariables(query: DataQuery): DataQuery;
+applyTemplateVariables(query: TQuery, scopedVars: ScopedVars): Record<string, any>;
 ```
 <b>Parameters</b>
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  query | <code>DataQuery</code> |  |
+| Parameter  | Type                    | Description |
+| ---------- | ----------------------- | ----------- |
+| query      | <code>TQuery</code>     |             |
+| scopedVars | <code>ScopedVars</code> |             |
 
 <b>Returns:</b>
 
-`DataQuery`
+`Record<string, any>`
 
 ### callHealthCheck method
 
@@ -86,6 +91,26 @@ callHealthCheck(): Promise<HealthCheckResult>;
 
 `Promise<HealthCheckResult>`
 
+### filterQuery method
+
+Override to skip executing a query
+
+<b>Signature</b>
+
+```typescript
+/** @virtual */
+filterQuery?(query: TQuery): boolean;
+```
+<b>Parameters</b>
+
+| Parameter | Type                | Description |
+| --------- | ------------------- | ----------- |
+| query     | <code>TQuery</code> |             |
+
+<b>Returns:</b>
+
+`boolean`
+
 ### getResource method
 
 Make a GET request to the datasource resource path
@@ -97,10 +122,10 @@ getResource(path: string, params?: any): Promise<any>;
 ```
 <b>Parameters</b>
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  path | <code>string</code> |  |
-|  params | <code>any</code> |  |
+| Parameter | Type                | Description |
+| --------- | ------------------- | ----------- |
+| path      | <code>string</code> |             |
+| params    | <code>any</code>    |             |
 
 <b>Returns:</b>
 
@@ -117,14 +142,33 @@ postResource(path: string, body?: any): Promise<any>;
 ```
 <b>Parameters</b>
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  path | <code>string</code> |  |
-|  body | <code>any</code> |  |
+| Parameter | Type                | Description |
+| --------- | ------------------- | ----------- |
+| path      | <code>string</code> |             |
+| body      | <code>any</code>    |             |
 
 <b>Returns:</b>
 
 `Promise<any>`
+
+### processResponse method
+
+Optionally augment the response before returning the results to the
+
+<b>Signature</b>
+
+```typescript
+processResponse?(res: DataQueryResponse): Promise<DataQueryResponse>;
+```
+<b>Parameters</b>
+
+| Parameter | Type                           | Description |
+| --------- | ------------------------------ | ----------- |
+| res       | <code>DataQueryResponse</code> |             |
+
+<b>Returns:</b>
+
+`Promise<DataQueryResponse>`
 
 ### query method
 
@@ -133,13 +177,13 @@ Ideally final -- any other implementation may not work as expected
 <b>Signature</b>
 
 ```typescript
-query(request: DataQueryRequest): Observable<DataQueryResponse>;
+query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse>;
 ```
 <b>Parameters</b>
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  request | <code>DataQueryRequest</code> |  |
+| Parameter | Type                                        | Description |
+| --------- | ------------------------------------------- | ----------- |
+| request   | <code>DataQueryRequest&lt;TQuery&gt;</code> |             |
 
 <b>Returns:</b>
 

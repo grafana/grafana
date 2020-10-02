@@ -38,7 +38,6 @@ func (s *UserAuthTokenService) Init() error {
 }
 
 func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, error) {
-
 	var count int64
 	var err error
 	err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
@@ -119,9 +118,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 			Get(&model)
 
 		return err
-
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +370,6 @@ func (s *UserAuthTokenService) GetUserToken(ctx context.Context, userId, userTok
 }
 
 func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) ([]*models.UserToken, error) {
-
 	result := []*models.UserToken{}
 	err := s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var tokens []*userAuthToken
@@ -382,7 +378,6 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 			s.createdAfterParam(),
 			s.rotatedAfterParam()).
 			Find(&tokens)
-
 		if err != nil {
 			return err
 		}
@@ -402,13 +397,11 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 }
 
 func (s *UserAuthTokenService) createdAfterParam() int64 {
-	tokenMaxLifetime := time.Duration(s.Cfg.LoginMaxLifetimeDays) * 24 * time.Hour
-	return getTime().Add(-tokenMaxLifetime).Unix()
+	return getTime().Add(-s.Cfg.LoginMaxLifetime).Unix()
 }
 
 func (s *UserAuthTokenService) rotatedAfterParam() int64 {
-	tokenMaxInactiveLifetime := time.Duration(s.Cfg.LoginMaxInactiveLifetimeDays) * 24 * time.Hour
-	return getTime().Add(-tokenMaxInactiveLifetime).Unix()
+	return getTime().Add(-s.Cfg.LoginMaxInactiveLifetime).Unix()
 }
 
 func hashToken(token string) string {

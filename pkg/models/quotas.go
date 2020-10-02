@@ -2,8 +2,9 @@ package models
 
 import (
 	"errors"
-	"github.com/grafana/grafana/pkg/setting"
 	"time"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var ErrInvalidQuotaTarget = errors.New("Invalid quota target")

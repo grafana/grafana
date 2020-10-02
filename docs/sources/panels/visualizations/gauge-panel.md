@@ -17,8 +17,8 @@ Gauge is a single value panel that can repeat a gauge for every series, column o
 
 Gauge visualizations allow you to apply:
 
-- [Data transformations]({{< relref "../transformations.md" >}})
-- [Field configuration options and overrides]({{< relref "../field-configuration-options.md" >}})
+- [Data transformations]({{< relref "../transformations/_index.md" >}})
+- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options
@@ -33,4 +33,4 @@ Use the following options to refine your visualization:
   - **Horizontal -** Bars stretch horizontally, left to right.
   - **Vertical -** Bars stretch vertically, top to bottom.
 - **Show threshold labels -** Controls if threshold values are shown.
-- **Show threshold markers -** Controls if a thresholds band is shown outside the inner gauge value band.
+- **Show threshold markers -** Controls if a threshold band is shown outside the inner gauge value band.

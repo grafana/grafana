@@ -22,6 +22,7 @@ var (
 	brokenYaml                      = "testdata/broken-yaml"
 	multipleOrgsWithDefault         = "testdata/multiple-org-default"
 	withoutDefaults                 = "testdata/appliedDefaults"
+	invalidAccess                   = "testdata/invalid-access"
 
 	fakeRepo *fakeRepository
 )
@@ -35,6 +36,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 		bus.AddHandler("test", mockUpdate)
 		bus.AddHandler("test", mockGet)
 		bus.AddHandler("test", mockGetAll)
+		bus.AddHandler("test", mockGetOrg)
 
 		Convey("apply default values when missing", func() {
 			dc := newDatasourceProvisioner(logger)
@@ -149,9 +151,16 @@ func TestDatasourceAsConfig(t *testing.T) {
 			So(err, ShouldNotBeNil)
 		})
 
+		Convey("invalid access should warn about invalid value and return 'proxy'", func() {
+			reader := &configReader{log: logger}
+			configs, err := reader.readConfig(invalidAccess)
+			So(err, ShouldBeNil)
+			So(configs[0].Datasources[0].Access, ShouldEqual, models.DS_ACCESS_PROXY)
+		})
+
 		Convey("skip invalid directory", func() {
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvifer.readConfig("./invalid-directory")
+			cfgProvider := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvider.readConfig("./invalid-directory")
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
@@ -161,8 +170,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 		Convey("can read all properties from version 1", func() {
 			_ = os.Setenv("TEST_VAR", "name")
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvifer.readConfig(allProperties)
+			cfgProvider := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvider.readConfig(allProperties)
 			_ = os.Unsetenv("TEST_VAR")
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
@@ -190,8 +199,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		Convey("can read all properties from version 0", func() {
-			cfgProvifer := &configReader{log: log.New("test logger")}
-			cfg, err := cfgProvifer.readConfig(versionZero)
+			cfgProvider := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvider.readConfig(versionZero)
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
@@ -287,4 +296,8 @@ func mockGet(cmd *models.GetDataSourceByNameQuery) error {
 	}
 
 	return models.ErrDataSourceNotFound
+}
+
+func mockGetOrg(_ *models.GetOrgByIdQuery) error {
+	return nil
 }

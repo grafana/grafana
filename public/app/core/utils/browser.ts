@@ -13,17 +13,17 @@ export function checkBrowserCompatibility() {
   */
   const isEdgeVersion = /Edge\/([0-9.]+)/.exec(navigator.userAgent);
 
-  if (isIE && parseFloat(/Trident\/([0-9.]+)/.exec(navigator.userAgent)[1]) <= 7) {
+  if (isIE && parseFloat(/Trident\/([0-9.]+)/.exec(navigator.userAgent)![1]) <= 7) {
     return false;
   } else if (
     isEdge &&
     ((isEdgeVersion && parseFloat(isEdgeVersion[1]) <= 16) ||
-      parseFloat(/Edg\/([0-9.]+)/.exec(navigator.userAgent)[1]) <= 16)
+      parseFloat(/Edg\/([0-9.]+)/.exec(navigator.userAgent)![1]) <= 16)
   ) {
     return false;
-  } else if (isFirefox && parseFloat(/Firefox\/([0-9.]+)/.exec(navigator.userAgent)[1]) <= 64) {
+  } else if (isFirefox && parseFloat(/Firefox\/([0-9.]+)/.exec(navigator.userAgent)![1]) <= 64) {
     return false;
-  } else if (isChrome && parseFloat(/Chrome\/([0-9.]+)/.exec(navigator.userAgent)[1]) <= 54) {
+  } else if (isChrome && parseFloat(/Chrome\/([0-9.]+)/.exec(navigator.userAgent)![1]) <= 54) {
     return false;
   }
 

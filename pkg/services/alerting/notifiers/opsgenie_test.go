@@ -13,7 +13,6 @@ import (
 
 func TestOpsGenieNotifier(t *testing.T) {
 	Convey("OpsGenie notifier tests", t, func() {
-
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
@@ -69,7 +68,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				notifier, notifierErr := NewOpsGenieNotifier(model) //unhandled error
+				notifier, notifierErr := NewOpsGenieNotifier(model) // unhandled error
 
 				opsgenieNotifier := notifier.(*OpsGenieNotifier)
 

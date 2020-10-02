@@ -14,16 +14,19 @@ func init() {
 		Type:        "teams",
 		Name:        "Microsoft Teams",
 		Description: "Sends notifications using Incoming Webhook connector to Microsoft Teams",
+		Heading:     "Teams settings",
 		Factory:     NewTeamsNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">Teams settings</h3>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Url</span>
-        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Teams incoming webhook url"></input>
-      </div>
-    `,
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "URL",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "Teams incoming webhook url",
+				PropertyName: "url",
+				Required:     true,
+			},
+		},
 	})
-
 }
 
 // NewTeamsNotifier is the constructor for Teams notifier.
@@ -78,7 +81,7 @@ func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	message := ""
-	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
+	if evalContext.Rule.State != models.AlertStateOK { // don't add message when going back to alert state ok.
 		message = evalContext.Rule.Message
 	}
 

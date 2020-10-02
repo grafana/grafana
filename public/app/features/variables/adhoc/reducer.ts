@@ -1,4 +1,4 @@
-import { AdHocVariableFilter, AdHocVariableModel, VariableHide } from 'app/features/templating/types';
+import { AdHocVariableFilter, AdHocVariableModel, VariableHide } from 'app/features/variables/types';
 import { getInstanceState, NEW_VARIABLE_ID, VariablePayload } from '../state/types';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';

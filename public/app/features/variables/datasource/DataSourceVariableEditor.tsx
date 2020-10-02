@@ -1,6 +1,6 @@
 import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
 
-import { DataSourceVariableModel, VariableWithMultiSupport } from '../../templating/types';
+import { DataSourceVariableModel, VariableWithMultiSupport } from '../types';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { InlineFormLabel } from '@grafana/ui';

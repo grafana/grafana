@@ -17,7 +17,7 @@ export interface SelectCommonProps<T> {
   components?: any;
   defaultValue?: any;
   disabled?: boolean;
-  filterOption?: (option: SelectableValue, searchQuery: string) => void;
+  filterOption?: (option: SelectableValue, searchQuery: string) => boolean;
   /**   Function for formatting the text that is displayed when creating a new value*/
   formatCreateLabel?: (input: string) => string;
   getOptionLabel?: (item: SelectableValue<T>) => string;

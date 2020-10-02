@@ -78,7 +78,7 @@ export const PromSettings = (props: Props) => {
       <div className="gf-form-group">
         <div className="gf-form">
           <Switch
-            checked={options.jsonData.disableMetricsLookup}
+            checked={options.jsonData.disableMetricsLookup ?? false}
             label="Disable metrics lookup"
             labelClass="width-14"
             onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableMetricsLookup')}

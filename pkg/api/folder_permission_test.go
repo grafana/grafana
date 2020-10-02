@@ -125,6 +125,10 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			updateFolderPermissionScenario("When calling POST on", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
 				callUpdateFolderPermissions(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
+				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+				So(err, ShouldBeNil)
+				So(respJSON.Get("id").MustInt(), ShouldEqual, 1)
+				So(respJSON.Get("title").MustString(), ShouldEqual, "Folder")
 			})
 
 			Reset(func() {
@@ -169,7 +173,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			})
 		})
 
-		Convey("When trying to override inherited permissions with lower presedence", func() {
+		Convey("When trying to override inherited permissions with lower precedence", func() {
 			origNewGuardian := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 				CanAdminValue:                    true,

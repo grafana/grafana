@@ -309,7 +309,7 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 	err = u.FetchOrgs()
 
 	if err != nil {
-		return Error(http.StatusBadRequest, "An oganization was not found - Please verify your LDAP configuration", err)
+		return Error(http.StatusBadRequest, "An organization was not found - Please verify your LDAP configuration", err)
 	}
 
 	cmd := &models.GetTeamsForLDAPGroupCommand{Groups: user.Groups}

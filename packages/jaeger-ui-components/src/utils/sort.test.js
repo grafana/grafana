@@ -84,9 +84,7 @@ it('createSortClickHandler() should return a function', () => {
   const currentSortDir = 1;
   const updateSort = sinon.spy();
 
-  expect(typeof sortUtils.createSortClickHandler(column, currentSortKey, currentSortDir, updateSort)).toBe(
-    'function'
-  );
+  expect(typeof sortUtils.createSortClickHandler(column, currentSortKey, currentSortDir, updateSort)).toBe('function');
 });
 
 it('createSortClickHandler() should call updateSort with the new sort vals', () => {

@@ -54,13 +54,14 @@ func TestLDAPHelpers(t *testing.T) {
 
 			result := getUsersIteration(logins, func(previous, current int) error {
 				i++
-				if i == 1 {
+				switch i {
+				case 1:
 					So(previous, ShouldEqual, 0)
 					So(current, ShouldEqual, 500)
-				} else if i == 2 {
+				case 2:
 					So(previous, ShouldEqual, 500)
 					So(current, ShouldEqual, 1000)
-				} else {
+				default:
 					So(previous, ShouldEqual, 1000)
 					So(current, ShouldEqual, 1500)
 				}

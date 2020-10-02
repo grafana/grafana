@@ -107,9 +107,7 @@ func UpdatePluginSetting(cmd *models.UpdatePluginSettingCmd) error {
 
 func UpdatePluginSettingVersion(cmd *models.UpdatePluginSettingVersionCmd) error {
 	return inTransaction(func(sess *DBSession) error {
-
 		_, err := sess.Exec("UPDATE plugin_setting SET plugin_version=? WHERE org_id=? AND plugin_id=?", cmd.PluginVersion, cmd.OrgId, cmd.PluginId)
 		return err
-
 	})
 }

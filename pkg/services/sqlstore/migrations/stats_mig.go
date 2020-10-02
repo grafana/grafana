@@ -3,7 +3,7 @@ package migrations
 import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 // commented out because of the deadcode CI check
-//func addStatsMigrations(mg *Migrator) {
+// func addStatsMigrations(mg *Migrator) {
 //	statTable := Table{
 //		Name: "stat",
 //		Columns: []*Column{
@@ -33,7 +33,7 @@ import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 //
 //	// create table
 //	mg.AddMigration("create stat_value table", NewAddTableMigration(statValue))
-//}
+// }
 
 func addTestDataMigrations(mg *Migrator) {
 	testData := Table{

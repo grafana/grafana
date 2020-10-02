@@ -35,7 +35,7 @@ RUN if [ ! -z "${CONTAINER_TIMEZONE}" ]; \
 
 # fix python dependencies (LTS Django and newer memcached/txAMQP)
 RUN pip install --upgrade pip && \
-  pip install django==1.8.18 \
+  pip install --no-cache-dir django==1.8.18 \
   python-memcached==1.53 \
   txAMQP==0.6.2
 
@@ -62,13 +62,13 @@ RUN python ./setup.py install
 # install carbon
 RUN git clone -b ${carbon_version} --depth 1 ${carbon_repo} /usr/local/src/carbon
 WORKDIR /usr/local/src/carbon
-RUN pip install -r requirements.txt \
+RUN pip install --no-cache-dir -r requirements.txt \
   && python ./setup.py install
 
 # install graphite
 RUN git clone -b ${graphite_version} --depth 1 ${graphite_repo} /usr/local/src/graphite-web
 WORKDIR /usr/local/src/graphite-web
-RUN pip install -r requirements.txt \
+RUN pip install --no-cache-dir -r requirements.txt \
   && python ./setup.py install
 
 # install statsd

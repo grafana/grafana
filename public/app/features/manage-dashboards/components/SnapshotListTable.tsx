@@ -10,7 +10,7 @@ interface Props {
 
 export const SnapshotListTable: FC<Props> = ({ url }) => {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  const [removeSnapshot, setRemoveSnapshot] = useState<Snapshot>();
+  const [removeSnapshot, setRemoveSnapshot] = useState<Snapshot | undefined>();
 
   const getSnapshots = useCallback(async () => {
     await getBackendSrv()
@@ -91,7 +91,7 @@ export const SnapshotListTable: FC<Props> = ({ url }) => {
         confirmText="Delete"
         onDismiss={() => setRemoveSnapshot(undefined)}
         onConfirm={() => {
-          doRemoveSnapshot(removeSnapshot);
+          doRemoveSnapshot(removeSnapshot!);
           setRemoveSnapshot(undefined);
         }}
       />

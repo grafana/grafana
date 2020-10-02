@@ -242,8 +242,8 @@
   }
 }
 
-.explore-input--ml {
-  margin-left: 4px;
+.explore-input-margin {
+  margin-right: 4px;
 }
 
 .navbar .elapsed-time {
@@ -263,6 +263,9 @@
   display: flex;
   position: relative;
   align-items: flex-start;
+  @include media-breakpoint-down(sm) {
+    flex-wrap: wrap;
+  }
 
   & + & {
     margin-top: $space-sm;

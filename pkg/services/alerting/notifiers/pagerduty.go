@@ -18,42 +18,54 @@ func init() {
 		Type:        "pagerduty",
 		Name:        "PagerDuty",
 		Description: "Sends notifications to PagerDuty",
+		Heading:     "PagerDuty settings",
 		Factory:     NewPagerdutyNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">PagerDuty settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">Integration Key</span>
-        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.integrationKey" placeholder="Pagerduty Integration Key"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">Severity</span>
-        <div class="gf-form-select-wrapper width-14">
-          <select
-            class="gf-form-input"
-            ng-model="ctrl.model.settings.severity"
-            ng-options="s for s in ['critical', 'error', 'warning', 'info']">
-          </select>
-        </div>
-      </div>
-      <div class="gf-form">
-        <gf-form-switch
-           class="gf-form"
-           label="Auto resolve incidents"
-           label-class="width-14"
-           checked="ctrl.model.settings.autoResolve"
-           tooltip="Resolve incidents in pagerduty once the alert goes back to ok.">
-        </gf-form-switch>
-      </div>
-      <div class="gf-form">
-        <gf-form-switch
-           class="gf-form"
-           label="Include message in details"
-           label-class="width-14"
-           checked="ctrl.model.settings.messageInDetails"
-           tooltip="Move the alert message from the PD summary into the custom details. This changes the custom details object and may break event rules you have configured">
-        </gf-form-switch>
-      </div>
-    `,
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "Integration Key",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "Pagerduty Integration Key",
+				PropertyName: "integrationKey",
+				Required:     true,
+				Secure:       true,
+			},
+			{
+				Label:   "Severity",
+				Element: alerting.ElementTypeSelect,
+				SelectOptions: []alerting.SelectOption{
+					{
+						Value: "critical",
+						Label: "Critical",
+					},
+					{
+						Value: "error",
+						Label: "Error",
+					},
+					{
+						Value: "warning",
+						Label: "Warning",
+					},
+					{
+						Value: "info",
+						Label: "Info",
+					},
+				},
+				PropertyName: "severity",
+			},
+			{
+				Label:        "Auto resolve incidents",
+				Element:      alerting.ElementTypeCheckbox,
+				Description:  "Resolve incidents in pagerduty once the alert goes back to ok.",
+				PropertyName: "autoResolve",
+			},
+			{
+				Label:        "Include message in details",
+				Element:      alerting.ElementTypeCheckbox,
+				Description:  "Move the alert message from the PD summary into the custom details. This changes the custom details object and may break event rules you have configured",
+				PropertyName: "messageInDetails",
+			},
+		},
 	})
 }
 
@@ -65,7 +77,7 @@ var (
 func NewPagerdutyNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	severity := model.Settings.Get("severity").MustString("critical")
 	autoResolve := model.Settings.Get("autoResolve").MustBool(false)
-	key := model.Settings.Get("integrationKey").MustString()
+	key := model.DecryptedValue("integrationKey", model.Settings.Get("integrationKey").MustString())
 	messageInDetails := model.Settings.Get("messageInDetails").MustBool(false)
 	if key == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find integration key property in settings"}
@@ -94,7 +106,6 @@ type PagerdutyNotifier struct {
 
 // buildEventPayload is responsible for building the event payload body for sending to Pagerduty v2 API
 func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext) ([]byte, error) {
-
 	eventType := "trigger"
 	if evalContext.Rule.State == models.AlertStateOK {
 		eventType = "resolve"
@@ -120,10 +131,9 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	// set default, override in following case switch if defined
 	payloadJSON.Set("component", "Grafana")
 	payloadJSON.Set("severity", pn.Severity)
+	dedupKey := "alertId-" + strconv.FormatInt(evalContext.Rule.ID, 10)
 
 	for _, tag := range evalContext.Rule.AlertRuleTags {
-		customData.Set(tag.Key, tag.Value)
-
 		// Override tags appropriately if they are in the PagerDuty v2 API
 		switch strings.ToLower(tag.Key) {
 		case "group":
@@ -132,6 +142,11 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 			payloadJSON.Set("class", tag.Value)
 		case "component":
 			payloadJSON.Set("component", tag.Value)
+		case "dedup_key":
+			if len(tag.Value) > 254 {
+				tag.Value = tag.Value[0:254]
+			}
+			dedupKey = tag.Value
 		case "severity":
 			// Only set severity if it's one of the PD supported enum values
 			// Info, Warning, Error, or Critical (case insensitive)
@@ -148,6 +163,7 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 				pn.log.Warn("Ignoring invalid severity tag", "severity", sev)
 			}
 		}
+		customData.Set(tag.Key, tag.Value)
 	}
 
 	var summary string
@@ -169,7 +185,7 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("routing_key", pn.Key)
 	bodyJSON.Set("event_action", eventType)
-	bodyJSON.Set("dedup_key", "alertId-"+strconv.FormatInt(evalContext.Rule.ID, 10))
+	bodyJSON.Set("dedup_key", dedupKey)
 	bodyJSON.Set("payload", payloadJSON)
 
 	ruleURL, err := evalContext.GetRuleURL()
@@ -201,7 +217,6 @@ func (pn *PagerdutyNotifier) buildEventPayload(evalContext *alerting.EvalContext
 
 // Notify sends an alert notification to PagerDuty
 func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
-
 	if evalContext.Rule.State == models.AlertStateOK && !pn.AutoResolve {
 		pn.log.Info("Not sending a trigger to Pagerduty", "state", evalContext.Rule.State, "auto resolve", pn.AutoResolve)
 		return nil

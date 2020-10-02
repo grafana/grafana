@@ -13,19 +13,14 @@ import {
   PanelData,
   QueryFixAction,
   TimeRange,
-  ExploreMode,
+  LogsDedupStrategy,
 } from '@grafana/data';
-import { ExploreId, ExploreItemState, ExploreUIState } from 'app/types/explore';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
 
 export interface AddQueryRowPayload {
   exploreId: ExploreId;
   index: number;
   query: DataQuery;
-}
-
-export interface ChangeModePayload {
-  exploreId: ExploreId;
-  mode: ExploreMode;
 }
 
 export interface ChangeQueryPayload {
@@ -61,9 +56,7 @@ export interface InitializeExplorePayload {
   eventBridge: Emitter;
   queries: DataQuery[];
   range: TimeRange;
-  mode: ExploreMode;
-  ui: ExploreUIState;
-  originPanelId: number;
+  originPanelId?: number | null;
 }
 
 export interface LoadDatasourceMissingPayload {
@@ -132,23 +125,9 @@ export interface SyncTimesPayload {
   syncedTimes: boolean;
 }
 
-export interface ToggleTablePayload {
-  exploreId: ExploreId;
-}
-
-export interface ToggleGraphPayload {
-  exploreId: ExploreId;
-}
-
-export interface UpdateUIStatePayload extends Partial<ExploreUIState> {
-  exploreId: ExploreId;
-}
-
 export interface UpdateDatasourceInstancePayload {
   exploreId: ExploreId;
   datasourceInstance: DataSourceApi;
-  version?: string;
-  mode?: ExploreMode;
 }
 
 export interface ToggleLogLevelPayload {
@@ -185,15 +164,15 @@ export interface ResetExplorePayload {
   force?: boolean;
 }
 
+export interface ChangeDedupStrategyPayload {
+  exploreId: ExploreId;
+  dedupStrategy: LogsDedupStrategy;
+}
+
 /**
  * Adds a query row after the row with the given index.
  */
 export const addQueryRowAction = createAction<AddQueryRowPayload>('explore/addQueryRow');
-
-/**
- * Change the mode of Explore.
- */
-export const changeModeAction = createAction<ChangeModePayload>('explore/changeMode');
 
 /**
  * Query change handler for the query row with the given index.
@@ -211,6 +190,11 @@ export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeS
  * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
  */
 export const changeRefreshIntervalAction = createAction<ChangeRefreshIntervalPayload>('explore/changeRefreshInterval');
+
+/**
+ * Change deduplication strategy for logs.
+ */
+export const changeDedupStrategyAction = createAction<ChangeDedupStrategyPayload>('explore/changeDedupStrategyAction');
 
 /**
  * Clear all queries and results.
@@ -303,20 +287,6 @@ export const splitOpenAction = createAction<SplitOpenPayload>('explore/splitOpen
 export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
 
 export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
-/**
- * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
- */
-export const updateUIStateAction = createAction<UpdateUIStatePayload>('explore/updateUIState');
-
-/**
- * Expand/collapse the table result viewer. When collapsed, table queries won't be run.
- */
-export const toggleTableAction = createAction<ToggleTablePayload>('explore/toggleTable');
-
-/**
- * Expand/collapse the graph result viewer. When collapsed, graph queries won't be run.
- */
-export const toggleGraphAction = createAction<ToggleGraphPayload>('explore/toggleGraph');
 
 /**
  * Updates datasource instance before datasouce loading has started

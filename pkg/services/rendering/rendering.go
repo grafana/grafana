@@ -59,13 +59,14 @@ func (rs *RenderingService) Init() error {
 	}
 
 	// set value used for domain attribute of renderKey cookie
-	if rs.Cfg.RendererUrl != "" {
+	switch {
+	case rs.Cfg.RendererUrl != "":
 		// RendererCallbackUrl has already been passed, it won't generate an error.
 		u, _ := url.Parse(rs.Cfg.RendererCallbackUrl)
 		rs.domain = u.Hostname()
-	} else if setting.HttpAddr != setting.DEFAULT_HTTP_ADDR {
+	case setting.HttpAddr != setting.DEFAULT_HTTP_ADDR:
 		rs.domain = setting.HttpAddr
-	} else {
+	default:
 		rs.domain = "localhost"
 	}
 
@@ -132,19 +133,23 @@ func (rs *RenderingService) renderUnavailableImage() *RenderResult {
 
 func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResult, error) {
 	startTime := time.Now()
-	result, err := rs.render(ctx, opts)
 	elapsedTime := time.Since(startTime).Milliseconds()
-	if err == ErrTimeout {
-		metrics.MRenderingRequestTotal.WithLabelValues("timeout").Inc()
-		metrics.MRenderingSummary.WithLabelValues("timeout").Observe(float64(elapsedTime))
-	} else if err != nil {
-		metrics.MRenderingRequestTotal.WithLabelValues("failure").Inc()
-		metrics.MRenderingSummary.WithLabelValues("failure").Observe(float64(elapsedTime))
-	} else {
-		metrics.MRenderingRequestTotal.WithLabelValues("success").Inc()
-		metrics.MRenderingSummary.WithLabelValues("success").Observe(float64(elapsedTime))
+	result, err := rs.render(ctx, opts)
+	if err != nil {
+		if err == ErrTimeout {
+			metrics.MRenderingRequestTotal.WithLabelValues("timeout").Inc()
+			metrics.MRenderingSummary.WithLabelValues("timeout").Observe(float64(elapsedTime))
+		} else {
+			metrics.MRenderingRequestTotal.WithLabelValues("failure").Inc()
+			metrics.MRenderingSummary.WithLabelValues("failure").Observe(float64(elapsedTime))
+		}
+
+		return nil, err
 	}
-	return result, err
+
+	metrics.MRenderingRequestTotal.WithLabelValues("success").Inc()
+	metrics.MRenderingSummary.WithLabelValues("success").Observe(float64(elapsedTime))
+	return result, nil
 }
 
 func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResult, error) {
@@ -218,7 +223,6 @@ func (rs *RenderingService) getURL(path string) string {
 
 		// &render=1 signals to the legacy redirect layer to
 		return fmt.Sprintf("%s%s&render=1", rs.Cfg.RendererCallbackUrl, path)
-
 	}
 
 	protocol := setting.Protocol

@@ -14,18 +14,21 @@ import (
 
 func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
-		Type: "googlechat",
-		Name: "Google Hangouts Chat",
-		Description: "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message " +
-			"format (https://developers.google.com/hangouts/chat/reference/message-formats/).",
-		Factory: newGoogleChatNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">Google Hangouts Chat settings</h3>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Url</span>
-        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Google Hangouts Chat incoming webhook url"></input>
-      </div>
-    `,
+		Type:        "googlechat",
+		Name:        "Google Hangouts Chat",
+		Description: "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message format",
+		Factory:     newGoogleChatNotifier,
+		Heading:     "Google Hangouts Chat settings",
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "Url",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "Google Hangouts Chat incoming webhook url",
+				PropertyName: "url",
+				Required:     true,
+			},
+		},
 	})
 }
 
@@ -55,6 +58,7 @@ Structs used to build a custom Google Hangouts Chat message card.
 See: https://developers.google.com/hangouts/chat/reference/message-formats/cards
 */
 type outerStruct struct {
+	PreviewText  string `json:"previewText"`
 	FallbackText string `json:"fallbackText"`
 	Cards        []card `json:"cards"`
 }
@@ -192,6 +196,7 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	// nest the required structs
 	res1D := &outerStruct{
+		PreviewText:  evalContext.GetNotificationTitle(),
 		FallbackText: evalContext.GetNotificationTitle(),
 		Cards: []card{
 			{

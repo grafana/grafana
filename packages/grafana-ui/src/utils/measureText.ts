@@ -34,6 +34,6 @@ export function calculateFontSize(text: string, width: number, height: number, l
   const fontSizeBasedOnHeight = height / lineHeight;
 
   // final fontSize
-  const optimialSize = Math.min(fontSizeBasedOnHeight, fontSizeBasedOnWidth);
-  return Math.min(optimialSize, maxSize ?? optimialSize);
+  const optimalSize = Math.min(fontSizeBasedOnHeight, fontSizeBasedOnWidth);
+  return Math.min(optimalSize, maxSize ?? optimalSize);
 }

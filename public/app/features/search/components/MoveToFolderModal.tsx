@@ -5,9 +5,9 @@ import { AppEvents, GrafanaTheme } from '@grafana/data';
 import { FolderInfo } from 'app/types';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import appEvents from 'app/core/app_events';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSection, OnMoveItems } from '../types';
 import { getCheckedDashboards } from '../utils';
+import { moveDashboards } from 'app/features/manage-dashboards/state/actions';
 
 interface Props {
   onMoveItems: OnMoveItems;
@@ -26,7 +26,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
     if (folder && selectedDashboards.length) {
       const folderTitle = folder.title ?? 'General';
 
-      backendSrv.moveDashboards(selectedDashboards.map(d => d.uid) as string[], folder).then((result: any) => {
+      moveDashboards(selectedDashboards.map(d => d.uid) as string[], folder).then((result: any) => {
         if (result.successCount > 0) {
           const ending = result.successCount === 1 ? '' : 's';
           const header = `Dashboard${ending} Moved`;

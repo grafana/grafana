@@ -226,7 +226,7 @@ Content-Type: application/json
 }
 ```
 
-> NOTE: `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response. See also the [Encrypting Sensitive Data]({{< relref "../developers/plugins/authentication.md/#encrypting-sensitive-data">}}) documentation for more details.
+> **Note:** By defining `password` and `basicAuthPassword` under `secureJsonData` Grafana encrypts them securely as an encrypted blob in the database. The response then lists the encrypted fields under `secureJsonFields`.
 
 **Example Graphite Request with basic auth enabled**:
 
@@ -376,7 +376,7 @@ Content-Type: application/json
 }
 ```
 
-> NOTE: Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response. See also the [Encrypting Sensitive Data]({{< relref "../developers/plugins/authentication.md/#encrypting-sensitive-data">}}) documentation for more details.
+> **Note:** Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response.
 
 ## Delete an existing data source by id
 
@@ -419,7 +419,10 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"Data source deleted"}
+{
+  "message":"Data source deleted",
+  "id": 1
+}
 ```
 
 ## Data source proxy calls

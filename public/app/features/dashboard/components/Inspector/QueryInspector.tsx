@@ -1,38 +1,52 @@
 import React, { PureComponent } from 'react';
 import { Button, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { AppEvents, PanelEvents } from '@grafana/data';
+import { AppEvents, PanelEvents, DataFrame } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
-import { CoreEvents } from 'app/types';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getPanelInspectorStyles } from './styles';
 import { supportsDataQuery } from '../PanelEditor/utils';
+import { config } from '@grafana/runtime';
+import { css } from 'emotion';
+import { Unsubscribable } from 'rxjs';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 interface DsQuery {
   isLoading: boolean;
   response: {};
 }
 
+interface ExecutedQueryInfo {
+  refId: string;
+  query: string;
+  frames: number;
+  rows: number;
+}
+
 interface Props {
   panel: PanelModel;
+  data: DataFrame[];
 }
 
 interface State {
-  allNodesExpanded: boolean;
+  allNodesExpanded: boolean | null;
   isMocking: boolean;
   mockedResponse: string;
   dsQuery: DsQuery;
+  executedQueries: ExecutedQueryInfo[];
 }
 
 export class QueryInspector extends PureComponent<Props, State> {
   formattedJson: any;
   clipboard: any;
+  subscription?: Unsubscribable;
 
   constructor(props: Props) {
     super(props);
     this.state = {
+      executedQueries: [],
       allNodesExpanded: null,
       isMocking: false,
       mockedResponse: '',
@@ -44,9 +58,53 @@ export class QueryInspector extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    appEvents.on(CoreEvents.dsRequestResponse, this.onDataSourceResponse);
-    appEvents.on(CoreEvents.dsRequestError, this.onRequestError);
+    this.subscription = backendSrv.getInspectorStream().subscribe({
+      next: response => this.onDataSourceResponse(response),
+    });
+
     this.props.panel.events.on(PanelEvents.refresh, this.onPanelRefresh);
+    this.updateQueryList();
+  }
+
+  componentDidUpdate(oldProps: Props) {
+    if (this.props.data !== oldProps.data) {
+      this.updateQueryList();
+    }
+  }
+
+  /**
+   * Find the list of executed queries
+   */
+  updateQueryList() {
+    const { data } = this.props;
+    const executedQueries: ExecutedQueryInfo[] = [];
+
+    if (data?.length) {
+      let last: ExecutedQueryInfo | undefined = undefined;
+
+      data.forEach((frame, idx) => {
+        const query = frame.meta?.executedQueryString;
+
+        if (query) {
+          const refId = frame.refId || '?';
+
+          if (last?.refId === refId) {
+            last.frames++;
+            last.rows += frame.length;
+          } else {
+            last = {
+              refId,
+              frames: 0,
+              rows: frame.length,
+              query,
+            };
+            executedQueries.push(last);
+          }
+        }
+      });
+    }
+
+    this.setState({ executedQueries });
   }
 
   onIssueNewQuery = () => {
@@ -56,23 +114,11 @@ export class QueryInspector extends PureComponent<Props, State> {
   componentWillUnmount() {
     const { panel } = this.props;
 
-    appEvents.off(CoreEvents.dsRequestResponse, this.onDataSourceResponse);
-    appEvents.on(CoreEvents.dsRequestError, this.onRequestError);
-
-    panel.events.off(PanelEvents.refresh, this.onPanelRefresh);
-  }
-
-  handleMocking(response: any) {
-    const { mockedResponse } = this.state;
-    let mockedData;
-    try {
-      mockedData = JSON.parse(mockedResponse);
-    } catch (err) {
-      appEvents.emit(AppEvents.alertError, ['R: Failed to parse mocked response']);
-      return;
+    if (this.subscription) {
+      this.subscription.unsubscribe();
     }
 
-    response.data = mockedData;
+    panel.events.off(PanelEvents.refresh, this.onPanelRefresh);
   }
 
   onPanelRefresh = () => {
@@ -85,13 +131,9 @@ export class QueryInspector extends PureComponent<Props, State> {
     }));
   };
 
-  onRequestError = (err: any) => {
-    this.onDataSourceResponse(err);
-  };
-
-  onDataSourceResponse = (response: any = {}) => {
-    if (this.state.isMocking) {
-      this.handleMocking(response);
+  onDataSourceResponse(response: any) {
+    // ignore silent requests
+    if (response.config?.hideFromInspector) {
       return;
     }
 
@@ -137,7 +179,7 @@ export class QueryInspector extends PureComponent<Props, State> {
         response: response,
       },
     }));
-  };
+  }
 
   setFormattedJson = (formattedJson: any) => {
     this.formattedJson = formattedJson;
@@ -182,8 +224,39 @@ export class QueryInspector extends PureComponent<Props, State> {
     }));
   };
 
+  renderExecutedQueries(executedQueries: ExecutedQueryInfo[]) {
+    if (!executedQueries.length) {
+      return null;
+    }
+
+    const styles = {
+      refId: css`
+        font-weight: ${config.theme.typography.weight.semibold};
+        color: ${config.theme.colors.textBlue};
+        margin-right: 8px;
+      `,
+    };
+
+    return (
+      <div>
+        {executedQueries.map(info => {
+          return (
+            <div key={info.refId}>
+              <div>
+                <span className={styles.refId}>{info.refId}:</span>
+                {info.frames > 1 && <span>{info.frames} frames, </span>}
+                <span>{info.rows} rows</span>
+              </div>
+              <pre>{info.query}</pre>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   render() {
-    const { allNodesExpanded } = this.state;
+    const { allNodesExpanded, executedQueries } = this.state;
     const { response, isLoading } = this.state.dsQuery;
     const openNodes = this.getNrOfOpenNodes();
     const styles = getPanelInspectorStyles();
@@ -202,6 +275,7 @@ export class QueryInspector extends PureComponent<Props, State> {
             new query. Hit refresh button below to trigger a new query.
           </p>
         </div>
+        {this.renderExecutedQueries(executedQueries)}
         <div className={styles.toolbar}>
           <Button
             icon="sync"

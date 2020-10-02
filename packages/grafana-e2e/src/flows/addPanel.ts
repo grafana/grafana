@@ -1,28 +1,14 @@
-import { e2e } from '../index';
+import { configurePanel, PartialAddPanelConfig } from './configurePanel';
 import { getScenarioContext } from '../support/scenarioContext';
+import { v4 as uuidv4 } from 'uuid';
 
-export interface AddPanelConfig {
-  dataSourceName: string;
-  queriesForm: Function;
-}
-
-const DEFAULT_ADD_PANEL_CONFIG: AddPanelConfig = {
-  dataSourceName: 'TestData DB',
-  queriesForm: () => {},
-};
-
-export const addPanel = (config?: Partial<AddPanelConfig>) => {
-  const { dataSourceName, queriesForm } = { ...DEFAULT_ADD_PANEL_CONFIG, ...config };
-
-  getScenarioContext().then(({ lastAddedDashboardUid }: any) => {
-    e2e.flows.openDashboard(lastAddedDashboardUid);
-    e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
-    e2e.pages.AddDashboard.addNewPanel().click();
-    e2e()
-      .get('.ds-picker')
-      .click()
-      .contains('[id^="react-select-"][id*="-option-"]', dataSourceName)
-      .click();
-    queriesForm();
-  });
-};
+export const addPanel = (config?: Partial<PartialAddPanelConfig>) =>
+  getScenarioContext().then(({ lastAddedDataSource }: any) =>
+    configurePanel({
+      dataSourceName: lastAddedDataSource,
+      panelTitle: `e2e-${uuidv4()}`,
+      ...config,
+      isEdit: false,
+      isExplore: false,
+    })
+  );

@@ -1,0 +1,3 @@
+test/cypress/report.json
+test/cypress/screenshots/actual
+test/cypress/videos/

@@ -1,7 +1,7 @@
 +++
 title = "Using InfluxDB in Grafana"
 description = "Guide for using InfluxDB in Grafana"
-keywords = ["grafana", "influxdb", "guide"]
+keywords = ["grafana", "influxdb", "guide", "flux"]
 type = "docs"
 aliases = ["/docs/grafana/latest/datasources/influxdb"]
 [menu.docs]
@@ -17,17 +17,21 @@ Grafana ships with a feature-rich data source plugin for InfluxDB. The plugin in
 ## Add the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.
-2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
-3. Click the `+ Add data source` button in the top header.
-4. Select *InfluxDB* from the *Type* dropdown.
+1. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
+1. Click the `+ Add data source` button in the top header.
+1. Select *InfluxDB* from the *Type* dropdown.
+1. Select *InfluxQL* or *Flux* from the `Query Language` list.
 
-> NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
+> **Note:** If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
+
+
+### InfluxQL (classic InfluxDB query)
 
 Name | Description
 ------------ | -------------
 *Name* | The data source name. This is how you refer to the data source in panels and queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
-*Url* | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB API port is by default 8086)
+*URL* | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB API port is by default 8086)
 *Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
 *Database* | Name of your InfluxDB database
 *User* | Name of your database user
@@ -65,10 +69,10 @@ Identifier | Description
 {{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
 
 You can access the InfluxDB editor under the metrics tab when you are in the edit mode of the Graph or Singlestat panels. 
-Enter edit mode by clicking the panel title, and clicking **Edit**. The editor allows you to select metrics and tags.
+Enter edit mode by clicking the panel title and clicking **Edit**. The editor allows you to select metrics and tags.
 
 ### Filter data (WHERE)
-To add a tag filter click the plus icon to the right of the `WHERE` condition. You can remove tag filters by clicking on
+To add a tag filter, click the plus icon to the right of the `WHERE` condition. You can remove tag filters by clicking on
 the tag key and then selecting `--remove tag filter--`.
 
 **Regex matching**
@@ -92,8 +96,8 @@ Use the plus button and select Field > field to add another SELECT clause. You c
 specify an asterix `*` to select all fields.
 
 ### Group By
-To group by a tag click the plus icon at the end of the GROUP BY row. Pick a tag from the dropdown that appears.
-You can remove the group by by clicking on the `tag` and then click on the x icon.
+To group by a tag, click the plus icon at the end of the GROUP BY row. Pick a tag from the dropdown that appears.
+You can remove the "Group By" by clicking on the `tag` and then click on the x icon.
 
 ### Text Editor Mode (RAW)
 You can switch to raw query mode by clicking hamburger icon and then `Switch editor mode`.
@@ -117,11 +121,66 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 You can remove the group by time by clicking on the `time` part and then the `x` icon. You can
 change the option `Format As` to `Table` if you want to show raw data in the `Table` panel.
 
+## Flux support
+
+> Starting in v7.1, Grafana can execute Flux queries.
+
+The client supports Flux running on InfluxDB 1.8+.  See [1.8 compatibility](https://github.com/influxdata/influxdb-client-go/#influxdb-18-api-compatibility) for more information and connection details.
+
+
+Name | Description
+------------ | -------------
+*URL* | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB 2.0 API port is by default 9999)
+*Organization* | The [Influx organization](https://v2.docs.influxdata.com/v2.0/organizations/) that will be used for Flux queries.  This is also used to for the `v.organization` query macro
+*Token* | The authentication token used for Flux queries. With Influx 2.0, use the [influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/).  For influx 1.8, the token is `username:password` 
+*Default Bucket* | The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) that will be used for the `v.defaultBucket` macro in Flux queries
+
+You can use the [Flux query and scripting language](https://www.influxdata.com/products/flux/). Grafana's Flux query editor is a text editor for raw Flux queries with Macro support.
+
+
+### Supported macros
+
+The macros support copying and pasting from [Chronograph](https://www.influxdata.com/time-series-platform/chronograf/).
+
+Macro example | Description
+------------ | -------------
+*`v.timeRangeStart`* | Will be replaced by the start of the currently active time selection. For example, *2020-06-11T13:31:00Z*
+*`v.timeRangeEnd`* | Will be replaced by the end of the currently active time selection. For example, *2020-06-11T14:31:00Z*
+*`v.windowPeriod`* | Will be replaced with an interval string compatible with Flux that corresponds to Grafana's calculated interval based on the time range of the active time selection. For example, *5s*
+*`v.defaultBucket`* | Will be replaced with the data source configuration's "Default Bucket" setting
+*`v.organization`* | Will be replaced with the data source configuration's "Organization" setting
+
+For example, the following query will be interpolated as the query that follows it, with interval and time period values changing according to active time selection\):
+
+Grafana Flux query:
+
+```flux
+from(bucket: v.defaultBucket)
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+  |> filter(fn: (r) => r["_measurement"] == "cpu" or r["_measurement"] == "swap")
+  |> filter(fn: (r) => r["_field"] == "usage_system" or r["_field"] == "free")
+  |> aggregateWindow(every: v.windowPeriod, fn: mean)
+  |> yield(name: "mean")
+```
+
+Interpolated query send to Influx:
+
+```flux
+from(bucket: "grafana")
+  |> range(start: 2020-06-11T13:59:07Z, stop: 2020-06-11T14:59:07Z)
+  |> filter(fn: (r) => r["_measurement"] == "cpu" or r["_measurement"] == "swap")
+  |> filter(fn: (r) => r["_field"] == "usage_system" or r["_field"] == "free")
+  |> aggregateWindow(every: 2s, fn: mean)
+  |> yield(name: "mean")
+```
+
+You can view the interpolated version of a query with the Query Inspector.
+
 ## Querying Logs (BETA)
 
 > Only available in Grafana v6.3+.
 
-Querying and displaying log data from InfluxDB is available via [Explore]({{< relref "../explore" >}}).
+Querying and displaying log data from InfluxDB is available via [Explore]({{< relref "../../explore" >}}).
 
 ![](/img/docs/v63/influxdb_explore_logs.png)
 
@@ -136,7 +195,7 @@ Once the result is returned, the log panel shows a list of log rows and a bar ch
 
 ### Filter search
 
-To add a filter click the plus icon to the right of the `Measurements/Fields` button or a condition. You can remove tag filters by clicking on the first select and choosing `--remove filter--`.
+To add a filter, click the plus icon to the right of the `Measurements/Fields` button or a condition. You can remove tag filters by clicking on the first select and choosing `--remove filter--`.
 
 ## Templating
 
@@ -144,21 +203,21 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
 
-If you add a template variable of the type `Query` you can write a InfluxDB exploration (meta data) query. These queries can
+If you add a template variable of the type `Query`, then you can write an InfluxDB exploration (metadata) query. These queries can
 return things like measurement names, key names or key values.
 
-For example you can have a variable that contains all values for tag `hostname` if you specify a query like this in the templating variable *Query* setting.
+For example, you can have a variable that contains all values for tag `hostname` if you specify a query like this in the template variable *Query* setting.
 
 ```sql
 SHOW TAG VALUES WITH KEY = "hostname"
 ```
 
-You can also create nested variables. For example if you had another variable, for example `region`. Then you could have
+You can also create nested variables. For example, if you had another variable, for example `region`. Then you could have
 the hosts variable only show hosts from the current selected region with a query like this:
 
 ```sql
@@ -203,7 +262,7 @@ be applied to all your InfluxDB queries.
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. Add annotation queries using the Annotations view in the Dashboard menu.
+[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allows you to overlay rich event information on top of graphs. Add annotation queries using the Annotations view in the Dashboard menu.
 
 An example query:
 
@@ -219,11 +278,12 @@ You can now configure data sources using config files with Grafana's provisionin
 
 Here are some provisioning examples for this data source.
 
+### InfluxDB 1.x example
 ```yaml
 apiVersion: 1
 
 datasources:
-  - name: InfluxDB
+  - name: InfluxDB_v1
     type: influxdb
     access: proxy
     database: site
@@ -232,4 +292,22 @@ datasources:
     url: http://localhost:8086
     jsonData:
       httpMode: GET
+```
+
+### InfluxDB 2.x example
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB_v2
+    type: influxdb
+    access: proxy
+    url: http://localhost:8086
+    secureJsonData:
+      token: token
+    jsonData:
+      version: Flux
+      organization: organization
+      defaultBucket: bucket
+      tlsSkipVerify: true
 ```

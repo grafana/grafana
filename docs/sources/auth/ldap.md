@@ -8,7 +8,7 @@ aliases = ["/docs/grafana/latest/installation/ldap/"]
 name = "LDAP"
 identifier = "ldap"
 parent = "authentication"
-weight = 2
+weight = 300
 +++
 
 # LDAP Authentication
@@ -26,7 +26,7 @@ This means that you should be able to configure LDAP integration using any compl
 
 ## Enable LDAP
 
-In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "../installation/configuration.md" >}}) as well as specify the path to the LDAP
+In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "../administration/configuration.md" >}}) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
 
 ```bash
@@ -114,8 +114,8 @@ Within this view, you'll be able to see which LDAP servers are currently reachab
 To use the debug view:
 
  1. Type the username of a user that exists within any of your LDAP server(s)
- 2. Then, press "Run"
- 3. If the user is found within any of your LDAP instances, the mapping information is displayed
+ 1. Then, press "Run"
+ 1. If the user is found within any of your LDAP instances, the mapping information is displayed
 
 {{< docs-imagebox img="/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
 
@@ -355,7 +355,7 @@ Please inspect your Active Directory configuration and documentation to find the
 
 ## Troubleshooting
 
-To troubleshoot and get more log info enable LDAP debug logging in the [main config file]({{< relref "../installation/configuration.md" >}}).
+To troubleshoot and get more log info enable LDAP debug logging in the [main config file]({{< relref "../administration/configuration.md" >}}).
 
 ```bash
 [log]

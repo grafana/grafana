@@ -19,7 +19,6 @@ const (
 func TestDataSourcesProxy(t *testing.T) {
 	Convey("Given a user is logged in", t, func() {
 		loggedInUserScenario("When calling GET on", "/api/datasources/", func(sc *scenarioContext) {
-
 			// Stubs the database query
 			bus.AddHandler("test", func(query *models.GetDataSourcesQuery) error {
 				So(query.OrgId, ShouldEqual, TestOrgID)

@@ -1,0 +1,31 @@
+import { Meta, Props } from '@storybook/addon-docs/blocks';
+import { ConfirmButton } from './ConfirmButton';
+
+<Meta title="MDX|ConfirmButton" component={ConfirmButton} />
+
+# ConfirmButton
+
+The ConfirmButton is an interactive component that adds a double-confirm option to a clickable action. When clicked, the action is replaced by an inline confirmation with the option to cancel. In Grafana, this is used, for example, for editing values in settings tables.
+
+## Variants
+
+There are four variants of the `ConfirmButton`: primary, secondary, destructive, and link. The primary and secondary variants include a primary or secondary `Button` component. The primary and secondary variant should be used to confirm actions like saving or adding data. The destructive variant includes a destructive `Button` component. The destructive variant should be used to double-confirm a deletion or removal of an element. The link variant doesn't include any button and double-confirms as links instead.
+
+Apart from the button variant, you can also modify the button size and the button text.
+
+## Usage
+
+```jsx
+ <ConfirmButton
+  closeOnConfirm
+  size='md'
+  confirmText='Are you sure?'
+  confirmVariant='secondary'
+  onConfirm={() => {
+   console.log('Action confirmed!')
+  }}
+>
+  Click me
+</ConfirmButton>
+```
+<Props of={ConfirmButton} />

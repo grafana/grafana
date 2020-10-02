@@ -7,7 +7,7 @@ import validationSrv from 'app/features/manage-dashboards/services/ValidationSrv
 
 interface SaveDashboardAsFormDTO {
   title: string;
-  $folder: { id: number; title: string };
+  $folder: { id?: number; title?: string };
   copyTags: boolean;
 }
 
@@ -65,6 +65,10 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
     <Form
       defaultValues={defaultValues}
       onSubmit={async (data: SaveDashboardAsFormDTO) => {
+        if (!onSubmit) {
+          return;
+        }
+
         const clone = getSaveAsDashboardClone(dashboard);
         clone.title = data.title;
         if (!data.copyTags) {

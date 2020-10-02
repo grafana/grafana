@@ -2,7 +2,7 @@ import React, { FunctionComponent, useCallback } from 'react';
 import { LegacyForms } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { VariableWithMultiSupport } from '../../templating/types';
+import { VariableWithMultiSupport } from '../types';
 import { VariableEditorProps } from './types';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
 
@@ -53,7 +53,7 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
             labelClass="width-10"
             checked={props.variable.includeAll}
             onChange={onIncludeAllChanged}
-            tooltip={'Enables multiple values to be selected at the same time'}
+            tooltip={'Enables an option to include all variables'}
           />
         </div>
       </div>

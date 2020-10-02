@@ -11,10 +11,10 @@ export const getDefaultCondition = () => ({
 });
 
 export const getAlertingValidationMessage = async (
-  transformations: DataTransformerConfig[],
+  transformations: DataTransformerConfig[] | undefined,
   targets: DataQuery[],
   datasourceSrv: DataSourceSrv,
-  datasourceName: string
+  datasourceName: string | null
 ): Promise<string> => {
   if (targets.length === 0) {
     return 'Could not find any metric queries';

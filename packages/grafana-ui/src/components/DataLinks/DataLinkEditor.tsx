@@ -1,5 +1,5 @@
 import React, { ChangeEvent, useContext } from 'react';
-import { DataLink, VariableSuggestion, GrafanaTheme } from '@grafana/data';
+import { VariableSuggestion, GrafanaTheme, DataLink } from '@grafana/data';
 import { Switch } from '../Switch/Switch';
 import { css } from 'emotion';
 import { ThemeContext, stylesFactory } from '../../themes/index';
@@ -53,7 +53,7 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
         </Field>
 
         <Field label="Open in new tab">
-          <Switch checked={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
+          <Switch value={value.targetBlank || false} onChange={onOpenInNewTabChanged} />
         </Field>
 
         {isLast && (

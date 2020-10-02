@@ -40,6 +40,7 @@ interface LogsContainerProps {
   logsMeta?: LogsMetaItem[];
   logsSeries?: GraphSeriesXY[];
   dedupedRows?: LogRowModel[];
+  visibleRange?: AbsoluteTimeRange;
 
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -107,6 +108,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       onStopScanning,
       absoluteRange,
       timeZone,
+      visibleRange,
       scanning,
       range,
       width,
@@ -150,6 +152,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               onDedupStrategyChange={this.handleDedupStrategyChange}
               onToggleLogLevel={this.handleToggleLogLevel}
               absoluteRange={absoluteRange}
+              visibleRange={visibleRange}
               timeZone={timeZone}
               scanning={scanning}
               scanRange={range.raw}
@@ -190,6 +193,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     logRows: logsResult && logsResult.rows,
     logsMeta: logsResult && logsResult.meta,
     logsSeries: logsResult && logsResult.series,
+    visibleRange: logsResult && logsResult.visibleRange,
     scanning,
     timeZone,
     dedupStrategy,

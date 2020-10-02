@@ -7,6 +7,8 @@ export interface FolderDTO {
   url: string;
   version: number;
   canSave: boolean;
+  canEdit: boolean;
+  canAdmin: boolean;
 }
 
 export interface FolderState {

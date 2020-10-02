@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
-import { AsyncSelect, Icon } from '@grafana/ui';
+import { useAsync } from 'react-use';
+import { Select, Icon } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { DEFAULT_SORT } from 'app/features/search/constants';
 import { SearchSrv } from '../../services/search_srv';
@@ -19,15 +20,17 @@ const getSortOptions = () => {
 };
 
 export const SortPicker: FC<Props> = ({ onChange, value, placeholder }) => {
-  return (
-    <AsyncSelect
+  // Using sync Select and manual options fetching here since we need to find the selected option by value
+  const { loading, value: options } = useAsync<SelectableValue[]>(getSortOptions, []);
+
+  return !loading ? (
+    <Select
       width={25}
       onChange={onChange}
-      value={[value]}
-      loadOptions={getSortOptions}
-      defaultOptions
+      value={options?.filter(opt => opt.value === value)}
+      options={options}
       placeholder={placeholder ?? `Sort (Default ${DEFAULT_SORT.label})`}
       prefix={<Icon name="sort-amount-down" />}
     />
-  );
+  ) : null;
 };

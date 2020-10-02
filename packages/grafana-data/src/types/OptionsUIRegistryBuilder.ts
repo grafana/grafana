@@ -75,6 +75,10 @@ export interface OptionsUIRegistryBuilderAPI<
     config: OptionEditorConfig<TOptions, TSettings, string>
   ): this;
 
+  addStringArray?<TSettings extends StringFieldConfigSettings = StringFieldConfigSettings>(
+    config: OptionEditorConfig<TOptions, TSettings, string[]>
+  ): this;
+
   addSelect?<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
     config: OptionEditorConfig<TOptions, TSettings, TOption>
   ): this;

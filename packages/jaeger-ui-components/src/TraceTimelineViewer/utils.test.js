@@ -85,8 +85,7 @@ describe('TraceTimelineViewer/utils', () => {
   describe('spanContainsErredSpan()', () => {
     it('returns true only when a descendant has an error tag', () => {
       const errorTag = { key: 'error', type: 'bool', value: true };
-      const getTags = withError =>
-        withError ? traceGenerator.tags().concat(errorTag) : traceGenerator.tags();
+      const getTags = withError => (withError ? traceGenerator.tags().concat(errorTag) : traceGenerator.tags());
 
       // Using a string to generate the test spans. Each line results in a span. The
       // left number indicates whether or not the generated span has a descendant

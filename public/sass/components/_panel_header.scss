@@ -73,11 +73,15 @@ $panel-header-no-title-zindex: 1;
 
 .panel-loading {
   position: absolute;
-  top: 4px;
+  top: 0px;
   right: 4px;
   z-index: $panel-header-z-index + 1;
-  font-size: $font-size-sm;
+  font-size: $font-size-lg;
   color: $text-color-weak;
+
+  &:hover {
+    cursor: pointer;
+  }
 }
 
 .panel-empty {

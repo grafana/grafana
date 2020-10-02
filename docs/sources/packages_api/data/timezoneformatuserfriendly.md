@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-timeZoneFormatUserFriendly: (timeZone: string | undefined) => string | undefined
+timeZoneFormatUserFriendly: (timeZone: TimeZone | undefined) => string | undefined
 ```
 <b>Import</b>
 

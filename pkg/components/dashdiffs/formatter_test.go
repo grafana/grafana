@@ -3,8 +3,10 @@ package dashdiffs
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestDiff(t *testing.T) {
@@ -60,72 +62,69 @@ func TestDiff(t *testing.T) {
 		}`
 	)
 
-	Convey("Testing dashboard diffs", t, func() {
+	// Compute the diff between the two JSON objects
+	baseData, err := simplejson.NewJson([]byte(leftJSON))
+	require.NoError(t, err)
 
-		// Compute the diff between the two JSON objects
-		baseData, err := simplejson.NewJson([]byte(leftJSON))
-		So(err, ShouldBeNil)
+	newData, err := simplejson.NewJson([]byte(rightJSON))
+	require.NoError(t, err)
 
-		newData, err := simplejson.NewJson([]byte(rightJSON))
-		So(err, ShouldBeNil)
+	left, jsonDiff, err := getDiff(baseData, newData)
+	require.NoError(t, err)
 
-		left, jsonDiff, err := getDiff(baseData, newData)
-		So(err, ShouldBeNil)
+	t.Run("JSONFormatter produces expected JSON tokens", func(t *testing.T) {
+		f := NewJSONFormatter(left)
+		_, err := f.Format(jsonDiff)
+		require.NoError(t, err)
 
-		Convey("The JSONFormatter should produce the expected JSON tokens", func() {
-			f := NewJSONFormatter(left)
-			_, err := f.Format(jsonDiff)
-			So(err, ShouldBeNil)
+		// Total up the change types. If the number of different change
+		// types is correct, it means that the diff is producing correct
+		// output to the template rendered.
+		changeCounts := make(map[ChangeType]int)
+		for _, line := range f.Lines {
+			changeCounts[line.Change]++
+		}
 
-			// Total up the change types. If the number of different change
-			// types is correct, it means that the diff is producing correct
-			// output to the template rendered.
-			changeCounts := make(map[ChangeType]int)
-			for _, line := range f.Lines {
-				changeCounts[line.Change]++
+		// The expectedChangeCounts here were determined by manually
+		// looking at the JSON
+		expectedChangeCounts := map[ChangeType]int{
+			ChangeNil:       12,
+			ChangeAdded:     2,
+			ChangeDeleted:   1,
+			ChangeOld:       5,
+			ChangeNew:       5,
+			ChangeUnchanged: 5,
+		}
+		assert.EqualValues(t, expectedChangeCounts, changeCounts)
+	})
+
+	t.Run("BasicFormatter produces expected BasicBlocks", func(t *testing.T) {
+		f := NewBasicFormatter(left)
+		_, err := f.Format(jsonDiff)
+		require.NoError(t, err)
+
+		bd := &BasicDiff{}
+		blocks := bd.Basic(f.jsonDiff.Lines)
+
+		changeCounts := make(map[ChangeType]int)
+		for _, block := range blocks {
+			for _, change := range block.Changes {
+				changeCounts[change.Change]++
 			}
 
-			// The expectedChangeCounts here were determined by manually
-			// looking at the JSON
-			expectedChangeCounts := map[ChangeType]int{
-				ChangeNil:       12,
-				ChangeAdded:     2,
-				ChangeDeleted:   1,
-				ChangeOld:       5,
-				ChangeNew:       5,
-				ChangeUnchanged: 5,
-			}
-			So(changeCounts, ShouldResemble, expectedChangeCounts)
-		})
-
-		Convey("The BasicFormatter should produce the expected BasicBlocks", func() {
-			f := NewBasicFormatter(left)
-			_, err := f.Format(jsonDiff)
-			So(err, ShouldBeNil)
-
-			bd := &BasicDiff{}
-			blocks := bd.Basic(f.jsonDiff.Lines)
-
-			changeCounts := make(map[ChangeType]int)
-			for _, block := range blocks {
-				for _, change := range block.Changes {
-					changeCounts[change.Change]++
-				}
-
-				for _, summary := range block.Summaries {
-					changeCounts[summary.Change]++
-				}
-
-				changeCounts[block.Change]++
+			for _, summary := range block.Summaries {
+				changeCounts[summary.Change]++
 			}
 
-			expectedChangeCounts := map[ChangeType]int{
-				ChangeNil:     3,
-				ChangeAdded:   2,
-				ChangeDeleted: 1,
-				ChangeOld:     3,
-			}
-			So(changeCounts, ShouldResemble, expectedChangeCounts)
-		})
+			changeCounts[block.Change]++
+		}
+
+		expectedChangeCounts := map[ChangeType]int{
+			ChangeNil:     3,
+			ChangeAdded:   2,
+			ChangeDeleted: 1,
+			ChangeOld:     3,
+		}
+		assert.EqualValues(t, expectedChangeCounts, changeCounts)
 	})
 }

@@ -4,7 +4,7 @@ import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
 import InfluxQueryModel from '../influx_query_model';
 import { AdHocFilterField, KeyValuePair } from 'app/features/explore/AdHocFilterField';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import InfluxDatasource from '../datasource';
 import { InfluxQueryBuilder } from '../query_builder';
 import { InfluxOptions, InfluxQuery } from '../types';
@@ -13,15 +13,15 @@ export interface Props extends ExploreQueryFieldProps<InfluxDatasource, InfluxQu
 
 export interface State {
   measurements: CascaderOption[];
-  measurement: string;
-  field: string;
-  error: string;
+  measurement: string | null;
+  field: string | null;
+  error: string | null;
 }
 
 interface ChooserOptions {
-  measurement: string;
-  field: string;
-  error: string;
+  measurement: string | null;
+  field: string | null;
+  error: string | null;
 }
 
 // Helper function for determining if a collection of pairs are valid
@@ -48,12 +48,12 @@ function getChooserText({ measurement, field, error }: ChooserOptions): string {
 }
 
 export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
-  templateSrv: TemplateSrv = new TemplateSrv();
+  templateSrv: TemplateSrv = getTemplateSrv();
   state: State = {
     measurements: [],
-    measurement: (null as unknown) as string,
-    field: (null as unknown) as string,
-    error: (null as unknown) as string,
+    measurement: null,
+    field: null,
+    error: null,
   };
 
   async componentDidMount() {
@@ -115,10 +115,10 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
         ...query,
         resultFormat: 'table',
         groupBy: [],
-        select: [[{ type: 'field', params: [field] }]],
+        select: [[{ type: 'field', params: [field ?? ''] }]],
         tags: pairs,
         limit: '1000',
-        measurement,
+        measurement: measurement ?? '',
       },
       this.templateSrv
     );
@@ -143,7 +143,7 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
           <ButtonCascader
             options={measurements}
             disabled={!hasMeasurement}
-            value={[measurement, field]}
+            value={[measurement ?? '', field ?? '']}
             onChange={this.onMeasurementsChange}
           >
             {cascadeText}

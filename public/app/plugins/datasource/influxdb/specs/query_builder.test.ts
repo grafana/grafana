@@ -32,6 +32,15 @@ describe('InfluxQueryBuilder', () => {
       expect(query).toBe('SHOW TAG KEYS WHERE "host" = \'se1\'');
     });
 
+    it('should ignore condition if operator is a value operator', () => {
+      const builder = new InfluxQueryBuilder({
+        measurement: '',
+        tags: [{ key: 'value', value: '10', operator: '>' }],
+      });
+      const query = builder.buildExploreQuery('TAG_KEYS');
+      expect(query).toBe('SHOW TAG KEYS');
+    });
+
     it('should have no conditions in measurement query for query with no tags', () => {
       const builder = new InfluxQueryBuilder({ measurement: '', tags: [] });
       const query = builder.buildExploreQuery('MEASUREMENTS');

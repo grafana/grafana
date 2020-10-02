@@ -5,14 +5,14 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from '../sta
 import { createCustomOptionsFromQuery, customVariableReducer } from './reducer';
 import { createCustomVariableAdapter } from './adapter';
 import { VariablesState } from '../state/variablesReducer';
-import { CustomVariableModel } from '../../templating/types';
+import { CustomVariableModel } from '../types';
 
 describe('customVariableReducer', () => {
   const adapter = createCustomVariableAdapter();
 
   describe('when createCustomOptionsFromQuery is dispatched', () => {
     it('then state should be correct', () => {
-      const query = 'a,b,c';
+      const query = 'a,b,c,d:e';
       const id = '0';
       const { initialState } = getVariableTestContext(adapter, { id, query });
       const payload = toVariablePayload({ id: '0', type: 'custom' });
@@ -39,6 +39,11 @@ describe('customVariableReducer', () => {
                 value: 'c',
                 selected: false,
               },
+              {
+                text: 'd',
+                value: 'e',
+                selected: false,
+              },
             ],
           } as CustomVariableModel,
         });
@@ -47,7 +52,7 @@ describe('customVariableReducer', () => {
 
   describe('when createCustomOptionsFromQuery is dispatched and query contains spaces', () => {
     it('then state should be correct', () => {
-      const query = 'a,  b,   c';
+      const query = 'a,  b,   c, d :    e';
       const id = '0';
       const { initialState } = getVariableTestContext(adapter, { id, query });
       const payload = toVariablePayload({ id: '0', type: 'constant' });
@@ -74,6 +79,11 @@ describe('customVariableReducer', () => {
                 value: 'c',
                 selected: false,
               },
+              {
+                text: 'd',
+                value: 'e',
+                selected: false,
+              },
             ],
           } as CustomVariableModel,
         });
@@ -82,7 +92,7 @@ describe('customVariableReducer', () => {
 
   describe('when createCustomOptionsFromQuery is dispatched and includeAll is true', () => {
     it('then state should be correct', () => {
-      const query = 'a,b,c';
+      const query = 'a,b,c,d:e';
       const id = '0';
       const { initialState } = getVariableTestContext(adapter, { id, query, includeAll: true });
       const payload = toVariablePayload({ id: '0', type: 'constant' });
@@ -112,6 +122,11 @@ describe('customVariableReducer', () => {
               {
                 text: 'c',
                 value: 'c',
+                selected: false,
+              },
+              {
+                text: 'd',
+                value: 'e',
                 selected: false,
               },
             ],

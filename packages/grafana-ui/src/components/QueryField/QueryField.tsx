@@ -26,7 +26,7 @@ export interface QueryFieldProps {
   // We have both value and local state. This is usually an antipattern but we need to keep local state
   // for perf reasons and also have outside value in for example in Explore redux that is mutable from logs
   // creating a two way binding.
-  query: string | null;
+  query?: string | null;
   onRunQuery?: () => void;
   onBlur?: () => void;
   onChange?: (value: string) => void;

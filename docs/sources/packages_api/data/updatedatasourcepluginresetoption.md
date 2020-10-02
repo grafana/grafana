@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-updateDatasourcePluginResetOption: <J, S extends {} = KeyValue<any>>(props: DataSourcePluginOptionsEditorProps<import("../types").DataSourceJsonData, {}>, key: string) => void
+updateDatasourcePluginResetOption: <J, S extends {} = KeyValue<any>>(props: DataSourcePluginOptionsEditorProps, key: string) => void
 ```
 <b>Import</b>
 

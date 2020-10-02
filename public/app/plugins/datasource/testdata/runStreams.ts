@@ -128,8 +128,9 @@ export function runLogsStream(
     });
     data.refId = target.refId;
     data.name = target.alias || 'Logs ' + target.refId;
-    data.addField({ name: 'time', type: FieldType.time });
     data.addField({ name: 'line', type: FieldType.string });
+    data.addField({ name: 'time', type: FieldType.time });
+    data.meta = { preferredVisualisationType: 'logs' };
 
     const { speed } = query;
 

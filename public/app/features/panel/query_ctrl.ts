@@ -7,7 +7,7 @@ export class QueryCtrl {
   panelCtrl: any;
   panel: any;
   hasRawMode: boolean;
-  error: string;
+  error?: string | null;
   isLastQuery: boolean;
 
   constructor(public $scope: any, public $injector: auto.IInjectorService) {

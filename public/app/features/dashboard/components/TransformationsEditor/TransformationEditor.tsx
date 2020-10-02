@@ -2,25 +2,29 @@ import React, { useContext } from 'react';
 import { css } from 'emotion';
 import { Icon, JSONFormatter, ThemeContext } from '@grafana/ui';
 import { GrafanaTheme, DataFrame } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface TransformationEditorProps {
   name: string;
-  description: string;
+  description?: string;
   editor?: JSX.Element;
   input: DataFrame[];
   output?: DataFrame[];
   debugMode?: boolean;
 }
 
-export const TransformationEditor = ({ editor, input, output, debugMode }: TransformationEditorProps) => {
+export const TransformationEditor = ({ editor, input, output, debugMode, name }: TransformationEditorProps) => {
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme);
 
   return (
-    <div className={styles.editor}>
+    <div className={styles.editor} aria-label={selectors.components.TransformTab.transformationEditor(name)}>
       {editor}
       {debugMode && (
-        <div className={styles.debugWrapper}>
+        <div
+          className={styles.debugWrapper}
+          aria-label={selectors.components.TransformTab.transformationEditorDebugger(name)}
+        >
           <div className={styles.debug}>
             <div className={styles.debugTitle}>Transformation input data</div>
             <div className={styles.debugJson}>
@@ -32,9 +36,7 @@ export const TransformationEditor = ({ editor, input, output, debugMode }: Trans
           </div>
           <div className={styles.debug}>
             <div className={styles.debugTitle}>Transformation output data</div>
-            <div className={styles.debugJson}>
-              <JSONFormatter json={output} />
-            </div>
+            <div className={styles.debugJson}>{output && <JSONFormatter json={output} />}</div>
           </div>
         </div>
       )}

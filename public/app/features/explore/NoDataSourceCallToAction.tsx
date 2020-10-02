@@ -23,7 +23,7 @@ export const NoDataSourceCallToAction = () => {
   );
 
   const ctaElement = (
-    <LinkButton size="lg" href="/datasources/new" icon="database">
+    <LinkButton size="lg" href="datasources/new" icon="database">
       Add data source
     </LinkButton>
   );

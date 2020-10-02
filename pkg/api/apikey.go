@@ -80,8 +80,10 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 	}
 
 	result := &dtos.NewApiKeyResult{
+		ID:   cmd.Result.Id,
 		Name: cmd.Result.Name,
-		Key:  newKeyInfo.ClientSecret}
+		Key:  newKeyInfo.ClientSecret,
+	}
 
 	return JSON(200, result)
 }

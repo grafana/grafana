@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
 import { PanelEvents } from '@grafana/data';
+import { getLocationSrv } from '@grafana/runtime';
 
 export interface MssqlQuery {
   refId: string;
@@ -28,11 +29,9 @@ ORDER BY
 export class MssqlQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
-  showLastQuerySQL: boolean;
   formats: any[];
   target: MssqlQuery;
-  lastQueryMeta: QueryMeta;
-  lastQueryError: string;
+  lastQueryError: string | null;
   showHelp: boolean;
 
   /** @ngInject */
@@ -60,21 +59,21 @@ export class MssqlQueryCtrl extends QueryCtrl {
     this.panelCtrl.events.on(PanelEvents.dataError, this.onDataError.bind(this), $scope);
   }
 
-  onDataReceived(dataList: any) {
-    this.lastQueryMeta = null;
-    this.lastQueryError = null;
+  showQueryInspector() {
+    getLocationSrv().update({
+      query: { inspect: this.panel.id, inspectTab: 'query' },
+      partial: true,
+    });
+  }
 
-    const anySeriesFromQuery: any = _.find(dataList, { refId: this.target.refId });
-    if (anySeriesFromQuery) {
-      this.lastQueryMeta = anySeriesFromQuery.meta;
-    }
+  onDataReceived(dataList: any) {
+    this.lastQueryError = null;
   }
 
   onDataError(err: any) {
     if (err.data && err.data.results) {
       const queryRes = err.data.results[this.target.refId];
       if (queryRes) {
-        this.lastQueryMeta = queryRes.meta;
         this.lastQueryError = queryRes.error;
       }
     }

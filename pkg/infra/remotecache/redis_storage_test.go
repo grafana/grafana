@@ -95,6 +95,5 @@ func Test_parseRedisConnStr(t *testing.T) {
 		}
 		assert.NoError(t, err, reason)
 		assert.EqualValues(t, testCase.OutputOptions, options, reason)
-
 	}
 }

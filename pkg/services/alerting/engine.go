@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
-	"golang.org/x/xerrors"
 )
 
 // AlertEngine is the background process that
@@ -214,11 +214,12 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 		evalContext.Ctx = resultHandleCtx
 		evalContext.Rule.State = evalContext.GetNewState()
 		if err := e.resultHandler.handle(evalContext); err != nil {
-			if xerrors.Is(err, context.Canceled) {
+			switch {
+			case errors.Is(err, context.Canceled):
 				e.log.Debug("Result handler returned context.Canceled")
-			} else if xerrors.Is(err, context.DeadlineExceeded) {
+			case errors.Is(err, context.DeadlineExceeded):
 				e.log.Debug("Result handler returned context.DeadlineExceeded")
-			} else {
+			default:
 				e.log.Error("Failed to handle result", "err", err)
 			}
 		}

@@ -18,27 +18,22 @@ func init() {
 		Name:        "Email",
 		Description: "Sends notifications using Grafana server configured SMTP settings",
 		Factory:     NewEmailNotifier,
-		OptionsTemplate: `
-			<h3 class="page-heading">Email settings</h3>
-			<div class="gf-form">
-				<gf-form-switch
-					class="gf-form"
-					label="Single email"
-					label-class="width-8"
-					checked="ctrl.model.settings.singleEmail"
-					tooltip="Send a single email to all recipients">
-				</gf-form-switch>
-			</div>
-			<div class="gf-form">
-				<label class="gf-form-label width-8">
-					Addresses
-				</label>
-				<textarea rows="7" class="gf-form-input width-27" required ng-model="ctrl.model.settings.addresses"></textarea>
-			</div>
-			<div class="gf-form offset-width-8">
-				<span>You can enter multiple email addresses using a ";" separator</span>
-			</div>
-    `,
+		Heading:     "Email settings",
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "Single email",
+				Description:  "Send a single email to all recipients",
+				Element:      alerting.ElementTypeCheckbox,
+				PropertyName: "singleEmail",
+			},
+			{
+				Label:        "Addresses",
+				Description:  "You can enter multiple email addresses using a \";\" separator",
+				Element:      alerting.ElementTypeTextArea,
+				PropertyName: "addresses",
+				Required:     true,
+			},
+		},
 	})
 }
 
@@ -103,10 +98,10 @@ func (en *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"AlertPageUrl":  setting.AppUrl + "alerting",
 				"EvalMatches":   evalContext.EvalMatches,
 			},
-			To:           en.Addresses,
-			SingleEmail:  en.SingleEmail,
-			Template:     "alert_notification.html",
-			EmbededFiles: []string{},
+			To:            en.Addresses,
+			SingleEmail:   en.SingleEmail,
+			Template:      "alert_notification.html",
+			EmbeddedFiles: []string{},
 		},
 	}
 
@@ -116,7 +111,7 @@ func (en *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 		} else {
 			file, err := os.Stat(evalContext.ImageOnDiskPath)
 			if err == nil {
-				cmd.EmbededFiles = []string{evalContext.ImageOnDiskPath}
+				cmd.EmbeddedFiles = []string{evalContext.ImageOnDiskPath}
 				cmd.Data["EmbeddedImage"] = file.Name()
 			}
 		}

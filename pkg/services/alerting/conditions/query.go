@@ -7,7 +7,6 @@ import (
 
 	gocontext "context"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -174,7 +173,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 		useDataframes := v.Dataframes != nil && (v.Series == nil || len(v.Series) == 0)
 
 		if useDataframes { // convert the dataframes to tsdb.TimeSeries
-			frames, err := data.UnmarshalArrowFrames(v.Dataframes)
+			frames, err := v.Dataframes.Decoded()
 			if err != nil {
 				return nil, errutil.Wrap("tsdb.HandleRequest() failed to unmarshal arrow dataframes from bytes", err)
 			}
@@ -215,13 +214,15 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 }
 
 func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, timeRange *tsdb.TimeRange, debug bool) *tsdb.TsdbQuery {
+	queryModel := c.Query.Model
 	req := &tsdb.TsdbQuery{
 		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
 			{
 				RefId:      "A",
-				Model:      c.Query.Model,
+				Model:      queryModel,
 				DataSource: datasource,
+				QueryType:  queryModel.Get("queryType").MustString(""),
 			},
 		},
 		Headers: map[string]string{

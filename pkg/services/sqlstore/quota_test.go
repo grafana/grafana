@@ -10,8 +10,7 @@ import (
 )
 
 func TestQuotaCommandsAndQueries(t *testing.T) {
-
-	Convey("Testing Qutoa commands & queries", t, func() {
+	Convey("Testing Quota commands & queries", t, func() {
 		InitTestDB(t)
 		userId := int64(1)
 		orgId := int64(0)
@@ -93,15 +92,14 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 4)
 				for _, res := range query.Result {
-					limit := 5 //default quota limit
+					limit := 5 // default quota limit
 					used := 0
 					if res.Target == "org_user" {
-						limit = 10 //customized quota limit.
+						limit = 10 // customized quota limit.
 						used = 1
 					}
 					So(res.Limit, ShouldEqual, limit)
 					So(res.Used, ShouldEqual, used)
-
 				}
 			})
 		})

@@ -1,4 +1,4 @@
-import { VariableModel } from '../../templating/types';
+import { VariableModel } from '../types';
 import { VariablesState } from './variablesReducer';
 import { VariableType } from '@grafana/data';
 
@@ -28,17 +28,19 @@ export interface AddVariable<T extends VariableModel = VariableModel> {
 }
 
 export const toVariableIdentifier = (variable: VariableModel): VariableIdentifier => {
-  return { type: variable.type, id: variable.id! };
+  return { type: variable.type, id: variable.id };
 };
 
 export function toVariablePayload<T extends any = undefined>(
   identifier: VariableIdentifier,
   data?: T
 ): VariablePayload<T>;
+// eslint-disable-next-line
 export function toVariablePayload<T extends any = undefined>(model: VariableModel, data?: T): VariablePayload<T>;
+// eslint-disable-next-line
 export function toVariablePayload<T extends any = undefined>(
   obj: VariableIdentifier | VariableModel,
   data?: T
 ): VariablePayload<T> {
-  return { type: obj.type, id: obj.id!, data: data as T };
+  return { type: obj.type, id: obj.id, data: data as T };
 }

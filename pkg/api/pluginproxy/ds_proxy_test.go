@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +30,6 @@ import (
 )
 
 func TestDSRouteRule(t *testing.T) {
-
 	Convey("DataSourceProxy", t, func() {
 		Convey("Plugin with routes", func() {
 			plugin := &plugins.DataSourcePlugin{
@@ -66,6 +66,10 @@ func TestDSRouteRule(t *testing.T) {
 						Headers: []plugins.AppPluginRouteHeader{
 							{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 						},
+					},
+					{
+						Path:    "api/restricted",
+						ReqRole: models.ROLE_ADMIN,
 					},
 				},
 			}
@@ -113,6 +117,17 @@ func TestDSRouteRule(t *testing.T) {
 				Convey("should add headers and interpolate the url with query string parameters", func() {
 					So(req.URL.String(), ShouldEqual, "https://dynamic.grafana.com/some/method?apiKey=123")
 					So(req.Header.Get("x-header"), ShouldEqual, "my secret 123")
+				})
+			})
+
+			Convey("When matching route path with no url", func() {
+				proxy, err := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
+				So(err, ShouldBeNil)
+				proxy.route = plugin.Routes[4]
+				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
+
+				Convey("Should not replace request url", func() {
+					So(req.URL.String(), ShouldEqual, "http://localhost/asd")
 				})
 			})
 
@@ -383,6 +398,9 @@ func TestDSRouteRule(t *testing.T) {
 					Config: &oauth2.Config{},
 				},
 			}
+			setting.OAuthService = &setting.OAuther{}
+			setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
+			setting.OAuthService.OAuthInfos["generic_oauth"] = &setting.OAuthInfo{}
 
 			bus.AddHandler("test", func(query *models.GetAuthInfoQuery) error {
 				query.Result = &models.UserAuth{
@@ -583,9 +601,60 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 	}
 	cfg := setting.Cfg{}
 	plugin := plugins.DataSourcePlugin{}
+
 	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg)
 
 	require.NoError(t, err)
+}
+
+// Test wth MSSQL type data sources.
+func TestNewDataSourceProxy_MSSQL(t *testing.T) {
+	ctx := models.ReqContext{
+		Context: &macaron.Context{
+			Req: macaron.Request{},
+		},
+		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
+	}
+	tcs := []struct {
+		description string
+		url         string
+		err         error
+	}{
+		{
+			description: "Valid ODBC URL",
+			url:         `localhost\instance:1433`,
+		},
+		{
+			description: "Invalid ODBC URL",
+			url:         `localhost\instance::1433`,
+			err: datasource.URLValidationError{
+				Err: fmt.Errorf(`unrecognized MSSQL URL format: "localhost\\instance::1433"`),
+				URL: `localhost\instance::1433`,
+			},
+		},
+	}
+	for _, tc := range tcs {
+		t.Run(tc.description, func(t *testing.T) {
+			cfg := setting.Cfg{}
+			plugin := plugins.DataSourcePlugin{}
+			ds := models.DataSource{
+				Type: "mssql",
+				Url:  tc.url,
+			}
+
+			p, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg)
+			if tc.err == nil {
+				require.NoError(t, err)
+				assert.Equal(t, &url.URL{
+					Scheme: "sqlserver",
+					Host:   ds.Url,
+				}, p.targetUrl)
+			} else {
+				require.Error(t, err)
+				assert.Equal(t, tc.err, err)
+			}
+		})
+	}
 }
 
 type CloseNotifierResponseRecorder struct {

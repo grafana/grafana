@@ -3,8 +3,8 @@ import cloneDeep from 'lodash/cloneDeep';
 import { default as lodashDefaults } from 'lodash/defaults';
 
 import { VariableType } from '@grafana/data';
-import { VariableModel, VariableOption, VariableWithOptions } from '../../templating/types';
-import { AddVariable, ALL_VARIABLE_VALUE, getInstanceState, NEW_VARIABLE_ID, VariablePayload } from './types';
+import { VariableModel, VariableOption, VariableWithOptions } from '../types';
+import { AddVariable, getInstanceState, NEW_VARIABLE_ID, VariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { Deferred } from '../../../core/utils/deferred';
@@ -30,19 +30,29 @@ const sharedReducerSlice = createSlice({
       state[id] = variable;
     },
     addInitLock: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const instanceState = getInstanceState(state, action.payload.id!);
+      const instanceState = getInstanceState(state, action.payload.id);
       instanceState.initLock = new Deferred();
     },
     resolveInitLock: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const instanceState = getInstanceState(state, action.payload.id!);
+      const instanceState = getInstanceState(state, action.payload.id);
+
+      if (!instanceState) {
+        // we might have cancelled a batch so then this state has been removed
+        return;
+      }
       instanceState.initLock?.resolve();
     },
     removeInitLock: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const instanceState = getInstanceState(state, action.payload.id!);
+      const instanceState = getInstanceState(state, action.payload.id);
+
+      if (!instanceState) {
+        // we might have cancelled a batch so then this state has been removed
+        return;
+      }
       instanceState.initLock = null;
     },
     removeVariable: (state: VariablesState, action: PayloadAction<VariablePayload<{ reIndex: boolean }>>) => {
-      delete state[action.payload.id!];
+      delete state[action.payload.id];
       if (!action.payload.data.reIndex) {
         return;
       }
@@ -74,17 +84,17 @@ const sharedReducerSlice = createSlice({
       const toVariable = variables.find(v => v.index === action.payload.data.toIndex);
 
       if (fromVariable) {
-        state[fromVariable.id!].index = action.payload.data.toIndex;
+        state[fromVariable.id].index = action.payload.data.toIndex;
       }
 
       if (toVariable) {
-        state[toVariable.id!].index = action.payload.data.fromIndex;
+        state[toVariable.id].index = action.payload.data.fromIndex;
       }
     },
     storeNewVariable: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const id = action.payload.id!;
+      const id = action.payload.id;
       const emptyVariable = cloneDeep<VariableModel>(state[NEW_VARIABLE_ID]);
-      state[id!] = {
+      state[id] = {
         ...cloneDeep(variableAdapters.get(action.payload.type).initialState),
         ...emptyVariable,
         id,
@@ -93,9 +103,9 @@ const sharedReducerSlice = createSlice({
     },
     changeVariableType: (state: VariablesState, action: PayloadAction<VariablePayload<{ newType: VariableType }>>) => {
       const { id } = action.payload;
-      const { label, name, index } = state[id!];
+      const { label, name, index } = state[id];
 
-      state[id!] = {
+      state[id] = {
         ...cloneDeep(variableAdapters.get(action.payload.data.newType).initialState),
         id: id,
         label,
@@ -113,12 +123,6 @@ const sharedReducerSlice = createSlice({
 
       const instanceState = getInstanceState<VariableWithOptions>(state, action.payload.id);
       const current = { ...action.payload.data.option };
-
-      if (Array.isArray(current.text) && current.text.length > 0) {
-        current.text = current.text.join(' + ');
-      } else if (Array.isArray(current.value) && current.value[0] !== ALL_VARIABLE_VALUE) {
-        current.text = current.value.join(' + ');
-      }
 
       instanceState.current = current;
       instanceState.options = instanceState.options.map(option => {
@@ -155,7 +159,7 @@ const sharedReducerSlice = createSlice({
       state: VariablesState,
       action: PayloadAction<VariablePayload<{ propName: string; propValue: any }>>
     ) => {
-      const instanceState = getInstanceState(state, action.payload.id!);
+      const instanceState = getInstanceState(state, action.payload.id);
       (instanceState as Record<string, any>)[action.payload.data.propName] = action.payload.data.propValue;
     },
   },

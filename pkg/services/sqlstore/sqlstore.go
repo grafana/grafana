@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -69,7 +70,7 @@ func (ss *SqlStore) Init() error {
 
 	engine, err := ss.getEngine()
 	if err != nil {
-		return fmt.Errorf("Fail to connect to database: %v", err)
+		return errutil.Wrap("failed to connect to database", err)
 	}
 
 	ss.engine = engine
@@ -79,7 +80,7 @@ func (ss *SqlStore) Init() error {
 	x = engine
 	dialect = ss.Dialect
 
-	migrator := migrator.NewMigrator(x)
+	migrator := migrator.NewMigrator(engine)
 	migrations.AddMigrations(migrator)
 
 	for _, descriptor := range registry.GetServices() {
@@ -90,51 +91,24 @@ func (ss *SqlStore) Init() error {
 	}
 
 	if err := migrator.Start(); err != nil {
-		return fmt.Errorf("Migration failed err: %v", err)
+		return errutil.Wrap("migration failed", err)
 	}
 
 	// Init repo instances
 	annotations.SetRepository(&SqlAnnotationRepo{})
+	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: 100, log: log.New("annotationcleaner")})
 	ss.Bus.SetTransactionManager(ss)
 
 	// Register handlers
 	ss.addUserQueryAndCommandHandlers()
 	ss.addAlertNotificationUidByIdHandler()
-
-	err = ss.logOrgsNotice()
-	if err != nil {
-		return err
-	}
+	ss.addPreferencesQueryAndCommandHandlers()
 
 	if ss.skipEnsureDefaultOrgAndUser {
 		return nil
 	}
 
 	return ss.ensureMainOrgAndAdminUser()
-}
-
-func (ss *SqlStore) logOrgsNotice() error {
-	type targetCount struct {
-		Count int64
-	}
-
-	return ss.WithDbSession(context.Background(), func(session *DBSession) error {
-		resp := make([]*targetCount, 0)
-		if err := session.SQL("select count(id) as Count from org").Find(&resp); err != nil {
-			return err
-		}
-
-		if resp[0].Count > 1 {
-			ss.log.Warn(`[Deprecation notice]`)
-			ss.log.Warn(`Fewer than 1% of Grafana installations use organizations, and we feel that most of those`)
-			ss.log.Warn(`users would have a better experience using Teams instead. As such, we are considering de-emphasizing`)
-			ss.log.Warn(`and eventually deprecating Organizations in a future Grafana release. If you would like to provide`)
-			ss.log.Warn(`feedback or describe your need, please do so in the issue linked below`)
-			ss.log.Warn(`https://github.com/grafana/grafana/issues/24588`)
-		}
-
-		return nil
-	})
 }
 
 func (ss *SqlStore) ensureMainOrgAndAdminUser() error {
@@ -265,6 +239,34 @@ func (ss *SqlStore) getEngine() (*xorm.Engine, error) {
 	}
 
 	sqlog.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
+	if ss.dbCfg.Type == migrator.SQLITE && strings.HasPrefix(connectionString, "file:") {
+		exists, err := fs.Exists(ss.dbCfg.Path)
+		if err != nil {
+			return nil, errutil.Wrapf(err, "can't check for existence of %q", ss.dbCfg.Path)
+		}
+
+		const perms = 0640
+		if !exists {
+			ss.log.Info("Creating SQLite database file", "path", ss.dbCfg.Path)
+			f, err := os.OpenFile(ss.dbCfg.Path, os.O_CREATE|os.O_RDWR, perms)
+			if err != nil {
+				return nil, errutil.Wrapf(err, "failed to create SQLite database file %q", ss.dbCfg.Path)
+			}
+			if err := f.Close(); err != nil {
+				return nil, errutil.Wrapf(err, "failed to create SQLite database file %q", ss.dbCfg.Path)
+			}
+		} else {
+			fi, err := os.Lstat(ss.dbCfg.Path)
+			if err != nil {
+				return nil, errutil.Wrapf(err, "failed to stat SQLite database file %q", ss.dbCfg.Path)
+			}
+			m := fi.Mode() & os.ModePerm
+			if m|perms != perms {
+				ss.log.Warn("SQLite database file has broader permissions than it should",
+					"path", ss.dbCfg.Path, "mode", m, "expected", os.FileMode(perms))
+			}
+		}
+	}
 	engine, err := xorm.NewEngine(ss.dbCfg.Type, connectionString)
 	if err != nil {
 		return nil, err
@@ -335,9 +337,10 @@ func (ss *SqlStore) readConfig() {
 type ITestDB interface {
 	Helper()
 	Fatalf(format string, args ...interface{})
+	Logf(format string, args ...interface{})
 }
 
-// InitTestDB initialize test DB.
+// InitTestDB initializes the test DB.
 func InitTestDB(t ITestDB) *SqlStore {
 	t.Helper()
 	sqlstore := &SqlStore{}
@@ -349,6 +352,7 @@ func InitTestDB(t ITestDB) *SqlStore {
 
 	// environment variable present for test db?
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		t.Logf("Using database type %q", db)
 		dbType = db
 	}
 
@@ -364,20 +368,21 @@ func InitTestDB(t ITestDB) *SqlStore {
 
 	switch dbType {
 	case "mysql":
-		if _, err := sec.NewKey("connection_string", sqlutil.TestDB_Mysql.ConnStr); err != nil {
+		if _, err := sec.NewKey("connection_string", sqlutil.MySQLTestDB().ConnStr); err != nil {
 			t.Fatalf("Failed to create key: %s", err)
 		}
 	case "postgres":
-		if _, err := sec.NewKey("connection_string", sqlutil.TestDB_Postgres.ConnStr); err != nil {
+		if _, err := sec.NewKey("connection_string", sqlutil.PostgresTestDB().ConnStr); err != nil {
 			t.Fatalf("Failed to create key: %s", err)
 		}
 	default:
-		if _, err := sec.NewKey("connection_string", sqlutil.TestDB_Sqlite3.ConnStr); err != nil {
+		if _, err := sec.NewKey("connection_string", sqlutil.Sqlite3TestDB().ConnStr); err != nil {
 			t.Fatalf("Failed to create key: %s", err)
 		}
 	}
 
 	// need to get engine to clean db before we init
+	t.Logf("Creating database connection: %q", sec.Key("connection_string"))
 	engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
 	if err != nil {
 		t.Fatalf("Failed to init test database: %v", err)
@@ -388,6 +393,7 @@ func InitTestDB(t ITestDB) *SqlStore {
 	// temp global var until we get rid of global vars
 	dialect = sqlstore.Dialect
 
+	t.Logf("Cleaning DB")
 	if err := dialect.CleanDB(); err != nil {
 		t.Fatalf("Failed to clean test db %v", err)
 	}

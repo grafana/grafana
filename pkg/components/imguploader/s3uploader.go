@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
@@ -73,7 +74,7 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 		return "", err
 	}
 	key := u.path + rand + pngExt
-	log.Debug("Uploading image to s3. bucket = %s, path = %s", u.bucket, key)
+	log.Debugf("Uploading image to s3. bucket = %s, path = %s", u.bucket, key)
 
 	file, err := os.Open(imageDiskPath)
 	if err != nil {
@@ -99,7 +100,7 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 	return result.Location, nil
 }
 
-func webIdentityProvider(sess *session.Session) credentials.Provider {
+func webIdentityProvider(sess client.ConfigProvider) credentials.Provider {
 	svc := sts.New(sess)
 
 	roleARN := os.Getenv("AWS_ROLE_ARN")
@@ -128,6 +129,6 @@ func ecsCredProvider(sess *session.Session, uri string) credentials.Provider {
 		func(p *endpointcreds.Provider) { p.ExpiryWindow = 5 * time.Minute })
 }
 
-func ec2RoleProvider(sess *session.Session) credentials.Provider {
+func ec2RoleProvider(sess client.ConfigProvider) credentials.Provider {
 	return &ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute}
 }

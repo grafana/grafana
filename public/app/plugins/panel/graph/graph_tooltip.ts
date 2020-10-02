@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import { appEvents } from 'app/core/core';
 import { CoreEvents } from 'app/types';
-import { textUtil } from '@grafana/data';
+import { textUtil, systemDateFormats } from '@grafana/data';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;
@@ -207,14 +207,18 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         self.clear(plot);
         return;
       }
+
       pos.pageX = elem.offset().left + pointOffset.left;
       pos.pageY = elem.offset().top + elem.height() * pos.panelRelY;
-      const isVisible =
-        pos.pageY >= $(window).scrollTop() && pos.pageY <= $(window).innerHeight() + $(window).scrollTop();
+
+      const scrollTop = $(window).scrollTop() ?? 0;
+      const isVisible = pos.pageY >= scrollTop && pos.pageY <= $(window).innerHeight()! + scrollTop;
+
       if (!isVisible) {
         self.clear(plot);
         return;
       }
+
       plot.setCrosshair(pos);
       allSeriesMode = true;
 
@@ -229,9 +233,9 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     }
 
     if (seriesList[0].hasMsResolution) {
-      tooltipFormat = 'YYYY-MM-DD HH:mm:ss.SSS';
+      tooltipFormat = systemDateFormats.fullDateMS;
     } else {
-      tooltipFormat = 'YYYY-MM-DD HH:mm:ss';
+      tooltipFormat = systemDateFormats.fullDate;
     }
 
     if (allSeriesMode) {

@@ -25,7 +25,6 @@ func init() {
 }
 
 func handleAlertTestCommand(cmd *AlertTestCommand) error {
-
 	dash := models.NewDashboardFromJson(cmd.Dashboard)
 
 	extractor := NewDashAlertExtractor(dash, cmd.OrgID, cmd.User)

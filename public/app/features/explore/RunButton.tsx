@@ -43,7 +43,7 @@ export function RunButton(props: Props) {
         'btn--radius-right-0': showDropdown,
       })}
       icon={loading ? 'fa fa-spinner' : 'sync'}
-      iconClassName={loading && ' fa-spin run-icon'}
+      iconClassName={loading ? ' fa-spin run-icon' : undefined}
       aria-label={selectors.pages.Explore.General.runButton}
     />
   );

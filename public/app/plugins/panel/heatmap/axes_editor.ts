@@ -1,8 +1,6 @@
-import kbn from 'app/core/utils/kbn';
 export class AxesEditorCtrl {
   panel: any;
   panelCtrl: any;
-  unitFormats: any;
   logScales: any;
   dataFormats: any;
   yBucketBoundModes: any;
@@ -12,7 +10,6 @@ export class AxesEditorCtrl {
     $scope.editor = this;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
-    this.unitFormats = kbn.getUnitFormats();
 
     this.logScales = {
       linear: 1,
@@ -35,10 +32,10 @@ export class AxesEditorCtrl {
     };
   }
 
-  setUnitFormat(subItem: any) {
-    this.panel.yAxis.format = subItem.value;
+  setUnitFormat = (unit: string) => {
+    this.panel.yAxis.format = unit;
     this.panelCtrl.render();
-  }
+  };
 }
 
 /** @ngInject */

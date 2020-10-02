@@ -2,6 +2,7 @@ package migrator
 
 import (
 	"fmt"
+
 	"github.com/mattn/go-sqlite3"
 	"xorm.io/xorm"
 )
@@ -75,7 +76,7 @@ func (db *Sqlite3) IndexCheckSql(tableName, indexName string) (string, []interfa
 
 func (db *Sqlite3) DropIndexSql(tableName string, index *Index) string {
 	quote := db.Quote
-	//var unique string
+	// var unique string
 	idxName := index.XName(tableName)
 	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
 }

@@ -4,7 +4,7 @@ import coreModule from '../core_module';
 function getBlockNodes(nodes: any[]) {
   let node = nodes[0];
   const endNode = nodes[nodes.length - 1];
-  let blockNodes: any[];
+  let blockNodes: any[] | undefined;
   node = node.nextSibling;
 
   for (let i = 1; node !== endNode && node; i++) {
@@ -12,7 +12,8 @@ function getBlockNodes(nodes: any[]) {
       if (!blockNodes) {
         blockNodes = $([].slice.call(nodes, 0, i)) as any;
       }
-      blockNodes.push(node);
+
+      blockNodes!.push(node);
     }
     node = node.nextSibling;
   }

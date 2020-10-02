@@ -173,11 +173,12 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 	var authAndBind bool
 
 	// Check if we can use a search user
-	if server.shouldAdminBind() {
+	switch {
+	case server.shouldAdminBind():
 		if err := server.AdminBind(); err != nil {
 			return nil, err
 		}
-	} else if server.shouldSingleBind() {
+	case server.shouldSingleBind():
 		authAndBind = true
 		err = server.UserBind(
 			server.singleBindDN(query.Username),
@@ -186,7 +187,7 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	default:
 		err := server.Connection.UnauthenticatedBind(server.Config.BindDN)
 		if err != nil {
 			return nil, err
@@ -362,13 +363,12 @@ func (server *Server) getSearchRequest(
 
 	search := ""
 	for _, login := range logins {
-		query := strings.Replace(
+		query := strings.ReplaceAll(
 			server.Config.SearchFilter,
 			"%s", ldap.EscapeFilter(login),
-			-1,
 		)
 
-		search = search + query
+		search += query
 	}
 
 	filter := fmt.Sprintf("(|%s)", search)
@@ -426,6 +426,12 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 		}
 	}
 
+	// If there are group org mappings configured, but no matching mappings,
+	// the user will not be able to login and will be disabled
+	if len(server.Config.Groups) > 0 && len(extUser.OrgRoles) == 0 {
+		extUser.IsDisabled = true
+	}
+
 	return extUser, nil
 }
 
@@ -453,7 +459,7 @@ func (server *Server) AdminBind() error {
 	err := server.userBind(server.Config.BindDN, server.Config.BindPassword)
 	if err != nil {
 		server.log.Error(
-			"Cannot authentificate admin user in LDAP",
+			"Cannot authenticate admin user in LDAP",
 			"error",
 			err,
 		)
@@ -502,10 +508,9 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 			)
 		}
 
-		filter := strings.Replace(
+		filter := strings.ReplaceAll(
 			config.GroupSearchFilter, "%s",
 			ldap.EscapeFilter(filterReplace),
-			-1,
 		)
 
 		server.log.Info("Searching for user's groups", "filter", filter)
@@ -532,13 +537,11 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 
 		if len(groupSearchResult.Entries) > 0 {
 			for _, group := range groupSearchResult.Entries {
-
 				memberOf = append(
 					memberOf,
 					getAttribute(groupIDAttribute, group),
 				)
 			}
-			break
 		}
 	}
 

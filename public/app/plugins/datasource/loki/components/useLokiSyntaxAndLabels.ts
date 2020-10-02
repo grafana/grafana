@@ -39,7 +39,7 @@ const useInitLanguageProvider = (languageProvider: LokiLanguageProvider, absolut
  */
 const useLokiSyntax = (languageProvider: LokiLanguageProvider, languageProviderInitialized: boolean) => {
   // State
-  const [syntax, setSyntax] = useState<Grammar>(null);
+  const [syntax, setSyntax] = useState<Grammar | null>(null);
 
   // Effects
   useEffect(() => {

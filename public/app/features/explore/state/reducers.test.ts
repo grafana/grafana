@@ -2,12 +2,11 @@ import {
   DataQuery,
   DataSourceApi,
   dateTime,
-  ExploreMode,
   LoadingState,
-  LogsDedupStrategy,
   RawTimeRange,
-  toDataFrame,
   UrlQueryMap,
+  ExploreUrlState,
+  LogsDedupStrategy,
 } from '@grafana/data';
 
 import {
@@ -18,22 +17,24 @@ import {
   makeExploreItemState,
   makeInitialUpdateState,
 } from './reducers';
-import { ExploreId, ExploreItemState, ExploreState, ExploreUrlState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
-  changeModeAction,
   changeRangeAction,
   changeRefreshIntervalAction,
   scanStartAction,
   scanStopAction,
   splitCloseAction,
   splitOpenAction,
-  toggleGraphAction,
-  toggleTableAction,
   updateDatasourceInstanceAction,
+  addQueryRowAction,
+  removeQueryRowAction,
+  changeDedupStrategyAction,
 } from './actionTypes';
-import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import { updateLocation } from '../../../core/actions';
+import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+
+const QUERY_KEY_REGEX = /Q-(?:[a-z0-9]+-){5}(?:[0-9]+)/;
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -70,21 +71,6 @@ describe('Explore item reducer', () => {
   });
 
   describe('changing datasource', () => {
-    describe('when changeMode is dispatched', () => {
-      it('then it should set correct state', () => {
-        reducerTester<ExploreItemState>()
-          .givenReducer(itemReducer, ({} as unknown) as ExploreItemState)
-          .whenActionIsDispatched(changeModeAction({ exploreId: ExploreId.left, mode: ExploreMode.Logs }))
-          .thenStatePredicateShouldEqual((resultingState: ExploreItemState) => {
-            expect(resultingState.mode).toEqual(ExploreMode.Logs);
-            expect(resultingState.logsResult).toBeNull();
-            expect(resultingState.graphResult).toBeNull();
-            expect(resultingState.tableResult).toBeNull();
-            return true;
-          });
-      });
-    });
-
     describe('when updateDatasourceInstanceAction is dispatched', () => {
       describe('and datasourceInstance supports graph, logs, table and has a startpage', () => {
         it('then it should set correct state', () => {
@@ -112,8 +98,6 @@ describe('Explore item reducer', () => {
             graphResult: null,
             logsResult: null,
             tableResult: null,
-            supportedModes: [ExploreMode.Metrics, ExploreMode.Logs],
-            mode: ExploreMode.Metrics,
             latency: 0,
             loading: false,
             queryResponse: createEmptyQueryResponse(),
@@ -172,41 +156,6 @@ describe('Explore item reducer', () => {
     });
   });
 
-  describe('toggling panels', () => {
-    describe('when toggleGraphAction is dispatched', () => {
-      it('then it should set correct state', () => {
-        reducerTester<ExploreItemState>()
-          .givenReducer(itemReducer, ({ graphResult: [] } as unknown) as ExploreItemState)
-          .whenActionIsDispatched(toggleGraphAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual(({ showingGraph: true, graphResult: [] } as unknown) as ExploreItemState)
-          .whenActionIsDispatched(toggleGraphAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual(({ showingGraph: false, graphResult: null } as unknown) as ExploreItemState);
-      });
-    });
-
-    describe('when toggleTableAction is dispatched', () => {
-      it('then it should set correct state', () => {
-        const table = toDataFrame({
-          name: 'logs',
-          fields: [
-            {
-              name: 'time',
-              type: 'number',
-              values: [1, 2],
-            },
-          ],
-        });
-
-        reducerTester<ExploreItemState>()
-          .givenReducer(itemReducer, ({ tableResult: table } as unknown) as ExploreItemState)
-          .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual(({ showingTable: true, tableResult: table } as unknown) as ExploreItemState)
-          .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual(({ showingTable: false, tableResult: null } as unknown) as ExploreItemState);
-      });
-    });
-  });
-
   describe('changing range', () => {
     describe('when changeRangeAction is dispatched', () => {
       it('then it should set correct state', () => {
@@ -231,6 +180,93 @@ describe('Explore item reducer', () => {
       });
     });
   });
+
+  describe('changing dedup strategy', () => {
+    describe('when changeDedupStrategyAction is dispatched', () => {
+      it('then it should set correct dedup strategy in state', () => {
+        const initialState = makeExploreItemState();
+
+        reducerTester<ExploreItemState>()
+          .givenReducer(itemReducer, initialState)
+          .whenActionIsDispatched(
+            changeDedupStrategyAction({ exploreId: ExploreId.left, dedupStrategy: LogsDedupStrategy.exact })
+          )
+          .thenStateShouldEqual({
+            ...makeExploreItemState(),
+            dedupStrategy: LogsDedupStrategy.exact,
+          });
+      });
+    });
+  });
+
+  describe('query rows', () => {
+    it('adds a new query row', () => {
+      reducerTester<ExploreItemState>()
+        .givenReducer(itemReducer, ({
+          queries: [],
+        } as unknown) as ExploreItemState)
+        .whenActionIsDispatched(
+          addQueryRowAction({
+            exploreId: ExploreId.left,
+            query: { refId: 'A', key: 'mockKey' },
+            index: 0,
+          })
+        )
+        .thenStateShouldEqual(({
+          queries: [{ refId: 'A', key: 'mockKey' }],
+          queryKeys: ['mockKey-0'],
+        } as unknown) as ExploreItemState);
+    });
+    it('removes a query row', () => {
+      reducerTester<ExploreItemState>()
+        .givenReducer(itemReducer, ({
+          queries: [
+            { refId: 'A', key: 'mockKey' },
+            { refId: 'B', key: 'mockKey' },
+          ],
+          queryKeys: ['mockKey-0', 'mockKey-1'],
+        } as unknown) as ExploreItemState)
+        .whenActionIsDispatched(
+          removeQueryRowAction({
+            exploreId: ExploreId.left,
+            index: 0,
+          })
+        )
+        .thenStatePredicateShouldEqual((resultingState: ExploreItemState) => {
+          expect(resultingState.queries.length).toBe(1);
+          expect(resultingState.queries[0].refId).toBe('A');
+          expect(resultingState.queries[0].key).toMatch(QUERY_KEY_REGEX);
+          expect(resultingState.queryKeys[0]).toMatch(QUERY_KEY_REGEX);
+          return true;
+        });
+    });
+    it('reassigns query refId after removing a query to keep queries in order', () => {
+      reducerTester<ExploreItemState>()
+        .givenReducer(itemReducer, ({
+          queries: [{ refId: 'A' }, { refId: 'B' }, { refId: 'C' }],
+          queryKeys: ['undefined-0', 'undefined-1', 'undefined-2'],
+        } as unknown) as ExploreItemState)
+        .whenActionIsDispatched(
+          removeQueryRowAction({
+            exploreId: ExploreId.left,
+            index: 0,
+          })
+        )
+        .thenStatePredicateShouldEqual((resultingState: ExploreItemState) => {
+          expect(resultingState.queries.length).toBe(2);
+          const queriesRefIds = resultingState.queries.map(query => query.refId);
+          const queriesKeys = resultingState.queries.map(query => query.key);
+          expect(queriesRefIds).toEqual(['A', 'B']);
+          queriesKeys.forEach(queryKey => {
+            expect(queryKey).toMatch(QUERY_KEY_REGEX);
+          });
+          resultingState.queryKeys.forEach(queryKey => {
+            expect(queryKey).toMatch(QUERY_KEY_REGEX);
+          });
+          return true;
+        });
+    });
+  });
 });
 
 export const setup = (urlStateOverrides?: any) => {
@@ -241,13 +277,6 @@ export const setup = (urlStateOverrides?: any) => {
     range: {
       from: '',
       to: '',
-    },
-    mode: ExploreMode.Metrics,
-    ui: {
-      dedupStrategy: LogsDedupStrategy.none,
-      showingGraph: false,
-      showingTable: false,
-      showingLogs: false,
     },
   };
   const urlState: ExploreUrlState = { ...urlStateDefaults, ...urlStateOverrides };
@@ -435,7 +464,7 @@ describe('Explore reducer', () => {
                   },
                 },
               };
-              const stateWithDifferentDataSource = {
+              const stateWithDifferentDataSource: any = {
                 ...initialState,
                 left: {
                   ...initialState.left,
@@ -473,7 +502,7 @@ describe('Explore reducer', () => {
                   },
                 },
               };
-              const stateWithDifferentDataSource = {
+              const stateWithDifferentDataSource: any = {
                 ...initialState,
                 left: {
                   ...initialState.left,
@@ -514,54 +543,13 @@ describe('Explore reducer', () => {
                   },
                 },
               };
-              const stateWithDifferentDataSource = {
+              const stateWithDifferentDataSource: any = {
                 ...initialState,
                 left: {
                   ...initialState.left,
                   urlState: {
                     ...initialState.left.urlState,
                     queries: [{ expr: '{__filename__="some.log"}' }],
-                  },
-                },
-              };
-
-              reducerTester<ExploreState>()
-                .givenReducer(exploreReducer, stateWithDifferentDataSource)
-                .whenActionIsDispatched(
-                  updateLocation({
-                    query: {
-                      left: serializedUrlState,
-                    },
-                    path: '/explore',
-                  })
-                )
-                .thenStateShouldEqual(expectedState);
-            });
-          });
-
-          describe('and ui differs', () => {
-            it('then it should return update ui', () => {
-              const { initialState, serializedUrlState } = setup();
-              const expectedState = {
-                ...initialState,
-                left: {
-                  ...initialState.left,
-                  update: {
-                    ...initialState.left.update,
-                    ui: true,
-                  },
-                },
-              };
-              const stateWithDifferentDataSource = {
-                ...initialState,
-                left: {
-                  ...initialState.left,
-                  urlState: {
-                    ...initialState.left.urlState,
-                    ui: {
-                      ...initialState.left.urlState.ui,
-                      showingGraph: true,
-                    },
                   },
                 },
               };

@@ -12,9 +12,12 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { BarGaugeDisplayMode } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { BarGaugePanel } from './BarGaugePanel';
 import { BarGaugeOptions } from './types';
+
+const valueSelector = selectors.components.Panels.Visualization.BarGauge.value;
 
 describe('BarGaugePanel', () => {
   describe('when empty result is rendered', () => {
@@ -25,7 +28,7 @@ describe('BarGaugePanel', () => {
     });
 
     it('should render with title "No data"', () => {
-      const displayValue = wrapper.find('div.bar-gauge__value').text();
+      const displayValue = wrapper.find(`div[aria-label="${valueSelector}"]`).text();
       expect(displayValue).toBe('No data');
     });
   });
@@ -46,7 +49,7 @@ describe('BarGaugePanel', () => {
     });
 
     it('should render with title "No data"', () => {
-      const displayValue = wrapper.find('div.bar-gauge__value').text();
+      const displayValue = wrapper.find(`div[aria-label="${valueSelector}"]`).text();
       expect(displayValue).toBe('100');
     });
   });
@@ -84,6 +87,7 @@ function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<B
       timeRange={timeRange}
       timeZone={'utc'}
       options={options}
+      title="hello"
       fieldConfig={fieldConfig}
       onFieldConfigChange={() => {}}
       onOptionsChange={() => {}}

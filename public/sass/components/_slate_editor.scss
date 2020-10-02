@@ -3,6 +3,8 @@
   font-family: $font-family-monospace;
   height: auto;
   word-break: break-word;
+  // Affects only placeholder in query field. Adds scrollbar only if content is cropped.
+  overflow: auto;
 }
 
 .slate-query-field__wrapper {
@@ -16,7 +18,7 @@
   color: $text-color;
   background-color: $input-bg;
   background-image: none;
-  border: $panel-border;
+  border: $input-border;
   border-radius: $border-radius;
   transition: all 0.3s;
   line-height: $input-line-height;

@@ -73,11 +73,12 @@ func (ns *NotificationService) setFiles(
 	m *gomail.Message,
 	msg *Message,
 ) {
-	for _, file := range msg.EmbededFiles {
+	for _, file := range msg.EmbeddedFiles {
 		m.Embed(file)
 	}
 
 	for _, file := range msg.AttachedFiles {
+		file := file
 		m.Attach(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
 			_, err := writer.Write(file.Content)
 			return err
@@ -181,8 +182,9 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 		From:          fmt.Sprintf("%s <%s>", ns.Cfg.Smtp.FromName, ns.Cfg.Smtp.FromAddress),
 		Subject:       subject,
 		Body:          buffer.String(),
-		EmbededFiles:  cmd.EmbededFiles,
+		EmbeddedFiles: cmd.EmbeddedFiles,
 		AttachedFiles: buildAttachedFiles(cmd.AttachedFiles),
+		ReplyTo:       cmd.ReplyTo,
 	}, nil
 }
 

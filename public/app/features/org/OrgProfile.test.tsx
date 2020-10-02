@@ -6,7 +6,6 @@ const setup = () => {
   const props: Props = {
     orgName: 'Main org',
     onSubmit: jest.fn(),
-    onOrgNameChange: jest.fn(),
   };
 
   return shallow(<OrgProfile {...props} />);

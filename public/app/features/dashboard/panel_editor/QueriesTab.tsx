@@ -38,7 +38,7 @@ interface State {
   dataSource?: DataSourceApi;
   dataSourceItem: DataSourceSelectItem;
   dataSourceError?: string;
-  helpContent: JSX.Element;
+  helpContent: React.ReactNode;
   isLoadingHelp: boolean;
   isPickerOpen: boolean;
   isAddingMixed: boolean;
@@ -96,7 +96,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ data });
   }
 
-  findCurrentDataSource(dataSourceName: string = this.props.panel.datasource): DataSourceSelectItem {
+  findCurrentDataSource(dataSourceName: string | null = this.props.panel.datasource): DataSourceSelectItem {
     return this.datasources.find(datasource => datasource.value === dataSourceName) || this.datasources[0];
   }
 
@@ -161,7 +161,9 @@ export class QueriesTab extends PureComponent<Props, State> {
    * Sets the queries for the panel
    */
   onUpdateQueries = (queries: DataQuery[]) => {
-    this.props.panel.targets = queries;
+    this.props.panel.updateQueries(queries);
+
+    // Need to force update to rerender query rows.
     this.forceUpdate();
   };
 

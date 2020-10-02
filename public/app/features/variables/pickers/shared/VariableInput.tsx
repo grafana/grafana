@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { trim } from 'lodash';
 import { NavigationKey } from '../types';
 
 export interface Props {
@@ -13,18 +12,13 @@ export class VariableInput extends PureComponent<Props> {
     if (NavigationKey[event.keyCode]) {
       const clearOthers = event.ctrlKey || event.metaKey || event.shiftKey;
       this.props.onNavigate(event.keyCode as NavigationKey, clearOthers);
+      event.preventDefault();
     }
   };
 
   onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (this.shouldUpdateValue(event.target.value)) {
-      this.props.onChange(event.target.value);
-    }
+    this.props.onChange(event.target.value);
   };
-
-  private shouldUpdateValue(value: string) {
-    return trim(value ?? '').length > 0 || trim(this.props.value ?? '').length > 0;
-  }
 
   render() {
     return (

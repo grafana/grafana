@@ -14,7 +14,7 @@ describe('searchForTags', () => {
       title: 'some title',
       tooltip: 'some tooltip',
       type: 'dashboards',
-      url: undefined,
+      url: '/d/6ieouugGk/DashLinks',
     };
     const backendSrv: any = {
       search: jest.fn(args => []),
@@ -46,7 +46,7 @@ describe('resolveLinks', () => {
       title: 'some title',
       tooltip: 'some tooltip',
       type: 'dashboards',
-      url: undefined,
+      url: '/d/6ieouugGk/DashLinks',
     };
     const searchHits: DashboardSearchHit[] = [
       {

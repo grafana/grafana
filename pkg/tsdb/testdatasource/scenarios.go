@@ -47,7 +47,7 @@ func init() {
 			factor := 2
 			for i := 0; i < 10; i++ {
 				timeWalkerMs := context.TimeRange.GetFromAsMsEpoch()
-				serie := &tsdb.TimeSeries{Name: strconv.Itoa(start)}
+				ts := &tsdb.TimeSeries{Name: strconv.Itoa(start)}
 				start *= factor
 
 				points := make(tsdb.TimeSeriesPoints, 0)
@@ -57,8 +57,8 @@ func init() {
 					timeWalkerMs += query.IntervalMs * 50
 				}
 
-				serie.Points = points
-				series = append(series, serie)
+				ts.Points = points
+				series = append(series, ts)
 			}
 
 			queryRes := tsdb.NewQueryResult()
@@ -77,7 +77,7 @@ func init() {
 			var series []*tsdb.TimeSeries
 			for i := 0; i < 10; i++ {
 				timeWalkerMs := context.TimeRange.GetFromAsMsEpoch()
-				serie := &tsdb.TimeSeries{Name: strconv.Itoa(i * 10)}
+				ts := &tsdb.TimeSeries{Name: strconv.Itoa(i * 10)}
 
 				points := make(tsdb.TimeSeriesPoints, 0)
 				for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
@@ -86,8 +86,8 @@ func init() {
 					timeWalkerMs += query.IntervalMs * 50
 				}
 
-				serie.Points = points
-				series = append(series, serie)
+				ts.Points = points
+				series = append(series, ts)
 			}
 
 			queryRes := tsdb.NewQueryResult()
@@ -114,29 +114,22 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "predictable_pulse",
-		Name: "Predictable Pulse",
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			return getPredictablePulse(query, context)
-		},
+		Id:          "predictable_pulse",
+		Name:        "Predictable Pulse",
+		Handler:     getPredictablePulse,
 		Description: PredictablePulseDesc,
 	})
 
 	registerScenario(&Scenario{
-		Id:   "predictable_csv_wave",
-		Name: "Predictable CSV Wave",
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			return getPredictableCSVWave(query, context)
-		},
+		Id:      "predictable_csv_wave",
+		Name:    "Predictable CSV Wave",
+		Handler: getPredictableCSVWave,
 	})
 
 	registerScenario(&Scenario{
-		Id:   "random_walk_table",
-		Name: "Random Walk Table",
-
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			return getRandomWalkTable(query, context)
-		},
+		Id:      "random_walk_table",
+		Name:    "Random Walk Table",
+		Handler: getRandomWalkTable,
 	})
 
 	registerScenario(&Scenario{
@@ -225,7 +218,7 @@ func init() {
 			queryRes := tsdb.NewQueryResult()
 
 			stringInput := query.Model.Get("stringInput").MustString()
-			stringInput = strings.Replace(stringInput, " ", "", -1)
+			stringInput = strings.ReplaceAll(stringInput, " ", "")
 
 			values := []null.Float{}
 			for _, strVal := range strings.Split(stringInput, ",") {
@@ -280,6 +273,14 @@ func init() {
 		Name: "Load Apache Arrow Data",
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			// Real work is in javascript client
+			return tsdb.NewQueryResult()
+		},
+	})
+
+	registerScenario(&Scenario{
+		Id:   "annotations",
+		Name: "Annotations",
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			return tsdb.NewQueryResult()
 		},
 	})
@@ -455,7 +456,7 @@ func getPredictablePulse(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Query
 		return queryRes
 	}
 
-	timeStep = timeStep * 1000                     // Seconds to Milliseconds
+	timeStep *= 1000                               // Seconds to Milliseconds
 	onFor := func(mod int64) (null.Float, error) { // How many items in the cycle should get the on value
 		var i int64
 		for i = 0; i < onCount; i++ {
@@ -505,7 +506,7 @@ func getPredictableCSVWave(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Que
 		values[i] = val
 	}
 
-	timeStep = timeStep * 1000 // Seconds to Milliseconds
+	timeStep *= 1000 // Seconds to Milliseconds
 	valuesLen := int64(len(values))
 	getValue := func(mod int64) (null.Float, error) {
 		var i int64

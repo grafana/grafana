@@ -10,7 +10,7 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e.flows.openDashboard('5SdHCadmz');
+    e2e.flows.openDashboard({ uid: '5SdHCadmz' });
 
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
 
@@ -24,6 +24,14 @@ e2e.scenario({
     e2e.components.QueryEditorRows.rows().within(rows => {
       expect(rows.length).equals(1);
     });
+
+    e2e().server();
+    e2e()
+      .route({
+        method: 'POST',
+        url: '/api/tsdb/query',
+      })
+      .as('apiPostQuery');
 
     // Add query button should be visible and clicking on it should create a new row
     e2e.components.QueryTab.addQuery()
@@ -41,6 +49,8 @@ e2e.scenario({
       .eq(0)
       .should('be.visible')
       .click();
+
+    e2e().wait('@apiPostQuery');
 
     // We expect row with refId B to exist and be visible
     e2e.components.QueryEditorRows.rows().within(rows => {
@@ -63,37 +73,7 @@ e2e.scenario({
       .eq(1)
       .select('CSV Metric Values');
 
-    // Change order or query rows
-    // Check the order of the rows before
-    e2e.components.QueryEditorRows.rows()
-      .eq(0)
-      .within(() => {
-        e2e.components.QueryEditorRow.title('B').should('be.visible');
-      });
-
-    e2e.components.QueryEditorRows.rows()
-      .eq(1)
-      .within(() => {
-        e2e.components.QueryEditorRow.title('A').should('be.visible');
-      });
-
-    // Change so A is first
-    e2e.components.QueryEditorRow.actionButton('Move query up')
-      .eq(1)
-      .click();
-
-    // Check the order of the rows after change
-    e2e.components.QueryEditorRows.rows()
-      .eq(0)
-      .within(() => {
-        e2e.components.QueryEditorRow.title('A').should('be.visible');
-      });
-
-    e2e.components.QueryEditorRows.rows()
-      .eq(1)
-      .within(() => {
-        e2e.components.QueryEditorRow.title('B').should('be.visible');
-      });
+    e2e().wait('@apiPostQuery');
 
     // Disable / enable row
     expectInspectorResultAndClose(keys => {
@@ -102,15 +82,17 @@ e2e.scenario({
       expect(keys[length - 1].innerText).equals('B:');
     });
 
-    // Disable row with refId B
+    // Disable row with refId A
     e2e.components.QueryEditorRow.actionButton('Disable/enable query')
       .eq(1)
       .should('be.visible')
       .click();
 
+    e2e().wait('@apiPostQuery');
+
     expectInspectorResultAndClose(keys => {
       const length = keys.length;
-      expect(keys[length - 1].innerText).equals('A:');
+      expect(keys[length - 1].innerText).equals('B:');
     });
 
     // Enable row with refId B
@@ -118,6 +100,8 @@ e2e.scenario({
       .eq(1)
       .should('be.visible')
       .click();
+
+    e2e().wait('@apiPostQuery');
 
     expectInspectorResultAndClose(keys => {
       const length = keys.length;
@@ -135,6 +119,8 @@ const expectInspectorResultAndClose = (expectCallBack: (keys: any[]) => void) =>
   e2e.components.PanelInspector.Query.refreshButton()
     .should('be.visible')
     .click();
+
+  e2e().wait('@apiPostQuery');
 
   e2e.components.PanelInspector.Query.jsonObjectKeys()
     .should('be.visible')

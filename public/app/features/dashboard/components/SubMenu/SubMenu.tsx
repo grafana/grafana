@@ -1,15 +1,17 @@
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../../types';
-import { getVariables } from '../../../variables/state/selectors';
-import { VariableHide, VariableModel } from '../../../templating/types';
+import { getSubMenuVariables } from '../../../variables/state/selectors';
+import { VariableHide, VariableModel } from '../../../variables/types';
 import { DashboardModel } from '../../state';
 import { DashboardLinks } from './DashboardLinks';
 import { Annotations } from './Annotations';
 import { SubMenuItems } from './SubMenuItems';
+import { DashboardLink } from '../../state/DashboardModel';
 
 interface OwnProps {
   dashboard: DashboardModel;
+  links: DashboardLink[];
 }
 
 interface ConnectedProps {
@@ -49,7 +51,8 @@ class SubMenuUnConnected extends PureComponent<Props> {
   };
 
   render() {
-    const { dashboard, variables } = this.props;
+    const { dashboard, variables, links } = this.props;
+
     if (!this.isSubMenuVisible()) {
       return null;
     }
@@ -59,16 +62,18 @@ class SubMenuUnConnected extends PureComponent<Props> {
         <SubMenuItems variables={variables} />
         <Annotations annotations={dashboard.annotations.list} onAnnotationChanged={this.onAnnotationStateChanged} />
         <div className="gf-form gf-form--grow" />
-        {dashboard && <DashboardLinks dashboard={dashboard} />}
+        {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
         <div className="clearfix" />
       </div>
     );
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  variables: getVariables(state, false),
-});
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
+  return {
+    variables: getSubMenuVariables(state.templating.variables),
+  };
+};
 
 export const SubMenu = connect(mapStateToProps)(SubMenuUnConnected);
 SubMenu.displayName = 'SubMenu';

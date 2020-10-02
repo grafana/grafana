@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
-import { VariableHide, VariableModel } from '../../../templating/types';
+import { VariableHide, VariableModel } from '../../../variables/types';
 import { selectors } from '@grafana/e2e-selectors';
 import { PickerRenderer } from '../../../variables/pickers/PickerRenderer';
 

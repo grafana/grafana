@@ -26,8 +26,9 @@ export const fieldNameMatcherItem: FieldMatcherUIRegistryItem<string> = {
   id: FieldMatcherID.byName,
   component: FieldNameMatcherEditor,
   matcher: fieldMatchers.get(FieldMatcherID.byName),
-  name: 'Filter by field',
-  description: 'Set properties for fields matching the name',
+  name: 'Fields with name',
+  description: 'Set properties for a specific field',
+  optionsToLabel: options => options,
 };
 
 const useFieldDisplayNames = (data: DataFrame[]): Set<string> => {

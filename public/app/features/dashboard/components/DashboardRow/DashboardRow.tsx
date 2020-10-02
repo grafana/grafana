@@ -3,9 +3,10 @@ import classNames from 'classnames';
 import { Icon } from '@grafana/ui';
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
-import templateSrv from 'app/features/templating/template_srv';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
+import { RowOptionsButton } from '../RowOptions/RowOptionsButton';
+import { getTemplateSrv } from '@grafana/runtime';
 
 export interface DashboardRowProps {
   panel: PanelModel;
@@ -39,20 +40,12 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     });
   };
 
-  onUpdate = () => {
+  onUpdate = (title: string, repeat: string | undefined) => {
+    this.props.panel['title'] = title;
+    this.props.panel['repeat'] = repeat;
+    this.props.panel.render();
     this.props.dashboard.processRepeats();
     this.forceUpdate();
-  };
-
-  onOpenSettings = () => {
-    appEvents.emit(CoreEvents.showModal, {
-      templateHtml: `<row-options row="model.row" on-updated="model.onUpdated()" dismiss="dismiss()"></row-options>`,
-      modalClass: 'modal--narrow',
-      model: {
-        row: this.props.panel,
-        onUpdated: this.onUpdate,
-      },
-    });
   };
 
   onDelete = () => {
@@ -76,7 +69,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       'dashboard-row--collapsed': this.state.collapsed,
     });
 
-    const title = templateSrv.replaceWithText(this.props.panel.title, this.props.panel.scopedVars);
+    const title = getTemplateSrv().replace(this.props.panel.title, this.props.panel.scopedVars, 'text');
     const count = this.props.panel.panels ? this.props.panel.panels.length : 0;
     const panels = count === 1 ? 'panel' : 'panels';
     const canEdit = this.props.dashboard.meta.canEdit === true;
@@ -92,9 +85,11 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
         </a>
         {canEdit && (
           <div className="dashboard-row__actions">
-            <a className="pointer" onClick={this.onOpenSettings}>
-              <Icon name="cog" />
-            </a>
+            <RowOptionsButton
+              title={this.props.panel.title}
+              repeat={this.props.panel.repeat}
+              onUpdate={this.onUpdate}
+            />
             <a className="pointer" onClick={this.onDelete}>
               <Icon name="trash-alt" />
             </a>

@@ -107,7 +107,7 @@ const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   docsLink: css`
     display: inline-block;
-    margin-top: ${theme.spacing.lg};
+    margin-top: ${theme.spacing.md};
     font-size: ${theme.typography.size.sm};
   `,
 }));

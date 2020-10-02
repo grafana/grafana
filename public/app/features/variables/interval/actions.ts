@@ -1,14 +1,13 @@
-import { AppEvents } from '@grafana/data';
+import { AppEvents, rangeUtil } from '@grafana/data';
 
 import { toVariablePayload, VariableIdentifier } from '../state/types';
 import { ThunkResult } from '../../../types';
 import { createIntervalOptions } from './reducer';
 import { validateVariableSelectionState } from '../state/actions';
 import { getVariable } from '../state/selectors';
-import { IntervalVariableModel } from '../../templating/types';
-import kbn from '../../../core/utils/kbn';
+import { IntervalVariableModel } from '../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import templateSrv from '../../templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import appEvents from '../../../core/app_events';
 
 export interface UpdateIntervalVariableOptionsDependencies {
@@ -29,22 +28,22 @@ export const updateIntervalVariableOptions = (
 };
 
 export interface UpdateAutoValueDependencies {
-  kbn: typeof kbn;
+  calculateInterval: typeof rangeUtil.calculateInterval;
   getTimeSrv: typeof getTimeSrv;
-  templateSrv: typeof templateSrv;
+  templateSrv: TemplateSrv;
 }
 
 export const updateAutoValue = (
   identifier: VariableIdentifier,
   dependencies: UpdateAutoValueDependencies = {
-    kbn: kbn,
+    calculateInterval: rangeUtil.calculateInterval,
     getTimeSrv: getTimeSrv,
-    templateSrv: templateSrv,
+    templateSrv: getTemplateSrv(),
   }
 ): ThunkResult<void> => (dispatch, getState) => {
   const variableInState = getVariable<IntervalVariableModel>(identifier.id, getState());
   if (variableInState.auto) {
-    const res = dependencies.kbn.calculateInterval(
+    const res = dependencies.calculateInterval(
       dependencies.getTimeSrv().timeRange(),
       variableInState.auto_count,
       variableInState.auto_min

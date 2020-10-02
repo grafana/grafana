@@ -3,7 +3,7 @@ import { QueryRow, QueryRowProps } from './QueryRow';
 import { shallow } from 'enzyme';
 import { ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
-import { DataSourceApi, TimeRange, AbsoluteTimeRange, ExploreMode, PanelData } from '@grafana/data';
+import { DataSourceApi, TimeRange, AbsoluteTimeRange, PanelData } from '@grafana/data';
 
 const setup = (propOverrides?: object) => {
   const props: QueryRowProps = {
@@ -23,7 +23,6 @@ const setup = (propOverrides?: object) => {
     removeQueryRowAction: jest.fn() as any,
     runQueries: jest.fn(),
     queryResponse: {} as PanelData,
-    mode: ExploreMode.Metrics,
     latency: 1,
   };
 
@@ -33,34 +32,9 @@ const setup = (propOverrides?: object) => {
   return wrapper;
 };
 
-const ExploreMetricsQueryField = () => <div />;
-const ExploreLogsQueryField = () => <div />;
-const ExploreQueryField = () => <div />;
 const QueryEditor = () => <div />;
 
 describe('QueryRow', () => {
-  describe('if datasource has all query field components ', () => {
-    const allComponents = {
-      ExploreMetricsQueryField,
-      ExploreLogsQueryField,
-      ExploreQueryField,
-      QueryEditor,
-    };
-
-    it('it should render ExploreMetricsQueryField in metrics mode', () => {
-      const wrapper = setup({ mode: ExploreMode.Metrics, datasourceInstance: { components: allComponents } });
-      expect(wrapper.find(ExploreMetricsQueryField)).toHaveLength(1);
-    });
-    it('it should render ExploreLogsQueryField in logs mode', () => {
-      const wrapper = setup({ mode: ExploreMode.Logs, datasourceInstance: { components: allComponents } });
-      expect(wrapper.find(ExploreLogsQueryField)).toHaveLength(1);
-    });
-    it('it should render ExploreQueryField in tracing mode', () => {
-      const wrapper = setup({ mode: ExploreMode.Tracing, datasourceInstance: { components: allComponents } });
-      expect(wrapper.find(ExploreQueryField)).toHaveLength(1);
-    });
-  });
-
   describe('if datasource does not have Explore query fields ', () => {
     it('it should render QueryEditor if datasource has it', () => {
       const wrapper = setup({ datasourceInstance: { components: { QueryEditor } } });

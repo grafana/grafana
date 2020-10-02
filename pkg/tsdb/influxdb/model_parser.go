@@ -139,7 +139,6 @@ func (*InfluxdbQueryParser) parseQueryPart(model *simplejson.Json) (*QueryPart, 
 		}
 
 		return nil, err
-
 	}
 
 	qp, err := NewQueryPart(typ, params)
@@ -152,14 +151,13 @@ func (*InfluxdbQueryParser) parseQueryPart(model *simplejson.Json) (*QueryPart, 
 
 func (qp *InfluxdbQueryParser) parseGroupBy(model *simplejson.Json) ([]*QueryPart, error) {
 	var result []*QueryPart
-
 	for _, groupObj := range model.Get("groupBy").MustArray() {
 		groupJson := simplejson.NewFromAny(groupObj)
 		queryPart, err := qp.parseQueryPart(groupJson)
-
 		if err != nil {
 			return nil, err
 		}
+
 		result = append(result, queryPart)
 	}
 

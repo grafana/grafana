@@ -4,13 +4,12 @@ import {
   FieldConfig,
   Field,
   DataFrame,
-  VariableSuggestionsScope,
-  VariableSuggestion,
   GrafanaTheme,
   TimeZone,
+  DataSourceInstanceSettings,
 } from '../types';
 import { InterpolateFunction } from './panel';
-import { StandardEditorProps, FieldConfigOptionsRegistry } from '../field';
+import { StandardEditorProps, FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 
 export interface DynamicConfigValue {
@@ -31,17 +30,14 @@ export interface FieldConfigSource<TOptions extends object = any> {
   overrides: ConfigOverrideRule[];
 }
 
-export interface FieldOverrideContext {
+export interface FieldOverrideContext extends StandardEditorContext<any> {
   field?: Field;
   dataFrameIndex?: number; // The index for the selected field frame
   data: DataFrame[]; // All results
-  replaceVariables?: InterpolateFunction;
-  getSuggestions?: (scope?: VariableSuggestionsScope) => VariableSuggestion[];
 }
-
 export interface FieldConfigEditorProps<TValue, TSettings>
   extends Omit<StandardEditorProps<TValue, TSettings>, 'item'> {
-  item: FieldConfigPropertyItem<TValue, TSettings>; // The property info
+  item: FieldConfigPropertyItem<any, TValue, TSettings>; // The property info
   value: TValue;
   context: FieldOverrideContext;
   onChange: (value?: TValue) => void;
@@ -118,6 +114,7 @@ export interface ApplyFieldOverrideOptions {
   data?: DataFrame[];
   fieldConfig: FieldConfigSource;
   replaceVariables: InterpolateFunction;
+  getDataSourceSettingsByUid: (uid: string) => DataSourceInstanceSettings | undefined;
   theme: GrafanaTheme;
   timeZone?: TimeZone;
   autoMinMax?: boolean;
@@ -129,7 +126,7 @@ export enum FieldConfigProperty {
   Min = 'min',
   Max = 'max',
   Decimals = 'decimals',
-  Title = 'title',
+  DisplayName = 'displayName',
   NoValue = 'noValue',
   Thresholds = 'thresholds',
   Mappings = 'mappings',

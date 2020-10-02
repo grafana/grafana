@@ -7,15 +7,19 @@ import { useDashboardSearch } from '../hooks/useDashboardSearch';
 import { SearchField } from './SearchField';
 import { SearchResults } from './SearchResults';
 import { ActionRow } from './ActionRow';
+import { connectWithRouteParams, ConnectProps, DispatchProps } from '../connect';
 
-export interface Props {
+export interface OwnProps {
   onCloseSearch: () => void;
-  folder?: string;
 }
 
-export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
-  const payload = folder ? { query: `folder:${folder} ` } : {};
-  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery(payload);
+export type Props = OwnProps & ConnectProps & DispatchProps;
+
+export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, params, updateLocation }) => {
+  const { query, onQueryChange, onTagFilterChange, onTagAdd, onSortChange, onLayoutChange } = useSearchQuery(
+    params,
+    updateLocation
+  );
   const { results, loading, onToggleSection, onKeyDown } = useDashboardSearch(query, onCloseSearch);
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -53,6 +57,8 @@ export const DashboardSearch: FC<Props> = memo(({ onCloseSearch, folder }) => {
     </div>
   );
 });
+
+export default connectWithRouteParams(DashboardSearch);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {

@@ -167,7 +167,6 @@ func TestUserAuth(t *testing.T) {
 			So(getAuthQuery.Result.OAuthAccessToken, ShouldEqual, token.AccessToken)
 			So(getAuthQuery.Result.OAuthRefreshToken, ShouldEqual, token.RefreshToken)
 			So(getAuthQuery.Result.OAuthTokenType, ShouldEqual, token.TokenType)
-
 		})
 
 		Convey("Always return the most recently used auth_module", func() {

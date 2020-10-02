@@ -154,7 +154,10 @@ func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDT
 }
 
 func (e *GraphiteExecutor) createRequest(dsInfo *models.DataSource, data url.Values) (*http.Request, error) {
-	u, _ := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.Url)
+	if err != nil {
+		return nil, err
+	}
 	u.Path = path.Join(u.Path, "render")
 
 	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(data.Encode()))
@@ -175,17 +178,17 @@ func formatTimeRange(input string) string {
 	if input == "now" {
 		return input
 	}
-	return strings.Replace(strings.Replace(strings.Replace(input, "now", "", -1), "m", "min", -1), "M", "mon", -1)
+	return strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(input, "now", ""), "m", "min"), "M", "mon")
 }
 
 func fixIntervalFormat(target string) string {
 	rMinute := regexp.MustCompile(`'(\d+)m'`)
 	target = rMinute.ReplaceAllStringFunc(target, func(m string) string {
-		return strings.Replace(m, "m", "min", -1)
+		return strings.ReplaceAll(m, "m", "min")
 	})
 	rMonth := regexp.MustCompile(`'(\d+)M'`)
 	target = rMonth.ReplaceAllStringFunc(target, func(M string) string {
-		return strings.Replace(M, "M", "mon", -1)
+		return strings.ReplaceAll(M, "M", "mon")
 	})
 	return target
 }

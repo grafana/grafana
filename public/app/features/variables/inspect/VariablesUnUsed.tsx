@@ -2,8 +2,6 @@ import React, { FC, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { StoreState } from '../../../types';
 import { getVariables } from '../state/selectors';
-import { VariableModel } from '../../templating/types';
-import { DashboardModel } from '../../dashboard/state';
 import { createUsagesNetwork } from './utils';
 import { FeatureInfoBox, Icon } from '@grafana/ui';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
@@ -21,8 +19,8 @@ interface DispatchProps {}
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export const VariablesUnUsed: FC<Props> = ({ onEditClick, onRemoveVariable }) => {
-  const variables: VariableModel[] = useSelector((state: StoreState) => getVariables(state));
-  const dashboard: DashboardModel = useSelector((state: StoreState) => state.dashboard.getModel());
+  const variables = useSelector((state: StoreState) => getVariables(state));
+  const dashboard = useSelector((state: StoreState) => state.dashboard.getModel());
   const { unUsed } = useMemo(() => createUsagesNetwork(variables, dashboard), [variables, dashboard]);
 
   return (

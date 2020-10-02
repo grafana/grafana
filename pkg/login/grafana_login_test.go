@@ -23,7 +23,7 @@ func TestGrafanaLogin(t *testing.T) {
 				So(sc.validatePasswordCalled, ShouldBeFalse)
 			})
 
-			Convey("it should not pupulate user object", func() {
+			Convey("it should not populate user object", func() {
 				So(sc.loginUserQuery.User, ShouldBeNil)
 			})
 		})
@@ -40,7 +40,7 @@ func TestGrafanaLogin(t *testing.T) {
 				So(sc.validatePasswordCalled, ShouldBeTrue)
 			})
 
-			Convey("it should not pupulate user object", func() {
+			Convey("it should not populate user object", func() {
 				So(sc.loginUserQuery.User, ShouldBeNil)
 			})
 		})
@@ -57,7 +57,7 @@ func TestGrafanaLogin(t *testing.T) {
 				So(sc.validatePasswordCalled, ShouldBeTrue)
 			})
 
-			Convey("it should pupulate user object", func() {
+			Convey("it should populate user object", func() {
 				So(sc.loginUserQuery.User, ShouldNotBeNil)
 				So(sc.loginUserQuery.User.Login, ShouldEqual, sc.loginUserQuery.Username)
 				So(sc.loginUserQuery.User.Password, ShouldEqual, sc.loginUserQuery.Password)
@@ -76,7 +76,7 @@ func TestGrafanaLogin(t *testing.T) {
 				So(sc.validatePasswordCalled, ShouldBeFalse)
 			})
 
-			Convey("it should not pupulate user object", func() {
+			Convey("it should not populate user object", func() {
 				So(sc.loginUserQuery.User, ShouldBeNil)
 			})
 		})

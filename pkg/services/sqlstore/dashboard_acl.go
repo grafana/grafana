@@ -73,9 +73,7 @@ func GetDashboardAclInfoList(query *models.GetDashboardAclInfoListQuery) error {
 		WHERE da.dashboard_id = -1`
 		query.Result = make([]*models.DashboardAclInfoDTO, 0)
 		err = x.SQL(sql).Find(&query.Result)
-
 	} else {
-
 		rawSQL := `
 			-- get permissions for the dashboard and its parent folder
 			SELECT

@@ -1,9 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import {
-  DashboardInitPhase,
-  DashboardState,
   DashboardAclDTO,
   DashboardInitError,
+  DashboardInitPhase,
+  DashboardState,
   PanelState,
   QueriesToUpdateOnDashboardLoad,
 } from 'app/types';

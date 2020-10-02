@@ -85,7 +85,7 @@
         }
       ],
       "thresholds": "5,10",
-      "title": "prefix 3 ms (green) postfixt + sparkline",
+      "title": "prefix 3 ms (green) postfix + sparkline",
       "type": "singlestat",
       "valueFontSize": "80%",
       "valueMaps": [

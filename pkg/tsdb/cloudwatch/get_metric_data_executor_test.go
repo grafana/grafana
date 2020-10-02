@@ -35,7 +35,7 @@ func (client *cloudWatchFakeClient) GetMetricDataWithContext(ctx aws.Context, in
 }
 
 func TestGetMetricDataExecutorTest(t *testing.T) {
-	executor := &CloudWatchExecutor{}
+	executor := &cloudWatchExecutor{}
 	inputs := &cloudwatch.GetMetricDataInput{MetricDataQueries: []*cloudwatch.MetricDataQuery{}}
 	res, err := executor.executeRequest(context.Background(), &cloudWatchFakeClient{}, inputs)
 	require.NoError(t, err)

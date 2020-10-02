@@ -8,7 +8,7 @@ import { CloudWatchDatasource } from '../datasource';
 
 interface Props {
   query: CloudWatchLogsQuery;
-  panelData: PanelData;
+  panelData?: PanelData;
   datasource: CloudWatchDatasource;
 }
 
@@ -18,8 +18,12 @@ interface State {
 
 export default class CloudWatchLink extends Component<Props, State> {
   state: State = { href: '' };
+
   async componentDidUpdate(prevProps: Props) {
-    if (prevProps.panelData !== this.props.panelData && this.props.panelData.request) {
+    const { panelData: panelDataNew } = this.props;
+    const { panelData: panelDataOld } = prevProps;
+
+    if (panelDataOld !== panelDataNew && panelDataNew?.request) {
       const href = this.getExternalLink();
       this.setState({ href });
     }
@@ -42,9 +46,9 @@ export default class CloudWatchLink extends Component<Props, State> {
       start,
       timeType: 'ABSOLUTE',
       tz: 'UTC',
-      editorString: query.expression,
+      editorString: query.expression ?? '',
       isLiveTail: false,
-      source: query.logGroupNames,
+      source: query.logGroupNames ?? [],
     };
 
     return encodeUrl(urlProps, datasource.getActualRegion(query.region));

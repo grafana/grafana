@@ -13,9 +13,8 @@
 // limitations under the License.
 
 import { ApiError } from './api-error';
-import { Trace } from './trace';
+import { Trace } from '@grafana/data';
 
-export * from './trace';
 export { default as TTraceTimeline } from './TTraceTimeline';
 export { default as TNil } from './TNil';
 

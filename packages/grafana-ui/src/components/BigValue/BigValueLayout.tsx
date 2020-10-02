@@ -4,11 +4,11 @@ import tinycolor from 'tinycolor2';
 import { Chart, Geom } from 'bizcharts';
 
 // Utils
-import { getColorFromHexRgbOrName, formattedValueToString } from '@grafana/data';
+import { getColorFromHexRgbOrName, formattedValueToString, DisplayValue } from '@grafana/data';
 import { calculateFontSize } from '../../utils/measureText';
 
 // Types
-import { BigValueColorMode, Props, BigValueJustifyMode } from './BigValue';
+import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
@@ -25,16 +25,17 @@ export abstract class BigValueLayout {
   valueToAlignTo: string;
   maxTextWidth: number;
   maxTextHeight: number;
+  textValues: BigValueTextValues;
 
   constructor(private props: Props) {
-    const { width, height, value, alignmentFactors, theme } = props;
+    const { width, height, value, theme } = props;
 
     this.valueColor = getColorFromHexRgbOrName(value.color || 'green', theme.type);
-    this.justifyCenter = shouldJustifyCenter(props);
     this.panelPadding = height > 100 ? 12 : 8;
-    this.titleToAlignTo = alignmentFactors ? alignmentFactors.title : value.title;
-    this.valueToAlignTo = formattedValueToString(alignmentFactors ? alignmentFactors : value);
-
+    this.textValues = getTextValues(props);
+    this.justifyCenter = shouldJustifyCenter(props.justifyMode, this.textValues.title);
+    this.valueToAlignTo = this.textValues.valueToAlignTo;
+    this.titleToAlignTo = this.textValues.titleToAlignTo;
     this.titleFontSize = 14;
     this.valueFontSize = 14;
     this.chartHeight = 0;
@@ -364,7 +365,7 @@ export class StackedWithChartLayout extends BigValueLayout {
     // make title fontsize it's a bit smaller than valueFontSize
     this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
 
-    // make chart take up onused space
+    // make chart take up unused space
     this.chartHeight = height - this.titleFontSize * LINE_HEIGHT - this.valueFontSize * LINE_HEIGHT;
   }
 
@@ -447,10 +448,68 @@ export function buildLayout(props: Props): BigValueLayout {
   }
 }
 
-export function shouldJustifyCenter(props: Props) {
-  const { value, justifyMode } = props;
+export function shouldJustifyCenter(justifyMode?: BigValueJustifyMode, title?: string) {
   if (justifyMode === BigValueJustifyMode.Center) {
     return true;
   }
-  return (value.title ?? '').length === 0;
+
+  return (title ?? '').length === 0;
+}
+
+export interface BigValueTextValues extends DisplayValue {
+  valueToAlignTo: string;
+  titleToAlignTo?: string;
+  tooltip?: string;
+}
+
+function getTextValues(props: Props): BigValueTextValues {
+  const { value, alignmentFactors, count } = props;
+  let { textMode } = props;
+
+  const titleToAlignTo = alignmentFactors ? alignmentFactors.title : value.title;
+  const valueToAlignTo = formattedValueToString(alignmentFactors ? alignmentFactors : value);
+
+  // In the auto case we only show title if this big value is part of more panes (count > 1)
+  if (textMode === BigValueTextMode.Auto && (count ?? 1) === 1) {
+    textMode = BigValueTextMode.Value;
+  }
+
+  switch (textMode) {
+    case BigValueTextMode.Name:
+      return {
+        ...value,
+        title: undefined,
+        prefix: undefined,
+        suffix: undefined,
+        text: value.title || '',
+        titleToAlignTo: undefined,
+        valueToAlignTo: titleToAlignTo ?? '',
+        tooltip: formattedValueToString(value),
+      };
+    case BigValueTextMode.Value:
+      return {
+        ...value,
+        title: undefined,
+        titleToAlignTo: undefined,
+        valueToAlignTo,
+        tooltip: value.title,
+      };
+    case BigValueTextMode.None:
+      return {
+        numeric: value.numeric,
+        color: value.color,
+        title: undefined,
+        text: '',
+        titleToAlignTo: undefined,
+        valueToAlignTo: '1',
+        tooltip: `Name: ${value.title}\nValue: ${formattedValueToString(value)}`,
+      };
+    case BigValueTextMode.ValueAndName:
+    default:
+      return {
+        ...value,
+        titleToAlignTo,
+        valueToAlignTo,
+      };
+  }
 }

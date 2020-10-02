@@ -92,25 +92,25 @@ describe('ElasticQueryDef', () => {
   describe('pipeline aggs depending on esverison', () => {
     describe('using esversion undefined', () => {
       test('should not get pipeline aggs', () => {
-        expect(queryDef.getMetricAggTypes(undefined).length).toBe(10);
+        expect(queryDef.getMetricAggTypes(undefined).length).toBe(11);
       });
     });
 
     describe('using esversion 1', () => {
       test('should not get pipeline aggs', () => {
-        expect(queryDef.getMetricAggTypes(1).length).toBe(10);
+        expect(queryDef.getMetricAggTypes(1).length).toBe(11);
       });
     });
 
     describe('using esversion 2', () => {
       test('should get pipeline aggs', () => {
-        expect(queryDef.getMetricAggTypes(2).length).toBe(13);
+        expect(queryDef.getMetricAggTypes(2).length).toBe(15);
       });
     });
 
     describe('using esversion 5', () => {
       test('should get pipeline aggs', () => {
-        expect(queryDef.getMetricAggTypes(5).length).toBe(13);
+        expect(queryDef.getMetricAggTypes(5).length).toBe(15);
       });
     });
   });

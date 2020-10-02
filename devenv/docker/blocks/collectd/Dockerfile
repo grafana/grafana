@@ -10,7 +10,7 @@ ADD     etc_mtab /etc/mtab
 
 ADD     collectd.conf.tpl /etc/collectd/collectd.conf.tpl
 
-RUN	pip install envtpl
+RUN	pip install --no-cache-dir envtpl
 ADD     start_container /usr/bin/start_container
 RUN     chmod +x /usr/bin/start_container
 CMD     start_container

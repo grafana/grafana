@@ -36,7 +36,7 @@ General features are included in all Grafana editions.
 
 Query history is a new feature that lets you view and interact with the queries that you have previously run in Explore. You can add queries to the Explore query editor,  write comments, create and share URL links, star your favorite queries, and much more. Starred queries are displayed in Starred tab, so it is easier to reuse queries that you run often without typing them from scratch.
 
-Learn more about query history in [Explore]({{< relref "../features/explore" >}}).
+Learn more about query history in [Explore]({{< relref "../explore" >}}).
 
 {{< docs-imagebox img="/img/docs/v67/rich-history.gif" max-width="1024px" caption="Query history" >}}
 
@@ -47,7 +47,7 @@ Grafana v6.7 comes with a new OAuth integration for Microsoft Azure Active Direc
 
 Allowing a low dashboard refresh interval can cause severe load on data sources and Grafana. Grafana v6.7 allows you to restrict the dashboard refresh interval so it cannot be set lower than a given interval. This provides a way for administrators to control dashboard refresh behavior on a global level.
 
-Refer to min_refresh_interval in [Configuration]({{< relref "../installation/configuration#min-refresh-interval" >}}) for more information and how to enable this feature.
+Refer to min_refresh_interval in [Configuration]({{< relref "../administration/configuration#min-refresh-interval" >}}) for more information and how to enable this feature.
 
 ### Stackdriver project selector
 

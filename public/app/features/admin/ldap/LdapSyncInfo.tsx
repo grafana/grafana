@@ -19,7 +19,6 @@ export class LdapSyncInfo extends PureComponent<Props, State> {
   };
 
   handleSyncClick = () => {
-    console.log('Bulk-sync now');
     this.setState({ isSyncing: !this.state.isSyncing });
   };
 

@@ -2,8 +2,6 @@ import React, { FC, useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { StoreState } from '../../../types';
 import { getVariables } from '../state/selectors';
-import { VariableModel } from '../../templating/types';
-import { DashboardModel } from '../../dashboard/state';
 import { createUsagesNetwork, transformUsagesToNetwork, UsagesToNetwork } from './utils';
 import { FeatureInfoBox, Icon, LinkButton } from '@grafana/ui';
 import { FeatureState } from '@grafana/data';
@@ -18,8 +16,8 @@ interface DispatchProps {}
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export const VariablesUnknownGraph: FC<Props> = props => {
-  const variables: VariableModel[] = useSelector((state: StoreState) => getVariables(state));
-  const dashboard: DashboardModel = useSelector((state: StoreState) => state.dashboard.getModel());
+  const variables = useSelector((state: StoreState) => getVariables(state));
+  const dashboard = useSelector((state: StoreState) => state.dashboard.getModel());
   const { unknown } = useMemo(() => createUsagesNetwork(variables, dashboard), [variables, dashboard]);
   const [networks, setNetWorks] = useState(transformUsagesToNetwork(unknown));
   const onToggleGraph = useCallback(

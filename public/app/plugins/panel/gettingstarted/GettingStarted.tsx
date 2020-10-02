@@ -68,7 +68,9 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     const { id } = this.props;
     const dashboard = getDashboardSrv().getCurrent();
     const panel = dashboard.getPanelById(id);
-    dashboard.removePanel(panel);
+
+    dashboard.removePanel(panel!);
+
     backendSrv
       .request({
         method: 'PUT',

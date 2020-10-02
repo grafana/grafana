@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -483,6 +483,112 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			movingAvgAgg := firstLevel.Aggregation.Aggs[1]
 			So(movingAvgAgg.Key, ShouldEqual, "2")
 			plAgg := movingAvgAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			So(plAgg.BucketPath, ShouldEqual, "3")
+		})
+
+		Convey("With cumulative sum", func() {
+			c := newFakeClient(5)
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
+				],
+				"metrics": [
+					{ "id": "3", "type": "sum", "field": "@value" },
+					{
+						"id": "2",
+						"type": "cumulative_sum",
+						"field": "3",
+						"pipelineAgg": "3"
+					}
+				]
+			}`, from, to, 15*time.Second)
+			So(err, ShouldBeNil)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			So(firstLevel.Key, ShouldEqual, "4")
+			So(firstLevel.Aggregation.Type, ShouldEqual, "date_histogram")
+			So(firstLevel.Aggregation.Aggs, ShouldHaveLength, 2)
+
+			sumAgg := firstLevel.Aggregation.Aggs[0]
+			So(sumAgg.Key, ShouldEqual, "3")
+			So(sumAgg.Aggregation.Type, ShouldEqual, "sum")
+			mAgg := sumAgg.Aggregation.Aggregation.(*es.MetricAggregation)
+			So(mAgg.Field, ShouldEqual, "@value")
+
+			cumulativeSumAgg := firstLevel.Aggregation.Aggs[1]
+			So(cumulativeSumAgg.Key, ShouldEqual, "2")
+			So(cumulativeSumAgg.Aggregation.Type, ShouldEqual, "cumulative_sum")
+			pl := cumulativeSumAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			So(pl.BucketPath, ShouldEqual, "3")
+		})
+
+		Convey("With cumulative sum doc count", func() {
+			c := newFakeClient(5)
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
+				],
+				"metrics": [
+					{ "id": "3", "type": "count", "field": "select field" },
+					{
+						"id": "2",
+						"type": "cumulative_sum",
+						"field": "3",
+						"pipelineAgg": "3"
+					}
+				]
+			}`, from, to, 15*time.Second)
+			So(err, ShouldBeNil)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			So(firstLevel.Key, ShouldEqual, "4")
+			So(firstLevel.Aggregation.Type, ShouldEqual, "date_histogram")
+			So(firstLevel.Aggregation.Aggs, ShouldHaveLength, 1)
+
+			cumulativeSumAgg := firstLevel.Aggregation.Aggs[0]
+			So(cumulativeSumAgg.Key, ShouldEqual, "2")
+			So(cumulativeSumAgg.Aggregation.Type, ShouldEqual, "cumulative_sum")
+			pl := cumulativeSumAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			So(pl.BucketPath, ShouldEqual, "_count")
+		})
+
+		Convey("With broken cumulative sum", func() {
+			c := newFakeClient(5)
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "5" }
+				],
+				"metrics": [
+					{ "id": "3", "type": "sum", "field": "@value" },
+					{
+						"id": "2",
+						"type": "cumulative_sum",
+						"pipelineAgg": "3"
+					},
+					{
+						"id": "4",
+						"type": "cumulative_sum",
+						"pipelineAgg": "Metric to apply cumulative sum"
+					}
+				]
+			}`, from, to, 15*time.Second)
+			So(err, ShouldBeNil)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			So(firstLevel.Key, ShouldEqual, "5")
+			So(firstLevel.Aggregation.Type, ShouldEqual, "date_histogram")
+
+			So(firstLevel.Aggregation.Aggs, ShouldHaveLength, 2)
+
+			cumulativeSumAgg := firstLevel.Aggregation.Aggs[1]
+			So(cumulativeSumAgg.Key, ShouldEqual, "2")
+			plAgg := cumulativeSumAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
 			So(plAgg.BucketPath, ShouldEqual, "3")
 		})
 

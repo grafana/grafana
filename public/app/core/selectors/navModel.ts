@@ -1,6 +1,6 @@
 import { NavModel, NavModelItem, NavIndex } from '@grafana/data';
 
-function getNotFoundModel(): NavModel {
+const getNotFoundModel = (): NavModel => {
   const node: NavModelItem = {
     id: 'not-found',
     text: 'Page not found',
@@ -13,9 +13,9 @@ function getNotFoundModel(): NavModel {
     node: node,
     main: node,
   };
-}
+};
 
-export function getNavModel(navIndex: NavIndex, id: string, fallback?: NavModel, onlyChild = false): NavModel {
+export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel, onlyChild = false): NavModel => {
   if (navIndex[id]) {
     const node = navIndex[id];
 
@@ -36,8 +36,8 @@ export function getNavModel(navIndex: NavIndex, id: string, fallback?: NavModel,
     }
 
     return {
-      node: node,
-      main: main,
+      node,
+      main,
     };
   }
 
@@ -46,7 +46,7 @@ export function getNavModel(navIndex: NavIndex, id: string, fallback?: NavModel,
   }
 
   return getNotFoundModel();
-}
+};
 
 export const getTitleFromNavModel = (navModel: NavModel) => {
   return `${navModel.main.text}${navModel.node.text ? ': ' + navModel.node.text : ''}`;

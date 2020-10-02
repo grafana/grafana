@@ -6,7 +6,7 @@ import PageLoader from '../PageLoader/PageLoader';
 
 interface Props {
   isLoading?: boolean;
-  children: JSX.Element[] | JSX.Element;
+  children: React.ReactNode;
 }
 
 class PageContents extends Component<Props> {

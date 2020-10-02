@@ -1,6 +1,7 @@
 import { Labels } from './data';
 import { GraphSeriesXY } from './graph';
 import { DataFrame } from './dataFrame';
+import { AbsoluteTimeRange } from './time';
 
 /**
  * Mapping of log level abbreviation to canonical log level.
@@ -30,6 +31,11 @@ export enum LogsMetaKind {
   Number,
   String,
   LabelsMap,
+}
+
+export enum LogsSortOrder {
+  Descending = 'Descending',
+  Ascending = 'Ascending',
 }
 
 export interface LogsMetaItem {
@@ -74,6 +80,7 @@ export interface LogsModel {
   meta?: LogsMetaItem[];
   rows: LogRowModel[];
   series?: GraphSeriesXY[];
+  visibleRange?: AbsoluteTimeRange;
 }
 
 export interface LogSearchMatch {

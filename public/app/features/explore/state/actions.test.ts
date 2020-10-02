@@ -1,28 +1,17 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { DataQuery, DefaultTimeZone, ExploreMode, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/data';
+import { DataQuery, DefaultTimeZone, toUtc, ExploreUrlState } from '@grafana/data';
 
-import * as Actions from './actions';
-import {
-  changeDatasource,
-  loadDatasource,
-  navigateToExplore,
-  refreshExplore,
-  cancelQueries,
-  changeMode,
-} from './actions';
-import { ExploreId, ExploreUpdateState, ExploreUrlState } from 'app/types';
+import { cancelQueries, loadDatasource, navigateToExplore, refreshExplore } from './actions';
+import { ExploreId, ExploreUpdateState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
+  cancelQueriesAction,
   initializeExploreAction,
   InitializeExplorePayload,
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
-  setQueriesAction,
-  updateDatasourceInstanceAction,
-  updateUIStateAction,
-  cancelQueriesAction,
   scanStopAction,
-  changeModeAction,
+  setQueriesAction,
 } from './actionTypes';
 import { Emitter } from 'app/core/core';
 import { makeInitialUpdateState } from './reducers';
@@ -65,23 +54,20 @@ const testRange = {
   },
 };
 jest.mock('app/core/utils/explore', () => ({
-  ...jest.requireActual('app/core/utils/explore'),
-  getTimeRangeFromUrl: (range: RawTimeRange) => testRange,
+  ...((jest.requireActual('app/core/utils/explore') as unknown) as object),
+  getTimeRangeFromUrl: (range: any) => testRange,
 }));
 
 const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
   const exploreId = ExploreId.left;
   const containerWidth = 1920;
   const eventBridge = {} as Emitter;
-  const ui = { dedupStrategy: LogsDedupStrategy.none, showingGraph: false, showingLogs: false, showingTable: false };
   const timeZone = DefaultTimeZone;
   const range = testRange;
   const urlState: ExploreUrlState = {
     datasource: 'some-datasource',
     queries: [],
     range: range.raw,
-    mode: ExploreMode.Metrics,
-    ui,
   };
   const updateDefaults = makeInitialUpdateState();
   const update = { ...updateDefaults, ...updateOverides };
@@ -100,7 +86,6 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
         datasourceInstance: { name: 'some-datasource' },
         queries: [] as DataQuery[],
         range,
-        ui,
         refreshInterval: {
           label: 'Off',
           value: 0,
@@ -113,7 +98,6 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
     initialState,
     exploreId,
     range,
-    ui,
     containerWidth,
     eventBridge,
   };
@@ -123,7 +107,7 @@ describe('refreshExplore', () => {
   describe('when explore is initialized', () => {
     describe('and update datasource is set', () => {
       it('then it should dispatch initializeExplore', async () => {
-        const { exploreId, ui, initialState, containerWidth, eventBridge } = setup({ datasource: true });
+        const { exploreId, initialState, containerWidth, eventBridge } = setup({ datasource: true });
 
         const dispatchedActions = await thunkTester(initialState)
           .givenThunk(refreshExplore)
@@ -140,20 +124,6 @@ describe('refreshExplore', () => {
         expect(payload.range.to).toEqual(testRange.to);
         expect(payload.range.raw.from).toEqual(testRange.raw.from);
         expect(payload.range.raw.to).toEqual(testRange.raw.to);
-        expect(payload.ui).toEqual(ui);
-      });
-    });
-
-    describe('and update ui is set', () => {
-      it('then it should dispatch updateUIStateAction', async () => {
-        const { exploreId, initialState, ui } = setup({ ui: true });
-
-        const dispatchedActions = await thunkTester(initialState)
-          .givenThunk(refreshExplore)
-          .whenThunkIsDispatched(exploreId);
-
-        expect(dispatchedActions[0].type).toEqual(updateUIStateAction.type);
-        expect(dispatchedActions[0].payload).toEqual({ ...ui, exploreId });
       });
     });
 
@@ -219,62 +189,6 @@ describe('running queries', () => {
   });
 });
 
-describe('changing datasource', () => {
-  it('should switch to logs mode when changing from prometheus to loki', async () => {
-    const lokiMock = {
-      testDatasource: () => Promise.resolve({ status: 'success' }),
-      name: 'Loki',
-      init: jest.fn(),
-      meta: { id: 'some id', name: 'Loki' },
-    };
-
-    getDatasourceSrvMock.mockImplementation(
-      () =>
-        ({
-          getExternal: jest.fn().mockReturnValue([]),
-          get: jest.fn().mockReturnValue(lokiMock),
-        } as any)
-    );
-
-    const exploreId = ExploreId.left;
-    const name = 'Prometheus';
-    const mockPromDatasourceInstance = {
-      testDatasource: () => Promise.resolve({ status: 'success' }),
-      name,
-      init: jest.fn(),
-      meta: { id: 'some id', name },
-    };
-
-    const initialState = {
-      explore: {
-        [exploreId]: {
-          requestedDatasourceName: 'Loki',
-          datasourceInstance: mockPromDatasourceInstance,
-        },
-      },
-      user: {
-        orgId: 1,
-      },
-    };
-
-    jest.spyOn(Actions, 'importQueries').mockImplementationOnce(() => jest.fn);
-    jest.spyOn(Actions, 'loadDatasource').mockImplementationOnce(() => jest.fn);
-    jest.spyOn(Actions, 'runQueries').mockImplementationOnce(() => jest.fn);
-    const dispatchedActions = await thunkTester(initialState)
-      .givenThunk(changeDatasource)
-      .whenThunkIsDispatched(exploreId, name);
-
-    expect(dispatchedActions).toEqual([
-      updateDatasourceInstanceAction({
-        exploreId,
-        datasourceInstance: lokiMock as any,
-        version: undefined,
-        mode: ExploreMode.Logs,
-      }),
-    ]);
-  });
-});
-
 describe('loading datasource', () => {
   describe('when loadDatasource thunk is dispatched', () => {
     describe('and all goes fine', () => {
@@ -334,35 +248,13 @@ describe('loading datasource', () => {
   });
 });
 
-describe('changing mode', () => {
-  it('should trigger changeModeAction and updateLocation', async () => {
-    const { exploreId, initialState, range } = setup();
-    const dispatchedActions = await thunkTester(initialState)
-      .givenThunk(changeMode)
-      .whenThunkIsDispatched(exploreId, ExploreMode.Logs);
-    const rawTimeRange = Actions.toRawTimeRange(range);
-    const leftQuery = JSON.stringify([
-      rawTimeRange.from,
-      rawTimeRange.to,
-      initialState.explore.left.datasourceInstance.name,
-      {},
-      { ui: [false, true, false, null] },
-    ]);
-
-    expect(dispatchedActions).toEqual([
-      changeModeAction({ exploreId, mode: ExploreMode.Logs }),
-      updateLocation({ query: { left: leftQuery, orgId: '1' }, replace: false }),
-    ]);
-  });
-});
-
 const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => void) => {
   const url = 'http://www.someurl.com';
   const panel: Partial<PanelModel> = {
     datasource: 'mocked datasource',
     targets: [{ refId: 'A' }],
   };
-  const datasource = new MockDataSourceApi(panel.datasource);
+  const datasource = new MockDataSourceApi(panel.datasource!);
   const get = jest.fn().mockResolvedValue(datasource);
   const getDataSourceSrv = jest.fn().mockReturnValue({ get });
   const getTimeSrv = jest.fn();

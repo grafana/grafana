@@ -39,7 +39,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr ng-repeat="link in ctrl.dashboard.links">
+        <tr ng-repeat="link in ctrl.dashboard.links track by $index">
           <td class="pointer" ng-click="ctrl.editLink(link)">
             <icon name="'external-link-alt'"></icon>
             {{ link.type }}
@@ -68,8 +68,13 @@
             <icon ng-click="ctrl.moveLink($index, 1)" ng-hide="$last" name="'arrow-down'"></icon>
           </td>
           <td style="width: 1%">
-            <a ng-click="ctrl.deleteLink($index)" class="btn btn-danger btn-small" ng-hide="annotation.builtIn">
-              <icon name="'times'" style="margin-bottom: 0;"></icon>
+            <a ng-click="ctrl.duplicateLink(link, $index)" class="btn">
+              <icon name="'copy'" style="margin-bottom: 0;"></icon>
+            </a>
+          </td>
+          <td style="width: 1%">
+            <a ng-click="ctrl.deleteLink($index)" class="btn" ng-hide="annotation.builtIn">
+              <icon name="'trash-alt'" style="margin-bottom: 0;"></icon>
             </a>
           </td>
         </tr>

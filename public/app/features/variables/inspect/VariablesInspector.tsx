@@ -10,7 +10,6 @@ import { VariablesDependencies } from './VariablesDependencies';
 import { VariablesUnUsed } from './VariablesUnUsed';
 import { VariablesUsagesGraph } from './VariablesUsagesGraph';
 import { VariablesUnknownGraph } from './VariablesUnknownGraph';
-import { DashboardModel } from '../../dashboard/state';
 import { StoreState } from '../../../types';
 
 interface OwnProps {
@@ -39,7 +38,7 @@ enum VariableTabs {
 type TabType = { id: string; text: string; active: boolean };
 
 const UnProvidedVariablesInspector: FC<Props> = props => {
-  const dashboard: DashboardModel = useSelector((state: StoreState) => state.dashboard.getModel());
+  const dashboard = useSelector((state: StoreState) => state.dashboard.getModel());
   const [tabs, setTabs] = useState<TabType[]>([
     { id: VariableTabs.Variables, text: 'List', active: true },
     { id: VariableTabs.Dependencies, text: 'Dependencies', active: false },
@@ -77,7 +76,9 @@ const UnProvidedVariablesInspector: FC<Props> = props => {
         ))}
       </TabsBar>
       <TabContent>
-        {activeTab.id === VariableTabs.Variables && <VariableEditorList {...props} dashboard={dashboard} />}
+        {activeTab.id === VariableTabs.Variables && dashboard && (
+          <VariableEditorList {...props} dashboard={dashboard} />
+        )}
         {activeTab.id === VariableTabs.Dependencies && <VariablesDependencies {...props} />}
         {activeTab.id === VariableTabs.Usages && <VariablesUsagesGraph {...props} />}
         {activeTab.id === VariableTabs.UnUsed && <VariablesUnUsed {...props} />}

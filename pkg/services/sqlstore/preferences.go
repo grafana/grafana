@@ -10,15 +10,16 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func init() {
+func (ss *SqlStore) addPreferencesQueryAndCommandHandlers() {
 	bus.AddHandler("sql", GetPreferences)
-	bus.AddHandler("sql", GetPreferencesWithDefaults)
+	bus.AddHandler("sql", ss.GetPreferencesWithDefaults)
 	bus.AddHandler("sql", SavePreferences)
 }
 
-func GetPreferencesWithDefaults(query *models.GetPreferencesWithDefaultsQuery) error {
+func (ss *SqlStore) GetPreferencesWithDefaults(query *models.GetPreferencesWithDefaultsQuery) error {
 	params := make([]interface{}, 0)
 	filter := ""
+
 	if len(query.User.Teams) > 0 {
 		filter = "(org_id=? AND team_id IN (?" + strings.Repeat(",?", len(query.User.Teams)-1) + ")) OR "
 		params = append(params, query.User.OrgId)
@@ -26,6 +27,7 @@ func GetPreferencesWithDefaults(query *models.GetPreferencesWithDefaultsQuery) e
 			params = append(params, v)
 		}
 	}
+
 	filter += "(org_id=? AND user_id=? AND team_id=0) OR (org_id=? AND team_id=0 AND user_id=0)"
 	params = append(params, query.User.OrgId)
 	params = append(params, query.User.UserId)
@@ -41,7 +43,7 @@ func GetPreferencesWithDefaults(query *models.GetPreferencesWithDefaultsQuery) e
 
 	res := &models.Preferences{
 		Theme:           setting.DefaultTheme,
-		Timezone:        "browser",
+		Timezone:        ss.Cfg.DateFormats.DefaultTimezone,
 		HomeDashboardId: 0,
 	}
 
@@ -80,7 +82,6 @@ func GetPreferences(query *models.GetPreferencesQuery) error {
 
 func SavePreferences(cmd *models.SavePreferencesCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-
 		var prefs models.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=? AND team_id=?", cmd.OrgId, cmd.UserId, cmd.TeamId).Get(&prefs)
 		if err != nil {

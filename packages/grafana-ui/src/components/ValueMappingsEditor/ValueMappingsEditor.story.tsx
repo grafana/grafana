@@ -8,5 +8,5 @@ export default {
 };
 
 export const basic = () => {
-  return <ValueMappingsEditor valueMappings={[]} onChange={action('Mapping changed')} />;
+  return <ValueMappingsEditor value={[]} onChange={action('Mapping changed')} />;
 };

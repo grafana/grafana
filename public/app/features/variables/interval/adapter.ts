@@ -1,5 +1,5 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { IntervalVariableModel } from '../../templating/types';
+import { IntervalVariableModel } from '../types';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';

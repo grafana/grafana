@@ -28,11 +28,12 @@ func (re releaseFromExternalContent) prepareRelease(baseArchiveURL, whatsNewURL 
 
 	builds := []build{}
 	for _, ba := range re.artifactConfigurations {
-		sha256, err := re.getter.getContents(fmt.Sprintf("%s.sha256", ba.getURL(baseArchiveURL, version, rt)))
+		url := ba.getURL(baseArchiveURL, version, rt)
+		sha256, err := re.getter.getContents(fmt.Sprintf("%s.sha256", url))
 		if err != nil {
 			return nil, err
 		}
-		builds = append(builds, newBuild(baseArchiveURL, ba, version, rt, sha256))
+		builds = append(builds, newBuild(url, ba, sha256))
 	}
 
 	r := release{

@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
+var varRegex = regexp.MustCompile(`(\$\{.+?\})`)
+
 type ImportDashboardCommand struct {
 	Dashboard *simplejson.Json
 	Path      string
@@ -109,11 +111,9 @@ type DashTemplateEvaluator struct {
 	inputs    []ImportDashboardInput
 	variables map[string]string
 	result    *simplejson.Json
-	varRegex  *regexp.Regexp
 }
 
 func (this *DashTemplateEvaluator) findInput(varName string, varType string) *ImportDashboardInput {
-
 	for _, input := range this.inputs {
 		if varType == input.Type && (input.Name == varName || input.Name == "*") {
 			return &input
@@ -126,7 +126,6 @@ func (this *DashTemplateEvaluator) findInput(varName string, varType string) *Im
 func (this *DashTemplateEvaluator) Eval() (*simplejson.Json, error) {
 	this.result = simplejson.New()
 	this.variables = make(map[string]string)
-	this.varRegex, _ = regexp.Compile(`(\$\{.+\})`)
 
 	// check that we have all inputs we need
 	for _, inputDef := range this.template.Get("__inputs").MustArray() {
@@ -146,12 +145,11 @@ func (this *DashTemplateEvaluator) Eval() (*simplejson.Json, error) {
 }
 
 func (this *DashTemplateEvaluator) evalValue(source *simplejson.Json) interface{} {
-
 	sourceValue := source.Interface()
 
 	switch v := sourceValue.(type) {
 	case string:
-		interpolated := this.varRegex.ReplaceAllStringFunc(v, func(match string) string {
+		interpolated := varRegex.ReplaceAllStringFunc(v, func(match string) string {
 			replacement, exists := this.variables[match]
 			if exists {
 				return replacement

@@ -36,7 +36,14 @@ func New(logger string, ctx ...interface{}) Logger {
 	return Root.New(params...)
 }
 
-func Trace(format string, v ...interface{}) {
+// NewWithLevel returns a new logger with a certain level.
+func NewWithLevel(name string, level log15.Lvl) Logger {
+	logger := Root.New("logger", name)
+	logger.SetHandler(log15.LvlFilterHandler(level, log15.StreamHandler(os.Stdout, getLogFormat("console"))))
+	return logger
+}
+
+func Tracef(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
 		message = fmt.Sprintf(format, v...)
@@ -47,7 +54,7 @@ func Trace(format string, v ...interface{}) {
 	Root.Debug(message)
 }
 
-func Debug(format string, v ...interface{}) {
+func Debugf(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
 		message = fmt.Sprintf(format, v...)
@@ -58,7 +65,7 @@ func Debug(format string, v ...interface{}) {
 	Root.Debug(message)
 }
 
-func Info(format string, v ...interface{}) {
+func Infof(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
 		message = fmt.Sprintf(format, v...)
@@ -69,7 +76,7 @@ func Info(format string, v ...interface{}) {
 	Root.Info(message)
 }
 
-func Warn(format string, v ...interface{}) {
+func Warnf(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
 		message = fmt.Sprintf(format, v...)
@@ -80,15 +87,15 @@ func Warn(format string, v ...interface{}) {
 	Root.Warn(message)
 }
 
-func Error(skip int, format string, v ...interface{}) {
+func Errorf(skip int, format string, v ...interface{}) {
 	Root.Error(fmt.Sprintf(format, v...))
 }
 
-func Critical(skip int, format string, v ...interface{}) {
+func Criticalf(skip int, format string, v ...interface{}) {
 	Root.Crit(fmt.Sprintf(format, v...))
 }
 
-func Fatal(skip int, format string, v ...interface{}) {
+func Fatalf(skip int, format string, v ...interface{}) {
 	Root.Crit(fmt.Sprintf(format, v...))
 	Close()
 	os.Exit(1)
@@ -264,7 +271,6 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 
 func LogFilterHandler(maxLevel log15.Lvl, filters map[string]log15.Lvl, h log15.Handler) log15.Handler {
 	return log15.FilterHandler(func(r *log15.Record) (pass bool) {
-
 		if len(filters) > 0 {
 			for i := 0; i < len(r.Ctx); i += 2 {
 				key, ok := r.Ctx[i].(string)

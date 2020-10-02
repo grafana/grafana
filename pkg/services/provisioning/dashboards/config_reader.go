@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	yaml "gopkg.in/yaml.v2"
+	"github.com/grafana/grafana/pkg/services/provisioning/utils"
+	"gopkg.in/yaml.v2"
 )
 
 type configReader struct {
@@ -86,6 +87,10 @@ func (cr *configReader) readConfig() ([]*config, error) {
 	for _, dashboard := range dashboards {
 		if dashboard.OrgID == 0 {
 			dashboard.OrgID = 1
+		}
+
+		if err := utils.CheckOrgExists(dashboard.OrgID); err != nil {
+			return nil, fmt.Errorf("failed to provision dashboards with %q reader: %w", dashboard.Name, err)
 		}
 
 		if dashboard.Type == "" {

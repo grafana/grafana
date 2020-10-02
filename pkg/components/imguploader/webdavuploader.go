@@ -37,7 +37,7 @@ var netClient = &http.Client{
 
 func (u *WebdavUploader) PublicURL(filename string) string {
 	if strings.Contains(u.public_url, "${file}") {
-		return strings.Replace(u.public_url, "${file}", filename, -1)
+		return strings.ReplaceAll(u.public_url, "${file}", filename)
 	}
 
 	publicURL, _ := url.Parse(u.public_url)
@@ -75,6 +75,7 @@ func (u *WebdavUploader) Upload(ctx context.Context, pa string) (string, error) 
 	if err != nil {
 		return "", err
 	}
+	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusCreated {
 		body, _ := ioutil.ReadAll(res.Body)

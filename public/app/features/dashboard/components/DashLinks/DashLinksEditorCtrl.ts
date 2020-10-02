@@ -54,7 +54,7 @@ export class DashLinksEditorCtrl {
   };
 
   addLink() {
-    this.dashboard.links.push(this.link);
+    this.dashboard.links = [...this.dashboard.links, this.link];
     this.mode = 'list';
     this.dashboard.updateSubmenuVisibility();
   }
@@ -65,12 +65,18 @@ export class DashLinksEditorCtrl {
   }
 
   saveLink() {
+    this.dashboard.links = _.cloneDeep(this.dashboard.links);
     this.backToList();
   }
 
   moveLink(index: string | number, dir: string | number) {
     // @ts-ignore
     _.move(this.dashboard.links, index, index + dir);
+  }
+
+  duplicateLink(link: any, index: number) {
+    this.dashboard.links.splice(index, 0, link);
+    this.dashboard.updateSubmenuVisibility();
   }
 
   deleteLink(index: number) {

@@ -4,16 +4,17 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/search"
 	"net"
 	"net/http"
 	"os"
 	"path"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/search"
+
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
-	"github.com/grafana/grafana/pkg/api/live"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -47,11 +48,11 @@ func init() {
 }
 
 type HTTPServer struct {
-	log           log.Logger
-	macaron       *macaron.Macaron
-	context       context.Context
-	streamManager *live.StreamManager
-	httpSrv       *http.Server
+	log         log.Logger
+	macaron     *macaron.Macaron
+	context     context.Context
+	httpSrv     *http.Server
+	middlewares []macaron.Handler
 
 	RouteRegister        routing.RouteRegister            `inject:""`
 	Bus                  bus.Bus                          `inject:""`
@@ -69,23 +70,36 @@ type HTTPServer struct {
 	BackendPluginManager backendplugin.Manager            `inject:""`
 	PluginManager        *plugins.PluginManager           `inject:""`
 	SearchService        *search.SearchService            `inject:""`
+	Live                 *live.GrafanaLive
+	Listener             net.Listener
 }
 
 func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
 
-	hs.streamManager = live.NewStreamManager()
+	// Set up a websocket broker
+	if hs.Cfg.IsLiveEnabled() { // feature flag
+		node, err := live.InitializeBroker()
+		if err != nil {
+			return err
+		}
+		hs.Live = node
+	}
+
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
 
 	return nil
 }
 
+func (hs *HTTPServer) AddMiddleware(middleware macaron.Handler) {
+	hs.middlewares = append(hs.middlewares, middleware)
+}
+
 func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.context = ctx
 
 	hs.applyRoutes()
-	hs.streamManager.Run(ctx)
 
 	hs.httpSrv = &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort),
@@ -102,28 +116,9 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		}
 	}
 
-	var listener net.Listener
-	switch setting.Protocol {
-	case setting.HTTP, setting.HTTPS, setting.HTTP2:
-		var err error
-		listener, err = net.Listen("tcp", hs.httpSrv.Addr)
-		if err != nil {
-			return errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
-		}
-	case setting.SOCKET:
-		var err error
-		listener, err = net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
-		if err != nil {
-			return errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
-		}
-
-		// Make socket writable by group
-		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
-			return errutil.Wrapf(err, "failed to change socket permissions")
-		}
-	default:
-		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
-		return fmt.Errorf("invalid protocol %q", setting.Protocol)
+	listener, err := hs.getListener()
+	if err != nil {
+		return err
 	}
 
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
@@ -166,6 +161,36 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	wg.Wait()
 
 	return nil
+}
+
+func (hs *HTTPServer) getListener() (net.Listener, error) {
+	if hs.Listener != nil {
+		return hs.Listener, nil
+	}
+
+	switch setting.Protocol {
+	case setting.HTTP, setting.HTTPS, setting.HTTP2:
+		listener, err := net.Listen("tcp", hs.httpSrv.Addr)
+		if err != nil {
+			return nil, errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
+		}
+		return listener, nil
+	case setting.SOCKET:
+		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
+		if err != nil {
+			return nil, errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
+		}
+
+		// Make socket writable by group
+		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
+			return nil, errutil.Wrapf(err, "failed to change socket permissions")
+		}
+
+		return listener, nil
+	default:
+		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
+		return nil, fmt.Errorf("invalid protocol %q", setting.Protocol)
+	}
 }
 
 func (hs *HTTPServer) configureHttps() error {
@@ -307,7 +332,6 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
-	m.Use(hs.healthHandler)
 	m.Use(hs.metricsEndpoint)
 	m.Use(middleware.GetContextHandler(
 		hs.AuthTokenService,
@@ -322,6 +346,10 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.HandleNoCacheHeader())
+
+	for _, mw := range hs.middlewares {
+		m.Use(mw)
+	}
 }
 
 func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
@@ -343,16 +371,25 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 		ServeHTTP(ctx.Resp, ctx.Req.Request)
 }
 
-func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
-	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
-	if notHeadOrGet || ctx.Req.URL.Path != "/api/health" {
-		return
+// healthzHandler always return 200 - Ok if Grafana's web server is running
+func (hs *HTTPServer) healthzHandler(ctx *macaron.Context) {
+	ctx.WriteHeader(200)
+	_, err := ctx.Resp.Write([]byte("Ok"))
+	if err != nil {
+		hs.log.Error("could not write to response", "err", err)
 	}
+}
 
+// apiHealthHandler will return ok if Grafana's web server is running and it
+// can access the database. If the database cannot be access it will return
+// http status code 503.
+func (hs *HTTPServer) apiHealthHandler(ctx *macaron.Context) {
 	data := simplejson.New()
 	data.Set("database", "ok")
-	data.Set("version", setting.BuildVersion)
-	data.Set("commit", setting.BuildCommit)
+	if !hs.Cfg.AnonymousHideVersion {
+		data.Set("version", setting.BuildVersion)
+		data.Set("commit", setting.BuildCommit)
+	}
 
 	if err := bus.Dispatch(&models.GetDBHealthQuery{}); err != nil {
 		data.Set("database", "failing")
@@ -363,7 +400,12 @@ func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 		ctx.Resp.WriteHeader(200)
 	}
 
-	dataBytes, _ := data.EncodePretty()
+	dataBytes, err := data.EncodePretty()
+	if err != nil {
+		hs.log.Error("Failed to encode data", "err", err)
+		return
+	}
+
 	if _, err := ctx.Resp.Write(dataBytes); err != nil {
 		hs.log.Error("Failed to write to response", "err", err)
 	}

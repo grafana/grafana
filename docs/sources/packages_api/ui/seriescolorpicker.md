@@ -16,7 +16,7 @@ type = "docs"
 ```typescript
 SeriesColorPicker: React.FunctionComponent<Pick<import("./SeriesColorPickerPopover").SeriesColorPickerPopoverProps & {
     children?: ColorPickerTriggerRenderer | undefined;
-}, "onChange" | "color" | "children" | "onColorChange" | "enableNamedColors" | "updatePopperPosition" | "yaxis" | "onToggleAxis">>
+}, "color" | "onChange" | "children" | "onColorChange" | "enableNamedColors" | "updatePopperPosition" | "yaxis" | "onToggleAxis">>
 ```
 <b>Import</b>
 

@@ -7,9 +7,11 @@ import {
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   PanelData,
+  DataSourceInstanceSettings,
 } from '@grafana/data';
 import { ComponentClass } from 'react';
 import { PanelQueryRunner } from './PanelQueryRunner';
+import { setDataSourceSrv } from '@grafana/runtime';
 
 class TablePanelCtrl {}
 
@@ -94,6 +96,13 @@ describe('PanelModel', () => {
         fieldConfig: {
           defaults: {
             unit: 'mpg',
+            thresholds: {
+              mode: 'absolute',
+              steps: [
+                { color: 'green', value: null },
+                { color: 'red', value: 80 },
+              ],
+            },
           },
           overrides: [
             {
@@ -101,7 +110,18 @@ describe('PanelModel', () => {
                 id: '1',
                 options: {},
               },
-              properties: [],
+              properties: [
+                {
+                  id: 'thresholds',
+                  value: {
+                    mode: 'absolute',
+                    steps: [
+                      { color: 'green', value: null },
+                      { color: 'red', value: 80 },
+                    ],
+                  },
+                },
+              ],
             },
           ],
         },
@@ -144,11 +164,21 @@ describe('PanelModel', () => {
       expect(model.getOptions().showThresholds).toBeTruthy();
     });
 
+    it('should change null thresholds to negative infinity', () => {
+      expect(model.fieldConfig.defaults.thresholds.steps[0].value).toBe(-Infinity);
+      expect(model.fieldConfig.overrides[0].properties[0].value.steps[0].value).toBe(-Infinity);
+    });
+
     it('should apply option defaults but not override if array is changed', () => {
       expect(model.getOptions().arrayWith2Values.length).toBe(1);
     });
 
     it('should apply field config defaults', () => {
+      setDataSourceSrv({
+        getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
+          return undefined;
+        },
+      } as any);
       // default unit is overriden by model
       expect(model.getFieldOverrideOptions().fieldConfig.defaults.unit).toBe('mpg');
       // default decimals are aplied

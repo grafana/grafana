@@ -4,7 +4,7 @@ type = "docs"
 [menu.docs]
 identifier = "alerting"
 parent = "features"
-weight = 6
+weight = 100
 +++
 
 # Alerts overview
@@ -41,7 +41,7 @@ The actual notifications are configured and shared between multiple alerts.
 
 Alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
 of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `InfluxDB`, `Elasticsearch`,
-`Stackdriver`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Data Explorer`.
+`Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Data Explorer`.
 
 ## Metrics from the alert engine
 

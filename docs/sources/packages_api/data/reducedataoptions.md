@@ -26,6 +26,7 @@ import { ReduceDataOptions } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [calcs](#calcs-property) | <code>string[]</code> | When !values, pick one value for the whole field |
+|  [fields](#fields-property) | <code>string</code> | Which fields to show. By default this is only numeric fields |
 |  [limit](#limit-property) | <code>number</code> | if showing all values limit |
 |  [values](#values-property) | <code>boolean</code> |  |
 
@@ -37,6 +38,16 @@ When !values, pick one value for the whole field
 
 ```typescript
 calcs: string[];
+```
+
+### fields property
+
+Which fields to show. By default this is only numeric fields
+
+<b>Signature</b>
+
+```typescript
+fields?: string;
 ```
 
 ### limit property

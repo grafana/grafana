@@ -1,10 +1,11 @@
 package cleanup
 
 import (
-	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/setting"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestCleanUpTmpFiles(t *testing.T) {
@@ -37,5 +38,4 @@ func TestCleanUpTmpFiles(t *testing.T) {
 			So(service.shouldCleanupTempFile(weekAgo, now), ShouldBeFalse)
 		})
 	})
-
 }

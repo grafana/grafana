@@ -63,7 +63,7 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
 
 export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions> {
   history: LokiHistoryItem[];
-  syntax: Grammar;
+  syntax: Grammar | null;
   logLabelOptions: CascaderOption[];
   syntaxLoaded: boolean;
   absoluteRange: AbsoluteTimeRange;
@@ -128,9 +128,6 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
       { text, value, prefix, wrapperClasses, labelKey },
       { history, absoluteRange }
     );
-
-    //console.log('handleTypeahead', wrapperClasses, text, prefix, nextChar, labelKey, result.context);
-
     return result;
   };
 
@@ -152,7 +149,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
 
     return (
       <>
-        <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
+        <div className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1">
           <div className="gf-form flex-shrink-0">
             <ButtonCascader
               options={logLabelOptions || []}
@@ -164,7 +161,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               {chooserText}
             </ButtonCascader>
           </div>
-          <div className="gf-form gf-form--grow flex-shrink-1">
+          <div className="gf-form gf-form--grow flex-shrink-1 min-width-15 explore-input-margin">
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}

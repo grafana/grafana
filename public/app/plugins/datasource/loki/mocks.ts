@@ -25,13 +25,17 @@ export function makeMockLokiDatasource(labelsAndValues: Labels, series?: SeriesF
   return {
     metadataRequest: (url: string, params?: { [key: string]: string }) => {
       if (url === lokiLabelsEndpoint) {
+        //To test custom time ranges
+        if (Number(params?.start) === 2000000) {
+          return [labels[0]];
+        }
         return labels;
       } else {
         const labelsMatch = url.match(lokiLabelsAndValuesEndpointRegex);
         const seriesMatch = url.match(lokiSeriesEndpointRegex);
         if (labelsMatch) {
           return labelsAndValues[labelsMatch[1]] || [];
-        } else if (seriesMatch) {
+        } else if (seriesMatch && series && params) {
           return series[params.match] || [];
         } else {
           throw new Error(`Unexpected url error, ${url}`);

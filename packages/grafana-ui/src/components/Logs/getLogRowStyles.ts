@@ -126,7 +126,6 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     logsRowLocalTime: css`
       label: logs-row__localtime;
       white-space: nowrap;
-      max-width: 12.5em;
     `,
     logsRowLabels: css`
       label: logs-row__labels;
@@ -138,7 +137,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       white-space: pre-wrap;
       word-break: break-all;
     `,
-    //Log details sepcific CSS
+    //Log details specific CSS
     logDetailsContainer: css`
       label: logs-row-details-table;
       border: 1px solid ${borderColor};

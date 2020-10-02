@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"go/build"
 	"io"
 	"io/ioutil"
 	"log"
@@ -57,8 +58,6 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(0)
 
-	ensureGoPath()
-
 	var buildIdRaw string
 
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
@@ -106,16 +105,16 @@ func main() {
 
 		case "build-srv", "build-server":
 			clean()
-			build("grafana-server", "./pkg/cmd/grafana-server", []string{})
+			doBuild("grafana-server", "./pkg/cmd/grafana-server", []string{})
 
 		case "build-cli":
 			clean()
-			build("grafana-cli", "./pkg/cmd/grafana-cli", []string{})
+			doBuild("grafana-cli", "./pkg/cmd/grafana-cli", []string{})
 
 		case "build":
 			//clean()
 			for _, binary := range binaries {
-				build(binary, "./pkg/cmd/"+binary, []string{})
+				doBuild(binary, "./pkg/cmd/"+binary, []string{})
 			}
 
 		case "build-frontend":
@@ -417,18 +416,6 @@ func createPackage(options linuxPackageOptions) {
 	runPrint("fpm", append([]string{"-t", options.packageType}, args...)...)
 }
 
-func ensureGoPath() {
-	if os.Getenv("GOPATH") == "" {
-		cwd, err := os.Getwd()
-		if err != nil {
-			log.Fatal(err)
-		}
-		gopath := filepath.Clean(filepath.Join(cwd, "../../../../"))
-		log.Println("GOPATH is", gopath)
-		os.Setenv("GOPATH", gopath)
-	}
-}
-
 func grunt(params ...string) {
 	if runtime.GOOS == windows {
 		runPrint(`.\node_modules\.bin\grunt`, params...)
@@ -476,7 +463,7 @@ func test(pkg string) {
 	runPrint("go", "test", "-short", "-timeout", "60s", pkg)
 }
 
-func build(binaryName, pkg string, tags []string) {
+func doBuild(binaryName, pkg string, tags []string) {
 	libcPart := ""
 	if libc != "" {
 		libcPart = fmt.Sprintf("-%s", libc)
@@ -554,7 +541,7 @@ func clean() {
 
 	rmr("dist")
 	rmr("tmp")
-	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/grafana", goos, goarch)))
+	rmr(filepath.Join(build.Default.GOPATH, fmt.Sprintf("pkg/%s_%s/github.com/grafana", goos, goarch)))
 }
 
 func setBuildEnv() {

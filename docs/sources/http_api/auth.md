@@ -17,7 +17,7 @@ Currently you can authenticate via an `API Token` or via a `Session cookie` (acq
 
 ## Basic Auth
 
-If basic auth is enabled (it is enabled by default) you can authenticate your HTTP request via
+If basic auth is enabled (it is enabled by default), then you can authenticate your HTTP request via
 standard basic auth. Basic auth will also authenticate LDAP users.
 
 curl example:
@@ -128,7 +128,7 @@ Error statuses:
 HTTP/1.1 200
 Content-Type: application/json
 
-{"name":"mykey","key":"eyJrIjoiWHZiSWd3NzdCYUZnNUtibE9obUpESmE3bzJYNDRIc0UiLCJuIjoibXlrZXkiLCJpZCI6MX1="}
+{"name":"mykey","key":"eyJrIjoiWHZiSWd3NzdCYUZnNUtibE9obUpESmE3bzJYNDRIc0UiLCJuIjoibXlrZXkiLCJpZCI6MX1=","id":1}
 ```
 
 ## Delete API Key

@@ -39,7 +39,7 @@ Each organization can have one or more data sources.
 
 All dashboards are owned by a particular organization.
 
- > Note: Most metric databases do not provide per-user series authentication. This means that organization data sources and dashboards are available to all users in a particular organization.
+ > **Note:** Most metric databases do not provide per-user series authentication. This means that organization data sources and dashboards are available to all users in a particular organization.
 
 Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information.
 
@@ -53,4 +53,4 @@ Dashboard and folder permissions allow you to remove the default role based perm
 Per default, a data source in an organization can be queried by any user in that organization. For example a user with `Viewer` role can still
 issue any possible query to a data source, not just those queries that exist on dashboards he/she has access to.
 
-Data source permissions allows you to change the default permissions for data sources and restrict query permissions to specific **Users** and **Teams**. Read more about [data source permissions]({{< relref "datasource_permissions.md" >}}).
+Data source permissions allows you to change the default permissions for data sources and restrict query permissions to specific **Users** and **Teams**. Read more about [data source permissions]({{< relref "../enterprise/datasource_permissions.md" >}}).

@@ -12,7 +12,15 @@ Data links allow you to provide more granular context to your links. You can cre
 The link itself is accessible in different ways depending on the visualization. For the graph you need to click on a data point or line, for a panel like
 Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open the context menu.
 
->**Note:** For stat, gauge, bar gauge, and table visualizations, you add and edit data links on the Field tab. For the graph visualization, you add and edit data links on the Panel tab.
+> **Note:** For stat, gauge, bar gauge, and table visualizations, you add and edit data links on the Field tab. For the graph visualization, you add and edit data links on the Panel tab.
+
+You can use variables in data links to send people to a detailed dashboard with preserved data filters. For example, you could use variables to specify a time range, series, and variable selection. For more information, refer to [Data link variables]({{< relref "data-link-variables.md" >}}).
+
+## Typeahead suggestions
+
+When creating or updating a data link, press Cmd+Space or Ctrl+Space on your keyboard to open the typeahead suggestions to more easily add variables to your URL.
+
+{{< docs-imagebox img="/img/docs/data_link_typeahead.png"  max-width= "800px" >}}
 
 ## Add a data link
 
@@ -22,7 +30,7 @@ Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open th
 1. Enter a **Title**. **Title** is a human-readable label for the link that will be displayed in the UI.
 1. Enter the **URL** you want to link to.
    
-   You can even add one of the template variables defined in the dashboard. Press Ctrl+Space or Cmd+Space and click in the **URL** field to see the available variables. By adding template variables to your panel link, the link sends the user to the right context, with the relevant variables already set. For more information, refer to [URL variables]({{< relref "../variables/url-variables.md" >}}).
+   You can even add one of the template variables defined in the dashboard. Click in the **URL** field and then type `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. By adding template variables to your panel link, the link sends the user to the right context, with the relevant variables already set. For more information, refer to [Data link variables]({{< relref "data-link-variables.md" >}}).
    
 1. If you want the link to open in a new tab, then select **Open in a new tab**.
 1. Click **Save** to save changes and close the window.
@@ -36,7 +44,7 @@ Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open th
 1. Click **Save** to save changes and close the window.
 1. Click **Save** in the upper right to save your changes to the dashboard.
 
-## Delete a panel link
+## Delete a data link
 
 1. On the Field tab, find the link that you want to delete. (Panel tab for graph visualizations.)
 1. Click the **X** icon next to the link you want to delete. 

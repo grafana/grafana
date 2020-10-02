@@ -2,11 +2,10 @@ import React, { FormEvent, PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { AppEvents, NavModel } from '@grafana/data';
-import { Button, stylesFactory, Input, TextArea, Field, Form, Legend } from '@grafana/ui';
+import { Button, stylesFactory, Input, TextArea, Field, Form, Legend, FileUpload } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
-import { DashboardFileUpload } from './components/DashboardFileUpload';
 import { validateDashboardJson, validateGcomDashboard } from './utils/validation';
 import { fetchGcomDashboard, importDashboardJson } from './state/actions';
 import appEvents from 'app/core/app_events';
@@ -78,7 +77,9 @@ class DashboardImportUnConnected extends PureComponent<Props> {
     return (
       <>
         <div className={styles.option}>
-          <DashboardFileUpload onFileUpload={this.onFileUpload} />
+          <FileUpload accept="application/json" onFileUpload={this.onFileUpload}>
+            Upload JSON file
+          </FileUpload>
         </div>
         <div className={styles.option}>
           <Legend>Import via grafana.com</Legend>

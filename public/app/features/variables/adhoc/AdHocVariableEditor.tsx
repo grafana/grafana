@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 
-import { AdHocVariableModel } from '../../templating/types';
+import { AdHocVariableModel } from '../types';
 import { VariableEditorProps } from '../editor/types';
 import { VariableEditorState } from '../editor/reducer';
 import { AdHocVariableEditorState } from './reducer';

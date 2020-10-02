@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { Parser } from './parser';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 import { ScopedVars } from '@grafana/data';
 
 export default class GraphiteQuery {
@@ -54,7 +54,7 @@ export default class GraphiteQuery {
     try {
       this.parseTargetRecursive(astNode, null);
     } catch (err) {
-      console.log('error parsing target:', err.message);
+      console.error('error parsing target:', err.message);
       this.error = err.message;
       this.target.textEditor = true;
     }

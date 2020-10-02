@@ -9,7 +9,7 @@ services:
       - ${HOME}/.ssh:/root/.ssh
       - ../../..:/home/circleci/grafana-toolkit
   cibuilt:
-    image: "srclosson/grafana-plugin-ci-alpine"
+    image: "grafana/grafana-plugin-ci:latest-alpine"
     user: root
     volumes:
       - ../scripts:/home/circleci/scripts

@@ -1,5 +1,5 @@
 import cloneDeep from 'lodash/cloneDeep';
-import { CustomVariableModel } from '../../templating/types';
+import { CustomVariableModel } from '../types';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
@@ -8,6 +8,7 @@ import { OptionsPicker } from '../pickers';
 import { CustomVariableEditor } from './CustomVariableEditor';
 import { updateCustomVariableOptions } from './actions';
 import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
+import { isAllVariable } from '../utils';
 
 export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableModel> => {
   return {
@@ -35,7 +36,7 @@ export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableMod
       return rest;
     },
     getValueForUrl: variable => {
-      if (variable.current.text === ALL_VARIABLE_TEXT) {
+      if (isAllVariable(variable)) {
         return ALL_VARIABLE_TEXT;
       }
       return variable.current.value;

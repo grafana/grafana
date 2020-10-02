@@ -1,12 +1,15 @@
-ARG BASE_IMAGE=alpine:3.11
+ARG BASE_IMAGE=alpine:3.12
 FROM ${BASE_IMAGE}
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
 
+# Make sure we have Gnu tar
+RUN apk add --no-cache tar
+
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
 # Change to tar xfzv to make tar print every file it extracts
-RUN mkdir /tmp/grafana && tar xfz /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
+RUN mkdir /tmp/grafana && tar xzf /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
 
 FROM ${BASE_IMAGE}
 
@@ -24,11 +27,11 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 WORKDIR $GF_PATHS_HOME
 
 RUN apk add --no-cache ca-certificates bash tzdata && \
-    apk add --no-cache --upgrade openssl musl-utils
+    apk add --no-cache openssl musl-utils
 
 # Oracle Support for x86_64 only
 RUN if [ `arch` = "x86_64" ]; then \
-      apk add --no-cache --upgrade libaio libnsl && \
+      apk add --no-cache libaio libnsl && \
       ln -s /usr/lib/libnsl.so.2 /usr/lib/libnsl.so.1 && \
       wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.30-r0/glibc-2.30-r0.apk \
         -O /tmp/glibc-2.30-r0.apk && \
@@ -49,6 +52,7 @@ RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
     mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
              "$GF_PATHS_PROVISIONING/dashboards" \
              "$GF_PATHS_PROVISIONING/notifiers" \
+             "$GF_PATHS_PROVISIONING/plugins" \
              "$GF_PATHS_LOGS" \
              "$GF_PATHS_PLUGINS" \
              "$GF_PATHS_DATA" && \

@@ -1,30 +1,38 @@
+import set from 'lodash/set';
+
 import {
+  ArrayDataFrame,
+  arrowTableToDataFrame,
+  base64StringToArrowTable,
+  DataFrame,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  LoadingState,
   MetricFindValue,
   TableData,
   TimeSeries,
-  LoadingState,
-  ArrayDataFrame,
-  base64StringToArrowTable,
-  arrowTableToDataFrame,
-  DataFrame,
+  TimeRange,
+  DataTopic,
+  AnnotationEvent,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
-import { getBackendSrv, toDataQueryError } from '@grafana/runtime';
+import { getBackendSrv, toDataQueryError, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { queryMetricTree } from './metricTree';
 import { from, merge, Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { runStream } from './runStreams';
-import templateSrv from 'app/features/templating/template_srv';
-import { getSearchFilterScopedVar } from 'app/features/templating/utils';
+import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 
 type TestData = TimeSeries | TableData;
 
 export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
-  constructor(instanceSettings: DataSourceInstanceSettings) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
   }
 
@@ -37,26 +45,34 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
       if (target.hide) {
         continue;
       }
-      if (target.scenarioId === 'streaming_client') {
-        streams.push(runStream(target, options));
-      } else if (target.scenarioId === 'grafana_api') {
-        streams.push(runGrafanaAPI(target, options));
-      } else if (target.scenarioId === 'arrow') {
-        streams.push(runArrowFile(target, options));
-      } else {
-        queries.push({
-          ...target,
-          intervalMs: options.intervalMs,
-          maxDataPoints: options.maxDataPoints,
-          datasourceId: this.id,
-          alias: templateSrv.replace(target.alias || ''),
-        });
+
+      switch (target.scenarioId) {
+        case 'streaming_client':
+          streams.push(runStream(target, options));
+          break;
+        case 'grafana_api':
+          streams.push(runGrafanaAPI(target, options));
+          break;
+        case 'arrow':
+          streams.push(runArrowFile(target, options));
+          break;
+        case 'annotations':
+          streams.push(this.annotationDataTopicTest(target, options));
+          break;
+        default:
+          queries.push({
+            ...target,
+            intervalMs: options.intervalMs,
+            maxDataPoints: options.maxDataPoints,
+            datasourceId: this.id,
+            alias: this.templateSrv.replace(target.alias || '', options.scopedVars),
+          });
       }
     }
 
     if (queries.length) {
-      const req: Promise<DataQueryResponse> = getBackendSrv()
-        .datasourceRequest({
+      const stream = getBackendSrv()
+        .fetch({
           method: 'POST',
           url: '/api/tsdb/query',
           data: {
@@ -64,12 +80,10 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
             to: options.range.to.valueOf().toString(),
             queries: queries,
           },
-          // This sets up a cancel token
-          requestId: options.requestId,
         })
-        .then((res: any) => this.processQueryResult(queries, res));
+        .pipe(map(res => this.processQueryResult(queries, res)));
 
-      streams.push(from(req));
+      streams.push(stream);
     }
 
     return merge(...streams);
@@ -86,6 +100,11 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
         const table = t as TableData;
         table.refId = query.refId;
         table.name = query.alias;
+
+        if (query.scenarioId === 'logs') {
+          set(table, 'meta.preferredVisualisationType', 'logs');
+        }
+
         data.push(table);
       }
 
@@ -103,23 +122,36 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
     return { data, error };
   }
 
-  annotationQuery(options: any) {
-    let timeWalker = options.range.from.valueOf();
-    const to = options.range.to.valueOf();
-    const events = [];
-    const eventCount = 10;
-    const step = (to - timeWalker) / eventCount;
+  annotationDataTopicTest(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
+    return new Observable<DataQueryResponse>(observer => {
+      const events = this.buildFakeAnnotationEvents(req.range, 10);
+      const dataFrame = new ArrayDataFrame(events);
+      dataFrame.meta = { dataTopic: DataTopic.Annotations };
 
-    for (let i = 0; i < eventCount; i++) {
+      observer.next({ key: target.refId, data: [dataFrame] });
+    });
+  }
+
+  buildFakeAnnotationEvents(range: TimeRange, count: number): AnnotationEvent[] {
+    let timeWalker = range.from.valueOf();
+    const to = range.to.valueOf();
+    const events = [];
+    const step = (to - timeWalker) / count;
+
+    for (let i = 0; i < count; i++) {
       events.push({
-        annotation: options.annotation,
         time: timeWalker,
         text: 'This is the text, <a href="https://grafana.com">Grafana.com</a>',
         tags: ['text', 'server'],
       });
       timeWalker += step;
     }
-    return Promise.resolve(events);
+
+    return events;
+  }
+
+  annotationQuery(options: any) {
+    return Promise.resolve(this.buildFakeAnnotationEvents(options.range, 10));
   }
 
   getQueryDisplayText(query: TestDataQuery) {
@@ -143,7 +175,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
   metricFindQuery(query: string, options: any) {
     return new Promise<MetricFindValue[]>((resolve, reject) => {
       setTimeout(() => {
-        const interpolatedQuery = templateSrv.replace(
+        const interpolatedQuery = this.templateSrv.replace(
           query,
           getSearchFilterScopedVar({ query, wildcardChar: '*', options })
         );

@@ -3,6 +3,7 @@ package pluginproxy
 import (
 	"bytes"
 	"fmt"
+	"net/http"
 	"net/url"
 	"text/template"
 
@@ -46,4 +47,12 @@ func InterpolateURL(anURL *url.URL, route *plugins.AppPluginRoute, orgID int64, 
 	}
 
 	return result, err
+}
+
+// Set the X-Grafana-User header if needed (and remove if not)
+func applyUserHeader(sendUserHeader bool, req *http.Request, user *models.SignedInUser) {
+	req.Header.Del("X-Grafana-User")
+	if sendUserHeader && !user.IsAnonymous {
+		req.Header.Set("X-Grafana-User", user.Login)
+	}
 }

@@ -36,8 +36,10 @@ A library containing the different design components of the Grafana ecosystem.
 |  [PopoverController](./popovercontroller/) |  |
 |  [Portal](./portal/) |  |
 |  [QueryField](./queryfield/) | Renders an editor field. Pass initial value as initialQuery and listen to changes in props.onValueChanged. This component can only process strings. Internally it uses Slate Value. Implement props.onTypeahead to use suggestions, see PromQueryField.tsx as an example. |
+|  [SelectValueEditor](./selectvalueeditor/) |  |
 |  [SetInterval](./setinterval/) |  |
 |  [StatsPicker](./statspicker/) |  |
+|  [StringArrayEditor](./stringarrayeditor/) |  |
 |  [TableInputCSV](./tableinputcsv/) | Expects the container div to have size set and will fill it 100% |
 |  [TagsInput](./tagsinput/) |  |
 |  [ToggleButtonGroup](./togglebuttongroup/) |  |
@@ -73,6 +75,7 @@ A library containing the different design components of the Grafana ecosystem.
 |  [convertOldAngularValueMapping(panel)](./convertoldangularvaluemapping/) | Convert the angular single stat mapping to new react style |
 |  [FadeTransition(props)](./fadetransition/) |  |
 |  [Form({ defaultValues, onSubmit, validateOnMount, validateFieldsOnMount, children, validateOn, maxWidth, })](./form/) |  |
+|  [getScrollbarWidth()](./getscrollbarwidth/) |  |
 |  [getTagColor(index)](./gettagcolor/) |  |
 |  [getTagColorsFromName(name)](./gettagcolorsfromname/) | Returns tag badge background and border colors based on hashed tag name. |
 |  [IndentationPlugin()](./indentationplugin/) |  |
@@ -89,7 +92,6 @@ A library containing the different design components of the Grafana ecosystem.
 |  [SegmentSelect({ value, options, onChange, onClickOutside, width, noOptionsMessage, allowCustomValue, })](./segmentselect/) |  |
 |  [Select(props)](./select/) |  |
 |  [SelectionShortcutsPlugin()](./selectionshortcutsplugin/) |  |
-|  [SelectValueEditor({ value, onChange, item, })](./selectvalueeditor/) |  |
 |  [sharedSingleStatMigrationHandler(panel)](./sharedsinglestatmigrationhandler/) |  |
 |  [sharedSingleStatPanelChangedHandler(panel, prevPluginId, prevOptions)](./sharedsinglestatpanelchangedhandler/) |  |
 |  [SlatePrism(optsParam)](./slateprism/) | A Slate plugin to highlight code syntax. |
@@ -120,6 +122,7 @@ A library containing the different design components of the Grafana ecosystem.
 |  [SingleStatBaseOptions](./singlestatbaseoptions/) |  |
 |  [StyleProps](./styleprops/) |  |
 |  [SuggestionsState](./suggestionsstate/) |  |
+|  [TableSortByFieldState](./tablesortbyfieldstate/) |  |
 |  [Themeable](./themeable/) |  |
 |  [Token](./token/) |  |
 |  [TypeaheadInput](./typeaheadinput/) |  |
@@ -149,6 +152,7 @@ A library containing the different design components of the Grafana ecosystem.
 |  [CallToActionCard](./calltoactioncard/) |  |
 |  [Chart](./chart/) |  |
 |  [Checkbox](./checkbox/) |  |
+|  [CodeEditor](./codeeditor/) |  |
 |  [Collapse](./collapse/) |  |
 |  [ColorPicker](./colorpicker/) |  |
 |  [colors](./colors/) |  |
@@ -171,6 +175,8 @@ A library containing the different design components of the Grafana ecosystem.
 |  [Field](./field/) |  |
 |  [FieldConfigItemHeaderTitle](./fieldconfigitemheadertitle/) |  |
 |  [fieldMatchersUI](./fieldmatchersui/) |  |
+|  [FieldSet](./fieldset/) |  |
+|  [FileUpload](./fileupload/) |  |
 |  [FilterPill](./filterpill/) |  |
 |  [FullWidthButtonContainer](./fullwidthbuttoncontainer/) |  |
 |  [getAvailableIcons](./getavailableicons/) |  |
@@ -244,6 +250,7 @@ A library containing the different design components of the Grafana ecosystem.
 |  [ThemeContext](./themecontext/) |  |
 |  [TimeOfDayPicker](./timeofdaypicker/) |  |
 |  [TimeRangePicker](./timerangepicker/) |  |
+|  [TimeZonePicker](./timezonepicker/) |  |
 |  [ToggleButton](./togglebutton/) |  |
 |  [Tooltip](./tooltip/) |  |
 |  [useStyles](./usestyles/) | Hook for using memoized styles with access to the theme. |

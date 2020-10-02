@@ -14,12 +14,12 @@ interface Props {
 }
 
 interface State {
-  angularCtrl: AngularComponent;
+  angularCtrl: AngularComponent | null;
   refresh: number;
 }
 
 export class AppConfigCtrlWrapper extends PureComponent<Props, State> {
-  element: HTMLElement; // for angular ctrl
+  element: HTMLElement | null = null;
 
   // Needed for angular scope
   preUpdateHook = () => Promise.resolve();

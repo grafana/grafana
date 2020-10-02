@@ -2,18 +2,18 @@
 
 exports[`LokiExploreExtraField should render component 1`] = `
 <div
-  className="gf-form-inline explore-input--ml"
+  className="gf-form-inline"
 >
   <div
     className="gf-form"
   >
     <Component
-      width={6}
+      width={5}
     >
       Loki Explore Extra Field
     </Component>
     <input
-      className="gf-form-input width-6"
+      className="gf-form-input width-4"
       min={0}
       onChange={[MockFunction]}
       onKeyDown={[MockFunction]}

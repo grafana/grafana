@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/url"
+	"strconv"
 	"strings"
 
 	macaron "gopkg.in/macaron.v1"
@@ -51,8 +52,16 @@ func notAuthorized(c *models.ReqContext) {
 	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
 	}
-	WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, newCookieOptions)
 
+	// remove forceLogin query param if it exists
+	if parsed, err := url.ParseRequestURI(redirectTo); err == nil {
+		params := parsed.Query()
+		params.Del("forceLogin")
+		parsed.RawQuery = params.Encode()
+		WriteCookie(c.Resp, "redirect_to", url.QueryEscape(parsed.String()), 0, newCookieOptions)
+	} else {
+		c.Logger.Debug("Failed parsing request URI; redirect cookie will not be set", "redirectTo", redirectTo, "error", err)
+	}
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
@@ -79,7 +88,15 @@ func RoleAuth(roles ...models.RoleType) macaron.Handler {
 
 func Auth(options *AuthOptions) macaron.Handler {
 	return func(c *models.ReqContext) {
-		if !c.IsSignedIn && options.ReqSignedIn && !c.AllowAnonymous {
+		forceLogin := false
+		if c.AllowAnonymous {
+			forceLoginParam, err := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin"))
+			if err == nil {
+				forceLogin = forceLoginParam
+			}
+		}
+		requireLogin := !c.AllowAnonymous || forceLogin
+		if !c.IsSignedIn && options.ReqSignedIn && requireLogin {
 			notAuthorized(c)
 			return
 		}

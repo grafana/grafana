@@ -35,7 +35,6 @@ func StarDashboard(cmd *models.StarDashboardCommand) error {
 	}
 
 	return inTransaction(func(sess *DBSession) error {
-
 		entity := models.Star{
 			UserId:      cmd.UserId,
 			DashboardId: cmd.DashboardId,

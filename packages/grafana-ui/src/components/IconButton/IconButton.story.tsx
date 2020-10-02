@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from 'emotion';
-import { IconButton } from './IconButton';
+import { IconButton } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { useTheme } from '../../themes/ThemeContext';
 import { GrafanaTheme } from '@grafana/data';
@@ -33,7 +33,7 @@ export const simple = () => {
 };
 
 function renderScenario(surface: string, theme: GrafanaTheme, sizes: IconSize[], icons: IconName[]) {
-  let bg: string = 'red';
+  let bg = 'red';
 
   switch (surface) {
     case 'dashboard':

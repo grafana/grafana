@@ -90,7 +90,7 @@ Where the async function could look like this:
 
 ```tsx
 const loadAsyncOptions = () => {
-  return new Promise()<Array<SelectableValue<string>>>(resolve => {
+  return new Promise<Array<SelectableValue<string>>>(resolve => {
     setTimeout(() => {
       resolve(options);
     }, 2000);

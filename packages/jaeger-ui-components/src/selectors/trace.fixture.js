@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // See https://github.com/jaegertracing/jaeger-ui/issues/115 for details.
-// eslint-disable-next-line import/prefer-default-export
+
 export const followsFromRef = {
   processes: {
     p1: {

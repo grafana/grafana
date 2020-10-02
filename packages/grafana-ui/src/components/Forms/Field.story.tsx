@@ -1,8 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { boolean, number, text } from '@storybook/addon-knobs';
-import { Field } from './Field';
-import { Input } from '../Input/Input';
-import { Switch } from '../Switch/Switch';
+import { Field, Input, Switch } from '@grafana/ui';
 import mdx from './Field.mdx';
 
 export default {

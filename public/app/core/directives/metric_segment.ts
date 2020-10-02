@@ -164,7 +164,7 @@ export function metricSegment($compile: any, $sce: any, templateSrv: TemplateSrv
 
       $button.click(() => {
         options = null;
-        $input.css('width', Math.max($button.width(), 80) + 16 + 'px');
+        $input.css('width', Math.max($button.width()!, 80) + 16 + 'px');
 
         $button.hide();
         $input.show();

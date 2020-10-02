@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon } from '../Icon/Icon';
+import { IconName } from '../../types/icon';
 import { css, cx } from 'emotion';
 
 // @ts-ignore
@@ -12,6 +13,7 @@ import { GrafanaTheme } from '@grafana/data';
 export interface ButtonCascaderProps {
   options: CascaderOption[];
   children: string;
+  icon?: IconName;
   disabled?: boolean;
   value?: string[];
   fieldNames?: { label: string; value: string; children: string };
@@ -27,14 +29,19 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: popup;
       z-index: ${theme.zIndex.dropdown};
     `,
-    icon: css`
-      margin: 1px 0 0 4px;
-    `,
+    icons: {
+      right: css`
+        margin: 1px 0 0 4px;
+      `,
+      left: css`
+        margin: -1px 4px 0 0;
+      `,
+    },
   };
 });
 
 export const ButtonCascader: React.FC<ButtonCascaderProps> = props => {
-  const { onChange, className, loadData, ...rest } = props;
+  const { onChange, className, loadData, icon, ...rest } = props;
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -47,7 +54,9 @@ export const ButtonCascader: React.FC<ButtonCascaderProps> = props => {
       expandIcon={null}
     >
       <button className={cx('gf-form-label', className)} disabled={props.disabled}>
-        {props.children} <Icon name="angle-down" className={styles.icon} />
+        {icon && <Icon name={icon} className={styles.icons.left} />}
+        {props.children}
+        <Icon name="angle-down" className={styles.icons.right} />
       </button>
     </RCCascader>
   );

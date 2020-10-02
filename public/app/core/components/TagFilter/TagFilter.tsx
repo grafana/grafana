@@ -93,7 +93,7 @@ export const TagFilter: FC<Props> = ({
   };
 
   return (
-    <div className={styles.tagFilter}>
+    <div className={styles.tagFilter} aria-label="Tag filter">
       {isClearable && tags.length > 0 && (
         <span className={styles.clear} onClick={() => onTagChange([])}>
           Clear tags

@@ -128,8 +128,8 @@ $page-header-border-color: #dce1e6;
 $divider-border-color: $gray-2;
 
 // Graphite Target Editor
-$tight-form-func-bg: $gray-5;
-$tight-form-func-highlight-bg: $gray-6;
+$tight-form-func-bg: #f1f5f9;
+$tight-form-func-highlight-bg: #eaf0f6;
 
 $modal-backdrop-bg: #ffffff;
 $code-tag-bg: $gray-6;
@@ -295,6 +295,9 @@ $popover-error-bg: $btn-danger-bg;
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $tooltipColor;
 
+$popover-code-bg: #ffffff;
+$popover-code-boxshadow: 0 0 5px $gray60;
+
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';
 
@@ -379,12 +382,12 @@ $panel-grid-placeholder-bg: lighten(#5794f2, 30%);
 $panel-grid-placeholder-shadow: 0 0 4px #5794f2;
 
 // logs
-$logs-color-unkown: $gray-5;
+$logs-color-unknown: $gray-5;
 
 // toggle-group
 $button-toggle-group-btn-active-bg: $brand-primary;
 $button-toggle-group-btn-active-shadow: inset 0 0 4px $white;
-$button-toggle-group-btn-seperator-border: 1px solid $gray-6;
+$button-toggle-group-btn-separator-border: 1px solid $gray-6;
 
 $vertical-resize-handle-bg: $gray-4;
 $vertical-resize-handle-dots: $gray-3;

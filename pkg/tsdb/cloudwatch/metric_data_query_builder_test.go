@@ -28,7 +28,6 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 				})
 
 				Convey("and query has three dimension values for two given dimension keys", func() {
-
 					query := &cloudWatchQuery{
 						Namespace:  "AWS/EC2",
 						MetricName: "CPUUtilization",
@@ -178,7 +177,6 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 					res := buildSearchExpression(query, "Average")
 					So(res, ShouldEqual, `REMOVE_EMPTY(SEARCH('Namespace="AWS/EC2" MetricName="CPUUtilization" "LoadBalancer"=("lb1" OR "lb2" OR "lb3") "InstanceId"', 'Average', 300))`)
 				})
-
 			})
 		})
 
@@ -198,7 +196,6 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			Convey("it should escape double quotes", func() {
 				So(res, ShouldContainSubstring, `lb4\"\"`)
 			})
-
 		})
 	})
 }

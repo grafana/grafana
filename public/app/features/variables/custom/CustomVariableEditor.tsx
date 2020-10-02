@@ -1,5 +1,5 @@
 import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
-import { CustomVariableModel, VariableWithMultiSupport } from '../../templating/types';
+import { CustomVariableModel, VariableWithMultiSupport } from '../types';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
@@ -50,7 +50,7 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
               value={this.props.variable.query}
               onChange={this.onChange}
               onBlur={this.onBlur}
-              placeholder="1, 10, 20, myvalue, escaped\,value"
+              placeholder="1, 10, mykey : myvalue, myvalue, escaped\,value"
               required
               aria-label="Variable editor Form Custom Query field"
             />

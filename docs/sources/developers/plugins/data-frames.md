@@ -48,7 +48,7 @@ interface Field {
 Let's look an example. The table below demonstrates a data frame with two fields, _time_ and _temperature_.
 
 | time                | temperature |
-|---------------------|-------------|
+| ------------------- | ----------- |
 | 2020-01-02 03:04:00 | 45.0        |
 | 2020-01-02 03:05:00 | 47.0        |
 | 2020-01-02 03:06:00 | 48.0        |
@@ -65,7 +65,7 @@ By adding field configurations to a data frame, Grafana can configure visualizat
 
 ## Transformations
 
-Along with the type information, field configs enables _data transformations_ within Grafana.
+Along with the type information, field configs enable _data transformations_ within Grafana.
 
 A data transformation is any function that accepts a data frame as input, and returns another data frame as output. By using data frames in your plugin, you get a range of transformations for free.
 
@@ -73,7 +73,7 @@ A data transformation is any function that accepts a data frame as input, and re
 
 A data frame with at least one time field is considered a _time series_.
 
-For more information on time series, refer to our [Introduction to time series](https://grafana.com/docs/grafana/latest/guides/timeseries/).
+For more information on time series, refer to our [Introduction to time series]({{< relref "../../getting-started/timeseries.md" >}}).
 
 ### Wide format
 
@@ -130,7 +130,7 @@ In long format, string values are represented as separate fields rather than as 
 
 Grafana can detect and convert data frames in long format into wide format.
 
-> Note: Long format is currently only supported in the backend: [Grafana Issue #22219](https://github.com/grafana/grafana/issues/22219).
+> **Note:** Long format is currently only supported in the backend: [Grafana Issue #22219](https://github.com/grafana/grafana/issues/22219).
 
 For example, the following data frame in long format:
 

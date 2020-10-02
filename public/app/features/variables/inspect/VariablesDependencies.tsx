@@ -6,7 +6,6 @@ import { FeatureState } from '@grafana/data';
 
 import { StoreState } from '../../../types';
 import { getVariable, getVariables } from '../state/selectors';
-import { VariableModel } from '../../templating/types';
 import { createDependencyEdges, createDependencyNodes, filterNodesWithDependencies } from './utils';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
 import { NetWorkGraph } from './NetworkGraph';
@@ -22,7 +21,7 @@ interface DispatchProps {}
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export const VariablesDependencies: FC<Props> = ({ onEditClick }) => {
-  const variables: VariableModel[] = useSelector((state: StoreState) => getVariables(state));
+  const variables = useSelector((state: StoreState) => getVariables(state));
   const nodes = useMemo(() => createDependencyNodes(variables), [variables]);
   const edges = useMemo(() => createDependencyEdges(variables), [variables]);
   const onDoubleClick = useCallback(

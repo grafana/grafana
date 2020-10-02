@@ -2,8 +2,8 @@ import _ from 'lodash';
 import ResponseParser from './response_parser';
 import { getBackendSrv } from '@grafana/runtime';
 import { ScopedVars } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
 import { MssqlQueryForInterpolation } from './types';
 
@@ -13,8 +13,11 @@ export class MssqlDatasource {
   responseParser: ResponseParser;
   interval: string;
 
-  /** @ngInject */
-  constructor(instanceSettings: any, private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {
+  constructor(
+    instanceSettings: any,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly timeSrv: TimeSrv = getTimeSrv()
+  ) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser();
@@ -55,6 +58,7 @@ export class MssqlDatasource {
           ...query,
           datasource: this.name,
           rawSql: this.templateSrv.replace(query.rawSql, scopedVars, this.interpolateVariable),
+          rawQuery: true,
         };
         return expandedQuery;
       });
@@ -171,7 +175,7 @@ export class MssqlDatasource {
         return { status: 'success', message: 'Database Connection OK' };
       })
       .catch((err: any) => {
-        console.log(err);
+        console.error(err);
         if (err.data && err.data.message) {
           return { status: 'error', message: err.data.message };
         } else {

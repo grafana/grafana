@@ -23,9 +23,7 @@ func validateTimeRange(item *annotations.Item) error {
 		item.Epoch = item.EpochEnd
 	}
 	if item.EpochEnd < item.Epoch {
-		tmp := item.Epoch
-		item.Epoch = item.EpochEnd
-		item.EpochEnd = tmp
+		item.Epoch, item.EpochEnd = item.EpochEnd, item.Epoch
 	}
 	return nil
 }
@@ -217,7 +215,6 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 			} else {
 				sql.WriteString(fmt.Sprintf(" AND (%s) = %d ", tagsSubQuery, len(tags)))
 			}
-
 		}
 	}
 

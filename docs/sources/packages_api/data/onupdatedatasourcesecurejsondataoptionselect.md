@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-onUpdateDatasourceSecureJsonDataOptionSelect: <J, S extends {} = KeyValue<any>>(props: DataSourcePluginOptionsEditorProps<J, S>, key: string) => (selected: SelectableValue<any>) => void
+onUpdateDatasourceSecureJsonDataOptionSelect: <J, S extends {} = KeyValue<any>>(props: DataSourcePluginOptionsEditorProps<J, S>, key: string) => (selected: SelectableValue) => void
 ```
 <b>Import</b>
 

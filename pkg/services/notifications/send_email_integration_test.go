@@ -30,9 +30,9 @@ func TestEmailIntegrationTest(t *testing.T) {
 			cmd := &models.SendEmailCommand{
 
 				Data: map[string]interface{}{
-					"Title":         "[CRITICAL] Imaginary timeserie alert",
+					"Title":         "[CRITICAL] Imaginary timeseries alert",
 					"State":         "Firing",
-					"Name":          "Imaginary timeserie alert",
+					"Name":          "Imaginary timeseries alert",
 					"Severity":      "ok",
 					"SeverityColor": "#D63232",
 					"Message":       "Alert message that will support markdown in some distant future.",

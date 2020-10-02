@@ -1,12 +1,12 @@
 // @ts-ignore
 import vis from 'visjs-network';
 
-import { VariableModel } from '../../templating/types';
 import { variableAdapters } from '../adapters';
 import { DashboardModel } from '../../dashboard/state';
-import { containsVariable, variableRegex } from '../../templating/utils';
 import { isAdHoc } from '../guard';
 import { safeStringifyValue } from '../../../core/utils/explore';
+import { VariableModel } from '../types';
+import { containsVariable, variableRegex } from '../utils';
 
 export interface GraphNode {
   id: string;
@@ -66,6 +66,10 @@ export const getUnknownVariableStrings = (variables: VariableModel[], model: any
   const unknownVariableNames: string[] = [];
   const modelAsString = safeStringifyValue(model, 2);
   const matches = modelAsString.match(variableRegex);
+
+  if (!matches) {
+    return unknownVariableNames;
+  }
 
   for (const match of matches) {
     if (!match) {
@@ -145,7 +149,11 @@ export interface VariableUsages {
   usages: Array<{ variable: VariableModel; tree: any }>;
 }
 
-export const createUsagesNetwork = (variables: VariableModel[], dashboard: DashboardModel): VariableUsages => {
+export const createUsagesNetwork = (variables: VariableModel[], dashboard: DashboardModel | null): VariableUsages => {
+  if (!dashboard) {
+    return { unUsed: [], unknown: [], usages: [] };
+  }
+
   const unUsed: VariableModel[] = [];
   let usages: Array<{ variable: VariableModel; tree: any }> = [];
   let unknown: Array<{ variable: VariableModel; tree: any }> = [];

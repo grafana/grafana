@@ -10,11 +10,12 @@ import (
 )
 
 func TestUserAuthTokenCleanup(t *testing.T) {
-
 	Convey("Test user auth token cleanup", t, func() {
 		ctx := createTestContext(t)
-		ctx.tokenService.Cfg.LoginMaxInactiveLifetimeDays = 7
-		ctx.tokenService.Cfg.LoginMaxLifetimeDays = 30
+		maxInactiveLifetime, _ := time.ParseDuration("168h")
+		maxLifetime, _ := time.ParseDuration("720h")
+		ctx.tokenService.Cfg.LoginMaxInactiveLifetime = maxInactiveLifetime
+		ctx.tokenService.Cfg.LoginMaxLifetime = maxLifetime
 
 		insertToken := func(token string, prev string, createdAt, rotatedAt int64) {
 			ut := userAuthToken{AuthToken: token, PrevAuthToken: prev, CreatedAt: createdAt, RotatedAt: rotatedAt, UserAgent: "", ClientIp: ""}
@@ -28,7 +29,7 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 		}
 
 		Convey("should delete tokens where token rotation age is older than or equal 7 days", func() {
-			from := t.Add(-7 * 24 * time.Hour)
+			from := t.Add(-168 * time.Hour)
 
 			// insert three old tokens that should be deleted
 			for i := 0; i < 3; i++ {
@@ -41,7 +42,7 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 				insertToken(fmt.Sprintf("newA%d", i), fmt.Sprintf("newB%d", i), from.Unix(), from.Unix())
 			}
 
-			affected, err := ctx.tokenService.deleteExpiredTokens(context.Background(), 7*24*time.Hour, 30*24*time.Hour)
+			affected, err := ctx.tokenService.deleteExpiredTokens(context.Background(), 168*time.Hour, 30*24*time.Hour)
 			So(err, ShouldBeNil)
 			So(affected, ShouldEqual, 3)
 		})

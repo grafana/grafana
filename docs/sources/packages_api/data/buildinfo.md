@@ -29,6 +29,7 @@ import { BuildInfo } from '@grafana/data';
 |  [edition](#edition-property) | <code>string</code> |  |
 |  [env](#env-property) | <code>string</code> |  |
 |  [hasUpdate](#hasupdate-property) | <code>boolean</code> |  |
+|  [hideVersion](#hideversion-property) | <code>boolean</code> |  |
 |  [isEnterprise](#isenterprise-property) | <code>boolean</code> | Is set to true when running Grafana Enterprise edition. |
 |  [latestVersion](#latestversion-property) | <code>string</code> |  |
 |  [version](#version-property) | <code>string</code> |  |
@@ -63,6 +64,14 @@ env: string;
 
 ```typescript
 hasUpdate: boolean;
+```
+
+### hideVersion property
+
+<b>Signature</b>
+
+```typescript
+hideVersion: boolean;
 ```
 
 ### isEnterprise property

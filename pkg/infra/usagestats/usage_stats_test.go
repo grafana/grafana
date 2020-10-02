@@ -33,7 +33,6 @@ func TestMetrics(t *testing.T) {
 
 		var getSystemStatsQuery *models.GetSystemStatsQuery
 		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
-
 			query.Result = &models.SystemStats{
 				Dashboards:            1,
 				Datasources:           2,
@@ -50,6 +49,8 @@ func TestMetrics(t *testing.T) {
 				Snapshots:             13,
 				Teams:                 14,
 				AuthTokens:            15,
+				DashboardVersions:     16,
+				Annotations:           17,
 			}
 			getSystemStatsQuery = query
 			return nil
@@ -161,7 +162,7 @@ func TestMetrics(t *testing.T) {
 		}))
 		usageStatsURL = ts.URL
 
-		oauthProviders := map[string]bool{
+		uss.oauthProviders = map[string]bool{
 			"github":        true,
 			"gitlab":        true,
 			"azuread":       true,
@@ -170,11 +171,11 @@ func TestMetrics(t *testing.T) {
 			"grafana_com":   true,
 		}
 
-		uss.sendUsageStats(oauthProviders)
+		uss.sendUsageStats()
 
 		Convey("Given reporting not enabled and sending usage stats", func() {
 			setting.ReportingEnabled = false
-			uss.sendUsageStats(oauthProviders)
+			uss.sendUsageStats()
 
 			Convey("Should not gather stats or call http endpoint", func() {
 				So(getSystemStatsQuery, ShouldBeNil)
@@ -194,7 +195,7 @@ func TestMetrics(t *testing.T) {
 			setting.Packaging = "deb"
 
 			wg.Add(1)
-			uss.sendUsageStats(oauthProviders)
+			uss.sendUsageStats()
 
 			Convey("Should gather stats and call http endpoint", func() {
 				if waitTimeout(&wg, 2*time.Second) {
@@ -238,6 +239,8 @@ func TestMetrics(t *testing.T) {
 				So(metrics.Get("stats.teams.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Teams)
 				So(metrics.Get("stats.total_auth_token.count").MustInt64(), ShouldEqual, 15)
 				So(metrics.Get("stats.avg_auth_token_per_user.count").MustInt64(), ShouldEqual, 5)
+				So(metrics.Get("stats.dashboard_versions.count").MustInt64(), ShouldEqual, 16)
+				So(metrics.Get("stats.annotations.count").MustInt64(), ShouldEqual, 17)
 
 				So(metrics.Get("stats.ds."+models.DS_ES+".count").MustInt(), ShouldEqual, 9)
 				So(metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt(), ShouldEqual, 10)
@@ -269,7 +272,6 @@ func TestMetrics(t *testing.T) {
 				So(metrics.Get("stats.auth_enabled.oauth_grafana_com.count").MustInt(), ShouldEqual, 1)
 
 				So(metrics.Get("stats.packaging.deb.count").MustInt(), ShouldEqual, 1)
-
 			})
 		})
 

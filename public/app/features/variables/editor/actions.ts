@@ -22,7 +22,7 @@ import { addVariable, removeVariable, storeNewVariable } from '../state/sharedRe
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async dispatch => {
-    dispatch(variableEditorMounted({ name: getVariable(identifier.id!).name }));
+    dispatch(variableEditorMounted({ name: getVariable(identifier.id).name }));
   };
 };
 
@@ -37,7 +37,7 @@ export const variableEditorUnMount = (identifier: VariableIdentifier): ThunkResu
 
 export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const variableInState = getVariable(identifier.id!, getState());
+    const variableInState = getVariable(identifier.id, getState());
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
     dispatch(switchToListMode());
   };
@@ -57,11 +57,6 @@ export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> =
 
 export const changeVariableName = (identifier: VariableIdentifier, newName: string): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const variableInState = getVariable(identifier.id, getState());
-    if (newName === variableInState.name) {
-      return;
-    }
-
     let errorText = null;
     if (!newName.match(/^(?!__).*$/)) {
       errorText = "Template names cannot begin with '__', that's reserved for Grafana's global variables";
@@ -100,9 +95,13 @@ export const completeChangeVariableName = (identifier: VariableIdentifier, newNa
   getState
 ) => {
   const originalVariable = getVariable(identifier.id, getState());
+  if (originalVariable.name === newName) {
+    dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, { newName })));
+    return;
+  }
   const model = { ...cloneDeep(originalVariable), name: newName, id: newName };
-  const global = originalVariable.global!; // global is undefined because of old variable system
-  const index = originalVariable.index!; // index is undefined because of old variable system
+  const global = originalVariable.global;
+  const index = originalVariable.index;
   const renamedIdentifier = toVariableIdentifier(model);
 
   dispatch(addVariable(toVariablePayload(renamedIdentifier, { global, index, model })));

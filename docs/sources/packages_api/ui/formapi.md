@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export declare type FormAPI<T> = Pick<FormContextValues<T>, 'register' | 'errors' | 'control' | 'formState' | 'getValues'>;
+export declare type FormAPI<T> = Pick<FormContextValues<T>, 'register' | 'errors' | 'control' | 'formState' | 'getValues' | 'watch'>;
 ```
 <b>Import</b>
 

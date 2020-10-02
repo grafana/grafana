@@ -27,7 +27,7 @@ export class AppNotificationList extends PureComponent<Props> {
     appEvents.on(AppEvents.alertError, payload => notifyApp(createErrorNotification(...payload)));
   }
 
-  onClearAppNotification = (id: number) => {
+  onClearAppNotification = (id: string) => {
     this.props.clearAppNotification(id);
   };
 

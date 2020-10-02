@@ -1,9 +1,10 @@
 package permissions
 
 import (
+	"strings"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"strings"
 )
 
 type DashboardPermissionFilter struct {

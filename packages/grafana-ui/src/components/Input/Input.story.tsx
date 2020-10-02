@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { boolean, text, select, number } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Input } from './Input';
-import { Button } from '../Button';
 import mdx from './Input.mdx';
 import { getAvailableIcons, IconName } from '../../types';
 import { KeyValue } from '@grafana/data';
-import { Icon } from '../Icon/Icon';
-import { Field } from '../Forms/Field';
+import { Field, Icon, Button, Input } from '@grafana/ui';
 
 export default {
   title: 'Forms/Input',

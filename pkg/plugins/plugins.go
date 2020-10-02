@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"golang.org/x/xerrors"
 )
 
 var (
@@ -193,11 +192,11 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 	}
 
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
-		if xerrors.Is(err, os.ErrNotExist) {
+		if errors.Is(err, os.ErrNotExist) {
 			pm.log.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", pluginDir)
 			return nil
 		}
-		if xerrors.Is(err, os.ErrPermission) {
+		if errors.Is(err, os.ErrPermission) {
 			pm.log.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", pluginDir)
 			return nil
 		}

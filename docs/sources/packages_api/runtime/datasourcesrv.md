@@ -33,13 +33,13 @@ import { DataSourceSrv } from '@grafana/runtime';
 <b>Signature</b>
 
 ```typescript
-get(name?: string, scopedVars?: ScopedVars): Promise<DataSourceApi>;
+get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi>;
 ```
 <b>Parameters</b>
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  name | <code>string</code> | name of the datasource plugin you want to use. |
+|  name | <code>string &#124; null</code> | name of the datasource plugin you want to use. |
 |  scopedVars | <code>ScopedVars</code> | variables used to interpolate a templated passed as name. |
 
 <b>Returns:</b>

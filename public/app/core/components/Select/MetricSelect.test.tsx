@@ -2,6 +2,8 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { MetricSelect } from './MetricSelect';
 import { LegacyForms } from '@grafana/ui';
+import { expect } from '../../../../test/lib/common';
+
 const { Select } = LegacyForms;
 
 describe('MetricSelect', () => {
@@ -32,16 +34,15 @@ describe('MetricSelect', () => {
         variables: [],
       };
       const wrapper = shallow(<MetricSelect {...props} />);
-      wrapper
-        .find(Select)
-        .props()
-        .onChange({ value: 'foo' });
-      expect(
-        wrapper
-          .find(Select)
-          .props()
-          .noOptionsMessage()
-      ).toEqual('No options found');
+      const select = wrapper.find(Select);
+
+      select.props().onChange({ value: 'foo' });
+
+      expect(select.props().noOptionsMessage).toBeDefined();
+
+      // @ts-ignore typescript doesn't understand that noOptionsMessage can't be undefined here
+      const noOptionsMessage = select.props().noOptionsMessage();
+      expect(noOptionsMessage).toEqual('No options found');
       expect(spyOnChange).toHaveBeenCalledWith('foo');
     });
   });

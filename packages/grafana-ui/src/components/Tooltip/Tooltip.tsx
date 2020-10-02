@@ -1,10 +1,10 @@
-import React, { createRef } from 'react';
+import React, { createRef, FC } from 'react';
 import * as PopperJS from 'popper.js';
 import { Popover } from './Popover';
 import { PopoverController, UsingPopperProps } from './PopoverController';
 
 export interface TooltipProps extends UsingPopperProps {
-  theme?: 'info' | 'error';
+  theme?: 'info' | 'error' | 'info-alt';
 }
 
 export interface PopoverContentProps {
@@ -13,7 +13,7 @@ export interface PopoverContentProps {
 
 export type PopoverContent = string | React.ReactElement<any> | ((props: PopoverContentProps) => JSX.Element);
 
-export const Tooltip = ({ children, theme, ...controllerProps }: TooltipProps) => {
+export const Tooltip: FC<TooltipProps> = ({ children, theme, ...controllerProps }: TooltipProps) => {
   const tooltipTriggerRef = createRef<PopperJS.ReferenceObject>();
   const popperBackgroundClassName = 'popper__background' + (theme ? ' popper__background--' + theme : '');
 

@@ -17,14 +17,14 @@ import _isEqual from 'lodash/isEqual';
 // @ts-ignore
 import { getTraceSpanIdsAsTree } from '../selectors/trace';
 import { getConfigValue } from '../utils/config/get-config';
-import { KeyValuePair, Span, SpanData, Trace, TraceData } from '../types/trace';
+import { TraceKeyValuePair, TraceSpan, TraceSpanData, Trace, TraceData } from '@grafana/data';
 // @ts-ignore
 import TreeNode from '../utils/TreeNode';
 
 // exported for tests
-export function deduplicateTags(spanTags: KeyValuePair[]) {
+export function deduplicateTags(spanTags: TraceKeyValuePair[]) {
   const warningsHash: Map<string, string> = new Map<string, string>();
-  const tags: KeyValuePair[] = spanTags.reduce<KeyValuePair[]>((uniqueTags, tag) => {
+  const tags: TraceKeyValuePair[] = spanTags.reduce<TraceKeyValuePair[]>((uniqueTags, tag) => {
     if (!uniqueTags.some(t => t.key === tag.key && t.value === tag.value)) {
       uniqueTags.push(tag);
     } else {
@@ -37,8 +37,8 @@ export function deduplicateTags(spanTags: KeyValuePair[]) {
 }
 
 // exported for tests
-export function orderTags(spanTags: KeyValuePair[], topPrefixes?: string[]) {
-  const orderedTags: KeyValuePair[] = spanTags.slice();
+export function orderTags(spanTags: TraceKeyValuePair[], topPrefixes?: string[]) {
+  const orderedTags: TraceKeyValuePair[] = spanTags.slice();
   const tp = (topPrefixes || []).map((p: string) => p.toLowerCase());
 
   orderedTags.sort((a, b) => {
@@ -71,7 +71,7 @@ export function orderTags(spanTags: KeyValuePair[], topPrefixes?: string[]) {
  * NOTE: Mutates `data` - Transform the HTTP response data into the form the app
  * generally requires.
  */
-export default function transformTraceData(data: TraceData & { spans: SpanData[] }): Trace | null {
+export default function transformTraceData(data: TraceData & { spans: TraceSpanData[] }): Trace | null {
   let { traceID } = data;
   if (!traceID) {
     return null;
@@ -81,14 +81,14 @@ export default function transformTraceData(data: TraceData & { spans: SpanData[]
   let traceEndTime = 0;
   let traceStartTime = Number.MAX_SAFE_INTEGER;
   const spanIdCounts = new Map();
-  const spanMap = new Map<string, Span>();
+  const spanMap = new Map<string, TraceSpan>();
   // filter out spans with empty start times
   // eslint-disable-next-line no-param-reassign
   data.spans = data.spans.filter(span => Boolean(span.startTime));
 
   const max = data.spans.length;
   for (let i = 0; i < max; i++) {
-    const span: Span = data.spans[i] as Span;
+    const span: TraceSpan = data.spans[i] as TraceSpan;
     const { startTime, duration, processID } = span;
     //
     let spanID = span.spanID;
@@ -120,7 +120,7 @@ export default function transformTraceData(data: TraceData & { spans: SpanData[]
   // tree is necessary to sort the spans, so children follow parents, and
   // siblings are sorted by start time
   const tree = getTraceSpanIdsAsTree(data);
-  const spans: Span[] = [];
+  const spans: TraceSpan[] = [];
   const svcCounts: Record<string, number> = {};
   let traceName = '';
 
@@ -130,7 +130,7 @@ export default function transformTraceData(data: TraceData & { spans: SpanData[]
     if (spanID === '__root__') {
       return;
     }
-    const span = spanMap.get(spanID) as Span;
+    const span = spanMap.get(spanID) as TraceSpan;
     if (!span) {
       return;
     }
@@ -149,7 +149,7 @@ export default function transformTraceData(data: TraceData & { spans: SpanData[]
     span.tags = orderTags(tagsInfo.tags, getConfigValue('topTagPrefixes'));
     span.warnings = span.warnings.concat(tagsInfo.warnings);
     span.references.forEach((ref, index) => {
-      const refSpan = spanMap.get(ref.spanID) as Span;
+      const refSpan = spanMap.get(ref.spanID) as TraceSpan;
       if (refSpan) {
         // eslint-disable-next-line no-param-reassign
         ref.span = refSpan;

@@ -9,7 +9,6 @@ import (
 )
 
 func TestDashboardAclModel(t *testing.T) {
-
 	Convey("When printing a PermissionType", t, func() {
 		view := PERMISSION_VIEW
 		printed := fmt.Sprint(view)

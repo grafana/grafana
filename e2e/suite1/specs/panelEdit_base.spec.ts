@@ -4,12 +4,12 @@ const PANEL_UNDER_TEST = 'Random walk series';
 
 e2e.scenario({
   describeName: 'Panel edit tests',
-  itName: 'Testes various Panel edit scenarios',
+  itName: 'Tests various Panel edit scenarios',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e.flows.openDashboard('5SdHCadmz');
+    e2e.flows.openDashboard({ uid: '5SdHCadmz' });
 
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
 

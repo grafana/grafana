@@ -19,40 +19,19 @@ declare class PopoverController extends React.Component<Props, State>
 ```typescript
 import { PopoverController } from '@grafana/ui';
 ```
-<b>Constructors</b>
-
-|  Constructor | Modifiers | Description |
-|  --- | --- | --- |
-|  [constructor(props)](#constructor-props) |  | Constructs a new instance of the <code>PopoverController</code> class |
-
 <b>Properties</b>
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [hidePopper](#hidepopper-property) |  | <code>() =&gt; void</code> |  |
 |  [showPopper](#showpopper-property) |  | <code>() =&gt; void</code> |  |
+|  [state](#state-property) |  | <code>{</code><br/><code>        show: boolean;</code><br/><code>    }</code> |  |
 
 <b>Methods</b>
 
 |  Method | Modifiers | Description |
 |  --- | --- | --- |
 |  [render()](#render-method) |  |  |
-|  [UNSAFE\_componentWillReceiveProps(nextProps)](#unsafe_componentwillreceiveprops-method) |  |  |
-
-### constructor(props)
-
-Constructs a new instance of the `PopoverController` class
-
-<b>Signature</b>
-
-```typescript
-constructor(props: Props);
-```
-<b>Parameters</b>
-
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  props | <code>Props</code> |  |
 
 ### hidePopper property
 
@@ -70,6 +49,16 @@ hidePopper: () => void;
 showPopper: () => void;
 ```
 
+### state property
+
+<b>Signature</b>
+
+```typescript
+state: {
+        show: boolean;
+    };
+```
+
 ### render method
 
 <b>Signature</b>
@@ -80,21 +69,4 @@ render(): JSX.Element;
 <b>Returns:</b>
 
 `JSX.Element`
-
-### UNSAFE\_componentWillReceiveProps method
-
-<b>Signature</b>
-
-```typescript
-UNSAFE_componentWillReceiveProps(nextProps: Props): void;
-```
-<b>Parameters</b>
-
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  nextProps | <code>Props</code> |  |
-
-<b>Returns:</b>
-
-`void`
 

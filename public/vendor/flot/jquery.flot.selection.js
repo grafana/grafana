@@ -360,10 +360,10 @@ The plugin allso adds the following methods to the plot object:
                 // grafana addition
                 // In L114 this plugin is overrinding document.onselectstart handler to prevent default or custom behaviour
                 // Then this patch is being restored during mouseup event. But, mouseup handler is unbound when this plugin is destroyed
-                // and the overriden onselectstart handler is not restored.  The problematic behaviour surfaces when flot is re-rendered
+                // and the overridden onselectstart handler is not restored.  The problematic behaviour surfaces when flot is re-rendered
                 // as a consequence of panel's model update. When i.e. options are applied via onBlur
                 // event on some input which results in flot re-render. The mouseup handler should be called to resture the original handlers
-                //  but by the time the document mouseup event occurs, the event handler is no longer there, so onselectstart is permanently overriden.
+                //  but by the time the document mouseup event occurs, the event handler is no longer there, so onselectstart is permanently overridden.
                 // To fix that we are making sure that the overrides are reverted when this plugin is destroyed, the same way as they would
                 // via mouseup event handler (L138)
 

@@ -86,7 +86,7 @@ export const promptPluginDetails = async (name?: string) => {
     promptInput('keywords', 'Keywords (separated by comma)'),
     // Try using git specified username
     promptConfirm('author', `Author (${username})`, username, username !== ''),
-    // Prompt for manual author entry if no git user.name specifed
+    // Prompt for manual author entry if no git user.name specified
     promptInput('author', `Author`, true, undefined, (answers: any) => !answers.author || username === ''),
     promptInput('url', 'Your URL (i.e. organisation url)'),
   ]);
@@ -97,21 +97,26 @@ export const promptPluginDetails = async (name?: string) => {
   };
 };
 
-export const fetchTemplate = useSpinner<{ type: PluginType; dest: string }>(
-  'Fetching plugin template...',
-  async ({ type, dest }) => {
+export const fetchTemplate = ({ type, dest }: { type: PluginType; dest: string }) =>
+  useSpinner('Fetching plugin template...', async () => {
     const url = RepositoriesPaths[type];
     if (!url) {
       throw new Error('Unknown plugin type');
     }
 
     await simpleGit.clone(url, dest);
-  }
-);
+  });
 
-export const prepareJsonFiles = useSpinner<{ type: PluginType; pluginDetails: PluginDetails; pluginPath: string }>(
-  'Saving package.json and plugin.json files',
-  async ({ type, pluginDetails, pluginPath }) => {
+export const prepareJsonFiles = ({
+  type,
+  pluginDetails,
+  pluginPath,
+}: {
+  type: PluginType;
+  pluginDetails: PluginDetails;
+  pluginPath: string;
+}) =>
+  useSpinner('Saving package.json and plugin.json files', async () => {
     const packageJsonPath = path.resolve(pluginPath, 'package.json');
     const pluginJsonPath = path.resolve(pluginPath, 'src/plugin.json');
     const packageJson: any = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
@@ -146,10 +151,10 @@ export const prepareJsonFiles = useSpinner<{ type: PluginType; pluginDetails: Pl
         return fs.writeFile(filePath, JSON.stringify(f, null, 2));
       })
     );
-  }
-);
+  });
 
-export const removeGitFiles = useSpinner('Cleaning', async pluginPath => rmdir(`${path.resolve(pluginPath, '.git')}`));
+export const removeGitFiles = (pluginPath: string) =>
+  useSpinner('Cleaning', async () => rmdir(`${path.resolve(pluginPath, '.git')}`));
 
 /* eslint-disable no-console */
 export const formatPluginDetails = (details: PluginDetails) => {

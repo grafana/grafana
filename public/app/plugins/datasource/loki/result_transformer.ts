@@ -14,9 +14,12 @@ import {
   DataLink,
   Field,
   QueryResultMetaStat,
+  QueryResultMeta,
+  TimeSeriesValue,
+  ScopedVars,
 } from '@grafana/data';
 
-import templateSrv from 'app/features/templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import {
@@ -77,7 +80,7 @@ function constructDataFrame(
     refId,
     fields: [
       { name: 'ts', type: FieldType.time, config: { displayName: 'Time' }, values: times }, // Time
-      { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line
+      { name: 'line', type: FieldType.string, config: {}, values: lines, labels }, // Line - needs to be the first field with string type
       { name: 'id', type: FieldType.string, config: {}, values: uids },
       { name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' }, values: timesNs }, // Time
     ],
@@ -142,23 +145,25 @@ function createUid(ts: string, labelsString: string, line: string): string {
 }
 
 function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: TransformerOptions): TimeSeries {
+  const name = createMetricLabel(matrixResult.metric, options);
   return {
-    target: createMetricLabel(matrixResult.metric, options),
+    target: name,
+    title: name,
     datapoints: lokiPointsToTimeseriesPoints(matrixResult.values, options),
     tags: matrixResult.metric,
+    meta: options.meta,
+    refId: options.refId,
   };
 }
 
-function lokiPointsToTimeseriesPoints(
-  data: Array<[number, string]>,
-  options: TransformerOptions
-): Array<[number, number]> {
+function lokiPointsToTimeseriesPoints(data: Array<[number, string]>, options: TransformerOptions): TimeSeriesValue[][] {
   const stepMs = options.step * 1000;
-  const datapoints: Array<[number, number]> = [];
+  const datapoints: TimeSeriesValue[][] = [];
 
   let baseTimestampMs = options.start / 1e6;
   for (const [time, value] of data) {
-    let datapointValue = parseFloat(value);
+    let datapointValue: TimeSeriesValue = parseFloat(value);
+
     if (isNaN(datapointValue)) {
       datapointValue = null;
     }
@@ -184,6 +189,7 @@ export function lokiResultsToTableModel(
   lokiResults: Array<LokiMatrixResult | LokiVectorResult>,
   resultCount: number,
   refId: string,
+  meta: QueryResultMeta,
   valueWithRefId?: boolean
 ): TableModel {
   if (!lokiResults || lokiResults.length === 0) {
@@ -192,16 +198,18 @@ export function lokiResultsToTableModel(
 
   // Collect all labels across all metrics
   const metricLabels: Set<string> = new Set<string>(
-    lokiResults.reduce((acc, cur) => acc.concat(Object.keys(cur.metric)), [])
+    lokiResults.reduce((acc, cur) => acc.concat(Object.keys(cur.metric)), [] as string[])
   );
 
   // Sort metric labels, create columns for them and record their index
   const sortedLabels = [...metricLabels.values()].sort();
   const table = new TableModel();
+  table.refId = refId;
+  table.meta = meta;
   table.columns = [
     { text: 'Time', type: FieldType.time },
     ...sortedLabels.map(label => ({ text: label, filterable: true })),
-    { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: FieldType.time },
+    { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: FieldType.number },
   ];
 
   // Populate rows, set value to empty string when label not present.
@@ -233,13 +241,13 @@ export function lokiResultsToTableModel(
   return table;
 }
 
-function createMetricLabel(labelData: { [key: string]: string }, options?: TransformerOptions) {
+export function createMetricLabel(labelData: { [key: string]: string }, options?: TransformerOptions) {
   let label =
     options === undefined || _.isEmpty(options.legendFormat)
       ? getOriginalMetricName(labelData)
-      : renderTemplate(templateSrv.replace(options.legendFormat), labelData);
+      : renderTemplate(getTemplateSrv().replace(options.legendFormat ?? '', options.scopedVars), labelData);
 
-  if (!label) {
+  if (!label && options) {
     label = options.query;
   }
   return label;
@@ -264,11 +272,13 @@ export function decamelize(s: string): string {
 }
 
 // Turn loki stats { metric: value } into meta stat { title: metric, value: value }
-function lokiStatsToMetaStat(stats: LokiStats): QueryResultMetaStat[] {
+function lokiStatsToMetaStat(stats: LokiStats | undefined): QueryResultMetaStat[] {
   const result: QueryResultMetaStat[] = [];
+
   if (!stats) {
     return result;
   }
+
   for (const section in stats) {
     const values = stats[section];
     for (const label in values) {
@@ -285,6 +295,7 @@ function lokiStatsToMetaStat(stats: LokiStats): QueryResultMetaStat[] {
       result.push({ displayName: title, value, unit });
     }
   }
+
   return result;
 }
 
@@ -301,20 +312,36 @@ export function lokiStreamsToDataframes(
   const custom = {
     lokiQueryStatKey: 'Summary: total bytes processed',
   };
+
+  const meta: QueryResultMeta = {
+    searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr)),
+    limit,
+    stats,
+    custom,
+    preferredVisualisationType: 'logs',
+  };
+
   const series: DataFrame[] = data.map(stream => {
     const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
     enhanceDataFrame(dataFrame, config);
+
     return {
       ...dataFrame,
       refId: target.refId,
-      meta: {
-        searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr)),
-        limit,
-        stats,
-        custom,
-      },
+      meta,
     };
   });
+
+  if (stats.length && !data.length) {
+    return [
+      {
+        fields: [],
+        length: 0,
+        refId: target.refId,
+        meta,
+      },
+    ];
+  }
 
   return series;
 }
@@ -351,17 +378,24 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
  */
 function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Field<any, ArrayVector> {
   const dataLinks = derivedFieldConfigs.reduce((acc, derivedFieldConfig) => {
-    if (derivedFieldConfig.url || derivedFieldConfig.datasourceUid) {
+    // Having field.datasourceUid means it is an internal link.
+    if (derivedFieldConfig.datasourceUid) {
+      acc.push({
+        // Will be filled out later
+        title: '',
+        url: '',
+        // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
+        internal: {
+          query: { query: derivedFieldConfig.url },
+          datasourceUid: derivedFieldConfig.datasourceUid,
+        },
+      });
+    } else if (derivedFieldConfig.url) {
       acc.push({
         // We do not know what title to give here so we count on presentation layer to create a title from metadata.
         title: '',
+        // This is hardcoded for Jaeger or Zipkin not way right now to specify datasource specific query object
         url: derivedFieldConfig.url,
-        // Having field.datasourceUid means it is an internal link.
-        meta: derivedFieldConfig.datasourceUid
-          ? {
-              datasourceUid: derivedFieldConfig.datasourceUid,
-            }
-          : undefined,
       });
     }
     return acc;
@@ -382,18 +416,25 @@ export function rangeQueryResponseToTimeSeries(
   response: LokiResponse,
   query: LokiRangeQueryRequest,
   target: LokiQuery,
-  responseListLength: number
+  responseListLength: number,
+  scopedVars: ScopedVars
 ): TimeSeries[] {
+  /** Show results of Loki metric queries only in graph */
+  const meta: QueryResultMeta = {
+    preferredVisualisationType: 'graph',
+  };
   const transformerOptions: TransformerOptions = {
     format: target.format,
-    legendFormat: target.legendFormat,
-    start: query.start,
-    end: query.end,
-    step: query.step,
+    legendFormat: target.legendFormat ?? '',
+    start: query.start!,
+    end: query.end!,
+    step: query.step!,
     query: query.query,
     responseListLength,
     refId: target.refId,
+    meta,
     valueWithRefId: target.valueWithRefId,
+    scopedVars,
   };
 
   switch (response.data.resultType) {
@@ -415,6 +456,7 @@ export function processRangeQueryResponse(
   responseListLength: number,
   limit: number,
   config: LokiOptions,
+  scopedVars: ScopedVars,
   reverse = false
 ) {
   switch (response.data.resultType) {
@@ -434,7 +476,8 @@ export function processRangeQueryResponse(
             ...target,
             format: 'time_series',
           },
-          responseListLength
+          responseListLength,
+          scopedVars
         ),
         key: target.refId,
       });

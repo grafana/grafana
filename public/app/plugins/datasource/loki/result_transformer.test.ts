@@ -1,7 +1,9 @@
 import { CircularDataFrame, FieldCache, FieldType, MutableDataFrame } from '@grafana/data';
-import { LokiStreamResult, LokiTailResponse, LokiStreamResponse, LokiResultType } from './types';
+import { LokiStreamResult, LokiTailResponse, LokiStreamResponse, LokiResultType, TransformerOptions } from './types';
 import * as ResultTransformer from './result_transformer';
 import { enhanceDataFrame } from './result_transformer';
+import { setTemplateSrv } from '@grafana/runtime';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 const streamResult: LokiStreamResult[] = [
   {
@@ -32,6 +34,10 @@ const lokiResponse: LokiStreamResponse = {
 };
 
 describe('loki result transformer', () => {
+  beforeAll(() => {
+    setTemplateSrv(new TemplateSrv());
+  });
+
   afterAll(() => {
     jest.restoreAllMocks();
   });
@@ -114,6 +120,15 @@ describe('loki result transformer', () => {
       });
     });
   });
+  describe('createMetricLabel', () => {
+    it('should create correct label based on passed variables', () => {
+      const label = ResultTransformer.createMetricLabel({}, ({
+        scopedVars: { testLabel: { selected: true, text: 'label1', value: 'label1' } },
+        legendFormat: '{{$testLabel}}',
+      } as unknown) as TransformerOptions);
+      expect(label).toBe('label1');
+    });
+  });
 });
 
 describe('enhanceDataFrame', () => {
@@ -129,32 +144,36 @@ describe('enhanceDataFrame', () => {
         {
           matcherRegex: 'trace2=(\\w+)',
           name: 'trace2',
+          url: 'test',
           datasourceUid: 'uid',
         },
         {
           matcherRegex: 'trace2=(\\w+)',
           name: 'trace2',
+          url: 'test',
           datasourceUid: 'uid2',
         },
       ],
     });
     expect(df.fields.length).toBe(3);
     const fc = new FieldCache(df);
-    expect(fc.getFieldByName('trace1').values.toArray()).toEqual([null, '1234', null]);
-    expect(fc.getFieldByName('trace1').config.links[0]).toEqual({
+    expect(fc.getFieldByName('trace1')!.values.toArray()).toEqual([null, '1234', null]);
+    expect(fc.getFieldByName('trace1')!.config.links![0]).toEqual({
       url: 'http://localhost/${__value.raw}',
       title: '',
     });
 
-    expect(fc.getFieldByName('trace2').values.toArray()).toEqual([null, null, 'foo']);
-    expect(fc.getFieldByName('trace2').config.links.length).toBe(2);
-    expect(fc.getFieldByName('trace2').config.links[0]).toEqual({
+    expect(fc.getFieldByName('trace2')!.values.toArray()).toEqual([null, null, 'foo']);
+    expect(fc.getFieldByName('trace2')!.config.links!.length).toBe(2);
+    expect(fc.getFieldByName('trace2')!.config.links![0]).toEqual({
       title: '',
-      meta: { datasourceUid: 'uid' },
+      internal: { datasourceUid: 'uid', query: { query: 'test' } },
+      url: '',
     });
-    expect(fc.getFieldByName('trace2').config.links[1]).toEqual({
+    expect(fc.getFieldByName('trace2')!.config.links![1]).toEqual({
       title: '',
-      meta: { datasourceUid: 'uid2' },
+      internal: { datasourceUid: 'uid2', query: { query: 'test' } },
+      url: '',
     });
   });
 });

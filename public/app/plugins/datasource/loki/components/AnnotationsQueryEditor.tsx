@@ -40,7 +40,6 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
         onChange={(query: LokiQuery) => onChange(query.expr)}
         onRunQuery={() => {}}
         history={[]}
-        data={null}
         onLoadOptions={setActiveOption}
         onLabelsRefresh={refreshLabels}
         absoluteRange={absolute}

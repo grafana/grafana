@@ -5,8 +5,6 @@ import { FeatureState } from '@grafana/data';
 
 import { StoreState } from '../../../types';
 import { getVariables } from '../state/selectors';
-import { VariableModel } from '../../templating/types';
-import { DashboardModel } from '../../dashboard/state';
 import { createUsagesNetwork, transformUsagesToNetwork, UsagesToNetwork } from './utils';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
 import { NetWorkGraph } from './NetworkGraph';
@@ -22,8 +20,8 @@ interface DispatchProps {}
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export const VariablesUsagesGraph: FC<Props> = ({ onEditClick }) => {
-  const variables: VariableModel[] = useSelector((state: StoreState) => getVariables(state));
-  const dashboard: DashboardModel = useSelector((state: StoreState) => state.dashboard.getModel());
+  const variables = useSelector((state: StoreState) => getVariables(state));
+  const dashboard = useSelector((state: StoreState) => state.dashboard.getModel());
   const { usages } = useMemo(() => createUsagesNetwork(variables, dashboard), [variables, dashboard]);
   const [networks, setNetWorks] = useState(transformUsagesToNetwork(usages));
   const onToggleGraph = useCallback(

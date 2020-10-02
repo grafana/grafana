@@ -3,11 +3,7 @@
     <h5 class="section-heading">Y Axis</h5>
     <div class="gf-form">
       <label class="gf-form-label width-8">Unit</label>
-      <div class="gf-form-dropdown-typeahead width-12"
-           ng-model="ctrl.panel.yAxis.format"
-           dropdown-typeahead2="editor.unitFormats"
-           dropdown-typeahead-on-select="editor.setUnitFormat($subItem)">
-      </div>
+      <unit-picker onChange="editor.setUnitFormat" value="ctrl.panel.yAxis.format" class="width-12"></unit-picker>
     </div>
     <div ng-if="ctrl.panel.dataFormat == 'timeseries'">
       <div class="gf-form">
@@ -51,7 +47,7 @@
     <h5 class="section-heading">Buckets</h5>
     <div class="gf-form-inline">
       <div class="gf-form">
-        <label class="gf-form-label width-5">Y Axis</label>
+        <label class="gf-form-label width-4">Y Axis</label>
       </div>
       <div class="gf-form" ng-show="ctrl.panel.yAxis.logBase === 1">
         <label class="gf-form-label width-5">Buckets</label>
@@ -78,7 +74,7 @@
     </div>
     <div class="gf-form-inline">
       <div class="gf-form">
-        <label class="gf-form-label width-5">X Axis</label>
+        <label class="gf-form-label width-4">X Axis</label>
       </div>
       <div class="gf-form">
         <label class="gf-form-label width-5">Buckets</label>

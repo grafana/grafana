@@ -9,7 +9,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	startTime, err := queryContext.TimeRange.ParseFrom()
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 				}
 			}()
 
-			client, err := e.getClient(region)
+			client, err := e.getCWClient(region)
 			if err != nil {
 				return err
 			}

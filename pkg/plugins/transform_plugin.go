@@ -7,12 +7,14 @@ import (
 	"path"
 	"strconv"
 
+	sdkgrpcplugin "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -35,12 +37,12 @@ func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string, backendP
 		return err
 	}
 
-	cmd := ComposePluginStartCommmand(p.Executable)
+	cmd := ComposePluginStartCommand(p.Executable)
 	fullpath := path.Join(p.PluginDir, cmd)
-	descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath, backendplugin.PluginStartFuncs{
+	factory := grpcplugin.NewBackendPlugin(p.Id, fullpath, grpcplugin.PluginStartFuncs{
 		OnStart: p.onPluginStart,
 	})
-	if err := backendPluginManager.Register(descriptor); err != nil {
+	if err := backendPluginManager.Register(p.Id, factory); err != nil {
 		return errutil.Wrapf(err, "Failed to register backend plugin")
 	}
 
@@ -49,7 +51,7 @@ func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string, backendP
 	return nil
 }
 
-func (p *TransformPlugin) onPluginStart(pluginID string, client *backendplugin.Client, logger log.Logger) error {
+func (p *TransformPlugin) onPluginStart(pluginID string, client *grpcplugin.Client, logger log.Logger) error {
 	p.TransformWrapper = NewTransformWrapper(logger, client.TransformPlugin)
 
 	if client.DataPlugin != nil {
@@ -65,12 +67,12 @@ func (p *TransformPlugin) onPluginStart(pluginID string, client *backendplugin.C
 // Wrapper Code
 // ...
 
-func NewTransformWrapper(log log.Logger, plugin backendplugin.TransformPlugin) *TransformWrapper {
+func NewTransformWrapper(log log.Logger, plugin sdkgrpcplugin.TransformClient) *TransformWrapper {
 	return &TransformWrapper{plugin, log, &transformCallback{log}}
 }
 
 type TransformWrapper struct {
-	backendplugin.TransformPlugin
+	sdkgrpcplugin.TransformClient
 	logger   log.Logger
 	callback *transformCallback
 }
@@ -100,7 +102,7 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 			},
 		})
 	}
-	pbRes, err := tw.TransformPlugin.TransformData(ctx, pbQuery, tw.callback)
+	pbRes, err := tw.TransformClient.TransformData(ctx, pbQuery, tw.callback)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +113,7 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 	for refID, res := range pbRes.Responses {
 		tRes := &tsdb.QueryResult{
 			RefId:      refID,
-			Dataframes: res.Frames,
+			Dataframes: tsdb.NewEncodedDataFrames(res.Frames),
 		}
 		if len(res.JsonMeta) != 0 {
 			tRes.Meta = simplejson.NewFromAny(res.JsonMeta)
@@ -190,7 +192,11 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 		}
 
 		if res.Dataframes != nil {
-			pRes.Frames = res.Dataframes
+			encoded, err := res.Dataframes.Encoded()
+			if err != nil {
+				return nil, err
+			}
+			pRes.Frames = encoded
 			responses[refID] = pRes
 			continue
 		}

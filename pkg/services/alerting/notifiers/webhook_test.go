@@ -10,7 +10,6 @@ import (
 
 func TestWebhookNotifier(t *testing.T) {
 	Convey("Webhook notifier tests", t, func() {
-
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`

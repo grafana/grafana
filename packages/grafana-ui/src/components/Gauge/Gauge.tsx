@@ -180,7 +180,7 @@ export class Gauge extends PureComponent<Props> {
     try {
       $.plot(this.canvasElement, [plotSeries], options);
     } catch (err) {
-      console.log('Gauge rendering error', err, options, value);
+      console.error('Gauge rendering error', err, options, value);
     }
   }
 

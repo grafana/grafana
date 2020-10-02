@@ -20,6 +20,7 @@ var (
 	ErrUserDisabled          = errors.New("User is disabled")
 	ErrAbsoluteRedirectTo    = errors.New("Absolute urls are not allowed for redirect_to cookie value")
 	ErrInvalidRedirectTo     = errors.New("Invalid redirect_to cookie value")
+	ErrForbiddenRedirectTo   = errors.New("Forbidden redirect_to cookie value")
 )
 
 var loginLogger = log.New("login")
@@ -40,11 +41,13 @@ func AuthenticateUser(query *models.LoginUserQuery) error {
 
 	err := loginUsingGrafanaDB(query)
 	if err == nil || (err != models.ErrUserNotFound && err != ErrInvalidCredentials && err != ErrUserDisabled) {
+		query.AuthModule = "grafana"
 		return err
 	}
 
 	ldapEnabled, ldapErr := loginUsingLDAP(query)
 	if ldapEnabled {
+		query.AuthModule = models.AuthModuleLDAP
 		if ldapErr == nil || ldapErr != ldap.ErrInvalidCredentials {
 			return ldapErr
 		}
@@ -59,10 +62,6 @@ func AuthenticateUser(query *models.LoginUserQuery) error {
 			loginLogger.Error("Failed to save invalid login attempt", "err", err)
 		}
 
-		return ErrInvalidCredentials
-	}
-
-	if err == models.ErrUserNotFound {
 		return ErrInvalidCredentials
 	}
 
