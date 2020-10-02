@@ -20,11 +20,12 @@ export const RandomWalkEditor = ({ onChange, query }: EditorProps) => {
           <InlineField label={label} labelWidth={14} key={id}>
             <Input
               width={32}
+              name={id}
               type="number"
               id={id}
               min={min}
               step={step}
-              value={query[id as keyof TestDataQuery]}
+              value={query[id as keyof TestDataQuery] || placeholder}
               placeholder={placeholder}
               onChange={onChange}
             />

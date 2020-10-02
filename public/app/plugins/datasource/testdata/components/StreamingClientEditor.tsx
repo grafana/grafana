@@ -25,8 +25,7 @@ export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
   // Convert values to numbers before saving
   const onInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-
-    onChange({ target: { name, value: parseFloat(value) } });
+    onChange({ target: { name, value: Number(value) } });
   };
 
   return (
