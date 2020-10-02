@@ -24,8 +24,8 @@ func TestQueryTransformer(t *testing.T) {
 		}
 
 		res, err := executor.transformRequestQueriesToCloudWatchQueries(requestQueries)
-		require.Nil(t, err)
-		assert.Equal(t, len(res), 1)
+		require.NoError(t, err)
+		assert.Len(t, res, 1)
 	})
 
 	t.Run("Two cloudwatchQuery is generated when there's two stats", func(t *testing.T) {
@@ -42,8 +42,8 @@ func TestQueryTransformer(t *testing.T) {
 		}
 
 		res, err := executor.transformRequestQueriesToCloudWatchQueries(requestQueries)
-		require.Nil(t, err)
-		assert.Equal(t, len(res), 2)
+		require.NoError(t, err)
+		assert.Len(t, res, 2)
 	})
 	t.Run("id is given by user that will be used in the cloudwatch query", func(t *testing.T) {
 		requestQueries := []*requestQuery{
@@ -64,8 +64,8 @@ func TestQueryTransformer(t *testing.T) {
 		assert.Contains(t, res, "myid")
 	})
 
-	t.Run("id is not given by user", func(t *testing.T) {
-		t.Run("id will be generated based on ref id if query only has one stat", func(t *testing.T) {
+	t.Run("ID is not given by user", func(t *testing.T) {
+		t.Run("ID will be generated based on ref ID if query only has one stat", func(t *testing.T) {
 			requestQueries := []*requestQuery{
 				{
 					RefId:      "D",
@@ -79,12 +79,12 @@ func TestQueryTransformer(t *testing.T) {
 			}
 
 			res, err := executor.transformRequestQueriesToCloudWatchQueries(requestQueries)
-			require.Nil(t, err)
-			assert.Equal(t, len(res), 1)
+			require.NoError(t, err)
+			assert.Len(t, res, 1)
 			assert.Contains(t, res, "queryD")
 		})
 
-		t.Run("id will be generated based on ref and stat name if query has two stats", func(t *testing.T) {
+		t.Run("ID will be generated based on ref and stat name if query has two stats", func(t *testing.T) {
 			requestQueries := []*requestQuery{
 				{
 					RefId:      "D",
@@ -98,8 +98,8 @@ func TestQueryTransformer(t *testing.T) {
 			}
 
 			res, err := executor.transformRequestQueriesToCloudWatchQueries(requestQueries)
-			require.Nil(t, err)
-			assert.Equal(t, len(res), 2)
+			require.NoError(t, err)
+			assert.Len(t, res, 2)
 			assert.Contains(t, res, "queryD_Sum")
 			assert.Contains(t, res, "queryD_Average")
 		})
@@ -119,8 +119,8 @@ func TestQueryTransformer(t *testing.T) {
 		}
 
 		res, err := executor.transformRequestQueriesToCloudWatchQueries(requestQueries)
-		require.Nil(t, err)
-		assert.Equal(t, len(res), 2)
+		require.NoError(t, err)
+		assert.Len(t, res, 2)
 		assert.Contains(t, res, "queryD_p46_32")
 	})
 
@@ -148,6 +148,6 @@ func TestQueryTransformer(t *testing.T) {
 
 		res, err := executor.transformRequestQueriesToCloudWatchQueries(requestQueries)
 		require.Nil(t, res)
-		assert.NotNil(t, err)
+		assert.Error(t, err)
 	})
 }
