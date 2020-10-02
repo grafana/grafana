@@ -1,6 +1,5 @@
 import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
-import { restoreCwd } from '../utils/cwd';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 import { getPluginId } from '../../config/utils/getPluginId';
 
@@ -176,9 +175,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signingAdmin }
   console.log('Building ZIP');
   let zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';
   let zipFile = path.resolve(packagesDir, zipName);
-  process.chdir(distDir);
-  await execa('zip', ['-r', zipFile, '.']);
-  restoreCwd();
+  await execa('zip', ['-r', zipFile, '.'], { cwd: distDir });
 
   const zipStats = fs.statSync(zipFile);
   if (zipStats.size < 100) {
@@ -202,9 +199,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signingAdmin }
     console.log('Creating documentation zip');
     zipName = pluginInfo.id + '-' + pluginInfo.info.version + '-docs.zip';
     zipFile = path.resolve(packagesDir, zipName);
-    process.chdir(docsDir);
-    await execa('zip', ['-r', zipFile, '.']);
-    restoreCwd();
+    await execa('zip', ['-r', zipFile, '.'], { cwd: docsDir });
 
     info.docs = await getPackageDetails(zipFile, docsDir);
   }
