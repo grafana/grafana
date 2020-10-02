@@ -56,8 +56,6 @@ export const getInlineLabelStyles = (theme: GrafanaTheme, width?: number | 'auto
       color: ${theme.colors.textHeading};
     `,
     icon: css`
-      display: flex;
-      flex-grow: 0;
       color: ${theme.colors.textWeak};
       margin-left: 10px;
 
