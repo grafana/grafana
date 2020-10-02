@@ -61,7 +61,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 
 		middlewareScenario(t, "middleware should add correct Strict-Transport-Security header", func(sc *scenarioContext) {
 			setting.StrictTransportSecurity = true
-			setting.Protocol = setting.HTTPS
+			setting.Protocol = setting.HTTPSScheme
 			setting.StrictTransportSecurityMaxAge = 64000
 			sc.fakeReq("GET", "/api/").exec()
 			So(sc.resp.Header().Get("Strict-Transport-Security"), ShouldEqual, "max-age=64000")

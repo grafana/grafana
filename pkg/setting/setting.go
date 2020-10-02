@@ -33,11 +33,11 @@ const (
 )
 
 const (
-	redactedPassword string = "*********"
-	DefaultHTTPAddr         = "0.0.0.0"
-	Dev                     = "development"
-	Prod                    = "production"
-	Test                    = "test"
+	redactedPassword = "*********"
+	DefaultHTTPAddr  = "0.0.0.0"
+	Dev              = "development"
+	Prod             = "production"
+	Test             = "test"
 )
 
 var (
