@@ -167,6 +167,44 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
   }
 
+  // https://github.com/elgs/splitargs/blob/master/splitargs.js
+  private splitOnDot(input: string) {
+    var singleQuoteOpen = false;
+    var doubleQuoteOpen = false;
+    var tokenBuffer: string[] = [];
+    var ret: string[] = [];
+
+    const arr = input.split('');
+    for (var i = 0; i < arr.length; ++i) {
+      const element = arr[i];
+      const matches = element === '.';
+      if (element === "'" && !doubleQuoteOpen) {
+        singleQuoteOpen = !singleQuoteOpen;
+        continue;
+      } else if (element === '"' && !singleQuoteOpen) {
+        doubleQuoteOpen = !doubleQuoteOpen;
+        continue;
+      }
+
+      if (!singleQuoteOpen && !doubleQuoteOpen && matches) {
+        if (tokenBuffer.length > 0) {
+          ret.push(tokenBuffer.join(''));
+          tokenBuffer = [];
+        } else {
+          ret.push(element);
+        }
+      } else {
+        tokenBuffer.push(element);
+      }
+    }
+    if (tokenBuffer.length > 0) {
+      ret.push(tokenBuffer.join(''));
+    } else {
+      ret.push('');
+    }
+    return ret;
+  }
+
   annotationQuery(options: any): Promise<any> {
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
@@ -175,9 +213,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const tagsField = annotation.tagsField || 'tags';
     const textField = annotation.textField || null;
 
+    const strippedTimeField = timeField.replace(/['"]/g, '');
     const dateRanges = [];
     const rangeStart: any = {};
-    rangeStart[timeField] = {
+    rangeStart[strippedTimeField] = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
       format: 'epoch_millis',
@@ -246,7 +285,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
           return;
         }
 
-        const fieldNames = fieldName.split('.');
+        const fieldNames = this.splitOnDot(fieldName);
         let fieldValue = source;
 
         for (let i = 0; i < fieldNames.length; i++) {

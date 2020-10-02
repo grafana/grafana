@@ -193,6 +193,8 @@ for annotation events.
 | Text     | Event description field.                                                                                                                   |
 | Tags     | Optional field name to use for event tags (can be an array or a CSV string).                                                               |
 
+Note: field names with dot characters (i.e. `.`) must be surrounded in quotes. For example: `item."field.with.dots".value`
+
 ## Querying Logs (BETA)
 
 > Only available in Grafana v6.3+.
