@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { Provider, useSelector } from 'react-redux';
 import { css } from 'emotion';
-import { Icon, LinkButton, useStyles } from '@grafana/ui';
+import { Icon, LinkButton, Tooltip, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
 import { StoreState } from '../../../types';
@@ -46,7 +46,13 @@ export const UnProvidedVariablesUnknownGraph: FC<Props> = props => {
 
   return (
     <div className={style.container}>
-      <h5>Unknown Variables</h5>
+      <h5>
+        Unreferenced Variables
+        <Tooltip content="This table lists all variable references that no longer exist in this dashboard.">
+          <Icon name="info-circle" className={style.infoIcon} />
+        </Tooltip>
+      </h5>
+
       <div>
         <table className="filter-table filter-table--hover">
           <thead>
@@ -105,6 +111,9 @@ const getStyles = (theme: GrafanaTheme) => ({
     margin-top: ${theme.spacing.xl};
     padding-top: ${theme.spacing.xl};
     border-top: 1px solid ${theme.colors.panelBorder};
+  `,
+  infoIcon: css`
+    margin-left: ${theme.spacing.sm};
   `,
 });
 

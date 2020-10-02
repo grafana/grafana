@@ -1,6 +1,8 @@
-import React, { MouseEvent, PureComponent } from 'react';
-import { Icon, IconButton } from '@grafana/ui';
+import React, { FC, MouseEvent, PureComponent } from 'react';
+import { css } from 'emotion';
+import { Icon, IconButton, Tooltip, useStyles } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { GrafanaTheme } from '@grafana/data';
 
 import EmptyListCTA from '../../../core/components/EmptyListCTA/EmptyListCTA';
 import { QueryVariableModel, VariableModel } from '../types';
@@ -83,7 +85,7 @@ export class VariableEditorList extends PureComponent<Props> {
                   <tr>
                     <th>Variable</th>
                     <th>Definition</th>
-                    <th style={{ textAlign: 'right' }}>Used</th>
+                    <th />
                     <th colSpan={5} />
                   </tr>
                 </thead>
@@ -91,6 +93,8 @@ export class VariableEditorList extends PureComponent<Props> {
                   {this.props.variables.map((state, index) => {
                     const variable = state as QueryVariableModel;
                     const usages = getVariableUsages(variable.id, this.props.variables, this.props.dashboard);
+                    const adhoc = isAdHoc(variable);
+                    const passed = usages > 0 || adhoc;
                     return (
                       <tr key={`${variable.name}-${index}`}>
                         <td style={{ width: '1%' }}>
@@ -116,8 +120,7 @@ export class VariableEditorList extends PureComponent<Props> {
                         </td>
 
                         <td style={{ width: '1%', textAlign: 'right' }}>
-                          {usages === 0 && !isAdHoc(variable) && <Icon name="times" style={{ color: 'red' }} />}
-                          {(usages > 0 || isAdHoc(variable)) && <Icon name="check" style={{ color: 'green' }} />}
+                          <VariableCheckIndicator passed={passed} isAdhoc={adhoc} />
                         </td>
 
                         <td style={{ width: '1%' }}>
@@ -179,3 +182,34 @@ export class VariableEditorList extends PureComponent<Props> {
     );
   }
 }
+
+interface VariableCheckIndicatorProps {
+  passed: boolean;
+  isAdhoc: boolean;
+}
+
+const VariableCheckIndicator: FC<VariableCheckIndicatorProps> = ({ passed, isAdhoc }) => {
+  const style = useStyles(getStyles);
+  if (passed) {
+    return (
+      <Tooltip content="This variable is referenced by other variables or dashboard">
+        <Icon name="check" className={style.passed} />
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Tooltip content="This variable is not referenced by any variable or dashboard">
+      <Icon name="exclamation-triangle" className={style.failed} />
+    </Tooltip>
+  );
+};
+
+const getStyles = (theme: GrafanaTheme) => ({
+  passed: css`
+    color: ${theme.palette.greenBase};
+  `,
+  failed: css`
+    color: ${theme.palette.orange};
+  `,
+});
