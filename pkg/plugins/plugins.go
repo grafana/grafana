@@ -139,8 +139,7 @@ func (pm *PluginManager) Init() error {
 	for _, p := range Plugins {
 		if p.IsCorePlugin {
 			p.Signature = PluginSignatureInternal
-		} else if p.Signature == "" {
-			p.Signature = getPluginSignatureState(pm.log, p)
+		} else {
 			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
 		}
 	}
@@ -272,8 +271,8 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 		jsonParser := json.NewDecoder(reader)
 
-		// TODO: We should avoid loading the plugin a second time, and instead re-use pluginCommon
-		if err := loader.Load(jsonParser, plugin.PluginDir, scanner.backendPluginManager); err != nil {
+		// Load the full plugin, and add it to manager
+		if err := loader.Load(jsonParser, plugin, scanner.backendPluginManager); err != nil {
 			return err
 		}
 

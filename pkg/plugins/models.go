@@ -43,7 +43,7 @@ func (e PluginNotFoundError) Error() string {
 }
 
 type PluginLoader interface {
-	Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error
+	Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) error
 }
 
 type PluginBase struct {
@@ -73,12 +73,12 @@ type PluginBase struct {
 	Root *PluginBase
 }
 
-func (pb *PluginBase) registerPlugin(pluginDir string) error {
+func (pb *PluginBase) registerPlugin(base *PluginBase) error {
 	if _, exists := Plugins[pb.Id]; exists {
 		return fmt.Errorf("Plugin with ID %q already exists", pb.Id)
 	}
 
-	if !strings.HasPrefix(pluginDir, setting.StaticRootPath) {
+	if !strings.HasPrefix(base.PluginDir, setting.StaticRootPath) {
 		plog.Info("Registering plugin", "name", pb.Name)
 	}
 
@@ -96,7 +96,10 @@ func (pb *PluginBase) registerPlugin(pluginDir string) error {
 		}
 	}
 
-	pb.PluginDir = pluginDir
+	// Copy relevant fields from the base
+	pb.PluginDir = base.PluginDir
+	pb.Signature = base.Signature
+
 	Plugins[pb.Id] = pb
 	return nil
 }
