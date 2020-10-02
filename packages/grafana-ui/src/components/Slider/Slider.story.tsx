@@ -28,7 +28,7 @@ const SliderWrapper = () => {
         max={max}
         step={stepValue}
         orientation={orientation}
-        value={singleValue ? [10] : undefined}
+        value={singleValue ? 10 : undefined}
         reverse={reverse}
       />
     </div>
