@@ -25,7 +25,7 @@ const endpoints = [
 const numberFields = ['lines', 'seriesCount', 'timeStep'];
 
 export interface EditorProps {
-  onChange: any;
+  onChange: (value: any) => void;
   query: TestDataQuery;
 }
 
@@ -53,12 +53,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       return;
     }
 
-    let stringInput;
+    let stringInput = scenario.stringInput ?? '';
 
     if (scenario.id === 'grafana_api') {
       stringInput = 'datasources';
-    } else {
-      stringInput = scenario.stringInput ?? '';
     }
 
     onChange({

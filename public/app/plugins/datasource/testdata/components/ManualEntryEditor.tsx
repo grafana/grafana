@@ -24,7 +24,7 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
     onRunQuery();
   };
 
-  const points = (query.points || []).map((point, index) => {
+  const points = query.points.map((point, index) => {
     return {
       label: dateTime(point[1]).format('MMMM Do YYYY, H:mm:ss') + ' : ' + point[0],
       value: index,
@@ -57,7 +57,7 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
                 defaultValue={dateTime().format()}
               />
             </InlineField>
-            <button className="btn btn-secondary gf-form-btn">Add</button>
+            <button className="btn btn-secondary gf-form-btn query-keyword">Add</button>
             <InlineField label="All values">
               <InputControl
                 control={control}
