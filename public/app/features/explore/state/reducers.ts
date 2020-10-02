@@ -3,14 +3,12 @@ import { AnyAction } from 'redux';
 import { PayloadAction } from '@reduxjs/toolkit';
 import {
   DataQuery,
-  DataSourceApi,
   DefaultTimeRange,
   LoadingState,
   PanelData,
   PanelEvents,
   TimeZone,
   toLegacyResponseData,
-  ExploreMode,
   LogsDedupStrategy,
   sortLogsResult,
   DataQueryErrorType,
@@ -19,7 +17,6 @@ import { RefreshPicker } from '@grafana/ui';
 import { LocationUpdate } from '@grafana/runtime';
 
 import {
-  DEFAULT_UI_STATE,
   ensureQueries,
   generateNewKeyAndAddRefIdIfMissing,
   getQueryKeys,
@@ -62,8 +59,8 @@ import {
   syncTimesAction,
   toggleLogLevelAction,
   updateDatasourceInstanceAction,
-  updateUIStateAction,
   cancelQueriesAction,
+  changeDedupStrategyAction,
 } from './actionTypes';
 import { ResultProcessor } from '../utils/ResultProcessor';
 import { updateLocation } from '../../../core/actions';
@@ -79,7 +76,6 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
   queries: false,
   range: false,
   mode: false,
-  ui: false,
 });
 
 /**
@@ -109,7 +105,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   urlState: null,
   update: makeInitialUpdateState(),
   latency: 0,
-  supportedModes: [],
   isLive: false,
   isPaused: false,
   urlReplaced: false,
@@ -237,8 +232,16 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
     return { ...state, logsHighlighterExpressions: expressions };
   }
 
+  if (changeDedupStrategyAction.match(action)) {
+    const { dedupStrategy } = action.payload;
+    return {
+      ...state,
+      dedupStrategy,
+    };
+  }
+
   if (initializeExploreAction.match(action)) {
-    const { containerWidth, eventBridge, queries, range, ui, originPanelId } = action.payload;
+    const { containerWidth, eventBridge, queries, range, originPanelId } = action.payload;
     return {
       ...state,
       containerWidth,
@@ -247,40 +250,20 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       queries,
       initialized: true,
       queryKeys: getQueryKeys(queries, state.datasourceInstance),
-      ...ui,
       originPanelId,
       update: makeInitialUpdateState(),
     };
   }
 
   if (updateDatasourceInstanceAction.match(action)) {
-    const { datasourceInstance, version } = action.payload;
+    const { datasourceInstance } = action.payload;
 
     // Custom components
     stopQueryState(state.querySubscription);
 
-    let newMetadata = datasourceInstance.meta;
-
-    // HACK: Temporary hack for Loki datasource. Can remove when plugin.json structure is changed.
-    if (version && version.length && datasourceInstance.meta.name === 'Loki') {
-      const lokiVersionMetadata: Record<string, { metrics: boolean }> = {
-        v0: {
-          metrics: false,
-        },
-
-        v1: {
-          metrics: true,
-        },
-      };
-      newMetadata = { ...newMetadata, ...lokiVersionMetadata[version] };
-    }
-
-    const updatedDatasourceInstance = Object.assign(datasourceInstance, { meta: newMetadata });
-    const supportedModes = getModesForDatasource(updatedDatasourceInstance);
-
     return {
       ...state,
-      datasourceInstance: updatedDatasourceInstance,
+      datasourceInstance,
       graphResult: null,
       tableResult: null,
       logsResult: null,
@@ -288,7 +271,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       queryResponse: createEmptyQueryResponse(),
       loading: false,
       queryKeys: [],
-      supportedModes,
       originPanelId: state.urlState && state.urlState.originPanelId,
     };
   }
@@ -399,10 +381,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       queries: queries.slice(),
       queryKeys: getQueryKeys(queries, state.datasourceInstance),
     };
-  }
-
-  if (updateUIStateAction.match(action)) {
-    return { ...state, ...action.payload };
   }
 
   if (queriesImportedAction.match(action)) {
@@ -567,14 +545,13 @@ export const updateChildRefreshState = (
     return {
       ...state,
       urlState,
-      update: { datasource: false, queries: false, range: false, mode: false, ui: false },
+      update: { datasource: false, queries: false, range: false, mode: false },
     };
   }
 
   const datasource = _.isEqual(urlState ? urlState.datasource : '', state.urlState.datasource) === false;
   const queries = _.isEqual(urlState ? urlState.queries : [], state.urlState.queries) === false;
   const range = _.isEqual(urlState ? urlState.range : DEFAULT_RANGE, state.urlState.range) === false;
-  const ui = _.isEqual(urlState ? urlState.ui : DEFAULT_UI_STATE, state.urlState.ui) === false;
 
   return {
     ...state,
@@ -584,31 +561,8 @@ export const updateChildRefreshState = (
       datasource,
       queries,
       range,
-      ui,
     },
   };
-};
-
-const getModesForDatasource = (dataSource: DataSourceApi): ExploreMode[] => {
-  const supportsGraph = dataSource.meta.metrics;
-  const supportsLogs = dataSource.meta.logs;
-  const supportsTracing = dataSource.meta.tracing;
-
-  const supportedModes: ExploreMode[] = [];
-
-  if (supportsGraph) {
-    supportedModes.push(ExploreMode.Metrics);
-  }
-
-  if (supportsLogs) {
-    supportedModes.push(ExploreMode.Logs);
-  }
-
-  if (supportsTracing) {
-    supportedModes.push(ExploreMode.Tracing);
-  }
-
-  return supportedModes;
 };
 
 /**

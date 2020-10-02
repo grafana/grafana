@@ -46,7 +46,7 @@ row under the top menu where template variables appear.
 Grafana can now index Dashboards saved locally as JSON from a given directory. These file based dashboards
 will appear in the regular dashboard search along regular DB dashboards.
 
-> ***Note:*** Saving local dashboards back the folder is not supported; this feature is meant for statically generated JSON dashboards.
+> **Note:** Saving local dashboards back the folder is not supported; this feature is meant for statically generated JSON dashboards.
 
 - - -
 
@@ -60,14 +60,14 @@ You can also specify mappings between LDAP group memberships and Grafana Organiz
 ### Basic Auth Support
 You can now authenticate against the Grafana API utilizing a simple username and password with basic HTTP authentication.
 
-> ***Note:*** This can be useful for provisioning and config management systems that need
+> **Note:** This can be useful for provisioning and config management systems that need
 > to utilize the API without having to create an API key.
 
 
 ### Auth Proxy Support
 You can now authenticate utilizing a header (eg. X-Authenticated-User, or X-WEBAUTH-USER)
 
-> ***Note:*** this can be useful in situations with reverse proxies.
+> **Note:** this can be useful in situations with reverse proxies.
 
 
 ### New “Read-only Editor” User Role
@@ -92,7 +92,7 @@ Grafana OpenTSDB data source now supports template variable values queries. This
 template variables that fetches the values from OpenTSDB (for example metric names, tag names, or tag values).
 The query editor is also enhanced to limiting tags by metric.
 
-> ***Note:*** OpenTSDB config option tsd.core.meta.enable_realtime_ts must enabled for OpenTSDB lookup API)
+> **Note:** OpenTSDB config option tsd.core.meta.enable_realtime_ts must enabled for OpenTSDB lookup API)
 
 ### New Data Source: KairosDB
 The Cassandra backed time series database KairosDB is now supported in Grafana out of the box. Thank you to

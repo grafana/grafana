@@ -1,9 +1,10 @@
 import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
+import { toDataQueryError, getTemplateSrv } from '@grafana/runtime';
+
 import { updateOptions, validateVariableSelectionState } from '../state/actions';
 import { QueryVariableModel, VariableRefresh } from '../types';
 import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import templateSrv from '../../templating/template_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';
 import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
@@ -12,7 +13,6 @@ import { addVariableEditorError, changeVariableEditorExtended, removeVariableEdi
 import { changeVariableProp } from '../state/sharedReducer';
 import { updateVariableOptions, updateVariableTags } from './reducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
-import { toDataQueryError } from '@grafana/runtime';
 
 export const updateQueryVariableOptions = (
   identifier: VariableIdentifier,
@@ -132,5 +132,5 @@ const getTemplatedRegex = (variable: QueryVariableModel): string => {
     return '';
   }
 
-  return templateSrv.replace(variable.regex, {}, 'regex');
+  return getTemplateSrv().replace(variable.regex, {}, 'regex');
 };

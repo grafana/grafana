@@ -40,7 +40,7 @@ We have redesigned the UI for editing panels. The first visible change is that w
 
 This new option architecture and UI will make all panels have a consistent set of options and behaviors for attributes like unit, min, max, thresholds, links, decimals. Not only that but all these options will share a consistent UI for specifying override rules and is extensible for custom panel specific options.
 
-In previous versions of Grafana, each visualization had slightly different ways to define their options. One immediate benefit is after setting options like units or thresholds in a panel, you can seamlessly switch between visualization types and keep those options. This will bring increased of ease of use and more consistency for users and plugin developers.
+In previous versions of Grafana, each visualization had slightly different ways to define their options. One immediate benefit is after setting options like units or thresholds in a panel, you can seamlessly switch between visualization types and keep those options. This will bring increased ease of use and more consistency for users and plugin developers.
 
 We have yet to migrate all core panels to this new architecture so in 7.0 there will be some inconsistencies in the UI between panels. This will be fixed soon in future releases as we update all the core panels and help the community update the community panel plugins.
 

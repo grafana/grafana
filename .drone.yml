@@ -16,7 +16,7 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.27
   commands:
-  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.13/grabpl
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/grabpl
   - chmod +x grabpl
   - mkdir -p bin
   - mv grabpl bin
@@ -241,7 +241,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.13/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/windows/grabpl.exe -OutFile grabpl.exe
 
 trigger:
   event:
@@ -265,7 +265,7 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.27
   commands:
-  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.13/grabpl
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/grabpl
   - chmod +x grabpl
   - mkdir -p bin
   - mv grabpl bin
@@ -341,13 +341,14 @@ steps:
   depends_on:
   - initialize
 
-- name: frontend-metrics
+- name: publish-frontend-metrics
   image: grafana/build-container:1.2.27
   commands:
   - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
+  failure: ignore
   depends_on:
   - initialize
 
@@ -513,13 +514,12 @@ steps:
 - name: release-next-npm-packages
   image: grafana/build-container:1.2.27
   commands:
-  - npx lerna bootstrap
+  - ./node_modules/.bin/lerna bootstrap
   - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
   - ./scripts/circle-release-next-packages.sh
   environment:
     NPM_TOKEN:
       from_secret: npm_token
-  failure: ignore
   depends_on:
   - end-to-end-tests
 
@@ -586,7 +586,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.13/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -634,7 +634,7 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.27
   commands:
-  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.13/grabpl
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/grabpl
   - chmod +x grabpl
   - mkdir -p bin
   - mv grabpl bin
@@ -660,5 +660,36 @@ trigger:
 depends_on:
 - build-master
 - windows-master
+
+---
+kind: pipeline
+type: docker
+name: notify-master
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: slack
+  image: plugins/slack
+  settings:
+    channel: grafana-ci-notifications
+    template: "Build {{build.number}} failed: {{build.link}}"
+    webhook:
+      from_secret: slack_webhook
+
+trigger:
+  branch:
+  - master
+  event:
+  - push
+  status:
+  - failure
+
+depends_on:
+- build-master
+- windows-master
+- publish-master
 
 ...

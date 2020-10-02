@@ -7,7 +7,7 @@ import { validateVariableSelectionState } from '../state/actions';
 import { getVariable } from '../state/selectors';
 import { IntervalVariableModel } from '../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import templateSrv from '../../templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 
 export const updateIntervalVariableOptions = (identifier: VariableIdentifier): ThunkResult<void> => async dispatch => {
   await dispatch(createIntervalOptions(toVariablePayload(identifier)));
@@ -18,7 +18,7 @@ export const updateIntervalVariableOptions = (identifier: VariableIdentifier): T
 export interface UpdateAutoValueDependencies {
   calculateInterval: typeof rangeUtil.calculateInterval;
   getTimeSrv: typeof getTimeSrv;
-  templateSrv: typeof templateSrv;
+  templateSrv: TemplateSrv;
 }
 
 export const updateAutoValue = (
@@ -26,7 +26,7 @@ export const updateAutoValue = (
   dependencies: UpdateAutoValueDependencies = {
     calculateInterval: rangeUtil.calculateInterval,
     getTimeSrv: getTimeSrv,
-    templateSrv: templateSrv,
+    templateSrv: getTemplateSrv(),
   }
 ): ThunkResult<void> => (dispatch, getState) => {
   const variableInState = getVariable<IntervalVariableModel>(identifier.id, getState());
