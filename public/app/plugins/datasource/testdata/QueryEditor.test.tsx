@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { defaultQuery } from './constants';
 import { QueryEditor, Props } from './QueryEditor';
-import scenarios from './__mocks__/scenarios';
+import { scenarios } from './__mocks__/scenarios';
 
 beforeEach(() => {
   jest.clearAllMocks();
