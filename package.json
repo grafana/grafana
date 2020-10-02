@@ -214,6 +214,7 @@
     "@types/jsurl": "^1.2.28",
     "@types/md5": "^2.1.33",
     "@types/react-loadable": "5.5.2",
+    "@types/hoist-non-react-statics": "3.3.1",
     "@types/react-virtualized-auto-sizer": "1.0.0",
     "@types/sockjs-client": "^1.1.1",
     "@types/uuid": "8.3.0",
