@@ -3,7 +3,7 @@ import { updateCustomVariableOptions } from './actions';
 import { createCustomVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getRootReducer } from '../state/helpers';
-import { CustomVariableModel, VariableHide, VariableOption } from '../types';
+import { CustomVariableModel, initialVariableModelState, VariableOption } from '../types';
 import { toVariablePayload } from '../state/types';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { TemplatingState } from '../state/reducers';
@@ -21,9 +21,11 @@ describe('custom actions', () => {
       };
 
       const variable: CustomVariableModel = {
-        type: 'custom',
+        ...initialVariableModelState,
         id: '0',
-        global: false,
+        index: 0,
+        type: 'custom',
+        name: 'Custom',
         current: {
           value: '',
           text: '',
@@ -42,11 +44,6 @@ describe('custom actions', () => {
           },
         ],
         query: 'A,B',
-        name: 'Custom',
-        label: '',
-        hide: VariableHide.dontHide,
-        skipUrlSync: false,
-        index: 0,
         multi: true,
         includeAll: false,
       };

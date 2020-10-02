@@ -1,4 +1,4 @@
-import { AppEvents, rangeUtil } from '@grafana/data';
+import { rangeUtil } from '@grafana/data';
 
 import { toVariablePayload, VariableIdentifier } from '../state/types';
 import { ThunkResult } from '../../../types';
@@ -8,23 +8,11 @@ import { getVariable } from '../state/selectors';
 import { IntervalVariableModel } from '../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
-import appEvents from '../../../core/app_events';
 
-export interface UpdateIntervalVariableOptionsDependencies {
-  appEvents: typeof appEvents;
-}
-
-export const updateIntervalVariableOptions = (
-  identifier: VariableIdentifier,
-  dependencies: UpdateIntervalVariableOptionsDependencies = { appEvents: appEvents }
-): ThunkResult<void> => async dispatch => {
-  try {
-    await dispatch(createIntervalOptions(toVariablePayload(identifier)));
-    await dispatch(updateAutoValue(identifier));
-    await dispatch(validateVariableSelectionState(identifier));
-  } catch (error) {
-    dependencies.appEvents.emit(AppEvents.alertError, ['Templating', error.message]);
-  }
+export const updateIntervalVariableOptions = (identifier: VariableIdentifier): ThunkResult<void> => async dispatch => {
+  await dispatch(createIntervalOptions(toVariablePayload(identifier)));
+  await dispatch(updateAutoValue(identifier));
+  await dispatch(validateVariableSelectionState(identifier));
 };
 
 export interface UpdateAutoValueDependencies {
