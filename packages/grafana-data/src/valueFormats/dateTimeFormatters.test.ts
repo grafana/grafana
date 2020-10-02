@@ -76,18 +76,34 @@ describe('date time formats', () => {
     expect(actual.text).toBe(expected);
   });
 
-  it('should skip date when today in Local Format', () => {
-    const now = dateTime();
-    const dateIncluded = dateTimeAsLocal(now.valueOf(), 0, 0);
-    const dateExcluded = dateTimeAsLocalNoDateIfToday(now.valueOf(), 0, 0);
-    expect(dateIncluded.text.length).toBeGreaterThan(dateExcluded.text.length);
+  it('should format as local date', () => {
+    const dateTimeObject = browserTime.toDate();
+    const formattedDateText = dateTimeAsLocal(epoch, 0, 0).text;
+    expect(formattedDateText).toContain(dateTimeObject.getFullYear());
+    expect(formattedDateText).toContain(dateTimeObject.getSeconds());
   });
 
-  it('should skip date when today in Local Format (date in UTC)', () => {
+  it('should format as local date and skip date when today', () => {
+    const now = dateTime();
+    const dateTimeObject = now.toDate();
+    const formattedDateText = dateTimeAsLocalNoDateIfToday(now.valueOf(), 0, 0).text;
+    expect(formattedDateText).not.toContain(dateTimeObject.getFullYear());
+    expect(formattedDateText).toContain(dateTimeObject.getSeconds());
+  });
+
+  it('should format as local date (in UTC)', () => {
+    const dateTimeObject = utcTime.toDate();
+    const formattedDateText = dateTimeAsLocal(epoch, 0, 0, 'utc').text;
+    expect(formattedDateText).toContain(dateTimeObject.getFullYear());
+    expect(formattedDateText).toContain(dateTimeObject.getSeconds());
+  });
+
+  it('should format as local date (in UTC) and skip date when today', () => {
     const now = toUtc();
-    const dateIncluded = dateTimeAsLocal(now.valueOf(), 0, 0);
-    const dateExcluded = dateTimeAsLocalNoDateIfToday(now.valueOf(), 0, 0);
-    expect(dateIncluded.text.length).toBeGreaterThan(dateExcluded.text.length);
+    const dateTimeObject = now.toDate();
+    const formattedDateText = dateTimeAsLocalNoDateIfToday(now.valueOf(), 0, 0, 'utc').text;
+    expect(formattedDateText).not.toContain(dateTimeObject.getFullYear());
+    expect(formattedDateText).toContain(dateTimeObject.getSeconds());
   });
 
   it('should format as from now with days', () => {
