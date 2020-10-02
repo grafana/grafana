@@ -16,6 +16,7 @@ const rimraf = promisify(rimrafCallback);
 
 interface PluginBuildOptions {
   coverage: boolean;
+  maxJestWorkers?: string;
 }
 
 interface Fixable {
@@ -111,10 +112,10 @@ export const lintPlugin = ({ fix }: Fixable = {}) =>
     }
   });
 
-export const pluginBuildRunner: TaskRunner<PluginBuildOptions> = async ({ coverage }) => {
+export const pluginBuildRunner: TaskRunner<PluginBuildOptions> = async ({ coverage, maxJestWorkers }) => {
   await prepare();
   await lintPlugin({ fix: false });
-  await testPlugin({ updateSnapshot: false, coverage, watch: false });
+  await testPlugin({ updateSnapshot: false, coverage, maxWorkers: maxJestWorkers, watch: false });
   await bundlePlugin({ watch: false, production: true });
 };
 

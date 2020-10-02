@@ -12,6 +12,7 @@ import {
 import { updateLocation } from 'app/core/actions';
 import { ThunkResult, FolderInfo, DashboardDTO, DashboardDataDTO } from 'app/types';
 import { appEvents } from '../../../core/core';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
   return async dispatch => {
@@ -205,6 +206,8 @@ export interface SaveDashboardOptions {
 }
 
 export function saveDashboard(options: SaveDashboardOptions) {
+  dashboardWatcher.ignoreNextSave();
+
   return getBackendSrv().post('/api/dashboards/db/', {
     dashboard: options.dashboard,
     message: options.message ?? '',

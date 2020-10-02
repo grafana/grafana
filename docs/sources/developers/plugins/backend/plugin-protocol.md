@@ -20,7 +20,7 @@ Because Grafana maintains the plugin protocol, the plugin protocol attempts to f
 
 ## Writing plugins without Go
 
-In case you want to write a backend plugin in another language than Go it’s possible as long as the language supports [gRPC](https://grpc.io/). However, writing a plugin in Go is recommended and has several advantages that should be carefully taken into account before proceeding:
+If you want to write a backend plugin in another language than Go, then it’s possible as long as the language supports [gRPC](https://grpc.io/). However, writing a plugin in Go is recommended and has several advantages that should be carefully taken into account before proceeding:
 - There's an official [SDK]({{< relref "grafana-plugin-sdk-for-go.md" >}}) available.
 - Single binary as the compiled output.
 - Building and compiling for multiple platforms is easy.

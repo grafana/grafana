@@ -169,13 +169,21 @@ export class LiveAdmin extends PureComponent<Props, State> {
               <h5>Namespace</h5>
               <Select
                 options={namespaces}
-                value={namespaces.find(s => s.value === namespace) || ''}
+                value={namespaces.find(s => s.value === namespace) || namespace || ''}
                 onChange={this.onNamespaceChanged}
+                allowCustomValue={true}
+                backspaceRemovesValue={true}
               />
             </div>
             <div>
               <h5>Path</h5>
-              <Select options={paths} value={paths.find(s => s.value === path) || ''} onChange={this.onPathChanged} />
+              <Select
+                options={paths}
+                value={paths.find(s => s.value === path) || path || ''}
+                onChange={this.onPathChanged}
+                allowCustomValue={true}
+                backspaceRemovesValue={true}
+              />
             </div>
           </div>
           <br />

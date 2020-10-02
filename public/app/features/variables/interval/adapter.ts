@@ -33,7 +33,7 @@ export const createIntervalVariableAdapter = (): VariableAdapter<IntervalVariabl
       await dispatch(updateIntervalVariableOptions(toVariableIdentifier(variable)));
     },
     getSaveModel: variable => {
-      const { index, id, initLock, global, ...rest } = cloneDeep(variable);
+      const { index, id, state, global, ...rest } = cloneDeep(variable);
       return rest;
     },
     getValueForUrl: variable => {

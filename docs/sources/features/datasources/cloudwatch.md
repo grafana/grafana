@@ -19,8 +19,8 @@ build dashboards or use Explore with CloudWatch metrics and CloudWatch Logs.
 ## Adding the data source
 
 1. In the side menu under the `Configuration` link, click on `Data Sources`.
-2. Click the `Add data source` button.
-3. Select `Cloudwatch` in the `Cloud` section.
+1. Click the `Add data source` button.
+1. Select `Cloudwatch` in the `Cloud` section.
 
 > **Note:** If at any moment you have issues with getting this data source to work and Grafana is giving you undescriptive errors then don't
 > forget to check your log file (try looking in /var/log/grafana/grafana.log).
@@ -203,7 +203,7 @@ To the right of the query input field is a CloudWatch Logs Insights link that op
 ### Using template variables
 
 As with several other data sources, the CloudWatch data source supports the use of template variables in queries.
-See the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+See the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Deep linking from Grafana panels to the CloudWatch console
 
@@ -236,7 +236,7 @@ To import the pre-configured dashboards, go to the configuration page of your Cl
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-See the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+See the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query variable
 

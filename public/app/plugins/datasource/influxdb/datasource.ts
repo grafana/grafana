@@ -19,7 +19,8 @@ import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
 import { InfluxQuery, InfluxOptions, InfluxVersion } from './types';
-import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getBackendSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { FluxQueryEditor } from './components/FluxQueryEditor';
 
@@ -37,7 +38,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   httpMode: string;
   isFlux: boolean;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<InfluxOptions>) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
 
     this.type = 'influxdb';
@@ -97,7 +101,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): Record<string, any> {
     return {
       ...query,
-      query: getTemplateSrv().replace(query.query ?? '', scopedVars), // The raw query text
+      query: this.templateSrv.replace(query.query ?? '', scopedVars), // The raw query text
     };
   }
 
@@ -111,7 +115,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     const queryTargets: any[] = [];
 
     let i, y;
-    const templateSrv = getTemplateSrv();
 
     let allQueries = _.map(targets, target => {
       if (target.hide) {
@@ -123,7 +126,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       // backward compatibility
       scopedVars.interval = scopedVars.__interval;
 
-      return new InfluxQueryModel(target, templateSrv, scopedVars).render(true);
+      return new InfluxQueryModel(target, this.templateSrv, scopedVars).render(true);
     }).reduce((acc, current) => {
       if (current !== '') {
         acc += ';' + current;
@@ -136,9 +139,9 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     // add global adhoc filters to timeFilter
-    const adhocFilters = (templateSrv as any).getAdhocFilters(this.name);
+    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
     if (adhocFilters.length > 0) {
-      const tmpQuery = new InfluxQueryModel({ refId: 'A' }, templateSrv, scopedVars);
+      const tmpQuery = new InfluxQueryModel({ refId: 'A' }, this.templateSrv, scopedVars);
       timeFilter += ' AND ' + tmpQuery.renderAdhocFilters(adhocFilters);
     }
 
@@ -146,7 +149,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     scopedVars.timeFilter = { value: timeFilter };
 
     // replace templated variables
-    allQueries = templateSrv.replace(allQueries, scopedVars);
+    allQueries = this.templateSrv.replace(allQueries, scopedVars);
 
     return this._seriesQuery(allQueries, options).then((data: any): any => {
       if (!data || !data.results) {
@@ -163,7 +166,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         const target = queryTargets[i];
         let alias = target.alias;
         if (alias) {
-          alias = templateSrv.replace(target.alias, options.scopedVars);
+          alias = this.templateSrv.replace(target.alias, options.scopedVars);
         }
 
         const meta: QueryResultMeta = {
@@ -214,7 +217,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     const timeFilter = this.getTimeFilter({ rangeRaw: options.rangeRaw, timezone: options.dashboard.timezone });
     let query = options.annotation.query.replace('$timeFilter', timeFilter);
-    query = getTemplateSrv().replace(query, undefined, 'regex');
+    query = this.templateSrv.replace(query, undefined, 'regex');
 
     return this._seriesQuery(query, options).then((data: any) => {
       if (!data || !data.results || !data.results[0]) {
@@ -228,18 +231,16 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   targetContainsTemplate(target: any) {
-    const templateSrv = getTemplateSrv() as any; // :(
-
     for (const group of target.groupBy) {
       for (const param of group.params) {
-        if (templateSrv.variableExists(param)) {
+        if (this.templateSrv.variableExists(param)) {
           return true;
         }
       }
     }
 
     for (const i in target.tags) {
-      if (templateSrv.variableExists(target.tags[i].value)) {
+      if (this.templateSrv.variableExists(target.tags[i].value)) {
         return true;
       }
     }
@@ -254,25 +255,23 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
-      const templateSrv = getTemplateSrv();
-
       expandedQueries = queries.map(query => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          measurement: templateSrv.replace(query.measurement ?? '', scopedVars, 'regex'),
-          policy: templateSrv.replace(query.policy ?? '', scopedVars, 'regex'),
+          measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars, 'regex'),
+          policy: this.templateSrv.replace(query.policy ?? '', scopedVars, 'regex'),
         };
 
         if (query.rawQuery) {
-          expandedQuery.query = templateSrv.replace(query.query ?? '', scopedVars, 'regex');
+          expandedQuery.query = this.templateSrv.replace(query.query ?? '', scopedVars, 'regex');
         }
 
         if (query.tags) {
           const expandedTags = query.tags.map(tag => {
             const expandedTag = {
               ...tag,
-              value: templateSrv.replace(tag.value, undefined, 'regex'),
+              value: this.templateSrv.replace(tag.value, undefined, 'regex'),
             };
             return expandedTag;
           });
@@ -304,7 +303,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         });
     }
 
-    const interpolated = getTemplateSrv().replace(query, undefined, 'regex');
+    const interpolated = this.templateSrv.replace(query, undefined, 'regex');
 
     return this._seriesQuery(interpolated, options).then(resp => {
       return this.responseParser.parse(query, resp);

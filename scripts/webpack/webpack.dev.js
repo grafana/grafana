@@ -87,21 +87,21 @@ module.exports = (env = {}) =>
       env.noTsCheck
         ? new webpack.DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ForkTsCheckerWebpackPlugin({
-          eslint: {
-            enabled: true,
-            files: ['public/app/**/*.{ts,tsx}', 'packages/*/src/**/*.{ts,tsx}'],
-            options: {
-              cache: true,
+            eslint: {
+              enabled: true,
+              files: ['public/app/**/*.{ts,tsx}', 'packages/*/src/**/*.{ts,tsx}'],
+              options: {
+                cache: true,
+              },
             },
-          },
-          typescript: {
-            mode: 'write-references',
-            diagnosticOptions: {
-              semantic: true,
-              syntactic: true,
+            typescript: {
+              mode: 'write-references',
+              diagnosticOptions: {
+                semantic: true,
+                syntactic: true,
+              },
             },
-          },
-        }),
+          }),
       new MiniCssExtractPlugin({
         filename: 'grafana.[name].[hash].css',
       }),
