@@ -63,5 +63,18 @@ describe('Test Datasource Query Editor', () => {
     );
     expect(await screen.findByText('Grafana API')).toBeInTheDocument();
     expect(screen.getByText('Data Sources')).toBeInTheDocument();
+
+    await fireEvent.keyDown(select, { keyCode: 40 });
+    await userEvent.click(screen.getByText('Streaming Client'));
+    expect(mockOnChange).toHaveBeenCalledWith(
+      expect.objectContaining({ scenarioId: 'streaming_client', stringInput: '' })
+    );
+    rerender(<QueryEditor {...props} query={{ ...defaultQuery, scenarioId: 'streaming_client', stringInput: '' }} />);
+    expect(await screen.findByText('Streaming Client')).toBeInTheDocument();
+    expect(screen.getByText('Type')).toBeInTheDocument();
+    expect(screen.getByLabelText('Noise')).toHaveValue(2.2);
+    expect(screen.getByLabelText('Speed (ms)')).toHaveValue(250);
+    expect(screen.getByLabelText('Spread')).toHaveValue(3.5);
+    expect(screen.getByLabelText('Bands')).toHaveValue(1);
   });
 });

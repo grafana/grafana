@@ -78,7 +78,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       newValue = { [name]: Number(value) };
     }
 
-    console.log('v', newValue);
     onChange({ ...query, ...newValue });
   };
 
@@ -110,7 +109,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
   }
 
   query = { ...defaultQuery, ...query };
-  console.log('q ', query);
   return (
     <>
       <InlineFieldRow>
