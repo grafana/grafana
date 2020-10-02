@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { getConfig } from 'app/core/config';
 import {
@@ -80,11 +80,13 @@ const buildLabelPath = (label: string) => {
 };
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
-  ...templateSrv.getVariables().map(variable => ({
-    value: variable.name as string,
-    label: variable.name,
-    origin: VariableOrigin.Template,
-  })),
+  ...getTemplateSrv()
+    .getVariables()
+    .map(variable => ({
+      value: variable.name as string,
+      label: variable.name,
+      origin: VariableOrigin.Template,
+    })),
   {
     value: `${DataLinkBuiltInVars.includeVars}`,
     label: 'All variables',
@@ -240,11 +242,13 @@ export const getPanelOptionsVariableSuggestions = (plugin: PanelPlugin, data?: D
   const dataVariables = plugin.meta.skipDataQuery ? [] : getDataFrameVars(data || []);
   return [
     ...dataVariables, // field values
-    ...templateSrv.getVariables().map(variable => ({
-      value: variable.name as string,
-      label: variable.name,
-      origin: VariableOrigin.Template,
-    })),
+    ...getTemplateSrv()
+      .getVariables()
+      .map(variable => ({
+        value: variable.name as string,
+        label: variable.name,
+        origin: VariableOrigin.Template,
+      })),
   ];
 };
 

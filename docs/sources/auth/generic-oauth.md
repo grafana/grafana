@@ -7,18 +7,19 @@ type = "docs"
 name = "Generic OAuth"
 identifier = "generic_oauth"
 parent = "authentication"
-weight = 3
+weight = 500
 +++
 
 # Generic OAuth Authentication
 
 You can configure many different OAuth2 authentication services with Grafana using the generic OAuth2 feature. Examples:
-- [Auth0](#set-up-oauth2-with-auth0)
-- [Azure AD]({{< relref "azuread.md" >}})
-- [BitBucket](#set-up-oauth2-with-bitbucket) 
-- [Centrify](#set-up-oauth2-with-centrify)
-- [Okta]({{< relref "okta.md" >}}) 
-- [OneLogin](#set-up-oauth2-with-onelogin)
+- [Generic OAuth Authentication](#generic-oauth-authentication)
+  - [Set up OAuth2 with Auth0](#set-up-oauth2-with-auth0)
+  - [Set up OAuth2 with Bitbucket](#set-up-oauth2-with-bitbucket)
+  - [Set up OAuth2 with Centrify](#set-up-oauth2-with-centrify)
+  - [Set up OAuth2 with OneLogin](#set-up-oauth2-with-onelogin)
+  - [JMESPath examples](#jmespath-examples)
+    - [Role mapping](#role-mapping)
 
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
 
@@ -56,11 +57,11 @@ You can also specify the SSL/TLS configuration used by the client.
 Grafana will attempt to determine the user's e-mail address by querying the OAuth provider as described below in the following order until an e-mail address is found:
 
 1. Check for the presence of an e-mail address via the `email` field encoded in the OAuth `id_token` parameter.
-2. Check for the presence of an e-mail address using the [JMESPath](http://jmespath.org/examples.html) specified via the `email_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option.
+1. Check for the presence of an e-mail address using the [JMESPath](http://jmespath.org/examples.html) specified via the `email_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option.
 **Note**: Only available in Grafana v6.4+.
-3. Check for the presence of an e-mail address in the `attributes` map encoded in the OAuth `id_token` parameter. By default Grafana will perform a lookup into the attributes map using the `email:primary` key, however, this is configurable and can be adjusted by using the `email_attribute_name` configuration option.
-4. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`) and check for the presence of an e-mail address marked as a primary address.
-5. If no e-mail address is found in steps (1-4), then the e-mail address of the user is set to the empty string.
+1. Check for the presence of an e-mail address in the `attributes` map encoded in the OAuth `id_token` parameter. By default Grafana will perform a lookup into the attributes map using the `email:primary` key, however, this is configurable and can be adjusted by using the `email_attribute_name` configuration option.
+1. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`) and check for the presence of an e-mail address marked as a primary address.
+1. If no e-mail address is found in steps (1-4), then the e-mail address of the user is set to the empty string.
 
 Grafana will also attempt to do role mapping through OAuth as described below.
 
@@ -81,14 +82,14 @@ You can customize the attribute name used to extract the ID token from the retur
 
 ## Set up OAuth2 with Auth0
 
-1.  Create a new Client in Auth0
+1. Create a new Client in Auth0
     - Name: Grafana
     - Type: Regular Web Application
 
-2.  Go to the Settings tab and set:
+1. Go to the Settings tab and set:
     - Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
 
-3. Click Save Changes, then use the values at the top of the page to configure Grafana:
+1. Click Save Changes, then use the values at the top of the page to configure Grafana:
 
     ```bash
     [auth.generic_oauth]
@@ -124,21 +125,21 @@ allowed_organizations =
 
 ## Set up OAuth2 with Centrify
 
-1.  Create a new Custom OpenID Connect application configuration in the Centrify dashboard.
+1. Create a new Custom OpenID Connect application configuration in the Centrify dashboard.
 
-2.  Create a memorable unique Application ID, e.g. "grafana", "grafana_aws", etc.
+1. Create a memorable unique Application ID, e.g. "grafana", "grafana_aws", etc.
 
-3.  Put in other basic configuration (name, description, logo, category)
+1. Put in other basic configuration (name, description, logo, category)
 
-4.  On the Trust tab, generate a long password and put it into the OpenID Connect Client Secret field.
+1. On the Trust tab, generate a long password and put it into the OpenID Connect Client Secret field.
 
-5.  Put the URL to the front page of your Grafana instance into the "Resource Application URL" field.
+1. Put the URL to the front page of your Grafana instance into the "Resource Application URL" field.
 
-6.  Add an authorized Redirect URI like https://your-grafana-server/login/generic_oauth
+1. Add an authorized Redirect URI like https://your-grafana-server/login/generic_oauth
 
-7.  Set up permissions, policies, etc. just like any other Centrify app
+1. Set up permissions, policies, etc. just like any other Centrify app
 
-8.  Configure Grafana as follows:
+1. Configure Grafana as follows:
 
     ```bash
     [auth.generic_oauth]
@@ -155,7 +156,7 @@ allowed_organizations =
 
 ## Set up OAuth2 with OneLogin
 
-1.  Create a new Custom Connector with the following settings:
+1. Create a new Custom Connector with the following settings:
     - Name: Grafana
     - Sign On Method: OpenID Connect
     - Redirect URI: `https://<grafana domain>/login/generic_oauth`
@@ -163,11 +164,11 @@ allowed_organizations =
     - Login URL: `https://<grafana domain>/login/generic_oauth`
 
     then:
-2.  Add an App to the Grafana Connector:
+1. Add an App to the Grafana Connector:
     - Display Name: Grafana
 
     then:
-3.  Under the SSO tab on the Grafana App details page you'll find the Client ID and Client Secret.
+1. Under the SSO tab on the Grafana App details page you'll find the Client ID and Client Secret.
 
     Your OneLogin Domain will match the URL you use to access OneLogin.
 

@@ -21,16 +21,12 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
-jest.mock('app/features/dashboard/services/TimeSrv', () => {
-  return {
-    getTimeSrv: () => ({
-      timeRange: () => ({
-        from: new Date(0),
-        to: new Date(1),
-      }),
-    }),
-  };
-});
+const timeSrvStub = {
+  timeRange: () => ({
+    from: new Date(0),
+    to: new Date(1),
+  }),
+};
 
 describe('LokiDatasource', () => {
   let fetchStream: Subject<FetchResponse>;
@@ -120,7 +116,7 @@ describe('LokiDatasource', () => {
         replace: (a: string) => a,
       } as unknown) as TemplateSrv;
 
-      const ds = new LokiDatasource(settings, templateSrvMock);
+      const ds = new LokiDatasource(settings, templateSrvMock, timeSrvStub as any);
 
       const options = getQueryOptions<LokiQuery>({ targets: [{ expr: 'foo', refId: 'B', maxLines: maxDataPoints }] });
 
@@ -515,7 +511,7 @@ function createLokiDSForTests(
   const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
   const customSettings = { ...instanceSettings, jsonData: customData };
 
-  return new LokiDatasource(customSettings, templateSrvMock);
+  return new LokiDatasource(customSettings, templateSrvMock, timeSrvStub as any);
 }
 
 function makeAnnotationQueryRequest(): AnnotationQueryRequest<LokiQuery> {

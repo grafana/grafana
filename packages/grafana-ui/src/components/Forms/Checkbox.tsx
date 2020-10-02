@@ -25,6 +25,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
     description: cx(
       labelStyles.description,
       css`
+        line-height: ${theme.typography.lineHeight.sm};
         padding-left: ${theme.spacing.formSpacingBase}px;
       `
     ),
@@ -117,12 +118,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         />
         <span className={styles.checkmark} />
         {label && <span className={styles.label}>{label}</span>}
-        {description && (
-          <>
-            <br />
-            <span className={styles.description}>{description}</span>
-          </>
-        )}
+        {description && <span className={styles.description}>{description}</span>}
       </label>
     );
   }

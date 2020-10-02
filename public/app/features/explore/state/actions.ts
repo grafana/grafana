@@ -11,13 +11,12 @@ import {
   dateTimeForTimeZone,
   isDateTime,
   LoadingState,
-  LogsDedupStrategy,
   PanelData,
   QueryFixAction,
   RawTimeRange,
   TimeRange,
   ExploreUrlState,
-  ExploreUIState,
+  LogsDedupStrategy,
 } from '@grafana/data';
 // Services & Utils
 import store from 'app/core/store';
@@ -78,9 +77,10 @@ import {
   splitOpenAction,
   syncTimesAction,
   updateDatasourceInstanceAction,
-  updateUIStateAction,
   changeLoadingStateAction,
   cancelQueriesAction,
+  changeDedupStrategyAction,
+  ChangeDedupStrategyPayload,
 } from './actionTypes';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
@@ -90,16 +90,6 @@ import { preProcessPanelData, runRequest } from '../../dashboard/state/runReques
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 import { getExploreDatasources } from './selectors';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
-
-/**
- * Updates UI state and save it to the URL
- */
-const updateExploreUIState = (exploreId: ExploreId, uiStateFragment: Partial<ExploreUIState>): ThunkResult<void> => {
-  return dispatch => {
-    dispatch(updateUIStateAction({ exploreId, ...uiStateFragment }));
-    dispatch(stateSave());
-  };
-};
 
 /**
  * Adds a query row after the row with the given index.
@@ -133,13 +123,11 @@ export function changeDatasource(
     const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
     const queries = getState().explore[exploreId].queries;
     const orgId = getState().user.orgId;
-    const datasourceVersion = newDataSourceInstance.getVersion && (await newDataSourceInstance.getVersion());
 
     dispatch(
       updateDatasourceInstanceAction({
         exploreId,
         datasourceInstance: newDataSourceInstance,
-        version: datasourceVersion,
       })
     );
 
@@ -225,6 +213,16 @@ export function changeRefreshInterval(
 }
 
 /**
+ * Change logs deduplication strategy.
+ */
+export const changeDedupStrategy = (
+  exploreId: ExploreId,
+  dedupStrategy: LogsDedupStrategy
+): PayloadAction<ChangeDedupStrategyPayload> => {
+  return changeDedupStrategyAction({ exploreId, dedupStrategy });
+};
+
+/**
  * Clear all queries and results.
  */
 export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
@@ -276,7 +274,6 @@ export function initializeExplore(
   range: TimeRange,
   containerWidth: number,
   eventBridge: Emitter,
-  ui: ExploreUIState,
   originPanelId?: number | null
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
@@ -288,7 +285,6 @@ export function initializeExplore(
         eventBridge,
         queries,
         range,
-        ui,
         originPanelId,
       })
     );
@@ -568,12 +564,6 @@ export const stateSave = (): ThunkResult<void> => {
       datasource: left.datasourceInstance!.name,
       queries: left.queries.map(clearQueryKeys),
       range: toRawTimeRange(left.range),
-      ui: {
-        showingGraph: true,
-        showingLogs: true,
-        showingTable: true,
-        dedupStrategy: left.dedupStrategy,
-      },
     };
     urlStates.left = serializeStateToUrlParam(leftUrlState, true);
     if (split) {
@@ -581,12 +571,6 @@ export const stateSave = (): ThunkResult<void> => {
         datasource: right.datasourceInstance!.name,
         queries: right.queries.map(clearQueryKeys),
         range: toRawTimeRange(right.range),
-        ui: {
-          showingGraph: true,
-          showingLogs: true,
-          showingTable: true,
-          dedupStrategy: right.dedupStrategy,
-        },
       };
 
       urlStates.right = serializeStateToUrlParam(rightUrlState, true);
@@ -746,15 +730,6 @@ export function syncTimes(exploreId: ExploreId): ThunkResult<void> {
 }
 
 /**
- * Change logs deduplication strategy and update URL.
- */
-export const changeDedupStrategy = (exploreId: ExploreId, dedupStrategy: LogsDedupStrategy): ThunkResult<void> => {
-  return dispatch => {
-    dispatch(updateExploreUIState(exploreId, { dedupStrategy }));
-  };
-};
-
-/**
  * Reacts to changes in URL state that we need to sync back to our redux state. Checks the internal update variable
  * to see which parts change and need to be synced.
  * @param exploreId
@@ -772,7 +747,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
       return;
     }
 
-    const { datasource, queries, range: urlRange, ui, originPanelId } = urlState;
+    const { datasource, queries, range: urlRange, originPanelId } = urlState;
     const refreshQueries: DataQuery[] = [];
 
     for (let index = 0; index < queries.length; index++) {
@@ -787,7 +762,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
       dispatch(
-        initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, ui, originPanelId)
+        initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, originPanelId)
       );
       return;
     }
@@ -796,18 +771,13 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
       dispatch(updateTime({ exploreId, rawRange: range.raw }));
     }
 
-    // need to refresh ui state
-    if (update.ui) {
-      dispatch(updateUIStateAction({ ...ui, exploreId }));
-    }
-
     // need to refresh queries
     if (update.queries) {
       dispatch(setQueriesAction({ exploreId, queries: refreshQueries }));
     }
 
     // always run queries when refresh is needed
-    if (update.queries || update.ui || update.range) {
+    if (update.queries || update.range) {
       dispatch(runQueries(exploreId));
     }
   };

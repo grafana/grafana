@@ -16,7 +16,7 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.27
   commands:
-  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.14/grabpl
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/grabpl
   - chmod +x grabpl
   - mkdir -p bin
   - mv grabpl bin
@@ -241,7 +241,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.14/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/windows/grabpl.exe -OutFile grabpl.exe
 
 trigger:
   event:
@@ -265,7 +265,7 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.27
   commands:
-  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.14/grabpl
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/grabpl
   - chmod +x grabpl
   - mkdir -p bin
   - mv grabpl bin
@@ -341,7 +341,7 @@ steps:
   depends_on:
   - initialize
 
-- name: frontend-metrics
+- name: publish-frontend-metrics
   image: grafana/build-container:1.2.27
   commands:
   - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
@@ -514,7 +514,7 @@ steps:
 - name: release-next-npm-packages
   image: grafana/build-container:1.2.27
   commands:
-  - npx lerna bootstrap
+  - ./node_modules/.bin/lerna bootstrap
   - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
   - ./scripts/circle-release-next-packages.sh
   environment:
@@ -586,7 +586,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.14/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -634,7 +634,7 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.27
   commands:
-  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.14/grabpl
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/grabpl
   - chmod +x grabpl
   - mkdir -p bin
   - mv grabpl bin

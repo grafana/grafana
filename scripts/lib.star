@@ -3,7 +3,7 @@ publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
-grabpl_version = '0.5.14'
+grabpl_version = '0.5.16'
 git_image = 'alpine/git:v2.26.2'
 dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
@@ -558,7 +558,7 @@ def frontend_metrics_step(edition):
         return None
 
     return {
-        'name': 'frontend-metrics',
+        'name': 'publish-frontend-metrics',
         'image': build_image,
         'depends_on': [
             'initialize',
@@ -812,7 +812,7 @@ def release_next_npm_packages_step(edition):
             },
         },
         'commands': [
-            'npx lerna bootstrap',
+            './node_modules/.bin/lerna bootstrap',
             'echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc',
             './scripts/circle-release-next-packages.sh',
         ],

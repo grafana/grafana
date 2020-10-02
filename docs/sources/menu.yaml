@@ -29,6 +29,8 @@
 - name: Installation
   link: /installation/
   children:
+    - name: Installation
+      link: /installation/installation/
     - name: Requirements
       link: /installation/requirements/
     - name: Install on Ubuntu/Debian
@@ -46,6 +48,8 @@
 - name: Administration
   link: /administration/
   children:
+    - name: Administration Tasks
+      link: /administration/admin/
     - name: Change password
       link: /administration/change-your-password/
     - name: Change preferences
@@ -53,14 +57,16 @@
     - name: Configuration
       link: /administration/configuration/
     - name: Configure Docker image
-      link: /installation/configure-docker/
+      link: /administration/configure-docker/
     - name: Security
-      link: /installation/security/
+      link: /administration/security/
     - name: Authentication
       link: /auth/
       children:
         - link: /auth/overview/
           name: Overview
+        - link: /auth/grafana/
+          name: Grafana Authentication
         - link: /auth/auth-proxy/
           name: Auth Proxy
         - link: /auth/ldap/
@@ -238,13 +244,13 @@
       name: Playlist
     - link: /dashboards/search/
       name: Search
-    - link: /reference/share_dashboard/
-      name: Sharing a dashboard
-    - link: /reference/share_panel/
-      name: Sharing a panel
+    - link: /dashboards/share-dashboard/
+      name: Share dashboard
+    - link: /dashboards/share-panel/
+      name: Share a panel
     - link: /dashboards/time-range-controls/
       name: Time range controls
-    - link: /reference/export_import/
+    - link: /dashboards/export-import/
       name: Export and import
     - link: /dashboards/dashboard_history/
       name: Dashboard version history
@@ -252,9 +258,9 @@
       link: /dashboards/shortcuts/
     - name: Reporting
       link: /dashboards/reporting/
-    - link: /reference/dashboard/
-      name: JSON Model
-    - link: /reference/scripting/
+    - link: /dashboards/json-model/
+      name: JSON model
+    - link: /dashboards/scripted-dashboards/
       name: Scripted dashboards
 - name: Explore
   link: /explore/
@@ -291,8 +297,8 @@
 - name: Templates and variables
   link: /variables/
   children:
-    - link: /variables/templates-and-variables/
-      name: Overview
+    - link: /variables/syntax/
+      name: Variables syntax
     - link: /variables/variable-examples/
       name: Variable examples
     - name: Variable types

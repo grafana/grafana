@@ -8,7 +8,7 @@ aliases = ["/docs/grafana/latest/installation/configuration/"]
 name = "Configuration"
 identifier = "config"
 parent = "admin"
-weight = 1
+weight = 300
 +++
 
 # Configuration
@@ -31,7 +31,7 @@ If you installed Grafana using the `deb` or `rpm` packages, then your configurat
 
 ### Docker
 
-Refer to [Configure a Grafana Docker image]({{< relref "../installation/configure-docker.md" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
+Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
 
 ### Windows
 
