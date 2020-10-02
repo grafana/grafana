@@ -33,11 +33,18 @@ export const UnProvidedVariablesDependenciesButton: FC<Props> = () => {
 
   return (
     <>
-      <Modal isOpen={showModal} title="Dependency graph" onClickBackdrop={onClose} onDismiss={onClose}>
-        <NetWorkGraph nodes={filterNodesWithDependencies(nodes, edges)} edges={edges} width="100%" height="70vh" />
+      <Modal
+        isOpen={showModal}
+        title="Dependencies"
+        icon="info-circle"
+        iconTooltip="The graph can be moved, zoomed in and zoomed out."
+        onClickBackdrop={onClose}
+        onDismiss={onClose}
+      >
+        <NetWorkGraph nodes={filterNodesWithDependencies(nodes, edges)} edges={edges} />
       </Modal>
-      <Button onClick={onClick} icon="channel-add" variant="link">
-        Show dependency graph...
+      <Button onClick={onClick} icon="channel-add" variant="secondary">
+        Show dependencies
       </Button>
     </>
   );

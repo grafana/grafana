@@ -6,10 +6,10 @@ import { GraphEdge, GraphNode, toVisNetworkEdges, toVisNetworkNodes } from './ut
 interface OwnProps {
   nodes: GraphNode[];
   edges: GraphEdge[];
-  width: string;
-  height: string;
   direction?: 'UD' | 'DU' | 'LR' | 'RL';
   onDoubleClick?: (node: string) => void;
+  width?: string;
+  height?: string;
 }
 
 interface ConnectedProps {}
@@ -54,6 +54,7 @@ export const NetWorkGraph: FC<Props> = ({ nodes, edges, direction, width, height
         },
       },
       interaction: {
+        navigationButtons: true,
         dragNodes: false,
         // dragView: false,
       },
@@ -70,5 +71,10 @@ export const NetWorkGraph: FC<Props> = ({ nodes, edges, direction, width, height
     };
   }, []);
 
-  return <div ref={r => (ref = r)} style={{ width, height }} />;
+  return (
+    <div>
+      {/*<FeatureInfoBox title={''}>The graph can be moved, zoomed in and zoomed out.</FeatureInfoBox>*/}
+      <div ref={r => (ref = r)} style={{ width: width ?? '100%', height: height ?? '60vh' }} />
+    </div>
+  );
 };

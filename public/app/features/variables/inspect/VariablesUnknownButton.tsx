@@ -54,10 +54,12 @@ export const UnProvidedVariablesUnknownGraphButton: FC<Props> = ({ identifier })
       <Modal
         isOpen={showModal}
         title={`Showing usages for: $${identifier.id}`}
+        icon="info-circle"
+        iconTooltip="The graph can be moved, zoomed in and zoomed out."
         onClickBackdrop={onClose}
         onDismiss={onClose}
       >
-        <NetWorkGraph nodes={nodes} edges={network.edges} direction="UD" width="100%" height="70vh" />
+        <NetWorkGraph nodes={nodes} edges={network.edges} direction="UD" />
       </Modal>
       <IconButton onClick={onClick} name="code-branch" title="Show usages" />
     </>
