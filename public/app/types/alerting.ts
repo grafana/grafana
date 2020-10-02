@@ -40,6 +40,7 @@ export type NotifierType =
   | 'hipchat'
   | 'email'
   | 'sensu'
+  | 'sensugo'
   | 'googlechat'
   | 'threema'
   | 'teams'

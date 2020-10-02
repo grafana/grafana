@@ -69,6 +69,7 @@ OpsGenie | `opsgenie` | yes, external only | yes
 Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
 Pushover | `pushover` | yes | no
 Sensu | `sensu` | yes, external only | no
+Sensu Go | `sensugo` | yes, external only | no
 [Slack](#slack) | `slack` | yes | no
 Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
