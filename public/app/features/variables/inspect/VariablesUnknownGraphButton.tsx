@@ -1,14 +1,13 @@
 import React, { FC, MouseEvent, useCallback, useMemo, useState } from 'react';
 import { Provider, useSelector } from 'react-redux';
+import { IconButton, Modal } from '@grafana/ui';
 
 import { StoreState } from '../../../types';
-import { getVariable, getVariables } from '../state/selectors';
+import { getVariables } from '../state/selectors';
 import { createUsagesNetwork, transformUsagesToNetwork } from './utils';
-import { VariableIdentifier } from '../state/types';
 import { NetWorkGraph } from './NetworkGraph';
 import { store } from '../../../store/store';
-import { isAdHoc } from '../guard';
-import { IconButton, Modal } from '@grafana/ui';
+import { VariableIdentifier } from '../state/types';
 
 interface OwnProps {
   identifier: VariableIdentifier;
@@ -20,17 +19,16 @@ interface DispatchProps {}
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-export const UnProvidedVariableUsagesGraphButton: FC<Props> = ({ identifier }) => {
+export const UnProvidedVariablesUnknownGraphButton: FC<Props> = ({ identifier }) => {
   const [showModal, setShowModal] = useState(false);
   const variables = useSelector((state: StoreState) => getVariables(state));
-  const variable = useSelector((state: StoreState) => getVariable(identifier.id, state));
   const dashboard = useSelector((state: StoreState) => state.dashboard.getModel());
-  const { usages } = useMemo(() => createUsagesNetwork(variables, dashboard), [variables, dashboard]);
-  const network = useMemo(() => transformUsagesToNetwork(usages).find(n => n.variable.id === identifier.id), [
-    usages,
+  const { unknown } = useMemo(() => createUsagesNetwork(variables, dashboard), [variables, dashboard]);
+  const network = useMemo(() => transformUsagesToNetwork(unknown).find(n => n.variable.id === identifier.id), [
     identifier,
+    unknown,
   ]);
-  const adhoc = useMemo(() => isAdHoc(variable), [variable]);
+  const unknownExist = useMemo(() => Object.keys(unknown).length > 0, [unknown]);
   const onClick = useCallback(
     (event: MouseEvent) => {
       event.preventDefault();
@@ -40,7 +38,7 @@ export const UnProvidedVariableUsagesGraphButton: FC<Props> = ({ identifier }) =
   );
   const onClose = useCallback(() => setShowModal(false), [setShowModal]);
 
-  if (usages.length === 0 || adhoc || !network) {
+  if (!unknownExist || !network) {
     return null;
   }
 
@@ -66,8 +64,8 @@ export const UnProvidedVariableUsagesGraphButton: FC<Props> = ({ identifier }) =
   );
 };
 
-export const VariableUsagesGraphButton: FC<Props> = props => (
+export const VariablesUnknownGraphButton: FC<Props> = props => (
   <Provider store={store}>
-    <UnProvidedVariableUsagesGraphButton {...props} />
+    <UnProvidedVariablesUnknownGraphButton {...props} />
   </Provider>
 );

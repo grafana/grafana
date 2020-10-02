@@ -13,7 +13,7 @@ import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
 import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
 import { VariableEditorList } from './VariableEditorList';
 import { DashboardModel } from '../../dashboard/state';
-import { VariablesUnknownGraph } from '../inspect/VariablesUnknownGraph';
+import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
 
 interface OwnProps {}
 
@@ -121,7 +121,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
               onDuplicateVariable={this.onDuplicateVariable}
               onRemoveVariable={this.onRemoveVariable}
             />
-            <VariablesUnknownGraph />
+            <VariablesUnknownTable />
           </>
         )}
         {variableToEdit && <VariableEditorEditor identifier={toVariableIdentifier(variableToEdit)} />}

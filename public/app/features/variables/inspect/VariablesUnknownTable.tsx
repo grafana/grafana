@@ -1,14 +1,15 @@
-import React, { FC, useCallback, useMemo, useState } from 'react';
+import React, { FC, useMemo } from 'react';
 import { Provider, useSelector } from 'react-redux';
 import { css } from 'emotion';
-import { Icon, LinkButton, Tooltip, useStyles } from '@grafana/ui';
+import { Icon, Tooltip, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
 import { StoreState } from '../../../types';
 import { getVariables } from '../state/selectors';
-import { createUsagesNetwork, transformUsagesToNetwork, UsagesToNetwork } from './utils';
-import { NetWorkGraph } from './NetworkGraph';
+import { createUsagesNetwork, transformUsagesToNetwork } from './utils';
 import { store } from '../../../store/store';
+import { VariablesUnknownGraphButton } from './VariablesUnknownGraphButton';
+import { toVariableIdentifier } from '../state/types';
 
 interface OwnProps {}
 
@@ -18,26 +19,12 @@ interface DispatchProps {}
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-export const UnProvidedVariablesUnknownGraph: FC<Props> = props => {
+export const UnProvidedVariablesUnknownTable: FC<Props> = props => {
   const style = useStyles(getStyles);
   const variables = useSelector((state: StoreState) => getVariables(state));
   const dashboard = useSelector((state: StoreState) => state.dashboard.getModel());
   const { unknown } = useMemo(() => createUsagesNetwork(variables, dashboard), [variables, dashboard]);
-  const [networks, setNetWorks] = useState(transformUsagesToNetwork(unknown));
-  const onToggleGraph = useCallback(
-    (network: UsagesToNetwork) => {
-      setNetWorks(
-        networks.map(net => {
-          if (net !== network) {
-            return net;
-          }
-
-          return { ...net, showGraph: !network.showGraph };
-        })
-      );
-    },
-    [networks, setNetWorks]
-  );
+  const networks = useMemo(() => transformUsagesToNetwork(unknown), [unknown]);
   const unknownExist = useMemo(() => Object.keys(unknown).length > 0, [unknown]);
 
   if (!unknownExist) {
@@ -63,7 +50,7 @@ export const UnProvidedVariablesUnknownGraph: FC<Props> = props => {
           </thead>
           <tbody>
             {networks.map(network => {
-              const { variable, nodes, edges, showGraph } = network;
+              const { variable } = network;
               const { id, name } = variable;
               return (
                 <tr key={id}>
@@ -73,28 +60,8 @@ export const UnProvidedVariablesUnknownGraph: FC<Props> = props => {
                   <td style={{ width: '1%' }} />
                   <td style={{ width: '1%' }} />
                   <td style={{ width: '1%' }} />
-                  <td
-                    style={{ width: '100%', textAlign: 'right' }}
-                    className="pointer max-width"
-                    onClick={() => onToggleGraph(network)}
-                  >
-                    {!showGraph && (
-                      <>
-                        <LinkButton size="sm" variant="secondary" onClick={() => onToggleGraph(network)}>
-                          Show usages
-                          <Icon name="angle-down" />
-                        </LinkButton>
-                      </>
-                    )}
-                    {showGraph && (
-                      <>
-                        <LinkButton size="sm" variant="secondary" onClick={() => onToggleGraph(network)}>
-                          Hide usages
-                          <Icon name="angle-up" />
-                        </LinkButton>
-                        <NetWorkGraph nodes={nodes} edges={edges} direction="RL" width="100%" height="400px" />
-                      </>
-                    )}
+                  <td style={{ width: '100%', textAlign: 'right' }} className="pointer max-width">
+                    <VariablesUnknownGraphButton identifier={toVariableIdentifier(variable)} />
                   </td>
                 </tr>
               );
@@ -117,8 +84,8 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
 });
 
-export const VariablesUnknownGraph: FC<Props> = props => (
+export const VariablesUnknownTable: FC<Props> = props => (
   <Provider store={store}>
-    <UnProvidedVariablesUnknownGraph {...props} />
+    <UnProvidedVariablesUnknownTable {...props} />
   </Provider>
 );
