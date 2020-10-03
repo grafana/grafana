@@ -30,14 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-const (
-	defaultAuthType     = "default"
-	sharedCredsAuthType = "credentials"
-	keysAuthType        = "keys"
-	// Deprecated auth type
-	arnAuthType = "arn"
-)
-
 type datasourceInfo struct {
 	Profile       string
 	Region        string
@@ -360,6 +352,19 @@ const (
 	authTypeKeys
 )
 
+func (at authType) String() string {
+	switch at {
+	case authTypeDefault:
+		return "default"
+	case authTypeSharedCreds:
+		return "sharedCreds"
+	case authTypeKeys:
+		return "keys"
+	default:
+		panic(fmt.Sprintf("Unrecognized auth type %d", at))
+	}
+}
+
 func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 	if region == defaultRegion {
 		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
@@ -374,13 +379,13 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 
 	at := authTypeDefault
 	switch atStr {
-	case sharedCredsAuthType:
+	case "credentials":
 		at = authTypeSharedCreds
-	case keysAuthType:
+	case "keys":
 		at = authTypeKeys
-	case defaultAuthType:
+	case "default":
 		at = authTypeDefault
-	case arnAuthType:
+	case "arn":
 		at = authTypeDefault
 		plog.Warn("Authentication type \"arn\" is deprecated, falling back to default")
 	default:
