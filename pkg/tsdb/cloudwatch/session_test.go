@@ -4,8 +4,6 @@ import (
 	"reflect"
 	"testing"
 
-	"time"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -50,7 +48,7 @@ func TestNewSession_AssumeRole(t *testing.T) {
 		return nil
 	}
 
-	const duration = 5 * time.Minute
+	duration := stscreds.DefaultDuration
 
 	t.Run("Without external ID", func(t *testing.T) {
 		t.Cleanup(func() {
