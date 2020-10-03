@@ -10,27 +10,26 @@ import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { useComponentInstanceId } from '../../utils/useComponetInstanceId';
 import { css } from 'emotion';
 
-export enum PieChartType {
-  Pie = 'pie',
-  Donut = 'donut',
-}
-
-export enum PieChartLabelOption {
-  None = 'none',
-  Name = 'name',
-  Value = 'value',
-  Percent = 'percent',
-}
-
 export interface Props {
   height: number;
   width: number;
   values: DisplayValue[];
   pieType: PieChartType;
-  label?: PieChartLabelOption;
+  labelOptions?: PieChartLabelOptions;
 }
 
-export const PieChart: FC<Props> = ({ values, pieType, width, height, label = PieChartLabelOption.Percent }) => {
+export enum PieChartType {
+  Pie = 'pie',
+  Donut = 'donut',
+}
+
+export interface PieChartLabelOptions {
+  showName?: boolean;
+  showValue?: boolean;
+  showPercent?: boolean;
+}
+
+export const PieChart: FC<Props> = ({ values, pieType, width, height, labelOptions = { showName: true } }) => {
   const theme = useTheme();
   const componentInstanceId = useComponentInstanceId('PieChart');
   const styles = useStyles(getStyles);
@@ -54,13 +53,12 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height, label = Pi
   const donutThickness = pieType === PieChartType.Pie ? outerRadius : Math.max(outerRadius / 3, 20);
   const innerRadius = outerRadius - donutThickness;
   const centerOffset = (size - margin * 2) / 2;
-
-  // for non donut pie charts shift label out a bit
-  const labelRadius = innerRadius === 0 ? outerRadius / 6 : innerRadius;
+  const total = values.reduce((acc, item) => item.numeric + acc, 0);
+  // for non donut pie charts shift gradient out a bit
   const gradientFromOffset = 1 - (outerRadius - innerRadius) / outerRadius;
+  const showLabel = labelOptions.showName || labelOptions.showPercent || labelOptions.showValue;
 
   const getColor = (arc: PieArcDatum<DisplayValue>) => `url(#${getGradientId(arc.index)})`;
-  const getKey = (arc: PieArcDatum<DisplayValue>) => arc.data.title ?? 'no title';
 
   const onMouseMoveOverArc = (event: any, datum: any) => {
     const coords = localPoint(event.target.ownerSVGElement, event);
@@ -99,12 +97,9 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height, label = Pi
           >
             {pie => {
               return pie.arcs.map(arc => {
-                const [labelX, labelY] = getLabelPos(arc, outerRadius, labelRadius);
-                const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.4;
-
                 return (
                   <g
-                    key={getKey(arc)}
+                    key={arc.data.title}
                     className={styles.svgArg}
                     onMouseMove={event => onMouseMoveOverArc(event, arc.data)}
                     onMouseOut={hideTooltip}
@@ -115,20 +110,14 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height, label = Pi
                       stroke={theme.colors.panelBg}
                       strokeWidth={1}
                     />
-                    {hasSpaceForLabel && (
-                      <g>
-                        <text
-                          fill="white"
-                          x={labelX}
-                          y={labelY}
-                          dy=".33em"
-                          fontSize={14}
-                          textAnchor="middle"
-                          pointerEvents="none"
-                        >
-                          {getKey(arc)}
-                        </text>
-                      </g>
+                    {showLabel && (
+                      <PieLabel
+                        arc={arc}
+                        outerRadius={outerRadius}
+                        innerRadius={innerRadius}
+                        labelOptions={labelOptions}
+                        total={total}
+                      />
                     )}
                   </g>
                 );
@@ -143,6 +132,56 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height, label = Pi
         </TooltipInPortal>
       )}
     </div>
+  );
+};
+
+const PieLabel: FC<{
+  arc: PieArcDatum<DisplayValue>;
+  outerRadius: number;
+  innerRadius: number;
+  labelOptions: PieChartLabelOptions;
+  total: number;
+}> = ({ arc, outerRadius, innerRadius, labelOptions, total }) => {
+  const labelRadius = innerRadius === 0 ? outerRadius / 6 : innerRadius;
+  const [labelX, labelY] = getLabelPos(arc, outerRadius, labelRadius);
+  const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.3;
+
+  if (!hasSpaceForLabel) {
+    return null;
+  }
+
+  let labelFontSize = labelOptions.showName
+    ? Math.min(Math.max((outerRadius / 150) * 14, 12), 30)
+    : Math.min(Math.max((outerRadius / 100) * 14, 12), 36);
+
+  return (
+    <g>
+      <text
+        fill="white"
+        x={labelX}
+        y={labelY}
+        dy=".33em"
+        fontSize={labelFontSize}
+        textAnchor="middle"
+        pointerEvents="none"
+      >
+        {labelOptions.showName && (
+          <tspan x={labelX} dy="1.2em">
+            {arc.data.title}
+          </tspan>
+        )}
+        {labelOptions.showValue && (
+          <tspan x={labelX} dy="1.2em">
+            {formattedValueToString(arc.data)}
+          </tspan>
+        )}
+        {labelOptions.showPercent && (
+          <tspan x={labelX} dy="1.2em">
+            {((arc.data.numeric / total) * 100).toFixed(0) + '%'}
+          </tspan>
+        )}
+      </text>
+    </g>
   );
 };
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { object, select, number } from '@storybook/addon-knobs';
+import { object, select, number, boolean } from '@storybook/addon-knobs';
 import { PieChart, PieChartType } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
@@ -21,17 +21,30 @@ const getKnobs = () => {
     width: number('Width', 500),
     height: number('Height', 500),
     pieType: select('pieType', [PieChartType.Pie, PieChartType.Donut], PieChartType.Pie),
+    showLabelName: boolean('Label.showName', true),
+    showLabelValue: boolean('Label.showValue', false),
+    showLabelPercent: boolean('Label.showPercent', false),
   };
 };
 
 export const basic = () => {
-  const { datapoints, pieType, width, height } = getKnobs();
+  const { datapoints, pieType, width, height, showLabelName, showLabelPercent, showLabelValue } = getKnobs();
+  const labelOptions = { showName: showLabelName, showPercent: showLabelPercent, showValue: showLabelValue };
 
-  return <PieChart width={width} height={height} values={datapoints} pieType={pieType} />;
+  return <PieChart width={width} height={height} values={datapoints} pieType={pieType} labelOptions={labelOptions} />;
 };
 
 export const donut = () => {
-  const { datapoints, width, height } = getKnobs();
+  const { datapoints, width, height, showLabelName, showLabelPercent, showLabelValue } = getKnobs();
+  const labelOptions = { showName: showLabelName, showPercent: showLabelPercent, showValue: showLabelValue };
 
-  return <PieChart width={width} height={height} values={datapoints} pieType={PieChartType.Donut} />;
+  return (
+    <PieChart
+      width={width}
+      height={height}
+      values={datapoints}
+      pieType={PieChartType.Donut}
+      labelOptions={labelOptions}
+    />
+  );
 };

@@ -27,6 +27,14 @@ export class PieChartPanel extends PureComponent<Props> {
       timeZone,
     }).map(v => v.display);
 
-    return <PieChart width={width} height={height} values={values} pieType={options.pieType} />;
+    return (
+      <PieChart
+        width={width}
+        height={height}
+        values={values}
+        pieType={options.pieType}
+        labelOptions={options.labelOptions}
+      />
+    );
   }
 }
