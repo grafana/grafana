@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
-	tsdberrs "github.com/grafana/grafana/pkg/tsdb/errors"
 )
 
 type datasourceInfo struct {
@@ -90,10 +89,22 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 	}
 	sessCacheLock.RUnlock()
 
-	regionCfg := &aws.Config{Region: aws.String(dsInfo.Region)}
 	cfgs := []*aws.Config{
-		regionCfg,
+		{
+			CredentialsChainVerboseErrors: aws.Bool(true),
+		},
 	}
+
+	var regionCfg *aws.Config
+	if dsInfo.Region == defaultRegion {
+		plog.Warn("Region is set to \"default\", which is unsupported")
+		dsInfo.Region = ""
+	}
+	if dsInfo.Region != "" {
+		regionCfg = &aws.Config{Region: aws.String(dsInfo.Region)}
+		cfgs = append(cfgs, regionCfg)
+	}
+
 	switch dsInfo.AuthType {
 	case authTypeSharedCreds:
 		plog.Debug("Authenticating towards AWS with shared credentials", "profile", dsInfo.Profile,
@@ -122,16 +133,25 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 		// We should assume a role in AWS
 		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleARN)
 
-		sess, err = newSession(regionCfg, &aws.Config{
-			Credentials: newSTSCredentials(sess, dsInfo.AssumeRoleARN, func(p *stscreds.AssumeRoleProvider) {
-				// Not sure if this is necessary, overlaps with p.Duration and is undocumented
-				p.Expiry.SetExpiration(expiration, 0)
-				p.Duration = duration
-				if dsInfo.ExternalID != "" {
-					p.ExternalID = aws.String(dsInfo.ExternalID)
-				}
-			}),
-		})
+		cfgs := []*aws.Config{
+			{
+				CredentialsChainVerboseErrors: aws.Bool(true),
+			},
+			{
+				Credentials: newSTSCredentials(sess, dsInfo.AssumeRoleARN, func(p *stscreds.AssumeRoleProvider) {
+					// Not sure if this is necessary, overlaps with p.Duration and is undocumented
+					p.Expiry.SetExpiration(expiration, 0)
+					p.Duration = duration
+					if dsInfo.ExternalID != "" {
+						p.ExternalID = aws.String(dsInfo.ExternalID)
+					}
+				}),
+			},
+		}
+		if regionCfg != nil {
+			cfgs = append(cfgs, regionCfg)
+		}
+		sess, err = newSession(cfgs...)
 		if err != nil {
 			return nil, err
 		}
@@ -287,10 +307,6 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	queryParams.Set("queryString", queryParams.Get("expression").MustString(""))
 
 	region := queryParams.Get("region").MustString(defaultRegion)
-	if region == "" {
-		return nil, tsdberrs.BadRequest{Reason: "region must be configured"}
-	}
-
 	if region == defaultRegion {
 		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
 		queryParams.Set("region", region)
