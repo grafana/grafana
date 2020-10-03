@@ -61,7 +61,7 @@ const IconWrapper: React.FC<{ name: IconName }> = ({ name }) => {
 
 const icons = getAvailableIcons().sort((a, b) => a.localeCompare(b));
 
-export const iconsOverview = () => {
+export const IconsOverview = () => {
   const [filter, setFilter] = useState('');
 
   const searchIcon = (event: ChangeEvent<HTMLInputElement>) => {
