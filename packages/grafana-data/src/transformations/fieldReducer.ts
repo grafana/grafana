@@ -226,7 +226,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   },
   {
     id: ReducerID.diffperc,
-    name: 'Difference Percentage',
+    name: 'Difference (%)',
     description: 'Percentage difference between first and last values',
     standard: true,
   },
