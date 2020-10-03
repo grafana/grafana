@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { DisplayValue, formattedValueToString, getColorFromHexRgbOrName, GrafanaTheme } from '@grafana/data';
+import { DisplayValue, formattedValueToString, getColorForIndex, GrafanaTheme } from '@grafana/data';
 import { useStyles, useTheme } from '../../themes/ThemeContext';
 import tinycolor from 'tinycolor2';
 import Pie, { PieArcDatum } from '@visx/shape/lib/shapes/Pie';
@@ -43,11 +43,7 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height, labelOptio
     return <div>No data</div>;
   }
 
-  const getValue = (d: DisplayValue) => d.numeric;
-  const getGradientId = (idx: number) => `${componentInstanceId}-${idx}`;
-
   const margin = 16;
-  const colors = ['blue', 'green', 'red', 'purple', 'orange'].map(c => getColorFromHexRgbOrName(c, theme.type));
   const size = Math.min(width, height);
   const outerRadius = (size - margin * 2) / 2;
   const donutThickness = pieType === PieChartType.Pie ? outerRadius : Math.max(outerRadius / 3, 20);
@@ -58,6 +54,8 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height, labelOptio
   const gradientFromOffset = 1 - (outerRadius - innerRadius) / outerRadius;
   const showLabel = labelOptions.showName || labelOptions.showPercent || labelOptions.showValue;
 
+  const getValue = (d: DisplayValue) => d.numeric;
+  const getGradientId = (idx: number) => `${componentInstanceId}-${idx}`;
   const getColor = (arc: PieArcDatum<DisplayValue>) => `url(#${getGradientId(arc.index)})`;
 
   const onMouseMoveOverArc = (event: any, datum: any) => {
@@ -73,20 +71,23 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height, labelOptio
     <div className={styles.container}>
       <svg width={size} height={size} ref={containerRef}>
         <Group top={centerOffset + margin} left={centerOffset + margin}>
-          {colors.map((color, idx) => (
-            <RadialGradient
-              key={idx}
-              id={getGradientId(idx)}
-              from={getGradientColorFrom(color, theme)}
-              to={getGradientColorTo(color, theme)}
-              fromOffset={gradientFromOffset}
-              toOffset="1"
-              gradientUnits="userSpaceOnUse"
-              cx={0}
-              cy={0}
-              radius={outerRadius}
-            />
-          ))}
+          {values.map((value, idx) => {
+            const color = getColorForIndex(idx, theme);
+            return (
+              <RadialGradient
+                key={idx}
+                id={getGradientId(idx)}
+                from={getGradientColorFrom(color, theme)}
+                to={getGradientColorTo(color, theme)}
+                fromOffset={gradientFromOffset}
+                toOffset="1"
+                gradientUnits="userSpaceOnUse"
+                cx={0}
+                cy={0}
+                radius={outerRadius}
+              />
+            );
+          })}
           <Pie
             data={values}
             pieValue={getValue}

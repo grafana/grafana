@@ -1,6 +1,6 @@
 import flatten from 'lodash/flatten';
 import tinycolor from 'tinycolor2';
-import { GrafanaThemeType } from '../types/theme';
+import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 
 type Hue = 'green' | 'yellow' | 'red' | 'blue' | 'orange' | 'purple';
 
@@ -176,6 +176,26 @@ const buildNamedColorsPalette = () => {
 
   return palette;
 };
+
+const namedColorsByIndex = [
+  'blue',
+  'green',
+  'red',
+  'purple',
+  'orange',
+  'dark-blue',
+  'yellow',
+  'dark-green',
+  'dark-red',
+  'dark-purple',
+  'dark-orange',
+  'light-blue',
+  'light-green',
+];
+
+export function getColorForIndex(index: number, theme: GrafanaTheme): string {
+  return getColorFromHexRgbOrName(namedColorsByIndex[index % namedColorsByIndex.length], theme.type);
+}
 
 export const getNamedColorPalette = () => {
   if (colorsPaletteInstance) {
