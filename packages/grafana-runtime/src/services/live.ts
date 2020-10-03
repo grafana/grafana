@@ -1,11 +1,5 @@
-import { LiveChannel, LiveChannelScope } from '@grafana/data';
+import { LiveChannel, LiveChannelAddress } from '@grafana/data';
 import { Observable } from 'rxjs';
-
-export interface LiveChannelAddress {
-  scope: LiveChannelScope;
-  namespace: string;
-  path: string;
-}
 
 /**
  * @experimental

@@ -13,7 +13,6 @@ import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQue
 import { getBackendSrv, getTemplateSrv, toDataQueryResponse, getLiveMeasurmentsObserver } from '@grafana/runtime';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { GrafanaLiveScope } from 'app/features/live/scopes';
 
 export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {

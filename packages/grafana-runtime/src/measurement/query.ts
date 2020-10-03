@@ -1,6 +1,11 @@
-import { DataQueryResponse, isLiveChannelMessageEvent, isLiveChannelStatusEvent } from '@grafana/data';
+import {
+  DataQueryResponse,
+  isLiveChannelMessageEvent,
+  isLiveChannelStatusEvent,
+  LiveChannelAddress,
+} from '@grafana/data';
 import { LiveMeasurements, MeasurementsQuery } from './types';
-import { LiveChannelAddress, getGrafanaLiveSrv } from '../services/live';
+import { getGrafanaLiveSrv } from '../services/live';
 
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -10,7 +15,7 @@ import { map } from 'rxjs/operators';
  */
 export function getLiveMeasurmentsObserver(
   addr: LiveChannelAddress,
-  query: MeasurementsQuery
+  query?: MeasurementsQuery
 ): Observable<DataQueryResponse> {
   const rsp: DataQueryResponse = { data: [] };
   if (!addr || !addr.path) {
