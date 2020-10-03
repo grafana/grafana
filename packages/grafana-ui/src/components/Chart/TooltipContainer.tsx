@@ -1,6 +1,5 @@
 import React, { useState, useLayoutEffect, useRef } from 'react';
 import { stylesFactory } from '../../themes/stylesFactory';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { css } from 'emotion';
 import { useTheme } from '../../themes/ThemeContext';
 import useWindowSize from 'react-use/lib/useWindowSize';
@@ -12,8 +11,8 @@ interface TooltipContainerProps {
   children?: JSX.Element;
 }
 
-const getTooltipContainerStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.dark1 }, theme.type);
+export const getTooltipContainerStyles = stylesFactory((theme: GrafanaTheme) => {
+  const bgColor = theme.colors.bg2;
   return {
     wrapper: css`
       overflow: hidden;
@@ -21,8 +20,10 @@ const getTooltipContainerStyles = stylesFactory((theme: GrafanaTheme) => {
       /* max-width is set up based on .grafana-tooltip class that's used in dashboard */
       max-width: 800px;
       padding: ${theme.spacing.sm};
+      opacity: 0.9;
       border-radius: ${theme.border.radius.sm};
       z-index: ${theme.zIndex.tooltip};
+      border: 1px solid ${theme.colors.border2};
     `,
   };
 });

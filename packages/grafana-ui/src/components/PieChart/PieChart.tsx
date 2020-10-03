@@ -5,8 +5,9 @@ import tinycolor from 'tinycolor2';
 import Pie, { PieArcDatum } from '@visx/shape/lib/shapes/Pie';
 import { Group } from '@visx/group';
 import { RadialGradient } from '@visx/gradient';
-import { useComponentInstanceId } from '../../utils/useComponetInstanceId';
 import { localPoint } from '@visx/event';
+import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
+import { useComponentInstanceId } from '../../utils/useComponetInstanceId';
 import { css } from 'emotion';
 
 export enum PieChartType {
@@ -25,7 +26,11 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height }) => {
   const theme = useTheme();
   const componentInstanceId = useComponentInstanceId('PieChart');
   const styles = useStyles(getStyles);
-  // const [hoverIndex, setHoverIndex] = useState();
+  const { tooltipData, tooltipLeft, tooltipTop, tooltipOpen, showTooltip, hideTooltip } = useTooltip<DisplayValue>();
+  const { containerRef, TooltipInPortal } = useTooltipInPortal({
+    detectBounds: true,
+    scroll: true,
+  });
 
   if (values.length < 0) {
     return <div>No data</div>;
@@ -45,77 +50,90 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height }) => {
   const getColor = (arc: PieArcDatum<DisplayValue>) => `url(#${getGradientId(arc.index)})`;
   const getKey = (arc: PieArcDatum<DisplayValue>) => arc.data.title ?? 'no title';
 
-  // const onMouseMove = useCallback(
-  //   (event: MouseEventHandler<DisplayValue>) => {
-  //     console.log('event', event.target);
-  //     console.log('localPooint', localPoint(event));
-  //   },
-  //   [values]
-  // );
+  const onMouseMoveOverArc = (event: any, datum: any) => {
+    const coords = localPoint(event.target.ownerSVGElement, event);
+    showTooltip({
+      tooltipLeft: coords!.x,
+      tooltipTop: coords!.y,
+      tooltipData: datum,
+    });
+  };
 
   return (
-    <svg width={width} height={height}>
-      {colors.map((color, idx) => (
-        <RadialGradient
-          key={idx}
-          id={getGradientId(idx)}
-          from={getGradientColorFrom(color, theme)}
-          to={getGradientColorTo(color, theme)}
-          fromOffset="0"
-          toOffset="1"
-          gradientUnits="userSpaceOnUse"
-          cx="0"
-          cy="0"
-          radius={radius}
-        />
-      ))}
-      <Group top={centerY + margin.top} left={centerX + margin.left}>
-        <Pie
-          data={values}
-          pieValue={getValue}
-          outerRadius={radius}
-          innerRadius={radius - donutThickness}
-          cornerRadius={3}
-          padAngle={0.005}
-        >
-          {pie => {
-            return pie.arcs.map(arc => {
-              const [centroidX, centroidY] = pie.path.centroid(arc);
-              const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.4;
+    <>
+      <svg width={width} height={height} ref={containerRef}>
+        {colors.map((color, idx) => (
+          <RadialGradient
+            key={idx}
+            id={getGradientId(idx)}
+            from={getGradientColorFrom(color, theme)}
+            to={getGradientColorTo(color, theme)}
+            fromOffset="0"
+            toOffset="1"
+            gradientUnits="userSpaceOnUse"
+            cx="0"
+            cy="0"
+            radius={radius}
+          />
+        ))}
+        <Group top={centerY + margin.top} left={centerX + margin.left}>
+          <Pie
+            data={values}
+            pieValue={getValue}
+            outerRadius={radius}
+            innerRadius={radius - donutThickness}
+            cornerRadius={3}
+            padAngle={0.005}
+          >
+            {pie => {
+              return pie.arcs.map(arc => {
+                const [centroidX, centroidY] = pie.path.centroid(arc);
+                const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.4;
 
-              return (
-                <g key={getKey(arc)} className={styles.svgArg}>
-                  <path
-                    d={pie.path({ ...arc })!}
-                    fill={getColor(arc)}
-                    stroke={theme.colors.panelBg}
-                    strokeWidth={1}
+                return (
+                  <g
+                    key={getKey(arc)}
+                    className={styles.svgArg}
+                    onMouseMove={event => onMouseMoveOverArc(event, arc.data)}
+                    onMouseOut={hideTooltip}
+                  >
+                    <path
+                      d={pie.path({ ...arc })!}
+                      fill={getColor(arc)}
+                      stroke={theme.colors.panelBg}
+                      strokeWidth={1}
 
-                    //onClick={() => onClickDatum(arc)}
-                    //onTouchStart={() => onClickDatum(arc)}
-                  />
-                  {hasSpaceForLabel && (
-                    <g>
-                      <text
-                        fill="white"
-                        x={centroidX}
-                        y={centroidY}
-                        dy=".33em"
-                        fontSize={14}
-                        textAnchor="middle"
-                        pointerEvents="none"
-                      >
-                        {getKey(arc)}
-                      </text>
-                    </g>
-                  )}
-                </g>
-              );
-            });
-          }}
-        </Pie>
-      </Group>
-    </svg>
+                      //onClick={() => onClickDatum(arc)}
+                      //onTouchStart={() => onClickDatum(arc)}
+                    />
+                    {hasSpaceForLabel && (
+                      <g>
+                        <text
+                          fill="white"
+                          x={centroidX}
+                          y={centroidY}
+                          dy=".33em"
+                          fontSize={14}
+                          textAnchor="middle"
+                          pointerEvents="none"
+                        >
+                          {getKey(arc)}
+                        </text>
+                      </g>
+                    )}
+                  </g>
+                );
+              });
+            }}
+          </Pie>
+        </Group>
+      </svg>
+      {tooltipOpen && (
+        <TooltipInPortal key={Math.random()} top={tooltipTop} left={tooltipLeft}>
+          {tooltipData!.title} {formattedValueToString(tooltipData!)}
+        </TooltipInPortal>
+      )}
+    </>
   );
 };
 
@@ -138,8 +156,7 @@ const getStyles = (theme: GrafanaTheme) => {
     svgArg: css`
       transition: all 200ms ease-in-out;
       &:hover {
-        transform: scale3d(1.05, 1.05, 1);
-        filter: contrast(120%);
+        transform: scale3d(1.03, 1.03, 1);
       }
     `,
   };
