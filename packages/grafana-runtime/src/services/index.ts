@@ -6,4 +6,3 @@ export * from './EchoSrv';
 export * from './templateSrv';
 export * from './legacyAngularInjector';
 export * from './live';
-export * from './liveMeasurments';

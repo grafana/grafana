@@ -40,13 +40,13 @@ export function registerLiveFeatures() {
       },
       getSupportedPaths: () => [broadcastConfig],
     },
-    description: 'Broadcast will send/recieve any events on a channel',
+    description: 'Broadcast will send/recieve any JSON object in a channel',
   });
 
   grafanaLiveCoreFeatures.register({
     name: 'measurement',
     support: new LiveMeasurmentsSupport(),
-    description: 'Broadcast will send/recieve any events on a channel',
+    description: 'These channels listen for measurements and produce DataFrames',
   });
 
   // dashboard/*

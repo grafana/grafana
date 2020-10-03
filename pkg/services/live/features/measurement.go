@@ -13,6 +13,11 @@ type Measurement struct {
 	Labels    map[string]string      `json:"labels,omitempty"` // labels are applied to all values
 }
 
+// MeasurementBatch is a collection of measurments all sent at once
+type MeasurementBatch struct {
+	measures []Measurement
+}
+
 // MeasurementRunner will simply broadcast all events to `grafana/broadcast/*` channels
 // This makes no assumptions about the shape of the data and will broadcast it to anyone listening
 type MeasurementRunner struct{}

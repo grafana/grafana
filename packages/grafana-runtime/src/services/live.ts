@@ -1,6 +1,12 @@
 import { LiveChannel, LiveChannelScope } from '@grafana/data';
 import { Observable } from 'rxjs';
 
+export interface LiveChannelAddress {
+  scope: LiveChannelScope;
+  namespace: string;
+  path: string;
+}
+
 /**
  * @experimental
  */
@@ -23,11 +29,7 @@ export interface GrafanaLiveSrv {
    * Multiple requests for this channel will return the same object until
    * the channel is shutdown
    */
-  getChannel<TMessage, TPublish>(
-    scope: LiveChannelScope,
-    namespace: string,
-    path: string
-  ): LiveChannel<TMessage, TPublish>;
+  getChannel<TMessage, TPublish = any>(address: LiveChannelAddress): LiveChannel<TMessage, TPublish>;
 }
 
 let singletonInstance: GrafanaLiveSrv;

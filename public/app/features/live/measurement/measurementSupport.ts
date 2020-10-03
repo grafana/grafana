@@ -1,15 +1,4 @@
-import {
-  CircularDataFrame,
-  Labels,
-  formatLabels,
-  FieldType,
-  DataFrame,
-  matchAllLabels,
-  parseLabels,
-  CircularVector,
-  LiveChannelSupport,
-  LiveChannelConfig,
-} from '@grafana/data';
+import { LiveChannelSupport, LiveChannelConfig } from '@grafana/data';
 import { MeasurementCollector } from '@grafana/runtime';
 
 interface MeasurementChannel {
@@ -26,6 +15,8 @@ export class LiveMeasurmentsSupport implements LiveChannelSupport {
   getChannelConfig(path: string): LiveChannelConfig | undefined {
     let c = this.cache[path];
     if (!c) {
+      console.log('Listening for measurments on: ', path);
+      // Create a new cache for each path
       const collector = new MeasurementCollector();
       c = this.cache[path] = {
         collector,

@@ -144,15 +144,24 @@ export class MeasurementCollector implements LiveMeasurements {
   //------------------------------------------------------
   // Collector
   //------------------------------------------------------
-  addBatch(batch: MeasurementBatch) {
+  addBatch = (batch: MeasurementBatch) => {
+    if (!batch.measures) {
+      console.log('unknown message type:', batch);
+      return;
+    }
+
     for (const measure of batch.measures) {
       const name = measure.name || '';
       let m = this.measurements[name];
       if (!m) {
         m = this.measurements[name] = new MeasurmentCache(name, this.config);
       }
-      m.addMeasurement(measure);
+      if (measure.values) {
+        m.addMeasurement(measure);
+      } else {
+        console.log('invalid measurment', measure);
+      }
     }
     return this;
-  }
+  };
 }

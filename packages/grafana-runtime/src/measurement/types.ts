@@ -1,4 +1,4 @@
-import { DataFrame, DataQuery, Labels } from '@grafana/data';
+import { DataFrame, Labels } from '@grafana/data';
 
 /**
  * the raw channel events are batches of Measurements
@@ -21,7 +21,7 @@ export interface MeasurementBatch {
   measures: Measurement[];
 }
 
-export interface MeasurementsQuery extends DataQuery {
+export interface MeasurementsQuery {
   name?: string;
   labels?: Labels;
   fields?: string[]; // only include the fields with these names

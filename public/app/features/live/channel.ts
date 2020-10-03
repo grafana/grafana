@@ -61,15 +61,25 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
     const events: SubscriptionEvents = {
       // This means a message was received from the server
       publish: (ctx: PublicationContext) => {
-        this.stream.next({
-          type: LiveChannelEventType.Message,
-          message: prepare(ctx.data),
-        });
+        try {
+          const message = prepare(ctx.data);
+          if (message) {
+            this.stream.next({
+              type: LiveChannelEventType.Message,
+              message,
+            });
+          }
 
-        // Clear any error messages
-        if (this.currentStatus.error) {
+          // Clear any error messages
+          if (this.currentStatus.error) {
+            this.currentStatus.timestamp = Date.now();
+            delete this.currentStatus.error;
+            this.sendStatus();
+          }
+        } catch (err) {
+          console.log('publish error', config.path, err);
+          this.currentStatus.error = err;
           this.currentStatus.timestamp = Date.now();
-          delete this.currentStatus.error;
           this.sendStatus();
         }
       },
@@ -81,6 +91,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
       subscribe: (ctx: SubscribeSuccessContext) => {
         this.currentStatus.timestamp = Date.now();
         this.currentStatus.state = LiveChannelConnectionState.Connected;
+        delete this.currentStatus.error;
         this.sendStatus();
       },
       unsubscribe: (ctx: UnsubscribeContext) => {
