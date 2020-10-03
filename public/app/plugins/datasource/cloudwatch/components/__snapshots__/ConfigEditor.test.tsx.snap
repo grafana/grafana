@@ -18,7 +18,7 @@ exports[`Render should disable access key id field 1`] = `
       >
         <Component
           className="width-14"
-          tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS or if you've attached an IAM role to your EC2 instance."
+          tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
         >
           Authentication Provider
         </Component>
@@ -247,7 +247,7 @@ exports[`Render should render component 1`] = `
       >
         <Component
           className="width-14"
-          tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS or if you've attached an IAM role to your EC2 instance."
+          tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
         >
           Authentication Provider
         </Component>
@@ -476,7 +476,7 @@ exports[`Render should show access key and secret access key fields 1`] = `
       >
         <Component
           className="width-14"
-          tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS or if you've attached an IAM role to your EC2 instance."
+          tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
         >
           Authentication Provider
         </Component>
@@ -705,7 +705,7 @@ exports[`Render should show arn role field 1`] = `
       >
         <Component
           className="width-14"
-          tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS or if you've attached an IAM role to your EC2 instance."
+          tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
         >
           Authentication Provider
         </Component>
@@ -934,7 +934,7 @@ exports[`Render should show credentials profile name field 1`] = `
       >
         <Component
           className="width-14"
-          tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS or if you've attached an IAM role to your EC2 instance."
+          tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
         >
           Authentication Provider
         </Component>

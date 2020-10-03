@@ -127,7 +127,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             <div className="gf-form">
               <InlineFormLabel
                 className="width-14"
-                tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS or if you've attached an IAM role to your EC2 instance."
+                tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
               >
                 Authentication Provider
               </InlineFormLabel>
