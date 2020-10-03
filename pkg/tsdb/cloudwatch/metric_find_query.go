@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/tsdb"
+	tsdberrs "github.com/grafana/grafana/pkg/tsdb/errors"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -376,6 +377,9 @@ func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 
 func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
+	if region == "" {
+		return nil, tsdberrs.BadRequest{Reason: "region must be configured"}
+	}
 	namespace := parameters.Get("namespace").MustString()
 
 	var namespaceMetrics []string
@@ -402,6 +406,9 @@ func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 
 func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
+	if region == "" {
+		return nil, tsdberrs.BadRequest{Reason: "region must be configured"}
+	}
 	namespace := parameters.Get("namespace").MustString()
 
 	var dimensionValues []string
@@ -431,6 +438,9 @@ func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 
 func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
+	if region == "" {
+		return nil, tsdberrs.BadRequest{Reason: "region must be configured"}
+	}
 	namespace := parameters.Get("namespace").MustString()
 	metricName := parameters.Get("metricName").MustString()
 	dimensionKey := parameters.Get("dimensionKey").MustString()
@@ -483,6 +493,9 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json,
 	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
+	if region == "" {
+		return nil, tsdberrs.BadRequest{Reason: "region must be configured"}
+	}
 	instanceId := parameters.Get("instanceId").MustString()
 
 	instanceIds := aws.StringSlice(parseMultiSelectValue(instanceId))
@@ -506,6 +519,9 @@ func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, paramete
 func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, parameters *simplejson.Json,
 	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
+	if region == "" {
+		return nil, tsdberrs.BadRequest{Reason: "region must be configured"}
+	}
 	attributeName := parameters.Get("attributeName").MustString()
 	filterJson := parameters.Get("filters").MustMap()
 
@@ -586,6 +602,9 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, parameters *simplejson.Json,
 	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
+	if region == "" {
+		return nil, tsdberrs.BadRequest{Reason: "region must be configured"}
+	}
 	resourceType := parameters.Get("resourceType").MustString()
 	filterJson := parameters.Get("tags").MustMap()
 

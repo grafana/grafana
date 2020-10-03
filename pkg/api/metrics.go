@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
+	tsdberrs "github.com/grafana/grafana/pkg/tsdb/errors"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -73,6 +74,10 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 	if !expr {
 		resp, err = tsdb.HandleRequest(c.Req.Context(), ds, request)
 		if err != nil {
+			if errors.Is(err, tsdberrs.BadRequest{}) {
+				return Error(400, "Bad metric request", err)
+			}
+
 			return Error(500, "Metric request error", err)
 		}
 	} else {
@@ -138,6 +143,10 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 
 	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request)
 	if err != nil {
+		if errors.Is(err, tsdberrs.BadRequest{}) {
+			return Error(400, "Bad metric request", err)
+		}
+
 		return Error(500, "Metric request error", err)
 	}
 
@@ -213,6 +222,10 @@ func GetTestDataRandomWalk(c *models.ReqContext) Response {
 
 	resp, err := tsdb.HandleRequest(context.Background(), dsInfo, request)
 	if err != nil {
+		if errors.Is(err, tsdberrs.BadRequest{}) {
+			return Error(400, "Bad metric request", err)
+		}
+
 		return Error(500, "Metric request error", err)
 	}
 

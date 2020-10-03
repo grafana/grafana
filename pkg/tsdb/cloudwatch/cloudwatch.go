@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
+	tsdberrs "github.com/grafana/grafana/pkg/tsdb/errors"
 )
 
 type datasourceInfo struct {
@@ -286,6 +287,10 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	queryParams.Set("queryString", queryParams.Get("expression").MustString(""))
 
 	region := queryParams.Get("region").MustString(defaultRegion)
+	if region == "" {
+		return nil, tsdberrs.BadRequest{Reason: "region must be configured"}
+	}
+
 	if region == defaultRegion {
 		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
 		queryParams.Set("region", region)
