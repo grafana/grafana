@@ -1,5 +1,5 @@
 import React from 'react';
-import { number, object, select } from '@storybook/addon-knobs';
+import { object, select, number } from '@storybook/addon-knobs';
 import { PieChart, PieChartType } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
@@ -18,12 +18,20 @@ const getKnobs = () => {
       { numeric: 50, text: '50', title: 'Spain' },
       { numeric: 70, text: '70', title: 'Germeny' },
     ]),
+    width: number('Width', 500),
+    height: number('Height', 500),
     pieType: select('pieType', [PieChartType.Pie, PieChartType.Donut], PieChartType.Pie),
   };
 };
 
 export const basic = () => {
-  const { datapoints, pieType } = getKnobs();
+  const { datapoints, pieType, width, height } = getKnobs();
 
-  return <PieChart width={500} height={500} values={datapoints} pieType={pieType} />;
+  return <PieChart width={width} height={height} values={datapoints} pieType={pieType} />;
+};
+
+export const donut = () => {
+  const { datapoints, width, height } = getKnobs();
+
+  return <PieChart width={width} height={height} values={datapoints} pieType={PieChartType.Donut} />;
 };
