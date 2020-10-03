@@ -1,5 +1,6 @@
 import { LiveChannelConfig } from '@grafana/data';
 import { getDashboardChannelsFeature } from './dashboard/dashboardWatcher';
+import { LiveMeasurmentsSupport } from './measurement/measurementSupport';
 import { grafanaLiveCoreFeatures } from './scopes';
 
 export function registerLiveFeatures() {
@@ -39,6 +40,12 @@ export function registerLiveFeatures() {
       },
       getSupportedPaths: () => [broadcastConfig],
     },
+    description: 'Broadcast will send/recieve any events on a channel',
+  });
+
+  grafanaLiveCoreFeatures.register({
+    name: 'measurement',
+    support: new LiveMeasurmentsSupport(),
     description: 'Broadcast will send/recieve any events on a channel',
   });
 
