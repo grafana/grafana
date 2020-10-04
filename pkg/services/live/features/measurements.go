@@ -40,6 +40,6 @@ func (g *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subs
 
 // OnPublish called when an event is received from the websocket
 func (g *MeasurementsRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
-	// currenly generic... but should be more strict
+	// currently generic... but should be more strict
 	return e.Data, nil
 }
