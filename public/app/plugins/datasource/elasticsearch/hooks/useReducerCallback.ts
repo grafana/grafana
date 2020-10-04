@@ -8,7 +8,7 @@ export type Reducer<S, A extends Action = Action> = (state: S, action: A) => S;
 export const combineReducers = <S, A extends Action = Action>(reducers: { [P in keyof S]: Reducer<S[P], A> }) => (
   state: S,
   action: A
-): S => {
+): Partial<S> => {
   const newState = {} as S;
   for (const key in reducers) {
     newState[key] = reducers[key](state[key], action);
@@ -16,13 +16,13 @@ export const combineReducers = <S, A extends Action = Action>(reducers: { [P in 
   return newState;
 };
 
-export const useReducerCallback = <State, Action>(
+export const useReducerCallback = <State, A = Action>(
   onChange: (value: State) => void,
   state: State,
-  reducer: (state: State, action: Action) => State
+  reducer: (state: State, action: A) => State
 ) => {
   const dispatch = useCallback(
-    (action: Action) => {
+    (action: A) => {
       const newState = reducer(state, action);
       onChange({ ...state, ...newState });
     },

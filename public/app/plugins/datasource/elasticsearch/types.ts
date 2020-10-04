@@ -1,4 +1,5 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { MetricAggregation, MetricAggregationType } from './state/metricAggregation/types';
 
 export interface ElasticsearchOptions extends DataSourceJsonData {
   timeField: string;
@@ -37,7 +38,6 @@ export interface ElasticsearchAggregation {
   type: MetricAggregationType | BucketAggregationType;
   settings?: unknown;
   field?: string;
-  pipelineVariables?: Array<{ name?: string; pipelineAgg?: string }>;
   hide: boolean;
 }
 

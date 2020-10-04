@@ -1,12 +1,6 @@
 import _ from 'lodash';
-import {
-  ElasticsearchQuery,
-  MetricAggregation,
-  MetricAggregationType,
-  MetricsConfiguration,
-  BucketsConfiguration,
-  BucketAggregation,
-} from './types';
+import { MetricAggregation, MetricAggregationType } from './state/metricAggregation/types';
+import { MetricsConfiguration, BucketsConfiguration, BucketAggregation, ElasticsearchQuery } from './types';
 
 export const metricAggregationConfig: MetricsConfiguration = {
   count: {
@@ -249,7 +243,7 @@ export function getAncestors(target: ElasticsearchQuery, metric?: MetricAggregat
   const initialAncestors = metric != null ? [metric.id] : ([] as string[]);
   return metrics.reduce((acc: string[], metric) => {
     const includedInField = (metric.field && acc.includes(metric.field)) || false;
-    const includedInVariables = metric.pipelineVariables?.some(pv => acc.includes(pv?.pipelineAgg ?? ''));
+    const includedInVariables = metric.pipelineVariables?.some(pv => acc.includes(pv.pipelineAgg ?? ''));
     return includedInField || includedInVariables ? [...acc, metric.id] : acc;
   }, initialAncestors);
 }

@@ -1,28 +1,19 @@
-import React, { FunctionComponent, useReducer } from 'react';
+import React, { FunctionComponent } from 'react';
 import { QueryEditorProps } from '@grafana/data';
 import { ElasticDatasource } from '../datasource';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../types';
 
-// import { QueryEditorForm } from './QueryEditorForm';
-// import { ElasticsearchQueryProvider } from './ElasticsearchQueryContext';
-import { combineReducers, useReducerCallback } from '../hooks/useReducerCallback';
-import { reducer as metricsReducer } from '../state/metricAggregation/reducer';
+import { ElasticsearchProvider } from './ElasticsearchQueryContext';
+import { QueryEditorForm } from './QueryEditorForm';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
 
 export const QueryEditor: FunctionComponent<ElasticQueryEditorProps> = ({ query, onChange, datasource }) => {
-  const reducer = combineReducers({
-    metrics: metricsReducer,
-  });
+  return (
+    <ElasticsearchProvider datasource={datasource} onChange={onChange} query={query}>
+      {JSON.stringify(query)}
 
-  const dispatch = useReducerCallback(onChange, query, (state, action) => state);
-
-  return <>{JSON.stringify(query)}</>;
-  // return (
-  //   <ElasticsearchQueryProvider query={query} onChange={onChange} datasource={datasource}>
-  //     {JSON.stringify(query)}
-
-  //     <QueryEditorForm />
-  //   </ElasticsearchQueryProvider>
-  // );
+      <QueryEditorForm value={query} />
+    </ElasticsearchProvider>
+  );
 };

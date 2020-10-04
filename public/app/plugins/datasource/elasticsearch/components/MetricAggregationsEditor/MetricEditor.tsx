@@ -3,10 +3,10 @@ import { Icon, InlineField, Segment, SegmentAsync, useTheme } from '@grafana/ui'
 import { cx } from 'emotion';
 import React, { FunctionComponent, useCallback } from 'react';
 import { metricAggregationConfig } from '../../query_def';
-import { MetricAggregation, MetricAggregationType } from '../../types';
 import { useDatasource } from '../ElasticsearchQueryContext';
 import { getStyles } from './styles';
 import { marginZero } from '../styles';
+import { MetricAggregation, MetricAggregationType } from '../../state/metricAggregation/types';
 
 const metricAggOptions: Array<SelectableValue<MetricAggregationType>> = Object.entries(metricAggregationConfig).map(
   ([key, { label }]) => ({
@@ -22,10 +22,9 @@ const toOption = (metric: MetricAggregation) => ({
 
 interface QueryMetricEditorProps {
   metric: MetricAggregation;
-  onChange: (newMetric: MetricAggregation) => void;
 }
 
-export const MetricEditor: FunctionComponent<QueryMetricEditorProps> = ({ metric, onChange }) => {
+export const MetricEditor: FunctionComponent<QueryMetricEditorProps> = ({ metric }) => {
   const styles = getStyles(useTheme(), metric.hide);
   const datasource = useDatasource();
 
@@ -37,10 +36,10 @@ export const MetricEditor: FunctionComponent<QueryMetricEditorProps> = ({ metric
       }
       // TODO: When changing metric type we should generate a new metric with that type
       // And if the selected field can't be used for that metric we should clear it out.
-      // eg. Uniqie count with non-numeric field and then change type to eg. Average
-      onChange({ ...metric, type });
+      // eg. Unique count with non-numeric field and then change type to eg. Average
+      // onChange({ ...metric, type });
     },
-    [metric, onChange]
+    [metric]
   );
 
   const getFields = () => {
@@ -66,16 +65,13 @@ export const MetricEditor: FunctionComponent<QueryMetricEditorProps> = ({ metric
         <SegmentAsync
           className={cx(styles.color)}
           loadOptions={getFields}
-          onChange={field => onChange({ ...metric, field: field.value })}
+          onChange={() => {}}
           placeholder="Select Metric"
           value={metric.field}
         />
       )}
 
-      <button
-        className={cx('gf-form-label gf-form-label--btn query-part', styles.color)}
-        onClick={() => onChange({ ...metric, hide: !metric.hide })}
-      >
+      <button className={cx('gf-form-label gf-form-label--btn query-part', styles.color)} onClick={() => {}}>
         <Icon name={metric.hide ? 'eye-slash' : 'eye'} />
       </button>
     </>
