@@ -360,10 +360,11 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   if (isNumber(calcs.firstNotNull) && isNumber(calcs.lastNotNull)) {
     calcs.diff = calcs.lastNotNull - calcs.firstNotNull;
   }
-  
+
   if (isNumber(calcs.firstNotNull) && isNumber(calcs.diff)) {
     calcs.diffperc = calcs.diff / calcs.firstNotNull;
   }
+
 
   return calcs;
 }
