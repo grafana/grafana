@@ -15,7 +15,7 @@ export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>(props => {
       }
       return props.onChange(selection.value);
     },
-    [names, props.onChange]
+    [names, props]
   );
 
   const selectedOption = selectOptions.find(v => v.value === options);

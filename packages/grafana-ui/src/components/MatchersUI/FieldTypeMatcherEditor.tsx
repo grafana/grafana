@@ -12,7 +12,7 @@ export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>(props => {
     (selection: SelectableValue<string>) => {
       return props.onChange(selection.value!);
     },
-    [counts, props.onChange]
+    [props]
   );
 
   const selectedOption = selectOptions.find(v => v.value === options);

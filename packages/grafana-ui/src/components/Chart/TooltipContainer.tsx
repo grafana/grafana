@@ -57,7 +57,7 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({ position, of
       x: position.x + offset.x - xO,
       y: position.y + offset.y - yO,
     });
-  }, [tooltipRef, position]);
+  }, [tooltipRef, position, offset.x, offset.y, width, height]);
 
   const styles = getTooltipContainerStyles(theme);
 

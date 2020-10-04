@@ -10,7 +10,7 @@ export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>(props 
     (e: React.FocusEvent<HTMLInputElement>) => {
       return props.onChange(e.target.value);
     },
-    [props.onChange]
+    [props]
   );
 
   return <Input placeholder="Enter regular expression" defaultValue={options} onBlur={onBlur} />;
