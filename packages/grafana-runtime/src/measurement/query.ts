@@ -3,6 +3,7 @@ import {
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
   LiveChannelAddress,
+  LoadingState,
 } from '@grafana/data';
 import { LiveMeasurements, MeasurementsQuery } from './types';
 import { getGrafanaLiveSrv } from '../services/live';
@@ -14,6 +15,7 @@ import { map } from 'rxjs/operators';
  * When you know the stream will be managed measurments
  */
 export function getLiveMeasurmentsObserver(
+  requestId: string,
   addr: LiveChannelAddress,
   query?: MeasurementsQuery
 ): Observable<DataQueryResponse> {
@@ -29,6 +31,8 @@ export function getLiveMeasurmentsObserver(
     return of(rsp);
   }
 
+  rsp.state = LoadingState.Streaming;
+  rsp.key = requestId;
   return live
     .getChannel<LiveMeasurements>(addr)
     .getStream()
@@ -40,6 +44,7 @@ export function getLiveMeasurmentsObserver(
         } else if (isLiveChannelStatusEvent(evt)) {
           rsp.error = evt.error;
         }
+        console.log('EVENT', addr.path, rsp);
         return { ...rsp }; // send event on all status messages
       })
     );

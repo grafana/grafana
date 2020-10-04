@@ -1,6 +1,6 @@
 import { LiveChannelConfig } from '@grafana/data';
 import { getDashboardChannelsFeature } from './dashboard/dashboardWatcher';
-import { LiveMeasurmentsSupport } from './measurement/measurementSupport';
+import { LiveMeasurmentsSupport } from './measurements/measurementsSupport';
 import { grafanaLiveCoreFeatures } from './scopes';
 
 export function registerLiveFeatures() {
@@ -44,7 +44,7 @@ export function registerLiveFeatures() {
   });
 
   grafanaLiveCoreFeatures.register({
-    name: 'measurement',
+    name: 'measurements',
     support: new LiveMeasurmentsSupport(),
     description: 'These channels listen for measurements and produce DataFrames',
   });

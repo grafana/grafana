@@ -145,11 +145,6 @@ export class MeasurementCollector implements LiveMeasurements {
   // Collector
   //------------------------------------------------------
   addBatch = (batch: MeasurementBatch) => {
-    if (!batch.measures) {
-      console.log('unknown message type:', batch);
-      return;
-    }
-
     for (const measure of batch.measures) {
       const name = measure.name || '';
       let m = this.measurements[name];

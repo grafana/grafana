@@ -14,6 +14,8 @@ import { getBackendSrv, getTemplateSrv, toDataQueryResponse, getLiveMeasurmentsO
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
+let counter = 100;
+
 export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
@@ -30,6 +32,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
         if (channel) {
           queries.push(
             getLiveMeasurmentsObserver(
+              `${request.requestId}.${counter++}`,
               {
                 scope: LiveChannelScope.Grafana,
                 namespace: 'measurements',

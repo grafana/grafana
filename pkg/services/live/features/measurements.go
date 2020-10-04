@@ -18,28 +18,28 @@ type MeasurementBatch struct {
 	measures []Measurement
 }
 
-// MeasurementRunner will simply broadcast all events to `grafana/broadcast/*` channels
+// MeasurementsRunner will simply broadcast all events to `grafana/broadcast/*` channels
 // This makes no assumptions about the shape of the data and will broadcast it to anyone listening
-type MeasurementRunner struct{}
+type MeasurementsRunner struct{}
 
 // GetHandlerForPath called on init
-func (g *MeasurementRunner) GetHandlerForPath(path string) (models.ChannelHandler, error) {
+func (g *MeasurementsRunner) GetHandlerForPath(path string) (models.ChannelHandler, error) {
 	return g, nil // for now all channels share config
 }
 
 // GetChannelOptions called fast and often
-func (g *MeasurementRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
+func (g *MeasurementsRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
 	return centrifuge.ChannelOptions{}
 }
 
 // OnSubscribe for now allows anyone to subscribe to any dashboard
-func (g *MeasurementRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
+func (g *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
 	// anyone can subscribe
 	return nil
 }
 
 // OnPublish called when an event is received from the websocket
-func (g *MeasurementRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
+func (g *MeasurementsRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
 	// currenly generic... but should be more strict
 	return e.Data, nil
 }
