@@ -23,6 +23,7 @@ import {
   QueryResultMeta,
   ScopedVars,
   TimeRange,
+  CoreApp,
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv, BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
@@ -95,12 +96,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         expr: this.templateSrv.replace(target.expr, options.scopedVars, this.interpolateQueryExpr),
       }));
 
-    filteredTargets.forEach(target =>
-      subQueries.push(
-        this.runInstantQuery(target, options, filteredTargets.length),
-        this.runRangeQuery(target, options, filteredTargets.length)
-      )
-    );
+    for (const target of filteredTargets) {
+      if (options.app === CoreApp.Explore) {
+        subQueries.push(this.runInstantQuery(target, options, filteredTargets.length));
+      }
+      subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
+    }
 
     // No valid targets, return the empty result to save a round trip.
     if (isEmpty(subQueries)) {
