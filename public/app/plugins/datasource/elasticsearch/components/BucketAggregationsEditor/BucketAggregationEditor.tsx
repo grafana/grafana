@@ -20,9 +20,10 @@ const toOption = (bucketAgg: BucketAggregation) => ({
 
 interface QueryMetricEditorProps {
   bucketAgg: BucketAggregation;
+  onChange: (bucketAgg: BucketAggregation) => void;
 }
 
-export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> = ({ bucketAgg }) => {
+export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> = ({ bucketAgg, onChange }) => {
   const datasource = useDatasource();
 
   const getFields = () => {
@@ -39,7 +40,8 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
         <Segment
           className={marginZero}
           options={bucketAggOptions}
-          onChange={() => {
+          onChange={e => {
+            console.log(e);
             // TODO: This
           }}
           value={toOption(bucketAgg)}

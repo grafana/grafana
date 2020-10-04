@@ -11,23 +11,6 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   dataLinks?: DataLinkConfig[];
 }
 
-export type MetricAggregationType =
-  | 'count'
-  | 'avg'
-  | 'sum'
-  | 'min'
-  | 'max'
-  | 'extended_stats'
-  | 'percentiles'
-  | 'moving_avg'
-  | 'cardinality'
-  | 'derivative'
-  | 'cumulative_sum'
-  | 'bucket_script'
-  | 'raw_document'
-  | 'raw_data'
-  | 'logs';
-
 export type BucketAggregationType = 'terms' | 'filters' | 'geohash_grid' | 'date_histogram' | 'histogram';
 
 // TODO: Fix the stuff below here.
@@ -60,12 +43,6 @@ export interface ElasticsearchAggregation {
 
 export interface BucketAggregation extends ElasticsearchAggregation {
   type: BucketAggregationType;
-}
-
-export interface MetricAggregation extends ElasticsearchAggregation {
-  type: MetricAggregationType;
-  hide: boolean;
-  settings?: unknown;
 }
 
 export interface ElasticsearchQuery extends DataQuery {
