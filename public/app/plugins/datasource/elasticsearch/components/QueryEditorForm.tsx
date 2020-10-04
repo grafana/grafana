@@ -35,7 +35,7 @@ export const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
         </InlineField>
       </InlineFieldRow>
 
-      <MetricAggregationsEditor value={value.metrics} />
+      <MetricAggregationsEditor value={value.metrics || []} />
     </>
   );
 };

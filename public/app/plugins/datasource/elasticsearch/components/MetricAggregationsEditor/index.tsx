@@ -1,17 +1,17 @@
 import React, { FunctionComponent } from 'react';
 import { InlineFieldRow } from '@grafana/ui';
-import { defaultMetricAgg, metricAggregationConfig } from '../../query_def';
 import { AddRemove } from '../AddRemove';
 import { MetricEditor } from './MetricEditor';
 import { MetricAggregation, MetricAggregationAction } from '../../state/metricAggregation/types';
 import { useDispatch } from '../ElasticsearchQueryContext';
 import { addMetric, removeMetric } from '../../state/metricAggregation/actions';
+import { metricAggregationConfig } from '../../state/metricAggregation/utils';
 
 interface Props {
-  value?: MetricAggregation[];
+  value: MetricAggregation[];
 }
 
-export const MetricAggregationsEditor: FunctionComponent<Props> = ({ value = [defaultMetricAgg()] }) => {
+export const MetricAggregationsEditor: FunctionComponent<Props> = ({ value }) => {
   const dispatch = useDispatch<MetricAggregationAction>();
 
   return (

@@ -8,10 +8,22 @@ import { QueryEditorForm } from './QueryEditorForm';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
 
-export const QueryEditor: FunctionComponent<ElasticQueryEditorProps> = ({ query, onChange, datasource }) => {
+export const QueryEditor: FunctionComponent<ElasticQueryEditorProps> = ({
+  query,
+  onChange,
+  datasource,
+  onRunQuery,
+}) => {
   return (
-    <ElasticsearchProvider datasource={datasource} onChange={onChange} query={query}>
-      {JSON.stringify(query)}
+    <ElasticsearchProvider
+      datasource={datasource}
+      onChange={newQuery => {
+        onChange(newQuery);
+        onRunQuery();
+      }}
+      query={query}
+    >
+      {JSON.stringify(query.metrics, null, 2)}
 
       <QueryEditorForm value={query} />
     </ElasticsearchProvider>

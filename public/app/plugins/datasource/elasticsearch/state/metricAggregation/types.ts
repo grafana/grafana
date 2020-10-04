@@ -2,6 +2,7 @@ import { Action } from '../../hooks/useReducerCallback';
 
 export const ADD_METRIC = '@metrics/add';
 export const REMOVE_METRIC = '@metrics/remove';
+export const CHANGE_METRIC_TYPE = '@metrics/change_type';
 
 export type MetricAggregationType =
   | 'count'
@@ -12,6 +13,7 @@ export type MetricAggregationType =
   | 'extended_stats'
   | 'percentiles'
   | 'moving_avg'
+  | 'moving_fn'
   | 'cardinality'
   | 'derivative'
   | 'cumulative_sum'
@@ -26,7 +28,7 @@ interface PipelineVariable {
 }
 
 export interface MetricAggregation {
-  id: number;
+  id: string;
   type: MetricAggregationType;
   hide: boolean;
   settings?: unknown;
@@ -38,14 +40,21 @@ export interface MetricAggregation {
 
 export interface AddMetricAction extends Action<typeof ADD_METRIC> {
   payload: {
-    metricType: MetricAggregationType;
+    metricType: MetricAggregation['type'];
   };
 }
 
 export interface RemoveMetricAction extends Action<typeof REMOVE_METRIC> {
   payload: {
-    id: number;
+    id: MetricAggregation['id'];
   };
 }
 
-export type MetricAggregationAction = AddMetricAction | RemoveMetricAction;
+export interface ChangeMetricTypeAction extends Action<typeof CHANGE_METRIC_TYPE> {
+  payload: {
+    id: MetricAggregation['id'];
+    type: MetricAggregation['type'];
+  };
+}
+
+export type MetricAggregationAction = AddMetricAction | RemoveMetricAction | ChangeMetricTypeAction;

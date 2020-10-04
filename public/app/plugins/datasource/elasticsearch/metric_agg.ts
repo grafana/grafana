@@ -1,18 +1,14 @@
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import * as queryDef from './query_def';
-import { ElasticsearchAggregation } from './types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
-
-function createDefaultMetric(id = 0): ElasticsearchAggregation {
-  return { type: 'count', field: 'select field', id: id + 1, hide: true };
-}
+import { MetricAggregation } from './state/metricAggregation/types';
 
 export class ElasticMetricAggCtrl {
   /** @ngInject */
   constructor($scope: any, uiSegmentSrv: any, $rootScope: GrafanaRootScope) {
-    const metricAggs: ElasticsearchAggregation[] = $scope.target.metrics;
+    const metricAggs: MetricAggregation[] = $scope.target.metrics;
     $scope.metricAggTypes = queryDef.getMetricAggTypes($scope.esVersion);
     $scope.extendedStats = queryDef.extendedStats;
     $scope.pipelineAggOptions = [];
@@ -207,7 +203,7 @@ export class ElasticMetricAggCtrl {
         0
       );
 
-      metricAggs.splice(addIndex, 0, createDefaultMetric(id));
+      metricAggs.splice(addIndex, 0, queryDef.defaultMetricAgg(id.toString()));
       $scope.onChange();
     };
 
@@ -218,7 +214,7 @@ export class ElasticMetricAggCtrl {
       if (newMetricAggs.length > 0) {
         metricAggs.splice(0, metricAggs.length, ...newMetricAggs);
       } else {
-        metricAggs.splice(0, metricAggs.length, createDefaultMetric());
+        metricAggs.splice(0, metricAggs.length, queryDef.defaultMetricAgg());
       }
       $scope.onChange();
     };

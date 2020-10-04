@@ -2,11 +2,12 @@ import { SelectableValue } from '@grafana/data';
 import { Icon, InlineField, Segment, SegmentAsync, useTheme } from '@grafana/ui';
 import { cx } from 'emotion';
 import React, { FunctionComponent, useCallback } from 'react';
-import { metricAggregationConfig } from '../../query_def';
-import { useDatasource } from '../ElasticsearchQueryContext';
+import { useDatasource, useDispatch } from '../ElasticsearchQueryContext';
 import { getStyles } from './styles';
 import { marginZero } from '../styles';
 import { MetricAggregation, MetricAggregationType } from '../../state/metricAggregation/types';
+import { metricAggregationConfig } from '../../state/metricAggregation/utils';
+import { changeMetricType } from '../../state/metricAggregation/actions';
 
 const metricAggOptions: Array<SelectableValue<MetricAggregationType>> = Object.entries(metricAggregationConfig).map(
   ([key, { label }]) => ({
@@ -27,6 +28,7 @@ interface QueryMetricEditorProps {
 export const MetricEditor: FunctionComponent<QueryMetricEditorProps> = ({ metric }) => {
   const styles = getStyles(useTheme(), metric.hide);
   const datasource = useDatasource();
+  const dispatch = useDispatch();
 
   const onMetricTypeChange = useCallback(
     ({ value: type }) => {
@@ -38,8 +40,9 @@ export const MetricEditor: FunctionComponent<QueryMetricEditorProps> = ({ metric
       // And if the selected field can't be used for that metric we should clear it out.
       // eg. Unique count with non-numeric field and then change type to eg. Average
       // onChange({ ...metric, type });
+      dispatch(changeMetricType(metric.id, type));
     },
-    [metric]
+    [metric, dispatch]
   );
 
   const getFields = () => {

@@ -26,7 +26,7 @@ export const useReducerCallback = <State, A = Action>(
       const newState = reducer(state, action);
       onChange({ ...state, ...newState });
     },
-    [onChange]
+    [onChange, state, reducer]
   );
 
   return dispatch;
