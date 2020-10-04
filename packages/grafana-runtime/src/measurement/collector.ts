@@ -43,6 +43,7 @@ export class MeasurmentCache {
     let frame = this.frames[key];
     if (!frame) {
       frame = new CircularDataFrame(this.config);
+      frame.name = this.name;
       frame.addField({
         name: 'time',
         type: FieldType.time,
@@ -55,7 +56,11 @@ export class MeasurmentCache {
           labels: m.labels,
         },
       };
+      this.frames[key] = frame;
     }
+
+    // Add the timestamp
+    frame.values['time'].add(m.time || Date.now());
 
     // Append the row
     for (const [key, value] of Object.entries(m.values)) {
@@ -77,7 +82,7 @@ export class MeasurementCollector implements LiveMeasurements {
   measurements: Record<string, MeasurmentCache> = {};
   config: MeasurmentCacheConfig = {
     append: 'tail',
-    capacity: 1000,
+    capacity: 10,
   };
 
   //------------------------------------------------------

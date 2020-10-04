@@ -7,7 +7,7 @@ import { DataFrame, Labels } from '@grafana/data';
  */
 export interface Measurement {
   name: string;
-  timestamp?: number; // Missing will use the browser time
+  time?: number; // Missing will use the browser time
   values: Record<string, any>;
   labels?: Labels;
 }
