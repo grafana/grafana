@@ -130,7 +130,7 @@ describe('Stats Calculators', () => {
 
     const stats = reduceField({
       field: createField('x', info[0].data),
-      reducers: [ReducerID.first, ReducerID.last, ReducerID.firstNotNull, ReducerID.lastNotNull], // uses standard path
+      reducers: [ReducerID.first, ReducerID.last, ReducerID.firstNotNull, ReducerID.lastNotNull, ReducerID.diffperc], // uses standard path
     });
     expect(stats[ReducerID.first]).toEqual(null);
     expect(stats[ReducerID.last]).toEqual(null);
