@@ -1,4 +1,4 @@
-import { LogRowModel, toDataFrame, Field, FieldCache } from '@grafana/data';
+import { LogRowModel, toDataFrame, Field, FieldCache, LogsSortOrder } from '@grafana/data';
 import React, { useState, useEffect } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
@@ -30,6 +30,7 @@ interface ResultType {
 
 interface LogRowContextProviderProps {
   row: LogRowModel;
+  logsSortOrder?: LogsSortOrder | null;
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   children: (props: {
     result: LogRowContextRows;
@@ -43,7 +44,8 @@ interface LogRowContextProviderProps {
 export const getRowContexts = async (
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>,
   row: LogRowModel,
-  limit: number
+  limit: number,
+  logsSortOrder?: LogsSortOrder | null
 ) => {
   const promises = [
     getRowContext(row, {
@@ -58,62 +60,66 @@ export const getRowContexts = async (
 
   const results: Array<DataQueryResponse | DataQueryError> = await Promise.all(promises.map(p => p.catch(e => e)));
 
-  return {
-    data: results.map(result => {
-      const dataResult: DataQueryResponse = result as DataQueryResponse;
-      if (!dataResult.data) {
-        return [];
-      }
+  const data = results.map(result => {
+    const dataResult: DataQueryResponse = result as DataQueryResponse;
+    if (!dataResult.data) {
+      return [];
+    }
 
-      const data: any[] = [];
-      for (let index = 0; index < dataResult.data.length; index++) {
-        const dataFrame = toDataFrame(dataResult.data[index]);
-        const fieldCache = new FieldCache(dataFrame);
-        const timestampField: Field<string> = fieldCache.getFieldByName('ts')!;
-        const idField: Field<string> | undefined = fieldCache.getFieldByName('id');
+    const data: any[] = [];
+    for (let index = 0; index < dataResult.data.length; index++) {
+      const dataFrame = toDataFrame(dataResult.data[index]);
+      const fieldCache = new FieldCache(dataFrame);
+      const timestampField: Field<string> = fieldCache.getFieldByName('ts')!;
+      const idField: Field<string> | undefined = fieldCache.getFieldByName('id');
 
-        for (let fieldIndex = 0; fieldIndex < timestampField.values.length; fieldIndex++) {
-          // TODO: this filtering is datasource dependant so it will make sense to move it there so the API is
-          //  to return correct list of lines handling inclusive ranges or how to filter the correct line on the
-          //  datasource.
+      for (let fieldIndex = 0; fieldIndex < timestampField.values.length; fieldIndex++) {
+        // TODO: this filtering is datasource dependant so it will make sense to move it there so the API is
+        //  to return correct list of lines handling inclusive ranges or how to filter the correct line on the
+        //  datasource.
 
-          // Filter out the row that is the one used as a focal point for the context as we will get it in one of the
-          // requests.
-          if (idField) {
-            // For Loki this means we filter only the one row. Issue is we could have other rows logged at the same
-            // ns which came before but they come in the response that search for logs after. This means right now
-            // we will show those as if they came after. This is not strictly correct but seems better than losing them
-            // and making this correct would mean quite a bit of complexity to shuffle things around and messing up
-            //counts.
-            if (idField.values.get(fieldIndex) === row.uid) {
-              continue;
-            }
-          } else {
-            // Fallback to timestamp. This should not happen right now as this feature is implemented only for loki
-            // and that has ID. Later this branch could be used in other DS but mind that this could also filter out
-            // logs which were logged in the same timestamp and that can be a problem depending on the precision.
-            if (parseInt(timestampField.values.get(fieldIndex), 10) === row.timeEpochMs) {
-              continue;
-            }
+        // Filter out the row that is the one used as a focal point for the context as we will get it in one of the
+        // requests.
+        if (idField) {
+          // For Loki this means we filter only the one row. Issue is we could have other rows logged at the same
+          // ns which came before but they come in the response that search for logs after. This means right now
+          // we will show those as if they came after. This is not strictly correct but seems better than losing them
+          // and making this correct would mean quite a bit of complexity to shuffle things around and messing up
+          //counts.
+          if (idField.values.get(fieldIndex) === row.uid) {
+            continue;
           }
-
-          const lineField: Field<string> = dataFrame.fields.filter(field => field.name === 'line')[0];
-          const line = lineField.values.get(fieldIndex); // assuming that both fields have same length
-
-          data.push(line);
+        } else {
+          // Fallback to timestamp. This should not happen right now as this feature is implemented only for loki
+          // and that has ID. Later this branch could be used in other DS but mind that this could also filter out
+          // logs which were logged in the same timestamp and that can be a problem depending on the precision.
+          if (parseInt(timestampField.values.get(fieldIndex), 10) === row.timeEpochMs) {
+            continue;
+          }
         }
-      }
 
-      return data;
-    }),
-    errors: results.map(result => {
-      const errorResult: DataQueryError = result as DataQueryError;
-      if (!errorResult.message) {
-        return '';
-      }
+        const lineField: Field<string> = dataFrame.fields.filter(field => field.name === 'line')[0];
+        const line = lineField.values.get(fieldIndex); // assuming that both fields have same length
 
-      return errorResult.message;
-    }),
+        data.push(line);
+      }
+    }
+
+    return logsSortOrder === LogsSortOrder.Ascending ? data.reverse() : data;
+  });
+
+  const errors = results.map(result => {
+    const errorResult: DataQueryError = result as DataQueryError;
+    if (!errorResult.message) {
+      return '';
+    }
+
+    return errorResult.message;
+  });
+
+  return {
+    data: logsSortOrder === LogsSortOrder.Ascending ? data.reverse() : data,
+    errors: logsSortOrder === LogsSortOrder.Ascending ? errors.reverse() : errors,
   };
 };
 
@@ -121,6 +127,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   getRowContext,
   row,
   children,
+  logsSortOrder,
 }) => {
   // React Hook that creates a number state value called limit to component state and a setter function called setLimit
   // The initial value for limit is 10
@@ -144,7 +151,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   // First promise fetches limit number of rows backwards in time from a specific point in time
   // Second promise fetches limit number of rows forwards in time from a specific point in time
   const { value } = useAsync(async () => {
-    return await getRowContexts(getRowContext, row, limit); // Moved it to a separate function for debugging purposes
+    return await getRowContexts(getRowContext, row, limit, logsSortOrder); // Moved it to a separate function for debugging purposes
   }, [limit]);
 
   // React Hook that performs a side effect every time the value (from useAsync hook) prop changes

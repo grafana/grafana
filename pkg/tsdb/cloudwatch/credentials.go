@@ -29,18 +29,21 @@ var credsCacheLock sync.RWMutex
 
 // Session factory.
 // Stubbable by tests.
+//nolint:gocritic
 var newSession = func(cfgs ...*aws.Config) (*session.Session, error) {
 	return session.NewSession(cfgs...)
 }
 
 // STS service factory.
 // Stubbable by tests.
+//nolint:gocritic
 var newSTSService = func(p client.ConfigProvider, cfgs ...*aws.Config) stsiface.STSAPI {
 	return sts.New(p, cfgs...)
 }
 
 // EC2Metadata service factory.
 // Stubbable by tests.
+//nolint:gocritic
 var newEC2Metadata = func(p client.ConfigProvider, cfgs ...*aws.Config) *ec2metadata.EC2Metadata {
 	return ec2metadata.New(p, cfgs...)
 }
@@ -139,7 +142,7 @@ func getCredentials(dsInfo *datasourceInfo) (*credentials.Credentials, error) {
 	return creds, nil
 }
 
-func webIdentityProvider(sess *session.Session) credentials.Provider {
+func webIdentityProvider(sess client.ConfigProvider) credentials.Provider {
 	svc := newSTSService(sess)
 
 	roleARN := os.Getenv("AWS_ROLE_ARN")
@@ -168,20 +171,6 @@ func ecsCredProvider(sess *session.Session, uri string) credentials.Provider {
 		func(p *endpointcreds.Provider) { p.ExpiryWindow = 5 * time.Minute })
 }
 
-func ec2RoleProvider(sess *session.Session) credentials.Provider {
+func ec2RoleProvider(sess client.ConfigProvider) credentials.Provider {
 	return &ec2rolecreds.EC2RoleProvider{Client: newEC2Metadata(sess), ExpiryWindow: 5 * time.Minute}
-}
-
-func getAwsConfig(dsInfo *datasourceInfo) (*aws.Config, error) {
-	creds, err := getCredentials(dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := &aws.Config{
-		Region:      aws.String(dsInfo.Region),
-		Credentials: creds,
-	}
-
-	return cfg, nil
 }

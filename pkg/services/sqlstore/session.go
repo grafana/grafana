@@ -52,6 +52,7 @@ func (ss *SqlStore) WithDbSession(ctx context.Context, callback dbTransactionFun
 	if err != nil {
 		return err
 	}
+	defer sess.Close()
 
 	return callback(sess)
 }

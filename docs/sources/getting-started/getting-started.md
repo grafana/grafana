@@ -43,19 +43,19 @@ Different user types will have different interests. Some suggestions are listed 
 
 All users might want to learn about:
 
-* [Panels]({{< relref "../panels/panels-overview.md" >}})
-* [Dashboards]({{< relref "../features/dashboard/dashboards.md" >}})
-* [Data sources]({{< relref "../features/datasources/data-sources.md" >}}) and [Add a data source]({{< relref "../features/datasources/add-a-data-source.md" >}})
-* [Keyboard shortcuts]({{< relref "../features/shortcuts.md" >}})
-* [Explore workflow]({{< relref "../features/explore/index.md" >}})
-* [Plugins](https://grafana.com/grafana/plugins?orderBy=weight&direction=asc)
+- [Panels]({{< relref "../panels/panels-overview.md" >}})
+- [Dashboards]({{< relref "../dashboards/_index.md" >}})
+- [Data sources]({{< relref "../features/datasources/data-sources.md" >}}) and [Add a data source]({{< relref "../features/datasources/add-a-data-source.md" >}})
+- [Keyboard shortcuts]({{< relref "../dashboards/shortcuts.md" >}})
+- [Explore workflow]({{< relref "../explore/index.md" >}})
+- [Plugins](https://grafana.com/grafana/plugins?orderBy=weight&direction=asc)
 
 ### Admins
 
 Administrators might want to learn about:
 
-* [Grafana configuration]({{< relref "../administration/configuration.md" >}})
-* [Authentication]({{< relref "../auth/overview.md" >}})
-* [User permissions and roles]({{< relref "../permissions/overview.md" >}})
-* [Provisioning]({{< relref "../administration/provisioning.md" >}})
-* [Grafana CLI]({{< relref "../administration/cli.md" >}})
+- [Grafana configuration]({{< relref "../administration/configuration.md" >}})
+- [Authentication]({{< relref "../auth/overview.md" >}})
+- [User permissions and roles]({{< relref "../permissions/overview.md" >}})
+- [Provisioning]({{< relref "../administration/provisioning.md" >}})
+- [Grafana CLI]({{< relref "../administration/cli.md" >}})

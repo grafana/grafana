@@ -12,7 +12,7 @@ import (
 func ParseIPAddress(input string) (string, error) {
 	addr, err := SplitHostPort(input)
 	if err != nil {
-		return "", errutil.Wrapf(err, "Failed to split network address '%s' by host and port",
+		return "", errutil.Wrapf(err, "failed to split network address %q by host and port",
 			input)
 	}
 

@@ -28,7 +28,7 @@ const pluginCreateRunner: TaskRunner<PluginCreateOptions> = async ({ name }) => 
   // 2. Prompt plugin template
   const { type } = await promptPluginType();
 
-  // 3. Fetch plugin template from Github
+  // 3. Fetch plugin template from GitHub
   await fetchTemplate({ type, dest: destPath });
 
   // 4. Prompt plugin details

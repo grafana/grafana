@@ -1,6 +1,5 @@
 import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
-import { restoreCwd } from '../utils/cwd';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 import { getPluginId } from '../../config/utils/getPluginId';
 
@@ -26,6 +25,8 @@ const rimraf = promisify(rimrafCallback);
 export interface PluginCIOptions {
   finish?: boolean;
   upload?: boolean;
+  signingAdmin?: boolean;
+  maxJestWorkers?: string;
 }
 
 /**
@@ -39,7 +40,7 @@ export interface PluginCIOptions {
  *  Anything that should be put into the final zip file should be put in:
  *   ~/ci/jobs/build_xxx/dist
  */
-const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish }) => {
+const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish, maxJestWorkers }) => {
   const start = Date.now();
 
   if (finish) {
@@ -57,7 +58,7 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish }) => {
     writeJobStats(start, workDir);
   } else {
     // Do regular build process with coverage
-    await pluginBuildRunner({ coverage: true });
+    await pluginBuildRunner({ coverage: true, maxJestWorkers });
   }
 };
 
@@ -106,7 +107,7 @@ export const ciBuildPluginDocsTask = new Task<PluginCIOptions>('Build Plugin Doc
  *  2. zip it into packages in `~/ci/packages`
  *  3. prepare grafana environment in: `~/ci/grafana-test-env`
  */
-const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
+const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signingAdmin }) => {
   const start = Date.now();
   const ciDir = getCiFolder();
   const packagesDir = path.resolve(ciDir, 'packages');
@@ -116,7 +117,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
 
   fs.exists(jobsDir, jobsDirExists => {
     if (!jobsDirExists) {
-      throw 'You must run plugin:ci-build prior to running plugin:ci-package';
+      throw new Error('You must run plugin:ci-build prior to running plugin:ci-package');
     }
   });
 
@@ -161,9 +162,12 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     }
   });
 
-  // Write a manifest.txt file in the dist folder
+  // Write a MANIFEST.txt file in the dist folder
+  // By using the --signing-admin flag the plugin doesn't need to be in the plugins database to be signed,
+  // however it requires an Admin API key.
   try {
-    await execa('grabpl', ['build-plugin-manifest', distContentDir]);
+    const grabplCommandFlags = signingAdmin ? ['build-plugin-manifest', '--signing-admin'] : ['build-plugin-manifest'];
+    await execa('grabpl', [...grabplCommandFlags, distContentDir]);
   } catch (err) {
     console.warn(`Error signing manifest: ${distContentDir}`, err);
   }
@@ -171,9 +175,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   console.log('Building ZIP');
   let zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';
   let zipFile = path.resolve(packagesDir, zipName);
-  process.chdir(distDir);
-  await execa('zip', ['-r', zipFile, '.']);
-  restoreCwd();
+  await execa('zip', ['-r', zipFile, '.'], { cwd: distDir });
 
   const zipStats = fs.statSync(zipFile);
   if (zipStats.size < 100) {
@@ -197,9 +199,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     console.log('Creating documentation zip');
     zipName = pluginInfo.id + '-' + pluginInfo.info.version + '-docs.zip';
     zipFile = path.resolve(packagesDir, zipName);
-    process.chdir(docsDir);
-    await execa('zip', ['-r', zipFile, '.']);
-    restoreCwd();
+    await execa('zip', ['-r', zipFile, '.'], { cwd: docsDir });
 
     info.docs = await getPackageDetails(zipFile, docsDir);
   }

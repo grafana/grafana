@@ -17,31 +17,6 @@ import (
 const pushoverEndpoint = "https://api.pushover.net/1/messages.json"
 
 func init() {
-	sounds := `
-          'default',
-          'pushover',
-          'bike',
-          'bugle',
-          'cashregister',
-          'classical',
-          'cosmic',
-          'falling',
-          'gamelan',
-          'incoming',
-          'intermission',
-          'magic',
-          'mechanical',
-          'pianobar',
-          'siren',
-          'spacealarm',
-          'tugboat',
-          'alien',
-          'climb',
-          'persistent',
-          'echo',
-          'updown',
-          'none'`
-
 	soundOptions := []alerting.SelectOption{
 		{
 			Value: "default",
@@ -122,51 +97,6 @@ func init() {
 		Description: "Sends HTTP POST request to the Pushover API",
 		Heading:     "Pushover settings",
 		Factory:     NewPushoverNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">Pushover settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">API Token</span>
-        <input type="text" class="gf-form-input" required placeholder="Application token" ng-model="ctrl.model.settings.apiToken"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">User key(s)</span>
-        <input type="text" class="gf-form-input" required placeholder="comma-separated list" ng-model="ctrl.model.settings.userKey"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Device(s) (optional)</span>
-        <input type="text" class="gf-form-input" placeholder="comma-separated list; leave empty to send to all devices" ng-model="ctrl.model.settings.device"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Priority</span>
-        <select class="gf-form-input max-width-14" ng-model="ctrl.model.settings.priority" ng-options="v as k for (k, v) in {
-          Emergency: '2',
-          High:      '1',
-          Normal:    '0',
-          Low:      '-1',
-          Lowest:   '-2'
-        }" ng-init="ctrl.model.settings.priority=ctrl.model.settings.priority||'0'"></select>
-      </div>
-      <div class="gf-form" ng-show="ctrl.model.settings.priority == '2'">
-        <span class="gf-form-label width-10">Retry</span>
-        <input type="text" class="gf-form-input max-width-14" ng-required="ctrl.model.settings.priority == '2'" placeholder="minimum 30 seconds" ng-model="ctrl.model.settings.retry" ng-init="ctrl.model.settings.retry=ctrl.model.settings.retry||'60'></input>
-      </div>
-      <div class="gf-form" ng-show="ctrl.model.settings.priority == '2'">
-        <span class="gf-form-label width-10">Expire</span>
-         <input type="text" class="gf-form-input max-width-14" ng-required="ctrl.model.settings.priority == '2'" placeholder="maximum 86400 seconds" ng-model="ctrl.model.settings.expire" ng-init="ctrl.model.settings.expire=ctrl.model.settings.expire||'3600'"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Alerting sound</span>
-        <select class="gf-form-input max-width-14" ng-model="ctrl.model.settings.sound" ng-options="s for s in [
-          ` + sounds + `
-        ]" ng-init="ctrl.model.settings.sound=ctrl.model.settings.sound||'default'"></select>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">OK sound</span>
-        <select class="gf-form-input max-width-14" ng-model="ctrl.model.settings.okSound" ng-options="s for s in [
-         ` + sounds + `
-        ]" ng-init="ctrl.model.settings.okSound=ctrl.model.settings.okSound||'default'"></select>
-      </div>
-    `,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "API Token",
@@ -175,6 +105,7 @@ func init() {
 				Placeholder:  "Application token",
 				PropertyName: "apiToken",
 				Required:     true,
+				Secure:       true,
 			},
 			{
 				Label:        "User key(s)",
@@ -183,6 +114,7 @@ func init() {
 				Placeholder:  "comma-separated list",
 				PropertyName: "userKey",
 				Required:     true,
+				Secure:       true,
 			},
 			{
 				Label:        "Device(s) (optional)",
@@ -258,8 +190,8 @@ func init() {
 
 // NewPushoverNotifier is the constructor for the Pushover Notifier
 func NewPushoverNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
-	userKey := model.Settings.Get("userKey").MustString()
-	APIToken := model.Settings.Get("apiToken").MustString()
+	userKey := model.DecryptedValue("userKey", model.Settings.Get("userKey").MustString())
+	APIToken := model.DecryptedValue("apiToken", model.Settings.Get("apiToken").MustString())
 	device := model.Settings.Get("device").MustString()
 	priority, _ := strconv.Atoi(model.Settings.Get("priority").MustString())
 	retry, _ := strconv.Atoi(model.Settings.Get("retry").MustString())

@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"context"
 	"math/rand"
+	"strconv"
 	"testing"
 	"time"
 
@@ -191,14 +192,14 @@ func test(t *testing.T, dashboardProps DashboardProps, dashboardPermission *Dash
 }
 
 func createDummyUser() (*models.User, error) {
-	uid := rand.Intn(9999999)
+	uid := strconv.Itoa(rand.Intn(9999999))
 	createUserCmd := &models.CreateUserCommand{
-		Email:          string(uid) + "@example.com",
-		Login:          string(uid),
-		Name:           string(uid),
+		Email:          uid + "@example.com",
+		Login:          uid,
+		Name:           uid,
 		Company:        "",
 		OrgName:        "",
-		Password:       string(uid),
+		Password:       uid,
 		EmailVerified:  true,
 		IsAdmin:        false,
 		SkipOrgSetup:   false,

@@ -9,4 +9,4 @@ export * from './types';
 export { loadPluginCss, SystemJS, PluginCssOptions } from './utils/plugin';
 export { reportMetaAnalytics } from './utils/analytics';
 export { DataSourceWithBackend, HealthCheckResult, HealthStatus } from './utils/DataSourceWithBackend';
-export { toDataQueryError, toDataQueryResponse } from './utils/queryResponse';
+export { toDataQueryError, toDataQueryResponse, frameToMetricFindValue } from './utils/queryResponse';

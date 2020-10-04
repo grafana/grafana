@@ -28,7 +28,7 @@ Organizations via a role. That role can be:
 - `Editor`: Can view, update and create dashboards.
 - `Admin`: Everything an Editor can plus edit and add data sources and organization users.
 
-> **Note** A `Viewer` can still view all metrics exposed through a data source, not only
+> **Note:** A `Viewer` can still view all metrics exposed through a data source, not only
 > the metrics used in already existing dashboards. That is because there are not
 > per series permissions in Graphite, InfluxDB or OpenTSDB.
 
@@ -48,7 +48,7 @@ screen for that specific time period in your Dashboard is saved in the JSON of t
 Sharing a Snapshot is similar to sharing a link to a screenshot of your dashboard, only way better (they'll look great at any screen resolution, you can hover over series,
 even zoom in). Also they are fast to load as they aren't actually connected to any live Data Sources in any way.
 
-They're a great way to communicate about a particular incident with specific people who aren't Users of your Grafana instance. You can also use them to show off your dashboards over the Internet.
+They're a great way to communicate about a particular incident with specific people who aren't users of your Grafana instance. You can also use them to show off your dashboards over the Internet.
 
 ![](/img/docs/v2/dashboard_snapshot_dialog.png)
 
@@ -94,13 +94,13 @@ The top header has gotten a major streamlining in Grafana V2.0.
 <img class="no-shadow" src="/img/docs/v2/v2_top_nav_annotated.png">
 
 1. `Side menubar toggle` Toggle the side menubar on or off. This allows you to focus on the data presented on the Dashboard. The side menubar provides access to features unrelated to a Dashboard such as Users, Organizations, and Data Sources.
-2. `Dashboard dropdown` The main dropdown shows you which Dashboard you are currently viewing, and allows you to easily switch to a new Dashboard. From here you can also create a new Dashboard, Import existing Dashboards, and manage the Playlist.
-3. `Star Dashboard`: Star (or un-star) the current Dashboard. Starred Dashboards will show up on your own Home Dashboard by default, and are a convenient way to mark Dashboards that you're interested in.
-4. `Share Dashboard`: Share the current dashboard by creating a link or create a static Snapshot of it. Make sure the Dashboard is saved before sharing.
-5. `Save dashboard`: Save the current Dashboard with the current name.
-6. `Settings`: Manage Dashboard settings and features such as Templating, Annotations and the name.
+1. `Dashboard dropdown` The main dropdown shows you which Dashboard you are currently viewing, and allows you to easily switch to a new Dashboard. From here you can also create a new Dashboard, Import existing Dashboards, and manage the Playlist.
+1. `Star Dashboard`: Star (or un-star) the current Dashboard. Starred Dashboards will show up on your own Home Dashboard by default, and are a convenient way to mark Dashboards that you're interested in.
+1. `Share Dashboard`: Share the current dashboard by creating a link or create a static Snapshot of it. Make sure the Dashboard is saved before sharing.
+1. `Save dashboard`: Save the current Dashboard with the current name.
+1. `Settings`: Manage Dashboard settings and features such as Templating, Annotations and the name.
 
-> **Note** In Grafana v2.0 when you change the title of a dashboard and then save it it will no
+> **Note:** In Grafana v2.0 when you change the title of a dashboard and then save it, it will no
 > longer create a new Dashboard. It will just change the name for the current Dashboard.
 > To change name and create a new Dashboard use the `Save As...` menu option
 
@@ -170,6 +170,6 @@ Here you can update your user details, UI Theme, and change your password.
 
 Grafana now supports server-side PNG rendering. From the Panel share dialog you now have access to a link that will render a particular Panel to a PNG image.
 
-> **Note** This requires that your Data Source is accessible from your Grafana instance.
+> **Note:** This requires that your Data Source is accessible from your Grafana instance.
 
 ![](/img/docs/v2/share_dialog_image_highlight.jpg)

@@ -21,8 +21,8 @@ You can assign and remove permissions for **Organization Roles**, **Users** and 
 
 Permission levels:
 
-- **Admin**: Can edit and create dashboards and edit permissions.
-- **Edit**: Can edit and create dashboards. **Cannot** edit folder/dashboard permissions.
+- **Admin**: Can edit and create dashboards and edit permissions. Can also add, edit, and delete folders.
+- **Edit**: Can edit and create dashboards. **Cannot** edit folder/dashboard permissions, or add, edit, or delete folders.
 - **View**: Can only view existing dashboards/folders.
 
 ## Restricting Access

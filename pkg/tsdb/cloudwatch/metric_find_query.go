@@ -12,18 +12,18 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // Known AWS regions.
 var knownRegions = []string{
-	"ap-east-1", "ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-southeast-1",
+	"af-south-1", "ap-east-1", "ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-southeast-1",
 	"ap-southeast-2", "ca-central-1", "cn-north-1", "cn-northwest-1", "eu-central-1", "eu-north-1", "eu-west-1",
 	"eu-west-2", "eu-west-3", "me-south-1", "sa-east-1", "us-east-1", "us-east-2", "us-gov-east-1", "us-gov-west-1",
 	"us-iso-east-1", "us-isob-east-1", "us-west-1", "us-west-2",
@@ -43,7 +43,7 @@ var customMetricsMetricsMap = make(map[string]map[string]map[string]*customMetri
 var customMetricsDimensionsMap = make(map[string]map[string]map[string]*customMetricsCache)
 var metricsMap = map[string][]string{
 	"AWS/ACMPrivateCA":      {"CRLGenerated", "Failure", "MisconfiguredCRLBucket", "Success", "Time"},
-	"AWS/AmazonMQ":          {"ConsumerCount", "CpuCreditBalance", "CpuUtilization", "CurrentConnectionsCount", "DequeueCount", "DispatchCount", "EnqueueCount", "EnqueueTime", "ExpiredCount", "HeapUsage", "InflightCount", "JournalFilesForFastRecovery", "JournalFilesForFullRecovery", "MemoryUsage", "NetworkIn", "NetworkOut", "OpenTransactionsCount", "ProducerCount", "QueueSize", "StorePercentUsage", "TotalConsumerCount", "TotalMessageCount", "TotalProducerCount"},
+	"AWS/AmazonMQ":          {"BurstBalance", "ConsumerCount", "CpuCreditBalance", "CpuUtilization", "CurrentConnectionsCount", "DequeueCount", "DispatchCount", "EnqueueCount", "EnqueueTime", "EstablishedConnectionsCount", "ExpiredCount", "HeapUsage", "InactiveDurableTopicSubscribersCount", "InFlightCount", "JobSchedulerStorePercentUsage", "JournalFilesForFastRecovery", "JournalFilesForFullRecovery", "MemoryUsage", "NetworkIn", "NetworkOut", "OpenTransactionCount", "ProducerCount", "QueueSize", "ReceiveCount", "StorePercentUsage", "TempPercentUsage", "TotalConsumerCount", "TotalDequeueCount", "TotalEnqueueCount", "TotalMessageCount", "TotalProducerCount", "VolumeReadOps", "VolumeWriteOps"},
 	"AWS/ApiGateway":        {"4XXError", "5XXError", "CacheHitCount", "CacheMissCount", "Count", "IntegrationLatency", "Latency"},
 	"AWS/AppStream":         {"ActualCapacity", "AvailableCapacity", "CapacityUtilization", "DesiredCapacity", "InUseCapacity", "InsufficientCapacityError", "PendingCapacity", "RunningCapacity"},
 	"AWS/AppSync":           {"4XXError", "5XXError", "Latency"},
@@ -79,7 +79,7 @@ var metricsMap = map[string][]string{
 	"AWS/ElasticMapReduce":  {"AppsCompleted", "AppsFailed", "AppsKilled", "AppsPending", "AppsRunning", "AppsSubmitted", "BackupFailed", "CapacityRemainingGB", "Cluster Status", "ContainerAllocated", "ContainerPending", "ContainerPendingRatio", "ContainerReserved", "CoreNodesPending", "CoreNodesRunning", "CorruptBlocks", "DfsPendingReplicationBlocks", "HBase", "HDFSBytesRead", "HDFSBytesWritten", "HDFSUtilization", "HbaseBackupFailed", "IO", "IsIdle", "JobsFailed", "JobsRunning", "LiveDataNodes", "LiveTaskTrackers", "MRActiveNodes", "MRDecommissionedNodes", "MRLostNodes", "MRRebootedNodes", "MRTotalNodes", "MRUnhealthyNodes", "Map/Reduce", "MapSlotsOpen", "MapTasksRemaining", "MapTasksRunning", "MemoryAllocatedMB", "MemoryAvailableMB", "MemoryReservedMB", "MemoryTotalMB", "MissingBlocks", "MostRecentBackupDuration", "Node Status", "PendingDeletionBlocks", "ReduceSlotsOpen", "ReduceTasksRemaining", "ReduceTasksRunning", "RemainingMapTasksPerSlot", "S3BytesRead", "S3BytesWritten", "TaskNodesPending", "TaskNodesRunning", "TimeSinceLastSuccessfulBackup", "TotalLoad", "UnderReplicatedBlocks", "YARNMemoryAvailablePercentage"},
 	"AWS/ElasticTranscoder": {"Billed Audio Output", "Billed HD Output", "Billed SD Output", "Errors", "Jobs Completed", "Jobs Errored", "Outputs per Job", "Standby Time", "Throttles"},
 	"AWS/Events":            {"DeadLetterInvocations", "FailedInvocations", "Invocations", "MatchedEvents", "ThrottledRules", "TriggeredRules"},
-	"AWS/FSx":               {"DataReadBytes", "DataReadOperations", "DataWriteBytes", "DataWriteOperations", "FreeDataStorageCapacity", "MetadataOperations"},
+	"AWS/FSx":               {"DataReadBytes", "DataReadOperations", "DataWriteBytes", "DataWriteOperations", "FreeDataStorageCapacity", "FreeStorageCapacity", "MetadataOperations"},
 	"AWS/Firehose":          {"BackupToS3.Bytes", "BackupToS3.DataFreshness", "BackupToS3.Records", "BackupToS3.Success", "DataReadFromKinesisStream.Bytes", "DataReadFromKinesisStream.Records", "DeliveryToElasticsearch.Bytes", "DeliveryToElasticsearch.Records", "DeliveryToElasticsearch.Success", "DeliveryToRedshift.Bytes", "DeliveryToRedshift.Records", "DeliveryToRedshift.Success", "DeliveryToS3.Bytes", "DeliveryToS3.DataFreshness", "DeliveryToS3.Records", "DeliveryToS3.Success", "DeliveryToSplunk.Bytes", "DeliveryToSplunk.DataFreshness", "DeliveryToSplunk.Records", "DeliveryToSplunk.Success", "DescribeDeliveryStream.Latency", "DescribeDeliveryStream.Requests", "ExecuteProcessing.Duration", "ExecuteProcessing.Success", "FailedConversion.Bytes", "FailedConversion.Records", "IncomingBytes", "IncomingRecords", "KinesisMillisBehindLatest", "ListDeliveryStreams.Latency", "ListDeliveryStreams.Requests", "PutRecord.Bytes", "PutRecord.Latency", "PutRecord.Requests", "PutRecordBatch.Bytes", "PutRecordBatch.Latency", "PutRecordBatch.Records", "PutRecordBatch.Requests", "SucceedConversion.Bytes", "SucceedConversion.Records", "SucceedProcessing.Bytes", "SucceedProcessing.Records", "ThrottledDescribeStream", "ThrottledGetRecords", "ThrottledGetShardIterator", "UpdateDeliveryStream.Latency", "UpdateDeliveryStream.Requests"},
 	"AWS/GameLift":          {"ActivatingGameSessions", "ActiveGameSessions", "ActiveInstances", "ActiveServerProcesses", "AvailableGameSessions", "AverageWaitTime", "CurrentPlayerSessions", "CurrentTickets", "DesiredInstances", "FirstChoiceNotViable", "FirstChoiceOutOfCapacity", "GameSessionInterruptions", "HealthyServerProcesses", "IdleInstances", "InstanceInterruptions", "LowestLatencyPlacement", "LowestPricePlacement", "MatchAcceptancesTimedOut", "MatchesAccepted", "MatchesCreated", "MatchesPlaced", "MatchesRejected", "MaxInstances", "MinInstances", "PercentAvailableGameSessions", "PercentHealthyServerProcesses", "PercentIdleInstances", "Placement", "PlacementsCanceled", "PlacementsFailed", "PlacementsStarted", "PlacementsSucceeded", "PlacementsTimedOut", "PlayerSessionActivations", "PlayersStarted", "QueueDepth", "RuleEvaluationsFailed", "RuleEvaluationsPassed", "ServerProcessAbnormalTerminations", "ServerProcessActivations", "ServerProcessTerminations", "TicketsFailed", "TicketsStarted", "TicketsTimedOut", "TimeToMatch", "TimeToTicketSuccess"},
 	"AWS/Glue":              {"glue.driver.BlockManager.disk.diskSpaceUsed_MB", "glue.driver.ExecutorAllocationManager.executors.numberAllExecutors", "glue.driver.ExecutorAllocationManager.executors.numberMaxNeededExecutors", "glue.driver.aggregate.bytesRead", "glue.driver.aggregate.elapsedTime", "glue.driver.aggregate.numCompletedStages", "glue.driver.aggregate.numCompletedTasks", "glue.driver.aggregate.numFailedTasks", "glue.driver.aggregate.numKilledTasks", "glue.driver.aggregate.recordsRead", "glue.driver.aggregate.shuffleBytesWritten", "glue.driver.aggregate.shuffleLocalBytesRead", "glue.driver.jvm.heap.usage  glue.executorId.jvm.heap.usage  glue.ALL.jvm.heap.usage", "glue.driver.jvm.heap.used  glue.executorId.jvm.heap.used  glue.ALL.jvm.heap.used", "glue.driver.s3.filesystem.read_bytes  glue.executorId.s3.filesystem.read_bytes  glue.ALL.s3.filesystem.read_bytes", "glue.driver.s3.filesystem.write_bytes  glue.executorId.s3.filesystem.write_bytes  glue.ALL.s3.filesystem.write_bytes", "glue.driver.system.cpuSystemLoad  glue.executorId.system.cpuSystemLoad  glue.ALL.system.cpuSystemLoad"},
@@ -137,7 +137,7 @@ var metricsMap = map[string][]string{
 
 var dimensionsMap = map[string][]string{
 	"AWS/ACMPrivateCA":      {},
-	"AWS/AmazonMQ":          {"Broker", "Queue", "Topic"},
+	"AWS/AmazonMQ":          {"Broker", "NetworkConnector", "Queue", "Topic"},
 	"AWS/ApiGateway":        {"ApiName", "Method", "Resource", "Stage"},
 	"AWS/AppStream":         {"Fleet"},
 	"AWS/AppSync":           {"GraphQLAPIId"},
@@ -172,7 +172,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/ElasticMapReduce":  {"ClusterId", "JobFlowId", "JobId"},
 	"AWS/ElasticTranscoder": {"Operation", "PipelineId"},
 	"AWS/Events":            {"RuleName"},
-	"AWS/FSx":               {},
+	"AWS/FSx":               {"FileSystemId"},
 	"AWS/Firehose":          {"DeliveryStreamName"},
 	"AWS/GameLift":          {"FleetId", "InstanceType", "MatchmakingConfigurationName", "MatchmakingConfigurationName-RuleName", "MetricGroups", "OperatingSystem", "QueueName"},
 	"AWS/Glue":              {"JobName", "JobRunId", "Type"},
@@ -309,9 +309,9 @@ func parseMultiSelectValue(input string) []string {
 
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
-func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
-	const region = "default"
-	dsInfo := e.getDSInfo(region)
+func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json,
+	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	dsInfo := e.getDSInfo(defaultRegion)
 	profile := dsInfo.Profile
 	if cache, ok := regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
@@ -319,12 +319,12 @@ func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 		}
 	}
 
-	err := e.ensureClientSession("default")
+	client, err := e.getEC2Client(defaultRegion)
 	if err != nil {
 		return nil, err
 	}
 	regions := knownRegions
-	r, err := e.ec2Svc.DescribeRegions(&ec2.DescribeRegionsInput{})
+	r, err := client.DescribeRegions(&ec2.DescribeRegionsInput{})
 	if err != nil {
 		// ignore error for backward compatibility
 		plog.Error("Failed to get regions", "error", err)
@@ -386,11 +386,8 @@ func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 		}
 	} else {
 		var err error
-		dsInfo := e.getDSInfo(region)
-		dsInfo.Namespace = namespace
-
-		if namespaceMetrics, err = e.getMetricsForCustomMetrics(region, e.getAllMetrics); err != nil {
-			return nil, errors.New("Unable to call AWS API")
+		if namespaceMetrics, err = e.getMetricsForCustomMetrics(region, namespace); err != nil {
+			return nil, errutil.Wrap("unable to call AWS API", err)
 		}
 	}
 	sort.Strings(namespaceMetrics)
@@ -418,8 +415,8 @@ func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 		dsInfo := e.getDSInfo(region)
 		dsInfo.Namespace = namespace
 
-		if dimensionValues, err = e.getDimensionsForCustomMetrics(region, e.getAllMetrics); err != nil {
-			return nil, errors.New("Unable to call AWS API")
+		if dimensionValues, err = e.getDimensionsForCustomMetrics(region); err != nil {
+			return nil, errutil.Wrap("unable to call AWS API", err)
 		}
 	}
 	sort.Strings(dimensionValues)
@@ -483,30 +480,10 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) ensureClientSession(region string) error {
-	if e.ec2Svc == nil {
-		dsInfo := e.getDSInfo(region)
-		cfg, err := getAwsConfig(dsInfo)
-		if err != nil {
-			return fmt.Errorf("Failed to call ec2:getAwsConfig, %w", err)
-		}
-		sess, err := session.NewSession(cfg)
-		if err != nil {
-			return fmt.Errorf("Failed to call ec2:NewSession, %w", err)
-		}
-		e.ec2Svc = ec2.New(sess, cfg)
-	}
-	return nil
-}
-
-func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json,
+	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	instanceId := parameters.Get("instanceId").MustString()
-
-	err := e.ensureClientSession(region)
-	if err != nil {
-		return nil, err
-	}
 
 	instanceIds := aws.StringSlice(parseMultiSelectValue(instanceId))
 	instances, err := e.ec2DescribeInstances(region, nil, instanceIds)
@@ -526,7 +503,8 @@ func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, paramete
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, parameters *simplejson.Json,
+	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	attributeName := parameters.Get("attributeName").MustString()
 	filterJson := parameters.Get("filters").MustMap()
@@ -545,11 +523,6 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 				Values: values,
 			})
 		}
-	}
-
-	err := e.ensureClientSession(region)
-	if err != nil {
-		return nil, err
 	}
 
 	instances, err := e.ec2DescribeInstances(region, filters, nil)
@@ -610,31 +583,11 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) ensureRGTAClientSession(region string) error {
-	if e.rgtaSvc == nil {
-		dsInfo := e.getDSInfo(region)
-		cfg, err := getAwsConfig(dsInfo)
-		if err != nil {
-			return fmt.Errorf("Failed to call ec2:getAwsConfig, %w", err)
-		}
-		sess, err := session.NewSession(cfg)
-		if err != nil {
-			return fmt.Errorf("Failed to call ec2:NewSession, %w", err)
-		}
-		e.rgtaSvc = resourcegroupstaggingapi.New(sess, cfg)
-	}
-	return nil
-}
-
-func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, parameters *simplejson.Json,
+	queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	resourceType := parameters.Get("resourceType").MustString()
 	filterJson := parameters.Get("tags").MustMap()
-
-	err := e.ensureRGTAClientSession(region)
-	if err != nil {
-		return nil, err
-	}
 
 	var filters []*resourcegroupstaggingapi.TagFilter
 	for k, v := range filterJson {
@@ -669,7 +622,8 @@ func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, paramete
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) cloudwatchListMetrics(region string, namespace string, metricName string, dimensions []*cloudwatch.DimensionFilter) (*cloudwatch.ListMetricsOutput, error) {
+func (e *cloudWatchExecutor) cloudwatchListMetrics(region string, namespace string, metricName string,
+	dimensions []*cloudwatch.DimensionFilter) (*cloudwatch.ListMetricsOutput, error) {
 	svc, err := e.getCWClient(region)
 	if err != nil {
 		return nil, err
@@ -706,8 +660,13 @@ func (e *cloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 		InstanceIds: instanceIds,
 	}
 
+	client, err := e.getEC2Client(region)
+	if err != nil {
+		return nil, err
+	}
+
 	var resp ec2.DescribeInstancesOutput
-	if err := e.ec2Svc.DescribeInstancesPages(params, func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
+	if err := client.DescribeInstancesPages(params, func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
 		resp.Reservations = append(resp.Reservations, page.Reservations...)
 		return !lastPage
 	}); err != nil {
@@ -724,40 +683,37 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 		TagFilters:          filters,
 	}
 
+	client, err := e.getRGTAClient(region)
+	if err != nil {
+		return nil, err
+	}
+
 	var resp resourcegroupstaggingapi.GetResourcesOutput
-	if err := e.rgtaSvc.GetResourcesPages(params,
+	if err := client.GetResourcesPages(params,
 		func(page *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
 			resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, page.ResourceTagMappingList...)
 			return !lastPage
 		}); err != nil {
-		return nil, fmt.Errorf("failed to call tags:GetResources, %w", err)
+		return nil, fmt.Errorf("failed to call tag:GetResources, %w", err)
 	}
 
 	return &resp, nil
 }
 
 func (e *cloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetricsOutput, error) {
-	dsInfo := e.getDSInfo(region)
-	creds, err := getCredentials(dsInfo)
+	client, err := e.getCWClient(region)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}
-	cfg := &aws.Config{
-		Region:      aws.String(dsInfo.Region),
-		Credentials: creds,
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return cloudwatch.ListMetricsOutput{}, err
-	}
-	svc := cloudwatch.New(sess, cfg)
 
+	dsInfo := e.getDSInfo(region)
 	params := &cloudwatch.ListMetricsInput{
 		Namespace: aws.String(dsInfo.Namespace),
 	}
 
+	plog.Debug("Listing metrics pages")
 	var resp cloudwatch.ListMetricsOutput
-	err = svc.ListMetricsPages(params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+	err = client.ListMetricsPages(params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
 		metrics.MAwsCloudWatchListMetrics.Inc()
 		metrics, err := awsutil.ValuesAtPath(page, "Metrics")
 		if err != nil {
@@ -769,16 +725,19 @@ func (e *cloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetric
 		}
 		return !lastPage
 	})
+
 	return resp, err
 }
 
 var metricsCacheLock sync.Mutex
 
-func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region string, getAllMetrics func(string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string) ([]string, error) {
+	plog.Debug("Getting metrics for custom metrics", "region", region, "namespace", namespace)
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
 	dsInfo := e.getDSInfo(region)
+	dsInfo.Namespace = namespace
 
 	if _, ok := customMetricsMetricsMap[dsInfo.Profile]; !ok {
 		customMetricsMetricsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
@@ -794,10 +753,11 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region string, getAllMet
 	if customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire.After(time.Now()) {
 		return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
 	}
-	result, err := getAllMetrics(region)
+	result, err := e.getAllMetrics(region)
 	if err != nil {
 		return []string{}, err
 	}
+
 	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
 	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire = time.Now().Add(5 * time.Minute)
 
@@ -805,7 +765,8 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region string, getAllMet
 		if isDuplicate(customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *metric.MetricName) {
 			continue
 		}
-		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = append(customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *metric.MetricName)
+		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = append(
+			customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *metric.MetricName)
 	}
 
 	return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
@@ -813,7 +774,7 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region string, getAllMet
 
 var dimensionsCacheLock sync.Mutex
 
-func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region string, getAllMetrics func(string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region string) ([]string, error) {
 	dimensionsCacheLock.Lock()
 	defer dimensionsCacheLock.Unlock()
 
@@ -833,7 +794,7 @@ func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region string, getAll
 	if customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire.After(time.Now()) {
 		return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
 	}
-	result, err := getAllMetrics(region)
+	result, err := e.getAllMetrics(region)
 	if err != nil {
 		return []string{}, err
 	}
@@ -845,7 +806,8 @@ func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region string, getAll
 			if isDuplicate(customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *dimension.Name) {
 				continue
 			}
-			customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = append(customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *dimension.Name)
+			customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = append(
+				customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *dimension.Name)
 		}
 	}
 

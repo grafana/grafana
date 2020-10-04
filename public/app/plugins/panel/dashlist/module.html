@@ -6,9 +6,10 @@
       </h6>
       <div class="dashlist-item" ng-repeat="dash in group.list">
         <a class="dashlist-link dashlist-link-{{dash.type}}" href="{{dash.url}}">
-          <span class="dashlist-title">
-            {{dash.title}}
-          </span>
+          <div class="dashlist-link-body">
+            <div class="dashlist-title">{{dash.title}}</div>
+            <div ng-if="dash.folderTitle" class="dashlist-folder">{{dash.folderTitle}}</div>
+          </div>
           <span class="dashlist-star" ng-click="ctrl.starDashboard(dash, $event)">
             <icon name="dash.isStarred ? 'favorite':'star'" type="dash.isStarred ? 'mono':'default'"></icon>
           </span>

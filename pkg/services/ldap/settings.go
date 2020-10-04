@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/BurntSushi/toml"
-	"golang.org/x/xerrors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -136,7 +135,7 @@ func readConfig(configFile string) (*Config, error) {
 	}
 
 	if len(result.Servers) == 0 {
-		return nil, xerrors.New("LDAP enabled but no LDAP servers defined in config file")
+		return nil, fmt.Errorf("LDAP enabled but no LDAP servers defined in config file")
 	}
 
 	// set default org id
@@ -164,11 +163,11 @@ func assertNotEmptyCfg(val interface{}, propName string) error {
 	switch v := val.(type) {
 	case string:
 		if v == "" {
-			return xerrors.Errorf("LDAP config file is missing option: %v", propName)
+			return fmt.Errorf("LDAP config file is missing option: %q", propName)
 		}
 	case []string:
 		if len(v) == 0 {
-			return xerrors.Errorf("LDAP config file is missing option: %v", propName)
+			return fmt.Errorf("LDAP config file is missing option: %q", propName)
 		}
 	default:
 		fmt.Println("unknown")

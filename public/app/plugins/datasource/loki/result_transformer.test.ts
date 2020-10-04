@@ -1,7 +1,9 @@
 import { CircularDataFrame, FieldCache, FieldType, MutableDataFrame } from '@grafana/data';
-import { LokiStreamResult, LokiTailResponse, LokiStreamResponse, LokiResultType } from './types';
+import { LokiStreamResult, LokiTailResponse, LokiStreamResponse, LokiResultType, TransformerOptions } from './types';
 import * as ResultTransformer from './result_transformer';
 import { enhanceDataFrame } from './result_transformer';
+import { setTemplateSrv } from '@grafana/runtime';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 const streamResult: LokiStreamResult[] = [
   {
@@ -32,6 +34,10 @@ const lokiResponse: LokiStreamResponse = {
 };
 
 describe('loki result transformer', () => {
+  beforeAll(() => {
+    setTemplateSrv(new TemplateSrv());
+  });
+
   afterAll(() => {
     jest.restoreAllMocks();
   });
@@ -112,6 +118,15 @@ describe('loki result transformer', () => {
         labels: { filename: '/var/log/grafana/grafana.log' },
         id: '19e8e093d70122b3b53cb6e24efd6e2d',
       });
+    });
+  });
+  describe('createMetricLabel', () => {
+    it('should create correct label based on passed variables', () => {
+      const label = ResultTransformer.createMetricLabel({}, ({
+        scopedVars: { testLabel: { selected: true, text: 'label1', value: 'label1' } },
+        legendFormat: '{{$testLabel}}',
+      } as unknown) as TransformerOptions);
+      expect(label).toBe('label1');
     });
   });
 });

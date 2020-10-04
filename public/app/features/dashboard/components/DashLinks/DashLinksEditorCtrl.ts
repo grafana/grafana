@@ -74,6 +74,11 @@ export class DashLinksEditorCtrl {
     _.move(this.dashboard.links, index, index + dir);
   }
 
+  duplicateLink(link: any, index: number) {
+    this.dashboard.links.splice(index, 0, link);
+    this.dashboard.updateSubmenuVisibility();
+  }
+
   deleteLink(index: number) {
     this.dashboard.links.splice(index, 1);
     this.dashboard.updateSubmenuVisibility();

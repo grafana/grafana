@@ -3,7 +3,6 @@ package alerting
 import (
 	"encoding/json"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -75,7 +74,7 @@ func (ae *AlertEngine) mapRulesToUsageStats(rules []*models.Alert) (DatasourceAl
 	return result, nil
 }
 
-func (ae *AlertEngine) parseAlertRuleModel(settings *simplejson.Json) ([]int64, error) {
+func (ae *AlertEngine) parseAlertRuleModel(settings json.Marshaler) ([]int64, error) {
 	datasourceIDs := []int64{}
 	model := alertJSONModel{}
 
@@ -85,7 +84,7 @@ func (ae *AlertEngine) parseAlertRuleModel(settings *simplejson.Json) ([]int64, 
 
 	bytes, err := settings.MarshalJSON()
 	if err != nil {
-		return datasourceIDs, err
+		return nil, err
 	}
 
 	err = json.Unmarshal(bytes, &model)

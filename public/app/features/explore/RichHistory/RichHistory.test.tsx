@@ -4,7 +4,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { ExploreId } from '../../../types/explore';
 import { RichHistory, RichHistoryProps } from './RichHistory';
 import { Tabs } from './RichHistory';
-import { Tab, Slider } from '@grafana/ui';
+import { Tab } from '@grafana/ui';
 
 jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
 
@@ -31,6 +31,7 @@ describe('RichHistory', () => {
     const wrapper = setup();
     expect(wrapper.find(Tab)).toHaveLength(3);
   });
+
   it('should render correct lebels of tabs in tab bar', () => {
     const wrapper = setup();
     expect(
@@ -52,12 +53,14 @@ describe('RichHistory', () => {
         .text()
     ).toEqual('Settings');
   });
+
   it('should correctly render query history tab as active tab', () => {
     const wrapper = setup();
-    expect(wrapper.find(Slider)).toHaveLength(1);
+    expect(wrapper.find('RichHistoryQueriesTab')).toHaveLength(1);
   });
+
   it('should correctly render starred tab as active tab', () => {
     const wrapper = setup({ firstTab: Tabs.Starred });
-    expect(wrapper.find(Slider)).toHaveLength(0);
+    expect(wrapper.find('RichHistoryStarredTab')).toHaveLength(1);
   });
 });

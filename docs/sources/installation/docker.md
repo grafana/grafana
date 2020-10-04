@@ -12,23 +12,23 @@ weight = 600
 
 # Run Grafana Docker image
 
-You can install and run Grafana using the official Docker container. The official Grafana Docker image comes in two variants: Alpine and Ubuntu.
+You can install and run Grafana using the official Docker image. It comes in two variants: Alpine and Ubuntu.
 
-This page also contains important information about [migrating from earlier Docker container versions](#migrate-from-previous-docker-containers-versions).
+This page also contains important information about [migrating from earlier Docker image versions](#migrate-from-previous-docker-containers-versions).
 
 ## Alpine image (recommended)
 `grafana/grafana:<version>`
 
-This is the default image. This image is based on the popular [Alpine Linux project](http://alpinelinux.org), available in [the alpine official image](https://hub.docker.com/_/alpine). Alpine Linux is much smaller than most distribution base images, and thus leads to slimmer and more secure images.
+This is the default image. It's based on the popular [Alpine Linux project](http://alpinelinux.org), available in [the Alpine official image](https://hub.docker.com/_/alpine). Alpine Linux is much smaller than most distribution base images, and thus leads to slimmer and more secure images.
 
-This variant is highly recommended when security and final image size being as small as possible is desired. The main caveat to note is that it does use [musl libc](http://www.musl-libc.org) instead of [glibc and friends](http://www.etalabs.net/compare_libcs.html), so certain software might run into issues depending on the depth of their libc requirements. However, most software doesn't have an issue with this, so this variant is usually a very safe choice.
+This variant is highly recommended when security and final image size being as small as possible is desired. The main caveat to note is that it uses [musl libc](http://www.musl-libc.org) instead of [glibc and friends](http://www.etalabs.net/compare_libcs.html), so certain software might run into issues depending on the depth of their libc requirements. However, most software don't have an issue with this, so this variant is usually a very safe choice.
 
 > **Note:** The `grafana/grafana:<version>` image was based on [Ubuntu](https://ubuntu.com/) before version 6.4.0.
 
 ## Ubuntu image
 `grafana/grafana:<version>-ubuntu`
 
-This image is based on [Ubuntu](https://ubuntu.com/), available in [the Ubuntu official image](https://hub.docker.com/_/ubuntu). This is an alternative image for those who prefer an [Ubuntu](https://ubuntu.com/) based image and/or who are dependent on certain tooling not available for Alpine.
+This image is based on [Ubuntu](https://ubuntu.com/), available in [the Ubuntu official image](https://hub.docker.com/_/ubuntu). It is an alternative image for those who prefer an [Ubuntu](https://ubuntu.com/) based image and/or are dependent on certain tooling not available for Alpine.
 
 > **Note:** The `grafana/grafana:<version>-ubuntu` image is available for Grafana version 6.5.0 and later.
 
@@ -58,9 +58,9 @@ docker run -d -p 3000:3000 --name grafana grafana/grafana:6.5.0
 
 ### Run the Grafana master branch
 
-For every successful build of the master branch, we update the `grafana/grafana:master` and `grafana/grafana:master-ubuntu` tags. Additionally, two new tags are created, `grafana/grafana-dev:master-<commit hash>` and `grafana/grafana-dev:master-<commit hash>-ubuntu`, which includes the hash of the Git commit that was built. Use these to get access to the latest master builds of Grafana.
+For every successful build of the master branch, we update the `grafana/grafana:master` and `grafana/grafana:master-ubuntu` tags. Additionally, two new tags are created, `grafana/grafana-dev:<version>-<build ID>pre` and `grafana/grafana-dev:<version>-<build ID>pre-ubuntu`, where *version* is the next version of Grafana and *build ID* is the ID of the corresponding CI build. Use these to get access to the latest master builds of Grafana.
 
-When running Grafana master in production, we *strongly* recommend that you use the `grafana/grafana-dev:master-<commit hash>` tag. This tag guarantees that you use a specific version of Grafana instead of whatever was the most recent commit at the time.
+When running Grafana master in production, we *strongly* recommend that you use the `grafana/grafana-dev:<version>-<build ID>pre` tag. This tag guarantees that you use a specific version of Grafana instead of whatever was the most recent commit at the time.
 
 For a list of available tags, check out [grafana/grafana](https://hub.docker.com/r/grafana/grafana/tags/) and [grafana/grafana-dev](https://hub.docker.com/r/grafana/grafana-dev/tags/).
 
@@ -157,9 +157,9 @@ The Docker container for Grafana has seen a major rewrite for 5.1.
 
 **Important changes**
 
-* File ownership is no longer modified during startup with `chown`.
-* Default user ID is now `472` instead of `104`.
-* Removed the following implicit volumes:
+- File ownership is no longer modified during startup with `chown`.
+- Default user ID is now `472` instead of `104`.
+- Removed the following implicit volumes:
   - `/var/lib/grafana`
   - `/etc/grafana`
   - `/var/log/grafana`
@@ -221,7 +221,7 @@ Refer to the [Getting Started]({{< relref "../getting-started/getting-started/" 
 
 ## Configure Docker image
 
-Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to [Configure a Grafana Docker image]({{< relref "../administration/configure-docker.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
 
 ## Configure Grafana
 

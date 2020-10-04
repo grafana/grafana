@@ -86,12 +86,8 @@ describe('<TimelineColumnResizer>', () => {
 
   it('does not render a dragging indicator when not dragging', () => {
     const styles = getStyles();
-    expect(wrapper.find('[data-test-id="TimelineColumnResizer--dragger"]').prop('style').right).toBe(
-      undefined
-    );
-    expect(wrapper.find('[data-test-id="TimelineColumnResizer--dragger"]').prop('className')).toBe(
-      styles.dragger
-    );
+    expect(wrapper.find('[data-test-id="TimelineColumnResizer--dragger"]').prop('style').right).toBe(undefined);
+    expect(wrapper.find('[data-test-id="TimelineColumnResizer--dragger"]').prop('className')).toBe(styles.dragger);
   });
 
   it('renders a dragging indicator when dragging', () => {

@@ -51,7 +51,7 @@ export function useTheme(): GrafanaTheme {
 export function useStyles<T>(getStyles: (theme: GrafanaTheme) => T) {
   const theme = useTheme();
 
-  let memoizedStyleCreator = memoizedStyleCreators.get(getStyles);
+  let memoizedStyleCreator = memoizedStyleCreators.get(getStyles) as typeof getStyles;
   if (!memoizedStyleCreator) {
     memoizedStyleCreator = stylesFactory(getStyles);
     memoizedStyleCreators.set(getStyles, memoizedStyleCreator);

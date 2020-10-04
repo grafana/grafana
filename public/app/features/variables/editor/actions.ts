@@ -19,6 +19,7 @@ import {
 import cloneDeep from 'lodash/cloneDeep';
 import { VariableType } from '@grafana/data';
 import { addVariable, removeVariable, storeNewVariable } from '../state/sharedReducer';
+import { updateOptions } from '../state/actions';
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async dispatch => {
@@ -36,9 +37,8 @@ export const variableEditorUnMount = (identifier: VariableIdentifier): ThunkResu
 };
 
 export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const variableInState = getVariable(identifier.id, getState());
-    await variableAdapters.get(variableInState.type).updateOptions(variableInState);
+  return async dispatch => {
+    await dispatch(updateOptions(identifier));
     dispatch(switchToListMode());
   };
 };
@@ -48,8 +48,7 @@ export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> =
     const newVariableInState = getVariable(NEW_VARIABLE_ID, getState());
     const id = newVariableInState.name;
     dispatch(storeNewVariable(toVariablePayload({ type: identifier.type, id })));
-    const variableInState = getVariable(id, getState());
-    await variableAdapters.get(variableInState.type).updateOptions(variableInState);
+    await dispatch(updateOptions(identifier));
     dispatch(switchToListMode());
     dispatch(removeVariable(toVariablePayload({ type: identifier.type, id: NEW_VARIABLE_ID }, { reIndex: false })));
   };
@@ -57,11 +56,6 @@ export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> =
 
 export const changeVariableName = (identifier: VariableIdentifier, newName: string): ThunkResult<void> => {
   return (dispatch, getState) => {
-    const variableInState = getVariable(identifier.id, getState());
-    if (newName === variableInState.name) {
-      return;
-    }
-
     let errorText = null;
     if (!newName.match(/^(?!__).*$/)) {
       errorText = "Template names cannot begin with '__', that's reserved for Grafana's global variables";
@@ -100,6 +94,10 @@ export const completeChangeVariableName = (identifier: VariableIdentifier, newNa
   getState
 ) => {
   const originalVariable = getVariable(identifier.id, getState());
+  if (originalVariable.name === newName) {
+    dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, { newName })));
+    return;
+  }
   const model = { ...cloneDeep(originalVariable), name: newName, id: newName };
   const global = originalVariable.global;
   const index = originalVariable.index;

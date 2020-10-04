@@ -2,13 +2,13 @@
 
 exports[`TimePickerContent renders correctly in full screen 1`] = `
 <div
-  className="css-1py9bjs"
+  className="css-ajr8sn"
 >
   <div
     className="css-ooqtr4"
   >
     <div
-      className="css-dlnzj7"
+      className="css-1f2wc71"
     >
       <FullScreenForm
         historyOptions={Array []}
@@ -35,7 +35,7 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
       autoHide={false}
       autoHideDuration={200}
       autoHideTimeout={200}
-      className="css-1o1b8dr"
+      className="css-10t714z"
       hideTracksWhenNotNeeded={false}
       setScrollTop={[Function]}
     >
@@ -103,13 +103,13 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
 
 exports[`TimePickerContent renders correctly in narrow screen 1`] = `
 <div
-  className="css-1py9bjs"
+  className="css-ajr8sn"
 >
   <div
     className="css-ooqtr4"
   >
     <div
-      className="css-dlnzj7"
+      className="css-1f2wc71"
     >
       <FullScreenForm
         historyOptions={Array []}
@@ -136,7 +136,7 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
       autoHide={false}
       autoHideDuration={200}
       autoHideTimeout={200}
-      className="css-1o1b8dr"
+      className="css-10t714z"
       hideTracksWhenNotNeeded={false}
       setScrollTop={[Function]}
     >
@@ -200,13 +200,13 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
 
 exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
 <div
-  className="css-1py9bjs"
+  className="css-ajr8sn"
 >
   <div
     className="css-ooqtr4"
   >
     <div
-      className="css-dlnzj7"
+      className="css-1f2wc71"
     >
       <FullScreenForm
         history={
@@ -233,15 +233,15 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
           Array [
             Object {
               "display": "2019-12-17 07:48:27 to 2019-12-18 07:48:27",
-              "from": "2019-12-17T07:48:27Z",
+              "from": "2019-12-17 07:48:27",
               "section": 3,
-              "to": "2019-12-18T07:48:27Z",
+              "to": "2019-12-18 07:48:27",
             },
             Object {
               "display": "2019-10-17 07:48:27 to 2019-10-18 07:48:27",
-              "from": "2019-10-17T07:48:27Z",
+              "from": "2019-10-17 07:48:27",
               "section": 3,
-              "to": "2019-10-18T07:48:27Z",
+              "to": "2019-10-18 07:48:27",
             },
           ]
         }
@@ -268,7 +268,7 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
       autoHide={false}
       autoHideDuration={200}
       autoHideTimeout={200}
-      className="css-1o1b8dr"
+      className="css-10t714z"
       hideTracksWhenNotNeeded={false}
       setScrollTop={[Function]}
     >
@@ -297,15 +297,15 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
           Array [
             Object {
               "display": "2019-12-17 07:48:27 to 2019-12-18 07:48:27",
-              "from": "2019-12-17T07:48:27Z",
+              "from": "2019-12-17 07:48:27",
               "section": 3,
-              "to": "2019-12-18T07:48:27Z",
+              "to": "2019-12-18 07:48:27",
             },
             Object {
               "display": "2019-10-17 07:48:27 to 2019-10-18 07:48:27",
-              "from": "2019-10-17T07:48:27Z",
+              "from": "2019-10-17 07:48:27",
               "section": 3,
-              "to": "2019-10-18T07:48:27Z",
+              "to": "2019-10-18 07:48:27",
             },
           ]
         }

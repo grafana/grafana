@@ -17,7 +17,14 @@ import Prism from 'prismjs';
 // dom also includes Element polyfills
 import { PromQuery, PromOptions, PromMetricsMetadata } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreQueryFieldProps, QueryHint, isDataFrame, toLegacyResponseData, HistoryItem } from '@grafana/data';
+import {
+  ExploreQueryFieldProps,
+  QueryHint,
+  isDataFrame,
+  toLegacyResponseData,
+  HistoryItem,
+  AbsoluteTimeRange,
+} from '@grafana/data';
 import { DOMUtil, SuggestionsState } from '@grafana/ui';
 import { PrometheusDatasource } from '../datasource';
 
@@ -163,9 +170,24 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const {
       data,
       datasource: { languageProvider },
+      range,
     } = this.props;
 
-    if (languageProvider !== prevProps.datasource.languageProvider) {
+    let refreshed = false;
+    if (range && prevProps.range) {
+      const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
+      const prevAbsoluteRange: AbsoluteTimeRange = {
+        from: prevProps.range.from.valueOf(),
+        to: prevProps.range.to.valueOf(),
+      };
+
+      if (!_.isEqual(absoluteRange, prevAbsoluteRange)) {
+        this.refreshMetrics();
+        refreshed = true;
+      }
+    }
+
+    if (!refreshed && languageProvider !== prevProps.datasource.languageProvider) {
       this.refreshMetrics();
     }
 
@@ -326,12 +348,12 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     return (
       <>
         <div className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1">
-          <div className="gf-form flex-shrink-0">
+          <div className="gf-form flex-shrink-0 min-width-5">
             <ButtonCascader options={metricsOptions} disabled={buttonDisabled} onChange={this.onChangeMetrics}>
               {chooserText}
             </ButtonCascader>
           </div>
-          <div className={'gf-form gf-form--grow flex-shrink-1 min-width-15 explore-input-margin'}>
+          <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
@@ -346,8 +368,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               syntaxLoaded={syntaxLoaded}
             />
           </div>
-          {ExtraFieldElement}
         </div>
+        {ExtraFieldElement}
         {hint ? (
           <div className="query-row-break">
             <div className="prom-query-field-info text-warning">

@@ -28,11 +28,12 @@ import {
   textUtil,
   dateTime,
   AbsoluteTimeRange,
+  sortInAscendingOrder,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 
-import { sortInAscendingOrder, deduplicateLogRowsById } from 'app/core/utils/explore';
-import { decimalSIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
+import { deduplicateLogRowsById } from 'app/core/utils/explore';
+import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -269,7 +270,7 @@ function separateLogsAndMetrics(dataFrames: DataFrame[]) {
   const logSeries: DataFrame[] = [];
 
   for (const dataFrame of dataFrames) {
-    if (isLogsData(dataFrame)) {
+    if (isLogsData(dataFrame) || !dataFrame.fields.length) {
       logSeries.push(dataFrame);
       continue;
     }
@@ -303,23 +304,29 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   const allLabels: Labels[] = [];
 
   // Find the fields we care about and collect all labels
-  const allSeries: LogFields[] = logSeries.map(series => {
-    const fieldCache = new FieldCache(series);
-    const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
-    if (stringField?.labels) {
-      allLabels.push(stringField.labels);
-    }
-    return {
-      series,
-      timeField: fieldCache.getFirstFieldOfType(FieldType.time),
-      timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
-        ? fieldCache.getFieldByName('tsNs')
-        : undefined,
-      stringField,
-      logLevelField: fieldCache.getFieldByName('level'),
-      idField: getIdField(fieldCache),
-    } as LogFields;
-  });
+  let allSeries: LogFields[] = [];
+
+  if (hasFields(logSeries)) {
+    allSeries = logSeries.map(series => {
+      const fieldCache = new FieldCache(series);
+      const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
+
+      if (stringField?.labels) {
+        allLabels.push(stringField.labels);
+      }
+
+      return {
+        series,
+        timeField: fieldCache.getFirstFieldOfType(FieldType.time),
+        timeNanosecondField: fieldCache.hasFieldWithNameAndType('tsNs', FieldType.time)
+          ? fieldCache.getFieldByName('tsNs')
+          : undefined,
+        stringField,
+        logLevelField: fieldCache.getFieldByName('level'),
+        idField: getIdField(fieldCache),
+      } as LogFields;
+    });
+  }
 
   const commonLabels = allLabels.length > 0 ? findCommonLabels(allLabels) : {};
 
@@ -430,7 +437,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   }
 
   if (totalBytes > 0) {
-    const { text, suffix } = decimalSIPrefix('B')(totalBytes);
+    const { text, suffix } = SIPrefix('B')(totalBytes);
     meta.push({
       label: 'Total bytes processed',
       value: `${text} ${suffix}`,
@@ -443,6 +450,10 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     meta,
     rows: deduplicatedLogRows,
   };
+}
+
+function hasFields(logSeries: DataFrame[]): boolean {
+  return logSeries.some(series => series.fields.length);
 }
 
 function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {

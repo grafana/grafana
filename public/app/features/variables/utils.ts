@@ -1,5 +1,6 @@
 import isString from 'lodash/isString';
 import { ScopedVars } from '@grafana/data';
+import { ALL_VARIABLE_TEXT } from './state/types';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -7,7 +8,7 @@ import { ScopedVars } from '@grafana/data';
  * \[\[([\s\S]+?)(?::(\w+))?\]\]    [[var2]] or [[var2:fmt2]]
  * \${(\w+)(?::(\w+))?}             ${var3} or ${var3:fmt3}
  */
-export const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::(\w+))?}/g;
+export const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
 
 // Helper function since lastIndex is not reset
 export const variableRegexExec = (variableString: string) => {
@@ -58,3 +59,47 @@ export function containsVariable(...args: any[]) {
 
   return !!isMatchingVariable;
 }
+
+export const isAllVariable = (variable: any): boolean => {
+  if (!variable) {
+    return false;
+  }
+
+  if (!variable.current) {
+    return false;
+  }
+
+  if (!variable.current.text) {
+    return false;
+  }
+
+  if (Array.isArray(variable.current.text)) {
+    return variable.current.text.length ? variable.current.text[0] === ALL_VARIABLE_TEXT : false;
+  }
+
+  return variable.current.text === ALL_VARIABLE_TEXT;
+};
+
+export const getCurrentText = (variable: any): string => {
+  if (!variable) {
+    return '';
+  }
+
+  if (!variable.current) {
+    return '';
+  }
+
+  if (!variable.current.text) {
+    return '';
+  }
+
+  if (Array.isArray(variable.current.text)) {
+    return variable.current.text.toString();
+  }
+
+  if (typeof variable.current.text !== 'string') {
+    return '';
+  }
+
+  return variable.current.text;
+};

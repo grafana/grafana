@@ -4,9 +4,8 @@ import { ReplaySubject, Unsubscribable, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 // Services & Utils
+import { getTemplateSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import kbn from 'app/core/utils/kbn';
-import templateSrv from 'app/features/templating/template_srv';
 import { runRequest, preProcessPanelData } from './runRequest';
 import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
 
@@ -26,6 +25,7 @@ import {
   DataConfigSource,
   TimeZone,
   LoadingState,
+  rangeUtil,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
@@ -93,11 +93,13 @@ export class PanelQueryRunner {
         if (withFieldConfig) {
           // Apply field defaults & overrides
           const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+          const timeZone = data.request?.timezone ?? 'browser';
+
           if (fieldConfig) {
             processedData = {
               ...processedData,
               series: applyFieldOverrides({
-                timeZone: data.request!.timezone,
+                timeZone: timeZone,
                 autoMinMax: true,
                 data: processedData.series,
                 ...fieldConfig,
@@ -162,8 +164,8 @@ export class PanelQueryRunner {
         return query;
       });
 
-      const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
-      const norm = kbn.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
+      const lowerIntervalLimit = minInterval ? getTemplateSrv().replace(minInterval, request.scopedVars) : ds.interval;
+      const norm = rangeUtil.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,
       // and add built in variables interval and interval_ms

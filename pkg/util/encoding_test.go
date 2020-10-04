@@ -3,28 +3,32 @@ package util
 import (
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestEncoding(t *testing.T) {
-	Convey("When generating base64 header", t, func() {
+func TestGetBasicAuthHeader_Encoding(t *testing.T) {
+	t.Run("generating base64 header", func(t *testing.T) {
 		result := GetBasicAuthHeader("grafana", "1234")
-
-		So(result, ShouldEqual, "Basic Z3JhZmFuYToxMjM0")
+		assert.Equal(t, "Basic Z3JhZmFuYToxMjM0", result)
 	})
 
-	Convey("When decoding basic auth header", t, func() {
+	t.Run("decoding basic auth header", func(t *testing.T) {
 		header := GetBasicAuthHeader("grafana", "1234")
 		username, password, err := DecodeBasicAuthHeader(header)
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
-		So(username, ShouldEqual, "grafana")
-		So(password, ShouldEqual, "1234")
+		assert.Equal(t, "grafana", username)
+		assert.Equal(t, "1234", password)
 	})
+}
 
-	Convey("When encoding password", t, func() {
-		encodedPassword, err := EncodePassword("iamgod", "pepper")
-		So(err, ShouldBeNil)
-		So(encodedPassword, ShouldEqual, "e59c568621e57756495a468f47c74e07c911b037084dd464bb2ed72410970dc849cabd71b48c394faf08a5405dae53741ce9")
-	})
+func TestEncodePassword(t *testing.T) {
+	encodedPassword, err := EncodePassword("iamgod", "pepper")
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		"e59c568621e57756495a468f47c74e07c911b037084dd464bb2ed72410970dc849cabd71b48c394faf08a5405dae53741ce9",
+		encodedPassword,
+	)
 }

@@ -1,7 +1,6 @@
 import { text } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Cascader } from './Cascader';
-// import { Button } from '../Button';
+import { Cascader } from '@grafana/ui';
 import mdx from './Cascader.mdx';
 import React from 'react';
 

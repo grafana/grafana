@@ -31,7 +31,9 @@ exports[`Explore should render component 1`] = `
         addQueryRowButtonDisabled={false}
         addQueryRowButtonHidden={false}
         onClickAddQueryRowButton={[Function]}
+        onClickQueryInspectorButton={[Function]}
         onClickRichHistoryButton={[Function]}
+        queryInspectorButtonActive={false}
         richHistoryButtonActive={false}
       />
     </div>

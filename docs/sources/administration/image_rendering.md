@@ -83,20 +83,20 @@ docker-compose up
 The following example describes how to build and run the remote HTTP rendering service as a standalone Node.js application and configure Grafana appropriately.
 
 1. Clone the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) Git repository.
-2. Install dependencies and build:
+1. Install dependencies and build:
 
     ```bash
     yarn install --pure-lockfile
     yarn run build
     ```
 
-3. Run the server:
+1. Run the server:
 
     ```bash
     node build/app.js server --port=8081
     ```
 
-4. Update Grafana configuration:
+1. Update Grafana configuration:
 
     ```
     [rendering]
@@ -104,7 +104,7 @@ The following example describes how to build and run the remote HTTP rendering s
     callback_url = http://localhost:3000/
     ```
 
-5. Restart Grafana.
+1. Restart Grafana.
 
 ## PhantomJS
 
@@ -162,6 +162,12 @@ On Debian 9 (Stretch) the following dependencies have been confirmed as needed f
 libx11 libcairo bcairo2 libcairo2 libxtst6 libxcomposite1 libx11-xcb1 libxcursor1 libxdamage1 libnss3 libcups libcups2 libXss libXss1 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libgtk-3-0
 ```
 
+On Debian 10 (Buster) the following dependencies have been confirmed as needed for the image rendering to function.
+
+```bash
+libxdamage1 libxext6 libxi6 libxtst6 libnss3 libnss3 libcups2 libxss1 libxrandr2 libasound2 libatk1.0-0 libatk-bridge2.0-0 libpangocairo-1.0-0 libpango-1.0-0 libcairo2 libatspi2.0-0 libgtk3.0-cil libgdk3.0-cil libx11-xcb-dev
+```
+
 **Centos:**
 
 On a minimal Centos installation, the following dependencies have been confirmed as needed for the image rendering to function:
@@ -172,7 +178,7 @@ libXcomposite libXdamage libXtst cups libXScrnSaver pango atk adwaita-cursor-the
 
 ### Certificate signed by internal certificate authorities
 
-In many cases, Grafana runs on internal servers and uses certificates that have not been signed by a CA ([Certificate Authority](https://en.wikipedia.org/wiki/Certificate_authority)) known to Chrome, and therefore cannot be validated. Chrome internally uses NSS ([Network Security Services](https://en.wikipedia.org/wiki/Network_Security_Services)) for cryptogtraphic operations such as the validation of certificates.
+In many cases, Grafana runs on internal servers and uses certificates that have not been signed by a CA ([Certificate Authority](https://en.wikipedia.org/wiki/Certificate_authority)) known to Chrome, and therefore cannot be validated. Chrome internally uses NSS ([Network Security Services](https://en.wikipedia.org/wiki/Network_Security_Services)) for cryptographic operations such as the validation of certificates.
 
 If you are using the Grafana Image Renderer with a Grafana server that uses a certificate signed by such a custom CA (for example a company-internal CA), rendering images will fail and you will see messages like this in the Grafana log:
 

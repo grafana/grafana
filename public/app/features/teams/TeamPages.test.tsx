@@ -1,13 +1,16 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { TeamPages, Props } from './TeamPages';
-import { Team, TeamMember, OrgRole } from '../../types';
+import { Props, TeamPages } from './TeamPages';
+import { OrgRole, Team, TeamMember } from '../../types';
 import { getMockTeam } from './__mocks__/teamMocks';
 import { User } from 'app/core/services/context_srv';
 import { NavModel } from '@grafana/data';
 
 jest.mock('app/core/config', () => ({
-  licenseInfo: { hasLicense: true },
+  ...((jest.requireActual('app/core/config') as unknown) as object),
+  licenseInfo: {
+    hasLicense: true,
+  },
 }));
 
 const setup = (propOverrides?: object) => {

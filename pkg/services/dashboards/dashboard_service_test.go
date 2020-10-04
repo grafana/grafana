@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -10,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	. "github.com/smartystreets/goconvey/convey"
-	"golang.org/x/xerrors"
 )
 
 func TestDashboardService(t *testing.T) {
@@ -75,7 +75,7 @@ func TestDashboardService(t *testing.T) {
 					{Uid: "asdf90_-", Error: nil},
 					{Uid: "asdf/90", Error: models.ErrDashboardInvalidUid},
 					{Uid: "   asdfghjklqwertyuiopzxcvbnmasdfghjklqwer   ", Error: nil},
-					{Uid: "asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm", Error: models.ErrDashboardUidToLong},
+					{Uid: "asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm", Error: models.ErrDashboardUidTooLong},
 				}
 
 				for _, tc := range testCases {
@@ -145,12 +145,12 @@ func TestDashboardService(t *testing.T) {
 				})
 
 				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
-					return xerrors.New("Alert validation error")
+					return fmt.Errorf("alert validation error")
 				})
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				_, err := service.SaveDashboard(dto, false)
-				So(err.Error(), ShouldEqual, "Alert validation error")
+				So(err.Error(), ShouldEqual, "alert validation error")
 			})
 		})
 

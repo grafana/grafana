@@ -41,6 +41,17 @@ function buildWarningNav(text: string, subTitle?: string): NavModel {
 export const initialState: NavIndex = {};
 
 export const updateNavIndex = createAction<NavModelItem>('navIndex/updateNavIndex');
+// Since the configuration subtitle includes the organization name, we include this action to update the org name if it changes.
+export const updateConfigurationSubtitle = createAction<string>('navIndex/updateConfigurationSubtitle');
+
+export const getItemWithNewSubTitle = (item: NavModelItem, subTitle: string): NavModelItem => ({
+  ...item,
+  parentItem: {
+    ...item.parentItem,
+    text: item.parentItem?.text ?? '',
+    subTitle,
+  },
+});
 
 // Redux Toolkit uses ImmerJs as part of their solution to ensure that state objects are not mutated.
 // ImmerJs has an autoFreeze option that freezes objects from change which means this reducer can't be migrated to createSlice
@@ -60,6 +71,19 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
     }
 
     return { ...state, ...newPages };
+  } else if (updateConfigurationSubtitle.match(action)) {
+    const subTitle = `Organization: ${action.payload}`;
+
+    return {
+      ...state,
+      cfg: { ...state.cfg, subTitle },
+      datasources: getItemWithNewSubTitle(state.datasources, subTitle),
+      users: getItemWithNewSubTitle(state.users, subTitle),
+      teams: getItemWithNewSubTitle(state.teams, subTitle),
+      plugins: getItemWithNewSubTitle(state.plugins, subTitle),
+      'org-settings': getItemWithNewSubTitle(state['org-settings'], subTitle),
+      apikeys: getItemWithNewSubTitle(state.apikeys, subTitle),
+    };
   }
 
   return state;

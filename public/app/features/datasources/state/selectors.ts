@@ -5,7 +5,7 @@ export const getDataSources = (state: DataSourcesState) => {
   const regex = new RegExp(state.searchQuery, 'i');
 
   return state.dataSources.filter((dataSource: DataSourceSettings) => {
-    return regex.test(dataSource.name) || regex.test(dataSource.database);
+    return regex.test(dataSource.name) || regex.test(dataSource.database) || regex.test(dataSource.type);
   });
 };
 

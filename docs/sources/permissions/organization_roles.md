@@ -21,6 +21,7 @@ Can do everything scoped to the organization. For example:
 
 - Can add, edit, and delete data sources.
 - Can add and edit users and teams in organizations.
+- Can add, edit, and delete folders.
 - Can configure app plugins and organization settings.
 - Can do everything allowed by the Editor role.
 

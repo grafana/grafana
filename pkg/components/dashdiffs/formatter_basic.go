@@ -155,7 +155,7 @@ func (b *BasicDiff) Basic(lines []*JSONLine) []*BasicBlock {
 					b.Block.Changes = append(b.Block.Changes, b.Change)
 
 				default:
-					//ok
+					// ok
 				}
 
 				// otherwise, we're dealing with a change at a deeper level. We
@@ -212,12 +212,10 @@ func (b *BasicDiff) Basic(lines []*JSONLine) []*BasicBlock {
 					// - if we're not recording a change, then we do nothing,
 					// since the BasicDiff doesn't report on unchanged JSON
 					// values.
-				} else {
-					if b.writing {
-						b.writing = false
-						b.Summary.LineEnd = line.LineNum
-						b.Block.Summaries = append(b.Block.Summaries, b.Summary)
-					}
+				} else if b.writing {
+					b.writing = false
+					b.Summary.LineEnd = line.LineNum
+					b.Block.Summaries = append(b.Block.Summaries, b.Summary)
 				}
 			}
 		}

@@ -1,8 +1,8 @@
 module.exports = function(grunt) {
-  "use strict";
+  'use strict';
 
   function escapeRegExp(str) {
-    return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+    return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
   }
 
   function extractColour(line) {
@@ -12,8 +12,8 @@ module.exports = function(grunt) {
   }
 
   function extractVariable(line) {
-    var matches = line.match(/(\$[0-9a-zA-Z_-]+)\s*(!default|!default;)?/)
-    return matches ? matches[1] : matches
+    var matches = line.match(/(\$[0-9a-zA-Z_-]+)\s*(!default|!default;)?/);
+    return matches ? matches[1] : matches;
   }
 
   function readVars(file, obj) {
@@ -33,7 +33,8 @@ module.exports = function(grunt) {
 
   grunt.registerTask('styleguide', function() {
     var data = {
-      dark: {}, light: {}
+      dark: {},
+      light: {},
     };
 
     readVars('public/sass/_variables.dark.scss', data.dark);
@@ -41,7 +42,5 @@ module.exports = function(grunt) {
 
     var styleGuideJson = grunt.config().srcDir + '/build/styleguide.json';
     grunt.file.write(styleGuideJson, JSON.stringify(data, null, 4));
-
   });
-
 };

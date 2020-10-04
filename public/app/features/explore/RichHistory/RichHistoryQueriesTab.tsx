@@ -9,8 +9,8 @@ import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
-import { SortOrder } from 'app/core/utils/explore';
 import {
+  SortOrder,
   mapNumbertoTimeInSlider,
   mapQueriesToHeadings,
   createDatasourcesList,

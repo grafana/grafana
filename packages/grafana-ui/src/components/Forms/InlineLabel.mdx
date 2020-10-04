@@ -1,0 +1,17 @@
+import { Props } from "@storybook/addon-docs/blocks";
+import { InlineLabel } from "./InlineLabel";
+
+# InlineLabel
+
+A horizontal variant of `Label`, primarily used in query editors. Can be combined with form components that expect a label, eg. `Input`, `Select`, `Checkbox`.
+If you need to add additional explanation, use the tooltip prop, which will render an info icon with tooltip inside the label.
+For query editor readability, the label text should be as short as possible (4 words or fewer).
+
+# Usage
+```jsx
+<InlineLabel width="auto" tooltip="Tooltip content">
+  Simple label
+</InlineLabel>
+```
+
+<Props of={InlineLabel}/>

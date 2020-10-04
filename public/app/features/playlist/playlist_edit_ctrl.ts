@@ -46,14 +46,7 @@ export class PlaylistEditCtrl {
           .get('/api/playlists/' + playlistId)
           .then((result: any) => {
             this.playlist = result;
-          })
-      );
-
-      promiseToDigest(this.$scope)(
-        getBackendSrv()
-          .get('/api/playlists/' + playlistId + '/items')
-          .then((result: any) => {
-            this.playlistItems = result;
+            this.playlistItems = result.items;
           })
       );
     }

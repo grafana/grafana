@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -64,7 +65,7 @@ func findPanelQueryByRefID(panel *simplejson.Json, refID string) *simplejson.Jso
 	return nil
 }
 
-func copyJSON(in *simplejson.Json) (*simplejson.Json, error) {
+func copyJSON(in json.Marshaler) (*simplejson.Json, error) {
 	rawJSON, err := in.MarshalJSON()
 	if err != nil {
 		return nil, err

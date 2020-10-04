@@ -40,7 +40,7 @@ export interface ReduceDataOptions {
 
 // TODO: use built in variables, same as for data links?
 export const VAR_SERIES_NAME = '__series.name';
-export const VAR_FIELD_NAME = '__field.name';
+export const VAR_FIELD_NAME = '__field.displayName'; // Includes the rendered tags and naming strategy
 export const VAR_FIELD_LABELS = '__field.labels';
 export const VAR_CALC = '__calc';
 export const VAR_CELL_PREFIX = '__cell_'; // consistent with existing table templates

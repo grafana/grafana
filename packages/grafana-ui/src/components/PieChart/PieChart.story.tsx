@@ -1,6 +1,6 @@
 import React from 'react';
 import { number, object, select } from '@storybook/addon-knobs';
-import { PieChart, PieChartType } from './PieChart';
+import { PieChart, PieChartType } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 export default {

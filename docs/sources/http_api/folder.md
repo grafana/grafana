@@ -264,7 +264,8 @@ HTTP/1.1 200
 Content-Type: application/json
 
 {
-  "message":"Folder deleted"
+  "message":"Folder deleted",
+  "id": 2
 }
 ```
 

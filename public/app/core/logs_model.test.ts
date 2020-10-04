@@ -8,7 +8,7 @@ import {
   MutableDataFrame,
   toDataFrame,
 } from '@grafana/data';
-import { dataFrameToLogsModel, dedupLogRows, getSeriesProperties } from './logs_model';
+import { dataFrameToLogsModel, dedupLogRows, getSeriesProperties, logSeriesToLogsModel } from './logs_model';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
@@ -593,6 +593,37 @@ describe('dataFrameToLogsModel', () => {
         uniqueLabels: { baz: '2' },
       },
     ]);
+  });
+});
+
+describe('logSeriesToLogsModel', () => {
+  it('should return correct metaData even if the data is empty', () => {
+    const logSeries: DataFrame[] = [
+      {
+        fields: [],
+        length: 0,
+        refId: 'A',
+
+        meta: {
+          searchWords: ['test'],
+          limit: 1000,
+          stats: [{ displayName: 'Summary: total bytes processed', value: 97048, unit: 'decbytes' }],
+          custom: { lokiQueryStatKey: 'Summary: total bytes processed' },
+          preferredVisualisationType: 'logs',
+        },
+      },
+    ];
+
+    const metaData = {
+      hasUniqueLabels: false,
+      meta: [
+        { label: 'Limit', value: '1000 (0 returned)', kind: 1 },
+        { label: 'Total bytes processed', value: '97  kB', kind: 1 },
+      ],
+      rows: [],
+    };
+
+    expect(logSeriesToLogsModel(logSeries)).toMatchObject(metaData);
   });
 });
 

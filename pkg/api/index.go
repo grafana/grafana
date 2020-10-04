@@ -18,107 +18,133 @@ const (
 	darkName  = "dark"
 )
 
-func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewData, error) {
-	settings, err := hs.getFrontendSettingsMap(c)
+func getProfileNode(c *models.ReqContext) *dtos.NavLink {
+	// Only set login if it's different from the name
+	var login string
+	if c.SignedInUser.Login != c.SignedInUser.NameOrFallback() {
+		login = c.SignedInUser.Login
+	}
+	gravatarURL := dtos.GetGravatarUrl(c.Email)
+
+	children := []*dtos.NavLink{
+		{
+			Text: "Preferences", Id: "profile-settings", Url: setting.AppSubUrl + "/profile", Icon: "sliders-v-alt",
+		},
+		{
+			Text: "Change Password", Id: "change-password", Url: setting.AppSubUrl + "/profile/password",
+			Icon: "lock", HideFromMenu: true,
+		},
+	}
+	if !setting.DisableSignoutMenu {
+		// add sign out first
+		children = append(children, &dtos.NavLink{
+			Text:         "Sign out",
+			Id:           "sign-out",
+			Url:          setting.AppSubUrl + "/logout",
+			Icon:         "arrow-from-right",
+			Target:       "_self",
+			HideFromTabs: true,
+		})
+	}
+
+	return &dtos.NavLink{
+		Text:         c.SignedInUser.NameOrFallback(),
+		SubTitle:     login,
+		Id:           "profile",
+		Img:          gravatarURL,
+		Url:          setting.AppSubUrl + "/profile",
+		HideFromMenu: true,
+		SortWeight:   dtos.WeightProfile,
+		Children:     children,
+	}
+}
+
+func getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
+	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
 	if err != nil {
 		return nil, err
 	}
 
-	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
-	if err := bus.Dispatch(&prefsQuery); err != nil {
-		return nil, err
-	}
-	prefs := prefsQuery.Result
+	appLinks := []*dtos.NavLink{}
+	for _, plugin := range enabledPlugins.Apps {
+		if !plugin.Pinned {
+			continue
+		}
 
-	// Read locale from accept-language
-	acceptLang := c.Req.Header.Get("Accept-Language")
-	locale := "en-US"
+		appLink := &dtos.NavLink{
+			Text:       plugin.Name,
+			Id:         "plugin-page-" + plugin.Id,
+			Url:        plugin.DefaultNavUrl,
+			Img:        plugin.Info.Logos.Small,
+			SortWeight: dtos.WeightPlugin,
+		}
 
-	if len(acceptLang) > 0 {
-		parts := strings.Split(acceptLang, ",")
-		locale = parts[0]
-	}
+		for _, include := range plugin.Includes {
+			if !c.HasUserRole(include.Role) {
+				continue
+			}
 
-	appURL := setting.AppUrl
-	appSubURL := setting.AppSubUrl
+			if include.Type == "page" && include.AddToNav {
+				var link *dtos.NavLink
+				if len(include.Path) > 0 {
+					link = &dtos.NavLink{
+						Url:  setting.AppSubUrl + include.Path,
+						Text: include.Name,
+					}
+					if include.DefaultNav {
+						appLink.Url = link.Url // Overwrite the hardcoded page logic
+					}
+				} else {
+					link = &dtos.NavLink{
+						Url:  setting.AppSubUrl + "/plugins/" + plugin.Id + "/page/" + include.Slug,
+						Text: include.Name,
+					}
+				}
+				appLink.Children = append(appLink.Children, link)
+			}
 
-	// special case when doing localhost call from image renderer
-	if c.IsRenderCall && !hs.Cfg.ServeFromSubPath {
-		appURL = fmt.Sprintf("%s://localhost:%s", setting.Protocol, setting.HttpPort)
-		appSubURL = ""
-		settings["appSubUrl"] = ""
-	}
+			if include.Type == "dashboard" && include.AddToNav {
+				link := &dtos.NavLink{
+					Url:  setting.AppSubUrl + "/dashboard/db/" + include.Slug,
+					Text: include.Name,
+				}
+				appLink.Children = append(appLink.Children, link)
+			}
+		}
 
-	hasEditPermissionInFoldersQuery := models.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-	if err := bus.Dispatch(&hasEditPermissionInFoldersQuery); err != nil {
-		return nil, err
-	}
+		if len(appLink.Children) > 0 && c.OrgRole == models.ROLE_ADMIN {
+			appLink.Children = append(appLink.Children, &dtos.NavLink{Divider: true})
+			appLink.Children = append(appLink.Children, &dtos.NavLink{
+				Text: "Plugin Config", Icon: "cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/",
+			})
+		}
 
-	var data = dtos.IndexViewData{
-		User: &dtos.CurrentUser{
-			Id:                         c.UserId,
-			IsSignedIn:                 c.IsSignedIn,
-			Login:                      c.Login,
-			Email:                      c.Email,
-			Name:                       c.Name,
-			OrgCount:                   c.OrgCount,
-			OrgId:                      c.OrgId,
-			OrgName:                    c.OrgName,
-			OrgRole:                    c.OrgRole,
-			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
-			IsGrafanaAdmin:             c.IsGrafanaAdmin,
-			LightTheme:                 prefs.Theme == lightName,
-			Timezone:                   prefs.Timezone,
-			Locale:                     locale,
-			HelpFlags1:                 c.HelpFlags1,
-			HasEditPermissionInFolders: hasEditPermissionInFoldersQuery.Result,
-		},
-		Settings:                settings,
-		Theme:                   prefs.Theme,
-		AppUrl:                  appURL,
-		AppSubUrl:               appSubURL,
-		GoogleAnalyticsId:       setting.GoogleAnalyticsId,
-		GoogleTagManagerId:      setting.GoogleTagManagerId,
-		BuildVersion:            setting.BuildVersion,
-		BuildCommit:             setting.BuildCommit,
-		NewGrafanaVersion:       plugins.GrafanaLatestVersion,
-		NewGrafanaVersionExists: plugins.GrafanaHasUpdate,
-		AppName:                 setting.ApplicationName,
-		AppNameBodyClass:        getAppNameBodyClass(hs.License.HasValidLicense()),
-		FavIcon:                 "public/img/fav32.png",
-		AppleTouchIcon:          "public/img/apple-touch-icon.png",
-		AppTitle:                "Grafana",
+		if len(appLink.Children) > 0 {
+			appLinks = append(appLinks, appLink)
+		}
 	}
 
-	if setting.DisableGravatar {
-		data.User.GravatarUrl = setting.AppSubUrl + "/public/img/user_profile.png"
-	}
+	return appLinks, nil
+}
 
-	if len(data.User.Name) == 0 {
-		data.User.Name = data.User.Login
-	}
+func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dtos.NavLink, error) {
+	navTree := []*dtos.NavLink{}
 
-	themeURLParam := c.Query("theme")
-	if themeURLParam == lightName {
-		data.User.LightTheme = true
-		data.Theme = lightName
-	} else if themeURLParam == darkName {
-		data.User.LightTheme = false
-		data.Theme = darkName
-	}
-
-	if hasEditPermissionInFoldersQuery.Result {
+	if hasEditPerm {
 		children := []*dtos.NavLink{
 			{Text: "Dashboard", Icon: "apps", Url: setting.AppSubUrl + "/dashboard/new"},
 		}
-
 		if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {
-			children = append(children, &dtos.NavLink{Text: "Folder", SubTitle: "Create a new folder to organize your dashboards", Id: "folder", Icon: "folder-plus", Url: setting.AppSubUrl + "/dashboards/folder/new"})
+			children = append(children, &dtos.NavLink{
+				Text: "Folder", SubTitle: "Create a new folder to organize your dashboards", Id: "folder",
+				Icon: "folder-plus", Url: setting.AppSubUrl + "/dashboards/folder/new",
+			})
 		}
-
-		children = append(children, &dtos.NavLink{Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "import", Url: setting.AppSubUrl + "/dashboard/import"})
-
-		data.NavTree = append(data.NavTree, &dtos.NavLink{
+		children = append(children, &dtos.NavLink{
+			Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "import",
+			Url: setting.AppSubUrl + "/dashboard/import",
+		})
+		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Create",
 			Id:         "create",
 			Icon:       "plus",
@@ -136,7 +162,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "camera"},
 	}
 
-	data.NavTree = append(data.NavTree, &dtos.NavLink{
+	navTree = append(navTree, &dtos.NavLink{
 		Text:       "Dashboards",
 		Id:         "dashboards",
 		SubTitle:   "Manage dashboards & folders",
@@ -147,7 +173,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	})
 
 	if setting.ExploreEnabled && (c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit) {
-		data.NavTree = append(data.NavTree, &dtos.NavLink{
+		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Explore",
 			Id:         "explore",
 			SubTitle:   "Explore your data",
@@ -158,47 +184,19 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	}
 
 	if c.IsSignedIn {
-		// Only set login if it's different from the name
-		var login string
-		if c.SignedInUser.Login != c.SignedInUser.NameOrFallback() {
-			login = c.SignedInUser.Login
-		}
-		profileNode := &dtos.NavLink{
-			Text:         c.SignedInUser.NameOrFallback(),
-			SubTitle:     login,
-			Id:           "profile",
-			Img:          data.User.GravatarUrl,
-			Url:          setting.AppSubUrl + "/profile",
-			HideFromMenu: true,
-			SortWeight:   dtos.WeightProfile,
-			Children: []*dtos.NavLink{
-				{Text: "Preferences", Id: "profile-settings", Url: setting.AppSubUrl + "/profile", Icon: "sliders-v-alt"},
-				{Text: "Change Password", Id: "change-password", Url: setting.AppSubUrl + "/profile/password", Icon: "lock", HideFromMenu: true},
-			},
-		}
-
-		if !setting.DisableSignoutMenu {
-			// add sign out first
-			profileNode.Children = append(profileNode.Children, &dtos.NavLink{
-				Text:         "Sign out",
-				Id:           "sign-out",
-				Url:          setting.AppSubUrl + "/logout",
-				Icon:         "arrow-from-right",
-				Target:       "_self",
-				HideFromTabs: true,
-			})
-		}
-
-		data.NavTree = append(data.NavTree, profileNode)
+		navTree = append(navTree, getProfileNode(c))
 	}
 
 	if setting.AlertingEnabled && (c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR) {
 		alertChildNavs := []*dtos.NavLink{
 			{Text: "Alert Rules", Id: "alert-list", Url: setting.AppSubUrl + "/alerting/list", Icon: "list-ul"},
-			{Text: "Notification channels", Id: "channels", Url: setting.AppSubUrl + "/alerting/notifications", Icon: "comment-alt-share"},
+			{
+				Text: "Notification channels", Id: "channels", Url: setting.AppSubUrl + "/alerting/notifications",
+				Icon: "comment-alt-share",
+			},
 		}
 
-		data.NavTree = append(data.NavTree, &dtos.NavLink{
+		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Alerting",
 			SubTitle:   "Alert rules & notifications",
 			Id:         "alerting",
@@ -209,64 +207,11 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		})
 	}
 
-	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
+	appLinks, err := getAppLinks(c)
 	if err != nil {
 		return nil, err
 	}
-
-	for _, plugin := range enabledPlugins.Apps {
-		if plugin.Pinned {
-			appLink := &dtos.NavLink{
-				Text:       plugin.Name,
-				Id:         "plugin-page-" + plugin.Id,
-				Url:        plugin.DefaultNavUrl,
-				Img:        plugin.Info.Logos.Small,
-				SortWeight: dtos.WeightPlugin,
-			}
-
-			for _, include := range plugin.Includes {
-				if !c.HasUserRole(include.Role) {
-					continue
-				}
-
-				if include.Type == "page" && include.AddToNav {
-					var link *dtos.NavLink
-					if len(include.Path) > 0 {
-						link = &dtos.NavLink{
-							Url:  setting.AppSubUrl + include.Path,
-							Text: include.Name,
-						}
-						if include.DefaultNav {
-							appLink.Url = link.Url // Overwrite the hardcoded page logic
-						}
-					} else {
-						link = &dtos.NavLink{
-							Url:  setting.AppSubUrl + "/plugins/" + plugin.Id + "/page/" + include.Slug,
-							Text: include.Name,
-						}
-					}
-					appLink.Children = append(appLink.Children, link)
-				}
-
-				if include.Type == "dashboard" && include.AddToNav {
-					link := &dtos.NavLink{
-						Url:  setting.AppSubUrl + "/dashboard/db/" + include.Slug,
-						Text: include.Name,
-					}
-					appLink.Children = append(appLink.Children, link)
-				}
-			}
-
-			if len(appLink.Children) > 0 && c.OrgRole == models.ROLE_ADMIN {
-				appLink.Children = append(appLink.Children, &dtos.NavLink{Divider: true})
-				appLink.Children = append(appLink.Children, &dtos.NavLink{Text: "Plugin Config", Icon: "cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/"})
-			}
-
-			if len(appLink.Children) > 0 {
-				data.NavTree = append(data.NavTree, appLink)
-			}
-		}
-	}
+	navTree = append(navTree, appLinks...)
 
 	configNodes := []*dtos.NavLink{}
 
@@ -323,7 +268,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	}
 
 	if len(configNodes) > 0 {
-		data.NavTree = append(data.NavTree, &dtos.NavLink{
+		navTree = append(navTree, &dtos.NavLink{
 			Id:         "cfg",
 			Text:       "Configuration",
 			SubTitle:   "Organization: " + c.OrgName,
@@ -342,13 +287,19 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 			{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "graph-bar"},
 		}
 
+		if hs.Live != nil {
+			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+				Text: "Live", Id: "live", Url: setting.AppSubUrl + "/admin/live", Icon: "water",
+			})
+		}
+
 		if setting.LDAPEnabled {
 			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 				Text: "LDAP", Id: "ldap", Url: setting.AppSubUrl + "/admin/ldap", Icon: "book",
 			})
 		}
 
-		data.NavTree = append(data.NavTree, &dtos.NavLink{
+		navTree = append(navTree, &dtos.NavLink{
 			Text:         "Server Admin",
 			SubTitle:     "Manage all users & orgs",
 			HideFromTabs: true,
@@ -365,7 +316,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		helpVersion = setting.ApplicationName
 	}
 
-	data.NavTree = append(data.NavTree, &dtos.NavLink{
+	navTree = append(navTree, &dtos.NavLink{
 		Text:         "Help",
 		SubTitle:     helpVersion,
 		Id:           "help",
@@ -376,11 +327,113 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		Children:     []*dtos.NavLink{},
 	})
 
+	return navTree, nil
+}
+
+func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewData, error) {
+	hasEditPermissionInFoldersQuery := models.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
+	if err := bus.Dispatch(&hasEditPermissionInFoldersQuery); err != nil {
+		return nil, err
+	}
+	hasEditPerm := hasEditPermissionInFoldersQuery.Result
+
+	settings, err := hs.getFrontendSettingsMap(c)
+	if err != nil {
+		return nil, err
+	}
+
+	settings["dateFormats"] = hs.Cfg.DateFormats
+
+	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
+	if err := bus.Dispatch(&prefsQuery); err != nil {
+		return nil, err
+	}
+	prefs := prefsQuery.Result
+
+	// Read locale from accept-language
+	acceptLang := c.Req.Header.Get("Accept-Language")
+	locale := "en-US"
+
+	if len(acceptLang) > 0 {
+		parts := strings.Split(acceptLang, ",")
+		locale = parts[0]
+	}
+
+	appURL := setting.AppUrl
+	appSubURL := setting.AppSubUrl
+
+	// special case when doing localhost call from image renderer
+	if c.IsRenderCall && !hs.Cfg.ServeFromSubPath {
+		appURL = fmt.Sprintf("%s://localhost:%s", setting.Protocol, setting.HttpPort)
+		appSubURL = ""
+		settings["appSubUrl"] = ""
+	}
+
+	navTree, err := hs.getNavTree(c, hasEditPerm)
+	if err != nil {
+		return nil, err
+	}
+
+	data := dtos.IndexViewData{
+		User: &dtos.CurrentUser{
+			Id:                         c.UserId,
+			IsSignedIn:                 c.IsSignedIn,
+			Login:                      c.Login,
+			Email:                      c.Email,
+			Name:                       c.Name,
+			OrgCount:                   c.OrgCount,
+			OrgId:                      c.OrgId,
+			OrgName:                    c.OrgName,
+			OrgRole:                    c.OrgRole,
+			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
+			IsGrafanaAdmin:             c.IsGrafanaAdmin,
+			LightTheme:                 prefs.Theme == lightName,
+			Timezone:                   prefs.Timezone,
+			Locale:                     locale,
+			HelpFlags1:                 c.HelpFlags1,
+			HasEditPermissionInFolders: hasEditPerm,
+		},
+		Settings:                settings,
+		Theme:                   prefs.Theme,
+		AppUrl:                  appURL,
+		AppSubUrl:               appSubURL,
+		GoogleAnalyticsId:       setting.GoogleAnalyticsId,
+		GoogleTagManagerId:      setting.GoogleTagManagerId,
+		BuildVersion:            setting.BuildVersion,
+		BuildCommit:             setting.BuildCommit,
+		NewGrafanaVersion:       plugins.GrafanaLatestVersion,
+		NewGrafanaVersionExists: plugins.GrafanaHasUpdate,
+		AppName:                 setting.ApplicationName,
+		AppNameBodyClass:        getAppNameBodyClass(hs.License.HasValidLicense()),
+		FavIcon:                 "public/img/fav32.png",
+		AppleTouchIcon:          "public/img/apple-touch-icon.png",
+		AppTitle:                "Grafana",
+		NavTree:                 navTree,
+	}
+
+	if setting.DisableGravatar {
+		data.User.GravatarUrl = setting.AppSubUrl + "/public/img/user_profile.png"
+	}
+
+	if len(data.User.Name) == 0 {
+		data.User.Name = data.User.Login
+	}
+
+	themeURLParam := c.Query("theme")
+	if themeURLParam == lightName {
+		data.User.LightTheme = true
+		data.Theme = lightName
+	} else if themeURLParam == darkName {
+		data.User.LightTheme = false
+		data.Theme = darkName
+	}
+
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
 	sort.SliceStable(data.NavTree, func(i, j int) bool {
 		return data.NavTree[i].SortWeight < data.NavTree[j].SortWeight
 	})
+
 	return &data, nil
 }
 

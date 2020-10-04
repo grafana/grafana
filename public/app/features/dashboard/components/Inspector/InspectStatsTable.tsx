@@ -7,17 +7,17 @@ import {
   QueryResultMetaStat,
   TimeZone,
 } from '@grafana/data';
-import { DashboardModel } from 'app/features/dashboard/state';
 import { config } from 'app/core/config';
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { css } from 'emotion';
 
 interface InspectStatsTableProps {
-  dashboard: DashboardModel;
+  timeZone: TimeZone;
   name: string;
   stats: QueryResultMetaStat[];
 }
-export const InspectStatsTable: React.FC<InspectStatsTableProps> = ({ dashboard, name, stats }) => {
+
+export const InspectStatsTable: React.FC<InspectStatsTableProps> = ({ timeZone, name, stats }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -34,7 +34,7 @@ export const InspectStatsTable: React.FC<InspectStatsTableProps> = ({ dashboard,
             return (
               <tr key={`${stat.displayName}-${index}`}>
                 <td>{stat.displayName}</td>
-                <td className={styles.cell}>{formatStat(stat, dashboard.getTimezone())}</td>
+                <td className={styles.cell}>{formatStat(stat, timeZone)}</td>
               </tr>
             );
           })}

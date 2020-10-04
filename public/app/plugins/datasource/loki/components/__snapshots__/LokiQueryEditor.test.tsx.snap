@@ -3,22 +3,6 @@
 exports[`Render LokiQueryEditor with legend should render 1`] = `
 <div>
   <Component
-    absoluteRange={
-      Object {
-        "from": 1577836800000,
-        "to": 1577923200000,
-      }
-    }
-    data={
-      Object {
-        "request": Object {
-          "range": Object {
-            "from": "2020-01-01T00:00:00.000Z",
-            "to": "2020-01-02T00:00:00.000Z",
-          },
-        },
-      }
-    }
     datasource={Object {}}
     history={Array []}
     onChange={[Function]}
@@ -28,6 +12,12 @@ exports[`Render LokiQueryEditor with legend should render 1`] = `
         "expr": "",
         "legendFormat": "My Legend",
         "refId": "A",
+      }
+    }
+    range={
+      Object {
+        "from": "2020-01-01T00:00:00.000Z",
+        "to": "2020-01-02T00:00:00.000Z",
       }
     }
   />
@@ -57,25 +47,9 @@ exports[`Render LokiQueryEditor with legend should render 1`] = `
 </div>
 `;
 
-exports[`Render LokiQueryEditor with legend should update absolute timerange 1`] = `
+exports[`Render LokiQueryEditor with legend should update timerange 1`] = `
 <div>
   <Component
-    absoluteRange={
-      Object {
-        "from": 1546300800000,
-        "to": 1577923200000,
-      }
-    }
-    data={
-      Object {
-        "request": Object {
-          "range": Object {
-            "from": "2019-01-01T00:00:00.000Z",
-            "to": "2020-01-02T00:00:00.000Z",
-          },
-        },
-      }
-    }
     datasource={Object {}}
     history={Array []}
     onChange={[Function]}
@@ -85,6 +59,12 @@ exports[`Render LokiQueryEditor with legend should update absolute timerange 1`]
         "expr": "",
         "legendFormat": "My Legend",
         "refId": "A",
+      }
+    }
+    range={
+      Object {
+        "from": "2019-01-01T00:00:00.000Z",
+        "to": "2020-01-02T00:00:00.000Z",
       }
     }
   />
