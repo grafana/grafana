@@ -30,21 +30,6 @@ export const MetricEditor: FunctionComponent<QueryMetricEditorProps> = ({ metric
   const datasource = useDatasource();
   const dispatch = useDispatch<MetricAggregationAction>();
 
-  const onMetricTypeChange = useCallback(
-    ({ value: type }) => {
-      if (type === undefined || type === metric.type) {
-        // If we are selecting the same type we do nothing.
-        return;
-      }
-      // TODO: When changing metric type we should generate a new metric with that type
-      // And if the selected field can't be used for that metric we should clear it out.
-      // eg. Unique count with non-numeric field and then change type to eg. Average
-      // onChange({ ...metric, type });
-      dispatch(changeMetricType(metric.id, type));
-    },
-    [metric, dispatch]
-  );
-
   const getFields = () => {
     if (metric.type === 'cardinality') {
       return datasource.getFields();
@@ -59,7 +44,7 @@ export const MetricEditor: FunctionComponent<QueryMetricEditorProps> = ({ metric
           className={cx(styles.color, marginZero)}
           // FIXME: This needs to be filtered by esVersion
           options={metricAggOptions}
-          onChange={onMetricTypeChange}
+          onChange={e => dispatch(changeMetricType(metric.id, e.value!))}
           value={toOption(metric)}
         />
       </InlineField>
