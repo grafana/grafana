@@ -15,7 +15,6 @@ export class LiveMeasurmentsSupport implements LiveChannelSupport {
   getChannelConfig(path: string): LiveChannelConfig | undefined {
     let c = this.cache[path];
     if (!c) {
-      console.log('Listening for measurments on: ', path);
       // Create a new cache for each path
       const collector = new MeasurementCollector();
       c = this.cache[path] = {
@@ -23,6 +22,7 @@ export class LiveMeasurmentsSupport implements LiveChannelSupport {
         config: {
           path,
           processMessage: collector.addBatch, // << this converts the stream from a single event to the whole cache
+          getLast: () => collector,
         },
       };
     }

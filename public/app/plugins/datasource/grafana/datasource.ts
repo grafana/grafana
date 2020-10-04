@@ -32,12 +32,12 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
         if (channel) {
           queries.push(
             getLiveMeasurmentsObserver(
-              `${request.requestId}.${counter++}`,
               {
                 scope: LiveChannelScope.Grafana,
                 namespace: 'measurements',
                 path: channel,
               },
+              `${request.requestId}.${counter++}`,
               measurements
             )
           );

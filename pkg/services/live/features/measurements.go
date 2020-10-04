@@ -15,7 +15,7 @@ type Measurement struct {
 
 // MeasurementBatch is a collection of measurments all sent at once
 type MeasurementBatch struct {
-	measures []Measurement
+	Measures []Measurement `json:"measures,omitempty"` // batch of measurments
 }
 
 // MeasurementsRunner will simply broadcast all events to `grafana/broadcast/*` channels

@@ -11,12 +11,30 @@ import { getGrafanaLiveSrv } from '../services/live';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
+export function getLiveMeasurements(addr: LiveChannelAddress): LiveMeasurements | undefined {
+  if (!addr || !addr.path) {
+    return undefined;
+  }
+
+  const live = getGrafanaLiveSrv();
+  if (!live) {
+    return undefined;
+  }
+
+  const channel = live.getChannel<LiveMeasurements>(addr);
+  if (!channel.config || !channel.config.getLast) {
+    return undefined;
+  }
+
+  return channel.config.getLast();
+}
+
 /**
  * When you know the stream will be managed measurments
  */
 export function getLiveMeasurmentsObserver(
-  requestId: string,
   addr: LiveChannelAddress,
+  requestId: string,
   query?: MeasurementsQuery
 ): Observable<DataQueryResponse> {
   const rsp: DataQueryResponse = { data: [] };
@@ -40,11 +58,11 @@ export function getLiveMeasurmentsObserver(
       map(evt => {
         if (isLiveChannelMessageEvent(evt)) {
           rsp.data = evt.message.getData(query);
+          // ?? skip when data is empty ???
           delete rsp.error;
         } else if (isLiveChannelStatusEvent(evt)) {
           rsp.error = evt.error;
         }
-        console.log('EVENT', addr.path, rsp);
         return { ...rsp }; // send event on all status messages
       })
     );

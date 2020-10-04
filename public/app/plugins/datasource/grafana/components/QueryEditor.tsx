@@ -2,7 +2,8 @@ import defaults from 'lodash/defaults';
 
 import React, { PureComponent } from 'react';
 import { InlineField, Select } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { QueryEditorProps, SelectableValue, LiveChannelScope } from '@grafana/data';
+import { getLiveMeasurements, LiveMeasurements } from '@grafana/runtime';
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
 
@@ -32,7 +33,7 @@ export class QueryEditor extends PureComponent<Props> {
 
   onChannelChange = (sel: SelectableValue<string>) => {
     const { onChange, query, onRunQuery } = this.props;
-    onChange({ ...query, channel: sel.value! });
+    onChange({ ...query, channel: sel?.value });
     onRunQuery();
   };
 
@@ -42,7 +43,7 @@ export class QueryEditor extends PureComponent<Props> {
       ...query,
       measurements: {
         ...query.measurements,
-        name: sel.value!,
+        name: sel?.value,
       },
     });
     onRunQuery();
@@ -67,12 +68,37 @@ export class QueryEditor extends PureComponent<Props> {
     const names: Array<SelectableValue<string>> = [
       { value: '', label: 'All measurements', description: 'show every measurment streamed to this channel' },
     ];
-    if (measurements.name) {
-      names.push({
-        label: measurements.name,
-        value: measurements.name,
-        description: `Frames with name ${measurements.name}`,
+
+    let info: LiveMeasurements | undefined = undefined;
+    if (channel) {
+      info = getLiveMeasurements({
+        scope: LiveChannelScope.Grafana,
+        namespace: 'measurements',
+        path: channel,
       });
+
+      let foundName = false;
+      if (info) {
+        for (const name of info.getDistinctNames()) {
+          names.push({
+            value: name,
+            label: name,
+          });
+          if (name === measurements.name) {
+            foundName = true;
+          }
+        }
+      } else {
+        console.log('NO INFO for', channel);
+      }
+
+      if (measurements.name && !foundName) {
+        names.push({
+          label: measurements.name,
+          value: measurements.name,
+          description: `Frames with name ${measurements.name}`,
+        });
+      }
     }
 
     return (
@@ -97,7 +123,7 @@ export class QueryEditor extends PureComponent<Props> {
             <InlineField label="Measurement" grow={true} labelWidth={labelWidth}>
               <Select
                 options={names}
-                value={names.find(v => v.value === channel) || names[0]}
+                value={names.find(v => v.value === measurements?.name) || names[0]}
                 onChange={this.onMeasurmentNameChanged}
                 allowCustomValue={true}
                 backspaceRemovesValue={true}
