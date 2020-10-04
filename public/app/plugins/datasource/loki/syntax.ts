@@ -49,7 +49,7 @@ const AGGREGATION_OPERATORS: CompletionItem[] = [
   },
 ];
 
-export const PARSERS = [
+export const PARSERS: CompletionItem[] = [
   {
     label: 'json',
     insertText: 'json',
@@ -64,6 +64,29 @@ export const PARSERS = [
     label: 'logfmt',
     insertText: 'logfmt',
     documentation: 'Extracting labels from the log line using logfmt parser.',
+  },
+];
+
+export const OPERATORS: CompletionItem[] = [
+  {
+    label: 'filter_op',
+    insertText: 'filter_op',
+    documentation: '',
+  },
+  {
+    label: 'label_filter',
+    insertText: ' label_filter',
+    documentation: '',
+  },
+  {
+    label: 'label_format',
+    insertText: ' label_format',
+    documentation: '',
+  },
+  {
+    label: ' line_format',
+    insertText: '  line_format',
+    documentation: '',
   },
 ];
 
@@ -146,7 +169,7 @@ const tokenizer: Grammar = {
   },
   function: new RegExp(`\\b(?:${FUNCTIONS.map(f => f.label).join('|')})(?=\\s*\\()`, 'i'),
   parser: {
-    pattern: new RegExp(`\(?<=\| ?)${PARSERS.map(f => f.label).join('|')}`, 'i'),
+    pattern: new RegExp(`\(?<=\|\\s?)${[...PARSERS, ...OPERATORS].map(f => f.label).join('|')}`, 'i'),
     alias: 'keyword',
   },
   'context-range': [
@@ -171,7 +194,7 @@ const tokenizer: Grammar = {
     },
   ],
   number: /\b-?\d+((\.\d*)?([eE][+-]?\d+)?)?\b/,
-  operator: /( \|= ?)|( \|\~ ?)|( != ?)|( !\~ ?)|( \| )/gi,
+  operator: /\s?(\|[=~]?|!=?|<(?:=>?|<|>)?|>[>=]?)\s?/i,
   punctuation: /[{}()`,.]/,
 };
 
