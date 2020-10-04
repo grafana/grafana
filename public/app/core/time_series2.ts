@@ -337,7 +337,7 @@ export default class TimeSeries {
     }
     if (this.stats.current !== null && this.stats.first !== null) {
       this.stats.diff = this.stats.current - this.stats.first;
-      this.stats.percdiff = this.stats.diff / this.stats.first;
+      this.stats.diffperc = this.stats.diff / this.stats.first;
     }
 
     this.stats.count = result.length;
