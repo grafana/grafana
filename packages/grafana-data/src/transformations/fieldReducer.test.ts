@@ -136,7 +136,7 @@ describe('Stats Calculators', () => {
     expect(stats[ReducerID.last]).toEqual(null);
     expect(stats[ReducerID.firstNotNull]).toEqual(200);
     expect(stats[ReducerID.lastNotNull]).toEqual(200);
-    expect(stats[ReducerID.diffperc]).toEqual(100);
+    expect(stats[ReducerID.diffperc]).toEqual(0);
 
     const reducers = [ReducerID.lastNotNull, ReducerID.firstNotNull];
     for (const input of info) {
