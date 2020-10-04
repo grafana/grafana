@@ -1,5 +1,12 @@
 import { defaultMetricAgg } from '../../query_def';
-import { ADD_METRIC, CHANGE_METRIC_TYPE, MetricAggregation, MetricAggregationAction, REMOVE_METRIC } from './types';
+import {
+  ADD_METRIC,
+  CHANGE_METRIC_TYPE,
+  REMOVE_METRIC,
+  TOGGLE_METRIC_VISIBILITY,
+  MetricAggregation,
+  MetricAggregationAction,
+} from './types';
 
 export const reducer = (state: MetricAggregation[] = [], action: MetricAggregationAction) => {
   switch (action.type) {
@@ -20,6 +27,18 @@ export const reducer = (state: MetricAggregation[] = [], action: MetricAggregati
         return {
           ...metric,
           type: action.payload.type,
+        };
+      });
+
+    case TOGGLE_METRIC_VISIBILITY:
+      return state.map(metric => {
+        if (metric.id !== action.payload.id) {
+          return metric;
+        }
+
+        return {
+          ...metric,
+          hide: !metric.hide,
         };
       });
 

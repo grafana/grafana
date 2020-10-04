@@ -1,4 +1,11 @@
-import { ADD_METRIC, REMOVE_METRIC, MetricAggregationAction, CHANGE_METRIC_TYPE, MetricAggregation } from './types';
+import {
+  ADD_METRIC,
+  CHANGE_METRIC_TYPE,
+  REMOVE_METRIC,
+  TOGGLE_METRIC_VISIBILITY,
+  MetricAggregation,
+  MetricAggregationAction,
+} from './types';
 
 export const addMetric = (metricType: MetricAggregation['type']): MetricAggregationAction => ({
   type: ADD_METRIC,
@@ -22,5 +29,12 @@ export const changeMetricType = (
   payload: {
     id,
     type,
+  },
+});
+
+export const toggleMetricVisibility = (id: MetricAggregation['id']): MetricAggregationAction => ({
+  type: TOGGLE_METRIC_VISIBILITY,
+  payload: {
+    id,
   },
 });

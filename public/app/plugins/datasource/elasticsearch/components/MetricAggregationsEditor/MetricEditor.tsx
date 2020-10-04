@@ -5,9 +5,9 @@ import React, { FunctionComponent, useCallback } from 'react';
 import { useDatasource, useDispatch } from '../ElasticsearchQueryContext';
 import { getStyles } from './styles';
 import { marginZero } from '../styles';
-import { MetricAggregation, MetricAggregationType } from '../../state/metricAggregation/types';
+import { MetricAggregation, MetricAggregationAction, MetricAggregationType } from '../../state/metricAggregation/types';
 import { metricAggregationConfig } from '../../state/metricAggregation/utils';
-import { changeMetricType } from '../../state/metricAggregation/actions';
+import { changeMetricType, toggleMetricVisibility } from '../../state/metricAggregation/actions';
 
 const metricAggOptions: Array<SelectableValue<MetricAggregationType>> = Object.entries(metricAggregationConfig).map(
   ([key, { label }]) => ({
@@ -28,7 +28,7 @@ interface QueryMetricEditorProps {
 export const MetricEditor: FunctionComponent<QueryMetricEditorProps> = ({ metric }) => {
   const styles = getStyles(useTheme(), metric.hide);
   const datasource = useDatasource();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<MetricAggregationAction>();
 
   const onMetricTypeChange = useCallback(
     ({ value: type }) => {
@@ -74,7 +74,10 @@ export const MetricEditor: FunctionComponent<QueryMetricEditorProps> = ({ metric
         />
       )}
 
-      <button className={cx('gf-form-label gf-form-label--btn query-part', styles.color)} onClick={() => {}}>
+      <button
+        className={cx('gf-form-label gf-form-label--btn query-part', styles.color)}
+        onClick={() => dispatch(toggleMetricVisibility(metric.id))}
+      >
         <Icon name={metric.hide ? 'eye-slash' : 'eye'} />
       </button>
     </>
