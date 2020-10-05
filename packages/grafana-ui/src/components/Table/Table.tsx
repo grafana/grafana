@@ -91,7 +91,7 @@ function useTableStateReducer(props: Props) {
 
       return newState;
     },
-    [props.onColumnResize, props.onSortByChange, props.data]
+    [props]
   );
 }
 
@@ -153,7 +153,7 @@ export const Table: FC<Props> = memo((props: Props) => {
       stateReducer: stateReducer,
       initialState: getInitialState(props, memoizedColumns),
     }),
-    [memoizedColumns, memoizedData, stateReducer, resizable]
+    [memoizedColumns, memoizedData, resizable, stateReducer, props]
   );
 
   const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
@@ -182,7 +182,7 @@ export const Table: FC<Props> = memo((props: Props) => {
         </div>
       );
     },
-    [prepareRow, rows]
+    [data.fields, onCellFilterAdded, prepareRow, rows, tableStyles]
   );
 
   const headerHeight = noHeader ? 0 : tableStyles.cellHeight;

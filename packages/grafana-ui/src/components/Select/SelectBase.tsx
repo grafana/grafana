@@ -143,7 +143,7 @@ export function SelectBase<T>({
       }
       onChange(value);
     },
-    [isMulti, value, onChange]
+    [isMulti, onChange]
   );
   let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
   const creatableProps: any = {};

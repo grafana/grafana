@@ -28,7 +28,7 @@ export const ColorValueEditor: React.FC<FieldConfigEditorProps<FieldColor, Color
     color => {
       onChange({ ...value, fixedColor: color });
     },
-    [value]
+    [onChange, value]
   );
 
   return (
