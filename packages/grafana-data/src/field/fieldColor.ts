@@ -2,16 +2,16 @@ import { FALLBACK_COLOR, Field, FieldColorMode, GrafanaTheme, Threshold } from '
 import { getColorFromThreshold } from './thresholds';
 import { getColorFromHexRgbOrName, Registry, RegistryItem } from '../utils';
 
-export interface FieldColorResult {
-  percent?: number; // 0-1
-  threshold?: Threshold; // the selected step
-  color?: string; // Selected color (may be range based on threshold)
+export interface GetFieldColorCalculatorOptions {
+  field: Field;
+  seriesIndex: number;
+  theme: GrafanaTheme;
 }
 
-export type FieldColorCalculator = (value: number) => FieldColorResult;
+export type FieldValueColorCalculator = (value: number, percent: number, Threshold: Threshold) => string;
 
 export interface FieldColorModeItem extends RegistryItem {
-  getCalculator: (field: Field, seriesIndex: number, theme: GrafanaTheme) => (value: number) => FieldColorResult;
+  getCalculator: (field: Field, seriesIndex: number, theme: GrafanaTheme) => FieldValueColorCalculator;
 }
 
 export const fieldColorModeRegistry = new Registry<FieldColorModeItem>(() => {
@@ -39,7 +39,9 @@ function getFixedColor(field: Field, seriesIndex: number, theme: GrafanaTheme) {
 
 export function getFieldColorCalculator(field: Field, seriesIndex: number, theme: GrafanaTheme): FieldColorCalculator {
   const mode = fieldColorModeRegistry.get(field.config.color?.mode ?? FieldColorMode.Thresholds);
-  return mode.getCalculator(field, seriesIndex, theme);
+  const calculator = mode.getCalculator(field, seriesIndex, theme);
+
+  return (value: number) => {};
 }
 
 /**

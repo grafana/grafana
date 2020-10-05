@@ -50,39 +50,6 @@ export function getColorFromThreshold(field: Field, seriesIndex: number, theme: 
   };
 }
 
-interface FieldMinMaxInfo {
-  min?: number | null;
-  max?: number | null;
-  delta: number;
-}
-
-function getMinMaxAndDelta(field: Field): FieldMinMaxInfo {
-  // Calculate min/max if required
-  let min = field.config.min;
-  let max = field.config.max;
-
-  if (!isNumber(min) || !isNumber(max)) {
-    if (field.values && field.values.length) {
-      const stats = reduceField({ field, reducers: [ReducerID.min, ReducerID.max] });
-      if (!isNumber(min)) {
-        min = stats[ReducerID.min];
-      }
-      if (!isNumber(max)) {
-        max = stats[ReducerID.max];
-      }
-    } else {
-      min = 0;
-      max = 100;
-    }
-  }
-
-  return {
-    min,
-    max,
-    delta: max! - min!,
-  };
-}
-
 /**
  * Sorts the thresholds
  */

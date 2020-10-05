@@ -14,6 +14,11 @@ import { getFieldColorCalculator } from './fieldColor';
 interface DisplayProcessorOptions {
   field: Partial<Field>;
   /**
+   * Some color modes are based on series index, set to field index or if
+   * multiple data frames are visualized set to frame index
+   */
+  seriesIndex?: number;
+  /**
    * Will pick browser timezone if not defined
    */
   timeZone?: TimeZone;
@@ -52,7 +57,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   }
 
   const formatFunc = getValueFormat(unit || 'none');
-  const scaleFunc = getFieldColorCalculator(field as Field, 0, theme);
+  const scaleFunc = getFieldColorCalculator(field as Field, options.seriesIndex ?? 0, theme);
 
   return (value: any) => {
     const { mappings } = config;
