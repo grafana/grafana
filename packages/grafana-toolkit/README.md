@@ -61,6 +61,7 @@ With grafana-toolkit, we give you a CLI that addresses common tasks performed wh
 - `grafana-toolkit plugin:dev`
 - `grafana-toolkit plugin:test`
 - `grafana-toolkit plugin:build`
+- `grafana-toolkit plugin:sign`
 
 ### Create your plugin
 
@@ -104,6 +105,19 @@ This command creates a production-ready build of your plugin.
 Available options:
 
 - `--coverage` - Reports code coverage after the test step of the build.
+
+### Sign your plugin
+
+`grafana-toolkit plugin:sign`
+
+This command creates a signed MANIFEST.txt file which Grafana uses to validate the integrity of the plugin.
+
+Available options:
+
+- `--signatureType` - The [type of Signature](https://grafana.com/legal/plugins/) you are generating: `private`, `community` or `commercial`
+- `--rootUrls` - For private signatures, a list of the Grafana instance URLs that the plugin will be used on
+
+To generate a signature, you will need to sign up for a free account on https://grafana.com, create an API key with the Plugin Publisher role, and pass that in the `GRAFANA_API_KEY` environment variable.
 
 ## FAQ
 
