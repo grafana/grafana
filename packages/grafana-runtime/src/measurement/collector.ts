@@ -82,7 +82,7 @@ export class MeasurementCollector implements LiveMeasurements {
   measurements: Record<string, MeasurmentCache> = {};
   config: MeasurmentCacheConfig = {
     append: 'tail',
-    capacity: 10,
+    capacity: 1000,
   };
 
   //------------------------------------------------------

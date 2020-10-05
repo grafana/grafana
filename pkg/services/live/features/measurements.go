@@ -4,8 +4,13 @@ import (
 	"encoding/json"
 
 	"github.com/centrifugal/centrifuge"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+var (
+	logger = log.New("live.features") // scoped to all features?
 )
 
 // MeasurementsRunner will simply broadcast all events to `grafana/broadcast/*` channels
@@ -40,6 +45,7 @@ func (m *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subs
 // OnPublish called when an event is received from the websocket
 func (m *MeasurementsRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
 	// currently generic... but should be more strict
+	//logger.Debug("GOT: %s", e.Channel)
 	return e.Data, nil
 }
 
