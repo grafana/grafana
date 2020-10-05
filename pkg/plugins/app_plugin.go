@@ -58,12 +58,12 @@ type JwtTokenAuth struct {
 	Params map[string]string `json:"params"`
 }
 
-func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
+func (app *AppPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) error {
 	if err := decoder.Decode(app); err != nil {
 		return err
 	}
 
-	if err := app.registerPlugin(pluginDir); err != nil {
+	if err := app.registerPlugin(base); err != nil {
 		return err
 	}
 

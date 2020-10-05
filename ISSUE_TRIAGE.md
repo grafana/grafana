@@ -2,16 +2,16 @@
 
 The main goal of issue triage is to categorize all incoming Grafana issues and make sure each issue has all basic information needed for anyone else to understand and be able to start working on it.
 
-**Note:** This information is for Grafana project Maintainers, Owners, and Admins. If you are a Contributor, then you will not be able to perform most of the tasks in this topic.
+> **Note:** This information is for Grafana project Maintainers, Owners, and Admins. If you are a Contributor, then you will not be able to perform most of the tasks in this topic.
 
 The core maintainers of the Grafana project are responsible for categorizing all incoming issues and delegating any critical or important issue to other maintainers. Currently one maintainer each week is responsible. Besides that part, triage provides an important way to contribute to an open source project. 
 
 Triage helps ensure issues resolve quickly by:
 
-* Ensuring the issue's intent and purpose is conveyed precisely. This is necessary because it can be difficult for an issue to explain how an end user experiences a problem and what actions they took.
-* Giving a contributor the information they need before they commit to resolving an issue.
-* Lowering the issue count by preventing duplicate issues.
-* Streamlining the development process by preventing duplicate discussions.
+- Ensuring the issue's intent and purpose is conveyed precisely. This is necessary because it can be difficult for an issue to explain how an end user experiences a problem and what actions they took.
+- Giving a contributor the information they need before they commit to resolving an issue.
+- Lowering the issue count by preventing duplicate issues.
+- Streamlining the development process by preventing duplicate discussions.
 
 If you don't have the knowledge or time to code, consider helping with triage. The community will thank you for saving them time by spending some of yours.
 
@@ -112,11 +112,11 @@ In general, if the issue description and title is perceived as a question no mor
 
 To make it easier for everyone to understand and find issues they're searching for it's suggested as a general rule of thumbs to:
 
-* Make sure that issue titles are named to explain the subject of the issue, has a correct spelling and doesn't include irrelevant information and/or sensitive information.
-* Make sure that issue descriptions doesn't include irrelevant information, information from template that haven't been filled out and/or sensitive information.
-* Do your best effort to change title and description or request suggested changes by adding a comment.
+- Make sure that issue titles are named to explain the subject of the issue, has a correct spelling and doesn't include irrelevant information and/or sensitive information.
+- Make sure that issue descriptions doesn't include irrelevant information, information from template that haven't been filled out and/or sensitive information.
+- Do your best effort to change title and description or request suggested changes by adding a comment.
 
-Note: Above rules is applicable to both new and existing issues of the Grafana project.
+> **Note:** Above rules is applicable to both new and existing issues of the Grafana project.
 
 ### Do you have all the information needed to categorize an issue?
 
@@ -137,18 +137,18 @@ An issue can have multiple of the following labels. Typically, a properly catego
 - One label identifying its type (`type/*`).
 - One or multiple labels identifying the functional areas of interest or component (`area/*`) and/or data source (`datasource/*`), if applicable.
 
-Label | Description
-------- | --------
-`type/bug` | A feature isn't working as expected given design or documentation.
-`type/feature-request` | Request for a new feature or enhancement.
-`type/docs` | Documentation problem or enhancement.
-`type/accessibility` | Accessibility problem or enhancement.
-`type/question` | Issue is a question or is perceived as such.
-`type/duplicate` | An existing issue of the same subject/request have already been reported.
-`type/works-as-intended` | A reported bug works as intended/by design.
-`type/build-packaging` | Build or packaging problem or enhancement.
-`area/*` | Subject is related to a functional area of interest or component.
-`datasource/*` | Subject is related to a core data source plugin.
+| Label                    | Description                                                               |
+| ------------------------ | ------------------------------------------------------------------------- |
+| `type/bug`               | A feature isn't working as expected given design or documentation.        |
+| `type/feature-request`   | Request for a new feature or enhancement.                                 |
+| `type/docs`              | Documentation problem or enhancement.                                     |
+| `type/accessibility`     | Accessibility problem or enhancement.                                     |
+| `type/question`          | Issue is a question or is perceived as such.                              |
+| `type/duplicate`         | An existing issue of the same subject/request have already been reported. |
+| `type/works-as-intended` | A reported bug works as intended/by design.                               |
+| `type/build-packaging`   | Build or packaging problem or enhancement.                                |
+| `area/*`                 | Subject is related to a functional area of interest or component.         |
+| `datasource/*`           | Subject is related to a core data source plugin.                          |
 
 ### Duplicate issue?
 
@@ -223,15 +223,15 @@ The key here is asking for help and discuss issues to understand how more experi
 
 In case there is an uncertainty around the prioritization of an issue, please ask the maintainers for help.
 
-Label | Description
-------- | --------
-`priority/critical` | Highest priority. Must be actively worked on as someone's top priority right now.
-`priority/support-subscription` | This is important for one or several customers having a paid Grafana support subscription.
-`priority/important-soon` | Must be staffed and worked on either currently, or very soon, ideally in time for the next release.
-`priority/important-longterm` | Important over the long term, but may not be staffed and/or may need multiple releases to complete.
-`priority/nice-to-have` | It's a good idea, but not scheduled for any release.
-`priority/awaiting-more-evidence` | Lowest priority. Possibly useful, but not yet enough interest in it.
-`priority/unscheduled` | Something to look into before and to be discussed during the planning of the next (upcoming) major/minor stable release.
+| Label                             | Description                                                                                                              |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `priority/critical`               | Highest priority. Must be actively worked on as someone's top priority right now.                                        |
+| `priority/support-subscription`   | This is important for one or several customers having a paid Grafana support subscription.                               |
+| `priority/important-soon`         | Must be staffed and worked on either currently, or very soon, ideally in time for the next release.                      |
+| `priority/important-longterm`     | Important over the long term, but may not be staffed and/or may need multiple releases to complete.                      |
+| `priority/nice-to-have`           | It's a good idea, but not scheduled for any release.                                                                     |
+| `priority/awaiting-more-evidence` | Lowest priority. Possibly useful, but not yet enough interest in it.                                                     |
+| `priority/unscheduled`            | Something to look into before and to be discussed during the planning of the next (upcoming) major/minor stable release. |
 
 **Critical bug?**
 
@@ -335,6 +335,6 @@ This will give you a structure of labels in the sidebar similar to the following
   - Grafana
 ```
 
-* All notifications you’ll need to read/take action on show up as unread in GitHub (mine) and its sub-labels.
-* All other notifications you don’t need to take action on show up as unread in GitHub (other) and its sub-labels
-  * This is convenient for issue triage and to follow the activity in the Grafana project.
+- All notifications you’ll need to read/take action on show up as unread in GitHub (mine) and its sub-labels.
+- All other notifications you don’t need to take action on show up as unread in GitHub (other) and its sub-labels
+  - This is convenient for issue triage and to follow the activity in the Grafana project.

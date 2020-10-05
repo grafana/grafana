@@ -1,6 +1,5 @@
 import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
-import { restoreCwd } from '../utils/cwd';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 import { getPluginId } from '../../config/utils/getPluginId';
 
@@ -27,6 +26,7 @@ export interface PluginCIOptions {
   finish?: boolean;
   upload?: boolean;
   signingAdmin?: boolean;
+  maxJestWorkers?: string;
 }
 
 /**
@@ -40,7 +40,7 @@ export interface PluginCIOptions {
  *  Anything that should be put into the final zip file should be put in:
  *   ~/ci/jobs/build_xxx/dist
  */
-const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish }) => {
+const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish, maxJestWorkers }) => {
   const start = Date.now();
 
   if (finish) {
@@ -58,7 +58,7 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish }) => {
     writeJobStats(start, workDir);
   } else {
     // Do regular build process with coverage
-    await pluginBuildRunner({ coverage: true });
+    await pluginBuildRunner({ coverage: true, maxJestWorkers });
   }
 };
 
@@ -175,9 +175,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signingAdmin }
   console.log('Building ZIP');
   let zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';
   let zipFile = path.resolve(packagesDir, zipName);
-  process.chdir(distDir);
-  await execa('zip', ['-r', zipFile, '.']);
-  restoreCwd();
+  await execa('zip', ['-r', zipFile, '.'], { cwd: distDir });
 
   const zipStats = fs.statSync(zipFile);
   if (zipStats.size < 100) {
@@ -201,9 +199,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signingAdmin }
     console.log('Creating documentation zip');
     zipName = pluginInfo.id + '-' + pluginInfo.info.version + '-docs.zip';
     zipFile = path.resolve(packagesDir, zipName);
-    process.chdir(docsDir);
-    await execa('zip', ['-r', zipFile, '.']);
-    restoreCwd();
+    await execa('zip', ['-r', zipFile, '.'], { cwd: docsDir });
 
     info.docs = await getPackageDetails(zipFile, docsDir);
   }

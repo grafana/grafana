@@ -7,7 +7,7 @@ type = "docs"
 name = "Upgrade Grafana"
 identifier = "upgrading"
 parent = "installation"
-weight = 800
+weight = 700
 +++
 
 # Upgrade Grafana
@@ -125,7 +125,7 @@ grafana-cli plugins update-all
 
 The dashboard grid layout engine has changed. All dashboards will be automatically upgraded to new positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana. Some external panel plugins might need to be updated to work properly.
 
-For more details on the new panel positioning system, [click here]({{< relref "../reference/dashboard.md#panel-size-position" >}})
+For more details on the new panel positioning system, [click here]({{< relref "../dashboards/json-model.md#panel-size-position" >}})
 
 ## Upgrading to v5.2
 
@@ -231,7 +231,7 @@ Chrome 80 treats cookies as `SameSite=Lax` by default if no `SameSite` attribute
 
 Due to this change in Chrome, the `[security]` setting `cookie_samesite` configured to `none` now renders cookies with `SameSite=None` attribute compared to before where no `SameSite` attribute was added to cookies. To get the old behavior, use value `disabled` instead of `none`, see [cookie_samesite in Configuration]({{< relref "../administration/configuration/#cookie-samesite" >}}) for more information.
 
-**Note:** There is currently a bug affecting Mac OSX and iOS that causes `SameSite=None` cookies to be treated as `SameSite=Strict` and therefore not sent with cross-site requests, see https://bugs.webkit.org/show_bug.cgi?id=198181 for details. Until this is fixed, `SameSite=None` might not work properly on Safari.
+> **Note:** There is currently a bug affecting Mac OSX and iOS that causes `SameSite=None` cookies to be treated as `SameSite=Strict` and therefore not sent with cross-site requests, see https://bugs.webkit.org/show_bug.cgi?id=198181 for details. Until this is fixed, `SameSite=None` might not work properly on Safari.
 
 This version of Chrome also rejects insecure `SameSite=None` cookies. See https://www.chromestatus.com/feature/5633521622188032 for more information. Make sure that you
 change the `[security]` setting `cookie_secure` to `true` and use HTTPS when `cookie_samesite` is configured to `none`, otherwise authentication in Grafana won't work properly.
