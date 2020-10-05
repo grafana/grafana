@@ -1,7 +1,4 @@
-import { isNumber } from 'lodash';
-import { reduceField, ReducerID } from '../transformations/fieldReducer';
-import { Threshold, FALLBACK_COLOR, Field, ThresholdsMode, GrafanaTheme } from '../types';
-import { getColorFromHexRgbOrName } from '../utils';
+import { Threshold, FALLBACK_COLOR, Field, ThresholdsMode } from '../types';
 
 export function getActiveThreshold(value: number, thresholds: Threshold[] | undefined): Threshold {
   if (!thresholds || thresholds.length === 0) {
@@ -21,33 +18,14 @@ export function getActiveThreshold(value: number, thresholds: Threshold[] | unde
   return active;
 }
 
-export function getColorFromThreshold(field: Field, seriesIndex: number, theme: GrafanaTheme) {
+export function getActiveThresholdForValue(field: Field, value: number, percent: number): Threshold {
   const { thresholds } = field.config;
 
   if (thresholds?.mode === ThresholdsMode.Percentage) {
-    const info = getMinMaxAndDelta(field);
-
-    return (value: number) => {
-      const percent = (value - info.min!) / info.delta;
-      const threshold = getActiveThreshold(percent * 100 * value, thresholds?.steps);
-      const color = getColorFromHexRgbOrName(threshold.color, theme.type);
-
-      return {
-        threshold,
-        color,
-      };
-    };
+    return getActiveThreshold(percent * 100 * value, thresholds?.steps);
   }
 
-  return (value: number) => {
-    const threshold = getActiveThreshold(value, thresholds?.steps);
-    const color = getColorFromHexRgbOrName(threshold.color, theme.type);
-
-    return {
-      threshold,
-      color,
-    };
-  };
+  return getActiveThreshold(value, thresholds?.steps);
 }
 
 /**

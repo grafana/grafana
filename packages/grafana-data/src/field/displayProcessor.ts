@@ -10,6 +10,7 @@ import { getMappedValue } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
 import { getFieldColorCalculator } from './fieldColor';
+import { getScaleCalculator } from './scale';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -57,7 +58,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   }
 
   const formatFunc = getValueFormat(unit || 'none');
-  const scaleFunc = getFieldColorCalculator(field as Field, options.seriesIndex ?? 0, theme);
+  const scaleFunc = getScaleCalculator(field as Field, options.seriesIndex ?? 0, theme);
 
   return (value: any) => {
     const { mappings } = config;

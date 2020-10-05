@@ -1,4 +1,8 @@
-import { Field, GrafanaTheme, Threshold } from '../types';
+import { isNumber } from 'lodash';
+import { reduceField, ReducerID } from '../transformations/fieldReducer';
+import { Field, FieldColorMode, GrafanaTheme, Threshold } from '../types';
+import { fieldColorModeRegistry } from './fieldColor';
+import { getActiveThresholdForValue } from './thresholds';
 
 export interface ScaledValue {
   percent?: number; // 0-1
@@ -8,17 +12,21 @@ export interface ScaledValue {
 
 export type ScaleCalculator = (value: number) => ScaledValue;
 
-export interface GetFieldColorCalculatorOptions {
-  field: Field;
-  seriesIndex: number;
-  theme: GrafanaTheme;
-}
-
-export function getScaleCalculator(field: Field, seriesIndex: number, theme: GrafanaTheme): FieldColorCalculator {
+export function getScaleCalculator(field: Field, seriesIndex: number, theme: GrafanaTheme): ScaleCalculator {
   const mode = fieldColorModeRegistry.get(field.config.color?.mode ?? FieldColorMode.Thresholds);
-  const calculator = mode.getCalculator(field, seriesIndex, theme);
+  const getColor = mode.getCalculator(field, seriesIndex, theme);
+  const info = getMinMaxAndDelta(field);
 
-  return (value: number) => {};
+  return (value: number) => {
+    const percent = (value - info.min!) / info.delta;
+    const threshold = getActiveThresholdForValue(field, value, percent);
+
+    return {
+      percent,
+      threshold,
+      color: getColor(value, percent, threshold),
+    };
+  };
 }
 
 interface FieldMinMaxInfo {
