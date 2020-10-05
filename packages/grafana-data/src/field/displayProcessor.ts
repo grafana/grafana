@@ -9,7 +9,6 @@ import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
-import { getFieldColorCalculator } from './fieldColor';
 import { getScaleCalculator } from './scale';
 
 interface DisplayProcessorOptions {

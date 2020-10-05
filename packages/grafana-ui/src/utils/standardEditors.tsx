@@ -284,11 +284,11 @@ export const getStandardOptionEditors = () => {
     editor: ValueMappingsValueEditor as any,
   };
 
-  const color: StandardEditorsRegistryItem<FieldColor> = {
+  const color: StandardEditorsRegistryItem<string> = {
     id: 'color',
     name: 'Color',
     description: 'Allows color selection',
-    editor: ColorValueEditor as any,
+    editor: props => <ColorValueEditor value={props.value} onChange={props.onChange} />,
   };
 
   const fieldColor: StandardEditorsRegistryItem<FieldColor> = {
