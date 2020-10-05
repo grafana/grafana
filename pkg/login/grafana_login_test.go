@@ -7,13 +7,19 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestGrafanaLogin(t *testing.T) {
 	Convey("Login using Grafana DB", t, func() {
 		grafanaLoginScenario("When login with non-existing user", func(sc *grafanaLoginScenarioContext) {
+			setting.BasicAuthEnabled = true
 			sc.withNonExistingUser()
-			err := loginUsingGrafanaDB(sc.loginUserQuery)
+			enabled, err := loginUsingGrafanaDB(sc.loginUserQuery)
+
+			Convey("it should return true", func() {
+				So(enabled, ShouldBeTrue)
+			})
 
 			Convey("it should result in user not found error", func() {
 				So(err, ShouldEqual, models.ErrUserNotFound)
@@ -29,8 +35,13 @@ func TestGrafanaLogin(t *testing.T) {
 		})
 
 		grafanaLoginScenario("When login with invalid credentials", func(sc *grafanaLoginScenarioContext) {
+			setting.BasicAuthEnabled = true
 			sc.withInvalidPassword()
-			err := loginUsingGrafanaDB(sc.loginUserQuery)
+			enabled, err := loginUsingGrafanaDB(sc.loginUserQuery)
+
+			Convey("it should return true", func() {
+				So(enabled, ShouldBeTrue)
+			})
 
 			Convey("it should result in invalid credentials error", func() {
 				So(err, ShouldEqual, ErrInvalidCredentials)
@@ -46,8 +57,13 @@ func TestGrafanaLogin(t *testing.T) {
 		})
 
 		grafanaLoginScenario("When login with valid credentials", func(sc *grafanaLoginScenarioContext) {
+			setting.BasicAuthEnabled = true
 			sc.withValidCredentials()
-			err := loginUsingGrafanaDB(sc.loginUserQuery)
+			enabled, err := loginUsingGrafanaDB(sc.loginUserQuery)
+
+			Convey("it should return true", func() {
+				So(enabled, ShouldBeTrue)
+			})
 
 			Convey("it should not result in error", func() {
 				So(err, ShouldBeNil)
@@ -65,11 +81,38 @@ func TestGrafanaLogin(t *testing.T) {
 		})
 
 		grafanaLoginScenario("When login with disabled user", func(sc *grafanaLoginScenarioContext) {
+			setting.BasicAuthEnabled = true
 			sc.withDisabledUser()
-			err := loginUsingGrafanaDB(sc.loginUserQuery)
+			enabled, err := loginUsingGrafanaDB(sc.loginUserQuery)
+
+			Convey("it should return true", func() {
+				So(enabled, ShouldBeTrue)
+			})
 
 			Convey("it should return user is disabled error", func() {
 				So(err, ShouldEqual, ErrUserDisabled)
+			})
+
+			Convey("it should not call password validation", func() {
+				So(sc.validatePasswordCalled, ShouldBeFalse)
+			})
+
+			Convey("it should not populate user object", func() {
+				So(sc.loginUserQuery.User, ShouldBeNil)
+			})
+		})
+
+		grafanaLoginScenario("When basic auth is disabled", func(sc *grafanaLoginScenarioContext) {
+			setting.BasicAuthEnabled = false
+			sc.withDisabledUser()
+			enabled, err := loginUsingGrafanaDB(sc.loginUserQuery)
+
+			Convey("it should return false", func() {
+				So(enabled, ShouldBeFalse)
+			})
+
+			Convey("it should not result in error", func() {
+				So(err, ShouldBeNil)
 			})
 
 			Convey("it should not call password validation", func() {

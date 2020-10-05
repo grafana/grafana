@@ -12,9 +12,24 @@ import (
 
 func TestAuthenticateUser(t *testing.T) {
 	Convey("Authenticate user", t, func() {
+		authScenario("When a user authenticates with basic auth and ldap disabled", func(sc *authScenarioContext) {
+			mockLoginAttemptValidation(nil, sc)
+			mockLoginUsingGrafanaDB(false, nil, sc)
+			mockLoginUsingLDAP(false, nil, sc)
+
+			err := AuthenticateUser(sc.loginUserQuery)
+
+			Convey("it should result in", func() {
+				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
+				So(sc.ldapLoginWasCalled, ShouldBeTrue)
+				So(err, ShouldEqual, ErrNoAuthProvider)
+				So(sc.loginUserQuery.AuthModule, ShouldEqual, "")
+			})
+		})
+
 		authScenario("When a user authenticates without setting a password", func(sc *authScenarioContext) {
 			mockLoginAttemptValidation(nil, sc)
-			mockLoginUsingGrafanaDB(nil, sc)
+			mockLoginUsingGrafanaDB(true, nil, sc)
 			mockLoginUsingLDAP(false, nil, sc)
 
 			loginQuery := models.LoginUserQuery{
@@ -33,7 +48,7 @@ func TestAuthenticateUser(t *testing.T) {
 
 		authScenario("When a user authenticates having too many login attempts", func(sc *authScenarioContext) {
 			mockLoginAttemptValidation(ErrTooManyLoginAttempts, sc)
-			mockLoginUsingGrafanaDB(nil, sc)
+			mockLoginUsingGrafanaDB(true, nil, sc)
 			mockLoginUsingLDAP(true, nil, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
@@ -51,7 +66,7 @@ func TestAuthenticateUser(t *testing.T) {
 
 		authScenario("When grafana user authenticate with valid credentials", func(sc *authScenarioContext) {
 			mockLoginAttemptValidation(nil, sc)
-			mockLoginUsingGrafanaDB(nil, sc)
+			mockLoginUsingGrafanaDB(true, nil, sc)
 			mockLoginUsingLDAP(true, ErrInvalidCredentials, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
@@ -70,7 +85,7 @@ func TestAuthenticateUser(t *testing.T) {
 		authScenario("When grafana user authenticate and unexpected error occurs", func(sc *authScenarioContext) {
 			customErr := errors.New("custom")
 			mockLoginAttemptValidation(nil, sc)
-			mockLoginUsingGrafanaDB(customErr, sc)
+			mockLoginUsingGrafanaDB(true, customErr, sc)
 			mockLoginUsingLDAP(true, ErrInvalidCredentials, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
@@ -88,7 +103,7 @@ func TestAuthenticateUser(t *testing.T) {
 
 		authScenario("When a non-existing grafana user authenticate and ldap disabled", func(sc *authScenarioContext) {
 			mockLoginAttemptValidation(nil, sc)
-			mockLoginUsingGrafanaDB(models.ErrUserNotFound, sc)
+			mockLoginUsingGrafanaDB(true, models.ErrUserNotFound, sc)
 			mockLoginUsingLDAP(false, nil, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
@@ -106,7 +121,7 @@ func TestAuthenticateUser(t *testing.T) {
 
 		authScenario("When a non-existing grafana user authenticate and invalid ldap credentials", func(sc *authScenarioContext) {
 			mockLoginAttemptValidation(nil, sc)
-			mockLoginUsingGrafanaDB(models.ErrUserNotFound, sc)
+			mockLoginUsingGrafanaDB(false, models.ErrUserNotFound, sc)
 			mockLoginUsingLDAP(true, ldap.ErrInvalidCredentials, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
@@ -124,7 +139,7 @@ func TestAuthenticateUser(t *testing.T) {
 
 		authScenario("When a non-existing grafana user authenticate and valid ldap credentials", func(sc *authScenarioContext) {
 			mockLoginAttemptValidation(nil, sc)
-			mockLoginUsingGrafanaDB(models.ErrUserNotFound, sc)
+			mockLoginUsingGrafanaDB(false, models.ErrUserNotFound, sc)
 			mockLoginUsingLDAP(true, nil, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
@@ -143,7 +158,7 @@ func TestAuthenticateUser(t *testing.T) {
 		authScenario("When a non-existing grafana user authenticate and ldap returns unexpected error", func(sc *authScenarioContext) {
 			customErr := errors.New("custom")
 			mockLoginAttemptValidation(nil, sc)
-			mockLoginUsingGrafanaDB(models.ErrUserNotFound, sc)
+			mockLoginUsingGrafanaDB(false, models.ErrUserNotFound, sc)
 			mockLoginUsingLDAP(true, customErr, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
@@ -161,7 +176,7 @@ func TestAuthenticateUser(t *testing.T) {
 
 		authScenario("When grafana user authenticate with invalid credentials and invalid ldap credentials", func(sc *authScenarioContext) {
 			mockLoginAttemptValidation(nil, sc)
-			mockLoginUsingGrafanaDB(ErrInvalidCredentials, sc)
+			mockLoginUsingGrafanaDB(true, ErrInvalidCredentials, sc)
 			mockLoginUsingLDAP(true, ldap.ErrInvalidCredentials, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
@@ -188,10 +203,10 @@ type authScenarioContext struct {
 
 type authScenarioFunc func(sc *authScenarioContext)
 
-func mockLoginUsingGrafanaDB(err error, sc *authScenarioContext) {
-	loginUsingGrafanaDB = func(query *models.LoginUserQuery) error {
+func mockLoginUsingGrafanaDB(enabled bool, err error, sc *authScenarioContext) {
+	loginUsingGrafanaDB = func(query *models.LoginUserQuery) (bool, error) {
 		sc.grafanaLoginWasCalled = true
-		return err
+		return enabled, err
 	}
 }
 
