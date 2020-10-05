@@ -1,5 +1,5 @@
 // Libraries
-import React, { ChangeEvent, FormEvent, useEffect, useMemo } from 'react';
+import React, { ChangeEvent, FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 // Components
@@ -39,9 +39,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     return datasource.getScenarios();
   }, []);
 
-  useEffect(() => {
+  const onUpdate = (query: TestDataQuery) => {
+    onChange(query);
     onRunQuery();
-  }, [query]);
+  };
 
   const currentScenario = useMemo(() => scenarioList?.find(scenario => scenario.id === query.scenarioId), [
     scenarioList,
@@ -62,7 +63,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       stringInput = 'datasources';
     }
 
-    onChange({
+    onUpdate({
       ...query,
       scenarioId: item.value!,
       stringInput,
@@ -79,17 +80,17 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       newValue = { [name]: Number(value) };
     }
 
-    onChange({ ...query, ...newValue });
+    onUpdate({ ...query, ...newValue });
   };
 
   const onFieldChange = (field: string) => (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target as HTMLInputElement;
     const formattedValue = numberFields.includes(name) ? Number(value) : value;
-    onChange({ ...query, [field]: { ...query[field as keyof TestDataQuery], [name]: formattedValue } });
+    onUpdate({ ...query, [field]: { ...query[field as keyof TestDataQuery], [name]: formattedValue } });
   };
 
   const onEndPointChange = ({ value }: SelectableValue) => {
-    onChange({ ...query, stringInput: value });
+    onUpdate({ ...query, stringInput: value });
   };
 
   const onStreamClientChange = onFieldChange('stream');
@@ -174,7 +175,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         )}
       </InlineFieldRow>
 
-      {scenarioId === 'manual_entry' && <ManualEntryEditor onChange={onChange} query={query} onRunQuery={onRunQuery} />}
+      {scenarioId === 'manual_entry' && <ManualEntryEditor onChange={onUpdate} query={query} onRunQuery={onRunQuery} />}
       {scenarioId === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
       {scenarioId === 'streaming_client' && <StreamingClientEditor onChange={onStreamClientChange} query={query} />}
       {scenarioId === 'logs' && (
