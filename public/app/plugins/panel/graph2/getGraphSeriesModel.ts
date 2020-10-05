@@ -12,8 +12,7 @@ import {
   getSeriesTimeStep,
   TimeZone,
   hasMsResolution,
-  MS_DATE_TIME_FORMAT,
-  DEFAULT_DATE_TIME_FORMAT,
+  systemDateFormats,
   FieldColor,
   FieldColorMode,
   FieldConfigSource,
@@ -117,7 +116,7 @@ export const getGraphSeriesModel = (
             ...timeField,
             type: timeField.type,
             config: {
-              unit: `time:${useMsDateFormat ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT}`,
+              unit: systemDateFormats.getTimeFieldUnit(useMsDateFormat),
             },
           },
         });

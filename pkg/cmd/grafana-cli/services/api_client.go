@@ -146,7 +146,11 @@ func sendRequest(client http.Client, repoUrl string, subPaths ...string) (io.Rea
 }
 
 func createRequest(repoUrl string, subPaths ...string) (*http.Request, error) {
-	u, _ := url.Parse(repoUrl)
+	u, err := url.Parse(repoUrl)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, v := range subPaths {
 		u.Path = path.Join(u.Path, v)
 	}
@@ -170,7 +174,7 @@ func handleResponse(res *http.Response) (io.ReadCloser, error) {
 	}
 
 	if res.StatusCode/100 != 2 && res.StatusCode/100 != 4 {
-		return nil, fmt.Errorf("Api returned invalid status: %s", res.Status)
+		return nil, fmt.Errorf("API returned invalid status: %s", res.Status)
 	}
 
 	if res.StatusCode/100 == 4 {

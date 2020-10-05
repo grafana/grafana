@@ -19,17 +19,6 @@ func init() {
 		Description: "Sends notifications to Kafka Rest Proxy",
 		Heading:     "Kafka settings",
 		Factory:     NewKafkaNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">Kafka settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">Kafka REST Proxy</span>
-        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.kafkaRestProxy" placeholder="http://localhost:8082"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">Topic</span>
-        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.kafkaTopic" placeholder="topic1"></input>
-      </div>
-    `,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Kafka REST Proxy",
@@ -94,7 +83,7 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	records := make([]interface{}, 1)
 
 	bodyJSON := simplejson.New()
-	//get alert state in the kafka output issue #11401
+	// get alert state in the kafka output issue #11401
 	bodyJSON.Set("alert_state", state)
 	bodyJSON.Set("description", evalContext.Rule.Name+" - "+evalContext.Rule.Message)
 	bodyJSON.Set("client", "Grafana")

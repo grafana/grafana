@@ -50,5 +50,5 @@ Otherwise the dashboard will not be updated automatically for other Grafana user
 
 ## Using test data in issues
 
-If you post an issue on github regarding time series data or rendering of time series data we strongly advice you to use this data source to replicate the data.
+If you post an issue on Github regarding time series data or rendering of time series data, we strongly advise you to use this data source to replicate the data.
 That makes it much easier for the developers to replicate and solve the issue you have.

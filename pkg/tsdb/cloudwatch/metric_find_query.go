@@ -43,7 +43,7 @@ var customMetricsMetricsMap = make(map[string]map[string]map[string]*customMetri
 var customMetricsDimensionsMap = make(map[string]map[string]map[string]*customMetricsCache)
 var metricsMap = map[string][]string{
 	"AWS/ACMPrivateCA":      {"CRLGenerated", "Failure", "MisconfiguredCRLBucket", "Success", "Time"},
-	"AWS/AmazonMQ":          {"ConsumerCount", "CpuCreditBalance", "CpuUtilization", "CurrentConnectionsCount", "DequeueCount", "DispatchCount", "EnqueueCount", "EnqueueTime", "ExpiredCount", "HeapUsage", "InflightCount", "JournalFilesForFastRecovery", "JournalFilesForFullRecovery", "MemoryUsage", "NetworkIn", "NetworkOut", "OpenTransactionsCount", "ProducerCount", "QueueSize", "StorePercentUsage", "TotalConsumerCount", "TotalMessageCount", "TotalProducerCount"},
+	"AWS/AmazonMQ":          {"BurstBalance", "ConsumerCount", "CpuCreditBalance", "CpuUtilization", "CurrentConnectionsCount", "DequeueCount", "DispatchCount", "EnqueueCount", "EnqueueTime", "EstablishedConnectionsCount", "ExpiredCount", "HeapUsage", "InactiveDurableTopicSubscribersCount", "InFlightCount", "JobSchedulerStorePercentUsage", "JournalFilesForFastRecovery", "JournalFilesForFullRecovery", "MemoryUsage", "NetworkIn", "NetworkOut", "OpenTransactionCount", "ProducerCount", "QueueSize", "ReceiveCount", "StorePercentUsage", "TempPercentUsage", "TotalConsumerCount", "TotalDequeueCount", "TotalEnqueueCount", "TotalMessageCount", "TotalProducerCount", "VolumeReadOps", "VolumeWriteOps"},
 	"AWS/ApiGateway":        {"4XXError", "5XXError", "CacheHitCount", "CacheMissCount", "Count", "IntegrationLatency", "Latency"},
 	"AWS/AppStream":         {"ActualCapacity", "AvailableCapacity", "CapacityUtilization", "DesiredCapacity", "InUseCapacity", "InsufficientCapacityError", "PendingCapacity", "RunningCapacity"},
 	"AWS/AppSync":           {"4XXError", "5XXError", "Latency"},
@@ -137,7 +137,7 @@ var metricsMap = map[string][]string{
 
 var dimensionsMap = map[string][]string{
 	"AWS/ACMPrivateCA":      {},
-	"AWS/AmazonMQ":          {"Broker", "Queue", "Topic"},
+	"AWS/AmazonMQ":          {"Broker", "NetworkConnector", "Queue", "Topic"},
 	"AWS/ApiGateway":        {"ApiName", "Method", "Resource", "Stage"},
 	"AWS/AppStream":         {"Fleet"},
 	"AWS/AppSync":           {"GraphQLAPIId"},
@@ -694,7 +694,7 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 			resp.ResourceTagMappingList = append(resp.ResourceTagMappingList, page.ResourceTagMappingList...)
 			return !lastPage
 		}); err != nil {
-		return nil, fmt.Errorf("failed to call tags:GetResources, %w", err)
+		return nil, fmt.Errorf("failed to call tag:GetResources, %w", err)
 	}
 
 	return &resp, nil

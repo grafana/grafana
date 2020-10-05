@@ -1,7 +1,7 @@
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
-import { AppEvents } from '@grafana/data';
+import { AppEvents, DataQueryErrorType } from '@grafana/data';
 
 import { BackendSrv } from '../services/backend_srv';
 import { Emitter } from '../utils/emitter';
@@ -83,21 +83,22 @@ describe('backendSrv', () => {
   describe('parseRequestOptions', () => {
     it.each`
       retry        | url                                      | headers                           | orgId        | noBackendCache | expected
-      ${undefined} | ${'http://localhost:3000/api/dashboard'} | ${undefined}                      | ${undefined} | ${undefined}   | ${{ retry: 0, url: 'http://localhost:3000/api/dashboard' }}
-      ${1}         | ${'http://localhost:3000/api/dashboard'} | ${{ Authorization: 'Some Auth' }} | ${1}         | ${true}        | ${{ retry: 1, url: 'http://localhost:3000/api/dashboard', headers: { Authorization: 'Some Auth' } }}
-      ${undefined} | ${'api/dashboard'}                       | ${undefined}                      | ${undefined} | ${undefined}   | ${{ retry: 0, url: 'api/dashboard' }}
-      ${undefined} | ${'/api/dashboard'}                      | ${undefined}                      | ${undefined} | ${undefined}   | ${{ retry: 0, url: 'api/dashboard' }}
-      ${undefined} | ${'/api/dashboard/'}                     | ${undefined}                      | ${undefined} | ${undefined}   | ${{ retry: 0, url: 'api/dashboard/' }}
-      ${undefined} | ${'/api/dashboard/'}                     | ${{ Authorization: 'Some Auth' }} | ${undefined} | ${undefined}   | ${{ retry: 0, url: 'api/dashboard/', headers: { 'X-DS-Authorization': 'Some Auth' } }}
-      ${undefined} | ${'/api/dashboard/'}                     | ${{ Authorization: 'Some Auth' }} | ${1}         | ${undefined}   | ${{ retry: 0, url: 'api/dashboard/', headers: { 'X-DS-Authorization': 'Some Auth', 'X-Grafana-Org-Id': 1 } }}
-      ${undefined} | ${'/api/dashboard/'}                     | ${{ Authorization: 'Some Auth' }} | ${1}         | ${true}        | ${{ retry: 0, url: 'api/dashboard/', headers: { 'X-DS-Authorization': 'Some Auth', 'X-Grafana-Org-Id': 1, 'X-Grafana-NoCache': 'true' } }}
-      ${1}         | ${'/api/dashboard/'}                     | ${undefined}                      | ${undefined} | ${undefined}   | ${{ retry: 1, url: 'api/dashboard/' }}
-      ${1}         | ${'/api/dashboard/'}                     | ${{ Authorization: 'Some Auth' }} | ${undefined} | ${undefined}   | ${{ retry: 1, url: 'api/dashboard/', headers: { 'X-DS-Authorization': 'Some Auth' } }}
-      ${1}         | ${'/api/dashboard/'}                     | ${{ Authorization: 'Some Auth' }} | ${1}         | ${undefined}   | ${{ retry: 1, url: 'api/dashboard/', headers: { 'X-DS-Authorization': 'Some Auth', 'X-Grafana-Org-Id': 1 } }}
-      ${1}         | ${'/api/dashboard/'}                     | ${{ Authorization: 'Some Auth' }} | ${1}         | ${true}        | ${{ retry: 1, url: 'api/dashboard/', headers: { 'X-DS-Authorization': 'Some Auth', 'X-Grafana-Org-Id': 1, 'X-Grafana-NoCache': 'true' } }}
+      ${undefined} | ${'http://localhost:3000/api/dashboard'} | ${undefined}                      | ${undefined} | ${undefined}   | ${{ hideFromInspector: false, retry: 0, url: 'http://localhost:3000/api/dashboard' }}
+      ${1}         | ${'http://localhost:3000/api/dashboard'} | ${{ Authorization: 'Some Auth' }} | ${1}         | ${true}        | ${{ hideFromInspector: false, retry: 1, url: 'http://localhost:3000/api/dashboard', headers: { Authorization: 'Some Auth' } }}
+      ${undefined} | ${'api/dashboard'}                       | ${undefined}                      | ${undefined} | ${undefined}   | ${{ hideFromInspector: true, retry: 0, url: 'api/dashboard' }}
+      ${undefined} | ${'/api/dashboard'}                      | ${undefined}                      | ${undefined} | ${undefined}   | ${{ hideFromInspector: true, retry: 0, url: 'api/dashboard' }}
+      ${undefined} | ${'/api/dashboard/'}                     | ${undefined}                      | ${undefined} | ${undefined}   | ${{ hideFromInspector: true, retry: 0, url: 'api/dashboard/' }}
+      ${undefined} | ${'/api/dashboard/'}                     | ${{ Authorization: 'Some Auth' }} | ${undefined} | ${undefined}   | ${{ hideFromInspector: true, retry: 0, url: 'api/dashboard/', headers: { 'X-DS-Authorization': 'Some Auth' } }}
+      ${undefined} | ${'/api/dashboard/'}                     | ${{ Authorization: 'Some Auth' }} | ${1}         | ${undefined}   | ${{ hideFromInspector: true, retry: 0, url: 'api/dashboard/', headers: { 'X-DS-Authorization': 'Some Auth', 'X-Grafana-Org-Id': 1 } }}
+      ${undefined} | ${'/api/dashboard/'}                     | ${{ Authorization: 'Some Auth' }} | ${1}         | ${true}        | ${{ hideFromInspector: true, retry: 0, url: 'api/dashboard/', headers: { 'X-DS-Authorization': 'Some Auth', 'X-Grafana-Org-Id': 1, 'X-Grafana-NoCache': 'true' } }}
+      ${1}         | ${'/api/dashboard/'}                     | ${undefined}                      | ${undefined} | ${undefined}   | ${{ hideFromInspector: true, retry: 1, url: 'api/dashboard/' }}
+      ${1}         | ${'/api/dashboard/'}                     | ${{ Authorization: 'Some Auth' }} | ${undefined} | ${undefined}   | ${{ hideFromInspector: true, retry: 1, url: 'api/dashboard/', headers: { 'X-DS-Authorization': 'Some Auth' } }}
+      ${1}         | ${'/api/dashboard/'}                     | ${{ Authorization: 'Some Auth' }} | ${1}         | ${undefined}   | ${{ hideFromInspector: true, retry: 1, url: 'api/dashboard/', headers: { 'X-DS-Authorization': 'Some Auth', 'X-Grafana-Org-Id': 1 } }}
+      ${1}         | ${'/api/dashboard/'}                     | ${{ Authorization: 'Some Auth' }} | ${1}         | ${true}        | ${{ hideFromInspector: true, retry: 1, url: 'api/dashboard/', headers: { 'X-DS-Authorization': 'Some Auth', 'X-Grafana-Org-Id': 1, 'X-Grafana-NoCache': 'true' } }}
+      ${undefined} | ${'api/datasources/proxy'}               | ${undefined}                      | ${undefined} | ${undefined}   | ${{ hideFromInspector: false, retry: 0, url: 'api/datasources/proxy' }}
     `(
       "when called with retry: '$retry', url: '$url' and orgId: '$orgId' then result should be '$expected'",
-      ({ retry, url, headers, orgId, noBackendCache, expected }) => {
+      async ({ retry, url, headers, orgId, noBackendCache, expected }) => {
         const srv = new BackendSrv({
           contextSrv: {
             user: {
@@ -107,7 +108,7 @@ describe('backendSrv', () => {
         } as any);
 
         if (noBackendCache) {
-          srv.withNoBackendCache(async () => {
+          await srv.withNoBackendCache(async () => {
             expect(srv['parseRequestOptions']({ retry, url, headers })).toEqual(expected);
           });
         } else {
@@ -298,58 +299,6 @@ describe('backendSrv', () => {
   });
 
   describe('datasourceRequest', () => {
-    describe('when making a successful call and silent is true', () => {
-      it('then it should not emit message', async () => {
-        const url = 'http://localhost:3000/api/some-mock';
-        const { backendSrv, appEventsMock, expectRequestCallChain } = getTestContext({ url });
-        const options = { url, method: 'GET', silent: true };
-        const result = await backendSrv.datasourceRequest(options);
-
-        expect(result).toEqual({
-          data: { test: 'hello world' },
-          ok: true,
-          redirected: false,
-          status: 200,
-          statusText: 'Ok',
-          type: 'basic',
-          url,
-          config: options,
-        });
-
-        expect(appEventsMock.emit).not.toHaveBeenCalled();
-        expectRequestCallChain({ url, method: 'GET', silent: true });
-      });
-    });
-
-    describe('when making a successful call and silent is not defined', () => {
-      it('then it should not emit message', async () => {
-        const url = 'http://localhost:3000/api/some-mock';
-        const { backendSrv, expectRequestCallChain } = getTestContext({ url });
-        const options = { url, method: 'GET' };
-
-        let inspectorPacket: any = null;
-        backendSrv.getInspectorStream().subscribe({
-          next: rsp => (inspectorPacket = rsp),
-        });
-
-        const result = await backendSrv.datasourceRequest(options);
-        const expectedResult = {
-          data: { test: 'hello world' },
-          ok: true,
-          redirected: false,
-          status: 200,
-          statusText: 'Ok',
-          type: 'basic',
-          url,
-          config: options,
-        };
-
-        expect(result).toEqual(expectedResult);
-        expect(inspectorPacket).toEqual(expectedResult);
-        expectRequestCallChain({ url, method: 'GET' });
-      });
-    });
-
     describe('when called with the same requestId twice', () => {
       it('then it should cancel the first call and the first call should be unsubscribed', async () => {
         const url = '/api/dashboard/';
@@ -403,6 +352,7 @@ describe('backendSrv', () => {
         expect(unsubscribe).toHaveBeenCalledTimes(1);
 
         expect(slowError).toEqual({
+          type: DataQueryErrorType.Cancelled,
           cancelled: true,
           data: null,
           status: -1,
@@ -590,7 +540,7 @@ describe('backendSrv', () => {
           catchedError = err;
         }
 
-        expect(catchedError.cancelled).toEqual(true);
+        expect(catchedError.type).toEqual(DataQueryErrorType.Cancelled);
         expect(catchedError.statusText).toEqual('Request was aborted');
         expect(unsubscribe).toHaveBeenCalledTimes(2);
       });

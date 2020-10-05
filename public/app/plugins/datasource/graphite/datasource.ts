@@ -593,6 +593,9 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     const query = ({
       panelId: 3,
       rangeRaw: { from: 'now-1h', to: 'now' },
+      range: {
+        raw: { from: 'now-1h', to: 'now' },
+      },
       targets: [{ target: 'constantLine(100)' }],
       maxDataPoints: 300,
     } as unknown) as DataQueryRequest<GraphiteQuery>;

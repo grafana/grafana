@@ -6,7 +6,7 @@ aliases = ["/docs/grafana/latest/plugins/development/", "/docs/grafana/latest/pl
 
 # Legacy plugins
 
-> **Note**: Since Grafana 7.0, writing plugins using Angular is no longer recommended. If you're looking to build a new plugin, refer to [Plugins]({{< relref "../_index.md" >}}).
+> **Note:** Since Grafana 7.0, writing plugins using Angular is no longer recommended. If you're looking to build a new plugin, refer to [Plugins]({{< relref "../_index.md" >}}).
 
 You can extend Grafana by writing your own plugins and then share them with other users in [our plugin repository](https://grafana.com/plugins).
 

@@ -316,7 +316,7 @@ describe('shared actions', () => {
 
   describe('changeVariableName', () => {
     describe('when changeVariableName is dispatched with the same name', () => {
-      it('then no actions are dispatched', () => {
+      it('then the correct actions are dispatched', () => {
         const textbox = textboxBuilder()
           .withId('textbox')
           .withName('textbox')
@@ -333,10 +333,11 @@ describe('shared actions', () => {
             addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
           )
           .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), constant.name), true)
-          .thenNoActionsWhereDispatched();
+          .thenDispatchedActionsShouldEqual(
+            changeVariableNameSucceeded({ type: 'constant', id: 'constant', data: { newName: 'constant' } })
+          );
       });
     });
-
     describe('when changeVariableName is dispatched with an unique name', () => {
       it('then the correct actions are dispatched', () => {
         const textbox = textboxBuilder()

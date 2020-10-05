@@ -15,7 +15,7 @@ import { getPanelInspectorStyles } from '../dashboard/components/Inspector/style
 
 function stripPropsFromResponse(response: any) {
   // ignore silent requests
-  if (response.config?.silent) {
+  if (response.config?.hideFromInspector) {
     return {};
   }
 

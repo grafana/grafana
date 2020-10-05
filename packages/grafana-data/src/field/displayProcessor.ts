@@ -4,10 +4,10 @@ import _ from 'lodash';
 // Types
 import { Field, FieldType } from '../types/dataFrame';
 import { GrafanaTheme } from '../types/theme';
-import { DisplayProcessor, DisplayValue, DecimalCount, DecimalInfo } from '../types/displayValue';
+import { DecimalCount, DecimalInfo, DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
-import { DEFAULT_DATE_TIME_FORMAT } from '../datetime';
+import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
 
@@ -22,7 +22,9 @@ interface DisplayProcessorOptions {
 // Reasonable units for time
 const timeFormats: KeyValue<boolean> = {
   dateTimeAsIso: true,
+  dateTimeAsIsoSmart: true,
   dateTimeAsUS: true,
+  dateTimeAsUSSmart: true,
   dateTimeFromNow: true,
 };
 
@@ -30,27 +32,30 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   if (!options || _.isEmpty(options) || !options.field) {
     return toStringProcessor;
   }
+
   const { field } = options;
   const config = field.config ?? {};
+  let unit = config.unit;
+  let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
 
-  if (field.type === FieldType.time) {
-    if (config.unit && timeFormats[config.unit]) {
-      // Currently selected unit is valid for time fields
-    } else if (config.unit && config.unit.startsWith('time:')) {
-      // Also OK
-    } else {
-      config.unit = `time:${DEFAULT_DATE_TIME_FORMAT}`;
-    }
+  if (field.type === FieldType.time && !hasDateUnit) {
+    unit = `dateTimeAsSystem`;
+    hasDateUnit = true;
   }
 
-  const formatFunc = getValueFormat(config.unit || 'none');
+  const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field as Field, options.theme);
 
   return (value: any) => {
     const { mappings } = config;
+    const isStringUnit = unit === 'string';
+
+    if (hasDateUnit && typeof value === 'string') {
+      value = dateTime(value).valueOf();
+    }
 
     let text = _.toString(value);
-    let numeric = toNumber(value);
+    let numeric = isStringUnit ? NaN : toNumber(value);
     let prefix: string | undefined = undefined;
     let suffix: string | undefined = undefined;
     let shouldFormat = true;
@@ -60,7 +65,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
       if (mappedValue) {
         text = mappedValue.text;
-        const v = toNumber(text);
+        const v = isStringUnit ? NaN : toNumber(text);
 
         if (!isNaN(v)) {
           numeric = v;
@@ -160,4 +165,11 @@ export function getDecimalsForValue(value: number, decimalOverride?: DecimalCoun
   const scaledDecimals = decimals - Math.floor(Math.log(size) / Math.LN10) + 2;
 
   return { decimals, scaledDecimals };
+}
+
+export function getRawDisplayProcessor(): DisplayProcessor {
+  return (value: any) => ({
+    text: `${value}`,
+    numeric: (null as unknown) as number,
+  });
 }

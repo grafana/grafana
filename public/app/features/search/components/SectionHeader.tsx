@@ -41,19 +41,26 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
   );
 
   return (
-    <div className={styles.wrapper} onClick={onSectionExpand}>
+    <div
+      className={styles.wrapper}
+      onClick={onSectionExpand}
+      aria-label={section.expanded ? `Collapse folder ${section.id}` : `Expand folder ${section.id}`}
+    >
       <SearchCheckbox editable={editable} checked={section.checked} onClick={onSectionChecked} />
 
       <div className={styles.icon}>
         <Icon name={getSectionIcon(section)} />
       </div>
 
-      <span className={styles.text}>{section.title}</span>
-      {section.url && (
-        <a href={section.url} className={styles.link}>
-          <Icon name="cog" />
-        </a>
-      )}
+      <div className={styles.text}>
+        {section.title}
+        {section.url && (
+          <a href={section.url} className={styles.link}>
+            <span className={styles.separator}>|</span> <Icon name="folder-upload" /> Go to folder
+          </a>
+        )}
+      </div>
+
       {section.itemsFetching ? <Spinner /> : <Icon name={section.expanded ? 'angle-down' : 'angle-right'} />}
     </div>
   );
@@ -96,6 +103,9 @@ const getSectionHeaderStyles = stylesFactory((theme: GrafanaTheme, selected = fa
       color: ${theme.colors.textWeak};
       opacity: 0;
       transition: opacity 150ms ease-in-out;
+    `,
+    separator: css`
+      margin-right: 6px;
     `,
   };
 });

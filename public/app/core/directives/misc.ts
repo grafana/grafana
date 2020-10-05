@@ -14,7 +14,7 @@ function tip($compile: any) {
         '<i class="grafana-tip fa fa-' +
         (attrs.icon || 'question-circle') +
         '" bs-tooltip="\'' +
-        kbn.addslashes(elem.text()) +
+        kbn.addSlashes(elem.text()) +
         '\'"></i>';
       _t = _t.replace(/{/g, '\\{').replace(/}/g, '\\}');
       elem.replaceWith($compile(angular.element(_t))(scope));

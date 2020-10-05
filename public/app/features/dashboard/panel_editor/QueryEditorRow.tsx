@@ -31,12 +31,13 @@ interface Props {
   data: PanelData;
   query: DataQuery;
   dashboard: DashboardModel;
-  onAddQuery: (query?: DataQuery) => void;
-  onRemoveQuery: (query: DataQuery) => void;
-  onMoveQuery: (query: DataQuery, direction: number) => void;
-  onChange: (query: DataQuery) => void;
   dataSourceValue: string | null;
   inMixedMode?: boolean;
+  id: string;
+  index: number;
+  onAddQuery: (query?: DataQuery) => void;
+  onRemoveQuery: (query: DataQuery) => void;
+  onChange: (query: DataQuery) => void;
 }
 
 interface State {
@@ -230,7 +231,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const isDisabled = query.hide;
 
     return (
-      <HorizontalGroup>
+      <HorizontalGroup width="auto">
         {hasTextEditMode && (
           <QueryOperationAction
             title="Toggle text edit mode"
@@ -240,13 +241,6 @@ export class QueryEditorRow extends PureComponent<Props, State> {
             }}
           />
         )}
-        <QueryOperationAction
-          title="Move query down"
-          icon="arrow-down"
-          onClick={() => this.props.onMoveQuery(query, 1)}
-        />
-        <QueryOperationAction title="Move query up" icon="arrow-up" onClick={() => this.props.onMoveQuery(query, -1)} />
-
         <QueryOperationAction title="Duplicate query" icon="copy" onClick={this.onCopyQuery} />
         <QueryOperationAction
           title="Disable/enable query"
@@ -276,7 +270,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   render() {
-    const { query } = this.props;
+    const { query, id, index } = this.props;
     const { datasource } = this.state;
     const isDisabled = query.hide;
 
@@ -293,7 +287,14 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
     return (
       <div aria-label={selectors.components.QueryEditorRows.rows}>
-        <QueryOperationRow title={this.renderTitle} actions={this.renderActions} onOpen={this.onOpen}>
+        <QueryOperationRow
+          id={id}
+          draggable={true}
+          index={index}
+          title={this.renderTitle}
+          actions={this.renderActions}
+          onOpen={this.onOpen}
+        >
           <div className={rowClasses}>
             <ErrorBoundaryAlert>{editor}</ErrorBoundaryAlert>
           </div>

@@ -40,7 +40,7 @@ module.exports.pitch = function pitch(remainingRequest) {
     // https://github.com/webpack/webpack/blob/master/lib/WebpackOptionsApply.js
     new WebWorkerTemplatePlugin(outputOptions),
     new LoaderTargetPlugin('webworker'),
-    ...((this.target === 'web') || (this.target === 'webworker') ? [] : [new NodeTargetPlugin()]),
+    ...(this.target === 'web' || this.target === 'webworker' ? [] : [new NodeTargetPlugin()]),
 
     // https://github.com/webpack-contrib/worker-loader/issues/95#issuecomment-352856617
     ...(compilerOptions.externals ? [new ExternalsPlugin(compilerOptions.externals)] : []),
@@ -52,19 +52,29 @@ module.exports.pitch = function pitch(remainingRequest) {
 
   const subCache = `subcache ${__dirname} ${remainingRequest}`;
 
-  childCompiler.plugin('compilation', (compilation) => {
-    if (!compilation.cache) { return; }
-    if (!(subCache in compilation.cache)) { Object.assign(compilation.cache, { [subCache]: {} }); }
+  childCompiler.plugin('compilation', compilation => {
+    if (!compilation.cache) {
+      return;
+    }
+    if (!(subCache in compilation.cache)) {
+      Object.assign(compilation.cache, { [subCache]: {} });
+    }
     Object.assign(compilation, { cache: compilation.cache[subCache] });
   });
 
   const callback = this.async();
 
   childCompiler.runAsChild((error, entries, compilation) => {
-    if (error) { return callback(error); }
-    if (entries.length === 0) { return callback(null, null); }
+    if (error) {
+      return callback(error);
+    }
+    if (entries.length === 0) {
+      return callback(null, null);
+    }
     const mainFilename = entries[0].files[0];
-    if (emit === false) { delete currentCompilation.assets[mainFilename]; }
+    if (emit === false) {
+      delete currentCompilation.assets[mainFilename];
+    }
     callback(null, compilation.assets[mainFilename].source(), null, {
       [COMPILATION_METADATA]: entries[0].files,
     });
@@ -72,8 +82,12 @@ module.exports.pitch = function pitch(remainingRequest) {
 };
 
 function getOutputFilename(options, { target }) {
-  if (!options) { return { filename: `[hash].${target}.js`, options: undefined }; }
-  if (typeof options === 'string') { return { filename: options, options: undefined }; }
+  if (!options) {
+    return { filename: `[hash].${target}.js`, options: undefined };
+  }
+  if (typeof options === 'string') {
+    return { filename: options, options: undefined };
+  }
   if (typeof options === 'object') {
     return {
       filename: options.filename,

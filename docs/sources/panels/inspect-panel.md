@@ -21,8 +21,8 @@ The panel inspector consists of four tabs:
 
 * **Data tab -** Shows the raw data returned by the query with transformations applied. Field options such as overrides and value mappings are not applied by default.
 * **Stats tab -** Shows how long your query takes and how much it returns.
-* **JSON tab -** Allows you to view and copy the panel JSON, panel data JSON, and data frame structure JSON. This is useful if you are provisioning or administering Grafana. 
-* **Query tab -** Shows you the requests to the server sent when Grafana queries the data source. 
+* **JSON tab -** Allows you to view and copy the panel JSON, panel data JSON, and data frame structure JSON. This is useful if you are provisioning or administering Grafana.
+* **Query tab -** Shows you the requests to the server sent when Grafana queries the data source.
 
 > **Note:** Not all panel types include all four tabs. For example, dashboard list panels do not have raw data to inspect, so they do not display the Stats, Data, or Query tabs.
 
@@ -48,7 +48,7 @@ View raw query results in a table. This is the data returned by the query with t
 1. If your panel contains multiple queries or queries multiple nodes, then you have additional options.
 * **Select result -** Choose which result set data you want to view.
 * **Transform data**
-  * **Join by time -** View raw data from all your queries at once, one result set per column. Click a column heading to reorder the data.
+  - **Join by time -** View raw data from all your queries at once, one result set per column. Click a column heading to reorder the data.
   
   View raw query results in a table with field options and options overrides applied:
   1. Open the **Data** tab in panel inspector.

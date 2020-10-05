@@ -6,7 +6,7 @@ import { PanelProps, renderMarkdown, textUtil } from '@grafana/data';
 import config from 'app/core/config';
 // Types
 import { TextOptions } from './types';
-import { stylesFactory, CustomScrollbar } from '@grafana/ui';
+import { CustomScrollbar, stylesFactory } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 
@@ -39,25 +39,19 @@ export class TextPanel extends PureComponent<Props, State> {
   }
 
   prepareHTML(html: string): string {
-    const { replaceVariables } = this.props;
-
-    html = replaceVariables(html, {}, 'html');
-
-    return config.disableSanitizeHtml ? html : textUtil.sanitize(html);
-  }
-
-  prepareText(content: string): string {
-    return this.prepareHTML(
-      content
-        .replace(/&/g, '&amp;')
-        .replace(/>/g, '&gt;')
-        .replace(/</g, '&lt;')
-        .replace(/\n/g, '<br/>')
-    );
+    return this.interpolateAndSanitizeString(html);
   }
 
   prepareMarkdown(content: string): string {
-    return this.prepareHTML(renderMarkdown(content));
+    return renderMarkdown(this.interpolateAndSanitizeString(content));
+  }
+
+  interpolateAndSanitizeString(content: string): string {
+    const { replaceVariables } = this.props;
+
+    content = replaceVariables(content, {}, 'html');
+
+    return config.disableSanitizeHtml ? content : textUtil.sanitize(content);
   }
 
   processContent(options: TextOptions): string {
@@ -70,11 +64,8 @@ export class TextPanel extends PureComponent<Props, State> {
     if (mode === 'markdown') {
       return this.prepareMarkdown(content);
     }
-    if (mode === 'html') {
-      return this.prepareHTML(content);
-    }
 
-    return this.prepareText(content);
+    return this.prepareHTML(content);
   }
 
   render() {

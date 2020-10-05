@@ -13,8 +13,6 @@ import { VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
 import { customBuilder, queryBuilder } from '../shared/testing/builders';
 
-'../shared/testing/builders';
-
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
     timeRange: jest.fn().mockReturnValue({

@@ -25,7 +25,7 @@ func init() {
 }
 
 func characterEscape(s string, escapeChar string) string {
-	return strings.Replace(s, escapeChar, url.QueryEscape(escapeChar), -1)
+	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
 func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {

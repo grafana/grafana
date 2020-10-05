@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/data",
-  "version": "7.2.0-pre.0",
+  "version": "7.3.0-pre.0",
   "description": "Grafana Data Library",
   "keywords": [
     "typescript"
@@ -19,7 +19,6 @@
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled",
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
-    "lint": "eslint src/ --ext=.js,.ts,.tsx",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -30,7 +29,6 @@
     "xss": "1.0.6"
   },
   "devDependencies": {
-    "@grafana/eslint-config": "^1.0.0-rc1",
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@rollup/plugin-commonjs": "11.0.2",
     "@rollup/plugin-json": "4.0.3",
@@ -40,7 +38,7 @@
     "@types/jquery": "3.3.38",
     "@types/lodash": "4.14.123",
     "@types/node": "10.14.1",
-    "@types/papaparse": "4.5.9",
+    "@types/papaparse": "5.2.0",
     "@types/react": "16.8.16",
     "@types/rollup-plugin-visualizer": "2.6.0",
     "@types/sinon": "^7.5.2",
@@ -51,6 +49,6 @@
     "rollup-plugin-typescript2": "0.26.0",
     "rollup-plugin-visualizer": "3.3.1",
     "sinon": "8.1.1",
-    "typescript": "3.9.3"
+    "typescript": "4.0.2"
   }
 }

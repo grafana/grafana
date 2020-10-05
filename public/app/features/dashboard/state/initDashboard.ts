@@ -68,11 +68,6 @@ async function fetchDashboard(
         // load home dash
         const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
 
-        // if above all is cancelled it will return an array
-        if (Array.isArray(dashDTO)) {
-          return null;
-        }
-
         // if user specified a custom home dashboard redirect to that
         if (dashDTO.redirectUri) {
           const newUrl = locationUtil.stripBaseFromUrl(dashDTO.redirectUri);
@@ -116,6 +111,11 @@ async function fetchDashboard(
         throw { message: 'Unknown route ' + args.routeInfo };
     }
   } catch (err) {
+    // Ignore cancelled errors
+    if (err.cancelled) {
+      return null;
+    }
+
     dispatch(dashboardInitFailed({ message: 'Failed to fetch dashboard', error: err }));
     console.error(err);
     return null;

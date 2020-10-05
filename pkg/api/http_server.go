@@ -71,6 +71,7 @@ type HTTPServer struct {
 	PluginManager        *plugins.PluginManager           `inject:""`
 	SearchService        *search.SearchService            `inject:""`
 	Live                 *live.GrafanaLive
+	Listener             net.Listener
 }
 
 func (hs *HTTPServer) Init() error {
@@ -85,8 +86,8 @@ func (hs *HTTPServer) Init() error {
 		hs.Live = node
 
 		// Spit random walk to example
-		go live.RunRandomCSV(hs.Live, "random-2s-stream", 2000, 0)
-		go live.RunRandomCSV(hs.Live, "random-flakey-stream", 400, .6)
+		go live.RunRandomCSV(hs.Live, "grafana/testdata/random-2s-stream", 2000, 0)
+		go live.RunRandomCSV(hs.Live, "grafana/testdata/random-flakey-stream", 400, .6)
 	}
 
 	hs.macaron = hs.newMacaron()
@@ -119,28 +120,9 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		}
 	}
 
-	var listener net.Listener
-	switch setting.Protocol {
-	case setting.HTTP, setting.HTTPS, setting.HTTP2:
-		var err error
-		listener, err = net.Listen("tcp", hs.httpSrv.Addr)
-		if err != nil {
-			return errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
-		}
-	case setting.SOCKET:
-		var err error
-		listener, err = net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
-		if err != nil {
-			return errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
-		}
-
-		// Make socket writable by group
-		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
-			return errutil.Wrapf(err, "failed to change socket permissions")
-		}
-	default:
-		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
-		return fmt.Errorf("invalid protocol %q", setting.Protocol)
+	listener, err := hs.getListener()
+	if err != nil {
+		return err
 	}
 
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
@@ -183,6 +165,36 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	wg.Wait()
 
 	return nil
+}
+
+func (hs *HTTPServer) getListener() (net.Listener, error) {
+	if hs.Listener != nil {
+		return hs.Listener, nil
+	}
+
+	switch setting.Protocol {
+	case setting.HTTP, setting.HTTPS, setting.HTTP2:
+		listener, err := net.Listen("tcp", hs.httpSrv.Addr)
+		if err != nil {
+			return nil, errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
+		}
+		return listener, nil
+	case setting.SOCKET:
+		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
+		if err != nil {
+			return nil, errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
+		}
+
+		// Make socket writable by group
+		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
+			return nil, errutil.Wrapf(err, "failed to change socket permissions")
+		}
+
+		return listener, nil
+	default:
+		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
+		return nil, fmt.Errorf("invalid protocol %q", setting.Protocol)
+	}
 }
 
 func (hs *HTTPServer) configureHttps() error {
@@ -324,7 +336,6 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
-	m.Use(hs.healthHandler)
 	m.Use(hs.metricsEndpoint)
 	m.Use(middleware.GetContextHandler(
 		hs.AuthTokenService,
@@ -364,12 +375,19 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 		ServeHTTP(ctx.Resp, ctx.Req.Request)
 }
 
-func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
-	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
-	if notHeadOrGet || ctx.Req.URL.Path != "/api/health" {
-		return
+// healthzHandler always return 200 - Ok if Grafana's web server is running
+func (hs *HTTPServer) healthzHandler(ctx *macaron.Context) {
+	ctx.WriteHeader(200)
+	_, err := ctx.Resp.Write([]byte("Ok"))
+	if err != nil {
+		hs.log.Error("could not write to response", "err", err)
 	}
+}
 
+// apiHealthHandler will return ok if Grafana's web server is running and it
+// can access the database. If the database cannot be access it will return
+// http status code 503.
+func (hs *HTTPServer) apiHealthHandler(ctx *macaron.Context) {
 	data := simplejson.New()
 	data.Set("database", "ok")
 	if !hs.Cfg.AnonymousHideVersion {
@@ -386,7 +404,12 @@ func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 		ctx.Resp.WriteHeader(200)
 	}
 
-	dataBytes, _ := data.EncodePretty()
+	dataBytes, err := data.EncodePretty()
+	if err != nil {
+		hs.log.Error("Failed to encode data", "err", err)
+		return
+	}
+
 	if _, err := ctx.Resp.Write(dataBytes); err != nil {
 		hs.log.Error("Failed to write to response", "err", err)
 	}

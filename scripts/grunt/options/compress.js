@@ -4,9 +4,10 @@ module.exports = function(config) {
   var task = {
     release: {
       options: {
-        archive: '<%= destDir %>/<%= pkg.name %><%= enterprise ? "-enterprise" : ""  %>-<%= pkg.version %>.<%= platform %>-<%= arch %><%= libc ? "-" + libc : "" %>.tar.gz'
+        archive:
+          '<%= destDir %>/<%= pkg.name %><%= enterprise ? "-enterprise" : ""  %>-<%= pkg.version %>.<%= platform %>-<%= arch %><%= libc ? "-" + libc : "" %>.tar.gz',
       },
-      files : [
+      files: [
         {
           expand: true,
           cwd: '<%= tempDir %>',
@@ -17,13 +18,14 @@ module.exports = function(config) {
           expand: true,
           src: ['LICENSE', 'README.md', 'NOTICE.md'],
           dest: '<%= pkg.name %>-<%= pkg.version %>/',
-        }
-      ]
-    }
+        },
+      ],
+    },
   };
 
   if (config.platform === 'windows') {
-    task.release.options.archive = '<%= destDir %>/<%= pkg.name %><%= enterprise ? "-enterprise" : ""  %>-<%= pkg.version %>.<%= platform %>-<%= arch %>.zip';
+    task.release.options.archive =
+      '<%= destDir %>/<%= pkg.name %><%= enterprise ? "-enterprise" : ""  %>-<%= pkg.version %>.<%= platform %>-<%= arch %>.zip';
   }
 
   return task;

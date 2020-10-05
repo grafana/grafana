@@ -40,7 +40,7 @@ func init() {
 }
 ```
 
-`init` functions are only run whenever a package is imported, so we also need to import the package in the application. In the `server.go` file under `pkg/cmd/grafana-server`, import the package we just created:
+`init` functions are only run whenever a package is imported, so we also need to import the package in the application. In the `server.go` file under `pkg/server`, import the package we just created:
 
 ```go
 import _ "github.com/grafana/grafana/pkg/services/mysvc"
@@ -66,4 +66,4 @@ type MyService struct {
 }
 ```
 
-**Note:** Any injected dependency needs to be an exported field. Any unexported fields result in a runtime error.
+> **Note:** Any injected dependency needs to be an exported field. Any unexported fields result in a runtime error.

@@ -106,7 +106,10 @@ describe('<SpanBarRow>', () => {
       props.span
     );
 
-    const spanRow = shallow(<SpanBarRow {...props} span={span} />).dive().dive().dive();
+    const spanRow = shallow(<SpanBarRow {...props} span={span} />)
+      .dive()
+      .dive()
+      .dive();
     const refButton = spanRow.find(ReferencesButton);
     expect(refButton.length).toEqual(1);
     expect(refButton.at(0).props().tooltipText).toEqual('Contains multiple references');
@@ -128,7 +131,10 @@ describe('<SpanBarRow>', () => {
       },
       props.span
     );
-    const spanRow = shallow(<SpanBarRow {...props} span={span} />).dive().dive().dive();
+    const spanRow = shallow(<SpanBarRow {...props} span={span} />)
+      .dive()
+      .dive()
+      .dive();
     const refButton = spanRow.find(ReferencesButton);
     expect(refButton.length).toEqual(1);
     expect(refButton.at(0).props().tooltipText).toEqual('This span is referenced by another span');
@@ -158,7 +164,10 @@ describe('<SpanBarRow>', () => {
       },
       props.span
     );
-    const spanRow = shallow(<SpanBarRow {...props} span={span} />).dive().dive().dive();
+    const spanRow = shallow(<SpanBarRow {...props} span={span} />)
+      .dive()
+      .dive()
+      .dive();
     const refButton = spanRow.find(ReferencesButton);
     expect(refButton.length).toEqual(1);
     expect(refButton.at(0).props().tooltipText).toEqual('This span is referenced by multiple other spans');

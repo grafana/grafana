@@ -1,18 +1,25 @@
-import { DashboardTimeRangeConfig, setDashboardTimeRange } from './setDashboardTimeRange';
 import { e2e } from '../index';
 import { getScenarioContext } from '../support/scenarioContext';
+import { setDashboardTimeRange, TimeRangeConfig } from './setDashboardTimeRange';
 
-export interface OpenDashboardConfig {
-  timeRange?: DashboardTimeRangeConfig;
+interface OpenDashboardDefault {
   uid: string;
 }
 
-export const openDashboard = (config?: Partial<OpenDashboardConfig>) =>
+interface OpenDashboardOptional {
+  timeRange?: TimeRangeConfig;
+}
+
+export type PartialOpenDashboardConfig = Partial<OpenDashboardDefault> & OpenDashboardOptional;
+export type OpenDashboardConfig = OpenDashboardDefault & OpenDashboardOptional;
+
+// @todo this actually returns type `Cypress.Chainable<OpenDashboardConfig>`
+export const openDashboard = (config?: PartialOpenDashboardConfig) =>
   getScenarioContext().then(({ lastAddedDashboardUid }: any) => {
-    const fullConfig = {
+    const fullConfig: OpenDashboardConfig = {
       uid: lastAddedDashboardUid,
       ...config,
-    } as OpenDashboardConfig;
+    };
 
     const { timeRange, uid } = fullConfig;
 
@@ -23,5 +30,5 @@ export const openDashboard = (config?: Partial<OpenDashboardConfig>) =>
     }
 
     // @todo remove `wrap` when possible
-    return e2e().wrap({ config: fullConfig });
+    return e2e().wrap({ config: fullConfig }, { log: false });
   });

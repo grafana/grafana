@@ -489,10 +489,19 @@ func TestQuery_GetQueryResults(t *testing.T) {
 	expFrame.Meta = &data.FrameMeta{
 		Custom: map[string]interface{}{
 			"Status": "Complete",
-			"Statistics": cloudwatchlogs.QueryStatistics{
-				BytesScanned:   aws.Float64(512),
-				RecordsMatched: aws.Float64(256),
-				RecordsScanned: aws.Float64(1024),
+		},
+		Stats: []data.QueryStat{
+			{
+				FieldConfig: data.FieldConfig{DisplayName: "Bytes scanned"},
+				Value:       512,
+			},
+			{
+				FieldConfig: data.FieldConfig{DisplayName: "Records scanned"},
+				Value:       1024,
+			},
+			{
+				FieldConfig: data.FieldConfig{DisplayName: "Records matched"},
+				Value:       256,
 			},
 		},
 		PreferredVisualization: "logs",

@@ -18,29 +18,6 @@ func init() {
 		Description: "Sends HTTP POST request to a Sensu API",
 		Heading:     "Sensu settings",
 		Factory:     NewSensuNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">Sensu settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Url</span>
-				<input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url" placeholder="http://sensu-api.local:4567/results"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Source</span>
-        <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.source" bs-tooltip="'If empty rule id will be used'" data-placement="right"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Handler</span>
-        <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.handler" placeholder="default"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Username</span>
-        <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.username"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Password</span>
-        <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.password"></input>
-      </div>
-    `,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Url",
@@ -75,6 +52,7 @@ func init() {
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypePassword,
 				PropertyName: "passsword ",
+				Secure:       true,
 			},
 		},
 	})
@@ -92,7 +70,7 @@ func NewSensuNotifier(model *models.AlertNotification) (alerting.Notifier, error
 		URL:          url,
 		User:         model.Settings.Get("username").MustString(),
 		Source:       model.Settings.Get("source").MustString(),
-		Password:     model.Settings.Get("password").MustString(),
+		Password:     model.DecryptedValue("password", model.Settings.Get("password").MustString()),
 		Handler:      model.Settings.Get("handler").MustString(),
 		log:          log.New("alerting.notifier.sensu"),
 	}, nil
@@ -117,7 +95,7 @@ func (sn *SensuNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("ruleId", evalContext.Rule.ID)
 	// Sensu alerts cannot have spaces in them
-	bodyJSON.Set("name", strings.Replace(evalContext.Rule.Name, " ", "_", -1))
+	bodyJSON.Set("name", strings.ReplaceAll(evalContext.Rule.Name, " ", "_"))
 	// Sensu alerts require a source. We set it to the user-specified value (optional),
 	// else we fallback and use the grafana ruleID.
 	if sn.Source != "" {

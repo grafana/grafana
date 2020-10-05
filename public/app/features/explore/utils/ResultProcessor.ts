@@ -99,11 +99,13 @@ export class ResultProcessor {
 
     // set display processor
     for (const field of data.fields) {
-      field.display = getDisplayProcessor({
-        field,
-        theme: config.theme,
-        timeZone: this.timeZone,
-      });
+      field.display =
+        field.display ??
+        getDisplayProcessor({
+          field,
+          theme: config.theme,
+          timeZone: this.timeZone,
+        });
     }
 
     return data;

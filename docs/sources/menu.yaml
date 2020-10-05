@@ -15,6 +15,17 @@
       link: /getting-started/strategies/
     - name: Glossary
       link: /getting-started/glossary/
+- name: Best practices
+  link: /best-practices/
+  children:
+    - name: Best practices for creating dashboards
+      link: /best-practices/best-practices-for-creating-dashboards/
+    - name: Best practices for managing dashboards
+      link: /best-practices/best-practices-for-managing-dashboards/
+    - name: Observability strategies
+      link: /best-practices/common-observability-strategies/
+    - name: Dashboard management maturity model
+      link: /best-practices/dashboard-management-maturity-levels/
 - name: Installation
   link: /installation/
   children:
@@ -92,11 +103,9 @@
     - name: Jaeger instrumentation
       link: /administration/jaeger-instrumentation/
     - name: Set up Grafana for high availability
-      link: /tutorials/ha_setup/
+      link: /administration/set-up-for-high-availability/
     - name: Change home dashboard
       link: /administration/change-home-dashboard/
-    - name: Troubleshooting
-      link: /installation/troubleshooting/
 - name: Manage users
   link: /manage-users
   children:
@@ -154,10 +163,28 @@
       name: Add panel
     - link: /panels/queries/
       name: Queries
+    - link: /panels/share-query-results/
+      name: Share query results
     - link: /panels/transformations/
       name: Transformations
-    - link: /panels/field-configuration-options/
-      name: Field config options
+      children:
+        - link: /panels/transformations/
+          name: Overview
+        - link: /panels/transformations/apply-transformations/
+          name: Apply transformations
+        - link: /panels/transformations/types-options/
+          name: Transformation types and options
+    - link: /panels/field-options/
+      name: Field options and overrides
+      children:
+        - link: /panels/field-options/
+          name: Overview
+        - link: /panels/field-options/configure-all-fields/
+          name: Configure all fields
+        - link: /panels/field-options/configure-specific-fields/
+          name: Configure specific fields
+        - link: /panels/field-options/standard-field-options/
+          name: Standard field options
     - link: /panels/panel-editor/
       name: Panel editor
     - name: Visualizations
@@ -183,6 +210,13 @@
           name: Stat
         - link: /panels/visualizations/table-panel/
           name: Table
+          children:
+            - name: Overview
+              link: /panels/visualizations/table/
+            - link: /panels/visualizations/table/table-field-options/
+              name: Table field options
+            - link: /panels/visualizations/table/filter-table-columns/
+              name: Filter table columns
         - link: /panels/visualizations/text-panel/
           name: Text
     - link: /panels/thresholds/
@@ -192,9 +226,9 @@
     - link: /panels/calculations-list/
       name: Calculations list
 - name: Dashboards
-  link: /features/dashboard/
+  link: /dashboards/
   children:
-    - link: /features/dashboard/dashboards/
+    - link: /dashboards/
       name: Overview
     - link: /dashboards/annotations/
       name: Annotations
@@ -214,16 +248,16 @@
       name: Export and import
     - link: /dashboards/dashboard_history/
       name: Dashboard version history
-    - name: Keyboard Shortcuts
-      link: /features/shortcuts/
+    - name: Keyboard shortcuts
+      link: /dashboards/shortcuts/
     - name: Reporting
-      link: /features/reporting/
+      link: /dashboards/reporting/
     - link: /reference/dashboard/
       name: JSON Model
     - link: /reference/scripting/
       name: Scripted dashboards
 - name: Explore
-  link: /features/explore/
+  link: /explore/
 - name: Alerting
   link: /alerting/
   children:
@@ -252,6 +286,8 @@
       link: /linking/panel-links/
     - name: Data links
       link: /linking/data-links/
+    - link: /linking/data-link-variables/
+      name: Data link variables
 - name: Templates and variables
   link: /variables/
   children:
@@ -262,26 +298,24 @@
     - name: Variable types
       link: /variables/variable-types/
       children:
-      - link: /variables/variable-types/add-query-variable/
-        name: Add query variable
-      - link: /variables/variable-types/add-custom-variable/
-        name: Add custom variable
-      - link: /variables/variable-types/add-text-box-variable/
-        name: Add text box variable
-      - link: /variables/variable-types/add-constant-variable/
-        name: Add constant variable
-      - link: /variables/variable-types/add-data-source-variable/
-        name: Add data source variable
-      - link: /variables/variable-types/add-interval-variable/
-        name: Add interval variable
-      - link: /variables/variable-types/add-ad-hoc-filters/
-        name: Add ad hoc filters
-      - link: /variables/variable-types/chained-variables/
-        name: Chained variables
-      - link: /variables/variable-types/global-variables/
-        name: Global variables
-      - link: /variables/variable-types/url-variables/
-        name: URL variables
+        - link: /variables/variable-types/add-query-variable/
+          name: Add query variable
+        - link: /variables/variable-types/add-custom-variable/
+          name: Add custom variable
+        - link: /variables/variable-types/add-text-box-variable/
+          name: Add text box variable
+        - link: /variables/variable-types/add-constant-variable/
+          name: Add constant variable
+        - link: /variables/variable-types/add-data-source-variable/
+          name: Add data source variable
+        - link: /variables/variable-types/add-interval-variable/
+          name: Add interval variable
+        - link: /variables/variable-types/add-ad-hoc-filters/
+          name: Add ad hoc filters
+        - link: /variables/variable-types/chained-variables/
+          name: Chained variables
+        - link: /variables/variable-types/global-variables/
+          name: Global variables
     - name: Selection options
       link: /variables/variable-selection-options/
     - name: Value groups/tags
@@ -297,6 +331,8 @@
 - name: What's new in Grafana
   link: /whatsnew/
   children:
+    - name: Version 7.2
+      link: /guides/whats-new-in-v7-2/
     - name: Version 7.1
       link: /guides/whats-new-in-v7-1/
     - name: Version 7.0
@@ -390,9 +426,9 @@
     - name: API Authentication
       link: /http_api/auth/
     - name: Create API Tokens and Dashboards for a Specific Organization
-      link: /tutorials/api_org_token_howto/
+      link: /http_api/create-api-tokens-for-org/
     - name: cURL examples
-      link: /http_api/curl-examples/  
+      link: /http_api/curl-examples/
     - name: Admin API
       link: /http_api/admin/
     - name: Alerting API
@@ -435,6 +471,16 @@
       link: /http_api/team/
     - name: Users API
       link: /http_api/user/
+- name: Troubleshooting
+  children:
+    - name: Overview
+      link: /troubleshooting/
+    - name: Enable diagnostics
+      link: /troubleshooting/diagnostics/
+    - name: Troubleshoot dashboards
+      link: /troubleshooting/troubleshoot-dashboards/
+    - name: Troubleshoot queries
+      link: /troubleshooting/troubleshoot-queries/
 - name: Developers
   children:
     - name: Plugins
@@ -445,6 +491,8 @@
           link: /developers/plugins/metadata/
         - name: Data frames
           link: /developers/plugins/data-frames/
+        - name: Working with data frames
+          link: /developers/plugins/working-with-data-frames/
         - name: Add support for variables
           link: /developers/plugins/add-support-for-variables/
         - name: Add support for annotations
@@ -469,8 +517,12 @@
               name: Plugin protocol
             - link: /developers/plugins/backend/grafana-plugin-sdk-for-go/
               name: Grafana plugin SDK for Go
+        - name: Share a plugin
+          link: /developers/plugins/share-a-plugin/
         - name: Error handling
           link: /developers/plugins/error-handling/
+        - name: Plugin migration guide
+          link: /developers/plugins/migration-guide/
         - name: Legacy plugins
           children:
             - link: /developers/plugins/legacy/

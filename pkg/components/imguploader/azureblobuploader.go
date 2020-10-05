@@ -201,9 +201,9 @@ func (c *StorageClient) FileUpload(ctx context.Context, container, blobName stri
 func escape(content string) string {
 	content = url.QueryEscape(content)
 	// the Azure's behavior uses %20 to represent whitespace instead of + (plus)
-	content = strings.Replace(content, "+", "%20", -1)
+	content = strings.ReplaceAll(content, "+", "%20")
 	// the Azure's behavior uses slash instead of + %2F
-	content = strings.Replace(content, "%2F", "/", -1)
+	content = strings.ReplaceAll(content, "%2F", "/")
 
 	return content
 }

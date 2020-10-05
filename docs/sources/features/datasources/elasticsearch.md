@@ -22,14 +22,14 @@ visualize logs or metrics stored in Elasticsearch. You can also annotate your gr
 3. Click the `+ Add data source` button in the top header.
 4. Select *Elasticsearch* from the *Type* dropdown.
 
-> NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
+> **Note:** If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
-Name | Description
------------- | -------------
-*Name* | The data source name. This is how you refer to the data source in panels and queries.
-*Default* | Default data source means that it will be pre-selected for new panels.
-*Url* | The HTTP protocol, IP, and port of your Elasticsearch server.
-*Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
+| Name      | Description                                                                                                                           |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| *Name*    | The data source name. This is how you refer to the data source in panels and queries.                                                 |
+| *Default* | Default data source means that it will be pre-selected for new panels.                                                                |
+| *Url*     | The HTTP protocol, IP, and port of your Elasticsearch server.                                                                         |
+| *Access*  | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. |
 
 Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
 
@@ -42,7 +42,7 @@ All requests will be made from the browser to Grafana backend/server which in tu
 All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
 
 If you select Browser access you must update your Elasticsearch configuration to allow other domains to access
-Elasticsearch from the browser. You do this by specifying these to options in your **elasticsearch.yml** config file.
+Elasticsearch from the browser. You do this by specifying these two options in your **elasticsearch.yml** config file.
 
 ```bash
 http.cors.enabled: true
@@ -68,23 +68,23 @@ A lower limit for the auto group by time interval. Recommended to be set to writ
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
 
-Identifier | Description
------------- | -------------
-`y`   | year
-`M`   | month
-`w`   | week
-`d`   | day
-`h`   | hour
-`m`   | minute
-`s`   | second
-`ms`  | millisecond
+| Identifier | Description |
+| ---------- | ----------- |
+| `y`        | year        |
+| `M`        | month       |
+| `w`        | week        |
+| `d`        | day         |
+| `h`        | hour        |
+| `m`        | minute      |
+| `s`        | second      |
+| `ms`       | millisecond |
 
 ### Logs (BETA)
 
 > Only available in Grafana v6.3+.
 
 There are two parameters, `Message field name` and `Level field name`, that can optionally be configured from the data source settings page that determine
-which fields will be used for log messages and log levels when visualizing logs in [Explore]({{< relref "../explore" >}}).
+which fields will be used for log messages and log levels when visualizing logs in [Explore]({{< relref "../../explore" >}}).
 
 For example, if you're using a default setup of Filebeat for shipping logs to Elasticsearch the following configuration should work:
 
@@ -98,7 +98,7 @@ Data links create a link from a specified field that can be accessed in logs vie
 Each data link configuration consists of: 
 - **Field -** Name of the field used by the data link.
 - **URL/query -** If the link is external, then enter the full link URL. If the link is internal link, then this input serves as query for the target data source. In both cases, you can interpolate the value from the field with `${__value.raw }` macro.
-- **Internal link -** Select if the link is internal or external. In case of internal link, a data source selectorallows you to select the target data source. Only tracing data sources are supported.
+- **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.
 
 ## Metric Query editor
 
@@ -111,11 +111,11 @@ metrics or group by clauses. Some metrics and group by clauses haves options, cl
 
 You can control the name for time series via the `Alias` input field.
 
-Pattern | Description
------------- | -------------
-*{{term fieldname}}* |  replaced with value of a term group by
-*{{metric}}* | replaced with metric name (ex. Average, Min, Max)
-*{{field}}* | replaced with the metric field name
+| Pattern              | Description                                       |
+| -------------------- | ------------------------------------------------- |
+| *{{term fieldname}}* | replaced with value of a term group by            |
+| *{{metric}}*         | replaced with metric name (ex. Average, Min, Max) |
+| *{{field}}*          | replaced with the metric field name               |
 
 ## Pipeline metrics
 
@@ -136,11 +136,11 @@ types of template variables.
 
 The Elasticsearch data source supports two types of queries you can use in the *Query* field of *Query* variables. The query is written using a custom JSON string.
 
-Query | Description
------------- | -------------
-*{"find": "fields", "type": "keyword"}* | Returns a list of field names with the index type `keyword`.
-*{"find": "terms", "field": "@hostname", "size": 1000}* |  Returns a list of values for a field using term aggregation. Query will use current dashboard time range as time range for query.
-*{"find": "terms", "field": "@hostname", "query": '<lucene query>'}* | Returns a list of values for a field using term aggregation and a specified lucene query filter. Query will use current dashboard time range as time range for query.
+| Query                                                                | Description                                                                                                                                                           |
+| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| *{"find": "fields", "type": "keyword"}*                              | Returns a list of field names with the index type `keyword`.                                                                                                          |
+| *{"find": "terms", "field": "@hostname", "size": 1000}*              | Returns a list of values for a field using term aggregation. Query will use current dashboard time range as time range for query.                                     |
+| *{"find": "terms", "field": "@hostname", "query": '<lucene query>'}* | Returns a list of values for a field using term aggregation and a specified lucene query filter. Query will use current dashboard time range as time range for query. |
 
 There is a default size limit of 500 on terms queries. Set the size property in your query to set a custom limit.
 You can use other variables inside the query. Example query definition for a variable named `$host`.
@@ -185,19 +185,19 @@ Example dashboard:
 queries via the Dashboard menu / Annotations view. Grafana can query any Elasticsearch index
 for annotation events.
 
-Name | Description
------------- | -------------
-Query | You can leave the search query blank or specify a lucene query
-Time | The name of the time field, needs to be date field.
-Time End | Optional name of the time end field, needs to be date field. If set, then annotations will be marked as a regions between time and time-end.
-Text | Event description field.
-Tags | Optional field name to use for event tags (can be an array or a CSV string).
+| Name     | Description                                                                                                                                |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Query    | You can leave the search query blank or specify a lucene query.                                                                            |
+| Time     | The name of the time field, needs to be date field.                                                                                        |
+| Time End | Optional name of the time end field needs to be date field. If set, then annotations will be marked as a region between time and time-end. |
+| Text     | Event description field.                                                                                                                   |
+| Tags     | Optional field name to use for event tags (can be an array or a CSV string).                                                               |
 
 ## Querying Logs (BETA)
 
 > Only available in Grafana v6.3+.
 
-Querying and displaying log data from Elasticsearch is available via [Explore]({{< relref "../explore" >}}).
+Querying and displaying log data from Elasticsearch is available via [Explore]({{< relref "../../explore" >}}).
 
 ![](/img/docs/v63/elasticsearch_explore_logs.png)
 

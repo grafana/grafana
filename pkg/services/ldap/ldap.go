@@ -363,10 +363,9 @@ func (server *Server) getSearchRequest(
 
 	search := ""
 	for _, login := range logins {
-		query := strings.Replace(
+		query := strings.ReplaceAll(
 			server.Config.SearchFilter,
 			"%s", ldap.EscapeFilter(login),
-			-1,
 		)
 
 		search += query
@@ -509,10 +508,9 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 			)
 		}
 
-		filter := strings.Replace(
+		filter := strings.ReplaceAll(
 			config.GroupSearchFilter, "%s",
 			ldap.EscapeFilter(filterReplace),
-			-1,
 		)
 
 		server.log.Info("Searching for user's groups", "filter", filter)

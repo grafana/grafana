@@ -53,7 +53,10 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 				}
 			}
 
-			resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: tsdb.NewDecodedDataFrames(data.Frames{dataframe})}
+			resultChan <- &tsdb.QueryResult{
+				RefId:      query.RefId,
+				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{dataframe}),
+			}
 			return nil
 		})
 	}
@@ -165,7 +168,7 @@ func (e *cloudWatchExecutor) handleDescribeLogGroups(ctx context.Context,
 
 	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
 	var err error
-	if len(logGroupNamePrefix) < 1 {
+	if len(logGroupNamePrefix) == 0 {
 		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
 			Limit: aws.Int64(parameters.Get("limit").MustInt64(50)),
 		})

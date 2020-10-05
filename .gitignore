@@ -15,7 +15,6 @@ awsconfig
 .yarnrc
 .yarn/
 vendor/
-.eslintcache
 
 # Enterprise emails
 /emails/templates/enterprise_*

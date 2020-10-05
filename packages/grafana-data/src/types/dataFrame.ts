@@ -23,7 +23,20 @@ export enum FieldType {
  * Plugins may extend this with additional properties. Something like series overrides
  */
 export interface FieldConfig<TOptions extends object = any> {
-  displayName?: string; // The display value for this field.  This supports template variables blank is auto
+  /**
+   * The display value for this field.  This supports template variables blank is auto
+   */
+  displayName?: string;
+
+  /**
+   * This can be used by data sources that return and explicit naming structure for values and labels
+   * When this property is configured, this value is used rather than the default naming strategy.
+   */
+  displayNameFromDS?: string;
+
+  /**
+   * True if data source field supports ad-hoc filters
+   */
   filterable?: boolean;
 
   // Numeric Options

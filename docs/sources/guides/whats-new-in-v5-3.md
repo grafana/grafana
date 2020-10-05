@@ -39,7 +39,7 @@ The Grafana Stackdriver plugin comes with support for automatic unit detection. 
 The data source is still in the `beta` phase, meaning it's currently in active development and is still missing one important feature - templating queries.
 Please try it out, but be aware of that it might be subject to changes and possible bugs. We would love to hear your feedback.
 
-Please read [Using Google Stackdriver in Grafana](/features/datasources/stackdriver/) for more detailed information on how to get started and use it.
+Please read [Using Google Stackdriver in Grafana]({{< relref "../features/datasources/cloudmonitoring/" >}}) for more detailed information on how to get started and use it.
 
 ## TV and Kiosk Mode
 
@@ -65,7 +65,7 @@ Learn how to enable and configure reminders [here](/alerting/notifications/#send
 
 ## Postgres Query Builder
 
-Grafana 5.3 comes with a new graphical query builder for Postgres. This brings Postgres integration more in line with some of the other data sources and makes it easier for both advanced users and beginners to work with timeseries in Postgres. Learn more about it in the [documentation](/features/datasources/postgres/#query-editor).
+Grafana 5.3 comes with a new graphical query builder for Postgres. This brings Postgres integration more in line with some of the other data sources and makes it easier for both advanced users and beginners to work with timeseries in Postgres. Learn more about it in the [documentation]({{< relref "../features/datasources/postgres/#query-editor" >}}).
 
 {{< docs-imagebox img="/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v53/postgres_query.gif" >}}
 

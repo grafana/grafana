@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,9 +38,14 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ticker.C:
+			ctxWithTimeout, cancelFn := context.WithTimeout(ctx, time.Minute*9)
+			defer cancelFn()
+
 			srv.cleanUpTmpFiles()
 			srv.deleteExpiredSnapshots()
 			srv.deleteExpiredDashboardVersions()
+			srv.cleanUpOldAnnotations(ctxWithTimeout)
+
 			err := srv.ServerLockService.LockAndExecute(ctx, "delete old login attempts",
 				time.Minute*10, func() {
 					srv.deleteOldLoginAttempts()
@@ -50,6 +56,14 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		}
+	}
+}
+
+func (srv *CleanUpService) cleanUpOldAnnotations(ctx context.Context) {
+	cleaner := annotations.GetAnnotationCleaner()
+	err := cleaner.CleanAnnotations(ctx, srv.Cfg)
+	if err != nil {
+		srv.log.Error("failed to clean up old annotations", "error", err)
 	}
 }
 

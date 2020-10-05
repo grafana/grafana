@@ -13,7 +13,7 @@ Click a panel title to open the panel menu, then click share in the panel menu t
 
 ## Direct Link Rendered Image
 
-You also get a link to render a PNG image of the panel. Useful if you want to share an image of the panel. Read more about the requirements and how to configure image rendering [here](/administration/image_rendering/).
+You also get a link to render a .png image of the panel, which is useful if you want to share an image of the panel. For more information about the requirements and how to configure image rendering, refer to [Image rendering]({{< relref "../administration/image_rendering.md)" >}}.
 
 Example of a link to a server-side rendered PNG:
 

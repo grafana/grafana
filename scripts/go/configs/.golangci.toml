@@ -38,10 +38,10 @@ enable = [
   "unused",
   "varcheck",
   "whitespace",
+  "gocyclo",
 ]
 
 # Disabled linters (might want them later)
-# "gocyclo",
 # "unparam"
 
 [[issues.exclude-rules]]
@@ -75,6 +75,10 @@ text = "402"
 [[issues.exclude-rules]]
 linters = ["gosec"]
 text = "501"
+
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "404"
 
 [[issues.exclude-rules]]
 linters = ["misspell"]

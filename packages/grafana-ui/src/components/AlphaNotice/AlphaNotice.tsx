@@ -4,7 +4,7 @@ import { ThemeContext } from '../../index';
 import { PluginState } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 
-interface Props {
+export interface Props {
   state?: PluginState;
   text?: string;
   className?: string;

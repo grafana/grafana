@@ -259,6 +259,26 @@ func TestAdminApiEndpoint(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("When a server admin attempts to create a user with an already existing email/login", t, func() {
+		bus.AddHandler("test", func(cmd *models.CreateUserCommand) error {
+			return models.ErrUserAlreadyExists
+		})
+
+		createCmd := dtos.AdminCreateUserForm{
+			Login:    TestLogin,
+			Password: TestPassword,
+		}
+
+		adminCreateUserScenario("Should return an error", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
+			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+			So(sc.resp.Code, ShouldEqual, 412)
+
+			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+			So(err, ShouldBeNil)
+			So(respJSON.Get("error").MustString(), ShouldEqual, "User already exists")
+		})
+	})
 }
 
 func putAdminScenario(desc string, url string, routePattern string, role models.RoleType, cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc) {

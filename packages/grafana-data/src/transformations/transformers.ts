@@ -12,6 +12,7 @@ import { seriesToRowsTransformer } from './transformers/seriesToRows';
 import { renameFieldsTransformer } from './transformers/rename';
 import { labelsToFieldsTransformer } from './transformers/labelsToFields';
 import { ensureColumnsTransformer } from './transformers/ensureColumns';
+import { groupByTransformer } from './transformers/groupBy';
 import { mergeTransformer } from './transformers/merge';
 
 export const standardTransformers = {
@@ -30,5 +31,6 @@ export const standardTransformers = {
   renameFieldsTransformer,
   labelsToFieldsTransformer,
   ensureColumnsTransformer,
+  groupByTransformer,
   mergeTransformer,
 };

@@ -21,6 +21,7 @@ import {
   AbsoluteTimeRange,
   LoadingState,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
@@ -166,7 +167,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 
     return (
       <>
-        <div className="query-row">
+        <div className="query-row" aria-label={selectors.components.QueryEditorRows.rows}>
           <div className="query-row-field flex-shrink-1">{this.renderQueryEditor()}</div>
           <QueryRowActions
             canToggleEditorModes={canToggleEditorModes}

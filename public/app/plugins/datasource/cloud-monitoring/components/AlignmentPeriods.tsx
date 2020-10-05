@@ -2,8 +2,7 @@ import React, { FC } from 'react';
 import _ from 'lodash';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import kbn from 'app/core/utils/kbn';
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, rangeUtil } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 import { alignmentPeriods, alignOptions } from '../constants';
 
@@ -13,7 +12,7 @@ export interface Props {
   templateVariableOptions: Array<SelectableValue<string>>;
   alignmentPeriod: string;
   perSeriesAligner: string;
-  usedAlignmentPeriod: string;
+  usedAlignmentPeriod?: number;
 }
 
 export const AlignmentPeriods: FC<Props> = ({
@@ -25,7 +24,9 @@ export const AlignmentPeriods: FC<Props> = ({
   usedAlignmentPeriod,
 }) => {
   const alignment = alignOptions.find(ap => ap.value === templateSrv.replace(perSeriesAligner));
-  const formatAlignmentText = `${kbn.secondsToHms(usedAlignmentPeriod)} interval (${alignment ? alignment.text : ''})`;
+  const formatAlignmentText = usedAlignmentPeriod
+    ? `${rangeUtil.secondsToHms(usedAlignmentPeriod)} interval (${alignment ? alignment.text : ''})`
+    : '';
   const options = alignmentPeriods.map(ap => ({
     ...ap,
     label: ap.text,

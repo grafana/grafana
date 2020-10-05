@@ -22,9 +22,10 @@ import {
   toUtc,
   urlUtil,
   ExploreUrlState,
+  rangeUtil,
 } from '@grafana/data';
 import store from 'app/core/store';
-import kbn from 'app/core/utils/kbn';
+import { v4 as uuidv4 } from 'uuid';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
@@ -40,9 +41,6 @@ export const DEFAULT_RANGE = {
 };
 
 export const DEFAULT_UI_STATE = {
-  showingTable: true,
-  showingGraph: true,
-  showingLogs: true,
   dedupStrategy: LogsDedupStrategy.none,
 };
 
@@ -157,10 +155,13 @@ export function buildQueryTransaction(
       __interval_ms: { text: intervalMs, value: intervalMs },
     },
     maxDataPoints: queryOptions.maxDataPoints,
-    exploreMode: queryOptions.mode,
+    exploreMode: undefined,
     liveStreaming: queryOptions.liveStreaming,
-    showingGraph: queryOptions.showingGraph,
-    showingTable: queryOptions.showingTable,
+    /**
+     * @deprecated (external API) showingGraph and showingTable are always set to true and set to true
+     */
+    showingGraph: true,
+    showingTable: true,
   };
 
   return {
@@ -183,13 +184,6 @@ enum ParseUrlStateIndex {
   RangeTo = 1,
   Datasource = 2,
   SegmentsStart = 3,
-}
-
-enum ParseUiStateIndex {
-  Graph = 0,
-  Logs = 1,
-  Table = 2,
-  Strategy = 3,
 }
 
 export const safeParseJson = (text?: string): any | undefined => {
@@ -224,7 +218,6 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     datasource: null,
     queries: [],
     range: DEFAULT_RANGE,
-    ui: DEFAULT_UI_STATE,
     mode: null,
     originPanelId: null,
   };
@@ -250,22 +243,12 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
   const queries = parsedSegments.filter(segment => !isSegment(segment, 'ui', 'originPanelId'));
 
-  const uiState = parsedSegments.filter(segment => isSegment(segment, 'ui'))[0];
-  const ui = uiState
-    ? {
-        showingGraph: uiState.ui[ParseUiStateIndex.Graph],
-        showingLogs: uiState.ui[ParseUiStateIndex.Logs],
-        showingTable: uiState.ui[ParseUiStateIndex.Table],
-        dedupStrategy: uiState.ui[ParseUiStateIndex.Strategy],
-      }
-    : DEFAULT_UI_STATE;
-
   const originPanelId = parsedSegments.filter(segment => isSegment(segment, 'originPanelId'))[0];
-  return { datasource, queries, range, ui, originPanelId };
+  return { datasource, queries, range, originPanelId };
 }
 
 export function generateKey(index = 0): string {
-  return `Q-${Date.now()}-${Math.random()}-${index}`;
+  return `Q-${uuidv4()}-${index}`;
 }
 
 export function generateEmptyQuery(queries: DataQuery[], index = 0): DataQuery {
@@ -487,7 +470,7 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
     return { interval: '1s', intervalMs: 1000 };
   }
 
-  return kbn.calculateInterval(range, resolution, lowLimit);
+  return rangeUtil.calculateInterval(range, resolution, lowLimit);
 }
 
 export function deduplicateLogRowsById(rows: LogRowModel[]) {

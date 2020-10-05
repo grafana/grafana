@@ -7,7 +7,7 @@ import { SLOQuery } from '../types';
 import CloudMonitoringDatasource from '../datasource';
 
 export interface Props {
-  usedAlignmentPeriod: string;
+  usedAlignmentPeriod?: number;
   variableOptionGroup: SelectableValue<string>;
   onChange: (query: SLOQuery) => void;
   onRunQuery: () => void;

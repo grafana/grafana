@@ -828,7 +828,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		bus.AddHandler("test", func(query *models.GetDashboardVersionQuery) error {
 			query.Result = &models.DashboardVersion{
 				Data: simplejson.NewFromAny(map[string]interface{}{
-					"title": "Dash" + string(query.DashboardId),
+					"title": fmt.Sprintf("Dash%d", query.DashboardId),
 				}),
 			}
 			return nil

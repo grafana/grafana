@@ -88,6 +88,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/alerting/*", reqEditorRole, hs.Index)
 
 	// sign up
+	r.Get("/verify", hs.Index)
 	r.Get("/signup", hs.Index)
 	r.Get("/api/user/signup/options", Wrap(GetSignUpOptions))
 	r.Post("/api/user/signup", quota("user"), bind(dtos.SignUpForm{}), Wrap(SignUp))
@@ -434,6 +435,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, Wrap(DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
+
+	// Health check
+	r.Get("/api/health", hs.apiHealthHandler)
+	r.Get("/healthz", hs.healthzHandler)
 
 	r.Get("/*", reqSignedIn, hs.Index)
 }

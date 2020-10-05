@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -64,16 +64,12 @@ func makeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
 }
 
 func ReadPlugin(pluginDir, pluginName string) (models.InstalledPlugin, error) {
-	distPluginDataPath := path.Join(pluginDir, pluginName, "dist", "plugin.json")
+	distPluginDataPath := filepath.Join(pluginDir, pluginName, "dist", "plugin.json")
 
-	var data []byte
-	var err error
-	data, err = IoHelper.ReadFile(distPluginDataPath)
-
+	data, err := IoHelper.ReadFile(distPluginDataPath)
 	if err != nil {
-		pluginDataPath := path.Join(pluginDir, pluginName, "plugin.json")
+		pluginDataPath := filepath.Join(pluginDir, pluginName, "plugin.json")
 		data, err = IoHelper.ReadFile(pluginDataPath)
-
 		if err != nil {
 			return models.InstalledPlugin{}, errors.New("Could not find dist/plugin.json or plugin.json on  " + pluginName + " in " + pluginDir)
 		}
@@ -110,7 +106,7 @@ func GetLocalPlugins(pluginDir string) []models.InstalledPlugin {
 
 func RemoveInstalledPlugin(pluginPath, pluginName string) error {
 	logger.Infof("Removing plugin: %v\n", pluginName)
-	pluginDir := path.Join(pluginPath, pluginName)
+	pluginDir := filepath.Join(pluginPath, pluginName)
 
 	_, err := IoHelper.Stat(pluginDir)
 	if err != nil {

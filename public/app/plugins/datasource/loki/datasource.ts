@@ -1,44 +1,47 @@
 // Libraries
-import { isEmpty, map as lodashMap, cloneDeep } from 'lodash';
-import { Observable, from, merge, of } from 'rxjs';
-import { map, catchError, switchMap } from 'rxjs/operators';
-
-// Services & Utils
-import { DataFrame, dateMath, FieldCache, QueryResultMeta } from '@grafana/data';
-import { getBackendSrv, BackendSrvRequest, FetchError } from '@grafana/runtime';
-import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { convertToWebSocketUrl } from 'app/core/utils/explore';
-import { lokiResultsToTableModel, processRangeQueryResponse, lokiStreamResultToDataFrame } from './result_transformer';
-import { getHighlighterExpressionsFromQuery } from './query_utils';
+import { cloneDeep, isEmpty, map as lodashMap } from 'lodash';
+import { merge, Observable, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
 // Types
 import {
-  LogRowModel,
-  DateTime,
-  LoadingState,
   AnnotationEvent,
+  AnnotationQueryRequest,
+  DataFrame,
   DataFrameView,
-  PluginMeta,
-  DataSourceApi,
-  DataSourceInstanceSettings,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
-  AnnotationQueryRequest,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  dateMath,
+  DateTime,
+  FieldCache,
+  LoadingState,
+  LogRowModel,
+  PluginMeta,
+  QueryResultMeta,
   ScopedVars,
+  TimeRange,
 } from '@grafana/data';
+import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
+import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { convertToWebSocketUrl } from 'app/core/utils/explore';
+import { lokiResultsToTableModel, lokiStreamResultToDataFrame, processRangeQueryResponse } from './result_transformer';
+import { getHighlighterExpressionsFromQuery } from './query_utils';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import {
-  LokiQuery,
   LokiOptions,
+  LokiQuery,
+  LokiRangeQueryRequest,
   LokiResponse,
   LokiResultType,
-  LokiRangeQueryRequest,
   LokiStreamResponse,
 } from './types';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
-import LanguageProvider from './language_provider';
+import LanguageProvider, { rangeToParams } from './language_provider';
 import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 
@@ -78,7 +81,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       url,
     };
 
-    return from(getBackendSrv().datasourceRequest(req));
+    return getBackendSrv().fetch<Record<string, any>>(req);
   }
 
   query(options: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
@@ -90,7 +93,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         expr: this.templateSrv.replace(target.expr, options.scopedVars, this.interpolateQueryExpr),
       }));
 
-    filteredTargets.forEach(target => subQueries.push(this.runRangeQuery(target, options, filteredTargets.length)));
+    filteredTargets.forEach(target =>
+      subQueries.push(
+        this.runInstantQuery(target, options, filteredTargets.length),
+        this.runRangeQuery(target, options, filteredTargets.length)
+      )
+    );
 
     // No valid targets, return the empty result to save a round trip.
     if (isEmpty(subQueries)) {
@@ -132,7 +140,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           data: [lokiResultsToTableModel(response.data.data.result, responseListLength, target.refId, meta, true)],
           key: `${target.refId}_instant`,
         };
-      })
+      }),
+      catchError((err: any) => this.throwUnless(err, err.status === 404, target))
     );
   };
 
@@ -209,6 +218,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           responseListLength,
           linesLimit,
           this.instanceSettings.jsonData,
+          (options as DataQueryRequest<LokiQuery>).scopedVars,
           (options as DataQueryRequest<LokiQuery>).reverse
         )
       )
@@ -267,45 +277,48 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return this.languageProvider.importQueries(queries, originMeta.id);
   }
 
-  async metadataRequest(url: string, params?: Record<string, string>) {
-    const res = await this._request(url, params, { silent: true }).toPromise();
+  async metadataRequest(url: string, params?: Record<string, string | number>) {
+    const res = await this._request(url, params, { hideFromInspector: true }).toPromise();
     return res.data.data || res.data.values || [];
   }
 
-  async metricFindQuery(query: string) {
+  async metricFindQuery(query: string, optionalOptions?: any) {
     if (!query) {
       return Promise.resolve([]);
     }
     const interpolated = this.templateSrv.replace(query, {}, this.interpolateQueryExpr);
-    return await this.processMetricFindQuery(interpolated);
+    return await this.processMetricFindQuery(interpolated, optionalOptions?.range);
   }
 
-  async processMetricFindQuery(query: string) {
+  async processMetricFindQuery(query: string, range?: TimeRange) {
     const labelNamesRegex = /^label_names\(\)\s*$/;
     const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
 
+    const timeRange = range || getTimeSrv().timeRange();
+    const params = rangeToParams({ from: timeRange.from.valueOf(), to: timeRange.to.valueOf() });
+
     const labelNames = query.match(labelNamesRegex);
     if (labelNames) {
-      return await this.labelNamesQuery();
+      return await this.labelNamesQuery(params);
     }
 
     const labelValues = query.match(labelValuesRegex);
     if (labelValues) {
-      return await this.labelValuesQuery(labelValues[2]);
+      return await this.labelValuesQuery(labelValues[2], params);
     }
 
     return Promise.resolve([]);
   }
 
-  async labelNamesQuery() {
+  async labelNamesQuery(params?: Record<string, string | number>) {
     const url = `${LOKI_ENDPOINT}/label`;
-    const result = await this.metadataRequest(url);
+    const result = await this.metadataRequest(url, params);
     return result.map((value: string) => ({ text: value }));
   }
 
-  async labelValuesQuery(label: string) {
+  async labelValuesQuery(label: string, params?: Record<string, string | number>) {
     const url = `${LOKI_ENDPOINT}/label/${label}/values`;
-    const result = await this.metadataRequest(url);
+    const result = await this.metadataRequest(url, params);
     return result.map((value: string) => ({ text: value }));
   }
 

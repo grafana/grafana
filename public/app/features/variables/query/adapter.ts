@@ -9,7 +9,7 @@ import { OptionsPicker } from '../pickers';
 import { QueryVariableEditor } from './QueryVariableEditor';
 import { updateQueryVariableOptions } from './actions';
 import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
-import { containsVariable } from '../utils';
+import { containsVariable, isAllVariable } from '../utils';
 
 export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
   return {
@@ -42,7 +42,7 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
       return rest;
     },
     getValueForUrl: variable => {
-      if (variable.current.text === ALL_VARIABLE_TEXT) {
+      if (isAllVariable(variable)) {
         return ALL_VARIABLE_TEXT;
       }
       return variable.current.value;

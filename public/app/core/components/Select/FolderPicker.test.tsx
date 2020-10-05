@@ -11,6 +11,10 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
+jest.mock('../../config', () => ({
+  getConfig: () => ({}),
+}));
+
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     user: { orgId: 1 },

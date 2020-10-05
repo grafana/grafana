@@ -187,7 +187,7 @@ With the [`allowed_organizations`]({{< relref "./enterprise-configuration.md#all
 enabled = true
 certificate_path = "/path/to/certificate.cert"
 private_key_path = "/path/to/private_key.pem"
-metadata_path = "/my/metadata.xml"
+idp_metadata_path = "/my/metadata.xml"
 max_issue_delay = 90s
 metadata_valid_duration = 48h
 assertion_attribute_name = displayName
