@@ -382,11 +382,6 @@ func (hs *HTTPServer) registerRoutes() {
 			annotationsRoute.Post("/graphite", reqEditorRole, bind(dtos.PostGraphiteAnnotationsCmd{}), Wrap(PostGraphiteAnnotation))
 		})
 
-		// The live handler will manage its own routes
-		if hs.Live != nil {
-			apiRoute.Any("/live/*", hs.LiveHTTPHandler)
-		}
-
 		// error test
 		r.Get("/metrics/error", Wrap(GenerateError))
 	}, reqSignedIn)
@@ -431,7 +426,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Live streaming
 	if hs.Live != nil {
-		r.Any("/live/*", hs.Live.WebsocketHandler)
+		r.Any("/live/*", hs.Live.Handler)
 	}
 
 	// Snapshots

@@ -6,25 +6,25 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestParseChannelAddress(t *testing.T) {
-	addr := ParseChannelAddress("aaa/bbb/ccc/ddd")
-	if !addr.IsValid() {
+func TestParseChannelIdentifier(t *testing.T) {
+	ident, err := ParseChannelIdentifier("aaa/bbb/ccc/ddd")
+	if err != nil {
 		t.FailNow()
 	}
 
-	ex := ChannelAddress{
+	ex := ChannelIdentifier{
 		Scope:     "aaa",
 		Namespace: "bbb",
 		Path:      "ccc/ddd",
 	}
 
-	if diff := cmp.Diff(addr, ex); diff != "" {
+	if diff := cmp.Diff(ident, ex); diff != "" {
 		t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 	}
 
 	// Check an invalid identifier
-	addr = ParseChannelAddress("aaa/bbb")
-	if addr.IsValid() {
+	_, err = ParseChannelIdentifier("aaa/bbb")
+	if err == nil {
 		t.FailNow()
 	}
 }

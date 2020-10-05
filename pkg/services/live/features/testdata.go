@@ -9,7 +9,6 @@ import (
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // TestdataRunner manages all the `grafana/dashboard/*` channels
@@ -19,19 +18,18 @@ type testdataRunner struct {
 	speedMillis int
 	dropPercent float64
 	channel     string
-	name        string
 }
 
 // TestdataSupplier manages all the `grafana/testdata/*` channels
 type TestdataSupplier struct {
-	Publisher models.ChannelPublisher
+	publisher models.ChannelPublisher
 }
 
-// DoNamespaceHTTP called from the http api
-func (g *TestdataSupplier) DoNamespaceHTTP(c *models.ReqContext) {
-	c.JSON(400, util.DynMap{
-		"Unsupportedd": "TestdataSupplier",
-	})
+// CreateTestdataSupplier Initialize a dashboard handler
+func CreateTestdataSupplier(p models.ChannelPublisher) TestdataSupplier {
+	return TestdataSupplier{
+		publisher: p,
+	}
 }
 
 // GetHandlerForPath called on init
@@ -40,18 +38,17 @@ func (g *TestdataSupplier) GetHandlerForPath(path string) (models.ChannelHandler
 
 	if path == "random-2s-stream" {
 		return &testdataRunner{
-			publisher:   g.Publisher,
+			publisher:   g.publisher,
 			running:     false,
 			speedMillis: 2000,
 			dropPercent: 0,
 			channel:     channel,
-			name:        path,
 		}, nil
 	}
 
 	if path == "random-flakey-stream" {
 		return &testdataRunner{
-			publisher:   g.Publisher,
+			publisher:   g.publisher,
 			running:     false,
 			speedMillis: 400,
 			dropPercent: .6,
@@ -85,11 +82,11 @@ func (g *testdataRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEve
 	return nil, fmt.Errorf("can not publish to testdata")
 }
 
-// DoChannelHTTP called from the http api
-func (g *testdataRunner) DoChannelHTTP(c *models.ReqContext, channel string) {
-	c.JSON(400, util.DynMap{
-		"Unsupportedd": channel,
-	})
+type randomWalkMessage struct {
+	Time  int64
+	Value float64
+	Min   float64
+	Max   float64
 }
 
 // RunRandomCSV just for an example
@@ -99,14 +96,7 @@ func (g *testdataRunner) runRandomCSV() {
 	walker := rand.Float64() * 100
 	ticker := time.NewTicker(time.Duration(g.speedMillis) * time.Millisecond)
 
-	measure := models.Measurement{
-		Name:   g.name,
-		Time:   0,
-		Values: make(map[string]interface{}, 5),
-	}
-	msg := models.MeasurementMessage{
-		Measures: []models.Measurement{measure},
-	}
+	line := randomWalkMessage{}
 
 	for t := range ticker.C {
 		if rand.Float64() <= g.dropPercent {
@@ -115,12 +105,12 @@ func (g *testdataRunner) runRandomCSV() {
 		delta := rand.Float64() - 0.5
 		walker += delta
 
-		measure.Time = t.UnixNano() / int64(time.Millisecond)
-		measure.Values["value"] = walker
-		measure.Values["min"] = walker - ((rand.Float64() * spread) + 0.01)
-		measure.Values["max"] = walker + ((rand.Float64() * spread) + 0.01)
+		line.Time = t.UnixNano() / int64(time.Millisecond)
+		line.Value = walker
+		line.Min = walker - ((rand.Float64() * spread) + 0.01)
+		line.Max = walker + ((rand.Float64() * spread) + 0.01)
 
-		bytes, err := json.Marshal(&msg)
+		bytes, err := json.Marshal(&line)
 		if err != nil {
 			logger.Warn("unable to marshal line", "error", err)
 			continue
@@ -128,7 +118,7 @@ func (g *testdataRunner) runRandomCSV() {
 
 		err = g.publisher(g.channel, bytes)
 		if err != nil {
-			logger.Warn("write", "channel", g.channel, "line", measure)
+			logger.Warn("write", "channel", g.channel, "line", line)
 		}
 	}
 }

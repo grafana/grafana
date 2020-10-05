@@ -20,7 +20,7 @@ var (
 
 // CoreGrafanaScope list of core features
 type CoreGrafanaScope struct {
-	Features map[string]models.ChannelNamespaceHandler
+	Features map[string]models.ChannelHandlerProvider
 
 	// The generic service to advertise dashboard changes
 	Dashboards models.DashboardActivityChannel
@@ -30,7 +30,8 @@ type CoreGrafanaScope struct {
 type GrafanaLive struct {
 	node *centrifuge.Node
 
-	WebsocketHandler interface{}
+	// The websocket handler
+	Handler interface{}
 
 	// Full channel handler
 	channels   map[string]models.ChannelHandler
@@ -46,7 +47,7 @@ func InitializeBroker() (*GrafanaLive, error) {
 		channels:   make(map[string]models.ChannelHandler),
 		channelsMu: sync.RWMutex{},
 		GrafanaScope: CoreGrafanaScope{
-			Features: make(map[string]models.ChannelNamespaceHandler),
+			Features: make(map[string]models.ChannelHandlerProvider),
 		},
 	}
 
@@ -82,21 +83,13 @@ func InitializeBroker() (*GrafanaLive, error) {
 	glive.node = node
 
 	// Initialize the main features
-	dash := &features.DashboardHandler{
-		Publisher: glive.Publish,
-	}
+	dash := features.CreateDashboardHandler(glive.Publish)
+	tds := features.CreateTestdataSupplier(glive.Publish)
 
-	glive.GrafanaScope.Dashboards = dash
-	glive.GrafanaScope.Features["dashboard"] = dash
-	glive.GrafanaScope.Features["testdata"] = &features.TestdataSupplier{
-		Publisher: glive.Publish,
-	}
-	glive.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{
-		Publisher: glive.Publish,
-	}
-	glive.GrafanaScope.Features["measurements"] = &features.MeasurementsRunner{
-		Publisher: glive.Publish,
-	}
+	glive.GrafanaScope.Dashboards = &dash
+	glive.GrafanaScope.Features["dashboard"] = &dash
+	glive.GrafanaScope.Features["testdata"] = &tds
+	glive.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{}
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
@@ -178,7 +171,7 @@ func InitializeBroker() (*GrafanaLive, error) {
 		WriteBufferSize: 1024,
 	})
 
-	glive.WebsocketHandler = func(ctx *models.ReqContext) {
+	glive.Handler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
 		if user == nil {
 			ctx.Resp.WriteHeader(401)
@@ -239,9 +232,9 @@ func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, 
 	}
 
 	// Parse the identifier ${scope}/${namespace}/${path}
-	id := ParseChannelAddress(channel)
-	if !id.IsValid() {
-		return nil, fmt.Errorf("invalid channel")
+	id, err := ParseChannelIdentifier(channel)
+	if err != nil {
+		return nil, err
 	}
 	logger.Info("initChannel", "channel", channel, "id", id)
 
@@ -252,7 +245,7 @@ func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, 
 		return c, nil
 	}
 
-	c, err := g.initChannel(id)
+	c, err = g.initChannel(id)
 	if err != nil {
 		return nil, err
 	}
@@ -260,42 +253,31 @@ func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, 
 	return c, nil
 }
 
-// GetChannelNamespace gives threadsafe access to the channel
-func (g *GrafanaLive) GetChannelNamespace(scope string, name string) (models.ChannelNamespaceHandler, error) {
-	if scope == "grafana" {
-		p, ok := g.GrafanaScope.Features[name]
+func (g *GrafanaLive) initChannel(id ChannelIdentifier) (models.ChannelHandler, error) {
+	if id.Scope == "grafana" {
+		p, ok := g.GrafanaScope.Features[id.Namespace]
 		if ok {
-			return p, nil
+			return p.GetHandlerForPath(id.Path)
 		}
-		return nil, fmt.Errorf("Unknown feature: %s", name)
+		return nil, fmt.Errorf("Unknown feature: %s", id.Namespace)
 	}
 
-	if scope == "ds" {
-		return nil, fmt.Errorf("todo... look up datasource: %s", name)
+	if id.Scope == "ds" {
+		return nil, fmt.Errorf("todo... look up datasource: %s", id.Namespace)
 	}
 
-	if scope == "plugin" {
-		p, ok := plugins.Plugins[name]
+	if id.Scope == "plugin" {
+		p, ok := plugins.Plugins[id.Namespace]
 		if ok {
 			h := &PluginHandler{
 				Plugin: p,
 			}
-			return h, nil
+			return h.GetHandlerForPath(id.Path)
 		}
-		return nil, fmt.Errorf("unknown plugin: %s", name)
+		return nil, fmt.Errorf("unknown plugin: %s", id.Namespace)
 	}
 
-	return nil, fmt.Errorf("invalid scope: %s", scope)
-}
-
-func (g *GrafanaLive) initChannel(id ChannelAddress) (models.ChannelHandler, error) {
-	namespace, err := g.GetChannelNamespace(id.Scope, id.Namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	// First access will initalize
-	return namespace.GetHandlerForPath(id.Path)
+	return nil, fmt.Errorf("invalid scope: %s", id.Scope)
 }
 
 // Publish sends the data to the channel without checking permissions etc
