@@ -41,7 +41,7 @@ func AuthenticateUser(query *models.LoginUserQuery) error {
 	}
 
 	basicAuthEnabled, err := loginUsingGrafanaDB(query)
-	if err == nil || (err != models.ErrUserNotFound && err != ErrInvalidCredentials && err != ErrUserDisabled) {
+	if basicAuthEnabled && (err == nil || (err != models.ErrUserNotFound && err != ErrInvalidCredentials && err != ErrUserDisabled)) {
 		query.AuthModule = "grafana"
 		return err
 	}
