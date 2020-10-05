@@ -16,6 +16,7 @@ export interface ElasticsearchAggregation {
   type: string;
   settings?: any;
   field?: string;
+  pipelineVariables?: Array<{ name?: string; pipelineAgg?: string }>;
 }
 
 export interface ElasticsearchQuery extends DataQuery {
@@ -31,13 +32,3 @@ export type DataLinkConfig = {
   url: string;
   datasourceUid?: string;
 };
-
-export interface Metric {
-  id: string;
-  type: string;
-  field: string;
-}
-
-export interface Target {
-  metrics: Metric[];
-}

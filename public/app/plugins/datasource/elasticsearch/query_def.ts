@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Metric, Target } from './types';
+import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
 
 export const metricAggTypes = [
   { text: 'Count', value: 'count', requiresField: false },
@@ -208,22 +208,26 @@ export function isPipelineAggWithMultipleBucketPaths(metricType: any) {
   return false;
 }
 
-export function getPipelineAggOptions(target: Target, agg?: Metric) {
-  const result: any[] = [];
+export function getAancestors(target: ElasticsearchQuery, metric?: ElasticsearchAggregation) {
   const { metrics } = target;
-  const initialAncestors = agg != null ? [agg.id] : ([] as string[]);
-  const ancestors = metrics.reduce((acc: string[], metric: Metric) => {
-    if (acc.includes(metric.field)) {
-      return [...acc, metric.id];
-    }
-    return acc;
+  if (!metrics) {
+    return (metric && [metric.id]) || [];
+  }
+  const initialAncestors = metric != null ? [metric.id] : ([] as string[]);
+  return metrics.reduce((acc: string[], metric: ElasticsearchAggregation) => {
+    const includedInField = (metric.field && acc.includes(metric.field)) || false;
+    const includedInVariables = metric.pipelineVariables?.some(pv => acc.includes(pv?.pipelineAgg ?? ''));
+    return includedInField || includedInVariables ? [...acc, metric.id] : acc;
   }, initialAncestors);
-  metrics.forEach((metric: Metric) => {
-    if (!ancestors.includes(metric.id)) {
-      result.push({ text: describeMetric(metric), value: metric.id });
-    }
-  });
-  return result;
+}
+
+export function getPipelineAggOptions(target: ElasticsearchQuery, metric?: ElasticsearchAggregation) {
+  const { metrics } = target;
+  if (!metrics) {
+    return [];
+  }
+  const ancestors = getAancestors(target, metric);
+  return metrics.filter(m => !ancestors.includes(m.id)).map(m => ({ text: describeMetric(m), value: m.id }));
 }
 
 export function getMovingAvgSettings(model: any, filtered: boolean) {
@@ -255,7 +259,7 @@ export function describeOrder(order: string) {
   return def.text;
 }
 
-export function describeMetric(metric: { type: string; field: string }) {
+export function describeMetric(metric: ElasticsearchAggregation) {
   const def: any = _.find(metricAggTypes, { value: metric.type });
   if (!def.requiresField && !isPipelineAgg(metric.type)) {
     return def.text;
