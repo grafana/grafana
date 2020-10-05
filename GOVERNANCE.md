@@ -66,6 +66,7 @@ In case a member leaves, the [offboarding](#offboarding) procedure is applied.
 The current team members are:
 
 - Alexander Zobnin ([Grafana Labs](https://grafana.com/))
+- Alex Khomenko ([Grafana Labs](https://grafana.com/))
 - Andrej Ocenas ([Grafana Labs](https://grafana.com/))
 - Arve Knudsen ([Grafana Labs](https://grafana.com/))
 - Brian Gann ([Grafana Labs](https://grafana.com/))
