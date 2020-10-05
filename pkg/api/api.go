@@ -19,7 +19,7 @@ func (hs *HTTPServer) registerRoutes() {
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL()
-	redirectFromShortUrl := middleware.ShortUrlRedirect()
+	redirectFromShortURL := middleware.ShortURLRedirect()
 	quota := middleware.Quota(hs.QuotaService)
 	bind := binding.Bind
 
@@ -80,7 +80,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/import/dashboard", reqSignedIn, hs.Index)
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
-	r.Get("/goto/:uid", redirectFromShortUrl, hs.Index)
+	r.Get("/goto/:uid", reqSignedIn, redirectFromShortURL, hs.Index)
 
 	r.Get("/explore", reqSignedIn, middleware.EnsureEditorOrViewerCanEdit, hs.Index)
 
@@ -387,7 +387,7 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/metrics/error", Wrap(GenerateError))
 
 		// short urls
-		apiRoute.Post("/goto/", bind(dtos.CreateShortUrlForm{}), Wrap(hs.CreateShortUrl))
+		apiRoute.Post("/short-urls/", bind(dtos.CreateShortURLForm{}), Wrap(hs.CreateShortURL))
 	}, reqSignedIn)
 
 	// admin api

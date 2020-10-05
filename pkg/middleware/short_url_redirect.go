@@ -1,29 +1,26 @@
 package middleware
 
 import (
-	"net/http"
-	"strings"
-
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"gopkg.in/macaron.v1"
 )
 
-func ShortUrlRedirect() macaron.Handler {
-	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
-		shortUrlUid := c.Params(":uid")
-		ctx := c.Data["ctx"].(*models.ReqContext)
+func ShortURLRedirect() macaron.Handler {
+	return func(c *models.ReqContext) {
+		shortURLUid := c.Params(":uid")
 
-		if !util.IsValidShortUID(c.Params(":uid")) {
+		if !util.IsValidShortUID(shortURLUid) {
 			return
 		}
 
-		cmd := models.GetFullUrlQuery{OrgId: ctx.OrgId, Uid: shortUrlUid}
-		if err := bus.Dispatch(&cmd); err != nil {
+		service := shorturls.NewShortURLService(c.SignedInUser)
+		path, err := service.GetFullURLByUID(shortURLUid)
+		if err != nil {
 			return
 		}
-		c.Redirect(setting.ToAbsUrl(strings.TrimPrefix(cmd.Result.Path, "/")), 302)
+		c.Redirect(setting.ToAbsUrl(path), 302)
 	}
 }

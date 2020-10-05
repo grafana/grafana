@@ -1,4 +1,4 @@
-package shortUrls
+package shorturls
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
@@ -7,24 +7,24 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type ShortUrlService interface {
-	GetFullUrlByUID(orgId int64, uid string) (string, error)
-	CreateShortUrl(orgId int64, path string) (string, error)
+type ShortURLService interface {
+	GetFullURLByUID(uid string) (string, error)
+	CreateShortURL(path string) (string, error)
 }
 
-type shortUrlServiceImpl struct {
+type shortURLServiceImpl struct {
 	user *models.SignedInUser
 }
 
-var NewShortUrlService = func(orgId int64, user *models.SignedInUser) ShortUrlService {
-	return &shortUrlServiceImpl{
+var NewShortURLService = func(user *models.SignedInUser) ShortURLService {
+	return &shortURLServiceImpl{
 		user: user,
 	}
 }
 
-func (dr *shortUrlServiceImpl) buildCreateShortUrlCommand(orgId int64, path string) (*models.CreateShortUrlCommand, error) {
-	cmd := &models.CreateShortUrlCommand{
-		OrgId:     orgId,
+func (dr *shortURLServiceImpl) buildCreateShortURLCommand(path string) (*models.CreateShortURLCommand, error) {
+	cmd := &models.CreateShortURLCommand{
+		OrgId:     dr.user.OrgId,
 		Uid:       util.GenerateShortUID(),
 		Path:      path,
 		CreatedBy: dr.user.UserId,
@@ -33,29 +33,29 @@ func (dr *shortUrlServiceImpl) buildCreateShortUrlCommand(orgId int64, path stri
 	return cmd, nil
 }
 
-func (dr *shortUrlServiceImpl) GetFullUrlByUID(orgId int64, uid string) (string, error) {
-	query := models.GetFullUrlQuery{OrgId: orgId, Uid: uid}
+func (dr *shortURLServiceImpl) GetFullURLByUID(uid string) (string, error) {
+	query := models.GetShortURLByUIDQuery{OrgId: dr.user.OrgId, Uid: uid}
 	if err := bus.Dispatch(&query); err != nil {
 		return "", err
 	}
 
-	if err := bus.Dispatch(&models.UpdateShortUrlLastSeenAtCommand{Uid: query.Result.Uid}); err != nil {
-		logger.Error("Failed to update shortUrl last_seen_at", "error", err)
+	if err := bus.Dispatch(&models.UpdateShortURLLastSeenAtCommand{Uid: query.Result.Uid}); err != nil {
+		logger.Error("Failed to update shortURL last_seen_at", "error", err)
 	}
 
 	return query.Result.Path, nil
 }
 
-func (dr *shortUrlServiceImpl) CreateShortUrl(orgId int64, path string) (string, error) {
-	createShortUrlCmd, err := dr.buildCreateShortUrlCommand(orgId, path)
+func (dr *shortURLServiceImpl) CreateShortURL(path string) (string, error) {
+	createShortURLCmd, err := dr.buildCreateShortURLCommand(path)
 	if err != nil {
 		return "", err
 	}
 
-	err = bus.Dispatch(createShortUrlCmd)
+	err = bus.Dispatch(createShortURLCmd)
 	if err != nil {
 		return "", err
 	}
 
-	return createShortUrlCmd.Result.Uid, nil
+	return createShortURLCmd.Result.Uid, nil
 }

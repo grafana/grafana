@@ -6,41 +6,41 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", GetFullUrlByUid)
-	bus.AddHandler("sql", UpdateShortUrlLastSeenAt)
-	bus.AddHandler("sql", CreateShortUrl)
+	bus.AddHandler("sql", GetFullURLByUid)
+	bus.AddHandler("sql", UpdateShortURLLastSeenAt)
+	bus.AddHandler("sql", CreateShortURL)
 }
 
-func GetFullUrlByUid(query *models.GetFullUrlQuery) error {
-	var shortUrl models.ShortUrl
-	exists, err := x.Where("org_id=? AND uid=?", query.OrgId, query.Uid).Get(&shortUrl)
+func GetFullURLByUid(query *models.GetShortURLByUIDQuery) error {
+	var shortURL models.ShortUrl
+	exists, err := x.Where("org_id=? AND uid=?", query.OrgId, query.Uid).Get(&shortURL)
 	if err != nil {
 		return err
 	}
 
 	if !exists {
-		return models.ErrShortUrlNotFound
+		return models.ErrShortURLNotFound
 	}
 
-	query.Result = &shortUrl
+	query.Result = &shortURL
 	return nil
 }
 
-func UpdateShortUrlLastSeenAt(cmd *models.UpdateShortUrlLastSeenAtCommand) error {
+func UpdateShortURLLastSeenAt(cmd *models.UpdateShortURLLastSeenAtCommand) error {
 	now := getTime().Unix()
-	var shortUrl = models.ShortUrl{
+	var shortURL = models.ShortUrl{
 		OrgId:      cmd.OrgId,
 		Uid:        cmd.Uid,
 		LastSeenAt: now,
 	}
 
-	_, err := x.Where("org_id=? AND uid=?", shortUrl.OrgId, shortUrl.Uid).Update(&shortUrl)
+	_, err := x.Where("org_id=? AND uid=?", shortURL.OrgId, shortURL.Uid).Update(&shortURL)
 	return err
 }
 
-func CreateShortUrl(command *models.CreateShortUrlCommand) error {
+func CreateShortURL(command *models.CreateShortURLCommand) error {
 	now := getTime().Unix()
-	shortUrl := models.ShortUrl{
+	shortURL := models.ShortUrl{
 		OrgId:     command.OrgId,
 		Uid:       command.Uid,
 		Path:      command.Path,
@@ -48,11 +48,11 @@ func CreateShortUrl(command *models.CreateShortUrlCommand) error {
 		CreatedAt: now,
 	}
 
-	_, err := x.Insert(&shortUrl)
+	_, err := x.Insert(&shortURL)
 	if err != nil {
 		return err
 	}
 
-	command.Result = &shortUrl
+	command.Result = &shortURL
 	return err
 }

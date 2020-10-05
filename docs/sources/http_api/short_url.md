@@ -15,14 +15,14 @@ This API can be used to create shortened URLs. This allows URLs containing compl
 
 ## Create short URL
 
-`POST /api/goto`
+`POST /api/short-urls`
 
 Creates a new short URL.
 
 **Example request:**
 
 ```http
-POST /api/goto HTTP/1.1
+POST /api/short-urls HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
