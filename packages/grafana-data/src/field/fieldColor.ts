@@ -1,5 +1,5 @@
 import { FALLBACK_COLOR, Field, FieldColorMode, GrafanaTheme, Threshold } from '../types';
-import { getColorFromHexRgbOrName, Registry, RegistryItem } from '../utils';
+import { classicColors, getColorFromHexRgbOrName, Registry, RegistryItem } from '../utils';
 import { interpolateRgbBasis } from 'd3-interpolate';
 
 export type FieldValueColorCalculator = (value: number, percent: number, Threshold?: Threshold) => string;
@@ -20,14 +20,45 @@ export const fieldColorModeRegistry = new Registry<FieldColorModeItem>(() => {
       },
     },
     {
-      id: FieldColorMode.SchemeGrYlRd,
-      name: 'Scheme Green-Yellow-Red',
+      id: FieldColorMode.SpectrumGrYlRd,
+      name: 'Spectrum > Green-Yellow-Red',
       getCalculator: (field, seriesIndex, theme) => {
         const colors = ['green', 'yellow', 'red'].map(c => getColorFromHexRgbOrName(c, theme.type));
         const interpolator = interpolateRgbBasis(colors);
 
         return (value, percent) => {
           return interpolator(percent);
+        };
+      },
+    },
+    {
+      id: FieldColorMode.PaletteClassic,
+      name: 'Palette > Classic',
+      getCalculator: (field, seriesIndex) => {
+        return () => {
+          return classicColors[seriesIndex % classicColors.length];
+        };
+      },
+    },
+    {
+      id: FieldColorMode.PaletteVibrant,
+      name: 'Palette > Vibrant',
+      getCalculator: (field, seriesIndex, theme: GrafanaTheme) => {
+        const namedColors = [
+          'blue',
+          'red',
+          'green',
+          'yellow',
+          'purple',
+          'orange',
+          'dark-blue',
+          'dark-red',
+          'dark-yellow',
+          'dark-purple',
+          'dark-orange',
+        ];
+        return () => {
+          return getColorFromHexRgbOrName(namedColors[seriesIndex % namedColors.length], theme.type);
         };
       },
     },
