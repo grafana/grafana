@@ -8,35 +8,30 @@ const path = require('path');
 
 let distDir: string, cwd: string;
 
-// @ts-ignore
-export const clean = useSpinner<void>('Cleaning', async () => await execa('npm', ['run', 'clean']));
+const clean = () => useSpinner('Cleaning', () => execa('npm', ['run', 'clean']));
 
-// @ts-ignore
-const compile = useSpinner<void>('Compiling sources', async () => {
-  try {
-    await execa('tsc', ['-p', './tsconfig.json']);
-  } catch (e) {
-    console.log(e);
-    throw e;
-  }
-});
+const compile = () =>
+  useSpinner('Compiling sources', async () => {
+    try {
+      await execa('tsc', ['-p', './tsconfig.json']);
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
+  });
 
-// @ts-ignore
-export const savePackage = useSpinner<{
-  path: string;
-  pkg: {};
-  // @ts-ignore
-}>('Updating package.json', async ({ path, pkg }) => {
-  return new Promise((resolve, reject) => {
-    fs.writeFile(path, JSON.stringify(pkg, null, 2), err => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve();
+const savePackage = ({ path, pkg }: { path: string; pkg: {} }) =>
+  useSpinner('Updating package.json', async () => {
+    new Promise((resolve, reject) => {
+      fs.writeFile(path, JSON.stringify(pkg, null, 2), err => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve();
+      });
     });
   });
-});
 
 const preparePackage = async (pkg: any) => {
   pkg.bin = {
@@ -63,8 +58,8 @@ const copyFiles = () => {
     'src/config/styles.mock.js',
     'src/config/jest.plugin.config.local.js',
   ];
-  // @ts-ignore
-  return useSpinner<void>(`Moving ${files.join(', ')} files`, async () => {
+
+  return useSpinner(`Moving ${files.join(', ')} files`, async () => {
     const promises = files.map(file => {
       return new Promise((resolve, reject) => {
         const basedir = path.dirname(`${distDir}/${file}`);
@@ -82,13 +77,12 @@ const copyFiles = () => {
     });
 
     await Promise.all(promises);
-  })();
+  });
 };
 
 const copySassFiles = () => {
   const files = ['_variables.generated.scss', '_variables.dark.generated.scss', '_variables.light.generated.scss'];
-  // @ts-ignore
-  return useSpinner<void>(`Copy scss files ${files.join(', ')} files`, async () => {
+  return useSpinner(`Copy scss files ${files.join(', ')} files`, async () => {
     const sassDir = path.resolve(cwd, '../../public/sass/');
     const promises = files.map(file => {
       return new Promise((resolve, reject) => {
@@ -104,7 +98,7 @@ const copySassFiles = () => {
     });
 
     await Promise.all(promises);
-  })();
+  });
 };
 
 interface ToolkitBuildOptions {}

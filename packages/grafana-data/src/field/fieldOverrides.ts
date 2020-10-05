@@ -1,37 +1,36 @@
 import {
-  DynamicConfigValue,
-  FieldConfig,
-  DataFrame,
-  Field,
-  FieldType,
-  ThresholdsMode,
-  FieldColorMode,
-  FieldOverrideContext,
-  ScopedVars,
   ApplyFieldOverrideOptions,
-  FieldConfigPropertyItem,
-  LinkModel,
-  InterpolateFunction,
-  ValueLinkConfig,
-  GrafanaTheme,
-  TimeZone,
+  DataFrame,
   DataLink,
   DataSourceInstanceSettings,
+  DynamicConfigValue,
+  Field,
+  FieldColorMode,
+  FieldConfig,
+  FieldConfigPropertyItem,
+  FieldOverrideContext,
+  FieldType,
+  GrafanaTheme,
+  InterpolateFunction,
+  LinkModel,
+  ScopedVars,
+  TimeZone,
+  ValueLinkConfig,
 } from '../types';
-import { fieldMatchers, ReducerID, reduceField } from '../transformations';
+import { fieldMatchers, reduceField, ReducerID } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
 import set from 'lodash/set';
 import unset from 'lodash/unset';
 import get from 'lodash/get';
-import { getDisplayProcessor } from './displayProcessor';
+import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 import { guessFieldTypeForField } from '../dataframe';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { DataLinkBuiltInVars, locationUtil } from '../utils';
 import { formattedValueToString } from '../valueFormats';
 import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
-import { getFrameDisplayName, getFieldDisplayName } from './fieldState';
+import { getFieldDisplayName, getFrameDisplayName } from './fieldState';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
 import { getTemplateProxyForField } from './templateProxies';
@@ -101,6 +100,9 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   }
 
   return options.data.map((frame, index) => {
+    // Need to define this new frame here as it's passed to the getLinkSupplier function inside the fields loop
+    const newFrame: DataFrame = { ...frame };
+
     const scopedVars: ScopedVars = {
       __series: { text: 'Series', value: { name: getFrameDisplayName(frame, index) } }, // might be missing
     };
@@ -134,7 +136,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       // Anything in the field config that's not set by the datasource
       // will be filled in by panel's field configuration
       setFieldConfigDefaults(config, source.defaults, context);
-
       // Find any matching rules and then override
       for (const rule of override) {
         if (rule.match(field, frame, options.data!)) {
@@ -206,7 +207,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
       // Attach data links supplier
       f.getLinks = getLinksSupplier(
-        frame,
+        newFrame,
         f,
         fieldScopedVars,
         context.replaceVariables,
@@ -220,10 +221,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       return f;
     });
 
-    return {
-      ...frame,
-      fields,
-    };
+    newFrame.fields = fields;
+    return newFrame;
   });
 }
 
@@ -285,9 +284,9 @@ const processFieldConfigValue = (
   context: FieldOverrideEnv
 ) => {
   const currentConfig = get(destination, fieldConfigProperty.path);
-
   if (currentConfig === null || currentConfig === undefined) {
     const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
+    // console.log(item);
     if (!item) {
       return;
     }
@@ -307,18 +306,6 @@ const processFieldConfigValue = (
  */
 export function validateFieldConfig(config: FieldConfig) {
   const { thresholds } = config;
-  if (thresholds) {
-    if (!thresholds.mode) {
-      thresholds.mode = ThresholdsMode.Absolute;
-    }
-    if (!thresholds.steps) {
-      thresholds.steps = [];
-    } else if (thresholds.steps.length) {
-      // First value is always -Infinity
-      // JSON saves it as null
-      thresholds.steps[0].value = -Infinity;
-    }
-  }
 
   if (!config.color) {
     if (thresholds) {
@@ -430,3 +417,34 @@ export const getLinksSupplier = (
     }
   });
 };
+
+/**
+ * Return a copy of the DataFrame with raw data
+ */
+export function applyRawFieldOverrides(data: DataFrame[]): DataFrame[] {
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  const newData = [...data];
+  const processor = getRawDisplayProcessor();
+
+  for (let frameIndex = 0; frameIndex < newData.length; frameIndex++) {
+    const newFrame = { ...newData[frameIndex] };
+    const newFields = [...newFrame.fields];
+
+    for (let fieldIndex = 0; fieldIndex < newFields.length; fieldIndex++) {
+      newFields[fieldIndex] = {
+        ...newFields[fieldIndex],
+        display: processor,
+      };
+    }
+
+    newData[frameIndex] = {
+      ...newFrame,
+      fields: newFields,
+    };
+  }
+
+  return newData;
+}

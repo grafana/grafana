@@ -54,15 +54,6 @@ func FrameToSeriesSlice(frame *data.Frame) (TimeSeriesSlice, error) {
 		}
 		return nil, fmt.Errorf("input frame is not recognized as a time series")
 	}
-	// If Long, make wide
-	if tsSchema.Type == data.TimeSeriesTypeLong {
-		var err error
-		frame, err = data.LongToWide(frame, nil)
-		if err != nil {
-			return nil, errutil.Wrap("failed to convert long to wide series when converting from dataframe", err)
-		}
-		tsSchema = frame.TimeSeriesSchema()
-	}
 
 	seriesCount := len(tsSchema.ValueIndices)
 	seriesSlice := make(TimeSeriesSlice, 0, seriesCount)

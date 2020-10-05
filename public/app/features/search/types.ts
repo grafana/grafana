@@ -54,10 +54,6 @@ export interface SearchAction extends Action {
   payload?: any;
 }
 
-export interface OpenSearchParams {
-  query?: string;
-}
-
 export interface UidsToDelete {
   folders: string[];
   dashboards: string[];

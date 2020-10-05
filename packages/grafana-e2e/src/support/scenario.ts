@@ -1,5 +1,4 @@
 import { e2e } from '../';
-import { Flows } from '../flows';
 
 export interface ScenarioArguments {
   describeName: string;
@@ -22,20 +21,20 @@ export const e2eScenario = ({
     if (skipScenario) {
       it.skip(itName, () => scenario());
     } else {
-      before(() => Flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD')));
+      before(() => e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD')));
 
       beforeEach(() => {
         Cypress.Cookies.preserveOnce('grafana_session');
 
         if (addScenarioDataSource) {
-          Flows.addDataSource();
+          e2e.flows.addDataSource();
         }
         if (addScenarioDashBoard) {
-          Flows.addDashboard();
+          e2e.flows.addDashboard();
         }
       });
 
-      afterEach(() => Flows.revertAllChanges());
+      afterEach(() => e2e.flows.revertAllChanges());
       after(() => e2e().clearCookies());
 
       it(itName, () => scenario());

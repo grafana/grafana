@@ -12,7 +12,7 @@ weight = 2
 
 Before you create your first dashboard, you need to add your data source. Following are the list of instructions to create one.
 
-> Only users with the Admin role can add data sources.
+> **Note:** Only users with the organization Admin role can add data sources.
 
 1. Move your cursor to the cog on the side menu which will show you the configuration menu. If the side menu is not visible click the Grafana icon in the upper left corner. Click on **Configuration** > **Data Sources** in the side menu and you'll be taken to the data sources page
    where you can add and edit data sources. You can also click the cog.

@@ -58,6 +58,10 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
     return displayName;
   }
 
+  if (frame && field.config?.displayNameFromDS) {
+    return field.config.displayNameFromDS;
+  }
+
   // This is an ugly exception for time field
   // For time series we should normally treat time field with same name
   // But in case it has a join source we should handle it as normal field

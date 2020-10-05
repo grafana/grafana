@@ -1,85 +1,137 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import { css } from 'emotion';
 import { StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
-import { NavModel, SelectableValue, FeatureState } from '@grafana/data';
+import {
+  NavModel,
+  SelectableValue,
+  FeatureState,
+  LiveChannelScope,
+  LiveChannelConfig,
+  LiveChannelSupport,
+} from '@grafana/data';
 import { LivePanel } from './LivePanel';
-import { Select, Input, Button, FeatureInfoBox, Container } from '@grafana/ui';
-import { getGrafanaLiveSrv } from '@grafana/runtime';
+import { Select, FeatureInfoBox, Container } from '@grafana/ui';
+import { getGrafanaLiveCentrifugeSrv } from '../live/live';
 
 interface Props {
   navModel: NavModel;
 }
 
+const scopes: Array<SelectableValue<LiveChannelScope>> = [
+  { label: 'Grafana', value: LiveChannelScope.Grafana, description: 'Core grafana live features' },
+  { label: 'Data Sources', value: LiveChannelScope.DataSource, description: 'Data sources with live support' },
+  { label: 'Plugins', value: LiveChannelScope.Plugin, description: 'Plugins with live support' },
+];
+
 interface State {
-  channel: string;
-  text: string;
+  scope: LiveChannelScope;
+  namespace?: string;
+  path?: string;
+
+  namespaces: Array<SelectableValue<string>>;
+  paths: Array<SelectableValue<string>>;
+  support?: LiveChannelSupport;
+  config?: LiveChannelConfig;
 }
 
 export class LiveAdmin extends PureComponent<Props, State> {
   state: State = {
-    channel: 'random-2s-stream',
-    text: '', // publish text to a channel
+    scope: LiveChannelScope.Grafana,
+    namespace: 'testdata',
+    path: 'random-2s-stream',
+    namespaces: [],
+    paths: [],
   };
+  // onTextChanged: ((event: FormEvent<HTMLInputElement>) => void) | undefined;
+  // onPublish: ((event: MouseEvent<HTMLButtonElement, MouseEvent>) => void) | undefined;
 
-  onChannelChanged = (v: SelectableValue<string>) => {
+  async componentDidMount() {
+    const { scope, namespace, path } = this.state;
+    const srv = getGrafanaLiveCentrifugeSrv();
+    const namespaces = await srv.scopes[scope].listNamespaces();
+    const support = namespace ? await srv.scopes[scope].getChannelSupport(namespace) : undefined;
+    const paths = support ? await support.getSupportedPaths() : undefined;
+    const config = support && path ? await support.getChannelConfig(path) : undefined;
+
+    this.setState({
+      namespaces,
+      support,
+      paths: paths
+        ? paths.map(p => ({
+            label: p.path,
+            value: p.path,
+            description: p.description,
+          }))
+        : [],
+      config,
+    });
+  }
+
+  onScopeChanged = async (v: SelectableValue<LiveChannelScope>) => {
     if (v.value) {
+      const srv = getGrafanaLiveCentrifugeSrv();
+
       this.setState({
-        channel: v.value,
+        scope: v.value,
+        namespace: undefined,
+        path: undefined,
+        namespaces: await srv.scopes[v.value!].listNamespaces(),
+        paths: [],
+        support: undefined,
+        config: undefined,
       });
     }
   };
 
-  onTextChanged = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ text: event.target.value });
-  };
+  onNamespaceChanged = async (v: SelectableValue<string>) => {
+    if (v.value) {
+      const namespace = v.value;
+      const srv = getGrafanaLiveCentrifugeSrv();
+      const support = await srv.scopes[this.state.scope].getChannelSupport(namespace);
 
-  onPublish = () => {
-    const { text, channel } = this.state;
-    if (text) {
-      const msg = {
-        line: text,
-      };
-
-      const srv = getGrafanaLiveSrv();
-      srv.publish(channel, msg).then(v => {
-        console.log('PUBLISHED', text, v);
+      this.setState({
+        namespace: v.value,
+        paths: support!.getSupportedPaths().map(p => ({
+          label: p.path,
+          value: p.path,
+          description: p.description,
+        })),
+        path: undefined,
+        config: undefined,
       });
     }
-    this.setState({ text: '' });
+  };
+
+  onPathChanged = async (v: SelectableValue<string>) => {
+    if (v.value) {
+      const path = v.value;
+      const srv = getGrafanaLiveCentrifugeSrv();
+      const support = await srv.scopes[this.state.scope].getChannelSupport(this.state.namespace!);
+      if (!support) {
+        this.setState({
+          namespace: undefined,
+          paths: [],
+          config: undefined,
+          support,
+        });
+        return;
+      }
+
+      this.setState({
+        path,
+        support,
+        config: support.getChannelConfig(path),
+      });
+    }
   };
 
   render() {
     const { navModel } = this.props;
-    const { channel, text } = this.state;
-
-    const channels: Array<SelectableValue<string>> = [
-      {
-        label: 'random-2s-stream',
-        value: 'random-2s-stream',
-        description: 'Random stream that updates every 2s',
-      },
-      {
-        label: 'random-flakey-stream',
-        value: 'random-flakey-stream',
-        description: 'Random stream with intermittent updates',
-      },
-      {
-        label: 'example-chat',
-        value: 'example-chat',
-        description: 'A channel that expects chat messages',
-      },
-    ];
-    let current = channels.find(f => f.value === channel);
-    if (!current) {
-      current = {
-        label: channel,
-        value: channel,
-      };
-      channels.push(current);
-    }
+    const { scope, namespace, namespaces, path, paths, config } = this.state;
 
     return (
       <Page navModel={navModel}>
@@ -99,19 +151,44 @@ export class LiveAdmin extends PureComponent<Props, State> {
             <br />
           </Container>
 
-          <h2>Channels</h2>
-          <Select options={channels} value={current} onChange={this.onChannelChanged} allowCustomValue={true} />
+          <div
+            className={css`
+              width: 100%;
+              display: flex;
+              > div {
+                margin-right: 8px;
+                min-width: 150px;
+              }
+            `}
+          >
+            <div>
+              <h5>Scope</h5>
+              <Select options={scopes} value={scopes.find(s => s.value === scope)} onChange={this.onScopeChanged} />
+            </div>
+            <div>
+              <h5>Namespace</h5>
+              <Select
+                options={namespaces}
+                value={namespaces.find(s => s.value === namespace) || namespace || ''}
+                onChange={this.onNamespaceChanged}
+                allowCustomValue={true}
+                backspaceRemovesValue={true}
+              />
+            </div>
+            <div>
+              <h5>Path</h5>
+              <Select
+                options={paths}
+                value={paths.find(s => s.value === path) || path || ''}
+                onChange={this.onPathChanged}
+                allowCustomValue={true}
+                backspaceRemovesValue={true}
+              />
+            </div>
+          </div>
           <br />
-
-          <LivePanel channel={channel} />
-
           <br />
-          <br />
-          <h3>Write to channel</h3>
-          <Input value={text} onChange={this.onTextChanged} />
-          <Button onClick={this.onPublish} variant={text ? 'primary' : 'secondary'}>
-            Publish
-          </Button>
+          {scope && namespace && path && <LivePanel scope={scope} namespace={namespace} path={path} config={config} />}
         </Page.Contents>
       </Page>
     );

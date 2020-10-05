@@ -26,8 +26,8 @@ This section provides guidelines on how to avoid using charged language in docum
 
 Don't use "whitelist" or "blacklist" when referring to allowing or blocking content or traffic.
 
-* When used as a noun, use "allowlist" or "blocklist".
-* When used as a verb, use "allow" or "block"
+- When used as a noun, use "allowlist" or "blocklist".
+- When used as a verb, use "allow" or "block"
 
 Example: _To **allow** outgoing traffic, add the IP to the **allowlist**._
 
@@ -35,8 +35,8 @@ Example: _To **allow** outgoing traffic, add the IP to the **allowlist**._
 
 Don't use "master" or "slave" to describe relationships between nodes or processes.
 
-* Use "leader", "main" or "primary," instead of "master."
-* Use "follower" or "secondary," instead of "slave."
+- Use "leader", "main" or "primary," instead of "master."
+- Use "follower" or "secondary," instead of "slave."
 
 ### Exceptions
 
@@ -50,17 +50,17 @@ The following sections provide general guidelines on topics specific to Grafana 
 
 ### General
 
-* Use active voice. Avoid passive voice.
+- Use active voice. Avoid passive voice.
   - Passive: The heatmap visualization is displayed.
   - Active: Grafana displays the heatmap visualization.
-* Write in the imperative second person. Examples: You can write a query. Click the panel. Close the window.
-* Write in present tense.
+- Write in the imperative second person. Examples: You can write a query. Click the panel. Close the window.
+- Write in present tense.
   - Not: The panel will open.
   - Use: The panel opens. Grafana opens the panel.
-* Do not use an ampersand (&) as an abbreviation for "and."
+- Do not use an ampersand (&) as an abbreviation for "and."
   - **Exceptions:** If an ampersand is used in the Grafana UI, then match the UI.
-* Avoid using internal slang and jargon in technical documentation.
-* Do not use two spaces after a period. Only add one space after each sentence. Do not add a space at the end of the paragraph.
+- Avoid using internal slang and jargon in technical documentation.
+- Do not use two spaces after a period. Only add one space after each sentence. Do not add a space at the end of the paragraph.
 
 ### File naming conventions
 
@@ -70,39 +70,39 @@ The following sections provide general guidelines on topics specific to Grafana 
 
 ### Headings
 
-* Write headings in sentence case, not title case.
+- Write headings in sentence case, not title case.
   - This is sentence case
   - This Is Title Case
-* Task topic headings start with a verb.
+- Task topic headings start with a verb.
   - Write a query. Create a dashboard.
-* Concept and reference topic headings should be nouns or gerunds. Examples: Contributing to docs, Visualizations, Style guide
-* Avoid following one heading with another heading.
-* Avoid skipping heading levels. For example, an h1 should be followed by an h2 rather than an h3.
-* Avoid having just one lower-level heading. For example, h1, h2, h2, h3, h3, h2 is a good order. Do no go h1, h2, h3, h2, h3, h2.
-* Don't include parenthetical words like (Important!) in headings.
+- Concept and reference topic headings should be nouns or gerunds. Examples: Contributing to docs, Visualizations, Style guide
+- Avoid following one heading with another heading.
+- Avoid skipping heading levels. For example, an h1 should be followed by an h2 rather than an h3.
+- Avoid having just one lower-level heading. For example, h1, h2, h2, h3, h3, h2 is a good order. Do no go h1, h2, h3, h2, h3, h2.
+- Don't include parenthetical words like (Important!) in headings.
 
 ### Images
 
-* Preferred format is .png
-* File extension should be all lowercase.
-* Preferred DPI is 72.
-* Assume all graphics will be exclusively viewed on the web.
-* Maximum image size is 3840px X 2160px.
-* Screenshots should be readable, but not too large.
+- Preferred format is .png
+- File extension should be all lowercase.
+- Preferred DPI is 72.
+- Assume all graphics will be exclusively viewed on the web.
+- Maximum image size is 3840px X 2160px.
+- Screenshots should be readable, but not too large.
 
 ### Capitalization
 
-* Grafana, Loki, and Prometheus are always capitalized unless part of a code block.
-* API names are always Title Case, followed by "API"—for example, "Dashboard Permissions API"
-* Git is always capitalized, unless part of a code block.
-* Abbreviations are always capitalized (such as API, HTTP, ID, JSON, SQL, or URL) unless they are part of a code block.
-* Menu and submenu titles always use sentence case: capitalize the first word, and lowercase the rest.
+- Grafana, Loki, and Prometheus are always capitalized unless part of a code block.
+- API names are always Title Case, followed by "API"—for example, "Dashboard Permissions API"
+- Git is always capitalized, unless part of a code block.
+- Abbreviations are always capitalized (such as API, HTTP, ID, JSON, SQL, or URL) unless they are part of a code block.
+- Menu and submenu titles always use sentence case: capitalize the first word, and lowercase the rest.
   - "Dashboards" when referring to the submenu title.
   - "Keyboard shortcuts" when referring to the submenu topic.
-* Generic and plural versions are always lowercase.
+- Generic and plural versions are always lowercase.
   - Lowercase "dashboard" when referring to a dashboard generally.
   - Lowercase "dashboards" when referring to multiple dashboards.
-* **Exceptions:** If a term is lowercased in the Grafana UI, then match the UI.
+- **Exceptions:** If a term is lowercased in the Grafana UI, then match the UI.
 
 ### Links and references
 
@@ -115,16 +115,46 @@ When possible, use the exact title of the page or section you are linking to as 
 **Example**
 Refer to the [Documentation style guide](documentation-style-guide.md) for information about word usage and capitalization guidelines.
 
+### Notes, tips, cautions, and warnings
+
+Grafana documentation uses notes, tips, cautions, and warnings. Notes are the most common. The format for all of them is indented, bold, sentence case:
+
+```
+> **Note:**
+```
+
+#### Notes
+
+Notes provide additional information that the user should be extra aware of. For example:
+
+> **Note:** This page describes a feature for Grafana 7.0 beta.
+
+#### Tips
+
+Tips describe alternate or more efficient ways of doing things. Rarely used.
+
+#### Cautions
+
+Cautions warn the user that they should proceed with caution. Use cautions to emphasize the potential downside of a course of action.
+
+> **Caution:** If you turn off authentication requirements, then anyone can access your Grafana instance. This poses a considerable security risk.
+
+#### Warnings
+
+Warnings tell the user not to do something. For example:
+
+> **Warning:** Grafana does not back up your dashboards. If you delete a dashboard, then you might not be able to recover it.
+
 ### Command line examples
 
-* Do not assume everyone is using Linux. Make sure instructions include enough information for Windows and Mac users to successfully complete procedures.
+- Do not assume everyone is using Linux. Make sure instructions include enough information for Windows and Mac users to successfully complete procedures.
 
-* Do not add `$` before commands. Make it easy for users to copy and paste commands.
+- Do not add `$` before commands. Make it easy for users to copy and paste commands.
 
-  * **Wrong:** `$ sudo yum install grafana`
-  * **Right:** `sudo yum install grafana`
+  - **Wrong:** `$ sudo yum install grafana`
+  - **Right:** `sudo yum install grafana`
 
-* Include `sudo` before commands that require `sudo` to work.
+- Include `sudo` before commands that require `sudo` to work.
 
 For terminal examples and Grafana configuration, use a `bash` code block:
 ```bash
@@ -148,26 +178,26 @@ Two words if used as a verb, one word if used as a noun.
 
 **Examples**
 
-* Check out these new features!
-* Proceed to checkout.
+- Check out these new features!
+- Proceed to checkout.
 
 #### data source
 
 Two words, not one
 
 **Exceptions:**
-* "datasource" used as an identifier
-* "datasource" in a URL
-* Use "data source" instead of "datasource" unless used as an identifier, in code, or as part of a URL.
-* Spell out "repository" and avoid the shorter "repo."
-* Use "Unix" as the preferred spelling (as opposed to "UNIX", or "unix") when referring to the family of operating systems.
+- "datasource" used as an identifier
+- "datasource" in a URL
+- Use "data source" instead of "datasource" unless used as an identifier, in code, or as part of a URL.
+- Spell out "repository" and avoid the shorter "repo."
+- Use "Unix" as the preferred spelling (as opposed to "UNIX", or "unix") when referring to the family of operating systems.
 
 #### display (verb)
 
 *Display* is a transitive verb, which means it always needs a direct object.
-* Correct, active voice: Grafana displays your list of active alarms.
-* Correct, but passive voice: Your list of active alarms is displayed.
-* Incorrect: The list of active alarms displays.
+- Correct, active voice: Grafana displays your list of active alarms.
+- Correct, but passive voice: Your list of active alarms is displayed.
+- Incorrect: The list of active alarms displays.
 
 #### drawer
 
@@ -193,5 +223,5 @@ Two words if used as a verb, one word if used as a noun.
 
 **Examples**
 
-* Set up the workspace.
-* Initial setup might take five minutes.
+- Set up the workspace.
+- Initial setup might take five minutes.

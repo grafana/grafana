@@ -2,6 +2,7 @@ package pluginproxy
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -311,10 +312,10 @@ func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
 		return
 	}
 
-	provider := authInfoQuery.Result.AuthModule
-	connect, ok := social.SocialMap[strings.TrimPrefix(provider, "oauth_")] // The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
-	if !ok {
-		logger.Error("Failed to find oauth provider with given name", "provider", provider)
+	authProvider := authInfoQuery.Result.AuthModule
+	connect, err := social.GetConnector(authProvider)
+	if err != nil {
+		logger.Error("Failed to get OAuth connector", "error", err)
 		return
 	}
 
@@ -324,8 +325,16 @@ func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
 		RefreshToken: authInfoQuery.Result.OAuthRefreshToken,
 		TokenType:    authInfoQuery.Result.OAuthTokenType,
 	}
+
+	client, err := social.GetOAuthHttpClient(authProvider)
+	if err != nil {
+		logger.Error("Failed to create OAuth http client", "error", err)
+		return
+	}
+	oauthctx := context.WithValue(c.Req.Context(), oauth2.HTTPClient, client)
+
 	// TokenSource handles refreshing the token if it has expired
-	token, err := connect.TokenSource(c.Req.Context(), persistedToken).Token()
+	token, err := connect.TokenSource(oauthctx, persistedToken).Token()
 	if err != nil {
 		logger.Error("Failed to retrieve access token from OAuth provider", "provider", authInfoQuery.Result.AuthModule, "userid", c.UserId, "username", c.Login, "error", err)
 		return

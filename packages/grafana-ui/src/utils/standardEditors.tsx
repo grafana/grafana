@@ -18,8 +18,8 @@ import {
   valueMappingsOverrideProcessor,
   ThresholdsMode,
   identityOverrideProcessor,
-  FieldColor,
   TimeZone,
+  FieldColor,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
@@ -149,7 +149,7 @@ export const getStandardFieldConfigs = () => {
         { value: 80, color: 'red' },
       ],
     },
-    shouldApply: field => field.type === FieldType.number,
+    shouldApply: () => true,
     category: ['Thresholds'],
     getItemsCount: value => (value ? value.steps.length : 0),
   };
@@ -285,7 +285,7 @@ export const getStandardOptionEditors = () => {
     editor: ValueMappingsValueEditor as any,
   };
 
-  const color: StandardEditorsRegistryItem<string> = {
+  const color: StandardEditorsRegistryItem<FieldColor> = {
     id: 'color',
     name: 'Color',
     description: 'Allows color selection',
@@ -330,10 +330,10 @@ export const getStandardOptionEditors = () => {
     mappings,
     thresholds,
     links,
-    color,
     statsPicker,
     strings,
     timeZone,
     fieldColor,
+    color,
   ];
 };

@@ -27,20 +27,31 @@ func init() {
 	bus.AddHandler("sql", GetDataSourceByName)
 }
 
-func GetDataSourceById(query *models.GetDataSourceByIdQuery) error {
+func getDataSourceByID(id, orgID int64, engine *xorm.Engine) (*models.DataSource, error) {
 	metrics.MDBDataSourceQueryByID.Inc()
 
-	datasource := models.DataSource{OrgId: query.OrgId, Id: query.Id}
-	has, err := x.Get(&datasource)
+	datasource := models.DataSource{OrgId: orgID, Id: id}
+	has, err := engine.Get(&datasource)
 	if err != nil {
-		return err
+		sqlog.Error("Failed getting data source", "err", err, "id", id, "orgId", orgID)
+		return nil, err
 	}
-
 	if !has {
-		return models.ErrDataSourceNotFound
+		sqlog.Debug("Failed to find data source", "id", id, "orgId", orgID)
+		return nil, models.ErrDataSourceNotFound
 	}
 
-	query.Result = &datasource
+	return &datasource, nil
+}
+
+func (ss *SqlStore) GetDataSourceByID(id, orgID int64) (*models.DataSource, error) {
+	return getDataSourceByID(id, orgID, ss.engine)
+}
+
+func GetDataSourceById(query *models.GetDataSourceByIdQuery) error {
+	ds, err := getDataSourceByID(query.Id, query.OrgId, x)
+	query.Result = ds
+
 	return err
 }
 

@@ -39,7 +39,7 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 			continue
 		}
 
-		res := executeQuery(context.Background(), *qm, r, 50)
+		res := executeQuery(ctx, *qm, r, 50)
 
 		tRes.Results[query.RefId] = backendDataResponseToTSDBResponse(&res, query.RefId)
 	}

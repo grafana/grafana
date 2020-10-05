@@ -12,6 +12,7 @@ import {
   FieldConfig,
   FieldColorMode,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 // Components
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
@@ -114,7 +115,11 @@ export class BarGauge extends PureComponent<Props> {
 
     return (
       <div style={styles.wrapper}>
-        <FormattedValueDisplay className="bar-gauge__value" value={value} style={styles.value} />
+        <FormattedValueDisplay
+          aria-label={selectors.components.Panels.Visualization.BarGauge.value}
+          value={value}
+          style={styles.value}
+        />
         {showUnfilled && <div style={styles.emptyBar} />}
         <div style={styles.bar} />
       </div>
@@ -234,7 +239,11 @@ export class BarGauge extends PureComponent<Props> {
     return (
       <div style={containerStyles}>
         {cells}
-        <FormattedValueDisplay className="bar-gauge__value" value={value} style={valueStyles} />
+        <FormattedValueDisplay
+          aria-label={selectors.components.Panels.Visualization.BarGauge.value}
+          value={value}
+          style={valueStyles}
+        />
       </div>
     );
   }

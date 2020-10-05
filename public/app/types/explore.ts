@@ -14,7 +14,6 @@ import {
   AbsoluteTimeRange,
   GraphSeriesXY,
   DataFrame,
-  ExploreMode,
   ExploreUrlState,
 } from '@grafana/data';
 
@@ -118,14 +117,6 @@ export interface ExploreItemState {
    * Current scanning range to be shown to the user while scanning is active.
    */
   scanRange?: RawTimeRange;
-  /**
-   * True if graph result viewer is expanded. Query runs will contain graph queries.
-   */
-  showingGraph: boolean;
-  /**
-   * True if table result viewer is expanded. Query runs will contain table queries.
-   */
-  showingTable: boolean;
 
   loading: boolean;
   /**
@@ -165,7 +156,6 @@ export interface ExploreItemState {
   update: ExploreUpdateState;
 
   latency: number;
-  supportedModes: ExploreMode[];
 
   /**
    * If true, the view is in live tailing mode.
@@ -199,16 +189,12 @@ export interface ExploreUpdateState {
   queries: boolean;
   range: boolean;
   mode: boolean;
-  ui: boolean;
 }
 
 export interface QueryOptions {
   minInterval?: string;
   maxDataPoints?: number;
   liveStreaming?: boolean;
-  showingGraph?: boolean;
-  showingTable?: boolean;
-  mode?: ExploreMode;
 }
 
 export interface QueryTransaction {

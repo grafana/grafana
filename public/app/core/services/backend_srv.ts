@@ -1,17 +1,22 @@
-import { from, merge, MonoTypeOperatorFunction, Observable, Subject, throwError } from 'rxjs';
+import { from, merge, MonoTypeOperatorFunction, Observable, Subject, Subscription, throwError } from 'rxjs';
 import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
+import { v4 as uuidv4 } from 'uuid';
 import { BackendSrv as BackendService, BackendSrvRequest, FetchResponse, FetchError } from '@grafana/runtime';
-import { AppEvents } from '@grafana/data';
+import { AppEvents, DataQueryErrorType } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
-import config from 'app/core/config';
+import config, { getConfig } from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
 import { Emitter } from '../utils/emitter';
 import { parseInitFromOptions, parseUrlFromOptions } from '../utils/fetch';
+import { isDataQuery, isLocalUrl } from '../utils/query';
+import { FetchQueue } from './FetchQueue';
+import { ResponseQueue } from './ResponseQueue';
+import { FetchQueueWorker } from './FetchQueueWorker';
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
@@ -27,6 +32,8 @@ export class BackendSrv implements BackendService {
   private HTTP_REQUEST_CANCELED = -1;
   private noBackendCache: boolean;
   private inspectorStream: Subject<FetchResponse | FetchError> = new Subject<FetchResponse | FetchError>();
+  private readonly fetchQueue: FetchQueue;
+  private readonly responseQueue: ResponseQueue;
 
   private dependencies: BackendSrvDependencies = {
     fromFetch: fromFetch,
@@ -44,6 +51,11 @@ export class BackendSrv implements BackendService {
         ...deps,
       };
     }
+
+    this.internalFetch = this.internalFetch.bind(this);
+    this.fetchQueue = new FetchQueue();
+    this.responseQueue = new ResponseQueue(this.fetchQueue, this.internalFetch);
+    new FetchQueueWorker(this.fetchQueue, this.responseQueue, getConfig());
   }
 
   async request<T = any>(options: BackendSrvRequest): Promise<T> {
@@ -53,6 +65,37 @@ export class BackendSrv implements BackendService {
   }
 
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
+    return new Observable(observer => {
+      // We need to match an entry added to the queue stream with the entry that is eventually added to the response stream
+      const id = uuidv4();
+
+      // Subscription is an object that is returned whenever you subscribe to an Observable.
+      // You can also use it as a container of many subscriptions and when it is unsubscribed all subscriptions within are also unsubscribed.
+      const subscriptions: Subscription = new Subscription();
+
+      // We're using the subscriptions.add function to add the subscription implicitly returned by this.responseQueue.getResponses<T>(id).subscribe below.
+      subscriptions.add(
+        this.responseQueue.getResponses<T>(id).subscribe(result => {
+          // The one liner below can seem magical if you're not accustomed to RxJs.
+          // Firstly, we're subscribing to the result from the result.observable and we're passing in the outer observer object.
+          // By passing the outer observer object then any updates on result.observable are passed through to any subscriber of the fetch<T> function.
+          // Secondly, we're adding the subscription implicitly returned by result.observable.subscribe(observer).
+          subscriptions.add(result.observable.subscribe(observer));
+        })
+      );
+
+      // Let the fetchQueue know that this id needs to start data fetching.
+      this.fetchQueue.add(id, options);
+
+      // This returned function will be called whenever the returned Observable from the fetch<T> function is unsubscribed/errored/completed/canceled.
+      return function unsubscribe() {
+        // When subscriptions is unsubscribed all the implicitly added subscriptions above are also unsubscribed.
+        subscriptions.unsubscribe();
+      };
+    });
+  }
+
+  private internalFetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
     if (options.requestId) {
       this.inFlightRequests.next(options.requestId);
     }
@@ -102,10 +145,6 @@ export class BackendSrv implements BackendService {
       if (options.url.startsWith('/')) {
         options.url = options.url.substring(1);
       }
-
-      // if (options.url.endsWith('/')) {
-      //   options.url = options.url.slice(0, -1);
-      // }
 
       if (options.headers?.Authorization) {
         options.headers['X-DS-Authorization'] = options.headers.Authorization;
@@ -302,6 +341,7 @@ export class BackendSrv implements BackendService {
         // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
         // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
         throwIfEmpty(() => ({
+          type: DataQueryErrorType.Cancelled,
           cancelled: true,
           data: null,
           status: this.HTTP_REQUEST_CANCELED,
@@ -361,22 +401,6 @@ export class BackendSrv implements BackendService {
   getFolderByUid(uid: string) {
     return this.get<FolderDTO>(`/api/folders/${uid}`);
   }
-}
-
-function isDataQuery(url: string): boolean {
-  if (
-    url.indexOf('api/datasources/proxy') !== -1 ||
-    url.indexOf('api/tsdb/query') !== -1 ||
-    url.indexOf('api/ds/query') !== -1
-  ) {
-    return true;
-  }
-
-  return false;
-}
-
-function isLocalUrl(url: string) {
-  return !url.match(/^http/);
 }
 
 coreModule.factory('backendSrv', () => backendSrv);

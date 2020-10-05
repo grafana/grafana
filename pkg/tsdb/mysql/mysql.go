@@ -25,7 +25,7 @@ func init() {
 }
 
 func characterEscape(s string, escapeChar string) string {
-	return strings.Replace(s, escapeChar, url.QueryEscape(escapeChar), -1)
+	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
 func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
@@ -57,7 +57,7 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		cnnstr += "&tls=" + tlsConfigString
 	}
 
-	if setting.Env == setting.DEV {
+	if setting.Env == setting.Dev {
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
 

@@ -14,6 +14,7 @@ export interface Props {
   /** Set current positions of handle(s). If only 1 value supplied, only 1 handle displayed. */
   value?: number[];
   reverse?: boolean;
+  step?: number;
   tooltipAlwaysVisible?: boolean;
   formatTooltipResult?: (value: number) => number | string;
   onChange?: (values: number[]) => void;
@@ -104,6 +105,7 @@ export const Slider: FunctionComponent<Props> = ({
   onAfterChange,
   orientation = 'horizontal',
   reverse,
+  step,
   formatTooltipResult,
   value,
   tooltipAlwaysVisible = true,
@@ -123,6 +125,7 @@ export const Slider: FunctionComponent<Props> = ({
         }}
         min={min}
         max={max}
+        step={step}
         defaultValue={value || [min, max]}
         tipFormatter={(value: number) => (formatTooltipResult ? formatTooltipResult(value) : value)}
         onChange={onChange}

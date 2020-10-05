@@ -33,34 +33,34 @@ The data source can access metrics from four different services. You can configu
 
 1. Accessed from the Grafana main menu, newly installed data sources can be added immediately within the Data Sources section. Next, click the "Add data source" button in the upper right. The Azure Monitor data source will be available for selection in the Cloud section in the list of data sources.
 
-2. In the name field, Grafana will automatically fill in a name for the data source - `Azure Monitor` or something like `Azure Monitor - 3`. If you are going to configure multiple data sources then change the name to something more informative.
+1. In the name field, Grafana will automatically fill in a name for the data source - `Azure Monitor` or something like `Azure Monitor - 3`. If you are going to configure multiple data sources, then change the name to something more informative.
 
-3. If you are using Azure Monitor, you need 4 pieces of information from the Azure portal (see link above for detailed instructions):
+1. If you are using Azure Monitor, you need 4 pieces of information from the Azure portal (see link above for detailed instructions):
 
    - **Tenant Id** (Azure Active Directory -> Properties -> Directory ID)
    - **Client Id** (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
-   - **Client Secret** ( Azure Active Directory -> App Registrations -> Choose your app -> Keys)
+   - **Client Secret** (Azure Active Directory -> App Registrations -> Choose your app -> Keys)
    - **Default Subscription Id** (Subscriptions -> Choose subscription -> Overview -> Subscription ID)
 
-4. Paste these four items into the fields in the Azure Monitor API Details section:
+1. Paste these four items into the fields in the Azure Monitor API Details section:
    {{< docs-imagebox img="/img/docs/v62/config_1_azure_monitor_details.png" class="docs-image--no-shadow" caption="Azure Monitor Configuration Details" >}}
 
    - The Subscription Id can be changed per query. Save the data source and refresh the page to see the list of subscriptions available for the specified Client Id.
 
-5. If you are also using the Azure Log Analytics service, then you need to specify these two config values (or you can reuse the Client Id and Secret from the previous step).
+1. If you are also using the Azure Log Analytics service, then you need to specify these two config values (or you can reuse the Client Id and Secret from the previous step).
 
    - Client Id (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
    - Client Secret (Azure Active Directory -> App Registrations -> Choose your app -> Keys -> Create a key -> Use client secret)
 
-6. If you are using Application Insights, then you need two pieces of information from the Azure Portal (see link above for detailed instructions):
+1. If you are using Application Insights, then you need two pieces of information from the Azure Portal (see link above for detailed instructions):
 
    - Application ID
    - API Key
 
-7. Paste these two items into the appropriate fields in the Application Insights API Details section:
+1. Paste these two items into the appropriate fields in the Application Insights API Details section:
    {{< docs-imagebox img="/img/docs/v62/config_2_app_insights_api_details.png" class="docs-image--no-shadow" caption="Application Insights Configuration Details" >}}
 
-8. Test that the configuration details are correct by clicking on the "Save & Test" button:
+1. Test that the configuration details are correct by clicking on the "Save & Test" button:
    {{< docs-imagebox img="/img/docs/v62/config_3_save_and_test.png" class="docs-image--no-shadow" caption="Save and Test" >}}
 
 Alternatively on step 4 if creating a new Azure Active Directory App, use the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest):
@@ -86,7 +86,7 @@ Starting in Grafana 7.1, Insights Analytics replaced the former edit mode from w
 
 The Azure Monitor service provides metrics for all the Azure services that you have running. It helps you understand how your applications on Azure are performing and to proactively find issues affecting your applications.
 
-If your Azure Monitor credentials give you access to multiple subscriptions then choose the appropriate subscription first.
+If your Azure Monitor credentials give you access to multiple subscriptions, then choose the appropriate subscription first.
 
 Examples of metrics that you can get from the service are:
 
@@ -119,9 +119,9 @@ Azure Monitor examples:
 - `{{ namespace }}` = replaced with the value of the Namespace (e.g. Microsoft.Compute/virtualMachines)
 - `{{ resourcename }}` = replaced with the value of the Resource Name
 - `{{ metric }}` = replaced with metric name (e.g. Percentage CPU)
-- `{{ dimensionname }}` = *Legacy as of 7.1+ (for backwards compatibility)* replaced with the first dimension's key/label (as sorted by the key/label) (e.g. blobtype)
-- `{{ dimensionvalue }}` = *Legacy as of 7.1+ (for backwards compatibility)* replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
-- `{{ arbitraryDim }}` = *Available in 7.1+* replaced with the value of the corresponding dimension. (e.g. `{{ blobtype }}` becomes BlockBlob)
+- `{{ dimensionname }}` = _Legacy as of 7.1+ (for backwards compatibility)_ replaced with the first dimension's key/label (as sorted by the key/label) (e.g. blobtype)
+- `{{ dimensionvalue }}` = _Legacy as of 7.1+ (for backwards compatibility)_ replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
+- `{{ arbitraryDim }}` = _Available in 7.1+_ replaced with the value of the corresponding dimension. (e.g. `{{ blobtype }}` becomes BlockBlob)
 
 ### Create template variables for Azure Monitor
 
@@ -154,7 +154,7 @@ Examples:
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-service-variables.png" class="docs-image--no-shadow" caption="Nested Azure Monitor Template Variables" >}}
 
-Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### List of supported Azure Monitor metrics
@@ -188,10 +188,10 @@ Application Insights examples:
 
 ### Alias patterns for Application Insights
 
-- `{{ groupbyvalue }}` = *Legacy as of 7.1+ (for backwards compatibility)* replaced with the first dimension's key/label (as sorted by the key/label)
-- `{{ groupbyname }}` = *Legacy as of 7.1+ (for backwards compatibility)* replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
+- `{{ groupbyvalue }}` = _Legacy as of 7.1+ (for backwards compatibility)_ replaced with the first dimension's key/label (as sorted by the key/label)
+- `{{ groupbyname }}` = _Legacy as of 7.1+ (for backwards compatibility)_ replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
 - `{{ metric }}` = replaced with metric name (e.g. requests/count)
-- `{{ arbitraryDim }}` = *Available in 7.1+* replaced with the value of the corresponding dimension. (e.g. `{{ client/city }}` becomes Chicago)
+- `{{ arbitraryDim }}` = _Available in 7.1+_ replaced with the value of the corresponding dimension. (e.g. `{{ client/city }}` becomes Chicago)
 
 ### Filter expressions for Application Insights
 
@@ -208,13 +208,13 @@ Examples:
 
 Use the one of the following queries in the `Query` field in the Variable edit view.
 
-Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
-| Name                               | Description                                                |
-| ---------------------------------- | ---------------------------------------------------------- |
-| _AppInsightsMetricNames()_         | Returns a list of metric names.                            |
-| _AppInsightsGroupBys(aMetricName)_ | Returns a list of group bys for the specified metric name. |
+| Name                               | Description                                                  |
+| ---------------------------------- | ------------------------------------------------------------ |
+| _AppInsightsMetricNames()_         | Returns a list of metric names.                              |
+| _AppInsightsGroupBys(aMetricName)_ | Returns a list of "group bys" for the specified metric name. |
 
 Examples:
 
@@ -289,7 +289,7 @@ The default display name format is:
 
 `metricName{dimensionName=dimensionValue,dimensionTwoName=DimensionTwoValue}`
 
-This can be customized by using the [display name field configuration option]({{< relref "../../panels/field-configuration-options.md#display-name" >}}).
+This can be customized by using the [display name field option]({{< relref "../../panels/field-options/_index.md#display-name" >}}).
 
 ### Azure Log Analytics macros
 
@@ -311,19 +311,19 @@ To make writing queries easier there are several Grafana macros that can be used
 
 - `$__contains(colName, $myVar)` - is to be used with multi-value template variables. If `$myVar` has the value `'value1','value2'`, it expands to: `colName in ('value1','value2')`.
 
-  If using the `All` option, then check the `Include All Option` checkbox and in the `Custom all value` field type in the following value: `all`. If `$myVar` has value `all` then the macro will instead expand to `1 == 1`. For template variables with a lot of options, this will increase the query performance by not building a large where..in clause.
+  If using the `All` option, then check the `Include All Option` checkbox and in the `Custom all value` field type in the following value: `all`. If `$myVar` has value `all` then the macro will instead expand to `1 == 1`. For template variables with a lot of options, this will increase the query performance by not building a large "where..in" clause.
 
 ### Azure Log Analytics builtin variables
 
 There are also some Grafana variables that can be used in Azure Log Analytics queries:
 
-- `$__interval` - Grafana calculates the minimum time grain that can be used to group by time in queries. More details on how it works [here]({{< relref "../../variables/templates-and-variables.md#interval-variables" >}}). It returns a time grain like `5m` or `1h` that can be used in the bin function. E.g. `summarize count() by bin(TimeGenerated, $__interval)`
+- `$__interval` - Grafana calculates the minimum time grain that can be used to group by time in queries. More details on how it works [here]({{< relref "../../variables/variable-types/_index.md#interval-variables" >}}). It returns a time grain like `5m` or `1h` that can be used in the bin function. E.g. `summarize count() by bin(TimeGenerated, $__interval)`
 
 ### Templating with variables for Azure Log Analytics
 
 Any Log Analytics query that returns a list of values can be used in the `Query` field in the Variable edit view. There is also one Grafana function for Log Analytics that returns a list of workspaces.
 
-Refer to the [Variables]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
+Refer to the [Variables]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 | Name                                               | Description                                                                                            |

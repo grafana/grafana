@@ -3,13 +3,19 @@ import ReactDOM from 'react-dom';
 
 export interface Props {
   /**
-   *  When clicking outside of current element
+   *  Callback to trigger when clicking outside of current element occurs.
    */
   onClick: () => void;
   /**
    *  Runs the 'onClick' function when pressing a key outside of the current element. Defaults to true.
    */
   includeButtonPress: boolean;
+  /** Object to attach the click event listener to. */
+  parent: Window | Document;
+  /**
+   * https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener. Defaults to false.
+   */
+  useCapture?: boolean;
 }
 
 interface State {
@@ -19,23 +25,25 @@ interface State {
 export class ClickOutsideWrapper extends PureComponent<Props, State> {
   static defaultProps = {
     includeButtonPress: true,
+    parent: window,
+    useCapture: false,
   };
   state = {
     hasEventListener: false,
   };
 
   componentDidMount() {
-    document.addEventListener('click', this.onOutsideClick, false);
+    this.props.parent.addEventListener('click', this.onOutsideClick, this.props.useCapture);
     if (this.props.includeButtonPress) {
-      // Use keyup since keydown already has an eventlistener on window
-      document.addEventListener('keyup', this.onOutsideClick, false);
+      // Use keyup since keydown already has an event listener on window
+      this.props.parent.addEventListener('keyup', this.onOutsideClick, this.props.useCapture);
     }
   }
 
   componentWillUnmount() {
-    document.removeEventListener('click', this.onOutsideClick, false);
+    this.props.parent.removeEventListener('click', this.onOutsideClick, this.props.useCapture);
     if (this.props.includeButtonPress) {
-      document.removeEventListener('keyup', this.onOutsideClick, false);
+      this.props.parent.removeEventListener('keyup', this.onOutsideClick, this.props.useCapture);
     }
   }
 

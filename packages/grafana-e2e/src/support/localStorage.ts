@@ -3,7 +3,7 @@ import { e2e } from '../index';
 // @todo this actually returns type `Cypress.Chainable`
 const get = (key: string): any =>
   e2e()
-    .wrap({ getLocalStorage: () => localStorage.getItem(key) })
+    .wrap({ getLocalStorage: () => localStorage.getItem(key) }, { log: false })
     .invoke('getLocalStorage');
 
 // @todo this actually returns type `Cypress.Chainable`

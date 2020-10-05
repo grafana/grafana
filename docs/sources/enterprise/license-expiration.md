@@ -23,10 +23,10 @@ If your license has expired most of Grafana keeps working as normal. Some enterp
     ```
     The configuration file's location may also be overridden by the `GF_ENTERPRISE_LICENSE_PATH` environment variable.
 
-2. Log in to your [Grafana Cloud Account](https://grafana.com/login) and make sure you're in the correct organization in the dropdown at the top of the page.
-3. Under the **Grafana Enterprise** section in the menu bar to the left, choose licenses and download the currently valid license with which you want to run Grafana. If you cannot see a valid license on Grafana.com, please contact your account manager at Grafana Labs to renew your subscription.
-4. Replace the current `license.jwt`-file with the one you've just downloaded.
-5. Restart Grafana.
+1. Log in to your [Grafana Cloud Account](https://grafana.com/login) and make sure you're in the correct organization in the dropdown at the top of the page.
+1. Under the **Grafana Enterprise** section in the menu bar to the left, choose licenses and download the currently valid license with which you want to run Grafana. If you cannot see a valid license on Grafana.com, please contact your account manager at Grafana Labs to renew your subscription.
+1. Replace the current `license.jwt`-file with the one you've just downloaded.
+1. Restart Grafana.
 
 ## If your license expires
 
@@ -38,8 +38,8 @@ Your current data source permissions will keep working as expected, but you'll b
 
 ### LDAP authentication
 
-* LDAP synchronization is not affected by an expired license.
-* Enhanced LDAP debugging is unavailable.
+- LDAP synchronization is not affected by an expired license.
+- Enhanced LDAP debugging is unavailable.
 
 ### SAML authentication
 
@@ -47,8 +47,8 @@ SAML authentication is not affected by an expired license.
 
 ### Reporting
 
-* You're unable to configure new reports or generate previews.
-* Scheduled reports are not generated or sent.
+- You're unable to configure new reports or generate previews.
+- Scheduled reports are not generated or sent.
 
 ### Enterprise plugins
 

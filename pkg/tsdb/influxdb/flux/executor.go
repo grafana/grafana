@@ -20,29 +20,25 @@ func executeQuery(ctx context.Context, query queryModel, runner queryRunner, max
 		return
 	}
 
-	glog.Debug("Executing Flux query", "interpolated query", flux)
+	glog.Debug("Executing Flux query", "flux", flux)
 
 	tables, err := runner.runQuery(ctx, flux)
 	if err != nil {
 		glog.Warn("Flux query failed", "err", err, "query", flux)
 		dr.Error = err
-		metaFrame := data.NewFrame("meta for error")
-		metaFrame.Meta = &data.FrameMeta{
-			ExecutedQueryString: flux,
-		}
-		dr.Frames = append(dr.Frames, metaFrame)
-		return
+	} else {
+		dr = readDataFrames(tables, int(float64(query.MaxDataPoints)*1.5), maxSeries)
 	}
 
-	dr = readDataFrames(tables, int(float64(query.MaxDataPoints)*1.5), maxSeries)
-
-	for _, frame := range dr.Frames {
-		if frame.Meta == nil {
-			frame.Meta = &data.FrameMeta{}
-		}
-		frame.Meta.ExecutedQueryString = flux
+	// Make sure there is at least one frame
+	if len(dr.Frames) == 0 {
+		dr.Frames = append(dr.Frames, data.NewFrame(""))
 	}
-
+	firstFrame := dr.Frames[0]
+	if firstFrame.Meta == nil {
+		firstFrame.SetMeta(&data.FrameMeta{})
+	}
+	firstFrame.Meta.ExecutedQueryString = flux
 	return dr
 }
 

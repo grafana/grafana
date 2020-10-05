@@ -317,7 +317,7 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
 
         for (const customProp of builder.getRegistry().list()) {
           customProp.isCustom = true;
-          customProp.category = ['Custom options'].concat(customProp.category || []);
+          customProp.category = [`${this.meta.name} options`].concat(customProp.category || []);
           // need to do something to make the custom items not conflict with standard ones
           // problem is id (registry index) is used as property path
           // so sort of need a property path on the FieldPropertyEditorItem
