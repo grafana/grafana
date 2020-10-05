@@ -55,7 +55,7 @@ func (m *MeasurementsRunner) DoChannelHTTP(c *models.ReqContext, channel string)
 		}
 
 		msg := &models.MeasurementMessage{}
-		err = json.Unmarshal([]byte(body), &msg)
+		err = json.Unmarshal(body, &msg)
 		if err != nil {
 			c.JSON(500, util.DynMap{
 				"message": "body must be measurment",

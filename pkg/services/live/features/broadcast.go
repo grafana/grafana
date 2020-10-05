@@ -55,7 +55,7 @@ func (b *BroadcastRunner) DoChannelHTTP(c *models.ReqContext, channel string) {
 		}
 
 		jsonMap := make(map[string](interface{}))
-		err = json.Unmarshal([]byte(body), &jsonMap)
+		err = json.Unmarshal(body, &jsonMap)
 		if err != nil {
 			c.JSON(500, util.DynMap{
 				"message": "body must be valid JSON",
