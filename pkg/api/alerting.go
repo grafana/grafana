@@ -273,6 +273,9 @@ func CreateAlertNotification(c *models.ReqContext, cmd models.CreateAlertNotific
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == models.ErrAlertNotificationWithSameNameExists || err == models.ErrAlertNotificationWithSameUIDExists {
+			return Error(409, "Failed to create alert notification", err)
+		}
 		return Error(500, "Failed to create alert notification", err)
 	}
 
