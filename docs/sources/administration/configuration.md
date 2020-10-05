@@ -532,6 +532,8 @@ Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 This prevents users from setting the dashboard refresh interval of a lower than given interval. Per default this is 5 seconds.
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
 
+As of Grafana v7.3, this will also limit the refresh interval options in the explore section.
+
 ### default_home_dashboard_path
 
 Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json"

@@ -4,12 +4,11 @@ import { selectors } from '@grafana/e2e-selectors';
 import memoizeOne from 'memoize-one';
 import { css } from 'emotion';
 import classNames from 'classnames';
+import { defaultIntervals } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 import { ResponsiveButton } from './ResponsiveButton';
 
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-
-export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
 
 const getStyles = memoizeOne(() => {
   return {
