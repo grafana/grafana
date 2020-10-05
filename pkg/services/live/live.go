@@ -30,6 +30,7 @@ type CoreGrafanaScope struct {
 type GrafanaLive struct {
 	node *centrifuge.Node
 
+	// The websocket handler
 	WebsocketHandler interface{}
 
 	// Full channel handler
@@ -294,7 +295,7 @@ func (g *GrafanaLive) initChannel(id ChannelAddress) (models.ChannelHandler, err
 		return nil, err
 	}
 
-	// First access will initalize
+	// First access will initialize
 	return namespace.GetHandlerForPath(id.Path)
 }
 
