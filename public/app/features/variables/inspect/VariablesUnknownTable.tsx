@@ -34,7 +34,7 @@ export const UnProvidedVariablesUnknownTable: FC<Props> = props => {
   return (
     <div className={style.container}>
       <h5>
-        Unreferenced Variables
+        Unknown Variables
         <Tooltip content="This table lists all variable references that no longer exist in this dashboard.">
           <Icon name="info-circle" className={style.infoIcon} />
         </Tooltip>
