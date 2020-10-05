@@ -3,6 +3,7 @@ import React, { ChangeEvent, FormEvent, useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 // Components
+import { selectors as editorSelectors } from '@grafana/e2e-selectors';
 import { Input, InlineFieldRow, InlineField, Select, TextArea, Switch } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { StreamingClientEditor, ManualEntryEditor, RandomWalkEditor } from './components';
@@ -23,6 +24,8 @@ const endpoints = [
 
 // Fields that need to be transformed to numbers
 const numberFields = ['lines', 'seriesCount', 'timeStep'];
+
+const selectors = editorSelectors.components.DataSource.TestData.QueryTab;
 
 export interface EditorProps {
   onChange: (value: any) => void;
@@ -109,7 +112,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
   query = { ...defaultQuery, ...query };
   return (
     <>
-      <InlineFieldRow>
+      <InlineFieldRow aria-label={selectors.scenarioSelectContainer}>
         <InlineField labelWidth={14} label="Scenario">
           <Select
             options={options}
