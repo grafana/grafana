@@ -49,7 +49,7 @@ const AGGREGATION_OPERATORS: CompletionItem[] = [
   },
 ];
 
-export const PARSERS: CompletionItem[] = [
+export const PIPE_PARSERS: CompletionItem[] = [
   {
     label: 'json',
     insertText: 'json',
@@ -67,25 +67,20 @@ export const PARSERS: CompletionItem[] = [
   },
 ];
 
-export const OPERATORS: CompletionItem[] = [
-  {
-    label: 'filter_op',
-    insertText: 'filter_op',
-    documentation: '',
-  },
+export const PIPE_OPERATORS: CompletionItem[] = [
   {
     label: 'label_filter',
-    insertText: ' label_filter',
+    insertText: 'label_filter',
     documentation: '',
   },
   {
     label: 'label_format',
-    insertText: ' label_format',
+    insertText: 'label_format',
     documentation: '',
   },
   {
-    label: ' line_format',
-    insertText: '  line_format',
+    label: 'line_format',
+    insertText: 'line_format',
     documentation: '',
   },
 ];
@@ -167,11 +162,20 @@ const tokenizer: Grammar = {
       punctuation: /[{]/,
     },
   },
-  function: new RegExp(`\\b(?:${FUNCTIONS.map(f => f.label).join('|')})(?=\\s*\\()`, 'i'),
-  parser: {
-    pattern: new RegExp(`\(?<=\|\\s?)${[...PARSERS, ...OPERATORS].map(f => f.label).join('|')}`, 'i'),
-    alias: 'keyword',
+  'context-pipe': {
+    pattern: /(\s\|[^=~]\s?)\w*/i,
+    inside: {
+      'pipe-operator': {
+        pattern: /\|/i,
+        alias: 'operator',
+      },
+      'pipe-operations': {
+        pattern: new RegExp(`\(?<=\|\\s?)${[...PIPE_PARSERS, ...PIPE_OPERATORS].map(f => f.label).join('|')}`, 'i'),
+        alias: 'keyword',
+      },
+    },
   },
+  function: new RegExp(`\\b(?:${FUNCTIONS.map(f => f.label).join('|')})(?=\\s*\\()`, 'i'),
   'context-range': [
     {
       pattern: /\[[^\]]*(?=\])/, // [1m]

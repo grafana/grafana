@@ -38,12 +38,12 @@ describe('Loki syntax', () => {
       '<span class="token operator"> |~</span>'
     );
   });
-  it('should highlight parsers in Loki query correctly', () => {
+  it('should highlight pipe operations in Loki query correctly', () => {
     expect(Prism.highlight('{key="value"} |= "test" | logfmt', syntax, 'loki')).toContain(
-      '<span class="token operator"> | </span><span class="token parser keyword">logfmt</span>'
+      '<span class="token pipe-operator operator">|</span> <span class="token pipe-operations keyword">logfmt</span></span>'
     );
-    expect(Prism.highlight('{key="value"} |= "test" | regexp', syntax, 'loki')).toContain(
-      '<span class="token operator"> | </span><span class="token parser keyword">regexp</span>'
+    expect(Prism.highlight('{key="value"} |= "test" | label_format', syntax, 'loki')).toContain(
+      '<span class="token context-pipe"> <span class="token pipe-operator operator">|</span> <span class="token pipe-operations keyword">label_format</span></span>'
     );
   });
 });
