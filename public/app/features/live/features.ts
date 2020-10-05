@@ -1,6 +1,5 @@
 import { LiveChannelConfig } from '@grafana/data';
 import { getDashboardChannelsFeature } from './dashboard/dashboardWatcher';
-import { LiveMeasurmentsSupport } from './measurements/measurementsSupport';
 import { grafanaLiveCoreFeatures } from './scopes';
 
 export function registerLiveFeatures() {
@@ -40,13 +39,7 @@ export function registerLiveFeatures() {
       },
       getSupportedPaths: () => [broadcastConfig],
     },
-    description: 'Broadcast will send/recieve any JSON object in a channel',
-  });
-
-  grafanaLiveCoreFeatures.register({
-    name: 'measurements',
-    support: new LiveMeasurmentsSupport(),
-    description: 'These channels listen for measurements and produce DataFrames',
+    description: 'Broadcast will send/recieve any events on a channel',
   });
 
   // dashboard/*
