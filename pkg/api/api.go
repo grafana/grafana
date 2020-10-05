@@ -426,7 +426,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Live streaming
 	if hs.Live != nil {
-		r.Any("/live/*", hs.Live.Handler)
+		r.Any("/live/*", hs.Live.WebsocketHandler)
 	}
 
 	// Snapshots

@@ -146,18 +146,21 @@ export interface LiveChannelPresenceStatus {
 /**
  * @experimental
  */
+export interface LiveChannelAddress {
+  scope: LiveChannelScope;
+  namespace: string; // depends on the scope
+  path: string;
+}
+
+/**
+ * @experimental
+ */
 export interface LiveChannel<TMessage = any, TPublish = any> {
   /** The fully qualified channel id: ${scope}/${namespace}/${path} */
   id: string;
 
-  /** The scope for this channel */
-  scope: LiveChannelScope;
-
-  /** datasourceId/plugin name/feature depending on scope */
-  namespace: string;
-
-  /** additional qualifier */
-  path: string;
+  /** The channel address */
+  addr: LiveChannelAddress;
 
   /** Unix timestamp for when the channel connected */
   opened: number;

@@ -56,7 +56,11 @@ class DashboardWatcher {
     // Check for changes
     if (uid !== this.uid) {
       this.leave();
-      this.channel = live.getChannel(LiveChannelScope.Grafana, 'dashboard', uid);
+      this.channel = live.getChannel({
+        scope: LiveChannelScope.Grafana,
+        namespace: 'dashboard',
+        path: uid,
+      });
       this.channel.getStream().subscribe(this.observer);
       this.uid = uid;
     }
