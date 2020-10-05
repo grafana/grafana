@@ -155,7 +155,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/DDoSProtection":    {"ResourceArn", "AttackVector"},
 	"AWS/DMS":               {"ReplicationInstanceIdentifier", "ReplicationTaskIdentifier"},
 	"AWS/DocDB":             {"DBClusterIdentifier", "DBInstanceIdentifier", "Role"},
-	"AWS/DX":                {"ConnectionId"},
+	"AWS/DX":                {"ConnectionId", "OpticalLaneNumber", "VirtualInterfaceId"},
 	"AWS/DAX":               {"Account", "ClusterId", "NodeId"},
 	"AWS/DynamoDB":          {"GlobalSecondaryIndexName", "Operation", "ReceivingRegion", "StreamLabel", "TableName"},
 	"AWS/EBS":               {"VolumeId"},
