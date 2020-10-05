@@ -23,4 +23,5 @@ export const defaultQuery: TestDataQuery = {
   scenarioId: 'random_walk',
   lines: 10,
   refId: '',
+  alias: '',
 };

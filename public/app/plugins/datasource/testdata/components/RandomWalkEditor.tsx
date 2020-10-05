@@ -1,5 +1,6 @@
 import React from 'react';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 import { EditorProps } from '../QueryEditor';
 import { TestDataQuery } from '../types';
 
@@ -12,12 +13,16 @@ const randomWalkFields = [
   { label: 'Max', id: 'max', placeholder: 'none', step: 0.1 },
 ];
 
+const testSelectors = selectors.components.DataSource.TestData.QueryTab;
+type Selector = 'max' | 'min' | 'noise' | 'seriesCount' | 'spread' | 'startValue';
+
 export const RandomWalkEditor = ({ onChange, query }: EditorProps) => {
   return (
     <InlineFieldRow>
       {randomWalkFields.map(({ label, id, min, step, placeholder }) => {
+        const selector = testSelectors?.[id as Selector];
         return (
-          <InlineField label={label} labelWidth={14} key={id}>
+          <InlineField label={label} labelWidth={14} key={id} aria-label={selector}>
             <Input
               width={32}
               name={id}

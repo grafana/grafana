@@ -1,5 +1,5 @@
 // Libraries
-import React, { ChangeEvent, FormEvent, useMemo } from 'react';
+import React, { ChangeEvent, FormEvent, useMemo, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 // Components
@@ -35,6 +35,8 @@ export interface EditorProps {
 export type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
 
 export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) => {
+  query = { ...defaultQuery, ...query };
+
   const { loading, value: scenarioList } = useAsync<Scenario[]>(async () => {
     return datasource.getScenarios();
   }, []);
@@ -43,6 +45,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onChange(query);
     onRunQuery();
   };
+
+  useEffect(() => {
+    onUpdate(query);
+  }, []);
 
   const currentScenario = useMemo(() => scenarioList?.find(scenario => scenario.id === query.scenarioId), [
     scenarioList,
@@ -110,7 +116,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     return null;
   }
 
-  query = { ...defaultQuery, ...query };
   return (
     <>
       <InlineFieldRow aria-label={selectors.scenarioSelectContainer}>
