@@ -48,8 +48,8 @@ Please read [Using Google Stackdriver in Grafana]({{< relref "../features/dataso
 We've improved the TV and kiosk mode to make it easier to use. There's now an icon in the top bar that will let you cycle through the different view modes.
 
 1. In the first view mode, the sidebar and most of the buttons in the top bar will be hidden.
-2. In the second view mode, the top bar is completely hidden so that only the dashboard itself is shown.
-3. Hit the escape key to go back to the default view mode.
+1. In the second view mode, the top bar is completely hidden so that only the dashboard itself is shown.
+1. Hit the escape key to go back to the default view mode.
 
 When switching view modes, the URL will be updated to reflect the view mode selected. This allows a dashboard to be opened with a
 certain view mode enabled. Additionally, this also enables [playlists](/dashboards/playlist) to be started with a certain view mode enabled.

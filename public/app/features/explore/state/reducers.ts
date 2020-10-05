@@ -4,9 +4,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import {
   DataQuery,
   DataQueryErrorType,
-  DataSourceApi,
   DefaultTimeRange,
-  ExploreMode,
   LoadingState,
   LogsDedupStrategy,
   PanelData,
@@ -105,7 +103,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   urlState: null,
   update: makeInitialUpdateState(),
   latency: 0,
-  supportedModes: [],
   isLive: false,
   isPaused: false,
   urlReplaced: false,
@@ -257,33 +254,14 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
   }
 
   if (updateDatasourceInstanceAction.match(action)) {
-    const { datasourceInstance, version } = action.payload;
+    const { datasourceInstance } = action.payload;
 
     // Custom components
     stopQueryState(state.querySubscription);
 
-    let newMetadata = datasourceInstance.meta;
-
-    // HACK: Temporary hack for Loki datasource. Can remove when plugin.json structure is changed.
-    if (version && version.length && datasourceInstance.meta.name === 'Loki') {
-      const lokiVersionMetadata: Record<string, { metrics: boolean }> = {
-        v0: {
-          metrics: false,
-        },
-
-        v1: {
-          metrics: true,
-        },
-      };
-      newMetadata = { ...newMetadata, ...lokiVersionMetadata[version] };
-    }
-
-    const updatedDatasourceInstance = Object.assign(datasourceInstance, { meta: newMetadata });
-    const supportedModes = getModesForDatasource(updatedDatasourceInstance);
-
     return {
       ...state,
-      datasourceInstance: updatedDatasourceInstance,
+      datasourceInstance,
       graphResult: null,
       tableResult: null,
       logsResult: null,
@@ -291,7 +269,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       queryResponse: createEmptyQueryResponse(),
       loading: false,
       queryKeys: [],
-      supportedModes,
       originPanelId: state.urlState && state.urlState.originPanelId,
     };
   }
@@ -580,28 +557,6 @@ export const updateChildRefreshState = (
       range,
     },
   };
-};
-
-const getModesForDatasource = (dataSource: DataSourceApi): ExploreMode[] => {
-  const supportsGraph = dataSource.meta.metrics;
-  const supportsLogs = dataSource.meta.logs;
-  const supportsTracing = dataSource.meta.tracing;
-
-  const supportedModes: ExploreMode[] = [];
-
-  if (supportsGraph) {
-    supportedModes.push(ExploreMode.Metrics);
-  }
-
-  if (supportsLogs) {
-    supportedModes.push(ExploreMode.Logs);
-  }
-
-  if (supportsTracing) {
-    supportedModes.push(ExploreMode.Tracing);
-  }
-
-  return supportedModes;
 };
 
 /**

@@ -21,10 +21,10 @@ Grafana ships with built-in support for Google Cloud Monitoring. Just add it as 
 ## Adding the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.
-2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
-3. Click the `+ Add data source` button in the top header.
-4. Select `Google Cloud Monitoring` from the _Type_ dropdown.
-5. Upload or paste in the Service Account Key file. See below for steps on how to create a Service Account Key file.
+1. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
+1. Click the `+ Add data source` button in the top header.
+1. Select `Google Cloud Monitoring` from the _Type_ dropdown.
+1. Upload or paste in the Service Account Key file. See below for steps on how to create a Service Account Key file.
 
 > **Note:** If you're not seeing the `Data Sources` link in your side menu, then your current user account does not have the `Admin` role for the current organization.
 
@@ -56,24 +56,24 @@ Click on the links above and click the `Enable` button:
 #### Create a GCP Service Account for a Project
 
 1. Navigate to the [APIs and Services Credentials page](https://console.cloud.google.com/apis/credentials).
-2. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
+1. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
 
    {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_create_service_account_button.png" class="docs-image--no-shadow" caption="Create service account button" >}}
 
-3. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
+1. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
 
    {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_create_service_account_key.png" class="docs-image--no-shadow" caption="Create service account key" >}}
 
-4. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
+1. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
 
    {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_service_account_choose_role.png" class="docs-image--no-shadow" caption="Choose role" >}}
 
-5. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Google Cloud Monitoring data.
-6. Upload it to Grafana on the data source Configuration page. You can either upload the file or paste in the contents of the file.
+1. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Google Cloud Monitoring data.
+1. Upload it to Grafana on the data source Configuration page. You can either upload the file or paste in the contents of the file.
 
    {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_grafana_upload_key.png" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
 
-7. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
+1. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
 
    {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_grafana_key_uploaded.png" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
 
@@ -82,8 +82,8 @@ Click on the links above and click the `Enable` button:
 If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is possible for Grafana to automatically retrieve default credentials from the metadata server. This has the advantage of not needing to generate a private key file for the service account and also not having to upload the file to Grafana. However for this to work, there are a few preconditions that need to be met.
 
 1. First of all, you need to create a Service Account that can be used by the GCE virtual machine. See detailed instructions on how to do that [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#createanewserviceaccount).
-2. Make sure the GCE virtual machine instance is being run as the service account that you just created. See instructions [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#using).
-3. Allow access to the `Cloud Monitoring API` scope.
+1. Make sure the GCE virtual machine instance is being run as the service account that you just created. See instructions [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#using).
+1. Allow access to the `Cloud Monitoring API` scope.
 
 Read more about creating and enabling service accounts for GCE VM instances [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances).
 
@@ -100,10 +100,10 @@ The metric query editor allows you to select metrics, group/aggregate by labels 
 To create a metric query, follow these steps:
 
 1. Choose the option **Metrics** in the **Query Type** dropdown
-2. Choose a project from the **Project** dropdown
-3. Choose a Google Cloud Platform service from the **Service** dropdown
-4. Choose a metric from the **Metric** dropdown.
-5. Use the plus and minus icons in the filter and group by sections to add/remove filters or group by clauses. This step is optional.
+1. Choose a project from the **Project** dropdown
+1. Choose a Google Cloud Platform service from the **Service** dropdown
+1. Choose a metric from the **Metric** dropdown.
+1. Use the plus and minus icons in the filter and group by sections to add/remove filters or group by clauses. This step is optional.
 
 Google Cloud Monitoring metrics can be of different kinds (GAUGE, DELTA, CUMULATIVE) and these kinds have support for different aggregation options (reducers and aligners). The Grafana query editor shows the list of available aggregation methods for a selected metric and sets a default reducer and aligner when you select the metric. Units for the Y-axis are also automatically selected by the query editor.
 
@@ -198,10 +198,10 @@ The SLO query builder in the Google Cloud Monitoring data source allows you to d
 To create an SLO query, follow these steps:
 
 1. Choose the option **Service Level Objectives (SLO)** in the **Query Type** dropdown.
-2. Choose a project from the **Project** dropdown.
-3. Choose an [SLO service](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services) from the **Service** dropdown.
-4. Choose an [SLO](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services.serviceLevelObjectives) from the **SLO** dropdown.
-5. Choose a [time series selector](https://cloud.google.com/monitoring/service-monitoring/timeseries-selectors#ts-selector-list) from the **Selector** dropdown.
+1. Choose a project from the **Project** dropdown.
+1. Choose an [SLO service](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services) from the **Service** dropdown.
+1. Choose an [SLO](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services.serviceLevelObjectives) from the **SLO** dropdown.
+1. Choose a [time series selector](https://cloud.google.com/monitoring/service-monitoring/timeseries-selectors#ts-selector-list) from the **Selector** dropdown.
 
 The friendly names for the time series selectors are shown in Grafana. Here is the mapping from the friendly name to the system name that is used in the Service Monitoring documentation:
 
@@ -232,7 +232,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query Variable

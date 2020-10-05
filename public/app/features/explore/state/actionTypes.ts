@@ -127,7 +127,6 @@ export interface SyncTimesPayload {
 export interface UpdateDatasourceInstancePayload {
   exploreId: ExploreId;
   datasourceInstance: DataSourceApi;
-  version?: string;
 }
 
 export interface ToggleLogLevelPayload {

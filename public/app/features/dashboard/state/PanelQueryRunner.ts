@@ -4,8 +4,8 @@ import { MonoTypeOperatorFunction, Observable, of, ReplaySubject, Unsubscribable
 import { map, mergeMap } from 'rxjs/operators';
 
 // Services & Utils
+import { getTemplateSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import templateSrv from 'app/features/templating/template_srv';
 import { preProcessPanelData, runRequest } from './runRequest';
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
 
@@ -172,7 +172,7 @@ export class PanelQueryRunner {
         return query;
       });
 
-      const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
+      const lowerIntervalLimit = minInterval ? getTemplateSrv().replace(minInterval, request.scopedVars) : ds.interval;
       const norm = rangeUtil.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,

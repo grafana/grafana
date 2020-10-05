@@ -18,9 +18,9 @@ visualize logs or metrics stored in Elasticsearch. You can also annotate your gr
 ## Adding the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.
-2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
-3. Click the `+ Add data source` button in the top header.
-4. Select *Elasticsearch* from the *Type* dropdown.
+1. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
+1. Click the `+ Add data source` button in the top header.
+1. Select *Elasticsearch* from the *Type* dropdown.
 
 > **Note:** If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
@@ -129,7 +129,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable

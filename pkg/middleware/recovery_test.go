@@ -14,7 +14,7 @@ import (
 )
 
 func TestRecoveryMiddleware(t *testing.T) {
-	setting.ERR_TEMPLATE_NAME = "error-template"
+	setting.ErrTemplateName = "error-template"
 
 	Convey("Given an api route that panics", t, func() {
 		apiURL := "/api/whatever"

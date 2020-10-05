@@ -14,37 +14,37 @@ To see a list of available variables, type `$` in the data link **URL** field to
 
 > **Note:** These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
 
-You can also use template variables in your data links URLs, refer to [Templates and variables]({{< relref "../variables/templates-and-variables.md" >}}) for more information on template variables.
+You can also use template variables in your data links URLs, refer to [Templates and variables]({{< relref "../variables/_index.md" >}}) for more information on template variables.
 
 ## Time range panel variables
 
 These variables allow you to include the current time range in the data link URL.
 
-* ``__url_time_range`` - current dashboard's time range (i.e. ``?from=now-6h&to=now``)
-* `$__from and $__to` - For more information, refer to [Global variables]({{< relref "../variables/variable-types/global-variables.md#__from-and-__to" >}}).
+- ``__url_time_range`` - current dashboard's time range (i.e. ``?from=now-6h&to=now``)
+- `$__from and $__to` - For more information, refer to [Global variables]({{< relref "../variables/variable-types/global-variables.md#__from-and-__to" >}}).
 
 ## Series variables
 
 Series specific variables are available under ``__series`` namespace:
 
-* ``__series.name`` - series name to the URL
-* ``__series.labels.<LABEL>`` - label's value to the URL. If your label contains dots use ``__series.labels["<LABEL>"]`` syntax
+- ``__series.name`` - series name to the URL
+- ``__series.labels.<LABEL>`` - label's value to the URL. If your label contains dots, then use ``__series.labels["<LABEL>"]`` syntax.
 
 ## Field variables
 
 Field-specific variables are available under ``__field`` namespace:
 
-* ``__field.name`` - the name of the field
+- ``__field.name`` - the name of the field
 
 ## Value variables
 
 Value-specific variables are available under ``__value`` namespace:
 
-* ``__value.time`` - value's timestamp (Unix ms epoch) to the URL (i.e. ``?time=1560268814105``)
-* ``__value.raw`` - raw value
-* ``__value.numeric`` - numeric representation of a value
-* ``__value.text`` - text representation of a value
-* ``__value.calc`` - calculation name if the value is result of calculation
+- ``__value.time`` - value's timestamp (Unix ms epoch) to the URL (i.e. ``?time=1560268814105``)
+- ``__value.raw`` - raw value
+- ``__value.numeric`` - numeric representation of a value
+- ``__value.text`` - text representation of a value
+- ``__value.calc`` - calculation name if the value is result of calculation
 
 ## Template variables
 

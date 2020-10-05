@@ -294,7 +294,7 @@ func (scanner *PluginScanner) loadPlugin(pluginJsonFilePath string) error {
 						break
 					}
 				}
-				if setting.Env != setting.DEV && !allowUnsigned {
+				if setting.Env != setting.Dev && !allowUnsigned {
 					return fmt.Errorf("plugin %q is unsigned", pluginCommon.Id)
 				}
 				scanner.log.Warn("Running an unsigned backend plugin", "pluginID", pluginCommon.Id, "pluginDir", pluginCommon.PluginDir)
