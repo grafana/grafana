@@ -52,7 +52,11 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
             <code>
               $__interval
             </code>
-             variable. The limit is absolute and not modified by the "Resolution" setting.
+             and 
+            <code>
+              $__rate_interval
+            </code>
+             variables. The limit is absolute and not modified by the "Resolution" setting.
           </React.Fragment>
         }
         width={7}
