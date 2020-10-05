@@ -61,6 +61,8 @@ The following sections provide general guidelines on topics specific to Grafana 
   - **Exceptions:** If an ampersand is used in the Grafana UI, then match the UI.
 - Avoid using internal slang and jargon in technical documentation.
 - Do not use two spaces after a period. Only add one space after each sentence. Do not add a space at the end of the paragraph.
+- Sentence length should be 25 words or less. If your thought is longer than 25 words, consider breaking up the sentence or changing the format to a list.
+- Paragraphs should be three sentences or fewer. Break up long paragraphs.
 
 ### File naming conventions
 
