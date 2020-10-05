@@ -1,8 +1,10 @@
 import { Threshold, FALLBACK_COLOR, Field, ThresholdsMode } from '../types';
 
+const fallBackTreshold: Threshold = { value: 0, color: FALLBACK_COLOR };
+
 export function getActiveThreshold(value: number, thresholds: Threshold[] | undefined): Threshold {
   if (!thresholds || thresholds.length === 0) {
-    return { value, color: FALLBACK_COLOR };
+    return fallBackTreshold;
   }
 
   let active = thresholds[0];
