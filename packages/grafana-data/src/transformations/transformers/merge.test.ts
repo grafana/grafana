@@ -5,7 +5,7 @@ import { toDataFrame } from '../../dataframe';
 import { transformDataFrame } from '../transformDataFrame';
 import { ArrayVector } from '../../vector';
 import { mergeTransformer, MergeTransformerOptions } from './merge';
-import { observableTester } from '../../../../../public/test/helpers/observableTester';
+import { observableTester } from '../../utils/tests/observableTester';
 
 describe('Merge multipe to single', () => {
   const cfg: DataTransformerConfig<MergeTransformerOptions> = {

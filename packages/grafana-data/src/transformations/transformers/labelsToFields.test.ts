@@ -4,7 +4,7 @@ import { DataTransformerConfig, FieldDTO, FieldType } from '../../types';
 import { DataTransformerID } from './ids';
 import { toDataFrame, toDataFrameDTO } from '../../dataframe';
 import { transformDataFrame } from '../transformDataFrame';
-import { observableTester } from '../../../../../public/test/helpers/observableTester';
+import { observableTester } from '../../utils/tests/observableTester';
 
 describe('Labels as Columns', () => {
   beforeAll(() => {

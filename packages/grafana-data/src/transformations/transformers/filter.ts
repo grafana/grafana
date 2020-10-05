@@ -1,4 +1,4 @@
-import { of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { noopTransformer } from './noop';
 import { DataFrame, Field } from '../../types/dataFrame';
@@ -21,44 +21,48 @@ export const filterFieldsTransformer: DataTransformerInfo<FilterOptions> = {
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options: FilterOptions, data: DataFrame[]) => {
+  operator: (options: FilterOptions) => source => {
     if (!options.include && !options.exclude) {
-      return noopTransformer.transformer({}, data);
+      return source.pipe(noopTransformer.operator({}));
     }
 
-    const include = options.include ? getFieldMatcher(options.include) : null;
-    const exclude = options.exclude ? getFieldMatcher(options.exclude) : null;
+    return source.pipe(
+      map(data => {
+        const include = options.include ? getFieldMatcher(options.include) : null;
+        const exclude = options.exclude ? getFieldMatcher(options.exclude) : null;
 
-    const processed: DataFrame[] = [];
-    for (const series of data) {
-      // Find the matching field indexes
-      const fields: Field[] = [];
-      for (let i = 0; i < series.fields.length; i++) {
-        const field = series.fields[i];
+        const processed: DataFrame[] = [];
+        for (const series of data) {
+          // Find the matching field indexes
+          const fields: Field[] = [];
+          for (let i = 0; i < series.fields.length; i++) {
+            const field = series.fields[i];
 
-        if (exclude) {
-          if (exclude(field, series, data)) {
+            if (exclude) {
+              if (exclude(field, series, data)) {
+                continue;
+              }
+              if (!include) {
+                fields.push(field);
+              }
+            }
+            if (include && include(field, series, data)) {
+              fields.push(field);
+            }
+          }
+
+          if (!fields.length) {
             continue;
           }
-          if (!include) {
-            fields.push(field);
-          }
+          const copy = {
+            ...series, // all the other properties
+            fields, // but a different set of fields
+          };
+          processed.push(copy);
         }
-        if (include && include(field, series, data)) {
-          fields.push(field);
-        }
-      }
-
-      if (!fields.length) {
-        continue;
-      }
-      const copy = {
-        ...series, // all the other properties
-        fields, // but a different set of fields
-      };
-      processed.push(copy);
-    }
-    return of(processed);
+        return processed;
+      })
+    );
   },
 };
 
@@ -72,28 +76,32 @@ export const filterFramesTransformer: DataTransformerInfo<FilterOptions> = {
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options, data) => {
+  operator: options => source => {
     if (!options.include && !options.exclude) {
-      return noopTransformer.transformer({}, data);
+      return source.pipe(noopTransformer.operator({}));
     }
 
-    const include = options.include ? getFrameMatchers(options.include) : null;
-    const exclude = options.exclude ? getFrameMatchers(options.exclude) : null;
+    return source.pipe(
+      map(data => {
+        const include = options.include ? getFrameMatchers(options.include) : null;
+        const exclude = options.exclude ? getFrameMatchers(options.exclude) : null;
 
-    const processed: DataFrame[] = [];
-    for (const series of data) {
-      if (exclude) {
-        if (exclude(series)) {
-          continue;
+        const processed: DataFrame[] = [];
+        for (const series of data) {
+          if (exclude) {
+            if (exclude(series)) {
+              continue;
+            }
+            if (!include) {
+              processed.push(series);
+            }
+          }
+          if (include && include(series)) {
+            processed.push(series);
+          }
         }
-        if (!include) {
-          processed.push(series);
-        }
-      }
-      if (include && include(series)) {
-        processed.push(series);
-      }
-    }
-    return of(processed);
+        return processed;
+      })
+    );
   },
 };

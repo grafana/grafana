@@ -7,7 +7,7 @@ import { transformDataFrame } from '../transformDataFrame';
 import { CalculateFieldMode, calculateFieldTransformer, ReduceOptions } from './calculateField';
 import { DataFrameView } from '../../dataframe';
 import { BinaryOperationID } from '../../utils';
-import { observableTester } from '../../../../../public/test/helpers/observableTester';
+import { observableTester } from '../../utils/tests/observableTester';
 
 const seriesA = toDataFrame({
   fields: [

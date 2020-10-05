@@ -8,7 +8,7 @@ import {
 } from '@grafana/data';
 import { organizeFieldsTransformer, OrganizeFieldsTransformerOptions } from './organize';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { observableTester } from '../../../../../public/test/helpers/observableTester';
+import { observableTester } from '../../utils/tests/observableTester';
 
 describe('OrganizeFields Transformer', () => {
   beforeAll(() => {

@@ -8,7 +8,7 @@ import {
 } from '@grafana/data';
 import { renameFieldsTransformer, RenameFieldsTransformerOptions } from './rename';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { observableTester } from '../../../../../public/test/helpers/observableTester';
+import { observableTester } from '../../utils/tests/observableTester';
 
 describe('Rename Transformer', () => {
   beforeAll(() => {

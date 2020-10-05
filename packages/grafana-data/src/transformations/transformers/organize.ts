@@ -1,5 +1,3 @@
-import { mergeMap } from 'rxjs/operators';
-
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
 import { orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
@@ -26,22 +24,14 @@ export const organizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransf
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options, data) => {
-    return filterFieldsByNameTransformer
-      .transformer(
-        {
-          exclude: { names: mapToExcludeArray(options.excludeByName) },
-        },
-        data
-      )
-      .pipe(
-        mergeMap(filter =>
-          orderFieldsTransformer
-            .transformer(options, filter)
-            .pipe(mergeMap(order => renameFieldsTransformer.transformer(options, order)))
-        )
-      );
-  },
+  operator: options => source =>
+    source.pipe(
+      filterFieldsByNameTransformer.operator({
+        exclude: { names: mapToExcludeArray(options.excludeByName) },
+      }),
+      orderFieldsTransformer.operator(options),
+      renameFieldsTransformer.operator(options)
+    ),
 };
 
 const mapToExcludeArray = (excludeByName: Record<string, boolean>): string[] => {

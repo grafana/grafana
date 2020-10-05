@@ -1,6 +1,5 @@
-import { FieldType, toDataFrame } from '@grafana/data';
+import { FieldType, observableTester, toDataFrame } from '@grafana/data';
 import { getAnnotationsFromData } from './standardAnnotationSupport';
-import { observableTester } from '../../../test/helpers/observableTester';
 
 describe('DataFrame to annotations', () => {
   test('simple conversion', done => {

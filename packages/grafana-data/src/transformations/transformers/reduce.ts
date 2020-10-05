@@ -30,84 +30,87 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options, data) => {
-    const matcher = options.fields ? getFieldMatcher(options.fields) : alwaysFieldMatcher;
-    const calculators = options.reducers && options.reducers.length ? fieldReducers.list(options.reducers) : [];
-    const reducers = calculators.map(c => c.id);
+  operator: options => source =>
+    source.pipe(
+      map(data => {
+        const matcher = options.fields ? getFieldMatcher(options.fields) : alwaysFieldMatcher;
+        const calculators = options.reducers && options.reducers.length ? fieldReducers.list(options.reducers) : [];
+        const reducers = calculators.map(c => c.id);
 
-    const processed: DataFrame[] = [];
+        const processed: DataFrame[] = [];
 
-    for (let seriesIndex = 0; seriesIndex < data.length; seriesIndex++) {
-      const series = data[seriesIndex];
-      const values: ArrayVector[] = [];
-      const fields: Field[] = [];
-      const byId: KeyValue<ArrayVector> = {};
+        for (let seriesIndex = 0; seriesIndex < data.length; seriesIndex++) {
+          const series = data[seriesIndex];
+          const values: ArrayVector[] = [];
+          const fields: Field[] = [];
+          const byId: KeyValue<ArrayVector> = {};
 
-      values.push(new ArrayVector()); // The name
-      fields.push({
-        name: 'Field',
-        type: FieldType.string,
-        values: values[0],
-        config: {},
-      });
-
-      for (const info of calculators) {
-        const vals = new ArrayVector();
-        byId[info.id] = vals;
-        values.push(vals);
-
-        fields.push({
-          name: info.name,
-          type: FieldType.other, // UNKNOWN until after we call the functions
-          values: values[values.length - 1],
-          config: {},
-        });
-      }
-
-      for (let i = 0; i < series.fields.length; i++) {
-        const field = series.fields[i];
-
-        if (field.type === FieldType.time) {
-          continue;
-        }
-
-        if (matcher(field, series, data)) {
-          const results = reduceField({
-            field,
-            reducers,
+          values.push(new ArrayVector()); // The name
+          fields.push({
+            name: 'Field',
+            type: FieldType.string,
+            values: values[0],
+            config: {},
           });
 
-          // Update the name list
-          const fieldName = getFieldDisplayName(field, series, data);
-
-          values[0].buffer.push(fieldName);
-
           for (const info of calculators) {
-            const v = results[info.id];
-            byId[info.id].buffer.push(v);
+            const vals = new ArrayVector();
+            byId[info.id] = vals;
+            values.push(vals);
+
+            fields.push({
+              name: info.name,
+              type: FieldType.other, // UNKNOWN until after we call the functions
+              values: values[values.length - 1],
+              config: {},
+            });
           }
+
+          for (let i = 0; i < series.fields.length; i++) {
+            const field = series.fields[i];
+
+            if (field.type === FieldType.time) {
+              continue;
+            }
+
+            if (matcher(field, series, data)) {
+              const results = reduceField({
+                field,
+                reducers,
+              });
+
+              // Update the name list
+              const fieldName = getFieldDisplayName(field, series, data);
+
+              values[0].buffer.push(fieldName);
+
+              for (const info of calculators) {
+                const v = results[info.id];
+                byId[info.id].buffer.push(v);
+              }
+            }
+          }
+
+          for (const f of fields) {
+            const t = guessFieldTypeForField(f);
+
+            if (t) {
+              f.type = t;
+            }
+          }
+
+          processed.push({
+            ...series, // Same properties, different fields
+            fields,
+            length: values[0].length,
+          });
         }
-      }
 
-      for (const f of fields) {
-        const t = guessFieldTypeForField(f);
-
-        if (t) {
-          f.type = t;
-        }
-      }
-
-      processed.push({
-        ...series, // Same properties, different fields
-        fields,
-        length: values[0].length,
-      });
-    }
-
-    return filterFieldsTransformer
-      .transformer({ exclude: { id: FieldMatcherID.time } }, processed)
-      .pipe(map(mergeResults));
-  },
+        return processed;
+      }),
+      filterFieldsTransformer.operator({ exclude: { id: FieldMatcherID.time } }),
+      map(mergeResults)
+    ),
 };
 
 const mergeResults = (data: DataFrame[]) => {

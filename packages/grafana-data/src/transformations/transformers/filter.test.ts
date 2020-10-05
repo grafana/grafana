@@ -5,7 +5,7 @@ import { FieldMatcherID } from '../matchers/ids';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { filterFieldsTransformer } from './filter';
 import { transformDataFrame } from '../transformDataFrame';
-import { observableTester } from '../../../../../public/test/helpers/observableTester';
+import { observableTester } from '../../utils/tests/observableTester';
 
 export const simpleSeriesWithTypes = toDataFrame({
   fields: [

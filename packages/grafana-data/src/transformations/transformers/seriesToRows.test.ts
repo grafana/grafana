@@ -5,7 +5,7 @@ import { toDataFrame } from '../../dataframe';
 import { transformDataFrame } from '../transformDataFrame';
 import { ArrayVector } from '../../vector';
 import { seriesToRowsTransformer, SeriesToRowsTransformerOptions } from './seriesToRows';
-import { observableTester } from '../../../../../public/test/helpers/observableTester';
+import { observableTester } from '../../utils/tests/observableTester';
 
 describe('Series to rows', () => {
   beforeAll(() => {

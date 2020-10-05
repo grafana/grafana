@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { SeriesToColumnsOptions, seriesToColumnsTransformer } from './seriesToColumns';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { observableTester } from '../../../../../public/test/helpers/observableTester';
+import { observableTester } from '../../utils/tests/observableTester';
 
 describe('SeriesToColumns Transformer', () => {
   beforeAll(() => {

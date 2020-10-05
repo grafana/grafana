@@ -1,6 +1,6 @@
 import React, { ChangeEvent } from 'react';
+import { of, OperatorFunction } from 'rxjs';
 import { map } from 'rxjs/operators';
-
 import {
   BinaryOperationID,
   binaryOperators,
@@ -66,55 +66,67 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   private initOptions() {
     const { options } = this.props;
     const configuredOptions = options?.reduce?.include || [];
-    const subscription = standardTransformers.ensureColumnsTransformer
-      .transformer(null, this.props.input)
+    const subscription = of(this.props.input)
       .pipe(
-        map(this.extractAllNames),
-        map(({ allNames }) => this.extractNamesAndSelected(configuredOptions, allNames))
+        standardTransformers.ensureColumnsTransformer.operator(null),
+        this.extractAllNames(),
+        this.extractNamesAndSelected(configuredOptions)
       )
       .subscribe(({ selected, names }) => {
         this.setState({ names, selected }, () => subscription.unsubscribe());
       });
   }
 
-  private extractAllNames(input: DataFrame[]) {
-    const allNames: string[] = [];
-    const byName: KeyValue<boolean> = {};
+  private extractAllNames(): OperatorFunction<DataFrame[], string[]> {
+    return source =>
+      source.pipe(
+        map(input => {
+          const allNames: string[] = [];
+          const byName: KeyValue<boolean> = {};
 
-    for (const frame of input) {
-      for (const field of frame.fields) {
-        if (field.type !== FieldType.number) {
-          continue;
-        }
+          for (const frame of input) {
+            for (const field of frame.fields) {
+              if (field.type !== FieldType.number) {
+                continue;
+              }
 
-        const displayName = getFieldDisplayName(field, frame, input);
+              const displayName = getFieldDisplayName(field, frame, input);
 
-        if (!byName[displayName]) {
-          byName[displayName] = true;
-          allNames.push(displayName);
-        }
-      }
-    }
+              if (!byName[displayName]) {
+                byName[displayName] = true;
+                allNames.push(displayName);
+              }
+            }
+          }
 
-    return { allNames };
+          return allNames;
+        })
+      );
   }
 
-  private extractNamesAndSelected(configuredOptions: string[], allNames: string[]) {
-    if (!configuredOptions.length) {
-      return { names: allNames, selected: [] };
-    }
+  private extractNamesAndSelected(
+    configuredOptions: string[]
+  ): OperatorFunction<string[], { names: string[]; selected: string[] }> {
+    return source =>
+      source.pipe(
+        map(allNames => {
+          if (!configuredOptions.length) {
+            return { names: allNames, selected: [] };
+          }
 
-    const names: string[] = [];
-    const selected: string[] = [];
+          const names: string[] = [];
+          const selected: string[] = [];
 
-    for (const v of allNames) {
-      if (configuredOptions.includes(v)) {
-        selected.push(v);
-      }
-      names.push(v);
-    }
+          for (const v of allNames) {
+            if (configuredOptions.includes(v)) {
+              selected.push(v);
+            }
+            names.push(v);
+          }
 
-    return { names, selected };
+          return { names, selected };
+        })
+      );
   }
 
   onToggleReplaceFields = () => {

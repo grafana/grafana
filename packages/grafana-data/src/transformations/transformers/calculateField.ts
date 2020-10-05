@@ -1,4 +1,3 @@
-import { of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { DataFrame, DataTransformerInfo, Field, FieldType, NullValueMode, Vector } from '../../types';
@@ -13,6 +12,7 @@ import defaults from 'lodash/defaults';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
 import { ensureColumnsTransformer } from './ensureColumns';
 import { getFieldDisplayName } from '../../field';
+import { noopTransformer } from './noop';
 
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
@@ -70,11 +70,12 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       reducer: ReducerID.sum,
     },
   },
-  transformer: (options, frames) => {
-    const source =
-      options && options.timeSeries !== false ? ensureColumnsTransformer.transformer(null, frames) : of(frames);
+  operator: options => outerSource => {
+    const operator =
+      options && options.timeSeries !== false ? ensureColumnsTransformer.operator(null) : noopTransformer.operator({});
 
-    return source.pipe(
+    return outerSource.pipe(
+      operator,
       map(data => {
         const mode = options.mode ?? CalculateFieldMode.ReduceRow;
         let creator: ValuesCreator | undefined = undefined;

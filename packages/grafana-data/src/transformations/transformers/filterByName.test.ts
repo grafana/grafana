@@ -5,7 +5,7 @@ import { mockTransformationsRegistry } from '../../utils/tests/mockTransformatio
 import { filterFieldsByNameTransformer } from './filterByName';
 import { filterFieldsTransformer } from './filter';
 import { transformDataFrame } from '../transformDataFrame';
-import { observableTester } from '../../../../../public/test/helpers/observableTester';
+import { observableTester } from '../../utils/tests/observableTester';
 
 export const seriesWithNamesToMatch = toDataFrame({
   fields: [

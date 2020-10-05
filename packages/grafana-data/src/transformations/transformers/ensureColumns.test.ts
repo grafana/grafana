@@ -5,7 +5,7 @@ import { mockTransformationsRegistry } from '../../utils/tests/mockTransformatio
 import { transformDataFrame } from '../transformDataFrame';
 import { ensureColumnsTransformer } from './ensureColumns';
 import { seriesToColumnsTransformer } from './seriesToColumns';
-import { observableTester } from '../../../../../public/test/helpers/observableTester';
+import { observableTester } from '../../utils/tests/observableTester';
 
 const seriesA = toDataFrame({
   fields: [

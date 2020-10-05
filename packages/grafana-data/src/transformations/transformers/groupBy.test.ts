@@ -7,7 +7,7 @@ import { DataTransformerID } from './ids';
 import { ArrayVector } from '../../vector';
 import { ReducerID } from '../fieldReducer';
 import { DataTransformerConfig } from '@grafana/data';
-import { observableTester } from '../../../../../public/test/helpers/observableTester';
+import { observableTester } from '../../utils/tests/observableTester';
 
 describe('GroupBy transformer', () => {
   beforeAll(() => {

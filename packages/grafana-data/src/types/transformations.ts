@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { MonoTypeOperatorFunction } from 'rxjs';
 
 import { DataFrame, Field } from './dataFrame';
 import { RegistryItemWithOptions } from '../utils/Registry';
@@ -11,7 +11,7 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  transformer: (options: TOptions, data: DataFrame[]) => Observable<DataFrame[]>;
+  operator: (options: TOptions) => MonoTypeOperatorFunction<DataFrame[]>;
 }
 
 export interface DataTransformerConfig<TOptions = any> {

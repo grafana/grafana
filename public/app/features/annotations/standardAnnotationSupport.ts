@@ -1,5 +1,5 @@
-import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of, OperatorFunction } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
 import {
   AnnotationEvent,
   AnnotationEventFieldSource,
@@ -52,16 +52,25 @@ export const standardAnnotationSupport: AnnotationSupport = {
 /**
  * Flatten all panel data into a single frame
  */
-export function singleFrameFromPanelData(data: DataFrame[]): Observable<DataFrame | undefined> {
-  if (!data?.length) {
-    return of(undefined);
-  }
 
-  if (data.length === 1) {
-    return of(data[0]);
-  }
+export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFrame | undefined> {
+  return source =>
+    source.pipe(
+      mergeMap(data => {
+        if (!data?.length) {
+          return of(undefined);
+        }
 
-  return standardTransformers.mergeTransformer.transformer({}, data).pipe(map(d => d[0]));
+        if (data.length === 1) {
+          return of(data[0]);
+        }
+
+        return of(data).pipe(
+          standardTransformers.mergeTransformer.operator({}),
+          map(d => d[0])
+        );
+      })
+    );
 }
 
 interface AnnotationEventFieldSetter {
@@ -106,7 +115,8 @@ export function getAnnotationsFromData(
   data: DataFrame[],
   options?: AnnotationEventMappings
 ): Observable<AnnotationEvent[]> {
-  return singleFrameFromPanelData(data).pipe(
+  return of(data).pipe(
+    singleFrameFromPanelData(),
     map(frame => {
       if (!frame?.length) {
         return [];

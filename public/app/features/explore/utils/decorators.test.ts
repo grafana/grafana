@@ -11,12 +11,12 @@ import {
   DataSourceApi,
   FieldType,
   LoadingState,
+  observableTester,
   PanelData,
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
 
-import { observableTester } from '../../../../test/helpers/observableTester';
 import {
   decorateWithGraphLogsTraceAndTable,
   decorateWithGraphResult,

@@ -6,7 +6,7 @@ import { reduceTransformer } from './reduce';
 import { transformDataFrame } from '../transformDataFrame';
 import { Field, FieldType } from '../../types';
 import { ArrayVector } from '../../vector';
-import { observableTester } from '../../../../../public/test/helpers/observableTester';
+import { observableTester } from '../../utils/tests/observableTester';
 
 const seriesAWithSingleField = toDataFrame({
   name: 'A',

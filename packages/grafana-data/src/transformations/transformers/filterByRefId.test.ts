@@ -3,7 +3,7 @@ import { toDataFrame } from '../../dataframe/processDataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { filterFramesByRefIdTransformer } from './filterByRefId';
 import { transformDataFrame } from '../transformDataFrame';
-import { observableTester } from '../../../../../public/test/helpers/observableTester';
+import { observableTester } from '../../utils/tests/observableTester';
 
 export const allSeries = [
   toDataFrame({
