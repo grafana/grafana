@@ -287,7 +287,7 @@ func (e *CloudMonitoringExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*cl
 		sq.Target = target
 		sq.Params = params
 
-		if setting.Env == setting.DEV {
+		if setting.Env == setting.Dev {
 			slog.Debug("CloudMonitoring request", "params", params)
 		}
 

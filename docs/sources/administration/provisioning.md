@@ -23,7 +23,7 @@ Check out the [configuration]({{< relref "configuration.md" >}}) page for more i
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
 - The custom configuration file path can be overridden using the `--config` parameter
 
-> **Note.** If you have installed Grafana using the `deb` or `rpm`
+> **Note:** If you have installed Grafana using the `deb` or `rpm`
 > packages, then your configuration file is located at
 > `/etc/grafana/grafana.ini`. This path is specified in the Grafana
 > init.d script using `--config` file parameter.
@@ -151,7 +151,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsSkipVerify           | boolean | _All_                                                            | Controls whether a client verifies the server's certificate chain and host name.            |
 | graphiteVersion         | string  | Graphite                                                         | Graphite version                                                                            |
 | timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source                         |
-| httpMode                | string  | Influxdb, Prometheus                                             | HTTP Method. 'GET', 'POST', defaults to GET                 |
+| httpMode                | string  | Influxdb, Prometheus                                             | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
 | esVersion               | number  | Elasticsearch                                                    | Elasticsearch version as a number (2/5/56/60/70)                                            |
 | timeField               | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                |
 | interval                | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |
@@ -161,7 +161,7 @@ Since not all datasources have the same configuration settings we only have the 
 | assumeRoleArn           | string  | Cloudwatch                                                       | ARN of Assume Role                                                                          |
 | defaultRegion           | string  | Cloudwatch                                                       | AWS region                                                                                  |
 | customMetricsNamespaces | string  | Cloudwatch                                                       | Namespaces of Custom Metrics                                                                |
-| profile                 | string  | Cloudwatch                                                       | Custom credentials profile
+| profile                 | string  | Cloudwatch                                                       | Custom credentials profile                                                                  |
 | tsdbVersion             | string  | OpenTSDB                                                         | Version                                                                                     |
 | tsdbResolution          | string  | OpenTSDB                                                         | Resolution                                                                                  |
 | sslmode                 | string  | PostgreSQL                                                       | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full'                                 |
@@ -301,7 +301,7 @@ If the dashboard in the json file contains an [uid](/reference/dashboard/#json-f
 When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
 By default, Grafana will delete dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
 
-> **Note.** Provisioning allows you to overwrite existing dashboards
+> **Note:** Provisioning allows you to overwrite existing dashboards
 > which leads to problems if you re-use settings that are supposed to be unique.
 > Be careful not to re-use the same `title` multiple times within a folder
 > or `uid` within the same installation as this will cause weird behaviors.
@@ -333,7 +333,7 @@ providers:
 ```
 `server` and `application` will become new folders in Grafana menu.
 
-> **Note.** `folder` and `folderUid` options should be empty or missing to make `foldersFromFilesStructure` work.
+> **Note:** `folder` and `folderUid` options should be empty or missing to make `foldersFromFilesStructure` work.
 
 > **Note:** To provision dashboards to the General folder, store them in the root of your `path`.
 
@@ -409,32 +409,32 @@ delete_notifiers:
 
 The following sections detail the supported settings and secure settings for each alert notification type. Secure settings are stored encrypted in the database and you add them to `secure_settings` in the YAML file instead of `settings`.
 
-> **Note**: Secure settings is supported since Grafana v7.2.
+> **Note:** Secure settings is supported since Grafana v7.2.
 
 #### Alert notification `pushover`
 
 | Name     | Secure setting |
 | -------- | -------------- |
-| apiToken | yes |
-| userKey  | yes |
-| device   | |
-| retry    | |
-| expire   | |
+| apiToken | yes            |
+| userKey  | yes            |
+| device   |                |
+| retry    |                |
+| expire   |                |
 
 #### Alert notification `slack`
 
 | Name           | Secure setting |
 | -------------- | -------------- |
-| url            | yes |
-| recipient      | |
-| username       | |
-| icon_emoji     | |
-| icon_url       | |
-| uploadImage    | |
-| mentionUsers   | |
-| mentionGroups  | |
-| mentionChannel | |
-| token          | yes |
+| url            | yes            |
+| recipient      |                |
+| username       |                |
+| icon_emoji     |                |
+| icon_url       |                |
+| uploadImage    |                |
+| mentionUsers   |                |
+| mentionGroups  |                |
+| mentionChannel |                |
+| token          | yes            |
 
 #### Alert notification `victorops`
 
@@ -453,33 +453,33 @@ The following sections detail the supported settings and secure settings for eac
 #### Alert notification `LINE`
 
 | Name  | Secure setting |
-| ----- | - |
-| token | yes |
+| ----- | -------------- |
+| token | yes            |
 
 #### Alert notification `pagerduty`
 
 | Name           | Secure setting |
-| -------------- | - |
-| integrationKey | yes |
-| autoResolve    | |
+| -------------- | -------------- |
+| integrationKey | yes            |
+| autoResolve    |                |
 
 #### Alert notification `sensu`
 
 | Name     | Secure setting |
-| -------- | - | 
-| url      | |
-| source   | |
-| handler  | |
-| username | |
-| password | yes |
+| -------- | -------------- |
+| url      |                |
+| source   |                |
+| handler  |                |
+| username |                |
+| password | yes            |
 
 #### Alert notification `prometheus-alertmanager`
 
 | Name              | Secure setting |
-| ----------------- | - |
-| url               | |
-| basicAuthUser     | |
-| basicAuthPassword | yes |
+| ----------------- | -------------- |
+| url               |                |
+| basicAuthUser     |                |
+| basicAuthPassword | yes            |
 
 #### Alert notification `teams`
 
@@ -511,35 +511,35 @@ The following sections detail the supported settings and secure settings for eac
 #### Alert notification `opsgenie`
 
 | Name             | Secure setting |
-| ---------------- | - |
-| apiKey           | yes |
-| apiUrl           | |
-| autoClose        | |
-| overridePriority | |
+| ---------------- | -------------- |
+| apiKey           | yes            |
+| apiUrl           |                |
+| autoClose        |                |
+| overridePriority |                |
 
 #### Alert notification `telegram`
 
 | Name        | Secure setting |
-| ----------- | - |
-| bottoken    | yes |
-| chatid      | |
-| uploadImage | |
+| ----------- | -------------- |
+| bottoken    | yes            |
+| chatid      |                |
+| uploadImage |                |
 
 #### Alert notification `threema`
 
 | Name         | Secure setting |
-| ------------ | - |
-| gateway_id   | |
-| recipient_id | |
-| api_secret   | yes |
+| ------------ | -------------- |
+| gateway_id   |                |
+| recipient_id |                |
+| api_secret   | yes            |
 
 #### Alert notification `webhook`
 
 | Name     | Secure setting |
-| -------- | - |
-| url      | |
-| username | |
-| password | yes |
+| -------- | -------------- |
+| url      |                |
+| username |                |
+| password | yes            |
 
 #### Alert notification `googlechat`
 

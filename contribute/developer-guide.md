@@ -174,7 +174,7 @@ make build-docker-full
 
 The resulting image will be tagged as grafana/grafana:dev.
 
-**Note:** If you've already set up a local development environment, and you're running a `linux/amd64` machine, you can speed up building the Docker image:
+> **Note:** If you've already set up a local development environment, and you're running a `linux/amd64` machine, you can speed up building the Docker image:
 
 1. Build the frontend: `go run build.go build-frontend`.
 1. Build the Docker image: `make build-docker-dev`.
@@ -211,8 +211,8 @@ Another alternative is to limit the files being watched. The directories that ar
 
 To retain your `ulimit` configuration, i.e. so it will be remembered for future sessions, you need to commit it to your command line shell initialization file. Which file this will be depends on the shell you are using, here are some examples:
 
-* zsh -> ~/.zshrc
-* bash -> ~/.bashrc
+- zsh -> ~/.zshrc
+- bash -> ~/.bashrc
 
 Commit your ulimit configuration to your shell initialization file as follows ($LIMIT being your chosen limit and $INIT_FILE being the initialization file for your shell):
 

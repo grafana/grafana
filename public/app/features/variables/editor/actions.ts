@@ -19,6 +19,7 @@ import {
 import cloneDeep from 'lodash/cloneDeep';
 import { VariableType } from '@grafana/data';
 import { addVariable, removeVariable, storeNewVariable } from '../state/sharedReducer';
+import { updateOptions } from '../state/actions';
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async dispatch => {
@@ -36,9 +37,8 @@ export const variableEditorUnMount = (identifier: VariableIdentifier): ThunkResu
 };
 
 export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const variableInState = getVariable(identifier.id, getState());
-    await variableAdapters.get(variableInState.type).updateOptions(variableInState);
+  return async dispatch => {
+    await dispatch(updateOptions(identifier));
     dispatch(switchToListMode());
   };
 };
@@ -48,8 +48,7 @@ export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> =
     const newVariableInState = getVariable(NEW_VARIABLE_ID, getState());
     const id = newVariableInState.name;
     dispatch(storeNewVariable(toVariablePayload({ type: identifier.type, id })));
-    const variableInState = getVariable(id, getState());
-    await variableAdapters.get(variableInState.type).updateOptions(variableInState);
+    await dispatch(updateOptions(identifier));
     dispatch(switchToListMode());
     dispatch(removeVariable(toVariablePayload({ type: identifier.type, id: NEW_VARIABLE_ID }, { reIndex: false })));
   };

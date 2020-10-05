@@ -16,18 +16,39 @@ interface PlotCanvasContextType {
   };
 }
 
-interface PlotContextType {
+interface PlotConfigContextType {
+  addSeries: (
+    series: uPlot.Series
+  ) => {
+    removeSeries: () => void;
+    updateSeries: () => void;
+  };
+  addScale: (
+    scaleKey: string,
+    scale: uPlot.Scale
+  ) => {
+    removeScale: () => void;
+    updateScale: () => void;
+  };
+  addAxis: (
+    axis: uPlot.Axis
+  ) => {
+    removeAxis: () => void;
+    updateAxis: () => void;
+  };
+}
+
+interface PlotPluginsContextType {
+  registerPlugin: (plugin: PlotPlugin) => () => void;
+}
+
+interface PlotContextType extends PlotConfigContextType, PlotPluginsContextType {
   u?: uPlot;
   series?: uPlot.Series[];
   canvas?: PlotCanvasContextType;
   canvasRef: any;
-  registerPlugin: (plugin: PlotPlugin) => () => void;
   data: DataFrame;
 }
-
-type PlotPluginsContextType = {
-  registerPlugin: (plugin: PlotPlugin) => () => void;
-};
 
 export const PlotContext = React.createContext<PlotContextType | null>(null);
 
@@ -48,6 +69,19 @@ export const usePlotPluginContext = (): PlotPluginsContextType => {
   }
   return {
     registerPlugin: ctx!.registerPlugin,
+  };
+};
+
+// Exposes API for building uPlot config
+export const usePlotConfigContext = (): PlotConfigContextType => {
+  const ctx = useContext(PlotContext);
+  if (!ctx) {
+    throwWhenNoContext('usePlotPluginContext');
+  }
+  return {
+    addSeries: ctx!.addSeries,
+    addAxis: ctx!.addAxis,
+    addScale: ctx!.addScale,
   };
 };
 
@@ -136,6 +170,9 @@ export const usePlotCanvas = (): PlotCanvasContextType | null => {
 
 export const buildPlotContext = (
   registerPlugin: any,
+  addSeries: any,
+  addAxis: any,
+  addScale: any,
   canvasRef: any,
   data: DataFrame,
   u?: uPlot
@@ -156,6 +193,9 @@ export const buildPlotContext = (
         }
       : undefined,
     registerPlugin,
+    addSeries,
+    addAxis,
+    addScale,
     canvasRef,
     data,
   };

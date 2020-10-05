@@ -22,12 +22,12 @@ type RendererPlugin struct {
 	backendPluginManager backendplugin.Manager
 }
 
-func (r *RendererPlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
+func (r *RendererPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) error {
 	if err := decoder.Decode(r); err != nil {
 		return err
 	}
 
-	if err := r.registerPlugin(pluginDir); err != nil {
+	if err := r.registerPlugin(base); err != nil {
 		return err
 	}
 
