@@ -519,7 +519,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
   let gradient = '';
   let lastpos = 0;
 
-  if (field.color && field.color.mode === FieldColorMode.SchemeBlues) {
+  if (field.color && field.color.mode !== FieldColorMode.Thresholds) {
     /* const schemeSet = (d3 as any)[`scheme${field.color.schemeName}`] as any[]; */
     /* if (!schemeSet) { */
     /*   // Error: unknown scheme */
