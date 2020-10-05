@@ -1,13 +1,14 @@
 import { SelectableValue } from '@grafana/data';
-import { Icon, InlineField, Segment, SegmentAsync, useTheme } from '@grafana/ui';
+import { InlineField, Segment, SegmentAsync, useTheme } from '@grafana/ui';
 import { cx } from 'emotion';
-import React, { FunctionComponent, useCallback } from 'react';
+import React, { FunctionComponent } from 'react';
 import { useDatasource, useDispatch } from '../ElasticsearchQueryContext';
 import { getStyles } from './styles';
 import { marginZero } from '../styles';
 import { MetricAggregation, MetricAggregationAction, MetricAggregationType } from '../../state/metricAggregation/types';
 import { metricAggregationConfig } from '../../state/metricAggregation/utils';
 import { changeMetricType, toggleMetricVisibility } from '../../state/metricAggregation/actions';
+import { ToggleVisibilityButton } from '../ToggleVisibilityButton';
 
 const metricAggOptions: Array<SelectableValue<MetricAggregationType>> = Object.entries(metricAggregationConfig).map(
   ([key, { label }]) => ({
@@ -48,7 +49,6 @@ export const MetricEditor: FunctionComponent<QueryMetricEditorProps> = ({ metric
           value={toOption(metric)}
         />
       </InlineField>
-
       {metricAggregationConfig[metric.type].requiresField && (
         <SegmentAsync
           className={cx(styles.color)}
@@ -59,12 +59,7 @@ export const MetricEditor: FunctionComponent<QueryMetricEditorProps> = ({ metric
         />
       )}
 
-      <button
-        className={cx('gf-form-label gf-form-label--btn query-part', styles.color)}
-        onClick={() => dispatch(toggleMetricVisibility(metric.id))}
-      >
-        <Icon name={metric.hide ? 'eye-slash' : 'eye'} />
-      </button>
+      <ToggleVisibilityButton onClick={() => dispatch(toggleMetricVisibility(metric.id))} hide={metric.hide} />
     </>
   );
 };

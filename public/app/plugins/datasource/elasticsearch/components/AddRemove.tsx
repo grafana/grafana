@@ -9,6 +9,7 @@ interface Props {
 }
 
 export const AddRemove: FunctionComponent<Props> = ({ index, onAdd, onRemove, elements }) => {
+  // TODO: This can be refactored to have stuff in common with ToggleVisibilityButton
   return (
     <>
       {index === 0 && (
