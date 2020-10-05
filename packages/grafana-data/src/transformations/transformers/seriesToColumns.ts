@@ -19,7 +19,7 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
   defaultOptions: {
     byField: DEFAULT_KEY_FIELD,
   },
-  operator: (options: SeriesToColumnsOptions) => source =>
+  operator: options => source =>
     source.pipe(
       map(data => {
         const keyFieldMatch = options.byField || DEFAULT_KEY_FIELD;
