@@ -53,17 +53,17 @@ export const PIPE_PARSERS: CompletionItem[] = [
   {
     label: 'json',
     insertText: 'json',
-    documentation: 'Extracting labels from the log line using json parser.',
+    documentation: 'Extracting labels from the log line using json parser. Only available in Loki 2.0+.',
   },
   {
     label: 'regexp',
     insertText: 'regexp',
-    documentation: 'Extracting labels from the log line using regexp parser.',
+    documentation: 'Extracting labels from the log line using regexp parser. Only available in Loki 2.0+.',
   },
   {
     label: 'logfmt',
     insertText: 'logfmt',
-    documentation: 'Extracting labels from the log line using logfmt parser.',
+    documentation: 'Extracting labels from the log line using logfmt parser. Only available in Loki 2.0+.',
   },
 ];
 
@@ -71,17 +71,17 @@ export const PIPE_OPERATORS: CompletionItem[] = [
   {
     label: 'label_filter',
     insertText: 'label_filter',
-    documentation: '',
+    documentation: 'Only available in Loki 2.0+.',
   },
   {
     label: 'label_format',
     insertText: 'label_format',
-    documentation: '',
+    documentation: 'Only available in Loki 2.0+.',
   },
   {
     label: 'line_format',
     insertText: 'line_format',
-    documentation: '',
+    documentation: 'Only available in Loki 2.0+.',
   },
 ];
 
