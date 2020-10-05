@@ -4,7 +4,7 @@ import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from 'app/features/variables/state/reducers';
 import { updateConstantVariableOptions } from './actions';
 import { getRootReducer } from '../state/helpers';
-import { ConstantVariableModel, VariableHide, VariableOption } from '../types';
+import { ConstantVariableModel, initialVariableModelState, VariableOption } from '../types';
 import { toVariablePayload } from '../state/types';
 import { createConstantOptionsFromQuery } from './reducer';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
@@ -21,9 +21,11 @@ describe('constant actions', () => {
       };
 
       const variable: ConstantVariableModel = {
-        type: 'constant',
+        ...initialVariableModelState,
         id: '0',
-        global: false,
+        index: 0,
+        type: 'constant',
+        name: 'Constant',
         current: {
           value: '',
           text: '',
@@ -31,11 +33,6 @@ describe('constant actions', () => {
         },
         options: [],
         query: 'A',
-        name: 'Constant',
-        label: '',
-        hide: VariableHide.dontHide,
-        skipUrlSync: false,
-        index: 0,
       };
 
       const tester = await reduxTester<{ templating: TemplatingState }>()

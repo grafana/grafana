@@ -17,6 +17,6 @@ Each data source has a specific query editor that is customized for the features
 
 Use the query editor to build one or more queries in your time series database. The panel instantly updates, allowing you to effectively explore your data in real time and build a perfect query for that particular panel.
 
-You can use [template variables]({{< relref "../../variables/templates-and-variables.md" >}}) in the query editor within the queries themselves. This provides a powerful way to explore data dynamically based on the templating variables selected on the dashboard.
+You can use [template variables]({{< relref "../../variables/_index.md" >}}) in the query editor within the queries themselves. This provides a powerful way to explore data dynamically based on the templating variables selected on the dashboard.
 
 Grafana allows you to reference queries in the query editor by the row that they’re on. If you add a second query to graph, you can reference the first query by typing in #A. This provides an easy and convenient way to build compound queries.

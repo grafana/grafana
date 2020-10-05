@@ -63,7 +63,6 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
             ],
           },
           showIf: c => {
-            console.log(c);
             return c.line.show;
           },
         })

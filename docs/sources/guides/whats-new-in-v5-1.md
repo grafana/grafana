@@ -14,13 +14,13 @@ weight = -7
 
 Grafana v5.1 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
-* [Improved scrolling experience]({{< relref "#improved-scrolling-experience" >}})
-* [Improved docker image]({{< relref "#improved-docker-image-breaking-change" >}}) with a breaking change!
-* [Heatmap support for Prometheus]({{< relref "#prometheus" >}})
-* [Microsoft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric and table data source!
-* [Dashboards and Panels]({{< relref "#dashboards-panels" >}}) Improved adding panels to dashboards and enhancements to Graph and Table panels.
-* [New variable interpolation syntax]({{< relref "#new-variable-interpolation-syntax" >}})
-* [Improved workflow for provisioned dashboards]({{< relref "#improved-workflow-for-provisioned-dashboards" >}})
+- [Improved scrolling experience]({{< relref "#improved-scrolling-experience" >}})
+- [Improved docker image]({{< relref "#improved-docker-image-breaking-change" >}}) with a breaking change!
+- [Heatmap support for Prometheus]({{< relref "#prometheus" >}})
+- [Microsoft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric and table data source!
+- [Dashboards and Panels]({{< relref "#dashboards-panels" >}}) Improved adding panels to dashboards and enhancements to Graph and Table panels.
+- [New variable interpolation syntax]({{< relref "#new-variable-interpolation-syntax" >}})
+- [Improved workflow for provisioned dashboards]({{< relref "#improved-workflow-for-provisioned-dashboards" >}})
 
 ## Improved scrolling experience
 
@@ -110,8 +110,8 @@ Filter Option | Example | Raw | Interpolated | Description
 
 Grafana v5.1 brings an improved workflow for provisioned dashboards:
 
-* A populated `id` property in JSON is now automatically removed when provisioning dashboards.
-* When making changes to a provisioned dashboard you can `Save` the dashboard which now will bring up a *Cannot save provisioned dashboard* dialog like seen in the screenshot to the right.
+- A populated `id` property in JSON is now automatically removed when provisioning dashboards.
+- When making changes to a provisioned dashboard you can `Save` the dashboard which now will bring up a *Cannot save provisioned dashboard* dialog like seen in the screenshot to the right.
 
 
 Available options in the dialog will let you `Copy JSON to Clipboard` and/or `Save JSON to file` which can help you synchronize your dashboard changes back to the provisioning source.

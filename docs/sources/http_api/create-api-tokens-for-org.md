@@ -29,17 +29,17 @@ The task is to create a new organization and then add a Token that can be used b
 
     This should return a response: `{"message":"Organization created","orgId":6}`. Use the orgId for the next steps.
 
-2. Optional step. If the org was created previously and/or step 3 fails then first [add your Admin user to the org](http://docs.grafana.org/http_api/org/#add-user-in-organization):
+1. Optional step. If the org was created previously and/or step 3 fails then first [add your Admin user to the org](http://docs.grafana.org/http_api/org/#add-user-in-organization):
     ```bash
     curl -X POST -H "Content-Type: application/json" -d '{"loginOrEmail":"admin", "role": "Admin"}' http://admin:admin@localhost:3000/api/orgs/<org id of new org>/users
     ```
 
-3. [Switch the org context for the Admin user to the new org](http://docs.grafana.org/http_api/user/#switch-user-context-for-signed-in-user):
+1. [Switch the org context for the Admin user to the new org](http://docs.grafana.org/http_api/user/#switch-user-context-for-signed-in-user):
     ```bash
     curl -X POST http://admin:admin@localhost:3000/api/user/using/<id of new org>
     ```
 
-4. [Create the API token](http://docs.grafana.org/http_api/auth/#create-api-key):
+1. [Create the API token](http://docs.grafana.org/http_api/auth/#create-api-key):
     ```bash
     curl -X POST -H "Content-Type: application/json" -d '{"name":"apikeycurl", "role": "Admin"}' http://admin:admin@localhost:3000/api/auth/keys
     ```
@@ -72,4 +72,4 @@ Using the Token that was created in the previous step, you can create a dashboar
   }' http://localhost:3000/api/dashboards/db
   ```
 
-  > **Note.** If you export a dashboard for sharing externally using the Share > Export menu in the Grafana UI, you cannot import that dashboard. Instead, click **View JSON** and save it to a file or fetch the JSON output through the API.
+  > **Note:** If you export a dashboard for sharing externally using the Share > Export menu in the Grafana UI, you cannot import that dashboard. Instead, click **View JSON** and save it to a file or fetch the JSON output through the API.
