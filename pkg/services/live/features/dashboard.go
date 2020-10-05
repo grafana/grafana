@@ -5,6 +5,7 @@ import (
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // DashboardEvent events related to dashboards
@@ -17,19 +18,19 @@ type dashboardEvent struct {
 
 // DashboardHandler manages all the `grafana/dashboard/*` channels
 type DashboardHandler struct {
-	publisher models.ChannelPublisher
-}
-
-// CreateDashboardHandler Initialize a dashboard handler
-func CreateDashboardHandler(p models.ChannelPublisher) DashboardHandler {
-	return DashboardHandler{
-		publisher: p,
-	}
+	Publisher models.ChannelPublisher
 }
 
 // GetHandlerForPath called on init
 func (g *DashboardHandler) GetHandlerForPath(path string) (models.ChannelHandler, error) {
 	return g, nil // all dashboards share the same handler
+}
+
+// DoNamespaceHTTP called from the http api
+func (g *DashboardHandler) DoNamespaceHTTP(c *models.ReqContext) {
+	c.JSON(400, util.DynMap{
+		"Unsupportedd": "DashboardHandler",
+	})
 }
 
 // GetChannelOptions called fast and often
@@ -52,13 +53,20 @@ func (g *DashboardHandler) OnPublish(c *centrifuge.Client, e centrifuge.PublishE
 	return e.Data, nil
 }
 
+// DoChannelHTTP called from the http api
+func (g *DashboardHandler) DoChannelHTTP(c *models.ReqContext, channel string) {
+	c.JSON(400, util.DynMap{
+		"Unsupportedd": channel,
+	})
+}
+
 // DashboardSaved should broadcast to the appropriate stream
 func (g *DashboardHandler) publish(event dashboardEvent) error {
 	msg, err := json.Marshal(event)
 	if err != nil {
 		return err
 	}
-	return g.publisher("grafana/dashboard/"+event.UID, msg)
+	return g.Publisher("grafana/dashboard/"+event.UID, msg)
 }
 
 // DashboardSaved will broadcast to all connected dashboards

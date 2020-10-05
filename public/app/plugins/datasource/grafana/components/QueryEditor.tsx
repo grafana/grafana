@@ -131,6 +131,7 @@ export class QueryEditor extends PureComponent<Props> {
                 isClearable={true}
                 noOptionsMessage="Filter by name"
                 formatCreateLabel={(input: string) => `Show: ${input}`}
+                isSearchable={true}
               />
             </InlineField>
           </div>

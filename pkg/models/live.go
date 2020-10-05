@@ -2,7 +2,7 @@ package models
 
 import "github.com/centrifugal/centrifuge"
 
-// ChannelPublisher writes data into a channel
+// ChannelPublisher writes data into the main channel
 type ChannelPublisher func(channel string, data []byte) error
 
 // ChannelHandler defines the core channel behavior
@@ -15,12 +15,18 @@ type ChannelHandler interface {
 
 	// Called when something writes into the channel.  The returned value will be broadcast if len() > 0
 	OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error)
+
+	// Called from the HTTP API
+	DoChannelHTTP(c *ReqContext, channel string)
 }
 
-// ChannelHandlerProvider -- this should be implemented by any core feature
-type ChannelHandlerProvider interface {
+// ChannelNamespaceHandler -- this should be implemented by any core feature
+type ChannelNamespaceHandler interface {
 	// This is called fast and often -- it must be synchrnozed
 	GetHandlerForPath(path string) (ChannelHandler, error)
+
+	// Called from the HTTP API
+	DoNamespaceHTTP(c *ReqContext)
 }
 
 // DashboardActivityChannel is a service to advertise dashboard activity

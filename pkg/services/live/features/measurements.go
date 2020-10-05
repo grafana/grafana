@@ -1,45 +1,83 @@
 package features
 
 import (
+	"encoding/json"
+
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 )
-
-// Measurement is a single measurement value
-type Measurement struct {
-	Name   string                 `json:"name,omitempty"`
-	Time   int64                  `json:"time,omitempty"`   // units are usually ms, but depend on the channel
-	Values map[string]interface{} `json:"values,omitempty"` // typically number or string
-	Labels map[string]string      `json:"labels,omitempty"` // labels are applied to all values
-}
-
-// MeasurementBatch is a collection of measurments all sent at once
-type MeasurementBatch struct {
-	Measures []Measurement `json:"measures,omitempty"` // batch of measurments
-}
 
 // MeasurementsRunner will simply broadcast all events to `grafana/broadcast/*` channels
 // This makes no assumptions about the shape of the data and will broadcast it to anyone listening
-type MeasurementsRunner struct{}
+type MeasurementsRunner struct {
+	Publisher models.ChannelPublisher
+}
 
 // GetHandlerForPath called on init
-func (g *MeasurementsRunner) GetHandlerForPath(path string) (models.ChannelHandler, error) {
-	return g, nil // for now all channels share config
+func (m *MeasurementsRunner) GetHandlerForPath(path string) (models.ChannelHandler, error) {
+	return m, nil // for now all channels share config
+}
+
+// DoNamespaceHTTP called from the http api
+func (m *MeasurementsRunner) DoNamespaceHTTP(c *models.ReqContext) {
+	c.JSON(400, util.DynMap{
+		"Unsupportedd": "MeasurementsRunner",
+	})
 }
 
 // GetChannelOptions called fast and often
-func (g *MeasurementsRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
+func (m *MeasurementsRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
 	return centrifuge.ChannelOptions{}
 }
 
 // OnSubscribe for now allows anyone to subscribe to any dashboard
-func (g *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
+func (m *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
 	// anyone can subscribe
 	return nil
 }
 
 // OnPublish called when an event is received from the websocket
-func (g *MeasurementsRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
+func (m *MeasurementsRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
 	// currently generic... but should be more strict
 	return e.Data, nil
+}
+
+// DoChannelHTTP called from the http api
+func (m *MeasurementsRunner) DoChannelHTTP(c *models.ReqContext, channel string) {
+	if c.Req.Method == "POST" {
+		body, err := c.Req.Body().Bytes()
+		if err != nil {
+			c.JSON(500, util.DynMap{
+				"message": "error reading body",
+			})
+			return
+		}
+
+		msg := &models.MeasurementMessage{}
+		err = json.Unmarshal([]byte(body), &msg)
+		if err != nil {
+			c.JSON(500, util.DynMap{
+				"message": "body must be measurment",
+			})
+			return
+		}
+
+		err = m.Publisher(channel, body) // original bytes?
+		if err != nil {
+			c.JSON(500, util.DynMap{
+				"message": "error publishing",
+			})
+			return
+		}
+
+		c.JSON(200, util.DynMap{
+			"message": "OK",
+		})
+		return
+	}
+
+	c.JSON(400, util.DynMap{
+		"unsuppoted?": channel,
+	})
 }

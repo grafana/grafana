@@ -1,27 +1,40 @@
 package live
 
 import (
-	"fmt"
 	"strings"
 )
 
-// ChannelIdentifier is the channel id split by parts
-type ChannelIdentifier struct {
-	Scope     string // grafana, ds, or plugin
-	Namespace string // feature, id, or name
-	Path      string // path within the channel handler
+// ChannelAddress is the channel id split by parts
+type ChannelAddress struct {
+	Scope     string `json:"scope,omitempty"`     // grafana, ds, or plugin
+	Namespace string `json:"namespace,omitempty"` // feature, id, or name
+	Path      string `json:"path,omitempty"`      // path within the channel handler
 }
 
-// ParseChannelIdentifier parses the parts from a channel id:
+// ParseChannelAddress parses the parts from a channel id:
 //   ${scope} / ${namespace} / ${path}
-func ParseChannelIdentifier(id string) (ChannelIdentifier, error) {
+func ParseChannelAddress(id string) ChannelAddress {
+	identifier := ChannelAddress{}
 	parts := strings.SplitN(id, "/", 3)
-	if len(parts) == 3 {
-		return ChannelIdentifier{
-			Scope:     parts[0],
-			Namespace: parts[1],
-			Path:      parts[2],
-		}, nil
+	length := len(parts)
+	if length > 0 {
+		identifier.Scope = parts[0]
 	}
-	return ChannelIdentifier{}, fmt.Errorf("Invalid channel id: %s", id)
+	if length > 1 {
+		identifier.Namespace = parts[1]
+	}
+	if length > 2 {
+		identifier.Path = parts[2]
+	}
+	return identifier
+}
+
+// IsValid checks if all parts of the address are valid
+func (id *ChannelAddress) IsValid() bool {
+	return id.Scope != "" && id.Namespace != "" && id.Path != ""
+}
+
+// ToChannelID converts this to a single string
+func (id *ChannelAddress) ToChannelID() string {
+	return id.Scope + "/" + id.Namespace + "/" + id.Path
 }
