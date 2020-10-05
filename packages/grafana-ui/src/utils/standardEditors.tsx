@@ -207,7 +207,6 @@ export const getStandardFieldConfigs = () => {
     id: 'color',
     path: 'color',
     name: 'Color',
-    description: 'Define how field/series color is determined',
     editor: standardEditorsRegistry.get('fieldColor').editor as any,
     override: standardEditorsRegistry.get('fieldColor').editor as any,
     process: identityOverrideProcessor,
