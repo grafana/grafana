@@ -46,9 +46,6 @@ export interface LiveChannelConfig<TMessage = any> {
 
   /** convert the raw stream message into a message that should be broadcast */
   processMessage?: (msg: any) => TMessage;
-
-  /** some channels may keep the last result avaliable */
-  getLast?: () => TMessage;
 }
 
 export enum LiveChannelConnectionState {
