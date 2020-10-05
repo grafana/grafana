@@ -31,7 +31,7 @@ type GrafanaLive struct {
 	node *centrifuge.Node
 
 	// The websocket handler
-	Handler interface{}
+	WebsocketHandler interface{}
 
 	// Full channel handler
 	channels   map[string]models.ChannelHandler
@@ -171,7 +171,7 @@ func InitializeBroker() (*GrafanaLive, error) {
 		WriteBufferSize: 1024,
 	})
 
-	glive.Handler = func(ctx *models.ReqContext) {
+	glive.WebsocketHandler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
 		if user == nil {
 			ctx.Resp.WriteHeader(401)
