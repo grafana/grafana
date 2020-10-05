@@ -153,4 +153,9 @@ export const Components = {
     section: 'Search section',
     items: 'Search items',
   },
+  DashboardLinks: {
+    container: 'Dashboard link container',
+    dropDown: 'Dashboard link dropdown',
+    link: 'Dashboard link',
+  },
 };

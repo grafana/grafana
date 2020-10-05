@@ -506,7 +506,7 @@ func (e *sqlQueryEndpoint) processRow(cfg *processCfg) error {
 
 		series.Points = append(series.Points, tsdb.TimePoint{value, null.FloatFrom(timestamp)})
 
-		if setting.Env == setting.DEV {
+		if setting.Env == setting.Dev {
 			e.log.Debug("Rows", "metric", metric, "time", timestamp, "value", value)
 		}
 	}

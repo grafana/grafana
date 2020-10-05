@@ -50,7 +50,7 @@ func (e *OpenTsdbExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		tsdbQuery.Queries = append(tsdbQuery.Queries, metric)
 	}
 
-	if setting.Env == setting.DEV {
+	if setting.Env == setting.Dev {
 		plog.Debug("OpenTsdb request", "params", tsdbQuery)
 	}
 

@@ -87,7 +87,7 @@ Click and drag to select the time range in the visualization that you want to vi
 
 ### Refresh dashboard
 
-Click the **Refresh dashboard** icon to immediately run every query on the dashboard and refresh the visualizations.
+Click the **Refresh dashboard** icon to immediately run every query on the dashboard and refresh the visualizations. Grafana cancels any pending requests when a new refresh is triggered.
 
 By default, Grafana does not automatically refresh the dashboard. Queries run on their own schedule according to the panel settings. However, if you want to regularly refresh the dashboard, then click the down arrow next to the **Refresh dashboard** icon and then select a refresh interval.
 

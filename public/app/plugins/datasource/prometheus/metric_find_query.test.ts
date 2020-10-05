@@ -8,13 +8,6 @@ import { backendSrv } from 'app/core/services/backend_srv'; // will use the vers
 import { PromOptions } from './types';
 import { FetchResponse } from '@grafana/runtime';
 
-jest.mock('app/features/templating/template_srv', () => {
-  return {
-    getAdhocFilters: jest.fn(() => [] as any[]),
-    replace: jest.fn((a: string) => a),
-  };
-});
-
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
@@ -47,6 +40,11 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   }),
 }));
 
+const templateSrvStub = {
+  getAdhocFilters: jest.fn(() => [] as any[]),
+  replace: jest.fn((a: string) => a),
+} as any;
+
 beforeEach(() => {
   jest.clearAllMocks();
 });
@@ -54,7 +52,7 @@ beforeEach(() => {
 describe('PrometheusMetricFindQuery', () => {
   let ds: PrometheusDatasource;
   beforeEach(() => {
-    ds = new PrometheusDatasource(instanceSettings);
+    ds = new PrometheusDatasource(instanceSettings, templateSrvStub);
   });
 
   const setupMetricFindQuery = (data: any) => {
@@ -76,7 +74,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: 'proxied/api/v1/labels',
+        url: `proxied/api/v1/labels?start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
         headers: {},
       });
@@ -95,7 +93,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: 'proxied/api/v1/label/resource/values',
+        url: `proxied/api/v1/label/resource/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
         headers: {},
       });
@@ -190,7 +188,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: 'proxied/api/v1/label/__name__/values',
+        url: `proxied/api/v1/label/__name__/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
         headers: {},
       });

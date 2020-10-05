@@ -157,9 +157,9 @@ The Docker container for Grafana has seen a major rewrite for 5.1.
 
 **Important changes**
 
-* File ownership is no longer modified during startup with `chown`.
-* Default user ID is now `472` instead of `104`.
-* Removed the following implicit volumes:
+- File ownership is no longer modified during startup with `chown`.
+- Default user ID is now `472` instead of `104`.
+- Removed the following implicit volumes:
   - `/var/lib/grafana`
   - `/etc/grafana`
   - `/var/log/grafana`
@@ -221,7 +221,7 @@ Refer to the [Getting Started]({{< relref "../getting-started/getting-started/" 
 
 ## Configure Docker image
 
-Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to [Configure a Grafana Docker image]({{< relref "../administration/configure-docker.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
 
 ## Configure Grafana
 

@@ -21,18 +21,20 @@ import {
   AnnotationEvent,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
-import { getBackendSrv, toDataQueryError } from '@grafana/runtime';
+import { getBackendSrv, toDataQueryError, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { queryMetricTree } from './metricTree';
 import { from, merge, Observable, of } from 'rxjs';
 import { delay, map, mergeMap } from 'rxjs/operators';
 import { runStream } from './runStreams';
-import templateSrv from 'app/features/templating/template_srv';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 
 type TestData = TimeSeries | TableData;
 
 export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
-  constructor(instanceSettings: DataSourceInstanceSettings) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
 
     this.variables = {
@@ -90,7 +92,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
             intervalMs: options.intervalMs,
             maxDataPoints: options.maxDataPoints,
             datasourceId: this.id,
-            alias: templateSrv.replace(target.alias || '', options.scopedVars),
+            alias: this.templateSrv.replace(target.alias || '', options.scopedVars),
           });
       }
     }
@@ -203,7 +205,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
     }
 
     const dataQuery: any = options.targets[0];
-    const interpolatedQuery = templateSrv.replace(
+    const interpolatedQuery = this.templateSrv.replace(
       dataQuery.variableQuery,
       getSearchFilterScopedVar({ query: dataQuery.variableQuery, wildcardChar: '*', options: options.scopedVars })
     );

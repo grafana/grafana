@@ -6,7 +6,7 @@ aliases = ["/docs/grafana/latest/features/explore/"]
 [menu.docs]
 name = "Explore"
 identifier = "explore"
-weight = 900
+weight = 90
 +++
 
 # Explore
@@ -72,20 +72,20 @@ All queries that have been starred in the Query history tab are displayed in the
 By default, query history shows you the most recent queries. You can sort your history by date or by data source name in ascending or descending order.
 
 1. Click the **Sort queries by** field.
-2. Select one of the following options:
+1. Select one of the following options:
    - Newest first
    - Oldest first
    - Data source A-Z
    - Data source Z-A
 
-> Note: If you are in split mode, then the chosen sorting mode applies only to the active panel.
+> **Note:** If you are in split mode, then the chosen sorting mode applies only to the active panel.
 
 ### Filter query history
 
 Filter query history in Query history and Starred tab by data source name:
 
 1. Click the **Filter queries for specific data source(s)** field.
-2. Select the data source for which you would like to filter your history. You can select multiple data sources.
+1. Select the data source for which you would like to filter your history. You can select multiple data sources.
 
 In **Query history** tab it is also possible to filter queries by date using the slider:
 
@@ -93,7 +93,7 @@ In **Query history** tab it is also possible to filter queries by date using the
 - By dragging top handle, adjust start date.
 - By dragging top handle, adjust end date.
 
-> Note: If you are in split mode, filters are applied only to your currently active panel.
+> **Note:** If you are in split mode, filters are applied only to your currently active panel.
 
 ### Search in query history
 
@@ -113,7 +113,7 @@ You can customize the query history in the Settings tab. Options are described i
 | Only show queries for data source currently active in Explore | True                                    |
 | Clear query history                                           | Permanently deletes all stored queries. |
 
-> Note: Query history settings are global, and applied to both panels in split mode.
+> **Note:** Query history settings are global, and applied to both panels in split mode.
 
 ## Prometheus-specific Features
 
