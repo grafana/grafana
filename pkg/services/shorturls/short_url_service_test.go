@@ -16,7 +16,7 @@ func TestShortURLService(t *testing.T) {
 	mockUid := "testuid"
 	mockNotFoundUid := "testnotfounduid"
 	mockPath := "mock/path?test=true"
-	mockShortURL := models.ShortURL{
+	mockShortURL := models.ShortUrl{
 		Uid:       mockUid,
 		Path:      mockPath,
 		CreatedBy: service.user.UserId,
