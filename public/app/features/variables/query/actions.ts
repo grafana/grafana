@@ -35,76 +35,66 @@ const updateOptionsRequests = new Subject<{
 updateOptionsRequests.subscribe(args => {
   const { dataSource, identifier, searchFilter } = args;
   const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
-  try {
-    const range =
-      variableInState.refresh === VariableRefresh.onTimeRangeChanged ? getTimeSrv().timeRange() : DefaultTimeRange;
-    const targets = [
-      {
-        datasource: dataSource.name,
-        refId: `${dataSource.name}-${variableInState.id}`,
-        variableQuery: variableInState.query,
-      },
-    ];
+  const range =
+    variableInState.refresh === VariableRefresh.onTimeRangeChanged ? getTimeSrv().timeRange() : DefaultTimeRange;
+  const targets = [
+    {
+      datasource: dataSource.name,
+      refId: `${dataSource.name}-${variableInState.id}`,
+      variableQuery: variableInState.query,
+    },
+  ];
 
-    const request: DataQueryRequest = {
-      targets,
-      app: CoreApp.Variables,
-      range,
-      scopedVars: {
-        searchFilter: { text: searchFilter ?? '', value: searchFilter ?? '' },
-        variable: { text: variableInState.current.text, value: variableInState.current.value },
-      },
-      requestId: uuidv4(),
-      intervalMs: 0,
-      timezone: 'utc',
-      interval: '',
-      startTime: Date.now(),
-    };
+  const request: DataQueryRequest = {
+    targets,
+    app: CoreApp.Variables,
+    range,
+    scopedVars: {
+      searchFilter: { text: searchFilter ?? '', value: searchFilter ?? '' },
+      variable: { text: variableInState.current.text, value: variableInState.current.value },
+    },
+    requestId: uuidv4(),
+    intervalMs: 0,
+    timezone: 'utc',
+    interval: '',
+    startTime: Date.now(),
+  };
 
-    const subscriptions = new Subscription();
-    subscriptions.add(
-      runRequest(dataSource, request)
-        .pipe(
-          map(panelData => panelData.series),
-          dataSource.variables!.toMetricFindValues(),
-          takeUntil(
-            updateOptionsRequests.pipe(
-              filter(args => {
-                let cancelRequest = false;
+  const subscriptions = new Subscription();
+  subscriptions.add(
+    runRequest(dataSource, request)
+      .pipe(
+        map(panelData => panelData.series),
+        dataSource.variables!.toMetricFindValues(),
+        takeUntil(
+          updateOptionsRequests.pipe(
+            filter(args => {
+              let cancelRequest = false;
 
-                if (args.identifier.id === identifier.id) {
-                  cancelRequest = true;
-                }
+              if (args.identifier.id === identifier.id) {
+                cancelRequest = true;
+              }
 
-                return cancelRequest;
-              })
-            )
+              return cancelRequest;
+            })
           )
         )
-        .subscribe({
-          next: results => {
-            console.log(`results from ${identifier.id}`, results);
-            const templatedRegex = getTemplatedRegex(variableInState);
-            dispatch(updateVariableOptions(toVariablePayload(variableInState, { results, templatedRegex })));
-          },
-          error: err => {
-            throw err;
-          },
-          complete: () => {
-            console.log(`complete from ${identifier.id}`);
-            subscriptions.unsubscribe();
-          },
-        })
-    );
-  } catch (err) {
-    console.error(err);
-    if (err.data && err.data.message) {
-      err.message = err.data.message;
-    }
-    if (getState().templating.editor.id === identifier.id) {
-      dispatch(addVariableEditorError({ errorProp: 'update', errorText: err.message }));
-    }
-  }
+      )
+      .subscribe({
+        next: results => {
+          console.log(`results from ${identifier.id}`, results);
+          const templatedRegex = getTemplatedRegex(variableInState);
+          dispatch(updateVariableOptions(toVariablePayload(variableInState, { results, templatedRegex })));
+        },
+        error: err => {
+          throw err;
+        },
+        complete: () => {
+          console.log(`complete from ${identifier.id}`);
+          subscriptions.unsubscribe();
+        },
+      })
+  );
 });
 
 export const updateOptionsFromMetricFindValue = (
@@ -113,35 +103,25 @@ export const updateOptionsFromMetricFindValue = (
   searchFilter?: string
 ): ThunkResult<void> => async (dispatch, getState) => {
   const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
-  try {
-    const beforeUid = getState().templating.transaction.uid;
+  const beforeUid = getState().templating.transaction.uid;
 
-    if (!dataSource.metricFindQuery) {
-      return;
-    }
-
-    const results = await dataSource.metricFindQuery(
-      variableInState.query,
-      getLegacyQueryOptions(variableInState, searchFilter)
-    );
-
-    const afterUid = getState().templating.transaction.uid;
-    if (beforeUid !== afterUid) {
-      // we started another batch before this metricFindQuery finished let's abort
-      return;
-    }
-
-    const templatedRegex = getTemplatedRegex(variableInState);
-    await dispatch(updateVariableOptions(toVariablePayload(variableInState, { results, templatedRegex })));
-  } catch (err) {
-    console.error(err);
-    if (err.data && err.data.message) {
-      err.message = err.data.message;
-    }
-    if (getState().templating.editor.id === identifier.id) {
-      dispatch(addVariableEditorError({ errorProp: 'update', errorText: err.message }));
-    }
+  if (!dataSource.metricFindQuery) {
+    return;
   }
+
+  const results = await dataSource.metricFindQuery(
+    variableInState.query,
+    getLegacyQueryOptions(variableInState, searchFilter)
+  );
+
+  const afterUid = getState().templating.transaction.uid;
+  if (beforeUid !== afterUid) {
+    // we started another batch before this metricFindQuery finished let's abort
+    return;
+  }
+
+  const templatedRegex = getTemplatedRegex(variableInState);
+  await dispatch(updateVariableOptions(toVariablePayload(variableInState, { results, templatedRegex })));
 };
 
 export const updateQueryVariableOptions = (
@@ -180,6 +160,7 @@ export const updateQueryVariableOptions = (
       }
     } catch (err) {
       const error = toDataQueryError(err);
+
       if (getState().templating.editor.id === variableInState.id) {
         dispatch(addVariableEditorError({ errorProp: 'update', errorText: error.message }));
       }
