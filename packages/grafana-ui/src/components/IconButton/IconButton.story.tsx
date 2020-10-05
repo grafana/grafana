@@ -15,7 +15,7 @@ export default {
   },
 };
 
-export const simple = () => {
+export const Simple = () => {
   const theme = useTheme();
 
   return (
