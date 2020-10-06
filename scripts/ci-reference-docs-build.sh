@@ -5,7 +5,7 @@ set -eo pipefail
 
 BUILD_MODE="${1-local}"
 
-if [ "local" -eq "$BUILD_MODE" ]
+if [ "local" == "$BUILD_MODE" ]
   then
     # building grafana packages
     echo "building grafana packages..."
