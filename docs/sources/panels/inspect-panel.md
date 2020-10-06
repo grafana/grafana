@@ -62,7 +62,9 @@ Grafana generates a CSV file in your default browser download location. You can 
 1. Open the panel inspector.
 1. Inspect the raw query results as described above. Adjust settings until you see the raw data that you want to export.
 1. Click **Download CSV**.
- 
+
+To download a CSV file specifically formatted for Excel, expand the **Data options** panel and enable the **Download for Excel** toggle before clicking **Download CSV**.
+
 ### Inspect query performance
 
 The Stats tab displays statistics that tell you how long your query takes, how many queries you send, and the number of rows returned. This information can help you troubleshoot your queries, especially if any of the numbers are unexpectedly high or low.
