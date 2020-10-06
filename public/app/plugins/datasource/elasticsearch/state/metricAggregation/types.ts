@@ -3,6 +3,7 @@ import { Action } from '../../hooks/useReducerCallback';
 export const ADD_METRIC = '@metrics/add';
 export const REMOVE_METRIC = '@metrics/remove';
 export const CHANGE_METRIC_TYPE = '@metrics/change_type';
+export const CHANGE_METRIC_FIELD = '@metrics/change_field';
 export const TOGGLE_METRIC_VISIBILITY = '@metrics/toggle_visibility';
 
 export type MetricAggregationType =
@@ -58,6 +59,12 @@ export interface ChangeMetricTypeAction extends Action<typeof CHANGE_METRIC_TYPE
   };
 }
 
+export interface ChangeMetricFieldAction extends Action<typeof CHANGE_METRIC_FIELD> {
+  payload: {
+    id: MetricAggregation['id'];
+    field: string;
+  };
+}
 export interface ToggleMetricVisibilityAction extends Action<typeof TOGGLE_METRIC_VISIBILITY> {
   payload: {
     id: MetricAggregation['id'];
@@ -68,4 +75,5 @@ export type MetricAggregationAction =
   | AddMetricAction
   | RemoveMetricAction
   | ChangeMetricTypeAction
+  | ChangeMetricFieldAction
   | ToggleMetricVisibilityAction;

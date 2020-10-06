@@ -6,6 +6,7 @@ import {
   TOGGLE_METRIC_VISIBILITY,
   MetricAggregation,
   MetricAggregationAction,
+  CHANGE_METRIC_FIELD,
 } from './types';
 
 export const reducer = (state: MetricAggregation[] = [], action: MetricAggregationAction) => {
@@ -27,6 +28,18 @@ export const reducer = (state: MetricAggregation[] = [], action: MetricAggregati
         return {
           ...metric,
           type: action.payload.type,
+        };
+      });
+
+    case CHANGE_METRIC_FIELD:
+      return state.map(metric => {
+        if (metric.id !== action.payload.id) {
+          return metric;
+        }
+
+        return {
+          ...metric,
+          field: action.payload.field,
         };
       });
 

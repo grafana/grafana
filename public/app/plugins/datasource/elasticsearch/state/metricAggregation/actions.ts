@@ -1,5 +1,6 @@
 import {
   ADD_METRIC,
+  CHANGE_METRIC_FIELD,
   CHANGE_METRIC_TYPE,
   REMOVE_METRIC,
   TOGGLE_METRIC_VISIBILITY,
@@ -29,6 +30,14 @@ export const changeMetricType = (
   payload: {
     id,
     type,
+  },
+});
+
+export const changeMetricField = (id: MetricAggregation['id'], field: string): MetricAggregationAction => ({
+  type: CHANGE_METRIC_FIELD,
+  payload: {
+    id,
+    field,
   },
 });
 

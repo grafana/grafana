@@ -7,7 +7,7 @@ import { getStyles } from './styles';
 import { marginZero } from '../styles';
 import { MetricAggregation, MetricAggregationAction, MetricAggregationType } from '../../state/metricAggregation/types';
 import { metricAggregationConfig } from '../../state/metricAggregation/utils';
-import { changeMetricType, toggleMetricVisibility } from '../../state/metricAggregation/actions';
+import { changeMetricField, changeMetricType, toggleMetricVisibility } from '../../state/metricAggregation/actions';
 import { ToggleVisibilityButton } from '../ToggleVisibilityButton';
 
 const metricAggOptions: Array<SelectableValue<MetricAggregationType>> = Object.entries(metricAggregationConfig).map(
@@ -53,7 +53,7 @@ export const MetricEditor: FunctionComponent<QueryMetricEditorProps> = ({ metric
         <SegmentAsync
           className={cx(styles.color)}
           loadOptions={getFields}
-          onChange={() => {}}
+          onChange={e => dispatch(changeMetricField(metric.id, e.value!))}
           placeholder="Select Metric"
           value={metric.field}
         />
