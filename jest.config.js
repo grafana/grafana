@@ -18,5 +18,4 @@ module.exports = {
     'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
   },
   watchPathIgnorePatterns: ['<rootDir>/node_modules/'],
-  preset: 'ts-jest',
 };
