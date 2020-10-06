@@ -14,8 +14,8 @@ import { getScaleCalculator } from './scale';
 interface DisplayProcessorOptions {
   field: Partial<Field>;
   /**
-   * Some color modes are based on series index, set to field index or if
-   * multiple data frames are visualized set to frame index
+   * This is the unique index of each time vs field pair across all frames
+   * Some color modes will use this index to pick an appropriate color
    */
   seriesIndex?: number;
   /**
