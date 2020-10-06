@@ -657,7 +657,7 @@ Set to `true` to enable the AWS Signature Version 4 Authentication option for HT
 
 ## [auth.anonymous]
 
-Refer to [Anonymous authentication]({{< relref "../auth/#anonymous-authentication" >}}) for detailed instructions.
+Refer to [Anonymous authentication]({{< relref "../auth/grafana.md/#anonymous-authentication" >}}) for detailed instructions.
 
 <hr />
 

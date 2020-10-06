@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Area,
   Canvas,
@@ -9,14 +9,15 @@ import {
   LegendPlugin,
   Line,
   Point,
-  SeriesGeometry,
   Scale,
+  SeriesGeometry,
   TooltipPlugin,
   UPlotChart,
   ZoomPlugin,
 } from '@grafana/ui';
 
 import {
+  DataFrame,
   FieldConfig,
   FieldType,
   formattedValueToString,
@@ -91,11 +92,18 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
   options,
   onChangeTimeRange,
 }) => {
-  const alignedData = useMemo(() => {
+  const [alignedData, setAlignedData] = useState<DataFrame | null>(null);
+  useEffect(() => {
     if (!data || !data.series?.length) {
-      return null;
+      setAlignedData(null);
+      return;
     }
-    return alignAndSortDataFramesByFieldName(data.series, TIME_FIELD_NAME);
+
+    const subscription = alignAndSortDataFramesByFieldName(data.series, TIME_FIELD_NAME).subscribe(setAlignedData);
+
+    return function unsubscribe() {
+      subscription.unsubscribe();
+    };
   }, [data]);
 
   if (!alignedData) {

@@ -2,7 +2,10 @@ import { Observable } from 'rxjs';
 
 interface ObservableTester<T> {
   observable: Observable<T>;
-  done: jest.DoneCallback;
+  done: {
+    (...args: any[]): any;
+    fail(error?: string | { message: string }): any;
+  };
 }
 
 interface SubscribeAndExpectOnNext<T> extends ObservableTester<T> {
