@@ -1,4 +1,4 @@
-import { MonoTypeOperatorFunction, Observable, of, OperatorFunction } from 'rxjs';
+import { MonoTypeOperatorFunction, Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import { DataFrame, DataTransformerConfig } from '../types';

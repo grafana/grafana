@@ -72,7 +72,7 @@ export const seriesToColumnsTransformer: DataTransformerInfo<SeriesToColumnsOpti
         });
 
         for (const item of allFields) {
-          resultFrame.addField(item.newField);
+          item.newField = resultFrame.addField(item.newField);
         }
 
         const keyFieldTitle = getFieldDisplayName(resultFrame.fields[0], resultFrame);
