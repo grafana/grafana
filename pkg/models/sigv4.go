@@ -72,7 +72,6 @@ func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
 		return signer.Sign(req, bytes.NewReader(body), "grafana", m.Config.Region, time.Now().UTC())
 	}
 	return signer.Sign(req, nil, "grafana", m.Config.Region, time.Now().UTC())
-
 }
 
 func (m *SigV4Middleware) signer() (*v4.Signer, error) {
