@@ -95,11 +95,11 @@ The field color option defines how Grafana colors series or fields. There are mu
 
 Continuous color modes use a value's percentage relative to min and max to interpolate a color.
 
-- **Fixed color**: Set a specific color using the color picker. Mostly useful from an override rule.
-- **Classic**: Color is derived from the series or field index and looking up a corresponding color in the classic color palette. Useful for Graphs.
-- **Vibrant**: Color is derived from the series or field index and looking up a corresponding color in the vibrant color palette. Useful for Graphs.
-- **From thresholds**: Color is derived from the matching threshold. Useful for Gauge, BarGauge, Stat and Table.
-- **Green-Yellow-Red (Continuous)**: Color is derived from a continous spectrum between green, yellow and red.
+- **Fixed color:** Set a specific color using the color picker. Mostly useful from an override rule.
+- **Classic:** Color is derived from the series or field index and looking up a corresponding color in the classic color palette. Useful for Graphs.
+- **Vibrant:** Color is derived from the series or field index and looking up a corresponding color in the vibrant color palette. Useful for Graphs.
+- **From thresholds:** Color is derived from the matching threshold. Useful for gauges, stat and table visualizations.
+- **Green-Yellow-Red (continuous):** Color is derived from a continous spectrum between green, yellow and red.
 
 ## Thresholds
 
