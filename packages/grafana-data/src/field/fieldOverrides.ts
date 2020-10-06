@@ -5,7 +5,7 @@ import {
   DataSourceInstanceSettings,
   DynamicConfigValue,
   Field,
-  FieldColorMode,
+  FieldColorModeId,
   FieldConfig,
   FieldConfigPropertyItem,
   FieldOverrideContext,
@@ -318,7 +318,7 @@ export function validateFieldConfig(config: FieldConfig) {
   if (!config.color) {
     if (thresholds) {
       config.color = {
-        mode: FieldColorMode.Thresholds,
+        mode: FieldColorModeId.Thresholds,
       };
     }
     // No Color settings

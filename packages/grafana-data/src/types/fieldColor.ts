@@ -1,13 +1,13 @@
-export enum FieldColorMode {
+export enum FieldColorModeId {
   Thresholds = 'thresholds',
-  SpectrumGrYlRd = 'spectrum-GrYlRd',
-  PaletteClassic = 'palette-classic',
-  PaletteVibrant = 'palette-vibrant',
+  ContinousGrYlRd = 'continuous-GrYlRd',
+  DiscreteClassic = 'discrete-classic',
+  DiscreteVibrant = 'discrete-vibrant',
   Fixed = 'fixed',
 }
 
 export interface FieldColor {
-  mode: FieldColorMode;
+  mode: FieldColorModeId;
   fixedColor?: string;
 }
 

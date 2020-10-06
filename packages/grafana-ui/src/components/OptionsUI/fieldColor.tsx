@@ -1,5 +1,5 @@
 import React from 'react';
-import { FieldConfigEditorProps, FieldColorMode, SelectableValue, FieldColor } from '@grafana/data';
+import { FieldConfigEditorProps, FieldColorModeId, SelectableValue, FieldColor } from '@grafana/data';
 import { Select } from '../Select/Select';
 import { fieldColorModeRegistry } from '@grafana/data/src/field/fieldColor';
 import { ColorValueEditor } from './color';
@@ -14,12 +14,13 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
     return {
       value: mode.id,
       label: mode.name,
+      description: mode.description,
     };
   });
 
   const onModeChange = (newMode: SelectableValue<string>) => {
     onChange({
-      mode: newMode.value! as FieldColorMode,
+      mode: newMode.value! as FieldColorModeId,
     });
   };
 
@@ -30,8 +31,9 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
     });
   };
 
-  const mode = value?.mode ?? FieldColorMode.Thresholds;
-  if (mode === FieldColorMode.Fixed) {
+  const mode = value?.mode ?? FieldColorModeId.Thresholds;
+
+  if (mode === FieldColorModeId.Fixed) {
     return (
       <HorizontalGroup>
         <Select options={options} value={mode} onChange={onModeChange} />

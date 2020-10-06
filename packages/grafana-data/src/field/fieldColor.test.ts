@@ -13,17 +13,17 @@ describe('fieldColorModeRegistry', () => {
   }
 
   it('Schemes should interpolate', () => {
-    const calcFn = getCalculator({ mode: FieldColorMode.SpectrumGrYlRd });
+    const calcFn = getCalculator({ mode: FieldColorMode.ContinousGrYlRd });
     expect(calcFn(70, 0.5, undefined)).toEqual('rgb(226, 192, 61)');
   });
 
   it('Palette classic with series index 0', () => {
-    const calcFn = getCalculator({ mode: FieldColorMode.PaletteClassic, seriesIndex: 0 });
+    const calcFn = getCalculator({ mode: FieldColorMode.DiscreteClassic, seriesIndex: 0 });
     expect(calcFn(70, 0, undefined)).toEqual('#7EB26D');
   });
 
   it('Palette classic with series index 1', () => {
-    const calcFn = getCalculator({ mode: FieldColorMode.PaletteClassic, seriesIndex: 1 });
+    const calcFn = getCalculator({ mode: FieldColorMode.DiscreteClassic, seriesIndex: 1 });
     expect(calcFn(70, 0, undefined)).toEqual('#EAB839');
   });
 });
