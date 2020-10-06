@@ -214,7 +214,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/StorageGateway":    {"GatewayId", "GatewayName", "VolumeId"},
 	"AWS/Textract":          {},
 	"AWS/ThingsGraph":       {"FlowTemplateId", "StepName", "SystemTemplateId"},
-	"AWS/TransitGateway":    {"TransitGateway"},
+	"AWS/TransitGateway":    {"TransitGateway", "TransitGatewayAttachment"},
 	"AWS/Translate":         {"LanguagePair", "Operation"},
 	"AWS/TrustedAdvisor":    {},
 	"AWS/Usage":             {"Class", "Resource", "Service", "Type"},
