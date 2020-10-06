@@ -185,8 +185,7 @@ describe('ShareModal', () => {
       };
       ctx.mount();
       ctx.wrapper?.setState({ includeTemplateVars: true, useShortUrl: true }, async () => {
-        // @ts-ignore i dunno how else to await the async componentDidUpdate
-        await ctx.wrapper?.instance().busy;
+        await ctx.wrapper?.instance().buildUrl();
         const state = ctx.wrapper?.state();
         expect(state?.shareUrl).toContain(`/goto/${mockUid}`);
       });

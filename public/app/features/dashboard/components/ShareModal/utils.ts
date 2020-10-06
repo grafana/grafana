@@ -39,7 +39,7 @@ export function buildParams(
 }
 
 export function buildHostUrl() {
-  return `${window.location.protocol}//${window.location.host}`;
+  return `${window.location.protocol}//${window.location.host}${config.appSubUrl}`;
 }
 
 export function buildBaseUrl() {
