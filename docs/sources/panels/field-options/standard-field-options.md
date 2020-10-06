@@ -93,7 +93,7 @@ Grafana can sometime be too aggressive in parsing strings and displaying them as
 
 The field color option defines how Grafana colors series or fields. There are multiple modes here that work very differently, and their utility depends largely on what visualization you currently have selected.
 
-Continuous color modes use a value's percentage relative to min and max to interpolate a color.
+Continuous color modes use the percentage of a value relative to min and max to interpolate a color.
 
 - **Fixed color:** Set a specific color using the color picker. Mostly useful from an override rule.
 - **Classic:** Color is derived from the series or field index and looking up a corresponding color in the classic color palette. Useful for Graphs.
