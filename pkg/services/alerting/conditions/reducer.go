@@ -17,6 +17,7 @@ type queryReducer struct {
 	Type string
 }
 
+//nolint: gocyclo
 func (s *queryReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 	if len(series.Points) == 0 {
 		return null.FloatFromPtr(nil)
@@ -36,7 +37,7 @@ func (s *queryReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 			}
 		}
 		if validPointsCount > 0 {
-			value = value / float64(validPointsCount)
+			value /= float64(validPointsCount)
 		}
 	case "sum":
 		for _, point := range series.Points {

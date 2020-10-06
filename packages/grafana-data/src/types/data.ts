@@ -2,7 +2,7 @@ import { FieldConfig } from './dataFrame';
 import { DataTransformerConfig } from './transformations';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
 
-export type KeyValue<T = any> = { [s: string]: T };
+export type KeyValue<T = any> = Record<string, T>;
 
 /**
  * Represent panel data loading state.
@@ -13,6 +13,10 @@ export enum LoadingState {
   Streaming = 'Streaming',
   Done = 'Done',
   Error = 'Error',
+}
+
+export enum DataTopic {
+  Annotations = 'annotations',
 }
 
 export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';
@@ -34,6 +38,12 @@ export interface QueryResultMeta {
   preferredVisualisationType?: PreferredVisualisationType;
 
   /**
+   * Optionally identify which topic the frame should be assigned to.
+   * A value specified in the response will override what the request asked for.
+   */
+  dataTopic?: DataTopic;
+
+  /**
    * This is the raw query sent to the underlying system.  All macros and templating
    * as been applied.  When metadata contains this value, it will be shown in the query inspector
    */
@@ -43,7 +53,7 @@ export interface QueryResultMeta {
    * Legacy data source specific, should be moved to custom
    * */
   gmdMeta?: any[]; // used by cloudwatch
-  alignmentPeriod?: string; // used by cloud monitoring
+  alignmentPeriod?: number; // used by cloud monitoring
   searchWords?: string[]; // used by log models and loki
   limit?: number; // used by log models and loki
   json?: boolean; // used to keep track of old json doc values
@@ -130,27 +140,6 @@ export enum NullValueMode {
   Null = 'null',
   Ignore = 'connected',
   AsZero = 'null as zero',
-}
-
-export interface AnnotationEvent {
-  id?: string;
-  annotation?: any;
-  dashboardId?: number;
-  panelId?: number;
-  userId?: number;
-  login?: string;
-  email?: string;
-  avatarUrl?: string;
-  time?: number;
-  timeEnd?: number;
-  isRegion?: boolean;
-  title?: string;
-  text?: string;
-  type?: string;
-  tags?: string[];
-
-  // Currently used to merge annotations from alerts and dashboard
-  source?: any; // source.type === 'dashboard'
 }
 
 /**

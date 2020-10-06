@@ -3,13 +3,12 @@
 exports[`PromExploreQueryEditor should render component 1`] = `
 <PromQueryField
   ExtraFieldElement={
-    <PromExploreExtraField
-      hasTooltip={true}
-      label="Step"
-      onChangeFunc={[Function]}
+    <Memo
       onKeyDownFunc={[Function]}
-      tooltipContent="Time units can be used here, for example: 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)"
-      value="1s"
+      onQueryTypeChange={[Function]}
+      onStepChange={[Function]}
+      queryType="range"
+      stepValue="1s"
     />
   }
   data={
@@ -56,6 +55,16 @@ exports[`PromExploreQueryEditor should render component 1`] = `
       "expr": "",
       "interval": "1s",
       "refId": "A",
+    }
+  }
+  range={
+    Object {
+      "from": "2020-01-01T00:00:00.000Z",
+      "raw": Object {
+        "from": "2020-01-01T00:00:00.000Z",
+        "to": "2020-01-02T00:00:00.000Z",
+      },
+      "to": "2020-01-02T00:00:00.000Z",
     }
   }
 />

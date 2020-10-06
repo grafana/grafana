@@ -1,7 +1,6 @@
 import React from 'react';
 import { number } from '@storybook/addon-knobs';
-import { InfoBox } from './InfoBox';
-import { FeatureInfoBox } from './FeatureInfoBox';
+import { InfoBox, FeatureInfoBox } from '@grafana/ui';
 import { FeatureState } from '@grafana/data';
 
 export default {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -787,7 +788,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				{SaveError: models.ErrDashboardFolderNameExists, ExpectedStatusCode: 400},
 				{SaveError: models.ErrDashboardUpdateAccessDenied, ExpectedStatusCode: 403},
 				{SaveError: models.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
-				{SaveError: models.ErrDashboardUidToLong, ExpectedStatusCode: 400},
+				{SaveError: models.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
 				{SaveError: models.ErrDashboardCannotSaveProvisionedDashboard, ExpectedStatusCode: 400},
 				{SaveError: models.UpdatePluginDashboardError{PluginId: "plug"}, ExpectedStatusCode: 412},
 			}
@@ -827,7 +828,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		bus.AddHandler("test", func(query *models.GetDashboardVersionQuery) error {
 			query.Result = &models.DashboardVersion{
 				Data: simplejson.NewFromAny(map[string]interface{}{
-					"title": "Dash" + string(query.DashboardId),
+					"title": fmt.Sprintf("Dash%d", query.DashboardId),
 				}),
 			}
 			return nil
@@ -1002,7 +1003,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			dash := GetDashboardShouldReturn200WithConfig(sc, mock)
 
 			Convey("Should return relative path to provisioning file", func() {
-				So(dash.Meta.ProvisionedExternalId, ShouldEqual, "test/dashboard1.json")
+				So(dash.Meta.ProvisionedExternalId, ShouldEqual, filepath.Join("test", "dashboard1.json"))
 			})
 		})
 

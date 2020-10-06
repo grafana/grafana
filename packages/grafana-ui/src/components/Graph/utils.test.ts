@@ -8,7 +8,7 @@ import {
   GrafanaThemeType,
   Field,
 } from '@grafana/data';
-import { getMultiSeriesGraphHoverInfo, findHoverIndexFromData } from './utils';
+import { getMultiSeriesGraphHoverInfo, findHoverIndexFromData, graphTimeFormat } from './utils';
 
 const mockResult = (
   value: string,
@@ -194,6 +194,16 @@ describe('Graph utils', () => {
       expect(findHoverIndexFromData(timeField!, 299)).toBe(1);
       // hovering over 3rd datapoint
       expect(findHoverIndexFromData(timeField!, 300)).toBe(2);
+    });
+  });
+
+  describe('graphTimeFormat', () => {
+    it('graphTimeFormat', () => {
+      expect(graphTimeFormat(5, 1, 45 * 5 * 1000)).toBe('HH:mm:ss');
+      expect(graphTimeFormat(5, 1, 7200 * 5 * 1000)).toBe('HH:mm');
+      expect(graphTimeFormat(5, 1, 80000 * 5 * 1000)).toBe('MM/DD HH:mm');
+      expect(graphTimeFormat(5, 1, 2419200 * 5 * 1000)).toBe('MM/DD');
+      expect(graphTimeFormat(5, 1, 12419200 * 5 * 1000)).toBe('YYYY-MM');
     });
   });
 });

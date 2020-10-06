@@ -27,7 +27,7 @@ The following sections provide an overview of things you might want to do with y
 
 Explore your data through ad-hoc queries and dynamic drilldown. Split view and compare different time ranges, queries and data sources side by side. 
 
-Refer to [Explore]({{< relref "../features/explore/index.md" >}}) for more information.
+Refer to [Explore]({{< relref "../explore/index.md" >}}) for more information.
 
 ## Alerts
 
@@ -45,7 +45,7 @@ Refer to [Annotations]({{< relref "../dashboards/annotations.md" >}}) for more i
 
 ## Dashboard variables
 
-[Template variables]({{< relref "../variables/templates-and-variables.md" >}}) allow you to create dashboards that can be reused for lots of different use cases. Values aren't hard-coded with these templates, so for instance, if you have a production server and a test server, you can use the same dashboard for both. 
+[Template variables]({{< relref "../variables/_index.md" >}}) allow you to create dashboards that can be reused for lots of different use cases. Values aren't hard-coded with these templates, so for instance, if you have a production server and a test server, you can use the same dashboard for both. 
 
 Templating allows you to drill down into your data, say, from all data to North America data, down to Texas data, and beyond. You can also share these dashboards across teams within your organization—or if you create a great dashboard template for a popular data source, you can contribute it to the whole community to customize and use.
 

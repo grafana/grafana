@@ -9,7 +9,7 @@ import (
 )
 
 func TestTimeSeriesQuery(t *testing.T) {
-	executor := &CloudWatchExecutor{}
+	executor := newExecutor()
 
 	t.Run("End time before start time should result in error", func(t *testing.T) {
 		_, err := executor.executeTimeSeriesQuery(context.TODO(), &tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("now-1h", "now-2h")})

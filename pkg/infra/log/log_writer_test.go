@@ -3,16 +3,14 @@ package log
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/inconshreveable/log15"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 type FakeLogger struct {
-	debug string
-	info  string
-	warn  string
-	err   string
-	crit  string
+	m map[string]string
 }
 
 func (f *FakeLogger) New(ctx ...interface{}) log15.Logger {
@@ -20,23 +18,23 @@ func (f *FakeLogger) New(ctx ...interface{}) log15.Logger {
 }
 
 func (f *FakeLogger) Debug(msg string, ctx ...interface{}) {
-	f.debug = msg
+	f.m["debug"] = msg
 }
 
 func (f *FakeLogger) Info(msg string, ctx ...interface{}) {
-	f.info = msg
+	f.m["info"] = msg
 }
 
 func (f *FakeLogger) Warn(msg string, ctx ...interface{}) {
-	f.warn = msg
+	f.m["warn"] = msg
 }
 
 func (f *FakeLogger) Error(msg string, ctx ...interface{}) {
-	f.err = msg
+	f.m["err"] = msg
 }
 
 func (f *FakeLogger) Crit(msg string, ctx ...interface{}) {
-	f.crit = msg
+	f.m["crit"] = msg
 }
 
 func (f *FakeLogger) GetHandler() log15.Handler {
@@ -45,72 +43,80 @@ func (f *FakeLogger) GetHandler() log15.Handler {
 
 func (f *FakeLogger) SetHandler(l log15.Handler) {}
 
-func TestLogWriter(t *testing.T) {
-	Convey("When writing to a LogWriter", t, func() {
-		Convey("Should write using the correct level [crit]", func() {
-			fake := &FakeLogger{}
+func TestLogWriter_level(t *testing.T) {
+	tests := []struct {
+		description      string
+		logger           string
+		prefix           string
+		level            Lvl
+		input            []byte
+		expectedConsumed int
+		expectedOutput   string
+	}{
+		{
+			description:      "level crit",
+			logger:           "crit",
+			input:            []byte("crit"),
+			level:            LvlCrit,
+			expectedConsumed: 4,
+			expectedOutput:   "crit",
+		},
+		{
+			description:      "level error",
+			logger:           "err",
+			input:            []byte("error"),
+			level:            LvlError,
+			expectedConsumed: 5,
+			expectedOutput:   "error",
+		},
+		{
+			description:      "level warn",
+			logger:           "warn",
+			input:            []byte("warn"),
+			level:            LvlWarn,
+			expectedConsumed: 4,
+			expectedOutput:   "warn",
+		},
+		{
+			description:      "level info",
+			logger:           "info",
+			input:            []byte("info"),
+			level:            LvlInfo,
+			expectedConsumed: 4,
+			expectedOutput:   "info",
+		},
+		{
+			description:      "level debug",
+			logger:           "debug",
+			input:            []byte("debug"),
+			level:            LvlDebug,
+			expectedConsumed: 5,
+			expectedOutput:   "debug",
+		},
+		{
+			description:      "prefix",
+			logger:           "debug",
+			input:            []byte("debug"),
+			prefix:           "prefix",
+			level:            LvlDebug,
+			expectedConsumed: 5,
+			expectedOutput:   "prefixdebug",
+		},
+	}
 
-			crit := NewLogWriter(fake, LvlCrit, "")
-			n, err := crit.Write([]byte("crit"))
+	for _, tc := range tests {
+		tc := tc // to avoid timing issues
 
-			So(n, ShouldEqual, 4)
-			So(err, ShouldBeNil)
-			So(fake.crit, ShouldEqual, "crit")
+		t.Run(tc.description, func(t *testing.T) {
+			t.Parallel()
+			fake := &FakeLogger{m: map[string]string{}}
+
+			w := NewLogWriter(fake, tc.level, tc.prefix)
+			n, err := w.Write(tc.input)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expectedConsumed, n)
+			assert.Equal(t, tc.expectedOutput, fake.m[tc.logger])
 		})
-
-		Convey("Should write using the correct level [error]", func() {
-			fake := &FakeLogger{}
-
-			crit := NewLogWriter(fake, LvlError, "")
-			n, err := crit.Write([]byte("error"))
-
-			So(n, ShouldEqual, 5)
-			So(err, ShouldBeNil)
-			So(fake.err, ShouldEqual, "error")
-		})
-
-		Convey("Should write using the correct level [warn]", func() {
-			fake := &FakeLogger{}
-
-			crit := NewLogWriter(fake, LvlWarn, "")
-			n, err := crit.Write([]byte("warn"))
-
-			So(n, ShouldEqual, 4)
-			So(err, ShouldBeNil)
-			So(fake.warn, ShouldEqual, "warn")
-		})
-
-		Convey("Should write using the correct level [info]", func() {
-			fake := &FakeLogger{}
-
-			crit := NewLogWriter(fake, LvlInfo, "")
-			n, err := crit.Write([]byte("info"))
-
-			So(n, ShouldEqual, 4)
-			So(err, ShouldBeNil)
-			So(fake.info, ShouldEqual, "info")
-		})
-
-		Convey("Should write using the correct level [debug]", func() {
-			fake := &FakeLogger{}
-
-			crit := NewLogWriter(fake, LvlDebug, "")
-			n, err := crit.Write([]byte("debug"))
-
-			So(n, ShouldEqual, 5)
-			So(err, ShouldBeNil)
-			So(fake.debug, ShouldEqual, "debug")
-		})
-
-		Convey("Should prefix the output with the prefix", func() {
-			fake := &FakeLogger{}
-
-			crit := NewLogWriter(fake, LvlDebug, "prefix")
-			n, err := crit.Write([]byte("debug"))
-
-			So(n, ShouldEqual, 5) // n is how much of input consumed
-			So(err, ShouldBeNil)
-			So(fake.debug, ShouldEqual, "prefixdebug")
-		})
-	})
+	}
 }

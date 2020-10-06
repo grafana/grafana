@@ -30,7 +30,7 @@ export class ElasticResponse {
 
       switch (metric.type) {
         case 'count': {
-          newSeries = { datapoints: [], metric: 'count', props: props };
+          newSeries = { datapoints: [], metric: 'count', props: props, refId: target.refId };
           for (i = 0; i < esAgg.buckets.length; i++) {
             bucket = esAgg.buckets[i];
             value = bucket.doc_count;
@@ -53,6 +53,7 @@ export class ElasticResponse {
               metric: 'p' + percentileName,
               props: props,
               field: metric.field,
+              refId: target.refId,
             };
 
             for (i = 0; i < esAgg.buckets.length; i++) {
@@ -76,6 +77,7 @@ export class ElasticResponse {
               metric: statName,
               props: props,
               field: metric.field,
+              refId: target.refId,
             };
 
             for (i = 0; i < esAgg.buckets.length; i++) {
@@ -101,6 +103,7 @@ export class ElasticResponse {
             field: metric.field,
             metricId: metric.id,
             props: props,
+            refId: target.refId,
           };
           for (i = 0; i < esAgg.buckets.length; i++) {
             bucket = esAgg.buckets[i];
@@ -200,7 +203,7 @@ export class ElasticResponse {
 
   // This is quite complex
   // need to recurse down the nested buckets to build series
-  processBuckets(aggs: any, target: any, seriesList: any, table: any, props: any, depth: any) {
+  processBuckets(aggs: any, target: any, seriesList: any, table: TableModel, props: any, depth: any) {
     let bucket, aggDef: any, esAgg, aggId;
     const maxDepth = target.bucketAggs.length - 1;
 
@@ -324,12 +327,13 @@ export class ElasticResponse {
     }
   }
 
-  processHits(hits: { total: { value: any }; hits: any[] }, seriesList: any[]) {
+  processHits(hits: { total: { value: any }; hits: any[] }, seriesList: any[], target: any) {
     const hitsTotal = typeof hits.total === 'number' ? hits.total : hits.total.value; // <- Works with Elasticsearch 7.0+
 
     const series: any = {
-      target: 'docs',
+      target: target.refId,
       type: 'docs',
+      refId: target.refId,
       datapoints: [],
       total: hitsTotal,
       filterable: true,
@@ -391,23 +395,112 @@ export class ElasticResponse {
   }
 
   getTimeSeries() {
-    const seriesList = [];
+    if (this.targets.some((target: any) => target.metrics.some((metric: any) => metric.type === 'raw_data'))) {
+      return this.processResponseToDataFrames(false);
+    }
+    return this.processResponseToSeries();
+  }
 
-    for (let i = 0; i < this.response.responses.length; i++) {
-      const response = this.response.responses[i];
+  getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
+    return this.processResponseToDataFrames(true, logMessageField, logLevelField);
+  }
+
+  processResponseToDataFrames(
+    isLogsRequest: boolean,
+    logMessageField?: string,
+    logLevelField?: string
+  ): DataQueryResponse {
+    const dataFrame: DataFrame[] = [];
+
+    for (let n = 0; n < this.response.responses.length; n++) {
+      const response = this.response.responses[n];
       if (response.error) {
         throw this.getErrorFromElasticResponse(this.response, response.error);
       }
 
       if (response.hits && response.hits.hits.length > 0) {
-        this.processHits(response.hits, seriesList);
+        const { propNames, docs } = flattenHits(response.hits.hits);
+        if (docs.length > 0) {
+          let series = createEmptyDataFrame(
+            propNames,
+            this.targets[0].timeField,
+            isLogsRequest,
+            logMessageField,
+            logLevelField
+          );
+
+          // Add a row for each document
+          for (const doc of docs) {
+            if (logLevelField) {
+              // Remap level field based on the datasource config. This field is then used in explore to figure out the
+              // log level. We may rewrite some actual data in the level field if they are different.
+              doc['level'] = doc[logLevelField];
+            }
+
+            series.add(doc);
+          }
+          if (isLogsRequest) {
+            series = addPreferredVisualisationType(series, 'logs');
+          }
+          const target = this.targets[n];
+          series.refId = target.refId;
+          dataFrame.push(series);
+        }
       }
 
       if (response.aggregations) {
         const aggregations = response.aggregations;
-        const target = this.targets[i];
+        const target = this.targets[n];
         const tmpSeriesList: any[] = [];
         const table = new TableModel();
+
+        this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
+        this.trimDatapoints(tmpSeriesList, target);
+        this.nameSeries(tmpSeriesList, target);
+
+        if (table.rows.length > 0) {
+          const series = toDataFrame(table);
+          series.refId = target.refId;
+          dataFrame.push(series);
+        }
+
+        for (let y = 0; y < tmpSeriesList.length; y++) {
+          let series = toDataFrame(tmpSeriesList[y]);
+
+          // When log results, show aggregations only in graph. Log fields are then going to be shown in table.
+          if (isLogsRequest) {
+            series = addPreferredVisualisationType(series, 'graph');
+          }
+
+          series.refId = target.refId;
+          dataFrame.push(series);
+        }
+      }
+    }
+
+    return { data: dataFrame };
+  }
+
+  processResponseToSeries = () => {
+    const seriesList = [];
+
+    for (let i = 0; i < this.response.responses.length; i++) {
+      const response = this.response.responses[i];
+      const target = this.targets[i];
+
+      if (response.error) {
+        throw this.getErrorFromElasticResponse(this.response, response.error);
+      }
+
+      if (response.hits && response.hits.hits.length > 0) {
+        this.processHits(response.hits, seriesList, target);
+      }
+
+      if (response.aggregations) {
+        const aggregations = response.aggregations;
+        const tmpSeriesList: any[] = [];
+        const table = new TableModel();
+        table.refId = target.refId;
 
         this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
         this.trimDatapoints(tmpSeriesList, target);
@@ -424,59 +517,7 @@ export class ElasticResponse {
     }
 
     return { data: seriesList };
-  }
-
-  getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
-    const dataFrame: DataFrame[] = [];
-
-    for (let n = 0; n < this.response.responses.length; n++) {
-      const response = this.response.responses[n];
-      if (response.error) {
-        throw this.getErrorFromElasticResponse(this.response, response.error);
-      }
-
-      const { propNames, docs } = flattenHits(response.hits.hits);
-      if (docs.length > 0) {
-        let series = createEmptyDataFrame(propNames, this.targets[0].timeField, logMessageField, logLevelField);
-
-        // Add a row for each document
-        for (const doc of docs) {
-          if (logLevelField) {
-            // Remap level field based on the datasource config. This field is then used in explore to figure out the
-            // log level. We may rewrite some actual data in the level field if they are different.
-            doc['level'] = doc[logLevelField];
-          }
-
-          series.add(doc);
-        }
-
-        series = addPreferredVisualisationType(series, 'logs');
-        dataFrame.push(series);
-      }
-
-      if (response.aggregations) {
-        const aggregations = response.aggregations;
-        const target = this.targets[n];
-        const tmpSeriesList: any[] = [];
-        const table = new TableModel();
-
-        this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
-        this.trimDatapoints(tmpSeriesList, target);
-        this.nameSeries(tmpSeriesList, target);
-
-        for (let y = 0; y < tmpSeriesList.length; y++) {
-          let series = toDataFrame(tmpSeriesList[y]);
-
-          // When log results, show aggregations only in graph. Log fields are then going to be shown in table.
-          series = addPreferredVisualisationType(series, 'graph');
-
-          dataFrame.push(series);
-        }
-      }
-    }
-
-    return { data: dataFrame };
-  }
+  };
 }
 
 type Doc = {
@@ -532,6 +573,7 @@ const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames
 const createEmptyDataFrame = (
   propNames: string[],
   timeField: string,
+  isLogsRequest: boolean,
   logMessageField?: string,
   logLevelField?: string
 ): MutableDataFrame => {
@@ -549,13 +591,6 @@ const createEmptyDataFrame = (
     }).parse = (v: any) => {
       return v || '';
     };
-  } else {
-    series.addField({
-      name: '_source',
-      type: FieldType.string,
-    }).parse = (v: any) => {
-      return JSON.stringify(v, null, 2);
-    };
   }
 
   if (logLevelField) {
@@ -572,6 +607,10 @@ const createEmptyDataFrame = (
   for (const propName of propNames) {
     // Do not duplicate fields. This can mean that we will shadow some fields.
     if (fieldNames.includes(propName)) {
+      continue;
+    }
+    // Do not add _source field (besides logs) as we are showing each _source field in table instead.
+    if (!isLogsRequest && propName === '_source') {
       continue;
     }
 

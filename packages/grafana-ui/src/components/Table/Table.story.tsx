@@ -1,6 +1,6 @@
 import React from 'react';
 import { merge } from 'lodash';
-import { Table } from './Table';
+import { Table } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { number } from '@storybook/addon-knobs';
 import { useTheme } from '../../themes';

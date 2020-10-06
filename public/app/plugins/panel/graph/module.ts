@@ -25,6 +25,8 @@ import { getLocationSrv } from '@grafana/runtime';
 import { getDataTimeRange } from './utils';
 import { changePanelPlugin } from 'app/features/dashboard/state/actions';
 import { dispatch } from 'app/store/store';
+import { ThresholdMapper } from 'app/features/alerting/state/ThresholdMapper';
+import { getAnnotationsFromData } from 'app/features/annotations/standardAnnotationSupport';
 
 export class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -135,7 +137,10 @@ export class GraphCtrl extends MetricsPanelCtrl {
     seriesOverrides: [],
     thresholds: [],
     timeRegions: [],
-    options: {},
+    options: {
+      // show/hide alert threshold lines and fill
+      alertThreshold: true,
+    },
   };
 
   /** @ngInject */
@@ -230,6 +235,10 @@ export class GraphCtrl extends MetricsPanelCtrl {
           (this.seriesList as any).alertState = this.alertState.state;
         }
 
+        if (this.panelData!.annotations?.length) {
+          this.annotations = getAnnotationsFromData(this.panelData!.annotations!);
+        }
+
         this.render(this.seriesList);
       },
       () => {
@@ -266,35 +275,35 @@ export class GraphCtrl extends MetricsPanelCtrl {
       };
     }
 
-    // Look for data points outside time range
+    // If any data is in range, do not return an error
     for (const series of this.seriesList) {
       if (!series.isOutsideRange) {
-        continue;
+        return undefined;
       }
-
-      const dataWarning: DataWarning = {
-        title: 'Data outside time range',
-        tip: 'Can be caused by timezone mismatch or missing time filter in query',
-      };
-
-      const range = getDataTimeRange(this.dataList);
-
-      if (range) {
-        dataWarning.actionText = 'Zoom to data';
-        dataWarning.action = () => {
-          getLocationSrv().update({
-            partial: true,
-            query: {
-              from: range.from,
-              to: range.to,
-            },
-          });
-        };
-      }
-
-      return dataWarning;
     }
-    return undefined;
+
+    // All data is outside the time range
+    const dataWarning: DataWarning = {
+      title: 'Data outside time range',
+      tip: 'Can be caused by timezone mismatch or missing time filter in query',
+    };
+
+    const range = getDataTimeRange(this.dataList);
+
+    if (range) {
+      dataWarning.actionText = 'Zoom to data';
+      dataWarning.action = () => {
+        getLocationSrv().update({
+          partial: true,
+          query: {
+            from: range.from,
+            to: range.to,
+          },
+        });
+      };
+    }
+
+    return dataWarning;
   }
 
   onRender() {
@@ -302,9 +311,12 @@ export class GraphCtrl extends MetricsPanelCtrl {
       return;
     }
 
+    ThresholdMapper.alertToGraphThresholds(this.panel);
+
     for (const series of this.seriesList) {
       series.applySeriesOverrides(this.panel.seriesOverrides);
 
+      // Always use the configured field unit
       if (series.unit) {
         this.panel.yaxes[series.yaxis - 1].format = series.unit;
       }
@@ -378,6 +390,7 @@ export const plugin = new PanelPlugin<GraphPanelOptions, GraphFieldConfig>(null)
   .useFieldConfig({
     standardOptions: [
       FieldConfigProperty.DisplayName,
+      FieldConfigProperty.Unit,
       FieldConfigProperty.Links, // previously saved as dataLinks on options
     ],
   })

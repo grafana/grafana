@@ -12,14 +12,14 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
     valueProps: VizRepeaterRenderValueProps<FieldDisplay>,
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
-    const { options } = this.props;
+    const { options, fieldConfig } = this.props;
     const { width, height, count, value } = valueProps;
     const { field, display } = value;
     const { openMenu, targetClassName } = menuProps;
 
     return (
       <Gauge
-        value={clearNameForSingleSeries(count, field, display)}
+        value={clearNameForSingleSeries(count, fieldConfig.defaults, display)}
         width={width}
         height={height}
         field={field}

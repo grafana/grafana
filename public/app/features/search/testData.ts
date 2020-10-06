@@ -1,51 +1,54 @@
-export const searchResults = [
+import { DashboardSearchItemType, DashboardSection } from './types';
+
+export const generalFolder: DashboardSection = {
+  id: 0,
+  title: 'General',
+  items: [
+    {
+      id: 1,
+      uid: 'lBdLINUWk',
+      title: 'Test 1',
+      uri: 'db/test1',
+      url: '/d/lBdLINUWk/test1',
+      type: DashboardSearchItemType.DashDB,
+      tags: [],
+      isStarred: false,
+      checked: true,
+    },
+    {
+      id: 46,
+      uid: '8DY63kQZk',
+      title: 'Test 2',
+      uri: 'db/test2',
+      url: '/d/8DY63kQZk/test2',
+      type: DashboardSearchItemType.DashDB,
+      tags: [],
+      isStarred: false,
+      checked: true,
+    },
+  ],
+  icon: 'folder-open',
+  score: 1,
+  expanded: true,
+  checked: false,
+  url: '',
+  type: DashboardSearchItemType.DashFolder,
+};
+
+export const searchResults: DashboardSection[] = [
   {
     id: 2,
     uid: 'JB_zdOUWk',
     title: 'gdev dashboards',
     expanded: false,
-    //@ts-ignore
     items: [],
     url: '/dashboards/f/JB_zdOUWk/gdev-dashboards',
     icon: 'folder',
     score: 0,
     checked: true,
+    type: DashboardSearchItemType.DashFolder,
   },
-  {
-    id: 0,
-    title: 'General',
-    items: [
-      {
-        id: 1,
-        uid: 'lBdLINUWk',
-        title: 'Test 1',
-        uri: 'db/test1',
-        url: '/d/lBdLINUWk/test1',
-        slug: '',
-        type: 'dash-db',
-        //@ts-ignore
-        tags: [],
-        isStarred: false,
-        checked: true,
-      },
-      {
-        id: 46,
-        uid: '8DY63kQZk',
-        title: 'Test 2',
-        uri: 'db/test2',
-        url: '/d/8DY63kQZk/test2',
-        slug: '',
-        type: 'dash-db',
-        tags: [],
-        isStarred: false,
-        checked: true,
-      },
-    ],
-    icon: 'folder-open',
-    score: 1,
-    expanded: true,
-    checked: false,
-  },
+  generalFolder,
 ];
 
 // Search results with more info
@@ -59,7 +62,7 @@ export const sections = [
         id: 1,
         uid: 'lBdLINUWk',
         title: 'Prom dash',
-        type: 'dash-db',
+        type: DashboardSearchItemType.DashDB,
       },
     ],
   },
@@ -75,21 +78,21 @@ export const sections = [
         uid: 'OzAIf_rWz',
         title: 'New dashboard Copy 3',
 
-        type: 'dash-db',
+        type: DashboardSearchItemType.DashDB,
         isStarred: false,
       },
       {
         id: 46,
         uid: '8DY63kQZk',
         title: 'Stocks',
-        type: 'dash-db',
+        type: DashboardSearchItemType.DashDB,
         isStarred: false,
       },
       {
         id: 20,
         uid: '7MeksYbmk',
         title: 'Alerting with TestData',
-        type: 'dash-db',
+        type: DashboardSearchItemType.DashDB,
         isStarred: false,
         folderId: 2,
       },
@@ -97,7 +100,7 @@ export const sections = [
         id: 4073,
         uid: 'j9SHflrWk',
         title: 'New dashboard Copy 4',
-        type: 'dash-db',
+        type: DashboardSearchItemType.DashDB,
         isStarred: false,
         folderId: 2,
       },
@@ -111,7 +114,6 @@ export const sections = [
     url: '/dashboards/f/JB_zdOUWk/gdev-dashboards',
     icon: 'folder',
     score: 2,
-    //@ts-ignore
     items: [],
   },
   {
@@ -148,21 +150,21 @@ export const sections = [
         uri: 'db/new-dashboard-copy',
         url: '/d/LCFWfl9Zz/new-dashboard-copy',
         slug: '',
-        type: 'dash-db',
+        type: DashboardSearchItemType.DashDB,
         isStarred: false,
       },
       {
         id: 4072,
         uid: 'OzAIf_rWz',
         title: 'New dashboard Copy 3',
-        type: 'dash-db',
+        type: DashboardSearchItemType.DashDB,
         isStarred: false,
       },
       {
         id: 1,
         uid: 'lBdLINUWk',
         title: 'Prom dash',
-        type: 'dash-db',
+        type: DashboardSearchItemType.DashDB,
         isStarred: true,
       },
     ],

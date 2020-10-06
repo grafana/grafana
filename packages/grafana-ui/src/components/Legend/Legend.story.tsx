@@ -1,5 +1,6 @@
 import React from 'react';
-import { LegendList, LegendPlacement, LegendItem, LegendTable, generateLegendItems } from './Legend';
+import { generateLegendItems } from './Legend';
+import { LegendList, LegendPlacement, LegendItem, LegendTable } from '@grafana/ui';
 import { number, select, text } from '@storybook/addon-knobs';
 import { action } from '@storybook/addon-actions';
 import { GraphLegendListItem, GraphLegendTableRow, GraphLegendItemProps } from '../Graph/GraphLegendItem';

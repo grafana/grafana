@@ -27,11 +27,14 @@ npm install -g yarn
 
 ## Download Grafana
 
-We recommend using Go to download the source code for the Grafana project:
+We recommend using the Git command-line interface to download the source code for the Grafana project:
 
-1. Add `export GOPATH=$HOME/go/` to the bottom of your `$HOME/.bash_profile`.
-1. Open a terminal and run `go get github.com/grafana/grafana` in your terminal. This command downloads, and installs Grafana to your `$GOPATH`.
-1. Open `$GOPATH/src/github.com/grafana/grafana` in your favorite code editor.
+1. Open a terminal and run `git clone https://github.com/grafana/grafana.git`. This command downloads Grafana to a new `grafana` directory in your current directory.
+1. Open the `grafana` directory in your favorite code editor.
+
+For alternative ways of cloning the Grafana repository, please refer to [GitHub's cloning a repository](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository) documentation.
+
+**Warning:** Do not use `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
 
 ## Build Grafana
 
@@ -171,7 +174,7 @@ make build-docker-full
 
 The resulting image will be tagged as grafana/grafana:dev.
 
-**Note:** If you've already set up a local development environment, and you're running a `linux/amd64` machine, you can speed up building the Docker image:
+> **Note:** If you've already set up a local development environment, and you're running a `linux/amd64` machine, you can speed up building the Docker image:
 
 1. Build the frontend: `go run build.go build-frontend`.
 1. Build the Docker image: `make build-docker-dev`.
@@ -208,8 +211,8 @@ Another alternative is to limit the files being watched. The directories that ar
 
 To retain your `ulimit` configuration, i.e. so it will be remembered for future sessions, you need to commit it to your command line shell initialization file. Which file this will be depends on the shell you are using, here are some examples:
 
-* zsh -> ~/.zshrc
-* bash -> ~/.bashrc
+- zsh -> ~/.zshrc
+- bash -> ~/.bashrc
 
 Commit your ulimit configuration to your shell initialization file as follows ($LIMIT being your chosen limit and $INIT_FILE being the initialization file for your shell):
 

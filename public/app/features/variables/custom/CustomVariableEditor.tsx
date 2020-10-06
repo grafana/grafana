@@ -50,7 +50,7 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
               value={this.props.variable.query}
               onChange={this.onChange}
               onBlur={this.onBlur}
-              placeholder="1, 10, 20, myvalue, escaped\,value"
+              placeholder="1, 10, mykey : myvalue, myvalue, escaped\,value"
               required
               aria-label="Variable editor Form Custom Query field"
             />

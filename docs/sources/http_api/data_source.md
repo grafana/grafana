@@ -419,7 +419,10 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"Data source deleted"}
+{
+  "message":"Data source deleted",
+  "id": 1
+}
 ```
 
 ## Data source proxy calls

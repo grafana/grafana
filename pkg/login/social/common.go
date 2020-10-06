@@ -64,7 +64,7 @@ func HttpGet(client *http.Client, url string) (response HttpGetResponse, err err
 		return
 	}
 
-	log.Trace("HTTP GET %s: %s %s", url, r.Status, string(response.Body))
+	log.Tracef("HTTP GET %s: %s %s", url, r.Status, string(response.Body))
 
 	err = nil
 	return

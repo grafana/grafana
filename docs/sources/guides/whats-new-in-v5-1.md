@@ -14,13 +14,13 @@ weight = -7
 
 Grafana v5.1 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
-* [Improved scrolling experience]({{< relref "#improved-scrolling-experience" >}})
-* [Improved docker image]({{< relref "#improved-docker-image-breaking-change" >}}) with a breaking change!
-* [Heatmap support for Prometheus]({{< relref "#prometheus" >}})
-* [Microsoft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric and table data source!
-* [Dashboards and Panels]({{< relref "#dashboards-panels" >}}) Improved adding panels to dashboards and enhancements to Graph and Table panels.
-* [New variable interpolation syntax]({{< relref "#new-variable-interpolation-syntax" >}})
-* [Improved workflow for provisioned dashboards]({{< relref "#improved-workflow-for-provisioned-dashboards" >}})
+- [Improved scrolling experience]({{< relref "#improved-scrolling-experience" >}})
+- [Improved docker image]({{< relref "#improved-docker-image-breaking-change" >}}) with a breaking change!
+- [Heatmap support for Prometheus]({{< relref "#prometheus" >}})
+- [Microsoft SQL Server]({{< relref "#microsoft-sql-server" >}}) as metric and table data source!
+- [Dashboards and Panels]({{< relref "#dashboards-panels" >}}) Improved adding panels to dashboards and enhancements to Graph and Table panels.
+- [New variable interpolation syntax]({{< relref "#new-variable-interpolation-syntax" >}})
+- [Improved workflow for provisioned dashboards]({{< relref "#improved-workflow-for-provisioned-dashboards" >}})
 
 ## Improved scrolling experience
 
@@ -51,7 +51,7 @@ The Prometheus data source now support transforming Prometheus histograms to the
 really happy to finally allow our users to render those as heatmaps. Please read [Heatmap panel documentation](/features/panels/heatmap/#pre-bucketed-data)
 for more information on how to use it.
 
-Prometheus query editor also got support for autocomplete of template variables. More information in the [Prometheus data source documentation](/features/datasources/prometheus/).
+Prometheus query editor also got support for autocomplete of template variables. More information in the [Prometheus data source documentation]({{< relref "../features/datasources/prometheus/" >}}).
 
 <div class="clearfix"></div>
 
@@ -63,7 +63,7 @@ Grafana v5.1 now ships with a built-in Microsoft SQL Server (MSSQL) data source 
 Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. Do you have metric or log data in MSSQL? You can now visualize
 that data and define alert rules on it like with any of Grafana's other core data sources.
 
-Please read [Using Microsoft SQL Server in Grafana documentation](/features/datasources/mssql/) for more detailed information on how to get started and use it.
+Please read [Using Microsoft SQL Server in Grafana documentation]({{< relref "../features/datasources/mssql/" >}}) for more detailed information on how to get started and use it.
 
 <div class="clearfix"></div>
 
@@ -110,8 +110,8 @@ Filter Option | Example | Raw | Interpolated | Description
 
 Grafana v5.1 brings an improved workflow for provisioned dashboards:
 
-* A populated `id` property in JSON is now automatically removed when provisioning dashboards.
-* When making changes to a provisioned dashboard you can `Save` the dashboard which now will bring up a *Cannot save provisioned dashboard* dialog like seen in the screenshot to the right.
+- A populated `id` property in JSON is now automatically removed when provisioning dashboards.
+- When making changes to a provisioned dashboard you can `Save` the dashboard which now will bring up a *Cannot save provisioned dashboard* dialog like seen in the screenshot to the right.
 
 
 Available options in the dialog will let you `Copy JSON to Clipboard` and/or `Save JSON to file` which can help you synchronize your dashboard changes back to the provisioning source.

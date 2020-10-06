@@ -51,9 +51,8 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 
 	exists, err := mg.x.IsTableExist(new(MigrationLog))
 	if err != nil {
-		return nil, err
+		return nil, errutil.Wrap("failed to check table existence", err)
 	}
-
 	if !exists {
 		return logMap, nil
 	}
@@ -73,7 +72,7 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 }
 
 func (mg *Migrator) Start() error {
-	mg.Logger.Info("Starting DB migration")
+	mg.Logger.Info("Starting DB migrations")
 
 	logMap, err := mg.GetMigrationLog()
 	if err != nil {
@@ -110,9 +109,8 @@ func (mg *Migrator) Start() error {
 			_, err = sess.Insert(&record)
 			return err
 		})
-
 		if err != nil {
-			return err
+			return errutil.Wrap("migration failed", err)
 		}
 	}
 

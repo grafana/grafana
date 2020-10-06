@@ -143,8 +143,10 @@ const FeatureListing: React.FC = () => {
           <Item title="Splunk" />
           <Item title="Service Now" />
           <Item title="Dynatrace" />
+          <Item title="New Relic" />
           <Item title="DataDog" />
           <Item title="AppDynamics" />
+          <Item title="Amazon Timestream" />
         </List>
       </Item>
     </List>

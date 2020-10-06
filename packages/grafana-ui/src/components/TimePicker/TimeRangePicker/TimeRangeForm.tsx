@@ -21,6 +21,7 @@ interface Props {
   onApply: (range: TimeRange) => void;
   timeZone?: TimeZone;
   roundup?: boolean;
+  isReversed?: boolean;
 }
 
 interface InputState {
@@ -121,6 +122,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
         onClose={() => setOpen(false)}
         onChange={onChange}
         timeZone={timeZone}
+        isReversed={props.isReversed}
       />
     </>
   );

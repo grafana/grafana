@@ -102,11 +102,12 @@ func SearchDashboardSnapshots(query *models.GetDashboardSnapshotsQuery) error {
 	}
 
 	// admins can see all snapshots, everyone else can only see their own snapshots
-	if query.SignedInUser.OrgRole == models.ROLE_ADMIN {
+	switch {
+	case query.SignedInUser.OrgRole == models.ROLE_ADMIN:
 		sess.Where("org_id = ?", query.OrgId)
-	} else if !query.SignedInUser.IsAnonymous {
+	case !query.SignedInUser.IsAnonymous:
 		sess.Where("org_id = ? AND user_id = ?", query.OrgId, query.SignedInUser.UserId)
-	} else {
+	default:
 		query.Result = snapshots
 		return nil
 	}

@@ -107,8 +107,9 @@ export class TablePanel extends Component<Props> {
     const { data, height, width } = this.props;
 
     const count = data.series?.length;
+    const hasFields = data.series[0]?.fields.length;
 
-    if (!count || count < 1) {
+    if (!count || !hasFields) {
       return <div>No data</div>;
     }
 

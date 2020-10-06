@@ -252,7 +252,6 @@ const getStyles = createStyle((theme: Theme) => {
     `,
     errorIcon: css`
       label: errorIcon;
-      background: ${autoColor(theme, '#db2828')};
       border-radius: 6.5px;
       color: ${autoColor(theme, '#fff')};
       font-size: 0.85em;
@@ -418,7 +417,16 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                   [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
                 })}
               >
-                {showErrorIcon && <IoAlert className={styles.errorIcon} />}
+                {showErrorIcon && (
+                  <IoAlert
+                    style={{
+                      backgroundColor: span.errorIconColor
+                        ? autoColor(theme, span.errorIconColor)
+                        : autoColor(theme, '#db2828'),
+                    }}
+                    className={styles.errorIcon}
+                  />
+                )}
                 {serviceName}{' '}
                 {rpc && (
                   <span>

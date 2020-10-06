@@ -16,9 +16,10 @@ import {
   QueryResultMetaStat,
   QueryResultMeta,
   TimeSeriesValue,
+  ScopedVars,
 } from '@grafana/data';
 
-import templateSrv from 'app/features/templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import {
@@ -240,11 +241,11 @@ export function lokiResultsToTableModel(
   return table;
 }
 
-function createMetricLabel(labelData: { [key: string]: string }, options?: TransformerOptions) {
+export function createMetricLabel(labelData: { [key: string]: string }, options?: TransformerOptions) {
   let label =
     options === undefined || _.isEmpty(options.legendFormat)
       ? getOriginalMetricName(labelData)
-      : renderTemplate(templateSrv.replace(options.legendFormat ?? ''), labelData);
+      : renderTemplate(getTemplateSrv().replace(options.legendFormat ?? '', options.scopedVars), labelData);
 
   if (!label && options) {
     label = options.query;
@@ -312,21 +313,35 @@ export function lokiStreamsToDataframes(
     lokiQueryStatKey: 'Summary: total bytes processed',
   };
 
+  const meta: QueryResultMeta = {
+    searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr)),
+    limit,
+    stats,
+    custom,
+    preferredVisualisationType: 'logs',
+  };
+
   const series: DataFrame[] = data.map(stream => {
     const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
     enhanceDataFrame(dataFrame, config);
+
     return {
       ...dataFrame,
       refId: target.refId,
-      meta: {
-        searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.expr)),
-        limit,
-        stats,
-        custom,
-        preferredVisualisationType: 'logs',
-      },
+      meta,
     };
   });
+
+  if (stats.length && !data.length) {
+    return [
+      {
+        fields: [],
+        length: 0,
+        refId: target.refId,
+        meta,
+      },
+    ];
+  }
 
   return series;
 }
@@ -401,13 +416,13 @@ export function rangeQueryResponseToTimeSeries(
   response: LokiResponse,
   query: LokiRangeQueryRequest,
   target: LokiQuery,
-  responseListLength: number
+  responseListLength: number,
+  scopedVars: ScopedVars
 ): TimeSeries[] {
   /** Show results of Loki metric queries only in graph */
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'graph',
   };
-
   const transformerOptions: TransformerOptions = {
     format: target.format,
     legendFormat: target.legendFormat ?? '',
@@ -419,6 +434,7 @@ export function rangeQueryResponseToTimeSeries(
     refId: target.refId,
     meta,
     valueWithRefId: target.valueWithRefId,
+    scopedVars,
   };
 
   switch (response.data.resultType) {
@@ -440,6 +456,7 @@ export function processRangeQueryResponse(
   responseListLength: number,
   limit: number,
   config: LokiOptions,
+  scopedVars: ScopedVars,
   reverse = false
 ) {
   switch (response.data.resultType) {
@@ -459,7 +476,8 @@ export function processRangeQueryResponse(
             ...target,
             format: 'time_series',
           },
-          responseListLength
+          responseListLength,
+          scopedVars
         ),
         key: target.refId,
       });

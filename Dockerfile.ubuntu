@@ -1,4 +1,4 @@
-FROM node:12.16.3-slim AS js-builder
+FROM node:12.18.3-slim AS js-builder
 
 WORKDIR /usr/src/app/
 
@@ -16,7 +16,7 @@ COPY emails emails
 ENV NODE_ENV production
 RUN ./node_modules/.bin/grunt build
 
-FROM golang:1.14.2 AS go-builder
+FROM golang:1.15.1 AS go-builder
 
 WORKDIR /src/grafana
 
@@ -50,7 +50,7 @@ WORKDIR $GF_PATHS_HOME
 COPY conf conf
 
 # curl should be part of the image
-RUN apt-get update && apt-get upgrade -y && apt-get install -y ca-certificates curl
+RUN apt-get update && apt-get install -y ca-certificates curl
 
 RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
   addgroup --system --gid $GF_GID grafana && \
@@ -65,7 +65,6 @@ RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
     cp conf/ldap.toml /etc/grafana/ldap.toml && \
     chown -R grafana:grafana "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
     chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
-
 
 COPY --from=go-builder /src/grafana/bin/linux-amd64/grafana-server /src/grafana/bin/linux-amd64/grafana-cli bin/
 COPY --from=js-builder /usr/src/app/public public

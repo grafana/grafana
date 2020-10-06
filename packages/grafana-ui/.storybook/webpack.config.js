@@ -110,6 +110,8 @@ module.exports = ({ config, mode }) => {
   };
 
   config.resolve.extensions.push('.ts', '.tsx', '.mdx');
+  config.resolve.alias = config.resolve.alias || {};
+  config.resolve.alias['@grafana/ui'] = path.resolve(__dirname, '..');
 
   config.stats = {
     warningsFilter: /export .* was not found in/,

@@ -3,6 +3,7 @@ import { Form, Field, Input, Button, Legend, Container, useStyles, HorizontalGro
 import { getBackendSrv } from '@grafana/runtime';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
+import config from 'app/core/config';
 
 interface EmailDTO {
   userOrEmail: string;
@@ -19,6 +20,7 @@ const paragraphStyles = (theme: GrafanaTheme) => css`
 export const ForgottenPassword: FC = () => {
   const [emailSent, setEmailSent] = useState(false);
   const styles = useStyles(paragraphStyles);
+  const loginHref = `${config.appSubUrl}/login`;
 
   const sendEmail = async (formModel: EmailDTO) => {
     const res = await getBackendSrv().post('/api/user/password/send-reset-email', formModel);
@@ -32,7 +34,7 @@ export const ForgottenPassword: FC = () => {
       <div>
         <p>An email with a reset link has been sent to the email address. You should receive it shortly.</p>
         <Container margin="md" />
-        <LinkButton variant="primary" href="/login">
+        <LinkButton variant="primary" href={loginHref}>
           Back to login
         </LinkButton>
       </div>
@@ -53,7 +55,7 @@ export const ForgottenPassword: FC = () => {
           </Field>
           <HorizontalGroup>
             <Button>Send reset email</Button>
-            <LinkButton variant="link" href="/login">
+            <LinkButton variant="link" href={loginHref}>
               Back to login
             </LinkButton>
           </HorizontalGroup>

@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { css, cx } from 'emotion';
 
 import { CompletionItem, selectThemeVariant, ThemeContext } from '../..';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, renderMarkdown, textUtil } from '@grafana/data';
 
 const getStyles = (theme: GrafanaTheme, height: number, visible: boolean) => {
   return {
@@ -41,7 +41,7 @@ interface Props {
 export const TypeaheadInfo: React.FC<Props> = ({ item, height }) => {
   const visible = item && !!item.documentation;
   const label = item ? item.label : '';
-  const documentation = item && item.documentation ? item.documentation : '';
+  const documentation = textUtil.sanitize(renderMarkdown(item?.documentation));
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme, height, visible);
 
@@ -49,7 +49,7 @@ export const TypeaheadInfo: React.FC<Props> = ({ item, height }) => {
     <div className={cx([styles.typeaheadItem])}>
       <b>{label}</b>
       <hr />
-      <span>{documentation}</span>
+      <div dangerouslySetInnerHTML={{ __html: documentation }} />
     </div>
   );
 };

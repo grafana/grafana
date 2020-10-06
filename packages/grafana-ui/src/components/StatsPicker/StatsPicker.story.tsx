@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { StatsPicker } from './StatsPicker';
+import { StatsPicker } from '@grafana/ui';
 import { text, boolean } from '@storybook/addon-knobs';
 
 const getKnobs = () => {

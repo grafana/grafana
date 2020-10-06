@@ -3,7 +3,7 @@ import { toDuration as duration, toUtc, dateTime } from '../datetime/moment_wrap
 import { toFixed, toFixedScaled, FormattedValue, ValueFormatter } from './valueFormats';
 import { DecimalCount } from '../types/displayValue';
 import { TimeZone } from '../types';
-import { dateTimeFormat, dateTimeFormatTimeAgo } from '../datetime';
+import { dateTimeFormat, dateTimeFormatTimeAgo, localTimeFormat, systemDateFormats } from '../datetime';
 
 interface IntervalsInSeconds {
   [interval: string]: number;
@@ -44,8 +44,12 @@ export function toNanoSeconds(size: number, decimals?: DecimalCount, scaledDecim
     return toFixedScaled(size / 1000000, decimals, scaledDecimals, 6, ' ms');
   } else if (Math.abs(size) < 60000000000) {
     return toFixedScaled(size / 1000000000, decimals, scaledDecimals, 9, ' s');
-  } else {
+  } else if (Math.abs(size) < 3600000000000) {
     return toFixedScaled(size / 60000000000, decimals, scaledDecimals, 12, ' min');
+  } else if (Math.abs(size) < 86400000000000) {
+    return toFixedScaled(size / 3600000000000, decimals, scaledDecimals, 13, ' hour');
+  } else {
+    return toFixedScaled(size / 86400000000000, decimals, scaledDecimals, 14, ' day');
   }
 }
 
@@ -97,6 +101,11 @@ export function trySubstract(value1: DecimalCount, value2: DecimalCount): Decima
 export function toSeconds(size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount): FormattedValue {
   if (size === null) {
     return { text: '' };
+  }
+
+  // If 0, use s unit instead of ns
+  if (size === 0) {
+    return { text: '0', suffix: ' s' };
   }
 
   // Less than 1 µs, divide in ns
@@ -356,8 +365,32 @@ export function toDateTimeValueFormatter(pattern: string, todayPattern?: string)
   };
 }
 
-export const dateTimeAsIso = toDateTimeValueFormatter('YYYY-MM-DD HH:mm:ss', 'HH:mm:ss');
-export const dateTimeAsUS = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a', 'h:mm:ss a');
+export const dateTimeAsIso = toDateTimeValueFormatter('YYYY-MM-DD HH:mm:ss');
+export const dateTimeAsIsoNoDateIfToday = toDateTimeValueFormatter('YYYY-MM-DD HH:mm:ss', 'HH:mm:ss');
+export const dateTimeAsUS = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a');
+export const dateTimeAsUSNoDateIfToday = toDateTimeValueFormatter('MM/DD/YYYY h:mm:ss a', 'h:mm:ss a');
+
+export function getDateTimeAsLocalFormat() {
+  return toDateTimeValueFormatter(
+    localTimeFormat({
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+  );
+}
+
+export function dateTimeSystemFormatter(
+  value: number,
+  decimals: DecimalCount,
+  scaledDecimals: DecimalCount,
+  timeZone?: TimeZone
+): FormattedValue {
+  return { text: dateTimeFormat(value, { format: systemDateFormats.fullDate, timeZone }) };
+}
 
 export function dateTimeFromNow(
   value: number,

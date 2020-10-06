@@ -128,9 +128,6 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
       { text, value, prefix, wrapperClasses, labelKey },
       { history, absoluteRange }
     );
-
-    //console.log('handleTypeahead', wrapperClasses, text, prefix, nextChar, labelKey, result.context);
-
     return result;
   };
 

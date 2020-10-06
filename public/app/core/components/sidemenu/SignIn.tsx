@@ -1,18 +1,13 @@
 import React, { FC } from 'react';
-import config from 'app/core/config';
+
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { StoreState } from 'app/types';
 import { Icon } from '@grafana/ui';
-
-const getForcedLoginUrl = (url: string) => {
-  const urlObj = new URL(url, config.appUrl);
-  let params = urlObj.searchParams;
-  params.set('forceLogin', 'true');
-  return urlObj.toString();
-};
+import { getForcedLoginUrl } from './utils';
 
 export const SignIn: FC<any> = ({ url }) => {
   const forcedLoginUrl = getForcedLoginUrl(url);
+
   return (
     <div className="sidemenu-item">
       <a href={forcedLoginUrl} className="sidemenu-link" target="_self">

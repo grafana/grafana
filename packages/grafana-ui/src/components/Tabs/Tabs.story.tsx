@@ -1,9 +1,7 @@
 import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
-import { TabsBar } from './TabsBar';
-import { Tab } from './Tab';
-import { TabContent } from './TabContent';
+import { TabsBar, Tab, TabContent } from '@grafana/ui';
 
 export default {
   title: 'Layout/Tabs',

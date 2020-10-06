@@ -91,7 +91,15 @@ describe('Language completion provider', () => {
       const input = createTypeaheadInput('{}', '', '', 1);
       const result = await provider.provideCompletionItems(input, { absoluteRange: rangeMock });
       expect(result.context).toBe('context-labels');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'label1' }, { label: 'label2' }], label: 'Labels' }]);
+      expect(result.suggestions).toEqual([
+        {
+          items: [
+            { label: 'label1', filterText: '"label1"' },
+            { label: 'label2', filterText: '"label2"' },
+          ],
+          label: 'Labels',
+        },
+      ]);
     });
 
     it('returns all label suggestions on selector when starting to type', async () => {
@@ -100,7 +108,15 @@ describe('Language completion provider', () => {
       const input = createTypeaheadInput('{l}', '', '', 2);
       const result = await provider.provideCompletionItems(input, { absoluteRange: rangeMock });
       expect(result.context).toBe('context-labels');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'label1' }, { label: 'label2' }], label: 'Labels' }]);
+      expect(result.suggestions).toEqual([
+        {
+          items: [
+            { label: 'label1', filterText: '"label1"' },
+            { label: 'label2', filterText: '"label2"' },
+          ],
+          label: 'Labels',
+        },
+      ]);
     });
   });
 
@@ -140,7 +156,13 @@ describe('Language completion provider', () => {
       result = await provider.provideCompletionItems(input, { absoluteRange: rangeMock });
       expect(result.context).toBe('context-label-values');
       expect(result.suggestions).toEqual([
-        { items: [{ label: 'label1_val1' }, { label: 'label1_val2' }], label: 'Label values for "label1"' },
+        {
+          items: [
+            { label: 'label1_val1', filterText: '"label1_val1"' },
+            { label: 'label1_val2', filterText: '"label1_val2"' },
+          ],
+          label: 'Label values for "label1"',
+        },
       ]);
     });
   });

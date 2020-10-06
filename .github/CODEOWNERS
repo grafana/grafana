@@ -12,9 +12,9 @@
 # This should make it easy to add new rules without breaking existing ones.
 
 # Documentation owner: Diana Payton
-/docs/ @oddlittlebird
-/contribute/ @oddlittlebird  @marcusolsson
-
+/docs/ @oddlittlebird @achatterjee-grafana
+/contribute/ @oddlittlebird  @marcusolsson @achatterjee-grafana
+/docs/sources/developers/plugins/ @marcusolsson
 
 # Backend code
 *.go @grafana/backend-platform

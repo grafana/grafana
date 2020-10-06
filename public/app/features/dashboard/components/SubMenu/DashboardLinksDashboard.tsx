@@ -5,6 +5,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 import { DashboardLink } from '../../state/DashboardModel';
 import { DashboardSearchHit } from 'app/features/search/types';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   link: DashboardLink;
@@ -19,13 +20,17 @@ interface State {
 export class DashboardLinksDashboard extends PureComponent<Props, State> {
   state: State = { resolvedLinks: [] };
 
+  componentDidMount() {
+    this.searchForDashboards();
+  }
+
   componentDidUpdate(prevProps: Readonly<Props>) {
-    if (!this.props.link.asDropdown && prevProps.linkInfo !== this.props.linkInfo) {
-      this.onResolveLinks();
+    if (this.props.link !== prevProps.link || this.props.linkInfo !== prevProps.linkInfo) {
+      this.searchForDashboards();
     }
   }
 
-  onResolveLinks = async () => {
+  searchForDashboards = async () => {
     const { dashboardId, link } = this.props;
 
     const searchHits = await searchForTags(link);
@@ -34,11 +39,11 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
     this.setState({ resolvedLinks });
   };
 
-  renderElement = (linkElement: JSX.Element, key: string) => {
+  renderElement = (linkElement: JSX.Element, key: string, selector: string) => {
     const { link } = this.props;
 
     return (
-      <div className="gf-form" key={key}>
+      <div className="gf-form" key={key} aria-label={selector}>
         {link.tooltip && <Tooltip content={link.tooltip}>{linkElement}</Tooltip>}
         {!link.tooltip && <>{linkElement}</>}
       </div>
@@ -54,12 +59,21 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
         {resolvedLinks.length > 0 &&
           resolvedLinks.map((resolvedLink, index) => {
             const linkElement = (
-              <a className="gf-form-label" href={resolvedLink.url} target={link.targetBlank ? '_blank' : '_self'}>
+              <a
+                className="gf-form-label"
+                href={resolvedLink.url}
+                target={link.targetBlank ? '_blank' : '_self'}
+                aria-label={selectors.components.DashboardLinks.link}
+              >
                 <Icon name="apps" style={{ marginRight: '4px' }} />
                 <span>{resolvedLink.title}</span>
               </a>
             );
-            return this.renderElement(linkElement, `dashlinks-list-item-${resolvedLink.id}-${index}`);
+            return this.renderElement(
+              linkElement,
+              `dashlinks-list-item-${resolvedLink.id}-${index}`,
+              selectors.components.DashboardLinks.container
+            );
           })}
       </>
     );
@@ -73,7 +87,7 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
       <>
         <a
           className="gf-form-label pointer"
-          onClick={this.onResolveLinks}
+          onClick={this.searchForDashboards}
           data-placement="bottom"
           data-toggle="dropdown"
         >
@@ -85,7 +99,11 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
             resolvedLinks.map((resolvedLink, index) => {
               return (
                 <li key={`dashlinks-dropdown-item-${resolvedLink.id}-${index}`}>
-                  <a href={resolvedLink.url} target={link.targetBlank ? '_blank' : '_self'}>
+                  <a
+                    href={resolvedLink.url}
+                    target={link.targetBlank ? '_blank' : '_self'}
+                    aria-label={selectors.components.DashboardLinks.link}
+                  >
                     {resolvedLink.title}
                   </a>
                 </li>
@@ -95,7 +113,7 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
       </>
     );
 
-    return this.renderElement(linkElement, 'dashlinks-dropdown');
+    return this.renderElement(linkElement, 'dashlinks-dropdown', selectors.components.DashboardLinks.dropDown);
   };
 
   render() {

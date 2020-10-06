@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { isEqual } from 'lodash';
 import { AbsoluteTimeRange } from '@grafana/data';
 import { CascaderOption } from '@grafana/ui';
 
@@ -23,6 +24,7 @@ export const useLokiLabels = (
   // State
   const [logLabelOptions, setLogLabelOptions] = useState<any>([]);
   const [shouldTryRefreshLabels, setRefreshLabels] = useState(false);
+  const [prevAbsoluteRange, setPrevAbsoluteRange] = useState<AbsoluteTimeRange | null>(null);
   /**
    * Holds information about currently selected option from rc-cascader to perform effect
    * that loads option values not fetched yet. Based on that useLokiLabels hook decides whether or not
@@ -39,7 +41,8 @@ export const useLokiLabels = (
   };
 
   const tryLabelsRefresh = async () => {
-    await languageProvider.refreshLogLabels(absoluteRange);
+    await languageProvider.refreshLogLabels(absoluteRange, !isEqual(absoluteRange, prevAbsoluteRange));
+    setPrevAbsoluteRange(absoluteRange);
 
     if (mounted.current) {
       setRefreshLabels(false);

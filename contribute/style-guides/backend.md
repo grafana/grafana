@@ -1,6 +1,6 @@
 # Backend style guide
 
-Grafanas backend has been developed for a long time with a mix of code styles.  This guide explains how we want to write Go code in the future.
+Grafana's backend has been developed for a long time with a mix of code styles. This guide explains how we want to write Go code in the future.
 
 Unless stated otherwise, use the guidelines listed in the following articles:
 

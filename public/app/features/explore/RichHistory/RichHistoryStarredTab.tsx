@@ -8,9 +8,7 @@ import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 // Utils
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-
-import { SortOrder } from '../../../core/utils/explore';
-import { filterAndSortQueries, createDatasourcesList } from '../../../core/utils/richHistory';
+import { filterAndSortQueries, createDatasourcesList, SortOrder } from 'app/core/utils/richHistory';
 
 // Components
 import RichHistoryCard from './RichHistoryCard';

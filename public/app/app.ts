@@ -1,3 +1,4 @@
+import 'symbol-observable';
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 
@@ -112,7 +113,7 @@ export class GrafanaApp {
         $httpProvider: angular.IHttpProvider,
         $provide: angular.auto.IProvideService
       ) => {
-        // pre assing bindings before constructor calls
+        // pre assign bindings before constructor calls
         $compileProvider.preAssignBindingsEnabled(true);
 
         if (config.buildInfo.env !== 'development') {

@@ -1,9 +1,7 @@
 import React, { ChangeEvent, useState } from 'react';
 import { css } from 'emotion';
 
-import { Input } from '../Input/Input';
-import { Field } from '../Forms/Field';
-import { Icon } from './Icon';
+import { Input, Field, Icon } from '@grafana/ui';
 import { getAvailableIcons, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { useTheme, selectThemeVariant } from '../../themes';
@@ -63,7 +61,7 @@ const IconWrapper: React.FC<{ name: IconName }> = ({ name }) => {
 
 const icons = getAvailableIcons().sort((a, b) => a.localeCompare(b));
 
-export const iconsOverview = () => {
+export const IconsOverview = () => {
   const [filter, setFilter] = useState('');
 
   const searchIcon = (event: ChangeEvent<HTMLInputElement>) => {

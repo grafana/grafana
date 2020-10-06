@@ -9,6 +9,7 @@ import (
 )
 
 var (
+	ErrAlertNotificationNotFound                = errors.New("Alert notification not found")
 	ErrNotificationFrequencyNotFound            = errors.New("Notification frequency not specified")
 	ErrAlertNotificationStateNotFound           = errors.New("alert notification state not found")
 	ErrAlertNotificationStateVersionConflict    = errors.New("alert notification state update version conflict")
@@ -94,6 +95,8 @@ type DeleteAlertNotificationCommand struct {
 type DeleteAlertNotificationWithUidCommand struct {
 	Uid   string
 	OrgId int64
+
+	DeletedAlertNotificationId int64
 }
 
 type GetAlertNotificationUidQuery struct {

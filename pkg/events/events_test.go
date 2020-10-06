@@ -4,7 +4,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type TestEvent struct {
@@ -12,13 +13,12 @@ type TestEvent struct {
 }
 
 func TestEventCreation(t *testing.T) {
-	Convey("Event to wire event", t, func() {
-		e := TestEvent{
-			Timestamp: time.Unix(1231421123, 223),
-		}
+	e := TestEvent{
+		Timestamp: time.Unix(1231421123, 223),
+	}
 
-		wire, _ := ToOnWriteEvent(&e)
-		So(e.Timestamp.Unix(), ShouldEqual, wire.Timestamp.Unix())
-		So(wire.EventType, ShouldEqual, "TestEvent")
-	})
+	wire, err := ToOnWriteEvent(&e)
+	require.NoError(t, err)
+	assert.Equal(t, e.Timestamp.Unix(), wire.Timestamp.Unix())
+	assert.Equal(t, "TestEvent", wire.EventType)
 }

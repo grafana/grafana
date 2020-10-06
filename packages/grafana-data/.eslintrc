@@ -1,6 +1,13 @@
 {
-  "extends": ["@grafana/eslint-config"],
   "rules": {
-    "no-restricted-imports": [2, "^@grafana/data.*", "^@grafana/runtime.*", "^@grafana/ui.*"]
-  }
+    "no-restricted-imports": ["error", { "patterns": ["@grafana/runtime", "@grafana/ui", "@grafana/data"] }]
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ]
 }

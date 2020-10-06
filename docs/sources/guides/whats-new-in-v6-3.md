@@ -50,7 +50,7 @@ simplified query interface specifically designed for logs search.
 
 {{< docs-imagebox img="/img/docs/v63/elasticsearch_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
 
-Please read [Using Elasticsearch in Grafana](/features/datasources/elasticsearch/#querying-logs-beta) for more detailed information on how to get started and use it.
+Please read [Using Elasticsearch in Grafana]({{< relref "../features/datasources/elasticsearch/#elasticsearch-version" >}}) for more detailed information on how to get started and use it.
 
 ### InfluxDB logs support
 
@@ -59,7 +59,7 @@ simplified query interface specifically designed for logs search.
 
 {{< docs-imagebox img="/img/docs/v63/influxdb_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
 
-Please read [Using InfluxDB in Grafana](/features/datasources/influxdb/#querying-logs-beta) for more detailed information on how to get started and use it.
+Please read [Using InfluxDB in Grafana]({{< relref "../features/datasources/influxdb/#querying-logs-beta" >}}) for more detailed information on how to get started and use it.
 
 ## Data Links
 

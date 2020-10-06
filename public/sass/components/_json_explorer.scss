@@ -31,7 +31,7 @@
 
   .json-formatter-string {
     color: $json-explorer-string-color;
-    white-space: normal;
+    white-space: pre-wrap;
     word-wrap: break-word;
     word-break: break-all;
   }

@@ -9,8 +9,8 @@ import {
   SelectableValue,
   toDataFrame,
 } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import {
   CloudMonitoringQuery,
@@ -28,11 +28,10 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
   api: API;
   authenticationType: string;
 
-  /** @ngInject */
   constructor(
     private instanceSettings: DataSourceInstanceSettings<CloudMonitoringOptions>,
-    public templateSrv: TemplateSrv,
-    private timeSrv: TimeSrv
+    public templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly timeSrv: TimeSrv = getTimeSrv()
   ) {
     super(instanceSettings);
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
@@ -137,7 +136,8 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     const queries = options.targets
       .map(this.migrateQuery)
       .filter(this.shouldRunQuery)
-      .map(q => this.prepareTimeSeriesQuery(q, options));
+      .map(q => this.prepareTimeSeriesQuery(q, options.scopedVars))
+      .map(q => ({ ...q, intervalMs: options.intervalMs, type: 'timeSeriesQuery' }));
 
     if (queries.length > 0) {
       const { data } = await this.api.post({
@@ -309,13 +309,13 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     return query;
   }
 
-  interpolateProps(object: { [key: string]: any } = {}, scopedVars: ScopedVars = {}): { [key: string]: any } {
+  interpolateProps<T extends Record<string, any>>(object: T, scopedVars: ScopedVars = {}): T {
     return Object.entries(object).reduce((acc, [key, value]) => {
       return {
         ...acc,
         [key]: value && _.isString(value) ? this.templateSrv.replace(value, scopedVars) : value,
       };
-    }, {});
+    }, {} as T);
   }
 
   shouldRunQuery(query: CloudMonitoringQuery): boolean {
@@ -335,14 +335,12 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
 
   prepareTimeSeriesQuery(
     { metricQuery, refId, queryType, sloQuery }: CloudMonitoringQuery,
-    { scopedVars, intervalMs }: DataQueryRequest<CloudMonitoringQuery>
-  ) {
+    scopedVars: ScopedVars
+  ): CloudMonitoringQuery {
     return {
       datasourceId: this.id,
       refId,
       queryType,
-      intervalMs: intervalMs,
-      type: 'timeSeriesQuery',
       metricQuery: {
         ...this.interpolateProps(metricQuery, scopedVars),
         projectName: this.templateSrv.replace(
@@ -352,8 +350,12 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
         groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], scopedVars),
         view: metricQuery.view || 'FULL',
       },
-      sloQuery: this.interpolateProps(sloQuery, scopedVars),
+      sloQuery: sloQuery && this.interpolateProps(sloQuery, scopedVars),
     };
+  }
+
+  interpolateVariablesInQueries(queries: CloudMonitoringQuery[], scopedVars: ScopedVars): CloudMonitoringQuery[] {
+    return queries.map(query => this.prepareTimeSeriesQuery(query, scopedVars));
   }
 
   interpolateFilters(filters: string[], scopedVars: ScopedVars) {

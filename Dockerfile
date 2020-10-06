@@ -1,4 +1,4 @@
-FROM node:12.18.1-alpine3.12 as js-builder
+FROM node:12.18.3-alpine3.12 as js-builder
 
 WORKDIR /usr/src/app/
 
@@ -16,7 +16,7 @@ COPY emails emails
 ENV NODE_ENV production
 RUN ./node_modules/.bin/grunt build
 
-FROM golang:1.14.4-alpine3.12 as go-builder
+FROM golang:1.15.1-alpine3.12 as go-builder
 
 RUN apk add --no-cache gcc g++
 
@@ -50,7 +50,7 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
 WORKDIR $GF_PATHS_HOME
 
 RUN apk add --no-cache ca-certificates bash tzdata && \
-    apk add --no-cache --upgrade openssl musl-utils
+    apk add --no-cache openssl musl-utils
 
 COPY conf ./conf
 

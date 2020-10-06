@@ -2,6 +2,7 @@ import { StoreState } from '../../../types';
 import { VariableModel } from '../types';
 import { getState } from '../../../store/store';
 import { NEW_VARIABLE_ID } from './types';
+import memoizeOne from 'memoize-one';
 
 export const getVariable = <T extends VariableModel = VariableModel>(
   id: string,
@@ -42,9 +43,9 @@ export const getVariables = (state: StoreState = getState(), includeNewVariable 
   return getFilteredVariables(filter, state);
 };
 
-export const getSubMenuVariables = (state: StoreState): VariableModel[] => {
-  return getVariables(state);
-};
+export const getSubMenuVariables = memoizeOne((variables: Record<string, VariableModel>): VariableModel[] => {
+  return getVariables(getState());
+});
 
 export const getEditorVariables = (state: StoreState): VariableModel[] => {
   return getVariables(state, true);

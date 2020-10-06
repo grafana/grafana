@@ -13,7 +13,7 @@ import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
 import { Observable, from, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { serializeParams } from 'app/core/utils/fetch';
 
 export type JaegerQuery = {
@@ -21,12 +21,12 @@ export type JaegerQuery = {
 } & DataQuery;
 
 export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
-  constructor(private instanceSettings: DataSourceInstanceSettings) {
+  constructor(private instanceSettings: DataSourceInstanceSettings, private readonly timeSrv: TimeSrv = getTimeSrv()) {
     super(instanceSettings);
   }
 
   async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
-    const res = await this._request(url, params, { silent: true }).toPromise();
+    const res = await this._request(url, params, { hideFromInspector: true }).toPromise();
     return res.data.data;
   }
 
@@ -81,7 +81,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   }
 
   getTimeRange(): { start: number; end: number } {
-    const range = getTimeSrv().timeRange();
+    const range = this.timeSrv.timeRange();
     return {
       start: getTime(range.from, false),
       end: getTime(range.to, true),
