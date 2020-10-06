@@ -1,29 +1,80 @@
-import React, { useContext } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { mergeMap } from 'rxjs/operators';
 import { css } from 'emotion';
-import { Icon, JSONFormatter, ThemeContext } from '@grafana/ui';
-import { GrafanaTheme, DataFrame } from '@grafana/data';
+import { Icon, JSONFormatter, useStyles } from '@grafana/ui';
+import {
+  DataFrame,
+  DataTransformerConfig,
+  GrafanaTheme,
+  transformDataFrame,
+  TransformerRegistyItem,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import { TransformationsEditorTransformation } from './types';
+
 interface TransformationEditorProps {
-  name: string;
-  description?: string;
-  editor?: JSX.Element;
-  input: DataFrame[];
-  output?: DataFrame[];
   debugMode?: boolean;
+  index: number;
+  data: DataFrame[];
+  uiConfig: TransformerRegistyItem<any>;
+  configs: TransformationsEditorTransformation[];
+  onChange: (index: number, config: DataTransformerConfig) => void;
 }
 
-export const TransformationEditor = ({ editor, input, output, debugMode, name }: TransformationEditorProps) => {
-  const theme = useContext(ThemeContext);
-  const styles = getStyles(theme);
+export const TransformationEditor = ({
+  debugMode,
+  index,
+  data,
+  uiConfig,
+  configs,
+  onChange,
+}: TransformationEditorProps) => {
+  const styles = useStyles(getStyles);
+  const [input, setInput] = useState<DataFrame[]>([]);
+  const [output, setOutput] = useState<DataFrame[]>([]);
+  const config = useMemo(() => configs[index], [configs, index]);
+
+  useEffect(() => {
+    const inputTransforms = configs.slice(0, index).map(t => t.transformation);
+    const outputTransforms = configs.slice(index, index + 1).map(t => t.transformation);
+    const inputSubscription = transformDataFrame(inputTransforms, data).subscribe(setInput);
+    const outputSubscription = transformDataFrame(inputTransforms, data)
+      .pipe(mergeMap(before => transformDataFrame(outputTransforms, before)))
+      .subscribe(setOutput);
+
+    return function unsubscribe() {
+      inputSubscription.unsubscribe();
+      outputSubscription.unsubscribe();
+    };
+  }, [index, data, configs]);
+
+  const editor = useMemo(
+    () =>
+      React.createElement(uiConfig.editor, {
+        options: { ...uiConfig.transformation.defaultOptions, ...config.transformation.options },
+        input,
+        onChange: (opts: any) => {
+          onChange(index, { id: config.transformation.id, options: opts });
+        },
+      }),
+    [
+      uiConfig.editor,
+      uiConfig.transformation.defaultOptions,
+      config.transformation.id,
+      config.transformation.options,
+      input,
+      onChange,
+    ]
+  );
 
   return (
-    <div className={styles.editor} aria-label={selectors.components.TransformTab.transformationEditor(name)}>
+    <div className={styles.editor} aria-label={selectors.components.TransformTab.transformationEditor(uiConfig.name)}>
       {editor}
       {debugMode && (
         <div
           className={styles.debugWrapper}
-          aria-label={selectors.components.TransformTab.transformationEditorDebugger(name)}
+          aria-label={selectors.components.TransformTab.transformationEditorDebugger(uiConfig.name)}
         >
           <div className={styles.debug}>
             <div className={styles.debugTitle}>Transformation input data</div>

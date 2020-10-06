@@ -32,7 +32,7 @@ export const LegendPlugin: React.FC<LegendPluginProps> = ({ placement, displayMo
       label: getFieldDisplayName(field, data),
       isVisible: true,
       //flot vs uPlot differences
-      yAxis: (field.config.custom as GraphCustomFieldConfig).axis?.side === 1 ? 3 : 1,
+      yAxis: (field.config.custom as GraphCustomFieldConfig)?.axis?.side === 1 ? 3 : 1,
     });
     seriesIdx++;
   }

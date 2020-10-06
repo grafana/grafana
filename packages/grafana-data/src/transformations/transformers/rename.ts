@@ -2,6 +2,7 @@ import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
 import { DataFrame, Field } from '../../types/dataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
+import { map } from 'rxjs/operators';
 
 export interface RenameFieldsTransformerOptions {
   renameByName: Record<string, string>;
@@ -19,20 +20,21 @@ export const renameFieldsTransformer: DataTransformerInfo<RenameFieldsTransforme
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options: RenameFieldsTransformerOptions) => {
-    const renamer = createRenamer(options.renameByName);
+  operator: options => source =>
+    source.pipe(
+      map(data => {
+        const renamer = createRenamer(options.renameByName);
 
-    return (data: DataFrame[]) => {
-      if (!Array.isArray(data) || data.length === 0) {
-        return data;
-      }
+        if (!Array.isArray(data) || data.length === 0) {
+          return data;
+        }
 
-      return data.map(frame => ({
-        ...frame,
-        fields: renamer(frame),
-      }));
-    };
-  },
+        return data.map(frame => ({
+          ...frame,
+          fields: renamer(frame),
+        }));
+      })
+    ),
 };
 
 const createRenamer = (renameByName: Record<string, string>) => (frame: DataFrame): Field[] => {
