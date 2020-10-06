@@ -13,7 +13,6 @@ import (
 
 func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput,
 	queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
-	plog.Debug("Parsing metric data output", "queries", queries)
 	// Map from result ID -> label -> result
 	mdrs := make(map[string]map[string]*cloudwatch.MetricDataResult)
 	labels := map[string][]string{}
@@ -49,9 +48,8 @@ func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 
 	cloudWatchResponses := make([]*cloudwatchResponse, 0)
 	for id, lr := range mdrs {
-		plog.Debug("Handling metric data results", "id", id, "lr", lr)
 		query := queries[id]
-		frames, partialData, err := parseGetMetricDataTimeSeries(lr, labels[id], query)
+		frames, partialData, err := parseMetricResults(lr, labels[id], query)
 		if err != nil {
 			return nil, err
 		}
@@ -71,20 +69,17 @@ func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 	return cloudWatchResponses, nil
 }
 
-func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, labels []string,
+func parseMetricResults(results map[string]*cloudwatch.MetricDataResult, labels []string,
 	query *cloudWatchQuery) (data.Frames, bool, error) {
-	plog.Debug("Parsing metric data results", "results", metricDataResults)
 	partialData := false
 	frames := data.Frames{}
 	for _, label := range labels {
-		metricDataResult := metricDataResults[label]
-		plog.Debug("Processing metric data result", "label", label, "statusCode", metricDataResult.StatusCode)
-		if *metricDataResult.StatusCode != "Complete" {
-			plog.Debug("Handling a partial result")
+		result := results[label]
+		if *result.StatusCode != "Complete" {
 			partialData = true
 		}
 
-		for _, message := range metricDataResult.Messages {
+		for _, message := range result.Messages {
 			if *message.Code == "ArithmeticError" {
 				return nil, false, fmt.Errorf("ArithmeticError in query %q: %s", query.RefId, *message.Value)
 			}
@@ -92,7 +87,7 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 
 		// In case a multi-valued dimension is used and the cloudwatch query yields no values, create one empty time
 		// series for each dimension value. Use that dimension value to expand the alias field
-		if len(metricDataResult.Values) == 0 && query.isMultiValuedDimensionExpression() {
+		if len(result.Values) == 0 && query.isMultiValuedDimensionExpression() {
 			series := 0
 			multiValuedDimension := ""
 			for key, values := range query.Dimensions {
@@ -136,18 +131,14 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 
 			tags := data.Labels{}
 			for _, dim := range dims {
-				plog.Debug("Handling dimension", "dimension", dim)
 				values := query.Dimensions[dim]
 				if len(values) == 1 && values[0] != "*" {
-					plog.Debug("Got a tag value", "tag", dim, "value", values[0])
 					tags[dim] = values[0]
 				} else {
 					for _, value := range values {
 						if value == label || value == "*" {
-							plog.Debug("Got a tag value", "tag", dim, "value", value, "label", label)
 							tags[dim] = label
 						} else if strings.Contains(label, value) {
-							plog.Debug("Got a tag value", "tag", dim, "value", value, "label", label)
 							tags[dim] = value
 						}
 					}
@@ -156,16 +147,15 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 
 			timestamps := []*time.Time{}
 			points := []*float64{}
-			for j, t := range metricDataResult.Timestamps {
+			for j, t := range result.Timestamps {
 				if j > 0 {
-					expectedTimestamp := metricDataResult.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
+					expectedTimestamp := result.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
 					if expectedTimestamp.Before(*t) {
 						timestamps = append(timestamps, &expectedTimestamp)
 						points = append(points, nil)
 					}
 				}
-				val := metricDataResult.Values[j]
-				plog.Debug("Handling timestamp", "timestamp", t, "value", *val)
+				val := result.Values[j]
 				timestamps = append(timestamps, t)
 				points = append(points, val)
 			}
