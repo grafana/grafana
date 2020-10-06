@@ -29,6 +29,7 @@ import PrometheusMetricFindQuery from './metric_find_query';
 import { getQueryHints } from './query_hints';
 import { getOriginalMetricName, renderTemplate, transform } from './result_transformer';
 import {
+  ExemplarTraceIDDestination,
   isFetchErrorResponse,
   PromDataErrorResponse,
   PromDataSuccessResponse,
@@ -56,6 +57,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   queryTimeout: string;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
+  exemplarTraceIDDestination: ExemplarTraceIDDestination | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: any;
 
@@ -75,6 +77,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.directUrl = instanceSettings.jsonData.directUrl;
+    this.exemplarTraceIDDestination = instanceSettings.jsonData.exemplarTraceIDDestination;
     this.ruleMappings = {};
     this.languageProvider = new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
@@ -249,7 +252,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         tap(() => runningQueriesCount--),
         filter((response: any) => (response.cancelled ? false : true)),
         map((response: any) => {
-          const data = transform(response, { query, target, responseListLength: queries.length, mixedQueries });
+          const data = transform(response, {
+            query,
+            target,
+            responseListLength: queries.length,
+            mixedQueries,
+            exemplarTraceIDDestination: this.exemplarTraceIDDestination,
+          });
           return {
             data,
             key: query.requestId,
@@ -285,7 +294,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       const filterAndMapResponse = pipe(
         filter((response: any) => (response.cancelled ? false : true)),
         map((response: any) => {
-          const data = transform(response, { query, target, responseListLength: queries.length, scopedVars });
+          const data = transform(response, {
+            query,
+            target,
+            responseListLength: queries.length,
+            scopedVars,
+            exemplarTraceIDDestination: this.exemplarTraceIDDestination,
+          });
           return data;
         })
       );

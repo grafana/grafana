@@ -24,7 +24,13 @@ export interface PromOptions extends DataSourceJsonData {
   directUrl: string;
   customQueryParameters?: string;
   disableMetricsLookup?: boolean;
+  exemplarTraceIDDestination?: ExemplarTraceIDDestination;
 }
+
+export type ExemplarTraceIDDestination = {
+  name: string;
+  url: string;
+};
 
 export interface PromQueryRequest extends PromQuery {
   step?: number;
@@ -59,6 +65,7 @@ export interface PromDataErrorResponse<T = PromData> {
 export type PromData = PromMatrixData | PromVectorData | PromScalarData | PromExemplarData[] | null;
 
 export interface Labels {
+  [index: string]: any;
   traceID: string;
 }
 
