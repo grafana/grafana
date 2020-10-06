@@ -89,7 +89,7 @@ Grafana can sometime be too aggressive in parsing strings and displaying them as
 
 ## Color
 
-> Only available in Grafana 7.3+
+> **Note:** Only available in Grafana 7.3+.
 
 The field color option defines how Grafana should color series or fields. There are multiple modes here that work very differently and their utility depend largly on what visualization you currenly have selected.
 
