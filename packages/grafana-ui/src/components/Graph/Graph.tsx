@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 import uniqBy from 'lodash/uniqBy';
 // Types
 import { TimeRange, GraphSeriesXY, TimeZone, createDimension } from '@grafana/data';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
 import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '../Chart/Tooltip';
 import { GraphTooltip } from './GraphTooltip/GraphTooltip';

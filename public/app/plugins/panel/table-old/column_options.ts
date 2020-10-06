@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { getValueFormats } from '@grafana/data';
 
 export class ColumnOptionsCtrl {

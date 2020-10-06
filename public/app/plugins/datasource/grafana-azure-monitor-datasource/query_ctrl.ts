@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 // import './css/query_editor.css';
 import TimegrainConverter from './time_grain_converter';

@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { textUtil } from '@grafana/data';
 

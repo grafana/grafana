@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { AnyAction } from 'redux';
 import { PayloadAction } from '@reduxjs/toolkit';
 import {

@@ -1,5 +1,5 @@
 // Libaries
-import * as _ from 'lodash';
+import _ from 'lodash';
 // Constants
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';

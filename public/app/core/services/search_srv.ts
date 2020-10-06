@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 
 import impressionSrv from 'app/core/services/impression_srv';
 import store from 'app/core/store';

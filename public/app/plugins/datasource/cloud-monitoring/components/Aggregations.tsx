@@ -1,5 +1,5 @@
 import React, { FC, useState, useMemo } from 'react';
-import * as _ from 'lodash';
+import _ from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
 import { Segment, Icon } from '@grafana/ui';

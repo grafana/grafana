@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { PanelCtrl } from 'app/plugins/sdk';
 import impressionSrv from 'app/core/services/impression_srv';
 import { auto, IScope } from 'angular';

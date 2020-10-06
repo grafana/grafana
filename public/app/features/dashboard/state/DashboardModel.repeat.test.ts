@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { expect } from 'test/lib/common';
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';

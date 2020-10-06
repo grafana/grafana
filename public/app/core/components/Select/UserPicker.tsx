@@ -1,6 +1,6 @@
 // Libraries
 import React, { Component } from 'react';
-import * as _ from 'lodash';
+import _ from 'lodash';
 
 // Components
 import { AsyncSelect } from '@grafana/ui';

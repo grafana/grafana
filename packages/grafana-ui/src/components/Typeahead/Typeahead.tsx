@@ -1,6 +1,6 @@
 import React, { createRef } from 'react';
 import ReactDOM from 'react-dom';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { FixedSizeList } from 'react-window';
 
 import { TypeaheadInfo } from './TypeaheadInfo';

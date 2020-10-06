@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { PanelCtrl } from '../../../features/panel/panel_ctrl';
 import { auto, IScope } from 'angular';
 import { ContextSrv } from '../../../core/services/context_srv';

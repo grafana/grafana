@@ -1,6 +1,6 @@
 import angular from 'angular';
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
-import * as _ from 'lodash';
+import _ from 'lodash';
 import $ from 'jquery';
 import kbn from 'app/core/utils/kbn';
 import { AppEvents, dateMath, UrlQueryValue } from '@grafana/data';

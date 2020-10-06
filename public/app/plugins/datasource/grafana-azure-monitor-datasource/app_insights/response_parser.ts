@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { dateTime } from '@grafana/data';
 
 export default class ResponseParser {

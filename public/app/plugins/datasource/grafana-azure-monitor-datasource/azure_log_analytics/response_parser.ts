@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { AnnotationEvent, dateTime, TimeSeries } from '@grafana/data';
 import {
   AzureLogsTableData,

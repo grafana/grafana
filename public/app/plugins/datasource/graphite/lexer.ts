@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 
 // This is auto generated from the unicode tables.
 // The tables are at:

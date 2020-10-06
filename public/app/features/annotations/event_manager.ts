@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import tinycolor from 'tinycolor2';
 import {
   OK_COLOR,

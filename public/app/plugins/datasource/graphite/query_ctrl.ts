@@ -1,7 +1,7 @@
 import './add_graphite_func';
 import './func_editor';
 
-import * as _ from 'lodash';
+import _ from 'lodash';
 import GraphiteQuery from './graphite_query';
 import { QueryCtrl } from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';

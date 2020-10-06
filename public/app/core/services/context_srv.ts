@@ -1,5 +1,5 @@
 import config from '../../core/config';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { rangeUtil } from '@grafana/data';
 

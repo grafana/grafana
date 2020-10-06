@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 
 export default function sortByKeys(input: any): any {
   if (_.isArray(input)) {

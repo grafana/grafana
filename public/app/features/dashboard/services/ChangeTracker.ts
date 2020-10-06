@@ -1,5 +1,5 @@
 import angular, { ILocationService, IRootScopeService } from 'angular';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';

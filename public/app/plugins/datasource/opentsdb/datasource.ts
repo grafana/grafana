@@ -1,5 +1,5 @@
 import angular from 'angular';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { dateMath, DataQueryRequest, DataSourceApi, ScopedVars } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';

@@ -1,5 +1,5 @@
 // Libraries
-import * as _ from 'lodash';
+import _ from 'lodash';
 import LRU from 'lru-cache';
 
 // Services & Utils

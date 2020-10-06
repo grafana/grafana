@@ -1,5 +1,5 @@
 import { GraphiteDatasource } from '../datasource';
-import * as _ from 'lodash';
+import _ from 'lodash';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { dateTime, getFrameDisplayName } from '@grafana/data';

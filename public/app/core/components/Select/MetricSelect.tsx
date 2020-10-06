@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback, FC } from 'react';
-import * as _ from 'lodash';
+import _ from 'lodash';
 
 import { LegacyForms } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';

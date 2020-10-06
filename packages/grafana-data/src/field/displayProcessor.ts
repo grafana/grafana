@@ -1,5 +1,5 @@
 // Libraries
-import * as _ from 'lodash';
+import _ from 'lodash';
 
 // Types
 import { Field, FieldType } from '../types/dataFrame';

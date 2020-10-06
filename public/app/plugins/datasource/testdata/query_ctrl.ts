@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { IScope } from 'angular';
 import { getBackendSrv } from '@grafana/runtime';
 import { dateMath, dateTime } from '@grafana/data';

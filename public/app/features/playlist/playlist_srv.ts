@@ -1,5 +1,5 @@
 // Libraries
-import * as _ from 'lodash';
+import _ from 'lodash';
 
 // Utils
 import coreModule from '../../core/core_module';

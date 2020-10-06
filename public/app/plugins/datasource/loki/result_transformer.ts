@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import md5 from 'md5';
 import { of } from 'rxjs';
 

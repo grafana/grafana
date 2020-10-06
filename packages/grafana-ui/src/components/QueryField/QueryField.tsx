@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import React, { Context } from 'react';
 
 import { Value, Editor as CoreEditor } from 'slate';

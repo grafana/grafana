@@ -1,5 +1,5 @@
 import 'vendor/flot/jquery.flot';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { GrafanaThemeType, getColorFromHexRgbOrName, dateTime, DateTime, AbsoluteTimeRange } from '@grafana/data';
 
 type TimeRegionColorDefinition = {

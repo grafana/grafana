@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { AnnotationQuery } from './types';
 
 export class CloudWatchAnnotationsQueryCtrl {

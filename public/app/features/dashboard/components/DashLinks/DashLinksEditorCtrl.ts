@@ -1,5 +1,5 @@
 import angular from 'angular';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';

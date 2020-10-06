@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { QueryPartDef, QueryPart } from 'app/core/components/query_part/query_part';
 
 const alertQueryDef = new QueryPartDef({

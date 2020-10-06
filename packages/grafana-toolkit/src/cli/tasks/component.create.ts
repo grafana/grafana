@@ -1,6 +1,6 @@
 import { Task, TaskRunner } from './task';
 import fs from 'fs';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { prompt } from 'inquirer';
 import { pascalCase } from '../utils/pascalCase';
 import { promptConfirm, promptInput, promptList } from '../utils/prompt';

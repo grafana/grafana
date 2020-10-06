@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import TopSectionItem from './TopSectionItem';
 import config from '../../config';
 import { getLocationSrv } from '@grafana/runtime';

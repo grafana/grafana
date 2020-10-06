@@ -1,6 +1,6 @@
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { NavModel } from '@grafana/data';
 
 export class NavModelSrv {

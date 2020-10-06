@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import TableModel from 'app/core/table_model';
 import { TableRenderer } from '../renderer';
 import { getColorDefinitionByName, ScopedVars, TimeZone } from '@grafana/data';

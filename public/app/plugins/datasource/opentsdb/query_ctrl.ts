@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
 import { textUtil, rangeUtil } from '@grafana/data';

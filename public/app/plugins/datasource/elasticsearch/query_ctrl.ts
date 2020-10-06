@@ -3,7 +3,7 @@ import './metric_agg';
 import './pipeline_variables';
 
 import angular, { auto } from 'angular';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import * as queryDef from './query_def';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { ElasticsearchAggregation } from './types';

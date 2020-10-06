@@ -1,5 +1,5 @@
 import { IScope } from 'angular';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 

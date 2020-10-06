@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import $ from 'jquery';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { getValueBucketBound } from './heatmap_data_converter';
 import { getValueFormat, formattedValueToString } from '@grafana/data';
 

@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { alignOptions, aggOptions, ValueTypes, MetricKind, systemLabels } from './constants';
 import { SelectableValue } from '@grafana/data';
 import CloudMonitoringDatasource from './datasource';

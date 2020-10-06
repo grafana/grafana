@@ -1,5 +1,5 @@
 import angular, { auto } from 'angular';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { InfluxQueryBuilder } from './query_builder';
 import InfluxQueryModel from './influx_query_model';
 import queryPart from './query_part';

@@ -25,7 +25,7 @@ import $ from 'jquery';
 import angular from 'angular';
 import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
-import * as _ from 'lodash';
+import _ from 'lodash';
 import {
   AppEvents,
   setLocale,

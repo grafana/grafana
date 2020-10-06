@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 

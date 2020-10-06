@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { colors } from '@grafana/ui';
 import {
   getColorFromHexRgbOrName,

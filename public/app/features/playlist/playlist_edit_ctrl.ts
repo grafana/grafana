@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import coreModule from '../../core/core_module';
 import { ILocationService, IScope } from 'angular';
 import { getBackendSrv } from '@grafana/runtime';

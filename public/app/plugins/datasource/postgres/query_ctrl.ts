@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import appEvents from 'app/core/app_events';
 import { PostgresMetaQuery } from './meta_query';
 import { QueryCtrl } from 'app/plugins/sdk';

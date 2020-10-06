@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import ResponseParser from './response_parser';
 import { getBackendSrv } from '@grafana/runtime';
 import { ScopedVars } from '@grafana/data';

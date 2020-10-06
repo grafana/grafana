@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { QueryHint, QueryFix } from '@grafana/data';
 import { PrometheusDatasource } from './datasource';
 

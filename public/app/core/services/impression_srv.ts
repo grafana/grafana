@@ -1,5 +1,5 @@
 import store from 'app/core/store';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import config from 'app/core/config';
 
 export class ImpressionSrv {

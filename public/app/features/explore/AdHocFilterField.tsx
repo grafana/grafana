@@ -1,5 +1,5 @@
 import React from 'react';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { DataSourceApi, DataQuery, DataSourceJsonData } from '@grafana/data';
 import { Icon } from '@grafana/ui';
 import { AdHocFilter } from './AdHocFilter';

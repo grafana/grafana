@@ -1,5 +1,5 @@
 import angular from 'angular';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import './link_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 

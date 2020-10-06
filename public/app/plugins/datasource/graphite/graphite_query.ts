@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { Parser } from './parser';
 import { TemplateSrv } from '@grafana/runtime';
 import { ScopedVars } from '@grafana/data';

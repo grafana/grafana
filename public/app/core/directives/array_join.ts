@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 import coreModule from '../core_module';
 
 export function arrayJoin() {

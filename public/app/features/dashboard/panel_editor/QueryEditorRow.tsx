@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import * as _ from 'lodash';
+import _ from 'lodash';
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
