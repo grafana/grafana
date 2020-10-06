@@ -66,7 +66,6 @@ type HTTPServer struct {
 	RemoteCacheService   *remotecache.RemoteCache         `inject:""`
 	ProvisioningService  provisioning.ProvisioningService `inject:""`
 	Login                *login.LoginService              `inject:""`
-	SingleLogout         models.SAMLSingleLogout          `inject:""`
 	License              models.Licensing                 `inject:""`
 	BackendPluginManager backendplugin.Manager            `inject:""`
 	PluginManager        *plugins.PluginManager           `inject:""`
