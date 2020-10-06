@@ -208,7 +208,7 @@ export function isPipelineAggWithMultipleBucketPaths(metricType: any) {
   return false;
 }
 
-export function getAancestors(target: ElasticsearchQuery, metric?: ElasticsearchAggregation) {
+export function getAncestors(target: ElasticsearchQuery, metric?: ElasticsearchAggregation) {
   const { metrics } = target;
   if (!metrics) {
     return (metric && [metric.id]) || [];
