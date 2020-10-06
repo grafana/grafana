@@ -69,9 +69,6 @@ func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
 		if err != nil {
 			return nil, err
 		}
-		// re-wrap body with a io.ReadCloser for subsequent closure
-		req.Body = ioutil.NopCloser(bytes.NewReader(body))
-
 		return signer.Sign(req, bytes.NewReader(body), "grafana", m.Config.Region, time.Now().UTC())
 	}
 	return signer.Sign(req, nil, "grafana", m.Config.Region, time.Now().UTC())
