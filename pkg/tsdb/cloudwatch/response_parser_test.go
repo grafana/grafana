@@ -60,7 +60,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Period: 60,
 			Alias:  "{{LoadBalancer}} Expanded",
 		}
-		frames, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+		frames, partialData, err := parseMetricResults(mdrs, labels, query)
 		require.NoError(t, err)
 
 		frame1 := frames[0]
@@ -122,7 +122,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Period: 60,
 			Alias:  "{{LoadBalancer}} Expanded",
 		}
-		frames, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+		frames, partialData, err := parseMetricResults(mdrs, labels, query)
 		require.NoError(t, err)
 
 		frame1 := frames[0]
@@ -184,7 +184,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Period: 60,
 			Alias:  "{{LoadBalancer}} Expanded",
 		}
-		frames, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+		frames, partialData, err := parseMetricResults(mdrs, labels, query)
 		require.NoError(t, err)
 
 		assert.False(t, partialData)
@@ -221,7 +221,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Period: 60,
 			Alias:  "{{LoadBalancer}} Expanded",
 		}
-		frames, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+		frames, partialData, err := parseMetricResults(mdrs, labels, query)
 		require.NoError(t, err)
 
 		assert.False(t, partialData)
@@ -261,7 +261,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Period: 60,
 			Alias:  "{{LoadBalancer}} Expanded {{InstanceType}} - {{Resource}}",
 		}
-		frames, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+		frames, partialData, err := parseMetricResults(mdrs, labels, query)
 		require.NoError(t, err)
 
 		assert.False(t, partialData)
@@ -304,7 +304,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Period: 60,
 			Alias:  "{{namespace}}_{{metric}}_{{stat}}",
 		}
-		frames, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+		frames, partialData, err := parseMetricResults(mdrs, labels, query)
 		require.NoError(t, err)
 
 		frame := frames[0]
