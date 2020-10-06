@@ -24,7 +24,7 @@ export function getActiveThresholdForValue(field: Field, value: number, percent:
   const { thresholds } = field.config;
 
   if (thresholds?.mode === ThresholdsMode.Percentage) {
-    return getActiveThreshold(percent * 100 * value, thresholds?.steps);
+    return getActiveThreshold(percent * 100, thresholds?.steps);
   }
 
   return getActiveThreshold(value, thresholds?.steps);

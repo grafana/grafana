@@ -52,7 +52,7 @@ describe('thresholds', () => {
       values: new ArrayVector([]),
     };
     validateFieldConfig(field.config!);
-    return getActiveThresholdForValue(field, 0, percent);
+    return getActiveThresholdForValue(field, value, percent);
   }
 
   describe('Get color from threshold', () => {
@@ -63,31 +63,31 @@ describe('thresholds', () => {
 
     it('should get the threshold color if value is same as a threshold', () => {
       const thresholds = [
-        { index: 2, value: 75, color: '#6ED0E0' },
-        { index: 1, value: 50, color: '#EAB839' },
         { index: 0, value: -Infinity, color: '#7EB26D' },
+        { index: 1, value: 50, color: '#EAB839' },
+        { index: 2, value: 75, color: '#6ED0E0' },
       ];
       expect(getThreshold(50, thresholds, ThresholdsMode.Absolute)).toEqual(thresholds[1]);
     });
 
     it('should get the nearest threshold color between thresholds', () => {
       const thresholds = [
-        { index: 2, value: 75, color: '#6ED0E0' },
-        { index: 1, value: 50, color: '#EAB839' },
         { index: 0, value: -Infinity, color: '#7EB26D' },
+        { index: 1, value: 50, color: '#EAB839' },
+        { index: 2, value: 75, color: '#6ED0E0' },
       ];
       expect(getThreshold(55, thresholds, ThresholdsMode.Absolute)).toEqual(thresholds[1]);
     });
 
     it('should be able to get percent based threshold', () => {
       const thresholds = [
-        { index: 2, value: 75, color: '#6ED0E0' },
+        { index: 0, value: 0, color: '#7EB26D' },
         { index: 1, value: 50, color: '#EAB839' },
-        { index: 0, value: -Infinity, color: '#7EB26D' },
+        { index: 2, value: 75, color: '#6ED0E0' },
       ];
-      expect(getThreshold(55, thresholds, ThresholdsMode.Percentage, 0.9)).toEqual(thresholds[0]);
+      expect(getThreshold(55, thresholds, ThresholdsMode.Percentage, 0.9)).toEqual(thresholds[2]);
       expect(getThreshold(55, thresholds, ThresholdsMode.Percentage, 0.5)).toEqual(thresholds[1]);
-      expect(getThreshold(55, thresholds, ThresholdsMode.Percentage, 0.2)).toEqual(thresholds[2]);
+      expect(getThreshold(55, thresholds, ThresholdsMode.Percentage, 0.2)).toEqual(thresholds[0]);
     });
   });
 });
