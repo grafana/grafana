@@ -15,6 +15,8 @@ import {
 import { FetchResponse } from '@grafana/runtime';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 import {
+  Exemplar,
+  ExemplarTraceIDDestination,
   isExemplarData,
   isMatrixData,
   MatrixOrVectorResult,
@@ -30,6 +32,7 @@ export function transform(
   response: FetchResponse<PromDataSuccessResponse>,
   transformOptions: {
     query: PromQueryRequest;
+    exemplarTraceIDDestination?: ExemplarTraceIDDestination;
     target: PromQuery;
     responseListLength: number;
     scopedVars?: ScopedVars;
@@ -67,8 +70,8 @@ export function transform(
       const data = exemplarData.exemplars.map(exemplar => {
         return {
           time: exemplar.timestamp,
-          text: exemplar.labels.traceID,
-        };
+          text: getText(exemplar, transformOptions.exemplarTraceIDDestination),
+        } as AnnotationEvent;
       });
       events.push(...data);
     });
@@ -112,6 +115,16 @@ export function transform(
 
   // Return matrix or vector result as DataFrame[]
   return dataFrame;
+}
+
+function getText(exemplar: Exemplar, exemplarTraceIDDestination?: ExemplarTraceIDDestination) {
+  let traceID = exemplar.labels.traceID;
+  if (exemplarTraceIDDestination) {
+    traceID = exemplar.labels[exemplarTraceIDDestination.name];
+    const href = exemplarTraceIDDestination.url.replace('${value}', traceID);
+    return `<a href="${href}" rel="noopener" target="_blank">Go to ${traceID}</a>`;
+  }
+  return traceID;
 }
 
 function getPreferredVisualisationType(isInstantQuery?: boolean, mixedQueries?: boolean) {

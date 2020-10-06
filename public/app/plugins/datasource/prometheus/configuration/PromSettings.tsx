@@ -1,12 +1,13 @@
-import React, { SyntheticEvent } from 'react';
-import { EventsWithValidation, InlineFormLabel, regexValidation, LegacyForms } from '@grafana/ui';
-const { Select, Input, FormField, Switch } = LegacyForms;
 import {
-  SelectableValue,
-  onUpdateDatasourceJsonDataOptionChecked,
   DataSourcePluginOptionsEditorProps,
+  onUpdateDatasourceJsonDataOptionChecked,
+  SelectableValue,
 } from '@grafana/data';
+import { Button, EventsWithValidation, InlineFormLabel, LegacyForms, regexValidation } from '@grafana/ui';
+import { css } from 'emotion';
+import React, { SyntheticEvent } from 'react';
 import { PromOptions } from '../types';
+const { Select, Input, FormField, Switch } = LegacyForms;
 
 const httpOptions = [
   { value: 'GET', label: 'GET' },
@@ -104,6 +105,86 @@ export const PromSettings = (props: Props) => {
           </div>
         </div>
       </div>
+      <h3 className="page-heading">Exemplar TraceID Destination</h3>
+      {options.jsonData.exemplarTraceIDDestination ? (
+        <div className="gf-form-group">
+          <div className="gf-form-inline">
+            <div className="gf-form max-width-30">
+              <FormField
+                label="Label name"
+                tooltip="The name of the field in the labels object that should be used to get the traceID."
+                labelWidth={14}
+                inputEl={
+                  <Input
+                    className="width-25"
+                    value={options.jsonData.exemplarTraceIDDestination.name}
+                    onChange={value => {
+                      onOptionsChange({
+                        ...options,
+                        jsonData: {
+                          ...options.jsonData,
+                          exemplarTraceIDDestination: {
+                            url: options.jsonData.exemplarTraceIDDestination?.url ?? '',
+                            name: value.currentTarget.value,
+                          },
+                        },
+                      });
+                    }}
+                    spellCheck={false}
+                    placeholder="traceID"
+                  />
+                }
+              />
+            </div>
+          </div>
+          <div className="gf-form-inline">
+            <div className="gf-form max-width-30">
+              <FormField
+                label="URL"
+                tooltip="The URL of the trace backend the user would go to see its trace."
+                labelWidth={14}
+                inputEl={
+                  <Input
+                    className="width-25"
+                    value={options.jsonData.exemplarTraceIDDestination.url}
+                    onChange={value => {
+                      onOptionsChange({
+                        ...options,
+                        jsonData: {
+                          ...options.jsonData,
+                          exemplarTraceIDDestination: {
+                            name: options.jsonData.exemplarTraceIDDestination?.name ?? '',
+                            url: value.currentTarget.value,
+                          },
+                        },
+                      });
+                    }}
+                    spellCheck={false}
+                    placeholder="http://example.com/${value}"
+                  />
+                }
+              />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <Button
+          variant="secondary"
+          className={css`
+            margin-right: 10px;
+          `}
+          icon="plus"
+          onClick={event => {
+            event.preventDefault();
+            onOptionsChange({
+              ...options,
+              jsonData: { ...options.jsonData, exemplarTraceIDDestination: { name: '', url: '' } },
+            });
+          }}
+        >
+          Add
+        </Button>
+      )}
     </>
   );
 };
