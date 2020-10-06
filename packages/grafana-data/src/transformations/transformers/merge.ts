@@ -1,3 +1,5 @@
+import { map } from 'rxjs/operators';
+
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
 import { DataFrame, Field } from '../../types/dataFrame';
@@ -17,97 +19,98 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
   name: 'Merge series/tables',
   description: 'Merges multiple series/tables into a single serie/table',
   defaultOptions: {},
-  transformer: (options: MergeTransformerOptions) => {
-    return (dataFrames: DataFrame[]) => {
-      if (!Array.isArray(dataFrames) || dataFrames.length === 0) {
-        return dataFrames;
-      }
-
-      const data = dataFrames.filter(frame => frame.fields.length > 0);
-
-      if (data.length === 0) {
-        return [dataFrames[0]];
-      }
-
-      const fieldNames = new Set<string>();
-      const fieldIndexByName: Record<string, Record<number, number>> = {};
-      const fieldNamesForKey: string[] = [];
-      const dataFrame = new MutableDataFrame();
-
-      for (let frameIndex = 0; frameIndex < data.length; frameIndex++) {
-        const frame = data[frameIndex];
-
-        for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
-          const field = frame.fields[fieldIndex];
-
-          if (!fieldNames.has(field.name)) {
-            dataFrame.addField(copyFieldStructure(field));
-            fieldNames.add(field.name);
-          }
-
-          fieldIndexByName[field.name] = fieldIndexByName[field.name] || {};
-          fieldIndexByName[field.name][frameIndex] = fieldIndex;
-
-          if (data.length - 1 !== frameIndex) {
-            continue;
-          }
-
-          if (fieldExistsInAllFrames(fieldIndexByName, field, data)) {
-            fieldNamesForKey.push(field.name);
-          }
+  operator: options => source =>
+    source.pipe(
+      map(dataFrames => {
+        if (!Array.isArray(dataFrames) || dataFrames.length === 0) {
+          return dataFrames;
         }
-      }
 
-      if (fieldNamesForKey.length === 0) {
-        return dataFrames;
-      }
+        const data = dataFrames.filter(frame => frame.fields.length > 0);
 
-      const valuesByKey: Record<string, Array<Record<string, any>>> = {};
-      const valuesInOrder: ValuePointer[] = [];
-      const keyFactory = createKeyFactory(data, fieldIndexByName, fieldNamesForKey);
-      const valueMapper = createValueMapper(data, fieldNames, fieldIndexByName);
+        if (data.length === 0) {
+          return [dataFrames[0]];
+        }
 
-      for (let frameIndex = 0; frameIndex < data.length; frameIndex++) {
-        const frame = data[frameIndex];
+        const fieldNames = new Set<string>();
+        const fieldIndexByName: Record<string, Record<number, number>> = {};
+        const fieldNamesForKey: string[] = [];
+        const dataFrame = new MutableDataFrame();
 
-        for (let valueIndex = 0; valueIndex < frame.length; valueIndex++) {
-          const key = keyFactory(frameIndex, valueIndex);
-          const value = valueMapper(frameIndex, valueIndex);
+        for (let frameIndex = 0; frameIndex < data.length; frameIndex++) {
+          const frame = data[frameIndex];
 
-          if (!Array.isArray(valuesByKey[key])) {
-            valuesByKey[key] = [value];
-            valuesInOrder.push(createPointer(key, valuesByKey));
-            continue;
-          }
+          for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
+            const field = frame.fields[fieldIndex];
 
-          let valueWasMerged = false;
-
-          valuesByKey[key] = valuesByKey[key].map(existing => {
-            if (!isMergable(existing, value)) {
-              return existing;
+            if (!fieldNames.has(field.name)) {
+              dataFrame.addField(copyFieldStructure(field));
+              fieldNames.add(field.name);
             }
-            valueWasMerged = true;
-            return { ...existing, ...value };
-          });
 
-          if (!valueWasMerged) {
-            valuesByKey[key].push(value);
-            valuesInOrder.push(createPointer(key, valuesByKey));
+            fieldIndexByName[field.name] = fieldIndexByName[field.name] || {};
+            fieldIndexByName[field.name][frameIndex] = fieldIndex;
+
+            if (data.length - 1 !== frameIndex) {
+              continue;
+            }
+
+            if (fieldExistsInAllFrames(fieldIndexByName, field, data)) {
+              fieldNamesForKey.push(field.name);
+            }
           }
         }
-      }
 
-      for (const pointer of valuesInOrder) {
-        const value = valuesByKey[pointer.key][pointer.index];
-
-        if (value) {
-          dataFrame.add(value, false);
+        if (fieldNamesForKey.length === 0) {
+          return dataFrames;
         }
-      }
 
-      return [dataFrame];
-    };
-  },
+        const valuesByKey: Record<string, Array<Record<string, any>>> = {};
+        const valuesInOrder: ValuePointer[] = [];
+        const keyFactory = createKeyFactory(data, fieldIndexByName, fieldNamesForKey);
+        const valueMapper = createValueMapper(data, fieldNames, fieldIndexByName);
+
+        for (let frameIndex = 0; frameIndex < data.length; frameIndex++) {
+          const frame = data[frameIndex];
+
+          for (let valueIndex = 0; valueIndex < frame.length; valueIndex++) {
+            const key = keyFactory(frameIndex, valueIndex);
+            const value = valueMapper(frameIndex, valueIndex);
+
+            if (!Array.isArray(valuesByKey[key])) {
+              valuesByKey[key] = [value];
+              valuesInOrder.push(createPointer(key, valuesByKey));
+              continue;
+            }
+
+            let valueWasMerged = false;
+
+            valuesByKey[key] = valuesByKey[key].map(existing => {
+              if (!isMergable(existing, value)) {
+                return existing;
+              }
+              valueWasMerged = true;
+              return { ...existing, ...value };
+            });
+
+            if (!valueWasMerged) {
+              valuesByKey[key].push(value);
+              valuesInOrder.push(createPointer(key, valuesByKey));
+            }
+          }
+        }
+
+        for (const pointer of valuesInOrder) {
+          const value = valuesByKey[pointer.key][pointer.index];
+
+          if (value) {
+            dataFrame.add(value, false);
+          }
+        }
+
+        return [dataFrame];
+      })
+    ),
 };
 
 const copyFieldStructure = (field: Field): Field => {
