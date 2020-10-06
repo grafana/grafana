@@ -395,7 +395,7 @@ Interval between keep-alive probes. Default is `30` seconds. For more details ch
 
 ### tls_handshake_timeout_seconds
 
-The length of time that Grafana will wait for a succussful TLS handshake with the datasource. Default is `10` seconds. For more details check the [Transport.TLSHandshakeTimeout](https://golang.org/pkg/net/http/#Transport.TLSHandshakeTimeout) documentation.
+The length of time that Grafana will wait for a successful TLS handshake with the datasource. Default is `10` seconds. For more details check the [Transport.TLSHandshakeTimeout](https://golang.org/pkg/net/http/#Transport.TLSHandshakeTimeout) documentation.
 
 ### expect_continue_timeout_seconds
 
