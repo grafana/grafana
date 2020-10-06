@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
 const { Select, Input } = LegacyForms;
 import {
+  AppEvents,
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceResetOption,
@@ -13,6 +14,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
+import { appEvents } from 'app/core/core';
 
 const authProviderOptions = [
   { label: 'AWS SDK Default', value: 'default' },
@@ -44,6 +46,22 @@ export class ConfigEditor extends PureComponent<Props, State> {
         console.warn('Cloud Watch ConfigEditor has unmounted, intialization was canceled');
       }
     });
+
+    if (this.props.options.jsonData.authType === 'arn') {
+      appEvents.emit(AppEvents.alertWarning, [
+        'Since grafana 7.3 authentication type "arn" is deprecated, falling back to default SDK provider',
+      ]);
+    } else if (
+      this.props.options.jsonData.authType === 'credentials' &&
+      !this.props.options.jsonData.profile &&
+      !this.props.options.jsonData.database
+    ) {
+      appEvents.emit(AppEvents.alertWarning, [
+        'Since grafana 7.3 authentication type "credentials" should be used only for shared file credentials. \
+         If you don\'t have a credentials file, switch to default SDK provider for extracting credentials \
+         from environment variables or IAM roles',
+      ]);
+    }
   }
 
   componentWillUnmount() {
