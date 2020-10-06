@@ -1,4 +1,11 @@
-import { Transports, Event, init as origSentryInit, BrowserOptions } from '@sentry/react';
+import {
+  Transports,
+  Event,
+  init as origSentryInit,
+  BrowserOptions,
+  captureException,
+  captureMessage,
+} from '@sentry/browser';
 import { logger, parseRetryAfterHeader, supportsReferrerPolicy, SyncPromise } from '@sentry/utils';
 import { Response, Status } from '@sentry/types';
 import config from 'app/core/config';
@@ -7,6 +14,14 @@ import config from 'app/core/config';
  * This is a copy of sentry's FetchTransport, edited to be able to push to any custom url
  * instead of using Sentry-specific endpoint logic
  */
+
+function makeTimestamp(time: number | undefined): string {
+  if (time) {
+    return new Date(time * 1000).toISOString();
+  }
+  return new Date().toISOString();
+}
+
 export class CustomFetchTransport extends Transports.BaseTransport {
   /** Locks transport after receiving 429 response */
   private _disabledUntil: Date = new Date(Date.now());
@@ -21,12 +36,22 @@ export class CustomFetchTransport extends Transports.BaseTransport {
     }
 
     const sentryReq = {
-      body: JSON.stringify(event),
+      body: JSON.stringify({
+        ...event,
+        breadcrumbs: event.breadcrumbs?.map(breadcrumb => ({
+          ...breadcrumb,
+          timestamp: makeTimestamp(breadcrumb.timestamp),
+        })),
+        timestamp: makeTimestamp(event.timestamp),
+      }),
       url: this.options.fetchParameters!.endpoint,
     };
 
     const options: RequestInit = {
       body: sentryReq.body,
+      headers: {
+        'Content-Type': 'application/json',
+      },
       method: 'POST',
       // Despite all stars in the sky saying that Edge supports old draft syntax, aka 'never', 'always', 'origin' and 'default
       // https://caniuse.com/#feat=referrer-policy
@@ -40,7 +65,7 @@ export class CustomFetchTransport extends Transports.BaseTransport {
     }
 
     if (this.options.headers !== undefined) {
-      options.headers = this.options.headers;
+      Object.assign(options.headers, this.options.headers);
     }
 
     return this._buffer.add(
@@ -93,5 +118,7 @@ export function initSentry() {
     }
     origSentryInit(sentryOptions);
     console.log('sentry initialized');
+    captureException(new Error('foo'));
+    captureMessage('bar');
   }
 }
