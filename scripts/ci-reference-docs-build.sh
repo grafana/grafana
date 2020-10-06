@@ -3,9 +3,16 @@
 # abort if we get any error
 set -eo pipefail
 
-# building grafana packages
-echo "building grafana packages..."
-yarn packages:build
+BUILD_MODE="${1-local}"
+
+if [ "local" -eq "$BUILD_MODE"]
+  then
+    # building grafana packages
+    echo "building grafana packages..."
+    yarn packages:build
+  else
+    echo "skip building grafana packages since it already built in previous steps..."
+fi
 
 # extract packages api documentation json
 echo "extracting packages documentation data..."
@@ -18,6 +25,3 @@ yarn packages:docsToMarkdown
 # cleaning packages
 echo "cleaning up packages build files..."
 yarn packages:clean
-
-# exit successfully
-exit 0

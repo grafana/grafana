@@ -12,13 +12,20 @@ pretty_print_result_of_report() {
   echo -e "-----------------------------------------------------"
 }
 
+BUILD_MODE="${1-local}"
 REPORT_PATH="$(realpath "$(dirname "$0")/../reports/docs/")"
 BUILD_SCRIPT_PATH="$(realpath "$(dirname "$0")/ci-reference-docs-build.sh")"
 
 if [ ! -d "$REPORT_PATH" ]; then
   # this script needs to be run after the packages have been built and the api-extractor has completed.
   # shellcheck source=/scripts/ci-reference-docs-build.sh
-  . "$BUILD_SCRIPT_PATH"
+  . "$BUILD_SCRIPT_PATH" "$BUILD_MODE"
+  if [ $? -eq 0 ]
+    then
+      echo "Successfully build packages and extracted docs"
+    else
+      echo "Failed to build packages and extract docs" >&2
+  fi
 fi
 
 WARNINGS_COUNT="$(find "$REPORT_PATH" -type f -name \*.log -print0 | xargs -0 grep -o "\[33mWarning:" | wc -l | xargs)"
@@ -32,8 +39,6 @@ fi
 
 if [ "$WARNINGS_COUNT" -lt $WARNINGS_COUNT_LIMIT ]; then
   pretty_print_result_of_report "Wohoo! Fewer warnings compared to last build 🎉🎈🍾✨\n\nYou can lower the threshold from $WARNINGS_COUNT_LIMIT to $WARNINGS_COUNT in the:\nscripts/ci-reference-docs-metrics.sh"
-  exit 0
 fi
 
 pretty_print_result_of_report "API Extractor total warnings: $WARNINGS_COUNT"
-exit 0
