@@ -1,18 +1,9 @@
-import {
-  ThresholdsConfig,
-  ThresholdsMode,
-  FieldConfig,
-  Threshold,
-  GrafanaTheme,
-  Field,
-  FieldType,
-  GrafanaThemeType,
-} from '../types';
-import { sortThresholds, getActiveThreshold, getColorFromThreshold } from './thresholds';
+import { ThresholdsConfig, ThresholdsMode, FieldConfig, Threshold, Field, FieldType } from '../types';
+import { sortThresholds, getActiveThreshold, getActiveThresholdForValue } from './thresholds';
 import { validateFieldConfig } from './fieldOverrides';
 import { ArrayVector } from '../vector/ArrayVector';
 
-describe('scale', () => {
+describe('thresholds', () => {
   test('sort thresholds', () => {
     const thresholds: ThresholdsConfig = {
       steps: [
@@ -53,165 +44,50 @@ describe('scale', () => {
     expect(getActiveThreshold(1000, thresholds.steps).color).toEqual('HHH');
   });
 
-  // test('absolute thresholds', () => {
-  //   const thresholds: ThresholdsConfig = {
-  //     steps: [
-  //       // Colors are ignored when 'scheme' exists
-  //       { color: '#F00', state: 'LowLow', value: -Infinity },
-  //       { color: '#F00', state: 'Low', value: -50 },
-  //       { color: '#F00', state: 'OK', value: 0 },
-  //       { color: '#F00', state: 'High', value: 50 },
-  //       { color: '#F00', state: 'HighHigh', value: 100 },
-  //     ],
-  //     mode: ThresholdsMode.Absolute,
-  //   };
+  function getThreshold(value: number, steps: Threshold[], mode: ThresholdsMode, percent = 1): Threshold {
+    const field: Field = {
+      name: 'test',
+      config: { thresholds: { mode: mode, steps: sortThresholds(steps) } },
+      type: FieldType.number,
+      values: new ArrayVector([]),
+    };
+    validateFieldConfig(field.config!);
+    return getActiveThresholdForValue(field, 0, percent);
+  }
 
-  //   const field: Field<number> = {
-  //     name: 'test',
-  //     type: FieldType.number,
-  //     config: {
-  //       min: -100, // explicit range
-  //       max: 100, // note less then range of actual data
-  //       thresholds,
-  //       color: {
-  //         mode: FieldColorMode.Thresholds,
-  //       },
-  //     },
-  //     values: new ArrayVector([
-  //       -1000,
-  //       -25,
-  //       0, // middle
-  //       25,
-  //       55,
-  //       1000,
-  //     ]),
-  //   };
-  //   validateFieldConfig(field.config);
-  //   const calc = getScaleCalculator(field);
-  //   const mapped = field.values.toArray().map(v => {
-  //     return calc(v);
-  //   });
-  //   expect(mapped).toMatchInlineSnapshot(`
-  //     Array [
-  //       Object {
-  //         "color": "#F00",
-  //         "threshold": Object {
-  //           "color": "#F00",
-  //           "state": "LowLow",
-  //           "value": -Infinity,
-  //         },
-  //       },
-  //       Object {
-  //         "color": "#F00",
-  //         "threshold": Object {
-  //           "color": "#F00",
-  //           "state": "Low",
-  //           "value": -50,
-  //         },
-  //       },
-  //       Object {
-  //         "color": "#F00",
-  //         "threshold": Object {
-  //           "color": "#F00",
-  //           "state": "OK",
-  //           "value": 0,
-  //         },
-  //       },
-  //       Object {
-  //         "color": "#F00",
-  //         "threshold": Object {
-  //           "color": "#F00",
-  //           "state": "OK",
-  //           "value": 0,
-  //         },
-  //       },
-  //       Object {
-  //         "color": "#F00",
-  //         "threshold": Object {
-  //           "color": "#F00",
-  //           "state": "High",
-  //           "value": 50,
-  //         },
-  //       },
-  //       Object {
-  //         "color": "#F00",
-  //         "threshold": Object {
-  //           "color": "#F00",
-  //           "state": "HighHigh",
-  //           "value": 100,
-  //         },
-  //       },
-  //     ]
-  //   `);
-  // });
+  describe('Get color from threshold', () => {
+    it('should get first threshold color when only one threshold', () => {
+      const thresholds = [{ index: 0, value: -Infinity, color: '#7EB26D' }];
+      expect(getThreshold(49, thresholds, ThresholdsMode.Absolute)).toEqual(thresholds[0]);
+    });
 
-  // test('color scheme', () => {
-  //   const field: Field<number> = {
-  //     name: 'test',
-  //     type: FieldType.number,
-  //     config: {
-  //       color: {
-  //         mode: FieldColorMode.SchemeBlues,
-  //       },
-  //     },
-  //     values: new ArrayVector([0, 100, 1000]),
-  //   };
+    it('should get the threshold color if value is same as a threshold', () => {
+      const thresholds = [
+        { index: 2, value: 75, color: '#6ED0E0' },
+        { index: 1, value: 50, color: '#EAB839' },
+        { index: 0, value: -Infinity, color: '#7EB26D' },
+      ];
+      expect(getThreshold(50, thresholds, ThresholdsMode.Absolute)).toEqual(thresholds[1]);
+    });
 
-  //   validateFieldConfig(field.config);
-  //   const calc = getScaleCalculator(field);
-  //   const mapped = field.values.toArray().map(v => {
-  //     return calc(v);
-  //   });
+    it('should get the nearest threshold color between thresholds', () => {
+      const thresholds = [
+        { index: 2, value: 75, color: '#6ED0E0' },
+        { index: 1, value: 50, color: '#EAB839' },
+        { index: 0, value: -Infinity, color: '#7EB26D' },
+      ];
+      expect(getThreshold(55, thresholds, ThresholdsMode.Absolute)).toEqual(thresholds[1]);
+    });
 
-  //   expect(mapped).toMatchInlineSnapshot(`
-  //     Array [
-  //       Object {
-  //         "color": "rgb(31, 96, 196)",
-  //       },
-  //       Object {
-  //         "color": "rgb(47, 108, 202)",
-  //       },
-  //       Object {
-  //         "color": "rgb(192, 216, 255)",
-  //       },
-  //     ]
-  //   `);
-  // });
-});
-
-function colorFromThresholldTest(value: number, steps: Threshold[]): string {
-  const field: Field = {
-    name: 'test',
-    config: { thresholds: { mode: ThresholdsMode.Absolute, steps: sortThresholds(steps) } },
-    type: FieldType.number,
-    values: new ArrayVector([]),
-  };
-  validateFieldConfig(field.config!);
-  const calc = getColorFromThreshold(field, 0, { type: GrafanaThemeType.Dark } as GrafanaTheme);
-  return calc(value).color!;
-}
-
-describe('Get color from threshold', () => {
-  it('should get first threshold color when only one threshold', () => {
-    const thresholds = [{ index: 0, value: -Infinity, color: '#7EB26D' }];
-    expect(colorFromThresholldTest(49, thresholds)).toEqual('#7EB26D');
-  });
-
-  it('should get the threshold color if value is same as a threshold', () => {
-    const thresholds = [
-      { index: 2, value: 75, color: '#6ED0E0' },
-      { index: 1, value: 50, color: '#EAB839' },
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-    ];
-    expect(colorFromThresholldTest(50, thresholds)).toEqual('#EAB839');
-  });
-
-  it('should get the nearest threshold color between thresholds', () => {
-    const thresholds = [
-      { index: 2, value: 75, color: '#6ED0E0' },
-      { index: 1, value: 50, color: '#EAB839' },
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-    ];
-    expect(colorFromThresholldTest(55, thresholds)).toEqual('#EAB839');
+    it('should be able to get percent based threshold', () => {
+      const thresholds = [
+        { index: 2, value: 75, color: '#6ED0E0' },
+        { index: 1, value: 50, color: '#EAB839' },
+        { index: 0, value: -Infinity, color: '#7EB26D' },
+      ];
+      expect(getThreshold(55, thresholds, ThresholdsMode.Percentage, 0.9)).toEqual(thresholds[0]);
+      expect(getThreshold(55, thresholds, ThresholdsMode.Percentage, 0.5)).toEqual(thresholds[1]);
+      expect(getThreshold(55, thresholds, ThresholdsMode.Percentage, 0.2)).toEqual(thresholds[2]);
+    });
   });
 });
