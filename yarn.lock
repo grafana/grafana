@@ -6794,6 +6794,11 @@
   resolved "https://registry.yarnpkg.com/@types/stacktrace-js/-/stacktrace-js-0.0.32.tgz#d23e4a36a5073d39487fbea8234cc6186862d389"
   integrity sha512-SdxmlrHfO0BxgbBP9HZWMUo2rima8lwMjPiWm6S0dyKkDa5CseamktFhXg8umu3TPVBkSlX6ZoB5uUDJK89yvg==
 
+"@types/systemjs@6.1.0":
+  version "6.1.0"
+  resolved "https://registry.yarnpkg.com/@types/systemjs/-/systemjs-6.1.0.tgz#eb92e3181391b6f49b8310077fe65bfa3db9392a"
+  integrity sha512-akhlviqwowzRNiz3ooAbkjvyMO8cikBqap9z/0yfvMAb6vIsp91Rfox67qtgIhZosWP01MVSTwsgSFYWo4SWQA==
+
 "@types/systemjs@^0.20.6":
   version "0.20.6"
   resolved "https://registry.yarnpkg.com/@types/systemjs/-/systemjs-0.20.6.tgz#79838d2b4bce9c014330efa0b4c7b9345e830a72"
@@ -25297,15 +25302,14 @@ symbol.prototype.description@^1.0.0:
     es-abstract "^1.16.0"
     has-symbols "^1.0.0"
 
-systemjs-plugin-css@0.1.37:
-  version "0.1.37"
-  resolved "https://registry.yarnpkg.com/systemjs-plugin-css/-/systemjs-plugin-css-0.1.37.tgz#684847252ca69b7da24a1201094c86274324e82f"
-  integrity sha512-wCGG62zYXuOlNji5FlBjeMFAnLeAO/HQmFg+8UBX/mlHoAKLHlGFYRstlhGKibRU2oxk/BH9DaihOuhhNLi7Kg==
+"systemjs-css-extra@github:grafana/systemjs-css-extra":
+  version "1.0.2"
+  resolved "https://codeload.github.com/grafana/systemjs-css-extra/tar.gz/36cc1169205db1b7b0a1d5c98fad8cfcaf4a7fb5"
 
-systemjs@0.20.19:
-  version "0.20.19"
-  resolved "https://registry.yarnpkg.com/systemjs/-/systemjs-0.20.19.tgz#c2b9e79c19f4bea53a19b1ed3f974ffb463be949"
-  integrity sha512-H/rKwNEEyej/+IhkmFNmKFyJul8tbH/muiPq5TyNoVTwsGhUjRsN3NlFnFQUvFXA3+GQmsXkCNXU6QKPl779aw==
+systemjs@6.4.0:
+  version "6.4.0"
+  resolved "https://registry.yarnpkg.com/systemjs/-/systemjs-6.4.0.tgz#927957c0f6991f525695fec57a6a8a63e63081cf"
+  integrity sha512-s/nvcAXduGmThUXkNKBNh00dmOFwZIXv46qjj5gwLwN0RpHbPdmp65OE+A0QaNs4fO7tjn74Aw9S7ei88toFjA==
 
 table-layout@^0.4.3:
   version "0.4.5"
