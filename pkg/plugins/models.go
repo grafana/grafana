@@ -42,10 +42,13 @@ func (e PluginNotFoundError) Error() string {
 	return fmt.Sprintf("Plugin with id %s not found", e.PluginId)
 }
 
+// PluginLoader can load a plugin.
 type PluginLoader interface {
-	Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error
+	// Load loads a plugin and registers it with the manager.
+	Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) error
 }
 
+// PluginBase is the base plugin type.
 type PluginBase struct {
 	Type         string             `json:"type"`
 	Name         string             `json:"name"`
@@ -69,14 +72,16 @@ type PluginBase struct {
 
 	GrafanaNetVersion   string `json:"-"`
 	GrafanaNetHasUpdate bool   `json:"-"`
+
+	Root *PluginBase
 }
 
-func (pb *PluginBase) registerPlugin(pluginDir string) error {
+func (pb *PluginBase) registerPlugin(base *PluginBase) error {
 	if _, exists := Plugins[pb.Id]; exists {
 		return fmt.Errorf("Plugin with ID %q already exists", pb.Id)
 	}
 
-	if !strings.HasPrefix(pluginDir, setting.StaticRootPath) {
+	if !strings.HasPrefix(base.PluginDir, setting.StaticRootPath) {
 		plog.Info("Registering plugin", "name", pb.Name)
 	}
 
@@ -94,7 +99,10 @@ func (pb *PluginBase) registerPlugin(pluginDir string) error {
 		}
 	}
 
-	pb.PluginDir = pluginDir
+	// Copy relevant fields from the base
+	pb.PluginDir = base.PluginDir
+	pb.Signature = base.Signature
+
 	Plugins[pb.Id] = pb
 	return nil
 }

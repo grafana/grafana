@@ -62,7 +62,7 @@ export class LivePanel extends PureComponent<Props, State> {
 
   startSubscription = () => {
     const { scope, namespace, path } = this.props;
-    const channel = getGrafanaLiveSrv().getChannel(scope, namespace, path);
+    const channel = getGrafanaLiveSrv().getChannel({ scope, namespace, path });
     if (this.state.channel === channel) {
       return; // no change!
     }
