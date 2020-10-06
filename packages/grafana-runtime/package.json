@@ -24,7 +24,7 @@
   "dependencies": {
     "@grafana/data": "7.3.0-pre.0",
     "@grafana/ui": "7.3.0-pre.0",
-    "systemjs": "6.4.0",
+    "systemjs": "6.6.1",
     "systemjs-css-extra": "github:grafana/systemjs-css-extra"
   },
   "devDependencies": {
