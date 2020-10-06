@@ -4,6 +4,7 @@ import { getAnnotationsFromData } from 'app/features/annotations/standardAnnotat
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { css } from 'emotion';
 import { AnnotationMarker } from './AnnotationMarker';
+import { useObservable } from 'react-use';
 
 interface AnnotationsPluginProps {
   annotations: DataFrame[];
@@ -14,7 +15,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
   const pluginId = 'AnnotationsPlugin';
   const pluginsApi = usePlotPluginContext();
   const plotContext = usePlotContext();
-  const annotationsRef = useRef<AnnotationEvent[] | null>(null);
+  const annotationsRef = useRef<AnnotationEvent[]>();
   const [renderCounter, setRenderCounter] = useState(0);
   const theme = useTheme();
 
@@ -28,15 +29,17 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     [timeZone]
   );
 
-  const annotationsData = useMemo(() => {
-    return getAnnotationsFromData(annotations);
-  }, [annotations]);
-
+  const annotationEventsStream = useMemo(() => getAnnotationsFromData(annotations), [annotations]);
+  const annotationsData = useObservable<AnnotationEvent[]>(annotationEventsStream);
   const annotationMarkers = useMemo(() => {
     if (!plotContext || !plotContext?.u) {
       return null;
     }
-    const markers = [];
+    const markers: AnnotationEvent[] = [];
+
+    if (!annotationsData) {
+      return markers;
+    }
 
     for (let i = 0; i < annotationsData.length; i++) {
       const annotation = annotationsData[i];
