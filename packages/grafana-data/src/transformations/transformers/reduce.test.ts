@@ -6,6 +6,7 @@ import { reduceTransformer } from './reduce';
 import { transformDataFrame } from '../transformDataFrame';
 import { Field, FieldType } from '../../types';
 import { ArrayVector } from '../../vector';
+import { observableTester } from '../../utils/tests/observableTester';
 
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
@@ -46,187 +47,211 @@ describe('Reducer Transformer', () => {
     mockTransformationsRegistry([reduceTransformer]);
   });
 
-  it('reduces multiple data frames with many fields', () => {
+  it('reduces multiple data frames with many fields', done => {
     const cfg = {
       id: DataTransformerID.reduce,
       options: {
         reducers: [ReducerID.first, ReducerID.min, ReducerID.max, ReducerID.last],
       },
     };
-    const processed = transformDataFrame([cfg], [seriesAWithMultipleFields, seriesBWithMultipleFields]);
-    const expected: Field[] = [
-      {
-        name: 'Field',
-        type: FieldType.string,
-        values: new ArrayVector(['A temperature', 'A humidity', 'B temperature', 'B humidity']),
-        config: {},
-      },
-      {
-        name: 'First',
-        type: FieldType.number,
-        values: new ArrayVector([3, 10000.3, 1, 11000.1]),
-        config: {},
-      },
-      {
-        name: 'Min',
-        type: FieldType.number,
-        values: new ArrayVector([3, 10000.3, 1, 11000.1]),
-        config: {},
-      },
-      {
-        name: 'Max',
-        type: FieldType.number,
-        values: new ArrayVector([6, 10000.6, 7, 11000.7]),
-        config: {},
-      },
-      {
-        name: 'Last',
-        type: FieldType.number,
-        values: new ArrayVector([6, 10000.6, 7, 11000.7]),
-        config: {},
-      },
-    ];
 
-    expect(processed.length).toEqual(1);
-    expect(processed[0].length).toEqual(4);
-    expect(processed[0].fields).toEqual(expected);
+    observableTester().subscribeAndExpectOnNext({
+      observable: transformDataFrame([cfg], [seriesAWithMultipleFields, seriesBWithMultipleFields]),
+      expect: processed => {
+        const expected: Field[] = [
+          {
+            name: 'Field',
+            type: FieldType.string,
+            values: new ArrayVector(['A temperature', 'A humidity', 'B temperature', 'B humidity']),
+            config: {},
+          },
+          {
+            name: 'First',
+            type: FieldType.number,
+            values: new ArrayVector([3, 10000.3, 1, 11000.1]),
+            config: {},
+          },
+          {
+            name: 'Min',
+            type: FieldType.number,
+            values: new ArrayVector([3, 10000.3, 1, 11000.1]),
+            config: {},
+          },
+          {
+            name: 'Max',
+            type: FieldType.number,
+            values: new ArrayVector([6, 10000.6, 7, 11000.7]),
+            config: {},
+          },
+          {
+            name: 'Last',
+            type: FieldType.number,
+            values: new ArrayVector([6, 10000.6, 7, 11000.7]),
+            config: {},
+          },
+        ];
+
+        expect(processed.length).toEqual(1);
+        expect(processed[0].length).toEqual(4);
+        expect(processed[0].fields).toEqual(expected);
+      },
+      done,
+    });
   });
 
-  it('reduces multiple data frames with single field', () => {
+  it('reduces multiple data frames with single field', done => {
     const cfg = {
       id: DataTransformerID.reduce,
       options: {
         reducers: [ReducerID.first, ReducerID.min, ReducerID.max, ReducerID.last],
       },
     };
-    const processed = transformDataFrame([cfg], [seriesAWithSingleField, seriesBWithSingleField]);
-    const expected: Field[] = [
-      {
-        name: 'Field',
-        type: FieldType.string,
-        values: new ArrayVector(['A temperature', 'B temperature']),
-        config: {},
-      },
-      {
-        name: 'First',
-        type: FieldType.number,
-        values: new ArrayVector([3, 1]),
-        config: {},
-      },
-      {
-        name: 'Min',
-        type: FieldType.number,
-        values: new ArrayVector([3, 1]),
-        config: {},
-      },
-      {
-        name: 'Max',
-        type: FieldType.number,
-        values: new ArrayVector([6, 7]),
-        config: {},
-      },
-      {
-        name: 'Last',
-        type: FieldType.number,
-        values: new ArrayVector([6, 7]),
-        config: {},
-      },
-    ];
 
-    expect(processed.length).toEqual(1);
-    expect(processed[0].length).toEqual(2);
-    expect(processed[0].fields).toEqual(expected);
+    observableTester().subscribeAndExpectOnNext({
+      observable: transformDataFrame([cfg], [seriesAWithSingleField, seriesBWithSingleField]),
+      expect: processed => {
+        const expected: Field[] = [
+          {
+            name: 'Field',
+            type: FieldType.string,
+            values: new ArrayVector(['A temperature', 'B temperature']),
+            config: {},
+          },
+          {
+            name: 'First',
+            type: FieldType.number,
+            values: new ArrayVector([3, 1]),
+            config: {},
+          },
+          {
+            name: 'Min',
+            type: FieldType.number,
+            values: new ArrayVector([3, 1]),
+            config: {},
+          },
+          {
+            name: 'Max',
+            type: FieldType.number,
+            values: new ArrayVector([6, 7]),
+            config: {},
+          },
+          {
+            name: 'Last',
+            type: FieldType.number,
+            values: new ArrayVector([6, 7]),
+            config: {},
+          },
+        ];
+
+        expect(processed.length).toEqual(1);
+        expect(processed[0].length).toEqual(2);
+        expect(processed[0].fields).toEqual(expected);
+      },
+      done,
+    });
   });
 
-  it('reduces single data frame with many fields', () => {
+  it('reduces single data frame with many fields', done => {
     const cfg = {
       id: DataTransformerID.reduce,
       options: {
         reducers: [ReducerID.first, ReducerID.min, ReducerID.max, ReducerID.last],
       },
     };
-    const processed = transformDataFrame([cfg], [seriesAWithMultipleFields]);
-    const expected: Field[] = [
-      {
-        name: 'Field',
-        type: FieldType.string,
-        values: new ArrayVector(['A temperature', 'A humidity']),
-        config: {},
-      },
-      {
-        name: 'First',
-        type: FieldType.number,
-        values: new ArrayVector([3, 10000.3]),
-        config: {},
-      },
-      {
-        name: 'Min',
-        type: FieldType.number,
-        values: new ArrayVector([3, 10000.3]),
-        config: {},
-      },
-      {
-        name: 'Max',
-        type: FieldType.number,
-        values: new ArrayVector([6, 10000.6]),
-        config: {},
-      },
-      {
-        name: 'Last',
-        type: FieldType.number,
-        values: new ArrayVector([6, 10000.6]),
-        config: {},
-      },
-    ];
 
-    expect(processed.length).toEqual(1);
-    expect(processed[0].length).toEqual(2);
-    expect(processed[0].fields).toEqual(expected);
+    observableTester().subscribeAndExpectOnNext({
+      observable: transformDataFrame([cfg], [seriesAWithMultipleFields]),
+      expect: processed => {
+        const expected: Field[] = [
+          {
+            name: 'Field',
+            type: FieldType.string,
+            values: new ArrayVector(['A temperature', 'A humidity']),
+            config: {},
+          },
+          {
+            name: 'First',
+            type: FieldType.number,
+            values: new ArrayVector([3, 10000.3]),
+            config: {},
+          },
+          {
+            name: 'Min',
+            type: FieldType.number,
+            values: new ArrayVector([3, 10000.3]),
+            config: {},
+          },
+          {
+            name: 'Max',
+            type: FieldType.number,
+            values: new ArrayVector([6, 10000.6]),
+            config: {},
+          },
+          {
+            name: 'Last',
+            type: FieldType.number,
+            values: new ArrayVector([6, 10000.6]),
+            config: {},
+          },
+        ];
+
+        expect(processed.length).toEqual(1);
+        expect(processed[0].length).toEqual(2);
+        expect(processed[0].fields).toEqual(expected);
+      },
+      done,
+    });
   });
 
-  it('reduces single data frame with single field', () => {
+  it('reduces single data frame with single field', done => {
     const cfg = {
       id: DataTransformerID.reduce,
       options: {
         reducers: [ReducerID.first, ReducerID.min, ReducerID.max, ReducerID.last],
       },
     };
-    const processed = transformDataFrame([cfg], [seriesAWithSingleField]);
-    const expected: Field[] = [
-      {
-        name: 'Field',
-        type: FieldType.string,
-        values: new ArrayVector(['A temperature']),
-        config: {},
-      },
-      {
-        name: 'First',
-        type: FieldType.number,
-        values: new ArrayVector([3]),
-        config: {},
-      },
-      {
-        name: 'Min',
-        type: FieldType.number,
-        values: new ArrayVector([3]),
-        config: {},
-      },
-      {
-        name: 'Max',
-        type: FieldType.number,
-        values: new ArrayVector([6]),
-        config: {},
-      },
-      {
-        name: 'Last',
-        type: FieldType.number,
-        values: new ArrayVector([6]),
-        config: {},
-      },
-    ];
 
-    expect(processed.length).toEqual(1);
-    expect(processed[0].length).toEqual(1);
-    expect(processed[0].fields).toEqual(expected);
+    observableTester().subscribeAndExpectOnNext({
+      observable: transformDataFrame([cfg], [seriesAWithSingleField]),
+      expect: processed => {
+        const expected: Field[] = [
+          {
+            name: 'Field',
+            type: FieldType.string,
+            values: new ArrayVector(['A temperature']),
+            config: {},
+          },
+          {
+            name: 'First',
+            type: FieldType.number,
+            values: new ArrayVector([3]),
+            config: {},
+          },
+          {
+            name: 'Min',
+            type: FieldType.number,
+            values: new ArrayVector([3]),
+            config: {},
+          },
+          {
+            name: 'Max',
+            type: FieldType.number,
+            values: new ArrayVector([6]),
+            config: {},
+          },
+          {
+            name: 'Last',
+            type: FieldType.number,
+            values: new ArrayVector([6]),
+            config: {},
+          },
+        ];
+
+        expect(processed.length).toEqual(1);
+        expect(processed[0].length).toEqual(1);
+        expect(processed[0].fields).toEqual(expected);
+      },
+      done,
+    });
   });
 });
