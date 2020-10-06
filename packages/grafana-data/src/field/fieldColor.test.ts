@@ -1,9 +1,9 @@
-import { Field, GrafanaThemeType, GrafanaTheme, FieldColorMode } from '../types';
+import { Field, GrafanaThemeType, GrafanaTheme, FieldColorModeId } from '../types';
 import { fieldColorModeRegistry, FieldValueColorCalculator } from './fieldColor';
 
 describe('fieldColorModeRegistry', () => {
   interface GetCalcOptions {
-    mode: FieldColorMode;
+    mode: FieldColorModeId;
     seriesIndex?: number;
   }
 
@@ -13,17 +13,17 @@ describe('fieldColorModeRegistry', () => {
   }
 
   it('Schemes should interpolate', () => {
-    const calcFn = getCalculator({ mode: FieldColorMode.ContinousGrYlRd });
+    const calcFn = getCalculator({ mode: FieldColorModeId.ContinousGrYlRd });
     expect(calcFn(70, 0.5, undefined)).toEqual('rgb(226, 192, 61)');
   });
 
   it('Palette classic with series index 0', () => {
-    const calcFn = getCalculator({ mode: FieldColorMode.DiscreteClassic, seriesIndex: 0 });
+    const calcFn = getCalculator({ mode: FieldColorModeId.DiscreteClassic, seriesIndex: 0 });
     expect(calcFn(70, 0, undefined)).toEqual('#7EB26D');
   });
 
   it('Palette classic with series index 1', () => {
-    const calcFn = getCalculator({ mode: FieldColorMode.DiscreteClassic, seriesIndex: 1 });
+    const calcFn = getCalculator({ mode: FieldColorModeId.DiscreteClassic, seriesIndex: 1 });
     expect(calcFn(70, 0, undefined)).toEqual('#EAB839');
   });
 });
