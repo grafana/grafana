@@ -1,128 +1,18 @@
-import { Subject, Subscription } from 'rxjs';
-import { filter, map, takeUntil } from 'rxjs/operators';
-import { v4 as uuidv4 } from 'uuid';
-import {
-  CoreApp,
-  DataQueryRequest,
-  DataSourceApi,
-  DataSourcePluginMeta,
-  DataSourceSelectItem,
-  DefaultTimeRange,
-} from '@grafana/data';
-import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { DataSourcePluginMeta, DataSourceSelectItem, LoadingState } from '@grafana/data';
+import { toDataQueryError } from '@grafana/runtime';
 
-import { updateOptions, validateVariableSelectionState } from '../state/actions';
-import { QueryVariableModel, VariableRefresh } from '../types';
+import { updateOptions } from '../state/actions';
+import { QueryVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';
 import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
 import { getVariable } from '../state/selectors';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';
-import { updateVariableOptions, updateVariableTags } from './reducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
-import { runRequest } from '../../dashboard/state/runRequest';
-import { dispatch, getState } from '../../../store/store';
-
-const updateOptionsRequests = new Subject<{
-  identifier: VariableIdentifier;
-  dataSource: DataSourceApi;
-  searchFilter?: string;
-}>();
-
-updateOptionsRequests.subscribe(args => {
-  const { dataSource, identifier, searchFilter } = args;
-  const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
-  const range =
-    variableInState.refresh === VariableRefresh.onTimeRangeChanged ? getTimeSrv().timeRange() : DefaultTimeRange;
-  const targets = [
-    {
-      datasource: dataSource.name,
-      refId: `${dataSource.name}-${variableInState.id}`,
-      variableQuery: variableInState.query,
-    },
-  ];
-
-  const request: DataQueryRequest = {
-    targets,
-    app: CoreApp.Variables,
-    range,
-    scopedVars: {
-      searchFilter: { text: searchFilter ?? '', value: searchFilter ?? '' },
-      variable: { text: variableInState.current.text, value: variableInState.current.value },
-    },
-    requestId: uuidv4(),
-    intervalMs: 0,
-    timezone: 'utc',
-    interval: '',
-    startTime: Date.now(),
-  };
-
-  const subscriptions = new Subscription();
-  subscriptions.add(
-    runRequest(dataSource, request)
-      .pipe(
-        map(panelData => panelData.series),
-        dataSource.variables!.toMetricFindValues(),
-        takeUntil(
-          updateOptionsRequests.pipe(
-            filter(args => {
-              let cancelRequest = false;
-
-              if (args.identifier.id === identifier.id) {
-                cancelRequest = true;
-              }
-
-              return cancelRequest;
-            })
-          )
-        )
-      )
-      .subscribe({
-        next: results => {
-          console.log(`results from ${identifier.id}`, results);
-          const templatedRegex = getTemplatedRegex(variableInState);
-          dispatch(updateVariableOptions(toVariablePayload(variableInState, { results, templatedRegex })));
-        },
-        error: err => {
-          throw err;
-        },
-        complete: () => {
-          console.log(`complete from ${identifier.id}`);
-          subscriptions.unsubscribe();
-        },
-      })
-  );
-});
-
-export const updateOptionsFromMetricFindValue = (
-  identifier: VariableIdentifier,
-  dataSource: DataSourceApi,
-  searchFilter?: string
-): ThunkResult<void> => async (dispatch, getState) => {
-  const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
-  const beforeUid = getState().templating.transaction.uid;
-
-  if (!dataSource.metricFindQuery) {
-    return;
-  }
-
-  const results = await dataSource.metricFindQuery(
-    variableInState.query,
-    getLegacyQueryOptions(variableInState, searchFilter)
-  );
-
-  const afterUid = getState().templating.transaction.uid;
-  if (beforeUid !== afterUid) {
-    // we started another batch before this metricFindQuery finished let's abort
-    return;
-  }
-
-  const templatedRegex = getTemplatedRegex(variableInState);
-  await dispatch(updateVariableOptions(toVariablePayload(variableInState, { results, templatedRegex })));
-};
+import { variableQueryRunner } from './variableQueryRunner';
+import { Subscription } from 'rxjs';
 
 export const updateQueryVariableOptions = (
   identifier: VariableIdentifier,
@@ -137,27 +27,25 @@ export const updateQueryVariableOptions = (
 
       const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');
 
-      if (dataSource.variables) {
-        updateOptionsRequests.next({ identifier, dataSource, searchFilter });
-      } else {
-        await dispatch(updateOptionsFromMetricFindValue(identifier, dataSource, searchFilter));
-      }
+      // we need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
+      // variable will have the wrong current value as input
+      await new Promise((resolve, reject) => {
+        const subscription: Subscription = variableQueryRunner
+          .queueRequest({ identifier, dataSource, searchFilter })
+          .subscribe({
+            next: results => {
+              if (results.state === LoadingState.Error) {
+                subscription.unsubscribe();
+                return reject(results.error);
+              }
 
-      if (variableInState.useTags && dataSource.metricFindQuery) {
-        const tagResults = await dataSource.metricFindQuery(
-          variableInState.tagsQuery,
-          getLegacyQueryOptions(variableInState, searchFilter)
-        );
-        await dispatch(updateVariableTags(toVariablePayload(variableInState, tagResults)));
-      }
-
-      // If we are searching options there is no need to validate selection state
-      // This condition was added to as validateVariableSelectionState will update the current value of the variable
-      // So after search and selection the current value is already update so no setValue, refresh & url update is performed
-      // The if statement below fixes https://github.com/grafana/grafana/issues/25671
-      if (!searchFilter) {
-        await dispatch(validateVariableSelectionState(toVariableIdentifier(variableInState)));
-      }
+              if (results.state === LoadingState.Done) {
+                subscription.unsubscribe();
+                return resolve();
+              }
+            },
+          });
+      });
     } catch (err) {
       const error = toDataQueryError(err);
 
@@ -222,25 +110,4 @@ export const changeQueryVariableQuery = (
   dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
   dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition })));
   await dispatch(updateOptions(identifier));
-};
-
-const getTemplatedRegex = (variable: QueryVariableModel): string => {
-  if (!variable) {
-    return '';
-  }
-
-  if (!variable.regex) {
-    return '';
-  }
-
-  return getTemplateSrv().replace(variable.regex, {}, 'regex');
-};
-
-const getLegacyQueryOptions = (variable: QueryVariableModel, searchFilter?: string) => {
-  const queryOptions: any = { range: undefined, variable, searchFilter };
-  if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
-    queryOptions.range = getTimeSrv().timeRange();
-  }
-
-  return queryOptions;
 };

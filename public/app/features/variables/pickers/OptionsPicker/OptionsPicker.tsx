@@ -12,6 +12,8 @@ import { isQuery } from '../../guard';
 import { VariablePickerProps } from '../types';
 import { formatVariableLabel } from '../../shared/formatVariable';
 import { LoadingState } from '@grafana/data';
+import { variableQueryRunner } from '../../query/variableQueryRunner';
+import { toVariableIdentifier } from '../../state/types';
 
 interface OwnProps extends VariablePickerProps<VariableWithMultiSupport> {}
 
@@ -70,8 +72,20 @@ export class OptionsPickerUnconnected extends PureComponent<Props> {
     const tags = getSelectedTags(variable);
     const loading = variable.state === LoadingState.Loading;
 
-    return <VariableLink text={linkText} tags={tags} onClick={this.onShowOptions} loading={loading} />;
+    return (
+      <VariableLink
+        text={linkText}
+        tags={tags}
+        onClick={this.onShowOptions}
+        loading={loading}
+        onCancel={this.onCancel}
+      />
+    );
   }
+
+  onCancel = () => {
+    variableQueryRunner.cancelRequest(toVariableIdentifier(this.props.variable));
+  };
 
   renderOptions(showOptions: boolean, picker: OptionsPickerState) {
     if (!showOptions) {

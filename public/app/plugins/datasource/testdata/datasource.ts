@@ -1,6 +1,9 @@
+import { from, merge, Observable, of } from 'rxjs';
+import { delay, map, mergeMap } from 'rxjs/operators';
 import set from 'lodash/set';
-
+import { v4 as uuidv4 } from 'uuid';
 import {
+  AnnotationEvent,
   ArrayDataFrame,
   arrowTableToDataFrame,
   base64StringToArrowTable,
@@ -11,20 +14,19 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DataTopic,
+  DefaultTimeRange,
   LoadingState,
   MetricFindValue,
   TableData,
+  TimeRange,
   TimeSeries,
   toDataFrame,
-  TimeRange,
-  DataTopic,
-  AnnotationEvent,
 } from '@grafana/data';
+import { getBackendSrv, getTemplateSrv, TemplateSrv, toDataQueryError } from '@grafana/runtime';
+
 import { Scenario, TestDataQuery } from './types';
-import { getBackendSrv, toDataQueryError, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { queryMetricTree } from './metricTree';
-import { from, merge, Observable, of } from 'rxjs';
-import { delay, map, mergeMap } from 'rxjs/operators';
 import { runStream } from './runStreams';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 
@@ -56,6 +58,29 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
             return of(values);
           })
         ),
+      toDataQueryRequest: (query, scopedVars) => {
+        const targets = [
+          {
+            datasource: instanceSettings.name,
+            refId: `variable-query-${instanceSettings.name}`,
+            query,
+          },
+        ];
+
+        const request: DataQueryRequest = {
+          targets,
+          app: CoreApp.Variables,
+          range: DefaultTimeRange,
+          scopedVars,
+          requestId: uuidv4(),
+          intervalMs: 0,
+          timezone: 'utc',
+          interval: '',
+          startTime: Date.now(),
+        };
+
+        return request;
+      },
     };
   }
 
@@ -206,8 +231,8 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
 
     const dataQuery: any = options.targets[0];
     const interpolatedQuery = this.templateSrv.replace(
-      dataQuery.variableQuery,
-      getSearchFilterScopedVar({ query: dataQuery.variableQuery, wildcardChar: '*', options: options.scopedVars })
+      dataQuery.query,
+      getSearchFilterScopedVar({ query: dataQuery.query, wildcardChar: '*', options: options.scopedVars })
     );
     const children = queryMetricTree(interpolatedQuery);
     const items = children.map(item => ({ value: item.name, text: item.name }));
