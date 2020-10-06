@@ -205,7 +205,7 @@ export class ElasticMetricAggCtrl {
 
     $scope.removeMetricAgg = () => {
       const metricBeingRemoved = metricAggs[$scope.index];
-      const metricsToRemove = queryDef.getAancestors($scope.target, metricBeingRemoved);
+      const metricsToRemove = queryDef.getAncestors($scope.target, metricBeingRemoved);
       const newMetricAggs = metricAggs.filter(m => !metricsToRemove.includes(m.id));
       if (newMetricAggs.length > 0) {
         metricAggs.splice(0, metricAggs.length, ...newMetricAggs);
