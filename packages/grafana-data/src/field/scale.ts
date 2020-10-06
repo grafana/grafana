@@ -5,9 +5,9 @@ import { fieldColorModeRegistry } from './fieldColor';
 import { getActiveThresholdForValue } from './thresholds';
 
 export interface ScaledValue {
-  percent?: number; // 0-1
-  threshold?: Threshold; // the selected step
-  color?: string; // Selected color (may be range based on threshold)
+  percent: number; // 0-1
+  threshold: Threshold;
+  color: string;
 }
 
 export type ScaleCalculator = (value: number) => ScaledValue;

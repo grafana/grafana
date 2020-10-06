@@ -17,10 +17,10 @@ import {
 } from '@grafana/ui';
 
 import {
-  FieldColorMode,
   FieldConfig,
   FieldType,
   formattedValueToString,
+  getScaleCalculator,
   getTimeField,
   PanelProps,
   systemDateFormats,
@@ -32,7 +32,6 @@ import { VizLayout } from './VizLayout';
 
 import { Axis } from '@grafana/ui/src/components/uPlot/geometries/Axis';
 import { timeFormatToTemplate } from '@grafana/ui/src/components/uPlot/utils';
-import { fieldColorModeRegistry } from '@grafana/data/src/field/fieldColor';
 
 interface GraphPanelProps extends PanelProps<Options> {}
 
@@ -154,8 +153,8 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
       );
     }
 
-    const mode = fieldColorModeRegistry.get(config.color?.mode ?? FieldColorMode.PaletteClassic);
-    const seriesColor = mode.getCalculator(field, seriesIdx, theme)(0, 0, undefined);
+    const scaleFn = getScaleCalculator(field, seriesIdx, theme);
+    const seriesColor = scaleFn(0).color;
 
     if (customConfig?.line?.show) {
       seriesGeometry.push(
