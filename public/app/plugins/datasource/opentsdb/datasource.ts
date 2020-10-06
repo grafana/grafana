@@ -2,7 +2,7 @@ import angular from 'angular';
 import _ from 'lodash';
 import { dateMath, DataQueryRequest, DataSourceApi, ScopedVars } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { OpenTsdbOptions, OpenTsdbQuery } from './types';
 
 export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenTsdbOptions> {
@@ -19,8 +19,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   aggregatorsPromise: any;
   filterTypesPromise: any;
 
-  /** @ngInject */
-  constructor(instanceSettings: any, private templateSrv: TemplateSrv) {
+  constructor(instanceSettings: any, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
     super(instanceSettings);
     this.type = 'opentsdb';
     this.url = instanceSettings.url;

@@ -2,7 +2,9 @@
 title = "Enter variable Selection Options"
 type = "docs"
 [menu.docs]
-weight = 800
+identifier = "variables-selection-options"
+parent = "variables"
+weight = 400
 +++
 
 # Enter variable selection options

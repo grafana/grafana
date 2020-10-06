@@ -13,7 +13,7 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
 import { FetchResponse } from '@grafana/runtime';
-import templateSrv from 'app/features/templating/template_srv';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 import {
   isExemplarData,
   isMatrixData,
@@ -251,7 +251,7 @@ function getValueField(
 
 function createLabelInfo(labels: { [key: string]: string }, options: TransformOptions) {
   if (options?.legendFormat) {
-    const title = renderTemplate(templateSrv.replace(options.legendFormat, options?.scopedVars), labels);
+    const title = renderTemplate(getTemplateSrv().replace(options.legendFormat, options?.scopedVars), labels);
     return { name: title, labels };
   }
 

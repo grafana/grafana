@@ -14,7 +14,7 @@ import {
   dateTimeFormatISO,
   dateTimeFormat,
 } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { ColumnRender, TableRenderModel, ColumnStyle } from './types';
 import { ColumnOptionsCtrl } from './column_options';
 
@@ -27,7 +27,7 @@ export class TableRenderer {
     private table: TableRenderModel,
     private timeZone: TimeZone,
     private sanitize: (v: any) => any,
-    private templateSrv: TemplateSrv,
+    private templateSrv: TemplateSrv = getTemplateSrv(),
     private theme?: GrafanaThemeType
   ) {
     this.initColumns();

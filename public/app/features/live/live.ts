@@ -2,7 +2,7 @@ import Centrifuge from 'centrifuge/dist/centrifuge.protobuf';
 import SockJS from 'sockjs-client';
 import { GrafanaLiveSrv, setGrafanaLiveSrv, getGrafanaLiveSrv, config } from '@grafana/runtime';
 import { BehaviorSubject } from 'rxjs';
-import { LiveChannel, LiveChannelScope } from '@grafana/data';
+import { LiveChannel, LiveChannelScope, LiveChannelAddress } from '@grafana/data';
 import { CentrifugeLiveChannel, getErrorChannel } from './channel';
 import {
   GrafanaLiveScope,
@@ -11,6 +11,15 @@ import {
   GrafanaLivePluginScope,
 } from './scopes';
 import { registerLiveFeatures } from './features';
+
+export const sessionId =
+  (window as any)?.grafanaBootData?.user?.id +
+  '/' +
+  Date.now().toString(16) +
+  '/' +
+  Math.random()
+    .toString(36)
+    .substring(2, 15);
 
 export class CentrifugeSrv implements GrafanaLiveSrv {
   readonly open = new Map<string, CentrifugeLiveChannel>();
@@ -24,6 +33,9 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
     this.centrifuge = new Centrifuge(`${config.appUrl}live/sockjs`, {
       debug: true,
       sockjs: SockJS,
+    });
+    this.centrifuge.setConnectData({
+      sessionId,
     });
     this.centrifuge.connect(); // do connection
     this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
@@ -72,29 +84,25 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
    * Get a channel.  If the scope, namespace, or path is invalid, a shutdown
    * channel will be returned with an error state indicated in its status
    */
-  getChannel<TMessage, TPublish>(
-    scopeId: LiveChannelScope,
-    namespace: string,
-    path: string
-  ): LiveChannel<TMessage, TPublish> {
-    const id = `${scopeId}/${namespace}/${path}`;
+  getChannel<TMessage, TPublish = any>(addr: LiveChannelAddress): LiveChannel<TMessage, TPublish> {
+    const id = `${addr.scope}/${addr.namespace}/${addr.path}`;
     let channel = this.open.get(id);
     if (channel != null) {
       return channel;
     }
 
-    const scope = this.scopes[scopeId];
+    const scope = this.scopes[addr.scope];
     if (!scope) {
-      return getErrorChannel('invalid scope', id, scopeId, namespace, path);
+      return getErrorChannel('invalid scope', id, addr);
     }
 
-    channel = new CentrifugeLiveChannel(id, scopeId, namespace, path);
+    channel = new CentrifugeLiveChannel(id, addr);
     channel.shutdownCallback = () => {
       this.open.delete(id); // remove it from the list of open channels
     };
     this.open.set(id, channel);
 
-    // Initalize the channel in the bacground
+    // Initialize the channel in the background
     this.initChannel(scope, channel).catch(err => {
       channel?.shutdownWithError(err);
       this.open.delete(id);
@@ -105,20 +113,21 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
   }
 
   private async initChannel(scope: GrafanaLiveScope, channel: CentrifugeLiveChannel): Promise<void> {
-    const support = await scope.getChannelSupport(channel.namespace);
+    const { addr } = channel;
+    const support = await scope.getChannelSupport(addr.namespace);
     if (!support) {
-      throw new Error(channel.namespace + 'does not support streaming');
+      throw new Error(channel.addr.namespace + 'does not support streaming');
     }
-    const config = support.getChannelConfig(channel.path);
+    const config = support.getChannelConfig(addr.path);
     if (!config) {
-      throw new Error('unknown path: ' + channel.path);
+      throw new Error('unknown path: ' + addr.path);
+    }
+    if (config.canPublish?.()) {
+      channel.publish = (data: any) => this.centrifuge.publish(channel.id, data);
     }
     const events = channel.initalize(config);
     if (!this.centrifuge.isConnected()) {
       await this.connectionBlocker;
-    }
-    if (config.canPublish && config.canPublish()) {
-      channel.publish = (data: any) => this.centrifuge.publish(channel.id, data);
     }
     channel.subscription = this.centrifuge.subscribe(channel.id, events);
     return;

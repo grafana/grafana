@@ -125,7 +125,7 @@ Instead of hard-coding things like server, application, and sensor name in your 
 Variables are shown as drop-down select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-For more information, refer to [Variables and templates]({{< relref "../../variables/templates-and-variables.md" >}}).
+For more information, refer to [Variables and templates]({{< relref "../../variables/_index.md" >}}).
 
 Graphite 1.1 introduced tags and Grafana added support for Graphite queries with tags in version 5.0. To create a variable using tag values, use the Grafana functions `tags` and `tag_values`.
 

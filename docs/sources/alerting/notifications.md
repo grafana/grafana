@@ -5,8 +5,9 @@ keywords = ["Grafana", "alerting", "guide", "notifications"]
 type = "docs"
 [menu.docs]
 name = "Notifications"
+identifier = "alert-notification"
 parent = "alerting"
-weight = 200
+weight = 100
 +++
 
 # Alert notifications
@@ -175,15 +176,15 @@ In DingTalk PC Client:
 
 1. Click "more" icon on upper right of the panel.
 
-2. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
+1. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
 
-3. In the  "Robot Manage" panel, select "customized: customized robot with Webhook".
+1. In the  "Robot Manage" panel, select "customized: customized robot with Webhook".
 
-4. In the next new panel named "robot detail", click "Add" button.
+1. In the next new panel named "robot detail", click "Add" button.
 
-5. In "Add Robot" panel, input a nickname for the robot and select a "message group" which the robot will join in. click "next".
+1. In "Add Robot" panel, input a nickname for the robot and select a "message group" which the robot will join in. click "next".
 
-6. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the Grafana DingTalk setting page and then click "finish".
+1. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the Grafana DingTalk setting page and then click "finish".
 
 DingTalk supports the following "message type": `text`, `link` and `markdown`. Only the `link` message type is supported.
 
@@ -194,7 +195,7 @@ There are a couple of configuration options which need to be set up in Grafana U
 
 1. Kafka REST Proxy endpoint.
 
-2. Kafka Topic.
+1. Kafka Topic.
 
 Once these two properties are set, you can send the alerts to Kafka for further processing or throttling.
 

@@ -7,7 +7,7 @@ type = "docs"
 name = "Upgrade Grafana"
 identifier = "upgrading"
 parent = "installation"
-weight = 800
+weight = 700
 +++
 
 # Upgrade Grafana
@@ -125,7 +125,7 @@ grafana-cli plugins update-all
 
 The dashboard grid layout engine has changed. All dashboards will be automatically upgraded to new positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana. Some external panel plugins might need to be updated to work properly.
 
-For more details on the new panel positioning system, [click here]({{< relref "../reference/dashboard.md#panel-size-position" >}})
+For more details on the new panel positioning system, [click here]({{< relref "../dashboards/json-model.md#panel-size-position" >}})
 
 ## Upgrading to v5.2
 

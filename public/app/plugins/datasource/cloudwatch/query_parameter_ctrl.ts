@@ -1,12 +1,11 @@
 import angular from 'angular';
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import DatasourceSrv from 'app/features/plugins/datasource_srv';
+import { TemplateSrv } from '@grafana/runtime';
 
 export class CloudWatchQueryParameterCtrl {
   /** @ngInject */
-  constructor($scope: any, templateSrv: TemplateSrv, uiSegmentSrv: any, datasourceSrv: DatasourceSrv) {
+  constructor($scope: any, templateSrv: TemplateSrv, uiSegmentSrv: any) {
     $scope.init = () => {
       const target = $scope.target;
       target.namespace = target.namespace || '';

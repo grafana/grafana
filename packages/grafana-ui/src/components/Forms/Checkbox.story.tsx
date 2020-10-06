@@ -12,7 +12,7 @@ export default {
   },
 };
 
-export const controlled = () => {
+export const Controlled = () => {
   const [checked, setChecked] = useState(false);
   const onChange = useCallback(e => setChecked(e.currentTarget.checked), [setChecked]);
   return (

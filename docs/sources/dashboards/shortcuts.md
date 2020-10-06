@@ -12,7 +12,7 @@ Grafana has a number of keyboard shortcuts available. Press Shift + `?` on your 
 
 **Popular shortcuts:**
 
-* Ctrl+S saves the current dashboard.
-* Ctrl+F opens the dashboard finder / search.
-* Ctrl+H hides all controls (good for tv displays).
-* Press Escape to exit graph when in fullscreen or edit mode.
+- Ctrl+S saves the current dashboard.
+- Ctrl+F opens the dashboard finder / search.
+- Ctrl+H hides all controls (good for tv displays).
+- Press Escape to exit graph when in fullscreen or edit mode.

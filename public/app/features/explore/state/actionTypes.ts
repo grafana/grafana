@@ -10,12 +10,11 @@ import {
   HistoryItem,
   LoadingState,
   LogLevel,
-  PanelData,
+  LogsDedupStrategy,
   QueryFixAction,
   TimeRange,
-  LogsDedupStrategy,
 } from '@grafana/data';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExplorePanelData } from 'app/types/explore';
 
 export interface AddQueryRowPayload {
   exploreId: ExploreId;
@@ -82,7 +81,7 @@ export interface ModifyQueriesPayload {
 
 export interface QueryEndedPayload {
   exploreId: ExploreId;
-  response: PanelData;
+  response: ExplorePanelData;
 }
 
 export interface QueryStoreSubscriptionPayload {
@@ -128,7 +127,6 @@ export interface SyncTimesPayload {
 export interface UpdateDatasourceInstancePayload {
   exploreId: ExploreId;
   datasourceInstance: DataSourceApi;
-  version?: string;
 }
 
 export interface ToggleLogLevelPayload {

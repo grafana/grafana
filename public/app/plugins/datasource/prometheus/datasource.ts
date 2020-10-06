@@ -15,8 +15,8 @@ import {
 } from '@grafana/data';
 import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import templateSrv from 'app/features/templating/template_srv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import cloneDeep from 'lodash/cloneDeep';
 import defaults from 'lodash/defaults';
 import LRU from 'lru-cache';
@@ -59,7 +59,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   lookupsDisabled: boolean;
   customQueryParameters: any;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<PromOptions>) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<PromOptions>,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly timeSrv: TimeSrv = getTimeSrv()
+  ) {
     super(instanceSettings);
 
     this.type = 'prometheus';
@@ -151,7 +155,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   targetContainsTemplate(target: PromQuery) {
-    return templateSrv.variableExists(target.expr);
+    return this.templateSrv.variableExists(target.expr);
   }
 
   prepareTargets = (options: DataQueryRequest<PromQuery>, start: number, end: number) => {
@@ -329,12 +333,12 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     let interval: number = rangeUtil.intervalToSeconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query, or same as interval otherwise.
     const minInterval = rangeUtil.intervalToSeconds(
-      templateSrv.replace(target.interval || options.interval, options.scopedVars)
+      this.templateSrv.replace(target.interval || options.interval, options.scopedVars)
     );
     // Scrape interval as specified for the query ("Min step") or otherwise taken from the datasource.
     // Min step field can have template variables in it, make sure to replace it.
     const scrapeInterval = target.interval
-      ? rangeUtil.intervalToSeconds(templateSrv.replace(target.interval, options.scopedVars))
+      ? rangeUtil.intervalToSeconds(this.templateSrv.replace(target.interval, options.scopedVars))
       : rangeUtil.intervalToSeconds(this.interval);
 
     const intervalFactor = target.intervalFactor || 1;
@@ -360,7 +364,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     let expr = target.expr;
 
     // Apply adhoc filters
-    const adhocFilters = templateSrv.getAdhocFilters(this.name);
+    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
     expr = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
       const { key, operator } = filter;
       let { value } = filter;
@@ -371,18 +375,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     }, expr);
 
     // Only replace vars in expression after having (possibly) updated interval vars
-    query.expr = templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
+    query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
 
     // Align query interval with step to allow query caching and to ensure
     // that about-same-time query results look the same.
-    const adjusted = alignRange(
-      start,
-      end,
-      query.step,
-      getTimeSrv()
-        .timeRange()
-        .to.utcOffset() * 60
-    );
+    const adjusted = alignRange(start, end, query.step, this.timeSrv.timeRange().to.utcOffset() * 60);
     query.start = adjusted.start;
     query.end = adjusted.end;
     this._addTracingHeaders(query, options);
@@ -511,14 +508,14 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const scopedVars = {
       __interval: { text: this.interval, value: this.interval },
       __interval_ms: { text: rangeUtil.intervalToMs(this.interval), value: rangeUtil.intervalToMs(this.interval) },
-      ...this.getRangeScopedVars(getTimeSrv().timeRange()),
+      ...this.getRangeScopedVars(this.timeSrv.timeRange()),
     };
-    const interpolated = templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
+    const interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
     const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
     return metricFindQuery.process();
   }
 
-  getRangeScopedVars(range: TimeRange = getTimeSrv().timeRange()) {
+  getRangeScopedVars(range: TimeRange = this.timeSrv.timeRange()) {
     const msRange = range.to.diff(range.from);
     const sRange = Math.round(msRange / 1000);
     return {
@@ -664,7 +661,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          expr: templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
+          expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
         };
         return expandedQuery;
       });
@@ -734,7 +731,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   getTimeRange(): { start: number; end: number } {
-    const range = getTimeSrv().timeRange();
+    const range = this.timeSrv.timeRange();
     return {
       start: this.getPrometheusTime(range.from, false),
       end: this.getPrometheusTime(range.to, true),
