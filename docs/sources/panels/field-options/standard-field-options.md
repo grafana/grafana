@@ -99,7 +99,7 @@ Continuous color modes use a value's percentage relative to min and max to inter
 - **Classic:** Color is derived from the series or field index and looking up a corresponding color in the classic color palette. Useful for Graphs.
 - **Vibrant:** Color is derived from the series or field index and looking up a corresponding color in the vibrant color palette. Useful for Graphs.
 - **From thresholds:** Color is derived from the matching threshold. Useful for gauges, stat and table visualizations.
-- **Green-Yellow-Red (continuous):** Color is derived from a continous spectrum between green, yellow and red.
+- **Green-Yellow-Red (continuous):** Color is derived from a continuous spectrum between green, yellow and red.
 
 ## Thresholds
 
