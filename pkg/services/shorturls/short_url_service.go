@@ -24,8 +24,8 @@ var NewShortURLService = func(user *models.SignedInUser) ShortURLService {
 
 func (dr *shortURLServiceImpl) buildCreateShortURLCommand(path string) (*models.CreateShortURLCommand, error) {
 	cmd := &models.CreateShortURLCommand{
-		OrgId:     dr.user.OrgId,
-		Uid:       util.GenerateShortUID(),
+		OrgID:     dr.user.OrgId,
+		UID:       util.GenerateShortUID(),
 		Path:      path,
 		CreatedBy: dr.user.UserId,
 	}
@@ -34,12 +34,12 @@ func (dr *shortURLServiceImpl) buildCreateShortURLCommand(path string) (*models.
 }
 
 func (dr *shortURLServiceImpl) GetFullURLByUID(uid string) (string, error) {
-	query := models.GetShortURLByUIDQuery{OrgId: dr.user.OrgId, Uid: uid}
+	query := models.GetShortURLByUIDQuery{OrgID: dr.user.OrgId, UID: uid}
 	if err := bus.Dispatch(&query); err != nil {
 		return "", err
 	}
 
-	if err := bus.Dispatch(&models.UpdateShortURLLastSeenAtCommand{Uid: query.Result.Uid}); err != nil {
+	if err := bus.Dispatch(&models.UpdateShortURLLastSeenAtCommand{UID: query.Result.Uid}); err != nil {
 		logger.Error("Failed to update shortURL last_seen_at", "error", err)
 	}
 

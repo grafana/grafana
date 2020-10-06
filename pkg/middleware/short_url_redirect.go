@@ -10,14 +10,14 @@ import (
 
 func ShortURLRedirect() macaron.Handler {
 	return func(c *models.ReqContext) {
-		shortURLUid := c.Params(":uid")
+		shortURLUID := c.Params(":uid")
 
-		if !util.IsValidShortUID(shortURLUid) {
+		if !util.IsValidShortUID(shortURLUID) {
 			return
 		}
 
 		service := shorturls.NewShortURLService(c.SignedInUser)
-		path, err := service.GetFullURLByUID(shortURLUid)
+		path, err := service.GetFullURLByUID(shortURLUID)
 		if err != nil {
 			return
 		}

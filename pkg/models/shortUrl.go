@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	ErrShortURLNotFound = errors.New("Short URL not found")
+	ErrShortURLNotFound = errors.New("short URL not found")
 )
 
 type ShortUrl struct {
@@ -22,8 +22,8 @@ type ShortUrl struct {
 // COMMANDS
 
 type CreateShortURLCommand struct {
-	OrgId     int64  `json:"-"`
-	Uid       string `json:"uid"`
+	OrgID     int64  `json:"-"`
+	UID       string `json:"uid"`
 	Path      string `json:"path"`
 	CreatedBy int64  `json:"-"`
 
@@ -31,8 +31,8 @@ type CreateShortURLCommand struct {
 }
 
 type UpdateShortURLLastSeenAtCommand struct {
-	OrgId int64
-	Uid   string
+	OrgID int64
+	UID   string
 }
 
 // ---------------------
@@ -40,8 +40,8 @@ type UpdateShortURLLastSeenAtCommand struct {
 //
 
 type GetShortURLByUIDQuery struct {
-	OrgId int64
-	Uid   string
+	OrgID int64
+	UID   string
 
 	Result *ShortUrl
 }

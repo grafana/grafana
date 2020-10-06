@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestShortURLService(t *testing.T) {
@@ -13,11 +14,11 @@ func TestShortURLService(t *testing.T) {
 		user: &models.SignedInUser{UserId: 1},
 	}
 
-	mockUid := "testuid"
+	mockUID := "testuid"
 	mockNotFoundUid := "testnotfounduid"
 	mockPath := "mock/path?test=true"
 	mockShortURL := models.ShortUrl{
-		Uid:       mockUid,
+		Uid:       mockUID,
 		Path:      mockPath,
 		CreatedBy: service.user.UserId,
 		CreatedAt: 1,
@@ -29,7 +30,7 @@ func TestShortURLService(t *testing.T) {
 	})
 
 	bus.AddHandler("test", func(query *models.GetShortURLByUIDQuery) error {
-		if query.Uid == mockNotFoundUid {
+		if query.UID == mockNotFoundUid {
 			return models.ErrShortURLNotFound
 		}
 		result := &mockShortURL
@@ -39,23 +40,23 @@ func TestShortURLService(t *testing.T) {
 
 	t.Run("User can create and read short URLs", func(t *testing.T) {
 		uid, err := service.CreateShortURL(mockPath)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.NotEmpty(t, uid)
-		assert.Equal(t, uid, mockUid)
+		assert.Equal(t, mockUID, uid)
 		path, err := service.GetFullURLByUID(uid)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.NotEmpty(t, path)
-		assert.Equal(t, path, mockPath)
+		assert.Equal(t, mockPath, path)
 	})
 
-	t.Run("User cannot look up nonexistent short urls", func(t *testing.T) {
+	t.Run("User cannot look up nonexistent short URLs", func(t *testing.T) {
 		service := shortURLServiceImpl{
 			user: &models.SignedInUser{UserId: 1},
 		}
 
 		path, err := service.GetFullURLByUID(mockNotFoundUid)
-		assert.NotNil(t, err)
+		require.Error(t, err)
 		assert.Empty(t, path)
-		assert.Equal(t, err, models.ErrShortURLNotFound)
+		assert.Equal(t, models.ErrShortURLNotFound, err)
 	})
 }
