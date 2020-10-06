@@ -28,7 +28,10 @@ func (b *BroadcastRunner) DoNamespaceHTTP(c *models.ReqContext) {
 
 // GetChannelOptions called fast and often
 func (b *BroadcastRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
-	return centrifuge.ChannelOptions{}
+	return centrifuge.ChannelOptions{
+		// HistorySize:    1,
+		// HistoryRecover: true,
+	}
 }
 
 // OnSubscribe for now allows anyone to subscribe to any dashboard
