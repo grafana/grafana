@@ -1,7 +1,9 @@
 package models
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -61,7 +63,19 @@ func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
 		return nil, err
 	}
 
-	return signer.Sign(req, nil, "grafana", m.Config.Region, time.Now())
+	if req.Body != nil {
+		// consume entire request body so that the signer can generate a hash from the contents
+		body, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			return nil, err
+		}
+		// re-wrap body with a io.ReadCloser for subsequent closure
+		req.Body = ioutil.NopCloser(bytes.NewReader(body))
+
+		return signer.Sign(req, bytes.NewReader(body), "grafana", m.Config.Region, time.Now().UTC())
+	}
+	return signer.Sign(req, nil, "grafana", m.Config.Region, time.Now().UTC())
+
 }
 
 func (m *SigV4Middleware) signer() (*v4.Signer, error) {
