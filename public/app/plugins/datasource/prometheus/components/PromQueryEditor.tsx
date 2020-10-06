@@ -136,7 +136,8 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               tooltip={
                 <>
                   An additional lower limit for the step parameter of the Prometheus query and for the{' '}
-                  <code>$__interval</code> variable. The limit is absolute and not modified by the "Resolution" setting.
+                  <code>$__interval</code> and <code>$__rate_interval</code> variables. The limit is absolute and not
+                  modified by the "Resolution" setting.
                 </>
               }
             >

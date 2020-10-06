@@ -226,7 +226,7 @@ WHERE
 ORDER BY 1
 ```
 
-When above query are used in a graph panel the result will be two series named `Metric A` and `Metric B` with value of `valueOne` and `valueTwo` plotted over `time`.
+When the above query is used in a graph panel, it will produce two series named `Metric A` and `Metric B` with the values `valueOne` and `valueTwo` plotted over `time`.
 
 <div class="clearfix"></div>
 
@@ -246,7 +246,7 @@ WHERE
 ORDER BY 1
 ```
 
-When above query are used in a graph panel the result will be two series named `valueOne` and `valueTwo` with value of `valueOne` and `valueTwo` plotted over `time`.
+When the above query is used in a graph panel, it will produce two series named `Metric A` and `Metric B` with the values `valueOne` and `valueTwo` plotted over `time`.
 
 <div class="clearfix"></div>
 
@@ -269,8 +269,8 @@ GROUP BY
 ORDER BY 1
 ```
 
-When above query are used in a graph panel the result will be two series named `Metric A` and `Metric B` with an average of `valueOne` plotted over `time`.
-Any two series lacking a value in a 3 minute window will render a line between those two lines. You'll notice that the graph to the right never goes down to zero.
+When the above query is used in a graph panel, it will produce two series named `Metric A` and `Metric B` with the values `valueOne` and `valueTwo` plotted over `time`.
+Any two series lacking a value in a three-minute window will render a line between those two lines. You'll notice that the graph to the right never goes down to zero.
 
 <div class="clearfix"></div>
 
@@ -325,8 +325,8 @@ Another option is a query that can create a key/value variable. The query should
 SELECT hostname __text, id __value FROM host
 ```
 
-You can also create nested variables. For example if you had another variable named `region`. Then you could have
-the hosts variable only show hosts from the current selected region with a query like this (if `region` is a multi-value variable then use the `IN` comparison operator rather than `=` to match against multiple values):
+You can also create nested variables. For example, if you had another variable named `region`. Then you could have
+the hosts variable only show hosts from the current selected region with a query like this (if `region` is a multi-value variable, then use the `IN` comparison operator rather than `=` to match against multiple values):
 
 ```sql
 SELECT hostname FROM host WHERE region IN ($region)
@@ -452,7 +452,7 @@ Please note that any macro function will not work inside a stored procedure.
 ### Examples
 
 {{< docs-imagebox img="/img/docs/v51/mssql_metrics_graph.png" class="docs-image--no-shadow docs-image--right" >}}
-For the following examples the database table is defined in [Time series queries](#time-series-queries). Let's say that we want to visualize 4 series in a graph panel, i.e. all combinations of columns `valueOne`, `valueTwo` and `measurement`. Graph panel to the right visualizes what we want to achieve. To solve this we actually need to use two queries:
+For the following examples, the database table is defined in [Time series queries](#time-series-queries). Let's say that we want to visualize four series in a graph panel, such as all combinations of columns `valueOne`, `valueTwo` and `measurement`. Graph panel to the right visualizes what we want to achieve. To solve this, we need to use two queries:
 
 **First query:**
 
