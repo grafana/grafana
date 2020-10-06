@@ -77,8 +77,8 @@ type cloudWatchExecutor struct {
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
 	dsInfo := e.getDSInfo(region)
 
-	cacheKey := fmt.Sprintf("%d:%s:%s:%s:%s", dsInfo.AuthType, dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN,
-		dsInfo.ExternalID)
+	cacheKey := fmt.Sprintf("%d:%s:%s:%s:%s:%s", dsInfo.AuthType, dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN,
+		dsInfo.ExternalID, region)
 
 	sessCacheLock.RLock()
 	if env, ok := sessCache[cacheKey]; ok {
