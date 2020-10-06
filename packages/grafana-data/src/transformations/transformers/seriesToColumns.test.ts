@@ -377,7 +377,7 @@ describe('SeriesToColumns Transformer', () => {
     });
   });
 
-  it('handles duplicate field name', () => {
+  it('handles duplicate field name', done => {
     const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
       id: DataTransformerID.seriesToColumns,
       options: {
@@ -399,32 +399,37 @@ describe('SeriesToColumns Transformer', () => {
       ],
     });
 
-    const filtered = transformDataFrame([cfg], [frame1, frame2])[0];
-
-    expect(filtered.fields).toEqual([
-      {
-        name: 'time',
-        state: { displayName: 'time' },
-        type: FieldType.time,
-        values: new ArrayVector([1]),
-        config: {},
+    observableTester().subscribeAndExpectOnNext({
+      observable: transformDataFrame([cfg], [frame1, frame2]),
+      expect: data => {
+        const filtered = data[0];
+        expect(filtered.fields).toEqual([
+          {
+            name: 'time',
+            state: { displayName: 'time' },
+            type: FieldType.time,
+            values: new ArrayVector([1]),
+            config: {},
+          },
+          {
+            name: 'temperature',
+            state: { displayName: 'temperature 1' },
+            type: FieldType.number,
+            values: new ArrayVector([10]),
+            config: {},
+            labels: {},
+          },
+          {
+            name: 'temperature',
+            state: { displayName: 'temperature 2' },
+            type: FieldType.number,
+            values: new ArrayVector([20]),
+            config: {},
+            labels: {},
+          },
+        ]);
       },
-      {
-        name: 'temperature',
-        state: { displayName: 'temperature 1' },
-        type: FieldType.number,
-        values: new ArrayVector([10]),
-        config: {},
-        labels: {},
-      },
-      {
-        name: 'temperature',
-        state: { displayName: 'temperature 2' },
-        type: FieldType.number,
-        values: new ArrayVector([20]),
-        config: {},
-        labels: {},
-      },
-    ]);
+      done,
+    });
   });
 });
