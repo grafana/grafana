@@ -19,8 +19,7 @@ BUILD_SCRIPT_PATH="$(realpath "$(dirname "$0")/ci-reference-docs-build.sh")"
 if [ ! -d "$REPORT_PATH" ]; then
   # this script needs to be run after the packages have been built and the api-extractor has completed.
   # shellcheck source=/scripts/ci-reference-docs-build.sh
-  . "$BUILD_SCRIPT_PATH" "$BUILD_MODE"
-  if [ $? -eq 0 ]
+  if ! . "$BUILD_SCRIPT_PATH" "$BUILD_MODE";
     then
       echo "Successfully build packages and extracted docs"
     else
