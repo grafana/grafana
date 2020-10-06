@@ -146,7 +146,7 @@ steps:
 - name: generate-frontend-package-docs
   image: grafana/build-container:1.2.27
   commands:
-  - ./scripts/ci-reference-docs-lint.sh
+  - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
   - build-frontend
 
@@ -461,7 +461,7 @@ steps:
 - name: generate-frontend-package-docs
   image: grafana/build-container:1.2.27
   commands:
-  - ./scripts/ci-reference-docs-build.sh
+  - ./scripts/ci-reference-docs-build.sh ci
   depends_on:
   - build-frontend
 

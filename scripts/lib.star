@@ -459,7 +459,7 @@ def generate_frontend_package_docs(edition, lint=False):
             'build-frontend'
         ],
         'commands': [
-            script,
+            '{} ci'.format(script),
         ]
     }
 
