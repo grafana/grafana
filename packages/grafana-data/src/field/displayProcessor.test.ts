@@ -27,7 +27,7 @@ describe('Process simple display values', () => {
   // Don't test float values here since the decimal formatting changes
   const processors = [
     // Without options, this shortcuts to a much easier implementation
-    getDisplayProcessor(),
+    getDisplayProcessor({ field: { config: {} } }),
 
     // Add a simple option that is not used (uses a different base class)
     getDisplayProcessorFromConfig({ min: 0, max: 100 }),
@@ -276,6 +276,7 @@ describe('Date display options', () => {
       timeZone: 'utc',
       field: {
         type: FieldType.time,
+        config: {},
       },
     });
 
