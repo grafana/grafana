@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import {
   Area,
   Canvas,
-  colors,
   ContextMenuPlugin,
   GraphCustomFieldConfig,
   LegendDisplayMode,
@@ -14,13 +13,14 @@ import {
   TooltipPlugin,
   UPlotChart,
   ZoomPlugin,
+  useTheme,
 } from '@grafana/ui';
 
 import {
+  FieldColorMode,
   FieldConfig,
   FieldType,
   formattedValueToString,
-  getColorFromHexRgbOrName,
   getTimeField,
   PanelProps,
   systemDateFormats,
@@ -32,6 +32,7 @@ import { VizLayout } from './VizLayout';
 
 import { Axis } from '@grafana/ui/src/components/uPlot/geometries/Axis';
 import { timeFormatToTemplate } from '@grafana/ui/src/components/uPlot/utils';
+import { fieldColorModeRegistry } from '@grafana/data/src/field/fieldColor';
 
 interface GraphPanelProps extends PanelProps<Options> {}
 
@@ -91,6 +92,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
   options,
   onChangeTimeRange,
 }) => {
+  const theme = useTheme();
   const alignedData = useMemo(() => {
     if (!data || !data.series?.length) {
       return null;
@@ -128,9 +130,11 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
     const field = alignedData.fields[i];
     const config = field.config as FieldConfig<GraphCustomFieldConfig>;
     const customConfig = config.custom;
+
     if (i === timeIndex || field.type !== FieldType.number) {
       continue;
     }
+
     const fmt = field.display ?? defaultFormatter;
     const scale = config.unit || '__fixed';
 
@@ -150,10 +154,8 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
       );
     }
 
-    const seriesColor =
-      customConfig?.line.color && customConfig?.line.color.fixedColor
-        ? getColorFromHexRgbOrName(customConfig.line.color.fixedColor)
-        : colors[seriesIdx];
+    const mode = fieldColorModeRegistry.get(config.color?.mode ?? FieldColorMode.PaletteClassic);
+    const seriesColor = mode.getCalculator(field, seriesIdx, theme)(0, 0, undefined);
 
     if (customConfig?.line?.show) {
       seriesGeometry.push(
