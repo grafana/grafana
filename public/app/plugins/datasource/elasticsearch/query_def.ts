@@ -226,7 +226,7 @@ export function getPipelineAggOptions(target: ElasticsearchQuery, metric?: Elast
   if (!metrics) {
     return [];
   }
-  const ancestors = getAancestors(target, metric);
+  const ancestors = getAncestors(target, metric);
   return metrics.filter(m => !ancestors.includes(m.id)).map(m => ({ text: describeMetric(m), value: m.id }));
 }
 
