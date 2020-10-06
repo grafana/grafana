@@ -8,7 +8,7 @@ aliases = ["/docs/grafana/latest/tutorials/authproxy/"]
 name = "Auth Proxy"
 identifier = "auth-proxy"
 parent = "authentication"
-weight = 2
+weight = 200
 +++
 
 # Auth Proxy Authentication
@@ -108,25 +108,25 @@ In this example we use Apache as a reverse proxy in front of Grafana. Apache han
     </VirtualHost>
 ```
 
-* The first 4 lines of the virtualhost configuration are standard, so we won’t go into detail      on what they do.
+- The first four lines of the virtualhost configuration are standard, so we won’t go into detail on what they do.
 
-* We use a **\<proxy>** configuration block for applying our authentication rules to every proxied request. These rules include requiring basic authentication where user:password credentials are stored in the **/etc/apache2/grafana_htpasswd** file. This file can be created with the `htpasswd` command.
+- We use a **\<proxy>** configuration block for applying our authentication rules to every proxied request. These rules include requiring basic authentication where user:password credentials are stored in the **/etc/apache2/grafana_htpasswd** file. This file can be created with the `htpasswd` command.
 
-    * The next part of the configuration is the tricky part. We use Apache’s rewrite engine to create our **X-WEBAUTH-USER header**, populated with the authenticated user.
+    - The next part of the configuration is the tricky part. We use Apache’s rewrite engine to create our **X-WEBAUTH-USER header**, populated with the authenticated user.
 
-        * **RewriteRule .* - [E=PROXY_USER:%{LA-U:REMOTE_USER}, NS]**: This line is a little bit of magic. What it does, is for every request use the rewriteEngines look-ahead (LA-U) feature to determine what the REMOTE_USER variable would be set to after processing the request. Then assign the result to the variable PROXY_USER. This is necessary as the REMOTE_USER variable is not available to the RequestHeader function.
+        - **RewriteRule .* - [E=PROXY_USER:%{LA-U:REMOTE_USER}, NS]**: This line is a little bit of magic. What it does, is for every request use the rewriteEngines look-ahead (LA-U) feature to determine what the REMOTE_USER variable would be set to after processing the request. Then assign the result to the variable PROXY_USER. This is necessary as the REMOTE_USER variable is not available to the RequestHeader function.
 
-        * **RequestHeader set X-WEBAUTH-USER “%{PROXY_USER}e”**: With the authenticated username now stored in the PROXY_USER variable, we create a new HTTP request header that will be sent to our backend Grafana containing the username.
+        - **RequestHeader set X-WEBAUTH-USER “%{PROXY_USER}e”**: With the authenticated username now stored in the PROXY_USER variable, we create a new HTTP request header that will be sent to our backend Grafana containing the username.
 
-* The **RequestHeader unset Authorization** removes the Authorization header from the HTTP request before it is forwarded to Grafana. This ensures that Grafana does not try to authenticate the user using these credentials (BasicAuth is a supported authentication handler in Grafana).
+- The **RequestHeader unset Authorization** removes the Authorization header from the HTTP request before it is forwarded to Grafana. This ensures that Grafana does not try to authenticate the user using these credentials (BasicAuth is a supported authentication handler in Grafana).
 
-* The last 3 lines are then just standard reverse proxy configuration to direct all authenticated requests to our Grafana server running on port 3000.
+- The last 3 lines are then just standard reverse proxy configuration to direct all authenticated requests to our Grafana server running on port 3000.
 
-## Full walk through using Docker.
+## Full walkthrough using Docker.
 
-For this example, we use the official Grafana docker image available at [Docker Hub](https://hub.docker.com/r/grafana/grafana/)
+For this example, we use the official Grafana Docker image available at [Docker Hub](https://hub.docker.com/r/grafana/grafana/).
 
-* Create a file `grafana.ini` with the following contents
+- Create a file `grafana.ini` with the following contents
 
 ```bash
 [users]
@@ -152,7 +152,7 @@ docker run -i -v $(pwd)/grafana.ini:/etc/grafana/grafana.ini --name grafana graf
 
 For this example we use the official Apache docker image available at [Docker Hub](https://hub.docker.com/_/httpd/)
 
-* Create a file `httpd.conf` with the following contents
+- Create a file `httpd.conf` with the following contents
 
 ```bash
 ServerRoot "/usr/local/apache2"
@@ -207,13 +207,13 @@ ProxyPass / http://grafana:3000/
 ProxyPassReverse / http://grafana:3000/
 ```
 
-* Create a htpasswd file. We create a new user **anthony** with the password **password**
+- Create a htpasswd file. We create a new user **anthony** with the password **password**
 
     ```bash
     htpasswd -bc htpasswd anthony password
     ```
 
-* Launch the httpd container using our custom httpd.conf and our htpasswd file. The container will listen on port 80, and we create a link to the **grafana** container so that this container can resolve the hostname **grafana** to the grafana container’s ip address.
+- Launch the httpd container using our custom httpd.conf and our htpasswd file. The container will listen on port 80, and we create a link to the **grafana** container so that this container can resolve the hostname **grafana** to the Grafana container’s IP address.
 
     ```bash
     docker run -i -p 80:80 --link grafana:grafana -v $(pwd)/httpd.conf:/usr/local/apache2/conf/httpd.conf -v $(pwd)/htpasswd:/tmp/htpasswd httpd:2.4

@@ -16,7 +16,7 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.27
   commands:
-  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.14/grabpl
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/grabpl
   - chmod +x grabpl
   - mkdir -p bin
   - mv grabpl bin
@@ -249,7 +249,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.14/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/windows/grabpl.exe -OutFile grabpl.exe
 
 trigger:
   event:
@@ -273,7 +273,7 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.27
   commands:
-  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.14/grabpl
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/grabpl
   - chmod +x grabpl
   - mkdir -p bin
   - mv grabpl bin
@@ -283,17 +283,6 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-
-- name: slack
-  image: plugins/slack
-  settings:
-    channel: grafana-ci-failures
-    template: "Build {{build.number}} failed: {{build.link}}"
-    webhook:
-      from_secret: slack_webhook
-  when:
-    status:
-    - failure
 
 - name: trigger-enterprise-downstream
   image: grafana/drone-downstream
@@ -360,7 +349,7 @@ steps:
   depends_on:
   - initialize
 
-- name: frontend-metrics
+- name: publish-frontend-metrics
   image: grafana/build-container:1.2.27
   commands:
   - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
@@ -541,7 +530,7 @@ steps:
 - name: release-next-npm-packages
   image: grafana/build-container:1.2.27
   commands:
-  - npx lerna bootstrap
+  - ./node_modules/.bin/lerna bootstrap
   - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
   - ./scripts/circle-release-next-packages.sh
   environment:
@@ -613,7 +602,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.14/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -661,23 +650,12 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.27
   commands:
-  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.14/grabpl
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/grabpl
   - chmod +x grabpl
   - mkdir -p bin
   - mv grabpl bin
   environment:
     DOCKERIZE_VERSION: 0.6.1
-
-- name: slack
-  image: plugins/slack
-  settings:
-    channel: grafana-ci-failures
-    template: "Build {{build.number}} failed: {{build.link}}"
-    webhook:
-      from_secret: slack_webhook
-  when:
-    status:
-    - failure
 
 - name: publish-packages
   image: grafana/grafana-ci-deploy:1.2.6
@@ -698,5 +676,36 @@ trigger:
 depends_on:
 - build-master
 - windows-master
+
+---
+kind: pipeline
+type: docker
+name: notify-master
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: slack
+  image: plugins/slack
+  settings:
+    channel: grafana-ci-notifications
+    template: "Build {{build.number}} failed: {{build.link}}"
+    webhook:
+      from_secret: slack_webhook
+
+trigger:
+  branch:
+  - master
+  event:
+  - push
+  status:
+  - failure
+
+depends_on:
+- build-master
+- windows-master
+- publish-master
 
 ...

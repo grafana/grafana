@@ -29,7 +29,7 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 		return nil, err
 	}
 
-	if setting.Env == setting.DEV {
+	if setting.Env == setting.Dev {
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
 

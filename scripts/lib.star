@@ -3,7 +3,7 @@ publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
-grabpl_version = '0.5.14'
+grabpl_version = '0.5.16'
 git_image = 'alpine/git:v2.26.2'
 dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
@@ -53,6 +53,9 @@ def pr_pipelines(edition):
         mysql_integration_tests_step(),
     ]
     windows_steps = get_windows_steps(edition=edition, version_mode=version_mode)
+    if edition == 'enterprise':
+        steps.append(benchmark_ldap_step())
+        services.append(ldap_service())
     trigger = {
         'event': ['pull_request',],
     }
@@ -132,6 +135,11 @@ def master_pipelines(edition):
         'branch': 'master',
     }
     steps, windows_steps, publish_steps = master_steps(edition=edition)
+
+    if edition == 'enterprise':
+        steps.append(benchmark_ldap_step())
+        services.append(ldap_service())
+
     pipelines = [
         pipeline(
             name='build-master', edition=edition, trigger=trigger, services=services, steps=steps,
@@ -146,6 +154,12 @@ def master_pipelines(edition):
         pipelines.append(pipeline(
             name='publish-master', edition=edition, trigger=trigger, steps=publish_steps,
             depends_on=['build-master', 'windows-master',], install_deps=False, version_mode=version_mode,
+        ))
+
+        notify_trigger = dict(trigger, status = ['failure'])
+        pipelines.append(notify_pipeline(
+            name='notify-master', slack_channel='grafana-ci-notifications', trigger=notify_trigger,
+            depends_on=['build-master', 'windows-master', 'publish-master'],
         ))
     if edition == 'enterprise':
         # Add downstream enterprise pipelines triggerable from OSS builds
@@ -165,6 +179,12 @@ def master_pipelines(edition):
             name='publish-master-downstream', edition=edition, trigger=trigger, steps=publish_steps,
             depends_on=['build-master-downstream', 'windows-master-downstream'], is_downstream=True, install_deps=False,
             version_mode=version_mode,
+        ))
+
+        notify_trigger = dict(trigger, status = ['failure'])
+        pipelines.append(notify_pipeline(
+            name='notify-master-downstream', slack_channel='grafana-enterprise-ci-notifications', trigger=notify_trigger,
+            depends_on=['build-master-downstream', 'windows-master-downstream', 'publish-master-downstream'],
         ))
 
     return pipelines
@@ -206,6 +226,22 @@ def pipeline(
 
     return pipeline
 
+def notify_pipeline(name, slack_channel, trigger, depends_on=[]):
+    return {
+        'kind': 'pipeline',
+        'type': 'docker',
+        'platform': {
+            'os': 'linux',
+            'arch': 'amd64',
+        },
+        'name': name,
+        'trigger': trigger,
+        'steps': [
+            slack_step(slack_channel),
+        ],
+        'depends_on': depends_on,
+    }
+
 def slack_step(channel):
     return {
         'name': 'slack',
@@ -216,9 +252,6 @@ def slack_step(channel):
             },
             'channel': channel,
             'template': 'Build {{build.number}} failed: {{build.link}}',
-        },
-        'when': {
-            'status': ['failure',],
         },
     }
 
@@ -294,8 +327,7 @@ def init_steps(edition, platform, version_mode, is_downstream=False, install_dep
                 ] + common_cmds,
             },
         ]
-        if version_mode == 'master':
-            steps.append(slack_step(channel='grafana-enterprise-ci-failures'))
+
         return steps
 
     steps = [
@@ -316,9 +348,6 @@ def init_steps(edition, platform, version_mode, is_downstream=False, install_dep
             ] + common_cmds,
         },
     ]
-
-    if version_mode == 'master':
-        steps.append(slack_step(channel='grafana-ci-failures'))
 
     return steps
 
@@ -362,6 +391,33 @@ def lint_backend_step(edition):
             './scripts/revive-strict',
             './scripts/tidy-check.sh',
         ],
+    }
+
+def benchmark_ldap_step():
+    return {
+        'name': 'benchmark-ldap',
+        'image': build_image,
+        'depends_on': [
+            'initialize',
+        ],
+        'environment': {
+	  'LDAP_HOSTNAME': 'ldap',
+        },
+        'commands': [
+            './bin/dockerize -wait tcp://ldap:389 -timeout 120s',
+            'go test -benchmem -run=^$ ./pkg/extensions/ldapsync -bench "^(Benchmark50Users)$"',
+        ],
+    }
+
+def ldap_service():
+    return {
+        'name': 'ldap',
+        'image': 'osixia/openldap:1.4.0',
+        'environment': {
+          'LDAP_ADMIN_PASSWORD': 'grafana',
+          'LDAP_DOMAIN': 'grafana.org',
+          'SLAPD_ADDITIONAL_MODULES': 'memberof',
+        },
     }
 
 def build_storybook_step(edition):
@@ -524,7 +580,7 @@ def frontend_metrics_step(edition):
         return None
 
     return {
-        'name': 'frontend-metrics',
+        'name': 'publish-frontend-metrics',
         'image': build_image,
         'depends_on': [
             'initialize',
@@ -779,7 +835,7 @@ def release_next_npm_packages_step(edition):
             },
         },
         'commands': [
-            'npx lerna bootstrap',
+            './node_modules/.bin/lerna bootstrap',
             'echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc',
             './scripts/circle-release-next-packages.sh',
         ],

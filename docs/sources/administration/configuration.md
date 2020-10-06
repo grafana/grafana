@@ -8,7 +8,7 @@ aliases = ["/docs/grafana/latest/installation/configuration/"]
 name = "Configuration"
 identifier = "config"
 parent = "admin"
-weight = 1
+weight = 300
 +++
 
 # Configuration
@@ -31,7 +31,7 @@ If you installed Grafana using the `deb` or `rpm` packages, then your configurat
 
 ### Docker
 
-Refer to [Configure a Grafana Docker image]({{< relref "../installation/configure-docker.md" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
+Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
 
 ### Windows
 
@@ -653,7 +653,7 @@ Limit of API key seconds to live before expiration. Default is -1 (unlimited).
 
 ## [auth.anonymous]
 
-Refer to [Anonymous authentication]({{< relref "../auth/#anonymous-authentication" >}}) for detailed instructions.
+Refer to [Anonymous authentication]({{< relref "../auth/grafana.md/#anonymous-authentication" >}}) for detailed instructions.
 
 <hr />
 
@@ -1154,7 +1154,7 @@ keep the default, just leave this empty. You must still provide a `region` value
 Set this to true to force path-style addressing in S3 requests, i.e., `http://s3.amazonaws.com/BUCKET/KEY`, instead
 of the default, which is virtual hosted bucket addressing when possible (`http://BUCKET.s3.amazonaws.com/KEY`).
 
-> Note: This option is specific to the Amazon S3 service.
+> **Note:** This option is specific to the Amazon S3 service.
 
 ### bucket_url
 
