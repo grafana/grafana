@@ -61,7 +61,7 @@ aggregation system from Grafana Lab called [Grafana Loki](https://github.com/gra
 
 Loki is a horizontally-scalable, highly-available, multi-tenant log aggregation system inspired by Prometheus. It is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels.
 
-Read more about Grafana Loki [here](https://github.com/grafana/loki) or [Grafana Labs hosted Loki](https://grafana.com/loki).
+For more information about Grafana Loki, refer to [Github Grafana Loki](https://github.com/grafana/loki) or [Grafana Labs hosted Loki](https://grafana.com/loki).
 
 The Explore feature allows you to query logs and features a new log panel. In the near future, we will be adding support
 for other log sources to Explore and the next planned integration is Elasticsearch.
@@ -137,7 +137,7 @@ high availability setup and/or if you're using a stateless user session store li
 
 Instead of user sessions, we've implemented a solution based on short-lived tokens that are rotated frequently. This also replaces the old "remember me cookie"
 solution, which allowed a user to be logged in between browser sessions and which have been subject to several security holes throughout the years.
-Read more about the short-lived token solution and how to configure it [here](/auth/overview/#login-and-short-lived-tokens).
+For more information about the short-lived token solution and how to configure it, refer to [short lived token](/auth/overview/#login-and-short-lived-tokens).
 
 > Please note that due to these changes, all users will be required to login upon next visit after upgrade.
 
