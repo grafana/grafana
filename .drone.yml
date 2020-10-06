@@ -143,7 +143,7 @@ steps:
   depends_on:
   - package
 
-- name: generate-frontend-package-docs
+- name: build-frontend-docs
   image: grafana/build-container:1.2.27
   commands:
   - ./scripts/ci-reference-docs-lint.sh ci
@@ -158,7 +158,7 @@ steps:
   - cd /hugo && make prod
   depends_on:
   - initialize
-  - generate-frontend-package-docs
+  - build-frontend-docs
 
 - name: copy-packages-for-docker
   image: grafana/build-container:1.2.27
@@ -447,7 +447,7 @@ steps:
   depends_on:
   - build-storybook
 
-- name: generate-frontend-package-docs
+- name: build-frontend-docs
   image: grafana/build-container:1.2.27
   commands:
   - ./scripts/ci-reference-docs-build.sh ci
@@ -462,7 +462,7 @@ steps:
   - cd /hugo && make prod
   depends_on:
   - initialize
-  - generate-frontend-package-docs
+  - build-frontend-docs
 
 - name: copy-packages-for-docker
   image: grafana/build-container:1.2.27

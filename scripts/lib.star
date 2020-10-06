@@ -45,7 +45,7 @@ def pr_pipelines(edition):
         e2e_tests_server_step(),
         e2e_tests_step(),
         build_storybook_step(edition),
-        generate_frontend_package_docs(edition=edition, lint=True),
+        build_frontend_docs(edition=edition, lint=True),
         build_docs_website_step(),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, archs=['amd64',]),
@@ -88,7 +88,7 @@ def master_steps(edition, is_downstream=False):
         e2e_tests_step(),
         build_storybook_step(edition=edition),
         publish_storybook_step(edition=edition),
-        generate_frontend_package_docs(edition=edition, lint=False),
+        build_frontend_docs(edition=edition, lint=False),
         build_docs_website_step(),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, publish=publish),
@@ -499,7 +499,7 @@ def build_frontend_step(edition, is_downstream=False):
         ],
     }
 
-def generate_frontend_package_docs(edition, lint=False):
+def build_frontend_docs(edition, lint=False):
     if edition == 'enterprise':
         return None
 
@@ -509,7 +509,7 @@ def generate_frontend_package_docs(edition, lint=False):
         script = './scripts/ci-reference-docs-build.sh'
 
     return {
-        'name': 'generate-frontend-package-docs',
+        'name': 'build-frontend-docs',
         'image': build_image,
         'depends_on': [
             'build-frontend'
@@ -723,7 +723,7 @@ def build_docs_website_step():
         'image': 'grafana/docs-base:latest',
         'depends_on': [
             'initialize',
-            'generate-frontend-package-docs',
+            'build-frontend-docs',
         ],
         'commands': [
             'mkdir -p /hugo/content/docs/grafana',
