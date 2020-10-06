@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # abort if we get any error
-set -eo pipefail
+set -xeo pipefail
 
 pretty_print_result_of_report() {
   # $1 = result of current report
