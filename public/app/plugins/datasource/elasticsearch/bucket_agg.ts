@@ -1,5 +1,5 @@
 import coreModule from 'app/core/core_module';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import * as queryDef from './query_def';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';

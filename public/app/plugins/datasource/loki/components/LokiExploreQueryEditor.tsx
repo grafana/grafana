@@ -1,6 +1,6 @@
 // Libraries
 import React, { memo } from 'react';
-import _ from 'lodash';
+import * as _ from 'lodash';
 
 // Types
 import { ExploreQueryFieldProps } from '@grafana/data';

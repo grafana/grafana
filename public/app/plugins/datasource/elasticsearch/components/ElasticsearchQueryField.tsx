@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import React from 'react';
 
 import { QueryField, SlatePrism } from '@grafana/ui';

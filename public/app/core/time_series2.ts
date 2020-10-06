@@ -1,5 +1,5 @@
 import { getFlotTickDecimals } from 'app/core/utils/ticks';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { getValueFormat, ValueFormatter, stringToJsRegex, DecimalCount, formattedValueToString } from '@grafana/data';
 
 function matchSeriesOverride(aliasOrRegex: string, seriesAlias: string) {

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { TimeSeries } from 'app/core/core';
 import { Bucket, HeatmapCard, HeatmapCardStats, YBucket, XBucket } from './types';
 

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import LRU from 'lru-cache';
 import { Value } from 'slate';
 

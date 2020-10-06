@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 
 const keywords = 'by|without|on|ignoring|group_left|group_right|bool|or|and|unless';
 

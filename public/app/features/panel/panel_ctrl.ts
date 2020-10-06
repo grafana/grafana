@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
 import { Emitter } from 'app/core/utils/emitter';

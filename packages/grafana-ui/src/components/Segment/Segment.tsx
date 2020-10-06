@@ -1,6 +1,6 @@
 import React from 'react';
 import { cx } from 'emotion';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { SegmentSelect, useExpandableLabel, SegmentProps } from './';
 

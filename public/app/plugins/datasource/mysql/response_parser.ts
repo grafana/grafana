@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { MysqlMetricFindValue } from './types';
 
 interface TableResponse extends Record<string, any> {

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 
 export function getMessageFromError(err: string | (Error & { data?: any; statusText?: string })): string {
   if (err && !_.isString(err)) {

@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import * as _ from 'lodash';
 // Utils
 import { getTemplateSrv } from '@grafana/runtime';
 import { Emitter } from 'app/core/utils/emitter';

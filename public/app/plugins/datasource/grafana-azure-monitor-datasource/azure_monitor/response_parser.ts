@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import TimeGrainConverter from '../time_grain_converter';
 export default class ResponseParser {
   static parseResponseValues(

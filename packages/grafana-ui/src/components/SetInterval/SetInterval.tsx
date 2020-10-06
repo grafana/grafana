@@ -1,7 +1,7 @@
 import { PureComponent } from 'react';
 import { interval, Subscription, Subject, of, NEVER } from 'rxjs';
 import { tap, switchMap } from 'rxjs/operators';
-import _ from 'lodash';
+import * as _ from 'lodash';
 
 import { stringToMs, SelectableValue } from '@grafana/data';
 import { RefreshPicker } from '../RefreshPicker/RefreshPicker';

@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import * as _ from 'lodash';
 
 // Services & Utils
 import { DataQuery, DataSourceApi, dateTimeFormat, AppEvents, urlUtil, ExploreUrlState } from '@grafana/data';

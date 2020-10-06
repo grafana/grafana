@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import angular from 'angular';
 import coreModule from '../core_module';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';

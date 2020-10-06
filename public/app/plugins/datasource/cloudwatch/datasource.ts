@@ -1,6 +1,6 @@
 import React from 'react';
 import angular from 'angular';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { AppNotificationTimeout } from 'app/types';

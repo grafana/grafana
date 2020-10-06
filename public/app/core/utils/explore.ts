@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { Unsubscribable } from 'rxjs';
 // Services & Utils
 import {

@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import _ from 'lodash';
+import * as _ from 'lodash';
 
 import { TemplateSrv } from '@grafana/runtime';
 import { SelectableValue, rangeUtil } from '@grafana/data';

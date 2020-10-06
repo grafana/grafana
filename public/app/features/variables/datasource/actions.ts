@@ -7,7 +7,7 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getVariable } from '../state/selectors';
 import { DataSourceVariableModel } from '../types';
 import { getTemplateSrv } from '@grafana/runtime';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { changeVariableEditorExtended } from '../editor/reducer';
 
 export interface DataSourceVariableActionDependencies {

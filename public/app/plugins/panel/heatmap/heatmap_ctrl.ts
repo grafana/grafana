@@ -1,5 +1,5 @@
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import TimeSeries from 'app/core/time_series2';
 import { axesEditor } from './axes_editor';

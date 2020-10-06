@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import Plain from 'slate-plain-serializer';
 
 import QueryField from './query_field';

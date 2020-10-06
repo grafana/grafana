@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { appEvents, coreModule, NavModelSrv } from 'app/core/core';
 import { getBackendSrv } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';

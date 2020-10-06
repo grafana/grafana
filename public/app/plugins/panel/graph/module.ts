@@ -4,7 +4,7 @@ import './thresholds_form';
 import './time_regions_form';
 
 import template from './template';
-import _ from 'lodash';
+import * as _ from 'lodash';
 
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { DataProcessor } from './data_processor';

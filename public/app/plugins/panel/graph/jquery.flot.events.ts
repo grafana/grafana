@@ -1,6 +1,6 @@
 import angular from 'angular';
 import $ from 'jquery';
-import _ from 'lodash';
+import * as _ from 'lodash';
 //@ts-ignore
 import Drop from 'tether-drop';
 import { CreatePlotOverlay } from '@grafana/data';

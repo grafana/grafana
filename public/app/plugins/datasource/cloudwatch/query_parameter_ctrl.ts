@@ -1,6 +1,6 @@
 import angular from 'angular';
 import coreModule from 'app/core/core_module';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { TemplateSrv } from '@grafana/runtime';
 
 export class CloudWatchQueryParameterCtrl {

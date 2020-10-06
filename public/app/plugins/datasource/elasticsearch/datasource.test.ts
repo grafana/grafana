@@ -10,7 +10,7 @@ import {
   MutableDataFrame,
   toUtc,
 } from '@grafana/data';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { ElasticDatasource, enhanceDataFrame } from './datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';

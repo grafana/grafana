@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { rangeUtil } from '@grafana/data';
 
 export default class TimeGrainConverter {

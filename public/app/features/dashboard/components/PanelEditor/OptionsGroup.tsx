@@ -1,6 +1,6 @@
 import React, { FC, memo, ReactNode, useCallback, useEffect, useState } from 'react';
 import { css, cx } from 'emotion';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';

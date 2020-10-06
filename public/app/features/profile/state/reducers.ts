@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { UserState, ThunkResult } from 'app/types';
 import config from 'app/core/config';

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import TableModel from 'app/core/table_model';
 import { FieldType, QueryResultMeta, TimeSeries, TableData } from '@grafana/data';
 

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import angular, { ILocationService, IScope } from 'angular';
 
 import { DashboardModel } from '../../state/DashboardModel';

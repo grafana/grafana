@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import $ from 'jquery';
 import coreModule from '../core_module';
 import { TemplateSrv } from 'app/features/templating/template_srv';

@@ -1,5 +1,5 @@
 import coreModule from 'app/core/core_module';
-import _ from 'lodash';
+import * as _ from 'lodash';
 
 export function elasticPipelineVariables() {
   return {

@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import angular from 'angular';
-import _ from 'lodash';
+import * as _ from 'lodash';
 
 const $win = $(window);
 

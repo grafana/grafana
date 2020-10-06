@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
 import { histogram } from 'd3';
 

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { auto } from 'angular';
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';

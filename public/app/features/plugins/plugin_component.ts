@@ -1,5 +1,5 @@
 import angular, { ILocationService } from 'angular';
-import _ from 'lodash';
+import * as _ from 'lodash';
 
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';

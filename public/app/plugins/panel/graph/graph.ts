@@ -9,7 +9,7 @@ import 'vendor/flot/jquery.flot.dashes';
 import './jquery.flot.events';
 
 import $ from 'jquery';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { tickStep } from 'app/core/utils/ticks';
 import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';

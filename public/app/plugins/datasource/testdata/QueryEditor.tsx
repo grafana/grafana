@@ -1,6 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import _ from 'lodash';
+import * as _ from 'lodash';
 
 // Services & Utils
 import { getBackendSrv } from '@grafana/runtime';

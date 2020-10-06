@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 
 export function dedupAnnotations(annotations: any) {
   let dedup = [];

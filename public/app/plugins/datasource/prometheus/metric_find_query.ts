@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { map } from 'rxjs/operators';
 import { MetricFindValue, TimeRange } from '@grafana/data';
 import { PrometheusDatasource } from './datasource';

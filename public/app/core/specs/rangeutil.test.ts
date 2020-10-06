@@ -1,5 +1,5 @@
 import { rangeUtil } from '@grafana/data';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { dateTime } from '@grafana/data';
 
 describe('rangeUtil', () => {

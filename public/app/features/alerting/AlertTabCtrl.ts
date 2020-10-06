@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { ThresholdMapper } from './state/ThresholdMapper';
 import { QueryPart } from 'app/core/components/query_part/query_part';

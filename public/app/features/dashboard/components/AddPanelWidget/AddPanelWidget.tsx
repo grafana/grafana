@@ -1,6 +1,6 @@
 // Libraries
 import React, { useMemo } from 'react';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { LocationUpdate } from '@grafana/runtime';
 import { Button, HorizontalGroup, IconButton, stylesFactory, useTheme } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';

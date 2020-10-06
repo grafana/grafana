@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import coreModule from '../../core_module';
 import { ISCEService } from 'angular';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';

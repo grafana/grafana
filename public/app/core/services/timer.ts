@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { ITimeoutService } from 'angular';
 

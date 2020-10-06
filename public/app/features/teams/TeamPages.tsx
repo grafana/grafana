@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { hot } from 'react-hot-loader';
 import config from 'app/core/config';
 import Page from 'app/core/components/Page/Page';

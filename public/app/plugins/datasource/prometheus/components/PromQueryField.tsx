@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import React, { ReactNode } from 'react';
 
 import { Plugin } from 'slate';

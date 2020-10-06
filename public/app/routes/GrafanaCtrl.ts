@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import * as _ from 'lodash';
 import $ from 'jquery';
 // @ts-ignore
 import Drop from 'tether-drop';

@@ -1,5 +1,5 @@
 import angular from 'angular';
-import _ from 'lodash';
+import * as _ from 'lodash';
 
 import { getPluginSettings } from './PluginSettingsCache';
 import { PluginMeta } from '@grafana/data';
