@@ -14,6 +14,7 @@ You can apply standard field options to most built-in Grafana panels. Some older
 Most field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
 For more information about applying these options, refer to:
+
 - [Configure all fields]({{< relref "configure-all-fields.md" >}})
 - [Configure specific fields]({{< relref "configure-specific-fields.md" >}})
 
@@ -85,6 +86,18 @@ You can also paste a native emoji in the unit picker and pick it as a custom uni
 ### String units
 
 Grafana can sometime be too aggressive in parsing strings and displaying them as numbers. To make Grafana show the original string create a field override and add a unit property with the `string` unit.
+
+## Color
+
+The field color option defines how Grafana should color series or fields. There are multiple modes here that work very differently and their utility depend largly on what visualization you currenly have selected.
+
+Continuous color modes use a value's percentage relative to min and max to interpolate a color.
+
+- **Fixed color**: Set a specific color using the color picker. Mostly useful from an override rule.
+- **Classic**: Color is derived from the series or field index and looking up a corresponding color in the classic color palette. Useful for Graphs.
+- **Vibrant**: Color is derived from the series or field index and looking up a corresponding color in the vibrant color palette. Useful for Graphs.
+- **From thresholds**: Color is derived from the matching threshold. Useful for Gauge, BarGauge, Stat and Table.
+- **Green-Yellow-Red (Continuous)**: Color is derived from a continous spectrum between green, yellow and red.
 
 ## Thresholds
 

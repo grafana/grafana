@@ -12,42 +12,13 @@ export interface FieldColorMode extends RegistryItem {
 export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
   return [
     {
-      id: FieldColorModeId.Thresholds,
-      name: 'Discrete / From thresholds',
-      description: 'Derive colors from thresholds',
-      getCalculator: (_field, _seriesIndex, theme) => {
-        return (_value, _percent, threshold) => {
-          const thresholdSafe = threshold ?? fallBackTreshold;
-          return getColorFromHexRgbOrName(thresholdSafe.color, theme.type);
-        };
-      },
-    },
-    {
-      id: FieldColorModeId.ContinousGrYlRd,
-      name: 'Continuous / Green-Yellow-Red',
-      description: 'Derive colors from thresholds',
-      getCalculator: (_field, _seriesIndex, theme) => {
-        const colors = ['green', 'yellow', 'red'].map(c => getColorFromHexRgbOrName(c, theme.type));
-        const interpolator = interpolateRgbBasis(colors);
-
-        return (_value, percent) => {
-          return interpolator(percent);
-        };
-      },
-    },
-    {
-      id: FieldColorModeId.DiscreteClassic,
-      name: 'Discrete / Classic',
-      description: 'Assigns color based on series or field index',
-      getCalculator: (_field, seriesIndex) => {
-        return () => {
-          return classicColors[seriesIndex % classicColors.length];
-        };
-      },
+      id: FieldColorModeId.Fixed,
+      name: 'Fixed color',
+      getCalculator: getFixedColor,
     },
     {
       id: FieldColorModeId.DiscreteVibrant,
-      name: 'Discrete / Vibrant',
+      name: 'Vibrant',
       description: 'Assigns color based on series or field index',
       getCalculator: (_field, seriesIndex, theme: GrafanaTheme) => {
         const namedColors = [
@@ -69,9 +40,38 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       },
     },
     {
-      id: FieldColorModeId.Fixed,
-      name: 'Fixed color',
-      getCalculator: getFixedColor,
+      id: FieldColorModeId.DiscreteClassic,
+      name: 'Classic',
+      description: 'Assigns color based on series or field index',
+      getCalculator: (_field, seriesIndex) => {
+        return () => {
+          return classicColors[seriesIndex % classicColors.length];
+        };
+      },
+    },
+    {
+      id: FieldColorModeId.Thresholds,
+      name: 'From thresholds',
+      description: 'Derive colors from thresholds',
+      getCalculator: (_field, _seriesIndex, theme) => {
+        return (_value, _percent, threshold) => {
+          const thresholdSafe = threshold ?? fallBackTreshold;
+          return getColorFromHexRgbOrName(thresholdSafe.color, theme.type);
+        };
+      },
+    },
+    {
+      id: FieldColorModeId.ContinousGrYlRd,
+      name: 'Green-Yellow-Red (Continuous)',
+      description: 'Derive colors from thresholds',
+      getCalculator: (_field, _seriesIndex, theme) => {
+        const colors = ['green', 'yellow', 'red'].map(c => getColorFromHexRgbOrName(c, theme.type));
+        const interpolator = interpolateRgbBasis(colors);
+
+        return (_value, percent) => {
+          return interpolator(percent);
+        };
+      },
     },
   ];
 });
