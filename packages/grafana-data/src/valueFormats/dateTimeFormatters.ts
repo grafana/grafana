@@ -3,7 +3,7 @@ import { toDuration as duration, toUtc, dateTime } from '../datetime/moment_wrap
 import { toFixed, toFixedScaled, FormattedValue, ValueFormatter } from './valueFormats';
 import { DecimalCount } from '../types/displayValue';
 import { TimeZone } from '../types';
-import { dateTimeFormat, dateTimeFormatTimeAgo, localTimeFormat } from '../datetime';
+import { dateTimeFormat, dateTimeFormatTimeAgo, localTimeFormat, systemDateFormats } from '../datetime';
 
 interface IntervalsInSeconds {
   [interval: string]: number;
@@ -381,6 +381,15 @@ export function getDateTimeAsLocalFormat() {
       second: '2-digit',
     })
   );
+}
+
+export function dateTimeSystemFormatter(
+  value: number,
+  decimals: DecimalCount,
+  scaledDecimals: DecimalCount,
+  timeZone?: TimeZone
+): FormattedValue {
+  return { text: dateTimeFormat(value, { format: systemDateFormats.fullDate, timeZone }) };
 }
 
 export function dateTimeFromNow(

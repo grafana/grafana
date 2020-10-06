@@ -36,7 +36,7 @@ Support for Flux and Influx v2 has been added. The InfluxData blog post, [How to
 
 ## Query history search
 
-In Grafana v 7.1 we are introducing search functionality in Query history. You can search across queries and your comments. It is especially useful in combination with a time filter and data source filter. Read more about [Query history here]({{<relref "../features/explore/index.md#query-history" >}}).
+In Grafana v 7.1 we are introducing search functionality in Query history. You can search across queries and your comments. It is especially useful in combination with a time filter and data source filter. Read more about [Query history here]({{<relref "../explore/index.md#query-history" >}}).
 
 {{< docs-imagebox img="/img/docs/v71/query_history_search.gif" max-width="800px" caption="Query history search" >}}
 
@@ -52,13 +52,13 @@ The new internal linking feature for Elasticsearch allows you to link to other d
 
 ## Transformations
 
-We have added a new **Merge on time** transform that can combine many time series or table results. Unlike the join transform this combines the result into one table even when the time values does not align / match.
+We have added a new **Merge on time** transform that can combine many time series or table results. Unlike the join transform, this combines the result into one table even when the time values do not align / match.
 
 The new table panel introduced in 7.0 was missing a few features that the old table panel had. This feature, along with ad hoc filtering, means that the new table panel has achieved feature parity with the old table panel.
 
 ## Ad hoc filtering in the new table panel
 
-[Ad hoc filtering]({{<relref "../variables/templates-and-variables/#ad-hoc-filters" >}}), a way to automatically add filters to queries without having to define template variables is now supported in the new Table panel.
+[Ad hoc filtering]({{<relref "../variables/variable-types/_index.md#ad-hoc-filters" >}}), a way to automatically add filters to queries without having to define template variables is now supported in the new Table panel.
 
 ## Stat panel text mode
 
@@ -85,7 +85,7 @@ Additionally, the Raw Edit mode for Application Insights Analytics has been repl
 
 ## Deep linking for Google Cloud Monitoring (formerly named Google Stackdriver) data source
 
-A new feature in Grafana 7.1 is [deep linking from Grafana panels to the Metrics Explorer in Gooogle Cloud Console]({{<relref "../features/datasources/cloudmonitoring.md#deep-linking-from-grafana-panels-to-the-metrics-explorer-in-google-cloud-console">}}). Click on a time series in the panel to see a context menu with a link to View in Metrics explorer in Google Cloud Console. Clicking that link opens the Metrics explorer in the Monitoring Google Cloud Console and runs the query from the Grafana panel there.
+A new feature in Grafana 7.1 is [deep linking from Grafana panels to the Metrics Explorer in Google Cloud Console]({{<relref "../features/datasources/cloudmonitoring.md#deep-linking-from-grafana-panels-to-the-metrics-explorer-in-google-cloud-console">}}). Click on a time series in the panel to see a context menu with a link to View in Metrics explorer in Google Cloud Console. Clicking that link opens the Metrics explorer in the Monitoring Google Cloud Console and runs the query from the Grafana panel there.
 
 ## Time range picker update
 

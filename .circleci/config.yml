@@ -10,10 +10,9 @@ aliases:
   - &filter-only-master
     branches:
       only: master
-  - &filter-master-or-release
+  - &filter-release
     branches:
       only:
-        - master
         - chore/test-release-pipeline
     tags:
       only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
@@ -33,7 +32,7 @@ executors:
       - image: srclosson/grafana-plugin-ci-e2e:latest
   grafana-build:
     docker:
-      - image: grafana/build-container:1.2.26
+      - image: grafana/build-container:1.2.27
   grafana-publish:
     docker:
       - image: grafana/grafana-ci-deploy:1.2.5
@@ -48,7 +47,7 @@ commands:
       - run:
           name: "Install Grafana build pipeline tool"
           command: |
-            VERSION=0.5.8
+            VERSION=0.5.16
             curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${VERSION}/grabpl
             chmod +x grabpl
             mv grabpl /tmp
@@ -86,10 +85,6 @@ jobs:
               # We're testing the release pipeline
               /tmp/grabpl build-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
                 --variants << parameters.variant >> v7.0.0-test
-            else
-              # A master or PR build
-              /tmp/grabpl build-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
-                --variants << parameters.variant >> --build-id $CIRCLE_WORKFLOW_ID
             fi
       - run:
           name: Move artifacts
@@ -154,9 +149,6 @@ jobs:
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
               /tmp/grabpl build-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> 7.0.0-test
-            else
-              # A master or PR build
-              /tmp/grabpl build-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> --build-id $CIRCLE_WORKFLOW_ID
             fi
       - run:
           name: Move artifacts
@@ -410,17 +402,6 @@ jobs:
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
               /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --sign v7.0.0-test
-            elif [[ $CIRCLE_BRANCH == "master" ]]; then
-              # A master build
-              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID
-            elif [[ -n "$CIRCLE_PR_NUMBER" ]]; then
-              # A forked PR build, don't sign as it requires an API secret
-              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --build-id $CIRCLE_WORKFLOW_ID --variants \
-                linux-x64,linux-x64-musl,osx64,win64
-            else
-              # A non-forked PR build
-              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition oss --sign --build-id $CIRCLE_WORKFLOW_ID --variants \
-                linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
           name: Move artifacts
@@ -472,17 +453,6 @@ jobs:
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
               /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --sign v7.0.0-test
-            elif [[ $CIRCLE_BRANCH == "master" ]]; then
-              # A master build
-              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID
-            elif [[ -n "$CIRCLE_PR_NUMBER" ]]; then
-              # A forked PR build, don't sign as it requires an API secret
-              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --build-id $CIRCLE_WORKFLOW_ID --variants \
-                linux-x64,linux-x64-musl,osx64,win64
-            else
-              # A PR build
-              /tmp/grabpl package --github-token "${GITHUB_GRAFANABOT_TOKEN}" --jobs 2 --edition enterprise --sign --build-id $CIRCLE_WORKFLOW_ID --variants \
-                linux-x64,linux-x64-musl,osx64,win64
             fi
       - run:
           name: Move artifacts
@@ -566,10 +536,6 @@ jobs:
             if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
               echo Testing release
-            elif [[ $CIRCLE_BRANCH == "master" ]]; then
-              echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
-              gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-              gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary
             elif [[ -n $CIRCLE_TAG ]]; then
               echo $GCP_GRAFANA_UPLOAD_KEY > /tmp/gcpkey.json
               gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
@@ -633,7 +599,7 @@ jobs:
           name: Build Docker images
           command: |
             source google-cloud-sdk/path.bash.inc
-            if [[ -n $CIRCLE_TAG || $CIRCLE_BRANCH == "chore/test-release-pipeline" || $CIRCLE_BRANCH == "master" ]]; then
+            if [[ -n $CIRCLE_TAG || $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # It's a full build
               /tmp/grabpl build-docker --jobs 4 --edition << parameters.edition >> \
                 --ubuntu=<< parameters.ubuntu >>
@@ -645,7 +611,7 @@ jobs:
       - run:
           name: Exit if PR
           command: |
-            if [[ -z $CIRCLE_TAG && $CIRCLE_BRANCH != "chore/test-release-pipeline" && $CIRCLE_BRANCH != "master" ]]; then
+            if [[ -z $CIRCLE_TAG && $CIRCLE_BRANCH != "chore/test-release-pipeline" ]]; then
               echo "Nothing to do for PRs, so marking this step successful"
               circleci step halt
             fi
@@ -829,8 +795,12 @@ jobs:
               ./pkg/services/provisioning/notifiers/... \
               ./pkg/services/provisioning/values/... \
               ./pkg/plugins/backendplugin/...
+            ./scripts/tidy-check.sh
 
   test-frontend:
+    parameters:
+      edition:
+        type: string
     executor: node
     steps:
       - checkout
@@ -850,10 +820,20 @@ jobs:
           key: v2-yarn-{{ checksum "yarn.lock" }}
           paths:
             - node_modules
+      - install-grabpl
       - run:
           name: frontend tests
           command: |
-            ./scripts/circle-test-frontend.sh
+            if [[ -n $CIRCLE_TAG ]]; then
+              # A release build
+              ./scripts/circle-test-frontend.sh --edition << parameters.edition >> $CIRCLE_TAG
+            elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
+              # We're testing the release pipeline
+              ./scripts/circle-test-frontend.sh --edition << parameters.edition >> v7.0.0-test
+            else
+              # A master build
+              ./scripts/circle-test-frontend.sh --edition << parameters.edition >> --build-id $CIRCLE_WORKFLOW_ID
+            fi
       - store_test_results:
           path: reports/junit
       - run:
@@ -867,14 +847,31 @@ jobs:
 
   test-backend:
     executor: go
+    parameters:
+      edition:
+        type: string
     steps:
       - checkout
       - run:
           name: CI job started
           command: "./scripts/ci-job-started.sh"
+      - install-grabpl
       - run:
-          name: build backend and run go tests
-          command: "./scripts/circle-test-backend.sh"
+          name: back-end tests
+          command: |
+            if [[ -n $CIRCLE_TAG ]]; then
+              # A release build
+              /tmp/grabpl test-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
+                $CIRCLE_TAG
+            elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
+              # We're testing the release pipeline
+              /tmp/grabpl test-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
+                v7.0.0-test
+            else
+              # A master build
+              /tmp/grabpl test-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
+                --build-id $CIRCLE_WORKFLOW_ID
+            fi
       - run:
           name: CI job failed
           command: "./scripts/ci-job-failed.sh"
@@ -912,19 +909,6 @@ jobs:
           name: CI job succeeded
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
-
-  deploy-to-kubernetes:
-    description: "Deploy Grafana master Docker image to Kubernetes"
-    executor: base
-    steps:
-      - attach_workspace:
-          at: /tmp/workspace
-      - install-grabpl
-      - run:
-          name: Deploy to Kubernetes
-          command: |
-            cp -r /tmp/workspace/enterprise/dist .
-            /tmp/grabpl deploy-to-k8s
 
   release-packages:
     executor: node
@@ -1009,179 +993,193 @@ workflows:
   build-pipeline:
     jobs:
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           edition: oss
           variant: armv6
           name: build-oss-backend-armv6
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           edition: oss
           variant: armv7
           name: build-oss-backend-armv7
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           edition: oss
           variant: armv7-musl
           name: build-oss-backend-armv7-musl
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           edition: oss
           variant: arm64
           name: build-oss-backend-arm64
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           edition: oss
           variant: arm64-musl
           name: build-oss-backend-arm64-musl
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           edition: oss
           variant: osx64
           name: build-oss-backend-osx64
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           edition: oss
           variant: win64
           name: build-oss-backend-win64
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           edition: oss
           variant: linux-x64
           name: build-oss-backend-linux-x64
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           edition: oss
           variant: linux-x64-musl
           name: build-oss-backend-linux-x64-musl
           requires:
             - lint-go
       - build-frontend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-oss-frontend
           edition: oss
       - build-plugins:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-oss-plugins
           edition: oss
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-enterprise-backend-armv6
           edition: enterprise
           variant: armv6
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-enterprise-backend-armv7
           edition: enterprise
           variant: armv7
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-enterprise-backend-armv7-musl
           edition: enterprise
           variant: armv7-musl
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-enterprise-backend-arm64
           edition: enterprise
           variant: arm64
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-enterprise-backend-arm64-musl
           edition: enterprise
           variant: arm64-musl
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-enterprise-backend-osx64
           edition: enterprise
           variant: osx64
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-enterprise-backend-win64
           edition: enterprise
           variant: win64
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-enterprise-backend-linux-x64
           edition: enterprise
           variant: linux-x64
           requires:
             - lint-go
       - build-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-enterprise-backend-linux-x64-musl
           edition: enterprise
           variant: linux-x64-musl
           requires:
             - lint-go
       - build-frontend:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-enterprise-frontend
           edition: enterprise
       - build-plugins:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-enterprise-plugins
           edition: enterprise
           requires:
             - lint-go
       - build-release-publisher:
-          filters: *filter-master-or-release
+          filters: *filter-release
       - codespell:
-          filters: *filter-master-or-release
+          filters: *filter-release
       - lint-go:
-          filters: *filter-master-or-release
+          filters: *filter-release
       - shellcheck:
-          filters: *filter-master-or-release
+          filters: *filter-release
       - test-backend:
-          filters: *filter-master-or-release
+          filters: *filter-release
+          name: test-oss-backend
+          edition: oss
+          requires:
+            - lint-go
+      - test-backend:
+          filters: *filter-release
+          name: test-enterprise-backend
+          edition: enterprise
           requires:
             - lint-go
       - test-frontend:
-          filters: *filter-master-or-release
+          filters: *filter-release
+          name: test-oss-frontend
+          edition: oss
+      - test-frontend:
+          filters: *filter-release
+          name: test-enterprise-frontend
+          edition: enterprise
       - mysql-integration-test:
-          filters: *filter-master-or-release
+          filters: *filter-release
           requires:
             - lint-go
-            - test-backend
-            - test-frontend
+            - test-oss-backend
+            - test-oss-frontend
       - postgres-integration-test:
-          filters: *filter-master-or-release
+          filters: *filter-release
           requires:
             - lint-go
-            - test-backend
-            - test-frontend
+            - test-oss-backend
+            - test-oss-frontend
       - package-oss:
-          filters: *filter-master-or-release
+          filters: *filter-release
           requires:
             - build-oss-backend-armv6
             - build-oss-backend-armv7
@@ -1193,13 +1191,13 @@ workflows:
             - build-oss-backend-linux-x64
             - build-oss-backend-linux-x64-musl
             - build-oss-frontend
-            - test-backend
-            - test-frontend
+            - test-oss-backend
+            - test-oss-frontend
             - codespell
             - shellcheck
             - build-oss-plugins
       - package-enterprise:
-          filters: *filter-master-or-release
+          filters: *filter-release
           requires:
             - build-enterprise-backend-armv6
             - build-enterprise-backend-armv7
@@ -1211,23 +1209,19 @@ workflows:
             - build-enterprise-backend-linux-x64
             - build-enterprise-backend-linux-x64-musl
             - build-enterprise-frontend
-            - test-backend
-            - test-frontend
+            - test-enterprise-backend
+            - test-enterprise-frontend
             - codespell
             - shellcheck
             - build-enterprise-plugins
       - build-oss-windows-installer:
-          filters: *filter-master-or-release
+          filters: *filter-release
           requires:
             - package-oss
       - build-enterprise-windows-installer:
-          filters: *filter-master-or-release
+          filters: *filter-release
           requires:
             - package-enterprise
-      - release-next-packages:
-          filters: *filter-only-master
-          requires:
-            - end-to-end-tests
       - release-packages:
           filters: *filter-only-release
           requires:
@@ -1235,7 +1229,7 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
       - publish-packages:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: publish-oss-packages
           edition: oss
           requires:
@@ -1246,7 +1240,7 @@ workflows:
             - postgres-integration-test
             - build-release-publisher
       - publish-packages:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: publish-enterprise-packages
           edition: enterprise
           requires:
@@ -1257,12 +1251,12 @@ workflows:
             - postgres-integration-test
             - build-release-publisher
       - publish-storybook:
-          filters: *filter-master-or-release
+          filters: *filter-release
           requires:
-            - test-backend
-            - test-frontend
+            - test-oss-backend
+            - test-oss-frontend
       - build-docker-images:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-oss-docker-images
           edition: oss
           ubuntu: false
@@ -1273,7 +1267,7 @@ workflows:
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-oss-ubuntu-docker-images
           edition: oss
           ubuntu: true
@@ -1284,7 +1278,7 @@ workflows:
             - package-oss
             - build-oss-windows-installer
       - build-docker-images:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-enterprise-docker-images
           edition: enterprise
           ubuntu: false
@@ -1295,7 +1289,7 @@ workflows:
             - package-enterprise
             - build-enterprise-windows-installer
       - build-docker-images:
-          filters: *filter-master-or-release
+          filters: *filter-release
           name: build-enterprise-ubuntu-docker-images
           edition: enterprise
           ubuntu: true
@@ -1306,13 +1300,9 @@ workflows:
             - package-enterprise
             - build-enterprise-windows-installer
       - end-to-end-tests:
-          filters: *filter-master-or-release
+          filters: *filter-release
           requires:
             - package-oss
-      - deploy-to-kubernetes:
-          filters: *filter-only-master
-          requires:
-            - build-enterprise-docker-images
 
   nightly:
     triggers:

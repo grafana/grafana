@@ -54,7 +54,7 @@ type AzureMonitorResponse struct {
 	Resourceregion string `json:"resourceregion"`
 }
 
-//ApplicationInsightsQueryResponse is the json response from the Application Insights API
+// ApplicationInsightsQueryResponse is the json response from the Application Insights API
 type ApplicationInsightsQueryResponse struct {
 	Tables []struct {
 		Name    string `json:"name"`
@@ -71,7 +71,7 @@ type AzureLogAnalyticsResponse struct {
 	Tables []AzureLogAnalyticsTable `json:"tables"`
 }
 
-//AzureLogAnalyticsTable is the table format for Log Analytics responses
+// AzureLogAnalyticsTable is the table format for Log Analytics responses
 type AzureLogAnalyticsTable struct {
 	Name    string `json:"name"`
 	Columns []struct {

@@ -1,7 +1,25 @@
 import _ from 'lodash';
+import { MysqlMetricFindValue } from './types';
+
+interface TableResponse extends Record<string, any> {
+  type: string;
+  refId: string;
+  meta: any;
+}
+
+interface SeriesResponse extends Record<string, any> {
+  target: string;
+  refId: string;
+  meta: any;
+  datapoints: [any[]];
+}
+
+export interface MysqlResponse {
+  data: Array<TableResponse | SeriesResponse>;
+}
 
 export default class ResponseParser {
-  processQueryResult(res: any) {
+  processQueryResult(res: any): MysqlResponse {
     const data: any[] = [];
 
     if (!res.data.results) {
@@ -35,7 +53,7 @@ export default class ResponseParser {
     return { data: data };
   }
 
-  parseMetricFindQueryResult(refId: string, results: any) {
+  parseMetricFindQueryResult(refId: string, results: any): MysqlMetricFindValue[] {
     if (!results || results.data.length === 0 || results.data.results[refId].meta.rowCount === 0) {
       return [];
     }
@@ -117,9 +135,9 @@ export default class ResponseParser {
       } else if (table.columns[i].text === 'timeend') {
         timeEndColumnIndex = i;
       } else if (table.columns[i].text === 'title') {
-        return Promise.reject({
+        throw {
           message: 'The title column for annotations is deprecated, now only a column named text is returned',
-        });
+        };
       } else if (table.columns[i].text === 'text') {
         textColumnIndex = i;
       } else if (table.columns[i].text === 'tags') {
@@ -128,9 +146,9 @@ export default class ResponseParser {
     }
 
     if (timeColumnIndex === -1) {
-      return Promise.reject({
+      throw {
         message: 'Missing mandatory time column (with time_sec column alias) in annotation query.',
-      });
+      };
     }
 
     const list = [];

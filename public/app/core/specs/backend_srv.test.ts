@@ -353,6 +353,7 @@ describe('backendSrv', () => {
 
         expect(slowError).toEqual({
           type: DataQueryErrorType.Cancelled,
+          cancelled: true,
           data: null,
           status: -1,
           statusText: 'Request was aborted',

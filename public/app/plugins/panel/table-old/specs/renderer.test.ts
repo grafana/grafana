@@ -33,7 +33,7 @@ describe('when rendering table', () => {
       { text: 'Colored' },
       { text: 'Undefined' },
       { text: 'String' },
-      { text: 'United', unit: 'decbps' },
+      { text: 'United', unit: 'bps' },
       { text: 'Sanitized' },
       { text: 'Link' },
       { text: 'Array' },
@@ -477,7 +477,7 @@ describe('when rendering table with different patterns', () => {
 });
 
 describe('when rendering cells with different alignment options', () => {
-  const cases = [
+  const cases: Array<[string, boolean, string | null, string]> = [
     //align, preserve fmt, color mode, expected
     ['', false, null, '<td>42</td>'],
     ['invalid_option', false, null, '<td>42</td>'],

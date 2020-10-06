@@ -1,11 +1,12 @@
 // Libraries
 import _ from 'lodash';
 // Utils
+import { getTemplateSrv } from '@grafana/runtime';
 import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import templateSrv from 'app/features/templating/template_srv';
 // Types
 import {
+  AppEvent,
   DataConfigSource,
   DataLink,
   DataQuery,
@@ -23,6 +24,7 @@ import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
 import { PanelQueryRunner } from './PanelQueryRunner';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import { CoreEvents } from '../../../types';
 
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
@@ -116,7 +118,6 @@ export class PanelModel implements DataConfigSource {
   collapsed?: boolean;
 
   panels?: any;
-  soloMode?: boolean;
   targets: DataQuery[];
   transformations?: DataTransformerConfig[];
   datasource: string | null;
@@ -142,6 +143,7 @@ export class PanelModel implements DataConfigSource {
   isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
+
   hasRefreshed: boolean;
   events: Emitter;
   cacheTimeout?: any;
@@ -382,6 +384,11 @@ export class PanelModel implements DataConfigSource {
     }
   }
 
+  updateQueries(queries: DataQuery[]) {
+    this.events.emit(CoreEvents.queryChanged);
+    this.targets = queries;
+  }
+
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
     query.refId = getNextRefIdChar(this.targets);
@@ -461,6 +468,7 @@ export class PanelModel implements DataConfigSource {
   }
 
   setTransformations(transformations: DataTransformerConfig[]) {
+    this.events.emit(CoreEvents.transformationChanged);
     this.transformations = transformations;
     this.resendLastResult();
   }
@@ -470,7 +478,7 @@ export class PanelModel implements DataConfigSource {
     if (extraVars) {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
-    return templateSrv.replace(value, vars, format);
+    return getTemplateSrv().replace(value, vars, format);
   }
 
   resendLastResult() {
@@ -487,6 +495,14 @@ export class PanelModel implements DataConfigSource {
    * */
   getSavedId(): number {
     return this.editSourceId ?? this.id;
+  }
+
+  on<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
+    this.events.on(event, callback);
+  }
+
+  off<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
+    this.events.off(event, callback);
   }
 }
 

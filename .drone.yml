@@ -14,9 +14,9 @@ steps:
   - echo $DRONE_RUNNER_NAME
 
 - name: initialize
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
-  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/grabpl
   - chmod +x grabpl
   - mkdir -p bin
   - mv grabpl bin
@@ -26,21 +26,21 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.5.8
 
 - name: lint-backend
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
+  - ./scripts/tidy-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
   - initialize
 
 - name: codespell
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
@@ -48,7 +48,7 @@ steps:
   - initialize
 
 - name: shellcheck
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/shellcheck-v$${VERSION}.linux.x86_64.tar.xz
   - echo $$CHKSUM shellcheck-v$${VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status
@@ -63,7 +63,7 @@ steps:
   - initialize
 
 - name: test-backend
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
@@ -72,7 +72,7 @@ steps:
   - lint-backend
 
 - name: test-frontend
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - yarn run ci:test-frontend
   environment:
@@ -81,24 +81,24 @@ steps:
   - initialize
 
 - name: build-backend
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
   depends_on:
   - initialize
   - lint-backend
   - test-backend
 
 - name: build-frontend
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
+  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - initialize
   - test-frontend
 
 - name: build-plugins
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
   depends_on:
@@ -106,9 +106,9 @@ steps:
   - lint-backend
 
 - name: package
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
-  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64
+  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64
   depends_on:
   - build-backend
   - build-frontend
@@ -119,7 +119,7 @@ steps:
   - shellcheck
 
 - name: end-to-end-tests-server
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   detach: true
   commands:
   - ./e2e/start-server
@@ -137,7 +137,7 @@ steps:
   - end-to-end-tests-server
 
 - name: build-storybook
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - yarn storybook:build
   depends_on:
@@ -153,14 +153,14 @@ steps:
   - initialize
 
 - name: copy-packages-for-docker
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
-  - cp dist/*.tar.gz packaging/docker/
+  - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
 
 - name: build-docker-images
-  image: grafana/drone-grafana-docker:0.2.0
+  image: grafana/drone-grafana-docker:0.3.2
   settings:
     archs: amd64
     dry_run: true
@@ -169,7 +169,7 @@ steps:
   - copy-packages-for-docker
 
 - name: postgres-integration-tests
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - apt-get update
   - apt-get install -yq postgresql-client
@@ -186,7 +186,7 @@ steps:
   - test-frontend
 
 - name: mysql-integration-tests
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - apt-get update
   - apt-get install -yq default-mysql-client
@@ -224,7 +224,33 @@ trigger:
 ---
 kind: pipeline
 type: docker
-name: test-master
+name: windows-pr
+
+platform:
+  os: windows
+  arch: amd64
+  version: 1809
+
+steps:
+- name: identify-runner
+  image: mcr.microsoft.com/windows:1809
+  commands:
+  - echo $env:DRONE_RUNNER_NAME
+
+- name: initialize
+  image: grafana/ci-wix:0.1.1
+  commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/windows/grabpl.exe -OutFile grabpl.exe
+
+trigger:
+  event:
+  - pull_request
+
+---
+kind: pipeline
+type: docker
+name: build-master
 
 platform:
   os: linux
@@ -237,9 +263,9 @@ steps:
   - echo $DRONE_RUNNER_NAME
 
 - name: initialize
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
-  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v$${GRABPL_VERSION}/grabpl
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/grabpl
   - chmod +x grabpl
   - mkdir -p bin
   - mv grabpl bin
@@ -249,21 +275,33 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
-    GRABPL_VERSION: 0.5.8
+
+- name: trigger-enterprise-downstream
+  image: grafana/drone-downstream
+  settings:
+    params:
+    - SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}
+    - SOURCE_COMMIT=${DRONE_COMMIT}
+    repositories:
+    - grafana/grafana-enterprise
+    server: https://drone.grafana.net
+    token:
+      from_secret: drone_token
 
 - name: lint-backend
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
+  - ./scripts/tidy-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
   - initialize
 
 - name: codespell
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
@@ -271,7 +309,7 @@ steps:
   - initialize
 
 - name: shellcheck
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/shellcheck-v$${VERSION}.linux.x86_64.tar.xz
   - echo $$CHKSUM shellcheck-v$${VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status
@@ -286,7 +324,7 @@ steps:
   - initialize
 
 - name: test-backend
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
@@ -295,7 +333,7 @@ steps:
   - lint-backend
 
 - name: test-frontend
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - yarn run ci:test-frontend
   environment:
@@ -303,45 +341,58 @@ steps:
   depends_on:
   - initialize
 
-- name: frontend-metrics
-  image: grafana/build-container:1.2.26
+- name: publish-frontend-metrics
+  image: grafana/build-container:1.2.27
   commands:
   - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
   environment:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
+  failure: ignore
   depends_on:
   - initialize
 
 - name: build-backend
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - initialize
   - lint-backend
   - test-backend
 
 - name: build-frontend
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
+  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - initialize
   - test-frontend
 
 - name: build-plugins
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps --sign --signing-admin
+  environment:
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
   depends_on:
   - initialize
   - lint-backend
 
 - name: package
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
-  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id $DRONE_BUILD_NUMBER --no-pull-enterprise
+  - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --sign
+  environment:
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_API_KEY:
+      from_secret: grafana_api_key
   depends_on:
   - build-backend
   - build-frontend
@@ -352,7 +403,7 @@ steps:
   - shellcheck
 
 - name: end-to-end-tests-server
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   detach: true
   commands:
   - ./e2e/start-server
@@ -370,7 +421,7 @@ steps:
   - end-to-end-tests-server
 
 - name: build-storybook
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - yarn storybook:build
   depends_on:
@@ -381,7 +432,7 @@ steps:
   commands:
   - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-  - echo gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary
+  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/canary
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -398,31 +449,37 @@ steps:
   - initialize
 
 - name: copy-packages-for-docker
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
-  - cp dist/*.tar.gz packaging/docker/
+  - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
 
 - name: build-docker-images
-  image: grafana/drone-grafana-docker:0.2.0
+  image: grafana/drone-grafana-docker:0.3.2
   settings:
-    dry_run: true
     edition: oss
+    password:
+      from_secret: docker_password
+    username:
+      from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
 
 - name: build-docker-images-ubuntu
-  image: grafana/drone-grafana-docker:0.2.0
+  image: grafana/drone-grafana-docker:0.3.2
   settings:
-    dry_run: true
     edition: oss
+    password:
+      from_secret: docker_password
     ubuntu: true
+    username:
+      from_secret: docker_user
   depends_on:
   - copy-packages-for-docker
 
 - name: postgres-integration-tests
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - apt-get update
   - apt-get install -yq postgresql-client
@@ -439,7 +496,7 @@ steps:
   - test-frontend
 
 - name: mysql-integration-tests
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
   - apt-get update
   - apt-get install -yq default-mysql-client
@@ -455,21 +512,32 @@ steps:
   - test-frontend
 
 - name: release-next-npm-packages
-  image: grafana/build-container:1.2.26
+  image: grafana/build-container:1.2.27
   commands:
-  - npx lerna bootstrap
+  - ./node_modules/.bin/lerna bootstrap
   - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
-  - echo ./scripts/circle-release-next-packages.sh
+  - ./scripts/circle-release-next-packages.sh
   environment:
     NPM_TOKEN:
       from_secret: npm_token
   depends_on:
   - end-to-end-tests
 
-- name: publish-packages
+- name: upload-packages
   image: grafana/grafana-ci-deploy:1.2.6
   commands:
-  - echo ./bin/grabpl publish-packages --edition oss
+  - ./bin/grabpl upload-packages --edition oss
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
+    GRAFANA_COM_API_KEY:
+      from_secret: grafana_api_key
   depends_on:
   - package
   - end-to-end-tests
@@ -501,7 +569,7 @@ trigger:
 ---
 kind: pipeline
 type: docker
-name: windows-installer-master
+name: windows-master
 
 platform:
   os: windows
@@ -512,7 +580,13 @@ steps:
 - name: identify-runner
   image: mcr.microsoft.com/windows:1809
   commands:
-  - echo $Env:DRONE_RUNNER_NAME
+  - echo $env:DRONE_RUNNER_NAME
+
+- name: initialize
+  image: grafana/ci-wix:0.1.1
+  commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -522,17 +596,16 @@ steps:
   - dos2unix gcpkey.json
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
-  - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.8/windows/grabpl.exe -OutFile grabpl.exe
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/oss/master/grafana-7.2.0-9fffe273pre.windows-amd64.zip -OutFile grafana.zip
   - cp C:\App\nssm-2.24.zip .
-  - ./grabpl.exe windows-installer --edition oss grafana.zip
+  - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - echo "gsutil cp $$fname gs://grafana-downloads/oss/master/"
-  - echo "gsutil cp $$fname.sha256 gs://grafana-downloads/oss/master/"
+  - gsutil cp $$fname gs://grafana-downloads/oss/master/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/master/
   environment:
     GCP_KEY:
       from_secret: gcp_key
+  depends_on:
+  - initialize
 
 trigger:
   branch:
@@ -541,6 +614,82 @@ trigger:
   - push
 
 depends_on:
-- test-master
+- build-master
+
+---
+kind: pipeline
+type: docker
+name: publish-master
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: identify-runner
+  image: alpine:3.12
+  commands:
+  - echo $DRONE_RUNNER_NAME
+
+- name: initialize
+  image: grafana/build-container:1.2.27
+  commands:
+  - curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/grabpl
+  - chmod +x grabpl
+  - mkdir -p bin
+  - mv grabpl bin
+  environment:
+    DOCKERIZE_VERSION: 0.6.1
+
+- name: publish-packages
+  image: grafana/grafana-ci-deploy:1.2.6
+  commands:
+  - ./bin/grabpl publish-packages --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  environment:
+    GRAFANA_COM_API_KEY:
+      from_secret: grafana_api_key
+  depends_on:
+  - initialize
+
+trigger:
+  branch:
+  - master
+  event:
+  - push
+
+depends_on:
+- build-master
+- windows-master
+
+---
+kind: pipeline
+type: docker
+name: notify-master
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: slack
+  image: plugins/slack
+  settings:
+    channel: grafana-ci-notifications
+    template: "Build {{build.number}} failed: {{build.link}}"
+    webhook:
+      from_secret: slack_webhook
+
+trigger:
+  branch:
+  - master
+  event:
+  - push
+  status:
+  - failure
+
+depends_on:
+- build-master
+- windows-master
+- publish-master
 
 ...

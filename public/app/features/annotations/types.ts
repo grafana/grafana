@@ -1,4 +1,4 @@
-import { PanelData, DataFrame, AnnotationEvent, TimeRange } from '@grafana/data';
+import { PanelData, AnnotationEvent, TimeRange } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../dashboard/state';
 
 export interface AnnotationQueryOptions {
@@ -8,11 +8,6 @@ export interface AnnotationQueryOptions {
 }
 
 export interface AnnotationQueryResponse {
-  /**
-   * All the data flattened to a single frame
-   */
-  frame?: DataFrame;
-
   /**
    * The processed annotation events
    */

@@ -19,6 +19,7 @@ import {
   GrafanaTheme,
   InterpolateFunction,
   ThresholdsMode,
+  ScopedVars,
 } from '../types';
 import { locationUtil, Registry } from '../utils';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
@@ -64,6 +65,16 @@ export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<Fiel
   return [property1, property2, property3, shouldApplyFalse, ...mockStandardProperties()];
 });
 
+locationUtil.initialize({
+  getConfig: () => {
+    return { appSubUrl: '/subUrl' } as any;
+  },
+  // @ts-ignore
+  buildParamsFromVariables: () => {},
+  // @ts-ignore
+  getTimeRangeForUrl: () => {},
+});
+
 describe('Global MinMax', () => {
   it('find global min max', () => {
     const f0 = new MutableDataFrame();
@@ -93,6 +104,7 @@ describe('applyFieldOverrides', () => {
     defaults: {
       unit: 'xyz',
       decimals: 2,
+      links: [{ title: 'link', url: '${__value.text}' }],
     },
     overrides: [
       {
@@ -243,6 +255,28 @@ describe('applyFieldOverrides', () => {
 
     // Don't Automatically pick the min value
     expect(config.min).toEqual(-20);
+  });
+
+  it('getLinks should use applied field config', () => {
+    const replaceVariablesCalls: any[] = [];
+
+    const data = applyFieldOverrides({
+      data: [f0], // the frame
+      fieldConfig: src as FieldConfigSource, // defaults + overrides
+      replaceVariables: ((value: string, variables: ScopedVars) => {
+        replaceVariablesCalls.push(variables);
+        return value;
+      }) as InterpolateFunction,
+      getDataSourceSettingsByUid: undefined as any,
+      theme: (undefined as any) as GrafanaTheme,
+      autoMinMax: true,
+      fieldConfigRegistry: customFieldRegistry,
+    })[0];
+
+    data.fields[1].getLinks!({ valueRowIndex: 0 });
+
+    expect(data.fields[1].config.decimals).toEqual(1);
+    expect(replaceVariablesCalls[0].__value.value.text).toEqual('100.0');
   });
 });
 
@@ -541,8 +575,7 @@ describe('getLinksSupplier', () => {
     expect(links[0]).toEqual(
       expect.objectContaining({
         title: 'testDS',
-        href:
-          '/explore?left={"datasource":"testDS","queries":["12345"],"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}',
+        href: '/explore?left={"datasource":"testDS","queries":["12345"]}',
         onClick: undefined,
       })
     );

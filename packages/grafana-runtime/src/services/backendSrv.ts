@@ -108,7 +108,7 @@ export interface FetchErrorDataProps {
 export interface FetchError<T extends FetchErrorDataProps = any> {
   status: number;
   statusText?: string;
-  data: T | string;
+  data: T;
   cancelled?: boolean;
   isHandled?: boolean;
   config: BackendSrvRequest;
@@ -161,7 +161,7 @@ let singletonInstance: BackendSrv;
 
 /**
  * Used during startup by Grafana to set the BackendSrv so it is available
- * via the the {@link getBackendSrv} to the rest of the application.
+ * via the {@link getBackendSrv} to the rest of the application.
  *
  * @internal
  */

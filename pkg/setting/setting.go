@@ -26,34 +26,33 @@ import (
 type Scheme string
 
 const (
-	HTTP              Scheme = "http"
-	HTTPS             Scheme = "https"
-	HTTP2             Scheme = "h2"
-	SOCKET            Scheme = "socket"
-	DEFAULT_HTTP_ADDR string = "0.0.0.0"
-	REDACTED_PASSWORD string = "*********"
+	HTTPScheme   Scheme = "http"
+	HTTPSScheme  Scheme = "https"
+	HTTP2Scheme  Scheme = "h2"
+	SocketScheme Scheme = "socket"
 )
 
 const (
-	DEV      = "development"
-	PROD     = "production"
-	TEST     = "test"
-	APP_NAME = "Grafana"
+	redactedPassword = "*********"
+	DefaultHTTPAddr  = "0.0.0.0"
+	Dev              = "development"
+	Prod             = "production"
+	Test             = "test"
 )
 
 var (
-	ERR_TEMPLATE_NAME = "error"
+	ErrTemplateName = "error"
 )
 
 // This constant corresponds to the default value for ldap_sync_ttl in .ini files
 // it is used for comparison and has to be kept in sync
 const (
-	AUTH_PROXY_SYNC_TTL = 60
+	AuthProxySyncTTL = 60
 )
 
 var (
 	// App settings.
-	Env              = DEV
+	Env              = Dev
 	AppUrl           string
 	AppSubUrl        string
 	ServeFromSubPath bool
@@ -140,10 +139,10 @@ var (
 	ViewersCanEdit          bool
 
 	// Http auth
-	AdminUser            string
-	AdminPassword        string
-	LoginCookieName      string
-	LoginMaxLifetimeDays int
+	AdminUser        string
+	AdminPassword    string
+	LoginCookieName  string
+	LoginMaxLifetime time.Duration
 
 	AnonymousEnabled bool
 	AnonymousOrgName string
@@ -278,8 +277,8 @@ type Cfg struct {
 
 	// Auth
 	LoginCookieName              string
-	LoginMaxInactiveLifetimeDays int
-	LoginMaxLifetimeDays         int
+	LoginMaxInactiveLifetime     time.Duration
+	LoginMaxLifetime             time.Duration
 	TokenRotationIntervalMinutes int
 
 	// OAuth
@@ -371,7 +370,7 @@ func applyEnvVariableOverrides(file *ini.File) error {
 			if len(envValue) > 0 {
 				key.SetValue(envValue)
 				if shouldRedactKey(envKey) {
-					envValue = REDACTED_PASSWORD
+					envValue = redactedPassword
 				}
 				if shouldRedactURLKey(envKey) {
 					u, err := url.Parse(envValue)
@@ -423,9 +422,9 @@ type AnnotationCleanupSettings struct {
 }
 
 func envKey(sectionName string, keyName string) string {
-	sN := strings.ToUpper(strings.Replace(sectionName, ".", "_", -1))
-	sN = strings.Replace(sN, "-", "_", -1)
-	kN := strings.ToUpper(strings.Replace(keyName, ".", "_", -1))
+	sN := strings.ToUpper(strings.ReplaceAll(sectionName, ".", "_"))
+	sN = strings.ReplaceAll(sN, "-", "_")
+	kN := strings.ToUpper(strings.ReplaceAll(keyName, ".", "_"))
 	envKey := fmt.Sprintf("GF_%s_%s", sN, kN)
 	return envKey
 }
@@ -439,7 +438,7 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 			if exists {
 				key.SetValue(value)
 				if shouldRedactKey(keyString) {
-					value = REDACTED_PASSWORD
+					value = redactedPassword
 				}
 				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
 			}
@@ -664,7 +663,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.IsEnterprise = IsEnterprise
 	cfg.Packaging = Packaging
 
-	ApplicationName = APP_NAME
+	ApplicationName = "Grafana"
 
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
@@ -878,7 +877,7 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 
 	key.SetValue(envValue)
 	if shouldRedactKey(envKey) {
-		envValue = REDACTED_PASSWORD
+		envValue = redactedPassword
 	}
 	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, envValue))
 
@@ -946,15 +945,38 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	return nil
 }
 
-func readAuthSettings(iniFile *ini.File, cfg *Cfg) error {
+func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	auth := iniFile.Section("auth")
 
 	LoginCookieName = valueAsString(auth, "login_cookie_name", "grafana_session")
 	cfg.LoginCookieName = LoginCookieName
-	cfg.LoginMaxInactiveLifetimeDays = auth.Key("login_maximum_inactive_lifetime_days").MustInt(7)
+	maxInactiveDaysVal := auth.Key("login_maximum_inactive_lifetime_days").MustString("")
+	if maxInactiveDaysVal != "" {
+		maxInactiveDaysVal = fmt.Sprintf("%sd", maxInactiveDaysVal)
+		cfg.Logger.Warn("[Deprecated] the configuration setting 'login_maximum_inactive_lifetime_days' is deprecated, please use 'login_maximum_inactive_lifetime_duration' instead")
+	} else {
+		maxInactiveDaysVal = "7d"
+	}
+	maxInactiveDurationVal := valueAsString(auth, "login_maximum_inactive_lifetime_duration", maxInactiveDaysVal)
+	cfg.LoginMaxInactiveLifetime, err = gtime.ParseInterval(maxInactiveDurationVal)
+	if err != nil {
+		return err
+	}
 
-	LoginMaxLifetimeDays = auth.Key("login_maximum_lifetime_days").MustInt(30)
-	cfg.LoginMaxLifetimeDays = LoginMaxLifetimeDays
+	maxLifetimeDaysVal := auth.Key("login_maximum_lifetime_days").MustString("")
+	if maxLifetimeDaysVal != "" {
+		maxLifetimeDaysVal = fmt.Sprintf("%sd", maxLifetimeDaysVal)
+		cfg.Logger.Warn("[Deprecated] the configuration setting 'login_maximum_lifetime_days' is deprecated, please use 'login_maximum_lifetime_duration' instead")
+	} else {
+		maxLifetimeDaysVal = "7d"
+	}
+	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", maxLifetimeDaysVal)
+	cfg.LoginMaxLifetime, err = gtime.ParseInterval(maxLifetimeDurationVal)
+	if err != nil {
+		return err
+	}
+	LoginMaxLifetime = cfg.LoginMaxLifetime
+
 	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 
 	cfg.TokenRotationIntervalMinutes = auth.Key("token_rotation_interval_minutes").MustInt(10)
@@ -992,7 +1014,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) error {
 	ldapSyncVal := authProxy.Key("ldap_sync_ttl").MustInt()
 	syncVal := authProxy.Key("sync_ttl").MustInt()
 
-	if ldapSyncVal != AUTH_PROXY_SYNC_TTL {
+	if ldapSyncVal != AuthProxySyncTTL {
 		AuthProxySyncTtl = ldapSyncVal
 		cfg.Logger.Warn("[Deprecated] the configuration setting 'ldap_sync_ttl' is deprecated, please use 'sync_ttl' instead")
 	} else {
@@ -1105,26 +1127,26 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AppSubUrl = AppSubUrl
 	cfg.ServeFromSubPath = ServeFromSubPath
 
-	Protocol = HTTP
+	Protocol = HTTPScheme
 	protocolStr := valueAsString(server, "protocol", "http")
 
 	if protocolStr == "https" {
-		Protocol = HTTPS
+		Protocol = HTTPSScheme
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
 	}
 	if protocolStr == "h2" {
-		Protocol = HTTP2
+		Protocol = HTTP2Scheme
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
 	}
 	if protocolStr == "socket" {
-		Protocol = SOCKET
+		Protocol = SocketScheme
 		SocketPath = server.Key("socket").String()
 	}
 
 	Domain = valueAsString(server, "domain", "localhost")
-	HttpAddr = valueAsString(server, "http_addr", DEFAULT_HTTP_ADDR)
+	HttpAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
 	HttpPort = valueAsString(server, "http_port", "3000")
 	RouterLogging = server.Key("router_logging").MustBool(false)
 

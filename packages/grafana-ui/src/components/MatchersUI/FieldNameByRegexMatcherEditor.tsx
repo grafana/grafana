@@ -20,7 +20,7 @@ export const fieldNameByRegexMatcherItem: FieldMatcherUIRegistryItem<string> = {
   id: FieldMatcherID.byRegexp,
   component: FieldNameByRegexMatcherEditor,
   matcher: fieldMatchers.get(FieldMatcherID.byRegexp),
-  name: 'Filter by field using regex',
-  description: 'Set properties for fields with names matching provided regex',
+  name: 'Fields with name matching regex',
+  description: 'Set properties for fields with names matching a regex',
   optionsToLabel: options => options,
 };

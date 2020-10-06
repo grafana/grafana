@@ -123,7 +123,10 @@ func inviteExistingUserToOrg(c *models.ReqContext, user *models.User, inviteDto 
 		}
 	}
 
-	return Success(fmt.Sprintf("Existing Grafana user %s added to org %s", user.NameOrFallback(), c.OrgName))
+	return JSON(200, util.DynMap{
+		"message": fmt.Sprintf("Existing Grafana user %s added to org %s", user.NameOrFallback(), c.OrgName),
+		"userId":  user.Id,
+	})
 }
 
 func RevokeInvite(c *models.ReqContext) Response {

@@ -75,44 +75,6 @@ e2e.scenario({
 
     e2e().wait('@apiPostQuery');
 
-    // Change order or query rows
-    // Check the order of the rows before
-    e2e.components.QueryEditorRows.rows()
-      .eq(0)
-      .within(() => {
-        e2e.components.QueryEditorRow.title('B').should('be.visible');
-      });
-
-    e2e.components.QueryEditorRows.rows()
-      .eq(1)
-      .within(() => {
-        e2e.components.QueryEditorRow.title('A').should('be.visible');
-      });
-
-    // Change so A is first
-    e2e.components.QueryEditorRow.actionButton('Move query up')
-      .eq(1)
-      .click();
-
-    e2e().wait('@apiPostQuery');
-
-    // Avoid flaky tests
-    // Maybe the virtual dom performs optimzations such as node position swapping, meaning 1 becomes 0 and it gets that element before the change because and never finds title 'A'
-    e2e().wait(250);
-
-    // Check the order of the rows after change
-    e2e.components.QueryEditorRows.rows()
-      .eq(0)
-      .within(() => {
-        e2e.components.QueryEditorRow.title('A').should('be.visible');
-      });
-
-    e2e.components.QueryEditorRows.rows()
-      .eq(1)
-      .within(() => {
-        e2e.components.QueryEditorRow.title('B').should('be.visible');
-      });
-
     // Disable / enable row
     expectInspectorResultAndClose(keys => {
       const length = keys.length;
@@ -120,7 +82,7 @@ e2e.scenario({
       expect(keys[length - 1].innerText).equals('B:');
     });
 
-    // Disable row with refId B
+    // Disable row with refId A
     e2e.components.QueryEditorRow.actionButton('Disable/enable query')
       .eq(1)
       .should('be.visible')
@@ -130,7 +92,7 @@ e2e.scenario({
 
     expectInspectorResultAndClose(keys => {
       const length = keys.length;
-      expect(keys[length - 1].innerText).equals('A:');
+      expect(keys[length - 1].innerText).equals('B:');
     });
 
     // Enable row with refId B

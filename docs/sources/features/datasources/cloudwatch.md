@@ -19,22 +19,22 @@ build dashboards or use Explore with CloudWatch metrics and CloudWatch Logs.
 ## Adding the data source
 
 1. In the side menu under the `Configuration` link, click on `Data Sources`.
-2. Click the `Add data source` button.
-3. Select `Cloudwatch` in the `Cloud` section.
+1. Click the `Add data source` button.
+1. Select `Cloudwatch` in the `Cloud` section.
 
-> NOTE: If at any moment you have issues with getting this data source to work and Grafana is giving you undescriptive errors then don't
+> **Note:** If at any moment you have issues with getting this data source to work and Grafana is giving you undescriptive errors then don't
 > forget to check your log file (try looking in /var/log/grafana/grafana.log).
 
-| Name                       | Description                                                                                                              |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| _Name_                     | The data source name. This is how you refer to the data source in panels and queries.                                    |
-| _Default_                  | Default data source means that it will be pre-selected for new panels.                                                   |
-| _Default Region_           | Used in query editor to set region (can be changed on per query basis)                                                   |
-| _Custom Metrics namespace_ | Specify the CloudWatch namespace of Custom metrics                                                                       |
-| _Auth Provider_            | Specify the provider to get credentials.                                                                                 |
-| _Credentials_ profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.                  |
-| _Assume Role Arn_          | Specify the ARN of the role to assume                                                                                    |
-| _External ID_              | If you are assuming a role in another account, that has been created with an external ID, specify the exterrnal ID here. |
+| Name                       | Description                                                                                                             |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| _Name_                     | The data source name. This is how you refer to the data source in panels and queries.                                   |
+| _Default_                  | Default data source means that it will be pre-selected for new panels.                                                  |
+| _Default Region_           | Used in query editor to set region (can be changed on per query basis)                                                  |
+| _Custom Metrics namespace_ | Specify the CloudWatch namespace of Custom metrics                                                                      |
+| _Auth Provider_            | Specify the provider to get credentials.                                                                                |
+| _Credentials_ profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.                 |
+| _Assume Role Arn_          | Specify the ARN of the role to assume                                                                                   |
+| _External ID_              | If you are assuming a role in another account, that has been created with an external ID, specify the external ID here. |
 
 ## Authentication
 
@@ -45,7 +45,7 @@ server is running on AWS you can use IAM Roles and authentication will be handle
 
 See the AWS documentation on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
 
-> NOTE: AWS Role Switching as described [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html) is not supported at the moment.
+> **Note:** AWS Role Switching as described [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html) is not supported at the moment.
 
 ## IAM Policies
 
@@ -116,7 +116,7 @@ See the AWS documentation on [Configuring the AWS SDK for Go](https://docs.aws.a
 
 Create a file at `~/.aws/credentials`. That is the `HOME` path for user running grafana-server.
 
-> NOTE: If you think you have the credentials file in the right place but it is still not working then you might try moving your .aws file to '/usr/share/grafana/' and make sure your credentials file has at most 0644 permissions.
+> **Note:** If you think you have the credentials file in the right place but it is still not working then you might try moving your .aws file to '/usr/share/grafana/' and make sure your credentials file has at most 0644 permissions.
 
 Example content:
 
@@ -203,7 +203,7 @@ To the right of the query input field is a CloudWatch Logs Insights link that op
 ### Using template variables
 
 As with several other data sources, the CloudWatch data source supports the use of template variables in queries.
-See the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+See the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Deep linking from Grafana panels to the CloudWatch console
 
@@ -234,9 +234,9 @@ To import the pre-configured dashboards, go to the configuration page of your Cl
 
 ## Templated queries
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
+Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-See the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+See the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query variable
 
@@ -372,7 +372,7 @@ It's now possible to configure data sources using config files with Grafana's pr
 
 Here are some provisioning examples for this data source.
 
-### Using a credentials file
+### Using credentials profile name (non-default) 
 
 ```yaml
 apiVersion: 1
@@ -384,6 +384,7 @@ datasources:
       authType: credentials
       defaultRegion: eu-west-2
       customMetricsNamespaces: 'CWAgent,CustomNameSpace'
+      profile: secondary
 ```
 
 ### Using `accessKey` and `secretKey`

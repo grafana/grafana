@@ -1,4 +1,4 @@
-import { AppEvents, rangeUtil } from '@grafana/data';
+import { rangeUtil } from '@grafana/data';
 
 import { toVariablePayload, VariableIdentifier } from '../state/types';
 import { ThunkResult } from '../../../types';
@@ -7,30 +7,18 @@ import { validateVariableSelectionState } from '../state/actions';
 import { getVariable } from '../state/selectors';
 import { IntervalVariableModel } from '../types';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import templateSrv from '../../templating/template_srv';
-import appEvents from '../../../core/app_events';
+import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 
-export interface UpdateIntervalVariableOptionsDependencies {
-  appEvents: typeof appEvents;
-}
-
-export const updateIntervalVariableOptions = (
-  identifier: VariableIdentifier,
-  dependencies: UpdateIntervalVariableOptionsDependencies = { appEvents: appEvents }
-): ThunkResult<void> => async dispatch => {
-  try {
-    await dispatch(createIntervalOptions(toVariablePayload(identifier)));
-    await dispatch(updateAutoValue(identifier));
-    await dispatch(validateVariableSelectionState(identifier));
-  } catch (error) {
-    dependencies.appEvents.emit(AppEvents.alertError, ['Templating', error.message]);
-  }
+export const updateIntervalVariableOptions = (identifier: VariableIdentifier): ThunkResult<void> => async dispatch => {
+  await dispatch(createIntervalOptions(toVariablePayload(identifier)));
+  await dispatch(updateAutoValue(identifier));
+  await dispatch(validateVariableSelectionState(identifier));
 };
 
 export interface UpdateAutoValueDependencies {
   calculateInterval: typeof rangeUtil.calculateInterval;
   getTimeSrv: typeof getTimeSrv;
-  templateSrv: typeof templateSrv;
+  templateSrv: TemplateSrv;
 }
 
 export const updateAutoValue = (
@@ -38,7 +26,7 @@ export const updateAutoValue = (
   dependencies: UpdateAutoValueDependencies = {
     calculateInterval: rangeUtil.calculateInterval,
     getTimeSrv: getTimeSrv,
-    templateSrv: templateSrv,
+    templateSrv: getTemplateSrv(),
   }
 ): ThunkResult<void> => (dispatch, getState) => {
   const variableInState = getVariable<IntervalVariableModel>(identifier.id, getState());

@@ -21,7 +21,7 @@ This page also contains important information about [migrating from earlier Dock
 
 This is the default image. It's based on the popular [Alpine Linux project](http://alpinelinux.org), available in [the Alpine official image](https://hub.docker.com/_/alpine). Alpine Linux is much smaller than most distribution base images, and thus leads to slimmer and more secure images.
 
-This variant is highly recommended when security and final image size being as small as possible is desired. The main caveat to note is that it uses [musl libc](http://www.musl-libc.org) instead of [glibc and friends](http://www.etalabs.net/compare_libcs.html), so certain software might run into issues depending on the depth of their libc requirements. However, most software doesn't have an issue with this, so this variant is usually a very safe choice.
+This variant is highly recommended when security and final image size being as small as possible is desired. The main caveat to note is that it uses [musl libc](http://www.musl-libc.org) instead of [glibc and friends](http://www.etalabs.net/compare_libcs.html), so certain software might run into issues depending on the depth of their libc requirements. However, most software don't have an issue with this, so this variant is usually a very safe choice.
 
 > **Note:** The `grafana/grafana:<version>` image was based on [Ubuntu](https://ubuntu.com/) before version 6.4.0.
 
@@ -157,9 +157,9 @@ The Docker container for Grafana has seen a major rewrite for 5.1.
 
 **Important changes**
 
-* File ownership is no longer modified during startup with `chown`.
-* Default user ID is now `472` instead of `104`.
-* Removed the following implicit volumes:
+- File ownership is no longer modified during startup with `chown`.
+- Default user ID is now `472` instead of `104`.
+- Removed the following implicit volumes:
   - `/var/lib/grafana`
   - `/etc/grafana`
   - `/var/log/grafana`
@@ -179,7 +179,7 @@ In Grafana v5.1, we changed the ID of the Grafana user. Unfortunately this means
 Version | User    | User ID
 --------|---------|---------
 < 5.1   | grafana | 104
->= 5.1  | grafana | 472
+\>= 5.1  | grafana | 472
 
 There are two possible solutions to this problem. Either you start the new container as the root user and change ownership from `104` to `472`, or you start the upgraded container as user `104`.
 
@@ -221,7 +221,7 @@ Refer to the [Getting Started]({{< relref "../getting-started/getting-started/" 
 
 ## Configure Docker image
 
-Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to [Configure a Grafana Docker image]({{< relref "../administration/configure-docker.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
 
 ## Configure Grafana
 

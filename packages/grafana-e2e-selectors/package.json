@@ -43,7 +43,7 @@
     "@grafana/tsconfig": "^1.0.0-rc1",
     "commander": "5.0.0",
     "execa": "4.0.0",
-    "typescript": "3.9.3",
+    "typescript": "4.0.2",
     "yaml": "^1.8.3"
   }
 }

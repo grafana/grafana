@@ -7,7 +7,7 @@ type = "docs"
 name = "Okta"
 identifier = "okta_oauth2"
 parent = "authentication"
-weight = 3
+weight = 1000
 +++
 
 # Okta OAuth2 authentication
