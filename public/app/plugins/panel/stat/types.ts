@@ -4,6 +4,7 @@ import {
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
+  AlignmentFactorsEditor,
 } from '@grafana/ui';
 import {
   ReducerID,
@@ -108,4 +109,29 @@ export function addStandardDataReduceOptions(
       defaultValue: 'auto',
     });
   }
+}
+
+export function addFixexAlignmentOptions(builder: PanelOptionsEditorBuilder<SingleStatBaseOptions>) {
+  const category = ['Text Size'];
+
+  builder.addCustomEditor({
+    category,
+    id: 'fixAlignment',
+    path: 'fixAlignment',
+    name: 'Text Size',
+    description: 'text size is dynamically calculated',
+    editor: AlignmentFactorsEditor,
+    // options: {
+    //   getValues: () => {
+    //     console.log('XXX');
+    //     return [];
+    //   },
+    // },
+  });
+
+  // builder.addTextInput({
+  //   category,
+  //   path: 'fixAlignment.title',
+  //   name: 'Title (for calculation)',
+  // });
 }

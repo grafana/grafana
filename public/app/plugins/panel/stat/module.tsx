@@ -1,6 +1,6 @@
 import { sharedSingleStatMigrationHandler, BigValueTextMode, AlignmentFactorsEditor } from '@grafana/ui';
 import { PanelPlugin } from '@grafana/data';
-import { StatPanelOptions, addStandardDataReduceOptions } from './types';
+import { StatPanelOptions, addStandardDataReduceOptions, addFixexAlignmentOptions } from './types';
 import { StatPanel } from './StatPanel';
 import { statPanelChangedHandler } from './StatMigrations';
 
@@ -61,20 +61,10 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
             { value: 'center', label: 'Center' },
           ],
         },
-      })
-      .addCustomEditor({
-        id: 'fixAlignment',
-        path: 'fixAlignment',
-        name: 'Text Sizes',
-        description: 'text size is dynamically calculated',
-        editor: AlignmentFactorsEditor,
-        // options: {
-        //   getValues: () => {
-        //     console.log('XXX');
-        //     return [];
-        //   },
-        // },
       });
+
+    // Add a "Text Size" section
+    addFixexAlignmentOptions(builder);
   })
   .setNoPadding()
   .setPanelChangeHandler(statPanelChangedHandler)
