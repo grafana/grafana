@@ -1,8 +1,13 @@
 import { AnnotationEvent, DataFrame, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
-import { usePlotContext, usePlotPluginContext, useTheme } from '@grafana/ui';
+import {
+  EventsCanvas,
+  usePlotContext,
+  usePlotPluginContext,
+  useRefreshAfterGraphRendered,
+  useTheme,
+} from '@grafana/ui';
 import { getAnnotationsFromData } from 'app/features/annotations/standardAnnotationSupport';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { css } from 'emotion';
 import { AnnotationMarker } from './AnnotationMarker';
 import { useObservable } from 'react-use';
 
@@ -13,12 +18,12 @@ interface AnnotationsPluginProps {
 
 export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotations, timeZone }) => {
   const pluginId = 'AnnotationsPlugin';
+  const plotCtx = usePlotContext();
   const pluginsApi = usePlotPluginContext();
-  const plotContext = usePlotContext();
   const annotationsRef = useRef<AnnotationEvent[]>();
-  const [renderCounter, setRenderCounter] = useState(0);
+  // const [_, setRenderCounter] = useState(0);
   const theme = useTheme();
-
+  // useRefreshAfterGraphRendered('Annotations');
   const timeFormatter = useCallback(
     (value: number) => {
       return dateTimeFormat(value, {
@@ -31,47 +36,6 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
 
   const annotationEventsStream = useMemo(() => getAnnotationsFromData(annotations), [annotations]);
   const annotationsData = useObservable<AnnotationEvent[]>(annotationEventsStream);
-  const annotationMarkers = useMemo(() => {
-    if (!plotContext || !plotContext?.u) {
-      return null;
-    }
-    const markers: AnnotationEvent[] = [];
-
-    if (!annotationsData) {
-      return markers;
-    }
-
-    for (let i = 0; i < annotationsData.length; i++) {
-      const annotation = annotationsData[i];
-      if (!annotation.time) {
-        continue;
-      }
-      const xpos = plotContext.u.valToPos(annotation.time / 1000, 'x');
-      markers.push(
-        <AnnotationMarker
-          x={xpos}
-          key={`${annotation.time}-${i}`}
-          formatTime={timeFormatter}
-          annotationEvent={annotation}
-        />
-      );
-    }
-
-    return (
-      <div
-        className={css`
-          position: absolute;
-          left: ${plotContext.u.bbox.left / window.devicePixelRatio}px;
-          top: ${plotContext.u.bbox.top / window.devicePixelRatio +
-            plotContext.u.bbox.height / window.devicePixelRatio}px;
-          width: ${plotContext.u.bbox.width / window.devicePixelRatio}px;
-          height: 14px;
-        `}
-      >
-        {markers}
-      </div>
-    );
-  }, [annotationsData, timeFormatter, plotContext, renderCounter]);
 
   // For uPlot plugin to have access to lates annotation data we need to update the data ref
   useEffect(() => {
@@ -110,7 +74,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
             ctx.stroke();
             ctx.closePath();
           }
-          setRenderCounter(c => c + 1);
+          // setRenderCounter(c => c + 1);
           return;
         },
       },
@@ -121,9 +85,25 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     };
   }, []);
 
-  if (!plotContext || !plotContext.u || !plotContext.canvas) {
+  if (!annotationsData) {
     return null;
   }
 
-  return <div>{annotationMarkers}</div>;
+  return (
+    <EventsCanvas
+      id="annotations"
+      events={annotationsData}
+      renderEventMarker={event => <AnnotationMarker annotationEvent={event} formatTime={timeFormatter} />}
+      mapEventToXYCoords={annotation => {
+        if (!annotation.time) {
+          return undefined;
+        }
+
+        return {
+          x: plotCtx!.u!.valToPos(annotation.time / 1000, 'x'),
+          y: plotCtx!.u!.bbox.height / window.devicePixelRatio + 4,
+        };
+      }}
+    />
+  );
 };

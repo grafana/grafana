@@ -3,6 +3,7 @@ import { PlotPlugin } from './types';
 import { pluginLog } from './utils';
 import uPlot from 'uplot';
 import { getTimeZoneInfo, TimeZone } from '@grafana/data';
+import { usePlotPluginContext } from './context';
 
 export const usePlotPlugins = () => {
   /**
@@ -245,4 +246,27 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone)
     registerPlugin,
     currentConfig,
   };
+};
+
+export const useRefreshAfterGraphRendered = (pluginId: string) => {
+  const pluginsApi = usePlotPluginContext();
+  const [renderToken, setRenderToken] = useState(0);
+  useEffect(() => {
+    const unregister = pluginsApi.registerPlugin({
+      id: pluginId,
+      hooks: {
+        // refresh events when uPlot draws
+        draw: u => {
+          setRenderToken(c => c + 1);
+          return;
+        },
+      },
+    });
+
+    return () => {
+      unregister();
+    };
+  }, [pluginId]);
+
+  return renderToken;
 };
