@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { of, throwError } from 'rxjs';
 import {
   CoreApp,
@@ -22,6 +21,7 @@ import { PromOptions, PromQuery } from './types';
 import { VariableHide } from '../../../features/variables/types';
 import { describe } from '../../../../test/lib/common';
 import { QueryOptions } from 'app/types';
+import _ from 'lodash';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
