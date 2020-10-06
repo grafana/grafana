@@ -21,10 +21,10 @@ if [ ! -d "$REPORT_PATH" ]; then
   # shellcheck source=/scripts/ci-reference-docs-build.sh
   if ! . "$BUILD_SCRIPT_PATH" "$BUILD_MODE";
     then
-      echo "Successfully build packages and extracted docs"
-    else
       echo "Failed to build packages and extract docs" >&2
       exit 1
+    else
+      echo "Successfully build packages and extracted docs"
   fi
 fi
 
