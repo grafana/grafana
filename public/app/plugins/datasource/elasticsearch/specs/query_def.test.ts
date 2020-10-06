@@ -17,15 +17,15 @@ describe('ElasticQueryDef', () => {
         metrics: [maxMetric, derivativeMetric, bucketScriptMetric],
       };
       test('should return id of derivative and bucket_script', () => {
-        const response = queryDef.getAancestors(target, derivativeMetric);
+        const response = queryDef.getAncestors(target, derivativeMetric);
         expect(response).toEqual(['2', '3']);
       });
       test('should return id of the bucket_script', () => {
-        const response = queryDef.getAancestors(target, bucketScriptMetric);
+        const response = queryDef.getAncestors(target, bucketScriptMetric);
         expect(response).toEqual(['3']);
       });
       test('should return id of all the metrics', () => {
-        const response = queryDef.getAancestors(target, maxMetric);
+        const response = queryDef.getAncestors(target, maxMetric);
         expect(response).toEqual(['1', '2', '3']);
       });
     });
