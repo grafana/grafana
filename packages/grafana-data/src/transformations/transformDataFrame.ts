@@ -56,7 +56,7 @@ export function transformDataFrame(options: DataTransformerConfig[], data: DataF
     return stream;
   }
 
-  const operators: Array<OperatorFunction<DataFrame[], DataFrame[]>> = [];
+  const operators: Array<MonoTypeOperatorFunction<DataFrame[]>> = [];
 
   for (let index = 0; index < options.length; index++) {
     const config = options[index];
