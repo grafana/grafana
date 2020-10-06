@@ -27,13 +27,13 @@ Grafana Enterprise includes integrations with more ways to authenticate your use
 
 Supported auth providers:
 
-* [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
-* [Azure AD OAuth]({{< relref "../auth/azuread.md#team-sync-enterprise-only" >}})
-* [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
-* [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
-* [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
-* [Okta]({{< relref "../auth/okta.md#team-sync-enterprise-only" >}})
-* [SAML]({{< relref "saml.md#configure-team-sync" >}})
+- [Auth Proxy]({{< relref "../auth/auth-proxy.md#team-sync-enterprise-only">}})
+- [Azure AD OAuth]({{< relref "../auth/azuread.md#team-sync-enterprise-only" >}})
+- [GitHub OAuth]({{< relref "../auth/github.md#team-sync-enterprise-only" >}})
+- [GitLab OAuth]({{< relref "../auth/gitlab.md#team-sync-enterprise-only" >}})
+- [LDAP]({{< relref "enhanced_ldap.md#ldap-group-synchronization-for-teams" >}})
+- [Okta]({{< relref "../auth/okta.md#team-sync-enterprise-only" >}})
+- [SAML]({{< relref "saml.md#configure-team-sync" >}})
 
 ### Enhanced LDAP integration
 
@@ -47,25 +47,25 @@ With Grafana Enterprise [enhanced LDAP]({{< relref "enhanced_ldap.md" >}}), you 
 
 With Grafana Enterprise, you get access to new features, including:
 
-* [Data source permissions]({{< relref "datasource_permissions.md" >}}) to restrict query access to specific teams and users.
-* [Reporting]({{< relref "reporting.md" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
-* [Export dashboard as PDF]({{< relref "export-pdf.md" >}})
-* [White labeling]({{< relref "white-labeling.md" >}}) to customize Grafana from the brand and logo to the footer links.
-* [Usage insights]({{< relref "usage-insights.md" >}}) to understand how your Grafana instance is used.
-* [Vault integration]({{< relref "vault.md" >}}) to manage your configuration or provisioning secrets with Vault.
+- [Data source permissions]({{< relref "datasource_permissions.md" >}}) to restrict query access to specific teams and users.
+- [Reporting]({{< relref "reporting.md" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
+- [Export dashboard as PDF]({{< relref "export-pdf.md" >}})
+- [White labeling]({{< relref "white-labeling.md" >}}) to customize Grafana from the brand and logo to the footer links.
+- [Usage insights]({{< relref "usage-insights.md" >}}) to understand how your Grafana instance is used.
+- [Vault integration]({{< relref "vault.md" >}}) to manage your configuration or provisioning secrets with Vault.
 
 ## Enterprise plugins
 
 With a Grafana Enterprise license, you get access to premium plugins, including:
 
-* [Amazon Timestream](https://grafana.com/plugins/grafana-timestream-datasource)
-* [AppDynamics](https://grafana.com/plugins/dlopes7-appdynamics-datasource)
-* [DataDog](https://grafana.com/plugins/grafana-datadog-datasource)
-* [Dynatrace](https://grafana.com/plugins/grafana-dynatrace-datasource)
-* [New Relic](https://grafana.com/plugins/grafana-newrelic-datasource)
-* [Oracle Database](https://grafana.com/plugins/grafana-oracle-datasource)
-* [ServiceNow](https://grafana.com/grafana/plugins/grafana-servicenow-datasource)
-* [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)
+- [Amazon Timestream](https://grafana.com/plugins/grafana-timestream-datasource)
+- [AppDynamics](https://grafana.com/plugins/dlopes7-appdynamics-datasource)
+- [DataDog](https://grafana.com/plugins/grafana-datadog-datasource)
+- [Dynatrace](https://grafana.com/plugins/grafana-dynatrace-datasource)
+- [New Relic](https://grafana.com/plugins/grafana-newrelic-datasource)
+- [Oracle Database](https://grafana.com/plugins/grafana-oracle-datasource)
+- [ServiceNow](https://grafana.com/grafana/plugins/grafana-servicenow-datasource)
+- [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)
 
 ## Try Grafana Enterprise
 

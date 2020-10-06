@@ -1,31 +1,31 @@
 // Libraries
 import { cloneDeep } from 'lodash';
-import { ReplaySubject, Unsubscribable, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { MonoTypeOperatorFunction, Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
 
 // Services & Utils
+import { getTemplateSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import templateSrv from 'app/features/templating/template_srv';
-import { runRequest, preProcessPanelData } from './runRequest';
-import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
+import { preProcessPanelData, runRequest } from './runRequest';
+import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
 
 // Types
 import {
-  PanelData,
-  DataQuery,
+  applyFieldOverrides,
   CoreApp,
+  DataConfigSource,
+  DataQuery,
   DataQueryRequest,
   DataSourceApi,
   DataSourceJsonData,
-  TimeRange,
   DataTransformerConfig,
-  transformDataFrame,
-  ScopedVars,
-  applyFieldOverrides,
-  DataConfigSource,
-  TimeZone,
   LoadingState,
+  PanelData,
   rangeUtil,
+  ScopedVars,
+  TimeRange,
+  TimeZone,
+  transformDataFrame,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
@@ -75,20 +75,9 @@ export class PanelQueryRunner {
     const { withFieldConfig, withTransforms } = options;
 
     return this.subject.pipe(
+      this.getTransformationsStream(withTransforms),
       map((data: PanelData) => {
         let processedData = data;
-
-        // Apply transformation
-        if (withTransforms) {
-          const transformations = this.dataConfigSource.getTransformations();
-
-          if (transformations && transformations.length > 0) {
-            processedData = {
-              ...processedData,
-              series: transformDataFrame(transformations, data.series),
-            };
-          }
-        }
 
         if (withFieldConfig) {
           // Apply field defaults & overrides
@@ -112,6 +101,25 @@ export class PanelQueryRunner {
       })
     );
   }
+
+  private getTransformationsStream = (withTransforms: boolean): MonoTypeOperatorFunction<PanelData> => {
+    return inputStream =>
+      inputStream.pipe(
+        mergeMap(data => {
+          if (!withTransforms) {
+            return of(data);
+          }
+
+          const transformations = this.dataConfigSource.getTransformations();
+
+          if (!transformations || transformations.length === 0) {
+            return of(data);
+          }
+
+          return transformDataFrame(transformations, data.series).pipe(map(series => ({ ...data, series })));
+        })
+      );
+  };
 
   async run(options: QueryRunnerOptions) {
     const {
@@ -164,7 +172,7 @@ export class PanelQueryRunner {
         return query;
       });
 
-      const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
+      const lowerIntervalLimit = minInterval ? getTemplateSrv().replace(minInterval, request.scopedVars) : ds.interval;
       const norm = rangeUtil.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,

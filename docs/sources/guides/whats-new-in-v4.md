@@ -53,7 +53,7 @@ of another alert in your conditions, and `Time Of Day`.
 {{< imgbox max-width="40%" img="/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
 
 Alerting would not be very useful if there was no way to send notifications when rules trigger and change state. You
-can setup notifications of different types. We currently have `Slack`, `PagerDuty`, `Email` and `Webhook` with more in the
+can set up notifications of different types. We currently have `Slack`, `PagerDuty`, `Email` and `Webhook` with more in the
 pipe that will be added during beta period. The notifications can then be added to your alert rules.
 If you have configured an external image store in the grafana.ini config file (s3, webdav, and azure_blob options available)
 you can get very rich notifications with an image of the graph and the metric

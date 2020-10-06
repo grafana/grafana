@@ -16,15 +16,17 @@ const rimraf = promisify(rimrafCallback);
 
 interface PluginBuildOptions {
   coverage: boolean;
+  maxJestWorkers?: string;
 }
 
 interface Fixable {
   fix?: boolean;
 }
 
-export const bundlePlugin = useSpinner<PluginBundleOptions>('Compiling...', async options => await bundleFn(options));
+const bundlePlugin = (options: PluginBundleOptions) => useSpinner('Compiling...', () => bundleFn(options));
 
-export const clean = useSpinner<void>('Cleaning', async () => await rimraf(`${process.cwd()}/dist`));
+// @ts-ignore
+const clean = () => useSpinner('Cleaning', () => rimraf(`${process.cwd()}/dist`));
 
 const copyIfNonExistent = (srcPath: string, destPath: string) =>
   copyFile(srcPath, destPath, COPYFILE_EXCL)
@@ -35,87 +37,85 @@ const copyIfNonExistent = (srcPath: string, destPath: string) =>
       }
     });
 
-export const prepare = useSpinner<void>('Preparing', async () => {
-  await Promise.all([
-    // Remove local dependencies for @grafana/data/node_modules
-    // See: https://github.com/grafana/grafana/issues/26748
-    rimraf(resolvePath(__dirname, 'node_modules/@grafana/data/node_modules')),
+export const prepare = () =>
+  useSpinner('Preparing', () =>
+    Promise.all([
+      // Remove local dependencies for @grafana/data/node_modules
+      // See: https://github.com/grafana/grafana/issues/26748
+      rimraf(resolvePath(__dirname, 'node_modules/@grafana/data/node_modules')),
 
-    // Copy only if local tsconfig does not exist.  Otherwise this will work, but have odd behavior
-    copyIfNonExistent(
-      resolvePath(__dirname, '../../config/tsconfig.plugin.local.json'),
-      resolvePath(process.cwd(), 'tsconfig.json')
-    ),
-    // Copy only if local prettierrc does not exist.  Otherwise this will work, but have odd behavior
-    copyIfNonExistent(
-      resolvePath(__dirname, '../../config/prettier.plugin.rc.js'),
-      resolvePath(process.cwd(), '.prettierrc.js')
-    ),
-  ]);
-
-  // Nothing is returned
-});
+      // Copy only if local tsconfig does not exist.  Otherwise this will work, but have odd behavior
+      copyIfNonExistent(
+        resolvePath(__dirname, '../../config/tsconfig.plugin.local.json'),
+        resolvePath(process.cwd(), 'tsconfig.json')
+      ),
+      // Copy only if local prettierrc does not exist.  Otherwise this will work, but have odd behavior
+      copyIfNonExistent(
+        resolvePath(__dirname, '../../config/prettier.plugin.rc.js'),
+        resolvePath(process.cwd(), '.prettierrc.js')
+      ),
+    ])
+  );
 
 // @ts-ignore
-const typecheckPlugin = useSpinner<void>('Typechecking', async () => {
-  await execa('tsc', ['--noEmit']);
-});
+const typecheckPlugin = () => useSpinner('Typechecking', () => execa('tsc', ['--noEmit']));
 
 const getTypescriptSources = () => globby(resolvePath(process.cwd(), 'src/**/*.+(ts|tsx)'));
 
 // @ts-ignore
 const getStylesSources = () => globby(resolvePath(process.cwd(), 'src/**/*.+(scss|css)'));
 
-export const lintPlugin = useSpinner<Fixable>('Linting', async ({ fix } = {}) => {
-  try {
-    // Show a warning if the tslint file exists
-    await access(resolvePath(process.cwd(), 'tslint.json'));
-    console.log('\n');
-    console.log('--------------------------------------------------------------');
-    console.log('NOTE: @grafana/toolkit has migrated to use eslint');
-    console.log('Update your configs to use .eslintrc rather than tslint.json');
-    console.log('--------------------------------------------------------------');
-  } catch {
-    // OK: tslint does not exist
-  }
-
-  // @todo should remove this because the config file could be in a parent dir or within package.json
-  const configFile = await globby(resolvePath(process.cwd(), '.eslintrc?(.cjs|.js|.json|.yaml|.yml)')).then(
-    filePaths => {
-      if (filePaths.length > 0) {
-        return filePaths[0];
-      } else {
-        return resolvePath(__dirname, '../../config/eslint.plugin.json');
-      }
+export const lintPlugin = ({ fix }: Fixable = {}) =>
+  useSpinner('Linting', async () => {
+    try {
+      // Show a warning if the tslint file exists
+      await access(resolvePath(process.cwd(), 'tslint.json'));
+      console.log('\n');
+      console.log('--------------------------------------------------------------');
+      console.log('NOTE: @grafana/toolkit has migrated to use eslint');
+      console.log('Update your configs to use .eslintrc rather than tslint.json');
+      console.log('--------------------------------------------------------------');
+    } catch {
+      // OK: tslint does not exist
     }
-  );
 
-  const cli = new CLIEngine({
-    configFile,
-    fix,
+    // @todo should remove this because the config file could be in a parent dir or within package.json
+    const configFile = await globby(resolvePath(process.cwd(), '.eslintrc?(.cjs|.js|.json|.yaml|.yml)')).then(
+      filePaths => {
+        if (filePaths.length > 0) {
+          return filePaths[0];
+        } else {
+          return resolvePath(__dirname, '../../config/eslint.plugin.json');
+        }
+      }
+    );
+
+    const cli = new CLIEngine({
+      configFile,
+      fix,
+    });
+
+    const report = cli.executeOnFiles(await getTypescriptSources());
+
+    if (fix) {
+      CLIEngine.outputFixes(report);
+    }
+
+    const { errorCount, results, warningCount } = report;
+
+    if (errorCount > 0 || warningCount > 0) {
+      const formatter = cli.getFormatter();
+      console.log('\n');
+      console.log(formatter(results));
+      console.log('\n');
+      throw new Error(`${errorCount + warningCount} linting errors found in ${results.length} files`);
+    }
   });
 
-  const report = cli.executeOnFiles(await getTypescriptSources());
-
-  if (fix) {
-    CLIEngine.outputFixes(report);
-  }
-
-  const { errorCount, results, warningCount } = report;
-
-  if (errorCount > 0 || warningCount > 0) {
-    const formatter = cli.getFormatter();
-    console.log('\n');
-    console.log(formatter(results));
-    console.log('\n');
-    throw new Error(`${errorCount + warningCount} linting errors found in ${results.length} files`);
-  }
-});
-
-export const pluginBuildRunner: TaskRunner<PluginBuildOptions> = async ({ coverage }) => {
+export const pluginBuildRunner: TaskRunner<PluginBuildOptions> = async ({ coverage, maxJestWorkers }) => {
   await prepare();
   await lintPlugin({ fix: false });
-  await testPlugin({ updateSnapshot: false, coverage, watch: false });
+  await testPlugin({ updateSnapshot: false, coverage, maxWorkers: maxJestWorkers, watch: false });
   await bundlePlugin({ watch: false, production: true });
 };
 

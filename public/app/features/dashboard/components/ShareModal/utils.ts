@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import templateSrv from 'app/features/templating/template_srv';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { PanelModel, dateTime, urlUtil } from '@grafana/data';
 
 export function buildParams(
@@ -22,7 +22,7 @@ export function buildParams(
   }
 
   if (includeTemplateVars) {
-    templateSrv.fillVariableValuesForUrl(params);
+    getTemplateSrv().fillVariableValuesForUrl(params);
   }
 
   if (selectedTheme !== 'current') {

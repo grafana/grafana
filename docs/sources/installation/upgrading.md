@@ -7,7 +7,7 @@ type = "docs"
 name = "Upgrade Grafana"
 identifier = "upgrading"
 parent = "installation"
-weight = 800
+weight = 700
 +++
 
 # Upgrade Grafana
@@ -20,7 +20,7 @@ Upgrading is generally safe (between many minor and one major version) and dashb
 ## Backup
 
 We recommend that you backup a few things in case you have to rollback the upgrade.
-- Installed plugins - Back them up before you upgrade them in case you want to rollback the Grafana version and want to get the exact same versions you where running before the upgrade.
+- Installed plugins - Back them up before you upgrade them in case you want to rollback the Grafana version and want to get the exact same versions you were running before the upgrade.
 - Configuration files do not need to be backed up. However, you might want to in case you add new config options after upgrade and then rollback.
 
 ### Database backup
@@ -125,7 +125,7 @@ grafana-cli plugins update-all
 
 The dashboard grid layout engine has changed. All dashboards will be automatically upgraded to new positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana. Some external panel plugins might need to be updated to work properly.
 
-For more details on the new panel positioning system, [click here]({{< relref "../reference/dashboard.md#panel-size-position" >}})
+For more details on the new panel positioning system, [click here]({{< relref "../dashboards/json-model.md#panel-size-position" >}})
 
 ## Upgrading to v5.2
 
@@ -174,7 +174,7 @@ Data sources store passwords and basic auth passwords in secureJsonData encrypte
 will keep working with unencrypted passwords. If you want to migrate to encrypted storage for your existing data sources
 you can do that by:
 
-- For data sources created through UI, you need to go to data source config, re enter the password or basic auth
+- For data sources created through UI, you need to go to data source config, re-enter the password or basic auth
 password and save the data source.
 - For data sources created by provisioning, you need to update your config file and use secureJsonData.password or
 secureJsonData.basicAuthPassword field. See [provisioning docs]({{< relref "../administration/provisioning" >}}) for example of current
@@ -189,8 +189,8 @@ this new setting.
 ### Session storage is no longer used
 
 In 6.2 we completely removed the backend session storage since we replaced the previous login session implementation with an auth token.
-If you are using Auth proxy with LDAP an shared cached is used in Grafana so you might want configure [remote_cache] instead. If not
-Grafana will fallback to using the database as an shared cache.
+If you are using Auth proxy with LDAP, a shared cached is used in Grafana, so you might want to configure [remote_cache] instead. If not,
+Grafana will fall back to using the database as a shared cache.
 
 ### Upgrading Elasticsearch to v7.0+
 
@@ -231,7 +231,7 @@ Chrome 80 treats cookies as `SameSite=Lax` by default if no `SameSite` attribute
 
 Due to this change in Chrome, the `[security]` setting `cookie_samesite` configured to `none` now renders cookies with `SameSite=None` attribute compared to before where no `SameSite` attribute was added to cookies. To get the old behavior, use value `disabled` instead of `none`, see [cookie_samesite in Configuration]({{< relref "../administration/configuration/#cookie-samesite" >}}) for more information.
 
-**Note:** There is currently a bug affecting Mac OSX and iOS that causes `SameSite=None` cookies to be treated as `SameSite=Strict` and therefore not sent with cross-site requests, see https://bugs.webkit.org/show_bug.cgi?id=198181 for details. Until this is fixed, `SameSite=None` might not work properly on Safari.
+> **Note:** There is currently a bug affecting Mac OSX and iOS that causes `SameSite=None` cookies to be treated as `SameSite=Strict` and therefore not sent with cross-site requests, see https://bugs.webkit.org/show_bug.cgi?id=198181 for details. Until this is fixed, `SameSite=None` might not work properly on Safari.
 
 This version of Chrome also rejects insecure `SameSite=None` cookies. See https://www.chromestatus.com/feature/5633521622188032 for more information. Make sure that you
 change the `[security]` setting `cookie_secure` to `true` and use HTTPS when `cookie_samesite` is configured to `none`, otherwise authentication in Grafana won't work properly.
@@ -274,6 +274,6 @@ The following alert notifiers have been updated to support storing their sensiti
 
 For existing alert notification channels, there is no automatic migration of storing sensitive settings encrypted, and they will continue to work as before. Migration must be done manually. Opening a configured alert notification channel in the UI and saving it will store sensitive settings encrypted and at the same time reset the historic unencrypted setting of that alert notification channel in the database.
 
-> Please note that when migrating a notification channel and later downgrading Grafana to an earlier version, the notification channel will not be able to read stored sensitive settings and by that not function as expected.
+> Please note that when migrating a notification channel and later downgrading Grafana to an earlier version, the notification channel will not be able to read stored sensitive settings and, as a result, not function as expected.
 
 For provisioning of alert notification channels, refer to [Alert notification channels]({{< relref "../administration/provisioning.md#alert-notification-channels" >}}).

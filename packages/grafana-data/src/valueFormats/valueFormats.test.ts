@@ -66,6 +66,19 @@ const formatTests: ValueFormatTest[] = [
   // Time format
   { id: 'time:YYYY', decimals: 0, value: dateTime(new Date(1999, 6, 2)).valueOf(), result: '1999' },
   { id: 'time:YYYY.MM', decimals: 0, value: dateTime(new Date(2010, 6, 2)).valueOf(), result: '2010.07' },
+  { id: 'dateTimeAsIso', decimals: 0, value: dateTime(new Date(2010, 6, 2)).valueOf(), result: '2010-07-02 00:00:00' },
+  {
+    id: 'dateTimeAsUS',
+    decimals: 0,
+    value: dateTime(new Date(2010, 6, 2)).valueOf(),
+    result: '07/02/2010 12:00:00 am',
+  },
+  {
+    id: 'dateTimeAsSystem',
+    decimals: 0,
+    value: dateTime(new Date(2010, 6, 2)).valueOf(),
+    result: '2010-07-02 00:00:00',
+  },
 ];
 
 describe('valueFormats', () => {

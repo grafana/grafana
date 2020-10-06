@@ -43,7 +43,7 @@ get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-l
     "b4138199aa755ebfe171b57cc46910b13258ace5fbc4eaa099c42607cd0bff32"
 chmod +x /usr/local/bin/cc-test-reporter
 
-curl -fL -o /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.8/grabpl"
+curl -fL -o /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/grabpl"
 
 apk add --no-cache git
 # Install Mage

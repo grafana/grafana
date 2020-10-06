@@ -8,7 +8,7 @@ aliases = ["/docs/grafana/latest/installation/ldap/"]
 name = "LDAP"
 identifier = "ldap"
 parent = "authentication"
-weight = 2
+weight = 300
 +++
 
 # LDAP Authentication
@@ -114,8 +114,8 @@ Within this view, you'll be able to see which LDAP servers are currently reachab
 To use the debug view:
 
  1. Type the username of a user that exists within any of your LDAP server(s)
- 2. Then, press "Run"
- 3. If the user is found within any of your LDAP instances, the mapping information is displayed
+ 1. Then, press "Run"
+ 1. If the user is found within any of your LDAP instances, the mapping information is displayed
 
 {{< docs-imagebox img="/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
 
@@ -200,8 +200,8 @@ Users with nested/recursive group membership must have an LDAP server that suppo
 and configure `group_search_filter` in a way that it returns the groups the submitted username is a member of.
 
 To configure `group_search_filter`:
-* You can set `group_search_base_dns` to specify where the matching groups are defined.
-* If you do not use `group_search_base_dns`, then the previously defined `search_base_dns` is used.
+- You can set `group_search_base_dns` to specify where the matching groups are defined.
+- If you do not use `group_search_base_dns`, then the previously defined `search_base_dns` is used.
 
 **Active Directory example:**
 
@@ -320,9 +320,9 @@ org_role = "Viewer"
 
 Assuming the following Active Directory server setup:
 
-* IP address: `10.0.0.1`
-* Domain: `CORP`
-* DNS name: `corp.local`
+- IP address: `10.0.0.1`
+- Domain: `CORP`
+- DNS name: `corp.local`
 
 **LDAP specific configuration file (ldap.toml):**
 ```bash

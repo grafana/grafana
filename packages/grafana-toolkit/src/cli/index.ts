@@ -18,6 +18,7 @@ import { pluginUpdateTask } from './tasks/plugin.update';
 import { ciBuildPluginDocsTask, ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginCreateTask } from './tasks/plugin.create';
+import { pluginSignTask } from './tasks/plugin.sign';
 import { bundleManagedTask } from './tasks/plugin/bundle.managed';
 import { componentCreateTask } from './tasks/component.create';
 
@@ -138,9 +139,11 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:build')
+    .option('--maxJestWorkers <num>|<string>', 'Limit number of Jest workers spawned')
     .description('Prepares plugin dist package')
+    .option('--coverage', 'Run code coverage', false)
     .action(async cmd => {
-      await execTask(pluginBuildTask)({ coverage: false, silent: true });
+      await execTask(pluginBuildTask)({ coverage: cmd.coverage, silent: true, maxJestWorkers: cmd.maxJestWorkers });
     });
 
   program
@@ -163,6 +166,7 @@ export const run = (includeInternalScripts = false) => {
     .option('--watch', 'Run tests in interactive watch mode')
     .option('--testPathPattern <regex>', 'Run only tests with a path that matches the regex')
     .option('--testNamePattern <regex>', 'Run only tests with a name that matches the regex')
+    .option('--maxWorkers <num>|<string>', 'Limit number of workers spawned')
     .description('Executes plugin tests')
     .action(async cmd => {
       await execTask(pluginTestTask)({
@@ -171,6 +175,20 @@ export const run = (includeInternalScripts = false) => {
         watch: !!cmd.watch,
         testPathPattern: cmd.testPathPattern,
         testNamePattern: cmd.testNamePattern,
+        maxWorkers: cmd.maxWorkers,
+        silent: true,
+      });
+    });
+
+  program
+    .command('plugin:sign')
+    .option('--signatureType <type>', 'Signature Type')
+    .option('--rootUrls <urls...>', 'Root URLs')
+    .description('Create a plugin signature')
+    .action(async cmd => {
+      await execTask(pluginSignTask)({
+        signatureType: cmd.signatureType,
+        rootUrls: cmd.rootUrls,
         silent: true,
       });
     });
@@ -178,10 +196,12 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:ci-build')
     .option('--finish', 'move all results to the jobs folder', false)
+    .option('--maxJestWorkers <num>|<string>', 'Limit number of Jest workers spawned')
     .description('Build the plugin, leaving results in /dist and /coverage')
     .action(async cmd => {
       await execTask(ciBuildPluginTask)({
         finish: cmd.finish,
+        maxJestWorkers: cmd.maxJestWorkers,
       });
     });
 
@@ -194,11 +214,14 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:ci-package')
-    .option('--signing-admin', 'Use the admin API endpoint for signing the manifest.', false)
+    .option('--signatureType <type>', 'Signature Type')
+    .option('--rootUrls <urls...>', 'Root URLs')
+    .option('--signing-admin', 'Use the admin API endpoint for signing the manifest. (deprecated)', false)
     .description('Create a zip packages for the plugin')
     .action(async cmd => {
       await execTask(ciPackagePluginTask)({
-        signingAdmin: cmd.signingAdmin,
+        signatureType: cmd.signatureType,
+        rootUrls: cmd.rootUrls,
       });
     });
 

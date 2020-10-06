@@ -22,7 +22,7 @@ The main highlights are:
 - [New Panel Editor UX]({{< relref "#new-panel-editor" >}}) improves panel editing
     and enables easy switching between different visualizations.
 - [Google Stackdriver data source]({{< relref "#google-stackdriver-data-source" >}}) is out of beta and is officially released.
-- [Azure Monitor]({{< relref "#azure-monitor-data-source" >}}) plugin is ported from being an external plugin to being a core data source
+- [Azure Monitor]({{< relref "#azure-monitor-data-source" >}}) plugin is ported from being an external plugin to be a core data source
 - [React Plugin]({{< relref "#react-panels-query-editors" >}}) support enables an easier way to build plugins.
 - [Named Colors]({{< relref "#named-colors" >}}) in our new improved color picker.
 - [Removal of user session storage]({{< relref "#easier-to-deploy-improved-security" >}}) makes Grafana easier to deploy and improves security.
@@ -31,7 +31,7 @@ The main highlights are:
 
 {{< docs-imagebox img="/img/docs/v60/explore_prometheus.png" max-width="800px" class="docs-image--right" caption="Screenshot of the new Explore option in the panel menu" >}}
 
-Grafana's dashboard UI is all about building dashboards for visualization. **Explore** strips away all the dashboard and panel options so that you can focus on the query and metric exploration. Iterate until you have a working query and then think about building a dashboard. You can also jump from a dashboard panel into **Explore** and from there do some ad-hoc query exporation with the panel queries as a starting point.
+Grafana's dashboard UI is all about building dashboards for visualization. **Explore** strips away all the dashboard and panel options so that you can focus on the query and metric exploration. Iterate until you have a working query and then think about building a dashboard. You can also jump from a dashboard panel into **Explore** and from there do some ad-hoc query exploration with the panel queries as a starting point.
 
 For infrastructure monitoring and incident response, you no longer need to switch to other tools to debug what went wrong. **Explore** allows you to dig deeper into your metrics and logs to find the cause. Grafana's new logging data source, [Loki](https://github.com/grafana/loki) is tightly integrated into Explore and allows you to correlate metrics and logs by viewing them side-by-side.
 
@@ -41,7 +41,7 @@ query editor and the experience to provide the best possible exploration UX.
 
 ### Explore and Prometheus
 
-Explore features a new [Prometheus query editor](/features/explore/#prometheus-specific-features). This new editor has improved autocomplete, metric tree selector,
+Explore features a new [Prometheus query editor](/explore/#prometheus-specific-features). This new editor has improved autocomplete, metric tree selector,
 integrations with the Explore table view for easy label filtering, and useful query hints that can automatically apply
 functions to your query. There is also integration between Prometheus and Grafana Loki (see more about Loki below) that
 enabled jumping between metrics query and logs query with preserved label filters.
@@ -143,10 +143,10 @@ Read more about the short-lived token solution and how to configure it [here](/a
 
 Besides these changes we have also made security improvements regarding Cross-Site Request Forgery (CSRF) and Cross-site Scripting (XSS) vulnerabilities:
 
-* Cookies are per default using the [SameSite](/administration/configuration/#cookie-samesite) attribute to protect against CSRF attacks
-* Script tags in text panels are per default [disabled](/administration/configuration/#disable-sanitize-html) to protect against XSS attacks
+- Cookies are per default using the [SameSite](/administration/configuration/#cookie-samesite) attribute to protect against CSRF attacks
+- Script tags in text panels are per default [disabled](/administration/configuration/#disable-sanitize-html) to protect against XSS attacks
 
-> If you're using [Auth Proxy Authentication](/auth/auth-proxy/) you still need to have user sessions set up and configured
+> **Note:** If you're using [Auth Proxy Authentication](/auth/auth-proxy/) you still need to have user sessions set up and configured
 but our goal is to remove this requirement in the near future.
 
 ## Named Colors

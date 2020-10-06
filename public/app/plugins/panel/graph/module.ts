@@ -25,8 +25,8 @@ import { getLocationSrv } from '@grafana/runtime';
 import { getDataTimeRange } from './utils';
 import { changePanelPlugin } from 'app/features/dashboard/state/actions';
 import { dispatch } from 'app/store/store';
-
 import { ThresholdMapper } from 'app/features/alerting/state/ThresholdMapper';
+import { getAnnotationsFromData } from 'app/features/annotations/standardAnnotationSupport';
 
 export class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -233,6 +233,10 @@ export class GraphCtrl extends MetricsPanelCtrl {
         // Add it to the seriesList so react can access it
         if (this.alertState) {
           (this.seriesList as any).alertState = this.alertState.state;
+        }
+
+        if (this.panelData!.annotations?.length) {
+          this.annotations = getAnnotationsFromData(this.panelData!.annotations!);
         }
 
         this.render(this.seriesList);

@@ -1,14 +1,13 @@
 import { of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 import { FetchResponse } from '@grafana/runtime';
-import { dateTime, toUtc } from '@grafana/data';
+import { dateTime, observableTester, toUtc } from '@grafana/data';
 
 import { PostgresDatasource } from '../datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
 import { TimeSrv } from '../../../../features/dashboard/services/TimeSrv';
-import { observableTester } from '../../../../../test/helpers/observableTester';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),

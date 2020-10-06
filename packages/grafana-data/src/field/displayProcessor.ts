@@ -39,7 +39,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
 
   if (field.type === FieldType.time && !hasDateUnit) {
-    unit = `dateTimeAsIso`;
+    unit = `dateTimeAsSystem`;
     hasDateUnit = true;
   }
 

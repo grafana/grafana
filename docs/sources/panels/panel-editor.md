@@ -49,7 +49,7 @@ The visualization preview section contains viewing options, time range controls,
 
 {{< docs-imagebox img="/img/docs/panel-editor/visualization-preview-7-0.png" class="docs-image--no-shadow" max-width="1200px" >}}
 
-- **Fill -** The visualization preview will fill the available space in the preview part. If you change the width of the side pane or height of the bottom pane the visualisation will adapt to fill whatever space is available.
+- **Fill -** The visualization preview will fill the available space in the preview part. If you change the width of the side pane or height of the bottom pane the visualization will adapt to fill whatever space is available.
 - **Fit -** The visualization preview will fill the available space in but preserve the aspect ratio of the panel.
 - **Exact -** The visualization preview will have the exact size as the size on the dashboard. If not enough space is available, the visualization will scale down preserving the aspect ratio.
 - **Time range controls -** For more information, refer to [Time range controls]({{< relref "../dashboards/time-range-controls.md" >}}).
@@ -61,7 +61,7 @@ The section contains tabs where you enter queries, transform your data, and crea
 {{< docs-imagebox img="/img/docs/panel-editor/data-section-7-0.png" class="docs-image--no-shadow" max-width="1200px" >}}
 
 - **Query tab -** Select your data source and enter queries here. For more information, refer to [Queries]({{< relref "queries.md" >}}).
-- **Transform tab -** Apply data transformations. For more information, refer to [Transformations]({{< relref "transformations.md" >}}).
+- **Transform tab -** Apply data transformations. For more information, refer to [Transformations]({{< relref "transformations/_index.md" >}}).
 - **Alert tab -** Write alert rules. For more information, refer to [Create alerts]({{< relref "../alerting/create-alerts.md" >}}).
 
 ### Panel and field options (side pane)
@@ -72,5 +72,5 @@ Features in these tabs are documented in the following topics:
 
 - [Add a panel]({{< relref "add-a-panel.md" >}}) describes basic panel settings.
 - [Visualizations]({{< relref "visualizations/_index.md" >}}) display options vary widely. They are described in the individual visualization topic.
-- [Field options and overrides]({{< relref "field-options.md" >}}) allow you to control almost every aspect of your visualization, including units, value mappings, and [Thresholds]({{< relref "thresholds.md" >}}).
+- [Field options and overrides]({{< relref "field-options/_index.md" >}}) allow you to control almost every aspect of your visualization, including units, value mappings, and [Thresholds]({{< relref "thresholds.md" >}}).
 - [Panel links]({{< relref "../linking/panel-links.md" >}}) and [Data links]({{< relref "../linking/data-links.md" >}}) help you connect your visualization to other resources.

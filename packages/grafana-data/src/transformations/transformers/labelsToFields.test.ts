@@ -1,16 +1,17 @@
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { LabelsToFieldsOptions, labelsToFieldsTransformer } from './labelsToFields';
-import { DataTransformerConfig, FieldType, FieldDTO } from '../../types';
+import { DataTransformerConfig, FieldDTO, FieldType } from '../../types';
 import { DataTransformerID } from './ids';
 import { toDataFrame, toDataFrameDTO } from '../../dataframe';
 import { transformDataFrame } from '../transformDataFrame';
+import { observableTester } from '../../utils/tests/observableTester';
 
 describe('Labels as Columns', () => {
   beforeAll(() => {
     mockTransformationsRegistry([labelsToFieldsTransformer]);
   });
 
-  it('data frame with two labels', () => {
+  it('data frame with two labels', done => {
     const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
       id: DataTransformerID.labelsToFields,
       options: {},
@@ -24,23 +25,30 @@ describe('Labels as Columns', () => {
       ],
     });
 
-    const result = toDataFrameDTO(transformDataFrame([cfg], [source])[0]);
-    const expected: FieldDTO[] = [
-      { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
-      {
-        name: 'location',
-        type: FieldType.string,
-        values: ['inside', 'inside'],
-        config: {},
-      },
-      { name: 'feelsLike', type: FieldType.string, values: ['ok', 'ok'], config: {} },
-      { name: 'Value', type: FieldType.number, values: [1, 2], config: {} },
-    ];
+    observableTester().subscribeAndExpectOnNext({
+      observable: transformDataFrame([cfg], [source]),
+      expect: data => {
+        const result = toDataFrameDTO(data[0]);
 
-    expect(result.fields).toEqual(expected);
+        const expected: FieldDTO[] = [
+          { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
+          {
+            name: 'location',
+            type: FieldType.string,
+            values: ['inside', 'inside'],
+            config: {},
+          },
+          { name: 'feelsLike', type: FieldType.string, values: ['ok', 'ok'], config: {} },
+          { name: 'Value', type: FieldType.number, values: [1, 2], config: {} },
+        ];
+
+        expect(result.fields).toEqual(expected);
+      },
+      done,
+    });
   });
 
-  it('data frame with two labels and valueLabel option', () => {
+  it('data frame with two labels and valueLabel option', done => {
     const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
       id: DataTransformerID.labelsToFields,
       options: { valueLabel: 'name' },
@@ -63,22 +71,29 @@ describe('Labels as Columns', () => {
       ],
     });
 
-    const result = toDataFrameDTO(transformDataFrame([cfg], [source])[0]);
-    const expected: FieldDTO[] = [
-      { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
-      {
-        name: 'location',
-        type: FieldType.string,
-        values: ['inside', 'inside'],
-        config: {},
-      },
-      { name: 'Request', type: FieldType.number, values: [1, 2], config: {} },
-    ];
+    observableTester().subscribeAndExpectOnNext({
+      observable: transformDataFrame([cfg], [source]),
+      expect: data => {
+        const result = toDataFrameDTO(data[0]);
 
-    expect(result.fields).toEqual(expected);
+        const expected: FieldDTO[] = [
+          { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
+          {
+            name: 'location',
+            type: FieldType.string,
+            values: ['inside', 'inside'],
+            config: {},
+          },
+          { name: 'Request', type: FieldType.number, values: [1, 2], config: {} },
+        ];
+
+        expect(result.fields).toEqual(expected);
+      },
+      done,
+    });
   });
 
-  it('two data frames with 1 value and 1 label', () => {
+  it('two data frames with 1 value and 1 label', done => {
     const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
       id: DataTransformerID.labelsToFields,
       options: {},
@@ -100,14 +115,20 @@ describe('Labels as Columns', () => {
       ],
     });
 
-    const result = toDataFrameDTO(transformDataFrame([cfg], [oneValueOneLabelA, oneValueOneLabelB])[0]);
+    observableTester().subscribeAndExpectOnNext({
+      observable: transformDataFrame([cfg], [oneValueOneLabelA, oneValueOneLabelB]),
+      expect: data => {
+        const result = toDataFrameDTO(data[0]);
 
-    const expected: FieldDTO[] = [
-      { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
-      { name: 'location', type: FieldType.string, values: ['inside', 'outside'], config: {} },
-      { name: 'temp', type: FieldType.number, values: [1, -1], config: {} },
-    ];
+        const expected: FieldDTO[] = [
+          { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
+          { name: 'location', type: FieldType.string, values: ['inside', 'outside'], config: {} },
+          { name: 'temp', type: FieldType.number, values: [1, -1], config: {} },
+        ];
 
-    expect(result.fields).toEqual(expected);
+        expect(result.fields).toEqual(expected);
+      },
+      done,
+    });
   });
 });

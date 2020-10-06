@@ -96,10 +96,12 @@ type AccordianKeyValuesProps = {
 // export for tests
 export function KeyValuesSummary(props: { data?: TraceKeyValuePair[] }) {
   const { data } = props;
+  const styles = getStyles(useTheme());
+
   if (!Array.isArray(data) || !data.length) {
     return null;
   }
-  const styles = getStyles(useTheme());
+
   return (
     <ul className={styles.summary}>
       {data.map((item, i) => (

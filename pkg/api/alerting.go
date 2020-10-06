@@ -417,7 +417,7 @@ func DeleteAlertNotificationByUID(c *models.ReqContext) Response {
 	})
 }
 
-//POST /api/alert-notifications/test
+// POST /api/alert-notifications/test
 func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) Response {
 	cmd := &alerting.NotificationTestCommand{
 		OrgID:          c.OrgId,
@@ -438,7 +438,7 @@ func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) Re
 	return Success("Test notification sent")
 }
 
-//POST /api/alerts/:alertId/pause
+// POST /api/alerts/:alertId/pause
 func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 	alertID := c.ParamsInt64("alertId")
 	result := make(map[string]interface{})
@@ -491,7 +491,7 @@ func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 	return JSON(200, result)
 }
 
-//POST /api/admin/pause-all-alerts
+// POST /api/admin/pause-all-alerts
 func PauseAllAlerts(c *models.ReqContext, dto dtos.PauseAllAlertsCommand) Response {
 	updateCmd := models.PauseAllAlertCommand{
 		Paused: dto.Paused,

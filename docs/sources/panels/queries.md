@@ -21,11 +21,11 @@ Because of the difference between query languages, data sources may have query e
 
 **InfluxDB query editor**
 
-{{< docs-imagebox img="/img/docs/queries/influxdb-query-editor-7-0.png" class="docs-image--no-shadow" max-width="1000px" >}}
+{{< docs-imagebox img="/img/docs/queries/influxdb-query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
 **Prometheus (PromQL) query editor**
 
-{{< docs-imagebox img="/img/docs/queries/prometheus-query-editor-7-0.png" class="docs-image--no-shadow" max-width="1000px" >}}
+{{< docs-imagebox img="/img/docs/queries/prometheus-query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
 ## Query syntax
 
@@ -49,12 +49,12 @@ For more information about writing a query for your data source, refer to the sp
 
 The Query tab consists of the following elements:
 
-* Data source selector
-* Query options
-* Query inspector button
-* Query editor list
+- Data source selector
+- Query options
+- Query inspector button
+- Query editor list
 
-{{< docs-imagebox img="/img/docs/queries/query-editor-7-0.png" class="docs-image--no-shadow" max-width="1000px" >}}
+{{< docs-imagebox img="/img/docs/queries/query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
 
 ### Data source selector
 
@@ -98,7 +98,7 @@ Panel data source query options:
 
 - **Relative time -** You can override the relative time range for individual panels, causing them to be different than what is selected in the dashboard time picker in the top right corner of the dashboard. This allows you to show metrics from different time periods or days on the same dashboard.
   
-- **Time shift -** The time shift function is another way to override the time range for individual panels. It only works with relative time ranges and allows you to adjust the time range. 
+- **Time shift -** The time shift function is another way to override the time range for individual panels. It only works with relative time ranges and allows you to adjust the time range.
   
   For example, you could shift the time range for the panel to be two hours earlier than the dashboard time picker. For more information, refer to [Time range controls]({{< relref "../dashboards/time-range-controls.md" >}}).
 
@@ -114,7 +114,6 @@ Click **Refresh** to see the full text of the request sent by this panel to the 
 
 For more information about the panel inspector, refer to [Inspect a panel]({{< relref "inspect-panel.md" >}}).
 
-
 ### Query editor list
 
 In the UI, queries are organized in collapsible query rows. Each query row contains a query editor and is identified with a letter (A, B, C, and so on). 
@@ -123,7 +122,7 @@ You can:
 
 | Icon | Description |
 |:--:|:---|
-| {{< docs-imagebox img="/img/docs/queries/move-up-icon-7-0.png" class="docs-image--no-shadow" max-width="20px" max-height="30px" >}} {{< docs-imagebox img="/img/docs/queries/move-down-icon-7-0.png" class="docs-image--no-shadow" max-width="20px" max-height="30px" >}} | Change the order of queries by moving them up or down. The order of results reflects the order of the queries, so you can often adjust your visual results based on query order. |
 | {{< docs-imagebox img="/img/docs/queries/duplicate-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Copy a query. Duplicating queries is useful when working with multiple complex queries that are similar and you want to either experiment with different variants or do minor alterations. |
 | {{< docs-imagebox img="/img/docs/queries/hide-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Hide a query. Grafana does not send hidden queries to the data source. |
 | {{< docs-imagebox img="/img/docs/queries/remove-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Remove a query. Removing a query permanently deletes it, but sometimes you can recover deleted queries by reverting to previously saved versions of the panel. |
+| {{< docs-imagebox img="/img/docs/queries/query-drag-icon-7-2.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Reorder queries. Change the order of queries by clicking and holding the drag icon, then drag queries where desired. The order of results reflects the order of the queries, so you can often adjust your visual results based on query order. |

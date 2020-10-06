@@ -3,23 +3,19 @@ import { AnyAction } from 'redux';
 import { PayloadAction } from '@reduxjs/toolkit';
 import {
   DataQuery,
-  DataSourceApi,
+  DataQueryErrorType,
   DefaultTimeRange,
   LoadingState,
+  LogsDedupStrategy,
   PanelData,
   PanelEvents,
-  TimeZone,
-  toLegacyResponseData,
-  ExploreMode,
-  LogsDedupStrategy,
   sortLogsResult,
-  DataQueryErrorType,
+  toLegacyResponseData,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { LocationUpdate } from '@grafana/runtime';
 
 import {
-  DEFAULT_UI_STATE,
   ensureQueries,
   generateNewKeyAndAddRefIdIfMissing,
   getQueryKeys,
@@ -30,6 +26,8 @@ import {
 import { ExploreId, ExploreItemState, ExploreState, ExploreUpdateState } from 'app/types/explore';
 import {
   addQueryRowAction,
+  cancelQueriesAction,
+  changeDedupStrategyAction,
   changeLoadingStateAction,
   changeQueryAction,
   changeRangeAction,
@@ -38,7 +36,6 @@ import {
   clearQueriesAction,
   highlightLogsExpressionAction,
   historyUpdatedAction,
-  richHistoryUpdatedAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
@@ -51,6 +48,7 @@ import {
   removeQueryRowAction,
   resetExploreAction,
   ResetExplorePayload,
+  richHistoryUpdatedAction,
   scanStartAction,
   scanStopAction,
   setPausedStateAction,
@@ -60,14 +58,9 @@ import {
   SplitCloseActionPayload,
   splitOpenAction,
   syncTimesAction,
-  toggleGraphAction,
   toggleLogLevelAction,
-  toggleTableAction,
   updateDatasourceInstanceAction,
-  updateUIStateAction,
-  cancelQueriesAction,
 } from './actionTypes';
-import { ResultProcessor } from '../utils/ResultProcessor';
 import { updateLocation } from '../../../core/actions';
 import { Emitter } from 'app/core/core';
 
@@ -81,7 +74,6 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
   queries: false,
   range: false,
   mode: false,
-  ui: false,
 });
 
 /**
@@ -106,14 +98,11 @@ export const makeExploreItemState = (): ExploreItemState => ({
     to: null,
   } as any,
   scanning: false,
-  showingGraph: true,
-  showingTable: true,
   loading: false,
   queryKeys: [],
   urlState: null,
   update: makeInitialUpdateState(),
   latency: 0,
-  supportedModes: [],
   isLive: false,
   isPaused: false,
   urlReplaced: false,
@@ -241,8 +230,16 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
     return { ...state, logsHighlighterExpressions: expressions };
   }
 
+  if (changeDedupStrategyAction.match(action)) {
+    const { dedupStrategy } = action.payload;
+    return {
+      ...state,
+      dedupStrategy,
+    };
+  }
+
   if (initializeExploreAction.match(action)) {
-    const { containerWidth, eventBridge, queries, range, ui, originPanelId } = action.payload;
+    const { containerWidth, eventBridge, queries, range, originPanelId } = action.payload;
     return {
       ...state,
       containerWidth,
@@ -251,40 +248,20 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       queries,
       initialized: true,
       queryKeys: getQueryKeys(queries, state.datasourceInstance),
-      ...ui,
       originPanelId,
       update: makeInitialUpdateState(),
     };
   }
 
   if (updateDatasourceInstanceAction.match(action)) {
-    const { datasourceInstance, version } = action.payload;
+    const { datasourceInstance } = action.payload;
 
     // Custom components
     stopQueryState(state.querySubscription);
 
-    let newMetadata = datasourceInstance.meta;
-
-    // HACK: Temporary hack for Loki datasource. Can remove when plugin.json structure is changed.
-    if (version && version.length && datasourceInstance.meta.name === 'Loki') {
-      const lokiVersionMetadata: Record<string, { metrics: boolean }> = {
-        v0: {
-          metrics: false,
-        },
-
-        v1: {
-          metrics: true,
-        },
-      };
-      newMetadata = { ...newMetadata, ...lokiVersionMetadata[version] };
-    }
-
-    const updatedDatasourceInstance = Object.assign(datasourceInstance, { meta: newMetadata });
-    const supportedModes = getModesForDatasource(updatedDatasourceInstance);
-
     return {
       ...state,
-      datasourceInstance: updatedDatasourceInstance,
+      datasourceInstance,
       graphResult: null,
       tableResult: null,
       logsResult: null,
@@ -292,7 +269,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       queryResponse: createEmptyQueryResponse(),
       loading: false,
       queryKeys: [],
-      supportedModes,
       originPanelId: state.urlState && state.urlState.originPanelId,
     };
   }
@@ -405,28 +381,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
     };
   }
 
-  if (updateUIStateAction.match(action)) {
-    return { ...state, ...action.payload };
-  }
-
-  if (toggleGraphAction.match(action)) {
-    const showingGraph = !state.showingGraph;
-    if (showingGraph) {
-      return { ...state, showingGraph };
-    }
-
-    return { ...state, showingGraph };
-  }
-
-  if (toggleTableAction.match(action)) {
-    const showingTable = !state.showingTable;
-    if (showingTable) {
-      return { ...state, showingTable };
-    }
-
-    return { ...state, showingTable };
-  }
-
   if (queriesImportedAction.match(action)) {
     const { queries } = action.payload;
     return {
@@ -508,7 +462,7 @@ export const processQueryResponse = (
   action: PayloadAction<QueryEndedPayload>
 ): ExploreItemState => {
   const { response } = action.payload;
-  const { request, state: loadingState, series, error } = response;
+  const { request, state: loadingState, series, error, graphResult, logsResult, tableResult, traceFrames } = response;
 
   if (error) {
     if (error.type === DataQueryErrorType.Timeout) {
@@ -540,10 +494,6 @@ export const processQueryResponse = (
   }
 
   const latency = request.endTime ? request.endTime - request.startTime : 0;
-  const processor = new ResultProcessor(state, series, request.intervalMs, request.timezone as TimeZone);
-  const graphResult = processor.getGraphResult();
-  const tableResult = processor.getTableResult();
-  const logsResult = processor.getLogsResult();
 
   // Send legacy data to Angular editors
   if (state.datasourceInstance?.components?.QueryCtrl) {
@@ -564,7 +514,7 @@ export const processQueryResponse = (
     showLogs: !!logsResult,
     showMetrics: !!graphResult,
     showTable: !!tableResult,
-    showTrace: !!processor.traceFrames.length,
+    showTrace: !!traceFrames.length,
   };
 };
 
@@ -589,14 +539,13 @@ export const updateChildRefreshState = (
     return {
       ...state,
       urlState,
-      update: { datasource: false, queries: false, range: false, mode: false, ui: false },
+      update: { datasource: false, queries: false, range: false, mode: false },
     };
   }
 
   const datasource = _.isEqual(urlState ? urlState.datasource : '', state.urlState.datasource) === false;
   const queries = _.isEqual(urlState ? urlState.queries : [], state.urlState.queries) === false;
   const range = _.isEqual(urlState ? urlState.range : DEFAULT_RANGE, state.urlState.range) === false;
-  const ui = _.isEqual(urlState ? urlState.ui : DEFAULT_UI_STATE, state.urlState.ui) === false;
 
   return {
     ...state,
@@ -606,31 +555,8 @@ export const updateChildRefreshState = (
       datasource,
       queries,
       range,
-      ui,
     },
   };
-};
-
-const getModesForDatasource = (dataSource: DataSourceApi): ExploreMode[] => {
-  const supportsGraph = dataSource.meta.metrics;
-  const supportsLogs = dataSource.meta.logs;
-  const supportsTracing = dataSource.meta.tracing;
-
-  const supportedModes: ExploreMode[] = [];
-
-  if (supportsGraph) {
-    supportedModes.push(ExploreMode.Metrics);
-  }
-
-  if (supportsLogs) {
-    supportedModes.push(ExploreMode.Logs);
-  }
-
-  if (supportsTracing) {
-    supportedModes.push(ExploreMode.Tracing);
-  }
-
-  return supportedModes;
 };
 
 /**

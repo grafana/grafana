@@ -25,7 +25,7 @@ Grafana creates an empty graph panel with your default data source selected.
 
 ## 2. Edit panel settings
 
-While not required, we recommend that you add a helpful title and description to your panel. You can use [variables you have defined]({{< relref "../variables/templates-and-variables.md" >}}) in either field, but not [global variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
+While not required, we recommend that you add a helpful title and description to your panel. You can use [variables you have defined]({{< relref "../variables/_index.md" >}}) in either field, but not [global variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
 
 ![](/img/docs/panels/panel-settings-7-0.png)
 
@@ -58,7 +58,8 @@ Our Grafana Fundamentals tutorial is a great place to start, or you can learn mo
 
 - Learn more about [panel editor]({{< relref "panel-editor.md" >}}) options.
 - Add more [queries]({{< relref "queries.md" >}}).
-- [Transform]({{< relref "transformations.md" >}}) your data.
-- [Configure]({{< relref "field-options.md" >}}) how your results are displayed in the visualization.
+- [Transform]({{< relref "transformations/_index.md" >}}) your data.
+- [Configure]({{< relref "field-options/_index.md" >}}) how your results are displayed in the visualization.
+
 - If you made a graph panel, set up an [alert]({{< relref "../alerting/alerts-overview.md" >}}).
-- Create [templates and variables]({{< relref "../variables/templates-and-variables.md" >}}).
+- Create [templates and variables]({{< relref "../variables/_index.md" >}}).
