@@ -1,4 +1,4 @@
-import React, { ComponentProps, FunctionComponent } from 'react';
+import React, { ComponentProps, FunctionComponent, memo } from 'react';
 import { InlineField, InlineFieldRow, Input, QueryField } from '@grafana/ui';
 import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { ElasticsearchQuery } from '../types';
@@ -11,7 +11,7 @@ interface Props {
   value: ElasticsearchQuery;
 }
 
-export const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
+export const QueryEditorForm: FunctionComponent<Props> = memo(({ value }) => {
   return (
     <>
       <InlineFieldRow>
@@ -38,4 +38,4 @@ export const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
       <MetricAggregationsEditor value={value.metrics || []} />
     </>
   );
-};
+});
