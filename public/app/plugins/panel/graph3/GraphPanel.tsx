@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Area,
   Canvas,
@@ -8,8 +8,8 @@ import {
   LegendPlugin,
   Line,
   Point,
-  SeriesGeometry,
   Scale,
+  SeriesGeometry,
   TooltipPlugin,
   UPlotChart,
   ZoomPlugin,
@@ -17,6 +17,7 @@ import {
 } from '@grafana/ui';
 
 import {
+  DataFrame,
   FieldConfig,
   FieldType,
   formattedValueToString,
@@ -32,6 +33,7 @@ import { VizLayout } from './VizLayout';
 
 import { Axis } from '@grafana/ui/src/components/uPlot/geometries/Axis';
 import { timeFormatToTemplate } from '@grafana/ui/src/components/uPlot/utils';
+import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 
 interface GraphPanelProps extends PanelProps<Options> {}
 
@@ -92,11 +94,19 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
   onChangeTimeRange,
 }) => {
   const theme = useTheme();
-  const alignedData = useMemo(() => {
+  const [alignedData, setAlignedData] = useState<DataFrame | null>(null);
+
+  useEffect(() => {
     if (!data || !data.series?.length) {
-      return null;
+      setAlignedData(null);
+      return;
     }
-    return alignAndSortDataFramesByFieldName(data.series, TIME_FIELD_NAME);
+
+    const subscription = alignAndSortDataFramesByFieldName(data.series, TIME_FIELD_NAME).subscribe(setAlignedData);
+
+    return function unsubscribe() {
+      subscription.unsubscribe();
+    };
   }, [data]);
 
   if (!alignedData) {
@@ -225,6 +235,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
             <ZoomPlugin onZoom={onChangeTimeRange} />
             <ContextMenuPlugin />
 
+            {data.annotations && <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} />}
             {/* TODO: */}
             {/*<AnnotationsEditorPlugin />*/}
           </UPlotChart>

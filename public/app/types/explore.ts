@@ -1,20 +1,20 @@
 import { Unsubscribable } from 'rxjs';
 import {
-  HistoryItem,
-  DataQuery,
-  DataSourceApi,
-  QueryHint,
-  PanelData,
-  DataQueryRequest,
-  RawTimeRange,
-  LogLevel,
-  TimeRange,
-  LogsModel,
-  LogsDedupStrategy,
   AbsoluteTimeRange,
-  GraphSeriesXY,
   DataFrame,
+  DataQuery,
+  DataQueryRequest,
+  DataSourceApi,
   ExploreUrlState,
+  GraphSeriesXY,
+  HistoryItem,
+  LogLevel,
+  LogsDedupStrategy,
+  LogsModel,
+  PanelData,
+  QueryHint,
+  RawTimeRange,
+  TimeRange,
 } from '@grafana/data';
 
 import { Emitter } from 'app/core/core';
@@ -219,3 +219,13 @@ export type RichHistoryQuery = {
   sessionName: string;
   timeRange?: string;
 };
+
+export interface ExplorePanelData extends PanelData {
+  graphFrames: DataFrame[];
+  tableFrames: DataFrame[];
+  logsFrames: DataFrame[];
+  traceFrames: DataFrame[];
+  graphResult: GraphSeriesXY[] | null;
+  tableResult: DataFrame | null;
+  logsResult: LogsModel | null;
+}

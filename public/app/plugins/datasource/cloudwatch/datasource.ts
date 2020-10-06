@@ -16,7 +16,6 @@ import {
   LogRowModel,
   ScopedVars,
   TimeRange,
-  toDataFrame,
   rangeUtil,
   DataQueryErrorType,
 } from '@grafana/data';
@@ -497,75 +496,70 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     )}`;
   }
 
-  performTimeSeriesQuery(request: MetricRequest, { from, to }: TimeRange): Promise<any> {
-    return this.awsRequest(TSDB_QUERY_ENDPOINT, request)
-      .then((res: TSDBResponse) => {
-        if (!res.results) {
-          return { data: [] };
-        }
-        return Object.values(request.queries).reduce(
-          ({ data, error }: any, queryRequest: any) => {
-            const queryResult = res.results[queryRequest.refId];
-            if (!queryResult) {
-              return { data, error };
-            }
+  async performTimeSeriesQuery(request: MetricRequest, { from, to }: TimeRange): Promise<any> {
+    try {
+      const res: TSDBResponse = await this.awsRequest(TSDB_QUERY_ENDPOINT, request);
+      const dataframes: DataFrame[] = toDataQueryResponse({ data: res }).data;
+      if (!dataframes || dataframes.length <= 0) {
+        return { data: [] };
+      }
 
-            const link = this.buildCloudwatchConsoleUrl(
-              queryRequest,
-              from.toISOString(),
-              to.toISOString(),
-              queryRequest.refId,
-              queryResult.meta.gmdMeta
-            );
+      return Object.values(request.queries).reduce(
+        ({ data, error }: any, queryRequest: any) => {
+          const queryResult = res.results[queryRequest.refId];
+          if (!queryResult) {
+            return { data, error };
+          }
 
-            return {
-              error: error || queryResult.error ? { message: queryResult.error } : null,
-              data: [
-                ...data,
-                ...queryResult.series.map(({ name, points }: any) => {
-                  const dataFrame = toDataFrame({
-                    target: name,
-                    datapoints: points,
-                    refId: queryRequest.refId,
-                    meta: queryResult.meta,
-                  });
-                  if (link) {
-                    for (const field of dataFrame.fields) {
-                      field.config.links = [
-                        {
-                          url: link,
-                          title: 'View in CloudWatch console',
-                          targetBlank: true,
-                        },
-                      ];
-                    }
+          const link = this.buildCloudwatchConsoleUrl(
+            queryRequest,
+            from.toISOString(),
+            to.toISOString(),
+            queryRequest.refId,
+            queryResult.meta.gmdMeta
+          );
+
+          return {
+            error: error || queryResult.error ? { message: queryResult.error } : null,
+            data: [
+              ...data,
+              ...dataframes.map(frame => {
+                if (link) {
+                  for (const field of frame.fields) {
+                    field.config.links = [
+                      {
+                        url: link,
+                        title: 'View in CloudWatch console',
+                        targetBlank: true,
+                      },
+                    ];
                   }
-                  return dataFrame;
-                }),
-              ],
-            };
-          },
-          { data: [], error: null }
-        );
-      })
-      .catch((err: any = { data: { error: '' } }) => {
-        if (/^Throttling:.*/.test(err.data.message)) {
-          const failedRedIds = Object.keys(err.data.results);
-          const regionsAffected = Object.values(request.queries).reduce(
-            (res: string[], { refId, region }) =>
-              (refId && !failedRedIds.includes(refId)) || res.includes(region) ? res : [...res, region],
-            []
-          ) as string[];
+                }
+                return frame;
+              }),
+            ],
+          };
+        },
+        { data: [], error: null }
+      );
+    } catch (err) {
+      if (/^Throttling:.*/.test(err.data.message)) {
+        const failedRedIds = Object.keys(err.data.results);
+        const regionsAffected = Object.values(request.queries).reduce(
+          (res: string[], { refId, region }) =>
+            (refId && !failedRedIds.includes(refId)) || res.includes(region) ? res : [...res, region],
+          []
+        ) as string[];
 
-          regionsAffected.forEach(region => this.debouncedAlert(this.datasourceName, this.getActualRegion(region)));
-        }
+        regionsAffected.forEach(region => this.debouncedAlert(this.datasourceName, this.getActualRegion(region)));
+      }
 
-        if (err.data && err.data.message === 'Metric request error' && err.data.error) {
-          err.data.message = err.data.error;
-        }
+      if (err.data && err.data.message === 'Metric request error' && err.data.error) {
+        err.data.message = err.data.error;
+      }
 
-        throw err;
-      });
+      throw err;
+    }
   }
 
   transformSuggestDataFromTable(suggestData: TSDBResponse) {
