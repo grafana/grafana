@@ -3,7 +3,7 @@
     "type": "label",
     "name": "type/question",
     "action": "close",
-    "comment": "Please ask your question on [community.grafana.com/](https://community.grafana.com/. See also our [issue reporting](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md#report-bugs) guidelines.\n\nHappy Coding!"
+    "comment": "Please ask your question on [community.grafana.com/](https://community.grafana.com/). See also our [issue reporting](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md#report-bugs) guidelines.\n\nHappy Coding!"
   },
   {
     "type": "comment",
