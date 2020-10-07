@@ -1,6 +1,6 @@
 import React from 'react';
 import { dateMath, dateTime, SelectableValue } from '@grafana/data';
-import { Form, InlineField, InlineFieldRow, Input, InputControl, Select } from '@grafana/ui';
+import { Form, InlineField, InlineFieldRow, Input, InputControl, Select, Button } from '@grafana/ui';
 import { EditorProps } from '../QueryEditor';
 import { NewPoint } from '../types';
 
@@ -57,7 +57,9 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
                 defaultValue={dateTime().format()}
               />
             </InlineField>
-            <button className="btn btn-secondary gf-form-btn query-keyword">Add</button>
+            <InlineField>
+              <Button variant="secondary">Add</Button>
+            </InlineField>
             <InlineField label="All values">
               <InputControl
                 control={control}
@@ -72,16 +74,16 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
 
             {selectedPoint?.value !== undefined && (
               <InlineField>
-                <button
+                <Button
                   type="button"
-                  className="btn btn-danger gf-form-btn"
+                  variant="destructive"
                   onClick={() => {
                     control.setValue('selectedPoint', [{ value: undefined, label: 'Select value' }]);
                     deletePoint(selectedPoint);
                   }}
                 >
                   Delete
-                </button>
+                </Button>
               </InlineField>
             )}
           </InlineFieldRow>
