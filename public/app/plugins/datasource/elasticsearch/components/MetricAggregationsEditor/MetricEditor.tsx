@@ -66,10 +66,9 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
 
   return (
     <>
-      <InlineField label="Metric" labelWidth={15} className={cx(styles.color)}>
+      <InlineField label={`Metric (${value.id})`} labelWidth={15} className={cx(styles.color)}>
         <Segment
           className={cx(styles.color, marginZero)}
-          // FIXME: This needs to be filtered by esVersion
           options={getTypeOptions(previousMetrics, datasource.esVersion)}
           onChange={e => dispatch(changeMetricType(value.id, e.value!))}
           value={toOption(value)}
@@ -110,4 +109,6 @@ const metricToOption = (metric: MetricAggregation) => ({
 const metricsToOptions = (metrics: MetricAggregation[]): Array<SelectableValue<MetricAggregation>> =>
   metrics.map(metricToOption);
 
-const describeMetric = (metric: MetricAggregation) => `${metric.type} ${metric.field}`;
+// This is a very ugly way to describe a metric (by ID)
+// Would be nice maybe to have something like `metricType(anotherMetricType(field))`
+const describeMetric = (metric: MetricAggregation) => `${metricAggregationConfig[metric.type].label} ${metric.id}`;
