@@ -257,7 +257,7 @@ func TestFrameToSeriesSlice(t *testing.T) {
 
 			seriesSlice: tsdb.TimeSeriesSlice{
 				&tsdb.TimeSeries{
-					Name: "Values Int64s",
+					Name: "Values Int64s {Animal Factor=cat}",
 					Tags: map[string]string{"Animal Factor": "cat"},
 					Points: tsdb.TimeSeriesPoints{
 						tsdb.TimePoint{null.FloatFrom(math.NaN()), null.FloatFrom(1577934240000)},
@@ -265,7 +265,7 @@ func TestFrameToSeriesSlice(t *testing.T) {
 					},
 				},
 				&tsdb.TimeSeries{
-					Name: "Values Floats",
+					Name: "Values Floats {Animal Factor=sloth}",
 					Tags: map[string]string{"Animal Factor": "sloth"},
 					Points: tsdb.TimeSeriesPoints{
 						tsdb.TimePoint{null.FloatFrom(2), null.FloatFrom(1577934240000)},
@@ -284,12 +284,12 @@ func TestFrameToSeriesSlice(t *testing.T) {
 
 			seriesSlice: tsdb.TimeSeriesSlice{
 				&tsdb.TimeSeries{
-					Name:   "Values Int64s",
+					Name:   "Values Int64s {Animal Factor=cat}",
 					Tags:   map[string]string{"Animal Factor": "cat"},
 					Points: tsdb.TimeSeriesPoints{},
 				},
 				&tsdb.TimeSeries{
-					Name:   "Values Floats",
+					Name:   "Values Floats {Animal Factor=sloth}",
 					Tags:   map[string]string{"Animal Factor": "sloth"},
 					Points: tsdb.TimeSeriesPoints{},
 				},
