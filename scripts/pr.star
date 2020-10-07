@@ -44,7 +44,7 @@ def pr_pipelines(edition):
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         build_docs_website_step(),
         copy_packages_for_docker_step(),
-        build_docker_images_step(edition=edition, archs=['amd64',]),
+        build_docker_images_step(edition=edition, ver_mode=ver_mode, archs=['amd64',]),
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
     ]

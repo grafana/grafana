@@ -47,15 +47,15 @@ def get_steps(edition, is_downstream=False):
         build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_plugins_step(edition=edition, sign=True),
-        package_step(edition=edition, ver_mode=ver_mode, sign=True, is_downstream=is_downstream),
+        package_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         e2e_tests_server_step(),
         e2e_tests_step(),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         publish_storybook_step(edition=edition, ver_mode=ver_mode),
         build_docs_website_step(),
         copy_packages_for_docker_step(),
-        build_docker_images_step(edition=edition, publish=publish),
-        build_docker_images_step(edition=edition, ubuntu=True, publish=publish),
+        build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=publish),
+        build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=publish),
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
         release_next_npm_packages_step(edition),
@@ -65,7 +65,7 @@ def get_steps(edition, is_downstream=False):
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream)
 
     publish_steps = [
-        publish_packages_step(edition, is_downstream),
+        publish_packages_step(edition=edition, is_downstream=is_downstream),
     ]
 
     return steps, windows_steps, publish_steps
