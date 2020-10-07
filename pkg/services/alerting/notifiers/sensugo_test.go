@@ -14,7 +14,8 @@ func TestSensuGoNotifier(t *testing.T) {
 			Convey("empty settings should return error", func() {
 				json := `{ }`
 
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
 				model := &models.AlertNotification{
 					Name:     "Sensu Go",
 					Type:     "sensugo",
@@ -44,9 +45,9 @@ func TestSensuGoNotifier(t *testing.T) {
 				}
 
 				not, err := NewSensuGoNotifier(model)
+				So(err, ShouldBeNil)
 				sensuGoNotifier := not.(*SensuGoNotifier)
 
-				So(err, ShouldBeNil)
 				So(sensuGoNotifier.Name, ShouldEqual, "Sensu Go")
 				So(sensuGoNotifier.Type, ShouldEqual, "sensugo")
 				So(sensuGoNotifier.URL, ShouldEqual, "http://sensu-api.example.com:8080")

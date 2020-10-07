@@ -172,7 +172,10 @@ func (sn *SensuGoNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	bodyJSON.SetPath([]string{"check", "metadata", "labels"}, labels)
 
-	body, _ := bodyJSON.MarshalJSON()
+	body, err := bodyJSON.MarshalJSON()
+	if err != nil {
+		return err
+	}
 
 	cmd := &models.SendWebhookSync{
 		Url:        fmt.Sprintf("%s/api/core/v2/namespaces/%s/events", strings.TrimSuffix(sn.URL, "/"), namespace),
