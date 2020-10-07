@@ -111,10 +111,18 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
             'yarn install --frozen-lockfile --no-progress',
         ])
     if edition == 'enterprise':
-        if is_downstream:
-            source_commit = ' $${SOURCE_COMMIT}'
-        else:
+        if ver_mode == 'release':
+            committish = '${DRONE_TAG}'
+            source_commit = ' ${DRONE_TAG}'
+        elif ver_mode == 'test-release':
+            committish = 'master'
             source_commit = ''
+        else:
+            if is_downstream:
+                source_commit = ' $${SOURCE_COMMIT}'
+            else:
+                source_commit = ''
+            committish = '${DRONE_COMMIT}'
         steps = [
             identify_runner_step,
             {
@@ -128,7 +136,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
                 'commands': [
                     'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
                     'cd grafana-enterprise',
-                    'git checkout ${DRONE_COMMIT}',
+                    'git checkout {}'.format(committish),
                 ],
             },
             {
@@ -863,6 +871,12 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         })
 
     if edition == 'enterprise':
+        if ver_mode == 'release':
+            committish = '${DRONE_TAG}'
+        elif ver_mode == 'test-release':
+            committish = 'master'
+        else:
+            committish = '$$env:DRONE_COMMIT'
         # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
         clone_commands = [
             'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
@@ -870,7 +884,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         if not is_downstream:
             clone_commands.extend([
                 'cd grafana-enterprise',
-                'git checkout $$env:DRONE_COMMIT',
+                'git checkout {}'.format(committish),
             ])
         steps.insert(0, {
             'name': 'clone',
