@@ -14,7 +14,7 @@ weight = 300
 
 Prometheus is an open-source systems monitoring and alerting toolkit for which Grafana includes built-in support. This topic walks you through the steps to create a series of dashboards in Grafana displaying system metrics of a host monitored by Prometheus.
 
-You can also configure your Grafana instance in the cloud to display system metrics monitored by Prometheus running in the cloud. For more information, refer to [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) documentation.
+You can also configure your Grafana instance in the cloud to display system metrics. For more information, refer to the [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) documentation.
 
 ## Step 1: Install Grafana and build your first dashboard
 
@@ -66,4 +66,4 @@ In your Grafana instance, go to the [explore]({{< relref "../explore/index.md" >
 
 Now that you have a curated list of queries, create [dashboards]({{< relref "../dashboards/_index.md" >}}) to render system metrics monitored by Prometheus. The following image shows a simple dashboard with three panels showing some system metrics.
 
-<img class="no-shadow" src="/img/docs/v50/top_nav_annotated.png" width="580px">
+<img class="no-shadow" src="/static/img/docs/getting-started/simple_grafana_prom_dashboard.png" width="580px">
