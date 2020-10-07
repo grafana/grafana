@@ -383,7 +383,7 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
         ],
     }
 
-def build_frontend_docs(edition, lint=False):
+def build_frontend_docs_step(edition, lint=False):
     if edition == 'enterprise':
         return None
 
