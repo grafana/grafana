@@ -72,7 +72,7 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
-    const item = target.appInsights;
+    const item = target.appInsights!;
 
     const old: any = item;
     // fix for timeGrainUnit which is a deprecated/removed field name

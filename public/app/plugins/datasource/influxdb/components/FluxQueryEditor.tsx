@@ -21,7 +21,7 @@ const samples: Array<SelectableValue<string>> = [
   { label: 'Show buckets', description: 'List the avaliable buckets (table)', value: 'buckets()' },
   {
     label: 'Simple query',
-    description: 'filter by measurment and field',
+    description: 'filter by measurement and field',
     value: `from(bucket: "db/rp")
   |> range(start: v.timeRangeStart, stop:v.timeRangeStop)
   |> filter(fn: (r) =>

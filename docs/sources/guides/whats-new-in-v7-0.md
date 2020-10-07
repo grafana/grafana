@@ -40,7 +40,7 @@ We have redesigned the UI for editing panels. The first visible change is that w
 
 This new option architecture and UI will make all panels have a consistent set of options and behaviors for attributes like unit, min, max, thresholds, links, decimals. Not only that but all these options will share a consistent UI for specifying override rules and is extensible for custom panel specific options.
 
-In previous versions of Grafana, each visualization had slightly different ways to define their options. One immediate benefit is after setting options like units or thresholds in a panel, you can seamlessly switch between visualization types and keep those options. This will bring increased of ease of use and more consistency for users and plugin developers.
+In previous versions of Grafana, each visualization had slightly different ways to define their options. One immediate benefit is after setting options like units or thresholds in a panel, you can seamlessly switch between visualization types and keep those options. This will bring increased ease of use and more consistency for users and plugin developers.
 
 We have yet to migrate all core panels to this new architecture so in 7.0 there will be some inconsistencies in the UI between panels. This will be fixed soon in future releases as we update all the core panels and help the community update the community panel plugins.
 
@@ -78,7 +78,7 @@ We are also introducing a new shared data model for both time series and table d
 - **Organize fields:** Allows the user to re-order, hide, or rename fields / columns. Useful when data source doesn't allow overrides for visualizing data.
 - **Labels to fields:** Groups series by time and returns labels or tags as fields. Useful for showing time series with labels in a table where each label key becomes a separate column.
 - **Outer join:** Joins many time series/tables by a field. This can be used to outer join multiple time series on the _time_ field to show many time series in one table.
-- **Add field from calculation:** This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Can be used to calculate the difference between two series or fields and add the result to a new field. Or multiply one field with another another and add the result to a new field.
+- **Add field from calculation:** This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Can be used to calculate the difference between two series or fields and add the result to a new field. Or multiply one field with another and add the result to a new field.
 
 Learn more about this feature in [Transformations]({{< relref "../panels/transformations/_index.md" >}}).
 
@@ -90,7 +90,7 @@ Up until now the overrides were available only for Graph and Table panel(via Col
 
 This feature enables even more powerful visualizations and fine grained control over how the data is displayed.
 
-Learn more about this feature in [Field options]({{< relref "../panels/field-options.md" >}}).
+Learn more about this feature in [Field options]({{< relref "../panels/field-options/_index.md" >}}).
 
 ## Inspect panels and export data to CSV
 
@@ -177,7 +177,7 @@ Read more about [Image Rendering]({{< relref "../administration/image_rendering/
 
 The Query history feature lets you view and interact with the queries that you have previously run in Explore. You can add queries to the Explore query editor, write comments, create and share URL links, star your favorite queries, and much more. Starred queries are displayed in the Starred tab, so it is easier to reuse queries that you run often without typing them from scratch.
 
-It was released as a beta feature in Grafana 6.7. The feedback has been really positive and it is now out of beta for the 7.0 release. Learn more about query history in [Explore]({{< relref "../features/explore" >}}).
+It was released as a beta feature in Grafana 6.7. The feedback has been really positive and it is now out of beta for the 7.0 release. Learn more about query history in [Explore]({{< relref "../explore" >}}).
 
 ## Stackdriver data source supports Service Monitoring
 

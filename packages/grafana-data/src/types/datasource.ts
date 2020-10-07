@@ -4,7 +4,7 @@ import { GrafanaPlugin, PluginMeta } from './plugin';
 import { PanelData } from './panel';
 import { LogRowModel } from './logs';
 import { AnnotationEvent, AnnotationSupport } from './annotations';
-import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
+import { KeyValue, LoadingState, TableData, TimeSeries, DataTopic } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
@@ -331,6 +331,7 @@ export enum DataSourceStatus {
   Disconnected,
 }
 
+// TODO: not really needed but used as type in some data sources and in DataQueryRequest
 export enum ExploreMode {
   Logs = 'Logs',
   Metrics = 'Metrics',
@@ -413,6 +414,11 @@ export interface DataQuery {
   queryType?: string;
 
   /**
+   * The data topic resuls should be attached to
+   */
+  dataTopic?: DataTopic;
+
+  /**
    * For mixed data sources the selected datasource is on the query level.
    * For non mixed scenarios this is undefined.
    */
@@ -464,7 +470,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   // Explore state used by various datasources
   liveStreaming?: boolean;
   /**
-   * @deprecated showingGraph and showingTable are always set to true and set to true
+   * @deprecated showingGraph and showingTable are always set to true
    */
   showingGraph?: boolean;
   showingTable?: boolean;
@@ -499,6 +505,7 @@ export interface MetricFindValue {
 export interface DataSourceJsonData {
   authType?: string;
   defaultRegion?: string;
+  profile?: string;
 }
 
 /**

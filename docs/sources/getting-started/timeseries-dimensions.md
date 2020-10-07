@@ -51,12 +51,12 @@ SELECT BUCKET(StartTime, 1h), AVG(Temperature) AS Temp, Location FROM T
 
 Might return a table with three columns that each respectively have data types time, number, and string.
 
-| StartTime  | Temp | Location |
-| ---------- | ---- | -------- |
-| 09:00      | 24   | LGA      |
-| 09:00      | 20   | BOS      |
-| 10:00      | 26   | LGA      |
-| 10:00      | 22   | BOS      |
+| StartTime | Temp | Location |
+| --------- | ---- | -------- |
+| 09:00     | 24   | LGA      |
+| 09:00     | 20   | BOS      |
+| 10:00     | 26   | LGA      |
+| 10:00     | 22   | BOS      |
 
 The table format is _long_ formatted time series, also called _tall_. It has repeated time stamps, and repeated values in Location. In this case, we have two time series in the set that would be identified as `Temp {Location=LGA}` and `Temp {Location=BOS}`.
 
@@ -66,25 +66,25 @@ Individual time series from the set are extracted by using the time typed column
 
 If the query is updated to select and group by more than just one string column, for example, `GROUP BY BUCKET(StartTime, 1h), Location, Sensor`, then an additional dimension is added:
 
-| StartTime  | Temp | Location | Sensor |
-| ---------- | ---- | -------- | ------ |
-| 09:00      | 24   | LGA      | A      |
-| 09:00      | 24.1 | LGA      | B      |
-| 09:00      | 20   | BOS      | A      |
-| 09:00      | 20.2 | BOS      | B      |
-| 10:00      | 26   | LGA      | A      |
-| 10:00      | 26.1 | LGA      | B      |
-| 10:00      | 22   | BOS      | A      |
-| 10:00      | 22.2 | BOS      | B      |
+| StartTime | Temp | Location | Sensor |
+| --------- | ---- | -------- | ------ |
+| 09:00     | 24   | LGA      | A      |
+| 09:00     | 24.1 | LGA      | B      |
+| 09:00     | 20   | BOS      | A      |
+| 09:00     | 20.2 | BOS      | B      |
+| 10:00     | 26   | LGA      | A      |
+| 10:00     | 26.1 | LGA      | B      |
+| 10:00     | 22   | BOS      | A      |
+| 10:00     | 22.2 | BOS      | B      |
 
 In this case the labels that represent the dimensions will have two keys based on the two string typed columns `Location` and `Sensor`. This data results four series: `Temp {Location=LGA,Sensor=A}`, `Temp {Location=LGA,Sensor=B}`, `Temp {Location=BOS,Sensor=A}`, and `Temp {Location=BOS,Sensor=B}`.
 
-**Note:** More than one dimension for SQL data sources is currently only supported in the Analytics services with the Azure monitor service as of version 7.1. Support for SQL data sources such as MySQL, Postgres, and MSSQL is planned to be added for 7.2.
+> **Note:** More than one dimension for SQL data sources is currently only supported in the Analytics services with the Azure monitor service as of version 7.1. Support for SQL data sources such as MySQL, Postgres, and MSSQL is planned to be added for 7.2.
 
-**Note:** Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert. See the documentation on [creating alerts with multiple series]({{< relref "../alerting/create-alerts.md#multiple-series" >}}).
+> **Note:** Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert. See the documentation on [creating alerts with multiple series]({{< relref "../alerting/create-alerts.md#multiple-series" >}}).
 
 ### Multiple values
 
-In the case SQL-like data sources, more than one numeric column can be selected, without or without additional string columns to be used as dimensions. For example, ` AVG(Temperature) AS AvgTemp,  MAX(Temperature) AS MaxTemp`. This, if combined with multiple dimensions can result in a lot of series. Selecting multiple values is currently only designed to be used with visualization.
+In the case SQL-like data sources, more than one numeric column can be selected, with or without additional string columns to be used as dimensions. For example, ` AVG(Temperature) AS AvgTemp,  MAX(Temperature) AS MaxTemp`. This, if combined with multiple dimensions can result in a lot of series. Selecting multiple values is currently only designed to be used with visualization.
 
 Additional technical information on tabular time series formats and how dimensions are extracted can be found in [the developer documentation on data frames as time series]({{< relref "../developers/plugins/data-frames.md#data-frames-as-time-series" >}}).

@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput, queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
+func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMetricDataOutput,
+	queries map[string]*cloudWatchQuery) ([]*cloudwatchResponse, error) {
 	// Map from result ID -> label -> result
 	mdrs := make(map[string]map[string]*cloudwatch.MetricDataResult)
 	labels := map[string][]string{}
@@ -49,13 +49,13 @@ func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 	cloudWatchResponses := make([]*cloudwatchResponse, 0)
 	for id, lr := range mdrs {
 		query := queries[id]
-		series, partialData, err := parseGetMetricDataTimeSeries(lr, labels[id], query)
+		frames, partialData, err := parseMetricResults(lr, labels[id], query)
 		if err != nil {
 			return nil, err
 		}
 
 		response := &cloudwatchResponse{
-			series:                  series,
+			DataFrames:              frames,
 			Period:                  query.Period,
 			Expression:              query.UsedExpression,
 			RefId:                   query.RefId,
@@ -69,25 +69,25 @@ func (e *cloudWatchExecutor) parseResponse(metricDataOutputs []*cloudwatch.GetMe
 	return cloudWatchResponses, nil
 }
 
-func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.MetricDataResult, labels []string,
-	query *cloudWatchQuery) (*tsdb.TimeSeriesSlice, bool, error) {
+func parseMetricResults(results map[string]*cloudwatch.MetricDataResult, labels []string,
+	query *cloudWatchQuery) (data.Frames, bool, error) {
 	partialData := false
-	result := tsdb.TimeSeriesSlice{}
+	frames := data.Frames{}
 	for _, label := range labels {
-		metricDataResult := metricDataResults[label]
-		if *metricDataResult.StatusCode != "Complete" {
+		result := results[label]
+		if *result.StatusCode != "Complete" {
 			partialData = true
 		}
 
-		for _, message := range metricDataResult.Messages {
+		for _, message := range result.Messages {
 			if *message.Code == "ArithmeticError" {
 				return nil, false, fmt.Errorf("ArithmeticError in query %q: %s", query.RefId, *message.Value)
 			}
 		}
 
-		// In case a multi-valued dimension is used and the cloudwatch query yields no values, create one empty time series for each dimension value.
-		// Use that dimension value to expand the alias field
-		if len(metricDataResult.Values) == 0 && query.isMultiValuedDimensionExpression() {
+		// In case a multi-valued dimension is used and the cloudwatch query yields no values, create one empty time
+		// series for each dimension value. Use that dimension value to expand the alias field
+		if len(result.Values) == 0 && query.isMultiValuedDimensionExpression() {
 			series := 0
 			multiValuedDimension := ""
 			for key, values := range query.Dimensions {
@@ -98,62 +98,88 @@ func parseGetMetricDataTimeSeries(metricDataResults map[string]*cloudwatch.Metri
 			}
 
 			for _, value := range query.Dimensions[multiValuedDimension] {
-				emptySeries := tsdb.TimeSeries{
-					Tags:   map[string]string{multiValuedDimension: value},
-					Points: make([]tsdb.TimePoint, 0),
-				}
+				tags := map[string]string{multiValuedDimension: value}
 				for key, values := range query.Dimensions {
 					if key != multiValuedDimension && len(values) > 0 {
-						emptySeries.Tags[key] = values[0]
+						tags[key] = values[0]
 					}
 				}
 
-				emptySeries.Name = formatAlias(query, query.Stats, emptySeries.Tags, label)
-				result = append(result, &emptySeries)
+				timeField := data.NewField("timestamp", nil, []*time.Time{})
+				timeField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
+
+				frameName := formatAlias(query, query.Stats, tags, label)
+				valueField := data.NewField("value", tags, []*float64{})
+				valueField.SetConfig(&data.FieldConfig{DisplayName: frameName})
+
+				emptyFrame := data.Frame{
+					Name: frameName,
+					Fields: []*data.Field{
+						timeField,
+						valueField,
+					},
+					RefID: query.RefId,
+				}
+				frames = append(frames, &emptyFrame)
 			}
 		} else {
-			keys := make([]string, 0)
+			dims := make([]string, 0, len(query.Dimensions))
 			for k := range query.Dimensions {
-				keys = append(keys, k)
+				dims = append(dims, k)
 			}
-			sort.Strings(keys)
+			sort.Strings(dims)
 
-			series := tsdb.TimeSeries{
-				Tags:   make(map[string]string),
-				Points: make([]tsdb.TimePoint, 0),
-			}
-
-			for _, key := range keys {
-				values := query.Dimensions[key]
+			tags := data.Labels{}
+			for _, dim := range dims {
+				values := query.Dimensions[dim]
 				if len(values) == 1 && values[0] != "*" {
-					series.Tags[key] = values[0]
+					tags[dim] = values[0]
 				} else {
 					for _, value := range values {
 						if value == label || value == "*" {
-							series.Tags[key] = label
+							tags[dim] = label
 						} else if strings.Contains(label, value) {
-							series.Tags[key] = value
+							tags[dim] = value
 						}
 					}
 				}
 			}
 
-			series.Name = formatAlias(query, query.Stats, series.Tags, label)
-
-			for j, t := range metricDataResult.Timestamps {
+			timestamps := []*time.Time{}
+			points := []*float64{}
+			for j, t := range result.Timestamps {
 				if j > 0 {
-					expectedTimestamp := metricDataResult.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
+					expectedTimestamp := result.Timestamps[j-1].Add(time.Duration(query.Period) * time.Second)
 					if expectedTimestamp.Before(*t) {
-						series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), float64(expectedTimestamp.Unix()*1000)))
+						timestamps = append(timestamps, &expectedTimestamp)
+						points = append(points, nil)
 					}
 				}
-				series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(*metricDataResult.Values[j]),
-					float64(t.Unix())*1000))
+				val := result.Values[j]
+				timestamps = append(timestamps, t)
+				points = append(points, val)
 			}
-			result = append(result, &series)
+
+			timeField := data.NewField("timestamp", nil, timestamps)
+			timeField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
+
+			frameName := formatAlias(query, query.Stats, tags, label)
+			valueField := data.NewField("value", tags, points)
+			valueField.SetConfig(&data.FieldConfig{DisplayName: frameName})
+
+			frame := data.Frame{
+				Name: frameName,
+				Fields: []*data.Field{
+					timeField,
+					valueField,
+				},
+				RefID: query.RefId,
+			}
+			frames = append(frames, &frame)
 		}
 	}
-	return &result, partialData, nil
+
+	return frames, partialData, nil
 }
 
 func formatAlias(query *cloudWatchQuery, stat string, dimensions map[string]string, label string) string {

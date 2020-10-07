@@ -16,7 +16,7 @@ export interface AzureMonitorQuery extends DataQuery {
 
   azureMonitor: AzureMetricQuery;
   azureLogAnalytics: AzureLogsQuery;
-  appInsights: ApplicationInsightsQuery;
+  appInsights?: ApplicationInsightsQuery;
   insightsAnalytics: InsightsAnalyticsQuery;
 }
 
@@ -57,7 +57,7 @@ export interface AzureMetricQuery {
   metricDefinition: string;
   metricNamespace: string;
   metricName: string;
-  timeGrainUnit: string;
+  timeGrainUnit?: string;
   timeGrain: string;
   allowedTimeGrainsMs: number[];
   aggregation: string;

@@ -1,12 +1,12 @@
-import React, { useState, useLayoutEffect, useRef } from 'react';
+import React, { useState, useLayoutEffect, useRef, HTMLAttributes } from 'react';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { useTheme } from '../../themes/ThemeContext';
 import useWindowSize from 'react-use/lib/useWindowSize';
 import { GrafanaTheme } from '@grafana/data';
 
-interface TooltipContainerProps {
+interface TooltipContainerProps extends HTMLAttributes<HTMLDivElement> {
   position: { x: number; y: number };
   offset: { x: number; y: number };
   children?: JSX.Element;
@@ -27,7 +27,13 @@ const getTooltipContainerStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export const TooltipContainer: React.FC<TooltipContainerProps> = ({ position, offset, children }) => {
+export const TooltipContainer: React.FC<TooltipContainerProps> = ({
+  position,
+  offset,
+  children,
+  className,
+  ...otherProps
+}) => {
   const theme = useTheme();
   const tooltipRef = useRef<HTMLDivElement>(null);
   const { width, height } = useWindowSize();
@@ -45,17 +51,17 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({ position, of
       const xOverflow = width - (position.x + measurement.width);
       const yOverflow = height - (position.y + measurement.height);
       if (xOverflow < 0) {
-        xO = measurement.width + offset.x;
+        xO = measurement.width;
       }
 
       if (yOverflow < 0) {
-        yO = measurement.height + offset.y;
+        yO = measurement.height;
       }
     }
 
     setPlacement({
-      x: position.x - xO,
-      y: position.y - yO,
+      x: position.x + offset.x - xO,
+      y: position.y + offset.y - yO,
     });
   }, [tooltipRef, position]);
 
@@ -70,7 +76,8 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({ position, of
         top: 0,
         transform: `translate3d(${placement.x}px, ${placement.y}px, 0)`,
       }}
-      className={styles.wrapper}
+      {...otherProps}
+      className={cx(styles.wrapper, className)}
     >
       {children}
     </div>
