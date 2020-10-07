@@ -10,10 +10,11 @@ import {
   standardEditorsRegistry,
   FieldOverrideContext,
   getFieldDisplayName,
-  FieldDisplay,
   StandardEditorContext,
   escapeStringForRegex,
   getFieldDisplayValues,
+  FieldConfigSource,
+  DisplayValueAlignmentFactors,
   getDisplayValueAlignmentFactors,
 } from '@grafana/data';
 import { PanelOptionsEditorBuilder } from '@grafana/data';
@@ -127,18 +128,18 @@ export function addFixexAlignmentOptions(builder: PanelOptionsEditorBuilder<Sing
     editor: AlignmentFactorsEditor,
     settings: {
       getStandardAlignmentFactors: (ctx: StandardEditorContext<any>) => {
-        let { fieldConfig, data, replaceVariables, options } = ctx;
+        let { data, replaceVariables, options } = ctx;
         if (!data || !data.length) {
-          return [] as FieldDisplay[];
-        }
-
-        if (!fieldConfig) {
-          fieldConfig = { defaults: {}, overrides: [] };
+          return [] as DisplayValueAlignmentFactors[];
         }
 
         if (!replaceVariables) {
           replaceVariables = (value: string) => value;
         }
+
+        // We can not get the real factors since they are not passed, and the
+        // field overrides are not yet applied when this panel runs
+        const fieldConfig: FieldConfigSource = { defaults: {}, overrides: [] };
 
         return getDisplayValueAlignmentFactors(
           getFieldDisplayValues({

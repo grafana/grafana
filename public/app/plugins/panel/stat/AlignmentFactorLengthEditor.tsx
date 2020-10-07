@@ -24,7 +24,7 @@ const lengths: Array<SelectableValue<number>> = Array(51)
     };
   });
 
-export const AlignmentFactorTextLengthEditor: React.FC<Props> = ({ value, onChange }) => {
+export const AlignmentFactorLengthEditor: React.FC<Props> = ({ value, onChange }) => {
   const styles = {
     textInput: css`
       margin-bottom: 8px;

@@ -1,7 +1,7 @@
-import React, { PureComponent } from 'react';
+import React, { useCallback } from 'react';
 import { Button, Label } from '@grafana/ui';
 import { StandardEditorProps, DisplayValueAlignmentFactors, StandardEditorContext } from '@grafana/data';
-import { AlignmentFactorTextLengthEditor } from './AlignmentFactorTextLength';
+import { AlignmentFactorLengthEditor } from './AlignmentFactorLengthEditor';
 
 export interface AlignmentFactorsEditorOptions {
   getStandardAlignmentFactors: (ctx: StandardEditorContext<any>) => DisplayValueAlignmentFactors;
@@ -9,62 +9,60 @@ export interface AlignmentFactorsEditorOptions {
 
 type Props = StandardEditorProps<DisplayValueAlignmentFactors, any, AlignmentFactorsEditorOptions>;
 
-export class AlignmentFactorsEditor extends PureComponent<Props> {
-  onStartEditing = () => {
-    const { item, context } = this.props;
+export const AlignmentFactorsEditor: React.FC<Props> = ({ value, item, context, onChange }) => {
+  const onSetExplicit = useCallback(() => {
     const factors = item.settings?.getStandardAlignmentFactors(context);
-    this.props.onChange(factors ?? { text: '????' });
-  };
+    onChange(factors ?? { text: '????' });
+  }, [onChange, item, context]);
 
-  onStopEditing = () => {
-    this.props.onChange(undefined);
-  };
+  const onSetAutomatic = useCallback(() => {
+    onChange(undefined);
+  }, [onChange]);
 
-  onFactorsChanged = (update: Partial<DisplayValueAlignmentFactors>) => {
-    const { value, onChange } = this.props;
-    onChange({
-      ...value,
-      ...update,
-    });
-  };
+  const onFactorsChanged = useCallback(
+    (update: Partial<DisplayValueAlignmentFactors>) => {
+      onChange({
+        ...value,
+        ...update,
+      });
+    },
+    [onChange, value]
+  );
 
-  render() {
-    const { value } = this.props;
-    if (!value) {
-      return (
-        <div>
-          <Label description="This panel picks font sizes based on the longest strings it needs to display">
-            Automatic size factors
-          </Label>
-          <br />
-
-          <Button onClick={this.onStartEditing} variant="secondary" size="md">
-            Use explicit factors
-          </Button>
-        </div>
-      );
-    }
-
+  if (!value) {
     return (
       <div>
-        <Label description="Font sizes are picked based on the expected display value lenghts">
-          Explicit size factors
+        <Label description="This panel picks font sizes based on the longest strings it needs to display">
+          Automatic size factors
         </Label>
         <br />
 
-        <Label>Title length</Label>
-        <AlignmentFactorTextLengthEditor value={value.title} onChange={v => this.onFactorsChanged({ title: v })} />
-        <Label>Text length</Label>
-        <AlignmentFactorTextLengthEditor value={value.text} onChange={v => this.onFactorsChanged({ text: v })} />
-        <Label>Prefix length</Label>
-        <AlignmentFactorTextLengthEditor value={value.prefix} onChange={v => this.onFactorsChanged({ prefix: v })} />
-        <Label>Suffix length</Label>
-        <AlignmentFactorTextLengthEditor value={value.suffix} onChange={v => this.onFactorsChanged({ suffix: v })} />
-        <br />
-        <Button onClick={this.onStopEditing} variant="secondary" size="md">
-          Use automatic factors
+        <Button onClick={onSetExplicit} variant="secondary" size="md">
+          Use explicit factors
         </Button>
       </div>
     );
   }
-}
+
+  return (
+    <div>
+      <Label description="Font sizes are picked based on the expected display value lenghts.">
+        Explicit size factors
+      </Label>
+      <br />
+
+      <Label>Title length</Label>
+      <AlignmentFactorLengthEditor value={value.title} onChange={v => onFactorsChanged({ title: v })} />
+      <Label>Text length</Label>
+      <AlignmentFactorLengthEditor value={value.text} onChange={v => onFactorsChanged({ text: v })} />
+      <Label>Prefix length</Label>
+      <AlignmentFactorLengthEditor value={value.prefix} onChange={v => onFactorsChanged({ prefix: v })} />
+      <Label>Suffix length</Label>
+      <AlignmentFactorLengthEditor value={value.suffix} onChange={v => onFactorsChanged({ suffix: v })} />
+      <br />
+      <Button onClick={onSetAutomatic} variant="secondary" size="md">
+        Use automatic factors
+      </Button>
+    </div>
+  );
+};
