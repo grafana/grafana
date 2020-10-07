@@ -47,7 +47,7 @@ The table below describes all SAML configuration options. Continue reading below
 | `single_logout`                                             | No  | Whether SAML Single Logout enabled                                                                 | `false`       |
 | `certificate` or `certificate_path`                         | Yes | Base64-encoded string or Path for the SP X.509 certificate                                         |               |
 | `private_key` or `private_key_path`                         | Yes | Base64-encoded string or Path for the SP private key                                               |               |
-| `signature_algorithm`                                       | No  | Signature algorithm using for signing requests to the IdP. Supported values are rsa-sha1, rsa-sha256, rsa-sha512. |              |
+| `signature_algorithm`                                       | No  | Signature algorithm used for signing requests to the IdP. Supported values are rsa-sha1, rsa-sha256, rsa-sha512. |              |
 | `idp_metadata`, `idp_metadata_path`, or `idp_metadata_url`  | Yes | Base64-encoded string, Path or URL for the IdP SAML metadata XML                                   |               |
 | `max_issue_delay`                                           | No  | Duration, since the IdP issued a response and the SP is allowed to process it                      | `90s`         |
 | `metadata_valid_duration`                                   | No  | Duration, for how long the SP metadata is valid                                                    | `48h`         |
