@@ -20,5 +20,5 @@ jobs:
       - name: Run Commands
         uses: ./actions/commands
         with:
-          token: ${{secrets.GRAFANA_ISSUE_TRIAGE_BOT_TOKEN}}
+          token: ${{secrets.GH_BOT_ACCESS_TOKEN}
           config-path: commands
