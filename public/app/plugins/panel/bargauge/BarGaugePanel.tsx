@@ -15,6 +15,7 @@ import { config } from 'app/core/config';
 import { BarGaugeOptions } from './types';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { isNumber } from 'lodash';
+import { getAlignmentFactors } from '../stat/StatPanel';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   renderComponent = (
@@ -94,7 +95,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     return (
       <VizRepeater
         source={data}
-        getAlignmentFactors={getDisplayValueAlignmentFactors}
+        getAlignmentFactors={getAlignmentFactors(options.fixAlignment)}
         getValues={this.getValues}
         renderValue={this.renderValue}
         renderCounter={renderCounter}

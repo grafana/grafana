@@ -1,19 +1,20 @@
 import React, { PureComponent } from 'react';
-import { withTheme, Button, Label, Themeable } from '@grafana/ui';
+import { Button, Label } from '@grafana/ui';
 import { StandardEditorProps, DisplayValueAlignmentFactors, StandardEditorContext } from '@grafana/data';
 import { AlignmentFactorTextEditor } from './AlignmentFactorText';
+import { AlignmentFactorTextLengthEditor } from './AlignmentFactorTextLength';
 
 export interface AlignmentFactorsEditorOptions {
   getStandardAlignmentFactors: (ctx: StandardEditorContext<any>) => DisplayValueAlignmentFactors;
 }
 
-type Props = StandardEditorProps<DisplayValueAlignmentFactors, any, AlignmentFactorsEditorOptions> & Themeable;
+type Props = StandardEditorProps<DisplayValueAlignmentFactors, any, AlignmentFactorsEditorOptions>;
 
-class UnthemedAlignmentFactorsEditor extends PureComponent<Props> {
+export class AlignmentFactorsEditor extends PureComponent<Props> {
   onStartEditing = () => {
     const { item, context } = this.props;
-    const factors = item.settings?.getFieldDisplay(context);
-    this.props.onChange({ ...factors });
+    const factors = item.settings?.getStandardAlignmentFactors(context);
+    this.props.onChange(factors ?? { text: '????' });
   };
 
   onStopEditing = () => {
@@ -42,14 +43,14 @@ class UnthemedAlignmentFactorsEditor extends PureComponent<Props> {
 
     return (
       <div>
-        <Label>Title</Label>
-        <AlignmentFactorTextEditor value={value.title} onChange={v => this.onFactorsChanged({ title: v })} />
-        <Label>Text</Label>
-        <AlignmentFactorTextEditor value={value.text} onChange={v => this.onFactorsChanged({ text: v })} />
-        <Label>Prefix</Label>
-        <AlignmentFactorTextEditor value={value.prefix} onChange={v => this.onFactorsChanged({ prefix: v })} />
-        <Label>Suffix</Label>
-        <AlignmentFactorTextEditor value={value.suffix} onChange={v => this.onFactorsChanged({ suffix: v })} />
+        <Label>Title length</Label>
+        <AlignmentFactorTextLengthEditor value={value.title} onChange={v => this.onFactorsChanged({ title: v })} />
+        <Label>Text length</Label>
+        <AlignmentFactorTextLengthEditor value={value.text} onChange={v => this.onFactorsChanged({ text: v })} />
+        <Label>Prefix length</Label>
+        <AlignmentFactorTextLengthEditor value={value.prefix} onChange={v => this.onFactorsChanged({ prefix: v })} />
+        <Label>Suffix length</Label>
+        <AlignmentFactorTextLengthEditor value={value.suffix} onChange={v => this.onFactorsChanged({ suffix: v })} />
         <br />
         <Button onClick={this.onStopEditing} variant="secondary" size="md">
           Use default factors
@@ -58,5 +59,3 @@ class UnthemedAlignmentFactorsEditor extends PureComponent<Props> {
     );
   }
 }
-
-export const AlignmentFactorsEditor = withTheme(UnthemedAlignmentFactorsEditor);

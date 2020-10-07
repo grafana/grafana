@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, useTheme, Input } from '@grafana/ui';
+import { Input } from '@grafana/ui';
 import { css } from 'emotion';
+import { config } from 'app/core/config';
 
 interface Props {
   value?: string;
@@ -9,7 +9,14 @@ interface Props {
 }
 
 export const AlignmentFactorTextEditor: React.FC<Props> = ({ value, onChange }) => {
-  const styles = getStyles(useTheme());
+  const styles = {
+    textInput: css`
+      margin-bottom: 5px;
+      &:hover {
+        border: 1px solid ${config.theme.colors.formInputBorderHover};
+      }
+    `,
+  };
 
   const onValueChange = useCallback(
     (e: React.SyntheticEvent) => {
@@ -41,14 +48,3 @@ export const AlignmentFactorTextEditor: React.FC<Props> = ({ value, onChange }) 
     />
   );
 };
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    textInput: css`
-      margin-bottom: 5px;
-      &:hover {
-        border: 1px solid ${theme.colors.formInputBorderHover};
-      }
-    `,
-  };
-});

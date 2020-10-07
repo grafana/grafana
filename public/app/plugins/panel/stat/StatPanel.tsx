@@ -108,24 +108,13 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     });
   };
 
-  /**
-   * Check for stored alignment factors
-   */
-  getAlignmentFactors = (values: FieldDisplay[], width: number, height: number) => {
-    const { options } = this.props;
-    if (options.fixAlignment) {
-      return options.fixAlignment;
-    }
-    return getDisplayValueAlignmentFactors(values); // width, height);
-  };
-
   render() {
     const { height, options, width, data, renderCounter } = this.props;
 
     return (
       <VizRepeater
         getValues={this.getValues}
-        getAlignmentFactors={this.getAlignmentFactors}
+        getAlignmentFactors={getAlignmentFactors(options.fixAlignment)}
         renderValue={this.renderValue}
         width={width}
         height={height}
@@ -137,4 +126,11 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
       />
     );
   }
+}
+
+export function getAlignmentFactors(fixed?: DisplayValueAlignmentFactors) {
+  if (fixed) {
+    return () => fixed;
+  }
+  return getDisplayValueAlignmentFactors;
 }
