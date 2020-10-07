@@ -18,7 +18,7 @@ export const MetricAggregationsEditor: FunctionComponent<Props> = ({ value }) =>
     <>
       {value.map((metric, index) => (
         <InlineFieldRow key={metric.id}>
-          <MetricEditor metric={metric} />
+          <MetricEditor value={metric} />
 
           {!metricAggregationConfig[metric.type].isSingleMetric && (
             <AddRemove

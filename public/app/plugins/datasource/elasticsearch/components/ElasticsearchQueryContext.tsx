@@ -7,6 +7,7 @@ import { reducer as metricsReducer } from '../state/metricAggregation/reducer';
 
 const DatasourceContext = createContext<ElasticDatasource | undefined>(undefined);
 const DispatchContext = createContext<((action: Action) => void) | undefined>(undefined);
+const QueryContext = createContext<ElasticsearchQuery | undefined>(undefined);
 
 interface Props {
   query: ElasticsearchQuery;
@@ -23,7 +24,9 @@ export const ElasticsearchProvider: FunctionComponent<Props> = ({ children, onCh
 
   return (
     <DatasourceContext.Provider value={datasource}>
-      <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+      <QueryContext.Provider value={query}>
+        <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+      </QueryContext.Provider>
     </DatasourceContext.Provider>
   );
 };
@@ -36,58 +39,16 @@ export const useDispatch = <T extends Action = Action>(): ((action: T) => void) 
   }
 
   return dispatch;
+};
 
-  // const addMetric = () => {
-  //   const lastId = query.metrics[query.metrics.length - 1].id;
-  //   onChange({
-  //     ...query,
-  //     metrics: [...query.metrics, defaultMetricAgg(lastId + 1)],
-  //   });
-  // };
+export const useQuery = (): ElasticsearchQuery => {
+  const query = useContext(QueryContext);
 
-  // const removeMetric = (index: number) => {
-  //   onChange({
-  //     ...query,
-  //     metrics: query.metrics.slice(0, index).concat(query.metrics.slice(index + 1)),
-  //   });
-  // };
+  if (!query) {
+    throw new Error('use ElasticsearchProvider first.');
+  }
 
-  // const changeMetric = (index: number) => (newMetric: MetricAggregation) => {
-  //   const newMetrics = !!metricAggregationConfig[newMetric.type].isSingleMetric
-  //     ? [newMetric]
-  //     : query.metrics
-  //         .slice(0, index)
-  //         .concat(newMetric)
-  //         .concat(query.metrics.slice(index + 1));
-
-  //   onChange({
-  //     ...query,
-  //     metrics: newMetrics,
-  //     // TODO: If raw_document or raw_data also clear bucketAggs
-  //   });
-  // };
-
-  // const addBucketAggregation = () => {
-  //   const lastId = query.bucketAggs[query.bucketAggs.length - 1].id;
-  //   onChange({
-  //     ...query,
-  //     bucketAggs: [...query.bucketAggs, defaultBucketAgg(lastId + 1)],
-  //   });
-  // };
-
-  // const removeBucketAggregation = (index: number) => {
-  //   onChange({
-  //     ...query,
-  //     bucketAggs: query.bucketAggs.slice(0, index).concat(query.bucketAggs.slice(index + 1)),
-  //   });
-  // };
-
-  // const onQueryChange = (queryString: string) => {
-  //   onChange({
-  //     ...query,
-  //     query: queryString,
-  //   });
-  // };
+  return query;
 };
 
 export const useDatasource = () => {
