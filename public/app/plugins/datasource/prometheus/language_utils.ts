@@ -116,7 +116,7 @@ export function expandRecordingRules(query: string, mapping: { [name: string]: s
   // Split query into array, so if query uses operators, we can correctly add labels to each individual part.
   const queryArray = expandedQuery.split(/(\+|\-|\*|\/|\%|\^)/);
 
-  // Regex that matches occurences of ){ or }{ or ]{ which is a sign of incorrecly added labels.
+  // Regex that matches occurrences of ){ or }{ or ]{ which is a sign of incorrecly added labels.
   const invalidLabelsRegex = /(\)\{|\}\{|\]\{)/;
   const correctlyExpandedQueryArray = queryArray.map(query => {
     return addLabelsToExpression(query, invalidLabelsRegex);
