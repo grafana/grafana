@@ -7,6 +7,12 @@ import 'abortcontroller-polyfill/dist/polyfill-patch-fetch'; // fetch polyfill n
 // @ts-ignore
 import ttiPolyfill from 'tti-polyfill';
 
+// including polyfills for intl support
+import '@formatjs/intl-getcanonicallocales/polyfill';
+import '@formatjs/intl-pluralrules/polyfill';
+import '@formatjs/intl-numberformat/polyfill';
+import '@formatjs/intl-datetimeformat/polyfill';
+
 import 'file-saver';
 import 'lodash';
 import 'jquery';
