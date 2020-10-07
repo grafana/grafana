@@ -55,7 +55,7 @@ Please read [Using Google Stackdriver in Grafana]({{< relref "../features/dataso
 
 ## MySQL Query Builder
 
-Grafana v5.4 comes with a new graphical query builder for MySQL. This brings MySQL integration more in line with some of the other data sources and makes it easier for both advanced users and beginners to work with timeseries in MySQL. Learn more about it in the [documentation]({{< relref "../features/datasources/mysql/#query-editor" >}}).
+Grafana v5.4 comes with a new graphical query builder for MySQL. This brings MySQL integration more in line with some of the other data sources and makes it easier for both advanced users and beginners to work with timeseries in MySQL. For more information about MySQL graphical query builder, refer to [query editor]({{< relref "../features/datasources/mysql/#query-editor" >}}).
 
 {{< docs-imagebox img="/img/docs/v54/mysql_query_still.png" animated-gif="/img/docs/v54/mysql_query.gif" >}}
 
