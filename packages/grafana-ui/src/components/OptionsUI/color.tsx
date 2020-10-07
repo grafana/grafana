@@ -1,7 +1,7 @@
 import React from 'react';
 import { GrafanaTheme, getColorFromHexRgbOrName } from '@grafana/data';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
-import { getTheme, stylesFactory } from '../../themes';
+import { stylesFactory, useTheme } from '../../themes';
 import { css } from 'emotion';
 import { ColorPickerTrigger } from '../ColorPicker/ColorPickerTrigger';
 
@@ -12,7 +12,7 @@ export interface Props {
 
 // Supporting FixedColor only currently
 export const ColorValueEditor: React.FC<Props> = ({ value, onChange }) => {
-  const theme = getTheme();
+  const theme = useTheme();
   const styles = getStyles(theme);
 
   return (

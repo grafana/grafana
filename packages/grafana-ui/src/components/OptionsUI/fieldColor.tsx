@@ -1,7 +1,12 @@
 import React from 'react';
-import { FieldConfigEditorProps, FieldColorModeId, SelectableValue, FieldColor } from '@grafana/data';
+import {
+  FieldConfigEditorProps,
+  FieldColorModeId,
+  SelectableValue,
+  FieldColor,
+  fieldColorModeRegistry,
+} from '@grafana/data';
 import { Select } from '../Select/Select';
-import { fieldColorModeRegistry } from '@grafana/data/src/field/fieldColor';
 import { ColorValueEditor } from './color';
 import { HorizontalGroup } from '../Layout/Layout';
 

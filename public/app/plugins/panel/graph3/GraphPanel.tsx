@@ -23,6 +23,7 @@ import {
   formattedValueToString,
   getTimeField,
   PanelProps,
+  getFieldColorModeForField,
   systemDateFormats,
 } from '@grafana/data';
 
@@ -33,7 +34,6 @@ import { VizLayout } from './VizLayout';
 import { Axis } from '@grafana/ui/src/components/uPlot/geometries/Axis';
 import { timeFormatToTemplate } from '@grafana/ui/src/components/uPlot/utils';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
-import { getFieldColorModeFor } from '@grafana/data/src/field/fieldColor';
 
 interface GraphPanelProps extends PanelProps<Options> {}
 
@@ -166,7 +166,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
     // need to update field state here because we use a transform to merge frames
     field.state = { ...field.state, seriesIndex: seriesIdx };
 
-    const colorMode = getFieldColorModeFor(field);
+    const colorMode = getFieldColorModeForField(field);
     const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
 
     if (customConfig?.line?.show) {

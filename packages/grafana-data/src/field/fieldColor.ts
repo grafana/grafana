@@ -65,24 +65,50 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
         };
       },
     },
-    {
+    new GradientColorMode({
       id: FieldColorModeId.ContinousGrYlRd,
       name: 'Green-Yellow-Red (gradient)',
       description: 'Interpolated colors based value, min and max',
-      getCalculator: (_field, theme) => {
-        const colors = ['green', 'yellow', 'red'].map(c => getColorFromHexRgbOrName(c, theme.type));
-        const interpolator = interpolateRgbBasis(colors);
-
-        return (_value, percent) => {
-          return interpolator(percent);
-        };
-      },
-    },
+      colors: ['green', 'yellow', 'red'],
+    }),
+    new GradientColorMode({
+      id: FieldColorModeId.ContinousBlGrOrRd,
+      name: 'Blue-Green-Orange-Red (gradient)',
+      description: 'Interpolated colors based value, min and max',
+      colors: ['blue', 'green', 'orange', 'red'],
+    }),
   ];
 });
 
-export function getFieldColorModeFor(field: Field): FieldColorMode {
+export class GradientColorMode implements FieldColorMode {
+  id: string;
+  name: string;
+  description: string;
+  colors: string[];
+
+  constructor(options: { id: FieldColorModeId; name: string; description: string; colors: string[] }) {
+    this.id = options.id;
+    this.name = options.name;
+    this.description = options.description;
+    this.colors = options.colors;
+  }
+
+  getCalculator(_field: Field, theme: GrafanaTheme) {
+    const colors = this.colors.map(c => getColorFromHexRgbOrName(c, theme.type));
+    const interpolator = interpolateRgbBasis(colors);
+
+    return (_: number, percent: number) => {
+      return interpolator(percent);
+    };
+  }
+}
+
+export function getFieldColorModeForField(field: Field): FieldColorMode {
   return fieldColorModeRegistry.get(field.config.color?.mode ?? FieldColorModeId.Thresholds);
+}
+
+export function getFieldColorMode(mode?: FieldColorModeId): FieldColorMode {
+  return fieldColorModeRegistry.get(mode ?? FieldColorModeId.Thresholds);
 }
 
 function getFixedColor(field: Field, theme: GrafanaTheme) {
