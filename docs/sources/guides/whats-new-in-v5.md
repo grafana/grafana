@@ -20,8 +20,8 @@ This is the most substantial update that Grafana has ever seen. This article wil
 - [Dashboard Folders]({{< relref "#dashboard-folders" >}}) helps you keep your dashboards organized.
 - [Permissions]({{< relref "#dashboard-folders" >}}) on folders and dashboards helps manage larger Grafana installations.
 - [Group users into teams]({{< relref "#teams" >}}) and use them in the new permission system.
-- [Data source provisioning]({{< relref "#data-sources" >}}) makes it possible to setup data sources via config files.
-- [Dashboard provisioning]({{< relref "#dashboards" >}}) makes it possible to setup dashboards via config files.
+- [Data source provisioning]({{< relref "#data-sources" >}}) makes it possible to set up data sources via config files.
+- [Dashboard provisioning]({{< relref "#dashboards" >}}) makes it possible to set up dashboards via config files.
 - [Persistent dashboard URL's]({{< relref "#dashboard-model-persistent-url-s-and-api-changes" >}}) makes it possible to rename dashboards without breaking links.
 - [Graphite Tags and Integrated Function Docs]({{< relref "#graphite-tags-integrated-function-docs" >}}).
 
@@ -106,7 +106,7 @@ and alerts as well.
 
 ### Data sources
 
-Data sources can now be setup using config files. These data sources are by default not editable from the Grafana GUI.
+Data sources can now be set up using config files. These data sources are by default not editable from the Grafana GUI.
 It's also possible to update and delete data sources from the config file. More info in the [data source provisioning docs](/administration/provisioning/#datasources).
 
 ### Dashboards

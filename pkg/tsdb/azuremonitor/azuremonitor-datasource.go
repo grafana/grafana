@@ -153,7 +153,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 
 		target = params.Encode()
 
-		if setting.Env == setting.DEV {
+		if setting.Env == setting.Dev {
 			azlog.Debug("Azuremonitor request", "params", params)
 		}
 

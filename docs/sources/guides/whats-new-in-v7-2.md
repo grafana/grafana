@@ -12,9 +12,8 @@ weight = -16
 
 # What's new in Grafana v7.2
 
-This topic includes the release notes for the Grafana v7.2, which is currently in beta. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+This topic includes the release notes for the Grafana v7.2. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
-This article is not complete yet. We will be adding new details over the coming days as we get closer to a stable release.
 
 The main highlights are:
 
@@ -32,6 +31,9 @@ The main highlights are:
   - [**Report time range**]({{< relref "#report-time-range" >}})
   - [**Organization-wide report settings**]({{< relref "#organization-wide-report-settings" >}})
   - [**Report grid layout**]({{< relref "#report-grid-layout" >}})
+- [**What's new in other parts of the Grafana ecosystem**]({{< relref "#whats-new-in-other-parts-of-the-grafana-ecosystem">}})
+  - [**ADX (Azure Data Explorer) plugin**]({{< relref "#adx-azure-data-explorer-plugin">}})
+  - [**X-Ray data source plugin**]({{< relref "#x-ray-data-source-plugin" >}})
 
 ## New date formatting options added
 
@@ -157,3 +159,7 @@ Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELO
 In collaboration with Microsoft, we have improved the usability of our ADX datasource plugin by adding a visual query builder. The goal is to make it easier for users, regardless of their previous knowledge of writing KQL (Kusto Query Language) queries, to query and visualize their data.
 
 {{< docs-imagebox img="/img/docs/v72/adx-ds.png" max-width="800px" caption="ADX visual query builder" >}}
+
+### X-Ray data source plugin
+
+We are pleased to announce our very first version of our data source plugin for AWS X-Ray. You can use this plugin to visualize traces, look at analytics tables, and see insight summaries. For more information, refer to the [X-Ray data source](https://grafana.com/grafana/plugins/grafana-x-ray-datasource) plugin page.

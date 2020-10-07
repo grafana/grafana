@@ -36,8 +36,8 @@ plugin SDK / API.
 We’ve refactored our **Data Source** plugin architecture and added
 two new plugin types:
 
-* **Panel** plugins let you add new panel types for your Dashboards.
-* **App** plugins bundle **Panels** plugins, **Data Sources** plugins,
+- **Panel** plugins let you add new panel types for your Dashboards.
+- **App** plugins bundle **Panels** plugins, **Data Sources** plugins,
 Dashboards, and Grafana **Pages**. Apps are a great way to provide an
 entire experience right within Grafana.
 
@@ -184,13 +184,13 @@ This is due to a simplification of the variable format system where template var
 now stored without any formatting (glob/regex/etc), this is done on the fly when the
 variable is interpolated.
 
-* Plugin API: The plugin API has changed so if you are using a custom
+- Plugin API: The plugin API has changed so if you are using a custom
 data source (or panel) they need to be updated as well.
 
-* InfluxDB 0.8: This data source is no longer included in releases,
+- InfluxDB 0.8: This data source is no longer included in releases,
 you can still install manually from [Grafana.com](https://grafana.com)
 
-* KairosDB: This data source has also no longer shipped with Grafana,
+- KairosDB: This data source has also no longer shipped with Grafana,
 you can install it manually from [Grafana.com](https://grafana.com)
 
 ## Plugin showcase
