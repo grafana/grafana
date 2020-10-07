@@ -1,8 +1,8 @@
 export enum FieldColorModeId {
   Thresholds = 'thresholds',
   ContinousGrYlRd = 'continuous-GrYlRd',
-  DiscreteClassic = 'discrete-classic',
-  DiscreteVibrant = 'discrete-vibrant',
+  PaletteClassic = 'palette-classic',
+  PaletteSaturated = 'palette-saturated',
   Fixed = 'fixed',
 }
 

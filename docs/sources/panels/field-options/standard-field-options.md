@@ -87,7 +87,7 @@ You can also paste a native emoji in the unit picker and pick it as a custom uni
 
 Grafana can sometime be too aggressive in parsing strings and displaying them as numbers. To make Grafana show the original string create a field override and add a unit property with the `string` unit.
 
-## Color
+## Colors
 
 > **Note:** Only available in Grafana 7.3+.
 

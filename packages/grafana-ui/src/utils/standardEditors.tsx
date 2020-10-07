@@ -206,7 +206,8 @@ export const getStandardFieldConfigs = () => {
   const color: FieldConfigPropertyItem<any, FieldColor | undefined, {}> = {
     id: 'color',
     path: 'color',
-    name: 'Color',
+    name: 'Colors',
+    description: 'Select palette, gradient or single color',
     editor: standardEditorsRegistry.get('fieldColor').editor as any,
     override: standardEditorsRegistry.get('fieldColor').editor as any,
     process: identityOverrideProcessor,

@@ -21,12 +21,12 @@ describe('fieldColorModeRegistry', () => {
   });
 
   it('Palette classic with series index 0', () => {
-    const calcFn = getCalculator({ mode: FieldColorModeId.DiscreteClassic, seriesIndex: 0 });
+    const calcFn = getCalculator({ mode: FieldColorModeId.PaletteClassic, seriesIndex: 0 });
     expect(calcFn(70, 0, undefined)).toEqual('#7EB26D');
   });
 
   it('Palette classic with series index 1', () => {
-    const calcFn = getCalculator({ mode: FieldColorModeId.DiscreteClassic, seriesIndex: 1 });
+    const calcFn = getCalculator({ mode: FieldColorModeId.PaletteClassic, seriesIndex: 1 });
     expect(calcFn(70, 0, undefined)).toEqual('#EAB839');
   });
 });

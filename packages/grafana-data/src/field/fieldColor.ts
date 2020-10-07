@@ -13,12 +13,24 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
   return [
     {
       id: FieldColorModeId.Fixed,
-      name: 'Fixed color',
+      name: 'Single color',
+      description: 'Set a specific color',
       getCalculator: getFixedColor,
     },
     {
-      id: FieldColorModeId.DiscreteVibrant,
-      name: 'Vibrant',
+      id: FieldColorModeId.Thresholds,
+      name: 'From thresholds',
+      description: 'Derive colors from thresholds',
+      getCalculator: (_field, theme) => {
+        return (_value, _percent, threshold) => {
+          const thresholdSafe = threshold ?? fallBackTreshold;
+          return getColorFromHexRgbOrName(thresholdSafe.color, theme.type);
+        };
+      },
+    },
+    {
+      id: FieldColorModeId.PaletteSaturated,
+      name: 'Saturated palette',
       description: 'Assigns color based on series or field index',
       getCalculator: (field, theme: GrafanaTheme) => {
         const namedColors = [
@@ -42,8 +54,8 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       },
     },
     {
-      id: FieldColorModeId.DiscreteClassic,
-      name: 'Classic',
+      id: FieldColorModeId.PaletteClassic,
+      name: 'Classic palette',
       description: 'Assigns color based on series or field index',
       getCalculator: field => {
         const seriesIndex = field.state?.seriesIndex ?? 0;
@@ -54,20 +66,9 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       },
     },
     {
-      id: FieldColorModeId.Thresholds,
-      name: 'From thresholds',
-      description: 'Derive colors from thresholds',
-      getCalculator: (_field, theme) => {
-        return (_value, _percent, threshold) => {
-          const thresholdSafe = threshold ?? fallBackTreshold;
-          return getColorFromHexRgbOrName(thresholdSafe.color, theme.type);
-        };
-      },
-    },
-    {
       id: FieldColorModeId.ContinousGrYlRd,
-      name: 'Green-Yellow-Red (Continuous)',
-      description: 'Derive colors from thresholds',
+      name: 'Green-Yellow-Red (gradient)',
+      description: 'Interpolated colors based value, min and max',
       getCalculator: (_field, theme) => {
         const colors = ['green', 'yellow', 'red'].map(c => getColorFromHexRgbOrName(c, theme.type));
         const interpolator = interpolateRgbBasis(colors);
