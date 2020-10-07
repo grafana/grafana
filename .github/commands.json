@@ -3,7 +3,7 @@
     "type": "label",
     "name": "type/question",
     "action": "close",
-    "comment": "Please ask your question on [community.grafana.com/](https://community.grafana.com/). See also our [issue reporting](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md#report-bugs) guidelines.\n\nHappy Coding!"
+    "comment": "Please ask your question on [community.grafana.com/](https://community.grafana.com/)."
   },
   {
     "type": "comment",
@@ -16,6 +16,6 @@
     "type": "label",
     "name": "type/duplicate",
     "action": "close",
-    "comment": "Thanks for creating this issue! We figured it's covering the same as another one we already have. Thus, we closed this one as a duplicate. See also our [issue reporting](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md#report-bugs) guidelines.\n\nHappy Coding!"
+    "comment": "Thanks for creating this issue! It looks like this has already been reported by another user. We’ve closed this in favor of the existing one. Please consider adding any details you think is missing to that issue."
   }
 ]
