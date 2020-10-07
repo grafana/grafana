@@ -76,7 +76,7 @@ This feature is not available for metrics based on math expressions.
 
 #### Improved feedback when throttling occurs
 
-If the [limit of the GetMetricData API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_limits.html) is reached, either the transactions per second limit or the data points per second limit, then a throttling error will be returned by the CloudWatch API. Throttling limits are defined per account and region, so the alert modal indicates which data source got throttled in which region. A link to request a limit increase for the affected region is provided, but you will have to log in to the correct account. For example, for us-east-1, a limit increase can be requested [here](https://console.aws.amazon.com/servicequotas/home?region=us-east-1#!/services/monitoring/quotas/L-5E141212).
+If the [limit of the GetMetricData API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_limits.html) is reached, either the transactions per second limit or the data points per second limit, then a throttling error will be returned by the CloudWatch API. Throttling limits are defined per account and region, so the alert modal indicates which data source got throttled in which region. A link to request a limit increase for the affected region is provided, but you will have to log in to the correct account. For example, for us-east-1, a limit increase can be requested on [AWS console](https://console.aws.amazon.com/servicequotas/home?region=us-east-1#!/services/monitoring/quotas/L-5E141212).
 
 #### Multi-value template variables now use search expressions
 
