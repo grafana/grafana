@@ -31,10 +31,12 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
         };
       },
     },
-    new PaletteColorMode({
+    new FieldColorSchemeMode({
       id: FieldColorModeId.PaletteSaturated,
       name: 'Saturated palette',
       description: 'Assigns color based on series or field index',
+      isDiscrete: true,
+      isByValue: false,
       colors: [
         'blue',
         'red',
@@ -49,69 +51,98 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
         'dark-orange',
       ],
     }),
-    new PaletteColorMode({
+    new FieldColorSchemeMode({
       id: FieldColorModeId.PaletteClassic,
       name: 'Classic palette',
       description: 'Assigns color based on series or field index',
+      isDiscrete: true,
+      isByValue: false,
       colors: classicColors,
     }),
-    new GradientColorMode({
+    new FieldColorSchemeMode({
       id: FieldColorModeId.ContinousGrYlRd,
       name: 'Green-Yellow-Red (gradient)',
       description: 'Interpolated colors based value, min and max',
+      isDiscrete: false,
+      isByValue: true,
       colors: ['green', 'yellow', 'red'],
     }),
-    new GradientColorMode({
+    new FieldColorSchemeMode({
       id: FieldColorModeId.ContinousBlGrOr,
       name: 'Blue-Green-Orange (gradient)',
       description: 'Interpolated colors based value, min and max',
+      isDiscrete: false,
+      isByValue: true,
       colors: ['blue', 'green', 'orange'],
     }),
   ];
 });
 
-export class PaletteColorMode implements FieldColorMode {
+interface FieldColorSchemeModeOptions {
+  id: FieldColorModeId;
+  name: string;
+  description: string;
+  colors: string[];
+  isDiscrete: boolean;
+  isByValue: boolean;
+}
+
+export class FieldColorSchemeMode implements FieldColorMode {
   id: string;
   name: string;
   description: string;
   colors: string[];
+  isDiscrete: boolean;
+  isByValue: boolean;
+  colorCache?: string[];
+  interpolator?: (value: number) => string;
 
-  constructor(options: { id: FieldColorModeId; name: string; description: string; colors: string[] }) {
+  constructor(options: FieldColorSchemeModeOptions) {
     this.id = options.id;
     this.name = options.name;
     this.description = options.description;
     this.colors = options.colors;
+    this.isDiscrete = options.isDiscrete;
+    this.isByValue = options.isByValue;
+  }
+
+  private getColors(theme: GrafanaTheme) {
+    if (this.colorCache) {
+      return this.colorCache;
+    }
+
+    this.colorCache = this.colors.map(c => getColorFromHexRgbOrName(c, theme.type));
+    return this.colorCache;
+  }
+
+  private getInterpolator() {
+    if (!this.interpolator) {
+      this.interpolator = interpolateRgbBasis(this.colorCache!);
+    }
+
+    return this.interpolator;
   }
 
   getCalculator(field: Field, theme: GrafanaTheme) {
-    const seriesIndex = field.state?.seriesIndex ?? 0;
+    const colors = this.getColors(theme);
 
-    return (_: number, _percent: number, _threshold?: Threshold) => {
-      return getColorFromHexRgbOrName(this.colors[seriesIndex % this.colors.length], theme.type);
-    };
-  }
-}
+    if (this.isByValue) {
+      if (this.isDiscrete) {
+        return (_: number, percent: number, _threshold?: Threshold) => {
+          return colors[percent * (colors.length - 1)];
+        };
+      } else {
+        return (_: number, percent: number, _threshold?: Threshold) => {
+          return this.getInterpolator()(percent);
+        };
+      }
+    } else {
+      const seriesIndex = field.state?.seriesIndex ?? 0;
 
-export class GradientColorMode implements FieldColorMode {
-  id: string;
-  name: string;
-  description: string;
-  colors: string[];
-
-  constructor(options: { id: FieldColorModeId; name: string; description: string; colors: string[] }) {
-    this.id = options.id;
-    this.name = options.name;
-    this.description = options.description;
-    this.colors = options.colors;
-  }
-
-  getCalculator(_field: Field, theme: GrafanaTheme) {
-    const colors = this.colors.map(c => getColorFromHexRgbOrName(c, theme.type));
-    const interpolator = interpolateRgbBasis(colors);
-
-    return (_: number, percent: number, _threshold?: Threshold) => {
-      return interpolator(percent);
-    };
+      return (_: number, _percent: number, _threshold?: Threshold) => {
+        return colors[seriesIndex % colors.length];
+      };
+    }
   }
 }
 
