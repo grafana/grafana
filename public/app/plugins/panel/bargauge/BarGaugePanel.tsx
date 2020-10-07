@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 import {
   DisplayValueAlignmentFactors,
   FieldDisplay,
-  getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
   PanelProps,
   FieldConfig,

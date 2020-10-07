@@ -4,7 +4,6 @@ import {
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
-  AlignmentFactorsEditor,
 } from '@grafana/ui';
 import {
   ReducerID,
@@ -19,6 +18,7 @@ import {
 } from '@grafana/data';
 import { PanelOptionsEditorBuilder } from '@grafana/data';
 import { config } from 'app/core/config';
+import { AlignmentFactorsEditor } from './AlignmentFactorsEditor';
 
 // Structure copied from angular
 export interface StatPanelOptions extends SingleStatBaseOptions {
@@ -123,8 +123,7 @@ export function addFixexAlignmentOptions(builder: PanelOptionsEditorBuilder<Sing
     category,
     id: 'fixAlignment',
     path: 'fixAlignment',
-    name: 'Text Size',
-    description: 'Text size is calculated based on the maximum length of values to display.',
+    name: '', // Empty on purpose
     editor: AlignmentFactorsEditor,
     settings: {
       getStandardAlignmentFactors: (ctx: StandardEditorContext<any>) => {
