@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { AnnotationEvent } from '@grafana/data';
-import { usePlotContext, usePlotPluginContext } from '../context';
+import { usePlotContext } from '../context';
 import { Marker } from './Marker';
 import { XYCanvas } from './XYCanvas';
 import { useRefreshAfterGraphRendered } from '../hooks';
@@ -18,14 +18,10 @@ export function EventsCanvas<T extends AnnotationEvent>({
   renderEventMarker,
   mapEventToXYCoords,
 }: EventsCanvasProps<T>) {
-  const plotContext = usePlotContext();
+  const plotCtx = usePlotContext();
   const renderToken = useRefreshAfterGraphRendered(id);
 
   const eventMarkers = useMemo(() => {
-    console.log('invalidating markers');
-    if (!plotContext || !plotContext?.u) {
-      return null;
-    }
     const markers: AnnotationEvent[] = [];
 
     if (!events) {
@@ -34,7 +30,6 @@ export function EventsCanvas<T extends AnnotationEvent>({
 
     for (let i = 0; i < events.length; i++) {
       const event = events[i];
-
       const coords = mapEventToXYCoords(event);
 
       if (!coords) {
@@ -49,10 +44,11 @@ export function EventsCanvas<T extends AnnotationEvent>({
     }
 
     return <>{markers}</>;
-  }, [events, renderEventMarker, plotContext, renderToken]);
+  }, [events, renderEventMarker, renderToken]);
 
-  if (!plotContext || !plotContext.u || !plotContext.canvas) {
+  if (!plotCtx.isPlotReady) {
     return null;
   }
+
   return <XYCanvas>{eventMarkers}</XYCanvas>;
 }

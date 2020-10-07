@@ -8,7 +8,7 @@ interface AnnotationMarkerProps {
   annotationEvent: AnnotationEvent;
 }
 
-export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ annotationEvent, x, formatTime }) => {
+export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ annotationEvent, formatTime }) => {
   const styles = useStyles(getAnnotationMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
   const markerRef = useRef<HTMLDivElement>(null);

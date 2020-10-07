@@ -1,15 +1,9 @@
 import { AnnotationEvent, DataFrame, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
-import {
-  EventsCanvas,
-  usePlotContext,
-  usePlotPluginContext,
-  useRefreshAfterGraphRendered,
-  useTheme,
-} from '@grafana/ui';
+import { EventsCanvas, usePlotContext, usePlotPluginContext, useTheme } from '@grafana/ui';
 import { getAnnotationsFromData } from 'app/features/annotations/standardAnnotationSupport';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnnotationMarker } from './AnnotationMarker';
-import { useObservable } from 'react-use';
+import { Subscription } from 'rxjs';
 
 interface AnnotationsPluginProps {
   annotations: DataFrame[];
@@ -21,9 +15,8 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
   const plotCtx = usePlotContext();
   const pluginsApi = usePlotPluginContext();
   const annotationsRef = useRef<AnnotationEvent[]>();
-  // const [_, setRenderCounter] = useState(0);
   const theme = useTheme();
-  // useRefreshAfterGraphRendered('Annotations');
+
   const timeFormatter = useCallback(
     (value: number) => {
       return dateTimeFormat(value, {
@@ -34,13 +27,27 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     [timeZone]
   );
 
-  const annotationEventsStream = useMemo(() => getAnnotationsFromData(annotations), [annotations]);
-  const annotationsData = useObservable<AnnotationEvent[]>(annotationEventsStream);
+  const [annotationEvents, setAnnotationEvents] = useState<AnnotationEvent[]>([]);
+
+  useEffect(() => {
+    let subscription: Subscription;
+    if (plotCtx.isPlotReady) {
+      subscription = getAnnotationsFromData(annotations).subscribe(result => {
+        console.log(result);
+        setAnnotationEvents(result);
+      });
+    }
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
+  }, [plotCtx.isPlotReady, annotations]);
 
   // For uPlot plugin to have access to lates annotation data we need to update the data ref
   useEffect(() => {
-    annotationsRef.current = annotationsData;
-  }, [annotationsData]);
+    annotationsRef.current = annotationEvents;
+  }, [annotationEvents]);
 
   useEffect(() => {
     const unregister = pluginsApi.registerPlugin({
@@ -74,7 +81,6 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
             ctx.stroke();
             ctx.closePath();
           }
-          // setRenderCounter(c => c + 1);
           return;
         },
       },
@@ -85,14 +91,10 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     };
   }, []);
 
-  if (!annotationsData) {
-    return null;
-  }
-
   return (
     <EventsCanvas
       id="annotations"
-      events={annotationsData}
+      events={annotationEvents}
       renderEventMarker={event => <AnnotationMarker annotationEvent={event} formatTime={timeFormatter} />}
       mapEventToXYCoords={annotation => {
         if (!annotation.time) {
@@ -100,8 +102,8 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
         }
 
         return {
-          x: plotCtx!.u!.valToPos(annotation.time / 1000, 'x'),
-          y: plotCtx!.u!.bbox.height / window.devicePixelRatio + 4,
+          x: plotCtx.getPlotInstance().valToPos(annotation.time / 1000, 'x'),
+          y: plotCtx.getPlotInstance().bbox.height / window.devicePixelRatio + 4,
         };
       }}
     />

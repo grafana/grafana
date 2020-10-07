@@ -8,7 +8,7 @@ interface ExemplarMarkerProps {
   exemplar: AnnotationEvent;
 }
 
-export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ exemplar, x, formatTime }) => {
+export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ exemplar, formatTime }) => {
   const styles = useStyles(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
   const markerRef = useRef<HTMLDivElement>(null);

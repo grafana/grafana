@@ -235,7 +235,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
             <ContextMenuPlugin />
 
             {data.annotations && <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} />}
-            {/*{data.annotations && <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} />}*/}
+            {data.annotations && <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} />}
             {/* TODO: */}
             {/*<AnnotationsEditorPlugin />*/}
           </UPlotChart>

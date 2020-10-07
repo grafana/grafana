@@ -248,9 +248,15 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone)
   };
 };
 
+/**
+ * Forces re-render of a component when uPlots's draw hook is fired.
+ * This hook is usefull in scenarios when you want to reposition XYCanvas elements when i.e. plot size changes
+ * @param pluginId - id under which the plugin will be registered
+ */
 export const useRefreshAfterGraphRendered = (pluginId: string) => {
   const pluginsApi = usePlotPluginContext();
   const [renderToken, setRenderToken] = useState(0);
+
   useEffect(() => {
     const unregister = pluginsApi.registerPlugin({
       id: pluginId,
@@ -266,7 +272,7 @@ export const useRefreshAfterGraphRendered = (pluginId: string) => {
     return () => {
       unregister();
     };
-  }, [pluginId]);
+  }, []);
 
   return renderToken;
 };

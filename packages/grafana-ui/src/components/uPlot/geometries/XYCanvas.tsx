@@ -4,11 +4,14 @@ import { css } from 'emotion';
 
 interface XYCanvasProps {}
 
-// Renders absolutely positioned element representing bounding box of uPlot's plotting area
+/**
+ * Renders absolutely positioned element on top of the uPlot's plotting area (axes are not included!).
+ * Useful when you want to render some overlay with canvas-independent elements on top of the plot.
+ */
 export const XYCanvas: React.FC<XYCanvasProps> = ({ children }) => {
   const plotContext = usePlotContext();
 
-  if (!plotContext || !plotContext.u) {
+  if (!plotContext.isPlotReady) {
     return null;
   }
 
@@ -17,8 +20,8 @@ export const XYCanvas: React.FC<XYCanvasProps> = ({ children }) => {
       className={css`
         position: absolute;
         overflow: visible;
-        left: ${plotContext.u.bbox.left / window.devicePixelRatio}px;
-        top: ${plotContext.u.bbox.top / window.devicePixelRatio}px;
+        left: ${plotContext.getPlotInstance().bbox.left / window.devicePixelRatio}px;
+        top: ${plotContext.getPlotInstance().bbox.top / window.devicePixelRatio}px;
       `}
     >
       {children}
