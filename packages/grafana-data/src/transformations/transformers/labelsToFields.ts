@@ -34,7 +34,7 @@ export const labelsToFieldsTransformer: DataTransformerInfo<LabelsToFieldsOption
             let name = field.name;
 
             for (const labelName of Object.keys(field.labels)) {
-              // if we should use this label as the value field name store it and skip adding this as a seperate field
+              // if we should use this label as the value field name store it and skip adding this as a separate field
               if (options.valueLabel === labelName) {
                 name = field.labels[labelName];
                 continue;
