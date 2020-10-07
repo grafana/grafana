@@ -16,7 +16,7 @@ func main() {
 		origin = "http://host.docker.internal:9090/"
 	}
 
-	sleep := time.Second * 10
+	sleep := time.Minute
 
 	originURL, _ := url.Parse(origin)
 	proxy := httputil.NewSingleHostReverseProxy(originURL)
