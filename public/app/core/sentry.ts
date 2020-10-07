@@ -1,12 +1,4 @@
-import {
-  Transports,
-  Event,
-  init as origSentryInit,
-  BrowserOptions,
-  captureException,
-  captureMessage,
-  setUser,
-} from '@sentry/browser';
+import { Transports, Event, init as origSentryInit, BrowserOptions, setUser } from '@sentry/browser';
 import { logger, parseRetryAfterHeader, supportsReferrerPolicy, SyncPromise } from '@sentry/utils';
 import { Response, Status } from '@sentry/types';
 import config from 'app/core/config';
@@ -129,8 +121,5 @@ export function initSentry() {
     }
 
     origSentryInit(sentryOptions);
-    console.log('sentry initialized');
-    captureException(new Error('foo'));
-    captureMessage('bar');
   }
 }
