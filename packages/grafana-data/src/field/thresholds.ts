@@ -34,7 +34,5 @@ export function getActiveThresholdForValue(field: Field, value: number, percent:
  * Sorts the thresholds
  */
 export function sortThresholds(thresholds: Threshold[]) {
-  return thresholds.sort((t1, t2) => {
-    return t1.value - t2.value;
-  });
+  return thresholds.sort((t1, t2) => t1.value - t2.value);
 }
