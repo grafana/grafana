@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 import { Select } from '@grafana/ui';
 import { css } from 'emotion';
-import { config } from 'app/core/config';
 import { SelectableValue } from '@grafana/data';
 
 interface Props {
