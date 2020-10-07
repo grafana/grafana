@@ -1057,7 +1057,7 @@ steps:
   commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
-  - git checkout ${DRONE_COMMIT}
+  - git checkout ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1069,7 +1069,7 @@ steps:
   - chmod +x grabpl
   - mv grabpl /tmp
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
+  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise ${DRONE_TAG}
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-version ${DRONE_TAG}
@@ -1336,7 +1336,7 @@ steps:
   commands:
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
-  - git checkout $$env:DRONE_COMMIT
+  - git checkout ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1812,7 +1812,7 @@ steps:
   commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
-  - git checkout ${DRONE_COMMIT}
+  - git checkout master
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2085,7 +2085,7 @@ steps:
   commands:
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
-  - git checkout $$env:DRONE_COMMIT
+  - git checkout master
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
