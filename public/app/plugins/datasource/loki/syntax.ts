@@ -70,8 +70,9 @@ export const PIPE_PARSERS: CompletionItem[] = [
 
 export const PIPE_OPERATORS: CompletionItem[] = [
   {
-    label: 'unwrap identifier',
-    insertText: 'unwrap identifier',
+    label: 'unwrap',
+    insertText: 'unwrap',
+    detail: 'unwrap identifier',
     documentation:
       'Take labels and use the values as sample data for metric aggregations. Only available in Loki 2.0+.',
   },
@@ -113,22 +114,42 @@ export const RANGE_VEC_FUNCTIONS = [
     documentation: 'The sum of all values in the specified interval. Only available in Loki 2.0+.',
   },
   {
+    insertText: 'count_over_time',
+    label: 'count_over_time',
+    detail: 'count_over_time(range-vector)',
+    documentation: 'The count of all values in the specified interval.',
+  },
+  {
     insertText: 'stdvar_over_time',
     label: 'stdvar_over_time',
     detail: 'stdvar_over_time(range-vector)',
-    documentation: 'Only available in Loki 2.0+.',
+    documentation:
+      'The population standard variance of the values in the specified interval. Only available in Loki 2.0+.',
   },
   {
     insertText: 'stddev_over_time',
     label: 'stddev_over_time',
     detail: 'stddev_over_time(range-vector)',
-    documentation: 'Only available in Loki 2.0+.',
+    documentation:
+      'The population standard deviation of the values in the specified interval. Only available in Loki 2.0+.',
   },
   {
-    insertText: 'count_over_time',
-    label: 'count_over_time',
-    detail: 'count_over_time(range-vector)',
-    documentation: 'The count of all values in the specified interval.',
+    insertText: 'quantile_over_time',
+    label: 'quantile_over_time',
+    detail: 'quantile_over_time(scalar, range-vector)',
+    documentation: 'The φ-quantile (0 ≤ φ ≤ 1) of the values in the specified interval. Only available in Loki 2.0+.',
+  },
+  {
+    insertText: 'bytes_over_time',
+    label: 'bytes_over_time',
+    detail: 'bytes_over_time(range-vector)',
+    documentation: 'Counts the amount of bytes used by each log stream for a given range',
+  },
+  {
+    insertText: 'bytes_rate',
+    label: 'bytes_rate',
+    detail: 'bytes_rate(range-vector)',
+    documentation: 'Calculates the number of bytes per second for each stream.',
   },
   {
     insertText: 'rate',
@@ -136,12 +157,6 @@ export const RANGE_VEC_FUNCTIONS = [
     detail: 'rate(v range-vector)',
     documentation:
       "Calculates the per-second average rate of increase of the time series in the range vector. Breaks in monotonicity (such as counter resets due to target restarts) are automatically adjusted for. Also, the calculation extrapolates to the ends of the time range, allowing for missed scrapes or imperfect alignment of scrape cycles with the range's time period.",
-  },
-  {
-    insertText: 'quantile_over_time',
-    label: 'quantile_over_time',
-    detail: 'quantile_over_time(value between 0 and 1, range-vector)',
-    documentation: 'Only available in Loki 2.0+.',
   },
 ];
 
