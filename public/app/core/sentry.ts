@@ -5,6 +5,7 @@ import {
   BrowserOptions,
   captureException,
   captureMessage,
+  setUser,
 } from '@sentry/browser';
 import { logger, parseRetryAfterHeader, supportsReferrerPolicy, SyncPromise } from '@sentry/utils';
 import { Response, Status } from '@sentry/types';
@@ -100,7 +101,10 @@ export function initSentry() {
   if (config.sentry.enabled) {
     const { dsn, customEndpoint } = config.sentry;
 
-    const sentryOptions: BrowserOptions = {};
+    const sentryOptions: BrowserOptions = {
+      release: config.buildInfo.version,
+      environment: config.buildInfo.env,
+    };
 
     if (dsn) {
       sentryOptions.dsn = dsn;
@@ -116,6 +120,14 @@ export function initSentry() {
         },
       };
     }
+    const { user } = config.bootData;
+    if (user) {
+      setUser({
+        email: user.email,
+        id: String(user.id),
+      });
+    }
+
     origSentryInit(sentryOptions);
     console.log('sentry initialized');
     captureException(new Error('foo'));

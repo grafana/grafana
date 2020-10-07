@@ -55,6 +55,9 @@ func (event *FrontendSentryEvent) ToLogContext() log15.Ctx {
 	if event.Exception != nil {
 		ctx["stacktrace"] = event.Exception.FmtStacktraces()
 	}
+	if len(event.User.Email) > 0 {
+		ctx["user_email"] = event.User.Email
+	}
 
 	return ctx
 }
