@@ -24,7 +24,7 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Readonly<Props>) {
-    if (this.props.link !== prevProps.link) {
+    if (this.props !== prevProps) {
       this.searchForDashboards();
     }
   }
