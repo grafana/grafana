@@ -140,8 +140,8 @@ export const RANGE_VEC_FUNCTIONS = [
   {
     insertText: 'quantile_over_time',
     label: 'quantile_over_time',
-    detail: 'quantile_over_time(value between 0 and 1,range vec)',
-    documentation: '',
+    detail: 'quantile_over_time(value between 0 and 1, range-vector)',
+    documentation: 'Only available in Loki 2.0+.',
   },
 ];
 
