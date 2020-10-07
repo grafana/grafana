@@ -4,6 +4,7 @@ import { getAnnotationsFromData } from 'app/features/annotations/standardAnnotat
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { css } from 'emotion';
 import { AnnotationMarker } from './AnnotationMarker';
+import { useObservable } from 'react-use';
 
 interface AnnotationsPluginProps {
   annotations: DataFrame[];
@@ -36,7 +37,11 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     if (!plotContext || !plotContext?.u) {
       return null;
     }
-    const markers = [];
+    const markers: AnnotationEvent[] = [];
+
+    if (!annotationsData) {
+      return markers;
+    }
 
     for (let i = 0; i < annotationsData.length; i++) {
       const annotation = annotationsData[i];

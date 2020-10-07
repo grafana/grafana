@@ -17,13 +17,13 @@ import (
 // Parses the json queries and returns a requestQuery. The requestQuery has a 1 to 1 mapping to a query editor row
 func (e *cloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery, startTime time.Time, endTime time.Time) (map[string][]*requestQuery, error) {
 	requestQueries := make(map[string][]*requestQuery)
-	for i, model := range queryContext.Queries {
-		queryType := model.Model.Get("type").MustString()
+	for i, query := range queryContext.Queries {
+		queryType := query.Model.Get("type").MustString()
 		if queryType != "timeSeriesQuery" && queryType != "" {
 			continue
 		}
 
-		refID := queryContext.Queries[i].RefId
+		refID := query.RefId
 		query, err := parseRequestQuery(queryContext.Queries[i].Model, refID, startTime, endTime)
 		if err != nil {
 			return nil, &queryError{err: err, RefID: refID}
@@ -39,6 +39,7 @@ func (e *cloudWatchExecutor) parseQueries(queryContext *tsdb.TsdbQuery, startTim
 }
 
 func parseRequestQuery(model *simplejson.Json, refId string, startTime time.Time, endTime time.Time) (*requestQuery, error) {
+	plog.Debug("Parsing request query", "query", model)
 	reNumber := regexp.MustCompile(`^\d+$`)
 	region, err := model.Get("region").String()
 	if err != nil {
