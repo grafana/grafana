@@ -81,11 +81,11 @@ Click on the links above and click the `Enable` button:
 
 If Grafana is running on a Google Compute Engine (GCE) virtual machine, it is possible for Grafana to automatically retrieve default credentials from the metadata server. This has the advantage of not needing to generate a private key file for the service account and also not having to upload the file to Grafana. However for this to work, there are a few preconditions that need to be met.
 
-1. First of all, you need to create a Service Account that can be used by the GCE virtual machine. See detailed instructions on how to do that [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#createanewserviceaccount).
-1. Make sure the GCE virtual machine instance is being run as the service account that you just created. See instructions [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#using).
+1. First of all, you need to create a Service Account that can be used by the GCE virtual machine. For more information, refer to [Create new service account](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#createanewserviceaccount).
+1. Make sure the GCE virtual machine instance is being run as the service account that you just created. For more information, refer to [using service account for instance](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#using).
 1. Allow access to the `Cloud Monitoring API` scope.
 
-Read more about creating and enabling service accounts for GCE VM instances [here](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances).
+For more information about creating and enabling service accounts for GCE VM instances, refer to [enable service accounts for instances](https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances).
 
 ## Using the Query Editor
 
@@ -121,9 +121,9 @@ When the operator is set to `=~` or `!=~` it is possible to add regular expressi
 
 #### Aggregation
 
-The aggregation field lets you combine time series based on common statistics. Read more about this option [here](https://cloud.google.com/monitoring/charts/metrics-selector#aggregation-options).
+The aggregation field lets you combine time series based on common statistics. For more information about aggregation, refer to [aggregation options](https://cloud.google.com/monitoring/charts/metrics-selector#aggregation-options).
 
-The `Aligner` field allows you to align multiple time series after the same group by time interval. Read more about how it works [here](https://cloud.google.com/monitoring/charts/metrics-selector#alignment).
+The `Aligner` field allows you to align multiple time series after the same group by time interval. For more information about aligner, refer to [alignment metric selector](https://cloud.google.com/monitoring/charts/metrics-selector#alignment).
 
 ##### Alignment Period/Group by Time
 
@@ -134,7 +134,7 @@ The option is called `cloud monitoring auto` and the defaults are:
 - 5m for time ranges >= 23 hours and < 6 days
 - 1h for time ranges >= 6 days
 
-The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the graph panel. Read more about the details [here](http://docs.grafana.org/variables/templates-and-variables/#the-interval-variable).
+The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the graph panel. For more information about grafana auto, refer to the [interval variable](http://docs.grafana.org/variables/templates-and-variables/#the-interval-variable).
 
 It is also possible to choose fixed time intervals to group by, like `1h` or `1d`.
 
