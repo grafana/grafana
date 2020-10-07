@@ -36,7 +36,11 @@ const props: VariableQueryProps = {
     getSLOServices: async (projectName: string, serviceId: string) => Promise.resolve([]),
     getServiceLevelObjectives: (projectName: string, serviceId: string) => Promise.resolve([]),
   },
-  templateSrv: { replace: (s: string) => s, getVariables: () => ([] as unknown) as VariableModel[] },
+  templateSrv: {
+    replace: (s: string) => s,
+    replaceToList: (s: string) => [s],
+    getVariables: () => ([] as unknown) as VariableModel[],
+  },
 };
 
 describe('VariableQueryEditor', () => {
