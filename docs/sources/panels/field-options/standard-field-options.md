@@ -87,7 +87,7 @@ You can also paste a native emoji in the unit picker and pick it as a custom uni
 
 Grafana can sometime be too aggressive in parsing strings and displaying them as numbers. To make Grafana show the original string create a field override and add a unit property with the `string` unit.
 
-## Colors
+## Color scheme
 
 > **Note:** Only available in Grafana 7.3+.
 
@@ -95,11 +95,17 @@ The field color option defines how Grafana colors series or fields. There are mu
 
 Continuous color modes use the percentage of a value relative to min and max to interpolate a color.
 
-- **Fixed color:** Set a specific color using the color picker. Mostly useful from an override rule.
-- **Classic:** Color is derived from the series or field index and looking up a corresponding color in the classic color palette. Useful for Graphs.
-- **Vibrant:** Color is derived from the series or field index and looking up a corresponding color in the vibrant color palette. Useful for Graphs.
+- **Single color:** Set a specific color using the color picker. Mostly useful from an override rule.
 - **From thresholds:** Color is derived from the matching threshold. Useful for gauges, stat and table visualizations.
-- **Green-Yellow-Red (continuous):** Color is derived from a continuous spectrum between green, yellow and red.
+
+### Color by series
+
+Then there are color schemes that define color by series. Useful for graphs and pie charts for example.
+
+### Color by value
+
+In addition to deriving color from thresholds there are also continous (gradient) color schemes. Useful
+for visualizations that that color individual values. For example stat panels and the table.
 
 ## Thresholds
 

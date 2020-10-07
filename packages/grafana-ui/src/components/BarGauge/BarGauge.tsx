@@ -512,7 +512,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
  * Only exported to for unit test
  */
 export function getBarGradient(props: Props, maxSize: number): string {
-  const { field, value, orientation } = props;
+  const { field, value, orientation, theme } = props;
   const cssDirection = isVertical(orientation) ? '0deg' : '90deg';
   const minValue = field.min!;
   const maxValue = field.max!;
@@ -545,7 +545,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
   }
 
   if (mode.colors) {
-    const scheme = mode.colors;
+    const scheme = mode.colors.map(item => getColorFromHexRgbOrName(item, theme.type));
     for (let i = 0; i < scheme.length; i++) {
       const color = scheme[i];
 

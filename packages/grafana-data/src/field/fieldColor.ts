@@ -35,7 +35,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       id: FieldColorModeId.PaletteSaturated,
       name: 'Saturated palette',
       description: 'Assigns color based on series or field index',
-      isDiscrete: true,
+      isContinuous: false,
       isByValue: false,
       colors: [
         'blue',
@@ -55,7 +55,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       id: FieldColorModeId.PaletteClassic,
       name: 'Classic palette',
       description: 'Assigns color based on series or field index',
-      isDiscrete: true,
+      isContinuous: false,
       isByValue: false,
       colors: classicColors,
     }),
@@ -63,7 +63,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       id: FieldColorModeId.ContinousGrYlRd,
       name: 'Green-Yellow-Red (gradient)',
       description: 'Interpolated colors based value, min and max',
-      isDiscrete: false,
+      isContinuous: true,
       isByValue: true,
       colors: ['green', 'yellow', 'red'],
     }),
@@ -71,7 +71,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       id: FieldColorModeId.ContinousBlGrOr,
       name: 'Blue-Green-Orange (gradient)',
       description: 'Interpolated colors based value, min and max',
-      isDiscrete: false,
+      isContinuous: true,
       isByValue: true,
       colors: ['blue', 'green', 'orange'],
     }),
@@ -83,7 +83,7 @@ interface FieldColorSchemeModeOptions {
   name: string;
   description: string;
   colors: string[];
-  isDiscrete: boolean;
+  isContinuous: boolean;
   isByValue: boolean;
 }
 
@@ -92,7 +92,7 @@ export class FieldColorSchemeMode implements FieldColorMode {
   name: string;
   description: string;
   colors: string[];
-  isDiscrete: boolean;
+  isContinuous: boolean;
   isByValue: boolean;
   colorCache?: string[];
   interpolator?: (value: number) => string;
@@ -102,7 +102,7 @@ export class FieldColorSchemeMode implements FieldColorMode {
     this.name = options.name;
     this.description = options.description;
     this.colors = options.colors;
-    this.isDiscrete = options.isDiscrete;
+    this.isContinuous = options.isContinuous;
     this.isByValue = options.isByValue;
   }
 
@@ -127,13 +127,13 @@ export class FieldColorSchemeMode implements FieldColorMode {
     const colors = this.getColors(theme);
 
     if (this.isByValue) {
-      if (this.isDiscrete) {
+      if (this.isContinuous) {
         return (_: number, percent: number, _threshold?: Threshold) => {
-          return colors[percent * (colors.length - 1)];
+          return this.getInterpolator()(percent);
         };
       } else {
         return (_: number, percent: number, _threshold?: Threshold) => {
-          return this.getInterpolator()(percent);
+          return colors[percent * (colors.length - 1)];
         };
       }
     } else {

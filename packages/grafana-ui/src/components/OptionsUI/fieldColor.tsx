@@ -5,23 +5,44 @@ import {
   SelectableValue,
   FieldColor,
   fieldColorModeRegistry,
+  GrafanaTheme,
 } from '@grafana/data';
 import { Select } from '../Select/Select';
 import { ColorValueEditor } from './color';
-import { HorizontalGroup } from '../Layout/Layout';
+import { useStyles } from '../../themes/ThemeContext';
+import { css } from 'emotion';
 
 export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | undefined, {}>> = ({
   value,
   onChange,
   item,
 }) => {
+  const styles = useStyles(getStyles);
+
   const options = fieldColorModeRegistry.list().map(mode => {
     return {
       value: mode.id,
       label: mode.name,
       description: mode.description,
+      isContinuous: mode.isContinuous,
+      isByValue: mode.isByValue,
     };
   });
+
+  const groups = [
+    options.find(item => item.value === FieldColorModeId.Fixed)!,
+    options.find(item => item.value === FieldColorModeId.Thresholds)!,
+    {
+      label: 'Color by series',
+      options: options.filter(item => item.isByValue === false),
+      expanded: false,
+    },
+    {
+      label: 'Color by value',
+      options: options.filter(item => item.isByValue === true),
+      expanded: false,
+    },
+  ];
 
   const onModeChange = (newMode: SelectableValue<string>) => {
     onChange({
@@ -40,12 +61,24 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
 
   if (mode === FieldColorModeId.Fixed) {
     return (
-      <HorizontalGroup>
-        <Select options={options} value={mode} onChange={onModeChange} />
+      <div className={styles.group}>
+        <Select options={groups} value={mode} onChange={onModeChange} className={styles.select} />
         <ColorValueEditor value={value?.fixedColor} onChange={onColorChange} />
-      </HorizontalGroup>
+      </div>
     );
   }
 
-  return <Select options={options} value={mode} onChange={onModeChange} />;
+  return <Select options={groups} value={mode} onChange={onModeChange} />;
+};
+
+const getStyles = (theme: GrafanaTheme) => {
+  return {
+    group: css`
+      display: flex;
+    `,
+    select: css`
+      margin-right: 8px;
+      flex-grow: 1;
+    `,
+  };
 };
