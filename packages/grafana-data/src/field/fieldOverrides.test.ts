@@ -11,7 +11,6 @@ import { MutableDataFrame, toDataFrame } from '../dataframe';
 import {
   DataFrame,
   Field,
-  FieldColorMode,
   FieldConfig,
   FieldConfigPropertyItem,
   FieldConfigSource,
@@ -19,6 +18,7 @@ import {
   GrafanaTheme,
   InterpolateFunction,
   ThresholdsMode,
+  FieldColorModeId,
   ScopedVars,
 } from '../types';
 import { locationUtil, Registry } from '../utils';
@@ -600,7 +600,7 @@ describe('applyRawFieldOverrides', () => {
     },
     mappings: [],
     color: {
-      mode: FieldColorMode.Thresholds,
+      mode: FieldColorModeId.Thresholds,
     },
     min: 0,
     max: 1599124316808,

@@ -6,7 +6,7 @@ import { fallBackTreshold } from './thresholds';
 export type FieldValueColorCalculator = (value: number, percent: number, Threshold?: Threshold) => string;
 
 export interface FieldColorMode extends RegistryItem {
-  getCalculator: (field: Field, seriesIndex: number, theme: GrafanaTheme) => FieldValueColorCalculator;
+  getCalculator: (field: Field, theme: GrafanaTheme) => FieldValueColorCalculator;
 }
 
 export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
@@ -20,7 +20,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       id: FieldColorModeId.DiscreteVibrant,
       name: 'Vibrant',
       description: 'Assigns color based on series or field index',
-      getCalculator: (_field, seriesIndex, theme: GrafanaTheme) => {
+      getCalculator: (field, theme: GrafanaTheme) => {
         const namedColors = [
           'blue',
           'red',
@@ -34,6 +34,8 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
           'dark-purple',
           'dark-orange',
         ];
+        const seriesIndex = field.state?.seriesIndex ?? 0;
+
         return () => {
           return getColorFromHexRgbOrName(namedColors[seriesIndex % namedColors.length], theme.type);
         };
@@ -43,7 +45,9 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       id: FieldColorModeId.DiscreteClassic,
       name: 'Classic',
       description: 'Assigns color based on series or field index',
-      getCalculator: (_field, seriesIndex) => {
+      getCalculator: field => {
+        const seriesIndex = field.state?.seriesIndex ?? 0;
+
         return () => {
           return classicColors[seriesIndex % classicColors.length];
         };
@@ -53,7 +57,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       id: FieldColorModeId.Thresholds,
       name: 'From thresholds',
       description: 'Derive colors from thresholds',
-      getCalculator: (_field, _seriesIndex, theme) => {
+      getCalculator: (_field, theme) => {
         return (_value, _percent, threshold) => {
           const thresholdSafe = threshold ?? fallBackTreshold;
           return getColorFromHexRgbOrName(thresholdSafe.color, theme.type);
@@ -64,7 +68,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       id: FieldColorModeId.ContinousGrYlRd,
       name: 'Green-Yellow-Red (Continuous)',
       description: 'Derive colors from thresholds',
-      getCalculator: (_field, _seriesIndex, theme) => {
+      getCalculator: (_field, theme) => {
         const colors = ['green', 'yellow', 'red'].map(c => getColorFromHexRgbOrName(c, theme.type));
         const interpolator = interpolateRgbBasis(colors);
 
@@ -80,7 +84,7 @@ export function getFieldColorModeFor(field: Field): FieldColorMode {
   return fieldColorModeRegistry.get(field.config.color?.mode ?? FieldColorModeId.Thresholds);
 }
 
-function getFixedColor(field: Field, _seriesIndex: number, theme: GrafanaTheme) {
+function getFixedColor(field: Field, theme: GrafanaTheme) {
   return () => {
     return getColorFromHexRgbOrName(field.config.color?.fixedColor ?? FALLBACK_COLOR, theme.type);
   };

@@ -14,11 +14,6 @@ import { getScaleCalculator } from './scale';
 interface DisplayProcessorOptions {
   field: Partial<Field>;
   /**
-   * This is the unique index of each time vs field pair across all frames
-   * Some color modes will use this index to pick an appropriate color
-   */
-  seriesIndex?: number;
-  /**
    * Will pick browser timezone if not defined
    */
   timeZone?: TimeZone;

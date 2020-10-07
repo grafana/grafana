@@ -188,6 +188,12 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         }
       }
 
+      // Some color modes needs series index to assign field color so we count
+      // up series index here but ignore time fields
+      if (field.type !== FieldType.time) {
+        seriesIndex++;
+      }
+
       // Overwrite the configs
       const newField: Field = {
         ...field,
@@ -196,19 +202,13 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         state: {
           ...field.state,
           displayName: null,
+          seriesIndex,
         },
       };
-
-      // Some color modes needs series index to assign field color so we count
-      // up series index here but ignore time fields
-      if (field.type !== FieldType.time) {
-        seriesIndex++;
-      }
 
       // and set the display processor using it
       newField.display = getDisplayProcessor({
         field: newField,
-        seriesIndex,
         theme: options.theme,
         timeZone: options.timeZone,
       });

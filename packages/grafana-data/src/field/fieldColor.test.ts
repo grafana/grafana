@@ -9,7 +9,10 @@ describe('fieldColorModeRegistry', () => {
 
   function getCalculator(options: GetCalcOptions): FieldValueColorCalculator {
     const mode = fieldColorModeRegistry.get(options.mode);
-    return mode.getCalculator({} as Field, options.seriesIndex ?? 0, { type: GrafanaThemeType.Dark } as GrafanaTheme);
+    return mode.getCalculator(
+      { state: { seriesIndex: options.seriesIndex } } as Field,
+      { type: GrafanaThemeType.Dark } as GrafanaTheme
+    );
   }
 
   it('Schemes should interpolate', () => {

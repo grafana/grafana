@@ -163,8 +163,11 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
       );
     }
 
+    // need to update field state here because we use a transform to merge frames
+    field.state = { ...field.state, seriesIndex: seriesIdx };
+
     const colorMode = getFieldColorModeFor(field);
-    const seriesColor = colorMode.getCalculator(field, seriesIdx, theme)(0, 0);
+    const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
 
     if (customConfig?.line?.show) {
       seriesGeometry.push(
