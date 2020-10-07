@@ -189,7 +189,7 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 }
 
 func (ds *DataSource) sigV4Middleware(next http.RoundTripper) http.RoundTripper {
-	decrypted := ds.SecureJsonData.Decrypt()
+	decrypted := ds.DecryptedValues()
 
 	return &SigV4Middleware{
 		Config: &Config{
