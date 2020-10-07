@@ -1,6 +1,6 @@
 import { isNumber } from 'lodash';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
-import { Field, GrafanaTheme, Threshold } from '../types';
+import { Field, FieldType, GrafanaTheme, Threshold } from '../types';
 import { getFieldColorModeFor } from './fieldColor';
 import { getActiveThresholdForValue } from './thresholds';
 
@@ -36,6 +36,10 @@ interface FieldMinMaxInfo {
 }
 
 function getMinMaxAndDelta(field: Field): FieldMinMaxInfo {
+  if (field.type !== FieldType.number) {
+    return { min: 0, max: 100, delta: 100 };
+  }
+
   // Calculate min/max if required
   let min = field.config.min;
   let max = field.config.max;
