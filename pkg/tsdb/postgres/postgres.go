@@ -58,7 +58,7 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 
 // escape single quotes and backslashes in Postgres connection string parameters.
 func escape(input string) string {
-	return strings.Replace(strings.Replace(input, `\`, `\\`, -1), "'", `\'`, -1)
+	return strings.ReplaceAll(strings.ReplaceAll(input, `\`, `\\`), "'", `\'`)
 }
 
 func generateConnectionString(datasource *models.DataSource, logger log.Logger) (string, error) {

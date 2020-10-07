@@ -220,7 +220,7 @@ var datePatternReplacements = map[string]string{
 	"YYYY": "2006",                    // stdLongYear 1970 1971 ... 2029 2030
 	"gg":   "<stdIsoYearShort>",       // ISO-8601 year number 70 71 ... 29 30
 	"gggg": "<stdIsoYear>",            // ***1970 1971 ... 2029 2030
-	"GG":   "<stdIsoYearShort>",       //70 71 ... 29 30
+	"GG":   "<stdIsoYearShort>",       // 70 71 ... 29 30
 	"GGGG": "<stdIsoYear>",            // ***1970 1971 ... 2029 2030
 	"Q":    "<stdQuarter>",            // 1, 2, 3, 4
 	"A":    "PM",                      // stdPM AM PM
@@ -233,17 +233,17 @@ var datePatternReplacements = map[string]string{
 	"mm":   "04",                      // stdZeroMinute 00 01 ... 58 59
 	"s":    "5",                       // stdSecond 0 1 ... 58 59
 	"ss":   "05",                      // stdZeroSecond ***00 01 ... 58 59
-	"z":    "MST",                     //EST CST ... MST PST
-	"zz":   "MST",                     //EST CST ... MST PST
+	"z":    "MST",                     // EST CST ... MST PST
+	"zz":   "MST",                     // EST CST ... MST PST
 	"Z":    "Z07:00",                  // stdNumColonTZ -07:00 -06:00 ... +06:00 +07:00
 	"ZZ":   "-0700",                   // stdNumTZ -0700 -0600 ... +0600 +0700
 	"X":    "<stdUnix>",               // Seconds since unix epoch 1360013296
 	"LT":   "3:04 PM",                 // 8:30 PM
-	"L":    "01/02/2006",              //09/04/1986
-	"l":    "1/2/2006",                //9/4/1986
-	"ll":   "Jan 2 2006",              //Sep 4 1986
-	"lll":  "Jan 2 2006 3:04 PM",      //Sep 4 1986 8:30 PM
-	"llll": "Mon, Jan 2 2006 3:04 PM", //Thu, Sep 4 1986 8:30 PM
+	"L":    "01/02/2006",              // 09/04/1986
+	"l":    "1/2/2006",                // 9/4/1986
+	"ll":   "Jan 2 2006",              // Sep 4 1986
+	"lll":  "Jan 2 2006 3:04 PM",      // Sep 4 1986 8:30 PM
+	"llll": "Mon, Jan 2 2006 3:04 PM", // Thu, Sep 4 1986 8:30 PM
 }
 
 func formatDate(t time.Time, pattern string) string {
@@ -277,11 +277,11 @@ func formatDate(t time.Time, pattern string) string {
 	if strings.Contains(formatted, "<std") {
 		isoYear, isoWeek := t.ISOWeek()
 		isoYearShort := fmt.Sprintf("%d", isoYear)[2:4]
-		formatted = strings.Replace(formatted, "<stdIsoYear>", fmt.Sprintf("%d", isoYear), -1)
-		formatted = strings.Replace(formatted, "<stdIsoYearShort>", isoYearShort, -1)
-		formatted = strings.Replace(formatted, "<stdWeekOfYear>", fmt.Sprintf("%02d", isoWeek), -1)
+		formatted = strings.ReplaceAll(formatted, "<stdIsoYear>", fmt.Sprintf("%d", isoYear))
+		formatted = strings.ReplaceAll(formatted, "<stdIsoYearShort>", isoYearShort)
+		formatted = strings.ReplaceAll(formatted, "<stdWeekOfYear>", fmt.Sprintf("%02d", isoWeek))
 
-		formatted = strings.Replace(formatted, "<stdUnix>", fmt.Sprintf("%d", t.Unix()), -1)
+		formatted = strings.ReplaceAll(formatted, "<stdUnix>", fmt.Sprintf("%d", t.Unix()))
 
 		day := t.Weekday()
 		dayOfWeekIso := int(day)
@@ -289,9 +289,9 @@ func formatDate(t time.Time, pattern string) string {
 			dayOfWeekIso = 7
 		}
 
-		formatted = strings.Replace(formatted, "<stdDayOfWeek>", fmt.Sprintf("%d", day), -1)
-		formatted = strings.Replace(formatted, "<stdDayOfWeekISO>", fmt.Sprintf("%d", dayOfWeekIso), -1)
-		formatted = strings.Replace(formatted, "<stdDayOfYear>", fmt.Sprintf("%d", t.YearDay()), -1)
+		formatted = strings.ReplaceAll(formatted, "<stdDayOfWeek>", fmt.Sprintf("%d", day))
+		formatted = strings.ReplaceAll(formatted, "<stdDayOfWeekISO>", fmt.Sprintf("%d", dayOfWeekIso))
+		formatted = strings.ReplaceAll(formatted, "<stdDayOfYear>", fmt.Sprintf("%d", t.YearDay()))
 
 		quarter := 4
 
@@ -304,8 +304,8 @@ func formatDate(t time.Time, pattern string) string {
 			quarter = 3
 		}
 
-		formatted = strings.Replace(formatted, "<stdQuarter>", fmt.Sprintf("%d", quarter), -1)
-		formatted = strings.Replace(formatted, "<stdHourNoZero>", fmt.Sprintf("%d", t.Hour()), -1)
+		formatted = strings.ReplaceAll(formatted, "<stdQuarter>", fmt.Sprintf("%d", quarter))
+		formatted = strings.ReplaceAll(formatted, "<stdHourNoZero>", fmt.Sprintf("%d", t.Hour()))
 	}
 
 	if ltr {

@@ -108,6 +108,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                     inMixedMode={props.datasource.meta.mixed}
                   />
                 ))}
+                {provided.placeholder}
               </div>
             );
           }}

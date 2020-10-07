@@ -59,7 +59,7 @@ Now the location data is saved in the dashboard json but we will have to load it
 
 ## Loading custom data for snapshots
 
-The example below shows a function that loads the custom data. The data source for the custom data (an external api in this case) is not available in snapshot mode so a guard check is made to see if there is any snapshot data available first. If there is, then the snapshot data is used instead of trying to load the data from the external api.
+The example below shows a function that loads the custom data. The data source for the custom data (an external API in this case) is not available in snapshot mode so a guard check is made to see if there is any snapshot data available first. If there is, then the snapshot data is used instead of trying to load the data from the external API.
 
 ```javascript
 loadLocationDataFromFile(reload) {

@@ -68,10 +68,10 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
     <div className={styles.header}>
       <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">
         <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
-        {title && <span className={styles.title}>{titleElement}</span>}
+        {title && <div className={styles.title}>{titleElement}</div>}
         {headerElement}
       </div>
-      {actions && actionsElement}
+      {actions && <div>{actionsElement}</div>}
       {draggable && (
         <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
       )}
@@ -113,7 +113,6 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       border-radius: ${theme.border.radius.sm};
       background: ${theme.colors.bg2};
       min-height: ${theme.spacing.formInputHeight}px;
-      line-height: ${theme.spacing.sm}px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -143,6 +142,7 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       font-weight: ${theme.typography.weight.semibold};
       color: ${theme.colors.textBlue};
       margin-left: ${theme.spacing.sm};
+      overflow: hidden;
     `,
     content: css`
       margin-top: ${theme.spacing.inlineFormMargin};

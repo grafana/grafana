@@ -11,7 +11,7 @@
   "devDependencies": {
     "enzyme": "^3.8.0",
     "enzyme-adapter-react-16": "^1.2.0",
-    "typescript": "3.9.3"
+    "typescript": "4.0.2"
   },
   "dependencies": {
     "@grafana/data": "7.3.0-pre.0",

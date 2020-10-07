@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   FieldConfigEditorProps,
   ColorFieldConfigSettings,
   GrafanaTheme,
   getColorFromHexRgbOrName,
+  FieldColor,
 } from '@grafana/data';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { getTheme, stylesFactory } from '../../themes';
@@ -11,7 +12,8 @@ import { Icon } from '../Icon/Icon';
 import { css } from 'emotion';
 import { ColorPickerTrigger } from '../ColorPicker/ColorPickerTrigger';
 
-export const ColorValueEditor: React.FC<FieldConfigEditorProps<string, ColorFieldConfigSettings>> = ({
+// Supporting FixedColor only currently
+export const ColorValueEditor: React.FC<FieldConfigEditorProps<FieldColor, ColorFieldConfigSettings>> = ({
   value,
   onChange,
   item,
@@ -20,10 +22,17 @@ export const ColorValueEditor: React.FC<FieldConfigEditorProps<string, ColorFiel
   const theme = getTheme();
   const styles = getStyles(theme);
 
-  const color = value || (item.defaultValue as string) || theme.colors.panelBg;
+  const color = value?.fixedColor || item.defaultValue?.fixedColor;
+
+  const onValueChange = useCallback(
+    color => {
+      onChange({ ...value, fixedColor: color });
+    },
+    [value]
+  );
 
   return (
-    <ColorPicker color={color} onChange={onChange} enableNamedColors={!settings.disableNamedColors}>
+    <ColorPicker color={color || ''} onChange={onValueChange} enableNamedColors={!settings?.disableNamedColors}>
       {({ ref, showColorPicker, hideColorPicker }) => {
         return (
           <div className={styles.spot} onBlur={hideColorPicker}>
@@ -32,13 +41,13 @@ export const ColorValueEditor: React.FC<FieldConfigEditorProps<string, ColorFiel
                 ref={ref}
                 onClick={showColorPicker}
                 onMouseLeave={hideColorPicker}
-                color={getColorFromHexRgbOrName(color, theme.type)}
+                color={color ? getColorFromHexRgbOrName(color, theme.type) : theme.colors.formInputBorder}
               />
             </div>
             <div className={styles.colorText} onClick={showColorPicker}>
-              {value ?? settings.textWhenUndefined ?? 'Pick Color'}
+              {color ?? settings?.textWhenUndefined ?? 'Pick Color'}
             </div>
-            {value && settings.allowUndefined && (
+            {value && settings?.allowUndefined && (
               <Icon className={styles.trashIcon} name="trash-alt" onClick={() => onChange(undefined)} />
             )}
           </div>

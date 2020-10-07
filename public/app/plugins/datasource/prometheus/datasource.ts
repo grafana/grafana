@@ -1,5 +1,6 @@
 // Libraries
 import cloneDeep from 'lodash/cloneDeep';
+import LRU from 'lru-cache';
 // Services & Utils
 import {
   AnnotationEvent,
@@ -66,7 +67,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   directUrl: string;
   basicAuth: any;
   withCredentials: any;
-  metricsNameCache: any;
+  metricsNameCache = new LRU<string, string[]>(10);
   interval: string;
   queryTimeout: string;
   httpMethod: string;
@@ -176,7 +177,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     query: PromQueryRequest,
     target: PromQuery,
     responseListLength: number,
-    scopedVars?: ScopedVars
+    scopedVars?: ScopedVars,
+    mixedQueries?: boolean
   ) => {
     // Keeping original start/end for transformers
     const transformerOptions = {
@@ -191,8 +193,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       refId: target.refId,
       valueWithRefId: target.valueWithRefId,
       meta: {
-        /** Fix for showing of Prometheus results in Explore table. We want to show result of instant query in table and the rest of time series in graph */
-        preferredVisualisationType: query.instant ? 'table' : 'graph',
+        /** Fix for showing of Prometheus results in Explore table.
+         * We want to show result of instant query always in table and result of range query based on target.runAll;
+         */
+        preferredVisualisationType: target.instant ? 'table' : mixedQueries ? 'graph' : undefined,
       },
     };
     const series = this.resultTransformer.transform(response, transformerOptions);
@@ -211,32 +215,38 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
       target.requestId = options.panelId + target.refId;
 
-      if (options.app !== CoreApp.Explore) {
-        activeTargets.push(target);
-        queries.push(this.createQuery(target, options, start, end));
-        continue;
-      }
-
-      if (options.showingTable) {
-        // create instant target only if Table is showed in Explore
+      if (target.range && target.instant) {
+        // If running both (only available in Explore) - instant and range query, prepare both targets
+        // Create instant target
         const instantTarget: any = cloneDeep(target);
         instantTarget.format = 'table';
         instantTarget.instant = true;
+        instantTarget.range = false;
         instantTarget.valueWithRefId = true;
         delete instantTarget.maxDataPoints;
         instantTarget.requestId += '_instant';
 
-        activeTargets.push(instantTarget);
+        // Create range target
+        const rangeTarget: any = cloneDeep(target);
+        rangeTarget.format = 'time_series';
+        rangeTarget.instant = false;
+        instantTarget.range = true;
+
+        // Add both targets to activeTargets and queries arrays
+        activeTargets.push(instantTarget, rangeTarget);
+        queries.push(
+          this.createQuery(instantTarget, options, start, end),
+          this.createQuery(rangeTarget, options, start, end)
+        );
+      } else if (target.instant && options.app === CoreApp.Explore) {
+        // If running only instant query in Explore, format as table
+        const instantTarget: any = cloneDeep(target);
+        instantTarget.format = 'table';
         queries.push(this.createQuery(instantTarget, options, start, end));
-      }
-
-      if (options.showingGraph) {
-        // create time series target only if Graph is showed in Explore
-        target.format = 'time_series';
-        target.instant = false;
-
-        activeTargets.push(target);
+        activeTargets.push(instantTarget);
+      } else {
         queries.push(this.createQuery(target, options, start, end));
+        activeTargets.push(target);
       }
     }
 
@@ -268,6 +278,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   private exploreQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number) {
     let runningQueriesCount = queries.length;
+    const mixedQueries = activeTargets.some(t => t.range) && activeTargets.some(t => t.instant);
+
     const subQueries = queries.map((query, index) => {
       const target = activeTargets[index];
 
@@ -281,7 +293,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         tap(() => runningQueriesCount--),
         filter((response: any) => (response.cancelled ? false : true)),
         map((response: any) => {
-          const data = this.processResult(response, query, target, queries.length);
+          const data = this.processResult(response, query, target, queries.length, undefined, mixedQueries);
           return {
             data,
             key: query.requestId,
@@ -515,20 +527,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     return error;
   };
-
-  async performSuggestQuery(query: string, cache = false) {
-    if (cache && this.metricsNameCache?.expire > Date.now()) {
-      return this.metricsNameCache.data.filter((metricName: any) => metricName.indexOf(query) !== 1);
-    }
-
-    const response: PromLabelQueryResponse = await this.metadataRequest('/api/v1/label/__name__/values');
-    this.metricsNameCache = {
-      data: response.data.data,
-      expire: Date.now() + 60 * 1000,
-    };
-
-    return response.data.data.filter(metricName => metricName.indexOf(query) !== 1);
-  }
 
   metricFindQuery(query: string) {
     if (!query) {

@@ -48,7 +48,15 @@ export default class PrometheusMetricFindQuery {
   }
 
   labelNamesQuery() {
-    const url = '/api/v1/labels';
+    const start = this.datasource.getPrometheusTime(this.range.from, false);
+    const end = this.datasource.getPrometheusTime(this.range.to, true);
+    const params = new URLSearchParams({
+      start: start.toString(),
+      end: end.toString(),
+    });
+
+    const url = `/api/v1/labels?${params.toString()}`;
+
     return this.datasource.metadataRequest(url).then((result: any) => {
       return _.map(result.data.data, value => {
         return { text: value };
@@ -57,11 +65,18 @@ export default class PrometheusMetricFindQuery {
   }
 
   labelValuesQuery(label: string, metric?: string) {
+    const start = this.datasource.getPrometheusTime(this.range.from, false);
+    const end = this.datasource.getPrometheusTime(this.range.to, true);
+
     let url: string;
 
     if (!metric) {
+      const params = new URLSearchParams({
+        start: start.toString(),
+        end: end.toString(),
+      });
       // return label values globally
-      url = '/api/v1/label/' + label + '/values';
+      url = `/api/v1/label/${label}/values?${params.toString()}`;
 
       return this.datasource.metadataRequest(url).then((result: any) => {
         return _.map(result.data.data, value => {
@@ -69,8 +84,6 @@ export default class PrometheusMetricFindQuery {
         });
       });
     } else {
-      const start = this.datasource.getPrometheusTime(this.range.from, false);
-      const end = this.datasource.getPrometheusTime(this.range.to, true);
       const params = new URLSearchParams({
         'match[]': metric,
         start: start.toString(),
@@ -96,7 +109,13 @@ export default class PrometheusMetricFindQuery {
   }
 
   metricNameQuery(metricFilterPattern: string) {
-    const url = '/api/v1/label/__name__/values';
+    const start = this.datasource.getPrometheusTime(this.range.from, false);
+    const end = this.datasource.getPrometheusTime(this.range.to, true);
+    const params = new URLSearchParams({
+      start: start.toString(),
+      end: end.toString(),
+    });
+    const url = `/api/v1/label/__name__/values?${params.toString()}`;
 
     return this.datasource.metadataRequest(url).then((result: any) => {
       return _.chain(result.data.data)

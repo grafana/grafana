@@ -76,7 +76,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: 'proxied/api/v1/labels',
+        url: `proxied/api/v1/labels?start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
         headers: {},
       });
@@ -95,7 +95,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: 'proxied/api/v1/label/resource/values',
+        url: `proxied/api/v1/label/resource/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
         headers: {},
       });
@@ -190,7 +190,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: 'proxied/api/v1/label/__name__/values',
+        url: `proxied/api/v1/label/__name__/values?start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
         headers: {},
       });

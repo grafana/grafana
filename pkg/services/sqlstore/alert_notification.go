@@ -97,7 +97,7 @@ func (ss *SqlStore) GetAlertNotificationUidWithId(query *models.GetAlertNotifica
 		return err
 	}
 
-	ss.CacheService.Set(cacheKey, query.Result, -1) //Infinite, never changes
+	ss.CacheService.Set(cacheKey, query.Result, -1) // Infinite, never changes
 
 	return nil
 }

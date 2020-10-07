@@ -8,8 +8,8 @@ type = "docs"
 
 This page lists resources for developers who want to contribute to the Grafana software ecosystem or build plugins for Grafana.
 
-##
-General resources
+## General resources
+
 These resources are useful for all developers.
 
 * [Contributing to Grafana](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md): Start here to learn how you can contribute your skills to make Grafana even better.

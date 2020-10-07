@@ -24,7 +24,7 @@ interface Fixable {
 
 export const bundlePlugin = useSpinner<PluginBundleOptions>('Compiling...', async options => await bundleFn(options));
 
-export const clean = useSpinner<void>('Cleaning', async () => await rimraf(`${process.cwd()}/dist`));
+export const clean = useSpinner('Cleaning', async () => await rimraf(`${process.cwd()}/dist`));
 
 const copyIfNonExistent = (srcPath: string, destPath: string) =>
   copyFile(srcPath, destPath, COPYFILE_EXCL)
@@ -35,7 +35,7 @@ const copyIfNonExistent = (srcPath: string, destPath: string) =>
       }
     });
 
-export const prepare = useSpinner<void>('Preparing', async () => {
+export const prepare = useSpinner('Preparing', async () => {
   await Promise.all([
     // Remove local dependencies for @grafana/data/node_modules
     // See: https://github.com/grafana/grafana/issues/26748
@@ -57,7 +57,7 @@ export const prepare = useSpinner<void>('Preparing', async () => {
 });
 
 // @ts-ignore
-const typecheckPlugin = useSpinner<void>('Typechecking', async () => {
+const typecheckPlugin = useSpinner('Typechecking', async () => {
   await execa('tsc', ['--noEmit']);
 });
 

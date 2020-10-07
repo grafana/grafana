@@ -1,3 +1,17 @@
+# 7.2.0 (2020-09-23)
+
+### Features / Enhancements
+* **Alerting**: Ensuring notifications displayed correctly in mobile device with Google Chat. [#27578](https://github.com/grafana/grafana/pull/27578), [@alvarolmedo](https://github.com/alvarolmedo)
+* **TraceView**: Show full traceID and better discern multiple stackTraces in span details. [#27710](https://github.com/grafana/grafana/pull/27710), [@aocenas](https://github.com/aocenas)
+
+### Bug Fixes
+* **DataLinks**: Fixes issue with data links not interpolating values with correct field config. [#27622](https://github.com/grafana/grafana/pull/27622), [@torkelo](https://github.com/torkelo)
+* **DataProxy**: Ignore empty URL's in plugin routes. [#27653](https://github.com/grafana/grafana/pull/27653), [@domasx2](https://github.com/domasx2)
+* **Field config**: Respect config paths when rendering default value of field config property. [#27652](https://github.com/grafana/grafana/pull/27652), [@dprokop](https://github.com/dprokop)
+* **Field config**: Fix mismatch in field config editor types. [#27657](https://github.com/grafana/grafana/pull/27657), [@dprokop](https://github.com/dprokop)
+* **Panel editor**: Prevents adding transformations in panels with alerts. [#27706](https://github.com/grafana/grafana/pull/27706), [@hugohaggmark](https://github.com/hugohaggmark)
+* **Stat panel**: Fix problem where string values where always green. [#27656](https://github.com/grafana/grafana/pull/27656), [@peterholmberg](https://github.com/peterholmberg)
+
 # 7.2.0-beta2 (2020-09-17)
 
 ### Features / Enhancements
@@ -510,7 +524,7 @@ We have also extended the time zone options so you can select any of the standar
 - **Dashboard**: Fix for strange "dashboard not found" errors when opening links in dashboard settings. [#24416](https://github.com/grafana/grafana/pull/24416), [@torkelo](https://github.com/torkelo)
 - **Dashboard**: Fix so default data source is selected when data source can't be found in panel editor. [#24526](https://github.com/grafana/grafana/pull/24526), [@mckn](https://github.com/mckn)
 - **Dashboard**: Fixed issue changing a panel from transparent back to normal in panel editor. [#24483](https://github.com/grafana/grafana/pull/24483), [@torkelo](https://github.com/torkelo)
-- **Dashboard**: Make header names reflect the field name when exporting to CSV file from the the panel inspector. [#24624](https://github.com/grafana/grafana/pull/24624), [@peterholmberg](https://github.com/peterholmberg)
+- **Dashboard**: Make header names reflect the field name when exporting to CSV file from the panel inspector. [#24624](https://github.com/grafana/grafana/pull/24624), [@peterholmberg](https://github.com/peterholmberg)
 - **Dashboard**: Make sure side pane is displayed with tabs by default in panel editor. [#24636](https://github.com/grafana/grafana/pull/24636), [@dprokop](https://github.com/dprokop)
 - **Data source**: Fix query/annotation help content formatting. [#24687](https://github.com/grafana/grafana/pull/24687), [@AgnesToulet](https://github.com/AgnesToulet)
 - **Data source**: Fixes async mount errors. [#24579](https://github.com/grafana/grafana/pull/24579), [@Estrax](https://github.com/Estrax)

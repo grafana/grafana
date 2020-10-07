@@ -86,8 +86,8 @@ func (hs *HTTPServer) Init() error {
 		hs.Live = node
 
 		// Spit random walk to example
-		go live.RunRandomCSV(hs.Live, "random-2s-stream", 2000, 0)
-		go live.RunRandomCSV(hs.Live, "random-flakey-stream", 400, .6)
+		go live.RunRandomCSV(hs.Live, "grafana/testdata/random-2s-stream", 2000, 0)
+		go live.RunRandomCSV(hs.Live, "grafana/testdata/random-flakey-stream", 400, .6)
 	}
 
 	hs.macaron = hs.newMacaron()
@@ -375,12 +375,19 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 		ServeHTTP(ctx.Resp, ctx.Req.Request)
 }
 
-func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
-	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
-	if notHeadOrGet || ctx.Req.URL.Path != "/api/health" {
-		return
+// healthzHandler always return 200 - Ok if Grafana's web server is running
+func (hs *HTTPServer) healthzHandler(ctx *macaron.Context) {
+	ctx.WriteHeader(200)
+	_, err := ctx.Resp.Write([]byte("Ok"))
+	if err != nil {
+		hs.log.Error("could not write to response", "err", err)
 	}
+}
 
+// apiHealthHandler will return ok if Grafana's web server is running and it
+// can access the database. If the database cannot be access it will return
+// http status code 503.
+func (hs *HTTPServer) apiHealthHandler(ctx *macaron.Context) {
 	data := simplejson.New()
 	data.Set("database", "ok")
 	if !hs.Cfg.AnonymousHideVersion {

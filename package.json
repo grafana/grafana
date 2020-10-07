@@ -13,7 +13,7 @@
     "e2e:debug": "./e2e/start-and-run-suite debug",
     "e2e:dev": "./e2e/start-and-run-suite dev",
     "jest": "jest --notify --watch",
-    "lint": "eslint . --ext .js,.tsx,.ts --cache --ignore-path .gitignore --ignore-pattern devenv",
+    "lint": "eslint . --ext .js,.tsx,.ts --cache",
     "jest-ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
     "lint:fix": "yarn lint --fix",
     "packages:build": "lerna run clean && lerna run build --ignore @grafana-plugins/input-datasource",
@@ -119,8 +119,9 @@
     "@types/testing-library__jest-dom": "^5.9.2",
     "@types/testing-library__react-hooks": "^3.2.0",
     "@types/tinycolor2": "1.4.2",
-    "@typescript-eslint/eslint-plugin": "3.6.0",
-    "@typescript-eslint/parser": "3.6.0",
+    "@typescript-eslint/eslint-plugin": "4.0.1",
+    "@typescript-eslint/parser": "4.0.1",
+    "angular-mocks": "1.6.6",
     "autoprefixer": "9.7.4",
     "axios": "0.19.2",
     "babel-core": "7.0.0-bridge.0",
@@ -162,7 +163,7 @@
     "html-webpack-harddisk-plugin": "1.0.1",
     "html-webpack-plugin": "3.2.0",
     "husky": "4.2.1",
-    "jest": "26.0.0",
+    "jest": "26.4.2",
     "jest-canvas-mock": "2.2.0",
     "jest-date-mock": "1.0.8",
     "lerna": "^3.20.2",
@@ -192,10 +193,10 @@
     "sinon": "8.1.1",
     "style-loader": "1.1.3",
     "terser-webpack-plugin": "2.3.5",
-    "ts-jest": "26.1.0",
+    "ts-jest": "26.3.0",
     "ts-node": "8.8.1",
-    "tslib": "1.10.0",
-    "typescript": "3.9.3",
+    "tslib": "2.0.1",
+    "typescript": "4.0.2",
     "webpack": "4.41.5",
     "webpack-bundle-analyzer": "3.6.0",
     "webpack-cleanup-plugin": "0.5.1",
@@ -311,6 +312,6 @@
     "node": ">=12 <13"
   },
   "volta": {
-    "node": "12.18.3"
+    "node": "12.18.4"
   }
 }

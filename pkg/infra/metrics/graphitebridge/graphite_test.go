@@ -306,7 +306,7 @@ prefix.page.response.constname.constvalue.labelname.val2.count 1 1477043
 		t.Fatalf("wanted \n%s\n, got \n%s\n", want, got)
 	}
 
-	//next collect
+	// next collect
 	cntVec.WithLabelValues("val1").Inc()
 	cntVec.WithLabelValues("val2").Inc()
 	apicntVec.WithLabelValues("val1").Inc()
@@ -373,7 +373,7 @@ func TestCounter(t *testing.T) {
 		t.Fatalf("wanted \n%s\n, got \n%s\n", want, got)
 	}
 
-	//next collect
+	// next collect
 	cntVec.Inc()
 
 	mfs, err = reg.Gather()

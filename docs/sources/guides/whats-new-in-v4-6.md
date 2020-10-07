@@ -23,7 +23,7 @@ You can now add annotation events and regions right from the graph panel! Just h
 
 ### Cloudwatch
 
-Cloudwatch now supports alerting. Setup alert rules for any Cloudwatch metric!
+Cloudwatch now supports alerting. Set up alert rules for any Cloudwatch metric!
 
 {{< docs-imagebox img="/img/docs/v46/cloudwatch_alerting.png"  max-width= "800px" >}}
 

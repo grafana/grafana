@@ -67,7 +67,8 @@
     "react-table": "7.0.0",
     "react-transition-group": "4.3.0",
     "slate": "0.47.8",
-    "tinycolor2": "1.4.1"
+    "tinycolor2": "1.4.1",
+    "uplot": "1.1.2"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "11.0.2",
@@ -106,7 +107,7 @@
     "rollup-plugin-visualizer": "3.3.1",
     "storybook-dark-mode": "0.6.1",
     "ts-loader": "6.2.1",
-    "typescript": "3.9.3"
+    "typescript": "4.0.2"
   },
   "types": "src/index.ts"
 }

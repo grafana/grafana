@@ -454,7 +454,7 @@ func GetDashboardPermissionsForUser(query *models.GetDashboardPermissionsForUser
 	`
 	params = append(params, query.UserId)
 
-	//check the user's role for dashboards that do not have hasAcl set
+	// check the user's role for dashboards that do not have hasAcl set
 	sql += `LEFT JOIN org_user ouRole ON ouRole.user_id = ? AND ouRole.org_id = ?`
 	params = append(params, query.UserId)
 	params = append(params, query.OrgId)

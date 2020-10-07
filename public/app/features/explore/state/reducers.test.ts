@@ -6,7 +6,6 @@ import {
   LoadingState,
   LogsDedupStrategy,
   RawTimeRange,
-  toDataFrame,
   UrlQueryMap,
   ExploreUrlState,
 } from '@grafana/data';
@@ -28,8 +27,6 @@ import {
   scanStopAction,
   splitCloseAction,
   splitOpenAction,
-  toggleGraphAction,
-  toggleTableAction,
   updateDatasourceInstanceAction,
   addQueryRowAction,
   removeQueryRowAction,
@@ -157,41 +154,6 @@ describe('Explore item reducer', () => {
         .givenReducer(itemReducer, initialState)
         .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: '' }))
         .thenStateShouldEqual(expectedState);
-    });
-  });
-
-  describe('toggling panels', () => {
-    describe('when toggleGraphAction is dispatched', () => {
-      it('then it should set correct state', () => {
-        reducerTester<ExploreItemState>()
-          .givenReducer(itemReducer, ({ graphResult: [] } as unknown) as ExploreItemState)
-          .whenActionIsDispatched(toggleGraphAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual(({ showingGraph: true, graphResult: [] } as unknown) as ExploreItemState)
-          .whenActionIsDispatched(toggleGraphAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual(({ showingGraph: false, graphResult: [] } as unknown) as ExploreItemState);
-      });
-    });
-
-    describe('when toggleTableAction is dispatched', () => {
-      it('then it should set correct state', () => {
-        const table = toDataFrame({
-          name: 'logs',
-          fields: [
-            {
-              name: 'time',
-              type: 'number',
-              values: [1, 2],
-            },
-          ],
-        });
-
-        reducerTester<ExploreItemState>()
-          .givenReducer(itemReducer, ({ tableResult: table } as unknown) as ExploreItemState)
-          .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual(({ showingTable: true, tableResult: table } as unknown) as ExploreItemState)
-          .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual(({ showingTable: false, tableResult: table } as unknown) as ExploreItemState);
-      });
     });
   });
 

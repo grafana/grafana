@@ -149,7 +149,9 @@ export const prepareJsonFiles = useSpinner<{ type: PluginType; pluginDetails: Pl
   }
 );
 
-export const removeGitFiles = useSpinner('Cleaning', async pluginPath => rmdir(`${path.resolve(pluginPath, '.git')}`));
+export const removeGitFiles = useSpinner<string>('Cleaning', async pluginPath =>
+  rmdir(`${path.resolve(pluginPath, '.git')}`)
+);
 
 /* eslint-disable no-console */
 export const formatPluginDetails = (details: PluginDetails) => {
