@@ -1,5 +1,5 @@
 import { EMPTY, from, merge, Observable, of, Subject, throwError, Unsubscribable } from 'rxjs';
-import { catchError, filter, map, mergeMap, takeUntil, tap } from 'rxjs/operators';
+import { catchError, filter, finalize, map, mergeMap, takeUntil, tap } from 'rxjs/operators';
 import {
   DataQuery,
   DataSourceApi,
@@ -128,10 +128,7 @@ class VariableQueryRunner {
             );
           }
 
-          return EMPTY;
-        }),
-        tap(() => {
-          this.updateOptionsResults.next({ identifier, state: LoadingState.Done });
+          return of([]);
         }),
         takeUntil(
           merge(this.updateOptionsRequests, this.cancelRequests).pipe(
@@ -149,6 +146,9 @@ class VariableQueryRunner {
         catchError(error => {
           this.updateOptionsResults.next({ identifier, state: LoadingState.Error, error });
           return throwError(error);
+        }),
+        finalize(() => {
+          this.updateOptionsResults.next({ identifier, state: LoadingState.Done });
         })
       )
       .subscribe();
