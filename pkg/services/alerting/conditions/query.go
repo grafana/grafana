@@ -334,6 +334,8 @@ func FrameToSeriesSlice(frame *data.Frame) (tsdb.TimeSeriesSlice, error) {
 
 		if field.Labels != nil {
 			ts.Tags = field.Labels.Copy()
+			// Tags are appended to the name so they are eventually included in EvalMatch's Metric property
+			// for display in notifications.
 			ts.Name = fmt.Sprintf("%v {%v}", ts.Name, field.Labels.String())
 		}
 
