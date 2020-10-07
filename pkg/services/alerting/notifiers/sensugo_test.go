@@ -22,7 +22,7 @@ func TestSensuGoNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewSensuGoNotifier(model)
+				_, err = NewSensuGoNotifier(model)
 				So(err, ShouldNotBeNil)
 			})
 
