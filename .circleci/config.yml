@@ -2,11 +2,6 @@ version: 2.1
 
 aliases:
   # Workflow filters
-  - &filter-only-release
-    branches:
-      only: chore/test-release-pipeline
-    tags:
-      only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
   - &filter-only-master
     branches:
       only: master
@@ -110,13 +105,6 @@ jobs:
     resource_class: large
     executor: grafana-build
     steps:
-      - run:
-          name: Exit if enterprise and forked PR
-          command: |
-            if [[ "<< parameters.edition >>" == "enterprise" && -n "$CIRCLE_PR_NUMBER" ]]; then
-              echo "Nothing to do for forked PRs, so marking this step successful"
-              circleci step halt
-            fi
       - checkout
       - restore_cache:
           keys:
@@ -188,13 +176,8 @@ jobs:
       - run:
           name: Build internal Grafana plug-ins
           command: |
-            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
-              # This is a forked PR, so don't sign as it requires an API secret
-              /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >>
-            else
-              export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
-              /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >> --sign --signing-admin
-            fi
+            export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
+            /tmp/grabpl build-plugins --jobs 2 --edition << parameters.edition >> --sign --signing-admin
       - run:
           name: Move artifacts
           command: |
@@ -341,38 +324,6 @@ jobs:
           command: "./scripts/ci-job-succeeded.sh"
           when: on_success
 
-  release-next-packages:
-    executor: grafana-build
-    steps:
-      - run:
-          name: Exit if forked PR
-          command: |
-            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
-              echo "Nothing to do for forked PRs, so marking this step successful"
-              circleci step halt
-            fi
-      - checkout
-      - run:
-          name: CI job started
-          command: ./scripts/ci-job-started.sh
-      - run:
-          name: Bootstrap lerna
-          command: npx lerna bootstrap
-      - run:
-          name: npm - Prepare auth token
-          command: "echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc"
-      - run:
-          name: Release next packages
-          command: ./scripts/circle-release-next-packages.sh
-      - run:
-          name: CI job failed
-          command: ./scripts/ci-job-failed.sh
-          when: on_fail
-      - run:
-          name: CI job succeeded
-          command: ./scripts/ci-job-succeeded.sh
-          when: on_success
-
   package-oss:
     executor: grafana-build
     steps:
@@ -389,11 +340,6 @@ jobs:
       - run:
           name: Package Grafana
           command: |
-            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
-              echo Using test GPG key pair since building a forked PR
-              source scripts/build/gpg-test-vars.sh
-            fi
-
             # Necessary for signing bundled plugins
             export GRAFANA_API_KEY=$GRAFANA_COM_API_KEY
             if [[ -n $CIRCLE_TAG ]]; then
@@ -527,11 +473,6 @@ jobs:
           command: |
             yarn install --frozen-lockfile --no-progress
             yarn storybook:build
-
-            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
-              echo "Nothing to do for forked PRs, so marking this step successful"
-              circleci step halt
-            fi
 
             if [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
@@ -830,9 +771,6 @@ jobs:
             elif [[ $CIRCLE_BRANCH == "chore/test-release-pipeline" ]]; then
               # We're testing the release pipeline
               ./scripts/circle-test-frontend.sh --edition << parameters.edition >> v7.0.0-test
-            else
-              # A master build
-              ./scripts/circle-test-frontend.sh --edition << parameters.edition >> --build-id $CIRCLE_WORKFLOW_ID
             fi
       - store_test_results:
           path: reports/junit
@@ -867,40 +805,7 @@ jobs:
               # We're testing the release pipeline
               /tmp/grabpl test-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
                 v7.0.0-test
-            else
-              # A master build
-              /tmp/grabpl test-backend --github-token "${GITHUB_GRAFANABOT_TOKEN}" --edition << parameters.edition >> \
-                --build-id $CIRCLE_WORKFLOW_ID
             fi
-      - run:
-          name: CI job failed
-          command: "./scripts/ci-job-failed.sh"
-          when: on_fail
-      - run:
-          name: CI job succeeded
-          command: "./scripts/ci-job-succeeded.sh"
-          when: on_success
-
-  build-docs-website:
-    executor: base
-    steps:
-      - checkout
-      - setup_remote_docker
-      - run:
-          name: CI job started
-          command: "./scripts/ci-job-started.sh"
-      - run:
-          name: Build Grafana docs website
-          command: |
-            # Use latest revision here, since we want to catch if it breaks
-            IMAGE=grafana/docs-base:latest
-
-            # In order to copy sources into the remote container, we need to employ a trick of creating a container
-            # with a volume, that we copy the sources into. Then, we launch the build container, with the volume
-            # from the other container
-            docker create -v /hugo/content/docs/grafana --name docs alpine:3.11 /bin/true
-            docker cp ${PWD}/docs/sources docs:/hugo/content/docs/grafana/latest
-            docker run --volumes-from docs $IMAGE /bin/bash -c 'make prod'
       - run:
           name: CI job failed
           command: "./scripts/ci-job-failed.sh"
@@ -913,13 +818,6 @@ jobs:
   release-packages:
     executor: node
     steps:
-      - run:
-          name: Exit if forked PR
-          command: |
-            if [[ -n "$CIRCLE_PR_NUMBER" ]]; then
-              echo "Nothing to do for forked PRs, so marking this step successful"
-              circleci step halt
-            fi
       - checkout
       - run:
           name: CI job started
@@ -1223,7 +1121,7 @@ workflows:
           requires:
             - package-enterprise
       - release-packages:
-          filters: *filter-only-release
+          filters: *filter-release
           requires:
             - end-to-end-tests
             - mysql-integration-test
