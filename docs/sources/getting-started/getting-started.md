@@ -5,8 +5,7 @@ keywords = ["grafana", "intro", "guide", "started"]
 type = "docs"
 aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
 [menu.docs]
-name = "Getting started"
-identifier = "getting_started"
+identifier = "getting_started-grafana"
 parent = "guides"
 weight = 200
 +++
@@ -36,10 +35,10 @@ To login to Grafana for the first time:
 To create your first dashboard:
 
 1. Click the **+** icon on the left panel, select **Create Dashboard**, then click **Add new panel**.
-2. In the New Dashbard/Edit Panel view, go to the **Query** tab.
-3. Configure your [query]({{< relref "../panels/queries.md" >}}) by selecting ``-- Grafana --`` from the [data source selector]({{< relref "../panels/queries.md/#data-source-selector" >}}). This generates the Random Walk dashboard.
-4. Click the  **Save** icon in the top right corner of your screen to save the dashboard.
-5. Add a descriptive name, and click **Save**.
+1. In the New Dashbard/Edit Panel view, go to the **Query** tab.
+1. Configure your [query]({{< relref "../panels/queries.md" >}}) by selecting ``-- Grafana --`` from the [data source selector]({{< relref "../panels/queries.md/#data-source-selector" >}}). This generates the Random Walk dashboard.
+1. Click the  **Save** icon in the top right corner of your screen to save the dashboard.
+1. Add a descriptive name, and click **Save**.
 
  Congratulations, you have created your first dashboard and it is displaying results.
 
