@@ -62,22 +62,31 @@
         "additionalItems": false,
         "properties": {
           "type": {
-            "type": "string"
+            "type": "string",
+            "enum": ["dashboard", "page", "panel", "datasource"]
           },
           "name": {
             "type": "string"
           },
           "component": {
-            "type": "string"
+            "type": "string",
+            "description": "(Legacy) The Angular component to use for a page."
           },
           "role": {
-            "type": "string"
+            "type": "string",
+            "enum": ["Admin", "Editor", "Viewer"]
+          },
+          "path": {
+            "type": "string",
+            "description": "Used for app plugins."
           },
           "addToNav": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Add the include to the side menu."
           },
           "defaultNav": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Page or dashboard when user clicks the icon in the side menu."
           }
         }
       }
@@ -151,8 +160,26 @@
         "plugins": {
           "type": "array",
           "description": "An array of required plugins on which this plugin depends.",
+          "additionalItems": false,
           "items": {
-            "type": "string"
+            "type": "object",
+            "required": ["id", "name", "type", "version"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["app", "datasource", "panel"]
+              },
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            }
           }
         }
       }
