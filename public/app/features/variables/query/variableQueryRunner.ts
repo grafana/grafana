@@ -66,6 +66,7 @@ class VariableQueryRunner {
     this.queueRequest = this.queueRequest.bind(this);
     this.onNewRequest = this.onNewRequest.bind(this);
     this.runUpdateOptionsRequest = this.runUpdateOptionsRequest.bind(this);
+    this.runUpdateTagsRequest = this.runUpdateTagsRequest.bind(this);
     this.cancelRequest = this.cancelRequest.bind(this);
     this.subscription = this.updateOptionsRequests.subscribe(this.onNewRequest);
   }
@@ -144,6 +145,10 @@ class VariableQueryRunner {
           )
         ),
         catchError(error => {
+          if (error.cancelled) {
+            return of({});
+          }
+
           this.updateOptionsResults.next({ identifier, state: LoadingState.Error, error });
           return throwError(error);
         }),
@@ -165,20 +170,10 @@ class VariableQueryRunner {
     const scopedVars = { ...searchFilterAsVars, ...variableAsVars } as ScopedVars;
     const request = dataSource.variables!.toDataQueryRequest(variable.query, scopedVars);
 
-    return new Observable<MetricFindValue[]>(observer => {
-      const subscription = runRequest(dataSource, request)
-        .pipe(
-          map(panelData => panelData.series),
-          dataSource.variables!.toMetricFindValues()
-        )
-        .subscribe(observer);
-
-      const unsubscribe = () => {
-        subscription.unsubscribe();
-      };
-
-      return unsubscribe;
-    });
+    return runRequest(dataSource, request).pipe(
+      map(panelData => panelData.series),
+      dataSource.variables!.toMetricFindValues()
+    );
   }
 
   runUpdateTagsRequest(variable: QueryVariableModel, args: UpdateOptionsArgs): Observable<MetricFindValue[]> {
