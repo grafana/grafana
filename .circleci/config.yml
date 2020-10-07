@@ -105,7 +105,6 @@ jobs:
     resource_class: large
     executor: grafana-build
     steps:
-      - run:
       - checkout
       - restore_cache:
           keys:
