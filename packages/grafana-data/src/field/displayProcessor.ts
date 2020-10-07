@@ -52,7 +52,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   }
 
   const formatFunc = getValueFormat(unit || 'none');
-  const scaleFunc = getScaleCalculator(field as Field, options.seriesIndex ?? 0, theme);
+  const scaleFunc = getScaleCalculator(field as Field, theme);
 
   return (value: any) => {
     const { mappings } = config;

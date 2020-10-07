@@ -18,7 +18,7 @@ describe('getScaleCalculator', () => {
       values: new ArrayVector([0, 50, 100]),
     };
 
-    const calc = getScaleCalculator(field, 0, { type: GrafanaThemeType.Dark } as GrafanaTheme);
+    const calc = getScaleCalculator(field, { type: GrafanaThemeType.Dark } as GrafanaTheme);
     expect(calc(70)).toEqual({
       percent: 0.7,
       threshold: thresholds[1],

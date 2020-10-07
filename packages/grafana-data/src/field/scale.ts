@@ -12,9 +12,9 @@ export interface ScaledValue {
 
 export type ScaleCalculator = (value: number) => ScaledValue;
 
-export function getScaleCalculator(field: Field, seriesIndex: number, theme: GrafanaTheme): ScaleCalculator {
+export function getScaleCalculator(field: Field, theme: GrafanaTheme): ScaleCalculator {
   const mode = getFieldColorModeFor(field);
-  const getColor = mode.getCalculator(field, seriesIndex, theme);
+  const getColor = mode.getCalculator(field, theme);
   const info = getMinMaxAndDelta(field);
 
   return (value: number) => {
