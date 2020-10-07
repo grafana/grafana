@@ -5,4 +5,4 @@ export {
   sharedSingleStatPanelChangedHandler,
 } from './SingleStatBaseOptions';
 
-export { AlignmentFactorsEditor, AlignmentFactorsEditorOptions } from './AlignmentFactorsEditor';
+export { AlignmentFactorsEditor, AlignmentFactorsEditorOptions } from 'app/plugins/panel/stat/AlignmentFactorsEditor';

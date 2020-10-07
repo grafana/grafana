@@ -11,9 +11,14 @@ import {
   standardEditorsRegistry,
   FieldOverrideContext,
   getFieldDisplayName,
+  FieldDisplay,
+  StandardEditorContext,
   escapeStringForRegex,
+  getFieldDisplayValues,
+  getDisplayValueAlignmentFactors,
 } from '@grafana/data';
 import { PanelOptionsEditorBuilder } from '@grafana/data';
+import { config } from 'app/core/config';
 
 // Structure copied from angular
 export interface StatPanelOptions extends SingleStatBaseOptions {
@@ -119,19 +124,36 @@ export function addFixexAlignmentOptions(builder: PanelOptionsEditorBuilder<Sing
     id: 'fixAlignment',
     path: 'fixAlignment',
     name: 'Text Size',
-    description: 'text size is dynamically calculated',
+    description: 'Text size is calculated based on the maximum length of values to display.',
     editor: AlignmentFactorsEditor,
-    // options: {
-    //   getValues: () => {
-    //     console.log('XXX');
-    //     return [];
-    //   },
-    // },
-  });
+    settings: {
+      getStandardAlignmentFactors: (ctx: StandardEditorContext<any>) => {
+        let { fieldConfig, data, replaceVariables, options } = ctx;
+        if (!data || !data.length) {
+          return [] as FieldDisplay[];
+        }
 
-  // builder.addTextInput({
-  //   category,
-  //   path: 'fixAlignment.title',
-  //   name: 'Title (for calculation)',
-  // });
+        if (!fieldConfig) {
+          fieldConfig = { defaults: {}, overrides: [] };
+        }
+
+        if (!replaceVariables) {
+          replaceVariables = (value: string) => value;
+        }
+
+        return getDisplayValueAlignmentFactors(
+          getFieldDisplayValues({
+            fieldConfig,
+            reduceOptions: options.reduceOptions,
+            replaceVariables,
+            theme: config.theme,
+            data,
+            sparkline: options.graphMode !== BigValueGraphMode.None,
+            autoMinMax: true,
+            timeZone: undefined, // ??
+          })
+        );
+      },
+    },
+  });
 }

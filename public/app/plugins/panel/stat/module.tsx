@@ -1,4 +1,4 @@
-import { sharedSingleStatMigrationHandler, BigValueTextMode, AlignmentFactorsEditor } from '@grafana/ui';
+import { sharedSingleStatMigrationHandler, BigValueTextMode } from '@grafana/ui';
 import { PanelPlugin } from '@grafana/data';
 import { StatPanelOptions, addStandardDataReduceOptions, addFixexAlignmentOptions } from './types';
 import { StatPanel } from './StatPanel';
