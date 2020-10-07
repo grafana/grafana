@@ -10,7 +10,7 @@
     "name": "duplicate",
     "allowUsers": [],
     "action": "updateLabels",
-    "addLabel": "*duplicate"
+    "addLabel": "type/duplicate"
   },
   {
     "type": "label",
