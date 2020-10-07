@@ -52,7 +52,6 @@ require (
 	github.com/jmespath/go-jmespath v0.3.0
 	github.com/jonboulle/clockwork v0.2.1 // indirect
 	github.com/jung-kurt/gofpdf v1.10.1
-	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/lib/pq v1.3.0
 	github.com/linkedin/goavro/v2 v2.9.7
 	github.com/magefile/mage v1.9.0
@@ -79,8 +78,6 @@ require (
 	github.com/urfave/cli/v2 v2.1.1
 	github.com/xorcare/pointer v1.1.0
 	github.com/yudai/gojsondiff v1.0.0
-	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
-	github.com/yudai/pp v2.0.1+incompatible // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d

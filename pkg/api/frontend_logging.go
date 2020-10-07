@@ -63,7 +63,6 @@ func (event *FrontendSentryEvent) ToLogContext() log15.Ctx {
 }
 
 func (hs *HTTPServer) LogFrontendMessage(c *models.ReqContext, event FrontendSentryEvent) Response {
-
 	var msg = "unknown"
 
 	if len(event.Message) > 0 {
