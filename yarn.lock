@@ -3330,7 +3330,7 @@
   dependencies:
     tslib "^2.0.1"
 
-"@formatjs/intl-datetimeformat@^2.6.8":
+"@formatjs/intl-datetimeformat@2.6.8":
   version "2.6.8"
   resolved "https://registry.yarnpkg.com/@formatjs/intl-datetimeformat/-/intl-datetimeformat-2.6.8.tgz#f1194a3233dbb6e8afaa820b1a37cbcac6c7e5ea"
   integrity sha512-xivwl15LnZ7sXiNOF1tZgOqAX/1pol4M1kh11h7LJwtPYYKt5VM9zZXw4NDBzK9lgYiMIzXIeryRGd8dDoySJg==
@@ -3338,7 +3338,7 @@
     "@formatjs/ecma402-abstract" "^1.2.3"
     tslib "^2.0.1"
 
-"@formatjs/intl-getcanonicallocales@^1.4.6":
+"@formatjs/intl-getcanonicallocales@1.4.6":
   version "1.4.6"
   resolved "https://registry.yarnpkg.com/@formatjs/intl-getcanonicallocales/-/intl-getcanonicallocales-1.4.6.tgz#348a0b8dd87f2b0513a4942a6273c937dd91ead0"
   integrity sha512-V54a+Ks02vke2CSmuGJ4GCvrdWfN105GSH7oZRoW5QSiwuac+fmxb5Qpu4002HetuRu0rrRTm+NMUTfZ1VB2xw==
@@ -3346,7 +3346,7 @@
     cldr-core "36.0.0"
     tslib "^2.0.1"
 
-"@formatjs/intl-numberformat@^5.6.3":
+"@formatjs/intl-numberformat@5.6.3":
   version "5.6.3"
   resolved "https://registry.yarnpkg.com/@formatjs/intl-numberformat/-/intl-numberformat-5.6.3.tgz#90c6fa2b5cd8a97f9c223ca901563a3f21c83488"
   integrity sha512-soskYWG/ftCXf3+Jr0JhNy3KTUMdnPpPg5u4+WZumbfT0hs7piOeDxR1req3e1ynMww13BBGtzSrfOgPo6f1xg==
@@ -3354,7 +3354,7 @@
     "@formatjs/ecma402-abstract" "^1.2.3"
     tslib "^2.0.1"
 
-"@formatjs/intl-pluralrules@^3.4.8":
+"@formatjs/intl-pluralrules@3.4.8":
   version "3.4.8"
   resolved "https://registry.yarnpkg.com/@formatjs/intl-pluralrules/-/intl-pluralrules-3.4.8.tgz#8adea6bbae3a5109d6b53b0e791b696f1a4fad4d"
   integrity sha512-u1upykr0awAEsYkfbg7KCsgKLZLWA+xMskUb2CVas3/RS+tD0BEgYSO+x3lGVI9BocX/iWGLsTSUYsU8G2jajQ==
