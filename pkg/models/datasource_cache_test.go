@@ -311,10 +311,10 @@ func TestDataSourceSigV4Auth(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("SigV4 is in middleware chain if configured in JsonData", func() {
-			m1, ok := (t.next).(*SigV4Middleware)
+			m1, ok := t.next.(*SigV4Middleware)
 			So(ok, ShouldEqual, true)
 
-			_, ok = (m1.Next).(*http.Transport)
+			_, ok = m1.Next.(*http.Transport)
 			So(ok, ShouldEqual, true)
 		})
 	})
@@ -333,7 +333,7 @@ func TestDataSourceSigV4Auth(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Should not include sigV4 middleware if not configured in JsonData", func() {
-			_, ok := interface{}(t.next).(*http.Transport)
+			_, ok := t.next.(*http.Transport)
 			So(ok, ShouldEqual, true)
 		})
 	})
@@ -357,7 +357,7 @@ func TestDataSourceSigV4Auth(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Should not include sigV4 middleware if not configured in app config", func() {
-			_, ok := interface{}(t.next).(*http.Transport)
+			_, ok := t.next.(*http.Transport)
 			So(ok, ShouldEqual, true)
 		})
 	})
