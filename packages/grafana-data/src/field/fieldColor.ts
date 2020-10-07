@@ -8,6 +8,8 @@ export type FieldValueColorCalculator = (value: number, percent: number, Thresho
 export interface FieldColorMode extends RegistryItem {
   getCalculator: (field: Field, theme: GrafanaTheme) => FieldValueColorCalculator;
   colors?: string[];
+  isContinuous?: boolean;
+  isByValue?: boolean;
 }
 
 export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
