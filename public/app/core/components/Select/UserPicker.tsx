@@ -3,8 +3,7 @@ import React, { Component } from 'react';
 import _ from 'lodash';
 
 // Components
-import { LegacyForms } from '@grafana/ui';
-const { AsyncSelect } = LegacyForms;
+import { AsyncSelect } from '@grafana/ui';
 
 // Utils & Services
 import { debounce } from 'lodash';
@@ -66,13 +65,14 @@ export class UserPicker extends Component<Props, State> {
     return (
       <div className="user-picker" data-testid="userPicker">
         <AsyncSelect
+          isClearable
           className={className}
           isLoading={isLoading}
           defaultOptions={true}
           loadOptions={this.debouncedSearch}
           onChange={onSelected}
           placeholder="Select user"
-          noOptionsMessage={() => 'No users found'}
+          noOptionsMessage="No users found"
         />
       </div>
     );

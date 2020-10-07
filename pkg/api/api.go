@@ -426,7 +426,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Live streaming
 	if hs.Live != nil {
-		r.Any("/live/*", hs.Live.Handler)
+		r.Any("/live/*", hs.Live.WebsocketHandler)
 	}
 
 	// Snapshots
@@ -435,10 +435,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, Wrap(DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
-
-	// Health check
-	r.Get("/api/health", hs.apiHealthHandler)
-	r.Get("/healthz", hs.healthzHandler)
 
 	r.Get("/*", reqSignedIn, hs.Index)
 }

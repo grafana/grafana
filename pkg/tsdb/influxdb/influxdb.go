@@ -64,7 +64,7 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		return nil, err
 	}
 
-	if setting.Env == setting.DEV {
+	if setting.Env == setting.Dev {
 		glog.Debug("Influxdb query", "raw query", rawQuery)
 	}
 

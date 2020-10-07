@@ -10,7 +10,7 @@ interface ContextMenuPluginProps {
 }
 
 export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({ onClose }) => {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const onClick = useCallback(() => {
     setIsOpen(!isOpen);

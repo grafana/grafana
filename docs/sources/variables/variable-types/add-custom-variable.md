@@ -3,7 +3,9 @@ title = "Add a custom variable"
 type = "docs"
 aliases = ["/docs/grafana/latest/variables/add-custom-variable.md"]
 [menu.docs]
-weight = 500
+identifier = "add-custom-variable"
+parent = "variable-types"
+weight = 200
 +++
 
 # Add a custom variable
@@ -26,7 +28,7 @@ For example, if you have server names or region names that never change, then yo
 
 ## Enter Custom Options
 
-1. In the **Values separated by comma** list, enter the values for this variable in a comma-separated list. You can include numbers, strings, or other variables.
+1. In the **Values separated by comma** list, enter the values for this variable in a comma-separated list. You can include numbers, strings, other variables or key/value pairs separated by a colon.
 1. (optional) Enter [Selection Options]({{< relref "../variable-selection-options.md" >}}).
 1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Add** to add the variable to the dashboard.

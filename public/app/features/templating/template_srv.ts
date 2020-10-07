@@ -251,12 +251,6 @@ export class TemplateSrv implements BaseTemplateSrv {
       .join('');
   }
 
-  /**
-   * Returns all possible interpolated values for the given target.
-   * Each variable value is formatted individually,
-   * so formats are not used to join multiple values but
-   * only for single-value formatting, e.g. for escaping or text representation.
-   */
   replaceToList(target: string, scopedVars?: ScopedVars, format?: string | Function): string[] {
     return TemplateSrv.cartesianProduct(
       this.targetTokens(target, scopedVars, format).map(t =>
@@ -385,4 +379,4 @@ export class TemplateSrv implements BaseTemplateSrv {
 // Expose the template srv
 const srv = new TemplateSrv();
 setTemplateSrv(srv);
-export default srv;
+export const getTemplateSrv = () => srv;

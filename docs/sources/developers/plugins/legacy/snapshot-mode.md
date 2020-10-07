@@ -8,7 +8,7 @@ aliases = ["/docs/grafana/latest/plugins/developing/snapshot-mode/"]
 
 {{< imgbox img="/img/docs/Grafana-snapshot-example.png" caption="A dashboard using snapshot data and not live data." >}}
 
-Grafana has this great feature where you can [save a snapshot of your dashboard]({{< relref "../../../reference/share_dashboard.md" >}}). Instead of sending a screenshot of a dashboard to someone, you can send them a working, interactive Grafana dashboard with the snapshot data embedded inside it. The snapshot can be saved on your Grafana server and is available to all your co-workers. Raintank also hosts a [snapshot server](http://snapshot.raintank.io/) if you want to send the snapshot to someone who does not have access to your Grafana server.
+Grafana has this great feature where you can [save a snapshot of your dashboard]({{< relref "../../../dashboards/json-model.md" >}}). Instead of sending a screenshot of a dashboard to someone, you can send them a working, interactive Grafana dashboard with the snapshot data embedded inside it. The snapshot can be saved on your Grafana server and is available to all your co-workers. Raintank also hosts a [snapshot server](http://snapshot.raintank.io/) if you want to send the snapshot to someone who does not have access to your Grafana server.
 
 {{< imgbox img="/img/docs/animated_gifs/snapshots.gif" caption="Selecting a snapshot" >}}
 

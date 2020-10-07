@@ -1,8 +1,9 @@
-import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import { DataSourceInstanceSettings, dateTime, AnnotationQueryRequest } from '@grafana/data';
 
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import templateSrv from 'app/features/templating/template_srv';
-import { GrafanaDatasource } from '../datasource';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
+import { GrafanaDatasource } from './datasource';
+import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -25,6 +26,7 @@ describe('grafana data source', () => {
         return Promise.resolve([]);
       });
 
+      let templateSrv = getTemplateSrv() as any;
       templateSrv.init([
         { type: 'query', name: 'var', current: { value: 'replaced' } },
         { type: 'query', name: 'var2', current: { value: ['replaced', 'replaced2'] } },
@@ -33,7 +35,7 @@ describe('grafana data source', () => {
         { type: 'query', name: 'var5', current: { value: ['replaced?3', 'replaced?4'] } },
       ]);
 
-      ds = new GrafanaDatasource({} as DataSourceInstanceSettings);
+      ds = new GrafanaDatasource({} as DataSourceInstanceSettings, templateSrv);
     });
 
     describe('with tags that have template variables', () => {
@@ -109,7 +111,7 @@ describe('grafana data source', () => {
     describe('with type dashboard', () => {
       const options = setupAnnotationQueryOptions(
         {
-          type: 'dashboard',
+          type: GrafanaAnnotationType.Dashboard,
           tags: ['tag1'],
         },
         { id: 1 }
@@ -126,8 +128,8 @@ describe('grafana data source', () => {
   });
 });
 
-function setupAnnotationQueryOptions(annotation: { tags: string[]; type?: string }, dashboard?: { id: number }) {
-  return {
+function setupAnnotationQueryOptions(annotation: Partial<GrafanaAnnotationQuery>, dashboard?: { id: number }) {
+  return ({
     annotation,
     dashboard,
     range: {
@@ -135,5 +137,5 @@ function setupAnnotationQueryOptions(annotation: { tags: string[]; type?: string
       to: dateTime(1432288401),
     },
     rangeRaw: { from: 'now-24h', to: 'now' },
-  };
+  } as unknown) as AnnotationQueryRequest<GrafanaQuery>;
 }

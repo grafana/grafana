@@ -17,6 +17,14 @@ export interface TemplateSrv {
    * Replace the values within the target string.  See also {@link InterpolateFunction}
    */
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string;
+
+  /**
+   * Returns all possible interpolated values for the given target.
+   * Each variable value is formatted individually,
+   * so formats are not used to join multiple values but
+   * only for single-value formatting, e.g. for escaping or text representation.
+   */
+  replaceToList(target: string, scopedVars?: ScopedVars, format?: string | Function): string[];
 }
 
 let singletonInstance: TemplateSrv;
