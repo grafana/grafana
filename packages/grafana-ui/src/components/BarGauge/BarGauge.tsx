@@ -11,6 +11,7 @@ import {
   DisplayProcessor,
   FieldConfig,
   FieldColorModeId,
+  getFieldColorMode,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -518,31 +519,9 @@ export function getBarGradient(props: Props, maxSize: number): string {
 
   let gradient = '';
   let lastpos = 0;
+  let mode = getFieldColorMode(field.color?.mode);
 
-  if (field.color && field.color.mode !== FieldColorModeId.Thresholds) {
-    /* const schemeSet = (d3 as any)[`scheme${field.color.schemeName}`] as any[]; */
-    /* if (!schemeSet) { */
-    /*   // Error: unknown scheme */
-    /*   const color = '#F00'; */
-    /*   gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`; */
-    /*   gradient += ` ${maxSize}px, ${color}`; */
-    /*   return gradient + ')'; */
-    /* } */
-    /* // Get the scheme with as many steps as possible */
-    /* const scheme = schemeSet[schemeSet.length - 1] as string[]; */
-    /* for (let i = 0; i < scheme.length; i++) { */
-    /*   const color = scheme[i]; */
-    /*   const valuePercent = i / (scheme.length - 1); */
-    /*   const pos = valuePercent * maxSize; */
-    /*   const offset = Math.round(pos - (pos - lastpos) / 2); */
-    /*   if (gradient === '') { */
-    /*     gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`; */
-    /*   } else { */
-    /*     lastpos = pos; */
-    /*     gradient += ` ${offset}px, ${color}`; */
-    /*   } */
-    /* } */
-  } else {
+  if (mode.id === FieldColorModeId.Thresholds) {
     const thresholds = field.thresholds!;
 
     for (let i = 0; i < thresholds.steps.length; i++) {
@@ -561,9 +540,29 @@ export function getBarGradient(props: Props, maxSize: number): string {
         gradient += ` ${offset}px, ${color}`;
       }
     }
+
+    return gradient + ')';
   }
 
-  return gradient + ')';
+  if (mode.colors) {
+    const scheme = mode.colors;
+    for (let i = 0; i < scheme.length; i++) {
+      const color = scheme[i];
+
+      if (gradient === '') {
+        gradient = `linear-gradient(${cssDirection}, ${color} 0px`;
+      } else {
+        const valuePercent = i / (scheme.length - 1);
+        const pos = valuePercent * maxSize;
+
+        lastpos = pos;
+        gradient += `, ${color} ${pos}px`;
+      }
+    }
+    return gradient + ')';
+  }
+
+  return 'gray';
 }
 
 /**

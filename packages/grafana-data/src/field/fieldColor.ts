@@ -7,6 +7,7 @@ export type FieldValueColorCalculator = (value: number, percent: number, Thresho
 
 export interface FieldColorMode extends RegistryItem {
   getCalculator: (field: Field, theme: GrafanaTheme) => FieldValueColorCalculator;
+  colors?: string[];
 }
 
 export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
@@ -28,43 +29,30 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
         };
       },
     },
-    {
+    new PaletteColorMode({
       id: FieldColorModeId.PaletteSaturated,
       name: 'Saturated palette',
       description: 'Assigns color based on series or field index',
-      getCalculator: (field, theme: GrafanaTheme) => {
-        const namedColors = [
-          'blue',
-          'red',
-          'green',
-          'yellow',
-          'purple',
-          'orange',
-          'dark-blue',
-          'dark-red',
-          'dark-yellow',
-          'dark-purple',
-          'dark-orange',
-        ];
-        const seriesIndex = field.state?.seriesIndex ?? 0;
-
-        return () => {
-          return getColorFromHexRgbOrName(namedColors[seriesIndex % namedColors.length], theme.type);
-        };
-      },
-    },
-    {
+      colors: [
+        'blue',
+        'red',
+        'green',
+        'yellow',
+        'purple',
+        'orange',
+        'dark-blue',
+        'dark-red',
+        'dark-yellow',
+        'dark-purple',
+        'dark-orange',
+      ],
+    }),
+    new PaletteColorMode({
       id: FieldColorModeId.PaletteClassic,
       name: 'Classic palette',
       description: 'Assigns color based on series or field index',
-      getCalculator: field => {
-        const seriesIndex = field.state?.seriesIndex ?? 0;
-
-        return () => {
-          return classicColors[seriesIndex % classicColors.length];
-        };
-      },
-    },
+      colors: classicColors,
+    }),
     new GradientColorMode({
       id: FieldColorModeId.ContinousGrYlRd,
       name: 'Green-Yellow-Red (gradient)',
@@ -72,13 +60,35 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       colors: ['green', 'yellow', 'red'],
     }),
     new GradientColorMode({
-      id: FieldColorModeId.ContinousBlGrOrRd,
-      name: 'Blue-Green-Orange-Red (gradient)',
+      id: FieldColorModeId.ContinousBlGrOr,
+      name: 'Blue-Green-Orange (gradient)',
       description: 'Interpolated colors based value, min and max',
-      colors: ['blue', 'green', 'orange', 'red'],
+      colors: ['blue', 'green', 'orange'],
     }),
   ];
 });
+
+export class PaletteColorMode implements FieldColorMode {
+  id: string;
+  name: string;
+  description: string;
+  colors: string[];
+
+  constructor(options: { id: FieldColorModeId; name: string; description: string; colors: string[] }) {
+    this.id = options.id;
+    this.name = options.name;
+    this.description = options.description;
+    this.colors = options.colors;
+  }
+
+  getCalculator(field: Field, theme: GrafanaTheme) {
+    const seriesIndex = field.state?.seriesIndex ?? 0;
+
+    return (_: number, _percent: number, _threshold?: Threshold) => {
+      return getColorFromHexRgbOrName(this.colors[seriesIndex % this.colors.length], theme.type);
+    };
+  }
+}
 
 export class GradientColorMode implements FieldColorMode {
   id: string;
@@ -97,7 +107,7 @@ export class GradientColorMode implements FieldColorMode {
     const colors = this.colors.map(c => getColorFromHexRgbOrName(c, theme.type));
     const interpolator = interpolateRgbBasis(colors);
 
-    return (_: number, percent: number) => {
+    return (_: number, percent: number, _threshold?: Threshold) => {
       return interpolator(percent);
     };
   }
