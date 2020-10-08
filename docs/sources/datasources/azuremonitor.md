@@ -154,7 +154,7 @@ Examples:
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-service-variables.png" class="docs-image--no-shadow" caption="Nested Azure Monitor Template Variables" >}}
 
-Check out the [Templating]({{< relref "../variables/index.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### List of supported Azure Monitor metrics
