@@ -14,9 +14,9 @@ import { InspectStatsTab } from '../dashboard/components/Inspector/InspectStatsT
 import { getPanelInspectorStyles } from '../dashboard/components/Inspector/styles';
 
 function stripPropsFromResponse(response: any) {
-  // ignore silent requests
+  // ignore silent requests and return early
   if (response.config?.hideFromInspector) {
-    return {};
+    return;
   }
 
   const clonedResponse = { ...response }; // clone - dont modify the response
@@ -57,7 +57,7 @@ function stripPropsFromResponse(response: any) {
   return clonedResponse;
 }
 
-interface Props {
+export interface Props {
   loading: boolean;
   width: number;
   exploreId: ExploreId;
@@ -65,7 +65,7 @@ interface Props {
   onClose: () => void;
 }
 
-function ExploreQueryInspector(props: Props) {
+export function ExploreQueryInspector(props: Props) {
   const [formattedJSON, setFormattedJSON] = useState({});
 
   const getTextForClipboard = () => {
@@ -98,7 +98,9 @@ function ExploreQueryInspector(props: Props) {
       .getInspectorStream()
       .subscribe(resp => {
         const strippedResponse = stripPropsFromResponse(resp);
-        setResponse(strippedResponse);
+        if (strippedResponse) {
+          setResponse(strippedResponse);
+        }
       });
 
     return () => {
