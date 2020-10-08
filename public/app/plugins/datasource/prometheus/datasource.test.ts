@@ -21,7 +21,7 @@ import { PromOptions, PromQuery } from './types';
 import { VariableHide } from '../../../features/variables/types';
 import { describe } from '../../../../test/lib/common';
 import { QueryOptions } from 'app/types';
-import _ from 'lodash';
+import { map as lodashMap, cloneDeep } from 'lodash';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
@@ -132,7 +132,7 @@ describe('PrometheusDatasource', () => {
     });
 
     it('should still perform a GET request with the DS HTTP method set to POST', () => {
-      const postSettings = _.cloneDeep(instanceSettings);
+      const postSettings = cloneDeep(instanceSettings);
       postSettings.jsonData.httpMethod = 'POST';
       const promDs = new PrometheusDatasource(postSettings, templateSrvStub as any, timeSrvStub as any);
       promDs.metadataRequest('/foo');
@@ -296,7 +296,7 @@ describe('PrometheusDatasource', () => {
 
       ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of([responseMock]));
       ds.query(query).subscribe((result: any) => {
-        const seriesLabels = _.map(result.data, 'target');
+        const seriesLabels = lodashMap(result.data, 'target');
         return expect(seriesLabels).toEqual(expected);
       });
     });

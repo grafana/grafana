@@ -102,7 +102,7 @@ class DashboardWatcher {
 
             const dash = getDashboardSrv().getCurrent();
             if (dash.uid !== event.message.uid) {
-              console.log('dashboard event for differnt dashboard?', event, dash);
+              console.log('dashboard event for different dashboard?', event, dash);
               return;
             }
 
