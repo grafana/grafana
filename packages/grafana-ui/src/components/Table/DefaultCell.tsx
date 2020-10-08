@@ -1,4 +1,4 @@
-import React, { FC, MouseEventHandler } from 'react';
+import React, { FC, MouseEventHandler, ReactElement } from 'react';
 import { DisplayValue, Field, formattedValueToString, LinkModel } from '@grafana/data';
 
 import { TableCellDisplayMode, TableCellProps } from './types';
@@ -10,7 +10,14 @@ export const DefaultCell: FC<TableCellProps> = props => {
   const { field, cell, tableStyles, row, cellProps } = props;
 
   const displayValue = field.display!(cell.value);
-  const value = formattedValueToString(displayValue);
+
+  let value: string | ReactElement;
+  if (React.isValidElement(cell.value)) {
+    value = cell.value;
+  } else {
+    value = formattedValueToString(displayValue);
+  }
+
   const cellStyle = getCellStyle(tableStyles, field, displayValue);
   const showFilters = field.config.filterable;
 
