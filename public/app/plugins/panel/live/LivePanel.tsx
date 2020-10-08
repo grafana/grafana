@@ -4,7 +4,6 @@ import { CustomScrollbar, FeatureInfoBox, Label } from '@grafana/ui';
 import {
   PanelProps,
   LiveChannelStatusEvent,
-  LiveChannelAddress,
   isValidLiveChannelAddress,
   LiveChannel,
   LiveChannelEvent,
