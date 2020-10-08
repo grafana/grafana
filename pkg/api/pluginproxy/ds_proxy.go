@@ -209,7 +209,7 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		}
 
 		if oauthtoken.IsOAuthPassThruEnabled(proxy.ds) {
-			token, err := oauthtoken.GetCurrentOAuthToken(proxy.ctx.Req.Context(), *proxy.ctx.SignedInUser)
+			token, err := oauthtoken.GetCurrentOAuthToken(proxy.ctx.Req.Context(), proxy.ctx.SignedInUser)
 			if err != nil {
 				logger.Error("Error fetching OAuth token for user", "error", err)
 				return
