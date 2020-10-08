@@ -38,7 +38,7 @@ func (s SecureJsonData) Decrypt() map[string]string {
 	return decrypted
 }
 
-// GetEncryptedJsonData returns map where all keys are encrypted.
+// GetEncryptedJsonData returns map where all values are encrypted.
 func GetEncryptedJsonData(sjd map[string]string) SecureJsonData {
 	encrypted := make(SecureJsonData)
 	for key, data := range sjd {
