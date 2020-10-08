@@ -84,7 +84,6 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 	if env, ok := sessCache[cacheKey]; ok {
 		if env.expiration.After(time.Now().UTC()) {
 			sessCacheLock.RUnlock()
-			plog.Debug("Using cached AWS session", "key", cacheKey)
 			return env.session, nil
 		}
 	}
