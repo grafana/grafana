@@ -24,7 +24,7 @@ type frontendSentryException struct {
 
 type FrontendSentryEvent struct {
 	*sentry.Event
-	Exception *FrontendSentryException `json:"exception,omitempty"`
+	Exception *frontendSentryException `json:"exception,omitempty"`
 }
 
 func (value *frontendSentryExceptionValue) FmtMessage() string {
