@@ -12,20 +12,22 @@ weight = 50
 
 # Permissions
 
-Grafana users have permissions that are determined by their:
+What you can do in Grafana is defined by the _permissions_ associated with your user account.
 
-- **Organization Role** (Admin, Editor, Viewer)
-- Via **Team** memberships where the **Team** has been assigned specific permissions.
-- Via permissions assigned directly to user (on folders, dashboards, data sources)
-- The Grafana Admin (i.e. Super Admin) user flag.
-
-## Users
-
-Grafana supports a wide variety of internal and external ways for users to authenticate themselves. These include from its own integrated database, from an external SQL server, or from an external LDAP server.
+There are three types of permissions:
+- Permissions granted as a Grafana server admin
+- Permissions associated with your role in an organization
+- Permissions granted to a specific folder or dashboard
 
 ## Grafana server admin
 
-This admin flag makes user a `Super Admin`. This means they can access the `Server Admin` views where all users and organizations can be administrated.
+Grafana server admins have the **Grafana Admin** flag enabled on their account. They can access the **Server Admin** menu and perform the following tasks:
+
+- Manage users and permissions.
+- Create, edit, and delete organizations.
+- View server-wide settings that are set in the [Configuration]({{< relref "../administration/configuration.md" >}}) file.
+- View Grafana server stats, including total users and active sessions.
+- Upgrade the server to Grafana Enterprise.
 
 ## Organization roles
 
