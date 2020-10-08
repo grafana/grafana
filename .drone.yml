@@ -1772,10 +1772,10 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --edition oss v7.3.0-test
+  - .\grabpl.exe windows-installer --edition oss --packages-bucket grafana-downloads-test v7.3.0-test
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-downloads/oss/release/
-  - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/release/
+  - gsutil cp $$fname gs://grafana-downloads-test/oss/release/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads-test/oss/release/
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -2113,10 +2113,10 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --edition enterprise v7.3.0-test
+  - .\grabpl.exe windows-installer --edition enterprise --packages-bucket grafana-downloads-test v7.3.0-test
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-downloads/enterprise/release/
-  - gsutil cp "$$fname.sha256" gs://grafana-downloads/enterprise/release/
+  - gsutil cp $$fname gs://grafana-downloads-test/enterprise/release/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads-test/enterprise/release/
   environment:
     GCP_KEY:
       from_secret: gcp_key
