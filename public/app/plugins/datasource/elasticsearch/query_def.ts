@@ -57,6 +57,14 @@ export const metricAggTypes = [
     requiresField: false,
     isPipelineAgg: true,
     minVersion: 2,
+    maxVersion: 60,
+  },
+  {
+    text: 'Moving Function',
+    value: 'moving_fn',
+    requiresField: false,
+    isPipelineAgg: true,
+    minVersion: 70,
   },
   {
     text: 'Derivative',
@@ -151,6 +159,10 @@ export const pipelineOptions: any = {
     { text: 'predict', default: undefined },
     { text: 'minimize', default: false },
   ],
+  moving_fn: [
+    { text: 'window', default: 5 },
+    { text: 'script', default: 'MovingFunctions.unweightedAvg(values)' },
+  ],
   derivative: [{ text: 'unit', default: undefined }],
   cumulative_sum: [{ text: 'format', default: undefined }],
   bucket_script: [],
@@ -175,11 +187,9 @@ export const movingAvgModelSettings: any = {
 
 export function getMetricAggTypes(esVersion: any) {
   return _.filter(metricAggTypes, f => {
-    if (f.minVersion) {
-      return f.minVersion <= esVersion;
-    } else {
-      return true;
-    }
+    const minVersion = f.minVersion || 0;
+    const maxVersion = f.maxVersion || esVersion;
+    return esVersion >= minVersion && esVersion <= maxVersion;
   });
 }
 

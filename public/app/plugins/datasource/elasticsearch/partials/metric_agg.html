@@ -71,6 +71,25 @@
 		<input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.format" ng-blur="onChangeInternal()" spellcheck='false'>
 	</div>
 
+  <div ng-if="agg.type === 'moving_fn'">
+
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Window</label>
+      <input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.window" ng-blur="onChangeInternal()" spellcheck='false'>
+    </div>
+
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Script</label>
+      <input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.script" ng-blur="onChangeInternal()" spellcheck='false'>
+    </div>
+
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Shift</label>
+      <input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.shift" ng-blur="onChangeInternal()" spellcheck='false'>
+    </div>
+
+  </div>
+
   <div ng-if="agg.type === 'moving_avg'">
     <div class="gf-form offset-width-7">
       <label class="gf-form-label width-10">Model</label>

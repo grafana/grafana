@@ -105,6 +105,11 @@ export class ElasticMetricAggCtrl {
           $scope.updateMovingAvgModelSettings();
           break;
         }
+        case 'moving_fn': {
+          $scope.agg.settings.window = $scope.agg.settings.window != null ? $scope.agg.settings.window : 5;
+          $scope.agg.settings.script = $scope.agg.settings.script || 'MovingFunctions.simple(values)';
+          break;
+        }
         case 'raw_document':
         case 'raw_data': {
           $scope.agg.settings.size = $scope.agg.settings.size || 500;

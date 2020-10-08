@@ -1,3 +1,4 @@
+import { convertMovingAvgToMovingFn, isMovingAvgMetric } from './convert_moving_avg_to_moving_fn';
 import * as queryDef from './query_def';
 import { ElasticsearchAggregation } from './types';
 
@@ -276,6 +277,8 @@ export class ElasticQueryBuilder {
       const aggField: any = {};
       let metricAgg: any = null;
 
+      const isMovingAvgDepreciated = this.esVersion >= 70 && isMovingAvgMetric(metric);
+
       if (queryDef.isPipelineAgg(metric.type)) {
         if (queryDef.isPipelineAggWithMultipleBucketPaths(metric.type)) {
           if (metric.pipelineVariables) {
@@ -301,7 +304,7 @@ export class ElasticQueryBuilder {
             continue;
           }
         } else {
-          if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
+          if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg) && !isMovingAvgDepreciated) {
             const appliedAgg = queryDef.findMetricById(target.metrics, metric.pipelineAgg);
             if (appliedAgg) {
               if (appliedAgg.type === 'count') {
@@ -310,6 +313,8 @@ export class ElasticQueryBuilder {
                 metricAgg = { buckets_path: metric.pipelineAgg };
               }
             }
+          } else if (isMovingAvgDepreciated) {
+            metricAgg = convertMovingAvgToMovingFn(metric);
           } else {
             continue;
           }
@@ -318,13 +323,16 @@ export class ElasticQueryBuilder {
         metricAgg = { field: metric.field };
       }
 
-      for (const prop in metric.settings) {
-        if (metric.settings.hasOwnProperty(prop) && metric.settings[prop] !== null) {
-          metricAgg[prop] = metric.settings[prop];
+      if (!isMovingAvgDepreciated) {
+        for (const prop in metric.settings) {
+          if (metric.settings.hasOwnProperty(prop) && metric.settings[prop] !== null) {
+            metricAgg[prop] = metric.settings[prop];
+          }
         }
       }
 
-      aggField[metric.type] = metricAgg;
+      const type = isMovingAvgDepreciated ? 'moving_fn' : metric.type;
+      aggField[type] = metricAgg;
       nestedAggs.aggs[metric.id] = aggField;
     }
 
