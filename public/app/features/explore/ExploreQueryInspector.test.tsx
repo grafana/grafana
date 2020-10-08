@@ -3,7 +3,7 @@ import { mount } from 'enzyme';
 import { Observable } from 'rxjs';
 import { ExploreId } from 'app/types';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
-import { TabbedContainer, Button } from '@grafana/ui';
+import { TabbedContainer, Button, Tab } from '@grafana/ui';
 import { TimeRange, LoadingState } from '@grafana/data';
 import { ExploreQueryInspector, Props } from './ExploreQueryInspector';
 
@@ -69,17 +69,21 @@ describe('ExploreQueryInspector', () => {
     const wrapper = setup();
     expect(wrapper.find(ExploreDrawer)).toHaveLength(1);
   });
-  it('should render reseizable TabbedContainer component', () => {
+  it('should render 2 Tabs component', () => {
     const wrapper = setup();
-    expect(wrapper.find(TabbedContainer)).toHaveLength(1);
+    expect(wrapper.find(Tab)).toHaveLength(2);
   });
-  it('should have collected query data', () => {
+  it('should be possible to switch between tabs and see tab-specific content', () => {
     const wrapper = setup();
     const queryInspctorTab = wrapper.find('[aria-label="Tab Query Inspector"]');
     queryInspctorTab.simulate('click');
-    expect(wrapper.html()).toContain('Expand all');
+    expect(
+      wrapper.find(Button).findWhere(n => {
+        return n.text() === 'Expand all' && n.type() === Button;
+      })
+    ).toHaveLength(1);
   });
-  it('should have collected query data', () => {
+  it('should display query data', () => {
     const wrapper = setup();
     const queryInspectorTab = wrapper.find('[aria-label="Tab Query Inspector"]');
     queryInspectorTab.simulate('click');
