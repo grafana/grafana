@@ -403,13 +403,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           SafeDynamicImport(import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')),
       },
     })
-    .when('/admin/live', {
-      template: '<react-container />',
-      reloadOnSearch: false,
-      resolve: {
-        component: () => SafeDynamicImport(import(/* webpackChunkName: "LiveAdmin" */ 'app/features/admin/LiveAdmin')),
-      },
-    })
     .when('/admin/ldap', {
       template: '<react-container />',
       reloadOnSearch: false,
