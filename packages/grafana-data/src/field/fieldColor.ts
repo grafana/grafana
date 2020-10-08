@@ -23,7 +23,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
     },
     {
       id: FieldColorModeId.Thresholds,
-      name: 'From thresholds',
+      name: 'Color by thresholds',
       description: 'Derive colors from thresholds',
       getCalculator: (_field, theme) => {
         return (_value, _percent, threshold) => {
@@ -34,8 +34,8 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
     },
     new FieldColorSchemeMode({
       id: FieldColorModeId.PaletteSaturated,
-      name: 'Saturated palette',
-      description: 'Assigns color based on series or field index',
+      name: 'Color by series / Saturated palette',
+      //description: 'Assigns color based on series or field index',
       isContinuous: false,
       isByValue: false,
       colors: [
@@ -54,24 +54,24 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
     }),
     new FieldColorSchemeMode({
       id: FieldColorModeId.PaletteClassic,
-      name: 'Classic palette',
-      description: 'Assigns color based on series or field index',
+      name: 'Color by series / Classic palette',
+      //description: 'Assigns color based on series or field index',
       isContinuous: false,
       isByValue: false,
       colors: classicColors,
     }),
     new FieldColorSchemeMode({
       id: FieldColorModeId.ContinousGrYlRd,
-      name: 'Green-Yellow-Red (gradient)',
-      description: 'Interpolated colors based value, min and max',
+      name: 'Color by value / Green-Yellow-Red / Continouous',
+      //description: 'Interpolated colors based value, min and max',
       isContinuous: true,
       isByValue: true,
       colors: ['green', 'yellow', 'red'],
     }),
     new FieldColorSchemeMode({
       id: FieldColorModeId.ContinousBlGrOr,
-      name: 'Blue-Green-Orange (gradient)',
-      description: 'Interpolated colors based value, min and max',
+      name: 'Color by value / Blue-Green-Orange / Continouous',
+      //description: 'Interpolated colors based value, min and max',
       isContinuous: true,
       isByValue: true,
       colors: ['blue', 'green', 'orange'],
@@ -82,7 +82,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
 interface FieldColorSchemeModeOptions {
   id: FieldColorModeId;
   name: string;
-  description: string;
+  description?: string;
   colors: string[];
   isContinuous: boolean;
   isByValue: boolean;
@@ -91,7 +91,7 @@ interface FieldColorSchemeModeOptions {
 export class FieldColorSchemeMode implements FieldColorMode {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   colors: string[];
   isContinuous: boolean;
   isByValue: boolean;

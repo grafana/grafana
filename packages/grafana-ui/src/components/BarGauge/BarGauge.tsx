@@ -554,8 +554,6 @@ export function getBarGradient(props: Props, maxSize: number): string {
       } else {
         const valuePercent = i / (scheme.length - 1);
         const pos = valuePercent * maxSize;
-
-        lastpos = pos;
         gradient += `, ${color} ${pos}px`;
       }
     }

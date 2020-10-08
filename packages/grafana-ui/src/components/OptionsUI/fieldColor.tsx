@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { CSSProperties, FC } from 'react';
 import {
   FieldConfigEditorProps,
   FieldColorModeId,
   SelectableValue,
   FieldColor,
   fieldColorModeRegistry,
+  FieldColorMode,
   GrafanaTheme,
+  getColorFromHexRgbOrName,
 } from '@grafana/data';
 import { Select } from '../Select/Select';
 import { ColorValueEditor } from './color';
-import { useStyles } from '../../themes/ThemeContext';
+import { useStyles, useTheme } from '../../themes/ThemeContext';
 import { css } from 'emotion';
 
 export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | undefined, {}>> = ({
@@ -17,6 +19,7 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
   onChange,
   item,
 }) => {
+  const theme = useTheme();
   const styles = useStyles(getStyles);
 
   const options = fieldColorModeRegistry.list().map(mode => {
@@ -26,23 +29,9 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
       description: mode.description,
       isContinuous: mode.isContinuous,
       isByValue: mode.isByValue,
+      component: () => <FieldColorModeViz mode={mode} theme={theme} />,
     };
   });
-
-  const groups = [
-    options.find(item => item.value === FieldColorModeId.Fixed)!,
-    options.find(item => item.value === FieldColorModeId.Thresholds)!,
-    {
-      label: 'Color by series',
-      options: options.filter(item => item.isByValue === false),
-      expanded: false,
-    },
-    {
-      label: 'Color by value',
-      options: options.filter(item => item.isByValue === true),
-      expanded: false,
-    },
-  ];
 
   const onModeChange = (newMode: SelectableValue<string>) => {
     onChange({
@@ -62,13 +51,55 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
   if (mode === FieldColorModeId.Fixed) {
     return (
       <div className={styles.group}>
-        <Select options={groups} value={mode} onChange={onModeChange} className={styles.select} />
+        <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} className={styles.select} />
         <ColorValueEditor value={value?.fixedColor} onChange={onColorChange} />
       </div>
     );
   }
 
-  return <Select options={groups} value={mode} onChange={onModeChange} />;
+  return <Select minMenuHeight={200} options={options} value={mode} onChange={onModeChange} />;
+};
+
+interface ModeProps {
+  mode: FieldColorMode;
+  theme: GrafanaTheme;
+}
+
+const FieldColorModeViz: FC<ModeProps> = ({ mode, theme }) => {
+  if (!mode.colors) {
+    return null;
+  }
+
+  const colors = mode.colors.map(item => getColorFromHexRgbOrName(item, theme.type));
+  const style: CSSProperties = {
+    height: '8px',
+    width: '100%',
+    margin: '2px 0',
+    borderRadius: '3px',
+    opacity: 1,
+  };
+
+  if (mode.isContinuous) {
+    style.background = `linear-gradient(90deg, ${colors.join(',')})`;
+  } else {
+    let gradient = '';
+    let lastColor = '';
+
+    for (let i = 0; i < colors.length; i++) {
+      const color = colors[i];
+      if (gradient === '') {
+        gradient = `linear-gradient(90deg, ${color} 0%`;
+      } else {
+        const valuePercent = i / (colors.length - 1);
+        const pos = valuePercent * 100;
+        gradient += `, ${lastColor} ${pos}%, ${color} ${pos}%`;
+      }
+      lastColor = color;
+    }
+    style.background = gradient;
+  }
+
+  return <div style={style} />;
 };
 
 const getStyles = (theme: GrafanaTheme) => {
