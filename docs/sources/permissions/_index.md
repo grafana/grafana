@@ -3,6 +3,7 @@ title = "Permissions"
 description = "Permissions"
 keywords = ["grafana", "configuration", "documentation", "admin", "users", "datasources", "permissions"]
 type = "docs"
+aliases = ["/docs/grafana/latest/permissions/overview/"]
 [menu.docs]
 name = "Permissions"
 identifier = "permissions"
@@ -22,7 +23,7 @@ Grafana users have permissions that are determined by their:
 
 Grafana supports a wide variety of internal and external ways for users to authenticate themselves. These include from its own integrated database, from an external SQL server, or from an external LDAP server.
 
-## Grafana Admin
+## Grafana server admin
 
 This admin flag makes user a `Super Admin`. This means they can access the `Server Admin` views where all users and organizations can be administrated.
 
