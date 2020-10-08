@@ -3,9 +3,29 @@ import { mount } from 'enzyme';
 import { Observable } from 'rxjs';
 import { ExploreId } from 'app/types';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
-import { TabbedContainer, Button, Tab } from '@grafana/ui';
+import { Button, Tab } from '@grafana/ui';
 import { TimeRange, LoadingState } from '@grafana/data';
 import { ExploreQueryInspector, Props } from './ExploreQueryInspector';
+
+const response = (hideFromInspector = false) => ({
+  status: 1,
+  statusText: '',
+  ok: true,
+  headers: {} as any,
+  redirected: false,
+  type: 'basic',
+  url: '',
+  request: {} as any,
+  data: {
+    test: {
+      testKey: 'Very unique test value',
+    },
+  },
+  config: {
+    url: '',
+    hideFromInspector,
+  },
+});
 
 jest.mock('../dashboard/components/Inspector/styles', () => ({
   getPanelInspectorStyles: () => ({}),
@@ -15,26 +35,8 @@ jest.mock('app/core/services/backend_srv', () => ({
   getBackendSrv: () => ({
     getInspectorStream: () =>
       new Observable(subscriber => {
-        const response = {
-          status: 1,
-          statusText: '',
-          ok: true,
-          headers: {} as any,
-          redirected: false,
-          type: 'basic',
-          url: '',
-          request: {} as any,
-          data: {
-            test: {
-              testKey: 'Very unique test value',
-            },
-          },
-          config: {
-            url: '',
-            hideFromInspector: false,
-          },
-        };
-        subscriber.next(response);
+        subscriber.next(response());
+        subscriber.next(response(true));
       }) as any,
   }),
 }));
@@ -72,16 +74,6 @@ describe('ExploreQueryInspector', () => {
   it('should render 2 Tabs component', () => {
     const wrapper = setup();
     expect(wrapper.find(Tab)).toHaveLength(2);
-  });
-  it('should be possible to switch between tabs and see tab-specific content', () => {
-    const wrapper = setup();
-    const queryInspctorTab = wrapper.find('[aria-label="Tab Query Inspector"]');
-    queryInspctorTab.simulate('click');
-    expect(
-      wrapper.find(Button).findWhere(n => {
-        return n.text() === 'Expand all' && n.type() === Button;
-      })
-    ).toHaveLength(1);
   });
   it('should display query data', () => {
     const wrapper = setup();
