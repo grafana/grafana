@@ -331,15 +331,15 @@ func FrameToSeriesSlice(frame *data.Frame) (tsdb.TimeSeriesSlice, error) {
 			Points: make(tsdb.TimeSeriesPoints, field.Len()),
 		}
 
-		hasDisplayName := field.Config != nil && field.Config.DisplayName != ""
-		if hasDisplayName {
+		switch {
+		case field.Config != nil && field.Config.DisplayName != "":
 			ts.Name = field.Config.DisplayName
-		} else if field.Labels != nil && !hasDisplayName {
+		case field.Labels != nil:
 			ts.Tags = field.Labels.Copy()
 			// Tags are appended to the name so they are eventually included in EvalMatch's Metric property
 			// for display in notifications.
 			ts.Name = fmt.Sprintf("%v {%v}", field.Name, field.Labels.String())
-		} else {
+		default:
 			ts.Name = field.Name
 		}
 
