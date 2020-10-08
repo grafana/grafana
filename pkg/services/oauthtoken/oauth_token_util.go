@@ -45,7 +45,7 @@ func GetCurrentOAuthToken(ctx context.Context, user models.SignedInUser) (*oauth
 	// TokenSource handles refreshing the token if it has expired
 	token, err := connect.TokenSource(ctx, persistedToken).Token()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to retrieve access token from OAuth provider=%s userid=%d username=%s error=%s", authInfoQuery.Result.AuthModule, user.UserId, user.Login, err)
+		return nil, fmt.Errorf("failed to retrieve access token from OAuth, provider=%s userid=%d username=%s error=%s", authInfoQuery.Result.AuthModule, user.UserId, user.Login, err)
 	}
 
 	// If the tokens are not the same, update the entry in the DB
