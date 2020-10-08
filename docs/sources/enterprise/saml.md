@@ -41,24 +41,26 @@ In terms of initiation:
 
 The table below describes all SAML configuration options. Continue reading below for details on specific options. Like any other Grafana configuration, you can apply these options as [environment variables]({{< relref "../administration/configuration.md#configure-with-environment-variables" >}}).
 
-| Setting                                                     | Required | Description                                                                                        | Default       |
-| ----------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------- | ------------- |
+| Setting                                                     | Required | Description                                                                                   | Default       |
+| ----------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------- | ------------- |
 | `enabled`                                                   | No  | Whether SAML authentication is allowed                                                             | `false`       |
+| `single_logout`                                             | No  | Whether SAML Single Logout enabled                                                                 | `false`       |
 | `certificate` or `certificate_path`                         | Yes | Base64-encoded string or Path for the SP X.509 certificate                                         |               |
 | `private_key` or `private_key_path`                         | Yes | Base64-encoded string or Path for the SP private key                                               |               |
+| `signature_algorithm`                                       | No  | Signature algorithm used for signing requests to the IdP. Supported values are rsa-sha1, rsa-sha256, rsa-sha512. |              |
 | `idp_metadata`, `idp_metadata_path`, or `idp_metadata_url`  | Yes | Base64-encoded string, Path or URL for the IdP SAML metadata XML                                   |               |
 | `max_issue_delay`                                           | No  | Duration, since the IdP issued a response and the SP is allowed to process it                      | `90s`         |
-| `metadata_valid_duration`                                   | No  | Duration, for how long the SP metadata is valid                                                  | `48h`         |
-| `assertion_attribute_name`                                  | No  | Friendly name or name of the attribute within the SAML assertion to use as the user name         | `displayName` |
-| `assertion_attribute_login`                                 | No  | Friendly name or name of the attribute within the SAML assertion to use as the user login handle | `mail`        |
-| `assertion_attribute_email`                                 | No  | Friendly name or name of the attribute within the SAML assertion to use as the user email        | `mail`        |
-| `assertion_attribute_groups`                                | No  | Friendly name or name of the attribute within the SAML assertion to use as the user groups     |               |
-| `assertion_attribute_role`                                  | No  | Friendly name or name of the attribute within the SAML assertion to use as the user roles      |               |
-| `assertion_attribute_org`                                   | No  | Friendly name or name of the attribute within the SAML assertion to use as the user organization |             |
+| `metadata_valid_duration`                                   | No  | Duration, for how long the SP metadata is valid                                                    | `48h`         |
+| `assertion_attribute_name`                                  | No  | Friendly name or name of the attribute within the SAML assertion to use as the user name           | `displayName` |
+| `assertion_attribute_login`                                 | No  | Friendly name or name of the attribute within the SAML assertion to use as the user login handle   | `mail`        |
+| `assertion_attribute_email`                                 | No  | Friendly name or name of the attribute within the SAML assertion to use as the user email          | `mail`        |
+| `assertion_attribute_groups`                                | No  | Friendly name or name of the attribute within the SAML assertion to use as the user groups         |               |
+| `assertion_attribute_role`                                  | No  | Friendly name or name of the attribute within the SAML assertion to use as the user roles          |               |
+| `assertion_attribute_org`                                   | No  | Friendly name or name of the attribute within the SAML assertion to use as the user organization   |             |
 | `allowed_organizations`                                     | No  | List of comma- or space-separated organizations. User should be a member of at least one organization to log in. |               |
-| `org_mapping`                                               | No  | List of comma- or space-separated Organization:OrgId mappings                                  |               |
-| `role_values_editor`                                        | No  | List of comma- or space-separated roles which will be mapped into the Editor role               |               |
-| `role_values_admin`                                         | No  | List of comma- or space-separated roles which will be mapped into the Admin role                |               |
+| `org_mapping`                                               | No  | List of comma- or space-separated Organization:OrgId mappings                                      |               |
+| `role_values_editor`                                        | No  | List of comma- or space-separated roles which will be mapped into the Editor role                  |               |
+| `role_values_admin`                                         | No  | List of comma- or space-separated roles which will be mapped into the Admin role                   |               |
 | `role_values_grafana_admin`                                 | No  | List of comma- or space-separated roles which will be mapped into the Grafana Admin (Super Admin) role |               |
 
 ### Enable SAML authentication
@@ -76,6 +78,10 @@ Grafana supports two ways of specifying both the `certificate` and `private_key`
 - With the `_path` suffix (`certificate_path` or `private_key_path`), then Grafana treats the value entered as a file path and attempts to read the file from the file system.
 
 You can only use one form of each configuration option. Using multiple forms, such as both `certificate` and `certificate_path`, results in an error.
+
+### Signature algorithm
+
+The SAML standard recommends using digital signature for some types of messages, like authentication or logout requests. If `signature_algorithm` option configured, Grafana will put digital signature into SAML requests. Supported signature types are `rsa-sha1`, `rsa-sha256`, `rsa-sha512`. This option should match your IdP configuration, otherwise, signature won't be validated by the IdP. Grafana uses key and certificate configured with `private_key` and `certificate` options for signing SAML requests.
 
 ### IdP metadata
 
@@ -106,6 +112,10 @@ The integration provides two key endpoints as part of Grafana:
 
 - The `/saml/metadata` endpoint, which contains the SP metadata. You can either download and upload it manually, or youmake the IdP request it directly from the endpoint. Some providers name it Identifier or Entity ID.
 - The `/saml/acs` endpoint, which is intended to receive the ACS (Assertion Customer Service) callback. Some providers name it SSO URL or Reply URL.
+
+### Single Logout
+
+Single Logout feature allows user to log out from all applications associated with current IdP session established via SAML SSO. If `single_logout` option set to `true` and user logs out, Grafana requests IdP to terminate user session. Then IdP triggers logout process for all other applications which user logged in with the same IdP session (application should support single logout). And conversely, if another application connected to the same IdP initiates single logout, Grafana gets logout request from IdP and terminates user session.
 
 ### Assertion mapping
 

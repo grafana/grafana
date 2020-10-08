@@ -287,7 +287,8 @@ type Cfg struct {
 	OAuthCookieMaxAge int
 
 	// SAML Auth
-	SAMLEnabled bool
+	SAMLEnabled             bool
+	SAMLSingleLogoutEnabled bool
 
 	// Dataproxy
 	SendUserHeader bool
@@ -998,6 +999,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// SAML auth
 	cfg.SAMLEnabled = iniFile.Section("auth.saml").Key("enabled").MustBool(false)
+	cfg.SAMLSingleLogoutEnabled = iniFile.Section("auth.saml").Key("single_logout").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
