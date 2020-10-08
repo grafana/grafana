@@ -1,95 +1,160 @@
-// Libraries
 import React, { PureComponent } from 'react';
-
-// Utils & Services
-import { CustomScrollbar, stylesFactory } from '@grafana/ui';
-
-// Types
-import { PanelProps, GrafanaTheme, LiveChannelStatusEvent, LiveChannelMessageEvent } from '@grafana/data';
+import { Unsubscribable, PartialObserver } from 'rxjs';
+import { CustomScrollbar, FeatureInfoBox } from '@grafana/ui';
+import {
+  PanelProps,
+  LiveChannelStatusEvent,
+  LiveChannelAddress,
+  LiveChannel,
+  LiveChannelEvent,
+  isLiveChannelStatusEvent,
+  isLiveChannelMessageEvent,
+} from '@grafana/data';
 import { LivePanelOptions } from './types';
-import { css } from 'emotion';
+import { getGrafanaLiveSrv } from '@grafana/runtime';
 
 interface Props extends PanelProps<LivePanelOptions> {}
 
 interface State {
-  hasLive?: boolean;
+  error?: any;
+  channel?: LiveChannel;
   status?: LiveChannelStatusEvent;
-  message?: LiveChannelMessageEvent<any>;
+  message?: any;
 }
 
 export class LivePanel extends PureComponent<Props, State> {
+  private readonly isValid: boolean;
+  subscription?: Unsubscribable;
+
   constructor(props: Props) {
     super(props);
 
+    this.isValid = !!getGrafanaLiveSrv();
     this.state = {};
   }
 
-  componentDidMount(): void {
-    this.loadFeed();
+  async componentDidMount() {
+    this.loadChannel();
+  }
+
+  componentWillUnmount() {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
   }
 
   componentDidUpdate(prevProps: Props): void {
     if (this.props.options?.channel !== prevProps.options?.channel) {
-      this.loadFeed();
+      this.loadChannel();
     }
   }
 
-  async loadFeed() {
-    const { options } = this.props;
-    console.log('TODO... connect', options);
+  streamObserver: PartialObserver<LiveChannelEvent> = {
+    next: (event: LiveChannelEvent) => {
+      if (isLiveChannelStatusEvent(event)) {
+        this.setState({ status: event });
+      } else if (isLiveChannelMessageEvent(event)) {
+        this.setState({ message: event.message });
+      } else {
+        console.log('ignore', event);
+      }
+    },
+  };
+
+  unsubscribe = () => {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+      this.subscription = undefined;
+    }
+  };
+
+  async loadChannel() {
+    const addr = this.props.options?.channel;
+    if (isValidChannel(addr)) {
+      const channel = getGrafanaLiveSrv().getChannel(addr!);
+      const changed = channel.id !== this.state.channel?.id;
+      console.log('LOAD', addr, changed, channel);
+      if (changed) {
+        this.unsubscribe();
+
+        // Subscribe to new events
+        try {
+          this.subscription = channel.getStream().subscribe(this.streamObserver);
+          this.setState({ channel, error: undefined });
+        } catch (err) {
+          this.setState({ channel: undefined, error: err });
+        }
+      } else {
+        console.log('Same channel', channel);
+      }
+    } else {
+      console.log('INVALID', addr);
+      this.unsubscribe();
+      this.setState({
+        channel: undefined,
+      });
+    }
+  }
+
+  renderNotEnabled() {
+    const preformatted = `[feature_toggles]
+    enable = live`;
+    return (
+      <FeatureInfoBox
+        title="Grafana Live"
+        style={{
+          height: this.props.height,
+        }}
+        // url={getDocsLink(DocsId.Transformations)}
+      >
+        <p>Grafana live requires a feature flag to run</p>
+
+        <b>custom.ini:</b>
+        <pre>{preformatted}</pre>
+      </FeatureInfoBox>
+    );
   }
 
   render() {
-    // const styles = getStyles(config.theme);
+    if (!this.isValid) {
+      return this.renderNotEnabled();
+    }
+    const { channel, status, message, error } = this.state;
+    if (!channel) {
+      return (
+        <FeatureInfoBox
+          title="Grafana Live"
+          style={{
+            height: this.props.height,
+          }}
+        >
+          <p>Use the panel editor to pick a channel</p>
+        </FeatureInfoBox>
+      );
+    }
 
-    // if (isError) {
-    //   return <div>Error Loading News</div>;
-    // }
-    // if (!news) {
-    //   return <div>loading...</div>;
-    // }
+    if (error) {
+      return (
+        <div>
+          <h2>ERROR</h2>
+          <div>{JSON.stringify(error)}</div>
+        </div>
+      );
+    }
 
     return (
       <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
-        TODO!!!!!!
+        <h3>Status</h3>
+        <pre>{JSON.stringify(status)}</pre>
+
+        <br />
+        <h3>Message</h3>
+        <pre>{JSON.stringify(message)}</pre>
       </CustomScrollbar>
     );
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  container: css`
-    height: 100%;
-  `,
-  item: css`
-    padding: ${theme.spacing.sm};
-    position: relative;
-    margin-bottom: 4px;
-    margin-right: ${theme.spacing.sm};
-    border-bottom: 2px solid ${theme.colors.border1};
-  `,
-  title: css`
-    color: ${theme.colors.linkExternal};
-    max-width: calc(100% - 70px);
-    font-size: 16px;
-    margin-bottom: ${theme.spacing.sm};
-  `,
-  content: css`
-    p {
-      margin-bottom: 4px;
-      color: ${theme.colors.text};
-    }
-  `,
-  date: css`
-    position: absolute;
-    top: 0;
-    right: 0;
-    background: ${theme.colors.panelBg};
-    width: 55px;
-    text-align: right;
-    padding: ${theme.spacing.xs};
-    font-weight: 500;
-    border-radius: 0 0 0 3px;
-    color: ${theme.colors.textWeak};
-  `,
-}));
+function isValidChannel(channel?: LiveChannelAddress) {
+  return channel?.path && channel.namespace && channel.scope;
+}
