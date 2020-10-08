@@ -27,12 +27,12 @@ func GetCurrentOAuthToken(ctx context.Context, user models.SignedInUser) (*oauth
 	authProvider := authInfoQuery.Result.AuthModule
 	connect, err := social.GetConnector(authProvider)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get OAuth connector error=%s", err)
+		return nil, fmt.Errorf("failed to get OAuth connector error=%s", err)
 	}
 
 	client, err := social.GetOAuthHttpClient(authProvider)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create OAuth http client error=%s", err)
+		return nil, fmt.Errorf("failed to create OAuth http client error=%s", err)
 	}
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
 
@@ -57,7 +57,7 @@ func GetCurrentOAuthToken(ctx context.Context, user models.SignedInUser) (*oauth
 			OAuthToken: token,
 		}
 		if err := bus.Dispatch(updateAuthCommand); err != nil {
-			return nil, fmt.Errorf("Failed to update auth info during token refresh userId=%d username=%s error=%s", user.UserId, user.Login, err)
+			return nil, fmt.Errorf("failed to update auth info during token refresh, userId=%d username=%s error=%s", user.UserId, user.Login, err)
 		}
 		logger.Debug("Updated OAuth info while proxying an OAuth pass-thru request", "userid", user.UserId, "username", user.Login)
 	}
