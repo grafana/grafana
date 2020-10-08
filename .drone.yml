@@ -1703,7 +1703,7 @@ steps:
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.2.6
   commands:
-  - ./bin/grabpl upload-packages --edition oss
+  - ./bin/grabpl upload-packages --edition oss --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket grafana-downloads-test --rpm-repo-bucket grafana-testing-repo
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
@@ -2023,7 +2023,7 @@ steps:
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.2.6
   commands:
-  - ./bin/grabpl upload-packages --edition enterprise
+  - ./bin/grabpl upload-packages --edition enterprise --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket grafana-downloads-test --rpm-repo-bucket grafana-testing-repo
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
