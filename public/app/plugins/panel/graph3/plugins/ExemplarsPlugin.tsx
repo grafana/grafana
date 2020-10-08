@@ -1,24 +1,34 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { map } from 'rxjs/operators';
-import { AnnotationEvent, DataFrame, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
-import { getAnnotationsFromData } from 'app/features/annotations/standardAnnotationSupport';
+import {
+  ArrayVector,
+  DataFrame,
+  dateTimeFormat,
+  FieldType,
+  MutableDataFrame,
+  systemDateFormats,
+  TimeZone,
+} from '@grafana/data';
 import { EventsCanvas, usePlotContext } from '@grafana/ui';
 import { ExemplarMarker } from './ExemplarMarker';
-import { Subscription } from 'rxjs';
 
 interface ExemplarsPluginProps {
   exemplars: DataFrame[];
   timeZone: TimeZone;
 }
 
-// tmp type to mock an exemplar events
-interface ExemplarEvent extends AnnotationEvent {
+// Type representing exemplars data frame fields
+interface ExemplarsDataFrameViewDTO {
+  time: number;
   y: number;
+  text: string;
+  tags: string[];
 }
 
 export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, timeZone }) => {
   const plotCtx = usePlotContext();
-  const [exemplarEvents, setExemplarEvents] = useState<ExemplarEvent[]>([]);
+
+  // TEMPORARY MOCK
+  const [exemplarsMock, setExemplarsMock] = useState<DataFrame[]>([]);
 
   const timeFormatter = useCallback(
     (value: number) => {
@@ -30,34 +40,34 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
     [timeZone]
   );
 
+  // THIS EVENT ONLY MOCKS EXEMPLAR Y VALUE!!!! TO BE REMOVED WHEN WE GET CORRECT EXEMPLARS SHAPE VIA PROPS
   useEffect(() => {
-    let subscription: Subscription;
-    if (plotCtx.isPlotReady) {
-      subscription = getAnnotationsFromData(exemplars)
-        .pipe(
-          map<AnnotationEvent[], ExemplarEvent[]>(annotations => {
-            return annotations.map(a => ({
-              ...a,
-              // temporary mock
-              y: Math.random(),
-            }));
-          })
-        )
-        .subscribe(result => {
-          setExemplarEvents(result);
+    if (plotCtx.isPlotReady && exemplars.length) {
+      const mocks: DataFrame[] = [];
+
+      for (const frame of exemplars) {
+        const mock = new MutableDataFrame(frame);
+        mock.addField({
+          name: 'y',
+          type: FieldType.number,
+          values: new ArrayVector(
+            Array(frame.length)
+              .fill(0)
+              .map(() => Math.random())
+          ),
         });
-    }
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
+        mocks.push(mock);
       }
-    };
+
+      console.log(mocks);
+      setExemplarsMock(mocks);
+    }
   }, [plotCtx.isPlotReady, exemplars]);
 
   return (
-    <EventsCanvas
+    <EventsCanvas<ExemplarsDataFrameViewDTO>
       id="exemplars"
-      events={exemplarEvents}
+      events={exemplarsMock}
       renderEventMarker={exemplar => <ExemplarMarker exemplar={exemplar} formatTime={timeFormatter} />}
       mapEventToXYCoords={exemplar => {
         if (!exemplar.time) {

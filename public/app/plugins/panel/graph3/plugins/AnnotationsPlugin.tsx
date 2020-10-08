@@ -1,21 +1,26 @@
-import { AnnotationEvent, DataFrame, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
+import { DataFrame, DataFrameView, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
 import { EventsCanvas, usePlotContext, usePlotPluginContext, useTheme } from '@grafana/ui';
-import { getAnnotationsFromData } from 'app/features/annotations/standardAnnotationSupport';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { AnnotationMarker } from './AnnotationMarker';
-import { Subscription } from 'rxjs';
 
 interface AnnotationsPluginProps {
   annotations: DataFrame[];
   timeZone: TimeZone;
 }
 
+interface AnnotationsDataFrameViewDTO {
+  time: number;
+  text: string;
+  tags: string[];
+}
+
 export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotations, timeZone }) => {
   const pluginId = 'AnnotationsPlugin';
   const plotCtx = usePlotContext();
   const pluginsApi = usePlotPluginContext();
-  const annotationsRef = useRef<AnnotationEvent[]>();
+
   const theme = useTheme();
+  const annotationsRef = useRef<Array<DataFrameView<AnnotationsDataFrameViewDTO>>>();
 
   const timeFormatter = useCallback(
     (value: number) => {
@@ -27,27 +32,17 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     [timeZone]
   );
 
-  const [annotationEvents, setAnnotationEvents] = useState<AnnotationEvent[]>([]);
-
   useEffect(() => {
-    let subscription: Subscription;
-    if (plotCtx.isPlotReady) {
-      subscription = getAnnotationsFromData(annotations).subscribe(result => {
-        console.log(result);
-        setAnnotationEvents(result);
-      });
-    }
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
+    if (plotCtx.isPlotReady && annotations.length > 0) {
+      const views: Array<DataFrameView<AnnotationsDataFrameViewDTO>> = [];
+
+      for (const frame of annotations) {
+        views.push(new DataFrameView(frame));
       }
-    };
-  }, [plotCtx.isPlotReady, annotations]);
 
-  // For uPlot plugin to have access to lates annotation data we need to update the data ref
-  useEffect(() => {
-    annotationsRef.current = annotationEvents;
-  }, [annotationEvents]);
+      annotationsRef.current = views;
+    }
+  }, [plotCtx.isPlotReady, annotations]);
 
   useEffect(() => {
     const unregister = pluginsApi.registerPlugin({
@@ -62,24 +57,30 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
           if (!annotationsRef.current) {
             return null;
           }
+
           const ctx = u.ctx;
           if (!ctx) {
             return;
           }
           for (let i = 0; i < annotationsRef.current.length; i++) {
-            const annotation = annotationsRef.current[i];
-            if (!annotation.time) {
-              continue;
+            const annotationsView = annotationsRef.current[i];
+            for (let j = 0; j < annotationsView.length; j++) {
+              const annotation = annotationsView.get(j);
+
+              if (!annotation.time) {
+                continue;
+              }
+
+              const xpos = u.valToPos(annotation.time / 1000, 'x', true);
+              ctx.beginPath();
+              ctx.lineWidth = 2;
+              ctx.strokeStyle = theme.palette.red;
+              ctx.setLineDash([5, 5]);
+              ctx.moveTo(xpos, u.bbox.top);
+              ctx.lineTo(xpos, u.bbox.top + u.bbox.height);
+              ctx.stroke();
+              ctx.closePath();
             }
-            const xpos = u.valToPos(annotation.time / 1000, 'x', true);
-            ctx.beginPath();
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = theme.palette.red;
-            ctx.setLineDash([5, 5]);
-            ctx.moveTo(xpos, u.bbox.top);
-            ctx.lineTo(xpos, u.bbox.top + u.bbox.height);
-            ctx.stroke();
-            ctx.closePath();
           }
           return;
         },
@@ -92,10 +93,12 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
   }, []);
 
   return (
-    <EventsCanvas
+    <EventsCanvas<AnnotationsDataFrameViewDTO>
       id="annotations"
-      events={annotationEvents}
-      renderEventMarker={event => <AnnotationMarker annotationEvent={event} formatTime={timeFormatter} />}
+      events={annotations}
+      renderEventMarker={event => (
+        <AnnotationMarker time={timeFormatter(event.time)} text={event.text} tags={event.tags} />
+      )}
       mapEventToXYCoords={annotation => {
         if (!annotation.time) {
           return undefined;

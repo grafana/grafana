@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { AnnotationEvent } from '@grafana/data';
+import { DataFrame, DataFrameView } from '@grafana/data';
 import { usePlotContext } from '../context';
 import { Marker } from './Marker';
 import { XYCanvas } from './XYCanvas';
@@ -7,44 +7,41 @@ import { useRefreshAfterGraphRendered } from '../hooks';
 
 interface EventsCanvasProps<T> {
   id: string;
-  events: T[];
+  events: DataFrame[];
   renderEventMarker: (event: T) => React.ReactNode;
   mapEventToXYCoords: (event: T) => { x: number; y: number } | undefined;
 }
 
-export function EventsCanvas<T extends AnnotationEvent>({
-  id,
-  events,
-  renderEventMarker,
-  mapEventToXYCoords,
-}: EventsCanvasProps<T>) {
+export function EventsCanvas<T>({ id, events, renderEventMarker, mapEventToXYCoords }: EventsCanvasProps<T>) {
   const plotCtx = usePlotContext();
   const renderToken = useRefreshAfterGraphRendered(id);
 
   const eventMarkers = useMemo(() => {
-    const markers: AnnotationEvent[] = [];
+    const markers: React.ReactNode[] = [];
 
-    if (!events) {
+    if (!plotCtx.isPlotReady || events.length === 0) {
       return markers;
     }
 
     for (let i = 0; i < events.length; i++) {
-      const event = events[i];
-      const coords = mapEventToXYCoords(event);
+      const view = new DataFrameView<T>(events[i]);
+      for (let j = 0; j < view.length; j++) {
+        const event = view.get(j);
 
-      if (!coords) {
-        continue;
+        const coords = mapEventToXYCoords(event);
+        if (!coords) {
+          continue;
+        }
+        markers.push(
+          <Marker {...coords} key={`${id}-marker-${i}-${j}`}>
+            {renderEventMarker(event)}
+          </Marker>
+        );
       }
-
-      markers.push(
-        <Marker {...coords} key={`${event.time}-${i}`}>
-          {renderEventMarker(event)}
-        </Marker>
-      );
     }
 
     return <>{markers}</>;
-  }, [events, renderEventMarker, renderToken]);
+  }, [events, renderEventMarker, renderToken, plotCtx.isPlotReady]);
 
   if (!plotCtx.isPlotReady) {
     return null;
