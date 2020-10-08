@@ -750,7 +750,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'test-release':
         cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
             '--deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket ' + \
-            'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --dry-run'
+            'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo'
     else:
         cmd = './bin/grabpl upload-packages --edition {}'.format(edition)
 
@@ -780,9 +780,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
                 'from_secret': 'gpg_key_password',
             },
         },
-        'commands': [
-            './bin/grabpl upload-packages --edition {}'.format(edition),
-        ],
+        'commands': [cmd,],
     }
 
 def publish_packages_step(edition, is_downstream):
