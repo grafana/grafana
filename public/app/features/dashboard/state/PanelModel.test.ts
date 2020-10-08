@@ -353,7 +353,7 @@ describe('PanelModel', () => {
         expect(model.someProperty).toBeUndefined();
       });
 
-      it('Should remove old angular panel specfic props', () => {
+      it('Should remove old angular panel specific props', () => {
         model.axes = [{ prop: 1 }];
         model.thresholds = [];
 
