@@ -1,5 +1,6 @@
 import { FALLBACK_COLOR, Field, FieldColorModeId, GrafanaTheme, Threshold } from '../types';
-import { classicColors, getColorFromHexRgbOrName, Registry, RegistryItem } from '../utils';
+import { classicColors, getColorFromHexRgbOrName, RegistryItem } from '../utils';
+import { Registry } from '../utils/Registry';
 import { interpolateRgbBasis } from 'd3-interpolate';
 import { fallBackTreshold } from './thresholds';
 

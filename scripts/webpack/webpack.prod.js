@@ -76,14 +76,14 @@ module.exports = merge(common, {
   },
   optimization: {
     nodeEnv: 'production',
-    // minimizer: [
-    //   new TerserPlugin({
-    //     cache: false,
-    //     parallel: false,
-    //     sourceMap: true,
-    //   }),
-    //   new OptimizeCSSAssetsPlugin({}),
-    // ],
+    minimizer: [
+      new TerserPlugin({
+        cache: false,
+        parallel: false,
+        sourceMap: true,
+      }),
+      new OptimizeCSSAssetsPlugin({}),
+    ],
   },
   plugins: [
     new ForkTsCheckerWebpackPlugin({
