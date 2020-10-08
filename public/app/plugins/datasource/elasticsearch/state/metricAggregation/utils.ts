@@ -1,4 +1,5 @@
 import { MetricsConfiguration } from '../../types';
+import { MetricAggregation } from './types';
 
 export const metricAggregationConfig: MetricsConfiguration = {
   count: {
@@ -91,4 +92,21 @@ export const metricAggregationConfig: MetricsConfiguration = {
     label: 'Logs',
     requiresField: false,
   },
+};
+
+/**
+ * Given a metric `MetricA` and an array of metrics, returns all ancestors of `MetricA`.
+ * `MetricB` is considered an ancestor of `MetricA` if `MetricA` references `MetricB` in it's `field` attribute
+ * (`MetricA.field === MetricB.id`).
+ * @param metric
+ * @param metrics
+ */
+export const getAncestors = (metric: MetricAggregation, metrics: MetricAggregation[]): MetricAggregation[] => {
+  const parentIndex = metrics.findIndex(otherMetric => metric.id === otherMetric.field);
+
+  if (parentIndex === -1) {
+    return [];
+  }
+
+  return [metrics[parentIndex], ...getAncestors(metrics[parentIndex], metrics)];
 };

@@ -8,6 +8,7 @@ import {
   MetricAggregationAction,
   CHANGE_METRIC_FIELD,
 } from './types';
+import { getAncestors } from './utils';
 
 export const reducer = (state: MetricAggregation[] = [], action: MetricAggregationAction) => {
   switch (action.type) {
@@ -15,7 +16,10 @@ export const reducer = (state: MetricAggregation[] = [], action: MetricAggregati
       const nextId = parseInt(state[state.length - 1].id, 10) + 1;
       return [...state, defaultMetricAgg(nextId.toString())];
     case REMOVE_METRIC:
-      return state.filter(metric => metric.id !== action.payload.id);
+      const metricToRemove = state.find(m => m.id === action.payload.id)!;
+      const metricsToRemove = [metricToRemove, ...getAncestors(metricToRemove, state)];
+      const resultingMetrics = state.filter(metric => !metricsToRemove.some(toRemove => toRemove.id === metric.id));
+      return resultingMetrics;
     case CHANGE_METRIC_TYPE:
       // TODO: Here we should do some checks to clean out metric configurations that are not compatible
       // with the new one (eg `settings` or `field`)
