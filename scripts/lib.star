@@ -750,7 +750,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'test-release':
         cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
             '--deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket ' + \
-            'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --dry-run'
+            'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo'
     else:
         cmd = './bin/grabpl upload-packages --edition {}'.format(edition)
 
@@ -780,9 +780,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
                 'from_secret': 'gpg_key_password',
             },
         },
-        'commands': [
-            './bin/grabpl upload-packages --edition {}'.format(edition),
-        ],
+        'commands': [cmd,],
     }
 
 def publish_packages_step(edition, is_downstream):
@@ -831,10 +829,10 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
     ]
     if (ver_mode == 'master' and (edition != 'enterprise' or is_downstream)) or ver_mode in ('release', 'test-release'):
         if ver_mode == 'release':
-            ver_part = ''
+            ver_part = '$$env:DRONE_TAG'
             dir = 'release'
         elif ver_mode == 'test-release':
-            ver_part = ''
+            ver_part = test_release_ver
             dir = 'release'
         else:
             dir = 'master'
@@ -842,7 +840,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
                 build_no = 'DRONE_BUILD_NUMBER'
             else:
                 build_no = 'SOURCE_BUILD_NUMBER'
-            ver_part = ' --build-id $$env:{}'.format(build_no)
+            ver_part = '--build-id $$env:{}'.format(build_no)
         installer_commands = [
             '$$gcpKey = $$env:GCP_KEY',
             '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json',
@@ -851,7 +849,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'gcloud auth activate-service-account --key-file=gcpkey.json',
             'rm gcpkey.json',
             'cp C:\\App\\nssm-2.24.zip .',
-            '.\\grabpl.exe windows-installer --edition {}{}'.format(edition, ver_part),
+            '.\\grabpl.exe windows-installer --edition {} {}'.format(edition, ver_part),
             '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
             'gsutil cp $$fname gs://grafana-downloads/{}/{}/'.format(edition, dir),
             'gsutil cp "$$fname.sha256" gs://grafana-downloads/{}/{}/'.format(edition, dir),
