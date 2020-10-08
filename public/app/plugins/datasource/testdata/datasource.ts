@@ -1,13 +1,11 @@
 import { from, merge, Observable, of } from 'rxjs';
 import { delay, map, mergeMap } from 'rxjs/operators';
 import set from 'lodash/set';
-import { v4 as uuidv4 } from 'uuid';
 import {
   AnnotationEvent,
   ArrayDataFrame,
   arrowTableToDataFrame,
   base64StringToArrowTable,
-  CoreApp,
   DataFrame,
   DataQueryError,
   DataQueryRequest,
@@ -15,7 +13,6 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataTopic,
-  DefaultTimeRange,
   LoadingState,
   MetricFindValue,
   TableData,
@@ -58,29 +55,14 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
             return of(values);
           })
         ),
-      toDataQueryRequest: (query, scopedVars) => {
-        const targets: TestDataQuery[] = [
-          {
-            datasource: instanceSettings.name,
-            refId: `variable-query-${instanceSettings.name}`,
-            scenarioId: 'metric_find_query',
-            stringInput: query,
-          },
-        ];
-
-        const request: DataQueryRequest<TestDataQuery> = {
-          targets,
-          app: CoreApp.Dashboard,
-          range: DefaultTimeRange,
-          scopedVars,
-          requestId: uuidv4(),
-          intervalMs: 0,
-          timezone: 'utc',
-          interval: '',
-          startTime: Date.now(),
+      toDataQuery: query => {
+        const target: TestDataQuery = {
+          stringInput: query,
+          scenarioId: 'metric_find_query',
+          refId: `variable-query-${instanceSettings.name}`,
         };
 
-        return request;
+        return target;
       },
     };
   }

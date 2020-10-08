@@ -1,9 +1,12 @@
 import { EMPTY, from, merge, Observable, of, Subject, throwError, Unsubscribable } from 'rxjs';
 import { catchError, filter, finalize, map, mergeMap, takeUntil, tap } from 'rxjs/operators';
 import {
+  CoreApp,
   DataQuery,
+  DataQueryRequest,
   DataSourceApi,
   DataSourceJsonData,
+  DefaultTimeRange,
   LoadingState,
   MetricFindValue,
   ScopedVars,
@@ -12,13 +15,15 @@ import {
 
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { getVariable } from '../state/selectors';
-import { QueryVariableModel } from '../types';
+import { QueryVariableModel, VariableRefresh } from '../types';
 import { runRequest } from '../../dashboard/state/runRequest';
 import { updateVariableOptions, updateVariableTags } from './reducer';
 import { StoreState, ThunkDispatch } from '../../../types';
 import { dispatch, getState } from '../../../store/store';
 import { getLegacyQueryOptions, getTemplatedRegex } from '../utils';
 import { validateVariableSelectionState } from '../state/actions';
+import { v4 as uuidv4 } from 'uuid';
+import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 
 interface UpdateOptionsArgs {
   identifier: VariableIdentifier;
@@ -37,6 +42,7 @@ interface VariableQueryRunnerArgs {
   getState: () => StoreState;
   getVariable: typeof getVariable;
   getTemplatedRegex: typeof getTemplatedRegex;
+  getTimeSrv: typeof getTimeSrv;
 }
 
 interface DataSourceWithVariableSupport<
@@ -59,7 +65,9 @@ class VariableQueryRunner {
   private readonly cancelRequests: Subject<{ identifier: VariableIdentifier }>;
   private readonly subscription: Unsubscribable;
 
-  constructor(private dependencies: VariableQueryRunnerArgs = { dispatch, getState, getVariable, getTemplatedRegex }) {
+  constructor(
+    private dependencies: VariableQueryRunnerArgs = { dispatch, getState, getVariable, getTemplatedRegex, getTimeSrv }
+  ) {
     this.updateOptionsRequests = new Subject<UpdateOptionsArgs>();
     this.updateOptionsResults = new Subject<UpdateOptionsResults>();
     this.cancelRequests = new Subject<{ identifier: VariableIdentifier }>();
@@ -161,18 +169,39 @@ class VariableQueryRunner {
 
   runUpdateOptionsRequest(variable: QueryVariableModel, args: UpdateOptionsArgs): Observable<MetricFindValue[]> {
     const { dataSource, searchFilter } = args;
+
+    if (!this.hasVariableSupport(dataSource)) {
+      return of([]);
+    }
+
     const variableAsVars = { variable: { text: variable.current.text, value: variable.current.value } };
-    const searchFilterAsVars = searchFilter
-      ? {
-          searchFilter: { text: searchFilter, value: searchFilter },
-        }
-      : {};
+    const searchFilterScope = { searchFilter: { text: searchFilter, value: searchFilter } };
+    const searchFilterAsVars = searchFilter ? searchFilterScope : {};
     const scopedVars = { ...searchFilterAsVars, ...variableAsVars } as ScopedVars;
-    const request = dataSource.variables!.toDataQueryRequest(variable.query, scopedVars);
+    const range =
+      variable.refresh === VariableRefresh.onTimeRangeChanged
+        ? this.dependencies.getTimeSrv().timeRange()
+        : DefaultTimeRange;
+    const target = dataSource.variables.toDataQuery(variable.query);
+    if (!target.datasource) {
+      target.datasource = dataSource.name;
+    }
+
+    const request: DataQueryRequest = {
+      app: CoreApp.Dashboard,
+      requestId: uuidv4(),
+      timezone: '',
+      range,
+      interval: '',
+      intervalMs: 0,
+      targets: [target],
+      scopedVars,
+      startTime: Date.now(),
+    };
 
     return runRequest(dataSource, request).pipe(
       map(panelData => panelData.series),
-      dataSource.variables!.toMetricFindValues()
+      dataSource.variables.toMetricFindValues()
     );
   }
 
