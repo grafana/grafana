@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -77,8 +78,15 @@ type cloudWatchExecutor struct {
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
 	dsInfo := e.getDSInfo(region)
 
-	cacheKey := fmt.Sprintf("%d:%s:%s:%s:%s:%s", dsInfo.AuthType, dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN,
-		dsInfo.ExternalID, region)
+	bldr := strings.Builder{}
+	for i, s := range []string{dsInfo.AuthType.String(), dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN} {
+		if i != 0 {
+			bldr.WriteString(":")
+		}
+		bldr.WriteString(strings.ReplaceAll(s, ":", `\:`))
+	}
+	cacheKey := bldr.String()
+	plog.Debug("Using cache key", "key", cacheKey)
 
 	sessCacheLock.RLock()
 	if env, ok := sessCache[cacheKey]; ok {
