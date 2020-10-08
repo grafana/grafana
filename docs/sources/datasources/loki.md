@@ -40,8 +40,8 @@ Just add it as a data source and you are ready to query your log data in [Explor
 
 The Derived Fields configuration allows you to:
 
-* Add fields parsed from the log message.
-* Add a link that uses the value of the field.
+- Add fields parsed from the log message.
+- Add a link that uses the value of the field.
 
 You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/explore/#labels-and-parsed-fields).
 {{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
@@ -87,15 +87,15 @@ For the label part of the query expression, wrap it in curly braces `{}` and the
 
 The following label matching operators are currently supported:
 
-* `=` exactly equal.
-* `!=` not equal.
-* `=~` regex-match.
-* `!~` do not regex-match.
+- `=` exactly equal.
+- `!=` not equal.
+- `=~` regex-match.
+- `!~` do not regex-match.
 
 Examples:
 
-* `{name=~"mysql.+"}`
-* `{name!~"mysql.+"}`
+- `{name=~"mysql.+"}`
+- `{name!~"mysql.+"}`
 
 The [same rules that apply for Prometheus Label Selectors](https://prometheus.io/docs/prometheus/latest/querying/basics/#instant-vector-selectors) apply for Loki Log Stream Selectors.
 
@@ -107,9 +107,9 @@ After writing the Log Stream Selector, you can filter the results further by wri
 
 Example queries:
 
-* `{job="mysql"} |= "error"`
-* `{name="kafka"} |~ "tsdb-ops.*io:2003"`
-* `{instance=~"kafka-[23]",name="kafka"} != "kafka.server:type=ReplicaManager"`
+- `{job="mysql"} |= "error"`
+- `{name="kafka"} |~ "tsdb-ops.*io:2003"`
+- `{instance=~"kafka-[23]",name="kafka"} != "kafka.server:type=ReplicaManager"`
 
 Filter operators can be chained and will sequentially filter down the expression. The resulting log lines will satisfy every filter.
 
@@ -119,12 +119,12 @@ Filter operators can be chained and will sequentially filter down the expression
 
 The following filter types are currently supported:
 
-* `|=` line contains string.
-* `!=` line doesn't contain string.
-* `|~` line matches regular expression.
-* `!~` line does not match regular expression.
+- `|=` line contains string.
+- `!=` line doesn't contain string.
+- `|~` line matches regular expression.
+- `!~` line does not match regular expression.
 
-> **Note:** For more details about LogQL, Loki's query language, refer to the [documentation](https://grafana.com/docs/loki/latest/logql/)
+> **Note:** For more details about LogQL, Loki's query language, refer to the [Loki LogQL](https://grafana.com/docs/loki/latest/logql/)
 
 ## Live tailing
 
@@ -149,7 +149,7 @@ log message you're interested in.
 
 Instead of hard-coding things like server, application and sensor name in your metric queries, you can use variables in their place. Variables are shown as drop-down select boxes at the top of the dashboard. These drop-down boxes make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/templates-and-variables" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ## Annotations
 

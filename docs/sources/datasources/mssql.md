@@ -40,7 +40,7 @@ Name | Description
 
 ### Min time interval
 
-A lower limit for the [$__interval]({{< relref "../variables/templates-and-variables/#the-interval-variable" >}}) and [$__interval_ms]({{< relref "../variables/templates-and-variables/#the-interval-ms-variable" >}}) variables.
+A lower limit for the [$__interval]({{< relref "../variables/variable-types/_index.md#the-interval-variable" >}}) and [$__interval_ms]({{< relref "../variables/variable-types/_index.md#the-interval-ms-variable" >}}) variables.
 Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
@@ -227,7 +227,7 @@ WHERE
 ORDER BY 1
 ```
 
-When above query are used in a graph panel the result will be two series named `Metric A` and `Metric B` with value of `valueOne` and `valueTwo` plotted over `time`.
+When the above query is used in a graph panel, it will produce two series named `Metric A` and `Metric B` with the values `valueOne` and `valueTwo` plotted over `time`.
 
 <div class="clearfix"></div>
 
@@ -247,7 +247,7 @@ WHERE
 ORDER BY 1
 ```
 
-When above query are used in a graph panel the result will be two series named `valueOne` and `valueTwo` with value of `valueOne` and `valueTwo` plotted over `time`.
+When the above query is used in a graph panel, it will produce two series named `Metric A` and `Metric B` with the values `valueOne` and `valueTwo` plotted over `time`.
 
 <div class="clearfix"></div>
 
@@ -270,8 +270,8 @@ GROUP BY
 ORDER BY 1
 ```
 
-When above query are used in a graph panel the result will be two series named `Metric A` and `Metric B` with an average of `valueOne` plotted over `time`.
-Any two series lacking a value in a 3 minute window will render a line between those two lines. You'll notice that the graph to the right never goes down to zero.
+When the above query is used in a graph panel, it will produce two series named `Metric A` and `Metric B` with the values `valueOne` and `valueTwo` plotted over `time`.
+Any two series lacking a value in a three-minute window will render a line between those two lines. You'll notice that the graph to the right never goes down to zero.
 
 <div class="clearfix"></div>
 
@@ -301,7 +301,7 @@ Any series lacking a value in a 3 minute window will have a value of zero which 
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query Variable
 
@@ -326,8 +326,8 @@ Another option is a query that can create a key/value variable. The query should
 SELECT hostname __text, id __value FROM host
 ```
 
-You can also create nested variables. For example if you had another variable named `region`. Then you could have
-the hosts variable only show hosts from the current selected region with a query like this (if `region` is a multi-value variable then use the `IN` comparison operator rather than `=` to match against multiple values):
+You can also create nested variables. For example, if you had another variable named `region`. Then you could have
+the hosts variable only show hosts from the current selected region with a query like this (if `region` is a multi-value variable, then use the `IN` comparison operator rather than `=` to match against multiple values):
 
 ```sql
 SELECT hostname FROM host WHERE region IN ($region)
@@ -371,7 +371,7 @@ Grafana automatically creates a quoted, comma-separated string for multi-value v
 
 `${servers:csv}`
 
-Read more about variable formatting options in the [Variables]({{< relref "../variables/templates-and-variables.md#advanced-formatting-options" >}}) documentation.
+Read more about variable formatting options in the [Variables]({{< relref "../variables/variable-types/_index.md#advanced-formatting-options" >}}) documentation.
 
 ## Annotations
 
@@ -453,7 +453,7 @@ Please note that any macro function will not work inside a stored procedure.
 ### Examples
 
 {{< docs-imagebox img="/img/docs/v51/mssql_metrics_graph.png" class="docs-image--no-shadow docs-image--right" >}}
-For the following examples the database table is defined in [Time series queries](#time-series-queries). Let's say that we want to visualize 4 series in a graph panel, i.e. all combinations of columns `valueOne`, `valueTwo` and `measurement`. Graph panel to the right visualizes what we want to achieve. To solve this we actually need to use two queries:
+For the following examples, the database table is defined in [Time series queries](#time-series-queries). Let's say that we want to visualize four series in a graph panel, such as all combinations of columns `valueOne`, `valueTwo` and `measurement`. Graph panel to the right visualizes what we want to achieve. To solve this, we need to use two queries:
 
 **First query:**
 

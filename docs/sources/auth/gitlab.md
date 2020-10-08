@@ -7,7 +7,7 @@ type = "docs"
 name = "GitLab"
 identifier = "gitlab_oauth"
 parent = "authentication"
-weight = 5
+weight = 900
 +++
 
 # GitLab OAuth2 Authentication
@@ -51,7 +51,7 @@ enabled = true
 allow_sign_up = false
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
-scopes = api
+scopes = read_api
 auth_url = https://gitlab.com/oauth/authorize
 token_url = https://gitlab.com/oauth/token
 api_url = https://gitlab.com/api/v4

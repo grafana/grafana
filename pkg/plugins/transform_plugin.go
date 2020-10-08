@@ -28,12 +28,12 @@ type TransformPlugin struct {
 	*TransformWrapper
 }
 
-func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
+func (p *TransformPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) error {
 	if err := decoder.Decode(p); err != nil {
 		return err
 	}
 
-	if err := p.registerPlugin(pluginDir); err != nil {
+	if err := p.registerPlugin(base); err != nil {
 		return err
 	}
 

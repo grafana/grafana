@@ -85,7 +85,7 @@ export interface LiveChannelStatusEvent {
   timestamp: number;
 
   /**
-   * flag if the channel is activly connected to the channel.
+   * flag if the channel is actively connected to the channel.
    * This may be false while the connections get established or if the network is lost
    * As long as the `shutdown` flag is not set, the connection will try to reestablish
    */
@@ -94,7 +94,7 @@ export interface LiveChannelStatusEvent {
   /**
    * The last error.
    *
-   * This will remain in the status until a new message is succesfully received from the channel
+   * This will remain in the status until a new message is successfully received from the channel
    */
   error?: any;
 }
@@ -146,18 +146,28 @@ export interface LiveChannelPresenceStatus {
 /**
  * @experimental
  */
+export interface LiveChannelAddress {
+  scope: LiveChannelScope;
+  namespace: string; // depends on the scope
+  path: string;
+}
+
+/**
+ * Check if the address has a scope, namespace, and path
+ */
+export function isValidLiveChannelAddress(addr?: LiveChannelAddress): addr is LiveChannelAddress {
+  return !!(addr?.path && addr.namespace && addr.scope);
+}
+
+/**
+ * @experimental
+ */
 export interface LiveChannel<TMessage = any, TPublish = any> {
   /** The fully qualified channel id: ${scope}/${namespace}/${path} */
   id: string;
 
-  /** The scope for this channel */
-  scope: LiveChannelScope;
-
-  /** datasourceId/plugin name/feature depending on scope */
-  namespace: string;
-
-  /** additional qualifier */
-  path: string;
+  /** The channel address */
+  addr: LiveChannelAddress;
 
   /** Unix timestamp for when the channel connected */
   opened: number;

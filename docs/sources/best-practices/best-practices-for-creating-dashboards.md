@@ -3,7 +3,9 @@ title = "Best practices for creating dashboards"
 description = "Best practices for creating dashboards in Grafana"
 type = "docs"
 [menu.docs]
-weight = 200
+identifier = "best-practices-for-creating-dashboards"
+parent = "best-practices"
+weight = 100
 +++
 
 # Best practices for creating dashboards
@@ -51,5 +53,5 @@ Once you have a strategy or design guidelines, write them down to help maintain 
 -  Add documentation to dashboards and panels.
    - To add documentation to a dashboard, add a [Text panel visualization]({{< relref "../panels/visualizations/text-panel.md" >}}) to the dashboard. Record things like the purpose of the dashboard, useful resource links, and any instructions users might need to interact with the dashboard. Check out this [Wikimedia example](https://grafana.wikimedia.org/d/000000066/resourceloader?orgId=1).
    - To add documentation to a panel, [edit the panel settings]({{< relref "../panels/add-a-panel.md#edit-panel-settings" >}}) and add a description. Any text you add will appear if you hover your cursor over the small `i` in the top left corner of the panel.
--  Reuse your dashboards and enforce consistency by using [templates and variables]({{< relref "../variables/templates-and-variables.md" >}}).
+-  Reuse your dashboards and enforce consistency by using [templates and variables]({{< relref "../variables/_index.md" >}}).
 -  Be careful with stacking graph data. The visualizations can be misleading, and hide important data. We recommend turning it off in most cases.

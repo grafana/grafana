@@ -3,6 +3,8 @@ title = "Add a data source variable"
 type = "docs"
 aliases = ["/docs/grafana/latest/variables/add-data-source-variable.md"]
 [menu.docs]
+identifier = "add-datasource-variable"
+parent = "variable-types"
 weight = 500
 +++
 

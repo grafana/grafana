@@ -33,12 +33,12 @@ type TListViewProps = {
   dataLength: number;
   /**
    * Convert item index (number) to the key (string). ListView uses both indexes
-   * and keys to handle the addtion of new rows.
+   * and keys to handle the addition of new rows.
    */
   getIndexFromKey: (key: string) => number;
   /**
    * Convert item key (string) to the index (number). ListView uses both indexes
-   * and keys to handle the addtion of new rows.
+   * and keys to handle the addition of new rows.
    */
   getKeyFromIndex: (index: number) => string;
   /**
