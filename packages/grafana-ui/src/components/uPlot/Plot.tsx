@@ -89,7 +89,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
   // Memoize plot context
   const plotCtx = useMemo(() => {
     return buildPlotContext(
-      !!plotInstance,
+      Boolean(plotInstance),
       canvasRef,
       props.data,
       registerPlugin,
@@ -98,7 +98,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
       addScale,
       getPlotInstance
     );
-  }, [registerPlugin, addSeries, addAxis, addScale, canvasRef, props.data, getPlotInstance, plotInstance]);
+  }, [plotInstance, canvasRef, props.data, registerPlugin, addSeries, addAxis, addScale, getPlotInstance]);
 
   return (
     <PlotContext.Provider value={plotCtx}>

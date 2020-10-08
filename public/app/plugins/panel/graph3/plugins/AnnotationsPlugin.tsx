@@ -92,23 +92,33 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     };
   }, []);
 
+  const mapAnnotationToXYCoords = useCallback(
+    (annotation: AnnotationsDataFrameViewDTO) => {
+      if (!annotation.time) {
+        return undefined;
+      }
+
+      return {
+        x: plotCtx.getPlotInstance().valToPos(annotation.time / 1000, 'x'),
+        y: plotCtx.getPlotInstance().bbox.height / window.devicePixelRatio + 4,
+      };
+    },
+    [plotCtx.getPlotInstance]
+  );
+
+  const renderMarker = useCallback(
+    (annotation: AnnotationsDataFrameViewDTO) => {
+      return <AnnotationMarker time={timeFormatter(annotation.time)} text={annotation.text} tags={annotation.tags} />;
+    },
+    [timeFormatter]
+  );
+
   return (
     <EventsCanvas<AnnotationsDataFrameViewDTO>
       id="annotations"
       events={annotations}
-      renderEventMarker={event => (
-        <AnnotationMarker time={timeFormatter(event.time)} text={event.text} tags={event.tags} />
-      )}
-      mapEventToXYCoords={annotation => {
-        if (!annotation.time) {
-          return undefined;
-        }
-
-        return {
-          x: plotCtx.getPlotInstance().valToPos(annotation.time / 1000, 'x'),
-          y: plotCtx.getPlotInstance().bbox.height / window.devicePixelRatio + 4,
-        };
-      }}
+      renderEventMarker={renderMarker}
+      mapEventToXYCoords={mapAnnotationToXYCoords}
     />
   );
 };

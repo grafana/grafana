@@ -1,14 +1,15 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { AnnotationEvent, GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import { HorizontalGroup, Portal, Tag, TooltipContainer, useStyles } from '@grafana/ui';
 import { css, cx } from 'emotion';
 
 interface ExemplarMarkerProps {
-  formatTime: (value: number) => string;
-  exemplar: AnnotationEvent;
+  time: string;
+  text: string;
+  tags: string[];
 }
 
-export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ exemplar, formatTime }) => {
+export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ time, text, tags }) => {
   const styles = useStyles(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
   const markerRef = useRef<HTMLDivElement>(null);
@@ -46,14 +47,14 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ exemplar, format
       >
         <div ref={annotationPopoverRef} className={styles.wrapper}>
           <div className={styles.header}>
-            <span className={styles.title}>{exemplar.title}</span>
-            {exemplar.time && <span className={styles.time}>{formatTime(exemplar.time)}</span>}
+            {/*<span className={styles.title}>{exemplar.title}</span>*/}
+            {time && <span className={styles.time}>{time}</span>}
           </div>
           <div className={styles.body}>
-            {exemplar.text && <div dangerouslySetInnerHTML={{ __html: exemplar.text }} />}
+            {text && <div dangerouslySetInnerHTML={{ __html: text }} />}
             <>
               <HorizontalGroup spacing="xs" wrap>
-                {exemplar.tags?.map((t, i) => (
+                {tags?.map((t, i) => (
                   <Tag name={t} key={`${t}-${i}`} />
                 ))}
               </HorizontalGroup>
@@ -62,7 +63,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ exemplar, format
         </div>
       </TooltipContainer>
     );
-  }, [exemplar]);
+  }, [time, tags, text]);
 
   return (
     <>

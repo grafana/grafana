@@ -59,27 +59,38 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
         mocks.push(mock);
       }
 
-      console.log(mocks);
       setExemplarsMock(mocks);
     }
   }, [plotCtx.isPlotReady, exemplars]);
+
+  const mapExemplarToXYCoords = useCallback(
+    (exemplar: ExemplarsDataFrameViewDTO) => {
+      if (!exemplar.time) {
+        return undefined;
+      }
+
+      return {
+        x: plotCtx.getPlotInstance().valToPos(exemplar.time / 1000, 'x'),
+        // exemplar.y is a temporary mock for an examplar. This Needs to be calculated according to examplar scale!
+        y: Math.floor((exemplar.y * plotCtx.getPlotInstance().bbox.height) / window.devicePixelRatio),
+      };
+    },
+    [plotCtx.getPlotInstance]
+  );
+
+  const renderMarker = useCallback(
+    (exemplar: ExemplarsDataFrameViewDTO) => {
+      return <ExemplarMarker time={timeFormatter(exemplar.time)} text={exemplar.text} tags={exemplar.tags} />;
+    },
+    [timeFormatter]
+  );
 
   return (
     <EventsCanvas<ExemplarsDataFrameViewDTO>
       id="exemplars"
       events={exemplarsMock}
-      renderEventMarker={exemplar => <ExemplarMarker exemplar={exemplar} formatTime={timeFormatter} />}
-      mapEventToXYCoords={exemplar => {
-        if (!exemplar.time) {
-          return undefined;
-        }
-
-        return {
-          x: plotCtx.getPlotInstance().valToPos(exemplar.time / 1000, 'x'),
-          // exemplar.y is a temporary mock for an examplar. This Needs to be calculated according to examplar scale!
-          y: Math.floor((exemplar.y * plotCtx.getPlotInstance().bbox.height) / window.devicePixelRatio),
-        };
-      }}
+      renderEventMarker={renderMarker}
+      mapEventToXYCoords={mapExemplarToXYCoords}
     />
   );
 };

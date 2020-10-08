@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { HorizontalGroup, Portal, Tag, TooltipContainer, useStyles } from '@grafana/ui';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 
 interface AnnotationMarkerProps {
   time: string;
@@ -67,7 +67,7 @@ export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ time, text, 
 
   return (
     <>
-      <div ref={markerRef} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} className={cx(styles.markerWrapper)}>
+      <div ref={markerRef} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} className={styles.markerWrapper}>
         <div className={styles.marker} />
       </div>
       {isOpen && <Portal>{renderMarker()}</Portal>}
