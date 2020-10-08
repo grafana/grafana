@@ -301,7 +301,7 @@ func validateToValue(to string) error {
 func FrameToSeriesSlice(frame *data.Frame) (tsdb.TimeSeriesSlice, error) {
 	tsSchema := frame.TimeSeriesSchema()
 	if tsSchema.Type == data.TimeSeriesTypeNot {
-		// If no fields, or only a time field, create an empty tsdb. with a single
+		// If no fields, or only a time field, create an empty tsdb.TimeSeriesSlice with a single
 		// time series in order to trigger "no data" in alerting.
 		if len(frame.Fields) == 0 || (len(frame.Fields) == 1 && frame.Fields[0].Type().Time()) {
 			return tsdb.TimeSeriesSlice{{
