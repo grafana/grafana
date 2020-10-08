@@ -110,7 +110,6 @@ export function ExploreQueryInspector(props: Props) {
 
   const haveData = response && Object.keys(response).length > 0;
   const styles = getPanelInspectorStyles();
-
   const statsTab: TabConfig = {
     label: 'Stats',
     value: 'stats',
