@@ -188,7 +188,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
     }
     if (seriesGeometry.length > 1) {
       geometries.push(
-        <SeriesGeometry key={`seriesGeometry-${scale}-${i}`} scaleKey={scale}>
+        <SeriesGeometry key={`seriesGeometry-${scale}-${i}`} scaleKey={scale} nullValues={customConfig?.nullValues}>
           {seriesGeometry}
         </SeriesGeometry>
       );

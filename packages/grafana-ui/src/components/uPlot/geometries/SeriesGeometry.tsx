@@ -2,6 +2,13 @@ import { usePlotConfigContext } from '../context';
 import { getAreaConfig, getLineConfig, getPointConfig } from './configGetters';
 import React, { useCallback, useEffect, useRef } from 'react';
 import uPlot from 'uplot';
+import { NullValuesMode } from '../types';
+
+interface SeriesGeometryProps {
+  nullValues?: NullValuesMode;
+  scaleKey: string;
+  children: React.ReactElement[];
+}
 
 const seriesGeometryAllowedGeometries = ['Line', 'Point', 'Area'];
 
@@ -42,12 +49,13 @@ const geometriesConfigGetters: Record<string, (props: any) => {}> = {
   Area: getAreaConfig,
 };
 
-export const SeriesGeometry: React.FC<{ scaleKey: string; children: React.ReactElement[] }> = props => {
+export const SeriesGeometry: React.FC<SeriesGeometryProps> = props => {
   const getConfig = () => {
     let config: uPlot.Series = {
       points: {
         show: false,
       },
+      spanGaps: props.nullValues === NullValuesMode.connected,
     };
 
     if (!props.children) {

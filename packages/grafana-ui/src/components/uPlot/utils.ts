@@ -62,6 +62,7 @@ export const preparePlotData = (data: DataFrame): uPlot.AlignedData => {
     let values = field.values.toArray();
 
     if (field.config.custom?.nullValues === 'asZero') {
+      console.log('replacing null with 0');
       values = values.map(v => (v === null ? 0 : v));
     }
 
