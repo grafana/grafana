@@ -66,4 +66,4 @@ In your Grafana instance, go to the [explore]({{< relref "../explore/index.md" >
 
 Now that you have a curated list of queries, create [dashboards]({{< relref "../dashboards/_index.md" >}}) to render system metrics monitored by Prometheus. The following image shows a simple dashboard with three panels showing some system metrics.
 
-<img class="no-shadow" src="/static/img/docs/getting-started/simple_grafana_prom_dashboard.png" width="580px">
+{{< imgbox max-width="800px" img="/static/img/docs/simple_grafana_prom_dashboard.png" caption="Alerting overview" >}}
