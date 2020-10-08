@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable, PartialObserver } from 'rxjs';
-import { CustomScrollbar, FeatureInfoBox } from '@grafana/ui';
+import { CustomScrollbar, FeatureInfoBox, Label } from '@grafana/ui';
 import {
   PanelProps,
   LiveChannelStatusEvent,
@@ -144,11 +144,11 @@ export class LivePanel extends PureComponent<Props, State> {
 
     return (
       <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
-        <h3>Status</h3>
+        <Label>Status</Label>
         <pre>{JSON.stringify(status)}</pre>
 
         <br />
-        <h3>Message</h3>
+        <Label>Message</Label>
         <pre>{JSON.stringify(message)}</pre>
       </CustomScrollbar>
     );
