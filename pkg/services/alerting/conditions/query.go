@@ -328,15 +328,19 @@ func FrameToSeriesSlice(frame *data.Frame) (tsdb.TimeSeriesSlice, error) {
 	for _, fieldIdx := range tsSchema.ValueIndices { // create a TimeSeries for each value Field
 		field := frame.Fields[fieldIdx]
 		ts := &tsdb.TimeSeries{
-			Name:   field.Name,
 			Points: make(tsdb.TimeSeriesPoints, field.Len()),
 		}
 
-		if field.Labels != nil {
+		hasDisplayName := field.Config != nil && field.Config.DisplayName != ""
+		if hasDisplayName {
+			ts.Name = field.Config.DisplayName
+		} else if field.Labels != nil && !hasDisplayName {
 			ts.Tags = field.Labels.Copy()
 			// Tags are appended to the name so they are eventually included in EvalMatch's Metric property
 			// for display in notifications.
-			ts.Name = fmt.Sprintf("%v {%v}", ts.Name, field.Labels.String())
+			ts.Name = fmt.Sprintf("%v {%v}", field.Name, field.Labels.String())
+		} else {
+			ts.Name = field.Name
 		}
 
 		for rowIdx := 0; rowIdx < field.Len(); rowIdx++ { // for each value in the field, make a TimePoint
