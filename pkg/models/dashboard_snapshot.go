@@ -25,19 +25,18 @@ type DashboardSnapshot struct {
 	Created time.Time
 	Updated time.Time
 
-	Dashboard       *simplejson.Json
-	DashboardSecure []byte
+	Dashboard          *simplejson.Json
+	DashboardEncrypted []byte
 }
 
 func (ds *DashboardSnapshot) DashboardJSON() (*simplejson.Json, error) {
-	if ds.DashboardSecure != nil {
-		decrypted, err := util.Decrypt(ds.DashboardSecure, setting.SecretKey)
+	if ds.DashboardEncrypted != nil {
+		decrypted, err := util.Decrypt(ds.DashboardEncrypted, setting.SecretKey)
 		if err != nil {
 			return nil, err
 		}
 		return simplejson.NewJson(decrypted)
 	}
-
 	return ds.Dashboard, nil
 }
 

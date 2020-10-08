@@ -65,7 +65,7 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 		Name: "external_delete_url", Type: DB_NVarchar, Length: 255, Nullable: true,
 	}))
 
-	mg.AddMigration("Add secure json data column", NewAddColumnMigration(snapshotV5, &Column{
-		Name: "dashboard_secure", Type: DB_Blob, Nullable: true,
+	mg.AddMigration("Add encrypted dashboard json column", NewAddColumnMigration(snapshotV5, &Column{
+		Name: "dashboard_encrypted", Type: DB_Blob, Nullable: true,
 	}))
 }

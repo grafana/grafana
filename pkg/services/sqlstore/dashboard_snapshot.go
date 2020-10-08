@@ -50,25 +50,29 @@ func CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCommand) error {
 		}
 
 		encode, err := cmd.Dashboard.Encode()
-		encrypted, err := util.Encrypt(encode, setting.SecretKey)
+		if err != nil {
+			return err
+		}
+
+		encryptedDashboard, err := util.Encrypt(encode, setting.SecretKey)
 		if err != nil {
 			return err
 		}
 
 		snapshot := &models.DashboardSnapshot{
-			Name:              cmd.Name,
-			Key:               cmd.Key,
-			DeleteKey:         cmd.DeleteKey,
-			OrgId:             cmd.OrgId,
-			UserId:            cmd.UserId,
-			External:          cmd.External,
-			ExternalUrl:       cmd.ExternalUrl,
-			ExternalDeleteUrl: cmd.ExternalDeleteUrl,
-			Dashboard:         simplejson.New(),
-			DashboardSecure:   encrypted,
-			Expires:           expires,
-			Created:           time.Now(),
-			Updated:           time.Now(),
+			Name:               cmd.Name,
+			Key:                cmd.Key,
+			DeleteKey:          cmd.DeleteKey,
+			OrgId:              cmd.OrgId,
+			UserId:             cmd.UserId,
+			External:           cmd.External,
+			ExternalUrl:        cmd.ExternalUrl,
+			ExternalDeleteUrl:  cmd.ExternalDeleteUrl,
+			Dashboard:          simplejson.New(),
+			DashboardEncrypted: encryptedDashboard,
+			Expires:            expires,
+			Created:            time.Now(),
+			Updated:            time.Now(),
 		}
 		_, err = sess.Insert(snapshot)
 		cmd.Result = snapshot

@@ -220,13 +220,13 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 
 			Convey("Should be able to read a snapshot's encrypted data", func() {
 				origSecret := setting.SecretKey
-
 				setting.SecretKey = "dashboard_snapshot_api_test"
 				t.Cleanup(func() {
 					setting.SecretKey = origSecret
 				})
 
-				jsonModel, _ := simplejson.NewJson([]byte(`{"id":123}`))
+				dashboardId := 123
+				jsonModel, _ := simplejson.NewJson([]byte(fmt.Sprintf(`{"id":%d}`, dashboardId)))
 
 				jsonModelEncoded, err := jsonModel.Encode()
 				So(err, ShouldBeNil)
@@ -234,15 +234,11 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 				encrypted, err := util.Encrypt(jsonModelEncoded, setting.SecretKey)
 				So(err, ShouldBeNil)
 
-				// mock with encrypted dashboard info
+				// mock snapshot with encrypted dashboard info
 				mockSnapshotResult := &models.DashboardSnapshot{
-					Id:              1,
-					Key:             "12345",
-					DeleteKey:       "54321",
-					DashboardSecure: encrypted,
-					Expires:         time.Now().Add(time.Duration(1000) * time.Second),
-					UserId:          999999,
-					External:        true,
+					Key:                "12345",
+					DashboardEncrypted: encrypted,
+					Expires:            time.Now().Add(time.Duration(1000) * time.Second),
 				}
 
 				bus.AddHandler("test", func(query *models.GetDashboardSnapshotQuery) error {
@@ -257,11 +253,7 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 					So(sc.resp.Code, ShouldEqual, 200)
 					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 					So(err, ShouldBeNil)
-
-					dashboard := respJSON.Get("dashboard")
-					id := dashboard.Get("id")
-
-					So(id.MustInt64(), ShouldEqual, 123)
+					So(respJSON.Get("dashboard").Get("id").MustInt64(), ShouldEqual, dashboardId)
 				})
 			})
 		})

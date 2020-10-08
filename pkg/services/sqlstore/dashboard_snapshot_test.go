@@ -18,6 +18,12 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 	Convey("Testing DashboardSnapshot data access", t, func() {
 		InitTestDB(t)
 
+		origSecret := setting.SecretKey
+		setting.SecretKey = "dashboard_snapshot_testing"
+		t.Cleanup(func() {
+			setting.SecretKey = origSecret
+		})
+
 		Convey("Given saved snapshot", func() {
 			cmd := models.CreateDashboardSnapshotCommand{
 				Key: "hej",
@@ -111,17 +117,10 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 			})
 
 			Convey("Should have encrypted dashboard data", func() {
-				origSecret := setting.SecretKey
-				setting.SecretKey = "dashboard_snapshot_testing"
-
-				t.Cleanup(func() {
-					setting.SecretKey = origSecret
-				})
-
 				original, err := cmd.Dashboard.Encode()
 				So(err, ShouldBeNil)
 
-				decrypted, err := util.Decrypt(cmd.Result.DashboardSecure, setting.SecretKey)
+				decrypted, err := util.Decrypt(cmd.Result.DashboardEncrypted, setting.SecretKey)
 				So(err, ShouldBeNil)
 
 				So(bytes.Equal(decrypted, original), ShouldEqual, true)
