@@ -12,14 +12,14 @@ import (
 
 var frontendLogger = log.New("frontend")
 
-type FrontendSentryExceptionValue struct {
+type frontendSentryExceptionValue struct {
 	Value      string            `json:"value,omitempty"`
 	Type       string            `json:"type,omitempty"`
 	Stacktrace sentry.Stacktrace `json:"stacktrace,omitempty"`
 }
 
-type FrontendSentryException struct {
-	Values []FrontendSentryExceptionValue `json:"values,omitempty"`
+type frontendSentryException struct {
+	Values []frontendSentryExceptionValue `json:"values,omitempty"`
 }
 
 type FrontendSentryEvent struct {
@@ -27,11 +27,11 @@ type FrontendSentryEvent struct {
 	Exception *FrontendSentryException `json:"exception,omitempty"`
 }
 
-func (value *FrontendSentryExceptionValue) FmtMessage() string {
+func (value *frontendSentryExceptionValue) FmtMessage() string {
 	return fmt.Sprintf("%s: %s", value.Type, value.Value)
 }
 
-func (value *FrontendSentryExceptionValue) FmtStacktrace() string {
+func (value *frontendSentryExceptionValue) FmtStacktrace() string {
 	var stacktrace = value.FmtMessage()
 	for _, frame := range value.Stacktrace.Frames {
 		stacktrace += fmt.Sprintf("\n  at %s (%s:%v:%v)", frame.Function, frame.Filename, frame.Lineno, frame.Colno)
@@ -39,7 +39,7 @@ func (value *FrontendSentryExceptionValue) FmtStacktrace() string {
 	return stacktrace
 }
 
-func (exception *FrontendSentryException) FmtStacktraces() string {
+func (exception *frontendSentryException) FmtStacktraces() string {
 	var stacktraces []string
 	for _, value := range exception.Values {
 		stacktraces = append(stacktraces, value.FmtStacktrace())
