@@ -104,7 +104,7 @@ Then there are color schemes that define color by series. Useful for graphs and 
 
 ### Color by value
 
-In addition to deriving color from thresholds there are also continous (gradient) color schemes. Useful
+In addition to deriving color from thresholds there are also continuous (gradient) color schemes. Useful
 for visualizations that that color individual values. For example stat panels and the table.
 
 ## Thresholds

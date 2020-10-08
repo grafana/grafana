@@ -480,7 +480,6 @@ describe('decorateWithLogsResult', () => {
                   values: new ArrayVector([0]),
                   index: 0,
                   display: expect.anything(),
-                  state: expect.anything(),
                 },
                 valueField: {
                   name: 'unknown',
