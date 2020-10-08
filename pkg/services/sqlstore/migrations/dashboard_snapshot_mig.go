@@ -1,6 +1,8 @@
 package migrations
 
-import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
 func addDashboardSnapshotMigrations(mg *Migrator) {
 	snapshotV4 := Table{
@@ -63,5 +65,9 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 
 	mg.AddMigration("Add column external_delete_url to dashboard_snapshots table", NewAddColumnMigration(snapshotV5, &Column{
 		Name: "external_delete_url", Type: DB_NVarchar, Length: 255, Nullable: true,
+	}))
+
+	mg.AddMigration("Add secure json data column", NewAddColumnMigration(snapshotV5, &Column{
+		Name: "dashboard_secure", Type: DB_Blob, Nullable: true,
 	}))
 }

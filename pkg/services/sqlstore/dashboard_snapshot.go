@@ -3,6 +3,10 @@ package sqlstore
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -45,6 +49,12 @@ func CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCommand) error {
 			expires = time.Now().Add(time.Second * time.Duration(cmd.Expires))
 		}
 
+		encode, err := cmd.Dashboard.Encode()
+		encrypted, err := util.Encrypt(encode, setting.SecretKey)
+		if err != nil {
+			return err
+		}
+
 		snapshot := &models.DashboardSnapshot{
 			Name:              cmd.Name,
 			Key:               cmd.Key,
@@ -54,13 +64,13 @@ func CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCommand) error {
 			External:          cmd.External,
 			ExternalUrl:       cmd.ExternalUrl,
 			ExternalDeleteUrl: cmd.ExternalDeleteUrl,
-			Dashboard:         cmd.Dashboard,
+			Dashboard:         simplejson.New(),
+			DashboardSecure:   encrypted,
 			Expires:           expires,
 			Created:           time.Now(),
 			Updated:           time.Now(),
 		}
-
-		_, err := sess.Insert(snapshot)
+		_, err = sess.Insert(snapshot)
 		cmd.Result = snapshot
 
 		return err

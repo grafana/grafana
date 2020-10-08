@@ -1,8 +1,11 @@
 package sqlstore
 
 import (
+	"bytes"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/util"
 
 	. "github.com/smartystreets/goconvey/convey"
 
@@ -33,7 +36,10 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(query.Result, ShouldNotBeNil)
-				So(query.Result.Dashboard.Get("hello").MustString(), ShouldEqual, "mupp")
+
+				dashboard, err := query.Result.DashboardJSON()
+				So(err, ShouldBeNil)
+				So(dashboard.Get("hello").MustString(), ShouldEqual, "mupp")
 			})
 
 			Convey("And the user has the admin role", func() {
@@ -102,6 +108,23 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 					So(query.Result, ShouldNotBeNil)
 					So(len(query.Result), ShouldEqual, 0)
 				})
+			})
+
+			Convey("Should have encrypted dashboard data", func() {
+				origSecret := setting.SecretKey
+				setting.SecretKey = "dashboard_snapshot_testing"
+
+				t.Cleanup(func() {
+					setting.SecretKey = origSecret
+				})
+
+				original, err := cmd.Dashboard.Encode()
+				So(err, ShouldBeNil)
+
+				decrypted, err := util.Decrypt(cmd.Result.DashboardSecure, setting.SecretKey)
+				So(err, ShouldBeNil)
+
+				So(bytes.Equal(decrypted, original), ShouldEqual, true)
 			})
 		})
 	})

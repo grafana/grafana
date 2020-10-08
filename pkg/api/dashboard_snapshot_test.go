@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -196,6 +199,69 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
 					So(sc.resp.Code, ShouldEqual, 500)
+				})
+			})
+
+			Convey("Should be able to read a snapshot's un-encrypted data", func() {
+				loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+					sc.handlerFunc = GetDashboardSnapshot
+					sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
+
+					So(sc.resp.Code, ShouldEqual, 200)
+					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+					So(err, ShouldBeNil)
+
+					dashboard := respJSON.Get("dashboard")
+					id := dashboard.Get("id")
+
+					So(id.MustInt64(), ShouldEqual, 100)
+				})
+			})
+
+			Convey("Should be able to read a snapshot's encrypted data", func() {
+				origSecret := setting.SecretKey
+
+				setting.SecretKey = "dashboard_snapshot_api_test"
+				t.Cleanup(func() {
+					setting.SecretKey = origSecret
+				})
+
+				jsonModel, _ := simplejson.NewJson([]byte(`{"id":123}`))
+
+				jsonModelEncoded, err := jsonModel.Encode()
+				So(err, ShouldBeNil)
+
+				encrypted, err := util.Encrypt(jsonModelEncoded, setting.SecretKey)
+				So(err, ShouldBeNil)
+
+				// mock with encrypted dashboard info
+				mockSnapshotResult := &models.DashboardSnapshot{
+					Id:              1,
+					Key:             "12345",
+					DeleteKey:       "54321",
+					DashboardSecure: encrypted,
+					Expires:         time.Now().Add(time.Duration(1000) * time.Second),
+					UserId:          999999,
+					External:        true,
+				}
+
+				bus.AddHandler("test", func(query *models.GetDashboardSnapshotQuery) error {
+					query.Result = mockSnapshotResult
+					return nil
+				})
+
+				loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+					sc.handlerFunc = GetDashboardSnapshot
+					sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
+
+					So(sc.resp.Code, ShouldEqual, 200)
+					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+					So(err, ShouldBeNil)
+
+					dashboard := respJSON.Get("dashboard")
+					id := dashboard.Get("id")
+
+					So(id.MustInt64(), ShouldEqual, 123)
 				})
 			})
 		})
