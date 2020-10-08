@@ -750,7 +750,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'test-release':
         cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
             '--deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket ' + \
-            'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --dry-run'
+            'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo'
     else:
         cmd = './bin/grabpl upload-packages --edition {}'.format(edition)
 
@@ -780,9 +780,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
                 'from_secret': 'gpg_key_password',
             },
         },
-        'commands': [
-            './bin/grabpl upload-packages --edition {}'.format(edition),
-        ],
+        'commands': [cmd,],
     }
 
 def publish_packages_step(edition, is_downstream):
@@ -830,12 +828,16 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         },
     ]
     if (ver_mode == 'master' and (edition != 'enterprise' or is_downstream)) or ver_mode in ('release', 'test-release'):
+        bucket_part = ''
+        bucket = 'grafana-downloads'
         if ver_mode == 'release':
             ver_part = '$$env:DRONE_TAG'
             dir = 'release'
         elif ver_mode == 'test-release':
             ver_part = test_release_ver
             dir = 'release'
+            bucket = 'grafana-downloads-test'
+            bucket_part = ' --packages-bucket grafana-downloads-test'
         else:
             dir = 'master'
             if not is_downstream:
@@ -851,10 +853,10 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'gcloud auth activate-service-account --key-file=gcpkey.json',
             'rm gcpkey.json',
             'cp C:\\App\\nssm-2.24.zip .',
-            '.\\grabpl.exe windows-installer --edition {} {}'.format(edition, ver_part),
+            '.\\grabpl.exe windows-installer --edition {}{} {}'.format(edition, bucket_part, ver_part),
             '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
-            'gsutil cp $$fname gs://grafana-downloads/{}/{}/'.format(edition, dir),
-            'gsutil cp "$$fname.sha256" gs://grafana-downloads/{}/{}/'.format(edition, dir),
+            'gsutil cp $$fname gs://{}/{}/{}/'.format(bucket, edition, dir),
+            'gsutil cp "$$fname.sha256" gs://{}/{}/{}/'.format(bucket, edition, dir),
         ]
         steps.append({
             'name': 'build-windows-installer',

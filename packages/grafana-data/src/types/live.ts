@@ -156,6 +156,13 @@ export interface LiveChannelAddress {
 }
 
 /**
+ * Check if the address has a scope, namespace, and path
+ */
+export function isValidLiveChannelAddress(addr?: LiveChannelAddress): addr is LiveChannelAddress {
+  return !!(addr?.path && addr.namespace && addr.scope);
+}
+
+/**
  * @experimental
  */
 export interface LiveChannel<TMessage = any, TPublish = any> {
