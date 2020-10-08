@@ -3358,10 +3358,10 @@
     typescript "3.7.5"
     yaml "^1.8.3"
 
-"@grafana/eslint-config@2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@grafana/eslint-config/-/eslint-config-2.0.0.tgz#6e2b03e6d9f2afe3a0afa68560184be4e47abcd8"
-  integrity sha512-AktBgoo/WzaPgjITkemP/ItcAc5E7Ga0mgjflP/fUGsHnx+d4C2Lxxxpf9BjhNgqj3G82Db8tjXDFHEqWW19hQ==
+"@grafana/eslint-config@2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@grafana/eslint-config/-/eslint-config-2.0.1.tgz#859f316e1f4985138e44b54fcd42a127b309fcbb"
+  integrity sha512-VN1DS9g2+0UoWJriBGUK8gPVXm9cgxSVpAP79iXnpMipGWThyGjn2K01j1VJJZNiJ9yOJdRBv6Hlwo4sQc0fgA==
 
 "@grafana/slate-react@0.22.9-grafana":
   version "0.22.9-grafana"
