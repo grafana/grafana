@@ -33,14 +33,9 @@ interface State {
 
 export class LiveChannelEditor extends PureComponent<Props, State> {
   state: State = {
-    // scope: LiveChannelScope.Grafana,
-    // namespace: 'testdata',
-    // path: 'random-2s-stream',
     namespaces: [],
     paths: [],
   };
-  // onTextChanged: ((event: FormEvent<HTMLInputElement>) => void) | undefined;
-  // onPublish: ((event: MouseEvent<HTMLButtonElement, MouseEvent>) => void) | undefined;
 
   async componentDidMount() {
     this.updateSelectOptions();
@@ -109,11 +104,7 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
 
     return (
       <>
-        <FeatureInfoBox
-          title="Grafana Live"
-          featureState={FeatureState.alpha}
-          // url={getDocsLink(DocsId.Transformations)}
-        >
+        <FeatureInfoBox title="Grafana Live" featureState={FeatureState.alpha}>
           <p>
             This supports real-time event streams in grafana core. This feature is under heavy development. Expect the
             intefaces and structures to change as this becomes more production ready.

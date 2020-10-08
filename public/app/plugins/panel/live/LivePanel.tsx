@@ -5,6 +5,7 @@ import {
   PanelProps,
   LiveChannelStatusEvent,
   LiveChannelAddress,
+  isValidLiveChannelAddress,
   LiveChannel,
   LiveChannelEvent,
   isLiveChannelStatusEvent,
@@ -70,29 +71,30 @@ export class LivePanel extends PureComponent<Props, State> {
 
   async loadChannel() {
     const addr = this.props.options?.channel;
-    if (isValidChannel(addr)) {
-      const channel = getGrafanaLiveSrv().getChannel(addr!);
-      const changed = channel.id !== this.state.channel?.id;
-      console.log('LOAD', addr, changed, channel);
-      if (changed) {
-        this.unsubscribe();
-
-        // Subscribe to new events
-        try {
-          this.subscription = channel.getStream().subscribe(this.streamObserver);
-          this.setState({ channel, error: undefined });
-        } catch (err) {
-          this.setState({ channel: undefined, error: err });
-        }
-      } else {
-        console.log('Same channel', channel);
-      }
-    } else {
+    if (!isValidLiveChannelAddress(addr)) {
       console.log('INVALID', addr);
       this.unsubscribe();
       this.setState({
         channel: undefined,
       });
+      return;
+    }
+
+    const channel = getGrafanaLiveSrv().getChannel(addr);
+    const changed = channel.id !== this.state.channel?.id;
+    console.log('LOAD', addr, changed, channel);
+    if (changed) {
+      this.unsubscribe();
+
+      // Subscribe to new events
+      try {
+        this.subscription = channel.getStream().subscribe(this.streamObserver);
+        this.setState({ channel, error: undefined });
+      } catch (err) {
+        this.setState({ channel: undefined, error: err });
+      }
+    } else {
+      console.log('Same channel', channel);
     }
   }
 
@@ -105,7 +107,6 @@ export class LivePanel extends PureComponent<Props, State> {
         style={{
           height: this.props.height,
         }}
-        // url={getDocsLink(DocsId.Transformations)}
       >
         <p>Grafana live requires a feature flag to run</p>
 
@@ -153,8 +154,4 @@ export class LivePanel extends PureComponent<Props, State> {
       </CustomScrollbar>
     );
   }
-}
-
-function isValidChannel(channel?: LiveChannelAddress) {
-  return channel?.path && channel.namespace && channel.scope;
 }
