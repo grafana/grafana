@@ -645,7 +645,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const url = '/api/v1/query_exemplar';
     return this._request<PromDataSuccessResponse<PromExemplarData>>(
       url,
-      { query: query.expr },
+      { query: query.expr, start: query.start.toString(), end: query.end.toString() },
       { requestId: query.requestId, headers: query.headers }
     );
   }

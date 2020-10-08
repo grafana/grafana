@@ -70,12 +70,17 @@ export function transform(
       const data = exemplarData.exemplars.map(exemplar => {
         return {
           time: exemplar.timestamp,
-          text: getText(exemplar, transformOptions.exemplarTraceIDDestination),
+          text: getText(exemplar, exemplarData.seriesLabels, transformOptions.exemplarTraceIDDestination),
         } as AnnotationEvent;
       });
       events.push(...data);
     });
-    const dataFrame = new ArrayDataFrame(events);
+
+    const range = Math.ceil(options.end - options.start);
+
+    const divider = Math.max(range / 60 / 15, 4);
+
+    const dataFrame = new ArrayDataFrame(events.filter((_, i) => i % divider === 0));
     dataFrame.meta = { dataTopic: DataTopic.Annotations };
     return [dataFrame];
   }
@@ -117,14 +122,27 @@ export function transform(
   return dataFrame;
 }
 
-function getText(exemplar: Exemplar, exemplarTraceIDDestination?: ExemplarTraceIDDestination) {
+function getText(
+  exemplar: Exemplar,
+  seriesLabels: PromMetric,
+  exemplarTraceIDDestination?: ExemplarTraceIDDestination
+) {
   let traceID = exemplar.labels.traceID;
+  const template = `
+    <div>
+      <ul>
+      ${Object.keys(seriesLabels)
+        .map(label => `<li>${label}: ${seriesLabels[label]}</li>`)
+        .join('\n')}
+      </ul>
+    </div>`;
   if (exemplarTraceIDDestination) {
     traceID = exemplar.labels[exemplarTraceIDDestination.name];
     const href = exemplarTraceIDDestination.url.replace('${value}', traceID);
-    return `<a href="${href}" rel="noopener" target="_blank">Go to ${traceID}</a>`;
+    const anchorElement = `<a href="${href}" rel="noopener" target="_blank">Go to ${traceID}</a>`;
+    return template + anchorElement;
   }
-  return traceID;
+  return template;
 }
 
 function getPreferredVisualisationType(isInstantQuery?: boolean, mixedQueries?: boolean) {
