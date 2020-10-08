@@ -8,7 +8,7 @@ export interface VariableSupport<TQuery extends DataQuery = DataQuery> {
   /**
    * Defines how to transform the query provided from the variable into the DataQueryRequest used to query for MetricFindValues.
    */
-  toDataQueryRequest: (query: string | any, scopedVars: ScopedVars) => DataQueryRequest<TQuery>;
+  toDataQueryRequest: (query: any, scopedVars: ScopedVars) => DataQueryRequest<TQuery>;
 
   /**
    * Defines how to transform data frames into metric find values used by variable.

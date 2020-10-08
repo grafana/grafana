@@ -59,17 +59,18 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
           })
         ),
       toDataQueryRequest: (query, scopedVars) => {
-        const targets = [
+        const targets: TestDataQuery[] = [
           {
             datasource: instanceSettings.name,
             refId: `variable-query-${instanceSettings.name}`,
-            query,
+            scenarioId: 'metric_find_query',
+            stringInput: query,
           },
         ];
 
-        const request: DataQueryRequest = {
+        const request: DataQueryRequest<TestDataQuery> = {
           targets,
-          app: CoreApp.Variables,
+          app: CoreApp.Dashboard,
           range: DefaultTimeRange,
           scopedVars,
           requestId: uuidv4(),
@@ -85,10 +86,6 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
   }
 
   query(options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
-    if (options.app === CoreApp.Variables) {
-      return this.handleVariablesQuery(options);
-    }
-
     const queries: any[] = [];
     const streams: Array<Observable<DataQueryResponse>> = [];
 
@@ -110,6 +107,9 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
           break;
         case 'annotations':
           streams.push(this.annotationDataTopicTest(target, options));
+          break;
+        case 'metric_find_query':
+          streams.push(this.handleVariablesQuery(options));
           break;
         default:
           queries.push({
@@ -229,10 +229,10 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
       return of({ state: LoadingState.Done, data: [] });
     }
 
-    const dataQuery: any = options.targets[0];
+    const { stringInput } = options.targets[0];
     const interpolatedQuery = this.templateSrv.replace(
-      dataQuery.query,
-      getSearchFilterScopedVar({ query: dataQuery.query, wildcardChar: '*', options: options.scopedVars })
+      stringInput,
+      getSearchFilterScopedVar({ query: stringInput, wildcardChar: '*', options: options.scopedVars })
     );
     const children = queryMetricTree(interpolatedQuery);
     const items = children.map(item => ({ value: item.name, text: item.name }));
