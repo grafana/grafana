@@ -75,6 +75,7 @@ export * from './uPlot/geometries';
 export { usePlotConfigContext } from './uPlot/context';
 export { Canvas } from './uPlot/Canvas';
 export * from './uPlot/plugins';
+export { useRefreshAfterGraphRendered } from './uPlot/hooks';
 export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';
 
 export { Gauge } from './Gauge/Gauge';
