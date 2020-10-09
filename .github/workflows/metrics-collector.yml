@@ -8,12 +8,12 @@
 #
 # https://github.com/grafana/grafana-github-actions/blob/main/metrics-collector/index.ts
 #
-name: Collect metrics when issue is closed
+name: Github issue metrics collection 
 on:
+  schedule:
+    - cron: "*/10 * * * *"
   issues:
     types: [opened, closed]
-  schedule:
-    - cron: "*/10 * * * *" # Every 10 minutes
 
 jobs:
   main:
