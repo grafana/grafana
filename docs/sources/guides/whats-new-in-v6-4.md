@@ -75,7 +75,7 @@ Grafana 6.4 improves Data Links and adds them to the Gauge and Bar Gauge and pan
 
 With Data Links you can define dynamic links to other dashboards and systems. The link can now reference template variables and query results like series name and labels, field name, value and time.
 
-Read more about Data Links and what you can do with them in [documentation](https://grafana.com/docs/features/panels/graph/#data-link)
+For more information about Data Links, refer to [data link](https://grafana.com/docs/features/panels/graph/#data-link)
 
 ## Series override to turn constant into a line
 
