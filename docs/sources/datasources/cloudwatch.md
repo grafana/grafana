@@ -424,3 +424,16 @@ datasources:
       accessKey: '<your access key>'
       secretKey: '<your secret key>'
 ```
+
+### Using AWS SDK Default and ARN of IAM Role to Assume
+
+```yaml
+apiVersion: 1
+datasources:
+  - name: CloudWatch
+    type: cloudwatch
+    jsonData:
+      authType: default
+      assumeRoleArn: arn:aws:iam::123456789012:root
+      defaultRegion: eu-west-2
+```
