@@ -90,7 +90,7 @@ const buildPluginDocsRunner: TaskRunner<PluginCIOptions> = async () => {
   const exe = await execa('cp', ['-rv', docsSrc + '/.', docsDest]);
   console.log(exe.stdout);
 
-  fs.writeFile(path.resolve(docsDest, 'index.html'), `TODO... actually build docs`, err => {
+  fs.writeFileSync(path.resolve(docsDest, 'index.html'), `TODO... actually build docs`, err => {
     if (err) {
       throw new Error('Unable to docs');
     }
@@ -158,7 +158,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signatureType,
   const pluginJsonFile = path.resolve(distContentDir, 'plugin.json');
   const pluginInfo = getPluginJson(pluginJsonFile);
   pluginInfo.info.build = await getPluginBuildInfo();
-  fs.writeFile(pluginJsonFile, JSON.stringify(pluginInfo, null, 2), err => {
+  fs.writeFileSync(pluginJsonFile, JSON.stringify(pluginInfo, null, 2), err => {
     if (err) {
       throw new Error('Error writing: ' + pluginJsonFile);
     }
@@ -212,7 +212,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signatureType,
   }
 
   p = path.resolve(packagesDir, 'info.json');
-  fs.writeFile(p, JSON.stringify(info, null, 2), err => {
+  fs.writeFileSync(p, JSON.stringify(info, null, 2), err => {
     if (err) {
       throw new Error('Error writing package info: ' + p);
     }
@@ -225,7 +225,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signatureType,
     `[paths] \n` +
     `plugins = ${path.resolve(grafanaEnvDir, 'plugins')}\n` +
     `\n`; // empty line
-  fs.writeFile(p, customIniBody, err => {
+  fs.writeFileSync(p, customIniBody, err => {
     if (err) {
       throw new Error('Unable to write: ' + p);
     }
@@ -267,7 +267,7 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
 
   // Save the report to disk
   const file = path.resolve(ciDir, 'report.json');
-  fs.writeFile(file, JSON.stringify(report, null, 2), err => {
+  fs.writeFileSync(file, JSON.stringify(report, null, 2), err => {
     if (err) {
       throw new Error('Unable to write: ' + file);
     }
