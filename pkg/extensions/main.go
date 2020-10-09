@@ -4,6 +4,7 @@ import (
 	// Upgrade ldapsync from cron to cron.v3 and
 	// remove the cron (v1) dependency
 
+	_ "github.com/beevik/etree"
 	_ "github.com/crewjam/saml"
 	_ "github.com/gobwas/glob"
 	"github.com/grafana/grafana/pkg/registry"
@@ -15,6 +16,7 @@ import (
 	_ "github.com/pkg/errors"
 	_ "github.com/robfig/cron"
 	_ "github.com/robfig/cron/v3"
+	_ "github.com/russellhaering/goxmldsig"
 	_ "github.com/stretchr/testify/require"
 	_ "github.com/timberio/go-datemath"
 	_ "gopkg.in/square/go-jose.v2"
