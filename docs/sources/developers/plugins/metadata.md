@@ -167,10 +167,11 @@ For data source plugins. Token authentication section used with an OAuth API.
 
 #### Properties
 
-| Property | Type              | Required | Description                                                               |
-|----------|-------------------|----------|---------------------------------------------------------------------------|
-| `params` | [object](#params) | No       | For data source plugins. Parameters for the token authentication request. |
-| `url`    | string            | No       | For data source plugins. URL to fetch the authentication token.           |
+| Property  | Type              | Required | Description                                                                                     |
+|-----------|-------------------|----------|-------------------------------------------------------------------------------------------------|
+| `params`  | [object](#params) | No       | For data source plugins. Parameters for the token authentication request.                       |
+| `url`     | string            | No       | For data source plugins. URL to fetch the authentication token.                                 |
+| `headers` | array             | No       | For data source plugins. Route headers adds HTTP headers to the authentication request request. |
 
 #### params
 

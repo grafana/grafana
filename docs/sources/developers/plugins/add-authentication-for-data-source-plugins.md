@@ -154,3 +154,31 @@ Grafana automatically renews the token when it expires.
   }
 ]
 ```
+
+## Optional headers to retrieve oauth token
+
+If a header value is expected in the call to the oauth url, they can sent using
+the `headers` property. 
+
+```json
+"routes": [
+  {
+    "path": "example",
+    "url": "https://api.example.com",
+    "tokenAuth": {
+      "url": "https://login.example.com/oauth2/token",
+      "headers": [
+        {
+          "name": "ApiVersion",
+          "content": "1.0"
+        }
+      ],
+      "params": {
+        "grant_type": "client_credentials",
+        "client_id": "{{ .JsonData.clientId }}",
+        "client_secret": "{{ .SecureJsonData.clientSecret }}"
+      }
+    }
+  }
+]
+```

@@ -306,6 +306,10 @@
                 "description": "For data source plugins. URL to fetch the authentication token.",
                 "format": "uri"
               },
+              "headers": {
+                "type": "array",
+                "description": "For data source plugins. Route headers adds HTTP headers to the proxied request."
+              },
               "params": {
                 "type": "object",
                 "description": "For data source plugins. Parameters for the token authentication request.",
