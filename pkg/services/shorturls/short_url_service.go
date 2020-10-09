@@ -7,33 +7,17 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type ShortURLService interface {
-	GetFullURLByUID(uid string) (string, error)
-	CreateShortURL(path string) (string, error)
-}
-
-type shortURLServiceImpl struct {
+type ShortURLService struct {
 	user *models.SignedInUser
 }
 
 var NewShortURLService = func(user *models.SignedInUser) ShortURLService {
-	return &shortURLServiceImpl{
+	return ShortURLService{
 		user: user,
 	}
 }
 
-func (dr *shortURLServiceImpl) buildCreateShortURLCommand(path string) (*models.CreateShortURLCommand, error) {
-	cmd := &models.CreateShortURLCommand{
-		OrgID:     dr.user.OrgId,
-		UID:       util.GenerateShortUID(),
-		Path:      path,
-		CreatedBy: dr.user.UserId,
-	}
-
-	return cmd, nil
-}
-
-func (dr *shortURLServiceImpl) GetFullURLByUID(uid string) (string, error) {
+func (dr ShortURLService) GetFullURLByUID(uid string) (string, error) {
 	query := models.GetShortURLByUIDQuery{OrgID: dr.user.OrgId, UID: uid}
 	if err := bus.Dispatch(&query); err != nil {
 		return "", err
@@ -46,16 +30,17 @@ func (dr *shortURLServiceImpl) GetFullURLByUID(uid string) (string, error) {
 	return query.Result.Path, nil
 }
 
-func (dr *shortURLServiceImpl) CreateShortURL(path string) (string, error) {
-	createShortURLCmd, err := dr.buildCreateShortURLCommand(path)
-	if err != nil {
+func (dr ShortURLService) CreateShortURL(path string) (string, error) {
+	cmd := models.CreateShortURLCommand{
+		OrgID:     dr.user.OrgId,
+		UID:       util.GenerateShortUID(),
+		Path:      path,
+		CreatedBy: dr.user.UserId,
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
 		return "", err
 	}
 
-	err = bus.Dispatch(createShortURLCmd)
-	if err != nil {
-		return "", err
-	}
-
-	return createShortURLCmd.Result.Uid, nil
+	return cmd.Result.Uid, nil
 }

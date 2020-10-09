@@ -10,7 +10,7 @@ import (
 )
 
 func TestShortURLService(t *testing.T) {
-	service := shortURLServiceImpl{
+	service := ShortURLService{
 		user: &models.SignedInUser{UserId: 1},
 	}
 
@@ -50,7 +50,7 @@ func TestShortURLService(t *testing.T) {
 	})
 
 	t.Run("User cannot look up nonexistent short URLs", func(t *testing.T) {
-		service := shortURLServiceImpl{
+		service := ShortURLService{
 			user: &models.SignedInUser{UserId: 1},
 		}
 
