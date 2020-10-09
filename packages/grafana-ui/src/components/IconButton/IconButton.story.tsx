@@ -12,7 +12,9 @@ export default {
   component: IconButton,
   decorators: [withCenteredStory],
   parameters: {
-    docs: {},
+    docs: {
+      page: mdx,
+    },
   },
 };
 
