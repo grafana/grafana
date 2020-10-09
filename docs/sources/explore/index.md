@@ -19,7 +19,7 @@ For infrastructure monitoring and incident response, you no longer need to switc
 
 1. Receive an alert
 1. Drill down and examine metrics
-1. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces).
+1. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces)
 
 If you just want to explore your data and do not want to create a dashboard, then Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time.
 
