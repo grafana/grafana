@@ -117,6 +117,9 @@ func TestAccessToken(t *testing.T) {
 					"https://www.testapi.com/auth/monitoring.read",
 					"https://www.testapi.com/auth/cloudplatformprojects.readonly",
 				},
+				Headers: []plugins.AppPluginRouteHeader{
+					{Name: "x-header", Content: "my {{ .JsonData.test_header }}"},
+				},
 				Params: map[string]string{
 					"grant_type":    "client_credentials",
 					"client_id":     "{{.JsonData.client_id}}",
@@ -129,8 +132,9 @@ func TestAccessToken(t *testing.T) {
 
 		templateData := templateData{
 			JsonData: map[string]interface{}{
-				"client_id": "my_client_id",
-				"audience":  "www.example.com",
+				"client_id":   "my_client_id",
+				"audience":    "www.example.com",
+				"test_header": "test header",
 			},
 			SecureJsonData: map[string]string{
 				"client_secret": "my_secret",

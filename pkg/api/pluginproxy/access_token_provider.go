@@ -117,6 +117,10 @@ func (provider *accessTokenProvider) getAccessToken(data templateData) (string, 
 	getTokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	getTokenReq.Header.Add("Content-Length", strconv.Itoa(len(params.Encode())))
 
+	if err := addAuthHeaders(&getTokenReq.Header, provider.route, data); err != nil {
+		logger.Error("Failed to render token auth headers", "error", err)
+	}
+
 	resp, err := client.Do(getTokenReq)
 	if err != nil {
 		return "", err
@@ -196,4 +200,16 @@ var getTokenSource = func(conf *jwt.Config, ctx context.Context) (*oauth2.Token,
 
 func (provider *accessTokenProvider) getAccessTokenCacheKey() string {
 	return fmt.Sprintf("%v_%v_%v_%v", provider.datasourceId, provider.datasourceVersion, provider.route.Path, provider.route.Method)
+}
+
+func addAuthHeaders(reqHeaders *http.Header, route *plugins.AppPluginRoute, data templateData) error {
+	for _, header := range route.TokenAuth.Headers {
+		interpolated, err := InterpolateString(header.Content, data)
+		if err != nil {
+			return err
+		}
+		reqHeaders.Add(header.Name, interpolated)
+	}
+
+	return nil
 }

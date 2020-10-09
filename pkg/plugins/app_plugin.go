@@ -53,9 +53,10 @@ type AppPluginRouteURLParam struct {
 // JwtTokenAuth struct is both for normal Token Auth and JWT Token Auth with
 // an uploaded JWT file.
 type JwtTokenAuth struct {
-	Url    string            `json:"url"`
-	Scopes []string          `json:"scopes"`
-	Params map[string]string `json:"params"`
+	Url     string                 `json:"url"`
+	Scopes  []string               `json:"scopes"`
+	Headers []AppPluginRouteHeader `json:"headers"`
+	Params  map[string]string      `json:"params"`
 }
 
 func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
