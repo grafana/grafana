@@ -143,6 +143,7 @@ var (
 	AdminPassword    string
 	LoginCookieName  string
 	LoginMaxLifetime time.Duration
+	SigV4AuthEnabled bool
 
 	AnonymousEnabled bool
 	AnonymousOrgName string
@@ -280,12 +281,14 @@ type Cfg struct {
 	LoginMaxInactiveLifetime     time.Duration
 	LoginMaxLifetime             time.Duration
 	TokenRotationIntervalMinutes int
+	SigV4AuthEnabled             bool
 
 	// OAuth
 	OAuthCookieMaxAge int
 
 	// SAML Auth
-	SAMLEnabled bool
+	SAMLEnabled             bool
+	SAMLSingleLogoutEnabled bool
 
 	// Dataproxy
 	SendUserHeader bool
@@ -990,8 +993,13 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
 	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 
+	// SigV4
+	SigV4AuthEnabled = auth.Key("sigv4_auth_enabled").MustBool(false)
+	cfg.SigV4AuthEnabled = SigV4AuthEnabled
+
 	// SAML auth
 	cfg.SAMLEnabled = iniFile.Section("auth.saml").Key("enabled").MustBool(false)
+	cfg.SAMLSingleLogoutEnabled = iniFile.Section("auth.saml").Key("single_logout").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)

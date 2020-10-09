@@ -75,7 +75,7 @@ You can use the Text mode option to control what text the panel renders. If the 
 
 ## Provisioning of apps
 
-Grafana v7.1 adds support for provisioning of app plugins. This allows app plugins to be configured and enabled/disabled using configuration files. Read more about provisioning of app plugins [here]({{<relref "../administration/provisioning.md#plugins" >}}).
+Grafana v7.1 adds support for provisioning of app plugins. This allows app plugins to be configured and enabled/disabled using configuration files. For more information about provisioning of app, refer to [provisioning plugin]({{<relref "../administration/provisioning.md#plugins" >}}).
 
 ## Azure Monitor data source
 
@@ -99,7 +99,7 @@ General features are included in the Grafana Enterprise edition software.
 
 ### Support for HashiCorp Vault
 
-You can now use HashiCorp Vault to get secrets for configuration and provisioning of Grafana Enterprise. Learn more about this feature [here]({{<relref "../enterprise/vault.md">}}).
+You can now use HashiCorp Vault to get secrets for configuration and provisioning of Grafana Enterprise. For more information about HashiCorp Vault, refer to [vault]({{<relref "../enterprise/vault.md">}}).
 
 ### Support for monthly schedules in reports
 

@@ -61,23 +61,23 @@ certain view mode enabled. Additionally, this also enables [playlists](/dashboar
 Do you use Grafana alerting and have some notifications that are more important than others? Then it's possible to set reminders so that you continue to be alerted until the problem is fixed. This is done on the notification channel itself and will affect all alerts that use that channel.
 For additional examples of why reminders might be useful for you, see [multiple series](/alerting/alerts-overview/#multiple-series).
 
-Learn how to enable and configure reminders [here](/alerting/notifications/#send-reminders).
+For more information about how to enable and configure reminders, refer to [alerting reminders](/alerting/notifications/#send-reminders).
 
 ## Postgres Query Builder
 
-Grafana 5.3 comes with a new graphical query builder for Postgres. This brings Postgres integration more in line with some of the other data sources and makes it easier for both advanced users and beginners to work with timeseries in Postgres. Learn more about it in the [documentation]({{< relref "../features/datasources/postgres/#query-editor" >}}).
+Grafana 5.3 comes with a new graphical query builder for Postgres. This brings Postgres integration more in line with some of the other data sources and makes it easier for both advanced users and beginners to work with timeseries in Postgres. For more information about Postgres graphical query builder, refer to [query editor]({{< relref "../features/datasources/postgres/#query-editor" >}}).
 
 {{< docs-imagebox img="/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v53/postgres_query.gif" >}}
 
 ## Improved OAuth Support for GitLab
 
 Grafana 5.3 comes with a new OAuth integration for GitLab that enables configuration to only allow users that are a member of certain GitLab groups to authenticate. This makes it possible to use GitLab OAuth with Grafana in a shared environment without giving everyone access to Grafana.
-Learn how to enable and configure it in the [documentation](/auth/gitlab/).
+For more information about how to enable and configure OAuth, refer to [Gitlab OAuth](/auth/gitlab/).
 
 ## Annotations
 
 Grafana 5.3 brings improved support for [native annotations](/dashboards/annotations/#native-annotations) and makes it possible to use template variables when filtering by tags.
-Learn more about it in the [documentation](/dashboards/annotations/#query-by-tag).
+For more information about native annotation, refer to [query by tag](/dashboards/annotations/#query-by-tag).
 
 {{< docs-imagebox img="/img/docs/v53/annotation_tag_filter_variable.png" max-width="600px" >}}
 

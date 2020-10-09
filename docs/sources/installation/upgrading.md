@@ -125,7 +125,7 @@ grafana-cli plugins update-all
 
 The dashboard grid layout engine has changed. All dashboards will be automatically upgraded to new positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana. Some external panel plugins might need to be updated to work properly.
 
-For more details on the new panel positioning system, [click here]({{< relref "../dashboards/json-model.md#panel-size-position" >}})
+For more details on the new panel positioning system, refer to [panel size position]({{< relref "../dashboards/json-model.md#panel-size-position" >}})
 
 ## Upgrading to v5.2
 
@@ -138,7 +138,7 @@ If you're using systemd and have a large amount of annotations consider temporar
 ## Upgrading to v6.0
 
 If you have text panels with script tags they will no longer work due to a new setting that per default disallow unsanitized HTML.
-Read more [here]({{< relref "../administration/configuration/#disable-sanitize-html" >}}) about this new setting.
+For more information about the new setting, refer to [disable sanitize html]({{< relref "../administration/configuration/#disable-sanitize-html" >}}).
 
 ### Authentication and security
 
@@ -183,7 +183,7 @@ configuration.
 ### Embedding Grafana
 
 If you're embedding Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>` on a different website it will no longer work due to a new setting
-that per default instructs the browser to not allow Grafana to be embedded. Read more [here]({{< relref "../administration/configuration/#allow-embedding" >}}) about
+that per default instructs the browser to not allow Grafana to be embedded. For more information about embedding Grafana, refer to [configuration embedding]({{< relref "../administration/configuration/#allow-embedding" >}}) about
 this new setting.
 
 ### Session storage is no longer used
@@ -244,11 +244,11 @@ PhantomJS was deprecated in [Grafana v6.4]({{< relref "../guides/whats-new-in-v6
 
 ### Dashboard minimum refresh interval enforced
 
-A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds. Read more [here]({{< relref "../administration/configuration/#min-refresh-interval" >}}) about this setting.
+A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds. For more information about this setting, refer to [minimum refresh interval]({{< relref "../administration/configuration/#min-refresh-interval" >}}).
 
 ### Backend plugins
 
-Grafana now requires backend plugins to be signed. If a backend plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure backend plugin binaries and files haven't been tampered with.  All Grafana Labs authored backend plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. Read more [here]({{< relref "../administration/#allow-loading-unsigned-plugins" >}}) about this setting.
+Grafana now requires backend plugins to be signed. If a backend plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure backend plugin binaries and files haven't been tampered with.  All Grafana Labs authored backend plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. For more information about this setting, refer to [allow loading unsigned plugins]({{< relref "../administration/#allow-loading-unsigned-plugins" >}}).
 
 ### Cookie path
 
