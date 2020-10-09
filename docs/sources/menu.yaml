@@ -106,6 +106,8 @@
       link: /administration/cli/
     - name: Internal metrics
       link: /administration/metrics/
+    - name: View server strategies
+      link: /administration/view-server-stats/
     - name: Jaeger instrumentation
       link: /administration/jaeger-instrumentation/
     - name: Set up Grafana for high availability
