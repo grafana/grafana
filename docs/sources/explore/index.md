@@ -145,9 +145,9 @@ Click on the filter button <span title="Filter for label" class="logs-label__ico
 
 Along with metrics, Explore allows you to investigate your logs with the following data sources:
 
-- [Loki](../features/datasources/loki)
-- [InfluxDB](../features/datasources/influxdb)
-- [Elasticsearch](../features/datasources/elasticsearch)
+- [Loki](../datasources/loki)
+- [InfluxDB](../datasources/influxdb)
+- [Elasticsearch](../datasources/elasticsearch)
 
 ### Visualization options
 
@@ -193,7 +193,7 @@ If your logs are structured in `json` or `logfmt`, then you can show or hide par
 
 As mentioned, one of the log integrations is for the new open source log aggregation system from Grafana Labs - [Loki](https://github.com/grafana/loki). Loki is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels. For more information about Grafana Loki, refer to [Grafana Loki](https://github.com/grafana/loki) or the Grafana Labs hosted variant: [Grafana Cloud Logs](https://grafana.com/loki).
 
-See [Loki's data source documentation](../features/datasources/loki) on how to query for log data.
+See [Loki's data source documentation](../datasources/loki) on how to query for log data.
 
 #### Switch from metrics to logs
 
@@ -223,8 +223,8 @@ While in Live tail view new logs will come from the bottom of the screen and wil
 
 You can visualize traces from tracing data sources in explore. Data sources currently supported:
 
-- [Jaeger]({{< relref "../features/datasources/jaeger.md" >}})
-- [Zipkin]({{< relref "../features/datasources/zipkin.md" >}})
+- [Jaeger]({{< relref "../datasources/jaeger.md" >}})
+- [Zipkin]({{< relref "../datasources/zipkin.md" >}})
 
 For information about how to use the query editor see documentation for specific data source.
 
