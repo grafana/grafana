@@ -46,12 +46,12 @@ const setup = () => {
 describe('ExploreQueryInspector', () => {
   it('should render closable drawer component', () => {
     setup();
-    expect(screen.getAllByTitle(/close query inspector/i)).toHaveLength(1);
+    expect(screen.getByTitle(/close query inspector/i)).toBeInTheDocument();
   });
   it('should render 2 Tabs', () => {
     setup();
-    expect(screen.getAllByLabelText(/tab stats/i)).toHaveLength(1);
-    expect(screen.getAllByLabelText(/tab query inspector/i)).toHaveLength(1);
+    expect(screen.getByLabelText(/tab stats/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/tab query inspector/i)).toBeInTheDocument();
   });
   it('should display query data', () => {
     setup();
