@@ -1,3 +1,9 @@
+# 7.3.0-beta1 (2020-10-14)
+
+### Breaking changes
+
+- **AWS CloudWatch**: See [upgrade notes](https://grafana.com/docs/grafana/latest/installation/upgrading/#upgrading-to-v73).
+
 # 7.2.1 (2020-10-08)
 
 ### Features / Enhancements
