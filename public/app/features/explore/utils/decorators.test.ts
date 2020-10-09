@@ -489,6 +489,7 @@ describe('decorateWithLogsResult', () => {
                   labels: undefined,
                   index: 1,
                   display: expect.anything(),
+                  state: expect.anything(),
                 },
                 timeStep: 0,
               },

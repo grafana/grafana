@@ -1,6 +1,12 @@
 package migrations
 
-import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	"fmt"
+	"time"
+
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"xorm.io/xorm"
+)
 
 func addTempUserMigrations(mg *Migrator) {
 	tempUserV1 := Table{
@@ -85,4 +91,37 @@ func addTempUserMigrations(mg *Migrator) {
 		"email_sent_on":      "email_sent_on",
 		"remote_addr":        "remote_addr",
 	})
+
+	// Ensure outstanding invites are given a valid lifetime post-migration
+	mg.AddMigration("Set created for temp users that will otherwise prematurely expire", &SetCreatedForOutstandingInvites{})
+}
+
+type SetCreatedForOutstandingInvites struct {
+	MigrationBase
+}
+
+func (m *SetCreatedForOutstandingInvites) Sql(dialect Dialect) string {
+	return "code migration"
+}
+
+type TempUserMigrationDTO struct {
+	Id int64
+}
+
+func (m *SetCreatedForOutstandingInvites) Exec(sess *xorm.Session, mg *Migrator) error {
+	users := make([]*TempUserMigrationDTO, 0)
+
+	err := sess.SQL(fmt.Sprintf("SELECT id from %s WHERE created = '0' AND status in ('SignUpStarted', 'InvitePending')", mg.Dialect.Quote("temp_user"))).Find(&users)
+	if err != nil {
+		return err
+	}
+
+	for _, user := range users {
+		created := time.Now().Unix()
+		if _, err := sess.Exec("UPDATE "+mg.Dialect.Quote("temp_user")+
+			" SET created = ?, updated = ? WHERE id = ?", created, created, user.Id); err != nil {
+			return err
+		}
+	}
+	return nil
 }

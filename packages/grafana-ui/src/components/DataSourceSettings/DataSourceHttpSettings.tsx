@@ -12,6 +12,7 @@ import { Icon } from '../Icon/Icon';
 import { FormField } from '../FormField/FormField';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { TagsInput } from '../TagsInput/TagsInput';
+import { SigV4AuthSettings } from './SigV4AuthSettings';
 import { useTheme } from '../../themes';
 import { HttpSettingsProps } from './types';
 
@@ -55,7 +56,7 @@ const HttpAccessHelp = () => (
 );
 
 export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
-  const { defaultUrl, dataSourceConfig, onChange, showAccessOptions } = props;
+  const { defaultUrl, dataSourceConfig, onChange, showAccessOptions, sigV4AuthToggleEnabled } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
   const theme = useTheme();
@@ -189,6 +190,21 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
             />
           </div>
 
+          {sigV4AuthToggleEnabled && (
+            <div className="gf-form-inline">
+              <Switch
+                label="SigV4 auth"
+                labelClass="width-13"
+                checked={dataSourceConfig.jsonData.sigV4Auth || false}
+                onChange={event => {
+                  onSettingsChange({
+                    jsonData: { ...dataSourceConfig.jsonData, sigV4Auth: event!.currentTarget.checked },
+                  });
+                }}
+              />
+            </div>
+          )}
+
           {dataSourceConfig.access === 'proxy' && (
             <HttpProxySettings
               dataSourceConfig={dataSourceConfig}
@@ -204,6 +220,8 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
             </div>
           </>
         )}
+
+        {dataSourceConfig.jsonData.sigV4Auth && <SigV4AuthSettings {...props} />}
 
         {(dataSourceConfig.jsonData.tlsAuth || dataSourceConfig.jsonData.tlsAuthWithCACert) && (
           <TLSAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
