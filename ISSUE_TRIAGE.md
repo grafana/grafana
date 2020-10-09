@@ -284,7 +284,7 @@ In many cases the issue author or community as a whole is more suitable to contr
 - Alert notifiers
 
 1. Kindly and politely add a comment to signal to users subscribed to updates of the issue.
-   - Explain that the issue would be nice to get resolved, but it isn't prioritized to work on by maintainers for an unforseen future.
+   - Explain that the issue would be nice to get resolved, but it isn't prioritized to work on by maintainers for an unforeseen future.
    - If possible or applicable, try to help contributors getting starting by adding pointers and references to what code/files need to be changed and/or ideas of a good way to solve/implement the issue.
 2. Label the issue with `help wanted`.
 3. If applicable, label the issue with `beginner friendly` to denote that the issue is suitable for a beginner to work on.
