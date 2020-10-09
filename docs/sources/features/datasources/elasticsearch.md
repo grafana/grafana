@@ -197,13 +197,8 @@ for annotation events.
 
 > Only available in Grafana v6.3+.
 
-Querying and displaying log data from Elasticsearch is available via [Explore]({{< relref "../../explore" >}}).
-
-![](/img/docs/v63/elasticsearch_explore_logs.png)
-
-Select the Elasticsearch data source, change to Logs using the Metrics/Logs switcher, and then optionally enter a lucene query into the query field to filter the log messages.
-
-Finally, press the `Enter` key or the `Run Query` button to display your logs.
+Querying and displaying log data from Elasticsearch is available in [Explore]({{< relref "../../explore" >}}), and in the [logs panel]({{< relref "../../panels/visualizations/logs-panel.md" >}}) in dashboards. 
+Select the Elasticsearch data source, and then optionally enter a lucene query to display your logs.
 
 ### Log Queries
 
