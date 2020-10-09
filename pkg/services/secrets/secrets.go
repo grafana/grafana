@@ -1,6 +1,8 @@
 package secrets
 
 import (
+	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"time"
@@ -16,8 +18,9 @@ var logger = log.New("secrets")
 type Secrets struct {
 	store *sqlstore.SqlStore `inject:""`
 
-	providers    map[string]Provider
-	dataKeyCache map[string]dataKeyCacheItem
+	defaultEncryptionKey string
+	providers            map[string]Provider
+	dataKeyCache         map[string]dataKeyCacheItem
 }
 
 type dataKeyCacheItem struct {
@@ -42,29 +45,60 @@ func (s *Secrets) Init() error {
 	return nil
 }
 
-func (s *Secrets) Encrypt(payload []byte, key string) ([]byte, error) {
+var b64 = base64.RawStdEncoding
+
+func (s *Secrets) Encrypt(payload []byte) ([]byte, error) {
+	key := s.defaultEncryptionKey
+
 	dataKey, err := s.dataKey(key)
 	if err != nil {
 		return nil, err
 	}
 
-	b64 := base64.StdEncoding
+	encrypted, err := encrypt(payload, dataKey)
+	if err != nil {
+		return nil, err
+	}
+
 	prefix := make([]byte, b64.EncodedLen(len(key))+2)
 	b64.Encode(prefix[1:], []byte(key))
 	prefix[0] = '#'
 	prefix[len(prefix)-1] = '#'
 
-	blob := make([]byte, len(prefix)+len(payload))
+	blob := make([]byte, len(prefix)+len(encrypted))
 	copy(blob, prefix)
-	copy(blob[len(prefix):], payload)
+	copy(blob[len(prefix):], encrypted)
 
-	return encrypt(blob, dataKey)
+	return blob, nil
 }
 
-func (s *Secrets) Decrypt(payload []byte, key string) ([]byte, error) {
-	dataKey, err := s.dataKey(key)
-	if err != nil {
-		return nil, err
+func (s *Secrets) Decrypt(payload []byte) ([]byte, error) {
+	if len(payload) == 0 {
+		return []byte{}, nil
+	}
+
+	var dataKey []byte
+
+	if payload[0] != '#' {
+		dataKey = []byte(setting.SecretKey)
+	} else {
+		payload = payload[1:]
+		endOfKey := bytes.Index(payload, []byte{'#'})
+		if endOfKey == -1 {
+			return nil, fmt.Errorf("could not find valid key in encrypted payload")
+		}
+		b64Key := payload[:endOfKey]
+		payload = payload[endOfKey+1:]
+		key := make([]byte, b64.DecodedLen(len(b64Key)))
+		_, err := b64.Decode(key, b64Key)
+		if err != nil {
+			return nil, err
+		}
+
+		dataKey, err = s.dataKey(string(key))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return decrypt(payload, dataKey)
@@ -83,8 +117,10 @@ func (s *Secrets) dataKey(key string) ([]byte, error) {
 		}
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 	// 1. get encrypted data key from database
-	dataKey, err := s.store.GetDataKey(key)
+	dataKey, err := s.store.GetDataKey(ctx, key)
 	if err != nil {
 		return nil, err
 	}

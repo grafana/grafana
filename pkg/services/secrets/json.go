@@ -11,7 +11,7 @@ type EncryptedJSON struct {
 // is true if the key exists and false if not.
 func (j EncryptedJSON) DecryptedValue(key string) (string, bool) {
 	if value, ok := j.Map[key]; ok {
-		decryptedData, err := j.s.Decrypt(value, "")
+		decryptedData, err := j.s.Decrypt(value)
 		if err != nil {
 			logger.Error("could not decrypt value", "key", key, "err", err.Error())
 			return "", false
@@ -26,7 +26,7 @@ func (j EncryptedJSON) DecryptedValue(key string) (string, bool) {
 func (j EncryptedJSON) DecryptJSONMap() (map[string]string, error) {
 	decrypted := make(map[string]string)
 	for key, data := range j.Map {
-		decryptedData, err := j.s.Decrypt(data, "")
+		decryptedData, err := j.s.Decrypt(data)
 		if err != nil {
 			logger.Error("could not decrypt map", "err", err.Error())
 			return nil, err
@@ -44,7 +44,7 @@ func (s *Secrets) EncryptJSONMap(m map[string]string) (EncryptedJSON, error) {
 		Map: make(map[string][]byte),
 	}
 	for key, data := range m {
-		encryptedData, err := s.Encrypt([]byte(data), "")
+		encryptedData, err := s.Encrypt([]byte(data))
 		if err != nil {
 			return EncryptedJSON{}, err
 		}
