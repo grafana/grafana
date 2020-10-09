@@ -1,0 +1,22 @@
+name: Collect metrics when issue is closed
+on:
+  issues:
+    types: [opened, closed]
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Actions
+        uses: actions/checkout@v2
+        with:
+          repository: "grafana/grafana-github-actions"
+          path: ./actions
+          ref: main
+      - name: Install Actions
+        run: npm install --production --prefix ./actions
+      - name: Run metrics collector
+        uses: ./actions/metrics-collector
+        with:
+          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
