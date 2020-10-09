@@ -5,6 +5,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { useTheme } from '../../themes/ThemeContext';
 import { GrafanaTheme } from '@grafana/data';
 import { IconSize, IconName } from '../../types';
+import mdx from './IconButton.mdx';
 
 export default {
   title: 'Buttons/IconButton',
