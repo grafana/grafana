@@ -3,6 +3,8 @@ package middleware
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -29,6 +31,46 @@ func TestMiddlewareAuth(t *testing.T) {
 
 			Convey("Should return 401", func() {
 				So(sc.resp.Code, ShouldEqual, 401)
+			})
+		})
+
+		Convey("Anonymous auth enabled", func() {
+			setting.AnonymousEnabled = true
+			setting.AnonymousOrgName = "test"
+
+			bus.AddHandler("test", func(query *models.GetOrgByNameQuery) error {
+				query.Result = &models.Org{Id: 1, Name: "test"}
+				return nil
+			})
+
+			middlewareScenario(t, "ReqSignIn true and request with forceLogin in query string", func(sc *scenarioContext) {
+				sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
+
+				sc.fakeReq("GET", "/secure?forceLogin=true").exec()
+
+				Convey("Should redirect to login", func() {
+					So(sc.resp.Code, ShouldEqual, 302)
+				})
+			})
+
+			middlewareScenario(t, "ReqSignIn true and request with same org provided in query string", func(sc *scenarioContext) {
+				sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
+
+				sc.fakeReq("GET", "/secure?orgId=1").exec()
+
+				Convey("Should not redirect to login", func() {
+					So(sc.resp.Code, ShouldEqual, 200)
+				})
+			})
+
+			middlewareScenario(t, "ReqSignIn true and request with different org provided in query string", func(sc *scenarioContext) {
+				sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
+
+				sc.fakeReq("GET", "/secure?orgId=2").exec()
+
+				Convey("Should redirect to login", func() {
+					So(sc.resp.Code, ShouldEqual, 302)
+				})
 			})
 		})
 
