@@ -1,46 +1,63 @@
 package shorturls
 
 import (
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"context"
+	"time"
+
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type ShortURLService struct {
-	user *models.SignedInUser
+	sqlStore *sqlstore.SqlStore
 }
 
-var NewShortURLService = func(user *models.SignedInUser) ShortURLService {
+var NewShortURLService = func(sqlStore *sqlstore.SqlStore) ShortURLService {
 	return ShortURLService{
-		user: user,
+		sqlStore: sqlStore,
 	}
 }
 
-func (dr ShortURLService) GetFullURLByUID(uid string) (string, error) {
-	query := models.GetShortURLByUIDQuery{OrgID: dr.user.OrgId, UID: uid}
-	if err := bus.Dispatch(&query); err != nil {
+func (s ShortURLService) GetFullURLByUID(user *models.SignedInUser, uid string) (string, error) {
+	var shortURL models.ShortUrl
+	ctx := context.Background()
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		exists, err := dbSession.Where("org_id=? AND uid=?", user.OrgId, uid).Get(&shortURL)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return models.ErrShortURLNotFound
+		}
+
+		return nil
+	})
+	if err != nil {
 		return "", err
 	}
 
-	if err := bus.Dispatch(&models.UpdateShortURLLastSeenAtCommand{UID: query.Result.Uid}); err != nil {
-		logger.Error("Failed to update shortURL last_seen_at", "error", err)
-	}
-
-	return query.Result.Path, nil
+	return shortURL.Path, nil
 }
 
-func (dr ShortURLService) CreateShortURL(path string) (string, error) {
-	cmd := models.CreateShortURLCommand{
-		OrgID:     dr.user.OrgId,
-		UID:       util.GenerateShortUID(),
+func (s ShortURLService) CreateShortURL(user *models.SignedInUser, path string) (string, error) {
+	now := time.Now().Unix()
+	shortURL := models.ShortUrl{
+		OrgId:     user.OrgId,
+		Uid:       util.GenerateShortUID(),
 		Path:      path,
-		CreatedBy: dr.user.UserId,
+		CreatedBy: user.UserId,
+		CreatedAt: now,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	ctx := context.Background()
+	err := s.sqlStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+		_, err := session.Insert(&shortURL)
+		return err
+	})
+	if err != nil {
 		return "", err
 	}
 
-	return cmd.Result.Uid, nil
+	return shortURL.Uid, nil
 }

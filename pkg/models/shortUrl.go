@@ -17,31 +17,3 @@ type ShortUrl struct {
 	CreatedAt  int64
 	LastSeenAt int64
 }
-
-// ---------------------
-// COMMANDS
-
-type CreateShortURLCommand struct {
-	OrgID     int64  `json:"-"`
-	UID       string `json:"uid"`
-	Path      string `json:"path"`
-	CreatedBy int64  `json:"-"`
-
-	Result *ShortUrl
-}
-
-type UpdateShortURLLastSeenAtCommand struct {
-	OrgID int64
-	UID   string
-}
-
-// ---------------------
-// QUERIES
-//
-
-type GetShortURLByUIDQuery struct {
-	OrgID int64
-	UID   string
-
-	Result *ShortUrl
-}

@@ -3,58 +3,35 @@ package shorturls
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestShortURLService(t *testing.T) {
-	service := ShortURLService{
-		user: &models.SignedInUser{UserId: 1},
-	}
-
-	mockUID := "testuid"
-	mockNotFoundUid := "testnotfounduid"
-	mockPath := "mock/path?test=true"
-	mockShortURL := models.ShortUrl{
-		Uid:       mockUID,
-		Path:      mockPath,
-		CreatedBy: service.user.UserId,
-		CreatedAt: 1,
-	}
-
-	bus.AddHandler("test", func(query *models.CreateShortURLCommand) error {
-		query.Result = &mockShortURL
-		return nil
-	})
-
-	bus.AddHandler("test", func(query *models.GetShortURLByUIDQuery) error {
-		if query.UID == mockNotFoundUid {
-			return models.ErrShortURLNotFound
-		}
-		result := &mockShortURL
-		query.Result = result
-		return nil
-	})
+	user := &models.SignedInUser{UserId: 1}
+	sqlStore := sqlstore.InitTestDB(t)
 
 	t.Run("User can create and read short URLs", func(t *testing.T) {
-		uid, err := service.CreateShortURL(mockPath)
+		const refPath = "mock/path?test=true"
+
+		service := NewShortURLService(sqlStore)
+
+		uid, err := service.CreateShortURL(user, refPath)
 		require.NoError(t, err)
 		assert.NotEmpty(t, uid)
-		assert.Equal(t, mockUID, uid)
-		path, err := service.GetFullURLByUID(uid)
+
+		path, err := service.GetFullURLByUID(user, uid)
 		require.NoError(t, err)
 		assert.NotEmpty(t, path)
-		assert.Equal(t, mockPath, path)
+		assert.Equal(t, refPath, path)
 	})
 
 	t.Run("User cannot look up nonexistent short URLs", func(t *testing.T) {
-		service := ShortURLService{
-			user: &models.SignedInUser{UserId: 1},
-		}
+		service := NewShortURLService(sqlStore)
 
-		path, err := service.GetFullURLByUID(mockNotFoundUid)
+		path, err := service.GetFullURLByUID(user, "testnotfounduid")
 		require.Error(t, err)
 		assert.Empty(t, path)
 		assert.Equal(t, models.ErrShortURLNotFound, err)

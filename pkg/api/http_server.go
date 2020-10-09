@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
@@ -70,6 +71,7 @@ type HTTPServer struct {
 	BackendPluginManager backendplugin.Manager            `inject:""`
 	PluginManager        *plugins.PluginManager           `inject:""`
 	SearchService        *search.SearchService            `inject:""`
+	SQLStore             *sqlstore.SqlStore               `inject:""`
 	Live                 *live.GrafanaLive
 	Listener             net.Listener
 }
