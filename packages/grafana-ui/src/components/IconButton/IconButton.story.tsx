@@ -62,6 +62,7 @@ function renderScenario(surface: string, theme: GrafanaTheme, sizes: IconSize[],
         }
       `}
     >
+      <div>Surface: {surface}</div>
       {icons.map(icon => {
         return sizes.map(size => (
           <span key={icon + size}>
