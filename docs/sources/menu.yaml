@@ -395,6 +395,8 @@
   children:
     - name: Overview
       link: /enterprise/
+    - name: Activate license
+      link: /enterprise/activate-license/     
     - name: Configuration
       link: /enterprise/enterprise-configuration/
     - name: Data source permissions
