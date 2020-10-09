@@ -180,12 +180,8 @@ You can view the interpolated version of a query with the Query Inspector.
 
 > Only available in Grafana v6.3+.
 
-Querying and displaying log data from InfluxDB is available via [Explore]({{< relref "../explore" >}}).
-
-![](/img/docs/v63/influxdb_explore_logs.png)
-
-Select the InfluxDB data source, change to Logs using the Metrics/Logs switcher,
-and then use the `Measurements/Fields` button to display your logs.
+Querying and displaying log data from InfluxDB is available in [Explore]({{< relref "../explore" >}}), and in the [logs panel]({{< relref "../panels/visualizations/logs-panel.md" >}}) in dashboards. 
+Select the InfluxDB data source, and then enter a query to display your logs.
 
 ### Log Queries
 
