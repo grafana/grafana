@@ -2,9 +2,12 @@ package conditions
 
 import (
 	"context"
+	"math"
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
@@ -13,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
+	"github.com/xorcare/pointer"
 )
 
 func TestQueryCondition(t *testing.T) {
@@ -225,4 +230,80 @@ func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
 
 		fn(ctx)
 	})
+}
+
+func TestFrameToSeriesSlice(t *testing.T) {
+	tests := []struct {
+		name        string
+		frame       *data.Frame
+		seriesSlice tsdb.TimeSeriesSlice
+		Err         require.ErrorAssertionFunc
+	}{
+		{
+			name: "a wide series",
+			frame: data.NewFrame("",
+				data.NewField("Time", nil, []time.Time{
+					time.Date(2020, 1, 2, 3, 4, 0, 0, time.UTC),
+					time.Date(2020, 1, 2, 3, 4, 30, 0, time.UTC),
+				}),
+				data.NewField(`Values Int64s`, data.Labels{"Animal Factor": "cat"}, []*int64{
+					nil,
+					pointer.Int64(3),
+				}),
+				data.NewField(`Values Floats`, data.Labels{"Animal Factor": "sloth"}, []float64{
+					2.0,
+					4.0,
+				})),
+
+			seriesSlice: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name: "Values Int64s {Animal Factor=cat}",
+					Tags: map[string]string{"Animal Factor": "cat"},
+					Points: tsdb.TimeSeriesPoints{
+						tsdb.TimePoint{null.FloatFrom(math.NaN()), null.FloatFrom(1577934240000)},
+						tsdb.TimePoint{null.FloatFrom(3), null.FloatFrom(1577934270000)},
+					},
+				},
+				&tsdb.TimeSeries{
+					Name: "Values Floats {Animal Factor=sloth}",
+					Tags: map[string]string{"Animal Factor": "sloth"},
+					Points: tsdb.TimeSeriesPoints{
+						tsdb.TimePoint{null.FloatFrom(2), null.FloatFrom(1577934240000)},
+						tsdb.TimePoint{null.FloatFrom(4), null.FloatFrom(1577934270000)},
+					},
+				},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "empty wide series",
+			frame: data.NewFrame("",
+				data.NewField("Time", nil, []time.Time{}),
+				data.NewField(`Values Int64s`, data.Labels{"Animal Factor": "cat"}, []*int64{}),
+				data.NewField(`Values Floats`, data.Labels{"Animal Factor": "sloth"}, []float64{})),
+
+			seriesSlice: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name:   "Values Int64s {Animal Factor=cat}",
+					Tags:   map[string]string{"Animal Factor": "cat"},
+					Points: tsdb.TimeSeriesPoints{},
+				},
+				&tsdb.TimeSeries{
+					Name:   "Values Floats {Animal Factor=sloth}",
+					Tags:   map[string]string{"Animal Factor": "sloth"},
+					Points: tsdb.TimeSeriesPoints{},
+				},
+			},
+			Err: require.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			seriesSlice, err := FrameToSeriesSlice(tt.frame)
+			tt.Err(t, err)
+			if diff := cmp.Diff(tt.seriesSlice, seriesSlice, cmpopts.EquateNaNs()); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
 }
