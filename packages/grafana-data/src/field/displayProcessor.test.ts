@@ -1,10 +1,7 @@
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { MappingType, ValueMapping } from '../types/valueMapping';
-import { Field, FieldConfig, FieldType, GrafanaTheme, Threshold, ThresholdsMode } from '../types';
-import { getScaleCalculator, sortThresholds } from './scale';
-import { ArrayVector } from '../vector';
-import { validateFieldConfig } from './fieldOverrides';
+import { FieldConfig, FieldType, ThresholdsMode } from '../types';
 import { systemDateFormats } from '../datetime';
 
 function getDisplayProcessorFromConfig(config: FieldConfig) {
@@ -14,18 +11,6 @@ function getDisplayProcessorFromConfig(config: FieldConfig) {
       type: FieldType.number,
     },
   });
-}
-
-function getColorFromThreshold(value: number, steps: Threshold[], theme?: GrafanaTheme): string {
-  const field: Field = {
-    name: 'test',
-    config: { thresholds: { mode: ThresholdsMode.Absolute, steps: sortThresholds(steps) } },
-    type: FieldType.number,
-    values: new ArrayVector([]),
-  };
-  validateFieldConfig(field.config!);
-  const calc = getScaleCalculator(field, theme);
-  return calc(value).color!;
 }
 
 function assertSame(input: any, processors: DisplayProcessor[], match: DisplayValue) {
@@ -42,7 +27,7 @@ describe('Process simple display values', () => {
   // Don't test float values here since the decimal formatting changes
   const processors = [
     // Without options, this shortcuts to a much easier implementation
-    getDisplayProcessor(),
+    getDisplayProcessor({ field: { config: {} } }),
 
     // Add a simple option that is not used (uses a different base class)
     getDisplayProcessorFromConfig({ min: 0, max: 100 }),
@@ -101,31 +86,6 @@ describe('Process simple display values', () => {
 
   it('boolean false', () => {
     assertSame(false, processors, { text: 'false', numeric: 0 });
-  });
-});
-
-describe('Get color from threshold', () => {
-  it('should get first threshold color when only one threshold', () => {
-    const thresholds = [{ index: 0, value: -Infinity, color: '#7EB26D' }];
-    expect(getColorFromThreshold(49, thresholds)).toEqual('#7EB26D');
-  });
-
-  it('should get the threshold color if value is same as a threshold', () => {
-    const thresholds = [
-      { index: 2, value: 75, color: '#6ED0E0' },
-      { index: 1, value: 50, color: '#EAB839' },
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-    ];
-    expect(getColorFromThreshold(50, thresholds)).toEqual('#EAB839');
-  });
-
-  it('should get the nearest threshold color between thresholds', () => {
-    const thresholds = [
-      { index: 2, value: 75, color: '#6ED0E0' },
-      { index: 1, value: 50, color: '#EAB839' },
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-    ];
-    expect(getColorFromThreshold(55, thresholds)).toEqual('#EAB839');
   });
 });
 
@@ -316,6 +276,7 @@ describe('Date display options', () => {
       timeZone: 'utc',
       field: {
         type: FieldType.time,
+        config: {},
       },
     });
 

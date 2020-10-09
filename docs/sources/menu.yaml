@@ -126,39 +126,39 @@
     - link: /manage-users/add-or-remove-user-from-team/
       name: Add or remove user from team
 - name: Data sources
-  link: /features/datasources/
+  link: /datasources/
   children:
-    - link: /features/datasources/add-a-data-source/
+    - link: /datasources/add-a-data-source/
       name: Add data source
-    - link: /features/datasources/cloudwatch/
+    - link: /datasources/cloudwatch/
       name: AWS Cloudwatch
-    - link: /features/datasources/azuremonitor/
+    - link: /datasources/azuremonitor/
       name: Azure Monitor
-    - link: /features/datasources/elasticsearch/
+    - link: /datasources/elasticsearch/
       name: Elasticsearch
-    - link: /features/datasources/cloudmonitoring/
+    - link: /datasources/cloudmonitoring/
       name: Google Cloud Monitoring
-    - link: /features/datasources/graphite/
+    - link: /datasources/graphite/
       name: Graphite
-    - link: /features/datasources/influxdb/
+    - link: /datasources/influxdb/
       name: InfluxDB
-    - link: /features/datasources/jaeger/
+    - link: /datasources/jaeger/
       name: Jaeger
-    - link: /features/datasources/loki/
+    - link: /datasources/loki/
       name: Loki
-    - link: /features/datasources/mssql/
+    - link: /datasources/mssql/
       name: Microsoft SQL Server
-    - link: /features/datasources/mysql/
+    - link: /datasources/mysql/
       name: MySQL
-    - link: /features/datasources/opentsdb/
+    - link: /datasources/opentsdb/
       name: OpenTSDB
-    - link: /features/datasources/postgres/
+    - link: /datasources/postgres/
       name: PostgreSQL
-    - link: /features/datasources/prometheus/
+    - link: /datasources/prometheus/
       name: Prometheus
-    - link: /features/datasources/testdata/
+    - link: /datasources/testdata/
       name: TestData DB
-    - link: /features/datasources/zipkin/
+    - link: /datasources/zipkin/
       name: Zipkin
 - name: Panels
   link: /panels/
@@ -338,58 +338,58 @@
   link: /whatsnew/
   children:
     - name: Version 7.2
-      link: /guides/whats-new-in-v7-2/
+      link: /whatsnew/whats-new-in-v7-2/
     - name: Version 7.1
-      link: /guides/whats-new-in-v7-1/
+      link: /whatsnew/whats-new-in-v7-1/
     - name: Version 7.0
-      link: /guides/whats-new-in-v7-0/
+      link: /whatsnew/whats-new-in-v7-0/
     - name: Version 6.7
-      link: /guides/whats-new-in-v6-7/
+      link: /whatsnew/whats-new-in-v6-7/
     - name: Version 6.6
-      link: /guides/whats-new-in-v6-6/
+      link: /whatsnew/whats-new-in-v6-6/
     - name: Version 6.5
-      link: /guides/whats-new-in-v6-5/
+      link: /whatsnew/whats-new-in-v6-5/
     - name: Version 6.4
-      link: /guides/whats-new-in-v6-4/
+      link: /whatsnew/whats-new-in-v6-4/
     - name: Version 6.3
-      link: /guides/whats-new-in-v6-3/
+      link: /whatsnew/whats-new-in-v6-3/
     - name: Version 6.2
-      link: /guides/whats-new-in-v6-2/
+      link: /whatsnew/whats-new-in-v6-2/
     - name: Version 6.1
-      link: /guides/whats-new-in-v6-1/
+      link: /whatsnew/whats-new-in-v6-1/
     - name: Version 6.0
-      link: /guides/whats-new-in-v6-0/
+      link: /whatsnew/whats-new-in-v6-0/
     - name: Old versions
       link: /whatsnew/
       children:
         - name: Version 5.4
-          link: /guides/whats-new-in-v5-4/
+          link: /whatsnew/whats-new-in-v5-4/
         - name: Version 5.3
-          link: /guides/whats-new-in-v5-3/
+          link: /whatsnew/whats-new-in-v5-3/
         - name: Version 5.2
-          link: /guides/whats-new-in-v5-2/
+          link: /whatsnew/whats-new-in-v5-2/
         - name: Version 5.1
-          link: /guides/whats-new-in-v5-1/
+          link: /whatsnew/whats-new-in-v5-1/
         - name: Version 5.0
-          link: /guides/whats-new-in-v5/
+          link: /whatsnew/whats-new-in-v5/
         - name: Version 4.6
-          link: /guides/whats-new-in-v4-6/
+          link: /whatsnew/whats-new-in-v4-6/
         - name: Version 4.5
-          link: /guides/whats-new-in-v4-5/
+          link: /whatsnew/whats-new-in-v4-5/
         - name: Version 4.4
-          link: /guides/whats-new-in-v4-4/
+          link: /whatsnew/whats-new-in-v4-4/
         - name: Version 4.3
-          link: /guides/whats-new-in-v4-3/
+          link: /whatsnew/whats-new-in-v4-3/
         - name: Version 4.2
-          link: /guides/whats-new-in-v4-2/
+          link: /whatsnew/whats-new-in-v4-2/
         - name: Version 4.1
-          link: /guides/whats-new-in-v4-1/
+          link: /whatsnew/whats-new-in-v4-1/
         - name: Version 4.0
-          link: /guides/whats-new-in-v4/
+          link: /whatsnew/whats-new-in-v4/
         - name: Version 3.1
-          link: /guides/whats-new-in-v3-1/
+          link: /whatsnew/whats-new-in-v3-1/
         - name: Version 3.0
-          link: /guides/whats-new-in-v3/
+          link: /whatsnew/whats-new-in-v3/
 - name: Grafana Enterprise
   link: /enterprise/
   children:
@@ -551,5 +551,3 @@
       link: /developers/contribute/
     - name: Contributor License Agreement (CLA)
       link: /developers/cla/
-- name: Docs Archive
-  link: /archive/
