@@ -1,16 +1,16 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { HorizontalGroup, Portal, Tag, TooltipContainer, useStyles } from '@grafana/ui';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 
-interface AnnotationMarkerProps {
+interface ExemplarMarkerProps {
   time: string;
   text: string;
   tags: string[];
 }
 
-export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ time, text, tags }) => {
-  const styles = useStyles(getAnnotationMarkerStyles);
+export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ time, text, tags }) => {
+  const styles = useStyles(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
   const markerRef = useRef<HTMLDivElement>(null);
   const annotationPopoverRef = useRef<HTMLDivElement>(null);
@@ -47,7 +47,7 @@ export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ time, text, 
       >
         <div ref={annotationPopoverRef} className={styles.wrapper}>
           <div className={styles.header}>
-            {/*<span className={styles.title}>{annotationEvent.title}</span>*/}
+            {/*<span className={styles.title}>{exemplar.title}</span>*/}
             {time && <span className={styles.time}>{time}</span>}
           </div>
           <div className={styles.body}>
@@ -67,15 +67,17 @@ export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ time, text, 
 
   return (
     <>
-      <div ref={markerRef} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} className={styles.markerWrapper}>
-        <div className={styles.marker} />
+      <div ref={markerRef} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} className={cx(styles.markerWrapper)}>
+        <svg viewBox="0 0 599 599" width="8" height="8">
+          <path id="black_diamond" fill="#000" d="M 300,575 L 575,300 L 300,25 L 25,300 L 300,575 Z" />
+        </svg>
       </div>
       {isOpen && <Portal>{renderMarker()}</Portal>}
     </>
   );
 };
 
-const getAnnotationMarkerStyles = (theme: GrafanaTheme) => {
+const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
   const bg = theme.isDark ? theme.palette.dark2 : theme.palette.white;
   const headerBg = theme.isDark ? theme.palette.dark9 : theme.palette.gray5;
   const shadowColor = theme.isDark ? theme.palette.black : theme.palette.white;
@@ -83,6 +85,12 @@ const getAnnotationMarkerStyles = (theme: GrafanaTheme) => {
   return {
     markerWrapper: css`
       padding: 0 4px 4px 4px;
+      width: 8px;
+      height: 8px;
+      box-sizing: content-box;
+      > svg {
+        display: block;
+      }
     `,
     marker: css`
       width: 0;

@@ -34,6 +34,7 @@ import { VizLayout } from './VizLayout';
 import { Axis } from '@grafana/ui/src/components/uPlot/geometries/Axis';
 import { timeFormatToTemplate } from '@grafana/ui/src/components/uPlot/utils';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
+import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 
 interface GraphPanelProps extends PanelProps<Options> {}
 
@@ -238,6 +239,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
             <ZoomPlugin onZoom={onChangeTimeRange} />
             <ContextMenuPlugin />
 
+            {data.annotations && <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} />}
             {data.annotations && <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} />}
             {/* TODO: */}
             {/*<AnnotationsEditorPlugin />*/}
