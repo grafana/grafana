@@ -57,7 +57,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
       !this.props.options.jsonData.database
     ) {
       appEvents.emit(AppEvents.alertWarning, [
-        'Since grafana 7.3, authentication type "credentials" should be used only for shared file credentials. \
+        'As of grafana 7.3 authentication type "credentials" should be used only for shared file credentials. \
          If you don\'t have a credentials file, switch to the default SDK provider for extracting credentials \
          from environment variables or IAM roles',
       ]);
