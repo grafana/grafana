@@ -13,7 +13,7 @@ on:
   issues:
     types: [opened, closed]
   schedule:
-    - cron: */10 * * * * # Every 10 minutes
+    - cron: "*/10 * * * *" # Every 10 minutes
 
 jobs:
   main:
