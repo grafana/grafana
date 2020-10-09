@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -1072,12 +1073,10 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 		return err
 	}
 
-	// Minimum supported lifetime is 1 hour, and the maximum is 1 week
+	// Minimum supported lifetime is 15 minutes
 	cfg.UserInviteMaxLifetime = userInviteMaxLifetimeDuration
-	if cfg.UserInviteMaxLifetime < time.Hour*1 {
-		cfg.UserInviteMaxLifetime = time.Hour * 1
-	} else if cfg.UserInviteMaxLifetime > time.Hour*24*7 {
-		cfg.UserInviteMaxLifetime = time.Hour * 24 * 7
+	if cfg.UserInviteMaxLifetime < time.Minute*15 {
+		return errors.New("the minimum supported value for the `user_invite_max_lifetime_duration` configuration is 15m (15 minutes)")
 	}
 
 	return nil
