@@ -82,14 +82,15 @@ export const commitChangesToVariable = (): ThunkResult<void> => {
     dispatch(setCurrentVariableValue(toVariablePayload(existing, currentPayload)));
     dispatch(changeVariableProp(toVariablePayload(existing, searchQueryPayload)));
     const updated = getVariable<VariableWithMultiSupport>(picker.id, getState());
+    dispatch(hideOptions());
 
     if (getCurrentText(existing) === getCurrentText(updated)) {
-      return dispatch(hideOptions());
+      return;
     }
 
     const adapter = variableAdapters.get(updated.type);
     await adapter.setValue(updated, updated.current, true);
-    return dispatch(hideOptions());
+    return;
   };
 };
 
