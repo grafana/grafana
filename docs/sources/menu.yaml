@@ -56,6 +56,8 @@
       link: /administration/preferences/
     - name: Configuration
       link: /administration/configuration/
+    - name: View server settings
+      link: /administration/view-server-settings/
     - name: Configure Docker image
       link: /administration/configure-docker/
     - name: Security
@@ -106,7 +108,7 @@
       link: /administration/cli/
     - name: Internal metrics
       link: /administration/metrics/
-    - name: View server strategies
+    - name: View server stats
       link: /administration/view-server-stats/
     - name: Jaeger instrumentation
       link: /administration/jaeger-instrumentation/
