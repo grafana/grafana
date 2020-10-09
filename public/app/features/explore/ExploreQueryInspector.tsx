@@ -57,7 +57,7 @@ function stripPropsFromResponse(response: any) {
   return clonedResponse;
 }
 
-export interface Props {
+interface Props {
   loading: boolean;
   width: number;
   exploreId: ExploreId;

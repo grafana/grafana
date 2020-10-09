@@ -1,31 +1,11 @@
-import React from 'react';
-import { mount } from 'enzyme';
+import React, { ComponentProps } from 'react';
 import { Observable } from 'rxjs';
-import { ExploreId } from 'app/types';
-import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
-import { Button, Tab } from '@grafana/ui';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { TimeRange, LoadingState } from '@grafana/data';
-import { ExploreQueryInspector, Props } from './ExploreQueryInspector';
+import { ExploreId } from 'app/types';
+import { ExploreQueryInspector } from './ExploreQueryInspector';
 
-const response = (hideFromInspector = false) => ({
-  status: 1,
-  statusText: '',
-  ok: true,
-  headers: {} as any,
-  redirected: false,
-  type: 'basic',
-  url: '',
-  request: {} as any,
-  data: {
-    test: {
-      testKey: 'Very unique test value',
-    },
-  },
-  config: {
-    url: '',
-    hideFromInspector,
-  },
-});
+type ExploreQueryInspectorProps = ComponentProps<typeof ExploreQueryInspector>;
 
 jest.mock('../dashboard/components/Inspector/styles', () => ({
   getPanelInspectorStyles: () => ({}),
@@ -47,8 +27,8 @@ jest.mock('app/core/services/context_srv', () => ({
   },
 }));
 
-const setup = (propOverrides?: Partial<Props>) => {
-  const props: Props = {
+const setup = () => {
+  const props: ExploreQueryInspectorProps = {
     loading: false,
     width: 100,
     exploreId: ExploreId.left,
@@ -60,29 +40,43 @@ const setup = (propOverrides?: Partial<Props>) => {
     },
   };
 
-  Object.assign(props, propOverrides);
-
-  const wrapper = mount(<ExploreQueryInspector {...props} />);
-  return wrapper;
+  return render(<ExploreQueryInspector {...props} />);
 };
 
 describe('ExploreQueryInspector', () => {
-  it('should render reseizable ExploreDrawer component', () => {
-    const wrapper = setup();
-    expect(wrapper.find(ExploreDrawer)).toHaveLength(1);
+  it('should render closable drawer component', () => {
+    setup();
+    expect(screen.getAllByTitle(/close query inspector/i)).toHaveLength(1);
   });
-  it('should render 2 Tabs component', () => {
-    const wrapper = setup();
-    expect(wrapper.find(Tab)).toHaveLength(2);
+  it('should render 2 Tabs', () => {
+    setup();
+    expect(screen.getAllByLabelText(/tab stats/i)).toHaveLength(1);
+    expect(screen.getAllByLabelText(/tab query inspector/i)).toHaveLength(1);
   });
   it('should display query data', () => {
-    const wrapper = setup();
-    const queryInspectorTab = wrapper.find('[aria-label="Tab Query Inspector"]');
-    queryInspectorTab.simulate('click');
-    const expandButton = wrapper.find(Button).findWhere(n => {
-      return n.text() === 'Expand all' && n.type() === Button;
-    });
-    expandButton.simulate('click');
-    expect(wrapper.html()).toContain('Very unique test value');
+    setup();
+    fireEvent.click(screen.getByLabelText(/tab query inspector/i));
+    fireEvent.click(screen.getByText(/expand all/i));
+    expect(screen.getByText(/very unique test value/i)).toBeInTheDocument();
   });
+});
+
+const response = (hideFromInspector = false) => ({
+  status: 1,
+  statusText: '',
+  ok: true,
+  headers: {} as any,
+  redirected: false,
+  type: 'basic',
+  url: '',
+  request: {} as any,
+  data: {
+    test: {
+      testKey: 'Very unique test value',
+    },
+  },
+  config: {
+    url: '',
+    hideFromInspector,
+  },
 });
