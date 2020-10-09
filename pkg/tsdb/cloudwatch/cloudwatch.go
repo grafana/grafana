@@ -88,7 +88,6 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 		bldr.WriteString(strings.ReplaceAll(s, ":", `\:`))
 	}
 	cacheKey := bldr.String()
-	plog.Debug("Using cache key", "key", cacheKey)
 
 	sessCacheLock.RLock()
 	if env, ok := sessCache[cacheKey]; ok {
@@ -167,7 +166,7 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 		}
 	}
 
-	plog.Debug("Successfully authenticated towards AWS")
+	plog.Debug("Successfully created AWS session")
 
 	sessCacheLock.Lock()
 	sessCache[cacheKey] = envelope{
