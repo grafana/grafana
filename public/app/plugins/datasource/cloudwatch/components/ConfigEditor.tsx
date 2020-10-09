@@ -57,8 +57,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
       !this.props.options.jsonData.database
     ) {
       appEvents.emit(AppEvents.alertWarning, [
-        'Since grafana 7.3 authentication type "credentials" should be used only for shared file credentials. \
-         If you don\'t have a credentials file, switch to default SDK provider for extracting credentials \
+        'Since grafana 7.3, authentication type "credentials" should be used only for shared file credentials. \
+         If you don\'t have a credentials file, switch to the default SDK provider for extracting credentials \
          from environment variables or IAM roles',
       ]);
     }
@@ -145,7 +145,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             <div className="gf-form">
               <InlineFormLabel
                 className="width-14"
-                tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
+                tooltip="Specify which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
               >
                 Authentication Provider
               </InlineFormLabel>
