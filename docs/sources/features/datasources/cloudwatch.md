@@ -105,11 +105,11 @@ There are three different authentication methods available. `AWS SDK Default` pe
 
 `Credentials file` corresponds directly to the [SharedCredentialsProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#SharedCredentialsProvider) provider in the Go SDK. In short, it will read the AWS shared credentials file and find the given profile. While `AWS SDK Default` will also find the shared credentials file, this option allows you to specify which profile to use without messing with environment variables. It doesn't have any implicit fallbacks to other credential providers, and will fail if using credentials from the credentials file doesn't work.
 
-`Access & secret key` corresponds to the [StaticProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#StaticProvider) and will use the given access key ID and secret key to authenticate. This method doesn't have any fallbacks, and will fail if the provided key pair doesn't work.
+`Access & secret key` corresponds to the [StaticProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#StaticProvider) and uses the given access key ID and secret key to authenticate. This method doesn't have any fallbacks, and will fail if the provided key pair doesn't work.
 
 ### Assuming a role
 
-The `Assume Role ARN` field allows you to specify which IAM role should be assumed, if any. When left blank, the provided credentials will be used directly and the associated role or user should have the required permissions. If this field is non-blank, on the other hand, the provided credentials will be used to perform an [sts:AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) call.
+The `Assume Role ARN` field allows you to specify which IAM role to assume, if any. When left blank, the provided credentials are used directly and the associated role or user should have the required permissions. If this field is non-blank, on the other hand, the provided credentials are used to perform an [sts:AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) call.
 
 ### EKS IAM roles for service accounts
 
