@@ -92,7 +92,7 @@
     - name: Permissions
       link: /permissions/
       children:
-        - link: /permissions/overview/
+        - link: /permissions/
           name: Overview
         - link: /permissions/organization_roles/
           name: Organization Roles
