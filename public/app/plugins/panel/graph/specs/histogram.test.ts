@@ -6,7 +6,7 @@ describe('Graph Histogam Converter', () => {
     let bucketSize = 10;
 
     beforeEach(() => {
-      values = [1, 2, 10, 11, 17, 20, 29];
+      values = [29, 1, 2, 10, 11, 17, 20];
     });
 
     it('Should convert to series-like array', () => {
@@ -17,7 +17,7 @@ describe('Graph Histogam Converter', () => {
         [20, 2],
       ];
 
-      const histogram = convertValuesToHistogram(values, bucketSize, 1, 29);
+      const histogram = convertValuesToHistogram(values, bucketSize, 1, 30);
       expect(histogram).toMatchObject(expected);
     });
 
@@ -32,7 +32,16 @@ describe('Graph Histogam Converter', () => {
         [25, 1],
       ];
 
-      const histogram = convertValuesToHistogram(values, bucketSize, 1, 29);
+      const histogram = convertValuesToHistogram(values, bucketSize, 1, 30);
+      expect(histogram).toMatchObject(expected);
+    });
+  });
+
+  describe('Buckets to have correct decimals', () => {
+    it('Should convert to series-like array', () => {
+      const expected = [[1.7000000000000002, 1]];
+
+      const histogram = convertValuesToHistogram([1.715000033378601], 0.05, 1.7, 1.8);
       expect(histogram).toMatchObject(expected);
     });
   });

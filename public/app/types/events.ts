@@ -156,3 +156,6 @@ export const jsonDiffReady = eventFactory('json-diff-ready');
 export const closeTimepicker = eventFactory('closeTimepicker');
 
 export const routeUpdated = eventFactory('$routeUpdate');
+
+export const queryChanged = eventFactory('queryChanged');
+export const transformationChanged = eventFactory('transformationChanged');

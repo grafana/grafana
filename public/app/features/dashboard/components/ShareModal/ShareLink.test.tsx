@@ -14,9 +14,11 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
 let fillVariableValuesForUrlMock = (params: any) => {};
 
 jest.mock('app/features/templating/template_srv', () => ({
-  fillVariableValuesForUrl: (params: any) => {
-    fillVariableValuesForUrlMock(params);
-  },
+  getTemplateSrv: () => ({
+    fillVariableValuesForUrl: (params: any) => {
+      fillVariableValuesForUrlMock(params);
+    },
+  }),
 }));
 
 function mockLocationHref(href: string) {
@@ -28,6 +30,7 @@ function mockLocationHref(href: string) {
     search = href.substring(searchPos);
   }
 
+  //@ts-ignore
   delete window.location;
   (window as any).location = {
     ...location,

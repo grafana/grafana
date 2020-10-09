@@ -38,10 +38,10 @@ enable = [
   "unused",
   "varcheck",
   "whitespace",
+  "gocyclo",
 ]
 
 # Disabled linters (might want them later)
-# "gocyclo",
 # "unparam"
 
 [[issues.exclude-rules]]

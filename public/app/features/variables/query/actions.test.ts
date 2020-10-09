@@ -1,10 +1,19 @@
+import { LoadingState } from '@grafana/data';
+
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getRootReducer } from '../state/helpers';
 import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from '../state/types';
-import { addVariable, changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
+import {
+  addVariable,
+  changeVariableProp,
+  setCurrentVariableValue,
+  variableStateCompleted,
+  variableStateFailed,
+  variableStateFetching,
+} from '../state/sharedReducer';
 import { TemplatingState } from '../state/reducers';
 import {
   changeQueryVariableDataSource,
@@ -21,6 +30,9 @@ import {
 } from '../editor/reducer';
 import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
 import { expect } from 'test/lib/common';
+import { updateOptions } from '../state/actions';
+import { notifyApp } from '../../../core/reducers/appNotification';
+import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 
 const mocks: Record<string, any> = {
   datasource: {
@@ -215,6 +227,7 @@ describe('query actions', () => {
   });
 
   describe('when updateQueryVariableOptions is dispatched and fails for variable open in editor', () => {
+    silenceConsoleOutput();
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true, useTags: false });
       const error = { message: 'failed to fetch metrics' };
@@ -225,15 +238,23 @@ describe('query actions', () => {
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
+        .whenAsyncActionIsDispatched(updateOptions(toVariablePayload(variable)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [clearErrors, errorOccurred] = actions;
-        const expectedNumberOfActions = 2;
+      tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
+        const expectedNumberOfActions = 5;
 
-        expect(errorOccurred).toEqual(addVariableEditorError({ errorProp: 'update', errorText: error.message }));
-        expect(clearErrors).toEqual(removeVariableEditorError({ errorProp: 'update' }));
-        return actions.length === expectedNumberOfActions;
+        expect(dispatchedActions[0]).toEqual(variableStateFetching(toVariablePayload(variable)));
+        expect(dispatchedActions[1]).toEqual(removeVariableEditorError({ errorProp: 'update' }));
+        expect(dispatchedActions[2]).toEqual(addVariableEditorError({ errorProp: 'update', errorText: error.message }));
+        expect(dispatchedActions[3]).toEqual(
+          variableStateFailed(toVariablePayload(variable, { error: { message: 'failed to fetch metrics' } }))
+        );
+        expect(dispatchedActions[4].type).toEqual(notifyApp.type);
+        expect(dispatchedActions[4].payload.title).toEqual('Templating [0]');
+        expect(dispatchedActions[4].payload.text).toEqual('Error updating options: failed to fetch metrics');
+        expect(dispatchedActions[4].payload.severity).toEqual('error');
+
+        return dispatchedActions.length === expectedNumberOfActions;
       });
     });
   });
@@ -435,23 +456,16 @@ describe('query actions', () => {
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
       const update = { results: optionsMetrics, templatedRegex: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [clearError, changeQuery, changeDefinition, updateOptions, updateTags, setOption] = actions;
-        const expectedNumberOfActions = 6;
-
-        expect(clearError).toEqual(removeVariableEditorError({ errorProp: 'query' }));
-        expect(changeQuery).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query }))
-        );
-        expect(changeDefinition).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
-        );
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
-        expect(updateTags).toEqual(updateVariableTags(toVariablePayload(variable, tagsMetrics)));
-        expect(setOption).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        removeVariableEditorError({ errorProp: 'query' }),
+        changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query })),
+        changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition })),
+        variableStateFetching(toVariablePayload(variable)),
+        updateVariableOptions(toVariablePayload(variable, update)),
+        updateVariableTags(toVariablePayload(variable, tagsMetrics)),
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        variableStateCompleted(toVariablePayload(variable))
+      );
     });
   });
 
@@ -473,22 +487,15 @@ describe('query actions', () => {
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
       const update = { results: optionsMetrics, templatedRegex: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [clearError, changeQuery, changeDefinition, updateOptions, setOption] = actions;
-        const expectedNumberOfActions = 5;
-
-        expect(clearError).toEqual(removeVariableEditorError({ errorProp: 'query' }));
-        expect(changeQuery).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query }))
-        );
-        expect(changeDefinition).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
-        );
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
-        expect(setOption).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        removeVariableEditorError({ errorProp: 'query' }),
+        changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query })),
+        changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition })),
+        variableStateFetching(toVariablePayload(variable)),
+        updateVariableOptions(toVariablePayload(variable, update)),
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        variableStateCompleted(toVariablePayload(variable))
+      );
     });
   });
 
@@ -509,22 +516,15 @@ describe('query actions', () => {
       const option = createOption('A');
       const update = { results: optionsMetrics, templatedRegex: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [clearError, changeQuery, changeDefinition, updateOptions, setOption] = actions;
-        const expectedNumberOfActions = 5;
-
-        expect(clearError).toEqual(removeVariableEditorError({ errorProp: 'query' }));
-        expect(changeQuery).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query }))
-        );
-        expect(changeDefinition).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
-        );
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
-        expect(setOption).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        removeVariableEditorError({ errorProp: 'query' }),
+        changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query })),
+        changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition })),
+        variableStateFetching(toVariablePayload(variable)),
+        updateVariableOptions(toVariablePayload(variable, update)),
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        variableStateCompleted(toVariablePayload(variable))
+      );
     });
   });
 
@@ -588,6 +588,8 @@ function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableMode
     regex: '',
     multi: true,
     includeAll: true,
+    state: LoadingState.NotStarted,
+    error: null,
     ...(extend ?? {}),
   };
 }

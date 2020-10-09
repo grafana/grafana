@@ -57,7 +57,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/stats", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin/live", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/ldap", reqGrafanaAdmin, hs.Index)
 
 	r.Get("/styleguide", reqSignedIn, hs.Index)
@@ -90,6 +89,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/alerting/*", reqEditorRole, hs.Index)
 
 	// sign up
+	r.Get("/verify", hs.Index)
 	r.Get("/signup", hs.Index)
 	r.Get("/api/user/signup/options", Wrap(GetSignUpOptions))
 	r.Post("/api/user/signup", quota("user"), bind(dtos.SignUpForm{}), Wrap(SignUp))
@@ -430,7 +430,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Live streaming
 	if hs.Live != nil {
-		r.Any("/live/*", hs.Live.Handler)
+		r.Any("/live/*", hs.Live.WebsocketHandler)
 	}
 
 	// Snapshots
@@ -439,9 +439,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, Wrap(DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
-
-	// Health check
-	r.Get("/api/health", hs.healthHandler)
 
 	r.Get("/*", reqSignedIn, hs.Index)
 }

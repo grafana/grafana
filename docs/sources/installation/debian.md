@@ -93,8 +93,8 @@ If you install the `.deb` package, then you will need to manually update Grafana
    * The most recent Grafana version is selected by default.
    * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
 1. Select an **Edition**.
-   * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
-   * **Open Source** - Functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
+   - **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
+   - **Open Source** - Functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
 1. Depending on which system you are running, click **Linux** or **ARM**.
 1. Copy and paste the code from the installation page into your command line and run. It follows the pattern shown below.
 
@@ -167,7 +167,7 @@ Start Grafana by running:
 - Installs configuration file to `/etc/grafana/grafana.ini`
 - Installs systemd service (if systemd is available) name `grafana-server.service`
 - The default configuration sets the log file at `/var/log/grafana/grafana.log`
-- The default configuration specifies an sqlite3 db at `/var/lib/grafana/grafana.db`
+- The default configuration specifies a SQLite3 db at `/var/lib/grafana/grafana.db`
 - Installs HTML/JS/CSS and other Grafana files at `/usr/share/grafana`
 
 ## Next steps

@@ -16,7 +16,12 @@ export const setTimeRange = ({ from, to, zone }: TimeRangeConfig) => {
     e2e()
       .contains('button', 'Change time zone')
       .click();
-    selectOption(e2e.components.TimeZonePicker.container(), zone, false);
+
+    selectOption({
+      clickToOpen: false,
+      container: e2e.components.TimeZonePicker.container(),
+      optionText: zone,
+    });
   }
 
   // For smaller screens

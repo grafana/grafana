@@ -17,10 +17,10 @@ Grafana ships with a feature-rich data source plugin for InfluxDB. The plugin in
 ## Add the data source
 
 1. Open the side menu by clicking the Grafana icon in the top header.
-2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
-3. Click the `+ Add data source` button in the top header.
-4. Select *InfluxDB* from the *Type* dropdown.
-5. Select *InfluxQL* or *Flux* from the `Query Language` list.
+1. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
+1. Click the `+ Add data source` button in the top header.
+1. Select *InfluxDB* from the *Type* dropdown.
+1. Select *InfluxQL* or *Flux* from the `Query Language` list.
 
 > **Note:** If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
@@ -69,10 +69,10 @@ Identifier | Description
 {{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
 
 You can access the InfluxDB editor under the metrics tab when you are in the edit mode of the Graph or Singlestat panels. 
-Enter edit mode by clicking the panel title, and clicking **Edit**. The editor allows you to select metrics and tags.
+Enter edit mode by clicking the panel title and clicking **Edit**. The editor allows you to select metrics and tags.
 
 ### Filter data (WHERE)
-To add a tag filter click the plus icon to the right of the `WHERE` condition. You can remove tag filters by clicking on
+To add a tag filter, click the plus icon to the right of the `WHERE` condition. You can remove tag filters by clicking on
 the tag key and then selecting `--remove tag filter--`.
 
 **Regex matching**
@@ -96,7 +96,7 @@ Use the plus button and select Field > field to add another SELECT clause. You c
 specify an asterix `*` to select all fields.
 
 ### Group By
-To group by a tag click the plus icon at the end of the GROUP BY row. Pick a tag from the dropdown that appears.
+To group by a tag, click the plus icon at the end of the GROUP BY row. Pick a tag from the dropdown that appears.
 You can remove the "Group By" by clicking on the `tag` and then click on the x icon.
 
 ### Text Editor Mode (RAW)
@@ -180,7 +180,7 @@ You can view the interpolated version of a query with the Query Inspector.
 
 > Only available in Grafana v6.3+.
 
-Querying and displaying log data from InfluxDB is available via [Explore]({{< relref "../explore" >}}).
+Querying and displaying log data from InfluxDB is available via [Explore]({{< relref "../../explore" >}}).
 
 ![](/img/docs/v63/influxdb_explore_logs.png)
 
@@ -195,7 +195,7 @@ Once the result is returned, the log panel shows a list of log rows and a bar ch
 
 ### Filter search
 
-To add a filter click the plus icon to the right of the `Measurements/Fields` button or a condition. You can remove tag filters by clicking on the first select and choosing `--remove filter--`.
+To add a filter, click the plus icon to the right of the `Measurements/Fields` button or a condition. You can remove tag filters by clicking on the first select and choosing `--remove filter--`.
 
 ## Templating
 
@@ -203,21 +203,21 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
 
-If you add a template variable of the type `Query` you can write a InfluxDB exploration (meta data) query. These queries can
+If you add a template variable of the type `Query`, then you can write an InfluxDB exploration (metadata) query. These queries can
 return things like measurement names, key names or key values.
 
-For example you can have a variable that contains all values for tag `hostname` if you specify a query like this in the templating variable *Query* setting.
+For example, you can have a variable that contains all values for tag `hostname` if you specify a query like this in the template variable *Query* setting.
 
 ```sql
 SHOW TAG VALUES WITH KEY = "hostname"
 ```
 
-You can also create nested variables. For example if you had another variable, for example `region`. Then you could have
+You can also create nested variables. For example, if you had another variable, for example `region`. Then you could have
 the hosts variable only show hosts from the current selected region with a query like this:
 
 ```sql

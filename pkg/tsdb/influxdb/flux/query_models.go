@@ -83,6 +83,12 @@ func getQueryModelTSDB(query *tsdb.Query, timeRange *tsdb.TimeRange, dsInfo *mod
 		To:   endTime,
 	}
 	model.MaxDataPoints = query.MaxDataPoints
+	if model.MaxDataPoints == 0 {
+		model.MaxDataPoints = 10000 // 10k/series should be a reasonable place to abort!
+	}
 	model.Interval = time.Millisecond * time.Duration(query.IntervalMs)
+	if model.Interval.Milliseconds() == 0 {
+		model.Interval = time.Millisecond // 1ms
+	}
 	return model, nil
 }

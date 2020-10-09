@@ -1,6 +1,10 @@
 package social
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -11,6 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+var (
+	logger = log.New("social")
 )
 
 type BasicUserInfo struct {
@@ -224,4 +232,59 @@ var GetOAuthProviders = func(cfg *setting.Cfg) map[string]bool {
 	}
 
 	return result
+}
+
+func GetOAuthHttpClient(name string) (*http.Client, error) {
+	if setting.OAuthService == nil {
+		return nil, fmt.Errorf("OAuth not enabled")
+	}
+	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
+	name = strings.TrimPrefix(name, "oauth_")
+	info, ok := setting.OAuthService.OAuthInfos[name]
+	if !ok {
+		return nil, fmt.Errorf("Could not find %s in OAuth Settings", name)
+	}
+
+	// handle call back
+	tr := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: info.TlsSkipVerify,
+		},
+	}
+	oauthClient := &http.Client{
+		Transport: tr,
+	}
+
+	if info.TlsClientCert != "" || info.TlsClientKey != "" {
+		cert, err := tls.LoadX509KeyPair(info.TlsClientCert, info.TlsClientKey)
+		if err != nil {
+			logger.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
+			return nil, fmt.Errorf("Failed to setup TlsClientCert")
+		}
+
+		tr.TLSClientConfig.Certificates = append(tr.TLSClientConfig.Certificates, cert)
+	}
+
+	if info.TlsClientCa != "" {
+		caCert, err := ioutil.ReadFile(info.TlsClientCa)
+		if err != nil {
+			logger.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
+			return nil, fmt.Errorf("Failed to setup TlsClientCa")
+		}
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+		tr.TLSClientConfig.RootCAs = caCertPool
+	}
+	return oauthClient, nil
+}
+
+func GetConnector(name string) (SocialConnector, error) {
+	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
+	provider := strings.TrimPrefix(name, "oauth_")
+	connector, ok := SocialMap[provider]
+	if !ok {
+		return nil, fmt.Errorf("Failed to find oauth provider for %s", name)
+	}
+	return connector, nil
 }

@@ -48,7 +48,7 @@ interface Field {
 Let's look an example. The table below demonstrates a data frame with two fields, _time_ and _temperature_.
 
 | time                | temperature |
-|---------------------|-------------|
+| ------------------- | ----------- |
 | 2020-01-02 03:04:00 | 45.0        |
 | 2020-01-02 03:05:00 | 47.0        |
 | 2020-01-02 03:06:00 | 48.0        |
@@ -130,7 +130,7 @@ In long format, string values are represented as separate fields rather than as 
 
 Grafana can detect and convert data frames in long format into wide format.
 
-> Note: Long format is currently only supported in the backend: [Grafana Issue #22219](https://github.com/grafana/grafana/issues/22219).
+> **Note:** Long format is currently only supported in the backend: [Grafana Issue #22219](https://github.com/grafana/grafana/issues/22219).
 
 For example, the following data frame in long format:
 

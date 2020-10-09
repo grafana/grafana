@@ -287,7 +287,7 @@ func (e *CloudMonitoringExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*cl
 		sq.Target = target
 		sq.Params = params
 
-		if setting.Env == setting.DEV {
+		if setting.Env == setting.Dev {
 			slog.Debug("CloudMonitoring request", "params", params)
 		}
 
@@ -302,7 +302,7 @@ func migrateLegacyQueryModel(query *tsdb.Query) {
 	if mq == nil {
 		migratedModel := simplejson.NewFromAny(map[string]interface{}{
 			"queryType":   metricQueryType,
-			"metricQuery": query.Model,
+			"metricQuery": query.Model.MustMap(),
 		})
 		query.Model = migratedModel
 	}
@@ -320,7 +320,7 @@ func interpolateFilterWildcards(value string) string {
 	matches := strings.Count(value, "*")
 	switch {
 	case matches == 2 && strings.HasSuffix(value, "*") && strings.HasPrefix(value, "*"):
-		value = strings.Replace(value, "*", "", -1)
+		value = strings.ReplaceAll(value, "*", "")
 		value = fmt.Sprintf(`has_substring("%s")`, value)
 	case matches == 1 && strings.HasPrefix(value, "*"):
 		value = strings.Replace(value, "*", "", 1)
@@ -332,8 +332,8 @@ func interpolateFilterWildcards(value string) string {
 		value = string(wildcardRegexRe.ReplaceAllFunc([]byte(value), func(in []byte) []byte {
 			return []byte(strings.Replace(string(in), string(in), `\\`+string(in), 1))
 		}))
-		value = strings.Replace(value, "*", ".*", -1)
-		value = strings.Replace(value, `"`, `\\"`, -1)
+		value = strings.ReplaceAll(value, "*", ".*")
+		value = strings.ReplaceAll(value, `"`, `\\"`)
 		value = fmt.Sprintf(`monitoring.regex.full_match("^%s$")`, value)
 	}
 

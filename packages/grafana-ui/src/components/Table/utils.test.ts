@@ -66,7 +66,7 @@ describe('Table utils', () => {
     it('Should set textAlign to right for number values', () => {
       const data = getData();
       const textAlign = getTextAlign(data.fields[1]);
-      expect(textAlign).toBe('right');
+      expect(textAlign).toBe('flex-end');
     });
   });
 

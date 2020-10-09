@@ -90,10 +90,10 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	viewData.Settings["samlEnabled"] = hs.License.HasValidLicense() && hs.Cfg.SAMLEnabled
 
 	if loginError, ok := tryGetEncryptedCookie(c, LoginErrorCookieName); ok {
-		//this cookie is only set whenever an OAuth login fails
-		//therefore the loginError should be passed to the view data
-		//and the view should return immediately before attempting
-		//to login again via OAuth and enter to a redirect loop
+		// this cookie is only set whenever an OAuth login fails
+		// therefore the loginError should be passed to the view data
+		// and the view should return immediately before attempting
+		// to login again via OAuth and enter to a redirect loop
 		middleware.DeleteCookie(c.Resp, LoginErrorCookieName, hs.CookieOptionsFromCfg)
 		viewData.Settings["loginError"] = loginError
 		c.HTML(200, getViewIndex(), viewData)
@@ -249,11 +249,16 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 	}
 
 	hs.log.Info("Successful Login", "User", user.Email)
-	middleware.WriteSessionCookie(c, userToken.UnhashedToken, hs.Cfg.LoginMaxLifetimeDays)
+	middleware.WriteSessionCookie(c, userToken.UnhashedToken, hs.Cfg.LoginMaxLifetime)
 	return nil
 }
 
 func (hs *HTTPServer) Logout(c *models.ReqContext) {
+	if hs.Cfg.SAMLEnabled && hs.Cfg.SAMLSingleLogoutEnabled {
+		c.Redirect(setting.AppSubUrl + "/logout/saml")
+		return
+	}
+
 	if err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken); err != nil && err != models.ErrUserTokenNotFound {
 		hs.log.Error("failed to revoke auth token", "error", err)
 	}

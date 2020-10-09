@@ -24,7 +24,7 @@ export const setup = () => {
 export default data => {
   group(`user auth token slow test (queries between 1 and ${slowQuery} seconds)`, () => {
     if (__ITER === 0) {
-      group('user authenticates thru ui with username and password', () => {
+      group('user authenticates through ui with username and password', () => {
         let res = client.ui.login('admin', 'admin');
 
         check(res, {

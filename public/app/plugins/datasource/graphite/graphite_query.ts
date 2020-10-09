@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { Parser } from './parser';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 import { ScopedVars } from '@grafana/data';
 
 export default class GraphiteQuery {

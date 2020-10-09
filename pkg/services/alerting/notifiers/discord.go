@@ -23,24 +23,6 @@ func init() {
 		Description: "Sends notifications to Discord",
 		Factory:     newDiscordNotifier,
 		Heading:     "Discord settings",
-		OptionsTemplate: `
-      <h3 class="page-heading">Discord settings</h3>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-10">Message Content</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.content"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Mention a group using @ or a user using <@ID> when notifying in a channel
-        </info-popover>
-      </div>
-      <div class="gf-form  max-width-30">
-        <span class="gf-form-label width-10">Webhook URL</span>
-        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Discord webhook URL"></input>
-      </div>
-    `,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Message Content",
@@ -121,7 +103,7 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	embed := simplejson.New()
 	embed.Set("title", evalContext.GetNotificationTitle())
-	//Discord takes integer for color
+	// Discord takes integer for color
 	embed.Set("color", color)
 	embed.Set("url", ruleURL)
 	embed.Set("description", evalContext.Rule.Message)

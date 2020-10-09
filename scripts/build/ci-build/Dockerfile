@@ -1,7 +1,5 @@
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20200803-slim AS toolchain
-
-ARG OSX_SDK_URL
+FROM debian:stretch-20200908-slim AS toolchain
 
 ENV OSX_MIN=10.10 \
     CTNG=1.24.0 \
@@ -49,7 +47,7 @@ RUN apt-get update && \
         lzma-dev
 RUN git clone https://github.com/tpoechtrager/osxcross.git /tmp/osxcross && \
       cd /tmp/osxcross && git reset --hard $OSX_CROSS_REV
-RUN curl -fL "${OSX_SDK_URL}" -o /tmp/osxcross/tarballs/$(echo "${OSX_SDK_URL}" | grep -E 'MacOSX[^?]+' -o)
+COPY MacOSX10.15.sdk.tar.xz /tmp/osxcross/tarballs/
 RUN ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil
 RUN UNATTENDED=1 OSX_VERSION_MIN=${OSX_MIN} /tmp/osxcross/build.sh
 RUN rm -rf /tmp/osxcross/target/SDK/*/usr/share && \
@@ -75,8 +73,8 @@ RUN cd /tmp && \
     rm -rf /tmp/x86_64-centos6-linux-gnu/ && \
     rm -rf /tmp/crosstool-ng-${CTNG}
 
-ARG GOLANGCILINT_VERSION=1.30.0
-ARG GOLANGCILINT_CHKSUM=c8e8fc5753e74d2eb489ad428dbce219eb9907799a57c02bcd8b80b4b98c60d4
+ARG GOLANGCILINT_VERSION=1.31.0
+ARG GOLANGCILINT_CHKSUM=9a5d47b51442d68b718af4c7350f4406cdc087e2236a5b9ae52f37aebede6cb3
 
 RUN curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
 RUN echo ${GOLANGCILINT_CHKSUM} golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
@@ -85,13 +83,13 @@ RUN mv golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64/golangci-lint /tmp/
 
 # Base image to crossbuild grafana.
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20200803
+FROM debian:stretch-20200908
 
 ENV GOVERSION=1.15.1 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=12.18.3-1nodesource1 \
-    YARNVERSION=1.22.4-1 \
+    NODEVERSION=12.18.4-1nodesource1 \
+    YARNVERSION=1.22.5-1 \
     GO111MODULE=on
 
 # Use ARG so as not to persist environment variable in image

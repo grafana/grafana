@@ -294,9 +294,14 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 	accessKey := decrypted["accessKey"]
 	secretKey := decrypted["secretKey"]
 
+	profile := e.DataSource.JsonData.Get("profile").MustString()
+	if profile == "" {
+		profile = e.DataSource.Database // legacy support
+	}
+
 	return &datasourceInfo{
 		Region:        region,
-		Profile:       e.DataSource.Database,
+		Profile:       profile,
 		AuthType:      authType,
 		AssumeRoleArn: assumeRoleArn,
 		ExternalID:    externalID,

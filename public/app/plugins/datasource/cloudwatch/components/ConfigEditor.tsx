@@ -4,7 +4,6 @@ const { Select, Input } = LegacyForms;
 import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOptionSelect,
-  onUpdateDatasourceOption,
   onUpdateDatasourceResetOption,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
@@ -42,7 +41,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     this.loadRegionsPromise = makePromiseCancelable(this.loadRegions());
     this.loadRegionsPromise.promise.catch(({ isCanceled }) => {
       if (isCanceled) {
-        console.warn('Cloud Watch ConfigEditor has unmounted, intialization was canceled');
+        console.warn('Cloud Watch ConfigEditor has unmounted, initialization was canceled');
       }
     });
   }
@@ -115,6 +114,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const { regions } = this.state;
     const { options } = this.props;
     const secureJsonData = (options.secureJsonData || {}) as CloudWatchSecureJsonData;
+    let profile = options.jsonData.profile;
+    if (!profile) {
+      profile = options.database;
+    }
 
     return (
       <>
@@ -151,8 +154,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
                   <Input
                     className="width-30"
                     placeholder="default"
-                    value={options.jsonData.database}
-                    onChange={onUpdateDatasourceOption(this.props, 'database')}
+                    value={profile}
+                    onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile')}
                   />
                 </div>
               </div>

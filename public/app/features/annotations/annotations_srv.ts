@@ -7,12 +7,30 @@ import coreModule from 'app/core/core_module';
 // Utils & Services
 import { dedupAnnotations } from './events_processing';
 // Types
-import { DashboardModel, PanelModel } from '../dashboard/state';
-import { AnnotationEvent, AppEvents, DataSourceApi, PanelEvents, TimeRange, CoreApp } from '@grafana/data';
+import { DashboardModel } from '../dashboard/state';
+import {
+  AnnotationEvent,
+  AppEvents,
+  CoreApp,
+  DataQueryRequest,
+  DataSourceApi,
+  PanelEvents,
+  rangeUtil,
+  ScopedVars,
+} from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
-import kbn from 'app/core/utils/kbn';
+import { Observable, of } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
+import { AnnotationQueryOptions, AnnotationQueryResponse } from './types';
+import { standardAnnotationSupport } from './standardAnnotationSupport';
+import { runRequest } from '../dashboard/state/runRequest';
+
+let counter = 100;
+function getNextRequestId() {
+  return 'AQ' + counter++;
+}
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -32,7 +50,7 @@ export class AnnotationsSrv {
     this.datasourcePromises = null;
   }
 
-  getAnnotations(options: { dashboard: DashboardModel; panel: PanelModel; range: TimeRange }) {
+  getAnnotations(options: AnnotationQueryOptions) {
     return Promise.all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then(results => {
         // combine the annotations and flatten results
@@ -103,7 +121,7 @@ export class AnnotationsSrv {
     return this.alertStatesPromise;
   }
 
-  getGlobalAnnotations(options: { dashboard: DashboardModel; panel: PanelModel; range: TimeRange }) {
+  getGlobalAnnotations(options: AnnotationQueryOptions) {
     const dashboard = options.dashboard;
 
     if (this.globalAnnotationsPromise) {
@@ -113,9 +131,6 @@ export class AnnotationsSrv {
     const range = getTimeSrv().timeRange();
     const promises = [];
     const dsPromises = [];
-
-    // No more points than pixels
-    const maxDataPoints = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 
     for (const annotation of dashboard.annotations.list) {
       if (!annotation.enable) {
@@ -130,21 +145,21 @@ export class AnnotationsSrv {
       promises.push(
         datasourcePromise
           .then((datasource: DataSourceApi) => {
-            if (!datasource.annotationQuery) {
-              return [];
+            // Use the legacy annotationQuery unless annotation support is explicitly defined
+            if (datasource.annotationQuery && !datasource.annotations) {
+              return datasource.annotationQuery({
+                range,
+                rangeRaw: range.raw,
+                annotation: annotation,
+                dashboard: dashboard,
+              });
             }
-
-            // Add interval to annotation queries
-            const interval = kbn.calculateInterval(range, maxDataPoints, datasource.interval);
-
-            return datasource.annotationQuery({
-              ...interval,
-              app: CoreApp.Dashboard,
-              range,
-              rangeRaw: range.raw,
-              annotation: annotation,
-              dashboard: dashboard,
-            });
+            // Note: future annotatoin lifecycle will use observables directly
+            return executeAnnotationQuery(options, datasource, annotation)
+              .toPromise()
+              .then(res => {
+                return res.events ?? [];
+              });
           })
           .then(results => {
             // store response in annotation object if this is a snapshot call
@@ -188,11 +203,75 @@ export class AnnotationsSrv {
 
     for (const item of results) {
       item.source = annotation;
+      item.color = annotation.iconColor;
+      item.type = annotation.name;
       item.isRegion = item.timeEnd && item.time !== item.timeEnd;
     }
 
     return results;
   }
+}
+
+export function executeAnnotationQuery(
+  options: AnnotationQueryOptions,
+  datasource: DataSourceApi,
+  savedJsonAnno: any
+): Observable<AnnotationQueryResponse> {
+  const processor = {
+    ...standardAnnotationSupport,
+    ...datasource.annotations,
+  };
+
+  const annotation = processor.prepareAnnotation!(savedJsonAnno);
+  if (!annotation) {
+    return of({});
+  }
+
+  const query = processor.prepareQuery!(annotation);
+  if (!query) {
+    return of({});
+  }
+
+  // No more points than pixels
+  const maxDataPoints = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+
+  // Add interval to annotation queries
+  const interval = rangeUtil.calculateInterval(options.range, maxDataPoints, datasource.interval);
+
+  const scopedVars: ScopedVars = {
+    __interval: { text: interval.interval, value: interval.interval },
+    __interval_ms: { text: interval.intervalMs.toString(), value: interval.intervalMs },
+    __annotation: { text: annotation.name, value: annotation },
+  };
+
+  const queryRequest: DataQueryRequest = {
+    startTime: Date.now(),
+    requestId: getNextRequestId(),
+    range: options.range,
+    maxDataPoints,
+    scopedVars,
+    ...interval,
+    app: CoreApp.Dashboard,
+
+    timezone: options.dashboard.timezone,
+
+    targets: [
+      {
+        ...query,
+        refId: 'Anno',
+      },
+    ],
+  };
+
+  return runRequest(datasource, queryRequest).pipe(
+    mergeMap(panelData => {
+      if (!panelData.series) {
+        return of({ panelData, events: [] });
+      }
+
+      return processor.processEvents!(annotation, panelData.series).pipe(map(events => ({ panelData, events })));
+    })
+  );
 }
 
 coreModule.service('annotationsSrv', AnnotationsSrv);

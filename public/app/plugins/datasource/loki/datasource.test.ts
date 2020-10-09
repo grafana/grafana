@@ -1,7 +1,16 @@
 import { of, Subject } from 'rxjs';
 import { first, last, take } from 'rxjs/operators';
 import { omit } from 'lodash';
-import { AnnotationQueryRequest, DataFrame, DataQueryResponse, dateTime, FieldCache, TimeRange } from '@grafana/data';
+import {
+  AnnotationQueryRequest,
+  CoreApp,
+  DataFrame,
+  DataQueryResponse,
+  dateTime,
+  FieldCache,
+  observableTester,
+  TimeRange,
+} from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 
 import LokiDatasource from './datasource';
@@ -11,7 +20,6 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { CustomVariableModel } from '../../../features/variables/types';
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
-import { observableTester } from '../../../../test/helpers/observableTester';
 import { expect } from '../../../../test/lib/common';
 import { makeMockLokiDatasource } from './mocks';
 
@@ -21,16 +29,12 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
-jest.mock('app/features/dashboard/services/TimeSrv', () => {
-  return {
-    getTimeSrv: () => ({
-      timeRange: () => ({
-        from: new Date(0),
-        to: new Date(1),
-      }),
-    }),
-  };
-});
+const timeSrvStub = {
+  timeRange: () => ({
+    from: new Date(0),
+    to: new Date(1),
+  }),
+};
 
 describe('LokiDatasource', () => {
   let fetchStream: Subject<FetchResponse>;
@@ -120,7 +124,7 @@ describe('LokiDatasource', () => {
         replace: (a: string) => a,
       } as unknown) as TemplateSrv;
 
-      const ds = new LokiDatasource(settings, templateSrvMock);
+      const ds = new LokiDatasource(settings, templateSrvMock, timeSrvStub as any);
 
       const options = getQueryOptions<LokiQuery>({ targets: [{ expr: 'foo', refId: 'B', maxLines: maxDataPoints }] });
 
@@ -134,7 +138,7 @@ describe('LokiDatasource', () => {
       observableTester().subscribeAndExpectOnComplete<DataQueryResponse>({
         observable: ds.query(options).pipe(take(1)),
         expect: () => {
-          expect(fetchMock.mock.calls.length).toBe(2);
+          expect(fetchMock.mock.calls.length).toBe(1);
           expect(fetchMock.mock.calls[0][0].url).toContain(`limit=${expectedLimit}`);
         },
         done,
@@ -175,10 +179,11 @@ describe('LokiDatasource', () => {
   });
 
   describe('when querying', () => {
-    it('should run range and instant query', done => {
+    it('should run range and instant query in Explore', done => {
       const ds = createLokiDSForTests();
       const options = getQueryOptions<LokiQuery>({
         targets: [{ expr: '{job="grafana"}', refId: 'B' }],
+        app: CoreApp.Explore,
       });
 
       ds.runInstantQuery = jest.fn(() => of({ data: [] }));
@@ -194,10 +199,29 @@ describe('LokiDatasource', () => {
       });
     });
 
-    it('should return series data', done => {
+    it('should run only range query in Dashboard', done => {
+      const ds = createLokiDSForTests();
+      const options = getQueryOptions<LokiQuery>({
+        targets: [{ expr: '{job="grafana"}', refId: 'B' }],
+      });
+
+      ds.runInstantQuery = jest.fn(() => of({ data: [] }));
+      ds.runRangeQuery = jest.fn(() => of({ data: [] }));
+
+      observableTester().subscribeAndExpectOnComplete<DataQueryResponse>({
+        observable: ds.query(options),
+        expect: () => {
+          expect(ds.runRangeQuery).toBeCalled();
+        },
+        done,
+      });
+    });
+
+    it('should return series data for both queries in Explore', done => {
       const ds = createLokiDSForTests();
       const options = getQueryOptions<LokiQuery>({
         targets: [{ expr: '{job="grafana"} |= "foo"', refId: 'B' }],
+        app: CoreApp.Explore,
       });
 
       observableTester().subscribeAndExpectOnNext<DataQueryResponse>({
@@ -213,6 +237,28 @@ describe('LokiDatasource', () => {
 
       observableTester().subscribeAndExpectOnNext<DataQueryResponse>({
         observable: ds.query(options).pipe(last()), // last result always comes from runRangeQuery
+        expect: res => {
+          const dataFrame = res.data[0] as DataFrame;
+          const fieldCache = new FieldCache(dataFrame);
+          expect(fieldCache.getFieldByName('line')?.values.get(0)).toBe('hello');
+          expect(dataFrame.meta?.limit).toBe(20);
+          expect(dataFrame.meta?.searchWords).toEqual(['foo']);
+        },
+        done,
+      });
+
+      fetchStream.next(testResponse);
+      fetchStream.next(omit(testResponse, 'data.status'));
+    });
+
+    it('should return series data for range query in Dashboard', done => {
+      const ds = createLokiDSForTests();
+      const options = getQueryOptions<LokiQuery>({
+        targets: [{ expr: '{job="grafana"} |= "foo"', refId: 'B' }],
+      });
+
+      observableTester().subscribeAndExpectOnNext<DataQueryResponse>({
+        observable: ds.query(options).pipe(first()), // first result will come from runRangeQuery
         expect: res => {
           const dataFrame = res.data[0] as DataFrame;
           const fieldCache = new FieldCache(dataFrame);
@@ -515,7 +561,7 @@ function createLokiDSForTests(
   const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
   const customSettings = { ...instanceSettings, jsonData: customData };
 
-  return new LokiDatasource(customSettings, templateSrvMock);
+  return new LokiDatasource(customSettings, templateSrvMock, timeSrvStub as any);
 }
 
 function makeAnnotationQueryRequest(): AnnotationQueryRequest<LokiQuery> {
@@ -539,9 +585,6 @@ function makeAnnotationQueryRequest(): AnnotationQueryRequest<LokiQuery> {
       raw: timeRange,
     },
     rangeRaw: timeRange,
-    app: 'test',
-    interval: '1m',
-    intervalMs: 6000,
   };
 }
 

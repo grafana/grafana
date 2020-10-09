@@ -21,6 +21,7 @@ export interface CSVConfig {
   newline?: string; // default: "\r\n"
   quoteChar?: string; // default: '"'
   encoding?: string; // default: "",
+  useExcelHeader?: boolean; // default: false
   headerStyle?: CSVHeaderStyle;
 }
 
@@ -72,7 +73,7 @@ export class CSVReader {
   }
 
   // PapaParse callback on each line
-  private step = (results: ParseResult, parser: Parser): void => {
+  private chunk = (results: ParseResult<any>, parser: Parser): void => {
     for (let i = 0; i < results.data.length; i++) {
       const line: string[] = results.data[i];
       if (line.length < 1) {
@@ -181,7 +182,7 @@ export class CSVReader {
       dynamicTyping: false,
       skipEmptyLines: true,
       comments: false, // Keep comment lines
-      step: this.step,
+      chunk: this.chunk,
     } as ParseConfig;
 
     Papa.parse(text, papacfg);
@@ -246,19 +247,28 @@ function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string 
   return '';
 }
 
+function getLocaleDelimiter(): string {
+  const arr = ['x', 'y'];
+  if (arr.toLocaleString) {
+    return arr.toLocaleString().charAt(1);
+  }
+  return ',';
+}
+
 export function toCSV(data: DataFrame[], config?: CSVConfig): string {
   if (!data) {
     return '';
   }
 
-  let csv = '';
   config = defaults(config, {
-    delimiter: ',',
+    delimiter: getLocaleDelimiter(),
     newline: '\r\n',
     quoteChar: '"',
     encoding: '',
     headerStyle: CSVHeaderStyle.name,
+    useExcelHeader: false,
   });
+  let csv = config.useExcelHeader ? `sep=${config.delimiter}${config.newline}` : '';
 
   for (const series of data) {
     const { fields } = series;
