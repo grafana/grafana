@@ -79,7 +79,9 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 	dsInfo := e.getDSInfo(region)
 
 	bldr := strings.Builder{}
-	for i, s := range []string{dsInfo.AuthType.String(), dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN} {
+	for i, s := range []string{
+		dsInfo.AuthType.String(), dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN, region,
+	} {
 		if i != 0 {
 			bldr.WriteString(":")
 		}
