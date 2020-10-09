@@ -1,7 +1,7 @@
 import React from 'react';
 import { Graph } from '@grafana/ui';
 import Chart from '../Chart';
-import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorMode } from '@grafana/data';
+import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorModeId } from '@grafana/data';
 import { select } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TooltipContentProps } from '../Chart/Tooltip';
@@ -49,7 +49,7 @@ const series: GraphSeriesXY[] = [
       values: new ArrayVector([10, 20, 10]),
       config: {
         color: {
-          mode: FieldColorMode.Fixed,
+          mode: FieldColorModeId.Fixed,
           fixedColor: 'red',
         },
       },
@@ -83,7 +83,7 @@ const series: GraphSeriesXY[] = [
       values: new ArrayVector([20, 30, 40]),
       config: {
         color: {
-          mode: FieldColorMode.Fixed,
+          mode: FieldColorModeId.Fixed,
           fixedColor: 'blue',
         },
       },

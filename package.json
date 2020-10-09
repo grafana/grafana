@@ -73,7 +73,7 @@
     "@babel/preset-typescript": "7.8.3",
     "@emotion/core": "10.0.27",
     "@grafana/api-documenter": "0.9.3",
-    "@grafana/eslint-config": "2.0.0",
+    "@grafana/eslint-config": "2.0.1",
     "@microsoft/api-extractor": "7.8.2-pr1796.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@testing-library/jest-dom": "^5.11.3",

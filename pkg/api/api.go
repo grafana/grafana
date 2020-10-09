@@ -56,7 +56,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/stats", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin/live", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/ldap", reqGrafanaAdmin, hs.Index)
 
 	r.Get("/styleguide", reqSignedIn, hs.Index)
@@ -426,7 +425,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Live streaming
 	if hs.Live != nil {
-		r.Any("/live/*", hs.Live.Handler)
+		r.Any("/live/*", hs.Live.WebsocketHandler)
 	}
 
 	// Snapshots

@@ -11,7 +11,6 @@ import { MutableDataFrame, toDataFrame } from '../dataframe';
 import {
   DataFrame,
   Field,
-  FieldColorMode,
   FieldConfig,
   FieldConfigPropertyItem,
   FieldConfigSource,
@@ -19,6 +18,7 @@ import {
   GrafanaTheme,
   InterpolateFunction,
   ThresholdsMode,
+  FieldColorModeId,
   ScopedVars,
 } from '../types';
 import { locationUtil, Registry } from '../utils';
@@ -600,7 +600,7 @@ describe('applyRawFieldOverrides', () => {
     },
     mappings: [],
     color: {
-      mode: FieldColorMode.Thresholds,
+      mode: FieldColorModeId.Thresholds,
     },
     min: 0,
     max: 1599124316808,
@@ -633,6 +633,7 @@ describe('applyRawFieldOverrides', () => {
       prefix: undefined,
       suffix: undefined,
       text: '1599045551050',
+      percent: expect.any(Number),
       threshold: {
         color: 'red',
         value: 80,
@@ -642,6 +643,7 @@ describe('applyRawFieldOverrides', () => {
     expect(getDisplayValue(frames, frameIndex, 1)).toEqual({
       color: '#73BF69',
       numeric: 3.14159265359,
+      percent: expect.any(Number),
       prefix: undefined,
       suffix: undefined,
       text: '3.142',
@@ -654,6 +656,7 @@ describe('applyRawFieldOverrides', () => {
     expect(getDisplayValue(frames, frameIndex, 2)).toEqual({
       color: '#73BF69',
       numeric: 0,
+      percent: expect.any(Number),
       prefix: undefined,
       suffix: undefined,
       text: '0',
@@ -664,24 +667,33 @@ describe('applyRawFieldOverrides', () => {
     });
 
     expect(getDisplayValue(frames, frameIndex, 3)).toEqual({
+      color: '#808080',
       numeric: 0,
+      percent: expect.any(Number),
       prefix: undefined,
       suffix: undefined,
       text: '0',
+      threshold: expect.anything(),
     });
 
     expect(getDisplayValue(frames, frameIndex, 4)).toEqual({
+      color: '#808080',
       numeric: NaN,
+      percent: 0,
       prefix: undefined,
       suffix: undefined,
       text: 'A - string',
+      threshold: expect.anything(),
     });
 
     expect(getDisplayValue(frames, frameIndex, 5)).toEqual({
+      color: '#808080',
       numeric: 1599045551050,
+      percent: expect.any(Number),
       prefix: undefined,
       suffix: undefined,
       text: '2020-09-02 11:19:11',
+      threshold: expect.anything(),
     });
   };
 

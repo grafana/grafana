@@ -649,11 +649,17 @@ Administrators can increase this if they experience OAuth login state mismatch e
 
 Limit of API key seconds to live before expiration. Default is -1 (unlimited).
 
+### sigv4_auth_enabled
+
+> Only available in Grafana 7.3+.
+
+Set to `true` to enable the AWS Signature Version 4 Authentication option for HTTP-based datasources. Default is `false`.
+
 <hr />
 
 ## [auth.anonymous]
 
-Refer to [Anonymous authentication]({{< relref "../auth/#anonymous-authentication" >}}) for detailed instructions.
+Refer to [Anonymous authentication]({{< relref "../auth/grafana.md/#anonymous-authentication" >}}) for detailed instructions.
 
 <hr />
 

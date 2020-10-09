@@ -17,7 +17,7 @@ export default {
   },
 };
 
-export const simple = () => {
+export const Simple = () => {
   const prefixSuffixOpts = {
     None: null,
     Text: '$',
@@ -96,7 +96,7 @@ export const simple = () => {
   );
 };
 
-export const withFieldValidation = () => {
+export const WithFieldValidation = () => {
   const [value, setValue] = useState('');
 
   return (
