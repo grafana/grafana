@@ -31,10 +31,10 @@ Just add it as a data source and you are ready to query your log data in [Explor
 
 | Name            | Description                                                                                                                                   |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| _Name_          | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                               |
-| _Default_       | Default data source means that it will be pre-selected for new panels.                                                                        |
-| _URL_           | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
-| _Maximum lines_ | Upper limit for number of log lines returned by Loki (default is 1000). Decrease if your browser is sluggish when displaying logs in Explore. |
+| `Name`          | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                               |
+| `Default`       | Default data source means that it will be pre-selected for new panels.                                                                        |
+| `URL`           | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
+| `Maximum lines` | Upper limit for number of log lines returned by Loki (default is 1000). Decrease if your browser is sluggish when displaying logs in Explore. |
 
 ### Derived fields
 
