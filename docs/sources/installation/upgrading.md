@@ -21,7 +21,7 @@ Upgrading is generally safe (between many minor and one major version) and dashb
 
 We recommend that you backup a few things in case you have to rollback the upgrade.
 - Installed plugins - Back them up before you upgrade them in case you want to rollback the Grafana version and want to get the exact same versions you were running before the upgrade.
-- Configuration files do not need to be backed up. However, you might want to in case you add new config options after upgrade and then rollback.
+- Configuration files do not need to be backed up. However, you might want to in case you add new configuration options after upgrade and then rollback.
 
 ### Database backup
 
@@ -82,7 +82,7 @@ sudo apt-get upgrade
 
 If you downloaded the binary `.tar.gz` package, then you can just download and extract the new package and overwrite all your existing files. However, this might overwrite your config changes.
 
-We recommend that you save your custom config changes in a file named `<grafana_install_dir>/conf/custom.ini`.
+We recommend that you save your custom configuration changes in a file named `<grafana_install_dir>/conf/custom.ini`.
 This allows you to upgrade Grafana without risking losing your configuration changes.
 
 ### Centos / RHEL
@@ -108,7 +108,7 @@ docker run -d --name=my-grafana-container --restart=always -v /var/lib/grafana:/
 
 ### Windows
 
-If you downloaded the Windows binary package you can just download a newer package and extract to the same location (and overwrite the existing files). This might overwrite your config changes. We recommend that you save your config changes in a file named `<grafana_install_dir>/conf/custom.ini` as this will make upgrades easier without risking losing your config changes.
+If you downloaded the Windows binary package you can just download a newer package and extract to the same location (and overwrite the existing files). This might overwrite your configuration changes. We recommend that you save your configuration changes in a file named `<grafana_install_dir>/conf/custom.ini` as this will make upgrades easier without risking losing your configuration changes.
 
 ## Update plugins
 
