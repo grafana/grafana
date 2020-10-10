@@ -125,7 +125,7 @@ exports[`Render should disable access key id field 1`] = `
       >
         <Component
           className="width-14"
-          tooltip="ARN of role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+          tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
         >
           Assume Role ARN
         </Component>
@@ -354,7 +354,7 @@ exports[`Render should render component 1`] = `
       >
         <Component
           className="width-14"
-          tooltip="ARN of role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+          tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
         >
           Assume Role ARN
         </Component>
@@ -583,7 +583,7 @@ exports[`Render should show access key and secret access key fields 1`] = `
       >
         <Component
           className="width-14"
-          tooltip="ARN of role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+          tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
         >
           Assume Role ARN
         </Component>
@@ -812,7 +812,7 @@ exports[`Render should show arn role field 1`] = `
       >
         <Component
           className="width-14"
-          tooltip="ARN of role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+          tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
         >
           Assume Role ARN
         </Component>
@@ -1041,7 +1041,7 @@ exports[`Render should show credentials profile name field 1`] = `
       >
         <Component
           className="width-14"
-          tooltip="ARN of role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+          tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
         >
           Assume Role ARN
         </Component>
