@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -74,7 +75,7 @@ func copyJSON(in json.Marshaler) (*simplejson.Json, error) {
 	return simplejson.NewJson(rawJSON)
 }
 
-func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json, validateAlertFunc func(*models.Alert) bool) ([]*models.Alert, error) {
+func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json, validators ...alertValidator) ([]*models.Alert, error) {
 	alerts := make([]*models.Alert, 0)
 
 	for _, panelObj := range jsonWithPanels.Get("panels").MustArray() {
@@ -84,7 +85,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		// check if the panel is collapsed
 		if collapsed && collapsedJSON.MustBool() {
 			// extract alerts from sub panels for collapsed panels
-			alertSlice, err := e.getAlertFromPanels(panel, validateAlertFunc)
+			alertSlice, err := e.getAlertFromPanels(panel, validators...)
 			if err != nil {
 				return nil, err
 			}
@@ -193,8 +194,30 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 			return nil, err
 		}
 
-		if !validateAlertFunc(alert) {
-			return nil, ValidationError{Reason: fmt.Sprintf("Panel id is not correct, alertName=%v, panelId=%v", alert.Name, alert.PanelId)}
+		validationErrors := strings.Builder{}
+		validationWarnings := strings.Builder{}
+		for _, validator := range validators {
+			ok, reason := validator.aFunc(alert)
+			if !ok {
+				switch validator.aSeverity {
+				case alertError:
+					if validationErrors.Len() > 0 {
+						validationErrors.WriteString("\n")
+					}
+					validationErrors.WriteString(reason)
+				case alertWarning:
+					if validationWarnings.Len() > 0 {
+						validationErrors.WriteString("\n")
+					}
+					validationWarnings.WriteString(reason)
+				}
+			}
+		}
+		if validationErrors.String() != "" {
+			return nil, ValidationError{Reason: validationErrors.String()}
+		}
+		if validationWarnings.String() != "" {
+			e.log.Debug(validationWarnings.String())
 		}
 
 		alerts = append(alerts, alert)
@@ -203,16 +226,49 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 	return alerts, nil
 }
 
-func validateAlertRule(alert *models.Alert) bool {
-	return alert.ValidToSave()
+func validateAlertRule(alert *models.Alert) (ok bool, reason string) {
+	ok = alert.ValidToSave()
+	if !ok {
+		reason = fmt.Sprintf("Panel id is not correct, alertName=%v, panelId=%v", alert.Name, alert.PanelId)
+	}
+	return ok, reason
+}
+
+func validAlertJSON(alert *models.Alert) (ok bool, reason string) {
+	warnings := strings.Builder{}
+	for _, v := range alert.Settings.Get("notifications").MustArray() {
+		jsonModel := simplejson.NewFromAny(v)
+		if id, err := jsonModel.Get("id").Int64(); err == nil {
+			_, err := translateNotificationIDToUID(id, alert.OrgId)
+			if err != nil {
+				ok = false
+				if warnings.Len() > 0 {
+					warnings.WriteString("\n")
+				}
+				warnings.WriteString(fmt.Sprintf("Alert contains notification identified by incorrect id, alertName=%v, panelId=%v, notificationId=%v", alert.Name, alert.PanelId, id))
+			}
+		}
+	}
+	reason = warnings.String()
+	return ok, reason
 }
 
 // GetAlerts extracts alerts from the dashboard json and does full validation on the alert json data.
 func (e *DashAlertExtractor) GetAlerts() ([]*models.Alert, error) {
-	return e.extractAlerts(validateAlertRule)
+	validators := []alertValidator{
+		{
+			aFunc:     validateAlertRule,
+			aSeverity: alertError,
+		},
+		{
+			aFunc:     validAlertJSON,
+			aSeverity: alertWarning,
+		},
+	}
+	return e.extractAlerts(validators...)
 }
 
-func (e *DashAlertExtractor) extractAlerts(validateFunc func(alert *models.Alert) bool) ([]*models.Alert, error) {
+func (e *DashAlertExtractor) extractAlerts(validateFuncs ...alertValidator) ([]*models.Alert, error) {
 	dashboardJSON, err := copyJSON(e.Dash.Data)
 	if err != nil {
 		return nil, err
@@ -226,7 +282,7 @@ func (e *DashAlertExtractor) extractAlerts(validateFunc func(alert *models.Alert
 	if len(rows) > 0 {
 		for _, rowObj := range rows {
 			row := simplejson.NewFromAny(rowObj)
-			a, err := e.getAlertFromPanels(row, validateFunc)
+			a, err := e.getAlertFromPanels(row, validateFuncs...)
 			if err != nil {
 				return nil, err
 			}
@@ -234,7 +290,7 @@ func (e *DashAlertExtractor) extractAlerts(validateFunc func(alert *models.Alert
 			alerts = append(alerts, a...)
 		}
 	} else {
-		a, err := e.getAlertFromPanels(dashboardJSON, validateFunc)
+		a, err := e.getAlertFromPanels(dashboardJSON, validateFuncs...)
 		if err != nil {
 			return nil, err
 		}
@@ -249,6 +305,15 @@ func (e *DashAlertExtractor) extractAlerts(validateFunc func(alert *models.Alert
 // ValidateAlerts validates alerts in the dashboard json but does not require a valid dashboard id
 // in the first validation pass.
 func (e *DashAlertExtractor) ValidateAlerts() error {
-	_, err := e.extractAlerts(func(alert *models.Alert) bool { return alert.OrgId != 0 && alert.PanelId != 0 })
+	_, err := e.extractAlerts(alertValidator{
+		aFunc: func(alert *models.Alert) (ok bool, reason string) {
+			ok = alert.OrgId != 0 && alert.PanelId != 0
+			if !ok {
+				reason = fmt.Sprintf("Panel id is not correct, alertName=%v, panelId=%v", alert.Name, alert.PanelId)
+			}
+			return ok, reason
+		},
+		aSeverity: alertError,
+	})
 	return err
 }
