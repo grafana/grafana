@@ -284,7 +284,7 @@ For provisioning of alert notification channels, refer to [Alert notification ch
 
 The AWS CloudWatch data source's authentication scheme has changed in Grafana 7.3. Most importantly the authentication method _ARN_ has been removed, and a new one has been added: _AWS SDK Default_. Existing data source configurations using the former will fall back to the latter. Assuming an IAM role will still work though, and the old _ARN_ method would use the default AWS SDK authentication method under the hood anyway.
 
-Since _ARN_ has been removed as an authentication method, we have instead made it into an option for providing the ARN of an IAM role to assume. This works independently of hte authentication method you choose.
+Since _ARN_ has been removed as an authentication method, we have instead made it into an option for providing the ARN of an IAM role to assume. This works independently of the authentication method you choose.
 
 The new authentication method, _AWS SDK Default_, uses the default AWS Go SDK credential chain, which at the time of writing looks for credentials in the following order: 
 
