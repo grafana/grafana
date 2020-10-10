@@ -1,38 +1,22 @@
-import React, { useCallback } from 'react';
-import {
-  FieldConfigEditorProps,
-  ColorFieldConfigSettings,
-  GrafanaTheme,
-  getColorFromHexRgbOrName,
-  FieldColor,
-} from '@grafana/data';
+import React from 'react';
+import { GrafanaTheme, getColorFromHexRgbOrName } from '@grafana/data';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
-import { getTheme, stylesFactory } from '../../themes';
-import { Icon } from '../Icon/Icon';
+import { stylesFactory, useTheme } from '../../themes';
 import { css } from 'emotion';
 import { ColorPickerTrigger } from '../ColorPicker/ColorPickerTrigger';
 
+export interface Props {
+  value?: string;
+  onChange: (value?: string) => void;
+}
+
 // Supporting FixedColor only currently
-export const ColorValueEditor: React.FC<FieldConfigEditorProps<FieldColor, ColorFieldConfigSettings>> = ({
-  value,
-  onChange,
-  item,
-}) => {
-  const { settings } = item;
-  const theme = getTheme();
+export const ColorValueEditor: React.FC<Props> = ({ value, onChange }) => {
+  const theme = useTheme();
   const styles = getStyles(theme);
 
-  const color = value?.fixedColor || item.defaultValue?.fixedColor;
-
-  const onValueChange = useCallback(
-    color => {
-      onChange({ ...value, fixedColor: color });
-    },
-    [value]
-  );
-
   return (
-    <ColorPicker color={color || ''} onChange={onValueChange} enableNamedColors={!settings?.disableNamedColors}>
+    <ColorPicker color={value ?? ''} onChange={onChange} enableNamedColors={true}>
       {({ ref, showColorPicker, hideColorPicker }) => {
         return (
           <div className={styles.spot} onBlur={hideColorPicker}>
@@ -41,15 +25,15 @@ export const ColorValueEditor: React.FC<FieldConfigEditorProps<FieldColor, Color
                 ref={ref}
                 onClick={showColorPicker}
                 onMouseLeave={hideColorPicker}
-                color={color ? getColorFromHexRgbOrName(color, theme.type) : theme.colors.formInputBorder}
+                color={value ? getColorFromHexRgbOrName(value, theme.type) : theme.colors.formInputBorder}
               />
             </div>
-            <div className={styles.colorText} onClick={showColorPicker}>
-              {color ?? settings?.textWhenUndefined ?? 'Pick Color'}
+            {/* <div className={styles.colorText} onClick={showColorPicker}>
+              {value ?? settings?.textWhenUndefined ?? 'Pick Color'}
             </div>
             {value && settings?.allowUndefined && (
               <Icon className={styles.trashIcon} name="trash-alt" onClick={() => onChange(undefined)} />
-            )}
+            )} */}
           </div>
         );
       }}
@@ -63,6 +47,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       color: ${theme.colors.text};
       background: ${theme.colors.formInputBg};
       padding: 3px;
+      height: ${theme.spacing.formInputHeight}px;
       border: 1px solid ${theme.colors.formInputBorder};
       display: flex;
       flex-direction: row;

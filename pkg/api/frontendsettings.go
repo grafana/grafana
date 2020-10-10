@@ -203,6 +203,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"alertingMinInterval":        setting.AlertingMinInterval,
 		"autoAssignOrg":              setting.AutoAssignOrg,
 		"verifyEmailEnabled":         setting.VerifyEmailEnabled,
+		"sigV4AuthEnabled":           setting.SigV4AuthEnabled,
 		"exploreEnabled":             setting.ExploreEnabled,
 		"googleAnalyticsId":          setting.GoogleAnalyticsId,
 		"disableLoginForm":           setting.DisableLoginForm,
@@ -235,7 +236,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		},
 		"featureToggles":    hs.Cfg.FeatureToggles,
 		"rendererAvailable": hs.RenderService.IsAvailable(),
-		"http2Enabled":      hs.Cfg.Protocol == setting.HTTP2,
+		"http2Enabled":      hs.Cfg.Protocol == setting.HTTP2Scheme,
 	}
 
 	return jsonObj, nil

@@ -267,7 +267,7 @@ func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.User
 }
 
 func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetime time.Duration) {
-	if setting.Env == setting.DEV {
+	if setting.Env == setting.Dev {
 		ctx.Logger.Info("New token", "unhashed token", value)
 	}
 
@@ -304,7 +304,8 @@ func AddDefaultResponseHeaders() macaron.Handler {
 
 // AddSecurityHeaders adds various HTTP(S) response headers that enable various security protections behaviors in the client's browser.
 func AddSecurityHeaders(w macaron.ResponseWriter) {
-	if (setting.Protocol == setting.HTTPS || setting.Protocol == setting.HTTP2) && setting.StrictTransportSecurity {
+	if (setting.Protocol == setting.HTTPSScheme || setting.Protocol == setting.HTTP2Scheme) &&
+		setting.StrictTransportSecurity {
 		strictHeaderValues := []string{fmt.Sprintf("max-age=%v", setting.StrictTransportSecurityMaxAge)}
 		if setting.StrictTransportSecurityPreload {
 			strictHeaderValues = append(strictHeaderValues, "preload")

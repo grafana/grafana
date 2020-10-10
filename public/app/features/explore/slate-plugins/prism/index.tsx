@@ -27,7 +27,7 @@ export default function PrismPlugin({ definition, language }: { definition: any;
 
   return {
     /**
-     * Render a Slate mark with appropiate CSS class names
+     * Render a Slate mark with appropriate CSS class names
      *
      * @param {Object} props
      * @return {Element}

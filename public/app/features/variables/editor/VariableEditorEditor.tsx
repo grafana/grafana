@@ -1,11 +1,11 @@
 import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
 import isEqual from 'lodash/isEqual';
-import { AppEvents, VariableType } from '@grafana/data';
-import { InlineFormLabel } from '@grafana/ui';
+import { AppEvents, LoadingState, VariableType } from '@grafana/data';
+import { Icon, InlineFormLabel } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { variableAdapters } from '../adapters';
-import { NEW_VARIABLE_ID, toVariablePayload, VariableIdentifier } from '../state/types';
+import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { VariableHide, VariableModel } from '../types';
 import { appEvents } from '../../../core/core';
 import { VariableValuesPreview } from './VariableValuesPreview';
@@ -17,6 +17,7 @@ import { getVariable } from '../state/selectors';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { OnPropChangeArguments } from './types';
 import { changeVariableProp, changeVariableType } from '../state/sharedReducer';
+import { updateOptions } from '../state/actions';
 
 export interface OwnProps {
   identifier: VariableIdentifier;
@@ -35,6 +36,7 @@ interface DispatchProps {
   onEditorUpdate: typeof onEditorUpdate;
   onEditorAdd: typeof onEditorAdd;
   changeVariableType: typeof changeVariableType;
+  updateOptions: typeof updateOptions;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -88,7 +90,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
   onPropChanged = async ({ propName, propValue, updateOptions = false }: OnPropChangeArguments) => {
     this.props.changeVariableProp(toVariablePayload(this.props.identifier, { propName, propValue }));
     if (updateOptions) {
-      await variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
+      await this.props.updateOptions(toVariableIdentifier(this.props.variable));
     }
   };
 
@@ -108,11 +110,13 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
   };
 
   render() {
+    const { variable } = this.props;
     const EditorToRender = variableAdapters.get(this.props.variable.type).editor;
     if (!EditorToRender) {
       return null;
     }
     const newVariable = this.props.variable.id && this.props.variable.id === NEW_VARIABLE_ID;
+    const loading = variable.state === LoadingState.Loading;
 
     return (
       <div>
@@ -201,24 +205,15 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
           <VariableValuesPreview variable={this.props.variable} />
 
           <div className="gf-form-button-row p-y-0">
-            {!newVariable && (
-              <button
-                type="submit"
-                className="btn btn-primary"
-                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.updateButton}
-              >
-                Update
-              </button>
-            )}
-            {newVariable && (
-              <button
-                type="submit"
-                className="btn btn-primary"
-                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.addButton}
-              >
-                Add
-              </button>
-            )}
+            <button
+              type="submit"
+              className="btn btn-primary"
+              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
+              disabled={loading}
+            >
+              {newVariable ? 'Add' : 'Update'}
+              {loading ? <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} /> : null}
+            </button>
           </div>
         </form>
       </div>
@@ -239,6 +234,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   onEditorUpdate,
   onEditorAdd,
   changeVariableType,
+  updateOptions,
 };
 
 export const VariableEditorEditor = connectWithStore(

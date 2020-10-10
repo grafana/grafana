@@ -1,11 +1,11 @@
 import React, { ChangeEvent, FocusEvent, KeyboardEvent, PureComponent } from 'react';
 
 import { TextBoxVariableModel } from '../types';
-import { toVariablePayload } from '../state/types';
+import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import { dispatch } from '../../../store/store';
-import { variableAdapters } from '../adapters';
 import { changeVariableProp } from '../state/sharedReducer';
 import { VariablePickerProps } from '../pickers/types';
+import { updateOptions } from '../state/actions';
 
 export interface Props extends VariablePickerProps<TextBoxVariableModel> {}
 
@@ -18,13 +18,13 @@ export class TextBoxVariablePicker extends PureComponent<Props> {
 
   onQueryBlur = (event: FocusEvent<HTMLInputElement>) => {
     if (this.props.variable.current.value !== this.props.variable.query) {
-      variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
+      dispatch(updateOptions(toVariableIdentifier(this.props.variable)));
     }
   };
 
   onQueryKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.keyCode === 13 && this.props.variable.current.value !== this.props.variable.query) {
-      variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
+      dispatch(updateOptions(toVariableIdentifier(this.props.variable)));
     }
   };
 

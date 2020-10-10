@@ -58,7 +58,7 @@ const tabs = [
   { label: '3rd child', value: 'third', active: false },
 ];
 
-export const withTabs = () => {
+export const WithTabs = () => {
   const [activeTab, setActiveTab] = useState('first');
   const modalHeader = (
     <ModalTabsHeader

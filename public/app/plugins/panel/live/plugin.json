@@ -1,0 +1,20 @@
+{
+  "type": "panel",
+  "name": "Live",
+  "id": "live",
+
+  "skipDataQuery": true,
+
+  "state": "alpha",
+
+  "info": {
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/live.svg",
+      "large": "img/live.svg"
+    }
+  }
+}

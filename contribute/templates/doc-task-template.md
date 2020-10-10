@@ -42,7 +42,7 @@ Write one-step tasks as simple sentences, not as unordered lists or numbered lis
 Short tasks can be grouped. How short constitutes "short" is a judgment call based on number of steps and how long individual steps are.
 
 1. Use your judgment.
-2. Ask your coworkers or someone on the Comm team for advice if you aren't sure.
+1. Ask your coworkers or someone on the Comm team for advice if you aren't sure.
 
 ## Next steps
 

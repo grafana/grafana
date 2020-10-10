@@ -36,7 +36,10 @@ const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: 7px 10px;
       width: 100%;
       border-bottom: 1px solid ${optionBorder};
-      text-transform: capitalize;
+
+      &:hover {
+        color: ${theme.colors.textStrong};
+      }
     `,
     label: css`
       flex-grow: 1;
@@ -80,11 +83,12 @@ class UnthemedSelectOptionGroup extends PureComponent<ExtendedGroupProps, State>
     const { children, label, theme } = this.props;
     const { expanded } = this.state;
     const styles = getSelectOptionGroupStyles(theme);
+
     return (
       <div>
         <div className={styles.header} onClick={this.onToggleChildren}>
           <span className={styles.label}>{label}</span>
-          <Icon className={styles.icon} name={expanded ? 'angle-left' : 'angle-down'} />{' '}
+          <Icon className={styles.icon} name={expanded ? 'angle-up' : 'angle-down'} />{' '}
         </div>
         {expanded && children}
       </div>

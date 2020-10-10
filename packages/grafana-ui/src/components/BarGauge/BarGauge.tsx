@@ -1,7 +1,6 @@
 // Library
 import React, { PureComponent, CSSProperties, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
-import * as d3 from 'd3-scale-chromatic';
 import {
   TimeSeriesValue,
   DisplayValue,
@@ -11,7 +10,8 @@ import {
   ThresholdsMode,
   DisplayProcessor,
   FieldConfig,
-  FieldColorMode,
+  FieldColorModeId,
+  getFieldColorMode,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -512,39 +512,16 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
  * Only exported to for unit test
  */
 export function getBarGradient(props: Props, maxSize: number): string {
-  const { field, value, orientation } = props;
+  const { field, value, orientation, theme } = props;
   const cssDirection = isVertical(orientation) ? '0deg' : '90deg';
   const minValue = field.min!;
   const maxValue = field.max!;
 
   let gradient = '';
   let lastpos = 0;
+  let mode = getFieldColorMode(field.color?.mode);
 
-  if (field.color && field.color.mode === FieldColorMode.Scheme) {
-    const schemeSet = (d3 as any)[`scheme${field.color.schemeName}`] as any[];
-    if (!schemeSet) {
-      // Error: unknown scheme
-      const color = '#F00';
-      gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
-      gradient += ` ${maxSize}px, ${color}`;
-      return gradient + ')';
-    }
-    // Get the scheme with as many steps as possible
-    const scheme = schemeSet[schemeSet.length - 1] as string[];
-    for (let i = 0; i < scheme.length; i++) {
-      const color = scheme[i];
-      const valuePercent = i / (scheme.length - 1);
-      const pos = valuePercent * maxSize;
-      const offset = Math.round(pos - (pos - lastpos) / 2);
-
-      if (gradient === '') {
-        gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
-      } else {
-        lastpos = pos;
-        gradient += ` ${offset}px, ${color}`;
-      }
-    }
-  } else {
+  if (mode.id === FieldColorModeId.Thresholds) {
     const thresholds = field.thresholds!;
 
     for (let i = 0; i < thresholds.steps.length; i++) {
@@ -563,9 +540,27 @@ export function getBarGradient(props: Props, maxSize: number): string {
         gradient += ` ${offset}px, ${color}`;
       }
     }
+
+    return gradient + ')';
   }
 
-  return gradient + ')';
+  if (mode.colors) {
+    const scheme = mode.colors.map(item => getColorFromHexRgbOrName(item, theme.type));
+    for (let i = 0; i < scheme.length; i++) {
+      const color = scheme[i];
+
+      if (gradient === '') {
+        gradient = `linear-gradient(${cssDirection}, ${color} 0px`;
+      } else {
+        const valuePercent = i / (scheme.length - 1);
+        const pos = valuePercent * maxSize;
+        gradient += `, ${color} ${pos}px`;
+      }
+    }
+    return gradient + ')';
+  }
+
+  return 'gray';
 }
 
 /**
