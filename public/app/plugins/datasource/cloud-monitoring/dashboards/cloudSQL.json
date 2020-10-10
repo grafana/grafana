@@ -1,14 +1,5 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_CLOUD_MONITORING",
-      "label": "cloud-monitoring",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "stackdriver",
-      "pluginName": "Google Cloud Monitoring"
-    }
-  ],
+  "__inputs": [],
   "__requires": [
     {
       "type": "grafana",
@@ -53,7 +44,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUD_MONITORING}",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -159,7 +150,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUD_MONITORING}",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -265,7 +256,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUD_MONITORING}",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -371,7 +362,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUD_MONITORING}",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -511,7 +502,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUD_MONITORING}",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -634,7 +625,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUD_MONITORING}",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -774,7 +765,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUD_MONITORING}",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -897,7 +888,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUD_MONITORING}",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -1037,7 +1028,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUD_MONITORING}",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -1177,7 +1168,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_CLOUD_MONITORING}",
+      "datasource": "$datasource",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -1320,9 +1311,29 @@
   "templating": {
     "list": [
       {
+        "current": {
+          "selected": true,
+          "text": "cloud-monitoring",
+          "value": "cloud-monitoring"
+        },
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "stackdriver",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
         "allValue": null,
         "current": {},
-        "datasource": "${DS_CLOUD_MONITORING}",
+        "datasource": "$datasource",
         "definition": "Google Cloud Monitoring - Projects",
         "hide": 0,
         "includeAll": false,
@@ -1350,7 +1361,7 @@
           "selectedService": "actions.googleapis.com",
           "sloServices": []
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
