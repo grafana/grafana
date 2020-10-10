@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// isBasicAuthEnabled checks if Basic Auth is enabled
-var isBasicAuthEnabled = auth.IsBasicAuthEnabled
+// isLoginDisabled checks if Basic Auth is enabled
+var isLoginDisabled = auth.IsLoginDisabled
 
 var validatePassword = func(providedPassword string, userPassword string, userSalt string) error {
 	passwordHashed, err := util.EncodePassword(providedPassword, userSalt)
@@ -25,7 +25,7 @@ var validatePassword = func(providedPassword string, userPassword string, userSa
 }
 
 var loginUsingGrafanaDB = func(query *models.LoginUserQuery) (bool, error) {
-	if !isBasicAuthEnabled() {
+	if isLoginDisabled() {
 		return false, nil
 	}
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: query.Username}

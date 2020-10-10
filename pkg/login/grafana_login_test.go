@@ -13,7 +13,7 @@ import (
 func TestGrafanaLogin(t *testing.T) {
 	Convey("Login using Grafana DB", t, func() {
 		grafanaLoginScenario("When login with non-existing user", func(sc *grafanaLoginScenarioContext) {
-			setting.BasicAuthEnabled = true
+			setting.DisableLogin = false
 			sc.withNonExistingUser()
 			enabled, err := loginUsingGrafanaDB(sc.loginUserQuery)
 
@@ -35,7 +35,7 @@ func TestGrafanaLogin(t *testing.T) {
 		})
 
 		grafanaLoginScenario("When login with invalid credentials", func(sc *grafanaLoginScenarioContext) {
-			setting.BasicAuthEnabled = true
+			setting.DisableLogin = false
 			sc.withInvalidPassword()
 			enabled, err := loginUsingGrafanaDB(sc.loginUserQuery)
 
@@ -57,7 +57,7 @@ func TestGrafanaLogin(t *testing.T) {
 		})
 
 		grafanaLoginScenario("When login with valid credentials", func(sc *grafanaLoginScenarioContext) {
-			setting.BasicAuthEnabled = true
+			setting.DisableLogin = false
 			sc.withValidCredentials()
 			enabled, err := loginUsingGrafanaDB(sc.loginUserQuery)
 
@@ -81,7 +81,7 @@ func TestGrafanaLogin(t *testing.T) {
 		})
 
 		grafanaLoginScenario("When login with disabled user", func(sc *grafanaLoginScenarioContext) {
-			setting.BasicAuthEnabled = true
+			setting.DisableLogin = false
 			sc.withDisabledUser()
 			enabled, err := loginUsingGrafanaDB(sc.loginUserQuery)
 
@@ -102,8 +102,8 @@ func TestGrafanaLogin(t *testing.T) {
 			})
 		})
 
-		grafanaLoginScenario("When basic auth is disabled", func(sc *grafanaLoginScenarioContext) {
-			setting.BasicAuthEnabled = false
+		grafanaLoginScenario("When login is disabled", func(sc *grafanaLoginScenarioContext) {
+			setting.DisableLogin = true
 			sc.withDisabledUser()
 			enabled, err := loginUsingGrafanaDB(sc.loginUserQuery)
 
