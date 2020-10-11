@@ -20,7 +20,7 @@ type ChannelHandler interface {
 // ChannelHandlerProvider -- this should be implemented by any core feature
 type ChannelHandlerProvider interface {
 	// This is called fast and often -- it must be synchrnozed
-	GetHandlerForPath(path string) (ChannelHandler, error)
+	GetHandlerForPath(path string, publisher ChannelPublisher) (ChannelHandler, error)
 }
 
 // DashboardActivityChannel is a service to advertise dashboard activity

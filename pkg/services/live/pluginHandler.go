@@ -12,7 +12,7 @@ type PluginHandler struct {
 }
 
 // GetHandlerForPath called on init
-func (g *PluginHandler) GetHandlerForPath(path string) (models.ChannelHandler, error) {
+func (g *PluginHandler) GetHandlerForPath(path string, publisher models.ChannelPublisher) (models.ChannelHandler, error) {
 	return g, nil // all dashboards share the same handler
 }
 

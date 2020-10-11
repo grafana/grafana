@@ -24,9 +24,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
+	"github.com/aws/aws-sdk-go/service/servicequotas"
+	"github.com/aws/aws-sdk-go/service/servicequotas/servicequotasiface"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -43,6 +46,19 @@ type datasourceInfo struct {
 	SecretKey string
 }
 
+// cloudWatchExecutor executes CloudWatch requests.
+type cloudWatchExecutor struct {
+	*models.DataSource
+
+	ec2Client           ec2iface.EC2API
+	rgtaClient          resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
+	logsClientsByRegion map[string]cloudwatchlogsiface.CloudWatchLogsAPI
+	mtx                 sync.Mutex
+
+	queuesByRegion map[string](chan bool)
+	queueLock      sync.Mutex
+}
+
 const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
 const defaultRegion = "default"
 
@@ -53,26 +69,22 @@ const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
-func init() {
-	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return newExecutor(), nil
-	})
-}
+const defaultConcurrentQueries = 4
 
 func newExecutor() *cloudWatchExecutor {
 	return &cloudWatchExecutor{
 		logsClientsByRegion: map[string]cloudwatchlogsiface.CloudWatchLogsAPI{},
+		queuesByRegion:      map[string]chan bool{},
 	}
 }
 
-// cloudWatchExecutor executes CloudWatch requests.
-type cloudWatchExecutor struct {
-	*models.DataSource
+func init() {
+	globalExecutor := newExecutor()
+	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+		return globalExecutor, nil
+	})
 
-	ec2Client           ec2iface.EC2API
-	rgtaClient          resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-	logsClientsByRegion map[string]cloudwatchlogsiface.CloudWatchLogsAPI
-	mtx                 sync.Mutex
+	live.RegisterHandler("CloudWatch", &LogQueryRunnerSupplier{})
 }
 
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
@@ -234,6 +246,69 @@ func (e *cloudWatchExecutor) getRGTAClient(region string) (resourcegroupstagging
 	return e.rgtaClient, nil
 }
 
+func (e *cloudWatchExecutor) getServiceQuotasClient(region string) (servicequotasiface.ServiceQuotasAPI, error) {
+	sess, err := e.newSession(region)
+	if err != nil {
+		return nil, err
+	}
+
+	return newQuotasClient(sess), nil
+}
+
+func (e *cloudWatchExecutor) getQueue(region string) (chan bool, error) {
+	e.queueLock.Lock()
+	defer e.queueLock.Unlock()
+
+	if queue, ok := e.queuesByRegion[region]; ok {
+		return queue, nil
+	}
+
+	concurrentQueriesQuota, err := e.fetchConcurrentQueriesQuota(region)
+	if err != nil {
+		plog.Info("Could not fetch quota")
+	}
+
+	queueChannel := make(chan bool, concurrentQueriesQuota)
+	e.queuesByRegion[region] = queueChannel
+
+	return queueChannel, nil
+}
+
+func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string) (int, error) {
+	client, err := e.getServiceQuotasClient(region)
+	if err != nil {
+		return defaultConcurrentQueries, err
+	}
+
+	concurrentQueriesQuota, err := client.GetServiceQuota(&servicequotas.GetServiceQuotaInput{
+		ServiceCode: aws.String("logs"),
+		QuotaCode:   aws.String("L-32C48FBB"),
+	})
+
+	if err != nil {
+		return defaultConcurrentQueries, err
+	}
+
+	if concurrentQueriesQuota != nil && concurrentQueriesQuota.Quota != nil {
+		return int(*concurrentQueriesQuota.Quota.Value), nil
+	}
+
+	defaultConcurrentQueriesQuota, err := client.GetAWSDefaultServiceQuota(&servicequotas.GetAWSDefaultServiceQuotaInput{
+		ServiceCode: aws.String("logs"),
+		QuotaCode:   aws.String("L-32C48FBB"),
+	})
+
+	if err != nil {
+		return defaultConcurrentQueries, err
+	}
+
+	if defaultConcurrentQueriesQuota != nil && defaultConcurrentQueriesQuota.Quota != nil {
+		return int(*defaultConcurrentQueriesQuota.Quota.Value), nil
+	}
+
+	return defaultConcurrentQueries, nil
+}
+
 func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
 	queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	const maxAttempts = 8
@@ -301,6 +376,8 @@ func (e *cloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 		result, err = e.executeAnnotationQuery(ctx, queryContext)
 	case "logAction":
 		result, err = e.executeLogActions(ctx, queryContext)
+	case "liveLogAction":
+		result, err = e.executeLiveLogQuery(ctx, queryContext)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
@@ -459,6 +536,16 @@ var newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 // Stubbable by tests.
 var newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 	client := cloudwatchlogs.New(sess)
+	client.Handlers.Send.PushFront(func(r *request.Request) {
+		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+	})
+
+	return client
+}
+
+// Service quotas client
+var newQuotasClient = func(sess *session.Session) servicequotasiface.ServiceQuotasAPI {
+	client := servicequotas.New(sess)
 	client.Handlers.Send.PushFront(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 	})

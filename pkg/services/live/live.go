@@ -14,8 +14,9 @@ import (
 )
 
 var (
-	logger   = log.New("live")
-	loggerCF = log.New("live.centrifuge")
+	logger             = log.New("live")
+	loggerCF           = log.New("live.centrifuge")
+	dsHandlerProviders = map[string]models.ChannelHandlerProvider{}
 )
 
 // CoreGrafanaScope list of core features
@@ -257,13 +258,17 @@ func (g *GrafanaLive) initChannel(id ChannelIdentifier) (models.ChannelHandler, 
 	if id.Scope == "grafana" {
 		p, ok := g.GrafanaScope.Features[id.Namespace]
 		if ok {
-			return p.GetHandlerForPath(id.Path)
+			return p.GetHandlerForPath(id.Path, g.Publish)
 		}
 		return nil, fmt.Errorf("Unknown feature: %s", id.Namespace)
 	}
 
 	if id.Scope == "ds" {
-		return nil, fmt.Errorf("todo... look up datasource: %s", id.Namespace)
+		if handlerProvider, ok := dsHandlerProviders[id.Namespace]; ok {
+			return handlerProvider.GetHandlerForPath(id.Path, g.Publish)
+		}
+
+		return nil, fmt.Errorf("no live handler for datasource '%s' registered", id.Namespace)
 	}
 
 	if id.Scope == "plugin" {
@@ -272,12 +277,26 @@ func (g *GrafanaLive) initChannel(id ChannelIdentifier) (models.ChannelHandler, 
 			h := &PluginHandler{
 				Plugin: p,
 			}
-			return h.GetHandlerForPath(id.Path)
+			return h.GetHandlerForPath(id.Path, g.Publish)
 		}
 		return nil, fmt.Errorf("unknown plugin: %s", id.Namespace)
 	}
 
 	return nil, fmt.Errorf("invalid scope: %s", id.Scope)
+}
+
+var handlerMu = sync.Mutex{}
+
+func RegisterHandler(datasourceID string, channelHandlerProvider models.ChannelHandlerProvider) error {
+	handlerMu.Lock()
+	defer handlerMu.Unlock()
+
+	if _, ok := dsHandlerProviders[datasourceID]; ok {
+		return fmt.Errorf("handler for datasource with id '%s' already registered", datasourceID)
+	}
+
+	dsHandlerProviders[datasourceID] = channelHandlerProvider
+	return nil
 }
 
 // Publish sends the data to the channel without checking permissions etc

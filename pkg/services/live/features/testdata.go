@@ -33,7 +33,7 @@ func CreateTestdataSupplier(p models.ChannelPublisher) TestdataSupplier {
 }
 
 // GetHandlerForPath called on init
-func (g *TestdataSupplier) GetHandlerForPath(path string) (models.ChannelHandler, error) {
+func (g *TestdataSupplier) GetHandlerForPath(path string, publisher models.ChannelPublisher) (models.ChannelHandler, error) {
 	channel := "grafana/testdata/" + path
 
 	if path == "random-2s-stream" {

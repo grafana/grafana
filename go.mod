@@ -15,7 +15,7 @@ require (
 	cloud.google.com/go/storage v1.8.0
 	github.com/BurntSushi/toml v0.3.1
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
-	github.com/aws/aws-sdk-go v1.33.12
+	github.com/aws/aws-sdk-go v1.35.5
 	github.com/beevik/etree v1.1.0
 	github.com/benbjohnson/clock v0.0.0-20161215174838-7dc76406b6d3
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
@@ -48,7 +48,7 @@ require (
 	github.com/hashicorp/go-version v1.2.0
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/influxdata/influxdb-client-go/v2 v2.0.1
-	github.com/jmespath/go-jmespath v0.3.0
+	github.com/jmespath/go-jmespath v0.4.0
 	github.com/jonboulle/clockwork v0.2.1 // indirect
 	github.com/jung-kurt/gofpdf v1.10.1
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
@@ -68,6 +68,7 @@ require (
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/robfig/cron/v3 v3.0.0
 	github.com/russellhaering/goxmldsig v0.0.0-20200902171629-2e1fbc2c5593
+	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/stretchr/testify v1.6.1
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf

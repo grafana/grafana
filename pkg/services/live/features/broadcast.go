@@ -10,7 +10,7 @@ import (
 type BroadcastRunner struct{}
 
 // GetHandlerForPath called on init
-func (g *BroadcastRunner) GetHandlerForPath(path string) (models.ChannelHandler, error) {
+func (g *BroadcastRunner) GetHandlerForPath(path string, publisher models.ChannelPublisher) (models.ChannelHandler, error) {
 	return g, nil // for now all channels share config
 }
 
