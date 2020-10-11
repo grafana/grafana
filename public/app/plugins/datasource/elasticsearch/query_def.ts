@@ -187,9 +187,13 @@ export const movingAvgModelSettings: any = {
 
 export function getMetricAggTypes(esVersion: any) {
   return _.filter(metricAggTypes, f => {
-    const minVersion = f.minVersion || 0;
-    const maxVersion = f.maxVersion || esVersion;
-    return esVersion >= minVersion && esVersion <= maxVersion;
+    if (f.minVersion || f.maxVersion) {
+      const minVersion = f.minVersion || 0;
+      const maxVersion = f.maxVersion || esVersion;
+      return esVersion >= minVersion && esVersion <= maxVersion;
+    } else {
+      return true;
+    }
   });
 }
 
