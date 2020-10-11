@@ -3,8 +3,8 @@ import {
   dateTimeAsIsoNoDateIfToday,
   dateTimeAsUS,
   dateTimeAsUSNoDateIfToday,
-  dateTimeAsLocal,
-  dateTimeAsLocalNoDateIfToday,
+  getDateTimeAsLocalFormat,
+  getDateTimeAsLocalFormatNoDateIfToday,
   dateTimeFromNow,
   Interval,
   toClock,
@@ -78,7 +78,7 @@ describe('date time formats', () => {
 
   it('should format as local date', () => {
     const dateTimeObject = browserTime.toDate();
-    const formattedDateText = dateTimeAsLocal(epoch, 0, 0).text;
+    const formattedDateText = getDateTimeAsLocalFormat()(epoch, 0, 0).text;
     expect(formattedDateText).toContain(dateTimeObject.getFullYear());
     expect(formattedDateText).toContain(dateTimeObject.getSeconds());
   });
@@ -86,14 +86,14 @@ describe('date time formats', () => {
   it('should format as local date and skip date when today', () => {
     const now = dateTime();
     const dateTimeObject = now.toDate();
-    const formattedDateText = dateTimeAsLocalNoDateIfToday(now.valueOf(), 0, 0).text;
+    const formattedDateText = getDateTimeAsLocalFormatNoDateIfToday()(now.valueOf(), 0, 0).text;
     expect(formattedDateText).not.toContain(dateTimeObject.getFullYear());
     expect(formattedDateText).toContain(dateTimeObject.getSeconds());
   });
 
   it('should format as local date (in UTC)', () => {
     const dateTimeObject = utcTime.toDate();
-    const formattedDateText = dateTimeAsLocal(epoch, 0, 0, 'utc').text;
+    const formattedDateText = getDateTimeAsLocalFormat()(epoch, 0, 0, 'utc').text;
     expect(formattedDateText).toContain(dateTimeObject.getFullYear());
     expect(formattedDateText).toContain(dateTimeObject.getSeconds());
   });
@@ -101,7 +101,7 @@ describe('date time formats', () => {
   it('should format as local date (in UTC) and skip date when today', () => {
     const now = toUtc();
     const dateTimeObject = now.toDate();
-    const formattedDateText = dateTimeAsLocalNoDateIfToday(now.valueOf(), 0, 0, 'utc').text;
+    const formattedDateText = getDateTimeAsLocalFormatNoDateIfToday()(now.valueOf(), 0, 0, 'utc').text;
     expect(formattedDateText).not.toContain(dateTimeObject.getFullYear());
     expect(formattedDateText).toContain(dateTimeObject.getSeconds());
   });
