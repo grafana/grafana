@@ -3,7 +3,7 @@ import {
   toDataFrame,
   FieldType,
   FieldCache,
-  FieldColorMode,
+  FieldColorModeId,
   getColorFromHexRgbOrName,
   GrafanaThemeType,
   Field,
@@ -34,7 +34,7 @@ const aSeries = toDataFrame({
       name: 'value',
       type: FieldType.number,
       values: [10, 20, 10],
-      config: { color: { mode: FieldColorMode.Fixed, fixedColor: 'red' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' } },
     },
   ],
 });
@@ -45,7 +45,7 @@ const bSeries = toDataFrame({
       name: 'value',
       type: FieldType.number,
       values: [30, 60, 30],
-      config: { color: { mode: FieldColorMode.Fixed, fixedColor: 'blue' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' } },
     },
   ],
 });
@@ -57,7 +57,7 @@ const cSeries = toDataFrame({
       name: 'value',
       type: FieldType.number,
       values: [30, 30],
-      config: { color: { mode: FieldColorMode.Fixed, fixedColor: 'yellow' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'yellow' } },
     },
   ],
 });
