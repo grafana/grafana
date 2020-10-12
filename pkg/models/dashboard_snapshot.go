@@ -25,7 +25,7 @@ type DashboardSnapshot struct {
 	Updated time.Time
 
 	Dashboard          *simplejson.Json
-	DashboardEncrypted *securedata.SecureData
+	DashboardEncrypted securedata.SecureData
 }
 
 func (ds *DashboardSnapshot) DashboardJSON() (*simplejson.Json, error) {

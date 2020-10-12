@@ -1,26 +1,16 @@
 package securedata
 
 import (
-	"encoding/base64"
-
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type SecureData string
+type SecureData []byte
 
 func EncryptAndEncode(data []byte) (SecureData, error) {
-	encrypted, err := util.Encrypt(data, setting.SecretKey)
-	if err != nil {
-		return "", err
-	}
-	return SecureData(base64.StdEncoding.EncodeToString(encrypted)), nil
+	return util.Encrypt(data, setting.SecretKey)
 }
 
 func (s SecureData) DecodeAndDecrypt() ([]byte, error) {
-	decoded, err := base64.StdEncoding.DecodeString(string(s))
-	if err != nil {
-		return nil, err
-	}
-	return util.Decrypt(decoded, setting.SecretKey)
+	return util.Decrypt(s, setting.SecretKey)
 }

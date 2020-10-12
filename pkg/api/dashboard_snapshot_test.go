@@ -238,7 +238,7 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 				// mock snapshot with encrypted dashboard info
 				mockSnapshotResult := &models.DashboardSnapshot{
 					Key:                "12345",
-					DashboardEncrypted: &encrypted,
+					DashboardEncrypted: encrypted,
 					Expires:            time.Now().Add(time.Duration(1000) * time.Second),
 				}
 

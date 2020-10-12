@@ -69,7 +69,7 @@ func CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCommand) error {
 			ExternalUrl:        cmd.ExternalUrl,
 			ExternalDeleteUrl:  cmd.ExternalDeleteUrl,
 			Dashboard:          simplejson.New(),
-			DashboardEncrypted: &encryptedDashboard,
+			DashboardEncrypted: encryptedDashboard,
 			Expires:            expires,
 			Created:            time.Now(),
 			Updated:            time.Now(),
