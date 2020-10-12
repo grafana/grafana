@@ -1,0 +1,6 @@
+---
+name: query-untriaged-issues
+description: Query for untriaged Grafana issues
+runs:
+  using: docker
+  image: Dockerfile

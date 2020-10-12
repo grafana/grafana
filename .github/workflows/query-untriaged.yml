@@ -1,0 +1,11 @@
+name: Query untriaged issues
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+branding: git-commit
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: query-untriaged-issues
+        uses: ./.github/actions/gha-query-untriaged-issues
