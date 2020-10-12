@@ -67,7 +67,6 @@ const nodeVersionCheckerRunner: TaskRunner<NodeVersionCheckerOptions> = async ()
 
   console.log(chalk.yellow('--------------------------------------------------------------------'));
   console.log(chalk.yellow('All node versions seem ok.'));
-  console.log(chalk.yellow(`also if you changed the engine version in ${packageJsonFile}`));
   console.log(chalk.yellow('--------------------------------------------------------------------'));
 };
 
