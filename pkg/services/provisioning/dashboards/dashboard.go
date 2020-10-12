@@ -72,7 +72,7 @@ func (provider *Provisioner) Provision() error {
 		}
 	}
 
-	provider.duplicateValidator.logWarnings(provider.log)
+	provider.duplicateValidator.validate(provider.log)
 	return nil
 }
 
@@ -96,7 +96,7 @@ func (provider *Provisioner) PollChanges(ctx context.Context) {
 		go reader.pollChanges(ctx)
 	}
 
-	go provider.duplicateValidator.startLogWarningsLoop(ctx, provider.log)
+	go provider.duplicateValidator.Run(ctx, provider.log)
 }
 
 // GetProvisionerResolvedPath returns resolved path for the specified provisioner name. Can be used to generate

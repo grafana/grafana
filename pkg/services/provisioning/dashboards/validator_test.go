@@ -10,7 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-const dashboardContainingUID = "testdata/test-dashboards/dashboard-with-uid"
+const (
+	dashboardContainingUID = "testdata/test-dashboards/dashboard-with-uid"
+	twoDashboardsWithUID   = "testdata/test-dashboards/two-dashboards-with-uid"
+)
 
 func TestDuplicatesValidator(t *testing.T) {
 	bus.ClearBusHandlers()
@@ -66,5 +69,55 @@ func TestDuplicatesValidator(t *testing.T) {
 		titleUsageReaders := keysToSlice(duplicates.Titles[identity].InvolvedReaders)
 		sort.Strings(titleUsageReaders)
 		require.Equal(t, []string{"first", "second"}, titleUsageReaders)
+
+		duplicateValidator.validate(logger)
+		require.Equal(t, true, reader1.isDatabaseAccessRestricted())
+		require.Equal(t, true, reader2.isDatabaseAccessRestricted())
+	})
+
+	t.Run("Duplicates validator should restrict write access for only reader with duplicates", func(t *testing.T) {
+		cfg1 := &config{
+			Name: "first", Type: "file", OrgID: 1, Folder: "duplicates-validator-folder",
+			Options: map[string]interface{}{"path": twoDashboardsWithUID},
+		}
+		cfg2 := &config{
+			Name: "second", Type: "file", OrgID: 1, Folder: "root",
+			Options: map[string]interface{}{"path": defaultDashboards},
+		}
+
+		reader1, err := NewDashboardFileReader(cfg1, logger)
+		require.NoError(t, err)
+
+		reader2, err := NewDashboardFileReader(cfg2, logger)
+		require.NoError(t, err)
+
+		duplicateValidator := newDuplicateValidator([]*FileReader{reader1, reader2})
+
+		err = reader1.startWalkingDisk()
+		require.NoError(t, err)
+
+		err = reader2.startWalkingDisk()
+		require.NoError(t, err)
+
+		duplicates := duplicateValidator.getDuplicates()
+
+		folderID, err := getOrCreateFolderID(cfg, fakeService, "duplicates-validator-folder")
+		require.NoError(t, err)
+
+		identity := dashboardIdentity{folderID: folderID, title: "Grafana"}
+
+		require.Equal(t, uint8(2), duplicates.UIDs["Z-phNqGmz"].Sum)
+		uidUsageReaders := keysToSlice(duplicates.UIDs["Z-phNqGmz"].InvolvedReaders)
+		sort.Strings(uidUsageReaders)
+		require.Equal(t, []string{"first"}, uidUsageReaders)
+
+		require.Equal(t, uint8(2), duplicates.Titles[identity].Sum)
+		titleUsageReaders := keysToSlice(duplicates.Titles[identity].InvolvedReaders)
+		sort.Strings(titleUsageReaders)
+		require.Equal(t, []string{"first"}, titleUsageReaders)
+
+		duplicateValidator.validate(logger)
+		require.Equal(t, true, reader1.isDatabaseAccessRestricted())
+		require.Equal(t, false, reader2.isDatabaseAccessRestricted())
 	})
 }

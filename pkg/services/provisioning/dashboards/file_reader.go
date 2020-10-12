@@ -35,8 +35,9 @@ type FileReader struct {
 	log                          log.Logger
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 
-	mux          sync.RWMutex
-	usageTracker *usageTracker
+	mux                     sync.RWMutex
+	usageTracker            *usageTracker
+	dbWriteAccessRestricted bool
 }
 
 // NewDashboardFileReader returns a new filereader based on `config`
@@ -119,6 +120,20 @@ func (fr *FileReader) walkDisk() error {
 
 	fr.usageTracker = usageTracker
 	return nil
+}
+
+func (fr *FileReader) changeWritePermissions(restrict bool) {
+	fr.mux.Lock()
+	defer fr.mux.Unlock()
+
+	fr.dbWriteAccessRestricted = restrict
+}
+
+func (fr *FileReader) isDatabaseAccessRestricted() bool {
+	fr.mux.RLock()
+	defer fr.mux.RUnlock()
+
+	return fr.dbWriteAccessRestricted
 }
 
 // storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
@@ -241,15 +256,17 @@ func (fr *FileReader) saveDashboard(path string, folderID int64, fileInfo os.Fil
 		dash.Dashboard.SetId(provisionedData.DashboardId)
 	}
 
-	fr.log.Debug("saving new dashboard", "provisioner", fr.Cfg.Name, "file", path, "folderId", dash.Dashboard.FolderId)
-	dp := &models.DashboardProvisioning{
-		ExternalId: path,
-		Name:       fr.Cfg.Name,
-		Updated:    resolvedFileInfo.ModTime().Unix(),
-		CheckSum:   jsonFile.checkSum,
+	if !fr.isDatabaseAccessRestricted() {
+		fr.log.Debug("saving new dashboard", "provisioner", fr.Cfg.Name, "file", path, "folderId", dash.Dashboard.FolderId)
+		dp := &models.DashboardProvisioning{
+			ExternalId: path,
+			Name:       fr.Cfg.Name,
+			Updated:    resolvedFileInfo.ModTime().Unix(),
+			CheckSum:   jsonFile.checkSum,
+		}
+		_, err = fr.dashboardProvisioningService.SaveProvisionedDashboard(dash, dp)
 	}
 
-	_, err = fr.dashboardProvisioningService.SaveProvisionedDashboard(dash, dp)
 	return provisioningMetadata, err
 }
 

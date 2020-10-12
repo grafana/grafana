@@ -21,6 +21,36 @@ type duplicateEntries struct {
 	UIDs   map[string]*duplicate
 }
 
+func (d *duplicateEntries) InvolvedReaders() map[string]struct{} {
+	involvedReaders := make(map[string]struct{})
+
+	for _, duplicate := range d.UIDs {
+		if duplicate.Sum <= 1 {
+			continue
+		}
+
+		for readerName := range duplicate.InvolvedReaders {
+			if _, ok := involvedReaders[readerName]; !ok {
+				involvedReaders[readerName] = struct{}{}
+			}
+		}
+	}
+
+	for _, duplicate := range d.Titles {
+		if duplicate.Sum <= 1 {
+			continue
+		}
+
+		for readerName := range duplicate.InvolvedReaders {
+			if _, ok := involvedReaders[readerName]; !ok {
+				involvedReaders[readerName] = struct{}{}
+			}
+		}
+	}
+
+	return involvedReaders
+}
+
 type duplicateValidator struct {
 	readers []*FileReader
 }
@@ -38,6 +68,7 @@ func (c *duplicateValidator) getDuplicates() *duplicateEntries {
 	for _, reader := range c.readers {
 		readerName := reader.Cfg.Name
 		tracker := reader.getUsageTracker()
+
 		for uid, times := range tracker.uidUsage {
 			if _, ok := duplicates.UIDs[uid]; !ok {
 				duplicates.UIDs[uid] = newDuplicate()
@@ -58,8 +89,7 @@ func (c *duplicateValidator) getDuplicates() *duplicateEntries {
 	return &duplicates
 }
 
-func (c *duplicateValidator) logWarnings(log log.Logger) {
-	duplicates := c.getDuplicates()
+func (c *duplicateValidator) logWarnings(log log.Logger, duplicates *duplicateEntries) {
 	for uid, usage := range duplicates.UIDs {
 		if usage.Sum > 1 {
 			log.Error("the same UID is used more than once", "uid", uid, "times", usage.Sum, "providers", keysToSlice(usage.InvolvedReaders))
@@ -73,16 +103,36 @@ func (c *duplicateValidator) logWarnings(log log.Logger) {
 	}
 }
 
-func (c *duplicateValidator) startLogWarningsLoop(ctx context.Context, log log.Logger) {
+func (c *duplicateValidator) takeAwayWritePermissions(log log.Logger, duplicates *duplicateEntries) {
+	involvedReaders := duplicates.InvolvedReaders()
+	for _, reader := range c.readers {
+		_, isReaderWithDuplicates := involvedReaders[reader.Cfg.Name]
+		// We restrict reader permissions to write to the database here to prevent overloading
+		reader.changeWritePermissions(isReaderWithDuplicates)
+
+		if isReaderWithDuplicates {
+			log.Error("dashboards provisioning provider has no database write permissions because of duplicates", "provider", reader.Cfg.Name)
+		}
+	}
+}
+
+func (c *duplicateValidator) Run(ctx context.Context, log log.Logger) {
 	ticker := time.NewTicker(30 * time.Second)
 	for {
 		select {
 		case <-ticker.C:
-			c.logWarnings(log)
+			c.validate(log)
 		case <-ctx.Done():
 			return
 		}
 	}
+}
+
+func (c *duplicateValidator) validate(log log.Logger) {
+	duplicates := c.getDuplicates()
+
+	c.logWarnings(log, duplicates)
+	c.takeAwayWritePermissions(log, duplicates)
 }
 
 func keysToSlice(data map[string]struct{}) []string {
