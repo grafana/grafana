@@ -155,7 +155,7 @@ An issue can have multiple of the following labels. Typically, a properly catego
 Make sure it's not a duplicate by searching existing issues using related terms from the issue title and description. If you think you know there is an existing issue, but can't find it, please reach out to one of the maintainers and ask for help. If you identify that the issue is a duplicate of an existing issue:
 
 1. Add a comment `/duplicate of #<issue number>`. GitHub will recognize this and add some additional context to the issue activity.
-2. The GrafaanBot will do the rest, adding the correct label and closing message
+2. The Grafana bot will do the rest, adding the correct label and closing message
 3. Optionally add any related `area/*` or `datasource/*` labels.
 
 ### Bug reports
