@@ -56,7 +56,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/stats", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin/live", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/ldap", reqGrafanaAdmin, hs.Index)
 
 	r.Get("/styleguide", reqSignedIn, hs.Index)
@@ -351,6 +350,13 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/", Wrap(GetAlerts))
 			alertsRoute.Get("/states-for-dashboard", Wrap(GetAlertStatesForDashboard))
 		})
+
+		if hs.Cfg.IsNgAlertEnabled() {
+			apiRoute.Group("/alert-definitions", func(alertDefinitions routing.RouteRegister) {
+				alertDefinitions.Get("/eval/:dashboardID/:panelID/:refID", reqEditorRole, Wrap(hs.AlertDefinitionEval))
+				alertDefinitions.Post("/eval", reqEditorRole, bind(dtos.EvalAlertConditionsCommand{}), Wrap(hs.ConditionsEval))
+			})
+		}
 
 		apiRoute.Get("/alert-notifiers", reqEditorRole, Wrap(GetAlertNotifiers))
 

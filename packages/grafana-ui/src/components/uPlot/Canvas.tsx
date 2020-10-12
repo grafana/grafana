@@ -8,13 +8,9 @@ interface CanvasProps {
 
 // Ref element to render the uPlot canvas to
 // This is a required child of Plot component!
-export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
-  const plot = usePlotContext();
-  if (!plot) {
-    return null;
-  }
-
-  return <div ref={plot.canvasRef} />;
+export const Canvas: React.FC<CanvasProps> = () => {
+  const plotCtx = usePlotContext();
+  return <div ref={plotCtx.canvasRef} />;
 };
 
 Canvas.displayName = 'Canvas';

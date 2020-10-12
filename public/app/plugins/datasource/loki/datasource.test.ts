@@ -8,6 +8,7 @@ import {
   DataQueryResponse,
   dateTime,
   FieldCache,
+  observableTester,
   TimeRange,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
@@ -19,7 +20,6 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { CustomVariableModel } from '../../../features/variables/types';
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
-import { observableTester } from '../../../../test/helpers/observableTester';
 import { expect } from '../../../../test/lib/common';
 import { makeMockLokiDatasource } from './mocks';
 

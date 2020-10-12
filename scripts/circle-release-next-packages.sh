@@ -7,7 +7,7 @@ PACKAGES=(ui toolkit data runtime e2e e2e-selectors)
 source "$(dirname "$0")/helpers/exit-if-fail.sh"
 
 function prepare_version_commit () {
-  echo $'\nCommitting version changes. This commit will not be checked-in!'
+  echo $'\nCommitting version changes. This commit will not be pushed!'
   git config --global user.email "drone@grafana.com"
   git config --global user.name "Drone"
   git commit -am "Version commit"
@@ -48,9 +48,9 @@ else
   # repository. We will not push this commit to the origin repository.
   prepare_version_commit
 
-  # Frontend packages have already been versioned and built by the 
-  # build-frontend step in drone. We will only unpublish the previous 
-  # canary version and publish the current built version as the new 
+  # Frontend packages have already been versioned and built by the
+  # build-frontend step in drone. We will only unpublish the previous
+  # canary version and publish the current built version as the new
   # latest canary build.
   for PACKAGE in "${PACKAGES[@]}"
   do

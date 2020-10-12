@@ -4,9 +4,10 @@ import { FieldType } from '../../types/dataFrame';
 import { ReducerID } from '../fieldReducer';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
-import { calculateFieldTransformer, CalculateFieldMode, ReduceOptions } from './calculateField';
+import { CalculateFieldMode, calculateFieldTransformer, ReduceOptions } from './calculateField';
 import { DataFrameView } from '../../dataframe';
 import { BinaryOperationID } from '../../utils';
+import { observableTester } from '../../utils/tests/observableTester';
 
 const seriesA = toDataFrame({
   fields: [
@@ -29,7 +30,7 @@ describe('calculateField transformer w/ timeseries', () => {
     mockTransformationsRegistry([calculateFieldTransformer]);
   });
 
-  it('will filter and alias', () => {
+  it('will filter and alias', done => {
     const cfg = {
       id: DataTransformerID.calculateField,
       options: {
@@ -38,31 +39,35 @@ describe('calculateField transformer w/ timeseries', () => {
       },
     };
 
-    const filtered = transformDataFrame([cfg], [seriesA, seriesBC])[0];
-    const rows = new DataFrameView(filtered).toArray();
-    expect(rows).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "A": 1,
-          "B": 2,
-          "C": 3,
-          "D": "first",
-          "The Total": 6,
-          "TheTime": 1000,
-        },
-        Object {
-          "A": 100,
-          "B": 200,
-          "C": 300,
-          "D": "second",
-          "The Total": 600,
-          "TheTime": 2000,
-        },
-      ]
-    `);
+    observableTester().subscribeAndExpectOnNext({
+      observable: transformDataFrame([cfg], [seriesA, seriesBC]),
+      expect: data => {
+        const filtered = data[0];
+        const rows = new DataFrameView(filtered).toArray();
+        expect(rows).toEqual([
+          {
+            A: 1,
+            B: 2,
+            C: 3,
+            D: 'first',
+            'The Total': 6,
+            TheTime: 1000,
+          },
+          {
+            A: 100,
+            B: 200,
+            C: 300,
+            D: 'second',
+            'The Total': 600,
+            TheTime: 2000,
+          },
+        ]);
+      },
+      done,
+    });
   });
 
-  it('will replace other fields', () => {
+  it('will replace other fields', done => {
     const cfg = {
       id: DataTransformerID.calculateField,
       options: {
@@ -74,23 +79,27 @@ describe('calculateField transformer w/ timeseries', () => {
       },
     };
 
-    const filtered = transformDataFrame([cfg], [seriesA, seriesBC])[0];
-    const rows = new DataFrameView(filtered).toArray();
-    expect(rows).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "Mean": 2,
-          "TheTime": 1000,
-        },
-        Object {
-          "Mean": 200,
-          "TheTime": 2000,
-        },
-      ]
-    `);
+    observableTester().subscribeAndExpectOnNext({
+      observable: transformDataFrame([cfg], [seriesA, seriesBC]),
+      expect: data => {
+        const filtered = data[0];
+        const rows = new DataFrameView(filtered).toArray();
+        expect(rows).toEqual([
+          {
+            Mean: 2,
+            TheTime: 1000,
+          },
+          {
+            Mean: 200,
+            TheTime: 2000,
+          },
+        ]);
+      },
+      done,
+    });
   });
 
-  it('will filter by name', () => {
+  it('will filter by name', done => {
     const cfg = {
       id: DataTransformerID.calculateField,
       options: {
@@ -103,23 +112,27 @@ describe('calculateField transformer w/ timeseries', () => {
       },
     };
 
-    const filtered = transformDataFrame([cfg], [seriesBC])[0];
-    const rows = new DataFrameView(filtered).toArray();
-    expect(rows).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "Mean": 2,
-          "TheTime": 1000,
-        },
-        Object {
-          "Mean": 200,
-          "TheTime": 2000,
-        },
-      ]
-    `);
+    observableTester().subscribeAndExpectOnNext({
+      observable: transformDataFrame([cfg], [seriesBC]),
+      expect: data => {
+        const filtered = data[0];
+        const rows = new DataFrameView(filtered).toArray();
+        expect(rows).toEqual([
+          {
+            Mean: 2,
+            TheTime: 1000,
+          },
+          {
+            Mean: 200,
+            TheTime: 2000,
+          },
+        ]);
+      },
+      done,
+    });
   });
 
-  it('binary math', () => {
+  it('binary math', done => {
     const cfg = {
       id: DataTransformerID.calculateField,
       options: {
@@ -133,23 +146,27 @@ describe('calculateField transformer w/ timeseries', () => {
       },
     };
 
-    const filtered = transformDataFrame([cfg], [seriesBC])[0];
-    const rows = new DataFrameView(filtered).toArray();
-    expect(rows).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "B + C": 5,
-          "TheTime": 1000,
-        },
-        Object {
-          "B + C": 500,
-          "TheTime": 2000,
-        },
-      ]
-    `);
+    observableTester().subscribeAndExpectOnNext({
+      observable: transformDataFrame([cfg], [seriesBC]),
+      expect: data => {
+        const filtered = data[0];
+        const rows = new DataFrameView(filtered).toArray();
+        expect(rows).toEqual([
+          {
+            'B + C': 5,
+            TheTime: 1000,
+          },
+          {
+            'B + C': 500,
+            TheTime: 2000,
+          },
+        ]);
+      },
+      done,
+    });
   });
 
-  it('field + static number', () => {
+  it('field + static number', done => {
     const cfg = {
       id: DataTransformerID.calculateField,
       options: {
@@ -163,19 +180,23 @@ describe('calculateField transformer w/ timeseries', () => {
       },
     };
 
-    const filtered = transformDataFrame([cfg], [seriesBC])[0];
-    const rows = new DataFrameView(filtered).toArray();
-    expect(rows).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "B + 2": 4,
-          "TheTime": 1000,
-        },
-        Object {
-          "B + 2": 202,
-          "TheTime": 2000,
-        },
-      ]
-    `);
+    observableTester().subscribeAndExpectOnNext({
+      observable: transformDataFrame([cfg], [seriesBC]),
+      expect: data => {
+        const filtered = data[0];
+        const rows = new DataFrameView(filtered).toArray();
+        expect(rows).toEqual([
+          {
+            'B + 2': 4,
+            TheTime: 1000,
+          },
+          {
+            'B + 2': 202,
+            TheTime: 2000,
+          },
+        ]);
+      },
+      done,
+    });
   });
 });
