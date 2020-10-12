@@ -84,7 +84,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
 
   return (
     <>
-      <h3 className="page-heading">Sigv4 Details</h3>
+      <h6>SigV4 Auth Details</h6>
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">
@@ -97,21 +97,17 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
             <Select
               className="width-30"
               value={authProviderOptions.find(
-                authProvider => authProvider.value === dataSourceConfig.jsonData.authType
+                authProvider => authProvider.value === dataSourceConfig.jsonData.sigV4AuthType
               )}
               options={authProviderOptions}
-              defaultValue={dataSourceConfig.jsonData.authType || 'keys'}
+              defaultValue={dataSourceConfig.jsonData.sigV4AuthType || 'keys'}
               onChange={option => {
-                if (dataSourceConfig.jsonData.authType === 'arn' && option.value !== 'arn') {
-                  delete dataSourceConfig.jsonData.assumeRoleArn;
-                  delete dataSourceConfig.jsonData.externalId;
-                }
-                onJsonDataChange('authType', option.value);
+                onJsonDataChange('sigV4AuthType', option.value);
               }}
             />
           </div>
         </div>
-        {dataSourceConfig.jsonData.authType === 'credentials' && (
+        {dataSourceConfig.jsonData.sigV4AuthType === 'credentials' && (
           <div className="gf-form-inline">
             <div className="gf-form">
               <InlineFormLabel
@@ -124,16 +120,16 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
                 <Input
                   className="width-30"
                   placeholder="default"
-                  value={dataSourceConfig.jsonData.profile || ''}
-                  onChange={e => onJsonDataChange('profile', e.currentTarget.value)}
+                  value={dataSourceConfig.jsonData.sigV4Profile || ''}
+                  onChange={e => onJsonDataChange('sigV4Profile', e.currentTarget.value)}
                 />
               </div>
             </div>
           </div>
         )}
-        {dataSourceConfig.jsonData.authType === 'keys' && (
+        {dataSourceConfig.jsonData.sigV4AuthType === 'keys' && (
           <div>
-            {dataSourceConfig.secureJsonFields?.accessKey ? (
+            {dataSourceConfig.secureJsonFields?.sigV4AccessKey ? (
               <div className="gf-form-inline">
                 <div className="gf-form">
                   <InlineFormLabel className="width-14">Access Key ID</InlineFormLabel>
@@ -141,7 +137,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
                 </div>
                 <div className="gf-form">
                   <div className="max-width-30 gf-form-inline">
-                    <Button variant="secondary" type="button" onClick={e => onSecureJsonDataReset('accessKey')}>
+                    <Button variant="secondary" type="button" onClick={e => onSecureJsonDataReset('sigV4AccessKey')}>
                       Reset
                     </Button>
                   </div>
@@ -154,14 +150,14 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
                   <div className="width-30">
                     <Input
                       className="width-30"
-                      value={dataSourceConfig.secureJsonData?.accessKey || ''}
-                      onChange={e => onSecureJsonDataChange('accessKey', e.currentTarget.value)}
+                      value={dataSourceConfig.secureJsonData?.sigV4AccessKey || ''}
+                      onChange={e => onSecureJsonDataChange('sigV4AccessKey', e.currentTarget.value)}
                     />
                   </div>
                 </div>
               </div>
             )}
-            {dataSourceConfig.secureJsonFields?.secretKey ? (
+            {dataSourceConfig.secureJsonFields?.sigV4SecretKey ? (
               <div className="gf-form-inline">
                 <div className="gf-form">
                   <InlineFormLabel className="width-14">Secret Access Key</InlineFormLabel>
@@ -169,7 +165,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
                 </div>
                 <div className="gf-form">
                   <div className="max-width-30 gf-form-inline">
-                    <Button variant="secondary" type="button" onClick={e => onSecureJsonDataReset('secretKey')}>
+                    <Button variant="secondary" type="button" onClick={e => onSecureJsonDataReset('sigV4SecretKey')}>
                       Reset
                     </Button>
                   </div>
@@ -182,8 +178,8 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
                   <div className="width-30">
                     <Input
                       className="width-30"
-                      value={dataSourceConfig.secureJsonData?.secretKey || ''}
-                      onChange={e => onSecureJsonDataChange('secretKey', e.currentTarget.value)}
+                      value={dataSourceConfig.secureJsonData?.sigV4SecretKey || ''}
+                      onChange={e => onSecureJsonDataChange('sigV4SecretKey', e.currentTarget.value)}
                     />
                   </div>
                 </div>
@@ -203,8 +199,8 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
               <Input
                 className="width-30"
                 placeholder="arn:aws:iam:*"
-                value={dataSourceConfig.jsonData.assumeRoleArn || ''}
-                onChange={e => onJsonDataChange('assumeRoleArn', e.currentTarget.value)}
+                value={dataSourceConfig.jsonData.sigV4AssumeRoleArn || ''}
+                onChange={e => onJsonDataChange('sigV4AssumeRoleArn', e.currentTarget.value)}
               />
             </div>
           </div>
@@ -220,8 +216,8 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
                 <Input
                   className="width-30"
                   placeholder="External ID"
-                  value={dataSourceConfig.jsonData.externalId || ''}
-                  onChange={e => onJsonDataChange('externalId', e.currentTarget.value)}
+                  value={dataSourceConfig.jsonData.sigV4ExternalId || ''}
+                  onChange={e => onJsonDataChange('sigV4ExternalId', e.currentTarget.value)}
                 />
               </div>
             </div>
@@ -237,10 +233,10 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
             </InlineFormLabel>
             <Select
               className="width-30"
-              value={regions.find(region => region.value === dataSourceConfig.jsonData.region)}
+              value={regions.find(region => region.value === dataSourceConfig.jsonData.sigV4Region)}
               options={regions}
-              defaultValue={dataSourceConfig.jsonData.region || ''}
-              onChange={option => onJsonDataChange('region', option.value)}
+              defaultValue={dataSourceConfig.jsonData.sigV4Region || ''}
+              onChange={option => onJsonDataChange('sigV4Region', option.value)}
             />
           </div>
         </div>
