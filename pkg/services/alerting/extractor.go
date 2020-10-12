@@ -210,7 +210,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 				validationErrors.WriteString(err.Error())
 			case alertWarning:
 				if validationWarnings.Len() > 0 {
-					validationErrors.WriteString("\n")
+					validationWarnings.WriteString("\n")
 				}
 				validationWarnings.WriteString(err.Error())
 			}
