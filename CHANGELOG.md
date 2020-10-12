@@ -1,3 +1,9 @@
+# 7.3.0-beta1 (2020-10-14)
+
+### Breaking changes
+
+- **CloudWatch**: The AWS CloudWatch data source's authentication scheme has changed. See the [upgrade notes](https://grafana.com/docs/grafana/latest/installation/upgrading/#upgrading-to-v73) for details and how this may affect you.
+
 # 7.2.1 (2020-10-08)
 
 ### Features / Enhancements
