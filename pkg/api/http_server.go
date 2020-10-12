@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/search"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/shorturls"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
@@ -71,7 +71,7 @@ type HTTPServer struct {
 	BackendPluginManager backendplugin.Manager            `inject:""`
 	PluginManager        *plugins.PluginManager           `inject:""`
 	SearchService        *search.SearchService            `inject:""`
-	SQLStore             *sqlstore.SqlStore               `inject:""`
+	ShortURLService      *shorturls.ShortURLService       `inject:""`
 	Live                 *live.GrafanaLive
 	Listener             net.Listener
 }

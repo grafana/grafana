@@ -5,24 +5,27 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type ShortURLService struct {
-	sqlStore *sqlstore.SqlStore
+func init() {
+	registry.RegisterService(&ShortURLService{})
 }
 
-var NewShortURLService = func(sqlStore *sqlstore.SqlStore) ShortURLService {
-	return ShortURLService{
-		sqlStore: sqlStore,
-	}
+type ShortURLService struct {
+	SQLStore *sqlstore.SqlStore `inject:""`
+}
+
+func (s *ShortURLService) Init() error {
+	return nil
 }
 
 func (s ShortURLService) GetFullURLByUID(user *models.SignedInUser, uid string) (string, error) {
 	var shortURL models.ShortUrl
 	ctx := context.Background()
-	err := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		exists, err := dbSession.Where("org_id=? AND uid=?", user.OrgId, uid).Get(&shortURL)
 		if err != nil {
 			return err
@@ -51,7 +54,7 @@ func (s ShortURLService) CreateShortURL(user *models.SignedInUser, path string) 
 	}
 
 	ctx := context.Background()
-	err := s.sqlStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
+	err := s.SQLStore.WithDbSession(ctx, func(session *sqlstore.DBSession) error {
 		_, err := session.Insert(&shortURL)
 		return err
 	})

@@ -16,7 +16,7 @@ func TestShortURLService(t *testing.T) {
 	t.Run("User can create and read short URLs", func(t *testing.T) {
 		const refPath = "mock/path?test=true"
 
-		service := NewShortURLService(sqlStore)
+		service := ShortURLService{SQLStore: sqlStore}
 
 		uid, err := service.CreateShortURL(user, refPath)
 		require.NoError(t, err)
@@ -29,7 +29,7 @@ func TestShortURLService(t *testing.T) {
 	})
 
 	t.Run("User cannot look up nonexistent short URLs", func(t *testing.T) {
-		service := NewShortURLService(sqlStore)
+		service := ShortURLService{SQLStore: sqlStore}
 
 		path, err := service.GetFullURLByUID(user, "testnotfounduid")
 		require.Error(t, err)
