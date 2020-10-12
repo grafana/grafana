@@ -3,8 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/components/securedata"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
@@ -26,12 +25,12 @@ type DashboardSnapshot struct {
 	Updated time.Time
 
 	Dashboard          *simplejson.Json
-	DashboardEncrypted []byte
+	DashboardEncrypted *securedata.SecureData
 }
 
 func (ds *DashboardSnapshot) DashboardJSON() (*simplejson.Json, error) {
 	if ds.DashboardEncrypted != nil {
-		decrypted, err := util.Decrypt(ds.DashboardEncrypted, setting.SecretKey)
+		decrypted, err := ds.DashboardEncrypted.DecodeAndDecrypt()
 		if err != nil {
 			return nil, err
 		}

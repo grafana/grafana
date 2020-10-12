@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util"
-
 	. "github.com/smartystreets/goconvey/convey"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -120,7 +118,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 				original, err := cmd.Dashboard.Encode()
 				So(err, ShouldBeNil)
 
-				decrypted, err := util.Decrypt(cmd.Result.DashboardEncrypted, setting.SecretKey)
+				decrypted, err := cmd.Result.DashboardEncrypted.DecodeAndDecrypt()
 				So(err, ShouldBeNil)
 
 				So(bytes.Equal(decrypted, original), ShouldEqual, true)

@@ -66,6 +66,6 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Add encrypted dashboard json column", NewAddColumnMigration(snapshotV5, &Column{
-		Name: "dashboard_encrypted", Type: DB_Blob, Nullable: true,
+		Name: "dashboard_encrypted", Type: DB_Text, Nullable: true,
 	}))
 }

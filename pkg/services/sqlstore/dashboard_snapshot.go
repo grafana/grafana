@@ -3,9 +3,9 @@ package sqlstore
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/components/securedata"
 
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -49,12 +49,12 @@ func CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCommand) error {
 			expires = time.Now().Add(time.Second * time.Duration(cmd.Expires))
 		}
 
-		encode, err := cmd.Dashboard.Encode()
+		marshalledData, err := cmd.Dashboard.Encode()
 		if err != nil {
 			return err
 		}
 
-		encryptedDashboard, err := util.Encrypt(encode, setting.SecretKey)
+		encryptedDashboard, err := securedata.EncryptAndEncode(marshalledData)
 		if err != nil {
 			return err
 		}
@@ -69,7 +69,7 @@ func CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCommand) error {
 			ExternalUrl:        cmd.ExternalUrl,
 			ExternalDeleteUrl:  cmd.ExternalDeleteUrl,
 			Dashboard:          simplejson.New(),
-			DashboardEncrypted: encryptedDashboard,
+			DashboardEncrypted: &encryptedDashboard,
 			Expires:            expires,
 			Created:            time.Now(),
 			Updated:            time.Now(),

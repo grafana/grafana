@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/components/securedata"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -231,13 +231,13 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 				jsonModelEncoded, err := jsonModel.Encode()
 				So(err, ShouldBeNil)
 
-				encrypted, err := util.Encrypt(jsonModelEncoded, setting.SecretKey)
+				encrypted, err := securedata.EncryptAndEncode(jsonModelEncoded)
 				So(err, ShouldBeNil)
 
 				// mock snapshot with encrypted dashboard info
 				mockSnapshotResult := &models.DashboardSnapshot{
 					Key:                "12345",
-					DashboardEncrypted: encrypted,
+					DashboardEncrypted: &encrypted,
 					Expires:            time.Now().Add(time.Duration(1000) * time.Second),
 				}
 
