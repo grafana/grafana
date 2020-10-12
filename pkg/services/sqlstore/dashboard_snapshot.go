@@ -3,11 +3,9 @@ package sqlstore
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/securedata"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/securedata"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -54,7 +52,7 @@ func CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCommand) error {
 			return err
 		}
 
-		encryptedDashboard, err := securedata.EncryptAndEncode(marshalledData)
+		encryptedDashboard, err := securedata.Encrypt(marshalledData)
 		if err != nil {
 			return err
 		}

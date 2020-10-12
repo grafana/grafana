@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/securedata"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -30,7 +29,7 @@ type DashboardSnapshot struct {
 
 func (ds *DashboardSnapshot) DashboardJSON() (*simplejson.Json, error) {
 	if ds.DashboardEncrypted != nil {
-		decrypted, err := ds.DashboardEncrypted.DecodeAndDecrypt()
+		decrypted, err := ds.DashboardEncrypted.Decrypt()
 		if err != nil {
 			return nil, err
 		}

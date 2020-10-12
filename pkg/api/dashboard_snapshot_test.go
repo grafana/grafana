@@ -232,7 +232,7 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 				jsonModelEncoded, err := jsonModel.Encode()
 				So(err, ShouldBeNil)
 
-				encrypted, err := securedata.EncryptAndEncode(jsonModelEncoded)
+				encrypted, err := securedata.Encrypt(jsonModelEncoded)
 				So(err, ShouldBeNil)
 
 				// mock snapshot with encrypted dashboard info

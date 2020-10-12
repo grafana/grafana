@@ -7,10 +7,10 @@ import (
 
 type SecureData []byte
 
-func EncryptAndEncode(data []byte) (SecureData, error) {
+func Encrypt(data []byte) (SecureData, error) {
 	return util.Encrypt(data, setting.SecretKey)
 }
 
-func (s SecureData) DecodeAndDecrypt() ([]byte, error) {
+func (s SecureData) Decrypt() ([]byte, error) {
 	return util.Decrypt(s, setting.SecretKey)
 }

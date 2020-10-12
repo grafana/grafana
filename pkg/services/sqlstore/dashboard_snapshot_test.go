@@ -117,7 +117,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 			original, err := cmd.Dashboard.Encode()
 			require.NoError(t, err)
 
-			decrypted, err := cmd.Result.DashboardEncrypted.DecodeAndDecrypt()
+			decrypted, err := cmd.Result.DashboardEncrypted.Decrypt()
 			require.NoError(t, err)
 
 			require.Equal(t, decrypted, original)
