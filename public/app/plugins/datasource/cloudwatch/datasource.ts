@@ -7,6 +7,7 @@ import { AppNotificationTimeout } from 'app/types';
 import { store } from 'app/store/store';
 import {
   DataFrame,
+  DataQueryErrorType,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
@@ -14,10 +15,9 @@ import {
   dateMath,
   LoadingState,
   LogRowModel,
+  rangeUtil,
   ScopedVars,
   TimeRange,
-  rangeUtil,
-  DataQueryErrorType,
 } from '@grafana/data';
 import { getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -34,14 +34,14 @@ import {
   GetLogEventsRequest,
   GetLogGroupFieldsRequest,
   GetLogGroupFieldsResponse,
+  isCloudWatchLogsQuery,
   LogAction,
   MetricQuery,
   MetricRequest,
   TSDBResponse,
-  isCloudWatchLogsQuery,
 } from './types';
-import { from, Observable, of, merge, zip } from 'rxjs';
-import { catchError, finalize, map, mergeMap, tap, concatMap, scan, share, repeat, takeWhile } from 'rxjs/operators';
+import { from, merge, Observable, of, zip } from 'rxjs';
+import { catchError, concatMap, finalize, map, mergeMap, repeat, scan, share, takeWhile, tap } from 'rxjs/operators';
 import { CloudWatchLanguageProvider } from './language_provider';
 
 import { VariableWithMultiSupport } from 'app/features/variables/types';
@@ -424,7 +424,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     };
   };
 
-  get variables() {
+  getVariables() {
     return this.templateSrv.getVariables().map(v => `$${v.name}`);
   }
 

@@ -4,7 +4,7 @@ import { GrafanaPlugin, PluginMeta } from './plugin';
 import { PanelData } from './panel';
 import { LogRowModel } from './logs';
 import { AnnotationEvent, AnnotationSupport } from './annotations';
-import { KeyValue, LoadingState, TableData, TimeSeries, DataTopic } from './data';
+import { DataTopic, KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
@@ -294,6 +294,21 @@ export abstract class DataSourceApi<
    * @experimental
    */
   channelSupport?: LiveChannelSupport;
+
+  variables?: {
+    custom?: {
+      editor: QueryEditorProps<DataSourceApi<TQuery, TOptions>, TQuery, TOptions>;
+      query?(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse>;
+    };
+    default?: {
+      toDataQuery: (target: LegacyVariableQuery) => TQuery;
+      query?(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse>;
+    };
+  };
+}
+
+export interface LegacyVariableQuery extends DataQuery {
+  query: string;
 }
 
 export interface MetadataInspectorProps<

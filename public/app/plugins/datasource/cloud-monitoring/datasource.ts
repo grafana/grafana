@@ -13,12 +13,12 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import {
-  CloudMonitoringQuery,
-  MetricDescriptor,
   CloudMonitoringOptions,
+  CloudMonitoringQuery,
   Filter,
-  VariableQueryData,
+  MetricDescriptor,
   QueryType,
+  VariableQueryData,
 } from './types';
 import { cloudMonitoringUnitMappings } from './constants';
 import API from './api';
@@ -38,7 +38,7 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     this.api = new API(`${instanceSettings.url!}/cloudmonitoring/v3/projects/`);
   }
 
-  get variables() {
+  getVariables() {
     return this.templateSrv.getVariables().map(v => `$${v.name}`);
   }
 
