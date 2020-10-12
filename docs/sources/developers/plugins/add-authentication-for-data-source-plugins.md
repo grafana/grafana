@@ -155,7 +155,7 @@ Grafana automatically renews the token when it expires.
 ]
 ```
 
-## Optional headers to retrieve oauth token
+## Optional headers to retrieve OAuth token
 
 If a header value is expected in the call to the oauth url, they can sent using
 the `headers` property. 
