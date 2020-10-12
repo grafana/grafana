@@ -2,16 +2,15 @@ import _ from 'lodash';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
-import { AzureMonitorQuery, AzureDataSourceJsonData, AzureQueryType, InsightsAnalyticsQuery } from './types';
+import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, InsightsAnalyticsQuery } from './types';
 import {
-  DataSourceApi,
   DataQueryRequest,
-  DataSourceInstanceSettings,
   DataQueryResponseData,
+  DataSourceApi,
+  DataSourceInstanceSettings,
   LoadingState,
-  ScopedVars,
 } from '@grafana/data';
-import { Observable, of, from } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
 import { migrateMetricsDimensionFilters } from './query_ctrl';
@@ -78,10 +77,11 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
         continue;
       }
 
-      // Initialize the list of queries
+      // Initalize the list of queries
       let q = byType[target.queryType];
       if (!q) {
         q = _.cloneDeep(options);
+        q.requestId = `${q.requestId}-${target.refId}`;
         q.targets = [];
         byType[target.queryType] = q;
       }
@@ -119,17 +119,17 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       return Promise.resolve([]);
     }
 
-    const aiResult = this.appInsightsDatasource.metricFindQueryInternal(query);
+    const aiResult = this.appInsightsDatasource.metricFindQuery(query);
     if (aiResult) {
       return aiResult;
     }
 
-    const amResult = this.azureMonitorDatasource.metricFindQueryInternal(query);
+    const amResult = this.azureMonitorDatasource.metricFindQuery(query);
     if (amResult) {
       return amResult;
     }
 
-    const alaResult = this.azureLogAnalyticsDatasource.metricFindQueryInternal(query);
+    const alaResult = this.azureLogAnalyticsDatasource.metricFindQuery(query);
     if (alaResult) {
       return alaResult;
     }
@@ -255,11 +255,5 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
   getSubscriptions() {
     return this.azureMonitorDatasource.getSubscriptions();
-  }
-
-  interpolateVariablesInQueries(queries: AzureMonitorQuery[], scopedVars: ScopedVars): AzureMonitorQuery[] {
-    return queries.map(
-      query => this.pseudoDatasource[query.queryType].applyTemplateVariables(query, scopedVars) as AzureMonitorQuery
-    );
   }
 }
