@@ -2,6 +2,7 @@ import React from 'react';
 import { TempoDatasource, TempoQuery } from './datasource';
 
 import { ExploreQueryFieldProps } from '@grafana/data';
+import { LegacyForms } from '@grafana/ui';
 
 type Props = ExploreQueryFieldProps<TempoDatasource, TempoQuery>;
 export class TempoQueryField extends React.PureComponent<Props> {
@@ -9,8 +10,10 @@ export class TempoQueryField extends React.PureComponent<Props> {
     const { query, onChange } = this.props;
 
     return (
-      <div className="gf-form-inline gf-form-inline--nowrap">
-        <div className="gf-form gf-form--grow flex-shrink-1">
+      <LegacyForms.FormField
+        label="TraceID"
+        labelWidth={4}
+        inputEl={
           <div className={'slate-query-field__wrapper'}>
             <div className="slate-query-field">
               <input
@@ -25,8 +28,8 @@ export class TempoQueryField extends React.PureComponent<Props> {
               />
             </div>
           </div>
-        </div>
-      </div>
+        }
+      />
     );
   }
 }
