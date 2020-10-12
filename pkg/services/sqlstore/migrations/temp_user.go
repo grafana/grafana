@@ -1,7 +1,6 @@
 package migrations
 
 import (
-	"fmt"
 	"time"
 
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -104,24 +103,11 @@ func (m *SetCreatedForOutstandingInvites) Sql(dialect Dialect) string {
 	return "code migration"
 }
 
-type TempUserMigrationDTO struct {
-	Id int64
-}
-
 func (m *SetCreatedForOutstandingInvites) Exec(sess *xorm.Session, mg *Migrator) error {
-	users := make([]*TempUserMigrationDTO, 0)
-
-	err := sess.SQL(fmt.Sprintf("SELECT id from %s WHERE created = '0' AND status in ('SignUpStarted', 'InvitePending')", mg.Dialect.Quote("temp_user"))).Find(&users)
-	if err != nil {
+	created := time.Now().Unix()
+	if _, err := sess.Exec("UPDATE "+mg.Dialect.Quote("temp_user")+
+		" SET created = ?, updated = ? WHERE created = '0' AND status in ('SignUpStarted', 'InvitePending')", created, created); err != nil {
 		return err
-	}
-
-	for _, user := range users {
-		created := time.Now().Unix()
-		if _, err := sess.Exec("UPDATE "+mg.Dialect.Quote("temp_user")+
-			" SET created = ?, updated = ? WHERE id = ?", created, created, user.Id); err != nil {
-			return err
-		}
 	}
 	return nil
 }
