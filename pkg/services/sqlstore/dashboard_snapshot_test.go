@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"bytes"
 	"testing"
 	"time"
 
@@ -14,8 +13,6 @@ import (
 )
 
 func TestDashboardSnapshotDBAccess(t *testing.T) {
-	t.Helper()
-
 	InitTestDB(t)
 
 	origSecret := setting.SecretKey
@@ -38,14 +35,14 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 
 		t.Run("Should be able to get snapshot by key", func(t *testing.T) {
 			query := models.GetDashboardSnapshotQuery{Key: "hej"}
-			err = GetDashboardSnapshot(&query)
+			err := GetDashboardSnapshot(&query)
 			require.NoError(t, err)
 
 			assert.NotNil(t, query.Result)
 
 			dashboard, err := query.Result.DashboardJSON()
 			require.NoError(t, err)
-			assert.Equal(t, dashboard.Get("hello").MustString(), "mupp")
+			assert.Equal(t, "mupp", dashboard.Get("hello").MustString())
 		})
 
 		t.Run("And the user has the admin role", func(t *testing.T) {
@@ -57,9 +54,8 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Run("Should return all the snapshots", func(t *testing.T) {
-
 				assert.NotNil(t, query.Result)
-				assert.Equal(t, len(query.Result), 1)
+				assert.Len(t, query.Result, 1)
 			})
 		})
 
@@ -73,7 +69,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 
 			t.Run("Should return all the snapshots", func(t *testing.T) {
 				assert.NotNil(t, query.Result)
-				assert.Equal(t, len(query.Result), 1)
+				assert.Len(t, query.Result, 1)
 			})
 		})
 
@@ -87,7 +83,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 
 			t.Run("Should not return any snapshots", func(t *testing.T) {
 				assert.NotNil(t, query.Result)
-				assert.Equal(t, len(query.Result), 0)
+				assert.Empty(t, query.Result)
 			})
 		})
 
@@ -113,7 +109,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 				require.NoError(t, err)
 
 				assert.NotNil(t, query.Result)
-				assert.Equal(t, len(query.Result), 0)
+				assert.Empty(t, query.Result)
 			})
 		})
 
@@ -124,7 +120,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 			decrypted, err := cmd.Result.DashboardEncrypted.DecodeAndDecrypt()
 			require.NoError(t, err)
 
-			assert.Equal(t, bytes.Equal(decrypted, original), true)
+			assert.Equal(t, decrypted, original)
 		})
 	})
 }
@@ -149,8 +145,8 @@ func TestDeleteExpiredSnapshots(t *testing.T) {
 		err = SearchDashboardSnapshots(&query)
 		require.NoError(t, err)
 
-		assert.Equal(t, len(query.Result), 1)
-		assert.Equal(t, query.Result[0].Key, nonExpiredSnapshot.Key)
+		assert.Len(t, query.Result, 1)
+		assert.Equal(t, nonExpiredSnapshot.Key, query.Result[0].Key)
 
 		err = DeleteExpiredSnapshots(&models.DeleteExpiredSnapshotsCommand{})
 		require.NoError(t, err)
@@ -162,8 +158,8 @@ func TestDeleteExpiredSnapshots(t *testing.T) {
 		err = SearchDashboardSnapshots(&query)
 		require.NoError(t, err)
 
-		assert.Equal(t, len(query.Result), 1)
-		assert.Equal(t, query.Result[0].Key, nonExpiredSnapshot.Key)
+		assert.Len(t, query.Result, 1)
+		assert.Equal(t, nonExpiredSnapshot.Key, query.Result[0].Key)
 	})
 }
 
