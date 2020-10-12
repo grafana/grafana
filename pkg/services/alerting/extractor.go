@@ -198,19 +198,21 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		validationWarnings := strings.Builder{}
 		for _, validator := range validators {
 			ok, reason := validator.aFunc(alert)
-			if !ok {
-				switch validator.aSeverity {
-				case alertError:
-					if validationErrors.Len() > 0 {
-						validationErrors.WriteString("\n")
-					}
-					validationErrors.WriteString(reason)
-				case alertWarning:
-					if validationWarnings.Len() > 0 {
-						validationErrors.WriteString("\n")
-					}
-					validationWarnings.WriteString(reason)
+			if ok {
+				continue
+			}
+			
+			switch validator.aSeverity {
+			case alertError:
+				if validationErrors.Len() > 0 {
+					validationErrors.WriteString("\n")
 				}
+				validationErrors.WriteString(reason)
+			case alertWarning:
+				if validationWarnings.Len() > 0 {
+					validationErrors.WriteString("\n")
+				}
+				validationWarnings.WriteString(reason)
 			}
 		}
 		if validationErrors.String() != "" {
@@ -238,16 +240,20 @@ func validAlertJSON(alert *models.Alert) (ok bool, reason string) {
 	warnings := strings.Builder{}
 	for _, v := range alert.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)
-		if id, err := jsonModel.Get("id").Int64(); err == nil {
-			_, err := translateNotificationIDToUID(id, alert.OrgId)
-			if err != nil {
-				ok = false
-				if warnings.Len() > 0 {
-					warnings.WriteString("\n")
-				}
-				warnings.WriteString(fmt.Sprintf("Alert contains notification identified by incorrect id, alertName=%v, panelId=%v, notificationId=%v", alert.Name, alert.PanelId, id))
-			}
+		id, err := jsonModel.Get("id").Int64()
+		if err != nil {
+			continue
 		}
+		
+		if _, err := translateNotificationIDToUID(id, alert.OrgId); err == nil {
+			continue
+		}
+
+		ok = false
+		if warnings.Len() > 0 {
+			warnings.WriteString("\n")
+		}
+		warnings.WriteString(fmt.Sprintf("Alert contains notification identified by incorrect id, alertName=%v, panelId=%v, notificationId=%v", alert.Name, alert.PanelId, id))	
 	}
 	reason = warnings.String()
 	return ok, reason
@@ -309,7 +315,7 @@ func (e *DashAlertExtractor) ValidateAlerts() error {
 		aFunc: func(alert *models.Alert) (ok bool, reason string) {
 			ok = alert.OrgId != 0 && alert.PanelId != 0
 			if !ok {
-				reason = fmt.Sprintf("Panel id is not correct, alertName=%v, panelId=%v", alert.Name, alert.PanelId)
+				reason = fmt.Sprintf("Panel ID is not correct, alertName=%v, panelId=%v", alert.Name, alert.PanelId)
 			}
 			return ok, reason
 		},
