@@ -282,17 +282,17 @@ For provisioning of alert notification channels, refer to [Alert notification ch
 
 ### AWS CloudWatch data source
 
-The AWS CloudWatch data source's authentication scheme has changed in Grafana 7.3. Most importantly the authentication method _ARN_ has been removed, and a new one has been added: _AWS SDK Default_. Existing data source configurations using the former will fall back to the latter. Assuming an IAM role will still work though, and the old _ARN_ method would use the default AWS SDK authentication method under the hood anyway.
+The AWS CloudWatch data source's authentication scheme has changed in Grafana 7.3. Most importantly the authentication method _ARN_ has been removed, and a new one has been added: _AWS SDK Default_. Existing data source configurations using the former will fallback to the latter. Assuming an IAM role will still work though, and the old _ARN_ method would use the default AWS SDK authentication method under the hood anyway.
 
 Since _ARN_ has been removed as an authentication method, we have instead made it into an option for providing the ARN of an IAM role to assume. This works independently of the authentication method you choose.
 
-The new authentication method, _AWS SDK Default_, uses the default AWS Go SDK credential chain, which at the time of writing looks for credentials in the following order: 
+The new authentication method, _AWS SDK Default_, uses the default AWS Go SDK credential chain, which at the time of writing looks for credentials in the following order:
 
 1. Environment variables.
 1. Shared credentials file.
 1. If your application uses an ECS task definition or RunTask API operation, IAM role for tasks.
 1. If your application is running on an Amazon EC2 instance, IAM role for Amazon EC2.
 
-For more in-depth information on this authentication method, please read the [reference](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html).
+The other authentication methods, _Access & secret key_ and _Credentials file_, have changed in regards to fallbacks. If these methods fail, they no longer fallback to other methods. e.g. environment variables. If you want fallbacks, you should use _AWS SDK Default_ instead.
 
-The other authentication methods, _Access & secret key_ and _Credentials file_, have changed wrt. fallbacks. If these methods fail, they no longer fall back to other methods (f.ex. environment variables). If you want fallbacks, you should us _AWS SDK Default_ instead.
+For more information and details, please refer to [Using AWS CloudWatch in Grafana]({{< relref "../datasources/cloudwatch.md#authentication" >}}).
