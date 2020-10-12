@@ -164,9 +164,14 @@ export type MetricAggregation =
   | RawData
   | Logs;
 
+/**
+ * Checks if `metric` requires a field (either referring to a document or another aggregation)
+ * @param metric
+ */
 export const isMetricAggregationWithField = (
   metric: BaseMetricAggregation | MetricAggregationWithField
-): metric is MetricAggregationWithField => metricAggregationConfig[metric.type].requiresField;
+): metric is MetricAggregationWithField =>
+  metricAggregationConfig[metric.type].requiresField || metricAggregationConfig[metric.type].isPipelineAgg;
 
 export const isPipelineAggregation = (
   metric: BaseMetricAggregation | PipelineMetricAggregation

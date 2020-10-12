@@ -1,5 +1,10 @@
 import { MetricsConfiguration } from '../../types';
-import { isMetricAggregationWithField, MetricAggregation, PipelineMetricAggregationType } from './state/types';
+import {
+  isMetricAggregationWithField,
+  isPipelineAggregationWithMultipleBucketPaths,
+  MetricAggregation,
+  PipelineMetricAggregationType,
+} from './state/types';
 
 // We can probably split Pipeline Aggregations from here.
 export const metricAggregationConfig: MetricsConfiguration = {
@@ -142,22 +147,21 @@ export const pipelineOptions: PipelineOptions = {
 };
 
 /**
- * Given a metric `MetricA` and an array of metrics, returns all ancestors of `MetricA`.
- * `MetricB` is considered an ancestor of `MetricA` if `MetricA` references `MetricB` in it's `field` attribute
- * (`MetricA.field === MetricB.id`).
+ * Given a metric `MetricA` and an array of metrics, returns all children of `MetricA`.
+ * `MetricB` is considered an child of `MetricA` if `MetricA` is referenced by `MetricB` in it's `field` attribute
+ * (`MetricA.id === MetricB.field`) or in it's pipeline aggregation variables (for bucket_scripts).
  * @param metric
  * @param metrics
  */
-export const getAncestors = (metric: MetricAggregation, metrics: MetricAggregation[]): MetricAggregation[] => {
-  if (!isMetricAggregationWithField(metric)) {
-    return [];
-  }
+export const getChildren = (metric: MetricAggregation, metrics: MetricAggregation[]): MetricAggregation[] => {
+  const children = metrics.filter(m => {
+    // TODO: Check this.
+    if (isPipelineAggregationWithMultipleBucketPaths(m)) {
+      return m.pipelineVariables.some(pv => pv.pipelineAgg === metric.id);
+    }
 
-  const parentIndex = metrics.findIndex(otherMetric => metric.field === otherMetric.id);
+    return isMetricAggregationWithField(m) && metric.id === m.field;
+  });
 
-  if (parentIndex === -1) {
-    return [];
-  }
-
-  return [metrics[parentIndex], ...getAncestors(metrics[parentIndex], metrics)];
+  return [...children, ...children.flatMap(child => getChildren(child, metrics))];
 };

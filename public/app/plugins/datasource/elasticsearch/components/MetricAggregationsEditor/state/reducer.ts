@@ -1,6 +1,6 @@
 import { defaultMetricAgg } from '../../../query_def';
 import { ElasticsearchQuery } from '../../../types';
-import { getAncestors } from '../utils';
+import { getChildren } from '../utils';
 import {
   ADD_METRIC,
   CHANGE_METRIC_TYPE,
@@ -21,7 +21,7 @@ export const reducer = (
       return [...state, defaultMetricAgg(nextId.toString())];
     case REMOVE_METRIC:
       const metricToRemove = state.find(m => m.id === action.payload.id)!;
-      const metricsToRemove = [metricToRemove, ...getAncestors(metricToRemove, state)];
+      const metricsToRemove = [metricToRemove, ...getChildren(metricToRemove, state)];
       const resultingMetrics = state.filter(metric => !metricsToRemove.some(toRemove => toRemove.id === metric.id));
       return resultingMetrics;
     case CHANGE_METRIC_TYPE:
