@@ -1,3 +1,7 @@
+import {
+  isPipelineAggregation,
+  isPipelineAggregationWithMultipleBucketPaths,
+} from './components/MetricAggregationsEditor/state/types';
 import * as queryDef from './query_def';
 import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
 
@@ -276,8 +280,8 @@ export class ElasticQueryBuilder {
       const aggField: any = {};
       let metricAgg: any = null;
 
-      if (queryDef.isPipelineAggregation(metric)) {
-        if (queryDef.isPipelineAggregationWithMultipleBucketPaths(metric)) {
+      if (isPipelineAggregation(metric)) {
+        if (isPipelineAggregationWithMultipleBucketPaths(metric)) {
           if (metric.pipelineVariables) {
             metricAgg = {
               buckets_path: {},

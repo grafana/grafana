@@ -1,5 +1,9 @@
 import _ from 'lodash';
-import { MetricAggregation, PipelineMetricAggregation } from './components/MetricAggregationsEditor/state/types';
+import {
+  isMetricAggregationWithField,
+  isPipelineAggregation,
+  MetricAggregation,
+} from './components/MetricAggregationsEditor/state/types';
 import { metricAggregationConfig, pipelineOptions } from './components/MetricAggregationsEditor/utils';
 import { BucketsConfiguration, BucketAggregation, ElasticsearchQuery } from './types';
 
@@ -114,13 +118,6 @@ export function getPipelineOptions(metric: MetricAggregation) {
   return pipelineOptions[metric.type];
 }
 
-export const isPipelineAggregation = (metric: MetricAggregation): metric is PipelineMetricAggregation =>
-  metricAggregationConfig[metric.type].isPipelineAgg === true;
-
-export const isPipelineAggregationWithMultipleBucketPaths = (metric: MetricAggregation) => {
-  return !!metricAggregationConfig[metric.type].supportsMultipleBucketPaths;
-};
-
 export function getAncestors(target: ElasticsearchQuery, metric?: MetricAggregation) {
   const { metrics } = target;
   if (!metrics) {
@@ -173,7 +170,7 @@ export function describeOrder(order: string) {
 }
 
 export function describeMetric(metric: MetricAggregation) {
-  if (!metricAggregationConfig[metric.type].requiresField && !isPipelineAggregation(metric)) {
+  if (!isMetricAggregationWithField(metric) && !isPipelineAggregation(metric)) {
     return metricAggregationConfig[metric.type].label;
   }
   return metricAggregationConfig[metric.type].label + ' ' + metric.field;

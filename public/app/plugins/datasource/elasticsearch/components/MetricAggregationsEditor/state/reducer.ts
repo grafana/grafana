@@ -26,7 +26,7 @@ export const reducer = (
       return resultingMetrics;
     case CHANGE_METRIC_TYPE:
       // TODO: Here we should do some checks to clean out metric configurations that are not compatible
-      // with the new one (eg `settings` or `field`)
+      // with the new one (eg. `settings` or `field`)
 
       return state.map(metric => {
         if (metric.id !== action.payload.id) {
@@ -36,7 +36,7 @@ export const reducer = (
         return {
           ...metric,
           type: action.payload.type,
-        };
+        } as MetricAggregation;
       });
 
     case CHANGE_METRIC_FIELD:

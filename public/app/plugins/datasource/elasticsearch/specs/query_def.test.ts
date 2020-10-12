@@ -1,15 +1,23 @@
+import { MetricAggregation } from '../components/MetricAggregationsEditor/state/types';
 import * as queryDef from '../query_def';
 
 describe('ElasticQueryDef', () => {
   describe('getAncestors', () => {
     describe('with multiple pipeline aggs', () => {
-      const maxMetric = { id: '1', type: 'max', field: '@value' };
-      const derivativeMetric = { id: '2', type: 'derivative', field: '1' };
-      const bucketScriptMetric = {
+      const maxMetric: MetricAggregation = { id: '1', type: 'max', field: '@value', hide: false };
+      const derivativeMetric: MetricAggregation = {
+        id: '2',
+        type: 'derivative',
+        field: '1',
+        hide: false,
+        settings: { unit: '' },
+      };
+      const bucketScriptMetric: MetricAggregation = {
         id: '3',
         type: 'bucket_script',
         field: '2',
         pipelineVariables: [{ name: 'var1', pipelineAgg: '2' }],
+        hide: false,
       };
       const target = {
         refId: '1',

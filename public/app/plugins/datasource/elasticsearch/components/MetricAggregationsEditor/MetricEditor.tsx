@@ -7,7 +7,14 @@ import { flex, flexColumn, getStyles, alignItemsStart } from './styles';
 import { marginZero } from '../styles';
 import { ToggleVisibilityButton } from '../ToggleVisibilityButton';
 import { SettingsEditor } from './SettingsEditor';
-import { MetricAggregation, MetricAggregationAction, MetricAggregationType } from './state/types';
+import {
+  isMetricAggregationWithField,
+  isPipelineAggregation,
+  isPipelineAggregationWithMultipleBucketPaths,
+  MetricAggregation,
+  MetricAggregationAction,
+  MetricAggregationType,
+} from './state/types';
 import { metricAggregationConfig } from './utils';
 import { changeMetricField, changeMetricType, toggleMetricVisibility } from './state/actions';
 
@@ -78,7 +85,7 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
             />
           </InlineField>
 
-          {metricAggregationConfig[value.type].requiresField && (
+          {isMetricAggregationWithField(value) && (
             <SegmentAsync
               className={cx(styles.color)}
               loadOptions={getFields}
@@ -88,17 +95,17 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
             />
           )}
 
-          {metricAggregationConfig[value.type].isPipelineAgg &&
-            !metricAggregationConfig[value.type].supportsMultipleBucketPaths && (
-              <Segment
-                className={cx(styles.color)}
-                options={metricsToOptions(previousMetrics)}
-                onChange={e => dispatch(changeMetricField(value.id, e.value?.id!))}
-                placeholder="Select Metric"
-                value={value.field ? metricToOption(previousMetrics.find(p => p.id === value.field)!) : null}
-              />
-            )}
+          {isPipelineAggregation(value) && !isPipelineAggregationWithMultipleBucketPaths(value) && (
+            <Segment
+              className={cx(styles.color)}
+              options={metricsToOptions(previousMetrics)}
+              onChange={e => dispatch(changeMetricField(value.id, e.value?.id!))}
+              placeholder="Select Metric"
+              value={value.field ? metricToOption(previousMetrics.find(p => p.id === value.field)!) : null}
+            />
+          )}
         </div>
+
         <div className={css(flex, flexColumn)}>
           <SettingsEditor metric={value} />
         </div>

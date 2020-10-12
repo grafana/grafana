@@ -1,4 +1,5 @@
 import { Action } from '../../../hooks/useReducerCallback';
+import { metricAggregationConfig } from '../utils';
 
 export const ADD_METRIC = '@metrics/add';
 export const REMOVE_METRIC = '@metrics/remove';
@@ -32,22 +33,152 @@ interface PipelineVariable {
   pipelineAgg: string;
 }
 
-export interface MetricAggregation {
+interface BaseMetricAggregation {
   id: string;
   type: MetricAggregationType;
   hide: boolean;
-  settings?: Record<string, string | number>;
-  field?: string;
 }
 
-export interface PipelineMetricAggregation extends MetricAggregation {
-  type: PipelineMetricAggregationType;
+export interface MetricAggregationWithField extends BaseMetricAggregation {
   field: string;
+}
+
+export interface MetricAggregationWithSettings extends BaseMetricAggregation {
+  settings: Record<string, unknown>;
+}
+
+interface Count extends BaseMetricAggregation {
+  type: 'count';
+}
+
+interface Average extends MetricAggregationWithField, MetricAggregationWithSettings {
+  type: 'avg';
+  settings: {
+    unit: string;
+    missing: number;
+  };
+}
+
+interface Sum extends MetricAggregationWithField {
+  type: 'sum';
+}
+interface Max extends MetricAggregationWithField {
+  type: 'max';
+}
+
+interface Min extends MetricAggregationWithField {
+  type: 'min';
+}
+
+interface ExtendedStats extends MetricAggregationWithField, MetricAggregationWithSettings {
+  type: 'extended_stats';
+  settings: {
+    unit: string;
+    missing: number;
+    // TODO: Add other settings here
+  };
+}
+
+interface Percentiles extends MetricAggregationWithField, MetricAggregationWithSettings {
+  type: 'percentiles';
+  settings: {
+    percentiles: string;
+    unit: string;
+    missing: number;
+  };
+}
+
+interface UniqueCount extends MetricAggregationWithField, MetricAggregationWithSettings {
+  type: 'cardinality';
+  settings: {
+    precision_threshold: string;
+    unit: string;
+    missing: number;
+  };
+}
+
+interface RawDocument extends MetricAggregationWithSettings {
+  type: 'raw_document';
+  settings: {
+    size: number;
+  };
+}
+
+interface RawData extends MetricAggregationWithSettings {
+  type: 'raw_data';
+  settings: {
+    size: number;
+  };
+}
+
+interface Logs extends BaseMetricAggregation {
+  type: 'logs';
+}
+
+export interface BasePipelineMetricAggregation extends MetricAggregationWithField {
+  type: PipelineMetricAggregationType;
+}
+
+interface PipelineMetricAggregationWithMoultipleBucketPaths extends BasePipelineMetricAggregation {
   pipelineVariables: PipelineVariable[];
 }
 
-// Action Types
+interface MovingAverage extends BasePipelineMetricAggregation, MetricAggregationWithSettings {
+  type: 'moving_avg';
+  settings: {
+    script: string;
+  };
+}
 
+interface Derivative extends BasePipelineMetricAggregation {
+  type: 'derivative';
+  settings: {
+    unit: string;
+  };
+}
+
+interface CumulativeSum extends BasePipelineMetricAggregation {
+  type: 'cumulative_sum';
+  settings: {
+    format: string;
+  };
+}
+
+interface BucketScript extends PipelineMetricAggregationWithMoultipleBucketPaths {
+  type: 'bucket_script';
+}
+
+type PipelineMetricAggregation = MovingAverage | Derivative | CumulativeSum | BucketScript;
+
+export type MetricAggregation =
+  | Count
+  | Average
+  | Sum
+  | Max
+  | Min
+  | ExtendedStats
+  | Percentiles
+  | UniqueCount
+  | PipelineMetricAggregation
+  | RawDocument
+  | RawData
+  | Logs;
+
+export const isMetricAggregationWithField = (
+  metric: BaseMetricAggregation | MetricAggregationWithField
+): metric is MetricAggregationWithField => metricAggregationConfig[metric.type].requiresField;
+
+export const isPipelineAggregation = (
+  metric: BaseMetricAggregation | PipelineMetricAggregation
+): metric is PipelineMetricAggregation => metricAggregationConfig[metric.type].isPipelineAgg;
+
+export const isPipelineAggregationWithMultipleBucketPaths = (
+  metric: BaseMetricAggregation | PipelineMetricAggregationWithMoultipleBucketPaths
+): metric is PipelineMetricAggregationWithMoultipleBucketPaths =>
+  metricAggregationConfig[metric.type].supportsMultipleBucketPaths;
+
+//
+// Action Types
 export interface AddMetricAction extends Action<typeof ADD_METRIC> {
   payload: {
     metricType: MetricAggregation['type'];
