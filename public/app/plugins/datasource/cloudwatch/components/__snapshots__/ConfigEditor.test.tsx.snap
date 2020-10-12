@@ -18,8 +18,9 @@ exports[`Render should disable access key id field 1`] = `
       >
         <Component
           className="width-14"
+          tooltip="Specify which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
         >
-          Auth Provider
+          Authentication Provider
         </Component>
         <Select
           allowCustomValue={false}
@@ -47,16 +48,16 @@ exports[`Render should disable access key id field 1`] = `
           options={
             Array [
               Object {
+                "label": "AWS SDK Default",
+                "value": "default",
+              },
+              Object {
                 "label": "Access & secret key",
                 "value": "keys",
               },
               Object {
                 "label": "Credentials file",
                 "value": "credentials",
-              },
-              Object {
-                "label": "ARN",
-                "value": "arn",
               },
             ]
           }
@@ -110,6 +111,54 @@ exports[`Render should disable access key id field 1`] = `
             <Input
               className="width-30"
               onChange={[Function]}
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+        >
+          Assume Role ARN
+        </Component>
+        <div
+          className="width-30"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="arn:aws:iam:*"
+            value=""
+          />
+        </div>
+      </div>
+      <div
+        className="gf-form-inline"
+      >
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+            tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
+          >
+            External ID
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              placeholder="External ID"
               value=""
             />
           </div>
@@ -198,8 +247,9 @@ exports[`Render should render component 1`] = `
       >
         <Component
           className="width-14"
+          tooltip="Specify which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
         >
-          Auth Provider
+          Authentication Provider
         </Component>
         <Select
           allowCustomValue={false}
@@ -227,16 +277,16 @@ exports[`Render should render component 1`] = `
           options={
             Array [
               Object {
+                "label": "AWS SDK Default",
+                "value": "default",
+              },
+              Object {
                 "label": "Access & secret key",
                 "value": "keys",
               },
               Object {
                 "label": "Credentials file",
                 "value": "credentials",
-              },
-              Object {
-                "label": "ARN",
-                "value": "arn",
               },
             ]
           }
@@ -290,6 +340,54 @@ exports[`Render should render component 1`] = `
             <Input
               className="width-30"
               onChange={[Function]}
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+        >
+          Assume Role ARN
+        </Component>
+        <div
+          className="width-30"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="arn:aws:iam:*"
+            value=""
+          />
+        </div>
+      </div>
+      <div
+        className="gf-form-inline"
+      >
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+            tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
+          >
+            External ID
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              placeholder="External ID"
               value=""
             />
           </div>
@@ -360,7 +458,7 @@ exports[`Render should render component 1`] = `
 </Fragment>
 `;
 
-exports[`Render should should show access key and secret access key fields 1`] = `
+exports[`Render should show access key and secret access key fields 1`] = `
 <Fragment>
   <h3
     className="page-heading"
@@ -378,8 +476,9 @@ exports[`Render should should show access key and secret access key fields 1`] =
       >
         <Component
           className="width-14"
+          tooltip="Specify which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
         >
-          Auth Provider
+          Authentication Provider
         </Component>
         <Select
           allowCustomValue={false}
@@ -407,16 +506,16 @@ exports[`Render should should show access key and secret access key fields 1`] =
           options={
             Array [
               Object {
+                "label": "AWS SDK Default",
+                "value": "default",
+              },
+              Object {
                 "label": "Access & secret key",
                 "value": "keys",
               },
               Object {
                 "label": "Credentials file",
                 "value": "credentials",
-              },
-              Object {
-                "label": "ARN",
-                "value": "arn",
               },
             ]
           }
@@ -470,6 +569,54 @@ exports[`Render should should show access key and secret access key fields 1`] =
             <Input
               className="width-30"
               onChange={[Function]}
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+        >
+          Assume Role ARN
+        </Component>
+        <div
+          className="width-30"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="arn:aws:iam:*"
+            value=""
+          />
+        </div>
+      </div>
+      <div
+        className="gf-form-inline"
+      >
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+            tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
+          >
+            External ID
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              placeholder="External ID"
               value=""
             />
           </div>
@@ -540,7 +687,7 @@ exports[`Render should should show access key and secret access key fields 1`] =
 </Fragment>
 `;
 
-exports[`Render should should show arn role field 1`] = `
+exports[`Render should show arn role field 1`] = `
 <Fragment>
   <h3
     className="page-heading"
@@ -558,8 +705,9 @@ exports[`Render should should show arn role field 1`] = `
       >
         <Component
           className="width-14"
+          tooltip="Specify which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
         >
-          Auth Provider
+          Authentication Provider
         </Component>
         <Select
           allowCustomValue={false}
@@ -587,16 +735,16 @@ exports[`Render should should show arn role field 1`] = `
           options={
             Array [
               Object {
+                "label": "AWS SDK Default",
+                "value": "default",
+              },
+              Object {
                 "label": "Access & secret key",
                 "value": "keys",
               },
               Object {
                 "label": "Credentials file",
                 "value": "credentials",
-              },
-              Object {
-                "label": "ARN",
-                "value": "arn",
               },
             ]
           }
@@ -650,6 +798,54 @@ exports[`Render should should show arn role field 1`] = `
             <Input
               className="width-30"
               onChange={[Function]}
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+        >
+          Assume Role ARN
+        </Component>
+        <div
+          className="width-30"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="arn:aws:iam:*"
+            value=""
+          />
+        </div>
+      </div>
+      <div
+        className="gf-form-inline"
+      >
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+            tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
+          >
+            External ID
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              placeholder="External ID"
               value=""
             />
           </div>
@@ -720,7 +916,7 @@ exports[`Render should should show arn role field 1`] = `
 </Fragment>
 `;
 
-exports[`Render should should show credentials profile name field 1`] = `
+exports[`Render should show credentials profile name field 1`] = `
 <Fragment>
   <h3
     className="page-heading"
@@ -738,8 +934,9 @@ exports[`Render should should show credentials profile name field 1`] = `
       >
         <Component
           className="width-14"
+          tooltip="Specify which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
         >
-          Auth Provider
+          Authentication Provider
         </Component>
         <Select
           allowCustomValue={false}
@@ -767,16 +964,16 @@ exports[`Render should should show credentials profile name field 1`] = `
           options={
             Array [
               Object {
+                "label": "AWS SDK Default",
+                "value": "default",
+              },
+              Object {
                 "label": "Access & secret key",
                 "value": "keys",
               },
               Object {
                 "label": "Credentials file",
                 "value": "credentials",
-              },
-              Object {
-                "label": "ARN",
-                "value": "arn",
               },
             ]
           }
@@ -830,6 +1027,54 @@ exports[`Render should should show credentials profile name field 1`] = `
             <Input
               className="width-30"
               onChange={[Function]}
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      className="gf-form-inline"
+    >
+      <div
+        className="gf-form"
+      >
+        <Component
+          className="width-14"
+          tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+        >
+          Assume Role ARN
+        </Component>
+        <div
+          className="width-30"
+        >
+          <Input
+            className="width-30"
+            onChange={[Function]}
+            placeholder="arn:aws:iam:*"
+            value=""
+          />
+        </div>
+      </div>
+      <div
+        className="gf-form-inline"
+      >
+        <div
+          className="gf-form"
+        >
+          <Component
+            className="width-14"
+            tooltip="If you are assuming a role in another account, that has been created with an external ID, specify the external ID here."
+          >
+            External ID
+          </Component>
+          <div
+            className="width-30"
+          >
+            <Input
+              className="width-30"
+              onChange={[Function]}
+              placeholder="External ID"
               value=""
             />
           </div>
