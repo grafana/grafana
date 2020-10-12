@@ -24,7 +24,6 @@ export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, Cloud
 
 export interface State {
   regions: SelectableValue[];
-  profile: string;
 }
 
 export class ConfigEditor extends PureComponent<Props, State> {
@@ -33,7 +32,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
     this.state = {
       regions: [],
-      profile: '',
     };
   }
 
@@ -45,14 +43,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
       if (isCanceled) {
         console.warn('Cloud Watch ConfigEditor has unmounted, initialization was canceled');
       }
-    });
-
-    let profile = this.props.options.jsonData.profile;
-    if (!profile) {
-      profile = this.props.options.database;
-    }
-    this.setState({
-      profile: profile,
     });
   }
 
@@ -124,6 +114,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const { regions } = this.state;
     const { options } = this.props;
     const secureJsonData = (options.secureJsonData || {}) as CloudWatchSecureJsonData;
+    let profile = options.jsonData.profile;
+    if (!profile) {
+      profile = options.database;
+    }
 
     return (
       <>
@@ -160,7 +154,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                   <Input
                     className="width-30"
                     placeholder="default"
-                    value={options.jsonData.profile}
+                    value={profile}
                     onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile')}
                   />
                 </div>
