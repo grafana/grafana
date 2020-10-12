@@ -9,14 +9,13 @@ export interface GraphOptions {
 
 export interface Options {
   graph: GraphOptions;
-  legend: Omit<LegendOptions, 'placement'> &
-    GraphLegendEditorLegendOptions & {
-      placement: LegendPlacement;
-    };
+  legend: GraphLegendEditorLegendOptions & {
+    placement: LegendPlacement;
+  };
   tooltipOptions: GraphTooltipOptions;
 }
 
-export interface GraphLegendEditorLegendOptions extends LegendOptions {
+export interface GraphLegendEditorLegendOptions extends Omit<LegendOptions, 'placement'> {
   stats?: string[];
   decimals?: number;
   sortBy?: string;
