@@ -97,7 +97,7 @@ func Auth(options *AuthOptions) macaron.Handler {
 
 			if !forceLogin {
 				orgIDValue := c.Req.URL.Query().Get("orgId")
-				orgID, err := strconv.ParseInt(orgIDValue, 10, 32)
+				orgID, err := strconv.ParseInt(orgIDValue, 10, 64)
 				if err == nil && orgID > 0 && orgID != c.OrgId {
 					forceLogin = true
 				}
