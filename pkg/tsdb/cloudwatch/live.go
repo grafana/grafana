@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
+	util "github.com/grafana/grafana/pkg/util/retryer"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/sync/errgroup"
 )
@@ -180,31 +181,24 @@ func (e *cloudWatchExecutor) startQuery(ctx context.Context, responseChannel cha
 		QueryId: startQueryOutput.QueryId,
 	}
 
-	attemptCount := 1
 	recordsMatched := 0.0
-
-	pollInterval := initialPollInterval
-	ticker := time.NewTicker(pollInterval)
-	defer ticker.Stop()
-	for range ticker.C {
+	util.Retry(func() (util.RetrySignal, error) {
 		getQueryResultsOutput, err := logsClient.GetQueryResultsWithContext(ctx, queryResultsInput)
 		if err != nil {
-			return err
+			return util.FuncError, err
 		}
 
-		if *getQueryResultsOutput.Statistics.RecordsMatched > recordsMatched {
-			attemptCount = 1
-			pollInterval = initialPollInterval
-			ticker.Reset(pollInterval)
-		}
+		retryNeeded := *getQueryResultsOutput.Statistics.RecordsMatched <= recordsMatched
+		recordsMatched = *getQueryResultsOutput.Statistics.RecordsMatched
 
 		dataFrame, err := logsResultsToDataframes(getQueryResultsOutput)
 		if err != nil {
-			return err
+			return util.FuncError, err
 		}
 
 		dataFrame.Name = query.RefId
 		dataFrame.RefID = query.RefId
+		dataFrames := data.Frames{}
 
 		// When a query of the form "stats ... by ..." is made, we want to return
 		// one series per group defined in the query, but due to the format
@@ -217,54 +211,39 @@ func (e *cloudWatchExecutor) startQuery(ctx context.Context, responseChannel cha
 		if len(statsGroups) > 0 && len(dataFrame.Fields) > 0 {
 			groupedFrames, err := groupResults(dataFrame, statsGroups)
 			if err != nil {
-				return err
+				return util.FuncError, err
 			}
 
-			responseChannel <- &tsdb.Response{
-				Results: map[string]*tsdb.QueryResult{
-					query.RefId: {
-						RefId:      query.RefId,
-						Dataframes: tsdb.NewDecodedDataFrames(groupedFrames),
-					},
-				},
-			}
-			continue
-		}
-
-		if dataFrame.Meta != nil {
-			dataFrame.Meta.PreferredVisualization = "logs"
+			dataFrames = groupedFrames
 		} else {
-			dataFrame.Meta = &data.FrameMeta{
-				PreferredVisualization: "logs",
+			if dataFrame.Meta != nil {
+				dataFrame.Meta.PreferredVisualization = "logs"
+			} else {
+				dataFrame.Meta = &data.FrameMeta{
+					PreferredVisualization: "logs",
+				}
 			}
+
+			dataFrames = data.Frames{dataFrame}
 		}
 
 		responseChannel <- &tsdb.Response{
 			Results: map[string]*tsdb.QueryResult{
 				query.RefId: {
 					RefId:      query.RefId,
-					Dataframes: tsdb.NewDecodedDataFrames(data.Frames{dataFrame}),
+					Dataframes: tsdb.NewDecodedDataFrames(dataFrames),
 				},
 			},
 		}
 
 		if isTerminated(*getQueryResultsOutput.Status) {
-			return nil
+			return util.FuncComplete, nil
+		} else if retryNeeded {
+			return util.FuncFailure, nil
+		} else {
+			return util.FuncSuccess, nil
 		}
-		if attemptCount >= maxAttempts {
-			return fmt.Errorf("fetching of query results exceeded max number of attempts")
-		}
-
-		ticker.Reset(minDuration(pollInterval*2, 30*time.Second))
-		attemptCount++
-	}
+	}, 8, 500*time.Millisecond, 30*time.Second)
 
 	return nil
-}
-
-func minDuration(a time.Duration, b time.Duration) time.Duration {
-	if a < b {
-		return a
-	}
-	return b
 }

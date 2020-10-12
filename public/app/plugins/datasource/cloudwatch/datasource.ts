@@ -177,6 +177,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       logGroupNames: target.logGroupNames?.map(logGroup =>
         this.replace(logGroup, options.scopedVars, true, 'log groups')
       ),
+      statsGroups: target.statsGroups,
       region: this.getActualRegion(this.replace(target.region, options.scopedVars, true, 'region')),
       type: 'liveLogAction',
     }));
@@ -209,6 +210,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
         )
           ? LoadingState.Done
           : LoadingState.Loading;
+        dataQueryResponse.key = message.results[Object.keys(message.results)[0]].refId;
         return this.addDataLinksToLogsResponse(dataQueryResponse, options);
       }),
       catchError(err => {
