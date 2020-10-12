@@ -1,6 +1,7 @@
 import { MetricsConfiguration } from '../../types';
-import { MetricAggregation } from './types';
+import { MetricAggregation, PipelineMetricAggregationType } from './state/types';
 
+// We can probably split Pipeline Aggregations from here.
 export const metricAggregationConfig: MetricsConfiguration = {
   count: {
     label: 'Count',
@@ -92,6 +93,27 @@ export const metricAggregationConfig: MetricsConfiguration = {
     label: 'Logs',
     requiresField: false,
   },
+};
+
+interface PipelineOption {
+  label: string;
+  default?: string | number | boolean;
+}
+
+type PipelineOptions = {
+  [K in PipelineMetricAggregationType]: PipelineOption[];
+};
+
+export const pipelineOptions: PipelineOptions = {
+  moving_avg: [
+    { label: 'window', default: 5 },
+    { label: 'model', default: 'simple' },
+    { label: 'predict' },
+    { label: 'minimize', default: false },
+  ],
+  derivative: [{ label: 'unit' }],
+  cumulative_sum: [{ label: 'format' }],
+  bucket_script: [],
 };
 
 /**

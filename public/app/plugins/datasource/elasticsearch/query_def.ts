@@ -1,6 +1,6 @@
 import _ from 'lodash';
-import { MetricAggregation, MetricAggregationType } from './state/metricAggregation/types';
-import { metricAggregationConfig } from './state/metricAggregation/utils';
+import { MetricAggregation, PipelineMetricAggregation } from './components/MetricAggregationsEditor/state/types';
+import { metricAggregationConfig, pipelineOptions } from './components/MetricAggregationsEditor/utils';
 import { BucketsConfiguration, BucketAggregation, ElasticsearchQuery } from './types';
 
 export const bucketAggregationConfig: BucketsConfiguration = {
@@ -77,19 +77,6 @@ export const movingAvgModelOptions = [
   { text: 'Holt Winters', value: 'holt_winters' },
 ];
 
-export const pipelineOptions: any = {
-  moving_avg: [
-    { text: 'window', default: 5 },
-    { text: 'model', default: 'simple' },
-    { text: 'predict', default: undefined },
-    { text: 'minimize', default: false },
-  ],
-  moving_fn: [{ text: 'window', default: 5 }, { text: 'script' }],
-  derivative: [{ text: 'unit', default: undefined }],
-  cumulative_sum: [{ text: 'format', default: undefined }],
-  bucket_script: [],
-};
-
 export const movingAvgModelSettings: any = {
   simple: [],
   linear: [],
@@ -119,27 +106,20 @@ export function getMetricAggTypes(esVersion: number) {
   });
 }
 
-export function getPipelineOptions(metric: any) {
-  if (!isPipelineAgg(metric.type)) {
+export function getPipelineOptions(metric: MetricAggregation) {
+  if (!isPipelineAggregation(metric)) {
     return [];
   }
 
   return pipelineOptions[metric.type];
 }
 
-export function isPipelineAgg(metricType: any) {
-  if (metricType) {
-    const po = pipelineOptions[metricType];
-    return po !== null && po !== undefined;
-  }
+export const isPipelineAggregation = (metric: MetricAggregation): metric is PipelineMetricAggregation =>
+  metricAggregationConfig[metric.type].isPipelineAgg === true;
 
-  return false;
-}
-
-export function isPipelineAggWithMultipleBucketPaths(metricType: MetricAggregationType) {
-  return !!metricAggregationConfig[metricType].supportsMultipleBucketPaths;
-  // return metricAggTypes.find(t => t.value === metricType && t.supportsMultipleBucketPaths) !== undefined;
-}
+export const isPipelineAggregationWithMultipleBucketPaths = (metric: MetricAggregation) => {
+  return !!metricAggregationConfig[metric.type].supportsMultipleBucketPaths;
+};
 
 export function getAncestors(target: ElasticsearchQuery, metric?: MetricAggregation) {
   const { metrics } = target;
@@ -193,11 +173,10 @@ export function describeOrder(order: string) {
 }
 
 export function describeMetric(metric: MetricAggregation) {
-  const def: any = _.find(metricAggTypes, { value: metric.type });
-  if (!def.requiresField && !isPipelineAgg(metric.type)) {
-    return def.text;
+  if (!metricAggregationConfig[metric.type].requiresField && !isPipelineAggregation(metric)) {
+    return metricAggregationConfig[metric.type].label;
   }
-  return def.text + ' ' + metric.field;
+  return metricAggregationConfig[metric.type].label + ' ' + metric.field;
 }
 
 export function describeOrderBy(orderBy: any, target: any) {

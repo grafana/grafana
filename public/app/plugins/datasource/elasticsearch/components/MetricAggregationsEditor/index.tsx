@@ -2,10 +2,10 @@ import React, { FunctionComponent } from 'react';
 import { InlineFieldRow } from '@grafana/ui';
 import { AddRemove } from '../AddRemove';
 import { MetricEditor } from './MetricEditor';
-import { MetricAggregation, MetricAggregationAction } from '../../state/metricAggregation/types';
 import { useDispatch } from '../ElasticsearchQueryContext';
-import { addMetric, removeMetric } from '../../state/metricAggregation/actions';
-import { metricAggregationConfig } from '../../state/metricAggregation/utils';
+import { MetricAggregation, MetricAggregationAction } from './state/types';
+import { metricAggregationConfig } from './utils';
+import { addMetric, removeMetric } from './state/actions';
 
 interface Props {
   value: MetricAggregation[];

@@ -1,10 +1,17 @@
-import { Action } from '../../hooks/useReducerCallback';
+import { Action } from '../../../hooks/useReducerCallback';
 
 export const ADD_METRIC = '@metrics/add';
 export const REMOVE_METRIC = '@metrics/remove';
 export const CHANGE_METRIC_TYPE = '@metrics/change_type';
 export const CHANGE_METRIC_FIELD = '@metrics/change_field';
 export const TOGGLE_METRIC_VISIBILITY = '@metrics/toggle_visibility';
+
+export type PipelineMetricAggregationType =
+  | 'moving_avg'
+  | 'moving_fn'
+  | 'derivative'
+  | 'cumulative_sum'
+  | 'bucket_script';
 
 export type MetricAggregationType =
   | 'count'
@@ -14,15 +21,11 @@ export type MetricAggregationType =
   | 'max'
   | 'extended_stats'
   | 'percentiles'
-  | 'moving_avg'
-  | 'moving_fn'
   | 'cardinality'
-  | 'derivative'
-  | 'cumulative_sum'
-  | 'bucket_script'
   | 'raw_document'
   | 'raw_data'
-  | 'logs';
+  | 'logs'
+  | PipelineMetricAggregationType;
 
 interface PipelineVariable {
   name: string;
@@ -33,9 +36,14 @@ export interface MetricAggregation {
   id: string;
   type: MetricAggregationType;
   hide: boolean;
-  settings?: unknown;
+  settings?: Record<string, string | number>;
   field?: string;
-  pipelineVariables?: PipelineVariable[];
+}
+
+export interface PipelineMetricAggregation extends MetricAggregation {
+  type: PipelineMetricAggregationType;
+  field: string;
+  pipelineVariables: PipelineVariable[];
 }
 
 // Action Types

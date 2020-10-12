@@ -3,7 +3,7 @@ import { ElasticDatasource } from '../datasource';
 import { Action, combineReducers, useReducerCallback } from '../hooks/useReducerCallback';
 import { ElasticsearchQuery } from '../types';
 
-import { reducer as metricsReducer } from '../state/metricAggregation/reducer';
+import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
 
 const DatasourceContext = createContext<ElasticDatasource | undefined>(undefined);
 const DispatchContext = createContext<((action: Action) => void) | undefined>(undefined);

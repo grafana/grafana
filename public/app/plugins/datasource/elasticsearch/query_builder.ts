@@ -276,8 +276,8 @@ export class ElasticQueryBuilder {
       const aggField: any = {};
       let metricAgg: any = null;
 
-      if (queryDef.isPipelineAgg(metric.type)) {
-        if (queryDef.isPipelineAggWithMultipleBucketPaths(metric.type)) {
+      if (queryDef.isPipelineAggregation(metric)) {
+        if (queryDef.isPipelineAggregationWithMultipleBucketPaths(metric)) {
           if (metric.pipelineVariables) {
             metricAgg = {
               buckets_path: {},

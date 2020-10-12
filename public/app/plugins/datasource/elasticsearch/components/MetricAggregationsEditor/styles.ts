@@ -15,3 +15,23 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, hidden: boolean) =>
     `,
   };
 });
+
+export const flex = css`
+  display: flex;
+`;
+
+export const flexRow = css`
+  flex-direction: row;
+`;
+
+export const flexColumn = css`
+  flex-direction: column;
+`;
+
+export const justifyStart = css`
+  justify-content: start;
+`;
+
+export const alignItemsStart = css`
+  align-items: start;
+`;

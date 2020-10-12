@@ -208,7 +208,7 @@ export class ElasticResponse {
   // need to recurse down the nested buckets to build series
   processBuckets(aggs: any, target: ElasticsearchQuery, seriesList: any, table: any, props: any, depth: any) {
     let bucket, aggDef: any, esAgg, aggId;
-    const maxDepth = target.bucketAggs.length - 1;
+    const maxDepth = target.bucketAggs!.length - 1;
 
     for (aggId in aggs) {
       aggDef = _.find(target.bucketAggs, { id: aggId });
@@ -397,11 +397,7 @@ export class ElasticResponse {
   }
 
   getTimeSeries() {
-    if (
-      this.targets.some((target: ElasticsearchQuery) =>
-        target.metrics.some((metric: any) => metric.type === 'raw_data')
-      )
-    ) {
+    if (this.targets.some((target: ElasticsearchQuery) => target.metrics?.some(metric => metric.type === 'raw_data'))) {
       return this.processResponseToDataFrames(false);
     }
     return this.processResponseToSeries();
@@ -429,7 +425,7 @@ export class ElasticResponse {
         if (docs.length > 0) {
           let series = createEmptyDataFrame(
             propNames,
-            this.targets[0].timeField,
+            this.targets[0].timeField!,
             isLogsRequest,
             logMessageField,
             logLevelField
