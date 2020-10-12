@@ -104,7 +104,7 @@ func (m *SetCreatedForOutstandingInvites) Sql(dialect Dialect) string {
 }
 
 func (m *SetCreatedForOutstandingInvites) Exec(sess *xorm.Session, mg *Migrator) error {
-	created := time.Now().Unix()
+	created := time.Now().Add(24 * time.Hour).Unix()
 	if _, err := sess.Exec("UPDATE "+mg.Dialect.Quote("temp_user")+
 		" SET created = ?, updated = ? WHERE created = '0' AND status in ('SignUpStarted', 'InvitePending')", created, created); err != nil {
 		return err
