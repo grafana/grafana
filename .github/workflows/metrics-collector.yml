@@ -1,5 +1,17 @@
-name: Collect metrics when issue is closed
+#
+# When triggered by the cron job it will also collect metrics for:
+#  * number of issues without label
+#  * number of issues with "needs more info"
+#  * number of issues with "needs investigation"
+#  * number of issues with label type/bug
+#  * number of open issues in current milestone
+#
+# https://github.com/grafana/grafana-github-actions/blob/main/metrics-collector/index.ts
+#
+name: Github issue metrics collection 
 on:
+  schedule:
+    - cron: "*/10 * * * *"
   issues:
     types: [opened, closed]
 
