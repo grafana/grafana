@@ -1,14 +1,25 @@
 package plugins
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 const (
-	UNSIGNED ErrorCode = iota + 1
+	UNSIGNED ErrorCode = iota
 	MODIFIED
 	INVALID
 )
 
+var (
+	ErrPluginIsUnsigned = errors.New("Plugin is unsigned")
+)
+
 type ErrorCode int
+
+func (e ErrorCode) String() string {
+	return [...]string{"Unsigned", "Modified", "Invalid"}[e]
+}
 
 type PluginError struct {
 	ErrorCode
@@ -16,7 +27,7 @@ type PluginError struct {
 }
 
 func (e *PluginError) Error() string {
-	return fmt.Sprintf("Error (Code: `%d`) in plugin : %v", e.ErrorCode, e.Err)
+	return fmt.Sprintf("Error (Code: `%d`) in plugin: %v", e.ErrorCode, e.Err)
 }
 
 type PluginErrors struct {

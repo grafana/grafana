@@ -30,25 +30,25 @@ type DataSource struct {
 }
 
 type DataSourceListItemDTO struct {
-	Id          int64                   `json:"id"`
-	OrgId       int64                   `json:"orgId"`
-	Name        string                  `json:"name"`
-	Type        string                  `json:"type"`
-	TypeLogoUrl string                  `json:"typeLogoUrl"`
-	Access      models.DsAccess         `json:"access"`
-	Url         string                  `json:"url"`
-	Password    string                  `json:"password"`
-	User        string                  `json:"user"`
-	Database    string                  `json:"database"`
-	BasicAuth   bool                    `json:"basicAuth"`
-	IsDefault   bool                    `json:"isDefault"`
-	JsonData    *simplejson.Json        `json:"jsonData,omitempty"`
-	ReadOnly    bool                    `json:"readOnly"`
-	Errors      DataSourceListItemError `json:"errors"`
+	Id          int64                      `json:"id"`
+	OrgId       int64                      `json:"orgId"`
+	Name        string                     `json:"name"`
+	Type        string                     `json:"type"`
+	TypeLogoUrl string                     `json:"typeLogoUrl"`
+	Access      models.DsAccess            `json:"access"`
+	Url         string                     `json:"url"`
+	Password    string                     `json:"password"`
+	User        string                     `json:"user"`
+	Database    string                     `json:"database"`
+	BasicAuth   bool                       `json:"basicAuth"`
+	IsDefault   bool                       `json:"isDefault"`
+	JsonData    *simplejson.Json           `json:"jsonData,omitempty"`
+	ReadOnly    bool                       `json:"readOnly"`
+	Errors      []*DataSourceListItemError `json:"errors"`
 }
 
 type DataSourceListItemError struct {
-	Error string `json:"error"`
+	ErrorCode string `json:"errorCode"`
 }
 
 type DataSourceList []DataSourceListItemDTO

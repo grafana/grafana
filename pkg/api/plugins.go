@@ -113,9 +113,13 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 		}
 
 		if pluginDef.Errors != nil {
-			listItem.Errors = &dtos.PluginListItemError{
-				Error: "Experienced a problem",
+			var pluginErrors []*dtos.PluginListItemError
+			for _, pluginErr := range pluginDef.Errors.PluginErrors {
+				pluginErrors = append(pluginErrors, &dtos.PluginListItemError{
+					ErrorCode: pluginErr.ErrorCode.String(),
+				})
 			}
+			listItem.Errors = pluginErrors
 		}
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
