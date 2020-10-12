@@ -63,7 +63,7 @@ func deleteResponseChannel(name string) {
 	delete(responseChannels, name)
 }
 
-// GetHandlerForPath called on init
+// GetHandlerForPath gets called on init.
 func (supplier *LogQueryRunnerSupplier) GetHandlerForPath(path string, publisher models.ChannelPublisher) (models.ChannelHandler, error) {
 	return &LogQueryRunner{
 		channelName: path,
@@ -72,7 +72,8 @@ func (supplier *LogQueryRunnerSupplier) GetHandlerForPath(path string, publisher
 	}, nil
 }
 
-// GetChannelOptions called fast and often
+// GetChannelOptions gets channel options.
+// It's called fast and often.
 func (g *LogQueryRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
 	return centrifuge.ChannelOptions{}
 }
@@ -87,7 +88,7 @@ func (g *LogQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscrib
 	return nil
 }
 
-// OnPublish called when an event is received from the websocket
+// OnPublish is called when an event is received from the websocket.
 func (g *LogQueryRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
 	return nil, fmt.Errorf("can not publish")
 }
