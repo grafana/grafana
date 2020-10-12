@@ -1073,7 +1073,6 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 		return err
 	}
 
-	// Minimum supported lifetime is 15 minutes
 	cfg.UserInviteMaxLifetime = userInviteMaxLifetimeDuration
 	if cfg.UserInviteMaxLifetime < time.Minute*15 {
 		return errors.New("the minimum supported value for the `user_invite_max_lifetime_duration` configuration is 15m (15 minutes)")
