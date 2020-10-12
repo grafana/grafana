@@ -133,10 +133,20 @@ export class ShareLink extends PureComponent<Props, State> {
                 </a>
               </div>
             )}
-
-            {!isDashboardSaved && (
-              <Alert severity="info" title="Dashboard is not saved" bottomSpacing={0}>
-                To render a panel image, you must save the dashboard first.
+            {panel && !config.rendererAvailable && (
+              <Alert severity="info" title="Image Renderer plugin not installed">
+                <p>
+                  <>To render a panel image, you must install the </>
+                  <a
+                    href="https://www.percona.com/doc/percona-monitoring-and-management/2.x/metrics-monitor-dashboards.html#rendering-dashboard-images"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="external-link"
+                  >
+                    Image Renderer plugin
+                  </a>
+                  . Please contact your PMM administrator to install the plugin.
+                </p>
               </Alert>
             )}
           </>
