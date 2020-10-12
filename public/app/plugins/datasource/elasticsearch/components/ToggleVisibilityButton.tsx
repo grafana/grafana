@@ -1,7 +1,8 @@
-import { Icon, useTheme } from '@grafana/ui';
+import { useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import React, { useMemo } from 'react';
 import { FunctionComponent } from 'react';
+import { IconButton } from './IconButton';
 
 interface Props {
   onClick: () => void;
@@ -21,9 +22,5 @@ export const ToggleVisibilityButton: FunctionComponent<Props> = ({ onClick, hide
   }, [theme]);
 
   // TODO: The button should have proper aria attributes
-  return (
-    <button className={cx('gf-form-label gf-form-label--btn query-part', hide && buttonCss)} onClick={onClick}>
-      <Icon name={hide ? 'eye-slash' : 'eye'} />
-    </button>
-  );
+  return <IconButton className={cx(hide && buttonCss)} iconName={hide ? 'eye-slash' : 'eye'} onClick={onClick} />;
 };

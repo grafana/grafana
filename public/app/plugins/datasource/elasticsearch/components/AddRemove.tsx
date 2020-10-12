@@ -1,27 +1,19 @@
-import { Icon } from '@grafana/ui';
 import React, { FunctionComponent } from 'react';
+import { IconButton } from './IconButton';
 
 interface Props {
   index: number;
   elements: any[];
   onAdd: () => void;
-  onRemove: (index: number) => void;
+  onRemove: () => void;
 }
 
 export const AddRemove: FunctionComponent<Props> = ({ index, onAdd, onRemove, elements }) => {
-  // TODO: This can be refactored to have stuff in common with ToggleVisibilityButton
   return (
     <>
-      {index === 0 && (
-        <button className="gf-form-label gf-form-label--btn query-part" onClick={onAdd}>
-          <Icon name="plus" />
-        </button>
-      )}
-      {elements.length >= 2 && (
-        <button className="gf-form-label gf-form-label--btn query-part" onClick={() => onRemove(index)}>
-          <Icon name="minus" />
-        </button>
-      )}
+      {index === 0 && <IconButton iconName="plus" onClick={onAdd} />}
+
+      {elements.length >= 2 && <IconButton iconName="minus" onClick={onRemove} />}
     </>
   );
 };
