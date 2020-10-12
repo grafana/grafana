@@ -134,6 +134,7 @@ var (
 	LoginHint               string
 	PasswordHint            string
 	DefaultTheme            string
+	DisableLogin            bool
 	DisableLoginForm        bool
 	DisableSignoutMenu      bool
 	SignoutRedirectUrl      string
@@ -1002,6 +1003,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		cfg.TokenRotationIntervalMinutes = 2
 	}
 
+	DisableLogin = auth.Key("disable_login").MustBool(false)
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
