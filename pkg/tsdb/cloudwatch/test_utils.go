@@ -18,9 +18,23 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func fakeDataSource() *models.DataSource {
+type fakeDataSourceCfg struct {
+	assumeRoleARN string
+	externalID    string
+}
+
+func fakeDataSource(cfgs ...fakeDataSourceCfg) *models.DataSource {
 	jsonData := simplejson.New()
-	jsonData.Set("defaultRegion", "default")
+	jsonData.Set("defaultRegion", defaultRegion)
+	jsonData.Set("authType", "default")
+	for _, cfg := range cfgs {
+		if cfg.assumeRoleARN != "" {
+			jsonData.Set("assumeRoleArn", cfg.assumeRoleARN)
+		}
+		if cfg.externalID != "" {
+			jsonData.Set("externalId", cfg.externalID)
+		}
+	}
 	return &models.DataSource{
 		Id:             1,
 		Database:       "default",

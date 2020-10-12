@@ -389,6 +389,26 @@ How long the data proxy should wait before timing out. Default is 30 seconds.
 
 This setting also applies to core backend HTTP data sources where query requests use an HTTP client with timeout set.
 
+### keep_alive_seconds
+
+Interval between keep-alive probes. Default is `30` seconds. For more details check the [Dialer.KeepAlive](https://golang.org/pkg/net/#Dialer.KeepAlive) documentation.
+
+### tls_handshake_timeout_seconds
+
+The length of time that Grafana will wait for a successful TLS handshake with the datasource. Default is `10` seconds. For more details check the [Transport.TLSHandshakeTimeout](https://golang.org/pkg/net/http/#Transport.TLSHandshakeTimeout) documentation.
+
+### expect_continue_timeout_seconds
+
+The length of time that Grafana will wait for a datasource’s first response headers after fully writing the request headers, if the request has an “Expect: 100-continue” header.  A value of `0` will result in the body being sent immediately. Default is `1` second. For more details check the [Transport.ExpectContinueTimeout](https://golang.org/pkg/net/http/#Transport.ExpectContinueTimeout) documentation.
+
+### max_idle_connections
+
+The maximum number of idle connections that Grafana will maintain. Default is `100`. For more details check the [Transport.MaxIdleConns](https://golang.org/pkg/net/http/#Transport.MaxIdleConns) documentation.
+
+### idle_conn_timeout_seconds
+
+The length of time that Grafana maintains idle connections before closing them. Default is `90` seconds. For more details check the [Transport.IdleConnTimeout](https://golang.org/pkg/net/http/#Transport.IdleConnTimeout) documentation.
+
 ### send_user_header
 
 If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request. Default is `false`.
