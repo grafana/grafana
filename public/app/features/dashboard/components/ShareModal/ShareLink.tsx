@@ -140,14 +140,14 @@ export class ShareLink extends PureComponent<Props, State> {
                 <p>
                   <>To render a panel image, you must install the </>
                   <a
-                    href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+                    href="https://www.percona.com/doc/percona-monitoring-and-management/2.x/metrics-monitor-dashboards.html#rendering-dashboard-images"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="external-link"
                   >
-                    Grafana Image Renderer plugin
+                    Image Renderer plugin
                   </a>
-                  . Please contact your Grafana administrator to install the plugin.
+                  . Please contact your PMM administrator to install the plugin.
                 </p>
               </InfoBox>
             )}
