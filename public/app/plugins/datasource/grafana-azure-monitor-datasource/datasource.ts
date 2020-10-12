@@ -9,6 +9,7 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   LoadingState,
+  ScopedVars,
 } from '@grafana/data';
 import { from, Observable, of } from 'rxjs';
 import { DataSourceWithBackend } from '@grafana/runtime';
@@ -77,7 +78,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
         continue;
       }
 
-      // Initalize the list of queries
+      // Initialize the list of queries
       let q = byType[target.queryType];
       if (!q) {
         q = _.cloneDeep(options);
@@ -119,17 +120,17 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       return Promise.resolve([]);
     }
 
-    const aiResult = this.appInsightsDatasource.metricFindQuery(query);
+    const aiResult = this.appInsightsDatasource.metricFindQueryInternal(query);
     if (aiResult) {
       return aiResult;
     }
 
-    const amResult = this.azureMonitorDatasource.metricFindQuery(query);
+    const amResult = this.azureMonitorDatasource.metricFindQueryInternal(query);
     if (amResult) {
       return amResult;
     }
 
-    const alaResult = this.azureLogAnalyticsDatasource.metricFindQuery(query);
+    const alaResult = this.azureLogAnalyticsDatasource.metricFindQueryInternal(query);
     if (alaResult) {
       return alaResult;
     }
@@ -255,5 +256,11 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
   getSubscriptions() {
     return this.azureMonitorDatasource.getSubscriptions();
+  }
+
+  interpolateVariablesInQueries(queries: AzureMonitorQuery[], scopedVars: ScopedVars): AzureMonitorQuery[] {
+    return queries.map(
+      query => this.pseudoDatasource[query.queryType].applyTemplateVariables(query, scopedVars) as AzureMonitorQuery
+    );
   }
 }
