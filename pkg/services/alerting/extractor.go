@@ -75,7 +75,7 @@ func copyJSON(in json.Marshaler) (*simplejson.Json, error) {
 	return simplejson.NewJson(rawJSON)
 }
 
-func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json, validators ...alertValidator) ([]*models.Alert, error) {
+func (e *DashAlertExtractor) getAlertsFromPanels(jsonWithPanels *simplejson.Json, validators ...alertValidator) ([]*models.Alert, error) {
 	alerts := make([]*models.Alert, 0)
 
 	for _, panelObj := range jsonWithPanels.Get("panels").MustArray() {
@@ -85,7 +85,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		// check if the panel is collapsed
 		if collapsed && collapsedJSON.MustBool() {
 			// extract alerts from sub panels for collapsed panels
-			alertSlice, err := e.getAlertFromPanels(panel, validators...)
+			alertSlice, err := e.getAlertsFromPanels(panel, validators...)
 			if err != nil {
 				return nil, err
 			}
@@ -289,7 +289,7 @@ func (e *DashAlertExtractor) extractAlerts(validators ...alertValidator) ([]*mod
 	if len(rows) > 0 {
 		for _, rowObj := range rows {
 			row := simplejson.NewFromAny(rowObj)
-			a, err := e.getAlertFromPanels(row, validators...)
+			a, err := e.getAlertsFromPanels(row, validators...)
 			if err != nil {
 				return nil, err
 			}
@@ -297,7 +297,7 @@ func (e *DashAlertExtractor) extractAlerts(validators ...alertValidator) ([]*mod
 			alerts = append(alerts, a...)
 		}
 	} else {
-		a, err := e.getAlertFromPanels(dashboardJSON, validators...)
+		a, err := e.getAlertsFromPanels(dashboardJSON, validators...)
 		if err != nil {
 			return nil, err
 		}
