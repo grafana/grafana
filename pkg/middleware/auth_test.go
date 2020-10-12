@@ -35,6 +35,14 @@ func TestMiddlewareAuth(t *testing.T) {
 		})
 
 		Convey("Anonymous auth enabled", func() {
+			origEnabled := setting.AnonymousEnabled
+			t.Cleanup(func() {
+				setting.AnonymousEnabled = origEnabled
+			})
+			origName := setting.AnonymousOrgName
+			t.Cleanup(func() {
+				setting.AnonymousOrgName = origName
+			})
 			setting.AnonymousEnabled = true
 			setting.AnonymousOrgName = "test"
 
@@ -50,6 +58,9 @@ func TestMiddlewareAuth(t *testing.T) {
 
 				Convey("Should redirect to login", func() {
 					So(sc.resp.Code, ShouldEqual, 302)
+					location, ok := sc.resp.Header()["Location"]
+					So(ok, ShouldBeTrue)
+					So(location[0], ShouldEqual, "/login")
 				})
 			})
 
@@ -70,6 +81,9 @@ func TestMiddlewareAuth(t *testing.T) {
 
 				Convey("Should redirect to login", func() {
 					So(sc.resp.Code, ShouldEqual, 302)
+					location, ok := sc.resp.Header()["Location"]
+					So(ok, ShouldBeTrue)
+					So(location[0], ShouldEqual, "/login")
 				})
 			})
 		})
