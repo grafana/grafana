@@ -90,11 +90,7 @@ const buildPluginDocsRunner: TaskRunner<PluginCIOptions> = async () => {
   const exe = await execa('cp', ['-rv', docsSrc + '/.', docsDest]);
   console.log(exe.stdout);
 
-  fs.writeFile(path.resolve(docsDest, 'index.html'), `TODO... actually build docs`, err => {
-    if (err) {
-      throw new Error('Unable to docs');
-    }
-  });
+  fs.writeFileSync(path.resolve(docsDest, 'index.html'), `TODO... actually build docs`, { encoding: 'utf-8' });
 
   writeJobStats(start, workDir);
 };
@@ -158,11 +154,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signatureType,
   const pluginJsonFile = path.resolve(distContentDir, 'plugin.json');
   const pluginInfo = getPluginJson(pluginJsonFile);
   pluginInfo.info.build = await getPluginBuildInfo();
-  fs.writeFile(pluginJsonFile, JSON.stringify(pluginInfo, null, 2), err => {
-    if (err) {
-      throw new Error('Error writing: ' + pluginJsonFile);
-    }
-  });
+  fs.writeFileSync(pluginJsonFile, JSON.stringify(pluginInfo, null, 2), { encoding: 'utf-8' });
 
   // Write a MANIFEST.txt file in the dist folder
   try {
@@ -212,11 +204,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signatureType,
   }
 
   p = path.resolve(packagesDir, 'info.json');
-  fs.writeFile(p, JSON.stringify(info, null, 2), err => {
-    if (err) {
-      throw new Error('Error writing package info: ' + p);
-    }
-  });
+  fs.writeFileSync(p, JSON.stringify(info, null, 2), { encoding: 'utf-8' });
 
   // Write the custom settings
   p = path.resolve(grafanaEnvDir, 'custom.ini');
@@ -225,11 +213,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signatureType,
     `[paths] \n` +
     `plugins = ${path.resolve(grafanaEnvDir, 'plugins')}\n` +
     `\n`; // empty line
-  fs.writeFile(p, customIniBody, err => {
-    if (err) {
-      throw new Error('Unable to write: ' + p);
-    }
-  });
+  fs.writeFileSync(p, customIniBody, { encoding: 'utf-8' });
 
   writeJobStats(start, getJobFolder());
 };
@@ -267,11 +251,7 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
 
   // Save the report to disk
   const file = path.resolve(ciDir, 'report.json');
-  fs.writeFile(file, JSON.stringify(report, null, 2), err => {
-    if (err) {
-      throw new Error('Unable to write: ' + file);
-    }
-  });
+  fs.writeFileSync(file, JSON.stringify(report, null, 2), { encoding: 'utf-8' });
 
   const GRAFANA_API_KEY = process.env.GRAFANA_API_KEY;
   if (!GRAFANA_API_KEY) {

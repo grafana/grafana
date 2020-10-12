@@ -43,28 +43,29 @@ interface PlotPluginsContextType {
 }
 
 interface PlotContextType extends PlotConfigContextType, PlotPluginsContextType {
-  u?: uPlot;
-  series?: uPlot.Series[];
-  canvas?: PlotCanvasContextType;
+  isPlotReady: boolean;
+  getPlotInstance: () => uPlot;
+  getSeries: () => uPlot.Series[];
+  getCanvas: () => PlotCanvasContextType;
   canvasRef: any;
   data: DataFrame;
 }
 
-export const PlotContext = React.createContext<PlotContextType | null>(null);
+export const PlotContext = React.createContext<PlotContextType>({} as PlotContextType);
 
 // Exposes uPlot instance and bounding box of the entire canvas and plot area
-export const usePlotContext = (): PlotContextType | null => {
-  return useContext<PlotContextType | null>(PlotContext);
+export const usePlotContext = (): PlotContextType => {
+  return useContext<PlotContextType>(PlotContext);
 };
 
 const throwWhenNoContext = (name: string) => {
-  throw new Error(`${name} must be used within PlotContext`);
+  throw new Error(`${name} must be used within PlotContext or PlotContext is not ready yet!`);
 };
 
 // Exposes API for registering uPlot plugins
 export const usePlotPluginContext = (): PlotPluginsContextType => {
   const ctx = useContext(PlotContext);
-  if (!ctx) {
+  if (Object.keys(ctx).length === 0) {
     throwWhenNoContext('usePlotPluginContext');
   }
   return {
@@ -74,7 +75,8 @@ export const usePlotPluginContext = (): PlotPluginsContextType => {
 
 // Exposes API for building uPlot config
 export const usePlotConfigContext = (): PlotConfigContextType => {
-  const ctx = useContext(PlotContext);
+  const ctx = usePlotContext();
+
   if (!ctx) {
     throwWhenNoContext('usePlotPluginContext');
   }
@@ -101,7 +103,7 @@ interface PlotDataAPI {
 }
 
 export const usePlotData = (): PlotDataAPI => {
-  const ctx = useContext(PlotContext);
+  const ctx = usePlotContext();
 
   const getField = useCallback(
     (idx: number) => {
@@ -149,7 +151,7 @@ export const usePlotData = (): PlotDataAPI => {
   }
 
   return {
-    data: ctx!.data,
+    data: ctx.data,
     getField,
     getFieldValue,
     getFieldConfig,
@@ -158,45 +160,35 @@ export const usePlotData = (): PlotDataAPI => {
   };
 };
 
-// Returns bbox of the plot canvas (only the graph, no axes)
-export const usePlotCanvas = (): PlotCanvasContextType | null => {
-  const ctx = usePlotContext();
-  if (!ctx) {
-    throwWhenNoContext('usePlotCanvas');
-  }
-
-  return ctx!.canvas || null;
-};
-
 export const buildPlotContext = (
+  isPlotReady: boolean,
+  canvasRef: any,
+  data: DataFrame,
   registerPlugin: any,
   addSeries: any,
   addAxis: any,
   addScale: any,
-  canvasRef: any,
-  data: DataFrame,
-  u?: uPlot
-): PlotContextType | null => {
+  getPlotInstance: () => uPlot
+): PlotContextType => {
   return {
-    u,
-    series: u?.series,
-    canvas: u
-      ? {
-          width: u.width,
-          height: u.height,
-          plot: {
-            width: u.bbox.width / window.devicePixelRatio,
-            height: u.bbox.height / window.devicePixelRatio,
-            top: u.bbox.top / window.devicePixelRatio,
-            left: u.bbox.left / window.devicePixelRatio,
-          },
-        }
-      : undefined,
+    isPlotReady,
+    canvasRef,
+    data,
     registerPlugin,
     addSeries,
     addAxis,
     addScale,
-    canvasRef,
-    data,
+    getPlotInstance,
+    getSeries: () => getPlotInstance().series,
+    getCanvas: () => ({
+      width: getPlotInstance().width,
+      height: getPlotInstance().height,
+      plot: {
+        width: getPlotInstance().bbox.width / window.devicePixelRatio,
+        height: getPlotInstance().bbox.height / window.devicePixelRatio,
+        top: getPlotInstance().bbox.top / window.devicePixelRatio,
+        left: getPlotInstance().bbox.left / window.devicePixelRatio,
+      },
+    }),
   };
 };
