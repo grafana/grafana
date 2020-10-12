@@ -205,7 +205,7 @@ const tokenizer: Grammar = {
         alias: 'operator',
       },
       'pipe-operations': {
-        pattern: new RegExp(`\(?<=\|\\s?)${[...PIPE_PARSERS, ...PIPE_OPERATORS].map(f => f.label).join('|')}`, 'i'),
+        pattern: new RegExp(`${[...PIPE_PARSERS, ...PIPE_OPERATORS].map(f => f.label).join('|')}`, 'i'),
         alias: 'keyword',
       },
     },
