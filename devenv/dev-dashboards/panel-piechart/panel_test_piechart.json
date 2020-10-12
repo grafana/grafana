@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 224,
+  "id": 231,
   "links": [],
   "panels": [
     {
@@ -119,6 +119,9 @@
       "datasource": null,
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "palette-saturated"
+          },
           "custom": {},
           "decimals": 1,
           "mappings": [],
@@ -179,6 +182,9 @@
       "datasource": null,
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "palette-saturated"
+          },
           "custom": {},
           "decimals": 1,
           "mappings": [],
@@ -239,6 +245,9 @@
       "datasource": null,
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "palette-saturated"
+          },
           "custom": {},
           "mappings": [],
           "thresholds": {
@@ -297,6 +306,9 @@
       "datasource": null,
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "palette-saturated"
+          },
           "custom": {},
           "mappings": [],
           "thresholds": {
@@ -355,6 +367,9 @@
       "datasource": null,
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "palette-saturated"
+          },
           "custom": {},
           "mappings": [],
           "thresholds": {
@@ -413,6 +428,9 @@
       "datasource": null,
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "palette-saturated"
+          },
           "custom": {},
           "mappings": [],
           "thresholds": {
@@ -471,6 +489,9 @@
       "datasource": null,
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {},
           "mappings": [],
           "thresholds": {
@@ -540,5 +561,5 @@
   "timezone": "",
   "title": "Panel Tests - Pie chart",
   "uid": "lVE-2YFMz",
-  "version": 11
+  "version": 1
 }

@@ -193,10 +193,6 @@ const namedColorsByIndex = [
   'light-green',
 ];
 
-export function getColorForIndex(index: number, theme: GrafanaTheme): string {
-  return getColorFromHexRgbOrName(namedColorsByIndex[index % namedColorsByIndex.length], theme.type);
-}
-
 export const getNamedColorPalette = () => {
   if (colorsPaletteInstance) {
     return colorsPaletteInstance;

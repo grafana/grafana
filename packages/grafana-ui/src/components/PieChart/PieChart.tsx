@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { DisplayValue, formattedValueToString, getColorForIndex, GrafanaTheme } from '@grafana/data';
+import { DisplayValue, formattedValueToString, GrafanaTheme } from '@grafana/data';
 import { useStyles, useTheme } from '../../themes/ThemeContext';
 import tinycolor from 'tinycolor2';
 import Pie, { PieArcDatum } from '@visx/shape/lib/shapes/Pie';
@@ -72,7 +72,7 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height, labelOptio
       <svg width={size} height={size} ref={containerRef}>
         <Group top={centerOffset + margin} left={centerOffset + margin}>
           {values.map((value, idx) => {
-            const color = getColorForIndex(idx, theme);
+            const color = value.color ?? 'gray';
             return (
               <RadialGradient
                 key={idx}
