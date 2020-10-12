@@ -226,7 +226,8 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 				})
 
 				dashboardId := 123
-				jsonModel, _ := simplejson.NewJson([]byte(fmt.Sprintf(`{"id":%d}`, dashboardId)))
+				jsonModel, err := simplejson.NewJson([]byte(fmt.Sprintf(`{"id":%d}`, dashboardId)))
+				So(err, ShouldBeNil)
 
 				jsonModelEncoded, err := jsonModel.Encode()
 				So(err, ShouldBeNil)
