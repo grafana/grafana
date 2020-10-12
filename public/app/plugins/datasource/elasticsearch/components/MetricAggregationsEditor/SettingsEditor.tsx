@@ -16,6 +16,10 @@ interface Props {
 export const SettingsEditor: FunctionComponent<Props> = ({ metric }) => {
   const [open, setOpen] = useState(false);
 
+  if (metric.type === 'count') {
+    return null;
+  }
+
   return (
     <>
       <button

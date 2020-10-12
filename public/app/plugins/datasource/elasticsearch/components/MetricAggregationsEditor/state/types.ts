@@ -54,27 +54,40 @@ interface Count extends BaseMetricAggregation {
 interface Average extends MetricAggregationWithField, MetricAggregationWithSettings {
   type: 'avg';
   settings: {
-    unit: string;
-    missing: number;
+    script?: string;
+    missing?: number;
   };
 }
 
-interface Sum extends MetricAggregationWithField {
+interface Sum extends MetricAggregationWithField, MetricAggregationWithSettings {
   type: 'sum';
-}
-interface Max extends MetricAggregationWithField {
-  type: 'max';
+  settings: {
+    script?: string;
+    missing?: number;
+  };
 }
 
-interface Min extends MetricAggregationWithField {
+interface Max extends MetricAggregationWithField, MetricAggregationWithSettings {
+  type: 'max';
+  settings: {
+    script?: string;
+    missing?: number;
+  };
+}
+
+interface Min extends MetricAggregationWithField, MetricAggregationWithSettings {
   type: 'min';
+  settings: {
+    script?: string;
+    missing?: number;
+  };
 }
 
 interface ExtendedStats extends MetricAggregationWithField, MetricAggregationWithSettings {
   type: 'extended_stats';
   settings: {
-    unit: string;
-    missing: number;
+    script?: string;
+    missing?: number;
     // TODO: Add other settings here
   };
 }
@@ -82,32 +95,31 @@ interface ExtendedStats extends MetricAggregationWithField, MetricAggregationWit
 interface Percentiles extends MetricAggregationWithField, MetricAggregationWithSettings {
   type: 'percentiles';
   settings: {
-    percentiles: string;
-    unit: string;
-    missing: number;
+    percentiles?: string;
+    script?: string;
+    missing?: number;
   };
 }
 
 interface UniqueCount extends MetricAggregationWithField, MetricAggregationWithSettings {
   type: 'cardinality';
   settings: {
-    precision_threshold: string;
-    unit: string;
-    missing: number;
+    precision_threshold?: string;
+    missing?: number;
   };
 }
 
 interface RawDocument extends MetricAggregationWithSettings {
   type: 'raw_document';
   settings: {
-    size: number;
+    size?: number;
   };
 }
 
 interface RawData extends MetricAggregationWithSettings {
   type: 'raw_data';
   settings: {
-    size: number;
+    size?: number;
   };
 }
 
@@ -120,32 +132,37 @@ export interface BasePipelineMetricAggregation extends MetricAggregationWithFiel
 }
 
 interface PipelineMetricAggregationWithMoultipleBucketPaths extends BasePipelineMetricAggregation {
-  pipelineVariables: PipelineVariable[];
+  pipelineVariables?: PipelineVariable[];
 }
 
 interface MovingAverage extends BasePipelineMetricAggregation, MetricAggregationWithSettings {
   type: 'moving_avg';
   settings: {
-    script: string;
+    model?: string; // TODO: pick the correct types
+    window?: number;
+    predict?: unknown;
   };
 }
 
 interface Derivative extends BasePipelineMetricAggregation {
   type: 'derivative';
   settings: {
-    unit: string;
+    unit?: string;
   };
 }
 
 interface CumulativeSum extends BasePipelineMetricAggregation {
   type: 'cumulative_sum';
   settings: {
-    format: string;
+    format?: string;
   };
 }
 
 interface BucketScript extends PipelineMetricAggregationWithMoultipleBucketPaths {
   type: 'bucket_script';
+  settings: {
+    script?: string;
+  };
 }
 
 type PipelineMetricAggregation = MovingAverage | Derivative | CumulativeSum | BucketScript;
