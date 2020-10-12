@@ -68,7 +68,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Run("Should return all the snapshots", func(t *testing.T) {
-				assert.NotNil(t, query.Result)
+				require.NotNil(t, query.Result)
 				assert.Len(t, query.Result, 1)
 			})
 		})
@@ -82,7 +82,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Run("Should not return any snapshots", func(t *testing.T) {
-				assert.NotNil(t, query.Result)
+				require.NotNil(t, query.Result)
 				assert.Empty(t, query.Result)
 			})
 		})
@@ -108,7 +108,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 				err := SearchDashboardSnapshots(&query)
 				require.NoError(t, err)
 
-				assert.NotNil(t, query.Result)
+				require.NotNil(t, query.Result)
 				assert.Empty(t, query.Result)
 			})
 		})
@@ -120,7 +120,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 			decrypted, err := cmd.Result.DashboardEncrypted.DecodeAndDecrypt()
 			require.NoError(t, err)
 
-			assert.Equal(t, decrypted, original)
+			require.Equal(t, decrypted, original)
 		})
 	})
 }
@@ -158,8 +158,8 @@ func TestDeleteExpiredSnapshots(t *testing.T) {
 		err = SearchDashboardSnapshots(&query)
 		require.NoError(t, err)
 
-		assert.Len(t, query.Result, 1)
-		assert.Equal(t, nonExpiredSnapshot.Key, query.Result[0].Key)
+		require.Len(t, query.Result, 1)
+		require.Equal(t, nonExpiredSnapshot.Key, query.Result[0].Key)
 	})
 }
 
