@@ -12,7 +12,7 @@ import (
 
 const (
 	pngExt                         = ".png"
-	defaultSGcsSignedUrlExpiration = 7 * 24 * time.Hour //7 days
+	defaultSGcsSignedUrlExpiration = 7 * 24 * time.Hour // 7 days
 )
 
 type ImageUploader interface {

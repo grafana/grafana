@@ -1,6 +1,8 @@
+import { Observable } from 'rxjs';
+import { ComponentType } from 'react';
+
 import { DataQuery, QueryEditorProps } from './datasource';
 import { DataFrame } from './dataFrame';
-import { ComponentType } from 'react';
 
 /**
  * This JSON object is stored in the dashboard json model.
@@ -34,6 +36,7 @@ export interface AnnotationEvent {
   text?: string;
   type?: string;
   tags?: string[];
+  color?: string;
 
   // Currently used to merge annotations from alerts and dashboard
   source?: any; // source.type === 'dashboard'
@@ -49,7 +52,7 @@ export enum AnnotationEventFieldSource {
 }
 
 export interface AnnotationEventFieldMapping {
-  source?: AnnotationEventFieldSource; // defautls to 'field'
+  source?: AnnotationEventFieldSource; // defaults to 'field'
   value?: string;
   regex?: string;
 }
@@ -78,7 +81,7 @@ export interface AnnotationSupport<TQuery extends DataQuery = DataQuery, TAnno =
   /**
    * When the standard frame > event processing is insufficient, this allows explicit control of the mappings
    */
-  processEvents?(anno: TAnno, data: DataFrame[]): AnnotationEvent[] | undefined;
+  processEvents?(anno: TAnno, data: DataFrame[]): Observable<AnnotationEvent[] | undefined>;
 
   /**
    * Specify a custom QueryEditor for the annotation page.  If not specified, the standard one will be used

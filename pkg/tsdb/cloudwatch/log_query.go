@@ -17,8 +17,8 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 	}
 
 	nonEmptyRows := make([][]*cloudwatchlogs.ResultField, 0)
-	// Sometimes CloudWatch can send empty rows
 	for _, row := range response.Results {
+		// Sometimes CloudWatch can send empty rows
 		if len(row) == 0 {
 			continue
 		}
@@ -26,7 +26,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 			if row[0].Value == nil {
 				continue
 			}
-			// Sometimes it sends row with only timestamp
+			// Sometimes it sends rows with only timestamp
 			if _, err := time.Parse(cloudWatchTSFormat, *row[0].Value); err == nil {
 				continue
 			}
@@ -52,7 +52,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 			if _, exists := fieldValues[*resultField.Field]; !exists {
 				fieldNames = append(fieldNames, *resultField.Field)
 
-				// Check if field is time field
+				// Check if it's a time field
 				if _, err := time.Parse(cloudWatchTSFormat, *resultField.Value); err == nil {
 					fieldValues[*resultField.Field] = make([]*time.Time, rowCount)
 				} else if _, err := strconv.ParseFloat(*resultField.Value, 64); err == nil {
@@ -81,7 +81,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 		}
 	}
 
-	newFields := make([]*data.Field, 0)
+	newFields := make([]*data.Field, 0, len(fieldNames))
 	for _, fieldName := range fieldNames {
 		newFields = append(newFields, data.NewField(fieldName, nil, fieldValues[fieldName]))
 

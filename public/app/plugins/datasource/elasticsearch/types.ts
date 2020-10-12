@@ -9,7 +9,6 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   logMessageField?: string;
   logLevelField?: string;
   dataLinks?: DataLinkConfig[];
-  includeFrozen?: boolean;
 }
 
 export interface ElasticsearchAggregation {
@@ -17,6 +16,7 @@ export interface ElasticsearchAggregation {
   type: string;
   settings?: any;
   field?: string;
+  pipelineVariables?: Array<{ name?: string; pipelineAgg?: string }>;
 }
 
 export interface ElasticsearchQuery extends DataQuery {

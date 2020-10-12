@@ -38,7 +38,7 @@ For more information, refer to [@grafana/toolkit](https://www.npmjs.com/package/
 
 ### Field options
 
-Grafana 7.0 introduced the concept of [_field options_]({{< relref "../../panels/field-options.md#field-options" >}}), a new way of configuring your data before it gets visualized. Since this was not available in previous versions, any plugin that enables field-based configuration will not work in previous versions of Grafana.
+Grafana 7.0 introduced the concept of [_field options_]({{< relref "../../panels/field-options/_index.md#field-options" >}}), a new way of configuring your data before it gets visualized. Since this was not available in previous versions, any plugin that enables field-based configuration will not work in previous versions of Grafana.
 
 For plugins prior to Grafana 7.0, all options are considered _Display options_. The tab for field configuration isn't available.
 
@@ -69,7 +69,7 @@ For example:
 
 - A legacy panel with data source that returns data frames: Grafana converts the response to the legacy format.
 - A legacy data source with a panel using data frames: Grafana converts the response to the data frame format.
-- If both panel and data source uses the same format, no transformations are made. Data is passed as is.
+- If both panel and data source use the same format, no transformations are made. Data is passed as is.
 
 ### target and jsonData are unchanged
 
@@ -127,7 +127,7 @@ export const MyPanel: React.FC<Props> = ({ options, data, width, height }) => {
 
 While all plugins are different, we'd like to share a migration process that has worked for some of our users.
 
-1. Define you configuration model and `ConfigEditor`. For many plugins, the config editor is the simplest component so it's a good candidate to start with.
+1. Define your configuration model and `ConfigEditor`. For many plugins, the config editor is the simplest component so it's a good candidate to start with.
 1. Implement the `testDatasource()` method on the class that extends `DataSourceApi` using the settings in your configuration model to make sure you can successfully configure and access the external API.
 1. Implement the `query()` method. At this point, you can hard-code your query, because we haven’t yet implemented the query editor. The `query()` method supports both the new data frame response and the old TimeSeries response, so don’t worry about converting to the new format just yet.
 1. Implement the `QueryEditor`. How much work this requires depends on how complex your query model is.

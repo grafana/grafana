@@ -5,6 +5,7 @@ keywords = ["grafana", "alerting", "guide", "rules"]
 type = "docs"
 [menu.docs]
 name = "Create alerts"
+identifier = "create-alerts"
 parent = "alerting"
 weight = 200
 +++
@@ -78,7 +79,7 @@ We plan to add other condition types in the future, like `Other Alert`, where yo
 
 #### Multiple Series
 
-If a query returns multiple series then the aggregation function and threshold check will be evaluated for each series. What Grafana does not do currently is track alert rule state **per series**. This has implications that are detailed in the scenario below.
+If a query returns multiple series, then the aggregation function and threshold check will be evaluated for each series. What Grafana does not do currently is track alert rule state **per series**. This has implications that are detailed in the scenario below.
 
 - Alert condition with query that returns 2 series: **server1** and **server2**
 - **server1** series causes the alert rule to fire and switch to state `Alerting`
@@ -86,7 +87,7 @@ If a query returns multiple series then the aggregation function and threshold c
 - In a subsequent evaluation of the same alert rule, the **server2** series also causes the alert rule to fire
 - No new notifications are sent as the alert rule is already in state `Alerting`.
 
-So as you can see from the above scenario Grafana will not send out notifications when other series cause the alert to fire if the rule already is in state `Alerting`. To improve support for queries that return multiple series we plan to track state **per series** in a future release.
+So, as you can see from the above scenario Grafana will not send out notifications when other series cause the alert to fire if the rule already is in state `Alerting`. To improve support for queries that return multiple series we plan to track state **per series** in a future release.
 
 > Starting with Grafana v5.3 you can configure reminders to be sent for triggered alerts. This will send additional notifications
 > when an alert continues to fire. If other series (like server2 in the example above) also cause the alert rule to fire they will be included in the reminder notification. Depending on what notification channel you're using you may be able to take advantage of this feature for identifying new/existing series causing alert to fire.
@@ -99,7 +100,7 @@ Below are conditions you can configure how the rule evaluation engine should han
 | --------------- | ------------------------------------------------------------------------------------------ |
 | No Data         | Set alert rule state to `NoData`                                                           |
 | Alerting        | Set alert rule state to `Alerting`                                                         |
-| Keep Last State | Keep the current alert rule state, what ever it is.                                        |
+| Keep Last State | Keep the current alert rule state, whatever it is.                                        |
 | Ok              | Not sure why you would want to send yourself an alert when things are okay, but you could. |
 
 ### Execution errors or timeouts
@@ -109,7 +110,7 @@ Tell Grafana how to handle execution or timeout errors.
 | Error or timeout option | Description                                         |
 | ----------------------- | --------------------------------------------------- |
 | Alerting                | Set alert rule state to `Alerting`                  |
-| Keep Last State         | Keep the current alert rule state, what ever it is. |
+| Keep Last State         | Keep the current alert rule state, whatever it is. |
 
 If you have an unreliable time series store from which queries sometime timeout or fail randomly you can set this option to `Keep Last State` in order to basically ignore them.
 

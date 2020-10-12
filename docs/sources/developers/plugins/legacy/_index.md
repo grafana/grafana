@@ -6,7 +6,7 @@ aliases = ["/docs/grafana/latest/plugins/development/", "/docs/grafana/latest/pl
 
 # Legacy plugins
 
-> **Note**: Since Grafana 7.0, writing plugins using Angular is no longer recommended. If you're looking to build a new plugin, refer to [Plugins]({{< relref "../_index.md" >}}).
+> **Note:** Since Grafana 7.0, writing plugins using Angular is no longer recommended. If you're looking to build a new plugin, refer to [Plugins]({{< relref "../_index.md" >}}).
 
 You can extend Grafana by writing your own plugins and then share them with other users in [our plugin repository](https://grafana.com/plugins).
 
@@ -15,8 +15,8 @@ Grafana already has a strong community of contributors and plugin developers. By
 ## Short version
 
 1. [Set up Grafana](https://github.com/grafana/grafana/blob/master/contribute/developer-guide.md)
-2. Clone an example plugin into `/var/lib/grafana/plugins` or `data/plugins` (relative to grafana git repo if you're running development version from source dir)
-3. Use one of our example plugins as a starting point
+1. Clone an example plugin into `/var/lib/grafana/plugins` or `data/plugins` (relative to grafana git repo if you're running development version from source dir)
+1. Use one of our example plugins as a starting point
 
 Example plugins
 
@@ -87,8 +87,8 @@ export { WorldmapCtrl as PanelCtrl };
 There are three ways that you can start developing a Grafana plugin.
 
 1. Set up a Grafana development environment. [(described here)](https://github.com/grafana/grafana/blob/master/contribute/developer-guide.md) and place your plugin in the `data/plugins` folder.
-2. Install Grafana and place your plugin in the plugins directory which is set in your [config file](/administration/configuration). By default this is `/var/lib/grafana/plugins` on Linux systems.
-3. Place your plugin directory anywhere you like and specify it grafana.ini.
+1. Install Grafana and place your plugin in the plugins directory which is set in your [config file](/administration/configuration). By default this is `/var/lib/grafana/plugins` on Linux systems.
+1. Place your plugin directory anywhere you like and specify it grafana.ini.
 
 We encourage people to set up the full Grafana environment so that you can get inspiration from the rest of the Grafana code base.
 

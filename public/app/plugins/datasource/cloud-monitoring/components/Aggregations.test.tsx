@@ -1,5 +1,5 @@
 import React from 'react';
-import renderer from 'react-test-renderer';
+import { render, screen } from '@testing-library/react';
 import { shallow } from 'enzyme';
 import { Segment } from '@grafana/ui';
 import { Aggregations, Props } from './Aggregations';
@@ -22,8 +22,8 @@ const props: Props = {
 
 describe('Aggregations', () => {
   it('renders correctly', () => {
-    const tree = renderer.create(<Aggregations {...props} />).toJSON();
-    expect(tree).toMatchSnapshot();
+    render(<Aggregations {...props} />);
+    expect(screen.getByTestId('aggregations')).toBeInTheDocument();
   });
 
   describe('options', () => {
@@ -62,7 +62,7 @@ describe('Aggregations', () => {
         const { options } = wrapper.find(Segment).props() as any;
         const [, aggGroup] = options;
 
-        expect(aggGroup.options.length).toEqual(10);
+        expect(aggGroup.options.length).toEqual(11);
         expect(aggGroup.options.map((o: any) => o.value)).toEqual(expect.arrayContaining(['REDUCE_NONE']));
       });
     });

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -31,8 +34,8 @@ import (
 type datasourceInfo struct {
 	Profile       string
 	Region        string
-	AuthType      string
-	AssumeRoleArn string
+	AuthType      authType
+	AssumeRoleARN string
 	ExternalID    string
 	Namespace     string
 
@@ -74,16 +77,105 @@ type cloudWatchExecutor struct {
 
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
 	dsInfo := e.getDSInfo(region)
-	creds, err := getCredentials(dsInfo)
+
+	bldr := strings.Builder{}
+	for i, s := range []string{
+		dsInfo.AuthType.String(), dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN, region,
+	} {
+		if i != 0 {
+			bldr.WriteString(":")
+		}
+		bldr.WriteString(strings.ReplaceAll(s, ":", `\:`))
+	}
+	cacheKey := bldr.String()
+
+	sessCacheLock.RLock()
+	if env, ok := sessCache[cacheKey]; ok {
+		if env.expiration.After(time.Now().UTC()) {
+			sessCacheLock.RUnlock()
+			return env.session, nil
+		}
+	}
+	sessCacheLock.RUnlock()
+
+	cfgs := []*aws.Config{
+		{
+			CredentialsChainVerboseErrors: aws.Bool(true),
+		},
+	}
+
+	var regionCfg *aws.Config
+	if dsInfo.Region == defaultRegion {
+		plog.Warn("Region is set to \"default\", which is unsupported")
+		dsInfo.Region = ""
+	}
+	if dsInfo.Region != "" {
+		regionCfg = &aws.Config{Region: aws.String(dsInfo.Region)}
+		cfgs = append(cfgs, regionCfg)
+	}
+
+	switch dsInfo.AuthType {
+	case authTypeSharedCreds:
+		plog.Debug("Authenticating towards AWS with shared credentials", "profile", dsInfo.Profile,
+			"region", dsInfo.Region)
+		cfgs = append(cfgs, &aws.Config{
+			Credentials: credentials.NewSharedCredentials("", dsInfo.Profile),
+		})
+	case authTypeKeys:
+		plog.Debug("Authenticating towards AWS with an access key pair", "region", dsInfo.Region)
+		cfgs = append(cfgs, &aws.Config{
+			Credentials: credentials.NewStaticCredentials(dsInfo.AccessKey, dsInfo.SecretKey, ""),
+		})
+	case authTypeDefault:
+		plog.Debug("Authenticating towards AWS with default SDK method", "region", dsInfo.Region)
+	default:
+		panic(fmt.Sprintf("Unrecognized authType: %d", dsInfo.AuthType))
+	}
+	sess, err := newSession(cfgs...)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg := &aws.Config{
-		Region:      aws.String(dsInfo.Region),
-		Credentials: creds,
+	duration := stscreds.DefaultDuration
+	expiration := time.Now().Add(duration)
+	if dsInfo.AssumeRoleARN != "" {
+		// We should assume a role in AWS
+		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleARN)
+
+		cfgs := []*aws.Config{
+			{
+				CredentialsChainVerboseErrors: aws.Bool(true),
+			},
+			{
+				Credentials: newSTSCredentials(sess, dsInfo.AssumeRoleARN, func(p *stscreds.AssumeRoleProvider) {
+					// Not sure if this is necessary, overlaps with p.Duration and is undocumented
+					p.Expiry.SetExpiration(expiration, 0)
+					p.Duration = duration
+					if dsInfo.ExternalID != "" {
+						p.ExternalID = aws.String(dsInfo.ExternalID)
+					}
+				}),
+			},
+		}
+		if regionCfg != nil {
+			cfgs = append(cfgs, regionCfg)
+		}
+		sess, err = newSession(cfgs...)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return newSession(cfg)
+
+	plog.Debug("Successfully created AWS session")
+
+	sessCacheLock.Lock()
+	sessCache[cacheKey] = envelope{
+		session:    sess,
+		expiration: expiration,
+	}
+	sessCacheLock.Unlock()
+
+	return sess, nil
 }
 
 func (e *cloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWatchAPI, error) {
@@ -282,23 +374,64 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	return response, nil
 }
 
+type authType int
+
+const (
+	authTypeDefault authType = iota
+	authTypeSharedCreds
+	authTypeKeys
+)
+
+func (at authType) String() string {
+	switch at {
+	case authTypeDefault:
+		return "default"
+	case authTypeSharedCreds:
+		return "sharedCreds"
+	case authTypeKeys:
+		return "keys"
+	default:
+		panic(fmt.Sprintf("Unrecognized auth type %d", at))
+	}
+}
+
 func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 	if region == defaultRegion {
 		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
 	}
 
-	authType := e.DataSource.JsonData.Get("authType").MustString()
-	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
+	atStr := e.DataSource.JsonData.Get("authType").MustString()
+	assumeRoleARN := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
 	externalID := e.DataSource.JsonData.Get("externalId").MustString()
 	decrypted := e.DataSource.DecryptedValues()
 	accessKey := decrypted["accessKey"]
 	secretKey := decrypted["secretKey"]
 
+	at := authTypeDefault
+	switch atStr {
+	case "credentials":
+		at = authTypeSharedCreds
+	case "keys":
+		at = authTypeKeys
+	case "default":
+		at = authTypeDefault
+	case "arn":
+		at = authTypeDefault
+		plog.Warn("Authentication type \"arn\" is deprecated, falling back to default")
+	default:
+		plog.Warn("Unrecognized AWS authentication type", "type", atStr)
+	}
+
+	profile := e.DataSource.JsonData.Get("profile").MustString()
+	if profile == "" {
+		profile = e.DataSource.Database // legacy support
+	}
+
 	return &datasourceInfo{
 		Region:        region,
-		Profile:       e.DataSource.Database,
-		AuthType:      authType,
-		AssumeRoleArn: assumeRoleArn,
+		Profile:       profile,
+		AuthType:      at,
+		AssumeRoleARN: assumeRoleARN,
 		ExternalID:    externalID,
 		AccessKey:     accessKey,
 		SecretKey:     secretKey,

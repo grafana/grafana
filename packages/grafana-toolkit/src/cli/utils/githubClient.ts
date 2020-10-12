@@ -7,7 +7,7 @@ const enterpriseURL = 'https://api.github.com/repos/grafana/grafana-enterprise';
 //
 // Two key things:
 // 1. You can specify whenever you want the credentials to be required or not when imported.
-// 2. If the the credentials are available as part of the environment, even if
+// 2. If the credentials are available as part of the environment, even if
 // they're not required - the library will use them. This allows us to overcome
 // any API rate limiting imposed without authentication.
 

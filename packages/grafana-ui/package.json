@@ -35,6 +35,7 @@
     "@torkelo/react-select": "3.0.8",
     "@types/react-beautiful-dnd": "12.1.2",
     "@types/react-color": "3.0.1",
+    "@types/hoist-non-react-statics": "3.3.1",
     "@types/react-select": "3.0.8",
     "@types/react-table": "7.0.12",
     "@types/slate": "0.47.1",
@@ -42,6 +43,8 @@
     "bizcharts": "^3.5.8",
     "classnames": "2.2.6",
     "d3": "5.15.0",
+    "hoist-non-react-statics": "3.3.2",
+    "immutable": "3.8.2",
     "emotion": "10.0.27",
     "immutable": "3.8.2",
     "jquery": "3.5.1",
@@ -67,7 +70,8 @@
     "react-table": "7.0.0",
     "react-transition-group": "4.3.0",
     "slate": "0.47.8",
-    "tinycolor2": "1.4.1"
+    "tinycolor2": "1.4.1",
+    "uplot": "1.1.2"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "11.0.2",
@@ -106,7 +110,7 @@
     "rollup-plugin-visualizer": "3.3.1",
     "storybook-dark-mode": "0.6.1",
     "ts-loader": "6.2.1",
-    "typescript": "3.9.3"
+    "typescript": "4.0.2"
   },
   "types": "src/index.ts"
 }

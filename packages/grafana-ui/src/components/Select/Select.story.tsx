@@ -87,7 +87,7 @@ const getDynamicProps = () => {
   };
 };
 
-export const basic = () => {
+export const Basic = () => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
@@ -107,7 +107,7 @@ export const basic = () => {
 /**
  * Uses plain values instead of SelectableValue<T>
  */
-export const basicSelectPlainValue = () => {
+export const BasicSelectPlainValue = () => {
   const [value, setValue] = useState<string>();
   return (
     <>
@@ -158,7 +158,7 @@ export const SelectWithOptionDescriptions = () => {
 /**
  * Uses plain values instead of SelectableValue<T>
  */
-export const multiPlainValue = () => {
+export const MultiPlainValue = () => {
   const [value, setValue] = useState<string[]>();
 
   return (
@@ -175,7 +175,7 @@ export const multiPlainValue = () => {
   );
 };
 
-export const multiSelect = () => {
+export const MultiSelectBasic = () => {
   const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
 
   return (
@@ -193,7 +193,7 @@ export const multiSelect = () => {
   );
 };
 
-export const multiSelectAsync = () => {
+export const MultiSelectAsync = () => {
   const [value, setValue] = useState<Array<SelectableValue<string>>>();
 
   return (
@@ -209,7 +209,7 @@ export const multiSelectAsync = () => {
     />
   );
 };
-export const buttonSelect = () => {
+export const ButtonSelectBasic = () => {
   const [value, setValue] = useState<SelectableValue<string>>();
   const icon = getIconKnob();
   return (
@@ -227,7 +227,7 @@ export const buttonSelect = () => {
   );
 };
 
-export const basicSelectAsync = () => {
+export const BasicSelectAsync = () => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
@@ -243,7 +243,7 @@ export const basicSelectAsync = () => {
   );
 };
 
-export const customizedControl = () => {
+export const CustomizedControl = () => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
@@ -266,7 +266,7 @@ export const customizedControl = () => {
   );
 };
 
-export const autoMenuPlacement = () => {
+export const AutoMenuPlacement = () => {
   const [value, setValue] = useState<SelectableValue<string>>();
 
   return (
@@ -285,7 +285,7 @@ export const autoMenuPlacement = () => {
   );
 };
 
-export const customValueCreation = () => {
+export const CustomValueCreation = () => {
   const [value, setValue] = useState<SelectableValue<string>>();
   const [customOptions, setCustomOptions] = useState<Array<SelectableValue<string>>>([]);
   const options = generateOptions();

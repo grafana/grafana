@@ -18,8 +18,8 @@ import { ElasticQueryBuilder } from './query_builder';
 import { toUtc } from '@grafana/data';
 import * as queryDef from './query_def';
 import { getBackendSrv } from '@grafana/runtime';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
@@ -52,13 +52,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   logLevelField?: string;
   dataLinks: DataLinkConfig[];
   languageProvider: LanguageProvider;
-  includeFrozen: boolean;
 
-  /** @ngInject */
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
-    private templateSrv: TemplateSrv,
-    private timeSrv: TimeSrv
+    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly timeSrv: TimeSrv = getTimeSrv()
   ) {
     super(instanceSettings);
     this.basicAuth = instanceSettings.basicAuth;
@@ -80,7 +78,6 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     this.logMessageField = settingsData.logMessageField || '';
     this.logLevelField = settingsData.logLevelField || '';
     this.dataLinks = settingsData.dataLinks || [];
-    this.includeFrozen = settingsData.includeFrozen ?? false;
 
     if (this.logMessageField === '') {
       this.logMessageField = undefined;
@@ -561,17 +558,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   getMultiSearchUrl() {
-    const searchParams = new URLSearchParams();
-
     if (this.esVersion >= 70 && this.maxConcurrentShardRequests) {
-      searchParams.append('max_concurrent_shard_requests', '' + this.maxConcurrentShardRequests);
+      return `_msearch?max_concurrent_shard_requests=${this.maxConcurrentShardRequests}`;
     }
 
-    if (this.esVersion >= 70 && this.includeFrozen) {
-      searchParams.append('ignore_throttled', 'false');
-    }
-
-    return (`_msearch?` + searchParams.toString()).replace(/\?+$/, '');
+    return '_msearch';
   }
 
   metricFindQuery(query: any) {

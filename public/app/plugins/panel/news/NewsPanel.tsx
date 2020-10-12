@@ -29,16 +29,16 @@ export class NewsPanel extends PureComponent<Props, State> {
   }
 
   componentDidMount(): void {
-    this.loadFeed();
+    this.loadChannel();
   }
 
   componentDidUpdate(prevProps: Props): void {
     if (this.props.options.feedUrl !== prevProps.options.feedUrl) {
-      this.loadFeed();
+      this.loadChannel();
     }
   }
 
-  async loadFeed() {
+  async loadChannel() {
     const { options } = this.props;
     try {
       const url = options.feedUrl

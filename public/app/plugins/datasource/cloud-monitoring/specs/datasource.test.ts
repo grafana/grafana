@@ -251,7 +251,7 @@ describe('CloudMonitoringDataSource', () => {
       ds = new CloudMonitoringDataSource(instanceSettings, templateSrv, timeSrv);
     });
     describe('when theres only one target', () => {
-      describe('and the cloud monitoring unit doesnt have a corresponding grafana unit', () => {
+      describe('and the cloud monitoring unit does nott have a corresponding grafana unit', () => {
         beforeEach(() => {
           res = ds.resolvePanelUnitFromTargets([{ unit: 'megaseconds' }]);
         });
@@ -278,7 +278,7 @@ describe('CloudMonitoringDataSource', () => {
           expect(res).toEqual('bits');
         });
       });
-      describe('and all target units are the same but doesnt have grafana mappings', () => {
+      describe('and all target units are the same but does not have grafana mappings', () => {
         beforeEach(() => {
           res = ds.resolvePanelUnitFromTargets([{ unit: 'megaseconds' }, { unit: 'megaseconds' }]);
         });

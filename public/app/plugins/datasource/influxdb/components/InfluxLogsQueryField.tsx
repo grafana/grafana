@@ -4,7 +4,7 @@ import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
 import InfluxQueryModel from '../influx_query_model';
 import { AdHocFilterField, KeyValuePair } from 'app/features/explore/AdHocFilterField';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import InfluxDatasource from '../datasource';
 import { InfluxQueryBuilder } from '../query_builder';
 import { InfluxOptions, InfluxQuery } from '../types';
@@ -48,7 +48,7 @@ function getChooserText({ measurement, field, error }: ChooserOptions): string {
 }
 
 export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
-  templateSrv: TemplateSrv = new TemplateSrv();
+  templateSrv: TemplateSrv = getTemplateSrv();
   state: State = {
     measurements: [],
     measurement: null,

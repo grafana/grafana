@@ -9,7 +9,7 @@ Docker >= 2.1.0.3
 ## Build the doc site
 
 1. In the command line, make sure you are in the docs folder: `cd docs`.
-2. Run `make docs`. This launches a preview of the docs website at `http://localhost:3002/docs/grafana/latest/` which will refresh automatically when changes to content in the `sources` directory are made.
+1. Run `make docs`. This launches a preview of the docs website at `http://localhost:3002/docs/grafana/latest/` which will refresh automatically when changes to content in the `sources` directory are made.
 
 ---
 

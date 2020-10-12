@@ -37,7 +37,7 @@ Before you apply transformations, all of the following must be true:
   - [Heatmap]({{< relref "visualizations/heatmap.md" >}})
   - [Logs]({{< relref "visualizations/logs-panel.md" >}})
   - [Stat]({{< relref "visualizations/stat-panel.md" >}})
-  - [Table]({{< relref "visualizations/table-panel.md" >}})
+  - [Table]({{< relref "visualizations/table/_index.md" >}})
 
 ## Apply a transformation
 
@@ -75,7 +75,7 @@ Grafana comes with the following transformations:
     - [Add field from calculation](#add-field-from-calculation)
     - [Labels to fields](#labels-to-fields)
     - [Group By](#group-by)
-    - [Series to rows](#series-to-rows)
+  - [Series to rows](#series-to-rows)
   - [Debug transformations](#debug-transformations)
 
 Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
