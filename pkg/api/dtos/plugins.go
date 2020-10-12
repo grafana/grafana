@@ -38,6 +38,11 @@ type PluginListItem struct {
 	Category      string                  `json:"category"`
 	State         plugins.PluginState     `json:"state"`
 	Signature     plugins.PluginSignature `json:"signature"`
+	Errors        *PluginListItemError    `json:"errors"`
+}
+
+type PluginListItemError struct {
+	Error string `json:"error"`
 }
 
 type PluginList []PluginListItem

@@ -45,6 +45,11 @@ func GetDataSources(c *models.ReqContext) Response {
 
 		if plugin, exists := plugins.DataSources[ds.Type]; exists {
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
+			if plugin.Errors != nil {
+				dsItem.Errors = dtos.DataSourceListItemError{
+					Error: "Experienced a problem",
+				}
+			}
 		} else {
 			dsItem.TypeLogoUrl = "public/img/icn-datasource.svg"
 		}

@@ -28,6 +28,7 @@ const PluginListItem: FC<Props> = props => {
           <div className="card-item-details">
             <div className="card-item-name">{plugin.name}</div>
             <div className="card-item-sub-name">{`By ${plugin.info.author.name}`}</div>
+            {plugin.errors && <div>{`Errors: ${plugin.errors.error}`}</div>}
           </div>
         </div>
       </a>

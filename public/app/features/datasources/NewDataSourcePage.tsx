@@ -128,6 +128,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
       description={plugin.info.description}
       ariaLabel={selectors.pages.AddDataSource.dataSourcePlugins(plugin.name)}
       logoUrl={plugin.info.logos.small}
+      errors={plugin.errors?.error}
       actions={
         <>
           {learnMoreLink && (

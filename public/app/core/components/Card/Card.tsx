@@ -10,6 +10,7 @@ export interface CardProps {
   onClick?: () => void;
   ariaLabel?: string;
   className?: string;
+  errors?: string;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -21,6 +22,7 @@ export const Card: React.FC<CardProps> = ({
   onClick,
   ariaLabel,
   className,
+  errors,
 }) => {
   const mainClassName = cx('add-data-source-item', className);
 
@@ -29,6 +31,7 @@ export const Card: React.FC<CardProps> = ({
       {logoUrl && <img className="add-data-source-item-logo" src={logoUrl} />}
       <div className="add-data-source-item-text-wrapper">
         <span className="add-data-source-item-text">{title}</span>
+        <div>Errors: {errors}</div>
         {description && <span className="add-data-source-item-desc">{description}</span>}
         {labels && <div>{labels}</div>}
       </div>

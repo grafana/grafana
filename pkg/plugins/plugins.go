@@ -229,10 +229,10 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		}
 
 		pm.log.Debug("Found plugin", "id", plugin.Id, "signature", plugin.Signature, "hasRoot", plugin.Root != nil)
-		if !scanner.validateSignature(plugin) {
-			pm.log.Debug("Not adding plugin since it lacks a valid signature", "id", plugin.Id,
-				"signature", plugin.Signature)
-			continue
+		signingError := scanner.validateSignature(plugin)
+		if signingError != nil {
+			pm.log.Info("Plugin has signature errors", "id", plugin.Id,
+				"signature", plugin.Signature, "errors", signingError.Err)
 		}
 
 		pm.log.Debug("Attempting to add plugin", "id", plugin.Id)
@@ -268,6 +268,12 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		defer reader.Close()
 
 		jsonParser := json.NewDecoder(reader)
+
+		if signingError != nil {
+			plugin.Errors = &PluginErrors{
+				PluginErrors: []PluginError{*signingError},
+			}
+		}
 
 		// Load the full plugin, and add it to manager
 		if err := loader.Load(jsonParser, plugin, scanner.backendPluginManager); err != nil {
@@ -364,16 +370,16 @@ func (scanner *PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
 }
 
 // validateSignature validates a plugin's signature.
-func (s *PluginScanner) validateSignature(plugin *PluginBase) bool {
+func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
 	// For the time being, we choose to only require back-end plugins to be signed
 	// NOTE: the state is calculated again when setting metadata on the object
 	if !plugin.Backend || !s.requireSigned {
-		return true
+		return nil
 	}
 
 	if plugin.Signature == PluginSignatureValid {
 		s.log.Debug("Plugin has valid signature", "id", plugin.Id)
-		return true
+		return nil
 	}
 
 	if plugin.Root != nil {
@@ -387,7 +393,7 @@ func (s *PluginScanner) validateSignature(plugin *PluginBase) bool {
 			plugin.Signature = plugin.Root.Signature
 			if plugin.Signature == PluginSignatureValid {
 				s.log.Debug("Plugin has valid signature (inherited from root)", "id", plugin.Id)
-				return true
+				return nil
 			}
 		}
 	} else {
@@ -404,23 +410,32 @@ func (s *PluginScanner) validateSignature(plugin *PluginBase) bool {
 				break
 			}
 		}
-		if setting.Env != setting.Dev && !allowUnsigned {
-			s.log.Debug("Plugin is unsigned", "id", plugin.Id)
+		if setting.Env != setting.Prod && !allowUnsigned {
+			s.log.Info("Plugin is unsigned", "id", plugin.Id)
 			s.errors = append(s.errors, fmt.Errorf("plugin %q is unsigned", plugin.Id))
-			return false
+			return &PluginError{
+				ErrorCode: UNSIGNED,
+				Err:       nil,
+			}
 		}
 
 		s.log.Warn("Running an unsigned backend plugin", "pluginID", plugin.Id, "pluginDir",
 			plugin.PluginDir)
-		return true
+		return nil
 	case PluginSignatureInvalid:
 		s.log.Debug("Plugin %q has an invalid signature", plugin.Id)
 		s.errors = append(s.errors, fmt.Errorf("plugin %q has an invalid signature", plugin.Id))
-		return false
+		return &PluginError{
+			ErrorCode: INVALID,
+			Err:       nil,
+		}
 	case PluginSignatureModified:
 		s.log.Debug("Plugin %q has a modified signature", plugin.Id)
 		s.errors = append(s.errors, fmt.Errorf("plugin %q's signature has been modified", plugin.Id))
-		return false
+		return &PluginError{
+			ErrorCode: MODIFIED,
+			Err:       nil,
+		}
 	default:
 		panic(fmt.Sprintf("Plugin %q has unrecognized plugin signature state %q", plugin.Id, plugin.Signature))
 	}

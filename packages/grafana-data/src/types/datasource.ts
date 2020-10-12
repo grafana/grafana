@@ -533,6 +533,11 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   readOnly: boolean;
   withCredentials: boolean;
   version?: number;
+  errors?: DatasourceErrors;
+}
+
+export interface DatasourceErrors {
+  error: string;
 }
 
 /**

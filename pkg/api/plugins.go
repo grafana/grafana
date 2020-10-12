@@ -81,7 +81,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 	result := make(dtos.PluginList, 0)
 	for _, pluginDef := range plugins.Plugins {
 		// filter out app sub plugins
-		if embeddedFilter == "0" && pluginDef.IncludedInAppId != "" {
+		if embeddedFilter == "0" && pluginDef.IncludedInAppId != "" && pluginDef.Errors == nil {
 			continue
 		}
 
@@ -112,6 +112,12 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 			Signature:     pluginDef.Signature,
 		}
 
+		if pluginDef.Errors != nil {
+			listItem.Errors = &dtos.PluginListItemError{
+				Error: "Experienced a problem",
+			}
+		}
+
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
 			listItem.Enabled = pluginSetting.Enabled
 			listItem.Pinned = pluginSetting.Pinned
@@ -122,7 +128,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 		}
 
 		// filter out disabled
-		if enabledFilter == "1" && !listItem.Enabled {
+		if enabledFilter == "1" && !listItem.Enabled && listItem.Errors == nil {
 			continue
 		}
 
