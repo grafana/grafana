@@ -18,8 +18,17 @@ func (hs *HTTPServer) ConditionsEval(c *models.ReqContext, dto dtos.EvalAlertCon
 	defer cancelFn()
 
 	alertExecCtx := eval.AlertExecCtx{Ctx: alertCtx, SignedInUser: c.SignedInUser}
-	fromStr := "now-3h"
-	toStr := "now"
+
+	fromStr := c.Query("from")
+	if fromStr == "" {
+		fromStr = "now-3h"
+	}
+
+	toStr := c.Query("to")
+	if toStr == "" {
+		toStr = "now"
+	}
+
 	execResult, err := dto.Conditions.Execute(alertExecCtx, fromStr, toStr)
 	if err != nil {
 		return Error(400, "Failed to execute conditions", err)
