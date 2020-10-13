@@ -1,4 +1,4 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC, HTMLAttributes, ReactNode } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme, styleMixins } from '../../themes';
@@ -24,6 +24,8 @@ export interface Props {
   actions?: ReactNode[];
   /** Right-side actions */
   secondaryActions?: ReactNode[];
+  /** Customise the container html element for the card. Defaults to div */
+  tag?: keyof JSX.IntrinsicElements;
 }
 
 export const Card: FC<Props> = ({
@@ -36,6 +38,7 @@ export const Card: FC<Props> = ({
   actions = [],
   tooltip = '',
   secondaryActions = [],
+  tag = 'div',
 }) => {
   const hasActions = Boolean(actions.length || secondaryActions.length);
   const disableHover = actions.length > 1;
@@ -45,26 +48,25 @@ export const Card: FC<Props> = ({
   const meta = Array.isArray(metaData)
     ? (metaData as ReactNode[]).reduce((prev, curr) => [prev, <span className={styles.separator}>|</span>, curr])
     : metaData;
+
   return (
-    <>
-      <Tooltip placement="top" content={tooltip} theme="info" show={!!tooltip}>
-        <div tabIndex={0} className={styles.container}>
-          {mediaContent && <div className={styles.media}>{mediaContent}</div>}
-          <div className={styles.inner}>
-            <p className={styles.title}>{title}</p>
-            {meta && <p className={styles.metaData}>{meta}</p>}
-            {!!tags.length && <TagList tags={tags} onClick={onTagClick} />}
-            {hasActions && (
-              <div className={styles.actionRow}>
-                {!!actions.length && <div className={styles.actions}>{actions}</div>}
-                {!!secondaryActions.length && <div className={styles.secondaryActions}>{secondaryActions}</div>}
-              </div>
-            )}
-          </div>
-          <div className={styles.overlay} />
+    <Tooltip placement="top" content={tooltip} theme="info" show={!!tooltip}>
+      <CardContainer tag={tag} tabIndex={0} className={styles.container}>
+        {mediaContent && <div className={styles.media}>{mediaContent}</div>}
+        <div className={styles.inner}>
+          <p className={styles.title}>{title}</p>
+          {meta && <p className={styles.metaData}>{meta}</p>}
+          {!!tags.length && <TagList tags={tags} onClick={onTagClick} />}
+          {hasActions && (
+            <div className={styles.actionRow}>
+              {!!actions.length && <div className={styles.actions}>{actions}</div>}
+              {!!secondaryActions.length && <div className={styles.secondaryActions}>{secondaryActions}</div>}
+            </div>
+          )}
         </div>
-      </Tooltip>
-    </>
+        <div className={styles.overlay} />
+      </CardContainer>
+    </Tooltip>
   );
 };
 
@@ -142,4 +144,12 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
       margin: 0 ${theme.spacing.sm};
     `,
   };
+};
+
+interface ContainerProps extends HTMLAttributes<HTMLOrSVGElement> {
+  tag: keyof JSX.IntrinsicElements;
+}
+
+const CardContainer: FC<ContainerProps> = ({ tag, children, ...props }) => {
+  return React.createElement(tag, props, children);
 };
