@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, ReactNode } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme, styleMixins } from '../../themes';
@@ -8,7 +8,8 @@ import { TagList } from '..';
 
 export interface Props {
   title?: string;
-  description?: string;
+  /** Card description text or meta data. If array is supplied, elements will be rendered with vertical line separator */
+  metaData?: ReactNode | ReactNode[];
   /** Content for the card's tooltip */
   tooltip?: PopoverContent;
   /** List of tags to display in the card */
@@ -18,16 +19,16 @@ export interface Props {
   /** Indicates if the card and all its actions can be interacted with */
   disabled?: boolean;
   /** Image or icon to be displayed on the let side of the card */
-  mediaContent?: React.ReactNode;
+  mediaContent?: ReactNode;
   /** Main card actions **/
-  actions?: React.ReactNode[];
+  actions?: ReactNode[];
   /** Right-side actions */
-  secondaryActions?: React.ReactNode[];
+  secondaryActions?: ReactNode[];
 }
 
 export const Card: FC<Props> = ({
   title,
-  description,
+  metaData,
   tags = [],
   onTagClick,
   disabled,
@@ -40,6 +41,10 @@ export const Card: FC<Props> = ({
   const disableHover = actions.length > 1;
   const theme = useTheme();
   const styles = getStyles(theme, disabled && !actions.length, disableHover);
+  // Join meta data elements by '|'
+  const meta = Array.isArray(metaData)
+    ? (metaData as ReactNode[]).reduce((prev, curr) => [prev, <span className={styles.separator}>|</span>, curr])
+    : metaData;
   return (
     <>
       <Tooltip placement="top" content={tooltip} theme="info" show={!!tooltip}>
@@ -47,7 +52,7 @@ export const Card: FC<Props> = ({
           {mediaContent && <div className={styles.media}>{mediaContent}</div>}
           <div className={styles.inner}>
             <p className={styles.title}>{title}</p>
-            {description && <p className={styles.description}>{description}</p>}
+            {meta && <p className={styles.metaData}>{meta}</p>}
             {!!tags.length && <TagList tags={tags} onClick={onTagClick} />}
             {hasActions && (
               <div className={styles.actionRow}>
@@ -91,7 +96,7 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
       margin-bottom: ${theme.spacing.xxs};
       font-size: ${theme.typography.size.md};
     `,
-    description: css`
+    metaData: css`
       margin-bottom: ${theme.spacing.sm};
       font-size: ${theme.typography.size.sm};
       color: ${theme.colors.textSemiWeak};
@@ -132,6 +137,9 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
       & > * {
         margin-right: ${theme.spacing.sm};
       }
+    `,
+    separator: css`
+      margin: 0 ${theme.spacing.sm};
     `,
   };
 };

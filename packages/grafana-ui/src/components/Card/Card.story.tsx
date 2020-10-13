@@ -28,7 +28,7 @@ export const Basic = () => {
   return (
     <Card
       title="Filter by name"
-      description="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
+      metaData="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
       disabled={disabled}
     />
   );
@@ -39,7 +39,7 @@ export const WithTooltip = () => {
   return (
     <Card
       title="Reduce"
-      description="Reduce all rows or data points to a single value using a function like max, min, mean or last."
+      metaData="Reduce all rows or data points to a single value using a function like max, min, mean or last."
       tooltip="Click to apply this transformation."
       disabled={disabled}
     />
@@ -51,7 +51,7 @@ export const WithTags = () => {
   return (
     <Card
       title="Elasticsearch – Custom Templated Query"
-      description="Elastic Search"
+      metaData="Elastic Search"
       tags={['elasticsearch', 'test', 'testdata']}
       disabled={disabled}
     />
@@ -63,7 +63,7 @@ export const WithMedia = () => {
   return (
     <Card
       title="1-ops-tools1-fallback"
-      description="Prometheus  |  https://ops-us-east4.grafana.net/api/prom"
+      metaData="Prometheus  |  https://ops-us-east4.grafana.net/api/prom"
       disabled={disabled}
       mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
     />
@@ -74,7 +74,10 @@ export const WithActions = () => {
   return (
     <Card
       title="1-ops-tools1-fallback"
-      description="Prometheus  |  https://ops-us-east4.grafana.net/api/prom"
+      metaData={[
+        'Prometheus',
+        <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+      ]}
       disabled={disabled}
       mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
       actions={[<Button variant="secondary">Settings</Button>, <Button variant="secondary">Explore</Button>]}
