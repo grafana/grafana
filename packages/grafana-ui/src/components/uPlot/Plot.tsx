@@ -46,7 +46,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
       return;
     }
     const data = preparePlotData(props.data);
-    pluginLog('uPlot core', false, 'updating plot data(throttled log!)');
+    // pluginLog('uPlot core', false, 'updating plot data(throttled log!)');
     // If config hasn't changed just update uPlot's data
     plotInstance.setData(data);
   }, [plotInstance, props.data]);

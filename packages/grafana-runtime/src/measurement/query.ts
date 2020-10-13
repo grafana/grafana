@@ -2,6 +2,7 @@ import {
   DataQueryResponse,
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
+  isValidLiveChannelAddress,
   LiveChannelAddress,
   LoadingState,
 } from '@grafana/data';
@@ -12,7 +13,7 @@ import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 export function getLiveMeasurements(addr: LiveChannelAddress): LiveMeasurements | undefined {
-  if (!addr || !addr.path) {
+  if (!isValidLiveChannelAddress(addr)) {
     return undefined;
   }
 
@@ -22,11 +23,8 @@ export function getLiveMeasurements(addr: LiveChannelAddress): LiveMeasurements 
   }
 
   const channel = live.getChannel<LiveMeasurements>(addr);
-  if (!channel.config || !channel.config.getLast) {
-    return undefined;
-  }
-
-  return channel.config.getLast();
+  const getController = channel?.config?.getController;
+  return getController ? getController() : undefined;
 }
 
 /**
@@ -49,7 +47,6 @@ export function getLiveMeasurmentsObserver(
     return of(rsp);
   }
 
-  rsp.state = LoadingState.Streaming;
   rsp.key = requestId;
   return live
     .getChannel<LiveMeasurements>(addr)
@@ -58,10 +55,16 @@ export function getLiveMeasurmentsObserver(
       map(evt => {
         if (isLiveChannelMessageEvent(evt)) {
           rsp.data = evt.message.getData(query);
-          // ?? skip when data is empty ???
+          if (!rsp.data.length) {
+            // ?? skip when data is empty ???
+          }
           delete rsp.error;
+          rsp.state = LoadingState.Streaming;
         } else if (isLiveChannelStatusEvent(evt)) {
-          rsp.error = evt.error;
+          if (evt.error != null) {
+            rsp.error = rsp.error;
+            rsp.state = LoadingState.Error;
+          }
         }
         return { ...rsp }; // send event on all status messages
       })

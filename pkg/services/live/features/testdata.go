@@ -103,7 +103,7 @@ func (g *testdataRunner) runRandomCSV() {
 		Time:   0,
 		Values: make(map[string]interface{}, 5),
 	}
-	msg := models.MeasurementMessage{
+	msg := models.MeasurementBatch{
 		Measures: []models.Measurement{measure},
 	}
 

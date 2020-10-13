@@ -1,8 +1,8 @@
 import defaults from 'lodash/defaults';
 
 import React, { PureComponent } from 'react';
-import { InlineField, Select } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue, LiveChannelScope } from '@grafana/data';
+import { InlineField, Select, FeatureInfoBox } from '@grafana/ui';
+import { QueryEditorProps, SelectableValue, LiveChannelScope, FeatureState } from '@grafana/data';
 import { getLiveMeasurements, LiveMeasurements } from '@grafana/runtime';
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
@@ -136,6 +136,13 @@ export class QueryEditor extends PureComponent<Props> {
             </InlineField>
           </div>
         )}
+
+        <FeatureInfoBox title="Grafana Live - Measurments" featureState={FeatureState.alpha}>
+          <p>
+            This supports real-time event streams in grafana core. This feature is under heavy development. Expect the
+            intefaces and structures to change as this becomes more production ready.
+          </p>
+        </FeatureInfoBox>
       </>
     );
   }

@@ -7,8 +7,9 @@ import {
   matchAllLabels,
   parseLabels,
   CircularVector,
+  ArrayVector,
 } from '@grafana/data';
-import { Measurement, MeasurementBatch, LiveMeasurements, MeasurementsQuery } from './types';
+import { Measurement, MeasurementBatch, LiveMeasurements, MeasurementsQuery, MeasurmentAction } from './types';
 
 interface MeasurmentCacheConfig {
   append?: 'head' | 'tail';
@@ -23,7 +24,7 @@ export class MeasurmentCache {
     if (!this.config) {
       this.config = {
         append: 'tail',
-        capacity: 1000,
+        capacity: 600, // Default capacity 10min @ 1hz
       };
     }
   }
@@ -38,7 +39,7 @@ export class MeasurmentCache {
     });
   }
 
-  addMeasurement(m: Measurement): DataFrame {
+  addMeasurement(m: Measurement, action: MeasurmentAction): DataFrame {
     const key = m.labels ? formatLabels(m.labels) : '';
     let frame = this.frames[key];
     if (!frame) {
@@ -59,10 +60,27 @@ export class MeasurmentCache {
       this.frames[key] = frame;
     }
 
+    // Clear existing values
+    if (action === MeasurmentAction.Replace) {
+      for (const field of frame.fields) {
+        (field.values as ArrayVector).buffer.length = 0; // same buffer, but reset to empty length
+      }
+    }
+
     // Add the timestamp
     frame.values['time'].add(m.time || Date.now());
 
-    // Append the row
+    // Attach field config to the current fields
+    if (m.config) {
+      for (const [key, value] of Object.entries(m.config)) {
+        const f = frame.fields.find(f => f.name === key);
+        if (f) {
+          f.config = value;
+        }
+      }
+    }
+
+    // Append all values (a row)
     for (const [key, value] of Object.entries(m.values)) {
       let v = frame.values[key];
       if (!v) {
@@ -72,17 +90,18 @@ export class MeasurmentCache {
       }
       v.add(value);
     }
-    // This will make sure everything has the same length
+
+    // Make sure all fields have the same length
     frame.validate();
     return frame;
   }
 }
 
 export class MeasurementCollector implements LiveMeasurements {
-  measurements: Record<string, MeasurmentCache> = {};
+  measurements = new Map<string, MeasurmentCache>();
   config: MeasurmentCacheConfig = {
     append: 'tail',
-    capacity: 1000,
+    capacity: 600, // Default capacity 10min @ 1hz
   };
 
   //------------------------------------------------------
@@ -95,12 +114,12 @@ export class MeasurementCollector implements LiveMeasurements {
     let data: DataFrame[] = [];
     if (name) {
       // for now we only match exact names
-      const m = this.measurements[name];
+      const m = this.measurements.get(name);
       if (m) {
         data = m.getFrames(labels);
       }
     } else {
-      for (const f of Object.values(this.measurements)) {
+      for (const f of this.measurements.values()) {
         data.push.apply(data, f.getFrames(labels));
       }
     }
@@ -122,7 +141,7 @@ export class MeasurementCollector implements LiveMeasurements {
   }
 
   getDistinctLabels(name: string): Labels[] {
-    const m = this.measurements[name];
+    const m = this.measurements.get(name);
     if (m) {
       return Object.keys(m.frames).map(k => parseLabels(k));
     }
@@ -133,7 +152,7 @@ export class MeasurementCollector implements LiveMeasurements {
     this.config.capacity = size;
 
     // Now update all the circular buffers
-    for (const wrap of Object.values(this.measurements)) {
+    for (const wrap of this.measurements.values()) {
       for (const frame of Object.values(wrap.frames)) {
         for (const field of frame.fields) {
           (field.values as CircularVector).setCapacity(size);
@@ -146,18 +165,35 @@ export class MeasurementCollector implements LiveMeasurements {
     return this.config.capacity!;
   }
 
+  clear() {
+    this.measurements.clear();
+  }
+
   //------------------------------------------------------
   // Collector
   //------------------------------------------------------
+
   addBatch = (batch: MeasurementBatch) => {
+    let action = batch.action ?? MeasurmentAction.Append;
+    if (action === MeasurmentAction.Clear) {
+      this.measurements.clear();
+      action = MeasurmentAction.Append;
+    }
+
+    // Change the local buffer size
+    if (batch.capacity && batch.capacity !== this.config.capacity) {
+      this.setCapacity(batch.capacity);
+    }
+
     for (const measure of batch.measures) {
       const name = measure.name || '';
-      let m = this.measurements[name];
+      let m = this.measurements.get(name);
       if (!m) {
-        m = this.measurements[name] = new MeasurmentCache(name, this.config);
+        m = new MeasurmentCache(name, this.config);
+        this.measurements.set(name, m);
       }
       if (measure.values) {
-        m.addMeasurement(measure);
+        m.addMeasurement(measure, action);
       } else {
         console.log('invalid measurment', measure);
       }

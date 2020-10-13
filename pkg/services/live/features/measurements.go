@@ -60,7 +60,7 @@ func (m *MeasurementsRunner) DoChannelHTTP(c *models.ReqContext, channel string)
 			return
 		}
 
-		msg := &models.MeasurementMessage{}
+		msg := &models.MeasurementBatch{}
 		err = json.Unmarshal(body, &msg)
 		if err != nil {
 			c.JSON(500, util.DynMap{
