@@ -80,7 +80,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 
 	result := make(dtos.PluginList, 0)
 	for _, pluginDef := range plugins.Plugins {
-		// filter out app sub plugins
+		// filter out app sub plugins with no errors
 		if embeddedFilter == "0" && pluginDef.IncludedInAppId != "" && pluginDef.Errors == nil {
 			continue
 		}
