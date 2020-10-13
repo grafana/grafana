@@ -17,7 +17,6 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 
 	uid, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, strings.TrimPrefix(cmd.Path, setting.AppUrl))
 	if err != nil {
-		c.Logger.Error("Failed to create short URL", "error", err)
 		return Error(500, "Failed to create short URL", err)
 	}
 
