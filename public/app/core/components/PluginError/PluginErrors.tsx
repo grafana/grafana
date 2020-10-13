@@ -16,25 +16,27 @@ type PluginErrorHelper = {
 const ErrorDetails: PluginErrorHelper = {
   [PluginErrorCode.unsigned]: {
     message: () => {
-      return 'This plugin is unsigned.';
+      return '<span class="fa fa-exclamation-circle"></span> This plugin cannot run as it is not signed';
     },
   },
   [PluginErrorCode.modified]: {
     message: () => {
-      return 'The plugin signature has been modified.';
+      return '<span class="fa fa-exclamation-circle"></span> The plugin cannot run as the signature has been modified';
     },
   },
   [PluginErrorCode.invalid]: {
     message: () => {
-      return 'The plugin signature is invalid.';
+      return '<span class="fa fa-exclamation-circle"></span> The plugin cannot run as the signature is invalid';
     },
   },
 };
 
 const getStyles = stylesFactory(() => {
   return {
-    button: css`
-      margin: 1em 4px 0 0;
+    error: css`
+      color: #c32121;
+      font-weight: bold;
+      letter-spacing: 0.05rem;
     `,
   };
 });
@@ -45,17 +47,16 @@ export class PluginErrors extends PureComponent<Props> {
   };
   render() {
     const styles = getStyles();
-
     const { errorCodes } = this.props;
 
     return (
-      <ul>
+      <div>
         {errorCodes.map((error, i) => {
           return (
-            <li key={i} className={styles.button} dangerouslySetInnerHTML={{ __html: this.getHelperMessage(error) }} />
+            <div key={i} className={styles.error} dangerouslySetInnerHTML={{ __html: this.getHelperMessage(error) }} />
           );
         })}
-      </ul>
+      </div>
     );
   }
 }
