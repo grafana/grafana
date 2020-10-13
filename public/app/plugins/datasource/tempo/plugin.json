@@ -12,14 +12,14 @@
   "tracing": true,
 
   "info": {
-    "description": "Open source, end-to-end distributed tracing",
+    "description": "High volume, minimal dependency trace storage.  OSS tracing solution from Grafana Labs.",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "img/jaeger_logo.svg",
-      "large": "img/jaeger_logo.svg"
+      "small": "img/tempo_logo.svg",
+      "large": "img/tempo_logo.svg"
     },
     "links": [
       {
