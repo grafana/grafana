@@ -93,16 +93,6 @@ func (c Conditions) IsValid() bool {
 
 // LoadAlertConditions returns a Conditions object for the given alertDefintionId.
 func (ng *AlertNG) LoadAlertConditions(dashboardID int64, panelID int64, conditionRefID string, signedInUser *models.SignedInUser, skipCache bool) (*Conditions, error) {
-	//func (ng *AlertNG) LoadAlertConditions(alertDefinitionID int64, signedInUser *models.SignedInUser, skipCache bool) (*Conditions, error) {
-	/*
-		getAlertByIDQuery := models.GetAlertByIdQuery{Id: alertDefinitionID}
-		if err := bus.Dispatch(&getAlertByIDQuery); err != nil {
-			return nil, err
-		}
-		dashboardID := getAlertByIDQuery.Result.DashboardId
-		panelID := getAlertByIDQuery.Result.PanelId
-	*/
-
 	// get queries from the dashboard (because GEL expressions cannot be stored in alerts so far)
 	getDashboardQuery := models.GetDashboardQuery{Id: dashboardID}
 	if err := bus.Dispatch(&getDashboardQuery); err != nil {
