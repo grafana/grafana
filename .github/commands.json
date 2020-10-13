@@ -1,0 +1,27 @@
+[
+  {
+    "type": "label",
+    "name": "type/question",
+    "action": "close",
+    "comment": "Please ask your question on [community.grafana.com/](https://community.grafana.com/). To avoid having your issue closed in the future, please read our [CONTRIBUTING](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guidelines.\n\nHappy graphing!"
+  },
+  {
+    "type": "comment",
+    "name": "duplicate",
+    "allowUsers": [],
+    "action": "updateLabels",
+    "addLabel": "type/duplicate"
+  },
+  {
+    "type": "label",
+    "name": "type/duplicate",
+    "action": "close",
+    "comment": "Thanks for creating this issue! It looks like this has already been reported by another user. We’ve closed this in favor of the existing one. Please consider adding any details you think is missing to that issue.\n\nTo avoid having your issue closed in the future, please read our [CONTRIBUTING](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guidelines.\n\nHappy graphing!"
+  },
+  {
+    "type": "label",
+    "name": "no new info",
+    "action": "close",
+    "comment": "We've closed this issue since it needs more information and hasn't had any activity recently. We can re-open it after you you add more information. To avoid having your issue closed in the future, please read our [CONTRIBUTING](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guidelines.\n\nHappy graphing!"
+  }
+]

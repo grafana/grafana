@@ -3,26 +3,26 @@ import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
 import * as redux from 'app/store/store';
 import {
   DataFrame,
+  DataQueryErrorType,
   DataQueryResponse,
   DataSourceInstanceSettings,
   dateMath,
   getFrameDisplayName,
-  DataQueryErrorType,
 } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import {
+  CloudWatchLogsQuery,
   CloudWatchLogsQueryStatus,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
   LogAction,
-  CloudWatchLogsQuery,
 } from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
 import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependencies';
-import { of, interval } from 'rxjs';
-import { CustomVariableModel, VariableHide } from '../../../../features/variables/types';
+import { interval, of } from 'rxjs';
+import { CustomVariableModel, initialVariableModelState, VariableHide } from '../../../../features/variables/types';
 import { TimeSrvStub } from '../../../../../test/specs/helpers';
 
 import * as rxjsUtils from '../utils/rxjs/increasingInterval';
@@ -376,6 +376,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should generate the correct query with interval variable', async () => {
       const period: CustomVariableModel = {
+        ...initialVariableModelState,
         id: 'period',
         name: 'period',
         index: 0,
@@ -386,9 +387,6 @@ describe('CloudWatchDatasource', () => {
         query: '',
         hide: VariableHide.dontHide,
         type: 'custom',
-        label: null,
-        skipUrlSync: false,
-        global: false,
       };
       templateSrv.init([period]);
 
@@ -821,6 +819,7 @@ describe('CloudWatchDatasource', () => {
     let requestParams: { queries: CloudWatchMetricsQuery[] };
     beforeEach(() => {
       const var1: CustomVariableModel = {
+        ...initialVariableModelState,
         id: 'var1',
         name: 'var1',
         index: 0,
@@ -831,11 +830,9 @@ describe('CloudWatchDatasource', () => {
         query: '',
         hide: VariableHide.dontHide,
         type: 'custom',
-        label: null,
-        skipUrlSync: false,
-        global: false,
       };
       const var2: CustomVariableModel = {
+        ...initialVariableModelState,
         id: 'var2',
         name: 'var2',
         index: 1,
@@ -846,11 +843,9 @@ describe('CloudWatchDatasource', () => {
         query: '',
         hide: VariableHide.dontHide,
         type: 'custom',
-        label: null,
-        skipUrlSync: false,
-        global: false,
       };
       const var3: CustomVariableModel = {
+        ...initialVariableModelState,
         id: 'var3',
         name: 'var3',
         index: 2,
@@ -865,11 +860,9 @@ describe('CloudWatchDatasource', () => {
         query: '',
         hide: VariableHide.dontHide,
         type: 'custom',
-        label: null,
-        skipUrlSync: false,
-        global: false,
       };
       const var4: CustomVariableModel = {
+        ...initialVariableModelState,
         id: 'var4',
         name: 'var4',
         index: 3,
@@ -884,9 +877,6 @@ describe('CloudWatchDatasource', () => {
         query: '',
         hide: VariableHide.dontHide,
         type: 'custom',
-        label: null,
-        skipUrlSync: false,
-        global: false,
       };
       const variables = [var1, var2, var3, var4];
       const state = convertToStoreState(variables);

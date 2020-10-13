@@ -1,27 +1,30 @@
-import { DataFrame } from '@grafana/data';
 import React, { useState } from 'react';
+import { DataFrame, DataTransformerConfig, TransformerRegistyItem } from '@grafana/data';
 import { HorizontalGroup } from '@grafana/ui';
+
 import { TransformationEditor } from './TransformationEditor';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
+import { TransformationsEditorTransformation } from './types';
 
 interface TransformationOperationRowProps {
   id: string;
   index: number;
-  name: string;
-  description?: string;
-  input: DataFrame[];
-  output: DataFrame[];
-  editor?: JSX.Element;
-  onRemove: () => void;
+  data: DataFrame[];
+  uiConfig: TransformerRegistyItem<any>;
+  configs: TransformationsEditorTransformation[];
+  onRemove: (index: number) => void;
+  onChange: (index: number, config: DataTransformerConfig) => void;
 }
 
 export const TransformationOperationRow: React.FC<TransformationOperationRowProps> = ({
-  children,
   onRemove,
   index,
   id,
-  ...props
+  data,
+  configs,
+  uiConfig,
+  onChange,
 }) => {
   const [showDebug, setShowDebug] = useState(false);
 
@@ -37,14 +40,21 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
           }}
         />
 
-        <QueryOperationAction title="Remove" icon="trash-alt" onClick={onRemove} />
+        <QueryOperationAction title="Remove" icon="trash-alt" onClick={() => onRemove(index)} />
       </HorizontalGroup>
     );
   };
 
   return (
-    <QueryOperationRow id={id} index={index} title={props.name} draggable actions={renderActions}>
-      <TransformationEditor {...props} debugMode={showDebug} />
+    <QueryOperationRow id={id} index={index} title={uiConfig.name} draggable actions={renderActions}>
+      <TransformationEditor
+        debugMode={showDebug}
+        index={index}
+        data={data}
+        configs={configs}
+        uiConfig={uiConfig}
+        onChange={onChange}
+      />
     </QueryOperationRow>
   );
 };

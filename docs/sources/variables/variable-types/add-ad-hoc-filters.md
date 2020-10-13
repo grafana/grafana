@@ -3,7 +3,9 @@ title = "Add ad hoc filters"
 type = "docs"
 aliases = ["/docs/grafana/latest/variables/add-ad-hoc-filters.md"]
 [menu.docs]
-weight = 500
+identifier = "add-adhoc-filters"
+parent = "variable-types"
+weight = 700
 +++
 
 # Add ad hoc filters
@@ -26,7 +28,7 @@ _Ad hoc filters_ allow you to add key/value filters that are automatically added
 
 ## Enter Options
 
-1. In the **Data source** list, select the target data source. For more information about data sources, refer to [Add a data source]({{< relref "../../features/datasources/add-a-data-source.md" >}}).
+1. In the **Data source** list, select the target data source. For more information about data sources, refer to [Add a data source]({{< relref "../../datasources/add-a-data-source.md" >}}).
 1. Click **Add** to add the variable to the dashboard.
 
 ## Create ad hoc filters

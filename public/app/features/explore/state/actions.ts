@@ -9,14 +9,14 @@ import {
   DataQuery,
   DataSourceApi,
   dateTimeForTimeZone,
+  ExploreUrlState,
   isDateTime,
   LoadingState,
+  LogsDedupStrategy,
   PanelData,
   QueryFixAction,
   RawTimeRange,
   TimeRange,
-  ExploreUrlState,
-  LogsDedupStrategy,
 } from '@grafana/data';
 // Services & Utils
 import store from 'app/core/store';
@@ -40,17 +40,21 @@ import {
 import {
   addToRichHistory,
   deleteAllFromRichHistory,
-  updateStarredInRichHistory,
-  updateCommentInRichHistory,
   deleteQueryInRichHistory,
   getRichHistory,
+  updateCommentInRichHistory,
+  updateStarredInRichHistory,
 } from 'app/core/utils/richHistory';
 // Types
-import { ExploreItemState, ThunkResult } from 'app/types';
+import { ThunkResult } from 'app/types';
 
-import { ExploreId, QueryOptions } from 'app/types/explore';
+import { ExploreId, ExploreItemState, QueryOptions } from 'app/types/explore';
 import {
   addQueryRowAction,
+  cancelQueriesAction,
+  changeDedupStrategyAction,
+  ChangeDedupStrategyPayload,
+  changeLoadingStateAction,
   changeQueryAction,
   changeRangeAction,
   changeRefreshIntervalAction,
@@ -59,7 +63,6 @@ import {
   ChangeSizePayload,
   clearQueriesAction,
   historyUpdatedAction,
-  richHistoryUpdatedAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
@@ -69,6 +72,7 @@ import {
   queriesImportedAction,
   queryStoreSubscriptionAction,
   queryStreamUpdatedAction,
+  richHistoryUpdatedAction,
   scanStartAction,
   scanStopAction,
   setQueriesAction,
@@ -77,19 +81,21 @@ import {
   splitOpenAction,
   syncTimesAction,
   updateDatasourceInstanceAction,
-  changeLoadingStateAction,
-  cancelQueriesAction,
-  changeDedupStrategyAction,
-  ChangeDedupStrategyPayload,
 } from './actionTypes';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
-import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getExploreDatasources } from './selectors';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import {
+  decorateWithGraphLogsTraceAndTable,
+  decorateWithGraphResult,
+  decorateWithLogsResult,
+  decorateWithTableResult,
+} from '../utils/decorators';
 
 /**
  * Adds a query row after the row with the given index.
@@ -466,9 +472,13 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
         // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
         // actually can see what is happening.
         live ? throttleTime(500) : identity,
-        map((data: PanelData) => preProcessPanelData(data, queryResponse))
+        map((data: PanelData) => preProcessPanelData(data, queryResponse)),
+        decorateWithGraphLogsTraceAndTable(getState().explore[exploreId].datasourceInstance),
+        decorateWithGraphResult(),
+        decorateWithTableResult(),
+        decorateWithLogsResult(getState().explore[exploreId])
       )
-      .subscribe((data: PanelData) => {
+      .subscribe(data => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);

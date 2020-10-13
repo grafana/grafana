@@ -55,6 +55,7 @@ import * as pieChartPanel from 'app/plugins/panel/piechart/module';
 import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
 import * as newsPanel from 'app/plugins/panel/news/module';
+import * as livePanel from 'app/plugins/panel/live/module';
 import * as homeLinksPanel from 'app/plugins/panel/homelinks/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 
@@ -90,6 +91,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/table/module': tablePanel,
   'app/plugins/panel/table-old/module': oldTablePanel,
   'app/plugins/panel/news/module': newsPanel,
+  'app/plugins/panel/live/module': livePanel,
   'app/plugins/panel/singlestat/module': singlestatPanel,
   'app/plugins/panel/stat/module': singlestatPanel2,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,

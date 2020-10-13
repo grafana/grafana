@@ -1,9 +1,8 @@
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
-import { OrderFieldsTransformerOptions, orderFieldsTransformer } from './order';
+import { orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
 import { filterFieldsByNameTransformer } from './filterByName';
-import { DataFrame } from '../..';
-import { RenameFieldsTransformerOptions, renameFieldsTransformer } from './rename';
+import { renameFieldsTransformer, RenameFieldsTransformerOptions } from './rename';
 
 export interface OrganizeFieldsTransformerOptions
   extends OrderFieldsTransformerOptions,
@@ -25,15 +24,14 @@ export const organizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransf
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options: OrganizeFieldsTransformerOptions) => {
-    const rename = renameFieldsTransformer.transformer(options);
-    const order = orderFieldsTransformer.transformer(options);
-    const filter = filterFieldsByNameTransformer.transformer({
-      exclude: { names: mapToExcludeArray(options.excludeByName) },
-    });
-
-    return (data: DataFrame[]) => rename(order(filter(data)));
-  },
+  operator: options => source =>
+    source.pipe(
+      filterFieldsByNameTransformer.operator({
+        exclude: { names: mapToExcludeArray(options.excludeByName) },
+      }),
+      orderFieldsTransformer.operator(options),
+      renameFieldsTransformer.operator(options)
+    ),
 };
 
 const mapToExcludeArray = (excludeByName: Record<string, boolean>): string[] => {
