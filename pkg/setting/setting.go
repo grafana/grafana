@@ -327,6 +327,11 @@ func (c Cfg) IsLiveEnabled() bool {
 	return c.FeatureToggles["live"]
 }
 
+// IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
+func (c Cfg) IsNgAlertEnabled() bool {
+	return c.FeatureToggles["ngalert"]
+}
+
 type CommandLineArgs struct {
 	Config   string
 	HomePath string
