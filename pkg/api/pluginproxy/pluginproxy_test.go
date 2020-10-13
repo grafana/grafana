@@ -169,7 +169,7 @@ func getPluginProxiedRequest(ctx *models.ReqContext, cfg *setting.Cfg, route *pl
 	}
 	proxy := NewApiPluginProxy(ctx, "", route, "", cfg)
 
-	req, err := http.NewRequest(http.MethodGet, "", nil)
+	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)
 	So(err, ShouldBeNil)
 	proxy.Director(req)
 	return req
