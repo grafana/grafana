@@ -58,6 +58,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     datasourceInsights: false,
     reportGrid: false,
     ngalert: false,
+    traceToLogs: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;

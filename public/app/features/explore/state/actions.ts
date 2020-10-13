@@ -688,6 +688,7 @@ export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: 
     const queryState = getState().location.query[ExploreId.left] as string;
     const urlState = parseUrlState(queryState);
 
+    console.log({ options });
     if (options) {
       rightState.queries = [];
       rightState.graphResult = null;
@@ -707,6 +708,8 @@ export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: 
       ];
 
       const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.datasourceUid);
+
+      console.log({ queries });
       await dispatch(changeDatasource(ExploreId.right, dataSourceSettings!.name));
       await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
       await dispatch(runQueries(ExploreId.right));
