@@ -6,7 +6,7 @@ import { DataSourceSelectItem, stringToJsRegex } from '@grafana/data';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getVariable } from '../state/selectors';
 import { DataSourceVariableModel } from '../types';
-import templateSrv from '../../templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 import _ from 'lodash';
 import { changeVariableEditorExtended } from '../editor/reducer';
 
@@ -23,7 +23,7 @@ export const updateDataSourceVariableOptions = (
   let regex;
 
   if (variableInState.regex) {
-    regex = templateSrv.replace(variableInState.regex, undefined, 'regex');
+    regex = getTemplateSrv().replace(variableInState.regex, undefined, 'regex');
     regex = stringToJsRegex(regex);
   }
 

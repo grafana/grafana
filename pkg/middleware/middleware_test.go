@@ -44,7 +44,7 @@ func resetGetTime() {
 }
 
 func TestMiddleWareSecurityHeaders(t *testing.T) {
-	setting.ERR_TEMPLATE_NAME = errorTemplate
+	setting.ErrTemplateName = errorTemplate
 
 	Convey("Given the grafana middleware", t, func() {
 		middlewareScenario(t, "middleware should get correct x-xss-protection header", func(sc *scenarioContext) {
@@ -61,7 +61,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 
 		middlewareScenario(t, "middleware should add correct Strict-Transport-Security header", func(sc *scenarioContext) {
 			setting.StrictTransportSecurity = true
-			setting.Protocol = setting.HTTPS
+			setting.Protocol = setting.HTTPSScheme
 			setting.StrictTransportSecurityMaxAge = 64000
 			sc.fakeReq("GET", "/api/").exec()
 			So(sc.resp.Header().Get("Strict-Transport-Security"), ShouldEqual, "max-age=64000")
@@ -76,7 +76,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 }
 
 func TestMiddlewareContext(t *testing.T) {
-	setting.ERR_TEMPLATE_NAME = errorTemplate
+	setting.ErrTemplateName = errorTemplate
 
 	Convey("Given the grafana middleware", t, func() {
 		middlewareScenario(t, "middleware should add context to injector", func(sc *scenarioContext) {

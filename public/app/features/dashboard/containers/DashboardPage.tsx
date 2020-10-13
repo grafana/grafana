@@ -32,6 +32,7 @@ import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { cancelVariables } from '../../variables/state/actions';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
 export interface Props {
   urlUid?: string;
@@ -116,6 +117,8 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     // entering edit mode
     if (!editPanel && urlEditPanelId) {
+      dashboardWatcher.setEditingState(true);
+
       this.getPanelByIdFromUrlParam(urlEditPanelId, panel => {
         // if no edit permission show error
         if (!dashboard.canEditPanel(panel)) {
@@ -129,6 +132,8 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     // leaving edit mode
     if (editPanel && !urlEditPanelId) {
+      dashboardWatcher.setEditingState(false);
+
       this.setState({ editPanel: null });
     }
 

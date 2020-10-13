@@ -254,6 +254,11 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 }
 
 func (hs *HTTPServer) Logout(c *models.ReqContext) {
+	if hs.Cfg.SAMLEnabled && hs.Cfg.SAMLSingleLogoutEnabled {
+		c.Redirect(setting.AppSubUrl + "/logout/saml")
+		return
+	}
+
 	if err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken); err != nil && err != models.ErrUserTokenNotFound {
 		hs.log.Error("failed to revoke auth token", "error", err)
 	}

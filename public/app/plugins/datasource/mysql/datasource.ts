@@ -3,12 +3,11 @@ import { Observable, of } from 'rxjs';
 import { catchError, map, mapTo } from 'rxjs/operators';
 import { getBackendSrv } from '@grafana/runtime';
 import { ScopedVars } from '@grafana/data';
-
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import MysqlQuery from 'app/plugins/datasource/mysql/mysql_query';
 import ResponseParser, { MysqlResponse } from './response_parser';
 import { MysqlMetricFindValue, MysqlQueryForInterpolation } from './types';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
 export class MysqlDatasource {
@@ -18,8 +17,11 @@ export class MysqlDatasource {
   queryModel: MysqlQuery;
   interval: string;
 
-  /** @ngInject */
-  constructor(instanceSettings: any, private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {
+  constructor(
+    instanceSettings: any,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly timeSrv: TimeSrv = getTimeSrv()
+  ) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser();

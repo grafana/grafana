@@ -1,4 +1,5 @@
 import { combineReducers } from '@reduxjs/toolkit';
+import { LoadingState } from '@grafana/data';
 
 import { NEW_VARIABLE_ID } from './types';
 import { VariableHide, VariableModel } from '../types';
@@ -25,6 +26,8 @@ export const getVariableState = (
       label: `Label-${index}`,
       skipUrlSync: false,
       global: false,
+      state: LoadingState.NotStarted,
+      error: null,
     };
   }
 
@@ -38,6 +41,8 @@ export const getVariableState = (
       label: `Label-${NEW_VARIABLE_ID}`,
       skipUrlSync: false,
       global: false,
+      state: LoadingState.NotStarted,
+      error: null,
     };
   }
 

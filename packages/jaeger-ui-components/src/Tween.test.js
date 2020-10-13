@@ -63,7 +63,7 @@ describe('Tween', () => {
         expect(setTimeoutFn).lastCalledWith(tween._frameCallback, delay);
       });
 
-      it('schedules animation frame if there isnt a delay', () => {
+      it('schedules animation frame if there is not a delay', () => {
         const tween = new Tween({ ...baseOptions, onUpdate: jest.fn() });
         expect(rafFn).lastCalledWith(tween._frameCallback);
       });
