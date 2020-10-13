@@ -57,6 +57,7 @@
     },
     "includes": {
       "type": "array",
+      "description": "Resources to include in plugin.",
       "items": {
         "type": "object",
         "additionalItems": false,
@@ -143,7 +144,7 @@
     },
     "dependencies": {
       "type": "object",
-      "description": "Plugin dependencies.",
+      "description": "Dependencies needed by the plugin.",
       "required": ["grafanaDependency"],
       "additionalProperties": false,
       "properties": {
@@ -163,6 +164,7 @@
           "additionalItems": false,
           "items": {
             "type": "object",
+            "description": "Plugin dependency. Used to display information about plugin dependencies in the Grafana UI.",
             "required": ["id", "name", "type", "version"],
             "properties": {
               "id": {

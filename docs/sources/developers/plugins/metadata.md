@@ -15,7 +15,7 @@ The plugin.json file is required for all plugins. When Grafana starts, it scans 
 
 | Property        | Type                    | Required | Description                                                                                                                                                                                                                                                                                                                                                                                             |
 |-----------------|-------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `dependencies`  | [object](#dependencies) | **Yes**  | Plugin dependencies.                                                                                                                                                                                                                                                                                                                                                                                    |
+| `dependencies`  | [object](#dependencies) | **Yes**  | Dependencies needed by the plugin.                                                                                                                                                                                                                                                                                                                                                                      |
 | `id`            | string                  | **Yes**  | Unique name of the plugin. If the plugin is published on grafana.com, then the plugin id has to follow the naming conventions.                                                                                                                                                                                                                                                                          |
 | `info`          | [object](#info)         | **Yes**  | Metadata for the plugin. Some fields are used on the plugins page in Grafana and others on grafana.com if the plugin is published.                                                                                                                                                                                                                                                                      |
 | `name`          | string                  | **Yes**  | Human-readable name of the plugin that is shown to the user in the UI.                                                                                                                                                                                                                                                                                                                                  |
@@ -27,7 +27,7 @@ The plugin.json file is required for all plugins. When Grafana starts, it scans 
 | `category`      | string                  | No       | Plugin category used on the Add data source page. Possible values are: `tsdb`, `logging`, `cloud`, `tracing`, `sql`, `enterprise` and `other`.                                                                                                                                                                                                                                                          |
 | `executable`    | string                  | No       | The first part of the file name of the backend component executable. There can be multiple executables built for different operating system and architecture. Grafana will check for executables named `<executable>_<$GOOS>_<lower case $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`. Combination of $GOOS and $GOARCH can be found here: https://golang.org/doc/install/source#environment. |
 | `hiddenQueries` | boolean                 | No       |                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `includes`      | [object](#includes)[]   | No       |                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `includes`      | [object](#includes)[]   | No       | Resources to include in plugin.                                                                                                                                                                                                                                                                                                                                                                         |
 | `logs`          | boolean                 | No       | For data source plugins. If the plugin supports logs.                                                                                                                                                                                                                                                                                                                                                   |
 | `metrics`       | boolean                 | No       | For data source plugins. If the plugin supports metric queries. Used in the Explore feature.                                                                                                                                                                                                                                                                                                            |
 | `mixed`         | boolean                 | No       | Not to be used by external plugins. Special property for the built-in mixed plugin.                                                                                                                                                                                                                                                                                                                     |
@@ -46,29 +46,42 @@ The plugin.json file is required for all plugins. When Grafana starts, it scans 
 
 ## dependencies
 
-Plugin dependencies.
+Dependencies needed by the plugin.
 
 ### Properties
 
-| Property            | Type     | Required | Description                                                                                                                   |
-|---------------------|----------|----------|-------------------------------------------------------------------------------------------------------------------------------|
-| `grafanaDependency` | string   | **Yes**  | Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.                                 |
-| `grafanaVersion`    | string   | No       | (Deprecated) Required Grafana version for this plugin, e.g. `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or v7.x.x. |
-| `plugins`           | string[] | No       | An array of required plugins on which this plugin depends.                                                                    |
+| Property            | Type                 | Required | Description                                                                                                                   |
+|---------------------|----------------------|----------|-------------------------------------------------------------------------------------------------------------------------------|
+| `grafanaDependency` | string               | **Yes**  | Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.                                 |
+| `grafanaVersion`    | string               | No       | (Deprecated) Required Grafana version for this plugin, e.g. `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or v7.x.x. |
+| `plugins`           | [object](#plugins)[] | No       | An array of required plugins on which this plugin depends.                                                                    |
+
+### plugins
+
+Plugin dependency. Used to display information about plugin dependencies in the Grafana UI.
+
+#### Properties
+
+| Property  | Type   | Required | Description |
+|-----------|--------|----------|-------------|
+| `id`      | string | **Yes**  |             |
+| `name`    | string | **Yes**  |             |
+| `type`    | string | **Yes**  |             |
+| `version` | string | **Yes**  |             |
 
 ## includes
 
 ### Properties
 
-| Property     | Type    | Required | Description |
-|--------------|---------|----------|-------------|
-| `addToNav`   | boolean | No       |             |
-| `component`  | string  | No       |             |
-| `defaultNav` | boolean | No       |             |
-| `name`       | string  | No       |             |
-| `role`       | string  | No       |             |
-| `type`       | string  | No       |             |
-| `icon`       | string  | No       |             |
+| Property     | Type    | Required | Description                                                   |
+|--------------|---------|----------|---------------------------------------------------------------|
+| `addToNav`   | boolean | No       | Add the include to the side menu.                             |
+| `component`  | string  | No       | (Legacy) The Angular component to use for a page.             |
+| `defaultNav` | boolean | No       | Page or dashboard when user clicks the icon in the side menu. |
+| `name`       | string  | No       |                                                               |
+| `path`       | string  | No       | Used for app plugins.                                         |
+| `role`       | string  | No       |                                                               |
+| `type`       | string  | No       |                                                               |
 
 ## info
 
