@@ -11,7 +11,7 @@ export class TempoQueryField extends React.PureComponent<Props> {
 
     return (
       <LegacyForms.FormField
-        label="TraceID"
+        label="Trace ID"
         labelWidth={4}
         inputEl={
           <div className={'slate-query-field__wrapper'}>
