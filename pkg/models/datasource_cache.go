@@ -157,12 +157,12 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 		Proxy:           http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
 			Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
-			KeepAlive: 30 * time.Second,
+			KeepAlive: time.Duration(setting.DataProxyKeepAlive) * time.Second,
 		}).Dial,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
+		ExpectContinueTimeout: time.Duration(setting.DataProxyExpectContinueTimeout) * time.Second,
+		MaxIdleConns:          setting.DataProxyMaxIdleConns,
+		IdleConnTimeout:       time.Duration(setting.DataProxyIdleConnTimeout) * time.Second,
 	}
 
 	// Set default next round tripper to the default transport
@@ -193,13 +193,13 @@ func (ds *DataSource) sigV4Middleware(next http.RoundTripper) http.RoundTripper 
 
 	return &SigV4Middleware{
 		Config: &Config{
-			AccessKey:     decrypted["accessKey"],
-			SecretKey:     decrypted["secretKey"],
-			Region:        ds.JsonData.Get("region").MustString(),
-			AssumeRoleARN: ds.JsonData.Get("assumeRoleArn").MustString(),
-			AuthType:      ds.JsonData.Get("authType").MustString(),
-			ExternalID:    ds.JsonData.Get("externalId").MustString(),
-			Profile:       ds.JsonData.Get("profile").MustString(),
+			AccessKey:     decrypted["sigV4AccessKey"],
+			SecretKey:     decrypted["sigV4SecretKey"],
+			Region:        ds.JsonData.Get("sigV4Region").MustString(),
+			AssumeRoleARN: ds.JsonData.Get("sigV4AssumeRoleArn").MustString(),
+			AuthType:      ds.JsonData.Get("sigV4AuthType").MustString(),
+			ExternalID:    ds.JsonData.Get("sigV4ExternalId").MustString(),
+			Profile:       ds.JsonData.Get("sigV4Profile").MustString(),
 		},
 		Next: next,
 	}

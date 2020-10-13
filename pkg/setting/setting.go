@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -78,18 +79,23 @@ var (
 	LogConfigs []util.DynMap
 
 	// Http server options
-	Protocol           Scheme
-	Domain             string
-	HttpAddr, HttpPort string
-	SshPort            int
-	CertFile, KeyFile  string
-	SocketPath         string
-	RouterLogging      bool
-	DataProxyLogging   bool
-	DataProxyTimeout   int
-	StaticRootPath     string
-	EnableGzip         bool
-	EnforceDomain      bool
+	Protocol                       Scheme
+	Domain                         string
+	HttpAddr, HttpPort             string
+	SshPort                        int
+	CertFile, KeyFile              string
+	SocketPath                     string
+	RouterLogging                  bool
+	DataProxyLogging               bool
+	DataProxyTimeout               int
+	DataProxyTLSHandshakeTimeout   int
+	DataProxyExpectContinueTimeout int
+	DataProxyMaxIdleConns          int
+	DataProxyKeepAlive             int
+	DataProxyIdleConnTimeout       int
+	StaticRootPath                 string
+	EnableGzip                     bool
+	EnforceDomain                  bool
 
 	// Security settings.
 	SecretKey                         string
@@ -287,7 +293,8 @@ type Cfg struct {
 	OAuthCookieMaxAge int
 
 	// SAML Auth
-	SAMLEnabled bool
+	SAMLEnabled             bool
+	SAMLSingleLogoutEnabled bool
 
 	// Dataproxy
 	SendUserHeader bool
@@ -305,6 +312,9 @@ type Cfg struct {
 
 	DateFormats DateFormats
 
+	// User
+	UserInviteMaxLifetime time.Duration
+
 	// Annotations
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
@@ -319,6 +329,11 @@ func (c Cfg) IsExpressionsEnabled() bool {
 // IsLiveEnabled returns if grafana live should be enabled
 func (c Cfg) IsLiveEnabled() bool {
 	return c.FeatureToggles["live"]
+}
+
+// IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
+func (c Cfg) IsNgAlertEnabled() bool {
+	return c.FeatureToggles["ngalert"]
 }
 
 type CommandLineArgs struct {
@@ -683,6 +698,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	dataproxy := iniFile.Section("dataproxy")
 	DataProxyLogging = dataproxy.Key("logging").MustBool(false)
 	DataProxyTimeout = dataproxy.Key("timeout").MustInt(30)
+	DataProxyKeepAlive = dataproxy.Key("keep_alive_seconds").MustInt(30)
+	DataProxyTLSHandshakeTimeout = dataproxy.Key("tls_handshake_timeout_seconds").MustInt(10)
+	DataProxyExpectContinueTimeout = dataproxy.Key("expect_continue_timeout_seconds").MustInt(1)
+	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt(100)
+	DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
 	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
 
 	if err := readSecuritySettings(iniFile, cfg); err != nil {
@@ -998,6 +1018,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// SAML auth
 	cfg.SAMLEnabled = iniFile.Section("auth.saml").Key("enabled").MustBool(false)
+	cfg.SAMLSingleLogoutEnabled = iniFile.Section("auth.saml").Key("single_logout").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -1060,6 +1081,17 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 
 	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
+
+	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
+	userInviteMaxLifetimeDuration, err := gtime.ParseInterval(userInviteMaxLifetimeVal)
+	if err != nil {
+		return err
+	}
+
+	cfg.UserInviteMaxLifetime = userInviteMaxLifetimeDuration
+	if cfg.UserInviteMaxLifetime < time.Minute*15 {
+		return errors.New("the minimum supported value for the `user_invite_max_lifetime_duration` configuration is 15m (15 minutes)")
+	}
 
 	return nil
 }

@@ -69,6 +69,7 @@ export function loadNotificationTypes(): ThunkResult<void> {
 
 export function loadNotificationChannel(id: number): ThunkResult<void> {
   return async dispatch => {
+    await dispatch(loadNotificationTypes());
     const notificationChannel = await getBackendSrv().get(`/api/alert-notifications/${id}`);
     dispatch(notificationChannelLoaded(notificationChannel));
   };
