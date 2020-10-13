@@ -95,7 +95,7 @@ export const Card: FC<Props> = ({
           <div className={styles.inner}>
             <p className={styles.title}>{title}</p>
             {meta && <p className={styles.metaData}>{meta}</p>}
-            {!!tags.length && <TagList tags={tags} onClick={onTagClick} />}
+            {!!tags.length && <TagList tags={tags} onClick={onTagClick} className={styles.tagList} />}
             {hasActions && (
               <div className={styles.actionRow}>
                 {!!actions.length && <div className={styles.actions}>{actions}</div>}
@@ -140,9 +140,9 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
       font-size: ${theme.typography.size.md};
     `,
     metaData: css`
-      margin-bottom: ${theme.spacing.sm};
       font-size: ${theme.typography.size.sm};
       color: ${theme.colors.textSemiWeak};
+      margin-bottom: 0;
     `,
     overlay: css`
       position: absolute;
@@ -168,6 +168,7 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
       justify-content: space-between;
       align-items: center;
       width: 100%;
+      margin-top: ${theme.spacing.sm};
     `,
     actions: css`
       & > * {
@@ -187,6 +188,9 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
     innerLink: css`
       display: flex;
       width: 100%;
+    `,
+    tagList: css`
+      margin-top: ${theme.spacing.sm};
     `,
   };
 };
