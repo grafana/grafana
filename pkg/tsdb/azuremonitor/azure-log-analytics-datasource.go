@@ -212,6 +212,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+	req.Header.Set("Prefer", fmt.Sprintf("wait=%d", setting.DataProxyTimeout))
 
 	// find plugin
 	plugin, ok := plugins.DataSources[dsInfo.Type]
