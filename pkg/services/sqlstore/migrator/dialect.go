@@ -60,6 +60,8 @@ func NewDialect(engine *xorm.Engine) Dialect {
 		return NewMysqlDialect(engine)
 	case SQLITE:
 		return NewSqlite3Dialect(engine)
+	case "sqlite3WithHooks":
+		return NewSqlite3Dialect(engine)
 	case POSTGRES:
 		return NewPostgresDialect(engine)
 	}
