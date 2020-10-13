@@ -1,6 +1,6 @@
 import flatten from 'lodash/flatten';
 import tinycolor from 'tinycolor2';
-import { GrafanaThemeType } from '../types/theme';
+import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 
 type Hue = 'green' | 'yellow' | 'red' | 'blue' | 'orange' | 'purple';
 
@@ -50,7 +50,7 @@ export type ColorDefinition = {
 
 let colorsPaletteInstance: Map<Hue, ColorDefinition[]>;
 let colorsMap: Record<Color, string> | undefined;
-let colorsMapTheme: GrafanaThemeType | undefined;
+let colorsMapTheme: GrafanaTheme | undefined;
 
 const buildColorDefinition = (
   hue: Hue,
@@ -71,21 +71,21 @@ export function getColorDefinitionByName(name: Color): ColorDefinition {
   return flatten(Array.from(getNamedColorPalette().values())).filter(definition => definition.name === name)[0];
 }
 
-export function buildColorsMapForTheme(theme?: GrafanaThemeType): Record<Color, string> {
+export function buildColorsMapForTheme(theme: GrafanaTheme): Record<Color, string> {
   theme = theme ?? GrafanaThemeType.Dark;
 
   colorsMap = {} as Record<Color, string>;
 
   for (const def of getNamedColorPalette().values()) {
     for (const c of def) {
-      colorsMap[c.name] = c.variants[theme];
+      colorsMap[c.name] = c.variants[theme.type];
     }
   }
 
   return colorsMap;
 }
 
-export function getColorFromHexRgbOrName(color: string, theme?: GrafanaThemeType): string {
+export function getColorForTheme(color: string, theme: GrafanaTheme): string {
   if (!color) {
     return 'gray';
   }
@@ -110,6 +110,15 @@ export function getColorFromHexRgbOrName(color: string, theme?: GrafanaThemeType
   }
 
   return (colorsMap[color as Color] = tinycolor(color).toHexString());
+}
+
+/**
+ * @deprecated use getColorForTheme
+ */
+export function getColorFromHexRgbOrName(color: string, type?: GrafanaThemeType): string {
+  const themeType = type ?? GrafanaThemeType.Dark;
+
+  return getColorForTheme(color, ({ type: themeType } as unknown) as GrafanaTheme);
 }
 
 const buildNamedColorsPalette = () => {

@@ -12,6 +12,7 @@ import {
   FieldConfig,
   FieldColorModeId,
   getFieldColorMode,
+  getColorForTheme,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -19,7 +20,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 // Utils
-import { getColorFromHexRgbOrName } from '@grafana/data';
 import { measureText, calculateFontSize } from '../../utils/measureText';
 
 // Types
@@ -526,7 +526,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
 
     for (let i = 0; i < thresholds.steps.length; i++) {
       const threshold = thresholds.steps[i];
-      const color = getColorFromHexRgbOrName(threshold.color);
+      const color = getColorForTheme(threshold.color, props.theme);
       const valuePercent = getValuePercent(threshold.value, minValue, maxValue);
       const pos = valuePercent * maxSize;
       const offset = Math.round(pos - (pos - lastpos) / 2);
@@ -545,7 +545,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
   }
 
   if (mode.colors) {
-    const scheme = mode.colors.map(item => getColorFromHexRgbOrName(item, theme.type));
+    const scheme = mode.colors.map(item => getColorForTheme(item, theme));
     for (let i = 0; i < scheme.length; i++) {
       const color = scheme[i];
 
@@ -567,11 +567,12 @@ export function getBarGradient(props: Props, maxSize: number): string {
  * Only exported to for unit test
  */
 export function getValueColor(props: Props): string {
-  const { theme, value } = props;
+  const { value } = props;
   if (value.color) {
     return value.color;
   }
-  return getColorFromHexRgbOrName('gray', theme.type);
+
+  return 'gray';
 }
 
 function getValueStyles(

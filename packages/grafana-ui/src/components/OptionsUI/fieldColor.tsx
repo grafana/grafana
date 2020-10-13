@@ -8,6 +8,7 @@ import {
   FieldColorMode,
   GrafanaTheme,
   getColorFromHexRgbOrName,
+  getColorForTheme,
 } from '@grafana/data';
 import { Select } from '../Select/Select';
 import { ColorValueEditor } from './color';
@@ -70,7 +71,7 @@ const FieldColorModeViz: FC<ModeProps> = ({ mode, theme }) => {
     return null;
   }
 
-  const colors = mode.colors.map(item => getColorFromHexRgbOrName(item, theme.type));
+  const colors = mode.colors.map(item => getColorForTheme(item, theme));
   const style: CSSProperties = {
     height: '8px',
     width: '100%',

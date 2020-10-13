@@ -61,7 +61,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       colors: classicColors,
     }),
     new FieldColorSchemeMode({
-      id: FieldColorModeId.ContinousGrYlRd,
+      id: 'continuous-GrYlRd',
       name: 'By value: Green Yellow Red (gradient)',
       //description: 'Interpolated colors based value, min and max',
       isContinuous: true,
@@ -72,7 +72,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
 });
 
 interface FieldColorSchemeModeOptions {
-  id: FieldColorModeId;
+  id: string;
   name: string;
   description?: string;
   colors: string[];

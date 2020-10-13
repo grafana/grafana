@@ -3,6 +3,7 @@ import TableModel from 'app/core/table_model';
 import { TableRenderer } from '../renderer';
 import { ScopedVars, TimeZone } from '@grafana/data';
 import { ColumnRender } from '../types';
+import { config } from 'app/core/config';
 
 const utc: TimeZone = 'utc';
 
@@ -210,7 +211,7 @@ describe('when rendering table', () => {
     };
 
     //@ts-ignore
-    const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv);
+    const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv, config.theme);
 
     it('time column should be formatted', () => {
       const html = renderer.renderCell(0, 0, 1388556366666);
