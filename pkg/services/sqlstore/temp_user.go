@@ -136,8 +136,8 @@ func GetTempUserByCode(query *models.GetTempUserByCodeQuery) error {
 
 func ExpireOldUserInvites(cmd *models.ExpireTempUsersCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		var rawSql = "UPDATE temp_user SET status = ?, updated = ? WHERE created <= ? AND status = ?"
-		if result, err := sess.Exec(rawSql, string(models.TmpUserExpired), time.Now().Unix(), cmd.OlderThan.Unix(), string(models.TmpUserInvitePending)); err != nil {
+		var rawSql = "UPDATE temp_user SET status = ?, updated = ? WHERE created <= ? AND status in (?, ?)"
+		if result, err := sess.Exec(rawSql, string(models.TmpUserExpired), time.Now().Unix(), cmd.OlderThan.Unix(), string(models.TmpUserSignUpStarted), string(models.TmpUserInvitePending)); err != nil {
 			return err
 		} else if cmd.NumExpired, err = result.RowsAffected(); err != nil {
 			return err
