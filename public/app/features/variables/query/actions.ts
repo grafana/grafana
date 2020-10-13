@@ -1,5 +1,5 @@
 import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
-import { toDataQueryError, getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 
 import { updateOptions, validateVariableSelectionState } from '../state/actions';
 import { QueryVariableModel, VariableRefresh } from '../types';
@@ -7,7 +7,7 @@ import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';
-import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
+import LegacyVariableQueryEditor from '../editor/LegacyVariableQueryEditor';
 import { getVariable } from '../state/selectors';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';
@@ -96,7 +96,7 @@ export const changeQueryVariableDataSource = (
     try {
       const dataSource = await getDatasourceSrv().get(name ?? '');
       const dsPlugin = await importDataSourcePlugin(dataSource.meta!);
-      const VariableQueryEditor = dsPlugin.components.VariableQueryEditor ?? DefaultVariableQueryEditor;
+      const VariableQueryEditor = dsPlugin.components.VariableQueryEditor ?? LegacyVariableQueryEditor;
       dispatch(changeVariableEditorExtended({ propName: 'dataSource', propValue: dataSource }));
       dispatch(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: VariableQueryEditor }));
     } catch (err) {

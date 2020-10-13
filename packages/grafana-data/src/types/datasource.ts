@@ -10,6 +10,7 @@ import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
 import { CoreApp } from './app';
 import { LiveChannelSupport } from './live';
+import { VariableSupport } from './variables';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -295,20 +296,11 @@ export abstract class DataSourceApi<
    */
   channelSupport?: LiveChannelSupport;
 
-  variables?: {
-    custom?: {
-      editor: QueryEditorProps<DataSourceApi<TQuery, TOptions>, TQuery, TOptions>;
-      query?(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse>;
-    };
-    default?: {
-      toDataQuery: (target: LegacyVariableQuery) => TQuery;
-      query?(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse>;
-    };
-  };
-}
-
-export interface LegacyVariableQuery extends DataQuery {
-  query: string;
+  /**
+   * Define new variable support
+   * @experimental
+   */
+  variables?: VariableSupport<TQuery, TOptions>;
 }
 
 export interface MetadataInspectorProps<

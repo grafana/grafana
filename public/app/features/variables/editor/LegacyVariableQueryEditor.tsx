@@ -1,8 +1,9 @@
 import React, { PureComponent } from 'react';
-import { VariableQueryProps } from 'app/types/plugins';
 import { selectors } from '@grafana/e2e-selectors';
 
-export default class DefaultVariableQueryEditor extends PureComponent<VariableQueryProps, any> {
+import { VariableQueryProps } from 'app/types/plugins';
+
+export default class LegacyVariableQueryEditor extends PureComponent<VariableQueryProps, any> {
   constructor(props: VariableQueryProps) {
     super(props);
     this.state = { value: props.query };

@@ -28,7 +28,7 @@ import {
   removeVariableEditorError,
   setIdInEditor,
 } from '../editor/reducer';
-import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
+import LegacyVariableQueryEditor from '../editor/LegacyVariableQueryEditor';
 import { expect } from 'test/lib/common';
 import { updateOptions } from '../state/actions';
 import { notifyApp } from '../../../core/reducers/appNotification';
@@ -410,7 +410,7 @@ describe('query actions', () => {
   describe('when changeQueryVariableDataSource is dispatched and editor is not configured', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ datasource: 'other' });
-      const editor = DefaultVariableQueryEditor;
+      const editor = LegacyVariableQueryEditor;
 
       mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
         components: {},
