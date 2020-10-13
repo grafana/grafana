@@ -5,7 +5,7 @@ const { Select, Switch } = LegacyForms;
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { buildImageUrl, buildShareUrl, buildShortUrl, buildHostUrl } from './utils';
+import { buildImageUrl, buildShareUrl } from './utils';
 import { appEvents } from 'app/core/core';
 import config from 'app/core/config';
 

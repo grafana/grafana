@@ -38,10 +38,6 @@ export function buildParams(
   return params;
 }
 
-export function buildHostUrl() {
-  return `${window.location.protocol}//${window.location.host}${config.appSubUrl}`;
-}
-
 export function buildBaseUrl() {
   let baseUrl = window.location.href;
   const queryStart = baseUrl.indexOf('?');
@@ -106,11 +102,6 @@ export function buildIframeHtml(
 ) {
   let soloUrl = buildSoloUrl(useCurrentTimeRange, includeTemplateVars, selectedTheme, panel);
   return '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
-}
-
-export function buildShortUrl(uid: string) {
-  const hostUrl = buildHostUrl();
-  return `${hostUrl}/goto/${uid}`;
 }
 
 export function getLocalTimeZone() {
