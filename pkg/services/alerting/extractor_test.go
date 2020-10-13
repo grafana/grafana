@@ -271,7 +271,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 				Convey("Should fail on save", func() {
 					_, err := extractor.GetAlerts()
-					So(err.Error(), ShouldEqual, "alert validation error: Dashboard ID, Org ID or Panel ID is not correct, alertName=Influxdb, panelId=1, orgId=1, dashboardId=0")
+					So(err.Error(), ShouldEqual, "alert validation error: Panel id is not correct, alertName=Influxdb, panelId=1")
 				})
 			})
 		})
