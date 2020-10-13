@@ -20,12 +20,12 @@ export const toFilters = (value: UrlQueryValue): AdHocVariableFilter[] => {
   return filter === null ? [] : [filter];
 };
 
-function escapeDelimiter(value: string) {
-  return value.replace(/\|/g, '__gfp__');
+function escapeDelimiter(value: string | undefined): string {
+  return value?.replace(/\|/g, '__gfp__') ?? '';
 }
 
-function unescapeDelimiter(value: string) {
-  return value.replace(/__gfp__/g, '|');
+function unescapeDelimiter(value: string | undefined): string {
+  return value?.replace(/__gfp__/g, '|') ?? '';
 }
 
 function toArray(filter: AdHocVariableFilter): string[] {
