@@ -5,7 +5,6 @@
   "category": "cloud",
   "metrics": true,
   "logs": true,
-  "live": true,
   "alerting": true,
   "annotations": true,
   "includes": [
