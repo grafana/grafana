@@ -1,4 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import {
+  DataFrame,
+  FieldConfig,
+  FieldType,
+  formattedValueToString,
+  getFieldColorModeForField,
+  getTimeField,
+  PanelProps,
+  systemDateFormats,
+} from '@grafana/data';
 import {
   Area,
   Canvas,
@@ -12,29 +21,16 @@ import {
   SeriesGeometry,
   TooltipPlugin,
   UPlotChart,
-  ZoomPlugin,
   useTheme,
+  ZoomPlugin,
 } from '@grafana/ui';
-
-import {
-  DataFrame,
-  FieldConfig,
-  FieldType,
-  formattedValueToString,
-  getTimeField,
-  PanelProps,
-  getFieldColorModeForField,
-  systemDateFormats,
-} from '@grafana/data';
-
+import { Axis } from '@grafana/ui/src/components/uPlot/geometries/Axis';
+import { timeFormatToTemplate } from '@grafana/ui/src/components/uPlot/utils';
+import React, { useEffect, useState } from 'react';
+import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { Options } from './types';
 import { alignAndSortDataFramesByFieldName } from './utils';
 import { VizLayout } from './VizLayout';
-
-import { Axis } from '@grafana/ui/src/components/uPlot/geometries/Axis';
-import { timeFormatToTemplate } from '@grafana/ui/src/components/uPlot/utils';
-import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
-import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 
 interface GraphPanelProps extends PanelProps<Options> {}
 
@@ -240,7 +236,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
             <ContextMenuPlugin />
 
             {data.annotations && <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} />}
-            {data.annotations && <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} />}
+            {/* {data.annotations && <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} />} */}
             {/* TODO: */}
             {/*<AnnotationsEditorPlugin />*/}
           </UPlotChart>
