@@ -56,6 +56,7 @@ func (m *MeasurementsRunner) DoChannelHTTP(c *models.ReqContext, channel string)
 		if err != nil {
 			c.JSON(500, util.DynMap{
 				"message": "error reading body",
+				"error":   err.Error(),
 			})
 			return
 		}
@@ -64,7 +65,8 @@ func (m *MeasurementsRunner) DoChannelHTTP(c *models.ReqContext, channel string)
 		err = json.Unmarshal(body, &msg)
 		if err != nil {
 			c.JSON(500, util.DynMap{
-				"message": "body must be measurment",
+				"message": "body must be measurment batch",
+				"error":   err.Error(),
 			})
 			return
 		}
@@ -73,6 +75,7 @@ func (m *MeasurementsRunner) DoChannelHTTP(c *models.ReqContext, channel string)
 		if err != nil {
 			c.JSON(500, util.DynMap{
 				"message": "error publishing",
+				"error":   err.Error(),
 			})
 			return
 		}
