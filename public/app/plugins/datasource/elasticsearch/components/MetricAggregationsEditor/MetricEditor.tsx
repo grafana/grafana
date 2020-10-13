@@ -85,7 +85,7 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
             />
           </InlineField>
 
-          {isMetricAggregationWithField(value) && (
+          {isMetricAggregationWithField(value) && !isPipelineAggregation(value) && (
             <SegmentAsync
               className={cx(styles.color)}
               loadOptions={getFields}

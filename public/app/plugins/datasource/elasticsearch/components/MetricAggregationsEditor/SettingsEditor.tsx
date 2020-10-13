@@ -122,7 +122,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric }) => {
               <Input
                 placeholder="_value * 1"
                 onBlur={e => dispatch(changeMetricSetting(metric, 'script', e.target.value))}
-                defaultValue={metric.settings?.script ?? ''}
+                defaultValue={metric.settings?.script}
               />
             </InlineField>
           )}
@@ -137,7 +137,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric }) => {
               <Input
                 onBlur={e => dispatch(changeMetricSetting(metric, 'missing', e.target.value))}
                 type="number"
-                defaultValue={metric.settings?.missing ?? ''}
+                defaultValue={metric.settings?.missing}
               />
             </InlineField>
           )}
