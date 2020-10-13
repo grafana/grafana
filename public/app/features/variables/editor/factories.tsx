@@ -106,7 +106,7 @@ const defaultVariableQueryEditorFactory = <
 const customVariableQueryEditorFactory = <
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
-  VariableQuery extends DataQuery = DataQuery
+  VariableQuery extends DataQuery = any
 >(): FC<CustomVariableQueryEditorProps<TQuery, TOptions, VariableQuery>> => ({
   datasource: propsDatasource,
   query: propsQuery,
