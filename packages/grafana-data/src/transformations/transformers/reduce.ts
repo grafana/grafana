@@ -13,7 +13,7 @@ import { getFieldDisplayName } from '../../field';
 
 export enum ReduceTransformerMode {
   SeriesToRows = 'seriesToRows', // default
-  ReduceField = 'reduceField', // same structure, add additional row for each type
+  ReduceFields = 'reduceFields', // same structure, add additional row for each type
 }
 export interface ReduceTransformerOptions {
   reducers: ReducerID[];
@@ -39,7 +39,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
       map(data => {
         const matcher = options.fields
           ? getFieldMatcher(options.fields)
-          : options.includeTimeField && options.mode === ReduceTransformerMode.ReduceField
+          : options.includeTimeField && options.mode === ReduceTransformerMode.ReduceFields
           ? alwaysFieldMatcher
           : notTimeFieldMatcher;
         const calculators = options.reducers && options.reducers.length ? fieldReducers.list(options.reducers) : [];
@@ -47,7 +47,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
 
         const processed: DataFrame[] = [];
         // Collapse all matching fields into a single row
-        if (options.mode === ReduceTransformerMode.ReduceField) {
+        if (options.mode === ReduceTransformerMode.ReduceFields) {
           for (const series of data) {
             const fields: Field[] = [];
             for (const field of series.fields) {
@@ -60,14 +60,14 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
                   const value = results[reducer];
                   const copy = {
                     ...field,
-                    value: new ArrayVector([value]),
+                    values: new ArrayVector([value]),
                   };
                   copy.state = undefined;
                   if (reducers.length > 1) {
                     if (!copy.labels) {
                       copy.labels = {};
                     }
-                    copy.labels['reducer'] = reducer;
+                    copy.labels['reducer'] = fieldReducers.get(reducer).name;
                   }
                   fields.push(copy);
                 }
@@ -147,9 +147,8 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
           });
         }
 
-        return processed;
-      }),
-      map(mergeResults)
+        return mergeResults(processed);
+      })
     ),
 };
 

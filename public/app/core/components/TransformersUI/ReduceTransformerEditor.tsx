@@ -24,8 +24,8 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
       description: 'Create a table with one row for each series value',
     },
     {
-      label: 'Reduce field',
-      value: ReduceTransformerMode.ReduceField,
+      label: 'Reduce fields',
+      value: ReduceTransformerMode.ReduceFields,
       description: 'Collapse each field into a single value',
     },
   ];
@@ -36,7 +36,7 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
       onChange({
         ...options,
         mode,
-        includeTimeField: mode === ReduceTransformerMode.ReduceField ? !!options.includeTimeField : false,
+        includeTimeField: mode === ReduceTransformerMode.ReduceFields ? !!options.includeTimeField : false,
       });
     },
     [onChange, options]
@@ -85,7 +85,7 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
           />
         </div>
       </div>
-      {options.mode === ReduceTransformerMode.ReduceField && (
+      {options.mode === ReduceTransformerMode.ReduceFields && (
         <div className="gf-form-inline">
           <div className="gf-form">
             <LegacyForms.Switch
