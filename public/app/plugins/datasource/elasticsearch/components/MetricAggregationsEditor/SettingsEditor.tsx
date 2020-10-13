@@ -45,12 +45,13 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric }) => {
       </button>
 
       {open && (
-        // FIXME: Count metric shouldn't have settings
         <>
           {metric.type === 'derivative' && (
-            // TODO: onBlur, defaultValue
             <InlineField label="Unit" {...inlineFieldProps}>
-              <Input value={metric.settings?.unit ?? ''} />
+              <Input
+                onBlur={e => dispatch(changeMetricSetting(metric, 'unit', e.target.value))}
+                defaultValue={metric.settings?.unit}
+              />
             </InlineField>
           )}
 
