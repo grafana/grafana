@@ -14,7 +14,7 @@ export class TempoQueryField extends React.PureComponent<Props> {
         label="Trace ID"
         labelWidth={4}
         inputEl={
-          <div className={'slate-query-field__wrapper'}>
+          <div className="slate-query-field__wrapper">
             <div className="slate-query-field">
               <input
                 style={{ width: '100%' }}
