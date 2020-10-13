@@ -18,13 +18,15 @@ export type BucketAggregationType = 'terms' | 'filters' | 'geohash_grid' | 'date
 interface MetricConfiguration {
   label: string;
   requiresField: boolean;
-  supportsInlineScript?: boolean;
-  supportsMissing?: boolean;
+  supportsInlineScript: boolean;
+  supportsMissing: boolean;
   isPipelineAgg: boolean;
   minVersion?: number;
   maxVersion?: number;
   supportsMultipleBucketPaths?: boolean;
   isSingleMetric?: boolean;
+  // TODO: this can probably be inferred from other settings
+  hasSettings: boolean;
 }
 
 interface BucketConfiguration {

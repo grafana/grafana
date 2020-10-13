@@ -5,6 +5,7 @@ export const ADD_METRIC = '@metrics/add';
 export const REMOVE_METRIC = '@metrics/remove';
 export const CHANGE_METRIC_TYPE = '@metrics/change_type';
 export const CHANGE_METRIC_FIELD = '@metrics/change_field';
+export const CHANGE_METRIC_SETTING = '@metrics/change_setting';
 export const TOGGLE_METRIC_VISIBILITY = '@metrics/toggle_visibility';
 
 export type PipelineMetricAggregationType =
@@ -44,81 +45,112 @@ export interface MetricAggregationWithField extends BaseMetricAggregation {
 }
 
 export interface MetricAggregationWithSettings extends BaseMetricAggregation {
-  settings: Record<string, unknown>;
+  // TODO: settings is optional for compatibility reasons, old saved queries might not have it set.
+  settings?: Record<string, unknown>;
+}
+
+export interface MetricAggregationWithMissingSupport extends MetricAggregationWithSettings {
+  settings?: {
+    missing?: string;
+  };
+}
+
+export interface MetricAggregationWithInlineScript extends MetricAggregationWithSettings {
+  settings?: {
+    script?: string;
+  };
 }
 
 interface Count extends BaseMetricAggregation {
   type: 'count';
 }
 
-interface Average extends MetricAggregationWithField, MetricAggregationWithSettings {
+interface Average
+  extends MetricAggregationWithField,
+    MetricAggregationWithMissingSupport,
+    MetricAggregationWithInlineScript {
   type: 'avg';
-  settings: {
+  settings?: {
     script?: string;
-    missing?: number;
+    missing?: string;
   };
 }
 
-interface Sum extends MetricAggregationWithField, MetricAggregationWithSettings {
+interface Sum
+  extends MetricAggregationWithField,
+    MetricAggregationWithMissingSupport,
+    MetricAggregationWithInlineScript {
   type: 'sum';
-  settings: {
+  settings?: {
     script?: string;
-    missing?: number;
+    missing?: string;
   };
 }
 
-interface Max extends MetricAggregationWithField, MetricAggregationWithSettings {
+interface Max
+  extends MetricAggregationWithField,
+    MetricAggregationWithMissingSupport,
+    MetricAggregationWithInlineScript {
   type: 'max';
-  settings: {
+  settings?: {
     script?: string;
-    missing?: number;
+    missing?: string;
   };
 }
 
-interface Min extends MetricAggregationWithField, MetricAggregationWithSettings {
+interface Min
+  extends MetricAggregationWithField,
+    MetricAggregationWithMissingSupport,
+    MetricAggregationWithInlineScript {
   type: 'min';
-  settings: {
+  settings?: {
     script?: string;
-    missing?: number;
+    missing?: string;
   };
 }
 
-interface ExtendedStats extends MetricAggregationWithField, MetricAggregationWithSettings {
+interface ExtendedStats
+  extends MetricAggregationWithField,
+    MetricAggregationWithMissingSupport,
+    MetricAggregationWithInlineScript {
   type: 'extended_stats';
-  settings: {
+  settings?: {
     script?: string;
-    missing?: number;
+    missing?: string;
     // TODO: Add other settings here
   };
 }
 
-interface Percentiles extends MetricAggregationWithField, MetricAggregationWithSettings {
+interface Percentiles
+  extends MetricAggregationWithField,
+    MetricAggregationWithMissingSupport,
+    MetricAggregationWithInlineScript {
   type: 'percentiles';
-  settings: {
+  settings?: {
     percentiles?: string;
     script?: string;
-    missing?: number;
+    missing?: string;
   };
 }
 
-interface UniqueCount extends MetricAggregationWithField, MetricAggregationWithSettings {
+interface UniqueCount extends MetricAggregationWithField, MetricAggregationWithMissingSupport {
   type: 'cardinality';
-  settings: {
+  settings?: {
     precision_threshold?: string;
-    missing?: number;
+    missing?: string;
   };
 }
 
 interface RawDocument extends MetricAggregationWithSettings {
   type: 'raw_document';
-  settings: {
+  settings?: {
     size?: number;
   };
 }
 
 interface RawData extends MetricAggregationWithSettings {
   type: 'raw_data';
-  settings: {
+  settings?: {
     size?: number;
   };
 }
@@ -144,23 +176,23 @@ interface MovingAverage extends BasePipelineMetricAggregation, MetricAggregation
   };
 }
 
-interface Derivative extends BasePipelineMetricAggregation {
+interface Derivative extends BasePipelineMetricAggregation, MetricAggregationWithSettings {
   type: 'derivative';
-  settings: {
+  settings?: {
     unit?: string;
   };
 }
 
-interface CumulativeSum extends BasePipelineMetricAggregation {
+interface CumulativeSum extends BasePipelineMetricAggregation, MetricAggregationWithSettings {
   type: 'cumulative_sum';
-  settings: {
+  settings?: {
     format?: string;
   };
 }
 
-interface BucketScript extends PipelineMetricAggregationWithMoultipleBucketPaths {
+interface BucketScript extends PipelineMetricAggregationWithMoultipleBucketPaths, MetricAggregationWithSettings {
   type: 'bucket_script';
-  settings: {
+  settings?: {
     script?: string;
   };
 }
@@ -199,6 +231,18 @@ export const isPipelineAggregationWithMultipleBucketPaths = (
 ): metric is PipelineMetricAggregationWithMoultipleBucketPaths =>
   metricAggregationConfig[metric.type].supportsMultipleBucketPaths;
 
+export const isMetricAggregationWithMissingSupport = (
+  metric: BaseMetricAggregation | MetricAggregationWithMissingSupport
+): metric is MetricAggregationWithMissingSupport => metricAggregationConfig[metric.type].supportsMissing;
+
+export const isMetricAggregationWithSettings = (
+  metric: BaseMetricAggregation | MetricAggregationWithSettings
+): metric is MetricAggregationWithMissingSupport => metricAggregationConfig[metric.type].hasSettings;
+
+export const isMetricAggregationWithInlineScript = (
+  metric: BaseMetricAggregation | MetricAggregationWithInlineScript
+): metric is MetricAggregationWithInlineScript => metricAggregationConfig[metric.type].supportsInlineScript;
+
 //
 // Action Types
 export interface AddMetricAction extends Action<typeof ADD_METRIC> {
@@ -232,9 +276,19 @@ export interface ToggleMetricVisibilityAction extends Action<typeof TOGGLE_METRI
   };
 }
 
+export interface ChangeMetricSettingAction<T extends MetricAggregationWithSettings = MetricAggregationWithSettings>
+  extends Action<typeof CHANGE_METRIC_SETTING> {
+  payload: {
+    metric: T;
+    setting: Extract<keyof Required<T>['settings'], string>;
+    newValue: string | number;
+  };
+}
+
 export type MetricAggregationAction =
   | AddMetricAction
   | RemoveMetricAction
   | ChangeMetricTypeAction
   | ChangeMetricFieldAction
-  | ToggleMetricVisibilityAction;
+  | ToggleMetricVisibilityAction
+  | ChangeMetricSettingAction;

@@ -9,6 +9,8 @@ import {
   MetricAggregation,
   MetricAggregationAction,
   CHANGE_METRIC_FIELD,
+  CHANGE_METRIC_SETTING,
+  isMetricAggregationWithSettings,
 } from './types';
 
 export const reducer = (
@@ -61,6 +63,25 @@ export const reducer = (
           ...metric,
           hide: !metric.hide,
         };
+      });
+
+    case CHANGE_METRIC_SETTING:
+      return state.map(metric => {
+        if (metric.id !== action.payload.metric.id) {
+          return metric;
+        }
+
+        if (isMetricAggregationWithSettings(metric)) {
+          return {
+            ...metric,
+            settings: {
+              ...metric.settings,
+              [action.payload.setting]: action.payload.newValue,
+            },
+          };
+        }
+        // This should never happen.
+        return metric;
       });
 
     default:

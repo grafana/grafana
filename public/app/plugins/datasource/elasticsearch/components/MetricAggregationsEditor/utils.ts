@@ -7,12 +7,16 @@ import {
 } from './state/types';
 
 // We can probably split Pipeline Aggregations from here.
+// TODO: hasSettings can probably be removed as it can be inferred
 export const metricAggregationConfig: MetricsConfiguration = {
   count: {
     label: 'Count',
     requiresField: false,
     isPipelineAgg: false,
+    supportsMissing: false,
     supportsMultipleBucketPaths: false,
+    hasSettings: false,
+    supportsInlineScript: false,
   },
   avg: {
     label: 'Average',
@@ -21,6 +25,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMissing: true,
     isPipelineAgg: false,
     supportsMultipleBucketPaths: false,
+    hasSettings: true,
   },
   sum: {
     label: 'Sum',
@@ -29,6 +34,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMissing: true,
     isPipelineAgg: false,
     supportsMultipleBucketPaths: false,
+    hasSettings: true,
   },
   max: {
     label: 'Max',
@@ -37,6 +43,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMissing: true,
     isPipelineAgg: false,
     supportsMultipleBucketPaths: false,
+    hasSettings: true,
   },
   min: {
     label: 'Min',
@@ -45,6 +52,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMissing: true,
     isPipelineAgg: false,
     supportsMultipleBucketPaths: false,
+    hasSettings: true,
   },
   extended_stats: {
     label: 'Extended Stats',
@@ -53,6 +61,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsInlineScript: true,
     isPipelineAgg: false,
     supportsMultipleBucketPaths: false,
+    hasSettings: true,
   },
   percentiles: {
     label: 'Percentiles',
@@ -61,6 +70,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsInlineScript: true,
     isPipelineAgg: false,
     supportsMultipleBucketPaths: false,
+    hasSettings: true,
   },
   cardinality: {
     label: 'Unique Count',
@@ -68,13 +78,18 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMissing: true,
     isPipelineAgg: false,
     supportsMultipleBucketPaths: false,
+    hasSettings: true,
+    supportsInlineScript: false,
   },
   moving_avg: {
     label: 'Moving Average',
     requiresField: false,
     isPipelineAgg: true,
     minVersion: 2,
+    supportsMissing: false,
     supportsMultipleBucketPaths: false,
+    hasSettings: true,
+    supportsInlineScript: false,
   },
   moving_fn: {
     label: 'Moving Function',
@@ -87,41 +102,59 @@ export const metricAggregationConfig: MetricsConfiguration = {
     requiresField: false,
     isPipelineAgg: true,
     minVersion: 2,
+    supportsMissing: false,
     supportsMultipleBucketPaths: false,
+    hasSettings: true,
+    supportsInlineScript: false,
   },
   cumulative_sum: {
     label: 'Cumulative Sum',
     requiresField: false,
     isPipelineAgg: true,
     minVersion: 2,
+    supportsMissing: false,
     supportsMultipleBucketPaths: false,
+    hasSettings: true,
+    supportsInlineScript: false,
   },
   bucket_script: {
     label: 'Bucket Script',
     requiresField: false,
     isPipelineAgg: true,
+    supportsMissing: false,
     supportsMultipleBucketPaths: true,
     minVersion: 2,
+    hasSettings: true,
+    supportsInlineScript: false,
   },
   raw_document: {
     label: 'Raw Document (legacy)',
     requiresField: false,
     isSingleMetric: true,
     isPipelineAgg: false,
+    supportsMissing: false,
     supportsMultipleBucketPaths: false,
+    hasSettings: true,
+    supportsInlineScript: false,
   },
   raw_data: {
     label: 'Raw Data',
     requiresField: false,
     isSingleMetric: true,
     isPipelineAgg: false,
+    supportsMissing: false,
     supportsMultipleBucketPaths: false,
+    hasSettings: true,
+    supportsInlineScript: false,
   },
   logs: {
     label: 'Logs',
     requiresField: false,
     isPipelineAgg: false,
+    supportsMissing: false,
     supportsMultipleBucketPaths: false,
+    hasSettings: true,
+    supportsInlineScript: false,
   },
 };
 

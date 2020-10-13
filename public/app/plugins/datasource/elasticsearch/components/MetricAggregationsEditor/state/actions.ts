@@ -6,6 +6,8 @@ import {
   TOGGLE_METRIC_VISIBILITY,
   MetricAggregation,
   MetricAggregationAction,
+  CHANGE_METRIC_SETTING,
+  MetricAggregationWithSettings,
 } from './types';
 
 export const addMetric = (metricType: MetricAggregation['type']): MetricAggregationAction => ({
@@ -45,5 +47,18 @@ export const toggleMetricVisibility = (id: MetricAggregation['id']): MetricAggre
   type: TOGGLE_METRIC_VISIBILITY,
   payload: {
     id,
+  },
+});
+
+export const changeMetricSetting = <T extends MetricAggregationWithSettings = MetricAggregationWithSettings>(
+  metric: T,
+  setting: Extract<keyof Required<T>['settings'], string>,
+  newValue: string | number
+): MetricAggregationAction => ({
+  type: CHANGE_METRIC_SETTING,
+  payload: {
+    metric,
+    setting,
+    newValue,
   },
 });

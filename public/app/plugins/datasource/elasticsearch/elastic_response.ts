@@ -11,6 +11,8 @@ import {
   PreferredVisualisationType,
 } from '@grafana/data';
 import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
+import { MetricAggregationType } from './components/MetricAggregationsEditor/state/types';
+import { metricAggregationConfig } from './components/MetricAggregationsEditor/utils';
 
 export class ElasticResponse {
   constructor(private targets: ElasticsearchQuery[], private response: any) {
@@ -19,11 +21,10 @@ export class ElasticResponse {
   }
 
   processMetrics(esAgg: any, target: ElasticsearchQuery, seriesList: any, props: any) {
-    let metric, y, i, bucket, value;
     let newSeries: any;
 
-    for (y = 0; y < target.metrics.length; y++) {
-      metric = target.metrics[y];
+    for (let y = 0; y < target.metrics!.length; y++) {
+      const metric = target.metrics![y];
       if (metric.hide) {
         continue;
       }
@@ -31,9 +32,9 @@ export class ElasticResponse {
       switch (metric.type) {
         case 'count': {
           newSeries = { datapoints: [], metric: 'count', props: props };
-          for (i = 0; i < esAgg.buckets.length; i++) {
-            bucket = esAgg.buckets[i];
-            value = bucket.doc_count;
+          for (let i = 0; i < esAgg.buckets.length; i++) {
+            const bucket = esAgg.buckets[i];
+            const value = bucket.doc_count;
             newSeries.datapoints.push([value, bucket.key]);
           }
           seriesList.push(newSeries);
@@ -55,8 +56,8 @@ export class ElasticResponse {
               field: metric.field,
             };
 
-            for (i = 0; i < esAgg.buckets.length; i++) {
-              bucket = esAgg.buckets[i];
+            for (let i = 0; i < esAgg.buckets.length; i++) {
+              const bucket = esAgg.buckets[i];
               const values = bucket[metric.id].values;
               newSeries.datapoints.push([values[percentileName], bucket.key]);
             }
@@ -78,8 +79,8 @@ export class ElasticResponse {
               field: metric.field,
             };
 
-            for (i = 0; i < esAgg.buckets.length; i++) {
-              bucket = esAgg.buckets[i];
+            for (let i = 0; i < esAgg.buckets.length; i++) {
+              const bucket = esAgg.buckets[i];
               const stats = bucket[metric.id];
 
               // add stats that are in nested obj to top level obj
@@ -102,10 +103,10 @@ export class ElasticResponse {
             metricId: metric.id,
             props: props,
           };
-          for (i = 0; i < esAgg.buckets.length; i++) {
-            bucket = esAgg.buckets[i];
+          for (let i = 0; i < esAgg.buckets.length; i++) {
+            const bucket = esAgg.buckets[i];
+            const value = bucket[metric.id];
 
-            value = bucket[metric.id];
             if (value !== undefined) {
               if (value.normalized_value) {
                 newSeries.datapoints.push([value.normalized_value, bucket.key]);
@@ -242,7 +243,9 @@ export class ElasticResponse {
     }
   }
 
-  private getMetricName(metric: any) {
+  private getMetricName(metric: MetricAggregationType): string {
+    // return metricAggregationConfig[metric].label;
+
     let metricDef: any = _.find(queryDef.metricAggTypes, { value: metric });
     if (!metricDef) {
       metricDef = _.find(queryDef.extendedStats, { value: metric });
