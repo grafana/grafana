@@ -139,11 +139,15 @@ func NewRuleFromDBAlert(ruleDef *models.Alert, logTranslationFailures bool) (*Ru
 		jsonModel := simplejson.NewFromAny(v)
 		if id, err := jsonModel.Get("id").Int64(); err == nil {
 			uid, err := translateNotificationIDToUID(id, ruleDef.OrgId)
-			if logTranslationFailures && errors.Is(err, models.ErrAlertNotificationFailedTranslateUniqueID) {
-				logger.Warn("Unable to translate notification id to uid", "error", err.Error(), "dashboardId", model.DashboardID, "alertId", model.Name, "panelId", model.PanelID, "notificationId", id)
-			}
-
 			if err != nil {
+				if !errors.Is(err, models.ErrAlertNotificationFailedTranslateUniqueID) {
+					return nil, ValidationError{Reason: "Failed to tranlate notification id to uid:" + err.Error(), DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
+				}
+
+				if logTranslationFailures {
+					logger.Warn("Unable to translate notification id to uid", "error", err.Error(), "dashboardId", model.DashboardID, "alertId", model.Name, "panelId", model.PanelID, "notificationId", id)
+				}
+			} else {
 				model.Notifications = append(model.Notifications, uid)
 			}
 		} else if uid, err := jsonModel.Get("uid").String(); err == nil {
