@@ -221,7 +221,6 @@ export const getStandardFieldConfigs = () => {
     defaultValue: NullValueMode.Null,
     shouldApply: () => true,
     category,
-    getItemsCount: value => (value ? value.length : 0),
   };
 
   const color: FieldConfigPropertyItem<any, FieldColor | undefined, {}> = {
