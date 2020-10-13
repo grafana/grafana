@@ -9,25 +9,19 @@ interface Props {
 
 type PluginErrorHelper = {
   [e in PluginErrorCode]: {
-    message: () => string;
+    message: string;
   };
 };
 
 const ErrorDetails: PluginErrorHelper = {
   [PluginErrorCode.unsigned]: {
-    message: () => {
-      return '<span class="fa fa-exclamation-circle"></span> This plugin cannot run as it is not signed';
-    },
+    message: '<span class="fa fa-exclamation-circle"></span> This plugin cannot run as it is not signed',
   },
   [PluginErrorCode.modified]: {
-    message: () => {
-      return '<span class="fa fa-exclamation-circle"></span> The plugin cannot run as the signature has been modified';
-    },
+    message: '<span class="fa fa-exclamation-circle"></span> The plugin cannot run as the signature has been modified',
   },
   [PluginErrorCode.invalid]: {
-    message: () => {
-      return '<span class="fa fa-exclamation-circle"></span> The plugin cannot run as the signature is invalid';
-    },
+    message: '<span class="fa fa-exclamation-circle"></span> The plugin cannot run as the signature is invalid',
   },
 };
 
@@ -42,8 +36,8 @@ const getStyles = stylesFactory(() => {
 });
 
 export class PluginErrors extends PureComponent<Props> {
-  getHelperMessage = (errorCode: PluginErrorCode): string => {
-    return ErrorDetails[errorCode].message();
+  getErrorMessage = (errorCode: PluginErrorCode): string => {
+    return ErrorDetails[errorCode].message;
   };
   render() {
     const styles = getStyles();
@@ -53,7 +47,7 @@ export class PluginErrors extends PureComponent<Props> {
       <div>
         {errorCodes.map((error, i) => {
           return (
-            <div key={i} className={styles.error} dangerouslySetInnerHTML={{ __html: this.getHelperMessage(error) }} />
+            <div key={i} className={styles.error} dangerouslySetInnerHTML={{ __html: this.getErrorMessage(error) }} />
           );
         })}
       </div>
