@@ -2,16 +2,16 @@ import _ from 'lodash';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
-import { AzureMonitorQuery, AzureDataSourceJsonData, AzureQueryType, InsightsAnalyticsQuery } from './types';
+import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, InsightsAnalyticsQuery } from './types';
 import {
-  DataSourceApi,
   DataQueryRequest,
-  DataSourceInstanceSettings,
   DataQueryResponseData,
+  DataSourceApi,
+  DataSourceInstanceSettings,
   LoadingState,
   ScopedVars,
 } from '@grafana/data';
-import { Observable, of, from } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
 import { migrateMetricsDimensionFilters } from './query_ctrl';
@@ -82,6 +82,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       let q = byType[target.queryType];
       if (!q) {
         q = _.cloneDeep(options);
+        q.requestId = `${q.requestId}-${target.refId}`;
         q.targets = [];
         byType[target.queryType] = q;
       }

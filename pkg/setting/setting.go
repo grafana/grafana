@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -311,6 +312,9 @@ type Cfg struct {
 
 	DateFormats DateFormats
 
+	// User
+	UserInviteMaxLifetime time.Duration
+
 	// Annotations
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
@@ -325,6 +329,11 @@ func (c Cfg) IsExpressionsEnabled() bool {
 // IsLiveEnabled returns if grafana live should be enabled
 func (c Cfg) IsLiveEnabled() bool {
 	return c.FeatureToggles["live"]
+}
+
+// IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
+func (c Cfg) IsNgAlertEnabled() bool {
+	return c.FeatureToggles["ngalert"]
 }
 
 type CommandLineArgs struct {
@@ -1072,6 +1081,17 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 
 	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
+
+	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
+	userInviteMaxLifetimeDuration, err := gtime.ParseInterval(userInviteMaxLifetimeVal)
+	if err != nil {
+		return err
+	}
+
+	cfg.UserInviteMaxLifetime = userInviteMaxLifetimeDuration
+	if cfg.UserInviteMaxLifetime < time.Minute*15 {
+		return errors.New("the minimum supported value for the `user_invite_max_lifetime_duration` configuration is 15m (15 minutes)")
+	}
 
 	return nil
 }
