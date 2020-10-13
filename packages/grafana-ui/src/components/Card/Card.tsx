@@ -4,7 +4,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { useTheme, styleMixins } from '../../themes';
 import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';
 import { OnTagClick } from '../Tags/Tag';
-import { TagList } from '..';
+import { TagList } from '../Tags/TagList';
 
 interface ContainerProps extends HTMLAttributes<HTMLOrSVGElement> {
   /** Customise the container html element for the card. Defaults to div */
@@ -13,6 +13,22 @@ interface ContainerProps extends HTMLAttributes<HTMLOrSVGElement> {
 
 const CardContainer: FC<ContainerProps> = ({ tag = 'div', children, ...props }) => {
   return React.createElement(tag, props, children);
+};
+
+export interface CardInnerProps {
+  href?: string;
+}
+
+const CardInner: FC<CardInnerProps> = ({ children, href }) => {
+  const theme = useTheme();
+  const styles = getStyles(theme);
+  return href ? (
+    <a className={styles.innerLink} href={href}>
+      {children}
+    </a>
+  ) : (
+    <>{children}</>
+  );
 };
 
 export interface Props extends ContainerProps {
@@ -33,6 +49,10 @@ export interface Props extends ContainerProps {
   actions?: ReactNode[];
   /** Right-side actions */
   secondaryActions?: ReactNode[];
+  /** Link to redirect to on card click. If provided, the Card inner content will be rendered inside `a` */
+  href?: string;
+  /** On click handler for the Card */
+  onClick?: () => void;
 }
 
 export const Card: FC<Props> = ({
@@ -46,6 +66,8 @@ export const Card: FC<Props> = ({
   tooltip = '',
   secondaryActions = [],
   tag,
+  href,
+  onClick,
   ...htmlProps
 }) => {
   const hasActions = Boolean(actions.length || secondaryActions.length);
@@ -56,22 +78,24 @@ export const Card: FC<Props> = ({
   const meta = Array.isArray(metaData)
     ? (metaData as ReactNode[]).reduce((prev, curr) => [prev, <span className={styles.separator}>|</span>, curr])
     : metaData;
-
+  const onCardClick = disabled ? () => {} : onClick;
   return (
     <Tooltip placement="top" content={tooltip} theme="info" show={!!tooltip} {...htmlProps}>
-      <CardContainer tag={tag} tabIndex={0} className={styles.container}>
-        {mediaContent && <div className={styles.media}>{mediaContent}</div>}
-        <div className={styles.inner}>
-          <p className={styles.title}>{title}</p>
-          {meta && <p className={styles.metaData}>{meta}</p>}
-          {!!tags.length && <TagList tags={tags} onClick={onTagClick} />}
-          {hasActions && (
-            <div className={styles.actionRow}>
-              {!!actions.length && <div className={styles.actions}>{actions}</div>}
-              {!!secondaryActions.length && <div className={styles.secondaryActions}>{secondaryActions}</div>}
-            </div>
-          )}
-        </div>
+      <CardContainer tag={tag} tabIndex={0} className={styles.container} onClick={onCardClick}>
+        <CardInner href={href}>
+          {mediaContent && <div className={styles.media}>{mediaContent}</div>}
+          <div className={styles.inner}>
+            <p className={styles.title}>{title}</p>
+            {meta && <p className={styles.metaData}>{meta}</p>}
+            {!!tags.length && <TagList tags={tags} onClick={onTagClick} />}
+            {hasActions && (
+              <div className={styles.actionRow}>
+                {!!actions.length && <div className={styles.actions}>{actions}</div>}
+                {!!secondaryActions.length && <div className={styles.secondaryActions}>{secondaryActions}</div>}
+              </div>
+            )}
+          </div>
+        </CardInner>
         <div className={styles.overlay} />
       </CardContainer>
     </Tooltip>
@@ -150,6 +174,10 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
     `,
     separator: css`
       margin: 0 ${theme.spacing.sm};
+    `,
+    innerLink: css`
+      display: flex;
+      width: 100%;
     `,
   };
 };

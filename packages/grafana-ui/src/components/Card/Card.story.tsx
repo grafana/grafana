@@ -23,10 +23,23 @@ const getKnobs = () => {
 
   return { disabled };
 };
+
 export const Basic = () => {
   const { disabled } = getKnobs();
   return (
     <Card
+      title="Filter by name"
+      metaData="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
+      disabled={disabled}
+    />
+  );
+};
+
+export const AsLink = () => {
+  const { disabled } = getKnobs();
+  return (
+    <Card
+      href="https://grafana.com"
       title="Filter by name"
       metaData="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
       disabled={disabled}
@@ -62,8 +75,13 @@ export const WithMedia = () => {
   const { disabled } = getKnobs();
   return (
     <Card
+      href="https://ops-us-east4.grafana.net/api/prom"
+      aria-label={'t'}
       title="1-ops-tools1-fallback"
-      metaData="Prometheus  |  https://ops-us-east4.grafana.net/api/prom"
+      metaData={[
+        'Prometheus',
+        <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+      ]}
       disabled={disabled}
       mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
     />
