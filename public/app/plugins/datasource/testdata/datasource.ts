@@ -1,6 +1,7 @@
 import set from 'lodash/set';
 
 import {
+  AnnotationEvent,
   ArrayDataFrame,
   arrowTableToDataFrame,
   base64StringToArrowTable,
@@ -10,19 +11,17 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
-  LoadingState,
-  MetricFindValue,
-  TableData,
-  TimeSeries,
-  TimeRange,
   DataTopic,
-  AnnotationEvent,
+  LoadingState,
+  TableData,
+  TimeRange,
+  TimeSeries,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
-import { getBackendSrv, toDataQueryError, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv, TemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { queryMetricTree } from './metricTree';
 import { from, merge, Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { delay, map } from 'rxjs/operators';
 import { runStream } from './runStreams';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 
@@ -34,6 +33,15 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
+    this.variables = {
+      default: {
+        toDataQuery: query => ({
+          refId: 'TestDataDataSource-QueryVariable',
+          stringInput: query,
+          scenarioId: 'variables-query',
+        }),
+      },
+    };
   }
 
   query(options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
@@ -59,6 +67,8 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
         case 'annotations':
           streams.push(this.annotationDataTopicTest(target, options));
           break;
+        case 'variables-query':
+          streams.push(this.variablesQuery(target, options));
         default:
           queries.push({
             ...target,
@@ -172,18 +182,17 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
     return getBackendSrv().get('/api/tsdb/testdata/scenarios');
   }
 
-  metricFindQuery(query: string, options: any) {
-    return new Promise<MetricFindValue[]>((resolve, reject) => {
-      setTimeout(() => {
-        const interpolatedQuery = this.templateSrv.replace(
-          query,
-          getSearchFilterScopedVar({ query, wildcardChar: '*', options })
-        );
-        const children = queryMetricTree(interpolatedQuery);
-        const items = children.map(item => ({ value: item.name, text: item.name }));
-        resolve(items);
-      }, 100);
-    });
+  variablesQuery(target: TestDataQuery, options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
+    const query = target.stringInput;
+    const interpolatedQuery = this.templateSrv.replace(
+      query,
+      getSearchFilterScopedVar({ query, wildcardChar: '*', options: options.scopedVars })
+    );
+    const children = queryMetricTree(interpolatedQuery);
+    const items = children.map(item => ({ value: item.name, text: item.name }));
+    const dataFrame = new ArrayDataFrame(items);
+
+    return of({ data: [dataFrame] }).pipe(delay(100));
   }
 }
 
