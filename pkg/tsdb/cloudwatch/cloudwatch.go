@@ -46,19 +46,6 @@ type datasourceInfo struct {
 	SecretKey string
 }
 
-// cloudWatchExecutor executes CloudWatch requests.
-type cloudWatchExecutor struct {
-	*models.DataSource
-
-	ec2Client           ec2iface.EC2API
-	rgtaClient          resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-	logsClientsByRegion map[string]cloudwatchlogsiface.CloudWatchLogsAPI
-	mtx                 sync.Mutex
-
-	queuesByRegion map[string](chan bool)
-	queueLock      sync.Mutex
-}
-
 const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
 const defaultRegion = "default"
 
@@ -71,13 +58,6 @@ var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
 const defaultConcurrentQueries = 4
 
-func newExecutor() *cloudWatchExecutor {
-	return &cloudWatchExecutor{
-		logsClientsByRegion: map[string]cloudwatchlogsiface.CloudWatchLogsAPI{},
-		queuesByRegion:      map[string]chan bool{},
-	}
-}
-
 func init() {
 	globalExecutor := newExecutor()
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
@@ -85,6 +65,26 @@ func init() {
 	})
 
 	live.RegisterHandler("CloudWatch", &LogQueryRunnerSupplier{})
+}
+
+func newExecutor() *cloudWatchExecutor {
+	return &cloudWatchExecutor{
+		logsClientsByRegion: map[string]cloudwatchlogsiface.CloudWatchLogsAPI{},
+		queuesByRegion:      map[string]chan bool{},
+	}
+}
+
+// cloudWatchExecutor executes CloudWatch requests.
+type cloudWatchExecutor struct {
+	*models.DataSource
+
+	ec2Client           ec2iface.EC2API
+	rgtaClient          resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
+	logsClientsByRegion map[string]cloudwatchlogsiface.CloudWatchLogsAPI
+	mtx                 sync.Mutex
+
+	queuesByRegion map[string](chan bool)
+	queueLock      sync.Mutex
 }
 
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
