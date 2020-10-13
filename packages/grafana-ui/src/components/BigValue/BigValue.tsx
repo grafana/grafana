@@ -44,16 +44,27 @@ export enum BigValueTextMode {
 }
 
 export interface Props extends Themeable {
+  /** Height of the component */
   height: number;
+  /** Width of the component */
   width: number;
+  /** Value displayed as Big Value */
   value: DisplayValue;
+  /** Sparkline values for showing a graph under/behind the value  */
   sparkline?: BigValueSparkline;
+  /** onClick handler for the value */
   onClick?: React.MouseEventHandler<HTMLElement>;
+  /** Custom styling */
   className?: string;
+  /** Color mode for coloring the value or the background */
   colorMode: BigValueColorMode;
+  /** Show a graph behind/under the value */
   graphMode: BigValueGraphMode;
+  /** Auto justify value and text or center it */
   justifyMode?: BigValueJustifyMode;
+  /** Factors that should influence the positioning of the text  */
   alignmentFactors?: DisplayValueAlignmentFactors;
+  /** Specify which text should be visible in the BigValue */
   textMode?: BigValueTextMode;
 
   /**
@@ -70,7 +81,6 @@ export class BigValue extends PureComponent<Props> {
 
   render() {
     const { onClick, className } = this.props;
-
     const layout = buildLayout(this.props);
     const panelStyles = layout.getPanelStyles();
     const valueAndTitleContainerStyles = layout.getValueAndTitleContainerStyles();

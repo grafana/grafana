@@ -56,6 +56,6 @@ Administrators might want to learn about:
 
 - [Grafana configuration]({{< relref "../administration/configuration.md" >}})
 - [Authentication]({{< relref "../auth/overview.md" >}})
-- [User permissions and roles]({{< relref "../permissions/overview.md" >}})
+- [User permissions and roles]({{< relref "../permissions/_index.md" >}})
 - [Provisioning]({{< relref "../administration/provisioning.md" >}})
 - [Grafana CLI]({{< relref "../administration/cli.md" >}})
