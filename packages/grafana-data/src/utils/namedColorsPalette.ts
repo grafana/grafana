@@ -112,10 +112,6 @@ export function getColorFromHexRgbOrName(color: string, theme?: GrafanaThemeType
   return (colorsMap[color as Color] = tinycolor(color).toHexString());
 }
 
-export const getColorForTheme = (color: ColorDefinition, theme?: GrafanaThemeType) => {
-  return theme ? color.variants[theme] : color.variants.dark;
-};
-
 const buildNamedColorsPalette = () => {
   const palette = new Map<Hue, ColorDefinition[]>();
 
