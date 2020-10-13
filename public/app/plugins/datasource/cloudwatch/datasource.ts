@@ -104,12 +104,6 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     AppNotificationTimeout.Error
   );
   logQueries: Record<string, { id: string; region: string; statsQuery: boolean }> = {};
-  readonly channelSupport = {
-    getChannelConfig: (path: string) => ({
-      path,
-    }),
-    getSupportedPaths: () => [],
-  };
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
@@ -194,8 +188,8 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       mergeMap((response: TSDBResponse) => {
         const channelName: string = response.results['A'].meta.channelName;
         const channel = getGrafanaLiveSrv().getChannel({
-          scope: LiveChannelScope.DataSource,
-          namespace: 'CloudWatch',
+          scope: LiveChannelScope.Plugin,
+          namespace: 'cloudwatch',
           path: channelName,
         });
         return channel.getStream();

@@ -120,7 +120,7 @@ func (g *LogQueryRunner) publishResults(channelName string) error {
 func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	responseChannelName := uuid.Must(uuid.NewV4()).String()
 	responseChannel := make(chan *tsdb.Response)
-	addResponseChannel("ds/CloudWatch/"+responseChannelName, responseChannel)
+	addResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel)
 	requestContext, _ := context.WithTimeout(context.Background(), 15*time.Minute)
 	go e.sendQueriesToChannel(requestContext, queryContext, responseChannel)
 

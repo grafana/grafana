@@ -11,12 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/live/features"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 )
 
 var (
-	logger             = log.New("live")
-	loggerCF           = log.New("live.centrifuge")
-	dsHandlerProviders = map[string]models.ChannelHandlerProvider{}
+	logger   = log.New("live")
+	loggerCF = log.New("live.centrifuge")
 )
 
 // CoreGrafanaScope list of core features
@@ -264,14 +264,18 @@ func (g *GrafanaLive) initChannel(id ChannelIdentifier) (models.ChannelHandler, 
 	}
 
 	if id.Scope == "ds" {
-		if handlerProvider, ok := dsHandlerProviders[id.Namespace]; ok {
-			return handlerProvider.GetHandlerForPath(id.Path, g.Publish)
+		if id.Scope == "ds" {
+			return nil, fmt.Errorf("todo... look up datasource: %s", id.Namespace)
 		}
-
-		return nil, fmt.Errorf("no live handler for datasource '%s' registered", id.Namespace)
 	}
 
 	if id.Scope == "plugin" {
+		// Temporary hack until we have a more generic solution later on
+		if id.Namespace == "cloudwatch" {
+			supplier := &cloudwatch.LogQueryRunnerSupplier{}
+			return supplier.GetHandlerForPath(id.Path, g.Publish)
+		}
+
 		p, ok := plugins.Plugins[id.Namespace]
 		if ok {
 			h := &PluginHandler{
@@ -283,20 +287,6 @@ func (g *GrafanaLive) initChannel(id ChannelIdentifier) (models.ChannelHandler, 
 	}
 
 	return nil, fmt.Errorf("invalid scope: %s", id.Scope)
-}
-
-var handlerMu = sync.Mutex{}
-
-func RegisterHandler(datasourceID string, channelHandlerProvider models.ChannelHandlerProvider) error {
-	handlerMu.Lock()
-	defer handlerMu.Unlock()
-
-	if _, ok := dsHandlerProviders[datasourceID]; ok {
-		return fmt.Errorf("handler for datasource with id '%s' already registered", datasourceID)
-	}
-
-	dsHandlerProviders[datasourceID] = channelHandlerProvider
-	return nil
 }
 
 // Publish sends the data to the channel without checking permissions etc
