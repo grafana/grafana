@@ -68,9 +68,9 @@ export class ShareLink extends PureComponent<Props, State> {
     if (useShortUrl) {
       getBackendSrv()
         .post(`/api/short-urls`, {
-          path: shareUrl.replace(buildHostUrl(), ''),
+          path: shareUrl,
         })
-        .then(uid => this.setState({ shareUrl: buildShortUrl(uid), imageUrl }));
+        .then(shortUrl => this.setState({ shareUrl: shortUrl, imageUrl }));
     } else {
       this.setState({ shareUrl, imageUrl });
     }

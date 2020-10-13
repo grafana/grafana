@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -14,15 +15,16 @@ import (
 func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortURLForm) Response {
 	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
 
-	uid, err := hs.ShortURLService.CreateShortURL(c.SignedInUser, strings.TrimPrefix(cmd.Path, "/"))
+	uid, err := hs.ShortURLService.CreateShortURL(c.SignedInUser, strings.TrimPrefix(cmd.Path, setting.AppUrl))
 	if err != nil {
 		c.Logger.Error("Failed to create short URL", "error", err)
 		return Error(500, "Failed to create short URL", err)
 	}
 
-	c.Logger.Debug("Created short URL", "uid", uid)
+	shortURL := fmt.Sprintf("%sgoto/%s", setting.AppUrl, uid)
+	c.Logger.Debug("Created short URL", "shortURL", shortURL)
 
-	return JSON(200, uid)
+	return JSON(200, shortURL)
 }
 
 func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
