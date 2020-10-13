@@ -113,7 +113,7 @@ func getTimeDurationStringToSeconds(str string) (int64, error) {
 
 // NewRuleFromDBAlert maps a db version of
 // alert to an in-memory version.
-func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
+func NewRuleFromDBAlert(ruleDef *models.Alert, logTranslationFailures bool) (*Rule, error) {
 	model := &Rule{}
 	model.ID = ruleDef.Id
 	model.OrgID = ruleDef.OrgId
@@ -139,7 +139,11 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 		jsonModel := simplejson.NewFromAny(v)
 		if id, err := jsonModel.Get("id").Int64(); err == nil {
 			uid, err := translateNotificationIDToUID(id, ruleDef.OrgId)
-			if err == nil {
+			if logTranslationFailures && errors.Is(err, models.ErrAlertNotificationFailedTranslateUniqueID) {
+				logger.Warn("Unable to translate notification id to uid", "error", err.Error(), "dashboardId", model.DashboardID, "alertId", model.Name, "panelId", model.PanelID, "notificationId", id)
+			}
+
+			if err != nil {
 				model.Notifications = append(model.Notifications, uid)
 			}
 		} else if uid, err := jsonModel.Get("uid").String(); err == nil {
