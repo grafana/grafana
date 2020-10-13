@@ -73,10 +73,10 @@ func NewSensuGoNotifier(model *models.AlertNotification) (alerting.Notifier, err
 	apikey := model.Settings.Get("apikey").MustString()
 
 	if url == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
+		return nil, alerting.ValidationError{Reason: "Could not find URL property in settings"}
 	}
 	if apikey == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find API Key property in settings"}
+		return nil, alerting.ValidationError{Reason: "Could not find the API Key property in settings"}
 	}
 
 	return &SensuGoNotifier{
