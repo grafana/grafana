@@ -1,4 +1,12 @@
-import { DataLink, FieldOverrideContext, SelectableValue, ThresholdsConfig, ValueMapping } from '../../types';
+import { settings } from 'cluster';
+import {
+  DataLink,
+  FieldColor,
+  FieldOverrideContext,
+  SelectableValue,
+  ThresholdsConfig,
+  ValueMapping,
+} from '../../types';
 
 export const identityOverrideProcessor = <T>(value: T, _context: FieldOverrideContext, _settings: any) => {
   return value;
@@ -114,8 +122,8 @@ export const booleanOverrideProcessor = (
   return value; // !!!! likely not !!!!
 };
 
-export interface ColorFieldConfigSettings {
-  allowUndefined?: boolean;
-  textWhenUndefined?: string; // Pick Color
-  disableNamedColors?: boolean;
+export interface FieldColorConfigSettings {
+  bySeries?: boolean;
+  byThreshold?: boolean;
+  byValue?: boolean;
 }

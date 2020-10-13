@@ -20,6 +20,7 @@ import {
   identityOverrideProcessor,
   TimeZone,
   FieldColor,
+  FieldColorConfigSettings,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
@@ -203,7 +204,7 @@ export const getStandardFieldConfigs = () => {
     getItemsCount: value => (value ? value.length : 0),
   };
 
-  const color: FieldConfigPropertyItem<any, FieldColor | undefined, {}> = {
+  const color: FieldConfigPropertyItem<any, FieldColor | undefined, FieldColorConfigSettings> = {
     id: 'color',
     path: 'color',
     name: 'Color scheme',
@@ -212,6 +213,11 @@ export const getStandardFieldConfigs = () => {
     override: standardEditorsRegistry.get('fieldColor').editor as any,
     process: identityOverrideProcessor,
     shouldApply: () => true,
+    settings: {
+      bySeries: true,
+      byThreshold: true,
+      byValue: true,
+    },
     category,
   };
 

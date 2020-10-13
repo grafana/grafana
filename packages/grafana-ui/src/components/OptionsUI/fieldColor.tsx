@@ -22,6 +22,8 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
   const theme = useTheme();
   const styles = useStyles(getStyles);
 
+  console.log('field color settings', item.settings);
+
   const options = fieldColorModeRegistry.list().map(mode => {
     return {
       value: mode.id,

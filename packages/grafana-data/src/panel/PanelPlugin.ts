@@ -42,6 +42,7 @@ export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
    * ```
    */
   standardOptionsDefaults?: Partial<Record<FieldConfigProperty, any>>;
+  standardOptionsSettings?: Partial<Record<FieldConfigProperty, any>>;
 
   /**
    * Function that allows custom field config properties definition.
@@ -305,13 +306,13 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
    *
    * @public
    */
-  useFieldConfig(config?: SetFieldConfigOptionsArgs<TFieldConfigOptions>) {
+  useFieldConfig(config: SetFieldConfigOptionsArgs<TFieldConfigOptions> = {}) {
     // builder is applied lazily when custom field configs are accessed
     this._initConfigRegistry = () => {
       const registry = new FieldConfigOptionsRegistry();
 
       // Add custom options
-      if (config && config.useCustomConfig) {
+      if (config.useCustomConfig) {
         const builder = new FieldConfigEditorBuilder<TFieldConfigOptions>();
         config.useCustomConfig(builder);
 
@@ -326,20 +327,35 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
         }
       }
 
-      if (config && config.standardOptions) {
-        for (const standardOption of config.standardOptions) {
-          const standardEditor = standardFieldConfigEditorRegistry.get(standardOption);
-          registry.register({
-            ...standardEditor,
-            defaultValue:
-              (config.standardOptionsDefaults && config.standardOptionsDefaults[standardOption]) ||
-              standardEditor.defaultValue,
-          });
+      for (let fieldConfigProp of standardFieldConfigEditorRegistry.list()) {
+        if (config.standardOptions) {
+          const option = config.standardOptions.find(opt => opt === fieldConfigProp.id);
+          if (!option) {
+            continue;
+          }
         }
-      } else {
-        for (const fieldConfigProp of standardFieldConfigEditorRegistry.list()) {
-          registry.register(fieldConfigProp);
+
+        if (config.standardOptionsDefaults) {
+          const customDefault: any = config.standardOptionsDefaults[fieldConfigProp.id as FieldConfigProperty];
+          if (customDefault) {
+            fieldConfigProp = {
+              ...fieldConfigProp,
+              defaultValue: customDefault,
+            };
+          }
         }
+
+        if (config.standardOptionsSettings) {
+          const customSettings: any = config.standardOptionsSettings[fieldConfigProp.id as FieldConfigProperty];
+          if (customSettings) {
+            fieldConfigProp = {
+              ...fieldConfigProp,
+              settings: customSettings,
+            };
+          }
+        }
+
+        registry.register(fieldConfigProp);
       }
 
       return registry;
