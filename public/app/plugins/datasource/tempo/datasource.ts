@@ -76,6 +76,15 @@ export class TempoDatasource extends DataSourceApi<TempoQuery> {
   }
 
   async testDatasource(): Promise<any> {
+    try {
+      await this._request(`/api/traces/random`).toPromise();
+    } catch (e) {
+      // As we are not searching for a valid trace here this will definitely fail but we should return 502 if it's
+      // unreachable. 500 should otherwise be from tempo it self but probably makes sense to report them here.
+      if (e?.status >= 500 && e?.status < 600) {
+        throw e;
+      }
+    }
     return true;
   }
 
