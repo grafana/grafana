@@ -171,6 +171,7 @@ describe('MeasurementCollector', () => {
       measures: [
         {
           name: 'test',
+          time: 105,
           labels: { host: 'a' },
           values: {
             f1: 10,
@@ -191,7 +192,7 @@ describe('MeasurementCollector', () => {
             "name": "time",
             "type": "time",
             "values": Array [
-              1602561353817,
+              105,
             ],
           },
           Object {
