@@ -201,7 +201,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 			if ok {
 				continue
 			}
-
+			
 			switch validator.aSeverity {
 			case alertError:
 				if validationErrors.Len() > 0 {
@@ -219,7 +219,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 			return nil, ValidationError{Reason: validationErrors.String()}
 		}
 		if validationWarnings.String() != "" {
-			e.log.Warn(validationWarnings.String())
+			e.log.Debug(validationWarnings.String())
 		}
 
 		alerts = append(alerts, alert)
@@ -231,7 +231,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 func validateAlertRule(alert *models.Alert) (ok bool, reason string) {
 	ok = alert.ValidToSave()
 	if !ok {
-		reason = fmt.Sprintf("Dashboard ID, Org ID or Panel ID is not correct, alertName=%v, panelId=%v, orgId=%v, dashboardId=%v", alert.Name, alert.PanelId, alert.OrgId, alert.DashboardId)
+		reason = fmt.Sprintf("Panel id is not correct, alertName=%v, panelId=%v", alert.Name, alert.PanelId)
 	}
 	return ok, reason
 }
@@ -244,7 +244,7 @@ func validAlertJSON(alert *models.Alert) (ok bool, reason string) {
 		if err != nil {
 			continue
 		}
-
+		
 		if _, err := translateNotificationIDToUID(id, alert.OrgId); err == nil {
 			continue
 		}
@@ -253,7 +253,7 @@ func validAlertJSON(alert *models.Alert) (ok bool, reason string) {
 		if warnings.Len() > 0 {
 			warnings.WriteString("\n")
 		}
-		warnings.WriteString(fmt.Sprintf("Alert contains notification identified by incorrect ID, alertName=%v, panelId=%v, notificationId=%v", alert.Name, alert.PanelId, id))
+		warnings.WriteString(fmt.Sprintf("Alert contains notification identified by incorrect id, alertName=%v, panelId=%v, notificationId=%v", alert.Name, alert.PanelId, id))	
 	}
 	reason = warnings.String()
 	return ok, reason
@@ -315,7 +315,7 @@ func (e *DashAlertExtractor) ValidateAlerts() error {
 		aFunc: func(alert *models.Alert) (ok bool, reason string) {
 			ok = alert.OrgId != 0 && alert.PanelId != 0
 			if !ok {
-				reason = fmt.Sprintf("Org ID or Panel ID is not correct, alertName=%v, panelId=%v, orgId=%v", alert.Name, alert.PanelId, alert.OrgId)
+				reason = fmt.Sprintf("Panel ID is not correct, alertName=%v, panelId=%v", alert.Name, alert.PanelId)
 			}
 			return ok, reason
 		},
