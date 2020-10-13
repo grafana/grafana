@@ -1,6 +1,7 @@
-import { Icon, InlineField, Input } from '@grafana/ui';
+import { Icon, InlineField, Input, Switch } from '@grafana/ui';
 import { css, cx } from 'emotion';
-import React, { FunctionComponent, useState, ComponentProps, useCallback } from 'react';
+import React, { FunctionComponent, useState, ComponentProps } from 'react';
+import { extendedStats } from '../../query_def';
 import { useDispatch } from '../ElasticsearchQueryContext';
 import { changeMetricSetting } from './state/actions';
 import {
@@ -82,6 +83,27 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric }) => {
                 defaultValue={metric.settings?.precision_threshold ?? ''}
               />
             </InlineField>
+          )}
+
+          {metric.type === 'extended_stats' && (
+            <>
+              {extendedStats.map(stat => (
+                <InlineField label={stat.text} {...inlineFieldProps} key={stat.value}>
+                  <Switch
+                    // FIXME: Performance of this is kinda bad, need to investigate
+                    onChange={e => dispatch(changeMetricSetting(metric, stat.value, (e.target as any).checked))}
+                    value={metric.settings?.[stat.value] ?? stat.default}
+                  />
+                </InlineField>
+              ))}
+              <InlineField label="Sigma" {...inlineFieldProps}>
+                <Input
+                  placeholder="3"
+                  onBlur={e => dispatch(changeMetricSetting(metric, 'sigma', e.target.value))}
+                  defaultValue={metric.settings?.sigma}
+                />
+              </InlineField>
+            </>
           )}
 
           {metric.type === 'percentiles' && (

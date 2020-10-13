@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import {
+  ExtendedStat,
   isMetricAggregationWithField,
   isPipelineAggregation,
   MetricAggregation,
@@ -51,15 +52,15 @@ export const sizeOptions = [
   { text: '20', value: '20' },
 ];
 
-export const extendedStats = [
-  { text: 'Avg', value: 'avg' },
-  { text: 'Min', value: 'min' },
-  { text: 'Max', value: 'max' },
-  { text: 'Sum', value: 'sum' },
-  { text: 'Count', value: 'count' },
-  { text: 'Std Dev', value: 'std_deviation' },
-  { text: 'Std Dev Upper', value: 'std_deviation_bounds_upper' },
-  { text: 'Std Dev Lower', value: 'std_deviation_bounds_lower' },
+export const extendedStats: ExtendedStat[] = [
+  { text: 'Avg', value: 'avg', default: false },
+  { text: 'Min', value: 'min', default: false },
+  { text: 'Max', value: 'max', default: false },
+  { text: 'Sum', value: 'sum', default: false },
+  { text: 'Count', value: 'count', default: false },
+  { text: 'Std Dev', value: 'std_deviation', default: false },
+  { text: 'Std Dev Upper', value: 'std_deviation_bounds_upper', default: true },
+  { text: 'Std Dev Lower', value: 'std_deviation_bounds_lower', default: true },
 ];
 
 export const intervalOptions = [
