@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/oauth2/google"
+	"golang.org/x/oauth2/jwt"
 	"google.golang.org/api/option"
 )
 
@@ -87,7 +88,45 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("https://storage.googleapis.com/%s/%s", u.bucket, key), nil
+
+	if !u.enableSignedUrls {
+		return fmt.Sprintf("https://storage.googleapis.com/%s/%s", u.bucket, key), nil
+	}
+
+	u.log.Debug("Signing GCS URL")
+	var conf *jwt.Config
+	if u.keyFile != "" {
+		jsonKey, err := ioutil.ReadFile(u.keyFile)
+		if err != nil {
+			return "", fmt.Errorf("failed to read %q: %s", u.keyFile, err)
+		}
+		conf, err = google.JWTConfigFromJSON(jsonKey)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		creds, err := google.FindDefaultCredentials(ctx, storage.ScopeReadWrite)
+		if err != nil {
+			return "", fmt.Errorf("failed to find default Google credentials: %s", err)
+		}
+		conf, err = google.JWTConfigFromJSON(creds.JSON)
+		if err != nil {
+			return "", err
+		}
+	}
+	opts := &storage.SignedURLOptions{
+		Scheme:         storage.SigningSchemeV4,
+		Method:         "GET",
+		GoogleAccessID: conf.Email,
+		PrivateKey:     conf.PrivateKey,
+		Expires:        time.Now().Add(u.signedUrlExpiration),
+	}
+	signedURL, err := storage.SignedURL(u.bucket, key, opts)
+	if err != nil {
+		return "", err
+	}
+
+	return signedURL, nil
 }
 
 func (u *GCSUploader) uploadFile(
@@ -104,13 +143,15 @@ func (u *GCSUploader) uploadFile(
 	}
 	defer fileReader.Close()
 
-	u.log.Debug("Sending to GCS bucket using SDK")
+	// TODO: Only enable public read if not using signed URLs
+	u.log.Debug("Uploading to GCS bucket using SDK")
 	wc := client.Bucket(u.bucket).Object(key).NewWriter(ctx)
 	if _, err := io.Copy(wc, fileReader); err != nil {
-		return err
+		wc.Close()
+		return fmt.Errorf("failed to upload to gs://%s/%s: %s", u.bucket, key, err)
 	}
 	if err := wc.Close(); err != nil {
-		return err
+		return fmt.Errorf("failed to upload to gs://%s/%s: %s", u.bucket, key, err)
 	}
 
 	return nil
