@@ -28,8 +28,9 @@ type LogQueryRunner struct {
 }
 
 const (
-	maxAttempts         = 8
-	initialPollInterval = 500 * time.Millisecond
+	maxAttempts   = 8
+	minRetryDelay = 500 * time.Millisecond
+	maxRetryDelay = 30 * time.Second
 )
 
 var (
@@ -58,10 +59,6 @@ func getResponseChannel(name string) (chan *tsdb.Response, error) {
 	}
 
 	return nil, fmt.Errorf("channel with name '%s' not found", name)
-}
-
-func deleteResponseChannel(name string) {
-	delete(responseChannels, name)
 }
 
 // GetHandlerForPath gets called on init.
@@ -96,7 +93,7 @@ func (g *LogQueryRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEve
 
 func (g *LogQueryRunner) publishResults(channelName string) error {
 	defer func() {
-		deleteResponseChannel(channelName)
+		delete(responseChannels, channelName)
 		delete(g.running, channelName)
 	}()
 
@@ -243,7 +240,7 @@ func (e *cloudWatchExecutor) startQuery(ctx context.Context, responseChannel cha
 		} else {
 			return util.FuncSuccess, nil
 		}
-	}, 8, 500*time.Millisecond, 30*time.Second)
+	}, maxAttempts, minRetryDelay, maxRetryDelay)
 
 	return nil
 }
