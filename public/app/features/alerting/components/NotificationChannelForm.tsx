@@ -36,9 +36,22 @@ export const NotificationChannelForm: FC<Props> = ({
 }) => {
   const styles = getStyles(useTheme());
 
+  /*
+   Finds fields that have dependencies on other fields and removes duplicates.
+   Needs to be prefixed with settings.
+  */
+  const fieldsToWatch =
+    new Set(
+      selectedChannel?.options
+        .filter(o => o.showWhen.field)
+        .map(option => {
+          return `settings.${option.showWhen.field}`;
+        })
+    ) || [];
+
   useEffect(() => {
-    watch(['type', 'settings.priority', 'sendReminder', 'uploadImage']);
-  }, []);
+    watch(['type', 'sendReminder', 'uploadImage', ...fieldsToWatch]);
+  }, [fieldsToWatch]);
 
   const currentFormValues = getValues();
 
