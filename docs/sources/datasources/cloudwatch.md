@@ -381,7 +381,7 @@ It's now possible to configure data sources using config files with Grafana's pr
 
 Here are some provisioning examples for this data source.
 
-### Using AWS SDK Default
+### Using AWS SDK (default)
 
 ```yaml
 apiVersion: 1
@@ -393,7 +393,7 @@ datasources:
       defaultRegion: eu-west-2
 ```
 
-### Using credentials profile name (non-default) 
+### Using credentials' profile name (non-default)
 
 ```yaml
 apiVersion: 1
