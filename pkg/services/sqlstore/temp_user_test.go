@@ -53,8 +53,8 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 			})
 
 			Convey("Should be able update email sent and email sent on", func() {
-				cmd3 := models.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
-				err := UpdateTempUserWithEmailSent(&cmd3)
+				cmd2 := models.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
+				err := UpdateTempUserWithEmailSent(&cmd2)
 				So(err, ShouldBeNil)
 
 				query := models.GetTempUsersQuery{OrgId: 2256, Status: models.TmpUserInvitePending}
@@ -62,7 +62,21 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 
 				So(err, ShouldBeNil)
 				So(query.Result[0].EmailSent, ShouldBeTrue)
-				So(query.Result[0].EmailSentOn, ShouldHappenOnOrAfter, (query.Result[0].Created))
+				So(query.Result[0].EmailSentOn.UTC(), ShouldHappenOnOrAfter, query.Result[0].Created.UTC())
+			})
+
+			Convey("Should be able expire temp user", func() {
+				cmd2 := models.ExpireTempUsersCommand{OlderThan: timeNow()}
+				err := ExpireOldUserInvites(&cmd2)
+				So(err, ShouldBeNil)
+				So(cmd2.NumExpired, ShouldEqual, 1)
+
+				Convey("Should do nothing when no temp users to expire", func() {
+					cmd2 = models.ExpireTempUsersCommand{OlderThan: timeNow()}
+					err := ExpireOldUserInvites(&cmd2)
+					So(err, ShouldBeNil)
+					So(cmd2.NumExpired, ShouldEqual, 0)
+				})
 			})
 		})
 	})
