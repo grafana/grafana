@@ -231,7 +231,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		pm.log.Debug("Found plugin", "id", plugin.Id, "signature", plugin.Signature, "hasRoot", plugin.Root != nil)
 		signingError := scanner.validateSignature(plugin)
 		if signingError != nil {
-			pm.log.Info("Plugin has signature errors", "id", plugin.Id,
+			pm.log.Warn("Plugin has signature errors", "id", plugin.Id,
 				"signature", plugin.Signature, "errors", signingError.Err)
 		}
 
@@ -410,8 +410,8 @@ func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
 				break
 			}
 		}
-		if setting.Env != setting.Prod && !allowUnsigned {
-			s.log.Info("Plugin is unsigned", "id", plugin.Id)
+		if setting.Env != setting.Dev && !allowUnsigned {
+			s.log.Debug("Plugin is unsigned", "id", plugin.Id)
 			s.errors = append(s.errors, fmt.Errorf("plugin %q is unsigned", plugin.Id))
 			return &PluginError{
 				ErrorCode: UNSIGNED,

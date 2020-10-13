@@ -125,7 +125,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 			listItem.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + listItem.Id + "/"
 		}
 
-		// filter out disabled
+		// filter out disabled plugins with no errors
 		if enabledFilter == "1" && !listItem.Enabled && listItem.Errors == nil {
 			continue
 		}
