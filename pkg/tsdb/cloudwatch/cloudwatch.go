@@ -260,10 +260,7 @@ func (e *cloudWatchExecutor) getQueue(region string) (chan bool, error) {
 		return queue, nil
 	}
 
-	concurrentQueriesQuota, err := e.fetchConcurrentQueriesQuota(region)
-	if err != nil {
-		plog.Info("Could not fetch quota")
-	}
+	concurrentQueriesQuota := e.fetchConcurrentQueriesQuota(region)
 
 	queueChannel := make(chan bool, concurrentQueriesQuota)
 	e.queuesByRegion[region] = queueChannel
@@ -271,10 +268,11 @@ func (e *cloudWatchExecutor) getQueue(region string) (chan bool, error) {
 	return queueChannel, nil
 }
 
-func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string) (int, error) {
+func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string) int {
 	client, err := e.getServiceQuotasClient(region)
 	if err != nil {
-		return defaultConcurrentQueries, err
+		plog.Warn("Could not get service quota client")
+		return defaultConcurrentQueries
 	}
 
 	concurrentQueriesQuota, err := client.GetServiceQuota(&servicequotas.GetServiceQuotaInput{
@@ -282,26 +280,31 @@ func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string) (int, er
 		QuotaCode:   aws.String("L-32C48FBB"),
 	})
 	if err != nil {
-		return defaultConcurrentQueries, err
+		plog.Warn("Could not get service quota")
+		return defaultConcurrentQueries
 	}
 
-	if concurrentQueriesQuota != nil && concurrentQueriesQuota.Quota != nil {
-		return int(*concurrentQueriesQuota.Quota.Value), nil
+	if concurrentQueriesQuota != nil && concurrentQueriesQuota.Quota != nil && concurrentQueriesQuota.Quota.Value != nil {
+		return int(*concurrentQueriesQuota.Quota.Value)
 	}
+
+	plog.Warn("Could not get service quota")
 
 	defaultConcurrentQueriesQuota, err := client.GetAWSDefaultServiceQuota(&servicequotas.GetAWSDefaultServiceQuotaInput{
 		ServiceCode: aws.String("logs"),
 		QuotaCode:   aws.String("L-32C48FBB"),
 	})
 	if err != nil {
-		return defaultConcurrentQueries, err
+		plog.Warn("Could not get default service quota")
+		return defaultConcurrentQueries
 	}
 
-	if defaultConcurrentQueriesQuota != nil && defaultConcurrentQueriesQuota.Quota != nil {
-		return int(*defaultConcurrentQueriesQuota.Quota.Value), nil
+	if defaultConcurrentQueriesQuota != nil && defaultConcurrentQueriesQuota.Quota != nil && defaultConcurrentQueriesQuota.Quota.Value != nil {
+		return int(*defaultConcurrentQueriesQuota.Quota.Value)
 	}
 
-	return defaultConcurrentQueries, nil
+	plog.Warn("Could not get default service quota")
+	return defaultConcurrentQueries
 }
 
 func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
