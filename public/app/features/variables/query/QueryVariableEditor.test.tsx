@@ -8,7 +8,7 @@ import { initialQueryVariableModelState } from './reducer';
 import { initialVariableEditorState } from '../editor/reducer';
 import { describe, expect } from '../../../../test/lib/common';
 import { NEW_VARIABLE_ID } from '../state/types';
-import LegacyVariableQueryEditor from '../editor/LegacyVariableQueryEditor';
+import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
@@ -17,6 +17,7 @@ const setupTestContext = (options: Partial<Props>) => {
     changeQueryVariableDataSource: jest.fn(),
     changeQueryVariableQuery: jest.fn(),
     changeVariableMultiValue: jest.fn(),
+    legacyChangeQueryVariableQuery: jest.fn(),
     editor: {
       ...initialVariableEditorState,
       extended: {

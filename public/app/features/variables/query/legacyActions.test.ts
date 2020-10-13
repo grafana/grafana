@@ -28,7 +28,7 @@ import {
   removeVariableEditorError,
   setIdInEditor,
 } from '../editor/reducer';
-import LegacyVariableQueryEditor from '../editor/LegacyVariableQueryEditor';
+import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
 import { expect } from 'test/lib/common';
 import { updateOptions } from '../state/actions';
 import { notifyApp } from '../../../core/reducers/appNotification';
