@@ -268,7 +268,7 @@ func (e *DashAlertExtractor) GetAlerts() ([]*models.Alert, error) {
 	return e.extractAlerts(validators...)
 }
 
-func (e *DashAlertExtractor) extractAlerts(validators ...alertValidator) ([]*models.Alert, error) {
+func (e *DashAlertExtractor) extractAlerts(validateFuncs ...alertValidator) ([]*models.Alert, error) {
 	dashboardJSON, err := copyJSON(e.Dash.Data)
 	if err != nil {
 		return nil, err
@@ -282,7 +282,7 @@ func (e *DashAlertExtractor) extractAlerts(validators ...alertValidator) ([]*mod
 	if len(rows) > 0 {
 		for _, rowObj := range rows {
 			row := simplejson.NewFromAny(rowObj)
-			a, err := e.getAlertFromPanels(row, validators...)
+			a, err := e.getAlertFromPanels(row, validateFuncs...)
 			if err != nil {
 				return nil, err
 			}
@@ -290,7 +290,7 @@ func (e *DashAlertExtractor) extractAlerts(validators ...alertValidator) ([]*mod
 			alerts = append(alerts, a...)
 		}
 	} else {
-		a, err := e.getAlertFromPanels(dashboardJSON, validators...)
+		a, err := e.getAlertFromPanels(dashboardJSON, validateFuncs...)
 		if err != nil {
 			return nil, err
 		}
