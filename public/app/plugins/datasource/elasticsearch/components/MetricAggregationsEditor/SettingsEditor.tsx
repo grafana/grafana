@@ -1,6 +1,6 @@
 import { Icon, InlineField, Input } from '@grafana/ui';
 import { css, cx } from 'emotion';
-import React, { FunctionComponent, useState, ComponentProps } from 'react';
+import React, { FunctionComponent, useState, ComponentProps, useCallback } from 'react';
 import { useDispatch } from '../ElasticsearchQueryContext';
 import { changeMetricSetting } from './state/actions';
 import {
@@ -63,6 +63,35 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric }) => {
           {metric.type === 'moving_avg' && (
             // TODO: onBlur, defaultValue
             <>Moving average settings</>
+          )}
+
+          {(metric.type === 'raw_data' || metric.type === 'raw_document') && (
+            <InlineField label="Size" {...inlineFieldProps}>
+              <Input
+                onBlur={e => dispatch(changeMetricSetting(metric, 'size', e.target.value))}
+                // TODO: this should be set somewhere else
+                defaultValue={metric.settings?.size ?? '500'}
+              />
+            </InlineField>
+          )}
+
+          {metric.type === 'cardinality' && (
+            <InlineField label="Percentiles" {...inlineFieldProps}>
+              <Input
+                onBlur={e => dispatch(changeMetricSetting(metric, 'precision_threshold', e.target.value))}
+                defaultValue={metric.settings?.precision_threshold ?? ''}
+              />
+            </InlineField>
+          )}
+
+          {metric.type === 'percentiles' && (
+            <InlineField label="Percentiles" {...inlineFieldProps}>
+              <Input
+                onBlur={e => dispatch(changeMetricSetting(metric, 'percentiles', e.target.value))}
+                // TODO: This should be set somewhere else
+                defaultValue={metric.settings?.percentiles ?? '25,50,75,95,99'}
+              />
+            </InlineField>
           )}
 
           {isMetricAggregationWithInlineScript(metric) && (
