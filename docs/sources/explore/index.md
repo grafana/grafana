@@ -49,6 +49,12 @@ In split view, timepickers for both panels can be linked (if you change one, the
 
 You can close the newly created query by clicking on the Close Split button.
 
+## Share shortened link
+
+> Share shortened link is only available in Grafana 7.3 and above.
+
+The Share shortened link feature allows you to create smaller and simpler URLs of the format `/goto/:uid` instead of using and sharing URLs that containin complex query parameters. You can create an copy shortened link by clicking on Share shortened link button in Explore toolbar.
+
 ## Query history
 
 Query history is a list of queries that you have used in Explore. The history is local to your browser and is not shared with others. To open and interact with your history, click the **Query history** button in Explore.
