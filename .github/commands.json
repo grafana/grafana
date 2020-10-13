@@ -22,6 +22,6 @@
     "type": "label",
     "name": "no new info",
     "action": "close",
-    "comment": "This issue has been closed because it needs more information and has not had recent activity. Please read our [CONTRIBUTING](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guidelines.\n\nHappy graphing!"
+    "comment": "We've closed this issue since it needs more information and hasn't had any activity recently. To avoid having your issue closed in the future, please read our [CONTRIBUTING](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guidelines.\n\nHappy graphing!"
   }, 
 ]
