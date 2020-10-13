@@ -2,7 +2,7 @@ package api
 
 import (
 	"errors"
-	"fmt"
+	"path"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
