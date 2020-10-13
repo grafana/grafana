@@ -2,12 +2,6 @@ import React from 'react';
 import uPlot from 'uplot';
 import { DataFrame, FieldColor, TimeRange, TimeZone } from '@grafana/data';
 
-export enum NullValuesMode {
-  null = 'null',
-  connected = 'connected',
-  asZero = 'asZero',
-}
-
 export enum MicroPlotAxisSide {
   top = 0,
   right = 1,
@@ -44,7 +38,6 @@ export interface GraphCustomFieldConfig {
   points: PointConfig;
   bars: BarsConfig;
   fill: FillConfig;
-  nullValues: NullValuesMode;
 }
 
 export type PlotPlugin = {

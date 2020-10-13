@@ -45,12 +45,12 @@
               "show": true,
               "width": 1
             },
-            "nullValues": "null",
             "points": {
               "radius": 4,
               "show": false
             }
           },
+          "nullValueMode": "null",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -144,12 +144,12 @@
               "show": false,
               "width": 1
             },
-            "nullValues": "null",
             "points": {
               "radius": 2,
               "show": true
             }
           },
+          "nullValueMode": "null",
           "decimals": 2,
           "mappings": [],
           "thresholds": {
@@ -379,12 +379,12 @@
                   "show": true,
                   "width": 1
                 },
-                "nullValues": "null",
                 "points": {
                   "radius": 5,
                   "show": false
                 }
               },
+              "nullValueMode": "null",
               "decimals": 2,
               "mappings": [],
               "thresholds": {
@@ -584,12 +584,12 @@
                   "show": true,
                   "width": 1
                 },
-                "nullValues": "null",
                 "points": {
                   "radius": 5,
                   "show": false
                 }
               },
+              "nullValueMode": "null",
               "decimals": 2,
               "mappings": [],
               "thresholds": {
@@ -702,12 +702,12 @@
                   "show": true,
                   "width": 1
                 },
-                "nullValues": "null",
                 "points": {
                   "radius": 5,
                   "show": false
                 }
               },
+              "nullValueMode": "null",
               "decimals": 2,
               "mappings": [],
               "thresholds": {
@@ -835,12 +835,12 @@
                   "show": false,
                   "width": 1
                 },
-                "nullValues": "null",
                 "points": {
                   "radius": 5,
                   "show": false
                 }
               },
+              "nullValueMode": "null",
               "decimals": 2,
               "mappings": [],
               "thresholds": {
@@ -984,12 +984,12 @@
                   "show": false,
                   "width": 1
                 },
-                "nullValues": "null",
                 "points": {
                   "radius": 5,
                   "show": false
                 }
               },
+              "nullValueMode": "null",
               "decimals": 2,
               "mappings": [],
               "thresholds": {
@@ -1133,12 +1133,12 @@
                   "show": false,
                   "width": 1
                 },
-                "nullValues": "null",
                 "points": {
                   "radius": 5,
                   "show": false
                 }
               },
+              "nullValueMode": "null",
               "decimals": 2,
               "mappings": [],
               "thresholds": {
@@ -1282,12 +1282,12 @@
                   "show": false,
                   "width": 1
                 },
-                "nullValues": "null",
                 "points": {
                   "radius": 5,
                   "show": false
                 }
               },
+              "nullValueMode": "null",
               "decimals": 2,
               "mappings": [],
               "thresholds": {
@@ -1449,12 +1449,12 @@
                   "show": true,
                   "width": 1
                 },
-                "nullValues": "null",
                 "points": {
                   "radius": 5,
                   "show": false
                 }
               },
+              "nullValueMode": "null",
               "mappings": [],
               "thresholds": {
                 "mode": "absolute",
@@ -1536,12 +1536,12 @@
                   "show": true,
                   "width": 1
                 },
-                "nullValues": "null",
                 "points": {
                   "radius": 5,
                   "show": false
                 }
               },
+              "nullValueMode": "null",
               "mappings": [],
               "thresholds": {
                 "mode": "absolute",
@@ -1622,12 +1622,12 @@
                   "show": true,
                   "width": 1
                 },
-                "nullValues": "null",
                 "points": {
                   "radius": 5,
                   "show": false
                 }
               },
+              "nullValueMode": "null",
               "mappings": [],
               "thresholds": {
                 "mode": "absolute",
@@ -1708,12 +1708,12 @@
                   "show": true,
                   "width": 1
                 },
-                "nullValues": "null",
                 "points": {
                   "radius": 8,
                   "show": true
                 }
               },
+              "nullValueMode": "null",
               "mappings": [],
               "thresholds": {
                 "mode": "absolute",
@@ -1813,12 +1813,12 @@
                   "show": true,
                   "width": 1
                 },
-                "nullValues": "null",
                 "points": {
                   "radius": 8,
                   "show": true
                 }
               },
+              "nullValueMode": "null",
               "mappings": [],
               "thresholds": {
                 "mode": "absolute",
@@ -1920,12 +1920,12 @@
                   "show": true,
                   "width": 1
                 },
-                "nullValues": "asZero",
                 "points": {
                   "radius": 5,
                   "show": false
                 }
               },
+              "nullValueMode": "null as zero",
               "mappings": [],
               "thresholds": {
                 "mode": "absolute",
@@ -2010,12 +2010,12 @@
                   "show": true,
                   "width": 1
                 },
-                "nullValues": "connected",
                 "points": {
                   "radius": 8,
                   "show": true
                 }
               },
+              "nullValueMode": "connected",
               "mappings": [],
               "thresholds": {
                 "mode": "absolute",
@@ -2115,12 +2115,12 @@
                   "show": true,
                   "width": 1
                 },
-                "nullValues": "null",
                 "points": {
                   "radius": 8,
                   "show": true
                 }
               },
+              "nullValueMode": "null",
               "mappings": [],
               "thresholds": {
                 "mode": "absolute",
@@ -2221,12 +2221,12 @@
                   "show": false,
                   "width": 1
                 },
-                "nullValues": "null",
                 "points": {
                   "radius": 4,
                   "show": false
                 }
               },
+              "nullValueMode": "null",
               "decimals": 2,
               "mappings": [],
               "thresholds": {
@@ -2385,12 +2385,12 @@
                   "show": true,
                   "width": 1
                 },
-                "nullValues": "null",
                 "points": {
                   "radius": 4,
                   "show": false
                 }
               },
+              "nullValueMode": "null",
               "mappings": [],
               "thresholds": {
                 "mode": "absolute",

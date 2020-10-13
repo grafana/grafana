@@ -2,10 +2,10 @@ import { usePlotConfigContext } from '../context';
 import { getAreaConfig, getLineConfig, getPointConfig } from './configGetters';
 import React, { useCallback, useEffect, useRef } from 'react';
 import uPlot from 'uplot';
-import { NullValuesMode } from '../types';
+import { NullValueMode } from '@grafana/data';
 
 interface SeriesGeometryProps {
-  nullValues?: NullValuesMode;
+  nullValueMode?: NullValueMode;
   scaleKey: string;
   children: React.ReactElement[];
 }
@@ -55,7 +55,7 @@ export const SeriesGeometry: React.FC<SeriesGeometryProps> = props => {
       points: {
         show: false,
       },
-      spanGaps: props.nullValues === NullValuesMode.connected,
+      spanGaps: props.nullValueMode === NullValueMode.Ignore,
     };
 
     if (!props.children) {

@@ -19,8 +19,8 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
       FieldConfigProperty.Decimals,
       // NOT:  FieldConfigProperty.Thresholds,
       FieldConfigProperty.Mappings,
+      FieldConfigProperty.ModeNullValue,
     ],
-
     useCustomConfig: builder => {
       builder
         // TODO:  Until we fix standard color property let's do it the custom editor way
@@ -156,19 +156,6 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           category: ['Axis'],
           description: '',
           defaultValue: true,
-        })
-        .addRadio({
-          path: 'nullValues',
-          name: 'Display null values as',
-          description: '',
-          defaultValue: 'null',
-          settings: {
-            options: [
-              { value: 'null', label: 'null' },
-              { value: 'connected', label: 'Connected' },
-              { value: 'asZero', label: 'Zero' },
-            ],
-          },
         });
     },
   })

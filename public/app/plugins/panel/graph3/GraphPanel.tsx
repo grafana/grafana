@@ -186,15 +186,12 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
         <Area key={`area-${scale}-${i}`} scaleKey={scale} fill={customConfig?.fill.alpha} color={seriesColor} />
       );
     }
-    if (seriesGeometry.length > 1) {
-      geometries.push(
-        <SeriesGeometry key={`seriesGeometry-${scale}-${i}`} scaleKey={scale} nullValues={customConfig?.nullValues}>
-          {seriesGeometry}
-        </SeriesGeometry>
-      );
-    } else {
-      geometries.push(seriesGeometry);
-    }
+
+    geometries.push(
+      <SeriesGeometry key={`seriesGeometry-${scale}-${i}`} scaleKey={scale} nullValueMode={config?.nullValueMode}>
+        {seriesGeometry}
+      </SeriesGeometry>
+    );
 
     seriesIdx++;
   }

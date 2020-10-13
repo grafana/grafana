@@ -19,6 +19,7 @@ import {
   ThresholdsMode,
   TimeZone,
   FieldColor,
+  NullValueMode,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
@@ -201,22 +202,27 @@ export const getStandardFieldConfigs = () => {
     getItemsCount: value => (value ? value.length : 0),
   };
 
-  // const color: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
-  //   id: 'color',
-  //   path: 'color',
-  //   name: 'Color',
-  //   description: 'Customise color',
-  //   editor: standardEditorsRegistry.get('color').editor as any,
-  //   override: standardEditorsRegistry.get('color').editor as any,
-  //   process: identityOverrideProcessor,
-  //   settings: {
-  //     placeholder: '-',
-  //   },
-  //   shouldApply: field => field.type !== FieldType.time,
-  //   category,
-  // };
+  const nullValueMode: FieldConfigPropertyItem<any, NullValueMode, any> = {
+    id: 'nullValueMode',
+    path: 'nullValueMode',
+    name: 'Display data point gaps as',
+    editor: standardEditorsRegistry.get('radio').editor as any,
+    override: standardEditorsRegistry.get('radio').editor as any,
+    process: (value, context, settings) => value,
+    settings: {
+      options: [
+        { value: NullValueMode.Null, label: 'null' },
+        { value: NullValueMode.Ignore, label: 'Connected' },
+        { value: NullValueMode.AsZero, label: 'Zero' },
+      ],
+    },
+    defaultValue: NullValueMode.Null,
+    shouldApply: () => true,
+    category,
+    getItemsCount: value => (value ? value.length : 0),
+  };
 
-  return [unit, min, max, decimals, displayName, noValue, thresholds, mappings, links];
+  return [unit, min, max, decimals, displayName, noValue, thresholds, mappings, links, nullValueMode];
 };
 
 /**

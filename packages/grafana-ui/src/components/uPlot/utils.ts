@@ -1,7 +1,7 @@
 import throttle from 'lodash/throttle';
 import isEqual from 'lodash/isEqual';
 import omit from 'lodash/omit';
-import { DataFrame, FieldType, getTimeField, rangeUtil, RawTimeRange } from '@grafana/data';
+import { DataFrame, FieldType, getTimeField, NullValueMode, rangeUtil, RawTimeRange } from '@grafana/data';
 import uPlot from 'uplot';
 import { PlotPlugin, PlotProps } from './types';
 
@@ -61,7 +61,7 @@ export const preparePlotData = (data: DataFrame): uPlot.AlignedData => {
 
     let values = field.values.toArray();
 
-    if (field.config.custom?.nullValues === 'asZero') {
+    if (field.config.nullValueMode === NullValueMode.AsZero) {
       values = values.map(v => (v === null ? 0 : v));
     }
 
