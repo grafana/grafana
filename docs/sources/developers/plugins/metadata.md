@@ -187,4 +187,3 @@ For data source plugins. Parameters for the token authentication request.
 | `grant_type`    | string | No       | For data source plugins. OAuth grant type.                                                                         |
 | `resource`      | string | No       | For data source plugins. OAuth resource.                                                                           |
 
-
