@@ -15,8 +15,13 @@ export default {
   },
 };
 
-export const Basic = () => {
+const getKnobs = () => {
   const disabled = boolean('Disabled', false, 'Style props');
+
+  return { disabled };
+};
+export const Basic = () => {
+  const { disabled } = getKnobs();
   return (
     <Card
       title="Filter by name"
@@ -27,21 +32,25 @@ export const Basic = () => {
 };
 
 export const WithTooltip = () => {
+  const { disabled } = getKnobs();
   return (
     <Card
       title="Reduce"
       description="Reduce all rows or data points to a single value using a function like max, min, mean or last."
       tooltip="Click to apply this transformation."
+      disabled={disabled}
     />
   );
 };
 
 export const WithTags = () => {
+  const { disabled } = getKnobs();
   return (
     <Card
       title="Elasticsearch – Custom Templated Query"
       description="Elastic Search"
       tags={['elasticsearch', 'test', 'testdata']}
+      disabled={disabled}
     />
   );
 };
