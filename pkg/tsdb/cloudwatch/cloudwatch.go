@@ -66,8 +66,7 @@ func init() {
 
 func newExecutor() *cloudWatchExecutor {
 	return &cloudWatchExecutor{
-		logsClientsByRegion: map[string]cloudwatchlogsiface.CloudWatchLogsAPI{},
-		queuesByRegion:      map[string]chan bool{},
+		queuesByRegion: map[string]chan bool{},
 	}
 }
 
@@ -75,10 +74,8 @@ func newExecutor() *cloudWatchExecutor {
 type cloudWatchExecutor struct {
 	*models.DataSource
 
-	ec2Client           ec2iface.EC2API
-	rgtaClient          resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-	logsClientsByRegion map[string]cloudwatchlogsiface.CloudWatchLogsAPI
-	mtx                 sync.Mutex
+	ec2Client  ec2iface.EC2API
+	rgtaClient resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 
 	queuesByRegion map[string](chan bool)
 	queueLock      sync.Mutex
@@ -196,20 +193,12 @@ func (e *cloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWa
 }
 
 func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
-	e.mtx.Lock()
-	defer e.mtx.Unlock()
-
-	if logsClient, ok := e.logsClientsByRegion[region]; ok {
-		return logsClient, nil
-	}
-
 	sess, err := e.newSession(region)
 	if err != nil {
 		return nil, err
 	}
 
 	logsClient := newCWLogsClient(sess)
-	e.logsClientsByRegion[region] = logsClient
 
 	return logsClient, nil
 }
