@@ -77,7 +77,7 @@ For more information on time series, refer to our [Introduction to time series](
 
 ### Wide format
 
-When a collection of time series share the same _time index_—the time fields in each time series are identical—they can be stored together, in a _wide_ format. By reusing the time field, we can reduce the amount of data being sent to the browser.
+When a collection of time series shares the same _time index_—the time fields in each time series are identical—they can be stored together, in a _wide_ format. By reusing the time field, we can reduce the amount of data being sent to the browser.
 
 In this example, the `cpu` usage from each host share the time index, so we can store them in the same data frame.
 
