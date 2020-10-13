@@ -6,7 +6,16 @@ import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';
 import { OnTagClick } from '../Tags/Tag';
 import { TagList } from '..';
 
-export interface Props {
+interface ContainerProps extends HTMLAttributes<HTMLOrSVGElement> {
+  /** Customise the container html element for the card. Defaults to div */
+  tag?: keyof JSX.IntrinsicElements;
+}
+
+const CardContainer: FC<ContainerProps> = ({ tag = 'div', children, ...props }) => {
+  return React.createElement(tag, props, children);
+};
+
+export interface Props extends ContainerProps {
   title?: string;
   /** Card description text or meta data. If array is supplied, elements will be rendered with vertical line separator */
   metaData?: ReactNode | ReactNode[];
@@ -24,8 +33,6 @@ export interface Props {
   actions?: ReactNode[];
   /** Right-side actions */
   secondaryActions?: ReactNode[];
-  /** Customise the container html element for the card. Defaults to div */
-  tag?: keyof JSX.IntrinsicElements;
 }
 
 export const Card: FC<Props> = ({
@@ -38,7 +45,8 @@ export const Card: FC<Props> = ({
   actions = [],
   tooltip = '',
   secondaryActions = [],
-  tag = 'div',
+  tag,
+  ...htmlProps
 }) => {
   const hasActions = Boolean(actions.length || secondaryActions.length);
   const disableHover = actions.length > 1;
@@ -50,7 +58,7 @@ export const Card: FC<Props> = ({
     : metaData;
 
   return (
-    <Tooltip placement="top" content={tooltip} theme="info" show={!!tooltip}>
+    <Tooltip placement="top" content={tooltip} theme="info" show={!!tooltip} {...htmlProps}>
       <CardContainer tag={tag} tabIndex={0} className={styles.container}>
         {mediaContent && <div className={styles.media}>{mediaContent}</div>}
         <div className={styles.inner}>
@@ -144,12 +152,4 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
       margin: 0 ${theme.spacing.sm};
     `,
   };
-};
-
-interface ContainerProps extends HTMLAttributes<HTMLOrSVGElement> {
-  tag: keyof JSX.IntrinsicElements;
-}
-
-const CardContainer: FC<ContainerProps> = ({ tag, children, ...props }) => {
-  return React.createElement(tag, props, children);
 };
