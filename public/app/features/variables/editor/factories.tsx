@@ -1,10 +1,9 @@
 import React, { ComponentType, FC, useCallback } from 'react';
 import {
-  CustomVariableQueryEditorProps,
   DataQuery,
   DataSourceApi,
   DataSourceJsonData,
-  DefaultVariableQueryEditorProps,
+  DefaultVariableQuery,
   VariableQueryEditorProps,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -20,7 +19,7 @@ import { VariableQueryProps } from '../../../types';
 
 export type VariableQueryEditorType =
   | ComponentType<VariableQueryProps>
-  | ComponentType<VariableQueryEditorProps>
+  | ComponentType<VariableQueryEditorProps<any>>
   | null;
 
 export const isLegacyQueryEditor = <
@@ -43,7 +42,7 @@ export const isQueryEditor = <
 >(
   component: VariableQueryEditorType,
   datasource: DataSourceApi<TQuery, TOptions>
-): component is ComponentType<VariableQueryEditorProps> => {
+): component is ComponentType<VariableQueryEditorProps<any>> => {
   if (!component) {
     return false;
   }
@@ -62,7 +61,7 @@ export const variableQueryEditorFactory = <
   VariableQuery extends DataQuery = DataQuery
 >(
   datasource: DataSourceApi<TQuery, TOptions>
-): FC<VariableQueryEditorProps<TQuery, TOptions, any>> => {
+): FC<VariableQueryEditorProps<any, TQuery, TOptions, any>> => {
   if (hasCustomVariableSupport(datasource)) {
     return customVariableQueryEditorFactory<TQuery, TOptions, VariableQuery>();
   }
@@ -77,7 +76,7 @@ export const variableQueryEditorFactory = <
 const defaultVariableQueryEditorFactory = <
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
->(): FC<DefaultVariableQueryEditorProps<TQuery, TOptions>> => ({
+>(): FC<VariableQueryEditorProps<any, TQuery, TOptions, DefaultVariableQuery>> => ({
   datasource: propsDatasource,
   query: propsQuery,
   onChange: propsOnChange,
@@ -107,7 +106,7 @@ const customVariableQueryEditorFactory = <
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
   VariableQuery extends DataQuery = any
->(): FC<CustomVariableQueryEditorProps<TQuery, TOptions, VariableQuery>> => ({
+>(): FC<VariableQueryEditorProps<any, TQuery, TOptions, VariableQuery>> => ({
   datasource: propsDatasource,
   query: propsQuery,
   onChange: propsOnChange,
@@ -124,7 +123,7 @@ const customVariableQueryEditorFactory = <
 const datasourceVariableQueryEditorFactory = <
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
->(): FC<CustomVariableQueryEditorProps<TQuery, TOptions, TQuery>> => ({
+>(): FC<VariableQueryEditorProps<any, TQuery, TOptions, TQuery>> => ({
   datasource: propsDatasource,
   query: propsQuery,
   onChange: propsOnChange,

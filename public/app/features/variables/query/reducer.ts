@@ -1,12 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import _ from 'lodash';
-import {
-  DataSourceApi,
-  DataSourceSelectItem,
-  MetricFindValue,
-  stringToJsRegex,
-  VariableQueryEditorProps,
-} from '@grafana/data';
+import { DataSourceApi, DataSourceSelectItem, MetricFindValue, stringToJsRegex } from '@grafana/data';
 
 import {
   initialVariableModelState,
@@ -25,9 +19,8 @@ import {
   NONE_VARIABLE_VALUE,
   VariablePayload,
 } from '../state/types';
-import { ComponentType } from 'react';
-import { VariableQueryProps } from '../../../types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
+import { VariableQueryEditorType } from '../editor/factories';
 
 interface VariableOptionsUpdate {
   templatedRegex: string;
@@ -35,7 +28,7 @@ interface VariableOptionsUpdate {
 }
 
 export interface QueryVariableEditorState {
-  VariableQueryEditor: ComponentType<VariableQueryProps> | ComponentType<VariableQueryEditorProps> | null;
+  VariableQueryEditor: VariableQueryEditorType;
   dataSources: DataSourceSelectItem[];
   dataSource: DataSourceApi | null;
 }

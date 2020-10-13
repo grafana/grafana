@@ -11,6 +11,7 @@ import {
 } from './datasource';
 
 export interface VariableSupport<
+  DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
   VariableQuery extends DataQuery = any
@@ -20,12 +21,11 @@ export interface VariableSupport<
     query?: (request: DataQueryRequest<TQuery>) => Observable<DataQueryResponse>;
   };
   custom?: {
-    toDataQuery: (query: VariableQuery) => TQuery;
-    editor: ComponentType<VariableQueryEditorProps<TQuery, TOptions, VariableQuery>>;
-    query: (request: DataQueryRequest<TQuery>) => Observable<DataQueryResponse>;
+    editor: ComponentType<VariableQueryEditorProps<DSType, TQuery, TOptions, VariableQuery>>;
+    query: (request: DataQueryRequest<VariableQuery>) => Observable<DataQueryResponse>;
   };
   datasource?: {
-    editor: ComponentType<VariableQueryEditorProps<TQuery, TOptions, TQuery>>;
+    editor: ComponentType<VariableQueryEditorProps<DSType, TQuery, TOptions, TQuery>>;
   };
 }
 
@@ -60,7 +60,7 @@ export interface DataSourceWithCustomVariableSupport<
     default: undefined;
     custom: {
       toDataQuery: (query: VariableQuery) => TQuery;
-      editor: ComponentType<VariableQueryEditorProps<TQuery, TOptions, VariableQuery>>;
+      editor: ComponentType<VariableQueryEditorProps<any, TQuery, TOptions, VariableQuery>>;
       query: (request: DataQueryRequest<TQuery>) => Observable<DataQueryResponse>;
     };
     datasource: undefined;
@@ -75,36 +75,38 @@ export interface DataSourceWithDatasourceVariableSupport<
     default: undefined;
     custom: undefined;
     datasource: {
-      editor: ComponentType<VariableQueryEditorProps<TQuery, TOptions, TQuery>>;
+      editor: ComponentType<VariableQueryEditorProps<any, TQuery, TOptions, TQuery>>;
     };
   };
 }
 
 export interface VariableQueryEditorProps<
+  DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
   VariableQuery extends DataQuery = DataQuery
 > {
-  datasource: DataSourceApi<TQuery, TOptions>;
+  datasource: DSType;
   query: VariableQuery;
   onChange: (value: VariableQuery) => void;
 }
 
-export interface DefaultVariableQueryEditorProps<
-  TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
-> extends VariableQueryEditorProps<TQuery, TOptions, DefaultVariableQuery> {}
-
-export interface CustomVariableQueryEditorProps<
-  TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData,
-  VariableQuery extends DataQuery = DataQuery
-> extends VariableQueryEditorProps<TQuery, TOptions, VariableQuery> {}
-
-export interface DatasourceVariableQueryEditorProps<
-  TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
-> extends VariableQueryEditorProps<TQuery, TOptions, TQuery> {}
+// export interface DefaultVariableQueryEditorProps<
+//   DSType extends DataSourceApi<TQuery, TOptions>,
+//   TQuery extends DataQuery = DataQuery,
+//   TOptions extends DataSourceJsonData = DataSourceJsonData
+// > extends VariableQueryEditorProps<TQuery, TOptions, DefaultVariableQuery> {}
+//
+// export interface CustomVariableQueryEditorProps<
+//   TQuery extends DataQuery = DataQuery,
+//   TOptions extends DataSourceJsonData = DataSourceJsonData,
+//   VariableQuery extends DataQuery = DataQuery
+// > extends VariableQueryEditorProps<TQuery, TOptions, VariableQuery> {}
+//
+// export interface DatasourceVariableQueryEditorProps<
+//   TQuery extends DataQuery = DataQuery,
+//   TOptions extends DataSourceJsonData = DataSourceJsonData
+// > extends VariableQueryEditorProps<TQuery, TOptions, TQuery> {}
 
 export interface DefaultVariableQuery extends DataQuery {
   query: string;

@@ -300,7 +300,7 @@ export abstract class DataSourceApi<
    * Define new variable support
    * @experimental
    */
-  variables?: VariableSupport<TQuery, TOptions>;
+  variables?: VariableSupport<DataSourceApi<TQuery, TOptions>, TQuery, TOptions>;
 }
 
 export interface MetadataInspectorProps<

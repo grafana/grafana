@@ -12,21 +12,18 @@ import {
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-import {
-  CloudMonitoringOptions,
-  CloudMonitoringQuery,
-  Filter,
-  MetricDescriptor,
-  QueryType,
-  VariableQueryData,
-} from './types';
+import { CloudMonitoringOptions, CloudMonitoringQuery, Filter, MetricDescriptor, QueryType } from './types';
 import { cloudMonitoringUnitMappings } from './constants';
 import API from './api';
 import CloudMonitoringMetricFindQuery from './CloudMonitoringMetricFindQuery';
+import { CloudMonitoringVariableQueryEditor } from './components/VariableQueryEditor';
+import { from } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
 
 export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonitoringQuery, CloudMonitoringOptions> {
   api: API;
   authenticationType: string;
+  private readonly findQueryHelper: CloudMonitoringMetricFindQuery;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<CloudMonitoringOptions>,
@@ -36,6 +33,20 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     super(instanceSettings);
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.api = new API(`${instanceSettings.url!}/cloudmonitoring/v3/projects/`);
+    this.findQueryHelper = new CloudMonitoringMetricFindQuery(this);
+    const self = this;
+    this.variables = {
+      custom: {
+        editor: CloudMonitoringVariableQueryEditor,
+        query: request => {
+          return from(this.ensureGCEDefaultProject()).pipe(
+            mergeMap(() => {
+              return from(self.findQueryHelper.execute(request.targets[0]));
+            })
+          );
+        },
+      },
+    };
   }
 
   getVariables() {
@@ -123,12 +134,6 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     });
 
     return results;
-  }
-
-  async metricFindQuery(query: VariableQueryData) {
-    await this.ensureGCEDefaultProject();
-    const cloudMonitoringMetricFindQuery = new CloudMonitoringMetricFindQuery(this);
-    return cloudMonitoringMetricFindQuery.execute(query);
   }
 
   async getTimeSeries(options: DataQueryRequest<CloudMonitoringQuery>) {
