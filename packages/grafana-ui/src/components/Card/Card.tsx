@@ -17,18 +17,45 @@ export interface Props {
   onTagClick?: OnTagClick;
   /** Indicates if the card and all its actions can be interacted with */
   disabled?: boolean;
+  /** Image or icon to be displayed on the let side of the card */
+  mediaContent?: React.ReactNode;
+  /** Main card actions **/
+  actions?: React.ReactNode[];
+  /** Right-side actions */
+  secondaryActions?: React.ReactNode[];
 }
 
-export const Card: FC<Props> = ({ title, description, tags = [], onTagClick, disabled, tooltip = '' }) => {
+export const Card: FC<Props> = ({
+  title,
+  description,
+  tags = [],
+  onTagClick,
+  disabled,
+  mediaContent,
+  actions = [],
+  tooltip = '',
+  secondaryActions = [],
+}) => {
+  const hasActions = Boolean(actions.length || secondaryActions.length);
+  const disableHover = actions.length > 1;
   const theme = useTheme();
-  const styles = getStyles(theme, disabled);
+  const styles = getStyles(theme, disabled && !actions.length, disableHover);
   return (
     <>
       <Tooltip placement="top" content={tooltip} theme="info" show={!!tooltip}>
         <div tabIndex={0} className={styles.container}>
-          <p className={styles.title}>{title}</p>
-          {description && <p className={styles.description}>{description}</p>}
-          {!!tags.length && <TagList tags={tags} onClick={onTagClick} />}
+          {mediaContent && <div className={styles.media}>{mediaContent}</div>}
+          <div className={styles.inner}>
+            <p className={styles.title}>{title}</p>
+            {description && <p className={styles.description}>{description}</p>}
+            {!!tags.length && <TagList tags={tags} onClick={onTagClick} />}
+            {hasActions && (
+              <div className={styles.actionRow}>
+                {!!actions.length && <div className={styles.actions}>{actions}</div>}
+                {!!secondaryActions.length && <div className={styles.secondaryActions}>{secondaryActions}</div>}
+              </div>
+            )}
+          </div>
           <div className={styles.overlay} />
         </div>
       </Tooltip>
@@ -36,9 +63,10 @@ export const Card: FC<Props> = ({ title, description, tags = [], onTagClick, dis
   );
 };
 
-const getStyles = (theme: GrafanaTheme, disabled = false) => {
+const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) => {
   return {
     container: css`
+      display: flex;
       width: 100%;
       color: ${theme.colors.textStrong};
       background: ${theme.colors.bg2};
@@ -48,13 +76,16 @@ const getStyles = (theme: GrafanaTheme, disabled = false) => {
       pointer-events: ${disabled ? 'none' : 'auto'};
 
       &:hover {
-        background: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
-        cursor: ${disabled ? 'not-allowed' : 'pointer'};
+        background: ${disableHover ? theme.colors.bg2 : styleMixins.hoverColor(theme.colors.bg2, theme)};
+        cursor: ${disableHover ? 'default' : 'pointer'};
       }
 
       &:focus {
         ${styleMixins.focusCss(theme)};
       }
+    `,
+    inner: css`
+      width: 100%;
     `,
     title: css`
       margin-bottom: ${theme.spacing.xxs};
@@ -65,7 +96,6 @@ const getStyles = (theme: GrafanaTheme, disabled = false) => {
       font-size: ${theme.typography.size.sm};
       color: ${theme.colors.textSemiWeak};
     `,
-
     overlay: css`
       position: absolute;
       top: 1px;
@@ -77,6 +107,31 @@ const getStyles = (theme: GrafanaTheme, disabled = false) => {
       height: calc(100% - 2px);
       z-index: ${disabled ? 0 : -1};
       border-radius: ${theme.border.radius.sm};
+    `,
+    media: css`
+      margin-right: ${theme.spacing.md};
+      max-width: 40px;
+      & > * {
+        width: 100%;
+      }
+    `,
+    actionRow: css`
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    `,
+    actions: css`
+      & > * {
+        margin-right: ${theme.spacing.sm};
+      }
+    `,
+    secondaryActions: css`
+      display: flex;
+      align-items: center;
+      & > * {
+        margin-right: ${theme.spacing.sm};
+      }
     `,
   };
 };

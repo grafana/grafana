@@ -3,6 +3,9 @@ import { boolean } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Card } from './Card';
 import mdx from './Card.mdx';
+import promLogo from '../../../../../public/app/plugins/datasource/prometheus/img/prometheus_logo.svg';
+import { Button } from '../Button';
+import { IconButton } from '../IconButton/IconButton';
 
 export default {
   title: 'General/Card',
@@ -51,6 +54,34 @@ export const WithTags = () => {
       description="Elastic Search"
       tags={['elasticsearch', 'test', 'testdata']}
       disabled={disabled}
+    />
+  );
+};
+
+export const WithMedia = () => {
+  const { disabled } = getKnobs();
+  return (
+    <Card
+      title="1-ops-tools1-fallback"
+      description="Prometheus  |  https://ops-us-east4.grafana.net/api/prom"
+      disabled={disabled}
+      mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+    />
+  );
+};
+export const WithActions = () => {
+  const { disabled } = getKnobs();
+  return (
+    <Card
+      title="1-ops-tools1-fallback"
+      description="Prometheus  |  https://ops-us-east4.grafana.net/api/prom"
+      disabled={disabled}
+      mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+      actions={[<Button variant="secondary">Settings</Button>, <Button variant="secondary">Explore</Button>]}
+      secondaryActions={[
+        <IconButton name="apps" tooltip="Show all dashboards for this data source" />,
+        <IconButton name="trash-alt" tooltip="Delete this data source" />,
+      ]}
     />
   );
 };
