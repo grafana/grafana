@@ -1,8 +1,10 @@
 import { splitOpen } from '../state/actions';
-import { Field, LinkModel, TimeRange } from '@grafana/data';
+import { Field, LinkModel, TimeRange, AppEvents } from '@grafana/data';
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
 import { mapInternalLinkToExplore } from '@grafana/data/src/utils/dataLinks';
-import { getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { getDataSourceSrv, getTemplateSrv, getBackendSrv } from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
+import { copyStringToClipboard } from 'app/core/utils/explore';
 
 /**
  * Get links from the field of a dataframe and in addition check if there is associated
@@ -59,4 +61,17 @@ function getTitleFromHref(href: string): string {
     title = href;
   }
   return title;
+}
+
+export async function copyShortLinkToClipboard(path: string) {
+  try {
+    const shortUrl = await getBackendSrv().post(`/api/short-urls`, {
+      path,
+    });
+    copyStringToClipboard(shortUrl);
+    appEvents.emit(AppEvents.alertSuccess, ['Shortened link copied to clipboard']);
+  } catch (err) {
+    appEvents.emit(AppEvents.alertError, ['Error when creating shortened link']);
+    console.error('Error when creating shortened link: ', err);
+  }
 }

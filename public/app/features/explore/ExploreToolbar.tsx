@@ -25,6 +25,7 @@ import { getTimeZone } from '../profile/state/selectors';
 import { updateTimeZoneForSession } from '../profile/state/reducers';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 import kbn from '../../core/utils/kbn';
+import { copyShortLinkToClipboard } from './utils/links';
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ResponsiveButton } from './ResponsiveButton';
@@ -262,6 +263,13 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                 />
               </div>
             ) : null}
+            <div className={'explore-toolbar-content-item'}>
+              <Tooltip content={'Copy shortened link'} placement="bottom">
+                <button className={'btn navbar-button'} onClick={() => copyShortLinkToClipboard(window.location.href)}>
+                  <Icon name="share-alt" />
+                </button>
+              </Tooltip>
+            </div>
             {!isLive && (
               <div className="explore-toolbar-content-item">
                 <ExploreTimeControls

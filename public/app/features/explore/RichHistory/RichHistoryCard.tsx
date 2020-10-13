@@ -6,7 +6,9 @@ import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/
 import { getDataSourceSrv } from '@grafana/runtime';
 import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
-import { copyStringToClipboard, createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
+import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
+import { copyShortLinkToClipboard } from '../../explore/utils/links';
+import { copyStringToClipboard } from 'app/core/utils/explore';
 import appEvents from 'app/core/app_events';
 import { StoreState, CoreEvents } from 'app/types';
 
@@ -178,8 +180,7 @@ export function RichHistoryCard(props: Props) {
 
   const onCreateLink = () => {
     const url = createUrlFromRichHistory(query);
-    copyStringToClipboard(url);
-    appEvents.emit(AppEvents.alertSuccess, ['Link copied to clipboard']);
+    copyShortLinkToClipboard(url);
   };
 
   const onDeleteQuery = () => {
@@ -254,7 +255,7 @@ export function RichHistoryCard(props: Props) {
         title={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
       />
       <IconButton name="copy" onClick={onCopyQuery} title="Copy query to clipboard" />
-      {!isRemoved && <IconButton name="link" onClick={onCreateLink} title="Copy link to clipboard" />}
+      {!isRemoved && <IconButton name="share-alt" onClick={onCreateLink} title="Copy shortened link to clipboard" />}
       <IconButton name="trash-alt" title={'Delete query'} onClick={onDeleteQuery} />
       <IconButton
         name={query.starred ? 'favorite' : 'star'}
