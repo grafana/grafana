@@ -18,13 +18,13 @@ A basic Card component expects at least a title to be used as it's heading. Opti
   metaData="Filter data by query."
 />
 ```
-
 <Preview>
   <Card
     title="Filter by name"
     metaData="Filter data by query."
   />
 </Preview>
+
 
 ### Multiple metaData elements
 
@@ -49,7 +49,7 @@ Metadata also accepts html elements, which could be links, for example.
   title="Test dashboard"
    metaData={[
     'Prometheus',
-    <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+    <a key='prom-link' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
 />
 ```
@@ -59,7 +59,7 @@ Metadata also accepts html elements, which could be links, for example.
     title="Test dashboard"
     metaData={[
       'Prometheus',
-      <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+      <a key='prom-link-2' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
   />
 </Preview>
@@ -107,7 +107,7 @@ Card can be used as a list item inside `ul` or `ol` elements by customizing its 
     title="List card item"
     metaData="Card that is rendered as li element."
     tag='li'
-/>
+  />
 </ul>
 ```
 <Preview>
@@ -159,7 +159,7 @@ Cards can also be rendered with media content such icons or images.
     title="1-ops-tools1-fallback"
     metaData={[
       'Prometheus',
-      <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+      <a key={'link'} href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
     mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
   />
@@ -179,8 +179,8 @@ Cards also accept primary and secondary actions. Usually the primary actions are
   mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
   actions={[<Button variant="secondary">Settings</Button>, <Button variant="secondary">Explore</Button>]}
   secondaryActions={[
-    <IconButton name="apps" tooltip="Show all dashboards for this data source" />,
-    <IconButton name="trash-alt" tooltip="Delete this data source" />,
+    <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />,
+    <IconButton key="delete" name="trash-alt" tooltip="Delete this data source" />,
   ]}
 />
 ```
@@ -190,15 +190,22 @@ Cards also accept primary and secondary actions. Usually the primary actions are
     title="1-ops-tools1-fallback"
     metaData={[
       'Prometheus',
-      <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+      <a key='prom-link-3' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
     mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
-    actions={[<Button variant="secondary">Settings</Button>, <Button variant="secondary">Explore</Button>]}
+    actions={[<Button key="settings" variant="secondary">
+        Settings
+      </Button>,
+      <Button key="explore" variant="secondary">
+        Explore
+      </Button>,
+    ]}
     secondaryActions={[
-      <IconButton name="apps" tooltip="Show all dashboards for this data source" />,
-      <IconButton name="trash-alt" tooltip="Delete this data source" />,
+      <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />,
+      <IconButton key="delete" name="trash-alt" tooltip="Delete this data source" />,
     ]}
   />
 </Preview>
 ### Props
 <Props of={Card}/>
+

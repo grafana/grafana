@@ -80,7 +80,9 @@ export const WithMedia = () => {
       title="1-ops-tools1-fallback"
       metaData={[
         'Prometheus',
-        <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+        <a key="link2" href="https://ops-us-east4.grafana.net/api/prom">
+          https://ops-us-east4.grafana.net/api/prom
+        </a>,
       ]}
       disabled={disabled}
       mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
@@ -94,14 +96,23 @@ export const WithActions = () => {
       title="1-ops-tools1-fallback"
       metaData={[
         'Prometheus',
-        <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+        <a key="link" href="https://ops-us-east4.grafana.net/api/prom">
+          https://ops-us-east4.grafana.net/api/prom
+        </a>,
       ]}
       disabled={disabled}
       mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
-      actions={[<Button variant="secondary">Settings</Button>, <Button variant="secondary">Explore</Button>]}
+      actions={[
+        <Button key="settings" variant="secondary">
+          Settings
+        </Button>,
+        <Button key="explore" variant="secondary">
+          Explore
+        </Button>,
+      ]}
       secondaryActions={[
-        <IconButton name="apps" tooltip="Show all dashboards for this data source" />,
-        <IconButton name="trash-alt" tooltip="Delete this data source" />,
+        <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />,
+        <IconButton key="delete" name="trash-alt" tooltip="Delete this data source" />,
       ]}
     />
   );

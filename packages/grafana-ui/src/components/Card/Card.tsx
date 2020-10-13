@@ -78,7 +78,13 @@ export const Card: FC<Props> = ({
   const styles = getStyles(theme, disabled && !actions.length, disableHover);
   // Join meta data elements by '|'
   const meta = Array.isArray(metaData)
-    ? (metaData as ReactNode[]).reduce((prev, curr) => [prev, <span className={styles.separator}>|</span>, curr])
+    ? (metaData as ReactNode[]).reduce((prev, curr, i) => [
+        prev,
+        <span key={`separator_${i}`} className={styles.separator}>
+          |
+        </span>,
+        curr,
+      ])
     : metaData;
   const onCardClick = disabled ? () => {} : onClick;
   return (
