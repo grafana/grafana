@@ -1,16 +1,204 @@
-import { Props } from "@storybook/addon-docs/blocks";
+import { Meta, Preview, Props } from "@storybook/addon-docs/blocks";
 import { Card } from "./Card";
+import { Button } from '../Button';
+import { IconButton } from '../IconButton/IconButton';
+import promLogo from '../../../../../public/app/plugins/datasource/prometheus/img/prometheus_logo.svg';
+
+<Meta title="MDX/Card" component={Card}/>
 
 # Card
 
-### Usage
+## Usage
 
+### Basic
+A basic Card component expects at least a title to be used as it's heading. Optionally a `metaData` prop is accepted, which can be used to provide some extra information for the card, or to be used as a description text. Multiple meta data elements can be provided as an array, in which case they will be separated by a horizontal line: `|`.
 ```jsx
 <Card
   title="Filter by name"
-  description="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
+  metaData="Filter data by query."
 />
 ```
 
+<Preview>
+  <Card
+    title="Filter by name"
+    metaData="Filter data by query."
+  />
+</Preview>
+
+### Multiple metaData elements
+
+```jsx
+<Card
+  title="Test dashboard"
+  metaData={['Folder: Test', 'Views: 100']}
+/>
+```
+
+<Preview>
+  <Card
+    title="Test dashboard"
+    metaData={['Folder: Test', 'Views: 100']}
+  />
+</Preview>
+
+Metadata also accepts html elements, which could be links, for example.
+
+```jsx
+<Card
+  title="Test dashboard"
+   metaData={[
+    'Prometheus',
+    <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+  ]}
+/>
+```
+
+<Preview>
+  <Card
+    title="Test dashboard"
+    metaData={[
+      'Prometheus',
+      <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+    ]}
+  />
+</Preview>
+
+### As a link
+A Card can be used as a clickable link item by specifying `href` prop. In this case the Card's content will be rendered inside `a`.
+
+```jsx
+<Card
+  title="Redirect to Grafana"
+  metaData="Clicking this card will redirect to grafana website"
+  href='https://grafana.com'
+/>
+```
+<Preview>
+  <Card
+    title="Redirect to Grafana"
+    metaData="Clicking this card will redirect to grafana website"
+    href='https://grafana.com'
+  />
+</Preview>
+
+### As a list item
+
+Card can be used as a list item inside `ul` or `ol` elements by customizing its `tag` prop.
+
+```jsx
+<ul>
+  <Card
+    title="List card item"
+    metaData="Card that is rendered as li element."
+    tag='li'
+  />
+  <Card
+    title="List card item"
+    metaData="Card that is rendered as li element."
+    tag='li'
+  />
+  <Card
+    title="List card item"
+    metaData="Card that is rendered as li element."
+    tag='li'
+  />
+  <Card
+    title="List card item"
+    metaData="Card that is rendered as li element."
+    tag='li'
+/>
+</ul>
+```
+<Preview>
+  <ul style={{padding: '20px', maxWidth: '800px'}}>
+    <Card
+      key={1}
+      title="List card item"
+      metaData="Card that is rendered as li element."
+      tag='li'
+    />
+    <Card
+      key={2}
+      title="List card item"
+      metaData="Card that is rendered as li element."
+      tag='li'
+    />
+    <Card
+      key={3}
+      title="List card item"
+      metaData="Card that is rendered as li element."
+      tag='li'
+    />
+    <Card
+      key={4}
+      title="List card item"
+      metaData="Card that is rendered as li element."
+      tag='li'
+    />
+  </ul>
+</Preview>
+
+### With media elements
+
+Cards can also be rendered with media content such icons or images.
+
+```jsx
+<Card
+  title="1-ops-tools1-fallback"
+  metaData={[
+    'Prometheus',
+    <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+  ]}
+  mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+/>
+```
+
+<Preview>
+  <Card
+    title="1-ops-tools1-fallback"
+    metaData={[
+      'Prometheus',
+      <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+    ]}
+    mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+  />
+</Preview>
+
+### Action Cards
+
+Cards also accept primary and secondary actions. Usually the primary actions are displayed as buttons while secondary actions are displayed as icon buttons,
+
+```jsx
+ <Card
+  title="1-ops-tools1-fallback"
+  metaData={[
+    'Prometheus',
+    <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+  ]}
+  mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+  actions={[<Button variant="secondary">Settings</Button>, <Button variant="secondary">Explore</Button>]}
+  secondaryActions={[
+    <IconButton name="apps" tooltip="Show all dashboards for this data source" />,
+    <IconButton name="trash-alt" tooltip="Delete this data source" />,
+  ]}
+/>
+```
+
+<Preview>
+  <Card
+    title="1-ops-tools1-fallback"
+    metaData={[
+      'Prometheus',
+      <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+    ]}
+    mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+    actions={[<Button variant="secondary">Settings</Button>, <Button variant="secondary">Explore</Button>]}
+    secondaryActions={[
+      <IconButton name="apps" tooltip="Show all dashboards for this data source" />,
+      <IconButton name="trash-alt" tooltip="Delete this data source" />,
+    ]}
+  />
+</Preview>
 ### Props
 <Props of={Card}/>

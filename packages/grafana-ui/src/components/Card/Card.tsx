@@ -1,5 +1,5 @@
 import React, { FC, HTMLAttributes, ReactNode } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme, styleMixins } from '../../themes';
 import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';
@@ -32,7 +32,8 @@ const CardInner: FC<CardInnerProps> = ({ children, href }) => {
 };
 
 export interface Props extends ContainerProps {
-  title?: string;
+  /** Main heading for the Card **/
+  title: string;
   /** Card description text or meta data. If array is supplied, elements will be rendered with vertical line separator */
   metaData?: ReactNode | ReactNode[];
   /** Content for the card's tooltip */
@@ -68,6 +69,7 @@ export const Card: FC<Props> = ({
   tag,
   href,
   onClick,
+  className,
   ...htmlProps
 }) => {
   const hasActions = Boolean(actions.length || secondaryActions.length);
@@ -81,7 +83,7 @@ export const Card: FC<Props> = ({
   const onCardClick = disabled ? () => {} : onClick;
   return (
     <Tooltip placement="top" content={tooltip} theme="info" show={!!tooltip} {...htmlProps}>
-      <CardContainer tag={tag} tabIndex={0} className={styles.container} onClick={onCardClick}>
+      <CardContainer tag={tag} tabIndex={0} className={cx(styles.container, className)} onClick={onCardClick}>
         <CardInner href={href}>
           {mediaContent && <div className={styles.media}>{mediaContent}</div>}
           <div className={styles.inner}>
@@ -113,6 +115,7 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
       padding: ${theme.spacing.md};
       position: relative;
       pointer-events: ${disabled ? 'none' : 'auto'};
+      margin-bottom: ${theme.spacing.sm};
 
       &:hover {
         background: ${disableHover ? theme.colors.bg2 : styleMixins.hoverColor(theme.colors.bg2, theme)};
@@ -127,7 +130,7 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
       width: 100%;
     `,
     title: css`
-      margin-bottom: ${theme.spacing.xxs};
+      margin-bottom: 0;
       font-size: ${theme.typography.size.md};
     `,
     metaData: css`
@@ -169,7 +172,7 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
       display: flex;
       align-items: center;
       & > * {
-        margin-right: ${theme.spacing.sm};
+        margin-right: ${theme.spacing.sm} !important;
       }
     `,
     separator: css`
