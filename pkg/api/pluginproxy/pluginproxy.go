@@ -33,7 +33,7 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 			SecureJsonData: query.Result.SecureJsonData.Decrypt(),
 		}
 
-		interpolatedURL, err := InterpolateString(route.URL, data)
+		interpolatedURL, err := interpolateString(route.URL, data)
 		if err != nil {
 			ctx.JsonApiErr(500, "Could not interpolate plugin route url", err)
 			return
@@ -65,7 +65,7 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 
 		applyUserHeader(cfg.SendUserHeader, req, ctx.SignedInUser)
 
-		if err := AddHeaders(&req.Header, route, data); err != nil {
+		if err := addHeaders(&req.Header, route, data); err != nil {
 			ctx.JsonApiErr(500, "Failed to render plugin headers", err)
 			return
 		}

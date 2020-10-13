@@ -23,7 +23,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	}
 
 	if len(route.URL) > 0 {
-		interpolatedURL, err := InterpolateString(route.URL, data)
+		interpolatedURL, err := interpolateString(route.URL, data)
 		if err != nil {
 			logger.Error("Error interpolating proxy url", "error", err)
 			return
@@ -41,11 +41,11 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		req.URL.Path = util.JoinURLFragments(routeURL.Path, proxyPath)
 	}
 
-	if err := AddQueryString(req, route, data); err != nil {
+	if err := addQueryString(req, route, data); err != nil {
 		logger.Error("Failed to render plugin URL query string", "error", err)
 	}
 
-	if err := AddHeaders(&req.Header, route, data); err != nil {
+	if err := addHeaders(&req.Header, route, data); err != nil {
 		logger.Error("Failed to render plugin headers", "error", err)
 	}
 
