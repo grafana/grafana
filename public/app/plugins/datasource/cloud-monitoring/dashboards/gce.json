@@ -89,7 +89,7 @@
       "targets": [
         {
           "metricQuery": {
-            "aliasBy": "",
+            "aliasBy": "{{metric.label.instance_name}}",
             "alignmentPeriod": "cloud-monitoring-auto",
             "crossSeriesReducer": "REDUCE_NONE",
             "filters": [],
@@ -198,7 +198,7 @@
       "targets": [
         {
           "metricQuery": {
-            "aliasBy": "",
+            "aliasBy": "{{metric.label.instance_name}}",
             "alignmentPeriod": "cloud-monitoring-auto",
             "crossSeriesReducer": "REDUCE_NONE",
             "filters": [],
@@ -306,7 +306,7 @@
       "targets": [
         {
           "metricQuery": {
-            "aliasBy": "",
+            "aliasBy": "{{metric.label.instance_name}}",
             "alignmentPeriod": "cloud-monitoring-auto",
             "crossSeriesReducer": "REDUCE_NONE",
             "filters": [],
@@ -415,7 +415,7 @@
       "targets": [
         {
           "metricQuery": {
-            "aliasBy": "",
+            "aliasBy": "{{metric.label.instance_name}}",
             "alignmentPeriod": "cloud-monitoring-auto",
             "crossSeriesReducer": "REDUCE_NONE",
             "filters": [],
@@ -524,7 +524,7 @@
       "targets": [
         {
           "metricQuery": {
-            "aliasBy": "",
+            "aliasBy": "{{metric.label.instance_name}}",
             "alignmentPeriod": "cloud-monitoring-auto",
             "crossSeriesReducer": "REDUCE_NONE",
             "filters": [],
@@ -633,7 +633,7 @@
       "targets": [
         {
           "metricQuery": {
-            "aliasBy": "",
+            "aliasBy": "{{metric.label.instance_name}}",
             "alignmentPeriod": "cloud-monitoring-auto",
             "crossSeriesReducer": "REDUCE_NONE",
             "filters": [],
@@ -742,7 +742,7 @@
       "targets": [
         {
           "metricQuery": {
-            "aliasBy": "",
+            "aliasBy": "{{metric.label.instance_name}}",
             "alignmentPeriod": "cloud-monitoring-auto",
             "crossSeriesReducer": "REDUCE_NONE",
             "filters": [],
@@ -851,7 +851,7 @@
       "targets": [
         {
           "metricQuery": {
-            "aliasBy": "",
+            "aliasBy": "{{metric.label.instance_name}}",
             "alignmentPeriod": "cloud-monitoring-auto",
             "crossSeriesReducer": "REDUCE_NONE",
             "filters": [],
@@ -960,7 +960,7 @@
       "targets": [
         {
           "metricQuery": {
-            "aliasBy": "",
+            "aliasBy": "{{metric.label.instance_name}}",
             "alignmentPeriod": "cloud-monitoring-auto",
             "crossSeriesReducer": "REDUCE_NONE",
             "filters": [],
@@ -1069,7 +1069,7 @@
       "targets": [
         {
           "metricQuery": {
-            "aliasBy": "",
+            "aliasBy": "{{metric.label.instance_name}}",
             "alignmentPeriod": "cloud-monitoring-auto",
             "crossSeriesReducer": "REDUCE_NONE",
             "filters": [],
