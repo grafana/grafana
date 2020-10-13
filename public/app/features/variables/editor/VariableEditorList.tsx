@@ -85,6 +85,11 @@ export class VariableEditorList extends PureComponent<Props> {
                 <tbody>
                   {this.props.variables.map((state, index) => {
                     const variable = state as QueryVariableModel;
+                    const definition = variable.definition
+                      ? variable.definition
+                      : typeof variable.query === 'string'
+                      ? variable.query
+                      : '';
                     return (
                       <tr key={`${variable.name}-${index}`}>
                         <td style={{ width: '1%' }}>
@@ -106,7 +111,7 @@ export class VariableEditorList extends PureComponent<Props> {
                             variable.name
                           )}
                         >
-                          {variable.definition ? variable.definition : variable.query}
+                          {definition}
                         </td>
 
                         <td style={{ width: '1%' }}>

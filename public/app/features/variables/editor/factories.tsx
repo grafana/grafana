@@ -94,7 +94,7 @@ const defaultVariableQueryEditorFactory = <
 
   return (
     <LegacyVariableQueryEditor
-      query={propsQuery}
+      query={propsQuery.query}
       onChange={onChange}
       datasource={propsDatasource}
       templateSrv={getTemplateSrv()}

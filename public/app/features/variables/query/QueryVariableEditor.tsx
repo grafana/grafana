@@ -81,7 +81,9 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   onQueryChange = async (query: any) => {
-    // To be implemented
+    if (this.props.variable.query !== query) {
+      this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query);
+    }
   };
 
   onRegExChange = (event: ChangeEvent<HTMLInputElement>) => {
