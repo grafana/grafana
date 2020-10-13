@@ -10,6 +10,6 @@ const (
 )
 
 type alertValidator struct {
-	aFunc     func(*models.Alert) error
+	aFunc     func(*models.Alert) (bool, string)
 	aSeverity validatorSeverity
 }

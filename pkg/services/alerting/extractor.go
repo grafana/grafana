@@ -197,8 +197,8 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		validationErrors := strings.Builder{}
 		validationWarnings := strings.Builder{}
 		for _, validator := range validators {
-			err := validator.aFunc(alert)
-			if err == nil {
+			ok, reason := validator.aFunc(alert)
+			if ok {
 				continue
 			}
 
@@ -207,12 +207,12 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 				if validationErrors.Len() > 0 {
 					validationErrors.WriteString("\n")
 				}
-				validationErrors.WriteString(err.Error())
+				validationErrors.WriteString(reason)
 			case alertWarning:
 				if validationWarnings.Len() > 0 {
 					validationErrors.WriteString("\n")
 				}
-				validationWarnings.WriteString(err.Error())
+				validationWarnings.WriteString(reason)
 			}
 		}
 		if validationErrors.String() != "" {
@@ -228,14 +228,15 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 	return alerts, nil
 }
 
-func validateAlertRule(alert *models.Alert) (err error) {
-	if !alert.ValidToSave() {
-		err = fmt.Errorf("Dashboard ID, Org ID or Panel ID is not correct, alertName=%v, panelId=%v, orgId=%v, dashboardId=%v", alert.Name, alert.PanelId, alert.OrgId, alert.DashboardId)
+func validateAlertRule(alert *models.Alert) (ok bool, reason string) {
+	ok = alert.ValidToSave()
+	if !ok {
+		reason = fmt.Sprintf("Dashboard ID, Org ID or Panel ID is not correct, alertName=%v, panelId=%v, orgId=%v, dashboardId=%v", alert.Name, alert.PanelId, alert.OrgId, alert.DashboardId)
 	}
-	return err
+	return ok, reason
 }
 
-func validAlertJSON(alert *models.Alert) (err error) {
+func validAlertJSON(alert *models.Alert) (ok bool, reason string) {
 	warnings := strings.Builder{}
 	for _, v := range alert.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)
@@ -248,16 +249,14 @@ func validAlertJSON(alert *models.Alert) (err error) {
 			continue
 		}
 
+		ok = false
 		if warnings.Len() > 0 {
 			warnings.WriteString("\n")
 		}
 		warnings.WriteString(fmt.Sprintf("Alert contains notification identified by incorrect ID, alertName=%v, panelId=%v, notificationId=%v", alert.Name, alert.PanelId, id))
 	}
-	reason := warnings.String()
-	if reason != "" {
-		err = fmt.Errorf(reason)
-	}
-	return err
+	reason = warnings.String()
+	return ok, reason
 }
 
 // GetAlerts extracts alerts from the dashboard json and does full validation on the alert json data.
@@ -313,12 +312,12 @@ func (e *DashAlertExtractor) extractAlerts(validators ...alertValidator) ([]*mod
 // in the first validation pass.
 func (e *DashAlertExtractor) ValidateAlerts() error {
 	_, err := e.extractAlerts(alertValidator{
-		aFunc: func(alert *models.Alert) (err error) {
-			ok := alert.OrgId != 0 && alert.PanelId != 0
+		aFunc: func(alert *models.Alert) (ok bool, reason string) {
+			ok = alert.OrgId != 0 && alert.PanelId != 0
 			if !ok {
-				err = fmt.Errorf("Org ID or Panel ID is not correct, alertName=%v, panelId=%v, orgId=%v", alert.Name, alert.PanelId, alert.OrgId)
+				reason = fmt.Sprintf("Org ID or Panel ID is not correct, alertName=%v, panelId=%v, orgId=%v", alert.Name, alert.PanelId, alert.OrgId)
 			}
-			return err
+			return ok, reason
 		},
 		aSeverity: alertError,
 	})
