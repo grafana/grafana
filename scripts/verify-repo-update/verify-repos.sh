@@ -2,7 +2,7 @@
 set -o pipefail
 
 _basedir=$(dirname "$0")
-cd "$_basedir"
+cd "$_basedir" || exit
 
 docker_build () {
 	dockerfile=$1
