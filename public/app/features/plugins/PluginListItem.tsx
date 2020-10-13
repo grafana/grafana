@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { PluginMeta } from '@grafana/data';
 import { PluginSignatureBadge } from './PluginSignatureBadge';
-import { PluginErrors } from '../../core/components/PluginError/PluginErrors';
+import { PluginErrors } from '../../core/components/PluginErrors/PluginErrors';
 
 interface Props {
   plugin: PluginMeta;

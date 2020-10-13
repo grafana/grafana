@@ -1,6 +1,6 @@
 import React from 'react';
 import { cx } from 'emotion';
-import { PluginErrors } from '../PluginError/PluginErrors';
+import { PluginErrors } from '../PluginErrors/PluginErrors';
 import { PluginErrorCode } from '@grafana/data';
 
 export interface CardProps {

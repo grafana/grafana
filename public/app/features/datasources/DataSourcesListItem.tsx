@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { DataSourceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { PluginErrors } from '../../core/components/PluginError/PluginErrors';
+import { PluginErrors } from '../../core/components/PluginErrors/PluginErrors';
 
 export interface Props {
   dataSource: DataSourceSettings;

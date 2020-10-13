@@ -29,7 +29,7 @@ import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
 import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
-import { PluginErrors } from '../../../core/components/PluginError/PluginErrors';
+import { PluginErrors } from '../../../core/components/PluginErrors/PluginErrors';
 
 export interface Props {
   navModel: NavModel;
