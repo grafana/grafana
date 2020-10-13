@@ -308,7 +308,7 @@
               },
               "headers": {
                 "type": "array",
-                "description": "For data source plugins. Route headers adds HTTP headers to the proxied request."
+                "description": "For data source plugins. Route headers adds HTTP headers to the token authentication request."
               },
               "params": {
                 "type": "object",

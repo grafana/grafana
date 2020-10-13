@@ -155,10 +155,9 @@ Grafana automatically renews the token when it expires.
 ]
 ```
 
-## Optional headers to retrieve oauth token
+### Add headers to OAuth request
 
-If a header value is expected in the call to the oauth url, they can sent using
-the `headers` property. 
+If the call to the OAuth URL expects a header value, you can send it using the `headers` property. 
 
 ```json
 "routes": [
