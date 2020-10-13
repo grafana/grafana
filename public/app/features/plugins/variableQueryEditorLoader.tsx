@@ -2,7 +2,7 @@ import coreModule from 'app/core/core_module';
 import { importDataSourcePlugin } from './plugin_loader';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import LegacyVariableQueryEditor from '../variables/editor/LegacyVariableQueryEditor';
+import { LegacyVariableQueryEditor } from '../variables/editor/LegacyVariableQueryEditor';
 import { DataSourcePluginMeta } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 

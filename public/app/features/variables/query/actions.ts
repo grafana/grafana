@@ -1,18 +1,19 @@
 import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
-import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { toDataQueryError } from '@grafana/runtime';
 
-import { updateOptions, validateVariableSelectionState } from '../state/actions';
-import { QueryVariableModel, VariableRefresh } from '../types';
+import { updateOptions } from '../state/actions';
+import { QueryVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import { importDataSourcePlugin } from '../../plugins/plugin_loader';
-import LegacyVariableQueryEditor from '../editor/LegacyVariableQueryEditor';
 import { getVariable } from '../state/selectors';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';
-import { updateVariableOptions, updateVariableTags } from './reducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
+import { hasLegacyVariableSupport } from '../guard';
+import { legacyUpdateQueryVariableOptions } from './legacyActions';
+import { importDataSourcePlugin } from '../../plugins/plugin_loader';
+import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
+import { variableQueryEditorFactory } from '../editor/factories';
 
 export const updateQueryVariableOptions = (
   identifier: VariableIdentifier,
@@ -21,42 +22,13 @@ export const updateQueryVariableOptions = (
   return async (dispatch, getState) => {
     const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
     try {
-      const beforeUid = getState().templating.transaction.uid;
       if (getState().templating.editor.id === variableInState.id) {
         dispatch(removeVariableEditorError({ errorProp: 'update' }));
       }
       const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');
-      const queryOptions: any = { range: undefined, variable: variableInState, searchFilter };
-      if (variableInState.refresh === VariableRefresh.onTimeRangeChanged) {
-        queryOptions.range = getTimeSrv().timeRange();
-      }
 
-      if (!dataSource.metricFindQuery) {
-        return;
-      }
-
-      const results = await dataSource.metricFindQuery(variableInState.query, queryOptions);
-
-      const afterUid = getState().templating.transaction.uid;
-      if (beforeUid !== afterUid) {
-        // we started another batch before this metricFindQuery finished let's abort
-        return;
-      }
-
-      const templatedRegex = getTemplatedRegex(variableInState);
-      await dispatch(updateVariableOptions(toVariablePayload(variableInState, { results, templatedRegex })));
-
-      if (variableInState.useTags) {
-        const tagResults = await dataSource.metricFindQuery(variableInState.tagsQuery, queryOptions);
-        await dispatch(updateVariableTags(toVariablePayload(variableInState, tagResults)));
-      }
-
-      // If we are searching options there is no need to validate selection state
-      // This condition was added to as validateVariableSelectionState will update the current value of the variable
-      // So after search and selection the current value is already update so no setValue, refresh & url update is performed
-      // The if statement below fixes https://github.com/grafana/grafana/issues/25671
-      if (!searchFilter) {
-        await dispatch(validateVariableSelectionState(toVariableIdentifier(variableInState)));
+      if (hasLegacyVariableSupport(dataSource)) {
+        return await dispatch(legacyUpdateQueryVariableOptions(identifier, searchFilter));
       }
     } catch (err) {
       const error = toDataQueryError(err);
@@ -95,9 +67,16 @@ export const changeQueryVariableDataSource = (
   return async (dispatch, getState) => {
     try {
       const dataSource = await getDatasourceSrv().get(name ?? '');
-      const dsPlugin = await importDataSourcePlugin(dataSource.meta!);
-      const VariableQueryEditor = dsPlugin.components.VariableQueryEditor ?? LegacyVariableQueryEditor;
       dispatch(changeVariableEditorExtended({ propName: 'dataSource', propValue: dataSource }));
+
+      if (hasLegacyVariableSupport(dataSource)) {
+        const dsPlugin = await importDataSourcePlugin(dataSource.meta!);
+        const VariableQueryEditor = dsPlugin.components.VariableQueryEditor ?? LegacyVariableQueryEditor;
+        dispatch(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: VariableQueryEditor }));
+        return;
+      }
+
+      const VariableQueryEditor = variableQueryEditorFactory(dataSource);
       dispatch(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: VariableQueryEditor }));
     } catch (err) {
       console.error(err);
@@ -121,16 +100,4 @@ export const changeQueryVariableQuery = (
   dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
   dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition })));
   await dispatch(updateOptions(identifier));
-};
-
-const getTemplatedRegex = (variable: QueryVariableModel): string => {
-  if (!variable) {
-    return '';
-  }
-
-  if (!variable.regex) {
-    return '';
-  }
-
-  return getTemplateSrv().replace(variable.regex, {}, 'regex');
 };

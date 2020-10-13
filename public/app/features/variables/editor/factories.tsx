@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { ComponentType, FC, useCallback } from 'react';
 import {
   CustomVariableQueryEditorProps,
   DataQuery,
@@ -9,8 +9,52 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
-import LegacyVariableQueryEditor from './LegacyVariableQueryEditor';
-import { hasCustomVariableSupport, hasDatasourceVariableSupport, hasDefaultVariableSupport } from '../guard';
+import { LEGACY_VARIABLE_QUERY_EDITOR_NAME, LegacyVariableQueryEditor } from './LegacyVariableQueryEditor';
+import {
+  hasCustomVariableSupport,
+  hasDatasourceVariableSupport,
+  hasDefaultVariableSupport,
+  hasLegacyVariableSupport,
+} from '../guard';
+import { VariableQueryProps } from '../../../types';
+
+export type VariableQueryEditorType =
+  | ComponentType<VariableQueryProps>
+  | ComponentType<VariableQueryEditorProps>
+  | null;
+
+export const isLegacyQueryEditor = <
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
+>(
+  component: VariableQueryEditorType,
+  datasource: DataSourceApi<TQuery, TOptions>
+): component is ComponentType<VariableQueryProps> => {
+  if (!component) {
+    return false;
+  }
+
+  return component.displayName === LEGACY_VARIABLE_QUERY_EDITOR_NAME || hasLegacyVariableSupport(datasource);
+};
+
+export const isQueryEditor = <
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
+>(
+  component: VariableQueryEditorType,
+  datasource: DataSourceApi<TQuery, TOptions>
+): component is ComponentType<VariableQueryEditorProps> => {
+  if (!component) {
+    return false;
+  }
+
+  return (
+    component.displayName !== LEGACY_VARIABLE_QUERY_EDITOR_NAME &&
+    (hasDatasourceVariableSupport(datasource) ||
+      hasDefaultVariableSupport(datasource) ||
+      hasCustomVariableSupport(datasource))
+  );
+};
 
 export const variableQueryEditorFactory = <
   TQuery extends DataQuery = DataQuery,

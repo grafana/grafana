@@ -73,6 +73,7 @@ export interface QueryVariableModel extends DataSourceVariableModel {
   tagValuesQuery: string;
   useTags: boolean;
   queryValue?: string;
+  query: any;
 }
 
 export interface TextBoxVariableModel extends VariableWithOptions {}
