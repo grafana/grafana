@@ -7,7 +7,6 @@ import {
   fieldColorModeRegistry,
   FieldColorMode,
   GrafanaTheme,
-  getColorFromHexRgbOrName,
   getColorForTheme,
 } from '@grafana/data';
 import { Select } from '../Select/Select';
