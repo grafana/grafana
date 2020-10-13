@@ -15,7 +15,7 @@ import (
 func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortURLForm) Response {
 	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
 
-	uid, err := hs.ShortURLService.CreateShortURL(c.SignedInUser, strings.TrimPrefix(cmd.Path, setting.AppUrl))
+	uid, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, strings.TrimPrefix(cmd.Path, setting.AppUrl))
 	if err != nil {
 		c.Logger.Error("Failed to create short URL", "error", err)
 		return Error(500, "Failed to create short URL", err)
@@ -34,7 +34,7 @@ func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
 		return
 	}
 
-	path, err := hs.ShortURLService.GetFullURLByUID(c.SignedInUser, shortURLUID)
+	path, err := hs.ShortURLService.GetFullURLByUID(c.Req.Context(), c.SignedInUser, shortURLUID)
 	if err != nil {
 		if errors.Is(err, models.ErrShortURLNotFound) {
 			hs.log.Debug("Not redirecting short URL since not found")

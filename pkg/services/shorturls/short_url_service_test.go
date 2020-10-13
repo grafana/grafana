@@ -1,6 +1,7 @@
 package shorturls
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -18,11 +19,11 @@ func TestShortURLService(t *testing.T) {
 
 		service := ShortURLService{SQLStore: sqlStore}
 
-		uid, err := service.CreateShortURL(user, refPath)
+		uid, err := service.CreateShortURL(context.Background(), user, refPath)
 		require.NoError(t, err)
 		assert.NotEmpty(t, uid)
 
-		path, err := service.GetFullURLByUID(user, uid)
+		path, err := service.GetFullURLByUID(context.Background(), user, uid)
 		require.NoError(t, err)
 		assert.NotEmpty(t, path)
 		assert.Equal(t, refPath, path)
@@ -31,7 +32,7 @@ func TestShortURLService(t *testing.T) {
 	t.Run("User cannot look up nonexistent short URLs", func(t *testing.T) {
 		service := ShortURLService{SQLStore: sqlStore}
 
-		path, err := service.GetFullURLByUID(user, "testnotfounduid")
+		path, err := service.GetFullURLByUID(context.Background(), user, "testnotfounduid")
 		require.Error(t, err)
 		assert.Empty(t, path)
 		assert.Equal(t, models.ErrShortURLNotFound, err)
