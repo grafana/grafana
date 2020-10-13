@@ -21,7 +21,7 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 		return Error(500, "Failed to create short URL", err)
 	}
 
-	shortURL := fmt.Sprintf("%sgoto/%s", setting.AppUrl, uid)
+	shortURL := path.Join(setting.AppUrl, "goto", uid)
 	c.Logger.Debug("Created short URL", "shortURL", shortURL)
 
 	return JSON(200, shortURL)
