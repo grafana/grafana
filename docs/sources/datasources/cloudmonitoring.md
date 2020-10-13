@@ -171,7 +171,7 @@ In the Group By dropdown, you can see a list of metric and resource labels for a
 | `{{metadata.system_labels.xxx}}` | returns the meta data system label value | `{{metadata.system_labels.name}}` | `grafana`        |
 | `{{metadata.user_labels.xxx}}`   | returns the meta data user label value   | `{{metadata.user_labels.tag}}`    | `production`     |
 
-Example Alias By: `{{metric.type}} - {{metric.labels.instance_name}}`
+Example Alias By: `{{metric.type}} - {{metric.label.instance_name}}`
 
 Example Result: `compute.googleapis.com/instance/cpu/usage_time - server1-prod`
 
