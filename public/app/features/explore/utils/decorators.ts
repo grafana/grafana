@@ -1,5 +1,3 @@
-import { MonoTypeOperatorFunction, of, OperatorFunction } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
 import {
   DataFrame,
   DataSourceApi,
@@ -9,13 +7,14 @@ import {
   PreferredVisualisationType,
   sortLogsResult,
   standardTransformers,
+  TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-
-import { ExploreItemState, ExplorePanelData } from '../../../types';
-import { getGraphSeriesModel } from '../../../plugins/panel/graph2/getGraphSeriesModel';
+import { MonoTypeOperatorFunction, of, OperatorFunction } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
 import { dataFrameToLogsModel } from '../../../core/logs_model';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
+import { ExploreItemState, ExplorePanelData } from '../../../types';
 
 export const decorateWithGraphLogsTraceAndTable = (
   datasourceInstance?: DataSourceApi | null
@@ -82,17 +81,24 @@ export const decorateWithGraphResult = (): MonoTypeOperatorFunction<ExplorePanel
         return { ...data, graphResult: null };
       }
 
-      const graphResult =
-        data.graphFrames.length === 0
-          ? null
-          : getGraphSeriesModel(
-              data.graphFrames,
-              data.request?.timezone ?? 'browser',
-              {},
-              { showBars: false, showLines: true, showPoints: false },
-              { asTable: false, isVisible: true, placement: 'under' }
-            );
-
+      // Set the field config of the value field to show graph lines
+      const graphResult = [...data.graphFrames];
+      for (const graph of graphResult) {
+        const valueField = graph.fields.find(f => f.name === TIME_SERIES_VALUE_FIELD_NAME);
+        if (valueField) {
+          valueField.config = {
+            custom: {
+              axis: { label: '', side: 3, width: 60, grid: true },
+              bars: { show: false },
+              fill: { alpha: 0.1 },
+              line: { show: true, width: 1 },
+              nullValues: 'null',
+              points: { show: false, radius: 4 },
+            },
+            ...valueField.config,
+          };
+        }
+      }
       return { ...data, graphResult };
     })
   );
