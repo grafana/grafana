@@ -56,9 +56,11 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric }) => {
           )}
 
           {metric.type === 'cumulative_sum' && (
-            // TODO: onBlur, defaultValue
             <InlineField label="Format" {...inlineFieldProps}>
-              <Input value={metric.settings?.format ?? ''} />
+              <Input
+                defaultValue={metric.settings?.format}
+                onBlur={e => dispatch(changeMetricSetting(metric, 'format', e.target.value))}
+              />
             </InlineField>
           )}
 
