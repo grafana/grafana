@@ -621,6 +621,12 @@ Default is `false`.
 Editors can administrate dashboards, folders and teams they create.
 Default is `false`.
 
+### user_invite_max_lifetime_duration
+
+The duration in time a user invitation remains valid before expiring. 
+This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
+Default is `24h` (24 hours). The minimum supported duration is `15m` (15 minutes).
+
 <hr>
 
 ## [auth]
