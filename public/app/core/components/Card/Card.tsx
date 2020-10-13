@@ -1,5 +1,7 @@
 import React from 'react';
 import { cx } from 'emotion';
+import { PluginErrors } from '../PluginError/PluginErrors';
+import { PluginErrorCode } from '@grafana/data';
 
 export interface CardProps {
   logoUrl?: string;
@@ -10,7 +12,7 @@ export interface CardProps {
   onClick?: () => void;
   ariaLabel?: string;
   className?: string;
-  errors?: string;
+  errorCodes?: PluginErrorCode[];
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -22,7 +24,7 @@ export const Card: React.FC<CardProps> = ({
   onClick,
   ariaLabel,
   className,
-  errors,
+  errorCodes,
 }) => {
   const mainClassName = cx('add-data-source-item', className);
 
@@ -31,7 +33,7 @@ export const Card: React.FC<CardProps> = ({
       {logoUrl && <img className="add-data-source-item-logo" src={logoUrl} />}
       <div className="add-data-source-item-text-wrapper">
         <span className="add-data-source-item-text">{title}</span>
-        <div>Errors: {errors}</div>
+        {errorCodes && <PluginErrors errorCodes={errorCodes} />}
         {description && <span className="add-data-source-item-desc">{description}</span>}
         {labels && <div>{labels}</div>}
       </div>

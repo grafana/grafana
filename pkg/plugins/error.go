@@ -1,7 +1,6 @@
 package plugins
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -11,14 +10,10 @@ const (
 	INVALID
 )
 
-var (
-	ErrPluginIsUnsigned = errors.New("Plugin is unsigned")
-)
-
 type ErrorCode int
 
 func (e ErrorCode) String() string {
-	return [...]string{"Unsigned", "Modified", "Invalid"}[e]
+	return [...]string{"unsigned", "modified", "invalid"}[e]
 }
 
 type PluginError struct {

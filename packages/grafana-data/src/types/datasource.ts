@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 import { ComponentType } from 'react';
-import { GrafanaPlugin, PluginMeta } from './plugin';
+import { GrafanaPlugin, PluginErrorCode, PluginMeta } from './plugin';
 import { PanelData } from './panel';
 import { LogRowModel } from './logs';
 import { AnnotationEvent, AnnotationSupport } from './annotations';
@@ -533,11 +533,11 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   readOnly: boolean;
   withCredentials: boolean;
   version?: number;
-  errors?: DatasourceErrors;
+  errors?: DatasourceError[];
 }
 
-export interface DatasourceErrors {
-  error: string;
+export interface DatasourceError {
+  errorCode: PluginErrorCode;
 }
 
 /**

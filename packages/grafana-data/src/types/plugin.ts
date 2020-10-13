@@ -23,6 +23,12 @@ export enum PluginSignatureStatus {
   unsigned = 'unsigned', // no MANIFEST file
 }
 
+export enum PluginErrorCode {
+  invalid = 'invalid',
+  modified = 'modified',
+  unsigned = 'unsigned',
+}
+
 export interface PluginMeta<T extends KeyValue = {}> {
   id: string;
   name: string;
@@ -49,11 +55,11 @@ export interface PluginMeta<T extends KeyValue = {}> {
   pinned?: boolean;
   signature?: PluginSignatureStatus;
   live?: boolean;
-  errors?: PluginErrors;
+  errors?: PluginError[];
 }
 
-export interface PluginErrors {
-  error: string;
+export interface PluginError {
+  errorCode: PluginErrorCode;
 }
 
 interface PluginDependencyInfo {

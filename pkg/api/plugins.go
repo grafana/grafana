@@ -113,13 +113,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 		}
 
 		if pluginDef.Errors != nil {
-			var pluginErrors []*dtos.PluginListItemError
-			for _, pluginErr := range pluginDef.Errors.PluginErrors {
-				pluginErrors = append(pluginErrors, &dtos.PluginListItemError{
-					ErrorCode: pluginErr.ErrorCode.String(),
-				})
-			}
-			listItem.Errors = pluginErrors
+			listItem.Errors = pluginErrors(pluginDef)
 		}
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
@@ -172,6 +166,10 @@ func GetPluginSettingByID(c *models.ReqContext) Response {
 		HasUpdate:     def.GrafanaNetHasUpdate,
 		State:         def.State,
 		Signature:     def.Signature,
+	}
+
+	if def.Errors != nil {
+		dto.Errors = pluginErrors(def)
 	}
 
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
@@ -392,4 +390,14 @@ func translatePluginRequestErrorToAPIError(err error) Response {
 	}
 
 	return Error(500, "Plugin request failed", err)
+}
+
+func pluginErrors(def *plugins.PluginBase) []*plugins.PluginErrorInfo {
+	var pluginErrors []*plugins.PluginErrorInfo
+	for _, pluginErr := range def.Errors.PluginErrors {
+		pluginErrors = append(pluginErrors, &plugins.PluginErrorInfo{
+			ErrorCode: pluginErr.ErrorCode.String(),
+		})
+	}
+	return pluginErrors
 }

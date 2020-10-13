@@ -186,3 +186,7 @@ func NewEnabledPlugins() EnabledPlugins {
 		Apps:        make([]*AppPlugin, 0),
 	}
 }
+
+type PluginErrorInfo struct {
+	ErrorCode string `json:"errorCode"`
+}
