@@ -91,23 +91,6 @@ export interface VariableQueryEditorProps<
   onChange: (value: VariableQuery) => void;
 }
 
-// export interface DefaultVariableQueryEditorProps<
-//   DSType extends DataSourceApi<TQuery, TOptions>,
-//   TQuery extends DataQuery = DataQuery,
-//   TOptions extends DataSourceJsonData = DataSourceJsonData
-// > extends VariableQueryEditorProps<TQuery, TOptions, DefaultVariableQuery> {}
-//
-// export interface CustomVariableQueryEditorProps<
-//   TQuery extends DataQuery = DataQuery,
-//   TOptions extends DataSourceJsonData = DataSourceJsonData,
-//   VariableQuery extends DataQuery = DataQuery
-// > extends VariableQueryEditorProps<TQuery, TOptions, VariableQuery> {}
-//
-// export interface DatasourceVariableQueryEditorProps<
-//   TQuery extends DataQuery = DataQuery,
-//   TOptions extends DataSourceJsonData = DataSourceJsonData
-// > extends VariableQueryEditorProps<TQuery, TOptions, TQuery> {}
-
 export interface DefaultVariableQuery extends DataQuery {
   query: string;
 }
