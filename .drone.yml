@@ -449,6 +449,13 @@ steps:
   depends_on:
   - build-storybook
 
+- name: build-frontend-docs
+  image: grafana/build-container:1.2.27
+  commands:
+  - ./scripts/ci-reference-docs-build.sh ci
+  depends_on:
+  - build-frontend
+
 - name: build-docs-website
   image: grafana/docs-base:latest
   commands:
