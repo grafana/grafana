@@ -84,7 +84,6 @@ export const Card: FC<Props> = ({
 }) => {
   const hasActions = Boolean(actions.length || secondaryActions.length);
   const disableHover = disabled || actions.length > 1;
-  const disableEvents = disableHover || disabled;
   const theme = useTheme();
   const styles = getStyles(theme, disabled && !actions.length, disableHover);
   // Join meta data elements by '|'
@@ -97,12 +96,12 @@ export const Card: FC<Props> = ({
         curr,
       ])
     : metaData;
-  const onCardClick = disableEvents ? () => {} : onClick;
+  const onCardClick = disableHover ? () => {} : onClick;
   return (
     <CardContainer
       tooltip={tooltip}
       tag={tag}
-      tabIndex={disableEvents ? undefined : 0}
+      tabIndex={disableHover ? undefined : 0}
       className={cx(styles.container, className)}
       onClick={onCardClick}
       {...htmlProps}
