@@ -1,7 +1,7 @@
-import { Icon, InlineField, Input, Switch } from '@grafana/ui';
+import { Icon, InlineField, Input, Select, Switch } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import React, { FunctionComponent, useState, ComponentProps } from 'react';
-import { extendedStats } from '../../query_def';
+import { extendedStats, movingAvgModelOptions, movingAvgModelSettings } from '../../query_def';
 import { useDispatch } from '../ElasticsearchQueryContext';
 import { changeMetricSetting } from './state/actions';
 import {
@@ -67,7 +67,50 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric }) => {
 
           {metric.type === 'moving_avg' && (
             // TODO: onBlur, defaultValue
-            <>Moving average settings</>
+            <>
+              <InlineField label="Model" {...inlineFieldProps}>
+                <Select
+                  onChange={value => dispatch(changeMetricSetting(metric, 'model', value.value!))}
+                  options={movingAvgModelOptions}
+                  defaultValue={
+                    movingAvgModelOptions.find(m => m.value === metric.settings?.model) || movingAvgModelOptions[0]
+                  }
+                />
+              </InlineField>
+              <InlineField label="Window" {...inlineFieldProps} invalid={!isValidNumber(metric.settings?.window)}>
+                <Input
+                  defaultValue={metric.settings?.window || '5'}
+                  onBlur={e => dispatch(changeMetricSetting(metric, 'window', e.target.value))}
+                />
+              </InlineField>
+
+              <InlineField label="Predict" {...inlineFieldProps} invalid={!isValidNumber(metric.settings?.predict)}>
+                <Input
+                  defaultValue={metric.settings?.predict}
+                  onBlur={e => dispatch(changeMetricSetting(metric, 'predict', e.target.value))}
+                />
+              </InlineField>
+
+              {movingAvgModelSettings[metric.settings?.model || 'simple'].map(modelOption => {
+                // FIXME: This is kinda ugly and types are not perfect. Need to give it a second shot.
+                const InputComponent = modelOption.type === 'boolean' ? Switch : Input;
+                const componentChangeEvent = modelOption.type === 'boolean' ? 'onChange' : 'onBlur';
+                const eventAttr = modelOption.type === 'boolean' ? 'checked' : 'value';
+                const componentChangeHandler = (e: any) =>
+                  dispatch(changeMetricSetting(metric, modelOption.value, (e.target as any)[eventAttr]));
+
+                return (
+                  <InlineField label={modelOption.label} {...inlineFieldProps} key={modelOption.value}>
+                    <InputComponent
+                      defaultValue={metric.settings?.[modelOption.value]}
+                      {...{
+                        [componentChangeEvent]: componentChangeHandler,
+                      }}
+                    />
+                  </InlineField>
+                );
+              })}
+            </>
           )}
 
           {(metric.type === 'raw_data' || metric.type === 'raw_document') && (

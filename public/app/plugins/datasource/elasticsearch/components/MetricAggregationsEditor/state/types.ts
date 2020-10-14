@@ -46,7 +46,7 @@ export interface MetricAggregationWithField extends BaseMetricAggregation {
 
 export interface MetricAggregationWithSettings extends BaseMetricAggregation {
   // TODO: settings is optional for compatibility reasons, old saved queries might not have it set.
-  settings?: Record<string, unknown>;
+  settings?: Record<string, string | boolean | undefined>;
 }
 
 export interface MetricAggregationWithMissingSupport extends MetricAggregationWithSettings {
@@ -133,7 +133,9 @@ interface ExtendedStats
     script?: string;
     missing?: string;
     sigma?: string;
-  } & { [P in ExtendedStatType]?: boolean };
+  } & {
+    [P in ExtendedStatType]?: boolean;
+  };
 }
 
 interface Percentiles
@@ -182,13 +184,53 @@ interface PipelineMetricAggregationWithMoultipleBucketPaths extends BasePipeline
   pipelineVariables?: PipelineVariable[];
 }
 
+export type MovingAverageModel = 'simple' | 'linear' | 'ewma' | 'holt' | 'holt_winters';
+
+export interface MovingAverageModelOption {
+  label: string;
+  value: MovingAverageModel;
+}
+
+type MovingAverageSettingsKey = 'alpha' | 'beta' | 'gamma' | 'period' | 'pad' | 'minimize';
+
+type BaseMovingAverageModelSettings = {
+  model?: MovingAverageModel;
+  window?: string;
+  predict?: string;
+} & { [P in MovingAverageSettingsKey]?: string };
+
+interface MovingAverageEWMAModelSettings extends BaseMovingAverageModelSettings {
+  alpha?: string;
+  minimize?: string;
+}
+interface MovingAverageHoltModelSettings extends BaseMovingAverageModelSettings {
+  alpha?: string;
+  beta?: string;
+  minimize?: string;
+}
+interface MovingAverageHoltWintersModelSettings extends BaseMovingAverageModelSettings {
+  alpha?: string;
+  beta?: string;
+  gamma?: string;
+  period?: string;
+  pad?: string;
+  minimize?: string;
+}
+
+type MovingAverageModelSettings =
+  | Partial<MovingAverageEWMAModelSettings>
+  | Partial<MovingAverageHoltModelSettings>
+  | Partial<MovingAverageHoltWintersModelSettings>;
+
+export interface MovingAverageSettingDefinition {
+  label: string;
+  value: keyof MovingAverageModelSettings;
+  type?: 'boolean' | 'string';
+}
+
 interface MovingAverage extends BasePipelineMetricAggregation, MetricAggregationWithSettings {
   type: 'moving_avg';
-  settings: {
-    model?: string; // TODO: pick the correct types
-    window?: number;
-    predict?: unknown;
-  };
+  settings?: MovingAverageModelSettings;
 }
 
 interface Derivative extends BasePipelineMetricAggregation, MetricAggregationWithSettings {

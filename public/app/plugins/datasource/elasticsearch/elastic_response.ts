@@ -12,7 +12,6 @@ import {
 } from '@grafana/data';
 import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
 import { MetricAggregationType } from './components/MetricAggregationsEditor/state/types';
-import { metricAggregationConfig } from './components/MetricAggregationsEditor/utils';
 
 export class ElasticResponse {
   constructor(private targets: ElasticsearchQuery[], private response: any) {
