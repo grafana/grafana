@@ -232,5 +232,4 @@ export const getAvailableIcons = (): IconName[] => [
   'cloud',
   'draggabledots',
   'folder-upload',
-  'clipboard-alt',
 ];
