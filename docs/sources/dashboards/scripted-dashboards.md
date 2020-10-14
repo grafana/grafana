@@ -14,7 +14,7 @@ weight = 1500
 
 If you have lots of metric names that change (new servers etc) in a defined pattern it is irritating to constantly have to create new dashboards.
 
-With scripted dashboards you can dynamically create your dashboards using javascript. In the grafana install folder
+With scripted dashboards you can dynamically create your dashboards using javascript. In the Grafana install folder
 under `public/dashboards/` there is a file named `scripted.js`. This file contains an example of a scripted dashboard. You can access it by using the URL:
 `http://grafana_url/dashboard/script/scripted.js?rows=3&name=myName`
 
