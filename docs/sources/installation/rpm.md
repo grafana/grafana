@@ -85,13 +85,13 @@ sudo yum install grafana-enterprise
 If you install manually with YUM, then you will need to manually update Grafana for each new version. To enable automatic updates for your Grafana installation please use the instructions below to install via our YUM repository.
 
 1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install. 
-   * The most recent Grafana version is selected by default.
-   * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
-2. Select an **Edition**.
-   * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
-   * **Open Source** - Functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want enterprise features.
-3. Depending on which system you are running, click **Linux** or **ARM**.
-4. Copy and paste the code from the installation page into your command line and run. It follows the pattern shown below.
+   - The most recent Grafana version is selected by default.
+   - The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
+1. Select an **Edition**.
+   - **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
+   - **Open Source** - Functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want enterprise features.
+1. Depending on which system you are running, click **Linux** or **ARM**.
+1. Copy and paste the code from the installation page into your command line and run. It follows the pattern shown below.
 
 ```bash
 wget <rpm package url>
@@ -110,13 +110,13 @@ If you install with RPM, then you will need to manually update Grafana for each 
 **Note:** The .rpm files are signed, you can verify the signature with this [public GPG key](https://packages.grafana.com/gpg.key).
 
 1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install. 
-   * The most recent Grafana version is selected by default.
-   * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
-2. Select an **Edition**.
-   * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
-   * **Open Source** - Functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
-3. Depending on which system you are running, click **Linux** or **ARM**.
-4. Copy and paste the .rpm package URL and the local .rpm package information from the installation page into the pattern shown below, then run the commands.
+   - The most recent Grafana version is selected by default.
+   - The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
+1. Select an **Edition**.
+   - **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
+   - **Open Source** - Functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
+1. Depending on which system you are running, click **Linux** or **ARM**.
+1. Copy and paste the .rpm package URL and the local .rpm package information from the installation page into the pattern shown below, then run the commands.
 
 **On CentOS, Fedora, Red Hat, or RHEL:**
 

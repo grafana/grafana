@@ -13,6 +13,7 @@ func init() {
 	bus.AddHandler("sql", UpdateTempUserStatus)
 	bus.AddHandler("sql", GetTempUserByCode)
 	bus.AddHandler("sql", UpdateTempUserWithEmailSent)
+	bus.AddHandler("sql", ExpireOldUserInvites)
 }
 
 func UpdateTempUserStatus(cmd *models.UpdateTempUserStatusCommand) error {
@@ -36,8 +37,8 @@ func CreateTempUser(cmd *models.CreateTempUserCommand) error {
 			RemoteAddr:      cmd.RemoteAddr,
 			InvitedByUserId: cmd.InvitedByUserId,
 			EmailSentOn:     time.Now(),
-			Created:         time.Now(),
-			Updated:         time.Now(),
+			Created:         time.Now().Unix(),
+			Updated:         time.Now().Unix(),
 		}
 
 		if _, err := sess.Insert(user); err != nil {
@@ -131,4 +132,16 @@ func GetTempUserByCode(query *models.GetTempUserByCodeQuery) error {
 
 	query.Result = &tempUser
 	return err
+}
+
+func ExpireOldUserInvites(cmd *models.ExpireTempUsersCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		var rawSql = "UPDATE temp_user SET status = ?, updated = ? WHERE created <= ? AND status in (?, ?)"
+		if result, err := sess.Exec(rawSql, string(models.TmpUserExpired), time.Now().Unix(), cmd.OlderThan.Unix(), string(models.TmpUserSignUpStarted), string(models.TmpUserInvitePending)); err != nil {
+			return err
+		} else if cmd.NumExpired, err = result.RowsAffected(); err != nil {
+			return err
+		}
+		return nil
+	})
 }

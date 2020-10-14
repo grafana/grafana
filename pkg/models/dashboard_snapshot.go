@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/securedata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -22,7 +23,19 @@ type DashboardSnapshot struct {
 	Created time.Time
 	Updated time.Time
 
-	Dashboard *simplejson.Json
+	Dashboard          *simplejson.Json
+	DashboardEncrypted securedata.SecureData
+}
+
+func (ds *DashboardSnapshot) DashboardJSON() (*simplejson.Json, error) {
+	if ds.DashboardEncrypted != nil {
+		decrypted, err := ds.DashboardEncrypted.Decrypt()
+		if err != nil {
+			return nil, err
+		}
+		return simplejson.NewJson(decrypted)
+	}
+	return ds.Dashboard, nil
 }
 
 // DashboardSnapshotDTO without dashboard map

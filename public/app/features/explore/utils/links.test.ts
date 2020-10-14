@@ -49,7 +49,7 @@ describe('getFieldLinksForExplore', () => {
     const links = getFieldLinksForExplore(field, 0, splitfn, range);
 
     expect(links[0].href).toBe(
-      '/explore?left={"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}],"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}'
+      '/explore?left={"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}]}'
     );
     expect(links[0].title).toBe('test_ds');
 

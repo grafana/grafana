@@ -1,5 +1,5 @@
 +++
-title = "Setup Grafana for high availability"
+title = "Set up Grafana for high availability"
 type = "docs"
 keywords = ["grafana", "tutorials", "HA", "high availability"]
 aliases = ["/docs/grafana/latest/tutorials/ha_setup/"]
@@ -18,13 +18,13 @@ and other persistent data. So the default embedded SQLite database will not work
 
 ## Configure multiple servers to use the same database
 
-First, you need to setup MySQL or Postgres on another server and configure Grafana to use that database.
+First, you need to set up MySQL or Postgres on another server and configure Grafana to use that database.
 You can find the configuration for doing that in the [[database]]({{< relref "../administration/configuration.md#database" >}}) section in the Grafana config.
 Grafana will now persist all long term data in the database. How to configure the database for high availability is out of scope for this guide. We recommend finding an expert on for the database you're using.
 
 ## Alerting
 
-Currently alerting supports a limited form of high availability. Since v4.2.0, alert notifications are deduped when running multiple servers. This means all alerts are executed on every server but alert notifications are only sent once per alert. Grafana does not support load distribution between servers.
+Currently alerting supports a limited form of high availability. Since v4.2.0, [alert notifications](https://grafana.com/docs/grafana/latest/alerting/notifications/) are deduped when running multiple servers. This means all alerts are executed on every server but alert notifications are only sent once per alert. Grafana does not support load distribution between servers.
 
 ## User sessions
 

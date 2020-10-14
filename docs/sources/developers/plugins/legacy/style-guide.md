@@ -27,7 +27,7 @@ grafana-piechart-panel
 mtanda-histogram-panel
 ```
 
-The full file format for plugin.json is described [here]({{< relref "../metadata.md" >}}).
+For more information about the file format for `plugin.json` file, refer to [metadata]({{< relref "../metadata.md" >}}).
 
 Minimal plugin.json:
 
@@ -141,13 +141,13 @@ Our recommendation is to use whatever you usually use - Grunt, Gulp or npm scrip
 
 ## Linting
 
-We recommend that you use a linter for your JavaScript. For ES6, the standard linter is [eslint](http://eslint.org/). Rules for linting are described in an .eslintrc that is placed in the root directory. [Here is an example](https://github.com/grafana/worldmap-panel/blob/master/.eslintrc) of linting rules in a plugin.
+We recommend that you use a linter for your JavaScript. For ES6, the standard linter is [eslint](http://eslint.org/). Rules for linting are described in an .eslintrc that is placed in the root directory. For an example of linting rules in a plugin, refer to [.eslintrc](https://github.com/grafana/worldmap-panel/blob/master/.eslintrc).
 
 ### ES6 features
 
 1. Use `const` if a variable is not going to be reassigned.
-2. Prefer to use `let` instead `var` ([Exploring ES6](http://exploringjs.com/es6/ch_core-features.html#_from-var-to-letconst))
-3. Use arrow functions, which don’t shadow `this` ([Exploring ES6](http://exploringjs.com/es6/ch_core-features.html#_from-function-expressions-to-arrow-functions)):
+1. Prefer to use `let` instead `var` ([Exploring ES6](http://exploringjs.com/es6/ch_core-features.html#_from-var-to-letconst))
+1. Use arrow functions, which don’t shadow `this` ([Exploring ES6](http://exploringjs.com/es6/ch_core-features.html#_from-function-expressions-to-arrow-functions)):
 
    ```js
    testDatasource() {
@@ -170,7 +170,7 @@ We recommend that you use a linter for your JavaScript. For ES6, the standard li
    }
    ```
 
-4. Use native _Promise_ object:
+1. Use native _Promise_ object:
 
    ```js
    metricFindQuery(query) {
@@ -190,4 +190,4 @@ We recommend that you use a linter for your JavaScript. For ES6, the standard li
    }
    ```
 
-5. If using Lodash, then be consistent and prefer that to the native ES6 array functions.
+1. If using Lodash, then be consistent and prefer that to the native ES6 array functions.

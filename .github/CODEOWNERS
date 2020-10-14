@@ -14,7 +14,7 @@
 # Documentation owner: Diana Payton
 /docs/ @oddlittlebird @achatterjee-grafana
 /contribute/ @oddlittlebird  @marcusolsson @achatterjee-grafana
-
+/docs/sources/developers/plugins/ @marcusolsson
 
 # Backend code
 *.go @grafana/backend-platform

@@ -66,7 +66,7 @@ if err := s.bus.Dispatch(cmd); err != nil {
 }
 ```
 
-**Note:** `Dispatch` will return an error if no handler is registered for that command.
+> **Note:** `Dispatch` will return an error if no handler is registered for that command.
 
 **Tip:** Browse the available commands in the `models` package.
 
@@ -87,7 +87,7 @@ func (s *MyService) SendStickers(cmd *models.SendStickersCommand) error {
 }
 ```
 
-**Note:** The handler method may return an error if unable to complete the command.
+> **Note:** The handler method may return an error if unable to complete the command.
 
 ## Queries
 

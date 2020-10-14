@@ -1,30 +1,26 @@
 # Markdown style guide
 
-This guide for Markdown style helps keep contributions consistent across all documentation
-created for Grafana products. Refer to the guide and update its sections as needed when a
-Subject Matter Expert answers a question on Markdown style, or a decision is made about
-how to apply Markdown.
+This guide for Markdown style helps keep contributions consistent across all documentation created for Grafana products. Refer to the guide and update its sections as needed when a Subject Matter Expert answers a question on Markdown style, or a decision is made about how to apply Markdown.
 
 ## Headers
 
-In Markdown, the number of "#" symbols creates different heading levels, similar to
-HTML heading levels:
+In Markdown, the number of "#" symbols creates different heading levels, similar to HTML heading levels:
 
 **Example**
 
-* \# is \<h1>.
-* \#\# is \<h2>.
-* \#\#\# is \<h3>.
+- \# is \<h1>.
+- \#\# is \<h2>.
+- \#\#\# is \<h3>.
 
 Start your document with a single ``#`` for the title of the page. Add the sub-headings with two ``##``.
 
 ## Bold and emphasis
 
-* Make text **bold** using two asterisks.
+- Make text **bold** using two asterisks.
 
-**Example:** It is ``**important**`` to use GitHub Flavored Markdown emoji consistently.
+**Example:** It is ``**important**`` to use GitHub-flavored Markdown emoji consistently.
 
-* Make text ``_emphasized_`` using single `` _underscores_``. Do not use the single asterisk, it can be easily confused with bold.
+- Make text ``_emphasized_`` using single `` _underscores_``. Do not use the single asterisk, it can be easily confused with bold.
 
 **Example:** GitHub-flavored markdown emoji should _only_ appear in specific cases.
 
@@ -35,7 +31,7 @@ Create links to other website by wrapping the display text in square brackets, a
 
 \[text to display](www.website.com)
 
-**Example:** For more information on including emoji in GitHub flavored Markdown, refer to the [webfx page on emoji](https://www.webfx.com/tools/emoji-cheat-sheet/) for a list of emoji.
+**Example:** For more information on including emoji in GitHub-flavored markdown, refer to the [webfx page on emoji](https://www.webfx.com/tools/emoji-cheat-sheet/) for a list of emoji.
 
 ## Block quotes
 
@@ -49,8 +45,7 @@ Include block quotes inside text using right-facing arrows:
 
 ## Code blocks
 
-Code blocks written with markdown can show off syntax highlighting specific
-to different languages. Use three back tics to create a code block:
+Code blocks written with markdown can show off syntax highlighting specific to different languages. Use three back tics to create a code block:
 
 ```
 function testNum(a) {
@@ -62,8 +57,7 @@ function testNum(a) {
 }
 ```
 
-Write the name of the language after the first set of back tics, no spaces,
-to show specific syntax highlighting. For example; "\```javascript" produces the following:
+Write the name of the language after the first set of back tics, no spaces, to show specific syntax highlighting. For example; "\```javascript" produces the following:
 
 ```javascript
 function testNum(a) {
@@ -76,10 +70,7 @@ function testNum(a) {
 ```
 ## Tables
 
-Construct a table by typing the table headings, and separating them with
-a "|" character. Then, add a second line of dashes ("-") separated by
-another "|" character. When constructing the table cells, separate each cell data with another
-"|".
+Construct a table by typing the table headings, and separating them with a "|" character. Then, add a second line of dashes ("-") separated by another "|" character. When constructing the table cells, separate each cell data with another "|".
 
 **Example**
 
@@ -115,8 +106,7 @@ The list above will always display as:
 
 ### Unordered lists
 
-Build a list of points - an unordered or unnumbered list - by
-using "\-" (hyphen) characters.
+Build a list of points - an unordered or unnumbered list - by using "\-" (hyphen) characters.
 
 **Example**
 

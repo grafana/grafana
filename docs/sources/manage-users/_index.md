@@ -4,12 +4,12 @@ type = "docs"
 [menu.docs]
 name = "Manage users"
 identifier = "manage-users"
-weight = 3
+weight = 40
 +++
 
 # Manage users
 
-Create users and teams and configure [Permissions]({{< relref "../permissions/overview.md" >}}) to make sure that users only have access to the resources they need.
+Create users and teams and configure [Permissions]({{< relref "../permissions/_index.md" >}}) to make sure that users only have access to the resources they need.
 
 Only Administrators can manage users and teams.
 

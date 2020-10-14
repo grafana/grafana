@@ -1,7 +1,6 @@
 import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
 import { KeyValue, QueryResultMeta } from '../types/data';
 import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
-import isArray from 'lodash/isArray';
 import isString from 'lodash/isString';
 import { makeFieldParser } from '../utils/fieldParser';
 import { MutableVector, Vector } from '../types/vector';
@@ -79,7 +78,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     let buffer: any[] | undefined = undefined;
 
     if (f.values) {
-      if (isArray(f.values)) {
+      if (Array.isArray(f.values)) {
         buffer = f.values as any[];
       } else {
         buffer = (f.values as Vector).toArray();

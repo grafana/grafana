@@ -4,6 +4,7 @@ export const Components = {
   DataSource: {
     TestData: {
       QueryTab: {
+        scenarioSelectContainer: 'Test Data Query scenario select container',
         scenarioSelect: 'Test Data Query scenario select',
         max: 'TestData max',
         min: 'TestData min',
@@ -152,5 +153,10 @@ export const Components = {
   Search: {
     section: 'Search section',
     items: 'Search items',
+  },
+  DashboardLinks: {
+    container: 'Dashboard link container',
+    dropDown: 'Dashboard link dropdown',
+    link: 'Dashboard link',
   },
 };
