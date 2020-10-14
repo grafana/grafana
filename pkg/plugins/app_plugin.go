@@ -2,12 +2,18 @@ package plugins
 
 import (
 	"encoding/json"
+	"path"
 	"strings"
 
 	"github.com/gosimple/slug"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
+	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type AppPluginCss struct {
@@ -21,6 +27,8 @@ type AppPlugin struct {
 
 	FoundChildPlugins []*PluginInclude `json:"-"`
 	Pinned            bool             `json:"-"`
+
+	Executable string `json:"executable,omitempty"`
 }
 
 // AppPluginRoute describes a plugin route that is defined in
@@ -67,6 +75,18 @@ func (app *AppPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPlugi
 		return err
 	}
 
+	if app.Backend {
+		cmd := ComposePluginStartCommand(app.Executable)
+		fullpath := path.Join(app.PluginDir, cmd)
+		factory := grpcplugin.NewBackendPlugin(app.Id, fullpath, grpcplugin.PluginStartFuncs{
+			OnLegacyStart: app.onLegacyPluginStart,
+			OnStart:       app.onPluginStart,
+		})
+		if err := backendPluginManager.Register(app.Id, factory); err != nil {
+			return errutil.Wrapf(err, "Failed to register backend plugin")
+		}
+	}
+
 	Apps[app.Id] = app
 	return nil
 }
@@ -110,4 +130,24 @@ func (app *AppPlugin) initApp() {
 			app.DefaultNavUrl = setting.AppSubUrl + "/dashboard/db/" + include.Slug
 		}
 	}
+}
+
+func (app *AppPlugin) onLegacyPluginStart(pluginID string, client *grpcplugin.LegacyClient, logger log.Logger) error {
+	if client.DatasourcePlugin != nil {
+		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+			return wrapper.NewDatasourcePluginWrapper(logger, client.DatasourcePlugin), nil
+		})
+	}
+
+	return nil
+}
+
+func (app *AppPlugin) onPluginStart(pluginID string, client *grpcplugin.Client, logger log.Logger) error {
+	if client.DataPlugin != nil {
+		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+			return wrapper.NewDatasourcePluginWrapperV2(logger, app.Id, app.Type, client.DataPlugin), nil
+		})
+	}
+
+	return nil
 }
