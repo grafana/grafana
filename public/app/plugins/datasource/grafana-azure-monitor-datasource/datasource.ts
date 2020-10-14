@@ -7,7 +7,6 @@ import {
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
-  DataQueryResponseData,
   DataSourceApi,
   DataSourceInstanceSettings,
   LoadingState,
@@ -50,7 +49,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     this.optionsKey = optionsKey;
   }
 
-  query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponseData> {
+  query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
     const byType: Record<AzureQueryType, DataQueryRequest<AzureMonitorQuery>> = ({} as unknown) as Record<
       AzureQueryType,
       DataQueryRequest<AzureMonitorQuery>
@@ -117,7 +116,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       );
     }
 
-    return of({ state: LoadingState.Done });
+    return of({ state: LoadingState.Done, data: [] });
   }
 
   async annotationQuery(options: any) {
