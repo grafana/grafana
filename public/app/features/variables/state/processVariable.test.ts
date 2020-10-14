@@ -361,13 +361,13 @@ describe('processVariable', () => {
           );
 
           await tester.thenDispatchedActionsShouldEqual(
-            variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })),
             setCurrentVariableValue(
               toVariablePayload(
                 { type: 'query', id: 'queryDependsOnCustom' },
                 { option: { text: 'AB', value: 'AB', selected: false } }
               )
-            )
+            ),
+            variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))
           );
         });
       });
