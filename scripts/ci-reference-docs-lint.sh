@@ -24,7 +24,7 @@ if [ ! -d "$REPORT_PATH" ]; then
       echo "Failed to build packages and extract docs" >&2
       exit 1
     else
-      echo "Successfully build packages and extracted docs"
+      echo "Successfully built packages and extracted docs"
   fi
 fi
 
