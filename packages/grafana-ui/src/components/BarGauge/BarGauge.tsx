@@ -14,7 +14,6 @@ import {
   getFieldColorMode,
   getColorForTheme,
   FALLBACK_COLOR,
-  FieldConfigProperty,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
