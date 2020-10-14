@@ -12,7 +12,7 @@ import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import { getColorFromHexRgbOrName, PanelEvents, PanelPlugin, DataFrame, FieldConfigProperty } from '@grafana/data';
+import { PanelEvents, PanelPlugin, DataFrame, FieldConfigProperty, getColorForTheme } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { graphPanelMigrationHandler } from './GraphMigrations';
@@ -327,7 +327,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onColorChange = (series: any, color: string) => {
-    series.setColor(getColorFromHexRgbOrName(color, config.theme.type));
+    series.setColor(getColorForTheme(color, config.theme));
     this.panel.aliasColors[series.alias] = color;
     this.render();
   };

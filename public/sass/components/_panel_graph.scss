@@ -8,7 +8,7 @@
       flex-direction: row;
 
       .graph-legend {
-        flex: 0 1 10px;
+        flex: 1 1 10px;
         max-height: 100%;
       }
 
@@ -46,10 +46,11 @@
 
 .graph-legend {
   display: flex;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   max-height: 35%;
   margin: 0;
   text-align: center;
+  overflow-y: auto;
   padding-top: 6px;
   position: relative;
 
