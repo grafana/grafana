@@ -393,7 +393,7 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/metrics/error", Wrap(GenerateError))
 
 		// short urls
-		apiRoute.Post("/short-urls", bind(dtos.CreateShortURLForm{}), Wrap(hs.createShortURL))
+		apiRoute.Post("/short-urls", bind(dtos.CreateShortURLCmd{}), Wrap(hs.createShortURL))
 	}, reqSignedIn)
 
 	// admin api

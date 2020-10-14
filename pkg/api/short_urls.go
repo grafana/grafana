@@ -12,10 +12,10 @@ import (
 )
 
 // createShortURL handles requests to create short URLs.
-func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortURLForm) Response {
-	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
+func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortURLCmd) Response {
+	hs.log.Debug("Received request to create short URL", "path", cmd.URL)
 
-	uid, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, strings.TrimPrefix(cmd.Path, setting.AppUrl))
+	uid, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, strings.TrimPrefix(cmd.URL, setting.AppUrl))
 	if err != nil {
 		return Error(500, "Failed to create short URL", err)
 	}
