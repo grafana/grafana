@@ -26,7 +26,6 @@ func TestShortURLService(t *testing.T) {
 		existingShortURL, err := service.GetShortURLByUID(context.Background(), user, newShortURL.Uid)
 		require.NoError(t, err)
 		require.NotNil(t, existingShortURL)
-		require.NotEmpty(t, existingShortURL.Path)
 		require.Equal(t, refPath, existingShortURL.Path)
 	})
 
