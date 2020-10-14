@@ -1,8 +1,9 @@
 import React from 'react';
 import { GraphCustomFieldConfig, GraphLegend, LegendDisplayMode, LegendItem } from '../..';
 import { usePlotData } from '../context';
-import { FieldType, getColorFromHexRgbOrName, getFieldDisplayName } from '@grafana/data';
+import { FieldType, getColorForTheme, getFieldDisplayName } from '@grafana/data';
 import { colors } from '../../../utils';
+import { useTheme } from '../../../themes';
 
 export type LegendPlacement = 'top' | 'bottom' | 'left' | 'right';
 
@@ -13,6 +14,7 @@ interface LegendPluginProps {
 
 export const LegendPlugin: React.FC<LegendPluginProps> = ({ placement, displayMode = LegendDisplayMode.List }) => {
   const { data } = usePlotData();
+  const theme = useTheme();
 
   const legendItems: LegendItem[] = [];
 
@@ -27,7 +29,7 @@ export const LegendPlugin: React.FC<LegendPluginProps> = ({ placement, displayMo
     legendItems.push({
       color:
         field.config.color && field.config.color.fixedColor
-          ? getColorFromHexRgbOrName(field.config.color.fixedColor)
+          ? getColorForTheme(field.config.color.fixedColor, theme)
           : colors[seriesIdx],
       label: getFieldDisplayName(field, data),
       isVisible: true,
