@@ -25,7 +25,7 @@ type ChannelNamespaceHandler interface {
 	// This is called fast and often -- it must be synchrnozed
 	GetHandlerForPath(path string) (ChannelHandler, error)
 
-	// Called from the HTTP API
+	// DoNamespaceHTTP is called from the HTTP API
 	DoNamespaceHTTP(c *ReqContext)
 }
 
