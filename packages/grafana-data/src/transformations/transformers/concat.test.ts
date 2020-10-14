@@ -4,17 +4,17 @@ import { concatenateFields, ConcatenateFrameNameMode } from './concat';
 export const simpleABC = toDataFrame({
   name: 'ABC',
   fields: [
-    { name: 'A', values: [1] },
+    { name: 'A', values: [1, 2] },
     { name: 'B', values: [1, 2] },
-    { name: 'C', values: [1, 2, 3] },
+    { name: 'C', values: [1, 2] },
   ],
 });
 
 export const simpleXYZ = toDataFrame({
   name: 'XYZ',
   fields: [
-    { name: 'X', values: [1] },
-    { name: 'Y', values: [1, 2] },
+    { name: 'X', values: [1, 2, 3] },
+    { name: 'Y', values: [1, 2, 3] },
     { name: 'Z', values: [1, 2, 3] },
   ],
 });
