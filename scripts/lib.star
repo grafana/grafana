@@ -383,14 +383,9 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
         ],
     }
 
-def build_frontend_docs_step(edition, lint=False):
+def build_frontend_docs_step(edition):
     if edition == 'enterprise':
         return None
-
-    if lint:
-        script = './scripts/ci-reference-docs-lint.sh'
-    else:
-        script = './scripts/ci-reference-docs-build.sh'
 
     return {
         'name': 'build-frontend-docs',
@@ -399,7 +394,7 @@ def build_frontend_docs_step(edition, lint=False):
             'build-frontend'
         ],
         'commands': [
-            '{} ci'.format(script),
+            './scripts/ci-reference-docs-lint.sh ci',
         ]
     }
 

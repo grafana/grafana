@@ -452,7 +452,7 @@ steps:
 - name: build-frontend-docs
   image: grafana/build-container:1.2.27
   commands:
-  - ./scripts/ci-reference-docs-build.sh ci
+  - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
   - build-frontend
 
