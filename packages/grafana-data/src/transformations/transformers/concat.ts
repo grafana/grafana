@@ -6,8 +6,21 @@ import { DataFrame, Field } from '../../types/dataFrame';
 import { ArrayVector } from '../../vector';
 
 export enum ConcatenateFrameNameMode {
+  /**
+   * Ignore the source frame name when moving to the destination
+   */
   Drop = 'drop',
+
+  /**
+   * Copy the source frame name to the destination field.  The final field will contain
+   * both the frame and field name
+   */
   FieldName = 'field',
+
+  /**
+   * Copy the source frame name to a label on the field.  The label key is controlled
+   * by frameNameLabel
+   */
   Label = 'label',
 }
 
@@ -44,11 +57,13 @@ export function concatenateFields(data: DataFrame[], opts: ConcatenateTransforme
   let maxLength = data[0].length;
   const frameNameLabel = opts.frameNameLabel ?? 'frame';
   let fields: Field[] = [];
+
   for (const frame of data) {
     if (maxLength !== frame.length) {
       sameLength = false;
       maxLength = Math.max(maxLength, frame.length);
     }
+
     for (const f of frame.fields) {
       const copy = { ...f };
       copy.state = undefined;
@@ -67,8 +82,9 @@ export function concatenateFields(data: DataFrame[], opts: ConcatenateTransforme
       fields.push(copy);
     }
   }
+
+  // Make sure all fields have the same length
   if (!sameLength) {
-    // Make sure that all fields have the same length
     fields = fields.map(f => {
       if (f.values.length === maxLength) {
         return f;
@@ -81,6 +97,7 @@ export function concatenateFields(data: DataFrame[], opts: ConcatenateTransforme
       };
     });
   }
+
   return {
     fields,
     length: maxLength,
