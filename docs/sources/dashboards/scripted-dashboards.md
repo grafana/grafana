@@ -55,4 +55,4 @@ return dashboard;
 
 ## More examples
 
-You can find more examples in `public/dashboards/` directory of your grafana installation.
+You can find more examples in `public/dashboards/` directory of your Grafana installation.
