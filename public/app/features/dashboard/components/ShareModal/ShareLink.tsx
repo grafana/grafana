@@ -145,7 +145,7 @@ export class ShareLink extends PureComponent<Props, State> {
                           getText={this.getShareUrl}
                           onClipboardCopy={this.onShareUrlCopy}
                         >
-                          <Icon name="clipboard-alt" /> Copy
+                          <Icon name="copy" /> Copy
                         </ClipboardButton>
                       }
                     />
