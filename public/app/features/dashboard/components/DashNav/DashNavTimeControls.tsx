@@ -18,7 +18,6 @@ import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePicker
 // Utils & Services
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { appEvents } from 'app/core/core';
-import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -85,7 +84,7 @@ class UnthemedDashNavTimeControls extends Component<Props> {
       to: 'now',
     };
 
-    const rangeMaxTimeBack = convertRawToRange(rawMaxTimeBack);
+    const rangeMaxTimeBack = rangeUtil.convertRawToRange(rawMaxTimeBack);
 
     const exceededMaxTimeBack =
       rangeMaxTimeBack.to.valueOf() - rangeMaxTimeBack.from.valueOf() <

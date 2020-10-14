@@ -49,16 +49,12 @@ export class TimePickerSettings extends PureComponent<Props, State> {
   onMaxTimeBackChange = (event: React.FormEvent<HTMLInputElement>) => {
     const value = event.currentTarget.value;
 
-    if (isEmpty(value)) {
+    if (isEmpty(value) || rangeUtil.isValidTimeSpan(value)) {
       this.setState({ isMaxTimeBackValid: true });
-      return this.props.onMaxTimeBackChange(value);
+      this.props.onMaxTimeBackChange(value);
+    } else {
+      this.setState({ isMaxTimeBackValid: false });
     }
-
-    if (rangeUtil.isValidTimeSpan(value)) {
-      this.setState({ isMaxTimeBackValid: true });
-      return this.props.onMaxTimeBackChange(value);
-    }
-    this.setState({ isMaxTimeBackValid: false });
   };
 
   onMaxTimeSpanChange = (event: React.FormEvent<HTMLInputElement>) => {
