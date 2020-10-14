@@ -1,6 +1,8 @@
 import './dashboard_loaders';
 import './ReactContainer';
 import { applyRouteRegistrationHandlers } from './registry';
+import { contextSrv } from 'app/core/services/context_srv';
+
 // Pages
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
@@ -70,6 +72,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       routeInfo: DashboardRouteInfo.New,
       reloadOnSearch: false,
       resolve: {
+        roles: () => (contextSrv.hasEditPermissionInFolders ? [contextSrv.user.orgRole] : ['Admin']),
         component: importDashboardPage,
       },
     })

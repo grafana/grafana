@@ -132,7 +132,8 @@ describe('processVariable', () => {
         await tester.thenDispatchedActionsShouldEqual(
           setCurrentVariableValue(
             toVariablePayload({ type: 'custom', id: 'custom' }, { option: { text: 'B', value: 'B', selected: false } })
-          )
+          ),
+          variableStateCompleted(toVariablePayload(custom))
         );
       });
     });
@@ -212,13 +213,13 @@ describe('processVariable', () => {
             .whenAsyncActionIsDispatched(processVariable(toVariableIdentifier(queryNoDepends), queryParams), true);
 
           await tester.thenDispatchedActionsShouldEqual(
-            variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryNoDepends' })),
             setCurrentVariableValue(
               toVariablePayload(
                 { type: 'query', id: 'queryNoDepends' },
                 { option: { text: 'B', value: 'B', selected: false } }
               )
-            )
+            ),
+            variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))
           );
         });
       });
@@ -360,13 +361,13 @@ describe('processVariable', () => {
           );
 
           await tester.thenDispatchedActionsShouldEqual(
-            variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })),
             setCurrentVariableValue(
               toVariablePayload(
                 { type: 'query', id: 'queryDependsOnCustom' },
                 { option: { text: 'AB', value: 'AB', selected: false } }
               )
-            )
+            ),
+            variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))
           );
         });
       });
