@@ -81,10 +81,8 @@ describe('createSpanLinkFactory', () => {
       } as any,
     } as any);
 
-    const expectedFrom = new Date('2020-10-14T00:59:55Z').valueOf();
-    const expectedTo = new Date('2020-10-14T02:00:01Z').valueOf();
     expect(linkDef.href).toBe(
-      `/explore?left={"range":{"from":"${expectedFrom}","to":"${expectedTo}"},"datasource":"Loki1","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"}","refId":""}]}`
+      `/explore?left={"range":{"from":"20201014T005955","to":"20201014T020001"},"datasource":"Loki1","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"}","refId":""}]}`
     );
   });
 });
