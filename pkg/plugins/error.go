@@ -1,15 +1,26 @@
 package plugins
 
+import "fmt"
+
 const (
-	UNSIGNED ErrorCode = iota
-	MODIFIED
-	INVALID
+	unsigned ErrorCode = iota
+	modified
+	invalid
 )
 
 type ErrorCode int
 
 func (e ErrorCode) String() string {
-	return [...]string{"unsigned", "modified", "invalid"}[e]
+	switch e {
+	case unsigned:
+		return "unsigned"
+	case modified:
+		return "modified"
+	case invalid:
+		return "invalid"
+	default:
+		panic(fmt.Sprintf("Unrecognized error code %d", e))
+	}
 }
 
 type PluginError struct {
