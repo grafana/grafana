@@ -1,12 +1,12 @@
 import {
   LiveChannelConfig,
   LiveChannel,
-  LiveChannelScope,
   LiveChannelStatusEvent,
   LiveChannelEvent,
   LiveChannelEventType,
   LiveChannelConnectionState,
   LiveChannelPresenceStatus,
+  LiveChannelAddress,
 } from '@grafana/data';
 import Centrifuge, {
   JoinLeaveContext,
@@ -26,9 +26,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
 
   readonly opened = Date.now();
   readonly id: string;
-  readonly scope: LiveChannelScope;
-  readonly namespace: string;
-  readonly path: string;
+  readonly addr: LiveChannelAddress;
 
   readonly stream = new Subject<LiveChannelEvent<TMessage>>();
 
@@ -37,11 +35,9 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
   subscription?: Centrifuge.Subscription;
   shutdownCallback?: () => void;
 
-  constructor(id: string, scope: LiveChannelScope, namespace: string, path: string) {
+  constructor(id: string, addr: LiveChannelAddress) {
     this.id = id;
-    this.scope = scope;
-    this.namespace = namespace;
-    this.path = path;
+    this.addr = addr;
     this.currentStatus = {
       type: LiveChannelEventType.Status,
       id,
@@ -61,15 +57,25 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
     const events: SubscriptionEvents = {
       // This means a message was received from the server
       publish: (ctx: PublicationContext) => {
-        this.stream.next({
-          type: LiveChannelEventType.Message,
-          message: prepare(ctx.data),
-        });
+        try {
+          const message = prepare(ctx.data);
+          if (message) {
+            this.stream.next({
+              type: LiveChannelEventType.Message,
+              message,
+            });
+          }
 
-        // Clear any error messages
-        if (this.currentStatus.error) {
+          // Clear any error messages
+          if (this.currentStatus.error) {
+            this.currentStatus.timestamp = Date.now();
+            delete this.currentStatus.error;
+            this.sendStatus();
+          }
+        } catch (err) {
+          console.log('publish error', config.path, err);
+          this.currentStatus.error = err;
           this.currentStatus.timestamp = Date.now();
-          delete this.currentStatus.error;
           this.sendStatus();
         }
       },
@@ -81,6 +87,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
       subscribe: (ctx: SubscribeSuccessContext) => {
         this.currentStatus.timestamp = Date.now();
         this.currentStatus.state = LiveChannelConnectionState.Connected;
+        delete this.currentStatus.error;
         this.sendStatus();
       },
       unsubscribe: (ctx: UnsubscribeContext) => {
@@ -159,19 +166,11 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
   }
 }
 
-export function getErrorChannel(
-  msg: string,
-  id: string,
-  scope: LiveChannelScope,
-  namespace: string,
-  path: string
-): LiveChannel {
+export function getErrorChannel(msg: string, id: string, addr: LiveChannelAddress): LiveChannel {
   return {
     id,
     opened: Date.now(),
-    scope,
-    namespace,
-    path,
+    addr,
 
     // return an error
     getStream: () =>

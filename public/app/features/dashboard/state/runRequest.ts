@@ -91,7 +91,7 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 }
 
 /**
- * This function handles the excecution of requests & and processes the single or multiple response packets into
+ * This function handles the execution of requests & and processes the single or multiple response packets into
  * a combined PanelData response. It will
  *  Merge multiple responses into a single DataFrame array based on the packet key
  *  Will emit a loading state if no response after 50ms

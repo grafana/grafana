@@ -72,7 +72,7 @@ func TestMetricDataQueryBuilder_buildSearchExpression(t *testing.T) {
 			}
 
 			res := buildSearchExpression(query, "Average")
-			assert.Equal(t, res, `REMOVE_EMPTY(SEARCH('{AWS/EC2,"LoadBalancer"} MetricName="CPUUtilization"', 'Average', 300))`)
+			assert.Equal(t, `REMOVE_EMPTY(SEARCH('{AWS/EC2,"LoadBalancer"} MetricName="CPUUtilization"', 'Average', 300))`, res)
 		})
 
 		t.Run("Query has three dimension values for two given dimension keys, and one value is a star", func(t *testing.T) {

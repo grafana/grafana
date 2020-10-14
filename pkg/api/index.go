@@ -287,12 +287,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "graph-bar"},
 		}
 
-		if hs.Live != nil {
-			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
-				Text: "Live", Id: "live", Url: setting.AppSubUrl + "/admin/live", Icon: "water",
-			})
-		}
-
 		if setting.LDAPEnabled {
 			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 				Text: "LDAP", Id: "ldap", Url: setting.AppSubUrl + "/admin/ldap", Icon: "book",

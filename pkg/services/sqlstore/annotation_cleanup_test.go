@@ -165,7 +165,7 @@ func createTestAnnotations(t *testing.T, sqlstore *SqlStore, expectedCount int, 
 		}
 
 		// mark every third as an API annotation
-		// that doesnt belong to a dashboard
+		// that does not belong to a dashboard
 		if i%3 == 1 {
 			a.DashboardId = 0
 		}

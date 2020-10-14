@@ -5,9 +5,9 @@ source "/etc/profile"
 source "./deploy-slim.sh"
 source "./deploy-common.sh"
 
-NODEVER="v12.18.3-linux-x64"
+NODEVER="v12.19.0-linux-x64"
 # Install Node
-wget -O - "https://nodejs.org/dist/v12.18.3/node-${NODEVER}.tar.xz" | tar Jvxf - -C "/tmp"
+wget -O - "https://nodejs.org/dist/v12.19.0/node-${NODEVER}.tar.xz" | tar Jvxf - -C "/tmp"
 
 # Move node to /usr/local so it's in the path
 pushd /tmp/node-${NODEVER}
