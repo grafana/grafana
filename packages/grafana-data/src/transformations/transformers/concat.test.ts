@@ -60,27 +60,27 @@ describe('Concat Transformer', () => {
       Array [
         Object {
           "labels": undefined,
-          "name": "ABC / A",
+          "name": "ABC · A",
         },
         Object {
           "labels": undefined,
-          "name": "ABC / B",
+          "name": "ABC · B",
         },
         Object {
           "labels": undefined,
-          "name": "ABC / C",
+          "name": "ABC · C",
         },
         Object {
           "labels": undefined,
-          "name": "XYZ / X",
+          "name": "XYZ · X",
         },
         Object {
           "labels": undefined,
-          "name": "XYZ / Y",
+          "name": "XYZ · Y",
         },
         Object {
           "labels": undefined,
-          "name": "XYZ / Z",
+          "name": "XYZ · Z",
         },
       ]
     `);

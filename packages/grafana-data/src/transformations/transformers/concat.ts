@@ -61,7 +61,7 @@ export function concatenateFields(data: DataFrame[], opts: ConcatenateTransforme
         } else if (!copy.name || copy.name === 'Value') {
           copy.name = frame.name;
         } else {
-          copy.name = `${frame.name} / ${f.name}`;
+          copy.name = `${frame.name} · ${f.name}`;
         }
       }
       fields.push(copy);
