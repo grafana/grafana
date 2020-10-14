@@ -160,6 +160,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
     if (shortLink) {
       copyStringToClipboard(shortLink);
       appEvents.emit(AppEvents.alertSuccess, ['Shortened link copied to clipboard']);
+    } else {
+      appEvents.emit(AppEvents.alertError, ['Error generating shortened link']);
     }
   };
 
