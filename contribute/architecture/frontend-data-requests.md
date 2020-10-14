@@ -8,7 +8,7 @@
 ### The challenge
 A data request can take a long time to finish. During the time between when a request starts and finishes, the user might change context. For example, the user navigates away or issues the same request again.
 
-If we allow ongoing requests to continue, it might cause unnecessary load on data sources.
+If we wait for canceled requests to complete, it might cause unnecessary load on data sources.
 
 Grafana uses a concept referenced as `request cancellation` to cancel any ongoing request that Grafana doesn’t need.
 
