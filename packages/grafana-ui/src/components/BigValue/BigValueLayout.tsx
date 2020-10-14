@@ -4,7 +4,7 @@ import tinycolor from 'tinycolor2';
 import { Chart, Geom } from 'bizcharts';
 
 // Utils
-import { getColorFromHexRgbOrName, formattedValueToString, DisplayValue } from '@grafana/data';
+import { formattedValueToString, DisplayValue, getColorForTheme } from '@grafana/data';
 import { calculateFontSize } from '../../utils/measureText';
 
 // Types
@@ -30,7 +30,7 @@ export abstract class BigValueLayout {
   constructor(private props: Props) {
     const { width, height, value, theme } = props;
 
-    this.valueColor = getColorFromHexRgbOrName(value.color || 'green', theme.type);
+    this.valueColor = getColorForTheme(value.color || 'green', theme);
     this.panelPadding = height > 100 ? 12 : 8;
     this.textValues = getTextValues(props);
     this.justifyCenter = shouldJustifyCenter(props.justifyMode, this.textValues.title);

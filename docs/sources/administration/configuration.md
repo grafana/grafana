@@ -173,13 +173,13 @@ Override log path using the command line argument `cfg:default.paths.log`:
 
 ### plugins
 
-Directory where Grafana automatically scans and looks for plugins. Manually or automatically install any plugins here.
+Directory where Grafana automatically scans and looks for plugins. Manually or automatically install any [plugins](https://grafana.com/docs/grafana/latest/plugins/installation/) here.
 
 **macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
 ### provisioning
 
-Folder that contains [provisioning]({{< relref "provisioning.md" >}}) config files that grafana will apply on startup. Dashboards will be reloaded when the json files changes
+Folder that contains [provisioning]({{< relref "provisioning.md" >}}) config files that Grafana will apply on startup. Dashboards will be reloaded when the json files changes.
 
 <hr />
 

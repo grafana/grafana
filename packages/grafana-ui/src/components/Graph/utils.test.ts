@@ -4,10 +4,10 @@ import {
   FieldType,
   FieldCache,
   FieldColorModeId,
-  getColorFromHexRgbOrName,
-  GrafanaThemeType,
   Field,
+  getColorForTheme,
 } from '@grafana/data';
+import { getTheme } from '../../themes';
 import { getMultiSeriesGraphHoverInfo, findHoverIndexFromData, graphTimeFormat } from './utils';
 
 const mockResult = (
@@ -63,7 +63,7 @@ const cSeries = toDataFrame({
 });
 
 function getFixedThemedColor(field: Field): string {
-  return getColorFromHexRgbOrName(field.config.color!.fixedColor!, GrafanaThemeType.Dark);
+  return getColorForTheme(field.config.color!.fixedColor!, getTheme());
 }
 
 describe('Graph utils', () => {
