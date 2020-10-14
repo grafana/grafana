@@ -6,7 +6,7 @@
 > **Note:** Data sources can implement their own cancellation concept. This documentation describes the `request cancellation` included in Grafana.
 
 ### The challenge
-A data request can take a long time to finish. Between the request starts and finishes, the user might change context. For instance, the user navigates away or the user issues the same request again.
+A data request can take a long time to finish. During the time between when a request starts and finishes, the user might change context. For example, the user navigates away or issues the same request again.
 
 If we allow ongoing requests to continue, it might cause unnecessary load on data sources.
 
