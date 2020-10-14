@@ -35,7 +35,7 @@ If you want to start with an existing query in a panel, choose the Explore optio
 
 {{< docs-imagebox img="/img/docs/v65/explore_panel_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
-Choose your data source from the dropdown in the top left. Prometheus has a custom Explore implementation, the other data sources use their standard query editor.
+Choose your data source from the dropdown in the top left. [Prometheus](https://grafana.com/oss/prometheus/) has a custom Explore implementation, the other data sources use their standard query editor.
 
 The query field is where you can write your query and explore your data. There are three buttons beside the query field, a clear button (X), an add query button (+) and the remove query button (-). Just like the normal query editor, you can add and remove multiple queries.
 
@@ -49,9 +49,15 @@ In split view, timepickers for both panels can be linked (if you change one, the
 
 You can close the newly created query by clicking on the Close Split button.
 
+## Share shortened link
+
+> Share shortened link is only available in Grafana 7.3 and above.
+
+The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs containing complex query parameters. You can create a shortened link by clicking on the **Share** option in Explore toolbar.
+
 ## Query history
 
-Query history is a list of queries that you have used in Explore. The history is local to your browser and is not shared with others. To open and interact with your history, click the **Query history** button in Explore.
+Query history is a list of queries that you have used in Explore. The history is local to your browser and is not shared. To open and interact with your history, click the **Query history** button in Explore.
 
 ### View query history
 
@@ -60,7 +66,7 @@ Query history lets you view the history of your querying. For each individual qu
 - Run a query.
 - Create and/or edit a comment.
 - Copy a query to the clipboard.
-- Copy a URL link with the query to the clipboard.
+- Copy a shortened link with the query to the clipboard.
 - Star a query.
 
 ### Manage favorite queries

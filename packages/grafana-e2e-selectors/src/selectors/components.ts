@@ -4,6 +4,7 @@ export const Components = {
   DataSource: {
     TestData: {
       QueryTab: {
+        scenarioSelectContainer: 'Test Data Query scenario select container',
         scenarioSelect: 'Test Data Query scenario select',
         max: 'TestData max',
         min: 'TestData min',
@@ -109,6 +110,7 @@ export const Components = {
   },
   Transforms: {
     Reduce: {
+      modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
     },
   },

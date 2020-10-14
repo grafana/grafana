@@ -179,7 +179,7 @@ Directory where Grafana automatically scans and looks for plugins. Manually or a
 
 ### provisioning
 
-Folder that contains [provisioning]({{< relref "provisioning.md" >}}) config files that grafana will apply on startup. Dashboards will be reloaded when the json files changes
+Folder that contains [provisioning]({{< relref "provisioning.md" >}}) config files that Grafana will apply on startup. Dashboards will be reloaded when the json files changes.
 
 <hr />
 

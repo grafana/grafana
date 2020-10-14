@@ -55,8 +55,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
     live: false,
     expressions: false,
     meta: false,
-    datasourceInsights: false,
-    reportGrid: false,
     ngalert: false,
     traceToLogs: false,
   };
