@@ -384,9 +384,6 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
     }
 
 def build_frontend_docs_step(edition):
-    if edition == 'enterprise':
-        return None
-
     return {
         'name': 'build-frontend-docs',
         'image': build_image,
