@@ -20,7 +20,7 @@ type ChannelHandler interface {
 	DoChannelHTTP(c *ReqContext, channel string)
 }
 
-// ChannelNamespaceHandler -- this should be implemented by any core feature
+// ChannelNamespaceHandler should be implemented by any core feature.
 type ChannelNamespaceHandler interface {
 	// This is called fast and often -- it must be synchrnozed
 	GetHandlerForPath(path string) (ChannelHandler, error)
