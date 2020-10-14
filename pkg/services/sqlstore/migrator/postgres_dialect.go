@@ -140,6 +140,38 @@ func (db *Postgres) CleanDB() error {
 	return nil
 }
 
+func (db *Postgres) TruncateDB() error {
+	sess := db.engine.NewSession()
+	defer sess.Close()
+
+	for _, table := range db.engine.Tables {
+		switch table.Name {
+		case "dashboard_acl":
+			// keep default dashboard permissions
+			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", db.Quote(table.Name))); err != nil {
+				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
+			}
+			if _, err := sess.Exec(fmt.Sprintf("ALTER SEQUENCE %v RESTART WITH 3;", db.Quote(fmt.Sprintf("%v_id_seq", table.Name)))); err != nil {
+				return errutil.Wrapf(err, "failed to reset table %q", table.Name)
+			}
+		default:
+			if table.Name == "" {
+				continue
+			}
+
+			if _, err := sess.Exec(fmt.Sprintf("TRUNCATE TABLE %v RESTART IDENTITY CASCADE;", db.Quote(table.Name))); err != nil {
+				if db.IsUndefinedTable(err) {
+					continue
+				}
+				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
+			}
+		}
+
+	}
+
+	return nil
+}
+
 func (db *Postgres) isThisError(err error, errcode string) bool {
 	if driverErr, ok := err.(*pq.Error); ok {
 		if string(driverErr.Code) == errcode {
@@ -155,6 +187,10 @@ func (db *Postgres) ErrorMessage(err error) string {
 		return driverErr.Message
 	}
 	return ""
+}
+
+func (db *Postgres) IsUndefinedTable(err error) bool {
+	return db.isThisError(err, "42P01")
 }
 
 func (db *Postgres) IsUniqueConstraintViolation(err error) bool {

@@ -3,6 +3,7 @@ package migrator
 import (
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/mattn/go-sqlite3"
 	"xorm.io/xorm"
 )
@@ -82,6 +83,34 @@ func (db *Sqlite3) DropIndexSql(tableName string, index *Index) string {
 }
 
 func (db *Sqlite3) CleanDB() error {
+	return nil
+}
+
+func (db *Sqlite3) TruncateDB() error {
+	tables, err := db.engine.DBMetas()
+	if err != nil {
+		return err
+	}
+
+	sess := db.engine.NewSession()
+	defer sess.Close()
+
+	for _, table := range tables {
+		switch table.Name {
+		case "dashboard_acl":
+			// keep default dashboard permissions
+			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %q WHERE dashboard_id != -1 AND org_id != -1;", table.Name)); err != nil {
+				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
+			}
+		default:
+			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %s;", table.Name)); err != nil {
+				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
+			}
+		}
+	}
+	if _, err := sess.Exec("UPDATE sqlite_sequence SET seq = 0;"); err != nil {
+		return errutil.Wrapf(err, "failed to cleanup sqlite_sequence")
+	}
 	return nil
 }
 
