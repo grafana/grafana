@@ -156,6 +156,8 @@
       name: PostgreSQL
     - link: /datasources/prometheus/
       name: Prometheus
+    - link: /datasources/tempo/
+      name: Tempo
     - link: /datasources/testdata/
       name: TestData DB
     - link: /datasources/zipkin/
