@@ -580,6 +580,9 @@ const createEmptyDataFrame = (
   const series = new MutableDataFrame({ fields: [] });
 
   series.addField({
+    config: {
+      filterable: true,
+    },
     name: timeField,
     type: FieldType.time,
   });
@@ -615,6 +618,9 @@ const createEmptyDataFrame = (
     }
 
     series.addField({
+      config: {
+        filterable: true,
+      },
       name: propName,
       type: FieldType.string,
     }).parse = (v: any) => {

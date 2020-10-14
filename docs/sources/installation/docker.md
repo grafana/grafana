@@ -179,7 +179,7 @@ In Grafana v5.1, we changed the ID of the Grafana user. Unfortunately this means
 Version | User    | User ID
 --------|---------|---------
 < 5.1   | grafana | 104
->= 5.1  | grafana | 472
+\>= 5.1  | grafana | 472
 
 There are two possible solutions to this problem. Either you start the new container as the root user and change ownership from `104` to `472`, or you start the upgraded container as user `104`.
 

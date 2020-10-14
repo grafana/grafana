@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import {
   applyFieldOverrides,
   applyRawFieldOverrides,
@@ -11,8 +12,8 @@ import {
   transformDataFrame,
 } from '@grafana/data';
 import { Button, Container, Field, HorizontalGroup, Icon, Select, Switch, Table, VerticalGroup } from '@grafana/ui';
+import { CSVConfig } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
@@ -38,6 +39,8 @@ interface State {
   transformId: DataTransformerID;
   dataFrameIndex: number;
   transformationOptions: Array<SelectableValue<DataTransformerID>>;
+  transformedData: DataFrame[];
+  downloadForExcel: boolean;
 }
 
 export class InspectDataTab extends PureComponent<Props, State> {
@@ -49,14 +52,44 @@ export class InspectDataTab extends PureComponent<Props, State> {
       dataFrameIndex: 0,
       transformId: DataTransformerID.noop,
       transformationOptions: buildTransformationOptions(),
+      transformedData: props.data ?? [],
+      downloadForExcel: false,
     };
   }
 
-  exportCsv = (dataFrame: DataFrame) => {
+  componentDidUpdate(prevProps: Props, prevState: State) {
+    if (!this.props.data) {
+      this.setState({ transformedData: [] });
+      return;
+    }
+
+    if (this.props.options.withTransforms) {
+      this.setState({ transformedData: this.props.data });
+      return;
+    }
+
+    if (prevProps.data !== this.props.data || prevState.transformId !== this.state.transformId) {
+      const currentTransform = this.state.transformationOptions.find(item => item.value === this.state.transformId);
+
+      if (currentTransform && currentTransform.transformer.id !== DataTransformerID.noop) {
+        const selectedDataFrame = this.state.selectedDataFrame;
+        const dataFrameIndex = this.state.dataFrameIndex;
+        const subscription = transformDataFrame([currentTransform.transformer], this.props.data).subscribe(data => {
+          this.setState({ transformedData: data, selectedDataFrame, dataFrameIndex }, () => subscription.unsubscribe());
+        });
+        return;
+      }
+
+      this.setState({ transformedData: this.props.data });
+      return;
+    }
+  }
+
+  exportCsv = (dataFrame: DataFrame, csvConfig: CSVConfig = {}) => {
     const { panel } = this.props;
     const { transformId } = this.state;
 
-    const dataFrameCsv = toCSV([dataFrame]);
+    const dataFrameCsv = toCSV([dataFrame], csvConfig);
 
     const blob = new Blob([String.fromCharCode(0xfeff), dataFrameCsv], {
       type: 'text/csv;charset=utf-8',
@@ -73,47 +106,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
       dataFrameIndex: typeof item.value === 'number' ? item.value : 0,
       selectedDataFrame: item.value!,
     });
-
-    this.props.onOptionsChange({
-      ...this.props.options,
-    });
   };
-
-  getTransformedData(): DataFrame[] {
-    const { transformId, transformationOptions } = this.state;
-    const { data } = this.props;
-
-    if (!data) {
-      return [];
-    }
-
-    const currentTransform = transformationOptions.find(item => item.value === transformId);
-
-    if (currentTransform && currentTransform.transformer.id !== DataTransformerID.noop) {
-      return transformDataFrame([currentTransform.transformer], data);
-    }
-    return data;
-  }
 
   getProcessedData(): DataFrame[] {
     const { options } = this.props;
-    let data = this.props.data;
-
-    if (!data) {
-      return [];
-    }
-
-    if (this.state.transformId !== DataTransformerID.noop) {
-      data = this.getTransformedData();
-    }
-
-    // In case the transform removes the currently selected data frame
-    if (!data[this.state.dataFrameIndex]) {
-      this.setState({
-        dataFrameIndex: 0,
-        selectedDataFrame: 0,
-      });
-    }
+    const data = this.state.transformedData;
 
     if (!options.withFieldConfig) {
       return applyRawFieldOverrides(data);
@@ -160,6 +157,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
       if (options.withFieldConfig) {
         parts.push('Formatted data');
       }
+    }
+
+    if (this.state.downloadForExcel) {
+      parts.push('Excel header');
     }
 
     return parts.join(', ');
@@ -239,6 +240,12 @@ export class InspectDataTab extends PureComponent<Props, State> {
                   />
                 </Field>
               )}
+              <Field label="Download for Excel" description="Adds header to CSV for use with Excel">
+                <Switch
+                  value={this.state.downloadForExcel}
+                  onChange={() => this.setState({ downloadForExcel: !this.state.downloadForExcel })}
+                />
+              </Field>
             </HorizontalGroup>
           </VerticalGroup>
         </div>
@@ -265,9 +272,9 @@ export class InspectDataTab extends PureComponent<Props, State> {
       return <div>No Data</div>;
     }
 
-    if (!dataFrames[dataFrameIndex]) {
-      return <div>Could not find the Data Frame</div>;
-    }
+    // let's make sure we don't try to render a frame that doesn't exists
+    const index = !dataFrames[dataFrameIndex] ? 0 : dataFrameIndex;
+    const data = dataFrames[index];
 
     return (
       <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
@@ -275,7 +282,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
           <div className={styles.dataDisplayOptions}>{this.renderDataOptions(dataFrames)}</div>
           <Button
             variant="primary"
-            onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}
+            onClick={() => this.exportCsv(dataFrames[dataFrameIndex], { useExcelHeader: this.state.downloadForExcel })}
             className={css`
               margin-bottom: 10px;
             `}
@@ -292,7 +299,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
               return (
                 <div style={{ width, height }}>
-                  <Table width={width} height={height} data={dataFrames[dataFrameIndex]} />
+                  <Table width={width} height={height} data={data} />
                 </div>
               );
             }}
