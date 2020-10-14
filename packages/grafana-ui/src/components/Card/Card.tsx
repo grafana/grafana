@@ -9,10 +9,19 @@ import { TagList } from '../Tags/TagList';
 interface ContainerProps extends HTMLAttributes<HTMLOrSVGElement> {
   /** Customise the container html element for the card. Defaults to div */
   tag?: keyof JSX.IntrinsicElements;
+  /** Content for the card's tooltip */
+  tooltip?: PopoverContent;
 }
 
-const CardContainer: FC<ContainerProps> = ({ tag = 'div', children, ...props }) => {
-  return React.createElement(tag, props, children);
+const CardContainer: FC<ContainerProps> = ({ tag = 'div', children, tooltip, ...props }) => {
+  const element = React.createElement(tag, props, children);
+  return tooltip ? (
+    <Tooltip placement="top" content={tooltip} theme="info">
+      {element}
+    </Tooltip>
+  ) : (
+    element
+  );
 };
 
 export interface CardInnerProps {
@@ -38,8 +47,6 @@ export interface Props extends ContainerProps {
   metaData?: ReactNode | ReactNode[];
   /** Card description text */
   description?: string;
-  /** Content for the card's tooltip */
-  tooltip?: PopoverContent;
   /** List of tags to display in the card */
   tags?: string[];
   /** Optional callback for tag onclick event */
@@ -67,7 +74,7 @@ export const Card: FC<Props> = ({
   disabled,
   mediaContent,
   actions = [],
-  tooltip = '',
+  tooltip,
   secondaryActions = [],
   tag,
   href,
@@ -92,34 +99,33 @@ export const Card: FC<Props> = ({
     : metaData;
   const onCardClick = disableEvents ? () => {} : onClick;
   return (
-    <Tooltip placement="top" content={tooltip} theme="info" show={!!tooltip}>
-      <CardContainer
-        tag={tag}
-        tabIndex={disableEvents ? undefined : 0}
-        className={cx(styles.container, className)}
-        onClick={onCardClick}
-        {...htmlProps}
-      >
-        <CardInner href={href}>
-          {mediaContent && <div className={styles.media}>{mediaContent}</div>}
-          <div className={styles.inner}>
-            <div className={styles.heading}>{heading}</div>
-            {meta && <div className={styles.metaData}>{meta}</div>}
-            {!!tags.length && <TagList tags={tags} onClick={onTagClick} className={styles.tagList} />}
-            {description && <p className={styles.description}>{description}</p>}
-            {hasActions && (
-              <div className={styles.actionRow}>
-                {!!actions.length && (
-                  <div className={styles.actions}>{actions.map(action => cloneElement(action, { disabled }))}</div>
-                )}
-                {!!secondaryActions.length && <div className={styles.secondaryActions}>{secondaryActions}</div>}
-              </div>
-            )}
-          </div>
-        </CardInner>
-        <div className={styles.overlay} />
-      </CardContainer>
-    </Tooltip>
+    <CardContainer
+      tooltip={tooltip}
+      tag={tag}
+      tabIndex={disableEvents ? undefined : 0}
+      className={cx(styles.container, className)}
+      onClick={onCardClick}
+      {...htmlProps}
+    >
+      <CardInner href={href}>
+        {mediaContent && <div className={styles.media}>{mediaContent}</div>}
+        <div className={styles.inner}>
+          <div className={styles.heading}>{heading}</div>
+          {meta && <div className={styles.metaData}>{meta}</div>}
+          {!!tags.length && <TagList tags={tags} onClick={onTagClick} className={styles.tagList} />}
+          {description && <p className={styles.description}>{description}</p>}
+          {hasActions && (
+            <div className={styles.actionRow}>
+              {!!actions.length && (
+                <div className={styles.actions}>{actions.map(action => cloneElement(action, { disabled }))}</div>
+              )}
+              {!!secondaryActions.length && <div className={styles.secondaryActions}>{secondaryActions}</div>}
+            </div>
+          )}
+        </div>
+      </CardInner>
+      <div className={styles.overlay} />
+    </CardContainer>
   );
 };
 
