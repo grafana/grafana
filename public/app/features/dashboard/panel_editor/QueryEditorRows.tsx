@@ -42,27 +42,26 @@ export class QueryEditorRows extends PureComponent<Props> {
     panel.refresh();
   };
 
-  onChangeQuery(query: DataQuery, index: number) {
+  onChangeQuery = (query: DataQuery) => {
     const { queries, onChangeQueries } = this.props;
 
-    const old = queries[index];
+    // Assuming datasources won't mutate queries, we find the index of the query that was updated.
+    const prevQueryIndex = queries.findIndex((_, i, oldQueries) => oldQueries[i] !== queries[i]);
 
-    // ensure refId & datasource are maintained
-    query.refId = old.refId;
-    if (old.datasource) {
-      query.datasource = old.datasource;
-    }
-
-    // update query in array
     onChangeQueries(
       queries.map((item, itemIndex) => {
-        if (itemIndex === index) {
-          return query;
+        if (itemIndex === prevQueryIndex) {
+          // ensure refId & datasource are maintained
+          return {
+            ...query,
+            refId: queries[prevQueryIndex].refId,
+            datasource: queries[prevQueryIndex].datasource,
+          };
         }
         return item;
       })
     );
-  }
+  };
 
   onDragEnd = (result: DropResult) => {
     const { queries, onChangeQueries, panel } = this.props;
@@ -102,7 +101,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                     dashboard={props.dashboard}
                     data={props.data}
                     query={query}
-                    onChange={query => this.onChangeQuery(query, index)}
+                    onChange={this.onChangeQuery}
                     onRemoveQuery={this.onRemoveQuery}
                     onAddQuery={this.onAddQuery}
                     inMixedMode={props.datasource.meta.mixed}
