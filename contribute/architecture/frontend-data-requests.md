@@ -1,6 +1,6 @@
 # Data requests
 
-[BackendSrv is the core data request service](https://grafana.com/docs/grafana/latest/packages_api/runtime/backendsrv) used by Grafana. This documentation highlights the high level concepts used by `BackendSrv`.
+[BackendSrv](https://grafana.com/docs/grafana/latest/packages_api/runtime/backendsrv) handles all outgoing HTTP requests from Grafana. This document explains the high-level concepts used by `BackendSrv`.
 
 ## Request `cancellation`
 > **Note:** Data sources can implement their own cancellation concept. This documentation describes the `request cancellation` included in Grafana.
