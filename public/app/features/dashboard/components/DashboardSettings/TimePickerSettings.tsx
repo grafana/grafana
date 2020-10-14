@@ -10,19 +10,22 @@ interface Props {
   onRefreshIntervalChange: (interval: string[]) => void;
   onNowDelayChange: (nowDelay: string) => void;
   onHideTimePickerChange: (hide: boolean) => void;
+  onMaxTimeBackChange: (maxTimeBack: string) => void;
   renderCount: number; // hack to make sure Angular changes are propagated properly, please remove when DashboardSettings are migrated to React
   refreshIntervals: string[];
   timePickerHidden: boolean;
   nowDelay: string;
+  maxTimeBack: string;
   timezone: TimeZone;
 }
 
 interface State {
   isNowDelayValid: boolean;
+  isMaxTimeBackValid: boolean;
 }
 
 export class TimePickerSettings extends PureComponent<Props, State> {
-  state: State = { isNowDelayValid: true };
+  state: State = { isNowDelayValid: true, isMaxTimeBackValid: true };
 
   onNowDelayChange = (event: React.FormEvent<HTMLInputElement>) => {
     const value = event.currentTarget.value;
@@ -38,6 +41,21 @@ export class TimePickerSettings extends PureComponent<Props, State> {
     }
 
     this.setState({ isNowDelayValid: false });
+  };
+
+  onMaxTimeBackChange = (event: React.FormEvent<HTMLInputElement>) => {
+    const value = event.currentTarget.value;
+
+    if (isEmpty(value)) {
+      this.setState({ isMaxTimeBackValid: true });
+      return this.props.onMaxTimeBackChange(value);
+    }
+
+    if (rangeUtil.isValidTimeSpan(value)) {
+      this.setState({ isMaxTimeBackValid: true });
+      return this.props.onMaxTimeBackChange(value);
+    }
+    this.setState({ isMaxTimeBackValid: false });
   };
 
   onHideTimePickerChange = () => {
@@ -93,6 +111,18 @@ export class TimePickerSettings extends PureComponent<Props, State> {
               checked={this.props.timePickerHidden ?? false}
               onChange={this.onHideTimePickerChange}
             />
+          </div>
+
+          <div className="gf-form">
+            <span className="gf-form-label width-7">Max Time Back</span>
+            <Tooltip placement="right" content={'Enter the maximum time users can go back'}>
+              <Input
+                width={60}
+                invalid={!this.state.isMaxTimeBackValid}
+                onChange={this.onMaxTimeBackChange}
+                defaultValue={this.props.maxTimeBack}
+              />
+            </Tooltip>
           </div>
         </div>
       </div>

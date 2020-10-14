@@ -18,6 +18,7 @@ import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePicker
 // Utils & Services
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { appEvents } from 'app/core/core';
+import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -78,12 +79,26 @@ class UnthemedDashNavTimeControls extends Component<Props> {
 
     const adjustedFrom = dateMath.isMathString(timeRange.raw.from) ? timeRange.raw.from : timeRange.from;
     const adjustedTo = dateMath.isMathString(timeRange.raw.to) ? timeRange.raw.to : timeRange.to;
+
+    const rawMaxTimeBack = {
+      from: panel.maxTimeBack ? 'now-' + panel.maxTimeBack : adjustedFrom,
+      to: 'now',
+    };
+
+    const rangeMaxTimeBack = convertRawToRange(rawMaxTimeBack);
+
+    const reachedMaxTimeBack =
+      rangeMaxTimeBack.to.valueOf() - rangeMaxTimeBack.from.valueOf() <
+      timeRange.to.valueOf() - timeRange.from.valueOf();
+
     const nextRange = {
       from: adjustedFrom,
       to: hasDelay ? 'now-' + panel.nowDelay : adjustedTo,
     };
 
-    getTimeSrv().setTime(nextRange);
+    if (!reachedMaxTimeBack) {
+      getTimeSrv().setTime(nextRange);
+    }
   };
 
   onChangeTimeZone = (timeZone: TimeZone) => {

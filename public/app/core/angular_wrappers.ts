@@ -205,10 +205,12 @@ export function registerAngularDirectives() {
     'refreshIntervals',
     'timePickerHidden',
     'nowDelay',
+    'maxTimeBack',
     'timezone',
     ['onTimeZoneChange', { watchDepth: 'reference', wrapApply: true }],
     ['onRefreshIntervalChange', { watchDepth: 'reference', wrapApply: true }],
     ['onNowDelayChange', { watchDepth: 'reference', wrapApply: true }],
     ['onHideTimePickerChange', { watchDepth: 'reference', wrapApply: true }],
+    ['onMaxTimeBackChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
 }

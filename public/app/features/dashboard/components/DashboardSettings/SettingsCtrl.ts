@@ -268,6 +268,11 @@ export class SettingsCtrl {
     this.renderCount++;
   };
 
+  onMaxTimeBackChange = (maxTimeBack: string) => {
+    this.dashboard.timepicker.maxTimeBack = maxTimeBack;
+    this.renderCount++;
+  };
+
   onTimeZoneChange = (timeZone: TimeZone) => {
     this.dashboard.timezone = timeZone;
     this.renderCount++;
