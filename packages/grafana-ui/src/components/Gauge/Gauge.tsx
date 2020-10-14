@@ -2,12 +2,12 @@ import React, { PureComponent } from 'react';
 import $ from 'jquery';
 import {
   DisplayValue,
-  getColorFromHexRgbOrName,
   formattedValueToString,
   FieldConfig,
   ThresholdsMode,
   getActiveThreshold,
   Threshold,
+  getColorForTheme,
 } from '@grafana/data';
 import { Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes';
@@ -67,7 +67,7 @@ export class Gauge extends PureComponent<Props> {
     const first = getActiveThreshold(min, steps);
     const last = getActiveThreshold(max, steps);
     const formatted: Threshold[] = [];
-    formatted.push({ value: +min.toFixed(decimals), color: getColorFromHexRgbOrName(first.color, theme.type) });
+    formatted.push({ value: +min.toFixed(decimals), color: getColorForTheme(first.color, theme) });
     let skip = true;
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
@@ -78,12 +78,12 @@ export class Gauge extends PureComponent<Props> {
         continue;
       }
       const prev = steps[i - 1];
-      formatted.push({ value: step.value, color: getColorFromHexRgbOrName(prev!.color, theme.type) });
+      formatted.push({ value: step.value, color: getColorForTheme(prev!.color, theme) });
       if (step === last) {
         break;
       }
     }
-    formatted.push({ value: +max.toFixed(decimals), color: getColorFromHexRgbOrName(last.color, theme.type) });
+    formatted.push({ value: +max.toFixed(decimals), color: getColorForTheme(last.color, theme) });
     return formatted;
   }
 

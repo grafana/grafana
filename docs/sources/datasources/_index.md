@@ -33,6 +33,9 @@ The following data sources are officially supported:
 - [OpenTSDB]({{< relref "opentsdb.md" >}})
 - [PostgreSQL]({{< relref "postgres.md" >}})
 - [Prometheus]({{< relref "prometheus.md" >}})
+- [Jaeger]({{< relref "jaeger.md" >}})
+- [Zipkin]({{< relref "zipkin.md" >}})
+- [Tempo]({{< relref "tempo.md" >}})
 - [Testdata]({{< relref "testdata.md" >}})
 
 In addition to the data sources that you have configured in your Grafana, there are three special data sources available:

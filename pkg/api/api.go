@@ -78,6 +78,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/import/dashboard", reqSignedIn, hs.Index)
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
+	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
 	r.Get("/explore", reqSignedIn, middleware.EnsureEditorOrViewerCanEdit, hs.Index)
 
@@ -390,6 +391,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// error test
 		r.Get("/metrics/error", Wrap(GenerateError))
+
+		// short urls
+		apiRoute.Post("/short-urls", bind(dtos.CreateShortURLCmd{}), Wrap(hs.createShortURL))
 	}, reqSignedIn)
 
 	// admin api

@@ -3358,10 +3358,20 @@
     typescript "3.7.5"
     yaml "^1.8.3"
 
-"@grafana/eslint-config@2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@grafana/eslint-config/-/eslint-config-2.0.1.tgz#859f316e1f4985138e44b54fcd42a127b309fcbb"
-  integrity sha512-VN1DS9g2+0UoWJriBGUK8gPVXm9cgxSVpAP79iXnpMipGWThyGjn2K01j1VJJZNiJ9yOJdRBv6Hlwo4sQc0fgA==
+"@grafana/eslint-config@2.0.3":
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/@grafana/eslint-config/-/eslint-config-2.0.3.tgz#f5a90eb689458142d41974285c5225f43229175b"
+  integrity sha512-ib8d4bJaomxyXfe10KcBAqMzQkEwhJ2VekpEr7eLSIfINv1S5eA223WhIMY/7ZgVmjkxp1mf7i/U30cM4KXrUg==
+  dependencies:
+    "@typescript-eslint/eslint-plugin" "4.0.1"
+    "@typescript-eslint/parser" "4.0.1"
+    eslint "7.4.0"
+    eslint-config-prettier "6.11.0"
+    eslint-plugin-jsdoc "28.6.1"
+    eslint-plugin-prettier "3.1.4"
+    eslint-plugin-react-hooks "4.0.5"
+    prettier "1.19.1"
+    typescript "4.0.2"
 
 "@grafana/slate-react@0.22.9-grafana":
   version "0.22.9-grafana"
