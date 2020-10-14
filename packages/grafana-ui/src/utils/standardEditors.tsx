@@ -208,7 +208,6 @@ export const getStandardFieldConfigs = () => {
     id: 'color',
     path: 'color',
     name: 'Color scheme',
-    description: 'Select palette, gradient or single color',
     editor: standardEditorsRegistry.get('fieldColor').editor as any,
     override: standardEditorsRegistry.get('fieldColor').editor as any,
     process: identityOverrideProcessor,
