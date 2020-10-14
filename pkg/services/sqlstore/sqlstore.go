@@ -407,7 +407,6 @@ func InitTestDB(t ITestDB) *SqlStore {
 
 		testSqlStore.engine.DatabaseTZ = time.UTC
 		testSqlStore.engine.TZLocation = time.UTC
-
 	}
 
 	if err := dialect.TruncateDB(); err != nil {

@@ -166,7 +166,6 @@ func (db *Postgres) TruncateDB() error {
 				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
 			}
 		}
-
 	}
 
 	return nil
