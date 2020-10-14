@@ -81,7 +81,7 @@ export const Card: FC<Props> = ({
   const styles = getStyles(theme, disabled && !actions.length, disableHover);
   // Join meta data elements by '|'
   const meta = Array.isArray(metaData)
-    ? (metaData as ReactNode[]).reduce((prev, curr, i) => [
+    ? (metaData as ReactNode[]).filter(Boolean).reduce((prev, curr, i) => [
         prev,
         <span key={`separator_${i}`} className={styles.separator}>
           |
