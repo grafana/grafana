@@ -383,6 +383,21 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
         ],
     }
 
+def build_frontend_docs_step(edition):
+    if edition == 'enterprise':
+        return None
+
+    return {
+        'name': 'build-frontend-docs',
+        'image': build_image,
+        'depends_on': [
+            'build-frontend'
+        ],
+        'commands': [
+            './scripts/ci-reference-docs-lint.sh ci',
+        ]
+    }
+
 def build_plugins_step(edition, sign=False):
     if sign:
         env = {
@@ -603,6 +618,7 @@ def build_docs_website_step():
         'image': 'grafana/docs-base:latest',
         'depends_on': [
             'initialize',
+            'build-frontend-docs',
         ],
         'commands': [
             'mkdir -p /hugo/content/docs/grafana',
