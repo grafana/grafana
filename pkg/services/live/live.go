@@ -264,9 +264,7 @@ func (g *GrafanaLive) initChannel(id ChannelIdentifier) (models.ChannelHandler, 
 	}
 
 	if id.Scope == "ds" {
-		if id.Scope == "ds" {
-			return nil, fmt.Errorf("todo... look up datasource: %s", id.Namespace)
-		}
+		return nil, fmt.Errorf("todo... look up datasource: %s", id.Namespace)
 	}
 
 	if id.Scope == "plugin" {

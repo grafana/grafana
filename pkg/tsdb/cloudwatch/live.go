@@ -21,7 +21,7 @@ import (
 type LogQueryRunnerSupplier struct {
 }
 
-type LogQueryRunner struct {
+type logQueryRunner struct {
 	channelName string
 	publish     models.ChannelPublisher
 	running     map[string]bool
@@ -63,7 +63,7 @@ func getResponseChannel(name string) (chan *tsdb.Response, error) {
 
 // GetHandlerForPath gets called on init.
 func (supplier *LogQueryRunnerSupplier) GetHandlerForPath(path string, publisher models.ChannelPublisher) (models.ChannelHandler, error) {
-	return &LogQueryRunner{
+	return &logQueryRunner{
 		channelName: path,
 		publish:     publisher,
 		running:     make(map[string]bool),
@@ -72,12 +72,12 @@ func (supplier *LogQueryRunnerSupplier) GetHandlerForPath(path string, publisher
 
 // GetChannelOptions gets channel options.
 // It's called fast and often.
-func (g *LogQueryRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
+func (g *logQueryRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
 	return centrifuge.ChannelOptions{}
 }
 
-// OnSubscribe for now allows anyone to subscribe to any dashboard
-func (g *LogQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
+// OnSubscribe publishes results from the corresponding CloudWatch Logs query to the provided channel
+func (g *logQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
 	if _, ok := g.running[e.Channel]; !ok {
 		g.running[e.Channel] = true
 		go g.publishResults(e.Channel)
@@ -87,11 +87,11 @@ func (g *LogQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscrib
 }
 
 // OnPublish is called when an event is received from the websocket.
-func (g *LogQueryRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
+func (g *logQueryRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
 	return nil, fmt.Errorf("can not publish")
 }
 
-func (g *LogQueryRunner) publishResults(channelName string) error {
+func (g *logQueryRunner) publishResults(channelName string) error {
 	defer func() {
 		delete(responseChannels, channelName)
 		delete(g.running, channelName)
@@ -119,7 +119,7 @@ func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryConte
 	responseChannel := make(chan *tsdb.Response)
 	addResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel)
 	requestContext, _ := context.WithTimeout(context.Background(), 15*time.Minute)
-	go e.sendQueriesToChannel(requestContext, queryContext, responseChannel)
+	go e.sendLiveQueriesToChannel(requestContext, queryContext, responseChannel)
 
 	response := &tsdb.Response{
 		Results: map[string]*tsdb.QueryResult{
@@ -135,13 +135,13 @@ func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryConte
 	return response, nil
 }
 
-func (e *cloudWatchExecutor) sendQueriesToChannel(ctx context.Context, queryContext *tsdb.TsdbQuery, responseChannel chan *tsdb.Response) {
+func (e *cloudWatchExecutor) sendLiveQueriesToChannel(ctx context.Context, queryContext *tsdb.TsdbQuery, responseChannel chan *tsdb.Response) {
 	eg, ectx := errgroup.WithContext(ctx)
 
 	for _, query := range queryContext.Queries {
 		query := query
 		eg.Go(func() error {
-			return e.startQuery(ectx, responseChannel, query, queryContext.TimeRange)
+			return e.startLiveQuery(ectx, responseChannel, query, queryContext.TimeRange)
 		})
 	}
 
@@ -152,7 +152,7 @@ func (e *cloudWatchExecutor) sendQueriesToChannel(ctx context.Context, queryCont
 	close(responseChannel)
 }
 
-func (e *cloudWatchExecutor) startQuery(ctx context.Context, responseChannel chan *tsdb.Response, query *tsdb.Query, timeRange *tsdb.TimeRange) error {
+func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan *tsdb.Response, query *tsdb.Query, timeRange *tsdb.TimeRange) error {
 	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
 	parameters := query.Model
 	region := parameters.Get("region").MustString(defaultRegion)
