@@ -39,9 +39,9 @@ func (g *PluginHandler) OnPublish(c *centrifuge.Client, e centrifuge.PublishEven
 	return e.Data, nil // broadcast any event
 }
 
-// DoChannelHTTP called when an event is received from the websocket
+// DoChannelHTTP is called when an event is received from the websocket.
 func (g *PluginHandler) DoChannelHTTP(c *models.ReqContext, channel string) {
 	c.JSON(400, util.DynMap{
-		"Unsupportedd": channel,
+		"Unsupported": channel,
 	})
 }
