@@ -117,3 +117,40 @@ export const WithActions = () => {
     />
   );
 };
+
+export const Full = () => {
+  const { disabled } = getKnobs();
+
+  return (
+    <Card
+      title="Card title"
+      metaData={[
+        'Subtitle',
+        'Meta info 1',
+        'Meta info 2',
+        <a key="link" href="https://ops-us-east4.grafana.net/api/prom">
+          https://ops-us-east4.grafana.net/api/prom
+        </a>,
+      ]}
+      disabled={disabled}
+      mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+      tags={['firing', 'active', 'test', 'testdata', 'prometheus']}
+      description="Description, body text. Greetings! Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+      actions={[
+        <Button key="settings" variant="secondary">
+          Main action
+        </Button>,
+        <Button key="explore" variant="secondary">
+          2nd action
+        </Button>,
+      ]}
+      secondaryActions={[
+        <IconButton key="comment-alt" name="comment-alt" tooltip="Tooltip content" />,
+        <IconButton key="copy" name="copy" tooltip="Tooltip content" />,
+        <IconButton key="link" name="link" tooltip="Tooltip content" />,
+        <IconButton key="star" name="star" tooltip="Tooltip content" />,
+        <IconButton key="delete" name="trash-alt" tooltip="Delete this data source" />,
+      ]}
+    />
+  );
+};

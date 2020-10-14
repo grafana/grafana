@@ -179,7 +179,7 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
       justify-content: space-between;
       align-items: center;
       width: 100%;
-      margin-top: ${theme.spacing.sm};
+      margin-top: ${theme.spacing.md};
     `,
     actions: css`
       & > * {
@@ -189,6 +189,7 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
     secondaryActions: css`
       display: flex;
       align-items: center;
+      color: ${theme.colors.textSemiWeak};
       & > * {
         margin-right: ${theme.spacing.sm} !important;
       }
