@@ -125,6 +125,30 @@ describe('urlParser', () => {
       expect(toFilters(url)).toEqual(expected);
     });
   });
+
+  describe('parsing toFilters with url containing filter with empty values', () => {
+    it('then url params should be correct', () => {
+      const url: UrlQueryValue = 'key||';
+      const expected: AdHocVariableFilter[] = [
+        {
+          value: '',
+          key: 'key',
+          operator: '',
+          condition: '',
+        },
+      ];
+
+      expect(toFilters(url)).toEqual(expected);
+    });
+  });
+
+  describe('parsing toFilters with url containing no filters as string', () => {
+    it('then url params should be correct', () => {
+      const url: UrlQueryValue = '';
+      const expected: AdHocVariableFilter[] = [];
+      expect(toFilters(url)).toEqual(expected);
+    });
+  });
 });
 
 function createFilter(value: string, operator = '='): AdHocVariableFilter {
