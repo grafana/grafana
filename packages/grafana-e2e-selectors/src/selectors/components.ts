@@ -109,7 +109,6 @@ export const Components = {
   },
   Transforms: {
     Reduce: {
-      modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
     },
   },
