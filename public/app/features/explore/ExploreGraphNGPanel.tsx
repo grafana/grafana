@@ -1,6 +1,6 @@
 import { AbsoluteTimeRange, dateTime, GrafanaTheme, LoadingState, PanelData, TimeZone } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Collapse, Icon, selectThemeVariant, Themeable, withTheme } from '@grafana/ui';
+import { Collapse, Icon, useTheme } from '@grafana/ui';
 import { GraphPanel } from 'app/plugins/panel/graph3/GraphPanel';
 import { css, cx } from 'emotion';
 import React, { useState } from 'react';
@@ -15,7 +15,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     padding: 10px 0;
     border-radius: ${theme.border.radius.md};
     text-align: center;
-    background-color: ${selectThemeVariant({ light: theme.palette.white, dark: theme.palette.dark4 }, theme.type)};
+    background-color: ${theme.colors.bg1};
   `,
   disclaimerIcon: css`
     label: disclaimer-icon;
@@ -29,7 +29,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
 });
 
-interface Props extends Themeable {
+interface Props {
   data: PanelData;
   width: number;
   absoluteRange: AbsoluteTimeRange;
@@ -37,8 +37,9 @@ interface Props extends Themeable {
   onUpdateTimeRange: (absoluteRange: AbsoluteTimeRange) => void;
 }
 
-function UnThemedExploreGraphNGPanel({ width, data, timeZone, absoluteRange, onUpdateTimeRange, theme }: Props) {
+export function ExploreGraphNGPanel({ width, data, timeZone, absoluteRange, onUpdateTimeRange }: Props) {
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
+  const theme = useTheme();
   const style = getStyles(theme);
   const timeRange = {
     from: dateTime(absoluteRange.from),
@@ -90,6 +91,3 @@ function UnThemedExploreGraphNGPanel({ width, data, timeZone, absoluteRange, onU
     </>
   );
 }
-
-export const ExploreGraphNGPanel = withTheme(UnThemedExploreGraphNGPanel);
-ExploreGraphNGPanel.displayName = 'ExploreGraphNGPanel';
