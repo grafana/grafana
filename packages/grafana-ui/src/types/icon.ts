@@ -116,8 +116,7 @@ export type IconName =
   | 'sort-amount-down'
   | 'cloud'
   | 'draggabledots'
-  | 'folder-upload'
-  | 'clipboard-alt';
+  | 'folder-upload';
 
 export const getAvailableIcons = (): IconName[] => [
   'fa fa-spinner',
