@@ -1,5 +1,5 @@
 package dtos
 
 type CreateShortURLCmd struct {
-	URL string `json:"url"`
+	Path string `json:"path"`
 }

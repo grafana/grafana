@@ -49,14 +49,14 @@ function setUTCTimeZone() {
   };
 }
 
-const mockShortUrl = '/goto/abc123';
+const mockUid = 'abc123';
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
 
   return {
     ...original,
     getBackendSrv: () => ({
-      post: jest.fn().mockResolvedValue(mockShortUrl),
+      post: jest.fn().mockResolvedValue(mockUid),
     }),
   };
 });
@@ -190,7 +190,7 @@ describe('ShareModal', () => {
       ctx.wrapper?.setState({ includeTemplateVars: true, useShortUrl: true }, async () => {
         await ctx.wrapper?.instance().buildUrl();
         const state = ctx.wrapper?.state();
-        expect(state?.shareUrl).toContain(mockShortUrl);
+        expect(state?.shareUrl).toContain(`/goto/${mockUid}`);
       });
     });
   });

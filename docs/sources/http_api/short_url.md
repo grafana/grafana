@@ -28,13 +28,13 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
-  "url": "http://localhost:3000/d/TxKARsmGz/new-dashboard?orgId=1&from=1599389322894&to=1599410922894"
+  "path": "d/TxKARsmGz/new-dashboard?orgId=1&from=1599389322894&to=1599410922894"
 }
 ```
 
 JSON body schema:
 
-- **url** – The url to shorten.
+- **path** – The path to shorten, relative to the Grafana [root_url]({{< relref "../administration/configuration.md#root_url" >}}).
 
 **Example response:**
 

@@ -13,17 +13,23 @@ import (
 
 // createShortURL handles requests to create short URLs.
 func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortURLCmd) Response {
-	hs.log.Debug("Received request to create short URL", "path", cmd.URL)
+	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
 
-	uid, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, strings.TrimPrefix(cmd.URL, setting.AppUrl))
+	cmd.Path = strings.TrimSpace(cmd.Path)
+
+	if path.IsAbs(cmd.Path) {
+		hs.log.Error("Invalid short URL path", "path", cmd.Path)
+		return Error(400, "Path should be relative", nil)
+	}
+
+	uid, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, cmd.Path)
 	if err != nil {
 		return Error(500, "Failed to create short URL", err)
 	}
 
-	shortURL := path.Join(setting.AppUrl, "goto", uid)
-	c.Logger.Debug("Created short URL", "shortURL", shortURL)
+	c.Logger.Debug("Created short URL", "uid", uid)
 
-	return JSON(200, shortURL)
+	return JSON(200, uid)
 }
 
 func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
