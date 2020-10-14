@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -310,6 +311,9 @@ type Cfg struct {
 	AnonymousHideVersion bool
 
 	DateFormats DateFormats
+
+	// User
+	UserInviteMaxLifetime time.Duration
 
 	// Annotations
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
@@ -1077,6 +1081,17 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 
 	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
+
+	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
+	userInviteMaxLifetimeDuration, err := gtime.ParseInterval(userInviteMaxLifetimeVal)
+	if err != nil {
+		return err
+	}
+
+	cfg.UserInviteMaxLifetime = userInviteMaxLifetimeDuration
+	if cfg.UserInviteMaxLifetime < time.Minute*15 {
+		return errors.New("the minimum supported value for the `user_invite_max_lifetime_duration` configuration is 15m (15 minutes)")
+	}
 
 	return nil
 }
