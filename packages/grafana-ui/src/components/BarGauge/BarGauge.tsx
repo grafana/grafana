@@ -14,6 +14,7 @@ import {
   getFieldColorMode,
   getColorForTheme,
   FALLBACK_COLOR,
+  FieldConfigProperty,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -561,7 +562,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
     return gradient + ')';
   }
 
-  return FALLBACK_COLOR;
+  return value.color ?? FALLBACK_COLOR;
 }
 
 /**
