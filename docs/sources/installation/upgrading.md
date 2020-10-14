@@ -125,7 +125,7 @@ grafana-cli plugins update-all
 
 The dashboard grid layout engine has changed. All dashboards will be automatically upgraded to new positioning system when you load them in v5. Dashboards saved in v5 will not work in older versions of Grafana. Some external panel plugins might need to be updated to work properly.
 
-For more details on the new panel positioning system, [click here]({{< relref "../dashboards/json-model.md#panel-size-position" >}})
+For more details on the new panel positioning system, refer to [panel size position]({{< relref "../dashboards/json-model.md#panel-size-position" >}})
 
 ## Upgrading to v5.2
 
@@ -138,7 +138,7 @@ If you're using systemd and have a large amount of annotations consider temporar
 ## Upgrading to v6.0
 
 If you have text panels with script tags they will no longer work due to a new setting that per default disallow unsanitized HTML.
-Read more [here]({{< relref "../administration/configuration/#disable-sanitize-html" >}}) about this new setting.
+For more information about the new setting, refer to [disable sanitize html]({{< relref "../administration/configuration/#disable-sanitize-html" >}}).
 
 ### Authentication and security
 
@@ -183,7 +183,7 @@ configuration.
 ### Embedding Grafana
 
 If you're embedding Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>` on a different website it will no longer work due to a new setting
-that per default instructs the browser to not allow Grafana to be embedded. Read more [here]({{< relref "../administration/configuration/#allow-embedding" >}}) about
+that per default instructs the browser to not allow Grafana to be embedded. For more information about embedding Grafana, refer to [configuration embedding]({{< relref "../administration/configuration/#allow-embedding" >}}) about
 this new setting.
 
 ### Session storage is no longer used
@@ -240,15 +240,15 @@ change the `[security]` setting `cookie_secure` to `true` and use HTTPS when `co
 
 ### PhantomJS removed
 
-PhantomJS was deprecated in [Grafana v6.4]({{< relref "../guides/whats-new-in-v6-4.md#phantomjs-deprecation" >}}) and starting from Grafana v7.0.0, all PhantomJS support has been removed. This means that Grafana no longer ships with a built-in image renderer, and we advise you to install the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
+PhantomJS was deprecated in [Grafana v6.4]({{< relref "../whatsnew/whats-new-in-v6-4.md#phantomjs-deprecation" >}}) and starting from Grafana v7.0.0, all PhantomJS support has been removed. This means that Grafana no longer ships with a built-in image renderer, and we advise you to install the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
 
 ### Dashboard minimum refresh interval enforced
 
-A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds. Read more [here]({{< relref "../administration/configuration/#min-refresh-interval" >}}) about this setting.
+A global minimum dashboard refresh interval is now enforced and defaults to 5 seconds. For more information about this setting, refer to [minimum refresh interval]({{< relref "../administration/configuration/#min-refresh-interval" >}}).
 
 ### Backend plugins
 
-Grafana now requires backend plugins to be signed. If a backend plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure backend plugin binaries and files haven't been tampered with.  All Grafana Labs authored backend plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. Read more [here]({{< relref "../administration/#allow-loading-unsigned-plugins" >}}) about this setting.
+Grafana now requires backend plugins to be signed. If a backend plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure backend plugin binaries and files haven't been tampered with.  All Grafana Labs authored backend plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. For more information about this setting, refer to [allow loading unsigned plugins]({{< relref "../administration/#allow-loading-unsigned-plugins" >}}).
 
 ### Cookie path
 
@@ -277,3 +277,22 @@ For existing alert notification channels, there is no automatic migration of sto
 > Please note that when migrating a notification channel and later downgrading Grafana to an earlier version, the notification channel will not be able to read stored sensitive settings and, as a result, not function as expected.
 
 For provisioning of alert notification channels, refer to [Alert notification channels]({{< relref "../administration/provisioning.md#alert-notification-channels" >}}).
+
+## Upgrading to v7.3
+
+### AWS CloudWatch data source
+
+The AWS CloudWatch data source's authentication scheme has changed in Grafana 7.3. Most importantly the authentication method _ARN_ has been removed, and a new one has been added: _AWS SDK Default_. Existing data source configurations using the former will fallback to the latter. Assuming an IAM role will still work though, and the old _ARN_ method would use the default AWS SDK authentication method under the hood anyway.
+
+Since _ARN_ has been removed as an authentication method, we have instead made it into an option for providing the ARN of an IAM role to assume. This works independently of the authentication method you choose.
+
+The new authentication method, _AWS SDK Default_, uses the default AWS Go SDK credential chain, which at the time of writing looks for credentials in the following order:
+
+1. Environment variables.
+1. Shared credentials file.
+1. If your application uses an ECS task definition or RunTask API operation, IAM role for tasks.
+1. If your application is running on an Amazon EC2 instance, IAM role for Amazon EC2.
+
+The other authentication methods, _Access & secret key_ and _Credentials file_, have changed in regards to fallbacks. If these methods fail, they no longer fallback to other methods. e.g. environment variables. If you want fallbacks, you should use _AWS SDK Default_ instead.
+
+For more information and details, please refer to [Using AWS CloudWatch in Grafana]({{< relref "../datasources/cloudwatch.md#authentication" >}}).

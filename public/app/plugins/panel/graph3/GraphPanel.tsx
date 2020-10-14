@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import {
   Area,
   Canvas,
-  colors,
   ContextMenuPlugin,
   GraphCustomFieldConfig,
   LegendDisplayMode,
@@ -14,6 +13,7 @@ import {
   TooltipPlugin,
   UPlotChart,
   ZoomPlugin,
+  useTheme,
 } from '@grafana/ui';
 
 import {
@@ -21,9 +21,9 @@ import {
   FieldConfig,
   FieldType,
   formattedValueToString,
-  getColorFromHexRgbOrName,
   getTimeField,
   PanelProps,
+  getFieldColorModeForField,
   systemDateFormats,
 } from '@grafana/data';
 
@@ -34,6 +34,7 @@ import { VizLayout } from './VizLayout';
 import { Axis } from '@grafana/ui/src/components/uPlot/geometries/Axis';
 import { timeFormatToTemplate } from '@grafana/ui/src/components/uPlot/utils';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
+import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 
 interface GraphPanelProps extends PanelProps<Options> {}
 
@@ -93,7 +94,9 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
   options,
   onChangeTimeRange,
 }) => {
+  const theme = useTheme();
   const [alignedData, setAlignedData] = useState<DataFrame | null>(null);
+
   useEffect(() => {
     if (!data || !data.series?.length) {
       setAlignedData(null);
@@ -137,9 +140,11 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
     const field = alignedData.fields[i];
     const config = field.config as FieldConfig<GraphCustomFieldConfig>;
     const customConfig = config.custom;
+
     if (i === timeIndex || field.type !== FieldType.number) {
       continue;
     }
+
     const fmt = field.display ?? defaultFormatter;
     const scale = config.unit || '__fixed';
 
@@ -159,10 +164,11 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
       );
     }
 
-    const seriesColor =
-      customConfig?.line.color && customConfig?.line.color.fixedColor
-        ? getColorFromHexRgbOrName(customConfig.line.color.fixedColor)
-        : colors[seriesIdx];
+    // need to update field state here because we use a transform to merge frames
+    field.state = { ...field.state, seriesIndex: seriesIdx };
+
+    const colorMode = getFieldColorModeForField(field);
+    const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
 
     if (customConfig?.line?.show) {
       seriesGeometry.push(
@@ -233,6 +239,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
             <ZoomPlugin onZoom={onChangeTimeRange} />
             <ContextMenuPlugin />
 
+            {data.annotations && <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} />}
             {data.annotations && <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} />}
             {/* TODO: */}
             {/*<AnnotationsEditorPlugin />*/}

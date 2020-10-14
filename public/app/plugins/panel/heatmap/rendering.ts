@@ -9,14 +9,14 @@ import { getColorScale, getOpacityScale } from './color_scale';
 import {
   toUtc,
   PanelEvents,
-  GrafanaThemeType,
-  getColorFromHexRgbOrName,
   getValueFormat,
   formattedValueToString,
   dateTimeFormat,
+  getColorForTheme,
 } from '@grafana/data';
 import { graphTimeFormat } from '@grafana/ui';
 import { CoreEvents } from 'app/types';
+import { config } from 'app/core/config';
 
 const MIN_CARD_SIZE = 1,
   CARD_PADDING = 1,
@@ -682,10 +682,7 @@ export class HeatmapRenderer {
 
   getCardColor(d: { count: any }) {
     if (this.panel.color.mode === 'opacity') {
-      return getColorFromHexRgbOrName(
-        this.panel.color.cardColor,
-        contextSrv.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark
-      );
+      return getColorForTheme(this.panel.color.cardColor, config.theme);
     } else {
       return this.colorScale(d.count);
     }

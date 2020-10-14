@@ -81,6 +81,12 @@ class MetricsPanelCtrl extends PanelCtrl {
         data = data.data;
       }
 
+      this.panelData = {
+        state: LoadingState.Done,
+        series: data,
+        timeRange: this.range,
+      };
+
       // Defer panel rendering till the next digest cycle.
       // For some reason snapshot panels don't init at this time, so this helps to avoid rendering issues.
       return this.$timeout(() => {
