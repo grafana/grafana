@@ -16,3 +16,11 @@ weight = -17
 This topic includes the release notes for the Grafana v7.3. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 This is a work in progress and will be updated later.
+
+## Upgrading
+
+See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
+
+## Changelog
+
+Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) for a complete list of new features, changes, and bug fixes.
