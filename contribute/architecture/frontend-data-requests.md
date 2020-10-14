@@ -2,7 +2,7 @@
 
 [BackendSrv](https://grafana.com/docs/grafana/latest/packages_api/runtime/backendsrv) handles all outgoing HTTP requests from Grafana. This document explains the high-level concepts used by `BackendSrv`.
 
-## Request `cancellation`
+## Canceling requests
 > **Note:** Data sources can implement their own cancellation concept. This documentation describes the `request cancellation` included in Grafana.
 
 ### The challenge
