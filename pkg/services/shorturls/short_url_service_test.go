@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,22 +18,24 @@ func TestShortURLService(t *testing.T) {
 
 		service := ShortURLService{SQLStore: sqlStore}
 
-		uid, err := service.CreateShortURL(context.Background(), user, refPath)
+		newShortURL, err := service.CreateShortURL(context.Background(), user, refPath)
 		require.NoError(t, err)
-		assert.NotEmpty(t, uid)
+		require.NotNil(t, newShortURL)
+		require.NotEmpty(t, newShortURL.Uid)
 
-		path, err := service.GetFullURLByUID(context.Background(), user, uid)
+		existingShortURL, err := service.GetShortURLByUID(context.Background(), user, newShortURL.Uid)
 		require.NoError(t, err)
-		assert.NotEmpty(t, path)
-		assert.Equal(t, refPath, path)
+		require.NotNil(t, existingShortURL)
+		require.NotEmpty(t, existingShortURL.Path)
+		require.Equal(t, refPath, existingShortURL.Path)
 	})
 
 	t.Run("User cannot look up nonexistent short URLs", func(t *testing.T) {
 		service := ShortURLService{SQLStore: sqlStore}
 
-		path, err := service.GetFullURLByUID(context.Background(), user, "testnotfounduid")
+		shortURL, err := service.GetShortURLByUID(context.Background(), user, "testnotfounduid")
 		require.Error(t, err)
-		assert.Empty(t, path)
-		assert.Equal(t, models.ErrShortURLNotFound, err)
+		require.Equal(t, models.ErrShortURLNotFound, err)
+		require.Nil(t, shortURL)
 	})
 }

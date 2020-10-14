@@ -22,7 +22,7 @@ func (s *ShortURLService) Init() error {
 	return nil
 }
 
-func (s ShortURLService) GetFullURLByUID(ctx context.Context, user *models.SignedInUser, uid string) (string, error) {
+func (s ShortURLService) GetShortURLByUID(ctx context.Context, user *models.SignedInUser, uid string) (*models.ShortUrl, error) {
 	var shortURL models.ShortUrl
 	err := s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		exists, err := dbSession.Where("org_id=? AND uid=?", user.OrgId, uid).Get(&shortURL)
@@ -36,13 +36,13 @@ func (s ShortURLService) GetFullURLByUID(ctx context.Context, user *models.Signe
 		return nil
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return shortURL.Path, nil
+	return &shortURL, nil
 }
 
-func (s ShortURLService) CreateShortURL(ctx context.Context, user *models.SignedInUser, path string) (string, error) {
+func (s ShortURLService) CreateShortURL(ctx context.Context, user *models.SignedInUser, path string) (*models.ShortUrl, error) {
 	now := time.Now().Unix()
 	shortURL := models.ShortUrl{
 		OrgId:     user.OrgId,
@@ -57,8 +57,8 @@ func (s ShortURLService) CreateShortURL(ctx context.Context, user *models.Signed
 		return err
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return shortURL.Uid, nil
+	return &shortURL, nil
 }
