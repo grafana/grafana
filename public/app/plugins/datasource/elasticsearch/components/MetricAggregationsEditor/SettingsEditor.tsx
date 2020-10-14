@@ -10,6 +10,7 @@ import {
   MetricAggregation,
 } from './state/types';
 import { justifyStart } from './styles';
+import { isValidNumber } from './utils';
 
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 15,
@@ -135,10 +136,10 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric }) => {
             they will be ignored but it is also possible to treat them as if they had a value"
               label="Missing"
               {...inlineFieldProps}
+              invalid={!isValidNumber(metric.settings?.missing)}
             >
               <Input
                 onBlur={e => dispatch(changeMetricSetting(metric, 'missing', e.target.value))}
-                type="number"
                 defaultValue={metric.settings?.missing}
               />
             </InlineField>

@@ -198,3 +198,11 @@ export const getChildren = (metric: MetricAggregation, metrics: MetricAggregatio
 
   return [...children, ...children.flatMap(child => getChildren(child, metrics))];
 };
+
+/**
+ * Checks if a string is a valid number
+ * @param stringNumber
+ */
+export const isValidNumber = (stringNumber?: string) => {
+  return !isNaN(+(stringNumber ?? 0));
+};
