@@ -7,7 +7,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
-import { copyShortLinkToClipboard } from '../../explore/utils/links';
+import { createShortLink } from '../../explore/utils/links';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import appEvents from 'app/core/app_events';
 import { StoreState, CoreEvents } from 'app/types';
@@ -178,9 +178,13 @@ export function RichHistoryCard(props: Props) {
     appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
   };
 
-  const onCreateLink = () => {
-    const url = createUrlFromRichHistory(query);
-    copyShortLinkToClipboard(url);
+  const onCreateLink = async () => {
+    const link = createUrlFromRichHistory(query);
+    const shortLink = await createShortLink(link);
+    if (shortLink) {
+      copyStringToClipboard(shortLink);
+      appEvents.emit(AppEvents.alertSuccess, ['Shortened link copied to clipboard']);
+    }
   };
 
   const onDeleteQuery = () => {
