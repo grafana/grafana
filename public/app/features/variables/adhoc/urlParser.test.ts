@@ -42,6 +42,42 @@ describe('urlParser', () => {
     });
   });
 
+  describe('parsing toUrl with filters without values', () => {
+    it('then url params should be correct', () => {
+      const a: AdHocVariableFilter = {
+        value: '',
+        key: 'key',
+        operator: '',
+        condition: '',
+      };
+
+      const filters: AdHocVariableFilter[] = [a];
+
+      const expectedA = `key||`;
+      const expected: string[] = [expectedA];
+
+      expect(toUrl(filters)).toEqual(expected);
+    });
+  });
+
+  describe('parsing toUrl with filters with undefined values', () => {
+    it('then url params should be correct', () => {
+      const a = ({
+        value: undefined,
+        key: 'key',
+        operator: undefined,
+        condition: '',
+      } as unknown) as AdHocVariableFilter;
+
+      const filters: AdHocVariableFilter[] = [a];
+
+      const expectedA = `key||`;
+      const expected: string[] = [expectedA];
+
+      expect(toUrl(filters)).toEqual(expected);
+    });
+  });
+
   describe('parsing toFilters with url containing no filters as string', () => {
     it('then url params should be correct', () => {
       const url: UrlQueryValue = '';
