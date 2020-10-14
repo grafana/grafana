@@ -120,7 +120,8 @@ export class ElasticMetricAggCtrl {
         // but having it like this simplifes the query_builder
         const inlineScript = $scope.agg.inlineScript;
         if (inlineScript) {
-          $scope.agg.settings.script = { inline: inlineScript };
+          const inlineScriptKey = $scope.esVersion < 56 ? 'inline' : 'source';
+          $scope.agg.settings.script = { [inlineScriptKey]: inlineScript };
         } else {
           delete $scope.agg.settings.script;
         }
