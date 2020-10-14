@@ -9,6 +9,7 @@ interface Props {
   onTimeZoneChange: (timeZone: TimeZone) => void;
   onRefreshIntervalChange: (interval: string[]) => void;
   onNowDelayChange: (nowDelay: string) => void;
+  onMaxTimeSpanChange: (MaxTimeSpan: string) => void;
   onHideTimePickerChange: (hide: boolean) => void;
   onMaxTimeBackChange: (maxTimeBack: string) => void;
   renderCount: number; // hack to make sure Angular changes are propagated properly, please remove when DashboardSettings are migrated to React
@@ -16,16 +17,18 @@ interface Props {
   timePickerHidden: boolean;
   nowDelay: string;
   maxTimeBack: string;
+  maxTimeSpan: string;
   timezone: TimeZone;
 }
 
 interface State {
   isNowDelayValid: boolean;
   isMaxTimeBackValid: boolean;
+  isMaxTimeSpanValid: boolean;
 }
 
 export class TimePickerSettings extends PureComponent<Props, State> {
-  state: State = { isNowDelayValid: true, isMaxTimeBackValid: true };
+  state: State = { isNowDelayValid: true, isMaxTimeBackValid: true, isMaxTimeSpanValid: true };
 
   onNowDelayChange = (event: React.FormEvent<HTMLInputElement>) => {
     const value = event.currentTarget.value;
@@ -56,6 +59,17 @@ export class TimePickerSettings extends PureComponent<Props, State> {
       return this.props.onMaxTimeBackChange(value);
     }
     this.setState({ isMaxTimeBackValid: false });
+  };
+
+  onMaxTimeSpanChange = (event: React.FormEvent<HTMLInputElement>) => {
+    const value = event.currentTarget.value;
+
+    if (isEmpty(value) || (rangeUtil.isValidTimeSpan(value) && !value.includes('now'))) {
+      this.setState({ isMaxTimeSpanValid: true });
+      this.props.onMaxTimeSpanChange(value);
+    } else {
+      this.setState({ isMaxTimeSpanValid: false });
+    }
   };
 
   onHideTimePickerChange = () => {
@@ -103,7 +117,18 @@ export class TimePickerSettings extends PureComponent<Props, State> {
               />
             </Tooltip>
           </div>
-
+          <div className="gf-form">
+            <span className="gf-form-label width-7">Max time span</span>
+            <Tooltip placement="right" content={'Enter the maximum time span allowed by time range controls'}>
+              <Input
+                width={60}
+                invalid={!this.state.isMaxTimeSpanValid}
+                placeholder="0m"
+                onChange={this.onMaxTimeSpanChange}
+                defaultValue={this.props.maxTimeSpan}
+              />
+            </Tooltip>
+          </div>
           <div className="gf-form">
             <LegacyForms.Switch
               labelClass="width-7"

@@ -6,7 +6,7 @@ import { css } from 'emotion';
 // Types
 import { DashboardModel } from '../../state';
 import { LocationState, CoreEvents } from 'app/types';
-import { TimeRange } from '@grafana/data';
+import { TimeRange, rangeUtil } from '@grafana/data';
 
 // State
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
@@ -87,7 +87,7 @@ class UnthemedDashNavTimeControls extends Component<Props> {
 
     const rangeMaxTimeBack = convertRawToRange(rawMaxTimeBack);
 
-    const reachedMaxTimeBack =
+    const exceededMaxTimeBack =
       rangeMaxTimeBack.to.valueOf() - rangeMaxTimeBack.from.valueOf() <
       timeRange.to.valueOf() - timeRange.from.valueOf();
 
@@ -96,7 +96,10 @@ class UnthemedDashNavTimeControls extends Component<Props> {
       to: hasDelay ? 'now-' + panel.nowDelay : adjustedTo,
     };
 
-    if (!reachedMaxTimeBack) {
+    const nextTimeSpan = timeRange.to.valueOf() - timeRange.from.valueOf();
+    const exceededMaxTimeSpan = panel.maxTimeSpan && nextTimeSpan > rangeUtil.intervalToMs(panel.maxTimeSpan);
+
+    if (!exceededMaxTimeBack || !exceededMaxTimeSpan) {
       getTimeSrv().setTime(nextRange);
     }
   };
