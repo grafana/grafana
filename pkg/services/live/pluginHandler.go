@@ -17,7 +17,7 @@ func (g *PluginHandler) GetHandlerForPath(path string) (models.ChannelHandler, e
 	return g, nil // all dashboards share the same handler
 }
 
-// DoNamespaceHTTP called from the http api
+// DoNamespaceHTTP is called from the HTTP API.
 func (g *PluginHandler) DoNamespaceHTTP(c *models.ReqContext) {
 	c.JSON(400, util.DynMap{
 		"Unsupported": "TestdataSupplier",
