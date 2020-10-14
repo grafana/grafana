@@ -283,7 +283,7 @@ func (g *GrafanaLive) GetChannelNamespace(scope string, name string) (models.Cha
 			}
 			return h, nil
 		}
-		return nil, fmt.Errorf("unknown plugin: %s", name)
+		return nil, fmt.Errorf("unknown plugin: %q", name)
 	}
 
 	return nil, fmt.Errorf("invalid scope: %s", scope)
