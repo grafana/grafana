@@ -44,7 +44,7 @@ export function buildHostUrl() {
 
 export function getRelativeURLPath(url: string) {
   let p = url.replace(buildHostUrl(), '');
-  return p.startsWith('/') ? p.substring(1, p.length - 1) : p;
+  return p.startsWith('/') ? p.substring(1, p.length) : p;
 }
 
 export function buildBaseUrl() {
