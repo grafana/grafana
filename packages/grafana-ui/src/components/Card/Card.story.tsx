@@ -28,7 +28,7 @@ export const Basic = () => {
   const { disabled } = getKnobs();
   return (
     <Card
-      title="Filter by name"
+      heading="Filter by name"
       description="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
       disabled={disabled}
     />
@@ -40,7 +40,7 @@ export const AsLink = () => {
   return (
     <Card
       href="https://grafana.com"
-      title="Filter by name"
+      heading="Filter by name"
       description="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
       disabled={disabled}
     />
@@ -51,7 +51,7 @@ export const WithTooltip = () => {
   const { disabled } = getKnobs();
   return (
     <Card
-      title="Reduce"
+      heading="Reduce"
       description="Reduce all rows or data points to a single value using a function like max, min, mean or last."
       tooltip="Click to apply this transformation."
       disabled={disabled}
@@ -63,7 +63,7 @@ export const WithTags = () => {
   const { disabled } = getKnobs();
   return (
     <Card
-      title="Elasticsearch – Custom Templated Query"
+      heading="Elasticsearch – Custom Templated Query"
       metaData="Elastic Search"
       tags={['elasticsearch', 'test', 'testdata']}
       disabled={disabled}
@@ -77,7 +77,7 @@ export const WithMedia = () => {
     <Card
       href="https://ops-us-east4.grafana.net/api/prom"
       aria-label={'t'}
-      title="1-ops-tools1-fallback"
+      heading="1-ops-tools1-fallback"
       metaData={[
         'Prometheus',
         <a key="link2" href="https://ops-us-east4.grafana.net/api/prom">
@@ -93,7 +93,7 @@ export const WithActions = () => {
   const { disabled } = getKnobs();
   return (
     <Card
-      title="1-ops-tools1-fallback"
+      heading="1-ops-tools1-fallback"
       metaData={[
         'Prometheus',
         <a key="link" href="https://ops-us-east4.grafana.net/api/prom">
@@ -123,7 +123,7 @@ export const Full = () => {
 
   return (
     <Card
-      title="Card title"
+      heading="Card title"
       metaData={[
         'Subtitle',
         'Meta info 1',

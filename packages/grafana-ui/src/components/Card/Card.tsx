@@ -33,7 +33,7 @@ const CardInner: FC<CardInnerProps> = ({ children, href }) => {
 
 export interface Props extends ContainerProps {
   /** Main heading for the Card **/
-  title: string;
+  heading: ReactNode;
   /** Additional data about the card. If array is supplied, elements will be rendered with vertical line separator */
   metaData?: ReactNode | ReactNode[];
   /** Card description text */
@@ -59,7 +59,7 @@ export interface Props extends ContainerProps {
 }
 
 export const Card: FC<Props> = ({
-  title,
+  heading,
   description,
   metaData,
   tags = [],
@@ -96,7 +96,7 @@ export const Card: FC<Props> = ({
         <CardInner href={href}>
           {mediaContent && <div className={styles.media}>{mediaContent}</div>}
           <div className={styles.inner}>
-            <p className={styles.title}>{title}</p>
+            <p className={styles.heading}>{heading}</p>
             {meta && <p className={styles.metaData}>{meta}</p>}
             {!!tags.length && <TagList tags={tags} onClick={onTagClick} className={styles.tagList} />}
             {description && <p className={styles.description}>{description}</p>}
@@ -141,7 +141,7 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
     inner: css`
       width: 100%;
     `,
-    title: css`
+    heading: css`
       margin-bottom: 0;
       font-size: ${theme.typography.size.md};
       line-height: ${theme.typography.lineHeight.xs};
