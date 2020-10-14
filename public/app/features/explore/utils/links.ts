@@ -1,10 +1,9 @@
+import memoizeOne from 'memoize-one';
 import { splitOpen } from '../state/actions';
-import { Field, LinkModel, TimeRange, AppEvents } from '@grafana/data';
+import { Field, LinkModel, TimeRange } from '@grafana/data';
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
 import { mapInternalLinkToExplore } from '@grafana/data/src/utils/dataLinks';
-import { getDataSourceSrv, getTemplateSrv, getBackendSrv } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
-import { copyStringToClipboard } from 'app/core/utils/explore';
+import { getDataSourceSrv, getTemplateSrv, getBackendSrv, config } from '@grafana/runtime';
 
 /**
  * Get links from the field of a dataframe and in addition check if there is associated
@@ -63,15 +62,22 @@ function getTitleFromHref(href: string): string {
   return title;
 }
 
-export async function copyShortLinkToClipboard(path: string) {
+function buildHostUrl() {
+  return `${window.location.protocol}//${window.location.host}${config.appSubUrl}`;
+}
+
+function getRelativeURLPath(url: string) {
+  let path = url.replace(buildHostUrl(), '');
+  return path.startsWith('/') ? path.substring(1, path.length) : path;
+}
+
+export const createShortLink = memoizeOne(async function(path: string) {
   try {
     const shortUrl = await getBackendSrv().post(`/api/short-urls`, {
-      path,
+      path: getRelativeURLPath(path),
     });
-    copyStringToClipboard(shortUrl);
-    appEvents.emit(AppEvents.alertSuccess, ['Shortened link copied to clipboard']);
+    return shortUrl.url;
   } catch (err) {
-    appEvents.emit(AppEvents.alertError, ['Error when creating shortened link']);
     console.error('Error when creating shortened link: ', err);
   }
-}
+});
