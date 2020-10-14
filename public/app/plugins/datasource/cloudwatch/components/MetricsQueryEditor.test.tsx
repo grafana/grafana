@@ -33,7 +33,7 @@ const setup = () => {
   templateSrv.init([variable]);
 
   const datasource = new CloudWatchDatasource(instanceSettings, templateSrv as any, {} as any);
-  datasource.metricFindQuery = async () => [{ value: 'test', label: 'test' }];
+  datasource.metricFindQuery = async () => [{ value: 'test', label: 'test', text: 'test' }];
 
   const props: Props = {
     query: {

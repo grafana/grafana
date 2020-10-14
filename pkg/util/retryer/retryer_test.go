@@ -12,7 +12,7 @@ func TestMaxRetries(t *testing.T) {
 
 	Retry(func() (RetrySignal, error) {
 		retryVal++
-		return Failure, nil
+		return FuncFailure, nil
 	}, 8, 100*time.Millisecond, 100*time.Millisecond)
 
 	assert.Equal(t, 8, retryVal)
