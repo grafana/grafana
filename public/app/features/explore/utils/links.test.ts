@@ -57,7 +57,11 @@ describe('getFieldLinksForExplore', () => {
       links[0].onClick({});
     }
 
-    expect(splitfn).toBeCalledWith({ datasourceUid: 'uid_1', query: { query: 'query_1' } });
+    expect(splitfn).toBeCalledWith({
+      datasourceUid: 'uid_1',
+      query: { query: 'query_1' },
+      range,
+    });
   });
 });
 
@@ -100,8 +104,8 @@ function setup(link: DataLink) {
   };
 
   const range: TimeRange = {
-    from: dateTime(),
-    to: dateTime(),
+    from: dateTime('2020-10-14T00:00:00'),
+    to: dateTime('2020-10-14T01:00:00'),
     raw: {
       from: 'now-1h',
       to: 'now',
