@@ -16,21 +16,8 @@ import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
 import { colors, useTheme } from '@grafana/ui';
-import {
-  TraceData,
-  TraceSpanData,
-  Trace,
-  TraceSpan,
-  TraceKeyValuePair,
-  TraceLink,
-  mapInternalLinkToExplore,
-  DataLink,
-  dateTime,
-  TimeRange,
-  Field,
-} from '@grafana/data';
-import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import { getDataSourceSrv, getTemplateSrv, config } from '@grafana/runtime';
+import { TraceData, TraceSpanData, Trace, TraceSpan, TraceKeyValuePair, TraceLink } from '@grafana/data';
+import { createSpanLinkFactory } from './createSpanLink';
 
 type Props = {
   trace: TraceData & { spans: TraceSpanData[] };
@@ -162,64 +149,4 @@ export function TraceView(props: Props) {
       </UIElementsContext.Provider>
     </ThemeProvider>
   );
-}
-
-const allowedKeys = ['cluster', 'hostname', 'namespace', 'pod'];
-
-function createSpanLinkFactory(splitOpenFn: (options: { datasourceUid: string; query: any }) => void) {
-  if (!config.featureToggles.traceToLogs) {
-    return undefined;
-  }
-
-  // Right now just hardcoded for first loki DS we can find
-  const lokiDs = getDataSourceSrv()
-    .getExternal()
-    .find(ds => ds.meta.id === 'loki');
-
-  if (!lokiDs) {
-    return undefined;
-  }
-
-  return function(span: TraceSpan) {
-    const tags = span.process.tags.reduce((acc, tag) => {
-      if (allowedKeys.includes(tag.key)) {
-        acc.push(`${tag.key}="${tag.value}"`);
-      }
-      return acc;
-    }, [] as string[]);
-    const query = `{${tags.join(', ')}}`;
-
-    const dataLink: DataLink<LokiQuery> = {
-      title: 'Loki',
-      url: '',
-      internal: {
-        datasourceUid: lokiDs!.uid,
-        query: {
-          expr: query,
-          refId: '',
-        },
-      },
-    };
-    const range: TimeRange = {
-      from: dateTime(span.startTime / 1000),
-      to: dateTime(span.startTime / 1000 + span.duration / 1000),
-      // Weirdly this needs to be string because Explore does not handle ISO string which would have been in the
-      // URL if we just left this as object :( .
-      // TODO: fix that somewhere, ideally just allow ISO string dates in the url
-      raw: {
-        from: dateTime(span.startTime / 1000)
-          .valueOf()
-          .toString(),
-        to: dateTime(span.startTime / 1000 + span.duration / 1000)
-          .valueOf()
-          .toString(),
-      },
-    };
-    const link = mapInternalLinkToExplore(dataLink, {}, range, {} as Field, {
-      onClickFn: splitOpenFn,
-      replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-      getDataSourceSettingsByUid: getDataSourceSrv().getDataSourceSettingsByUid.bind(getDataSourceSrv()),
-    });
-    return { href: link.href, onClick: link.onClick, content: 'Link to loki' };
-  };
 }

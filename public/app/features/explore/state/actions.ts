@@ -678,7 +678,11 @@ export function splitClose(itemId: ExploreId): ThunkResult<void> {
  * Otherwise it copies the left state to be the right state. The copy keeps all query modifications but wipes the query
  * results.
  */
-export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: string; query: T }): ThunkResult<void> {
+export function splitOpen<T extends DataQuery = any>(options?: {
+  datasourceUid: string;
+  query: T;
+  range?: TimeRange;
+}): ThunkResult<void> {
   return async (dispatch, getState) => {
     // Clone left state to become the right state
     const leftState: ExploreItemState = getState().explore[ExploreId.left];
@@ -688,7 +692,6 @@ export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: 
     const queryState = getState().location.query[ExploreId.left] as string;
     const urlState = parseUrlState(queryState);
 
-    console.log({ options });
     if (options) {
       rightState.queries = [];
       rightState.graphResult = null;
@@ -697,6 +700,10 @@ export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: 
       rightState.queryKeys = [];
       urlState.queries = [];
       rightState.urlState = urlState;
+      if (options.range) {
+        urlState.range = options.range.raw;
+        rightState.range = options.range;
+      }
 
       dispatch(splitOpenAction({ itemState: rightState }));
 
@@ -709,7 +716,6 @@ export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: 
 
       const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.datasourceUid);
 
-      console.log({ queries });
       await dispatch(changeDatasource(ExploreId.right, dataSourceSettings!.name));
       await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
       await dispatch(runQueries(ExploreId.right));
