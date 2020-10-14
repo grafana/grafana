@@ -13,6 +13,7 @@ import {
   FieldColorModeId,
   getFieldColorMode,
   getColorForTheme,
+  FALLBACK_COLOR,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -131,8 +132,8 @@ export class BarGauge extends PureComponent<Props> {
     const { value, display } = this.props;
     if (positionValue === null) {
       return {
-        background: 'gray',
-        border: 'gray',
+        background: FALLBACK_COLOR,
+        border: FALLBACK_COLOR,
       };
     }
 
@@ -165,8 +166,8 @@ export class BarGauge extends PureComponent<Props> {
     }
 
     return {
-      background: 'gray',
-      border: 'gray',
+      background: FALLBACK_COLOR,
+      border: FALLBACK_COLOR,
     };
   }
 
@@ -560,7 +561,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
     return gradient + ')';
   }
 
-  return 'gray';
+  return FALLBACK_COLOR;
 }
 
 /**
@@ -572,7 +573,7 @@ export function getValueColor(props: Props): string {
     return value.color;
   }
 
-  return 'gray';
+  return FALLBACK_COLOR;
 }
 
 function getValueStyles(
@@ -583,7 +584,7 @@ function getValueStyles(
   orientation: VizOrientation
 ): CSSProperties {
   const styles: CSSProperties = {
-    color: color,
+    color,
     height: `${height}px`,
     width: `${width}px`,
     display: 'flex',
