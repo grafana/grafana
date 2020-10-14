@@ -24,9 +24,9 @@ export enum PluginSignatureStatus {
 }
 
 export enum PluginErrorCode {
-  invalid = 'invalid',
-  modified = 'modified',
-  unsigned = 'unsigned',
+  signatureInvalid = 'signatureInvalid',
+  signatureModified = 'signatureModified',
+  signatureMissing = 'signatureMissing',
 }
 
 export interface PluginMeta<T extends KeyValue = {}> {

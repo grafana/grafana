@@ -14,13 +14,13 @@ type PluginErrorHelper = {
 };
 
 const ErrorDetails: PluginErrorHelper = {
-  [PluginErrorCode.unsigned]: {
+  [PluginErrorCode.signatureMissing]: {
     message: '<span class="fa fa-exclamation-circle"></span> This plugin cannot run as it is not signed',
   },
-  [PluginErrorCode.modified]: {
+  [PluginErrorCode.signatureModified]: {
     message: '<span class="fa fa-exclamation-circle"></span> The plugin cannot run as the signature has been modified',
   },
-  [PluginErrorCode.invalid]: {
+  [PluginErrorCode.signatureInvalid]: {
     message: '<span class="fa fa-exclamation-circle"></span> The plugin cannot run as the signature is invalid',
   },
 };
