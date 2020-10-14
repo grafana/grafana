@@ -34,8 +34,10 @@ const CardInner: FC<CardInnerProps> = ({ children, href }) => {
 export interface Props extends ContainerProps {
   /** Main heading for the Card **/
   title: string;
-  /** Card description text or meta data. If array is supplied, elements will be rendered with vertical line separator */
+  /** Additional data about the card. If array is supplied, elements will be rendered with vertical line separator */
   metaData?: ReactNode | ReactNode[];
+  /** Card description text */
+  description?: string;
   /** Content for the card's tooltip */
   tooltip?: PopoverContent;
   /** List of tags to display in the card */
@@ -58,6 +60,7 @@ export interface Props extends ContainerProps {
 
 export const Card: FC<Props> = ({
   title,
+  description,
   metaData,
   tags = [],
   onTagClick,
@@ -96,6 +99,7 @@ export const Card: FC<Props> = ({
             <p className={styles.title}>{title}</p>
             {meta && <p className={styles.metaData}>{meta}</p>}
             {!!tags.length && <TagList tags={tags} onClick={onTagClick} className={styles.tagList} />}
+            {description && <p className={styles.description}>{description}</p>}
             {hasActions && (
               <div className={styles.actionRow}>
                 {!!actions.length && <div className={styles.actions}>{actions}</div>}
@@ -138,11 +142,18 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
     title: css`
       margin-bottom: 0;
       font-size: ${theme.typography.size.md};
+      line-height: ${theme.typography.lineHeight.xs};
     `,
     metaData: css`
       font-size: ${theme.typography.size.sm};
       color: ${theme.colors.textSemiWeak};
-      margin-bottom: 0;
+      margin: ${theme.spacing.sm} 0 0;
+      line-height: ${theme.typography.lineHeight.xs};
+    `,
+    description: css`
+      margin: ${theme.spacing.sm} 0 0;
+      color: ${theme.colors.textSemiWeak};
+      line-height: ${theme.typography.lineHeight.md};
     `,
     overlay: css`
       position: absolute;

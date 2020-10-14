@@ -29,7 +29,7 @@ export const Basic = () => {
   return (
     <Card
       title="Filter by name"
-      metaData="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
+      description="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
       disabled={disabled}
     />
   );
@@ -41,7 +41,7 @@ export const AsLink = () => {
     <Card
       href="https://grafana.com"
       title="Filter by name"
-      metaData="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
+      description="Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel."
       disabled={disabled}
     />
   );
@@ -52,7 +52,7 @@ export const WithTooltip = () => {
   return (
     <Card
       title="Reduce"
-      metaData="Reduce all rows or data points to a single value using a function like max, min, mean or last."
+      description="Reduce all rows or data points to a single value using a function like max, min, mean or last."
       tooltip="Click to apply this transformation."
       disabled={disabled}
     />
