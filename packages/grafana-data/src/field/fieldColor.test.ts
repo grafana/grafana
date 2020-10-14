@@ -3,7 +3,7 @@ import { fieldColorModeRegistry, FieldValueColorCalculator } from './fieldColor'
 
 describe('fieldColorModeRegistry', () => {
   interface GetCalcOptions {
-    mode: FieldColorModeId;
+    mode: string;
     seriesIndex?: number;
   }
 
@@ -16,7 +16,7 @@ describe('fieldColorModeRegistry', () => {
   }
 
   it('Schemes should interpolate', () => {
-    const calcFn = getCalculator({ mode: FieldColorModeId.ContinousGrYlRd });
+    const calcFn = getCalculator({ mode: 'continuous-GrYlRd' });
     expect(calcFn(70, 0.5, undefined)).toEqual('rgb(226, 192, 61)');
   });
 
