@@ -80,7 +80,11 @@ func (g *logQueryRunner) GetChannelOptions(id string) centrifuge.ChannelOptions 
 func (g *logQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
 	if _, ok := g.running[e.Channel]; !ok {
 		g.running[e.Channel] = true
-		go g.publishResults(e.Channel)
+		go func() {
+			if err := g.publishResults(e.Channel); err != nil {
+				plog.Error(err.Error())
+			}
+		}()
 	}
 
 	return nil
@@ -108,7 +112,9 @@ func (g *logQueryRunner) publishResults(channelName string) error {
 			return err
 		}
 
-		g.publish(channelName, responseBytes)
+		if err := g.publish(channelName, responseBytes); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -117,9 +123,11 @@ func (g *logQueryRunner) publishResults(channelName string) error {
 func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	responseChannelName := uuid.Must(uuid.NewV4()).String()
 	responseChannel := make(chan *tsdb.Response)
-	addResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel)
-	requestContext, _ := context.WithTimeout(context.Background(), 15*time.Minute)
-	go e.sendLiveQueriesToChannel(requestContext, queryContext, responseChannel)
+	if err := addResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel); err != nil {
+		return nil, err
+	}
+
+	go e.sendLiveQueriesToChannel(queryContext, responseChannel)
 
 	response := &tsdb.Response{
 		Results: map[string]*tsdb.QueryResult{
@@ -135,8 +143,10 @@ func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryConte
 	return response, nil
 }
 
-func (e *cloudWatchExecutor) sendLiveQueriesToChannel(ctx context.Context, queryContext *tsdb.TsdbQuery, responseChannel chan *tsdb.Response) {
-	eg, ectx := errgroup.WithContext(ctx)
+func (e *cloudWatchExecutor) sendLiveQueriesToChannel(queryContext *tsdb.TsdbQuery, responseChannel chan *tsdb.Response) {
+	requestContext, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	defer cancel()
+	eg, ectx := errgroup.WithContext(requestContext)
 
 	for _, query := range queryContext.Queries {
 		query := query
@@ -179,7 +189,7 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 	}
 
 	recordsMatched := 0.0
-	util.Retry(func() (util.RetrySignal, error) {
+	return util.Retry(func() (util.RetrySignal, error) {
 		getQueryResultsOutput, err := logsClient.GetQueryResultsWithContext(ctx, queryResultsInput)
 		if err != nil {
 			return util.FuncError, err
@@ -195,7 +205,7 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 
 		dataFrame.Name = query.RefId
 		dataFrame.RefID = query.RefId
-		dataFrames := data.Frames{}
+		var dataFrames data.Frames
 
 		// When a query of the form "stats ... by ..." is made, we want to return
 		// one series per group defined in the query, but due to the format
@@ -237,10 +247,8 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 			return util.FuncComplete, nil
 		} else if retryNeeded {
 			return util.FuncFailure, nil
-		} else {
-			return util.FuncSuccess, nil
 		}
-	}, maxAttempts, minRetryDelay, maxRetryDelay)
 
-	return nil
+		return util.FuncSuccess, nil
+	}, maxAttempts, minRetryDelay, maxRetryDelay)
 }
