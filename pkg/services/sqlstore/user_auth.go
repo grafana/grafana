@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -265,7 +264,7 @@ func decodeAndDecrypt(s string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	decrypted, err := util.Decrypt(decoded, setting.SecretKey)
+	decrypted, err := util.Decrypt(decoded)
 	if err != nil {
 		return "", err
 	}
@@ -275,7 +274,7 @@ func decodeAndDecrypt(s string) (string, error) {
 // encryptAndEncode will encrypt a string with grafana's secretKey, and
 // then encode it with the standard bas64 encoder
 func encryptAndEncode(s string) (string, error) {
-	encrypted, err := util.Encrypt([]byte(s), setting.SecretKey)
+	encrypted, err := util.Encrypt([]byte(s))
 	if err != nil {
 		return "", err
 	}

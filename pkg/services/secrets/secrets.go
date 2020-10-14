@@ -3,9 +3,17 @@ package secrets
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"time"
+
+	"github.com/grafana/grafana/pkg/util"
+
+	"github.com/grafana/grafana/pkg/bus"
+
+	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
@@ -17,8 +25,10 @@ var logger = log.New("secrets")
 
 type Secrets struct {
 	store *sqlstore.SqlStore `inject:""`
+	bus   bus.Bus            `inject:""`
 
 	defaultEncryptionKey string
+	defaultProvider      string
 	providers            map[string]Provider
 	dataKeyCache         map[string]dataKeyCacheItem
 }
@@ -42,6 +52,46 @@ func (s *Secrets) Init() error {
 		},
 	}
 
+	base_key := "root"
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, err := s.store.GetDataKey(ctx, base_key)
+	if err != nil {
+		if errors.Is(err, models.ErrDataKeyNotFound) {
+			err = s.newRandomDataKey(ctx, base_key)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	util.Encrypt = s.Encrypt
+	util.Decrypt = s.Decrypt
+
+	return nil
+}
+
+func (s *Secrets) newRandomDataKey(ctx context.Context, base_key string) error {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		return err
+	}
+
+	encrypted, err := s.Encrypt(b)
+	if err != nil {
+		return err
+	}
+
+	err = s.store.CreateDataKey(ctx, models.DataKey{
+		Active:        true,
+		Name:          base_key,
+		Provider:      s.defaultProvider,
+		EncryptedData: encrypted,
+	})
 	return nil
 }
 
