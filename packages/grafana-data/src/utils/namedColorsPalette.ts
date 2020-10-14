@@ -1,6 +1,6 @@
 import flatten from 'lodash/flatten';
 import tinycolor from 'tinycolor2';
-import { GrafanaThemeType } from '../types/theme';
+import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 
 type Hue = 'green' | 'yellow' | 'red' | 'blue' | 'orange' | 'purple';
 
@@ -49,6 +49,8 @@ export type ColorDefinition = {
 };
 
 let colorsPaletteInstance: Map<Hue, ColorDefinition[]>;
+let colorsMap: Record<Color, string> | undefined;
+let colorsMapTheme: GrafanaTheme | undefined;
 
 const buildColorDefinition = (
   hue: Hue,
@@ -65,61 +67,59 @@ const buildColorDefinition = (
   isPrimary: !!isPrimary,
 });
 
-export const getColorDefinitionByName = (name: Color): ColorDefinition => {
+export function getColorDefinitionByName(name: Color): ColorDefinition {
   return flatten(Array.from(getNamedColorPalette().values())).filter(definition => definition.name === name)[0];
-};
+}
 
-export const getColorDefinition = (hex: string, theme: GrafanaThemeType): ColorDefinition | undefined => {
-  return flatten(Array.from(getNamedColorPalette().values())).filter(
-    definition => definition.variants[theme] === hex
-  )[0];
-};
+export function buildColorsMapForTheme(theme: GrafanaTheme): Record<Color, string> {
+  theme = theme ?? GrafanaThemeType.Dark;
 
-const isHex = (color: string) => {
-  const hexRegex = /^((0x){0,1}|#{0,1})([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{3})$/gi;
-  return hexRegex.test(color);
-};
+  colorsMap = {} as Record<Color, string>;
 
-export const getColorName = (color?: string, theme?: GrafanaThemeType): Color | undefined => {
+  for (const def of getNamedColorPalette().values()) {
+    for (const c of def) {
+      colorsMap[c.name] = c.variants[theme.type];
+    }
+  }
+
+  return colorsMap;
+}
+
+export function getColorForTheme(color: string, theme: GrafanaTheme): string {
   if (!color) {
-    return undefined;
+    return 'gray';
+  }
+
+  // check if we need to rebuild cache
+  if (!colorsMap || colorsMapTheme !== theme) {
+    colorsMap = buildColorsMapForTheme(theme);
+    colorsMapTheme = theme;
+  }
+
+  let realColor = colorsMap[color as Color];
+  if (realColor) {
+    return realColor;
+  }
+
+  if (color[0] === '#') {
+    return (colorsMap[color as Color] = color);
   }
 
   if (color.indexOf('rgb') > -1) {
-    return undefined;
-  }
-  if (isHex(color)) {
-    const definition = getColorDefinition(color, theme || GrafanaThemeType.Dark);
-    return definition ? definition.name : undefined;
+    return (colorsMap[color as Color] = color);
   }
 
-  return color as Color;
-};
+  return (colorsMap[color as Color] = tinycolor(color).toHexString());
+}
 
-export const getColorByName = (colorName: string) => {
-  const definition = flatten(Array.from(getNamedColorPalette().values())).filter(
-    definition => definition.name === colorName
-  );
-  return definition.length > 0 ? definition[0] : undefined;
-};
+/**
+ * @deprecated use getColorForTheme
+ */
+export function getColorFromHexRgbOrName(color: string, type?: GrafanaThemeType): string {
+  const themeType = type ?? GrafanaThemeType.Dark;
 
-export const getColorFromHexRgbOrName = (color: string, theme?: GrafanaThemeType): string => {
-  if (color.indexOf('rgb') > -1 || isHex(color)) {
-    return color;
-  }
-
-  const colorDefinition = getColorByName(color);
-
-  if (!colorDefinition) {
-    return new tinycolor(color).toHexString();
-  }
-
-  return theme ? colorDefinition.variants[theme] : colorDefinition.variants.dark;
-};
-
-export const getColorForTheme = (color: ColorDefinition, theme?: GrafanaThemeType) => {
-  return theme ? color.variants[theme] : color.variants.dark;
-};
+  return getColorForTheme(color, ({ type: themeType } as unknown) as GrafanaTheme);
+}
 
 const buildNamedColorsPalette = () => {
   const palette = new Map<Hue, ColorDefinition[]>();

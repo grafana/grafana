@@ -1,9 +1,10 @@
 import 'vendor/flot/jquery.flot';
 import $ from 'jquery';
 import _ from 'lodash';
-import { getColorFromHexRgbOrName } from '@grafana/data';
+import { getColorForTheme } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
+import { config } from 'app/core/config';
 
 export class ThresholdManager {
   plot: any;
@@ -228,12 +229,12 @@ export class ThresholdManager {
         if (threshold.yaxis === 'right' && this.hasSecondYAxis) {
           options.grid.markings.push({
             y2axis: { from: threshold.value, to: limit },
-            color: getColorFromHexRgbOrName(fillColor),
+            color: getColorForTheme(fillColor, config.theme),
           });
         } else {
           options.grid.markings.push({
             yaxis: { from: threshold.value, to: limit },
-            color: getColorFromHexRgbOrName(fillColor),
+            color: getColorForTheme(fillColor, config.theme),
           });
         }
       }
@@ -241,12 +242,12 @@ export class ThresholdManager {
         if (threshold.yaxis === 'right' && this.hasSecondYAxis) {
           options.grid.markings.push({
             y2axis: { from: threshold.value, to: threshold.value },
-            color: getColorFromHexRgbOrName(lineColor),
+            color: getColorForTheme(lineColor, config.theme),
           });
         } else {
           options.grid.markings.push({
             yaxis: { from: threshold.value, to: threshold.value },
-            color: getColorFromHexRgbOrName(lineColor),
+            color: getColorForTheme(lineColor, config.theme),
           });
         }
       }
