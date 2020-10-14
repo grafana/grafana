@@ -38,7 +38,7 @@ Some features might require more memory or CPUs. Features require more resources
 
 - [Server side rendering of images]({{< relref "../administration/image_rendering/#requirements" >}})
 - [Alerting]({{< relref "../alerting/alerts-overview" >}})
-- Data source proxy
+- [Data source proxy]({{< relref "../http_api/data_source" >}})
 
 ## Supported databases
 
