@@ -208,6 +208,70 @@ Cards also accept primary and secondary actions. Usually the primary actions are
     ]}
   />
 </Preview>
+
+### Disabled state
+
+A Card can have a disabled state, effectively making it and its actions non-clickable. If there is more than one primary action, disabled state will disable them instead of the whole card.
+
+```jsx
+ <Card
+  title="1-ops-tools1-fallback"
+  metaData={[
+    'Prometheus',
+    <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+  ]}
+  mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+  disabled
+/>
+```
+
+<Preview>
+  <Card
+    title="1-ops-tools1-fallback"
+    metaData={[
+      'Prometheus',
+      <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+    ]}
+    mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+    disabled
+  />
+</Preview>
+
+```jsx
+ <Card
+  title="1-ops-tools1-fallback"
+  metaData={[
+    'Prometheus',
+    <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+  ]}
+  mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+  actions={[<Button variant="secondary">Settings</Button>, <Button variant="secondary">Explore</Button>]}
+  secondaryActions={[
+    <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />,
+    <IconButton key="delete" name="trash-alt" tooltip="Delete this data source" />,
+  ]}
+  disabled
+/>
+```
+
+<Preview>
+  <Card
+    title="1-ops-tools1-fallback"
+    metaData={[
+      'Prometheus',
+      <a href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
+    ]}
+    mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+    actions={[<Button variant="secondary">Settings</Button>, <Button variant="secondary">Explore</Button>]}
+    secondaryActions={[
+      <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />,
+      <IconButton key="delete" name="trash-alt" tooltip="Delete this data source" />,
+    ]}
+    disabled
+  />
+</Preview>
+
+
 ### Props
 <Props of={Card}/>
 

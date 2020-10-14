@@ -1,4 +1,4 @@
-import React, { FC, HTMLAttributes, ReactNode } from 'react';
+import React, { cloneElement, FC, HTMLAttributes, ReactElement, ReactNode } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme, styleMixins } from '../../themes';
@@ -49,9 +49,9 @@ export interface Props extends ContainerProps {
   /** Image or icon to be displayed on the let side of the card */
   mediaContent?: ReactNode;
   /** Main card actions **/
-  actions?: ReactNode[];
+  actions?: ReactElement[];
   /** Right-side actions */
-  secondaryActions?: ReactNode[];
+  secondaryActions?: ReactElement[];
   /** Link to redirect to on card click. If provided, the Card inner content will be rendered inside `a` */
   href?: string;
   /** On click handler for the Card */
@@ -76,7 +76,7 @@ export const Card: FC<Props> = ({
   ...htmlProps
 }) => {
   const hasActions = Boolean(actions.length || secondaryActions.length);
-  const disableHover = actions.length > 1;
+  const disableHover = disabled || actions.length > 1;
   const theme = useTheme();
   const styles = getStyles(theme, disabled && !actions.length, disableHover);
   // Join meta data elements by '|'
@@ -89,7 +89,7 @@ export const Card: FC<Props> = ({
         curr,
       ])
     : metaData;
-  const onCardClick = disabled ? () => {} : onClick;
+  const onCardClick = disabled || disableHover ? () => {} : onClick;
   return (
     <Tooltip placement="top" content={tooltip} theme="info" show={!!tooltip} {...htmlProps}>
       <CardContainer tag={tag} tabIndex={0} className={cx(styles.container, className)} onClick={onCardClick}>
@@ -102,7 +102,9 @@ export const Card: FC<Props> = ({
             {description && <p className={styles.description}>{description}</p>}
             {hasActions && (
               <div className={styles.actionRow}>
-                {!!actions.length && <div className={styles.actions}>{actions}</div>}
+                {!!actions.length && (
+                  <div className={styles.actions}>{actions.map(action => cloneElement(action, { disabled }))}</div>
+                )}
                 {!!secondaryActions.length && <div className={styles.secondaryActions}>{secondaryActions}</div>}
               </div>
             )}
