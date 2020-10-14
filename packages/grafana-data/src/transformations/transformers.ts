@@ -1,5 +1,6 @@
 import { appendTransformer } from './transformers/append';
 import { reduceTransformer } from './transformers/reduce';
+import { concatenateTransformer } from './transformers/concat';
 import { calculateFieldTransformer } from './transformers/calculateField';
 import { filterFieldsTransformer, filterFramesTransformer } from './transformers/filter';
 import { filterFieldsByNameTransformer } from './transformers/filterByName';
@@ -25,6 +26,7 @@ export const standardTransformers = {
   organizeFieldsTransformer,
   appendTransformer,
   reduceTransformer,
+  concatenateTransformer,
   calculateFieldTransformer,
   seriesToColumnsTransformer,
   seriesToRowsTransformer,
