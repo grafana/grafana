@@ -1,5 +1,5 @@
 import { FALLBACK_COLOR, Field, FieldColorModeId, GrafanaTheme, Threshold } from '../types';
-import { classicColors, getColorFromHexRgbOrName, RegistryItem } from '../utils';
+import { classicColors, getColorForTheme, RegistryItem } from '../utils';
 import { Registry } from '../utils/Registry';
 import { interpolateRgbBasis } from 'd3-interpolate';
 import { fallBackTreshold } from './thresholds';
@@ -28,7 +28,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       getCalculator: (_field, theme) => {
         return (_value, _percent, threshold) => {
           const thresholdSafe = threshold ?? fallBackTreshold;
-          return getColorFromHexRgbOrName(thresholdSafe.color, theme.type);
+          return getColorForTheme(thresholdSafe.color, theme);
         };
       },
     },
@@ -54,7 +54,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
     // }),
     new FieldColorSchemeMode({
       id: FieldColorModeId.PaletteClassic,
-      name: 'By series: Classic palette',
+      name: 'By series / Classic palette',
       //description: 'Assigns color based on series or field index',
       isContinuous: false,
       isByValue: false,
@@ -62,7 +62,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
     }),
     new FieldColorSchemeMode({
       id: 'continuous-GrYlRd',
-      name: 'By value: Green Yellow Red (gradient)',
+      name: 'By value / Green Yellow Red (gradient)',
       //description: 'Interpolated colors based value, min and max',
       isContinuous: true,
       isByValue: true,
@@ -104,7 +104,7 @@ export class FieldColorSchemeMode implements FieldColorMode {
       return this.colorCache;
     }
 
-    this.colorCache = this.colors.map(c => getColorFromHexRgbOrName(c, theme.type));
+    this.colorCache = this.colors.map(c => getColorForTheme(c, theme));
     return this.colorCache;
   }
 
@@ -149,6 +149,6 @@ export function getFieldColorMode(mode?: FieldColorModeId): FieldColorMode {
 
 function getFixedColor(field: Field, theme: GrafanaTheme) {
   return () => {
-    return getColorFromHexRgbOrName(field.config.color?.fixedColor ?? FALLBACK_COLOR, theme.type);
+    return getColorForTheme(field.config.color?.fixedColor ?? FALLBACK_COLOR, theme);
   };
 }
