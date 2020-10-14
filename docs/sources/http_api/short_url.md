@@ -11,13 +11,13 @@ parent = "http_api"
 
 # Short URL API
 
-This API can be used to create shortened URLs. This allows URLs containing complex query parameters to be represented by smaller, simpler URLs of the format `/goto/:uid`.
+Use this API to create shortened URLs. A short URL represents a longer URL containing complex query parameters in a smaller and simpler format.
 
 ## Create short URL
 
 `POST /api/short-urls`
 
-Creates a new short URL.
+Creates a short URL.
 
 **Example request:**
 
