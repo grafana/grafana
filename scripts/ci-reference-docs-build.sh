@@ -21,7 +21,3 @@ yarn packages:docsExtract
 # generating api documentation markdown
 echo "generating markdown from documentation data..."
 yarn packages:docsToMarkdown
-
-# cleaning packages
-echo "cleaning up packages build files..."
-yarn packages:clean
