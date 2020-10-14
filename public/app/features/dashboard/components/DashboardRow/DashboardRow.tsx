@@ -3,10 +3,10 @@ import classNames from 'classnames';
 import { Icon } from '@grafana/ui';
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
-import templateSrv from 'app/features/templating/template_srv';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
 import { RowOptionsButton } from '../RowOptions/RowOptionsButton';
+import { getTemplateSrv } from '@grafana/runtime';
 
 export interface DashboardRowProps {
   panel: PanelModel;
@@ -69,7 +69,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       'dashboard-row--collapsed': this.state.collapsed,
     });
 
-    const title = templateSrv.replace(this.props.panel.title, this.props.panel.scopedVars, 'text');
+    const title = getTemplateSrv().replace(this.props.panel.title, this.props.panel.scopedVars, 'text');
     const count = this.props.panel.panels ? this.props.panel.panels.length : 0;
     const panels = count === 1 ? 'panel' : 'panels';
     const canEdit = this.props.dashboard.meta.canEdit === true;

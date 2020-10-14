@@ -3,54 +3,50 @@ title = "Permissions"
 description = "Permissions"
 keywords = ["grafana", "configuration", "documentation", "admin", "users", "datasources", "permissions"]
 type = "docs"
+aliases = ["/docs/grafana/latest/permissions/overview/"]
 [menu.docs]
 name = "Permissions"
 identifier = "permissions"
-parent = "admin"
-weight = 3
+weight = 50
 +++
 
-# Permissions overview
+# Permissions
 
-Grafana users have permissions that are determined by their:
+What you can do in Grafana is defined by the _permissions_ associated with your user account.
 
-- **Organization Role** (Admin, Editor, Viewer)
-- Via **Team** memberships where the **Team** has been assigned specific permissions.
-- Via permissions assigned directly to user (on folders, dashboards, data sources)
-- The Grafana Admin (i.e. Super Admin) user flag.
+There are three types of permissions:
+- Permissions granted as a Grafana server admin
+- Permissions associated with your role in an organization
+- Permissions granted to a specific folder or dashboard
 
-## Users
+You can be granted permissions based on:
+- Grafana server admin status
+- Organization role (Admin, Editor, or Viewer)
+- Folder or dashboard permissions assigned to your team (Admin, Editor, or Viewer)
+- Folder or dashboard permissions assigned to your user account (Admin, Editor, or Viewer)
+- (Grafana Enterprise) Data source permissions. For more information, refer to [Data source permissions]({{< relref "../enterprise/datasource_permissions.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
-Grafana supports a wide variety of internal and external ways for users to authenticate themselves. These include from its own integrated database, from an external SQL server, or from an external LDAP server.
+## Grafana server admin
 
-## Grafana Admin
+Grafana server admins have the **Grafana Admin** flag enabled on their account. They can access the **Server Admin** menu and perform the following tasks:
 
-This admin flag makes user a `Super Admin`. This means they can access the `Server Admin` views where all users and organizations can be administrated.
+- Manage users and permissions.
+- Create, edit, and delete organizations.
+- View server-wide settings that are set in the [Configuration]({{< relref "../administration/configuration.md" >}}) file.
+- View Grafana server stats, including total users and active sessions.
+- Upgrade the server to Grafana Enterprise.
 
-## Organization Roles
+## Organization roles
 
-Users can belong to one or more organizations. A user's organization membership is tied to a role that defines what the user is allowed to do
-in that organization. Grafana supports multiple *organizations* in order to support a wide variety of deployment models, including using a single Grafana instance to provide service to multiple potentially untrusted organizations.
+Users can belong to one or more organizations. A user's organization membership is tied to a role that defines what the user is allowed to do in that organization. For more information, refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}).
 
-In most cases, Grafana is deployed with a single organization.
+## Dashboard and folder permissions
 
-Each organization can have one or more data sources.
-
-All dashboards are owned by a particular organization.
-
- > Note: Most metric databases do not provide per-user series authentication. This means that organization data sources and dashboards are available to all users in a particular organization.
-
-Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information.
-
-
-## Dashboard and Folder Permissions
-
-Dashboard and folder permissions allow you to remove the default role based permissions for Editors and Viewers and assign permissions to specific **Users** and **Teams**. Learn more about [Dashboard and Folder Permissions]({{< relref "dashboard_folder_permissions.md" >}}).
+Dashboard and folder permissions allow you to remove the default role based permissions for Editors and Viewers and assign permissions to specific users and teams. Learn more about [Dashboard and folder permissions]({{< relref "dashboard_folder_permissions.md" >}}).
 
 ## Data source permissions
 
 Per default, a data source in an organization can be queried by any user in that organization. For example a user with `Viewer` role can still
 issue any possible query to a data source, not just those queries that exist on dashboards he/she has access to.
 
-Data source permissions allows you to change the default permissions for data sources and restrict query permissions to specific **Users** and **Teams**. Read more about [data source permissions]({{< relref "datasource_permissions.md" >}}).
-
+Data source permissions allows you to change the default permissions for data sources and restrict query permissions to specific **Users** and **Teams**. For more information, refer to [Data source permissions]({{< relref "../enterprise/datasource_permissions.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise" >}}).

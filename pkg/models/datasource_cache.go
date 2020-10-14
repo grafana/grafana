@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -68,11 +69,19 @@ type dataSourceTransport struct {
 	datasourceName string
 	headers        map[string]string
 	transport      *http.Transport
+	next           http.RoundTripper
 }
 
 func instrumentRoundtrip(datasourceName string, next http.RoundTripper) promhttp.RoundTripperFunc {
 	return promhttp.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
-		datasourceLabel := prometheus.Labels{"datasource": datasourceName}
+		datasourceLabelName, err := metricutil.SanitizeLabelName(datasourceName)
+		// if the datasource named cannot be turned into a prometheus
+		// label we will skip instrumenting these metrics.
+		if err != nil {
+			return next.RoundTrip(r)
+		}
+
+		datasourceLabel := prometheus.Labels{"datasource": datasourceLabelName}
 
 		requestCounter := datasourceRequestCounter.MustCurryWith(datasourceLabel)
 		requestSummary := datasourceRequestSummary.MustCurryWith(datasourceLabel)
@@ -100,7 +109,7 @@ func (d *dataSourceTransport) RoundTrip(req *http.Request) (*http.Response, erro
 		req.Header.Set(key, value)
 	}
 
-	return instrumentRoundtrip(d.datasourceName, d.transport).RoundTrip(req)
+	return instrumentRoundtrip(d.datasourceName, d.next).RoundTrip(req)
 }
 
 type cachedTransport struct {
@@ -125,6 +134,7 @@ func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	}, nil
 }
 
+// Creates a HTTP Transport middleware chain
 func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	ptc.Lock()
 	defer ptc.Unlock()
@@ -147,18 +157,27 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 		Proxy:           http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
 			Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
-			KeepAlive: 30 * time.Second,
+			KeepAlive: time.Duration(setting.DataProxyKeepAlive) * time.Second,
 		}).Dial,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
+		ExpectContinueTimeout: time.Duration(setting.DataProxyExpectContinueTimeout) * time.Second,
+		MaxIdleConns:          setting.DataProxyMaxIdleConns,
+		IdleConnTimeout:       time.Duration(setting.DataProxyIdleConnTimeout) * time.Second,
+	}
+
+	// Set default next round tripper to the default transport
+	next := http.RoundTripper(transport)
+
+	// Add SigV4 middleware if enabled, which will then defer to the default transport
+	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool() && setting.SigV4AuthEnabled {
+		next = ds.sigV4Middleware(transport)
 	}
 
 	dsTransport := &dataSourceTransport{
+		datasourceName: ds.Name,
 		headers:        customHeaders,
 		transport:      transport,
-		datasourceName: ds.Name,
+		next:           next,
 	}
 
 	ptc.cache[ds.Id] = cachedTransport{
@@ -167,6 +186,23 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	}
 
 	return dsTransport, nil
+}
+
+func (ds *DataSource) sigV4Middleware(next http.RoundTripper) http.RoundTripper {
+	decrypted := ds.DecryptedValues()
+
+	return &SigV4Middleware{
+		Config: &Config{
+			AccessKey:     decrypted["sigV4AccessKey"],
+			SecretKey:     decrypted["sigV4SecretKey"],
+			Region:        ds.JsonData.Get("sigV4Region").MustString(),
+			AssumeRoleARN: ds.JsonData.Get("sigV4AssumeRoleArn").MustString(),
+			AuthType:      ds.JsonData.Get("sigV4AuthType").MustString(),
+			ExternalID:    ds.JsonData.Get("sigV4ExternalId").MustString(),
+			Profile:       ds.JsonData.Get("sigV4Profile").MustString(),
+		},
+		Next: next,
+	}
 }
 
 func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {

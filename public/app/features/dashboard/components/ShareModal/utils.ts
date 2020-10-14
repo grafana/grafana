@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import templateSrv from 'app/features/templating/template_srv';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { PanelModel, dateTime, urlUtil } from '@grafana/data';
 
 export function buildParams(
@@ -22,7 +22,7 @@ export function buildParams(
   }
 
   if (includeTemplateVars) {
-    templateSrv.fillVariableValuesForUrl(params);
+    getTemplateSrv().fillVariableValuesForUrl(params);
   }
 
   if (selectedTheme !== 'current') {
@@ -36,6 +36,15 @@ export function buildParams(
   }
 
   return params;
+}
+
+export function buildHostUrl() {
+  return `${window.location.protocol}//${window.location.host}${config.appSubUrl}`;
+}
+
+export function getRelativeURLPath(url: string) {
+  let p = url.replace(buildHostUrl(), '');
+  return p.startsWith('/') ? p.substring(1, p.length) : p;
 }
 
 export function buildBaseUrl() {
@@ -102,6 +111,11 @@ export function buildIframeHtml(
 ) {
   let soloUrl = buildSoloUrl(useCurrentTimeRange, includeTemplateVars, selectedTheme, panel);
   return '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
+}
+
+export function buildShortUrl(uid: string) {
+  const hostUrl = buildHostUrl();
+  return `${hostUrl}/goto/${uid}`;
 }
 
 export function getLocalTimeZone() {

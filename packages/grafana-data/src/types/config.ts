@@ -34,6 +34,7 @@ export interface BuildInfo {
 export interface FeatureToggles {
   live: boolean;
   expressions: boolean;
+  ngalert: boolean;
 
   /**
    * @remarks
@@ -83,6 +84,7 @@ export interface GrafanaConfig {
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
   ldapEnabled: boolean;
+  sigV4AuthEnabled: boolean;
   samlEnabled: boolean;
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;

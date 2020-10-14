@@ -153,7 +153,7 @@ describe('runRequest', () => {
       });
     });
 
-    it('should emit 3 seperate results', () => {
+    it('should emit 3 separate results', () => {
       expect(ctx.results.length).toBe(3);
     });
 
@@ -266,7 +266,7 @@ describe('runRequest', () => {
       });
     });
 
-    it('should seperate annotations results', () => {
+    it('should separate annotations results', () => {
       expect(ctx.results[1].annotations?.length).toBe(1);
       expect(ctx.results[1].series.length).toBe(1);
     });

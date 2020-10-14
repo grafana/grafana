@@ -14,7 +14,7 @@ The *panel* is the basic visualization building block in Grafana. Each panel has
 
 With the exception of a few special use panels, a panel is a visual representation of one or more queries. The queries display data over time. This can range from temperature fluctuations to current server status to a list of logs or alerts.
 
-In order to display data, you need to have at least one data source added to Grafana. Refer to [Add a data source]({{< relref "../features/datasources/add-a-data-source.md" >}}) for instructions, or see our [Getting started]({{< relref "../getting-started/getting-started.md" >}}) guide if you want to make your first dashboard and panel using our TestData DB data source.
+In order to display data, you need to have at least one data source added to Grafana. Refer to [Add a data source]({{< relref "../datasources/add-a-data-source.md" >}}) for instructions, or see our [Getting started]({{< relref "../getting-started/getting-started.md" >}}) guide if you want to make your first dashboard and panel using our TestData DB data source.
 
 There are a wide variety of styling and formatting options for each panel. Panels can be dragged and dropped and rearranged on the dashboard. They can also be resized.
 
