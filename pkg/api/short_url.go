@@ -27,9 +27,15 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 		return Error(500, "Failed to create short URL", err)
 	}
 
-	c.Logger.Debug("Created short URL", "uid", shortURL.Uid)
+	url := path.Join(setting.AppUrl, "goto", shortURL.Uid)
+	c.Logger.Debug("Created short URL", "url", url)
 
-	return JSON(200, shortURL.Uid)
+	dto := dtos.ShortURL{
+		UID: shortURL.Uid,
+		URL: url,
+	}
+
+	return JSON(200, dto)
 }
 
 func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {

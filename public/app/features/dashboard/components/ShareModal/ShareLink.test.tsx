@@ -56,7 +56,10 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...original,
     getBackendSrv: () => ({
-      post: jest.fn().mockResolvedValue(mockUid),
+      post: jest.fn().mockResolvedValue({
+        uid: mockUid,
+        url: `http://localhost:3000/goto/${mockUid}`,
+      }),
     }),
   };
 });

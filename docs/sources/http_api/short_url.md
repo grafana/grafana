@@ -42,7 +42,11 @@ JSON body schema:
 HTTP/1.1 200
 Content-Type: application/json
 
-AT76wBvGk
+{
+  "uid": AT76wBvGk,
+  "url": http://localhost:3000/goto/AT76wBvGk
+}
+
 ```
 
 Status codes:

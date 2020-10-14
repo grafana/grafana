@@ -5,7 +5,7 @@ const { Select, Switch } = LegacyForms;
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { buildImageUrl, buildShareUrl, buildShortUrl, getRelativeURLPath } from './utils';
+import { buildImageUrl, buildShareUrl, getRelativeURLPath } from './utils';
 import { appEvents } from 'app/core/core';
 import config from 'app/core/config';
 
@@ -70,7 +70,7 @@ export class ShareLink extends PureComponent<Props, State> {
         .post(`/api/short-urls`, {
           path: getRelativeURLPath(shareUrl),
         })
-        .then(uid => this.setState({ shareUrl: buildShortUrl(uid), imageUrl }));
+        .then(res => this.setState({ shareUrl: res.url, imageUrl }));
     } else {
       this.setState({ shareUrl, imageUrl });
     }
