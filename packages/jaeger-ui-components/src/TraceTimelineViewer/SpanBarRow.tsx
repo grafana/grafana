@@ -449,6 +449,8 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                     href={link.href}
                     // Needs to have target otherwise preventDefault would not work due to angularRouter.
                     target={'_blank'}
+                    style={{ marginRight: '5px' }}
+                    rel="noopener noreferrer"
                     onClick={
                       link.onClick
                         ? event => {
