@@ -36,7 +36,7 @@ type CollapserProps = {
   onExpandAll: () => void;
 };
 
-export default function TimelineCollapser(props: CollapserProps) {
+export function TimelineCollapser(props: CollapserProps) {
   const { onExpandAll, onExpandOne, onCollapseAll, onCollapseOne } = props;
   const styles = getStyles();
   return (
