@@ -15,7 +15,9 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
       // NOT:  FieldConfigProperty.Thresholds,
       FieldConfigProperty.Mappings,
     ],
-
+    fieldColorSettings: {
+      noByValueSupport: true,
+    },
     useCustomConfig: builder => {
       builder
         .addBooleanSwitch({

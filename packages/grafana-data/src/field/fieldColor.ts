@@ -24,6 +24,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
     {
       id: FieldColorModeId.Thresholds,
       name: 'From thresholds',
+      isByValue: true,
       description: 'Derive colors from thresholds',
       getCalculator: (_field, theme) => {
         return (_value, _percent, threshold) => {

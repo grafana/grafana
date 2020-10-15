@@ -8,6 +8,7 @@ import {
   standardFieldConfigEditorRegistry,
   PanelData,
   DataSourceInstanceSettings,
+  FieldColorModeId,
 } from '@grafana/data';
 import { ComponentClass } from 'react';
 import { PanelQueryRunner } from './PanelQueryRunner';
@@ -55,7 +56,20 @@ export const mockStandardProperties = () => {
     shouldApply: () => true,
   };
 
-  return [unit, decimals, boolean];
+  const fieldColor = {
+    id: 'color',
+    path: 'color',
+    name: 'color',
+    description: '',
+    // @ts-ignore
+    editor: () => null,
+    // @ts-ignore
+    override: () => null,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+  };
+
+  return [unit, decimals, boolean, fieldColor];
 };
 
 standardFieldConfigEditorRegistry.setInit(() => mockStandardProperties());
@@ -239,6 +253,13 @@ describe('PanelModel', () => {
     describe('when changing panel type', () => {
       beforeEach(() => {
         const newPlugin = getPanelPlugin({ id: 'graph' });
+
+        newPlugin.useFieldConfig({
+          fieldColorSettings: {
+            preferByThreshold: true,
+          },
+        });
+
         newPlugin.setPanelOptions(builder => {
           builder.addBooleanSwitch({
             name: 'Show thresholds labels',
@@ -282,6 +303,48 @@ describe('PanelModel', () => {
       it('should remove alert rule when changing type that does not support it', () => {
         model.changePlugin(getPanelPlugin({ id: 'table' }));
         expect(model.alert).toBe(undefined);
+      });
+    });
+
+    describe('when changing panel type to one that does not support by value color mode', () => {
+      beforeEach(() => {
+        model.fieldConfig.defaults.color = { mode: FieldColorModeId.Thresholds };
+
+        const newPlugin = getPanelPlugin({ id: 'graph' });
+        newPlugin.useFieldConfig({
+          fieldColorSettings: {
+            noByValueSupport: true,
+          },
+        });
+
+        model.editSourceId = 1001;
+        model.changePlugin(newPlugin);
+        model.alert = { id: 2 };
+      });
+
+      it('should change color mode', () => {
+        expect(model.fieldConfig.defaults.color.mode).toBe(FieldColorModeId.PaletteClassic);
+      });
+    });
+
+    describe('when changing panel type to one that prefers color mode thresholds and current is by series', () => {
+      beforeEach(() => {
+        model.fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
+
+        const newPlugin = getPanelPlugin({ id: 'graph' });
+        newPlugin.useFieldConfig({
+          fieldColorSettings: {
+            preferByThreshold: true,
+          },
+        });
+
+        model.editSourceId = 1001;
+        model.changePlugin(newPlugin);
+        model.alert = { id: 2 };
+      });
+
+      it('should change color mode', () => {
+        expect(model.fieldConfig.defaults.color.mode).toBe(FieldColorModeId.Thresholds);
       });
     });
 

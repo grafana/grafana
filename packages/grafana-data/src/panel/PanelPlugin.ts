@@ -13,7 +13,7 @@ import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/Op
 import { ComponentClass, ComponentType } from 'react';
 import set from 'lodash/set';
 import { deprecationWarning } from '../utils';
-import { FieldConfigOptionsRegistry, standardFieldConfigEditorRegistry } from '../field';
+import { FieldColorConfigSettings, FieldConfigOptionsRegistry, standardFieldConfigEditorRegistry } from '../field';
 
 export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
   /**
@@ -41,8 +41,14 @@ export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
    * }
    * ```
    */
+
   standardOptionsDefaults?: Partial<Record<FieldConfigProperty, any>>;
-  standardOptionsSettings?: Partial<Record<FieldConfigProperty, any>>;
+
+  /**
+   * Controls field color behavior when switching visualizations and what color schemes
+   * are available in the dropdown.
+   */
+  fieldColorSettings?: FieldColorConfigSettings;
 
   /**
    * Function that allows custom field config properties definition.
@@ -345,14 +351,11 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
           }
         }
 
-        if (config.standardOptionsSettings) {
-          const customSettings: any = config.standardOptionsSettings[fieldConfigProp.id as FieldConfigProperty];
-          if (customSettings) {
-            fieldConfigProp = {
-              ...fieldConfigProp,
-              settings: customSettings,
-            };
-          }
+        if (config.fieldColorSettings && fieldConfigProp.id === FieldConfigProperty.Color) {
+          fieldConfigProp = {
+            ...fieldConfigProp,
+            settings: config.fieldColorSettings,
+          };
         }
 
         registry.register(fieldConfigProp);

@@ -9,6 +9,9 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
   .setMigrationHandler(tableMigrationHandler)
   .setNoPadding()
   .useFieldConfig({
+    fieldColorSettings: {
+      preferByThreshold: true,
+    },
     useCustomConfig: builder => {
       builder
         .addNumberInput({

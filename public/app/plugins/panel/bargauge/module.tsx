@@ -6,7 +6,11 @@ import { addStandardDataReduceOptions } from '../stat/types';
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 
 export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
-  .useFieldConfig()
+  .useFieldConfig({
+    fieldColorSettings: {
+      preferByThreshold: true,
+    },
+  })
   .setPanelOptions(builder => {
     addStandardDataReduceOptions(builder);
     builder

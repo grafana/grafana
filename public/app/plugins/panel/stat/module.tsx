@@ -5,7 +5,11 @@ import { StatPanel } from './StatPanel';
 import { statPanelChangedHandler } from './StatMigrations';
 
 export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
-  .useFieldConfig()
+  .useFieldConfig({
+    fieldColorSettings: {
+      preferByThreshold: true,
+    },
+  })
   .setPanelOptions(builder => {
     addStandardDataReduceOptions(builder);
 

@@ -13,6 +13,10 @@ import {
   DataQueryResponseData,
   DataTransformerConfig,
   eventFactory,
+  FieldColorConfigSettings,
+  FieldColorModeId,
+  fieldColorModeRegistry,
+  FieldConfigProperty,
   FieldConfigSource,
   PanelEvents,
   PanelPlugin,
@@ -321,7 +325,32 @@ export class PanelModel implements DataConfigSource {
       }
     });
 
-    this.fieldConfig = applyFieldConfigDefaults(this.fieldConfig, this.plugin!.fieldConfigDefaults);
+    this.fieldConfig = applyFieldConfigDefaults(this.fieldConfig, plugin.fieldConfigDefaults);
+    this.validateFieldColorMode(plugin);
+  }
+
+  private validateFieldColorMode(plugin: PanelPlugin) {
+    // adjust to prefered field color setting if needed
+    const color = plugin.fieldConfigRegistry.getIfExists(FieldConfigProperty.Color);
+
+    if (color && color.settings) {
+      const colorSettings = color.settings as FieldColorConfigSettings;
+      const mode = fieldColorModeRegistry.getIfExists(this.fieldConfig.defaults.color?.mode);
+
+      if (colorSettings.preferByThreshold) {
+        if (!mode || !mode.isByValue) {
+          this.fieldConfig.defaults.color = { mode: FieldColorModeId.Thresholds };
+          return;
+        }
+      }
+
+      if (colorSettings.noByValueSupport) {
+        if (!mode || mode.isByValue) {
+          this.fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
+          return;
+        }
+      }
+    }
   }
 
   pluginLoaded(plugin: PanelPlugin) {
