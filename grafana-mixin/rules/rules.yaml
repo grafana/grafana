@@ -1,16 +1,14 @@
 groups:
   - name: grafana_rules
     rules:
-      # Record error rate of http requests excluding dataproxy, /ds/query and /tsdb/query requests
-      - record: backend:http_request_total:rate5m
-        expr: |||
-            sum by (handler) (irate(http_request_total{job="hosted-grafana/grafana", statuscode=~"5..", handler!~"/datasources/proxy/:id.*|/ds/query|/tsdb/query"}[5m]))
-            /
-            sum by (handler) (irate(http_request_total{job="hosted-grafana/grafana", handler!~"/datasources/proxy/:id.*|/ds/query|/tsdb/query"}[5m]))
-            |||
+    # Record error rate of http requests excluding dataproxy, /ds/query and /tsdb/query requests
+    - record: backend:http_request_total:rate5m
+      expr: |
+          sum by (handler) (irate(http_request_total{job="hosted-grafana/grafana", statuscode=~"5..", handler!~"/datasources/proxy/:id.*|/ds/query|/tsdb/query"}[5m]))
+          /
+          sum by (handler) (irate(http_request_total{job="hosted-grafana/grafana", handler!~"/datasources/proxy/:id.*|/ds/query|/tsdb/query"}[5m]))
     - record: backend:datasource_request_total:rate5m
-        expr: |||
-            sum by (handler) (irate(http_request_total{job="hosted-grafana/grafana", statuscode=~"5..", handler=~"/datasources/proxy/:id.*|/ds/query|/tsdb/query"}[5m]))
-            /
-            sum by (handler) (irate(http_request_total{job="hosted-grafana/grafana", handler=~"/datasources/proxy/:id.*|/ds/query|/tsdb/query"}[5m]))
-            |||
+      expr: |
+          sum by (handler) (irate(http_request_total{job="hosted-grafana/grafana", statuscode=~"5..", handler=~"/datasources/proxy/:id.*|/ds/query|/tsdb/query"}[5m]))
+          /
+          sum by (handler) (irate(http_request_total{job="hosted-grafana/grafana", handler=~"/datasources/proxy/:id.*|/ds/query|/tsdb/query"}[5m]))
