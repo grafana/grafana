@@ -34,7 +34,8 @@ export type Color =
   | 'dark-purple'
   | 'semi-dark-purple'
   | 'light-purple'
-  | 'super-light-purple';
+  | 'super-light-purple'
+  | 'panel-bg';
 
 type ThemeVariants = {
   dark: string;
@@ -81,6 +82,8 @@ export function buildColorsMapForTheme(theme: GrafanaTheme): Record<Color, strin
       colorsMap[c.name] = c.variants[theme.type];
     }
   }
+
+  colorsMap['panel-bg'] = theme.colors.panelBg;
 
   return colorsMap;
 }
