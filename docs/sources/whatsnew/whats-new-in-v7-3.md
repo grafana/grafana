@@ -37,6 +37,16 @@ To import the pre-configured dashboards, go to the configuration page of your Go
 
 For more details, see the [Google Cloud Monitoring docs]({{<relref "../datasources/cloudmonitoring/#out-of-the-box-dashboards">}})
 
+## Grafana Enterprise features
+
+These features are included in the Grafana Enterprise edition software.
+
+### Auditing
+
+### Datasource Usage Insights
+
+### SAML Improvements
+
 ## Upgrading
 
 See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
