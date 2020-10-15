@@ -1,10 +1,9 @@
 import React from 'react';
-import { RefreshPicker } from '@grafana/ui';
+import { RefreshPicker, defaultIntervals } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import memoizeOne from 'memoize-one';
 import { css } from 'emotion';
 import classNames from 'classnames';
-import { defaultIntervals } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 import { ResponsiveButton } from './ResponsiveButton';
 
