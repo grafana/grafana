@@ -140,8 +140,8 @@ func (db *Postgres) CleanDB() error {
 	return nil
 }
 
-// TruncateDBTables truncates all the tables
-// A special case is the dashboard_acl table where we keep the default permissions
+// TruncateDBTables truncates all the tables.
+// A special case is the dashboard_acl table where we keep the default permissions.
 func (db *Postgres) TruncateDBTables() error {
 	sess := db.engine.NewSession()
 	defer sess.Close()

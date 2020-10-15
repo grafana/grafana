@@ -138,8 +138,8 @@ func (db *Mysql) CleanDB() error {
 	return nil
 }
 
-// TruncateDBTables truncates all the tables
-// A special case is the dashboard_acl table where we keep the default permissions
+// TruncateDBTables truncates all the tables.
+// A special case is the dashboard_acl table where we keep the default permissions.
 func (db *Mysql) TruncateDBTables() error {
 	tables, err := db.engine.DBMetas()
 	if err != nil {

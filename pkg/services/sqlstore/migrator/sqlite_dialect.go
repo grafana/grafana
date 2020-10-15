@@ -86,8 +86,8 @@ func (db *Sqlite3) CleanDB() error {
 	return nil
 }
 
-// TruncateDBTables deletes all data from all the tables and resets the sequences
-// A special case is the dashboard_acl table where we keep the default permissions
+// TruncateDBTables deletes all data from all the tables and resets the sequences.
+// A special case is the dashboard_acl table where we keep the default permissions.
 func (db *Sqlite3) TruncateDBTables() error {
 	tables, err := db.engine.DBMetas()
 	if err != nil {
