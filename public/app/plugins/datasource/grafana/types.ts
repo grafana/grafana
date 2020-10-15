@@ -8,6 +8,7 @@ import { MeasurementsQuery } from '@grafana/runtime';
 export enum GrafanaQueryType {
   RandomWalk = 'randomWalk',
   LiveMeasurements = 'measurements',
+  TestData = 'testdata', // same as measurements for now
 }
 
 export interface GrafanaQuery extends DataQuery {

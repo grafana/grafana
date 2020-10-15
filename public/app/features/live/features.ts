@@ -1,17 +1,24 @@
 import { LiveChannelConfig } from '@grafana/data';
+import { MeasurementCollector } from '@grafana/runtime';
 import { getDashboardChannelsFeature } from './dashboard/dashboardWatcher';
 import { LiveMeasurmentsSupport } from './measurements/measurementsSupport';
 import { grafanaLiveCoreFeatures } from './scopes';
 
 export function registerLiveFeatures() {
-  const channels = [
+  const random2s = new MeasurementCollector();
+  const randomFlakey = new MeasurementCollector();
+  const channels: LiveChannelConfig[] = [
     {
       path: 'random-2s-stream',
       description: 'Random stream with points every 2s',
+      getController: () => random2s,
+      processMessage: random2s.addBatch,
     },
     {
       path: 'random-flakey-stream',
       description: 'Random stream with flakey data points',
+      getController: () => randomFlakey,
+      processMessage: randomFlakey.addBatch,
     },
   ];
 
