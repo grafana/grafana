@@ -22,6 +22,9 @@ import {
   TransformOptions,
 } from './types';
 
+const POSITIVE_INFINITY_SAMPLE_VALUE = '+Inf';
+const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';
+
 export function transform(
   response: FetchResponse<PromDataSuccessResponse>,
   transformOptions: {
@@ -116,7 +119,7 @@ function transformToDataFrame(data: MatrixOrVectorResult, options: TransformOpti
     const dps: PromValue[] = [];
 
     for (const value of data.values) {
-      let dpValue: number | null = parseFloat(value[1]);
+      let dpValue: number | null = parseSampleValue(value[1]);
 
       if (isNaN(dpValue)) {
         dpValue = null;
@@ -180,12 +183,12 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
       d.values.forEach(val => {
         timeField.values.add(val[0] * 1000);
         metricFields.forEach(metricField => metricField.values.add(getLabelValue(d.metric, metricField.name)));
-        valueField.values.add(parseFloat(val[1]));
+        valueField.values.add(parseSampleValue(val[1]));
       });
     } else {
       timeField.values.add(d.value[0] * 1000);
       metricFields.forEach(metricField => metricField.values.add(getLabelValue(d.metric, metricField.name)));
-      valueField.values.add(parseFloat(d.value[1]));
+      valueField.values.add(parseSampleValue(d.value[1]));
     }
   });
 
@@ -225,7 +228,7 @@ function getValueField(
     name: valueName,
     type: FieldType.number,
     config: {},
-    values: new ArrayVector<number | null>(data.map(val => (parseValue ? parseFloat(val[1]) : val[1]))),
+    values: new ArrayVector<number | null>(data.map(val => (parseValue ? parseSampleValue(val[1]) : val[1]))),
   };
 }
 
@@ -312,4 +315,15 @@ function parseHistogramLabel(le: string): number {
     return +Infinity;
   }
   return Number(le);
+}
+
+function parseSampleValue(value: string): number {
+  switch (value) {
+    case POSITIVE_INFINITY_SAMPLE_VALUE:
+      return Number.POSITIVE_INFINITY;
+    case NEGATIVE_INFINITY_SAMPLE_VALUE:
+      return Number.NEGATIVE_INFINITY;
+    default:
+      return parseFloat(value);
+  }
 }
