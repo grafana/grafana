@@ -203,7 +203,7 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
 function getLabelValue(metric: PromMetric, label: string): string | number {
   if (metric.hasOwnProperty(label)) {
     if (label === 'le') {
-      return parseHistogramLabel(metric[label]);
+      return parseSampleValue(metric[label]);
     }
     return metric[label];
   }
@@ -292,8 +292,8 @@ function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
 
   try {
     // fail if not integer. might happen with bad queries
-    le1 = parseHistogramLabel(s1.name ?? '');
-    le2 = parseHistogramLabel(s2.name ?? '');
+    le1 = parseSampleValue(s1.name ?? '');
+    le2 = parseSampleValue(s2.name ?? '');
   } catch (err) {
     console.error(err);
     return 0;
@@ -308,13 +308,6 @@ function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
   }
 
   return 0;
-}
-
-function parseHistogramLabel(le: string): number {
-  if (le === '+Inf') {
-    return +Infinity;
-  }
-  return Number(le);
 }
 
 function parseSampleValue(value: string): number {
