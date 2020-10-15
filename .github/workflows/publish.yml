@@ -15,6 +15,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - uses: actions/cache@v2
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
+
     - name: generate-packages-docs
       uses: actions/setup-node@v1
       id: generate-docs
@@ -22,6 +27,7 @@ jobs:
         node-version: '12'
     - run: yarn install --pure-lockfile --no-progress
     - run: ./scripts/ci-reference-docs-build.sh
+    
     - name: publish-to-git
       uses: ./.github/actions/gha-publish-to-git
       id: publish

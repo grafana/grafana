@@ -76,6 +76,19 @@ echo "Populating ${TARGET_PATH}"
 mkdir -p "${TARGET_PATH}" || exit 1
 rsync -a --quiet --delete "${SOURCE_PATH}/" "${TARGET_PATH}" || exit 1
 
+# If nothing to commit we will silenty exit
+#
+if git diff --quiet ; then
+    echo "Nothing to commit, skip creating commit and pushing to remote"
+    
+    # Publish output variables.
+    #
+    echo "::set-output name=commit_hash::nothing-to-commit"
+    echo "::set-output name=working_directory::${WORK_DIR}"
+    
+    exit 0
+fi
+
 # Create commit with changes.
 #
 echo "Creating commit"
