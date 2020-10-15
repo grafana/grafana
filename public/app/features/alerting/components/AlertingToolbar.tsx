@@ -38,6 +38,7 @@ const getStyles = (theme: GrafanaTheme) => {
       display: flex;
       justify-content: flex-start;
       align-items: center;
+      margin-bottom: ${theme.spacing.md};
     `,
     actions: css`
       display: flex;
