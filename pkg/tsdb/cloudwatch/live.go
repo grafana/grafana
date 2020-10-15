@@ -25,6 +25,7 @@ type logQueryRunner struct {
 	channelName string
 	publish     models.ChannelPublisher
 	running     map[string]bool
+	runningMu   sync.Mutex
 }
 
 const (
@@ -61,6 +62,18 @@ func getResponseChannel(name string) (chan *tsdb.Response, error) {
 	return nil, fmt.Errorf("channel with name '%s' not found", name)
 }
 
+func deleteResponseChannel(name string) {
+	channelMu.Lock()
+	defer channelMu.Unlock()
+
+	if _, ok := responseChannels[name]; ok {
+		delete(responseChannels, name)
+		return
+	}
+
+	plog.Warn("Channel with name '" + name + "' not found")
+}
+
 // GetHandlerForPath gets called on init.
 func (supplier *LogQueryRunnerSupplier) GetHandlerForPath(path string, publisher models.ChannelPublisher) (models.ChannelHandler, error) {
 	return &logQueryRunner{
@@ -78,6 +91,9 @@ func (g *logQueryRunner) GetChannelOptions(id string) centrifuge.ChannelOptions 
 
 // OnSubscribe publishes results from the corresponding CloudWatch Logs query to the provided channel
 func (g *logQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
+	g.runningMu.Lock()
+	defer g.runningMu.Unlock()
+
 	if _, ok := g.running[e.Channel]; !ok {
 		g.running[e.Channel] = true
 		go func() {
@@ -97,8 +113,10 @@ func (g *logQueryRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEve
 
 func (g *logQueryRunner) publishResults(channelName string) error {
 	defer func() {
-		delete(responseChannels, channelName)
+		deleteResponseChannel(channelName)
+		g.runningMu.Lock()
 		delete(g.running, channelName)
+		g.runningMu.Unlock()
 	}()
 
 	responseChannel, err := getResponseChannel(channelName)
