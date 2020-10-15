@@ -1,5 +1,5 @@
 import { FALLBACK_COLOR, Field, FieldColorModeId, GrafanaTheme, Threshold } from '../types';
-import { classicColors, getColorFromHexRgbOrName, RegistryItem } from '../utils';
+import { classicColors, getColorForTheme, RegistryItem } from '../utils';
 import { Registry } from '../utils/Registry';
 import { interpolateRgbBasis } from 'd3-interpolate';
 import { fallBackTreshold } from './thresholds';
@@ -23,64 +23,56 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
     },
     {
       id: FieldColorModeId.Thresholds,
-      name: 'Color by thresholds',
+      name: 'From thresholds',
       description: 'Derive colors from thresholds',
       getCalculator: (_field, theme) => {
         return (_value, _percent, threshold) => {
           const thresholdSafe = threshold ?? fallBackTreshold;
-          return getColorFromHexRgbOrName(thresholdSafe.color, theme.type);
+          return getColorForTheme(thresholdSafe.color, theme);
         };
       },
     },
-    new FieldColorSchemeMode({
-      id: FieldColorModeId.PaletteSaturated,
-      name: 'Color by series / Saturated palette',
-      //description: 'Assigns color based on series or field index',
-      isContinuous: false,
-      isByValue: false,
-      colors: [
-        'blue',
-        'red',
-        'green',
-        'yellow',
-        'purple',
-        'orange',
-        'dark-blue',
-        'dark-red',
-        'dark-yellow',
-        'dark-purple',
-        'dark-orange',
-      ],
-    }),
+    // new FieldColorSchemeMode({
+    //   id: FieldColorModeId.PaletteSaturated,
+    //   name: 'By series / Saturated palette',
+    //   //description: 'Assigns color based on series or field index',
+    //   isContinuous: false,
+    //   isByValue: false,
+    //   colors: [
+    //     'blue',
+    //     'red',
+    //     'green',
+    //     'yellow',
+    //     'purple',
+    //     'orange',
+    //     'dark-blue',
+    //     'dark-red',
+    //     'dark-yellow',
+    //     'dark-purple',
+    //     'dark-orange',
+    //   ],
+    // }),
     new FieldColorSchemeMode({
       id: FieldColorModeId.PaletteClassic,
-      name: 'Color by series / Classic palette',
+      name: 'By series / Classic palette',
       //description: 'Assigns color based on series or field index',
       isContinuous: false,
       isByValue: false,
       colors: classicColors,
     }),
     new FieldColorSchemeMode({
-      id: FieldColorModeId.ContinousGrYlRd,
-      name: 'Color by value / Green-Yellow-Red / Continouous',
+      id: 'continuous-GrYlRd',
+      name: 'By value / Green Yellow Red (gradient)',
       //description: 'Interpolated colors based value, min and max',
       isContinuous: true,
       isByValue: true,
       colors: ['green', 'yellow', 'red'],
     }),
-    new FieldColorSchemeMode({
-      id: FieldColorModeId.ContinousBlGrOr,
-      name: 'Color by value / Blue-Green-Orange / Continouous',
-      //description: 'Interpolated colors based value, min and max',
-      isContinuous: true,
-      isByValue: true,
-      colors: ['blue', 'green', 'orange'],
-    }),
   ];
 });
 
 interface FieldColorSchemeModeOptions {
-  id: FieldColorModeId;
+  id: string;
   name: string;
   description?: string;
   colors: string[];
@@ -112,7 +104,7 @@ export class FieldColorSchemeMode implements FieldColorMode {
       return this.colorCache;
     }
 
-    this.colorCache = this.colors.map(c => getColorFromHexRgbOrName(c, theme.type));
+    this.colorCache = this.colors.map(c => getColorForTheme(c, theme));
     return this.colorCache;
   }
 
@@ -157,6 +149,6 @@ export function getFieldColorMode(mode?: FieldColorModeId): FieldColorMode {
 
 function getFixedColor(field: Field, theme: GrafanaTheme) {
   return () => {
-    return getColorFromHexRgbOrName(field.config.color?.fixedColor ?? FALLBACK_COLOR, theme.type);
+    return getColorForTheme(field.config.color?.fixedColor ?? FALLBACK_COLOR, theme);
   };
 }

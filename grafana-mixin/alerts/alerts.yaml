@@ -1,0 +1,14 @@
+groups:
+- name: GrafanaAlerts
+  rules:
+  - alert: GrafanaRequestsFailing
+    for: 5m
+    expr: |
+      100 * namespace_job_handler_statuscode:http_request_total:rate5m{handler!~"/datasources/proxy/:id.*|/ds/query|/tsdb/query", statuscode=~"5.."}
+      /
+      namespace_job_handler_statuscode:http_request_total:rate5m{handler!~"/datasources/proxy/:id.*|/ds/query|/tsdb/query"}
+      > 0.5
+    labels:
+      severity: 'critical'
+    annotations:
+      message: "'{{ $labels.namespace }}' / '{{ $labels.job }}' / '{{ $labels.handler }}' is experiencing {{ $value | humanize }}% errors"

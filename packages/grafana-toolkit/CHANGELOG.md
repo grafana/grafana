@@ -1,3 +1,8 @@
+# 7.3.0-beta1 (2020-10-15)
+
+### Features / Enhancements
+* **grafana/toolkit**: expose Jest maxWorkers arg for plugin test & build tasks. [#27724](https://github.com/grafana/grafana/pull/27724), [@domasx2](https://github.com/domasx2)
+
 # 7.2.0 (2020-09-23)
 
 ### Bug Fixes
