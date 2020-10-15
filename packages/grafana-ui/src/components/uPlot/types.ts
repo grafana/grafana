@@ -56,9 +56,13 @@ export interface PlotPluginProps {
 
 export interface PlotProps {
   data: DataFrame;
-  width: number;
-  height: number;
   timeRange: TimeRange;
   timeZone: TimeZone;
-  children: React.ReactNode[];
+  width: number;
+  height: number;
+  children?: React.ReactNode | React.ReactNode[];
+  /** Callback performed when uPlot data is updated */
+  onDataUpdate?: (data: uPlot.AlignedData) => {};
+  /** Callback performed when uPlot is (re)initialized */
+  onPlotInit?: () => {};
 }

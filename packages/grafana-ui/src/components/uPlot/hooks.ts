@@ -14,8 +14,8 @@ export const usePlotPlugins = () => {
 
   // arePluginsReady determines whether or not all plugins has already registered and uPlot should be initialised
   const [arePluginsReady, setPluginsReady] = useState(false);
-
   const cancellationToken = useRef<number>();
+  const isMounted = useRef(false);
 
   const checkPluginsReady = useCallback(() => {
     if (cancellationToken.current) {
@@ -29,7 +29,9 @@ export const usePlotPlugins = () => {
      * and arePluginsReady will be deferred to next animation frame.
      */
     cancellationToken.current = window.requestAnimationFrame(function() {
-      setPluginsReady(true);
+      if (isMounted.current) {
+        setPluginsReady(true);
+      }
     });
   }, [cancellationToken, setPluginsReady]);
 
@@ -66,9 +68,9 @@ export const usePlotPlugins = () => {
   useEffect(() => {
     checkPluginsReady();
     return () => {
+      isMounted.current = false;
       if (cancellationToken.current) {
         window.cancelAnimationFrame(cancellationToken.current);
-        cancellationToken.current = undefined;
       }
     };
   }, []);

@@ -93,16 +93,18 @@ const isPlottingTime = (config: uPlot.Options) => {
  * Based on two config objects indicates whether or not uPlot needs reinitialisation
  * This COULD be done based on data frames, but keeping it this way for now as a simplification
  */
-export const shouldReinitialisePlot = (prevConfig?: uPlot.Options, config?: uPlot.Options) => {
+export const shouldInitialisePlot = (prevConfig?: uPlot.Options, config?: uPlot.Options) => {
   if (!config && !prevConfig) {
     return false;
   }
 
-  if (!prevConfig && config) {
+  if (config) {
     if (config.width === 0 || config.height === 0) {
       return false;
     }
-    return true;
+    if (!prevConfig) {
+      return true;
+    }
   }
 
   if (isPlottingTime(config!) && prevConfig!.tzDate !== config!.tzDate) {

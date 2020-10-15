@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import uPlot from 'uplot';
 import { usePrevious } from 'react-use';
 import { buildPlotContext, PlotContext } from './context';
-import { pluginLog, preparePlotData, shouldReinitialisePlot } from './utils';
+import { pluginLog, preparePlotData, shouldInitialisePlot } from './utils';
 import { usePlotConfig } from './hooks';
 import { PlotProps } from './types';
 
@@ -39,7 +39,11 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     pluginLog('uPlot core', false, 'updating plot data(throttled log!)', plotData.current);
     // If config hasn't changed just update uPlot's data
     plotInstance.setData(plotData.current);
-  }, [plotInstance]);
+
+    if (props.onDataUpdate) {
+      props.onDataUpdate(plotData.current);
+    }
+  }, [plotInstance, props.onDataUpdate]);
 
   // Destroys previous plot instance when plot re-initialised
   useEffect(() => {
@@ -56,7 +60,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
   // Decides if plot should update data or re-initialise
   useLayoutEffect(() => {
     // Make sure everything is ready before proceeding
-    if (!currentConfig || !canvasRef.current || !plotData.current) {
+    if (!currentConfig || !plotData.current) {
       return;
     }
 
@@ -66,16 +70,21 @@ export const UPlotChart: React.FC<PlotProps> = props => {
       return;
     }
 
-    if (shouldReinitialisePlot(prevConfig, currentConfig)) {
-      const instance = initPlot(plotData.current, currentConfig, canvasRef.current);
-      if (!instance) {
-        return;
+    if (shouldInitialisePlot(prevConfig, currentConfig)) {
+      if (!canvasRef.current) {
+        throw new Error('Missing Canvas component as a child of the plot.');
       }
+      const instance = initPlot(plotData.current, currentConfig, canvasRef.current);
+
+      if (props.onPlotInit) {
+        props.onPlotInit();
+      }
+
       setPlotInstance(instance);
     } else {
       updateData();
     }
-  }, [currentConfig, updateData, setPlotInstance]);
+  }, [currentConfig, updateData, setPlotInstance, props.onPlotInit]);
 
   // When size props changed update plot size synchronously
   useLayoutEffect(() => {
