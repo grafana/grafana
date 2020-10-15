@@ -1,0 +1,7 @@
+groups:
+  - name: grafana_rules
+    rules:
+      # Record slave lag seconds for pre-computed timeseries that takes
+      # `mysql_slave_status_sql_delay` into account
+      - record: mysql_slave_lag_seconds
+        expr: mysql_slave_status_seconds_behind_master - mysql_slave_status_sql_delay
