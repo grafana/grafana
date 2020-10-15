@@ -2,7 +2,9 @@
 title = "Enter Value tags"
 type = "docs"
 [menu.docs]
-weight = 800
+identifier = "variables-value-groups"
+parent = "variables"
+weight = 500
 +++
 
 # Enter variable value groups/tags (experimental feature)

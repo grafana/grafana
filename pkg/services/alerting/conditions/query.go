@@ -7,6 +7,7 @@ import (
 
 	gocontext "context"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -179,7 +180,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 			}
 
 			for _, frame := range frames {
-				ss, err := tsdb.FrameToSeriesSlice(frame)
+				ss, err := FrameToSeriesSlice(frame)
 				if err != nil {
 					return nil, errutil.Wrapf(err, `tsdb.HandleRequest() failed to convert dataframe "%v" to tsdb.TimeSeriesSlice`, frame.Name)
 				}
@@ -293,4 +294,68 @@ func validateToValue(to string) error {
 
 	_, err := time.ParseDuration(to)
 	return err
+}
+
+// FrameToSeriesSlice converts a frame that is a valid time series as per data.TimeSeriesSchema()
+// to a TimeSeriesSlice.
+func FrameToSeriesSlice(frame *data.Frame) (tsdb.TimeSeriesSlice, error) {
+	tsSchema := frame.TimeSeriesSchema()
+	if tsSchema.Type == data.TimeSeriesTypeNot {
+		// If no fields, or only a time field, create an empty tsdb.TimeSeriesSlice with a single
+		// time series in order to trigger "no data" in alerting.
+		if len(frame.Fields) == 0 || (len(frame.Fields) == 1 && frame.Fields[0].Type().Time()) {
+			return tsdb.TimeSeriesSlice{{
+				Name:   frame.Name,
+				Points: make(tsdb.TimeSeriesPoints, 0),
+			}}, nil
+		}
+		return nil, fmt.Errorf("input frame is not recognized as a time series")
+	}
+
+	seriesCount := len(tsSchema.ValueIndices)
+	seriesSlice := make(tsdb.TimeSeriesSlice, 0, seriesCount)
+	timeField := frame.Fields[tsSchema.TimeIndex]
+	timeNullFloatSlice := make([]null.Float, timeField.Len())
+
+	for i := 0; i < timeField.Len(); i++ { // built slice of time as epoch ms in null floats
+		tStamp, err := timeField.FloatAt(i)
+		if err != nil {
+			return nil, err
+		}
+		timeNullFloatSlice[i] = null.FloatFrom(tStamp)
+	}
+
+	for _, fieldIdx := range tsSchema.ValueIndices { // create a TimeSeries for each value Field
+		field := frame.Fields[fieldIdx]
+		ts := &tsdb.TimeSeries{
+			Points: make(tsdb.TimeSeriesPoints, field.Len()),
+		}
+
+		switch {
+		case field.Config != nil && field.Config.DisplayName != "":
+			ts.Name = field.Config.DisplayName
+		case field.Labels != nil:
+			ts.Tags = field.Labels.Copy()
+			// Tags are appended to the name so they are eventually included in EvalMatch's Metric property
+			// for display in notifications.
+			ts.Name = fmt.Sprintf("%v {%v}", field.Name, field.Labels.String())
+		default:
+			ts.Name = field.Name
+		}
+
+		for rowIdx := 0; rowIdx < field.Len(); rowIdx++ { // for each value in the field, make a TimePoint
+			val, err := field.FloatAt(rowIdx)
+			if err != nil {
+				return nil, errutil.Wrapf(err, "failed to convert frame to tsdb.series, can not convert value %v to float", field.At(rowIdx))
+			}
+			ts.Points[rowIdx] = tsdb.TimePoint{
+				null.FloatFrom(val),
+				timeNullFloatSlice[rowIdx],
+			}
+		}
+
+		seriesSlice = append(seriesSlice, ts)
+	}
+
+	return seriesSlice, nil
 }

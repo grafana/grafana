@@ -76,7 +76,7 @@ export class GrafanaCtrl {
       },
     });
 
-    // Initalize websocket event streaming
+    // Initialize websocket event streaming
     if (config.featureToggles.live) {
       initGrafanaLive();
     }

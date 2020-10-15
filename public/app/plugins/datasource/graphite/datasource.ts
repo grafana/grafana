@@ -13,7 +13,7 @@ import {
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
 import { getBackendSrv } from '@grafana/runtime';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 // Types
 import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
@@ -33,8 +33,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   funcDefsPromise: Promise<any> | null = null;
   _seriesRefLetters: string;
 
-  /** @ngInject */
-  constructor(instanceSettings: any, private templateSrv: TemplateSrv) {
+  constructor(instanceSettings: any, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
     super(instanceSettings);
     this.basicAuth = instanceSettings.basicAuth;
     this.url = instanceSettings.url;

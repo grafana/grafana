@@ -1,8 +1,8 @@
 import { ComponentType } from 'react';
-import { SystemVariable, VariableHide } from '../types';
+import { LoadingState } from '@grafana/data';
+
+import { initialVariableModelState, SystemVariable, VariableHide } from '../types';
 import { VariableAdapter } from '../adapters';
-import { NEW_VARIABLE_ID } from '../state/types';
-import { Deferred } from '../../../core/utils/deferred';
 import { VariablePickerProps } from '../pickers/types';
 import { VariableEditorProps } from '../editor/types';
 
@@ -12,16 +12,12 @@ export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<an
     description: '',
     name: 'system',
     initialState: {
-      id: NEW_VARIABLE_ID,
-      global: false,
+      ...initialVariableModelState,
       type: 'system',
-      name: '',
-      label: (null as unknown) as string,
       hide: VariableHide.hideVariable,
       skipUrlSync: true,
       current: { value: { toString: () => '' } },
-      index: -1,
-      initLock: (null as unknown) as Deferred,
+      state: LoadingState.Done,
     },
     reducer: (state: any, action: any) => state,
     picker: (null as unknown) as ComponentType<VariablePickerProps>,

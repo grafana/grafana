@@ -16,6 +16,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
 	github.com/aws/aws-sdk-go v1.33.12
+	github.com/beevik/etree v1.1.0
 	github.com/benbjohnson/clock v0.0.0-20161215174838-7dc76406b6d3
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
 	github.com/centrifugal/centrifuge v0.11.0
@@ -35,12 +36,11 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/go-stack/stack v1.8.0
 	github.com/gobwas/glob v0.2.3
-	github.com/golang/mock v1.4.3
 	github.com/golang/protobuf v1.4.2
 	github.com/google/go-cmp v0.5.0
 	github.com/gosimple/slug v1.4.2
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.77.0
+	github.com/grafana/grafana-plugin-sdk-go v0.78.0
 	github.com/grafana/loki v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.1
 	github.com/hashicorp/go-hclog v0.12.2
@@ -67,7 +67,7 @@ require (
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/robfig/cron/v3 v3.0.0
-	github.com/russellhaering/goxmldsig v0.0.0-20200902171629-2e1fbc2c5593 // indirect
+	github.com/russellhaering/goxmldsig v0.0.0-20200902171629-2e1fbc2c5593
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/stretchr/testify v1.6.1
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf

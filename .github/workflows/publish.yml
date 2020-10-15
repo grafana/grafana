@@ -6,6 +6,7 @@ on:
     - master
     paths:
     - 'docs/sources/**'
+    - 'packages/grafana-*/**'
 
 jobs:
   build:
@@ -14,6 +15,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: generate-packages-docs
+      uses: actions/setup-node@v1
+      id: generate-docs
+      with:
+        node-version: '12'
+    - run: yarn install --pure-lockfile --no-progress
+    - run: ./scripts/ci-reference-docs-build.sh
     - name: publish-to-git
       uses: ./.github/actions/gha-publish-to-git
       id: publish

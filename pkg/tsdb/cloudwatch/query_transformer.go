@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -13,7 +14,9 @@ import (
 // has more than one statistic defined, one cloudwatchQuery will be created for each statistic.
 // If the query doesn't have an Id defined by the user, we'll give it an with format `query[RefId]`. In the case
 // the incoming query had more than one stat, it will ge an id like `query[RefId]_[StatName]`, eg queryC_Average
-func (e *cloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQueries []*requestQuery) (map[string]*cloudWatchQuery, error) {
+func (e *cloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQueries []*requestQuery) (
+	map[string]*cloudWatchQuery, error) {
+	plog.Debug("Transforming CloudWatch request queries")
 	cloudwatchQueries := make(map[string]*cloudWatchQuery)
 	for _, requestQuery := range requestQueries {
 		for _, stat := range requestQuery.Statistics {
@@ -52,17 +55,22 @@ func (e *cloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 
 func (e *cloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchResponses []*cloudwatchResponse) map[string]*tsdb.QueryResult {
 	responsesByRefID := make(map[string][]*cloudwatchResponse)
+	refIDs := sort.StringSlice{}
 	for _, res := range cloudwatchResponses {
+		refIDs = append(refIDs, res.RefId)
 		responsesByRefID[res.RefId] = append(responsesByRefID[res.RefId], res)
 	}
+	// Ensure stable results
+	refIDs.Sort()
 
 	results := make(map[string]*tsdb.QueryResult)
-	for refID, responses := range responsesByRefID {
+	for _, refID := range refIDs {
+		responses := responsesByRefID[refID]
 		queryResult := tsdb.NewQueryResult()
 		queryResult.RefId = refID
 		queryResult.Meta = simplejson.New()
 		queryResult.Series = tsdb.TimeSeriesSlice{}
-		timeSeries := make(tsdb.TimeSeriesSlice, 0)
+		frames := make(data.Frames, 0, len(responses))
 
 		requestExceededMaxLimit := false
 		partialData := false
@@ -72,7 +80,7 @@ func (e *cloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 		}{}
 
 		for _, response := range responses {
-			timeSeries = append(timeSeries, *response.series...)
+			frames = append(frames, response.DataFrames...)
 			requestExceededMaxLimit = requestExceededMaxLimit || response.RequestExceededMaxLimit
 			partialData = partialData || response.PartialData
 			queryMeta = append(queryMeta, struct {
@@ -85,8 +93,8 @@ func (e *cloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 			})
 		}
 
-		sort.Slice(timeSeries, func(i, j int) bool {
-			return timeSeries[i].Name < timeSeries[j].Name
+		sort.Slice(frames, func(i, j int) bool {
+			return frames[i].Name < frames[j].Name
 		})
 
 		if requestExceededMaxLimit {
@@ -96,7 +104,7 @@ func (e *cloudWatchExecutor) transformQueryResponseToQueryResult(cloudwatchRespo
 			queryResult.ErrorString = "Cloudwatch GetMetricData error: Too many datapoints requested - your search has been limited. Please try to reduce the time range"
 		}
 
-		queryResult.Series = append(queryResult.Series, timeSeries...)
+		queryResult.Dataframes = tsdb.NewDecodedDataFrames(frames)
 		queryResult.Meta.Set("gmdMeta", queryMeta)
 		results[refID] = queryResult
 	}

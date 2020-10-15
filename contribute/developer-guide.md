@@ -211,8 +211,8 @@ Another alternative is to limit the files being watched. The directories that ar
 
 To retain your `ulimit` configuration, i.e. so it will be remembered for future sessions, you need to commit it to your command line shell initialization file. Which file this will be depends on the shell you are using, here are some examples:
 
-* zsh -> ~/.zshrc
-* bash -> ~/.bashrc
+- zsh -> ~/.zshrc
+- bash -> ~/.bashrc
 
 Commit your ulimit configuration to your shell initialization file as follows ($LIMIT being your chosen limit and $INIT_FILE being the initialization file for your shell):
 
