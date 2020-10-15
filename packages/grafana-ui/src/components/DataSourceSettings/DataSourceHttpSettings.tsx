@@ -39,7 +39,7 @@ const HttpAccessHelp = () => (
       <strong>
         &nbsp<i>Server</i>
       </strong>{' '}
-      should be the preferred way if nothing else stated.
+      should be the preferred way if nothing else is stated.
     </p>
     <div className="alert-title">Server access mode (Default):</div>
     <p>
