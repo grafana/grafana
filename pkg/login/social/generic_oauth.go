@@ -250,7 +250,7 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 
 	data.rawJSON = rawJSON
 	data.source = "token"
-	s.log.Debug("Received id_token", "raw_json", string(data.rawJSON), "data", data)
+	s.log.Debug("Received id_token", "raw_json", string(data.rawJSON), "data", data.String())
 	return &data
 }
 
@@ -272,7 +272,7 @@ func (s *SocialGenericOAuth) extractFromAPI(client *http.Client) *UserInfoJson {
 
 	data.rawJSON = rawJSON
 	data.source = "API"
-	s.log.Debug("Received user info response from API", "raw_json", string(rawJSON), "data", data)
+	s.log.Debug("Received user info response from API", "raw_json", string(rawJSON), "data", data.String())
 	return &data
 }
 
