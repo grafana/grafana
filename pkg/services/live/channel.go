@@ -30,8 +30,8 @@ func ParseChannelAddress(id string) ChannelAddress {
 }
 
 // IsValid checks if all parts of the address are valid
-func (id *ChannelAddress) IsValid() bool {
-	return id.Scope != "" && id.Namespace != "" && id.Path != ""
+func (ca *ChannelAddress) IsValid() bool {
+	return ca.Scope != "" && ca.Namespace != "" && ca.Path != ""
 }
 
 // ToChannelID converts this to a single string
