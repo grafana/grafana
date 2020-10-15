@@ -4,9 +4,10 @@ import { UrlQueryMap } from '@grafana/data';
 import { getLocationQuery } from 'app/core/selectors/location';
 import { updateLocation } from 'app/core/reducers/location';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
-import { StoreState } from 'app/types';
+import { CoreEvents, StoreState } from 'app/types';
 import DashboardSearch from './DashboardSearch';
 import { defaultQueryParams } from '../reducers/searchQueryReducer';
+import appEvents from 'app/core/app_events';
 
 interface OwnProps {
   search?: string | null;
@@ -35,7 +36,9 @@ export const SearchWrapper: FC<Props> = memo(({ search, folder, updateLocation }
         partial: true,
       });
     }
+    appEvents.emit(CoreEvents.toggleSearchOpened);
   };
+  isOpen && appEvents.emit(CoreEvents.toggleSearchOpened);
 
   return isOpen ? <DashboardSearch onCloseSearch={closeSearch} folder={folder} /> : null;
 });

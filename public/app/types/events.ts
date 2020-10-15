@@ -125,6 +125,8 @@ export const graphHoverClear = eventFactory('graph-hover-clear');
 export const toggleSidemenuMobile = eventFactory('toggle-sidemenu-mobile');
 export const toggleSidemenuHidden = eventFactory('toggle-sidemenu-hidden');
 
+export const toggleSearchOpened = eventFactory('toggle-search-opened');
+
 export const playlistStarted = eventFactory('playlist-started');
 export const playlistStopped = eventFactory('playlist-stopped');
 

@@ -14,6 +14,12 @@
   background: $page-bg;
 }
 
+.search-opened {
+  .main-view {
+    visibility: hidden;
+  }
+}
+
 .page-explore,
 .page-dashboard {
   .main-view {

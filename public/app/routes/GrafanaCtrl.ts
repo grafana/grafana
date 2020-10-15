@@ -182,6 +182,10 @@ export function grafanaAppDirective(
         elem.toggleClass('view-mode--playlist', false);
       });
 
+      appEvents.on(CoreEvents.toggleSearchOpened, () => {
+        body.toggleClass('search-opened');
+      });
+
       // tooltip removal fix
       // manage page classes
       let pageClass: string;
