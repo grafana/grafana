@@ -4,11 +4,11 @@ groups:
   - alert: GrafanaRequestsFailing
     for: 5m
     expr: |
-      100 * sum(job_handler_statuscode:http_request_total:rate5m{handler!~"/datasources/proxy/:id.*|/ds/query|/tsdb/query", statuscode=~"5.."})
+      100 * namespace_job_handler_statuscode:http_request_total:rate5m{handler!~"/datasources/proxy/:id.*|/ds/query|/tsdb/query", statuscode=~"5.."}
       /
-      sum(job_handler_statuscode:http_request_total:rate5m{handler!~"/datasources/proxy/:id.*|/ds/query|/tsdb/query"})
+      namespace_job_handler_statuscode:http_request_total:rate5m{handler!~"/datasources/proxy/:id.*|/ds/query|/tsdb/query"}
       > 0.5
     labels:
       severity: 'critical'
     annotations:
-      message: "'{{ $labels.job }}' / '{{ $labels.handler }}' is experiencing {{ $value | humanize }}% errors"
+      message: "'{{ $labels.namespace }}' / '{{ $labels.job }}' / '{{ $labels.handler }}' is experiencing {{ $value | humanize }}% errors"
