@@ -449,6 +449,30 @@ describe('ElasticQueryBuilder', () => {
         expect(firstLevel.aggs['4'].bucket_script.buckets_path).toMatchObject({ var1: '_count' });
       });
 
+      it('with inline script', () => {
+        const query = builder.build({
+          metrics: [
+            {
+              id: '1',
+              type: 'sum',
+              field: '@value',
+              inlineScript: '_value * 42',
+            },
+          ],
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
+        });
+
+        const firstLevel = query.aggs['2'];
+
+        expect(firstLevel.aggs['1']).not.toBe(undefined);
+        expect(firstLevel.aggs['1'].sum).not.toBe(undefined);
+        if (builder.esVersion < 56) {
+          expect(firstLevel.aggs['1'].sum.script).toMatchObject({ inline: '_value * 42' });
+        } else {
+          expect(firstLevel.aggs['1'].sum.script).toMatchObject({ source: '_value * 42' });
+        }
+      });
+
       it('with histogram', () => {
         const query = builder.build({
           metrics: [{ id: '1', type: 'count' }],
