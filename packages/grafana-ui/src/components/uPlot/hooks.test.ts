@@ -170,7 +170,6 @@ describe('usePlotConfig', () => {
           side: 1,
         });
       });
-      // await waitForNextUpdate();
 
       expect(result.current.currentConfig?.axes).toHaveLength(1);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
