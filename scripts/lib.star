@@ -4,7 +4,6 @@ publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
-git_image = 'alpine/git:v2.26.2'
 dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
@@ -138,7 +137,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
             identify_runner_step,
             {
                 'name': 'clone',
-                'image': git_image,
+                'image': build_image,
                 'environment': {
                     'GITHUB_TOKEN': {
                         'from_secret': 'github_token',
