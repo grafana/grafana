@@ -86,7 +86,6 @@ describe('usePlotConfig', () => {
           stroke: '#00ff00',
         });
       });
-      // await waitForNextUpdate();
 
       expect(result.current.currentConfig?.series).toHaveLength(2);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
