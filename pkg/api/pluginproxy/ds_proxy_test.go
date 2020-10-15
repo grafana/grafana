@@ -75,7 +75,7 @@ func TestDSRouteRule(t *testing.T) {
 			}
 
 			setting.SecretKey = "password" //nolint:goconst
-			key, _ := util.Encrypt([]byte("123"), "password")
+			key, _ := util.Encrypt([]byte("123"))
 
 			ds := &models.DataSource{
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
@@ -189,7 +189,7 @@ func TestDSRouteRule(t *testing.T) {
 			}
 
 			setting.SecretKey = "password"
-			key, _ := util.Encrypt([]byte("123"), "password")
+			key, _ := util.Encrypt([]byte("123"))
 
 			ds := &models.DataSource{
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
