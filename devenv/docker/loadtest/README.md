@@ -75,7 +75,7 @@ Example output:
 
     █ user auth token test
 
-      █ user authenticates thru ui with username and password
+      █ user authenticates through ui with username and password
 
         ✓ response status is 200
         ✓ response has cookie 'grafana_session' with 32 characters

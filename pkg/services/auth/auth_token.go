@@ -102,7 +102,7 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, userId int64, cl
 
 func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 	hashedToken := hashToken(unhashedToken)
-	if setting.Env == setting.DEV {
+	if setting.Env == setting.Dev {
 		s.log.Debug("looking up token", "unhashed", unhashedToken, "hashed", hashedToken)
 	}
 
@@ -397,13 +397,11 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 }
 
 func (s *UserAuthTokenService) createdAfterParam() int64 {
-	tokenMaxLifetime := time.Duration(s.Cfg.LoginMaxLifetimeDays) * 24 * time.Hour
-	return getTime().Add(-tokenMaxLifetime).Unix()
+	return getTime().Add(-s.Cfg.LoginMaxLifetime).Unix()
 }
 
 func (s *UserAuthTokenService) rotatedAfterParam() int64 {
-	tokenMaxInactiveLifetime := time.Duration(s.Cfg.LoginMaxInactiveLifetimeDays) * 24 * time.Hour
-	return getTime().Add(-tokenMaxInactiveLifetime).Unix()
+	return getTime().Add(-s.Cfg.LoginMaxInactiveLifetime).Unix()
 }
 
 func hashToken(token string) string {

@@ -12,7 +12,7 @@ Data links allow you to provide more granular context to your links. You can cre
 The link itself is accessible in different ways depending on the visualization. For the graph you need to click on a data point or line, for a panel like
 Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open the context menu.
 
->**Note:** For stat, gauge, bar gauge, and table visualizations, you add and edit data links on the Field tab. For the graph visualization, you add and edit data links on the Panel tab.
+> **Note:** For stat, gauge, bar gauge, and table visualizations, you add and edit data links on the Field tab. For the graph visualization, you add and edit data links on the Panel tab.
 
 You can use variables in data links to send people to a detailed dashboard with preserved data filters. For example, you could use variables to specify a time range, series, and variable selection. For more information, refer to [Data link variables]({{< relref "data-link-variables.md" >}}).
 

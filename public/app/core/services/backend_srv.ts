@@ -3,10 +3,10 @@ import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, th
 import { fromFetch } from 'rxjs/fetch';
 import { v4 as uuidv4 } from 'uuid';
 import { BackendSrv as BackendService, BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
-import { AppEvents } from '@grafana/data';
+import { AppEvents, DataQueryErrorType } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
-import config, { getConfig } from 'app/core/config';
+import { getConfig } from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
@@ -40,7 +40,7 @@ export class BackendSrv implements BackendService {
     appEvents: appEvents,
     contextSrv: contextSrv,
     logout: () => {
-      window.location.href = config.appSubUrl + '/logout';
+      window.location.reload();
     },
   };
 
@@ -341,6 +341,7 @@ export class BackendSrv implements BackendService {
         // when a request is cancelled by takeUntil it will complete without emitting anything so we use throwIfEmpty to identify this case
         // in throwIfEmpty we'll then throw an cancelled error and then we'll return the correct result in the catchError or rethrow
         throwIfEmpty(() => ({
+          type: DataQueryErrorType.Cancelled,
           cancelled: true,
           data: null,
           status: this.HTTP_REQUEST_CANCELED,

@@ -119,6 +119,7 @@ const getStyles = stylesFactory(
 
     return {
       layout: css`
+        label: HorizontalGroup;
         display: flex;
         flex-direction: ${orientation === Orientation.Vertical ? 'column' : 'row'};
         flex-wrap: ${wrap ? 'wrap' : 'nowrap'};

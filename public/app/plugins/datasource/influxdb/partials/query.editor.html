@@ -1,13 +1,13 @@
 
-<query-editor-row ng-if="ctrl.datasource.is2x" query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
+<query-editor-row ng-if="ctrl.datasource.isFlux" query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
   <flux-query-editor 
-    target="ctrl.target" 
-    change="ctrl.onChange" 
-    refresh="ctrl.onRunQuery"
+    query="ctrl.target" 
+    onChange="ctrl.onChange" 
+    onRunQuery="ctrl.onRunQuery"
   ></flux-query-editor>
 </query-editor-row>
 
-<query-editor-row ng-if="!ctrl.datasource.is2x" query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
+<query-editor-row ng-if="!ctrl.datasource.isFlux" query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
   <div ng-if="ctrl.target.rawQuery">
     <div class="gf-form">
       <textarea

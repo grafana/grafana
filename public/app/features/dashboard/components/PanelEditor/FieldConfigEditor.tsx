@@ -1,13 +1,13 @@
-import React, { useCallback, ReactNode } from 'react';
-import cloneDeep from 'lodash/cloneDeep';
+import React, { ReactNode, useCallback } from 'react';
+import { get as lodashGet, cloneDeep } from 'lodash';
 import {
   DataFrame,
+  DocsId,
   FieldConfigPropertyItem,
   FieldConfigSource,
   PanelPlugin,
   SelectableValue,
   VariableSuggestionsScope,
-  DocsId,
 } from '@grafana/data';
 import { Container, Counter, FeatureInfoBox, Field, fieldMatchersUI, Label, useTheme, ValuePicker } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
@@ -17,6 +17,7 @@ import { OptionsGroup } from './OptionsGroup';
 import { selectors } from '@grafana/e2e-selectors';
 import { css } from 'emotion';
 import { getDocsLink } from 'app/core/utils/docsLinks';
+import { updateDefaultFieldConfigValue } from './utils';
 
 interface Props {
   plugin: PanelPlugin;
@@ -32,6 +33,7 @@ interface Props {
 export const OverrideFieldConfigEditor: React.FC<Props> = props => {
   const theme = useTheme();
   const { config } = props;
+
   const onOverrideChange = (index: number, override: any) => {
     const { config } = props;
     let overrides = cloneDeep(config.overrides);
@@ -76,7 +78,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
           // TODO:  apply matcher to retrieve fields
           return (
             <OverrideEditor
-              name={`${fieldMatchersUI.get(o.matcher.id).name}`}
+              name={`Override ${i + 1}`}
               key={`${o.matcher.id}/${i}`}
               data={data}
               override={o}
@@ -95,7 +97,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
       <Container padding="md">
         <ValuePicker
           icon="plus"
-          label="Add override"
+          label="Add an override for"
           variant="secondary"
           options={fieldMatchersUI
             .list()
@@ -128,32 +130,9 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
 };
 
 export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, config, plugin }) => {
-  const setDefaultValue = useCallback(
+  const onDefaultValueChange = useCallback(
     (name: string, value: any, isCustom: boolean | undefined) => {
-      const defaults = { ...config.defaults };
-      const remove = value === undefined || value === null || '';
-
-      if (isCustom) {
-        if (defaults.custom) {
-          if (remove) {
-            defaults.custom = { ...defaults.custom };
-            delete defaults.custom[name];
-          } else {
-            defaults.custom = { ...defaults.custom, [name]: value };
-          }
-        } else if (!remove) {
-          defaults.custom = { [name]: value };
-        }
-      } else if (remove) {
-        delete (defaults as any)[name];
-      } else {
-        (defaults as any)[name] = value;
-      }
-
-      onChange({
-        ...config,
-        defaults,
-      });
+      onChange(updateDefaultFieldConfigValue(config, name, value, isCustom));
     },
     [config, onChange]
   );
@@ -167,9 +146,9 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
       const defaults = config.defaults;
       const value = item.isCustom
         ? defaults.custom
-          ? defaults.custom[item.path]
+          ? lodashGet(defaults.custom, item.path)
           : undefined
-        : (defaults as any)[item.path];
+        : lodashGet(defaults, item.path);
 
       let label: ReactNode | undefined = (
         <Label description={item.description} category={item.category?.slice(1)}>
@@ -187,7 +166,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
           <item.editor
             item={item}
             value={value}
-            onChange={v => setDefaultValue(item.path, v, item.isCustom)}
+            onChange={v => onDefaultValueChange(item.path, v, item.isCustom)}
             context={{
               data,
               getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),

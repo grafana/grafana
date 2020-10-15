@@ -35,6 +35,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   dataList: LegacyResponseData[];
   querySubscription?: Unsubscribable | null;
   useDataFrames = false;
+  panelData?: PanelData;
 
   constructor($scope: any, $injector: any) {
     super($scope, $injector);
@@ -79,6 +80,12 @@ class MetricsPanelCtrl extends PanelCtrl {
       if (!_.isArray(data)) {
         data = data.data;
       }
+
+      this.panelData = {
+        state: LoadingState.Done,
+        series: data,
+        timeRange: this.range,
+      };
 
       // Defer panel rendering till the next digest cycle.
       // For some reason snapshot panels don't init at this time, so this helps to avoid rendering issues.
@@ -130,6 +137,8 @@ class MetricsPanelCtrl extends PanelCtrl {
   // Updates the response with information from the stream
   panelDataObserver = {
     next: (data: PanelData) => {
+      this.panelData = data;
+
       if (data.state === LoadingState.Error) {
         this.loading = false;
         this.processDataError(data.error);

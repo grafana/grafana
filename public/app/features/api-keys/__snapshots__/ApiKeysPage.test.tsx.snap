@@ -47,20 +47,23 @@ exports[`Render should render CTA if there are no API keys 1`] = `
       in={false}
     >
       <div
-        className="cta-form"
+        className="gf-form-inline cta-form"
       >
-        <IconButton
+        <button
           className="cta-form__close btn btn-transparent"
-          name="times"
           onClick={[Function]}
-        />
-        <h5>
-          Add API Key
-        </h5>
+        >
+          <Icon
+            name="times"
+          />
+        </button>
         <form
           className="gf-form-group"
           onSubmit={[Function]}
         >
+          <h5>
+            Add API Key
+          </h5>
           <div
             className="gf-form-inline"
           >

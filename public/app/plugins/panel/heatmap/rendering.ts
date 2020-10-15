@@ -9,20 +9,21 @@ import { getColorScale, getOpacityScale } from './color_scale';
 import {
   toUtc,
   PanelEvents,
-  GrafanaThemeType,
-  getColorFromHexRgbOrName,
   getValueFormat,
   formattedValueToString,
   dateTimeFormat,
+  getColorForTheme,
 } from '@grafana/data';
+import { graphTimeFormat } from '@grafana/ui';
 import { CoreEvents } from 'app/types';
+import { config } from 'app/core/config';
 
 const MIN_CARD_SIZE = 1,
   CARD_PADDING = 1,
   CARD_ROUND = 0,
   DATA_RANGE_WIDING_FACTOR = 1.2,
   DEFAULT_X_TICK_SIZE_PX = 100,
-  DEFAULT_Y_TICK_SIZE_PX = 50,
+  DEFAULT_Y_TICK_SIZE_PX = 22.5,
   X_AXIS_TICK_PADDING = 10,
   Y_AXIS_TICK_PADDING = 5,
   MIN_SELECTION_WIDTH = 2;
@@ -155,9 +156,13 @@ export class HeatmapRenderer {
       .range([0, this.chartWidth]);
 
     const ticks = this.chartWidth / DEFAULT_X_TICK_SIZE_PX;
-    const format = ticksUtils.grafanaTimeFormat(ticks, this.timeRange.from, this.timeRange.to);
+    const format = graphTimeFormat(ticks, this.timeRange.from.valueOf(), this.timeRange.to.valueOf());
     const timeZone = this.ctrl.dashboard.getTimezone();
-    const formatter = (date: Date) => dateTimeFormat(date, { format, timeZone });
+    const formatter = (date: Date) =>
+      dateTimeFormat(date.valueOf(), {
+        format: format,
+        timeZone: timeZone,
+      });
 
     const xAxis = d3
       .axisBottom(this.xScale)
@@ -677,10 +682,7 @@ export class HeatmapRenderer {
 
   getCardColor(d: { count: any }) {
     if (this.panel.color.mode === 'opacity') {
-      return getColorFromHexRgbOrName(
-        this.panel.color.cardColor,
-        contextSrv.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark
-      );
+      return getColorForTheme(this.panel.color.cardColor, config.theme);
     } else {
       return this.colorScale(d.count);
     }

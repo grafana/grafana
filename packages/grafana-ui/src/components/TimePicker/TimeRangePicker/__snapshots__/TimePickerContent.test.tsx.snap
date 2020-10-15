@@ -233,15 +233,15 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
           Array [
             Object {
               "display": "2019-12-17 07:48:27 to 2019-12-18 07:48:27",
-              "from": "2019-12-17T07:48:27Z",
+              "from": "2019-12-17 07:48:27",
               "section": 3,
-              "to": "2019-12-18T07:48:27Z",
+              "to": "2019-12-18 07:48:27",
             },
             Object {
               "display": "2019-10-17 07:48:27 to 2019-10-18 07:48:27",
-              "from": "2019-10-17T07:48:27Z",
+              "from": "2019-10-17 07:48:27",
               "section": 3,
-              "to": "2019-10-18T07:48:27Z",
+              "to": "2019-10-18 07:48:27",
             },
           ]
         }
@@ -297,15 +297,15 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
           Array [
             Object {
               "display": "2019-12-17 07:48:27 to 2019-12-18 07:48:27",
-              "from": "2019-12-17T07:48:27Z",
+              "from": "2019-12-17 07:48:27",
               "section": 3,
-              "to": "2019-12-18T07:48:27Z",
+              "to": "2019-12-18 07:48:27",
             },
             Object {
               "display": "2019-10-17 07:48:27 to 2019-10-18 07:48:27",
-              "from": "2019-10-17T07:48:27Z",
+              "from": "2019-10-17 07:48:27",
               "section": 3,
-              "to": "2019-10-18T07:48:27Z",
+              "to": "2019-10-18 07:48:27",
             },
           ]
         }

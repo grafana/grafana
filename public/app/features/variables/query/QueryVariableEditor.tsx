@@ -2,7 +2,7 @@ import React, { ChangeEvent, PureComponent } from 'react';
 import { InlineFormLabel, LegacyForms } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
-import templateSrv from '../../templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
 import { QueryVariableEditorState } from './reducer';
@@ -30,7 +30,7 @@ interface DispatchProps {
   changeVariableMultiValue: typeof changeVariableMultiValue;
 }
 
-type Props = OwnProps & ConnectedProps & DispatchProps;
+export type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export interface State {
   regex: string | null;
@@ -73,7 +73,9 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   onQueryChange = async (query: any, definition: string) => {
-    this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, definition);
+    if (this.props.variable.query !== query) {
+      this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, definition);
+    }
   };
 
   onRegExChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -81,7 +83,10 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   onRegExBlur = async (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onPropChange({ propName: 'regex', propValue: event.target.value, updateOptions: true });
+    const regex = event.target.value;
+    if (this.props.variable.regex !== regex) {
+      this.props.onPropChange({ propName: 'regex', propValue: regex, updateOptions: true });
+    }
   };
 
   onTagsQueryChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -89,7 +94,10 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   onTagsQueryBlur = async (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onPropChange({ propName: 'tagsQuery', propValue: event.target.value, updateOptions: true });
+    const tagsQuery = event.target.value;
+    if (this.props.variable.tagsQuery !== tagsQuery) {
+      this.props.onPropChange({ propName: 'tagsQuery', propValue: tagsQuery, updateOptions: true });
+    }
   };
 
   onTagValuesQueryChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -97,7 +105,10 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   onTagValuesQueryBlur = async (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onPropChange({ propName: 'tagValuesQuery', propValue: event.target.value, updateOptions: true });
+    const tagValuesQuery = event.target.value;
+    if (this.props.variable.tagValuesQuery !== tagValuesQuery) {
+      this.props.onPropChange({ propName: 'tagValuesQuery', propValue: tagValuesQuery, updateOptions: true });
+    }
   };
 
   onRefreshChange = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -174,7 +185,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
             <VariableQueryEditor
               datasource={this.props.editor.extended?.dataSource}
               query={this.props.variable.query}
-              templateSrv={templateSrv}
+              templateSrv={getTemplateSrv()}
               onChange={this.onQueryChange}
             />
           )}

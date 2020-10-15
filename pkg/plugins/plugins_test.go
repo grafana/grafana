@@ -29,7 +29,7 @@ func TestPluginManager_Init(t *testing.T) {
 	setting.StaticRootPath, err = filepath.Abs("../../public/")
 	require.NoError(t, err)
 	setting.Raw = ini.Empty()
-	setting.Env = setting.PROD
+	setting.Env = setting.Prod
 
 	t.Run("Base case", func(t *testing.T) {
 		pm := &PluginManager{

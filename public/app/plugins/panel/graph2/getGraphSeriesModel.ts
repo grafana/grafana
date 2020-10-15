@@ -12,10 +12,9 @@ import {
   getSeriesTimeStep,
   TimeZone,
   hasMsResolution,
-  MS_DATE_TIME_FORMAT,
-  DEFAULT_DATE_TIME_FORMAT,
+  systemDateFormats,
   FieldColor,
-  FieldColorMode,
+  FieldColorModeId,
   FieldConfigSource,
   getFieldDisplayName,
 } from '@grafana/data';
@@ -83,7 +82,7 @@ export const getGraphSeriesModel = (
         if (seriesOptions[field.name] && seriesOptions[field.name].color) {
           // Case when panel has settings provided via SeriesOptions, i.e. graph panel
           color = {
-            mode: FieldColorMode.Fixed,
+            mode: FieldColorModeId.Fixed,
             fixedColor: seriesOptions[field.name].color,
           };
         } else if (field.config && field.config.color) {
@@ -91,7 +90,7 @@ export const getGraphSeriesModel = (
           color = field.config.color;
         } else {
           color = {
-            mode: FieldColorMode.Fixed,
+            mode: FieldColorModeId.Fixed,
             fixedColor: colors[graphs.length % colors.length],
           };
         }
@@ -117,7 +116,7 @@ export const getGraphSeriesModel = (
             ...timeField,
             type: timeField.type,
             config: {
-              unit: `time:${useMsDateFormat ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT}`,
+              unit: systemDateFormats.getTimeFieldUnit(useMsDateFormat),
             },
           },
         });
