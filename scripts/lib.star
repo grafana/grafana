@@ -160,7 +160,8 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
                     'clone',
                 ],
                 'commands': pre_cmds + [
-                    'mv grabpl /tmp',
+                    'mv bin/grabpl /tmp/',
+                    'rmdir bin',
                     'mv grafana-enterprise /tmp/',
                     '/tmp/grabpl init-enterprise /tmp/grafana-enterprise{}'.format(source_commit),
                     'mkdir bin',
