@@ -24,6 +24,8 @@ type SocialGenericOAuth struct {
 	emailAttributeName   string
 	emailAttributePath   string
 	loginAttributePath   string
+	nameAttributeName    string
+	nameAttributePath    string
 	roleAttributePath    string
 	idTokenAttributeName string
 	teamIds              []int
@@ -107,12 +109,9 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		s.log.Debug("Processing external user info", "source", data.source, "data", data)
 
 		if userInfo.Name == "" {
-			if data.Name != "" {
-				s.log.Debug("Setting user info name from name field")
-				userInfo.Name = data.Name
-			} else if data.DisplayName != "" {
-				s.log.Debug("Setting user info name from display name field")
-				userInfo.Name = data.DisplayName
+			userInfo.Name = s.extractUserName(data)
+			if userInfo.Name != "" {
+				s.log.Debug("Set user info name from extracted name", "name", userInfo.Name)
 			}
 		}
 
@@ -303,6 +302,39 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 		s.log.Debug("Failed to parse e-mail address", "error", emailErr.Error())
 	}
 
+	return ""
+}
+
+func (s *SocialGenericOAuth) extractUserName(data *UserInfoJson) string {
+	if s.nameAttributePath != "" {
+		name, err := s.searchJSONForAttr(s.nameAttributePath, data.rawJSON)
+		if err != nil {
+			s.log.Error("Failed to search JSON for attribute", "error", err)
+		} else if name != "" {
+			s.log.Debug("Setting user info name from nameAttributePath", "nameAttributePath", s.nameAttributePath)
+			return name
+		}
+	}
+
+	if s.nameAttributeName != "" {
+		names, ok := data.Attributes[s.nameAttributeName]
+		if ok && len(names) != 0 {
+			s.log.Debug("Setting user info name from nameAttributeName", "nameAttributeName", s.nameAttributeName)
+			return names[0]
+		}
+	}
+
+	if data.Name != "" {
+		s.log.Debug("Setting user info name from name field")
+		return data.Name
+	}
+
+	if data.DisplayName != "" {
+		s.log.Debug("Setting user info name from display name field")
+		return data.DisplayName
+	}
+
+	s.log.Debug("Unable to find user info name")
 	return ""
 }
 
