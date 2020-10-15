@@ -1072,7 +1072,7 @@ steps:
   - echo $DRONE_RUNNER_NAME
 
 - name: clone
-  image: alpine/git:v2.26.2
+  image: grafana/build-container:1.2.27
   commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.18/grabpl
@@ -1089,7 +1089,8 @@ steps:
   image: grafana/build-container:1.2.27
   commands:
   - export DRONE_TAG=$$(./bin/grabpl parse-tag-ref ${DRONE_COMMIT_REF})
-  - mv grabpl /tmp
+  - mv bin/grabpl /tmp/
+  - rmdir bin
   - mv grafana-enterprise /tmp/
   - /tmp/grabpl init-enterprise /tmp/grafana-enterprise $${DRONE_TAG}
   - mkdir bin
@@ -1835,7 +1836,7 @@ steps:
   - echo $DRONE_RUNNER_NAME
 
 - name: clone
-  image: alpine/git:v2.26.2
+  image: grafana/build-container:1.2.27
   commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.18/grabpl
@@ -1850,7 +1851,8 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.27
   commands:
-  - mv grabpl /tmp
+  - mv bin/grabpl /tmp/
+  - rmdir bin
   - mv grafana-enterprise /tmp/
   - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
   - mkdir bin
