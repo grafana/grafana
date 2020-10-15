@@ -1,6 +1,6 @@
 {
   grafanaDashboards: {
-    'mysql-overview.json': (import 'dashboards/grafana-overview.json'),
+    'grafana-overview.json': (import 'dashboards/grafana-overview.json'),
   },
 
   // Helper function to ensure that we don't override other rules, by forcing
@@ -11,5 +11,5 @@
 
   prometheusRules+: importRules(importstr 'rules/rules.yaml'),
 
-  prometheusAlerts+: importRules(importstr 'alerts/grafana.yaml'),
+  prometheusAlerts+: importRules(importstr 'alerts/alerts.yaml'),
 }

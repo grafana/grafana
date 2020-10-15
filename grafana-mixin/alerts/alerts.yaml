@@ -1,0 +1,6 @@
+groups:
+  - name: GrafanaAlerts
+    rules:
+      - alert: HTTPRequestErrorRate
+        for: 5m
+        expr: 100 * backend:http_request_total:rate5m > 10

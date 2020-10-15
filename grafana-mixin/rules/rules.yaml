@@ -1,7 +1,16 @@
 groups:
   - name: grafana_rules
     rules:
-      # Record slave lag seconds for pre-computed timeseries that takes
-      # `mysql_slave_status_sql_delay` into account
-      - record: mysql_slave_lag_seconds
-        expr: mysql_slave_status_seconds_behind_master - mysql_slave_status_sql_delay
+      # Record error rate of http requests excluding dataproxy, /ds/query and /tsdb/query requests
+      - record: backend:http_request_total:rate5m
+        expr: |||
+            sum by (handler) (irate(http_request_total{job="hosted-grafana/grafana", statuscode=~"5..", handler!~"/datasources/proxy/:id.*|/ds/query|/tsdb/query"}[5m]))
+            /
+            sum by (handler) (irate(http_request_total{job="hosted-grafana/grafana", handler!~"/datasources/proxy/:id.*|/ds/query|/tsdb/query"}[5m]))
+            |||
+    - record: backend:datasource_request_total:rate5m
+        expr: |||
+            sum by (handler) (irate(http_request_total{job="hosted-grafana/grafana", statuscode=~"5..", handler=~"/datasources/proxy/:id.*|/ds/query|/tsdb/query"}[5m]))
+            /
+            sum by (handler) (irate(http_request_total{job="hosted-grafana/grafana", handler=~"/datasources/proxy/:id.*|/ds/query|/tsdb/query"}[5m]))
+            |||
