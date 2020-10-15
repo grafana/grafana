@@ -23,11 +23,6 @@ export class QueryEditor extends PureComponent<Props> {
       value: GrafanaQueryType.LiveMeasurements,
       description: 'Stream real-time measurements from grafana',
     },
-    {
-      label: 'Streaming testdata',
-      value: GrafanaQueryType.TestData,
-      description: 'NOTE: this will be moved to the tesdata source, when it is reactified',
-    },
   ];
 
   onQueryTypeChange = (sel: SelectableValue<GrafanaQueryType>) => {
@@ -55,25 +50,8 @@ export class QueryEditor extends PureComponent<Props> {
   };
 
   renderMeasurementsQuery() {
-    let { channel, measurements, queryType } = this.props.query;
-
-    const namespace = queryType === GrafanaQueryType.LiveMeasurements ? 'measurements' : 'testdata';
-    const channels: Array<SelectableValue<string>> =
-      namespace === 'testdata'
-        ? [
-            {
-              label: 'random-2s-stream',
-              value: 'random-2s-stream',
-              description: 'Random stream with points every 2s',
-            },
-            {
-              label: 'random-flakey-stream',
-              value: 'random-flakey-stream',
-              description: 'Random stream with flakey data points',
-            },
-          ]
-        : [];
-
+    let { channel, measurements } = this.props.query;
+    const channels: Array<SelectableValue<string>> = [];
     let currentChannel = channels.find(c => c.value === channel);
     if (channel && !currentChannel) {
       currentChannel = {
@@ -95,7 +73,7 @@ export class QueryEditor extends PureComponent<Props> {
     if (channel) {
       info = getLiveMeasurements({
         scope: LiveChannelScope.Grafana,
-        namespace,
+        namespace: 'measurements',
         path: channel,
       });
 
@@ -171,9 +149,6 @@ export class QueryEditor extends PureComponent<Props> {
 
   render() {
     const query = defaults(this.props.query, defaultQuery);
-    const ismeasure =
-      query.queryType === GrafanaQueryType.LiveMeasurements || query.queryType === GrafanaQueryType.TestData;
-
     return (
       <>
         <div className="gf-form">
@@ -185,7 +160,7 @@ export class QueryEditor extends PureComponent<Props> {
             />
           </InlineField>
         </div>
-        {ismeasure && this.renderMeasurementsQuery()}
+        {query.queryType === GrafanaQueryType.LiveMeasurements && this.renderMeasurementsQuery()}
       </>
     );
   }

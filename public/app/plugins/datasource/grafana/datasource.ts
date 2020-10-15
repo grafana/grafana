@@ -27,10 +27,20 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
       if (target.hide) {
         continue;
       }
-      if (target.queryType === GrafanaQueryType.LiveMeasurements || target.queryType === GrafanaQueryType.TestData) {
-        const q = getStreamingResponse(request.requestId, target);
-        if (q) {
-          queries.push(q);
+      if (target.queryType === GrafanaQueryType.LiveMeasurements) {
+        const { channel, measurements } = target;
+        if (channel) {
+          queries.push(
+            getLiveMeasurmentsObserver(
+              {
+                scope: LiveChannelScope.Grafana,
+                namespace: 'measurements',
+                path: channel,
+              },
+              `${request.requestId}.${counter++}`,
+              measurements
+            )
+          );
         }
       } else {
         queries.push(getRandomWalk(request));
@@ -103,23 +113,6 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
   testDatasource() {
     return Promise.resolve();
   }
-}
-
-function getStreamingResponse(requestId: string, target: GrafanaQuery): Observable<DataQueryResponse> | undefined {
-  const { channel, measurements } = target;
-  const namespace = target.queryType === GrafanaQueryType.LiveMeasurements ? 'measurements' : 'testdata';
-  if (channel && namespace) {
-    return getLiveMeasurmentsObserver(
-      {
-        scope: LiveChannelScope.Grafana,
-        namespace: 'testdata',
-        path: channel,
-      },
-      `${requestId}.${counter++}`,
-      measurements
-    );
-  }
-  return undefined;
 }
 
 // Note that the query does not actually matter
