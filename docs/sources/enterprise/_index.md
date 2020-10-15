@@ -13,7 +13,7 @@ weight = 100
 
 Grafana Enterprise is a commercial edition of Grafana that includes additional features not found in the open source version.
 
-Building on everything you already know and love about Grafana, Grafana Enterprise includes [exclusive datasource plugins]({{< relref "#enterprise-plugins">}}) and [additional features]({{< relref "#enterprise-features">}}). On top of that you get 24x7x365 support and training from the core Grafana team. 
+Building on everything you already know and love about Grafana, Grafana Enterprise includes [exclusive datasource plugins]({{< relref "#enterprise-plugins">}}) and [additional features]({{< relref "#enterprise-features">}}). On top of that you get 24x7x365 support and training from the core Grafana team.
 
 [Learn more about Grafana Enterprise.](https://grafana.com/enterprise)
 
@@ -53,6 +53,7 @@ With Grafana Enterprise, you get access to new features, including:
 - [White labeling]({{< relref "white-labeling.md" >}}) to customize Grafana from the brand and logo to the footer links.
 - [Usage insights]({{< relref "usage-insights.md" >}}) to understand how your Grafana instance is used.
 - [Vault integration]({{< relref "vault.md" >}}) to manage your configuration or provisioning secrets with Vault.
+- [Auditing]({{< relref "auditing.md" >}}) to manage and mitigate suspicious activity and meet compliance requirements.
 
 ## Enterprise plugins
 
@@ -77,44 +78,44 @@ Follow these steps to activate your Grafana Enterprise license:
 
 ### 1. Download your license file
 
-   To download your Grafana Enterprise license, log in to your [Grafana Cloud Account](https://grafana.com) and go to your **Org Profile**. In the side menu there is a section for Grafana Enterprise licenses. At the bottom of the license details page there is **Download Token** link that will download the *license.jwt* file containing your license.
+To download your Grafana Enterprise license, log in to your [Grafana Cloud Account](https://grafana.com) and go to your **Org Profile**. In the side menu there is a section for Grafana Enterprise licenses. At the bottom of the license details page there is **Download Token** link that will download the _license.jwt_ file containing your license.
 
 ### 2. Add your license file to a Grafana instance
 
-   There are two different ways to add the license file to a Grafana instance:
+There are two different ways to add the license file to a Grafana instance:
 
-   - Option 1: Upload the license file through the Grafana Server Administrator page
+- Option 1: Upload the license file through the Grafana Server Administrator page
 
-     Sign in as a Server Administrator. Navigate to **Server Admin > Upgrade** within Grafana, click on **Upload license token file**, select your license file, and upload it.
+  Sign in as a Server Administrator. Navigate to **Server Admin > Upgrade** within Grafana, click on **Upload license token file**, select your license file, and upload it.
 
-   - Option 2: Place the *license.jwt* file in Grafana's data folder. 
-   
-     This is usually located at `/var/lib/grafana` on Linux systems.
+- Option 2: Place the _license.jwt_ file in Grafana's data folder.
 
-     You can also configure a custom location for the license file via the ini setting:
+  This is usually located at `/var/lib/grafana` on Linux systems.
 
-     ```bash
-     [enterprise]
-     license_path = /company/secrets/license.jwt
-     ```
+  You can also configure a custom location for the license file via the ini setting:
 
-     This setting can also be set with an environment variable, which is useful if you're running Grafana with Docker and have a custom volume where you have placed the license file. In this case, set the environment variable `GF_ENTERPRISE_LICENSE_PATH` to point to the location of your license file.
+  ```bash
+  [enterprise]
+  license_path = /company/secrets/license.jwt
+  ```
+
+  This setting can also be set with an environment variable, which is useful if you're running Grafana with Docker and have a custom volume where you have placed the license file. In this case, set the environment variable `GF_ENTERPRISE_LICENSE_PATH` to point to the location of your license file.
 
 ### 3. Ensure that the license file's root url matches the root_url configuration option
 
-   Update the [`root_url`](../administration/configuration/#root-url) in your configuration. It should be the URL that users type in their browsers to access the frontend, not the node hostname(s).
+Update the [`root_url`](../administration/configuration/#root-url) in your configuration. It should be the URL that users type in their browsers to access the frontend, not the node hostname(s).
 
-   This is important, because as part of the validation checks at startup, Grafana compares the license URL to the [`root_url`](../administration/configuration/#root-url) in your configuration. 
+This is important, because as part of the validation checks at startup, Grafana compares the license URL to the [`root_url`](../administration/configuration/#root-url) in your configuration.
 
-   In your configuration file:
+In your configuration file:
 
-   ```
-   [server]
-   root_url = https://grafana.blah.com/
-   ```
+```
+[server]
+root_url = https://grafana.blah.com/
+```
 
-   Or with an environment variable:
+Or with an environment variable:
 
-   ```
-   GF_SERVER_ROOT_URL=https://grafana.blah.com/
-   ```
+```
+GF_SERVER_ROOT_URL=https://grafana.blah.com/
+```
