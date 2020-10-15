@@ -33,6 +33,7 @@ steps:
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
   - ./scripts/tidy-check.sh
+  - ./scripts/mixin-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -301,6 +302,7 @@ steps:
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
   - ./scripts/tidy-check.sh
+  - ./scripts/mixin-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -728,8 +730,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.18/grabpl
   - chmod +x bin/grabpl
-  - export DRONE_TAG=$$(./bin/grabpl parse-tag-ref ${DRONE_COMMIT_REF})
-  - ./bin/grabpl verify-version $${DRONE_TAG}
+  - ./bin/grabpl verify-version ${DRONE_TAG}
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -744,6 +745,7 @@ steps:
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
   - ./scripts/tidy-check.sh
+  - ./scripts/mixin-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -793,8 +795,7 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.2.27
   commands:
-  - export DRONE_TAG=$$(./bin/grabpl parse-tag-ref ${DRONE_COMMIT_REF})
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise $${DRONE_TAG}
+  - ./bin/grabpl build-backend --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -806,8 +807,7 @@ steps:
 - name: build-frontend
   image: grafana/build-container:1.2.27
   commands:
-  - export DRONE_TAG=$$(./bin/grabpl parse-tag-ref ${DRONE_COMMIT_REF})
-  - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition oss --no-pull-enterprise $${DRONE_TAG}
+  - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition oss --no-pull-enterprise ${DRONE_TAG}
   depends_on:
   - initialize
   - test-frontend
@@ -826,8 +826,7 @@ steps:
 - name: package
   image: grafana/build-container:1.2.27
   commands:
-  - export DRONE_TAG=$$(./bin/grabpl parse-tag-ref ${DRONE_COMMIT_REF})
-  - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise --sign $${DRONE_TAG}
+  - ./bin/grabpl package --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise --sign ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -876,11 +875,10 @@ steps:
 - name: publish-storybook
   image: grafana/grafana-ci-deploy:1.2.6
   commands:
-  - export DRONE_TAG=$$(./bin/grabpl parse-tag-ref ${DRONE_COMMIT_REF})
   - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
   - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/latest
-  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/$${DRONE_TAG}
+  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/${DRONE_TAG}
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -955,8 +953,7 @@ steps:
   commands:
   - ./node_modules/.bin/lerna bootstrap
   - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
-  - export DRONE_TAG=$$(./bin/grabpl parse-tag-ref ${DRONE_COMMIT_REF})
-  - ./scripts/build/release-packages.sh $${DRONE_TAG}
+  - ./scripts/build/release-packages.sh ${DRONE_TAG}
   environment:
     NPM_TOKEN:
       from_secret: npm_token
@@ -1029,14 +1026,13 @@ steps:
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
   commands:
-  - $$env:DRONE_TAG=$$(.\grabpl.exe parse-tag-ref ${DRONE_TAG})
   - $$gcpKey = $$env:GCP_KEY
   - "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json"
   - dos2unix gcpkey.json
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --edition oss $$env:DRONE_TAG
+  - .\grabpl.exe windows-installer --edition oss ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://grafana-downloads/oss/release/
   - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/release/
@@ -1077,10 +1073,9 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.18/grabpl
   - chmod +x bin/grabpl
-  - export DRONE_TAG=$$(./bin/grabpl parse-tag-ref ${DRONE_COMMIT_REF})
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
-  - git checkout $${DRONE_TAG}
+  - git checkout ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1088,14 +1083,13 @@ steps:
 - name: initialize
   image: grafana/build-container:1.2.27
   commands:
-  - export DRONE_TAG=$$(./bin/grabpl parse-tag-ref ${DRONE_COMMIT_REF})
   - mv bin/grabpl /tmp/
   - rmdir bin
   - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise $${DRONE_TAG}
+  - /tmp/grabpl init-enterprise /tmp/grafana-enterprise ${DRONE_TAG}
   - mkdir bin
   - mv /tmp/grabpl bin/
-  - ./bin/grabpl verify-version $${DRONE_TAG}
+  - ./bin/grabpl verify-version ${DRONE_TAG}
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - tar -C bin -xzvf dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
   - rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -1112,6 +1106,7 @@ steps:
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
   - ./scripts/tidy-check.sh
+  - ./scripts/mixin-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -1161,8 +1156,7 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.2.27
   commands:
-  - export DRONE_TAG=$$(./bin/grabpl parse-tag-ref ${DRONE_COMMIT_REF})
-  - ./bin/grabpl build-backend --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN} --no-pull-enterprise $${DRONE_TAG}
+  - ./bin/grabpl build-backend --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN} --no-pull-enterprise ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1174,8 +1168,7 @@ steps:
 - name: build-frontend
   image: grafana/build-container:1.2.27
   commands:
-  - export DRONE_TAG=$$(./bin/grabpl parse-tag-ref ${DRONE_COMMIT_REF})
-  - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition enterprise --no-pull-enterprise $${DRONE_TAG}
+  - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition enterprise --no-pull-enterprise ${DRONE_TAG}
   depends_on:
   - initialize
   - test-frontend
@@ -1194,8 +1187,7 @@ steps:
 - name: package
   image: grafana/build-container:1.2.27
   commands:
-  - export DRONE_TAG=$$(./bin/grabpl parse-tag-ref ${DRONE_COMMIT_REF})
-  - ./bin/grabpl package --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN} --no-pull-enterprise --sign $${DRONE_TAG}
+  - ./bin/grabpl package --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN} --no-pull-enterprise --sign ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1362,10 +1354,9 @@ steps:
   commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.18/windows/grabpl.exe -OutFile grabpl.exe
-  - $$env:DRONE_TAG=$$(.\grabpl.exe parse-tag-ref ${DRONE_TAG})
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
-  - git checkout $$env:DRONE_TAG
+  - git checkout ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -1385,14 +1376,13 @@ steps:
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
   commands:
-  - $$env:DRONE_TAG=$$(.\grabpl.exe parse-tag-ref ${DRONE_TAG})
   - $$gcpKey = $$env:GCP_KEY
   - "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json"
   - dos2unix gcpkey.json
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --edition enterprise $$env:DRONE_TAG
+  - .\grabpl.exe windows-installer --edition enterprise ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://grafana-downloads/enterprise/release/
   - gsutil cp "$$fname.sha256" gs://grafana-downloads/enterprise/release/
@@ -1430,17 +1420,15 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.18/grabpl
   - chmod +x bin/grabpl
-  - export DRONE_TAG=$$(./bin/grabpl parse-tag-ref ${DRONE_COMMIT_REF})
-  - ./bin/grabpl verify-version $${DRONE_TAG}
+  - ./bin/grabpl verify-version ${DRONE_TAG}
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages
   image: grafana/grafana-ci-deploy:1.2.6
   commands:
-  - export DRONE_TAG=$$(./bin/grabpl parse-tag-ref ${DRONE_COMMIT_REF})
-  - ./bin/grabpl publish-packages --edition oss $${DRONE_TAG}
-  - ./bin/grabpl publish-packages --edition enterprise $${DRONE_TAG}
+  - ./bin/grabpl publish-packages --edition oss ${DRONE_TAG}
+  - ./bin/grabpl publish-packages --edition enterprise ${DRONE_TAG}
   environment:
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
@@ -1524,6 +1512,7 @@ steps:
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
   - ./scripts/tidy-check.sh
+  - ./scripts/mixin-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -1874,6 +1863,7 @@ steps:
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
   - ./scripts/tidy-check.sh
+  - ./scripts/mixin-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
