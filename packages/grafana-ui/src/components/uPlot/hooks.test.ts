@@ -130,7 +130,6 @@ describe('usePlotConfig', () => {
 
         removeSeries();
       });
-      // await waitForNextUpdate();
 
       expect(result.current.currentConfig?.series).toHaveLength(1);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
