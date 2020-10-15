@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { LegacyForms, ClipboardButton, Icon, InfoBox } from '@grafana/ui';
+import { LegacyForms, ClipboardButton, Icon, InfoBox, Input } from '@grafana/ui';
 const { Select, Switch } = LegacyForms;
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
@@ -136,12 +136,19 @@ export class ShareLink extends PureComponent<Props, State> {
               <div className="gf-form-group">
                 <div className="gf-form-inline">
                   <div className="gf-form gf-form--grow">
-                    <input type="text" className="gf-form-input" defaultValue={shareUrl} />
-                  </div>
-                  <div className="gf-form">
-                    <ClipboardButton variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
-                      Copy
-                    </ClipboardButton>
+                    <Input
+                      value={shareUrl}
+                      readOnly
+                      addonAfter={
+                        <ClipboardButton
+                          variant="primary"
+                          getText={this.getShareUrl}
+                          onClipboardCopy={this.onShareUrlCopy}
+                        >
+                          <Icon name="copy" /> Copy
+                        </ClipboardButton>
+                      }
+                    />
                   </div>
                 </div>
               </div>

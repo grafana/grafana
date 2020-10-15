@@ -14,7 +14,7 @@ export interface CodeEditorProps {
   /**
    * Callback after the editor has mounted that gives you raw access to monaco
    *
-   * @experimental - real type is: monaco.editor.IStandaloneCodeEditor
+   * @alpha -- experimental - real type is: monaco.editor.IStandaloneCodeEditor
    */
   onEditorDidMount?: (editor: any) => void;
 
