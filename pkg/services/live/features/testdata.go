@@ -29,7 +29,7 @@ type TestdataSupplier struct {
 // DoNamespaceHTTP called from the http api
 func (g *TestdataSupplier) DoNamespaceHTTP(c *models.ReqContext) {
 	c.JSON(400, util.DynMap{
-		"Unsupportedd": "TestdataSupplier",
+		"Unsupported": "TestdataSupplier",
 	})
 }
 
@@ -87,7 +87,7 @@ func (g *testdataRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEve
 // DoChannelHTTP called from the http api
 func (g *testdataRunner) DoChannelHTTP(c *models.ReqContext, channel string) {
 	c.JSON(400, util.DynMap{
-		"Unsupportedd": channel,
+		"Unsupported": channel,
 	})
 }
 
@@ -127,7 +127,7 @@ func (g *testdataRunner) runRandomCSV() {
 
 		err = g.publisher(g.channel, bytes)
 		if err != nil {
-			logger.Warn("write", "channel", g.channel, "line", measure)
+			logger.Warn("write", "channel", g.channel, "measure", measure)
 		}
 	}
 }

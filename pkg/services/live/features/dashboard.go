@@ -26,10 +26,10 @@ func (g *DashboardHandler) GetHandlerForPath(path string) (models.ChannelHandler
 	return g, nil // all dashboards share the same handler
 }
 
-// DoNamespaceHTTP called from the http api
+// DoNamespaceHTTP is called from the HTTP API.
 func (g *DashboardHandler) DoNamespaceHTTP(c *models.ReqContext) {
 	c.JSON(400, util.DynMap{
-		"Unsupportedd": "DashboardHandler",
+		"Unsupported": "DashboardHandler",
 	})
 }
 
@@ -53,10 +53,10 @@ func (g *DashboardHandler) OnPublish(c *centrifuge.Client, e centrifuge.PublishE
 	return e.Data, nil
 }
 
-// DoChannelHTTP called from the http api
+// DoChannelHTTP is called from the HTTP API.
 func (g *DashboardHandler) DoChannelHTTP(c *models.ReqContext, channel string) {
 	c.JSON(400, util.DynMap{
-		"Unsupportedd": channel,
+		"Unsupported": channel,
 	})
 }
 

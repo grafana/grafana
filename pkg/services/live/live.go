@@ -268,11 +268,11 @@ func (g *GrafanaLive) GetChannelNamespace(scope string, name string) (models.Cha
 		if ok {
 			return p, nil
 		}
-		return nil, fmt.Errorf("Unknown feature: %s", name)
+		return nil, fmt.Errorf("Unknown feature: %q", name)
 	}
 
 	if scope == "ds" {
-		return nil, fmt.Errorf("todo... look up datasource: %s", name)
+		return nil, fmt.Errorf("todo... look up datasource: %q", name)
 	}
 
 	if scope == "plugin" {
@@ -286,7 +286,7 @@ func (g *GrafanaLive) GetChannelNamespace(scope string, name string) (models.Cha
 		return nil, fmt.Errorf("unknown plugin: %q", name)
 	}
 
-	return nil, fmt.Errorf("invalid scope: %s", scope)
+	return nil, fmt.Errorf("invalid scope: %q", scope)
 }
 
 func (g *GrafanaLive) initChannel(id ChannelAddress) (models.ChannelHandler, error) {

@@ -35,6 +35,6 @@ func (ca *ChannelAddress) IsValid() bool {
 }
 
 // ToChannelID converts this to a single string
-func (id *ChannelAddress) ToChannelID() string {
-	return id.Scope + "/" + id.Namespace + "/" + id.Path
+func (ca *ChannelAddress) ToChannelID() string {
+	return ca.Scope + "/" + ca.Namespace + "/" + ca.Path
 }

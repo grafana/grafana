@@ -19,19 +19,20 @@ type MeasurementsRunner struct {
 	Publisher models.ChannelPublisher
 }
 
-// GetHandlerForPath called on init
+// GetHandlerForPath is called on init.
 func (m *MeasurementsRunner) GetHandlerForPath(path string) (models.ChannelHandler, error) {
 	return m, nil // for now all channels share config
 }
 
-// DoNamespaceHTTP called from the http api
+// DoNamespaceHTTP is called from the HTTP API.
 func (m *MeasurementsRunner) DoNamespaceHTTP(c *models.ReqContext) {
 	c.JSON(400, util.DynMap{
-		"Unsupportedd": "MeasurementsRunner",
+		"Unsupported": "MeasurementsRunner",
 	})
 }
 
-// GetChannelOptions called fast and often
+// GetChannelOptions gets channel options.
+// It gets called fast and often.
 func (m *MeasurementsRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
 	return centrifuge.ChannelOptions{}
 }
@@ -42,14 +43,14 @@ func (m *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subs
 	return nil
 }
 
-// OnPublish called when an event is received from the websocket
+// OnPublish is called when an event is received from the websocket.
 func (m *MeasurementsRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
 	// currently generic... but should be more strict
 	// logger.Debug("GOT: %s", e.Channel)
 	return e.Data, nil
 }
 
-// DoChannelHTTP called from the http api
+// DoChannelHTTP is called from the HTTP API.
 func (m *MeasurementsRunner) DoChannelHTTP(c *models.ReqContext, channel string) {
 	if c.Req.Method == "POST" {
 		body, err := c.Req.Body().Bytes()
@@ -65,7 +66,7 @@ func (m *MeasurementsRunner) DoChannelHTTP(c *models.ReqContext, channel string)
 		err = json.Unmarshal(body, &msg)
 		if err != nil {
 			c.JSON(500, util.DynMap{
-				"message": "body must be measurment batch",
+				"message": "body must be measurement batch",
 				"error":   err.Error(),
 			})
 			return
@@ -87,6 +88,6 @@ func (m *MeasurementsRunner) DoChannelHTTP(c *models.ReqContext, channel string)
 	}
 
 	c.JSON(400, util.DynMap{
-		"unsuppoted?": channel,
+		"unsupported?": channel,
 	})
 }

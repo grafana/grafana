@@ -19,10 +19,10 @@ func (b *BroadcastRunner) GetHandlerForPath(path string) (models.ChannelHandler,
 	return b, nil // for now all channels share config
 }
 
-// DoNamespaceHTTP called from the http api
+// DoNamespaceHTTP is called from the HTTP API.
 func (b *BroadcastRunner) DoNamespaceHTTP(c *models.ReqContext) {
 	c.JSON(400, util.DynMap{
-		"Unsupportedd": "BroadcastRunner",
+		"Unsupported": "BroadcastRunner",
 	})
 }
 
