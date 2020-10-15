@@ -14,7 +14,7 @@ weight = 500
 
 SAML authentication integration allows your Grafana users to log in by using an external SAML 2.0 Identity Provider (IdP). To enable this, Grafana becomes a Service Provider (SP) in the authentication flow, interacting with the IdP to exchange user information.
 
-The SAML single-sign-on (SSO) standard is varied and flexible. Our implementation contains the subset of features needed to provide a smooth authentication experience into Grafana.
+The SAML single sign-on (SSO) standard is varied and flexible. Our implementation contains the subset of features needed to provide a smooth authentication experience into Grafana.
 
 > Only available in Grafana Enterprise v6.3+. If you encounter any problems with our implementation, please don't hesitate to contact us.
 
@@ -45,12 +45,14 @@ The table below describes all SAML configuration options. Continue reading below
 | ----------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------- | ------------- |
 | `enabled`                                                   | No  | Whether SAML authentication is allowed                                                             | `false`       |
 | `single_logout`                                             | No  | Whether SAML Single Logout enabled                                                                 | `false`       |
+| `allow_idp_initiated`                                       | No  | Whether SAML IdP-initiated login is allowed                                                        | `false`       |
 | `certificate` or `certificate_path`                         | Yes | Base64-encoded string or Path for the SP X.509 certificate                                         |               |
 | `private_key` or `private_key_path`                         | Yes | Base64-encoded string or Path for the SP private key                                               |               |
 | `signature_algorithm`                                       | No  | Signature algorithm used for signing requests to the IdP. Supported values are rsa-sha1, rsa-sha256, rsa-sha512. |              |
 | `idp_metadata`, `idp_metadata_path`, or `idp_metadata_url`  | Yes | Base64-encoded string, Path or URL for the IdP SAML metadata XML                                   |               |
 | `max_issue_delay`                                           | No  | Duration, since the IdP issued a response and the SP is allowed to process it                      | `90s`         |
 | `metadata_valid_duration`                                   | No  | Duration, for how long the SP metadata is valid                                                    | `48h`         |
+| `relay_state`                                               | No  | Relay state for IdP-initiated login. Should match relay state configured in IdP                    |               |
 | `assertion_attribute_name`                                  | No  | Friendly name or name of the attribute within the SAML assertion to use as the user name           | `displayName` |
 | `assertion_attribute_login`                                 | No  | Friendly name or name of the attribute within the SAML assertion to use as the user login handle   | `mail`        |
 | `assertion_attribute_email`                                 | No  | Friendly name or name of the attribute within the SAML assertion to use as the user email          | `mail`        |
@@ -81,7 +83,9 @@ You can only use one form of each configuration option. Using multiple forms, su
 
 ### Signature algorithm
 
-The SAML standard recommends using digital signature for some types of messages, like authentication or logout requests. If `signature_algorithm` option configured, Grafana will put digital signature into SAML requests. Supported signature types are `rsa-sha1`, `rsa-sha256`, `rsa-sha512`. This option should match your IdP configuration, otherwise, signature won't be validated by the IdP. Grafana uses key and certificate configured with `private_key` and `certificate` options for signing SAML requests.
+> Only available in Grafana v7.3+
+
+The SAML standard recommends using digital signature for some types of messages, like authentication or logout requests. If `signature_algorithm` option configured, Grafana will put digital signature into SAML requests. Supported signature types are `rsa-sha1`, `rsa-sha256`, `rsa-sha512`. This option should match your IdP configuration, otherwise, signature validation fails. Grafana uses key and certificate configured with `private_key` and `certificate` options for signing SAML requests.
 
 ### IdP metadata
 
@@ -113,7 +117,17 @@ The integration provides two key endpoints as part of Grafana:
 - The `/saml/metadata` endpoint, which contains the SP metadata. You can either download and upload it manually, or youmake the IdP request it directly from the endpoint. Some providers name it Identifier or Entity ID.
 - The `/saml/acs` endpoint, which is intended to receive the ACS (Assertion Customer Service) callback. Some providers name it SSO URL or Reply URL.
 
+### IdP-initiated Single Sign-On (SSO)
+
+> Only available in Grafana v7.3+
+
+By default Grafana allows only SP-initiated login (when user logs in with SAML from the Grafana). If you want to allow users log in into Grafana directly from the IdP page, set `allow_idp_initiated` config option to `true` and configure `relay_state` to the same value as specified in the IdP configuration. 
+
+IdP-initiated SSO has some security risks, so make sure you understand that dangers before enabling this feature. When using IdP-initiated SSO, Grafana recieves unsolicited SAML request and can't verify that login flow was started by the user. It's not possible also to detect whether SAML message has been stolen or replaced. Because of this, IdP-initiated SSO is vulnerable to the Login CSRF and Man-in-the-Middle attacks. Therefore, IdP-initiated SSO is not recommended and should be disabled whenever possible.
+
 ### Single Logout
+
+> Only available in Grafana v7.3+
 
 Single Logout feature allows user to log out from all applications associated with current IdP session established via SAML SSO. If `single_logout` option set to `true` and user logs out, Grafana requests IdP to terminate user session. Then IdP triggers logout process for all other applications which user logged in with the same IdP session (application should support single logout). And conversely, if another application connected to the same IdP initiates single logout, Grafana gets logout request from IdP and terminates user session.
 
