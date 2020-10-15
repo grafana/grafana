@@ -36,9 +36,8 @@ export const SearchWrapper: FC<Props> = memo(({ search, folder, updateLocation }
         partial: true,
       });
     }
-    appEvents.emit(CoreEvents.toggleSearchOpened);
   };
-  isOpen && appEvents.emit(CoreEvents.toggleSearchOpened);
+  appEvents.emit(isOpen ? CoreEvents.searchOpened : CoreEvents.searchClosed);
 
   return isOpen ? <DashboardSearch onCloseSearch={closeSearch} folder={folder} /> : null;
 });
