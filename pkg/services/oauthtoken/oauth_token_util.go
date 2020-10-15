@@ -24,8 +24,12 @@ func GetCurrentOAuthToken(ctx context.Context, user *models.SignedInUser) (*oaut
 
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: user.UserId}
 	if err := bus.Dispatch(authInfoQuery); err != nil {
-		logger.Debug("No oauth token for user", "userid", user.UserId, "username", user.Login)
-		// Not necessarily an error.  User may be logged in another way.
+		if err == models.ErrUserNotFound {
+			// Not necessarily an error.  User may be logged in another way.
+			logger.Debug("No oauth token for user", "userid", user.UserId, "username", user.Login)
+		} else {
+			logger.Error("Error getting oauth token for user", "userid", user.UserId, "username", user.Login, "error", err)
+		}
 		return nil, nil
 	}
 
