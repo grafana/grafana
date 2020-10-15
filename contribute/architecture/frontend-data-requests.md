@@ -39,5 +39,3 @@ Grafana uses a _request queue_ to process all incoming data requests in order wh
 Since the first implementation of the request queue doesn't take into account what browser the user uses, the _request queue_ limit for parallel data source requests is hard-coded to 5.
 
 > **Note:** Grafana instances [configured with HTTP2 ](https://grafana.com/docs/grafana/latest/administration/configuration/#protocol) will have a hard coded limit of 1000.
-
-The request queue is not the same as request canceling and should be treated as such, although Grafana intertwines both concepts at a lower level in code. 
