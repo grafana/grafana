@@ -1,13 +1,14 @@
-grabpl_version = '0.5.17'
+grabpl_version = '0.5.18'
 build_image = 'grafana/build-container:1.2.27'
 publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
-git_image = 'alpine/git:v2.26.2'
 dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
+
+drone_tag_cmd = 'export DRONE_TAG=$$(./bin/grabpl parse-tag-ref ${DRONE_COMMIT_REF})'
 
 def pipeline(
     name, edition, trigger, steps, ver_mode, services=[], platform='linux', depends_on=[],
@@ -88,10 +89,19 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
             },
         ]
 
+    download_grabpl_cmds = [
+        'mkdir -p bin',
+        'curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
+            grabpl_version
+        ),
+        'chmod +x bin/grabpl',
+    ]
     common_cmds = []
+    pre_cmds = []
 
     if ver_mode == 'release':
-        common_cmds.append('./bin/grabpl verify-version ${DRONE_TAG}')
+        pre_cmds.append(drone_tag_cmd)
+        common_cmds.append('./bin/grabpl verify-version $${DRONE_TAG}')
     elif ver_mode == 'test-release':
         common_cmds.append('./bin/grabpl verify-version {}'.format(test_release_ver))
 
@@ -112,8 +122,8 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
         ])
     if edition == 'enterprise':
         if ver_mode == 'release':
-            committish = '${DRONE_TAG}'
-            source_commit = ' ${DRONE_TAG}'
+            committish = '$${DRONE_TAG}'
+            source_commit = ' $${DRONE_TAG}'
         elif ver_mode == 'test-release':
             committish = 'master'
             source_commit = ''
@@ -127,13 +137,13 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
             identify_runner_step,
             {
                 'name': 'clone',
-                'image': git_image,
+                'image': build_image,
                 'environment': {
                     'GITHUB_TOKEN': {
                         'from_secret': 'github_token',
                     },
                 },
-                'commands': [
+                'commands': download_grabpl_cmds + pre_cmds + [
                     'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
                     'cd grafana-enterprise',
                     'git checkout {}'.format(committish),
@@ -148,12 +158,9 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
                 'depends_on': [
                     'clone',
                 ],
-                'commands': [
-                    'curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
-                        grabpl_version
-                    ),
-                    'chmod +x grabpl',
-                    'mv grabpl /tmp',
+                'commands': pre_cmds + [
+                    'mv bin/grabpl /tmp/',
+                    'rmdir bin',
                     'mv grafana-enterprise /tmp/',
                     '/tmp/grabpl init-enterprise /tmp/grafana-enterprise{}'.format(source_commit),
                     'mkdir bin',
@@ -172,14 +179,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
             'environment': {
                 'DOCKERIZE_VERSION': dockerize_version,
             },
-            'commands': [
-                'curl -fLO https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/grabpl'.format(
-                    grabpl_version
-                ),
-                'chmod +x grabpl',
-                'mkdir -p bin',
-                'mv grabpl bin',
-            ] + common_cmds,
+            'commands': download_grabpl_cmds + pre_cmds + common_cmds,
         },
     ]
 
@@ -224,6 +224,7 @@ def lint_backend_step(edition):
             'revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...',
             './scripts/revive-strict',
             './scripts/tidy-check.sh',
+            './scripts/mixin-check.sh,
         ],
     }
 
@@ -279,17 +280,19 @@ def publish_storybook_step(edition, ver_mode):
             'echo Testing release',
         ]
     else:
+        commands = []
         if ver_mode == 'release':
-            channels = ['latest', '${DRONE_TAG}',]
+            channels = ['latest', '$${DRONE_TAG}',]
+            commands.append(drone_tag_cmd)
         else:
             channels = ['canary',]
-        commands = [
+        commands.extend([
             'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
             'gcloud auth activate-service-account --key-file=/tmp/gcpkey.json',
         ] + [
             'gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/{}'.format(c)
             for c in channels
-        ]
+        ])
 
     return {
         'name': 'publish-storybook',
@@ -318,27 +321,34 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
                 'from_secret': 'github_token',
             },
         }
-        cmd = './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise ${{DRONE_TAG}}'.format(
-            edition,
-        )
+        cmds = [
+            drone_tag_cmd,
+            './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise $${{DRONE_TAG}}'.format(
+                edition,
+            ),
+        ]
     elif ver_mode == 'test-release':
         env = {
             'GITHUB_TOKEN': {
                 'from_secret': 'github_token',
             },
         }
-        cmd = './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise {}'.format(
-            edition, test_release_ver,
-        )
+        cmds = [
+            './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise {}'.format(
+                edition, test_release_ver,
+            ),
+        ]
     else:
         if not is_downstream:
             build_no = '${DRONE_BUILD_NUMBER}'
         else:
             build_no = '$${SOURCE_BUILD_NUMBER}'
         env = {}
-        cmd = './bin/grabpl build-backend --jobs 8 --edition {} --build-id {}{} --no-pull-enterprise'.format(
-            edition, build_no, variants_str,
-        )
+        cmds = [
+            './bin/grabpl build-backend --jobs 8 --edition {} --build-id {}{} --no-pull-enterprise'.format(
+                edition, build_no, variants_str,
+            ),
+        ]
 
     return {
         'name': 'build-backend',
@@ -349,9 +359,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
             'test-backend',
         ],
         'environment': env,
-        'commands': [
-            cmd,
-        ],
+        'commands': cmds,
     }
 
 def build_frontend_step(edition, ver_mode, is_downstream=False):
@@ -362,14 +370,21 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
 
     # TODO: Use percentage for num jobs
     if ver_mode == 'release':
-        cmd = './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps ' + \
-            '--edition {} --no-pull-enterprise ${{DRONE_TAG}}'.format(edition)
+        cmds = [
+            drone_tag_cmd,
+            './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps ' + \
+                '--edition {} --no-pull-enterprise $${{DRONE_TAG}}'.format(edition),
+        ]
     elif ver_mode == 'test-release':
-        cmd = './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps ' + \
-            '--edition {} --no-pull-enterprise {}'.format(edition, test_release_ver)
+        cmds = [
+            './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps ' + \
+                '--edition {} --no-pull-enterprise {}'.format(edition, test_release_ver),
+            ]
     else:
-        cmd = './bin/grabpl build-frontend --jobs 8 --no-install-deps --edition {} '.format(edition) + \
-            '--build-id {} --no-pull-enterprise'.format(build_no)
+        cmds = [
+            './bin/grabpl build-frontend --jobs 8 --no-install-deps --edition {} '.format(edition) + \
+                '--build-id {} --no-pull-enterprise'.format(build_no),
+        ]
 
     return {
         'name': 'build-frontend',
@@ -378,9 +393,7 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
             'initialize',
             'test-frontend',
         ],
-        'commands': [
-            cmd,
-        ],
+        'commands': cmds,
     }
 
 def build_frontend_docs_step(edition):
@@ -542,22 +555,29 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
 
     # TODO: Use percentage for jobs
     if ver_mode == 'release':
-        cmd = '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
-            '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} ${{DRONE_TAG}}'.format(
-                sign_args
-            )
+        cmds = [
+            drone_tag_cmd,
+            '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
+                '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} $${{DRONE_TAG}}'.format(
+                    sign_args
+                ),
+        ]
     elif ver_mode == 'test-release':
-        cmd = '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
-            '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} {}'.format(
-                sign_args, test_release_ver,
-            )
+        cmds = [
+            '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
+                '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} {}'.format(
+                    sign_args, test_release_ver,
+                ),
+        ]
     else:
         if not is_downstream:
             build_no = '${DRONE_BUILD_NUMBER}'
         else:
             build_no = '$${SOURCE_BUILD_NUMBER}'
-        cmd = '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
-            '--build-id {} --no-pull-enterprise{}{}'.format(build_no, variants_str, sign_args)
+        cmds = [
+            '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
+                '--build-id {} --no-pull-enterprise{}{}'.format(build_no, variants_str, sign_args),
+        ]
 
     return {
         'name': 'package',
@@ -572,9 +592,7 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
             'shellcheck',
         ],
         'environment': env,
-        'commands': [
-            cmd,
-        ],
+        'commands': cmds,
     }
 
 def e2e_tests_server_step():
@@ -827,17 +845,23 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
     else:
         source_commit = ' $$env:SOURCE_COMMIT'
 
+    pre_cmds = []
+    if ver_mode == 'release':
+        pre_cmds.append('$$env:DRONE_TAG=$$(.\\grabpl.exe parse-tag-ref ${DRONE_TAG})')
     sfx = ''
     if edition == 'enterprise':
         sfx = '-enterprise'
+    init_cmds = []
+    if edition != 'enterprise':
+        init_cmds.extend([
+            '$$ProgressPreference = "SilentlyContinue"',
+            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
+        ])
     steps = [
         {
             'name': 'initialize',
             'image': wix_image,
-            'commands': [
-                '$$ProgressPreference = "SilentlyContinue"',
-                'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
-            ],
+            'commands': init_cmds,
         },
     ]
     if (ver_mode == 'master' and (edition != 'enterprise' or is_downstream)) or ver_mode in ('release', 'test-release'):
@@ -879,7 +903,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
                     'from_secret': 'gcp_key',
                 },
             },
-            'commands': installer_commands,
+            'commands': pre_cmds + installer_commands,
             'depends_on': [
                 'initialize',
             ],
@@ -887,17 +911,21 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
 
     if edition == 'enterprise':
         if ver_mode == 'release':
-            committish = '${DRONE_TAG}'
+            committish = '$$env:DRONE_TAG'
         elif ver_mode == 'test-release':
             committish = 'master'
         else:
             committish = '$$env:DRONE_COMMIT'
         # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
-        clone_commands = [
+        download_grabpl_cmds = [
+            '$$ProgressPreference = "SilentlyContinue"',
+            'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
+        ]
+        clone_cmds = [
             'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
         ]
         if not is_downstream:
-            clone_commands.extend([
+            clone_cmds.extend([
                 'cd grafana-enterprise',
                 'git checkout {}'.format(committish),
             ])
@@ -909,7 +937,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
                     'from_secret': 'github_token',
                 },
             },
-            'commands': clone_commands,
+            'commands': download_grabpl_cmds + pre_cmds + clone_cmds,
         })
         steps[1]['depends_on'] = [
             'clone',
