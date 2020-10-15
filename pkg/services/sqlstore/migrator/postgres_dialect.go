@@ -146,6 +146,8 @@ func (db *Postgres) TruncateDB() error {
 
 	for _, table := range db.engine.Tables {
 		switch table.Name {
+		case "":
+			continue
 		case "dashboard_acl":
 			// keep default dashboard permissions
 			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", db.Quote(table.Name))); err != nil {
@@ -155,12 +157,8 @@ func (db *Postgres) TruncateDB() error {
 				return errutil.Wrapf(err, "failed to reset table %q", table.Name)
 			}
 		default:
-			if table.Name == "" {
-				continue
-			}
-
 			if _, err := sess.Exec(fmt.Sprintf("TRUNCATE TABLE %v RESTART IDENTITY CASCADE;", db.Quote(table.Name))); err != nil {
-				if db.IsUndefinedTable(err) {
+				if db.isUndefinedTable(err) {
 					continue
 				}
 				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
@@ -188,7 +186,7 @@ func (db *Postgres) ErrorMessage(err error) string {
 	return ""
 }
 
-func (db *Postgres) IsUndefinedTable(err error) bool {
+func (db *Postgres) isUndefinedTable(err error) bool {
 	return db.isThisError(err, "42P01")
 }
 
