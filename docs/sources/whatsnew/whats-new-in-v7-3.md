@@ -17,6 +17,26 @@ This topic includes the release notes for the Grafana v7.3. For all details, rea
 
 This is a work in progress and will be updated later.
 
+## Highlights
+
+Grafana 7.3 comes with a number of features and enhancements:
+
+- [**Google Cloud Monitoring:** Out of the box dashboards]({{< relref "#cloud-monitoring-out-of-the-box-dashboards" >}})
+
+#### Cloud monitoring out-of-the-box dashboards
+
+The updated Cloud monitoring data source is shipped with pre-configured dashboards for five of the most popular GCP services:
+
+- BigQuery
+- Cloud Load Balancing
+- Cloud SQL
+- Google Compute Engine `GCE`
+- Google Kubernetes Engine `GKE`
+
+To import the pre-configured dashboards, go to the configuration page of your Google Cloud Monitoring data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use. To customize the dashboard, we recommend to save the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
+
+For more details, see the [Google Cloud Monitoring docs]({{<relref "../datasources/cloudmonitoring/#out-of-the-box-dashboards">}})
+
 ## Upgrading
 
 See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
