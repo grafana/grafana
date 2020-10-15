@@ -94,6 +94,7 @@ export const DEFAULT_PLOT_CONFIG = {
   legend: {
     show: false,
   },
+  series: [],
   hooks: {},
 };
 export const usePlotConfig = (width: number, height: number, timeZone: TimeZone) => {
@@ -115,7 +116,7 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone)
     return fmt;
   }, [timeZone]);
 
-  const defaultConfig = useMemo(() => {
+  const defaultConfig = useMemo<uPlot.Options>(() => {
     return {
       ...DEFAULT_PLOT_CONFIG,
       width,
@@ -124,7 +125,7 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone)
         hooks: p[1].hooks,
       })),
       tzDate,
-    } as any;
+    };
   }, [plugins, width, height, tzDate]);
 
   useEffect(() => {
