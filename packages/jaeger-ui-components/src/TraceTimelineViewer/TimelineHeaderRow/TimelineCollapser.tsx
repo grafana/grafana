@@ -12,12 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Tooltip } from '@grafana/ui';
-import cx from 'classnames';
+import { IconButton } from '@grafana/ui';
 import { css } from 'emotion';
 import React from 'react';
-import DoubleRightIcon from 'react-icons/lib/fa/angle-double-right';
-import RightIcon from 'react-icons/lib/fa/angle-right';
 import { createStyle } from '../../Theme';
 
 const getStyles = createStyle(() => {
@@ -28,19 +25,6 @@ const getStyles = createStyle(() => {
       flex: none;
       justify-content: center;
       margin-right: 0.5rem;
-    `,
-    btn: css`
-      color: rgba(0, 0, 0, 0.5);
-      cursor: pointer;
-      margin-right: 0.3rem;
-      font-size: 1.5rem;
-      padding: 0.1rem;
-      &:hover {
-        color: rgba(0, 0, 0, 0.85);
-      }
-    `,
-    btnExpanded: css`
-      transform: rotate(90deg);
     `,
   };
 });
@@ -57,26 +41,22 @@ export default function TimelineCollapser(props: CollapserProps) {
   const styles = getStyles();
   return (
     <div className={styles.TimelineCollapser} data-test-id="TimelineCollapser">
-      <Tooltip content="Expand +1" placement="top">
-        <span>
-          <RightIcon onClick={onExpandOne} className={cx(styles.btn, styles.btnExpanded)} />
-        </span>
-      </Tooltip>
-      <Tooltip content="Collapse +1" placement="top">
-        <span>
-          <RightIcon onClick={onCollapseOne} className={styles.btn} />
-        </span>
-      </Tooltip>
-      <Tooltip content="Expand All" placement="top">
-        <span>
-          <DoubleRightIcon onClick={onExpandAll} className={cx(styles.btn, styles.btnExpanded)} />
-        </span>
-      </Tooltip>
-      <Tooltip content="Collapse All" placement="top">
-        <span>
-          <DoubleRightIcon onClick={onCollapseAll} className={styles.btn} />
-        </span>
-      </Tooltip>
+      <IconButton tooltip="Expand +1" size="xl" tooltipPlacement="top" name="angle-down" onClick={onExpandOne} />
+      <IconButton tooltip="Collapse +1" size="xl" tooltipPlacement="top" name="angle-right" onClick={onCollapseOne} />
+      <IconButton
+        tooltip="Expand All"
+        size="xl"
+        tooltipPlacement="top"
+        name="angle-double-down"
+        onClick={onExpandAll}
+      />
+      <IconButton
+        tooltip="Collapse All"
+        size="xl"
+        tooltipPlacement="top"
+        name="angle-double-right"
+        onClick={onCollapseAll}
+      />
     </div>
   );
 }
