@@ -2,7 +2,7 @@ import { LiveChannel, LiveChannelAddress } from '@grafana/data';
 import { Observable } from 'rxjs';
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
 export interface GrafanaLiveSrv {
   /**
@@ -42,7 +42,7 @@ export const setGrafanaLiveSrv = (instance: GrafanaLiveSrv) => {
  * Used to retrieve the {@link GrafanaLiveSrv} that allows you to subscribe to
  * server side events and streams
  *
- * @experimental
+ * @alpha -- experimental
  * @public
  */
 export const getGrafanaLiveSrv = (): GrafanaLiveSrv => singletonInstance;
