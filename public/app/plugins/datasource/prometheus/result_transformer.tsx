@@ -26,6 +26,7 @@ import {
   isMatrixData,
   MatrixOrVectorResult,
   PromDataSuccessResponse,
+  PromExemplarData,
   PromMetric,
   PromQuery,
   PromQueryRequest,
@@ -69,8 +70,19 @@ export function transform(
   };
   const prometheusResult = response.data.data;
 
+  // function makeDensityFilter(step?: number) {
+  //   let exemplarsInStep: ExemplarsDataFrameViewDTO[] = [];
+  //   let ts = 0;
+  //   return function(acc: ExemplarsDataFrameViewDTO[], exemplar: ExemplarsDataFrameViewDTO) {
+  //     if (ts === 0) {
+  //       ts = exemplar.time;
+  //     }
+  //     return acc;
+  //   }
+  // }
+
   if (isExemplarData(prometheusResult)) {
-    const events: AnnotationEvent[] = [];
+    const events: ExemplarsDataFrameViewDTO[] = [];
     prometheusResult.forEach(exemplarData => {
       const data = exemplarData.exemplars.map(exemplar => {
         return {
@@ -82,11 +94,26 @@ export function transform(
       events.push(...data);
     });
 
-    const range = Math.ceil(options.end - options.start);
+    // Grouping exemplars by step, treating start and end as step-aligned
+    const step = options.step || 15;
+    const bucketedExemplars: { [ts: string]: ExemplarsDataFrameViewDTO[] } = {};
+    for (const exemplar of events) {
+      // Align exemplar timestamp to nearest step second
+      const alignedTs = String(Math.floor(exemplar.time / 1000 / step) * step * 1000);
+      if (!bucketedExemplars[alignedTs]) {
+        // New bucket found
+        bucketedExemplars[alignedTs] = [];
+      }
+      bucketedExemplars[alignedTs].push(exemplar);
+    }
 
-    const divider = Math.max(range / 60 / 15, 4);
+    // Getting exemplar with highest y-value of each bucket
+    const sampledBuckets = Object.keys(bucketedExemplars).sort();
+    const findHighest = (acc: ExemplarsDataFrameViewDTO | undefined, curr: ExemplarsDataFrameViewDTO) =>
+      !acc || curr.y > acc.y ? curr : acc;
+    const sampledExemplars = sampledBuckets.map(ts => bucketedExemplars[ts].reduce(findHighest, undefined));
 
-    const dataFrame = new ArrayDataFrame(events.filter((_, i) => i % divider === 0));
+    const dataFrame = new ArrayDataFrame(sampledExemplars as AnnotationEvent[]);
     dataFrame.meta = { dataTopic: DataTopic.Annotations };
     return [dataFrame];
   }
