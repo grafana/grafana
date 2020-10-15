@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/securedata"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -45,22 +47,32 @@ func CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCommand) error {
 			expires = time.Now().Add(time.Second * time.Duration(cmd.Expires))
 		}
 
-		snapshot := &models.DashboardSnapshot{
-			Name:              cmd.Name,
-			Key:               cmd.Key,
-			DeleteKey:         cmd.DeleteKey,
-			OrgId:             cmd.OrgId,
-			UserId:            cmd.UserId,
-			External:          cmd.External,
-			ExternalUrl:       cmd.ExternalUrl,
-			ExternalDeleteUrl: cmd.ExternalDeleteUrl,
-			Dashboard:         cmd.Dashboard,
-			Expires:           expires,
-			Created:           time.Now(),
-			Updated:           time.Now(),
+		marshalledData, err := cmd.Dashboard.Encode()
+		if err != nil {
+			return err
 		}
 
-		_, err := sess.Insert(snapshot)
+		encryptedDashboard, err := securedata.Encrypt(marshalledData)
+		if err != nil {
+			return err
+		}
+
+		snapshot := &models.DashboardSnapshot{
+			Name:               cmd.Name,
+			Key:                cmd.Key,
+			DeleteKey:          cmd.DeleteKey,
+			OrgId:              cmd.OrgId,
+			UserId:             cmd.UserId,
+			External:           cmd.External,
+			ExternalUrl:        cmd.ExternalUrl,
+			ExternalDeleteUrl:  cmd.ExternalDeleteUrl,
+			Dashboard:          simplejson.New(),
+			DashboardEncrypted: encryptedDashboard,
+			Expires:            expires,
+			Created:            time.Now(),
+			Updated:            time.Now(),
+		}
+		_, err = sess.Insert(snapshot)
 		cmd.Result = snapshot
 
 		return err

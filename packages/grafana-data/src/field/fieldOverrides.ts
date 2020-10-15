@@ -1,12 +1,11 @@
 import {
   ApplyFieldOverrideOptions,
-  ColorScheme,
   DataFrame,
   DataLink,
   DataSourceInstanceSettings,
   DynamicConfigValue,
   Field,
-  FieldColorMode,
+  FieldColorModeId,
   FieldConfig,
   FieldConfigPropertyItem,
   FieldOverrideContext,
@@ -84,6 +83,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
   const fieldConfigRegistry = options.fieldConfigRegistry ?? standardFieldConfigEditorRegistry;
 
+  let seriesIndex = 0;
   let range: GlobalMinMax | undefined = undefined;
 
   // Prepare the Matchers
@@ -188,28 +188,35 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         }
       }
 
+      // Some color modes needs series index to assign field color so we count
+      // up series index here but ignore time fields
+      if (field.type !== FieldType.time) {
+        seriesIndex++;
+      }
+
       // Overwrite the configs
-      const f: Field = {
+      const newField: Field = {
         ...field,
         config,
         type,
         state: {
           ...field.state,
           displayName: null,
+          seriesIndex,
         },
       };
 
       // and set the display processor using it
-      f.display = getDisplayProcessor({
-        field: f,
+      newField.display = getDisplayProcessor({
+        field: newField,
         theme: options.theme,
         timeZone: options.timeZone,
       });
 
       // Attach data links supplier
-      f.getLinks = getLinksSupplier(
+      newField.getLinks = getLinksSupplier(
         newFrame,
-        f,
+        newField,
         fieldScopedVars,
         context.replaceVariables,
         context.getDataSourceSettingsByUid,
@@ -219,7 +226,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         }
       );
 
-      return f;
+      return newField;
     });
 
     newFrame.fields = fields;
@@ -311,22 +318,13 @@ export function validateFieldConfig(config: FieldConfig) {
   if (!config.color) {
     if (thresholds) {
       config.color = {
-        mode: FieldColorMode.Thresholds,
+        mode: FieldColorModeId.Thresholds,
       };
     }
     // No Color settings
   } else if (!config.color.mode) {
     // Without a mode, skip color altogether
     delete config.color;
-  } else {
-    const { color } = config;
-    if (color.mode === FieldColorMode.Scheme) {
-      if (!color.schemeName) {
-        color.schemeName = ColorScheme.BrBG;
-      }
-    } else {
-      delete color.schemeName;
-    }
   }
 
   // Verify that max > min (swap if necessary)

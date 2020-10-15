@@ -75,6 +75,8 @@ export * from './uPlot/geometries';
 export { usePlotConfigContext } from './uPlot/context';
 export { Canvas } from './uPlot/Canvas';
 export * from './uPlot/plugins';
+export { useRefreshAfterGraphRendered } from './uPlot/hooks';
+export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';
 
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
@@ -129,6 +131,7 @@ export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
 export { Segment, SegmentAsync, SegmentInput, SegmentSelect } from './Segment/';
 export { default as Chart } from './Chart';
+export { TooltipContainer } from './Chart/TooltipContainer';
 export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
 
@@ -155,6 +158,7 @@ export { FieldValidationMessage } from './Forms/FieldValidationMessage';
 export { InlineField } from './Forms/InlineField';
 export { InlineLabel } from './Forms/InlineLabel';
 export { InlineFieldRow } from './Forms/InlineFieldRow';
+export { FieldArray } from './Forms/FieldArray';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';
