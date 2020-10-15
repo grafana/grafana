@@ -45,7 +45,7 @@ type Dialect interface {
 	PostInsertId(table string, sess *xorm.Session) error
 
 	CleanDB() error
-	TruncateDB() error
+	TruncateDBTables() error
 	NoOpSql() string
 
 	IsUniqueConstraintViolation(err error) bool
@@ -272,6 +272,6 @@ func (db *BaseDialect) NoOpSql() string {
 	return "SELECT 0;"
 }
 
-func (db *BaseDialect) TruncateDB() error {
+func (db *BaseDialect) TruncateDBTables() error {
 	return nil
 }

@@ -86,7 +86,9 @@ func (db *Sqlite3) CleanDB() error {
 	return nil
 }
 
-func (db *Sqlite3) TruncateDB() error {
+// TruncateDBTables deletes all data from all the tables and resets the sequences
+// A special case is the dashboard_acl table where we keep the default permissions
+func (db *Sqlite3) TruncateDBTables() error {
 	tables, err := db.engine.DBMetas()
 	if err != nil {
 		return err
@@ -102,13 +104,16 @@ func (db *Sqlite3) TruncateDB() error {
 			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %q WHERE dashboard_id != -1 AND org_id != -1;", table.Name)); err != nil {
 				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
 			}
+			if _, err := sess.Exec("UPDATE sqlite_sequence SET seq = 2 WHERE name = '%s';", table.Name); err != nil {
+				return errutil.Wrapf(err, "failed to cleanup sqlite_sequence")
+			}
 		default:
 			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %s;", table.Name)); err != nil {
 				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
 			}
 		}
 	}
-	if _, err := sess.Exec("UPDATE sqlite_sequence SET seq = 0;"); err != nil {
+	if _, err := sess.Exec("UPDATE sqlite_sequence SET seq = 0 WHERE name != 'dashboard_acl';"); err != nil {
 		return errutil.Wrapf(err, "failed to cleanup sqlite_sequence")
 	}
 	return nil

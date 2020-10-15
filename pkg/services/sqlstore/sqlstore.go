@@ -409,7 +409,7 @@ func InitTestDB(t ITestDB) *SqlStore {
 		testSqlStore.engine.TZLocation = time.UTC
 	}
 
-	if err := dialect.TruncateDB(); err != nil {
+	if err := dialect.TruncateDBTables(); err != nil {
 		t.Fatalf("Failed to truncate test db %v", err)
 	}
 
