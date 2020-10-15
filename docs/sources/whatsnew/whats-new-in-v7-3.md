@@ -23,6 +23,36 @@ The main highlights are:
 
 This is an amazing new feature that was created in cooperation with one of our community members. The new **share shortened link** capability allows you to create smaller and simpler URLs of the format `/goto/:uid` instead of using longer URLs that can contain complex query parameters. In Explore, you can create a shortened link by clicking on the share button in Explore toolbar. In the dashboards, a shortened url option is available through the share panel or dashboard button.
 
+## Highlights
+
+Grafana 7.3 comes with a number of features and enhancements:
+
+- [**Google Cloud Monitoring:** Out of the box dashboards]({{< relref "#cloud-monitoring-out-of-the-box-dashboards" >}})
+
+#### Cloud monitoring out-of-the-box dashboards
+
+The updated Cloud monitoring data source is shipped with pre-configured dashboards for five of the most popular GCP services:
+
+- BigQuery
+- Cloud Load Balancing
+- Cloud SQL
+- Google Compute Engine `GCE`
+- Google Kubernetes Engine `GKE`
+
+To import the pre-configured dashboards, go to the configuration page of your Google Cloud Monitoring data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use. To customize the dashboard, we recommend to save the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
+
+For more details, see the [Google Cloud Monitoring docs]({{<relref "../datasources/cloudmonitoring/#out-of-the-box-dashboards">}})
+
+## Grafana Enterprise features
+
+These features are included in the Grafana Enterprise edition software.
+
+### Auditing
+
+### Datasource Usage Insights
+
+### SAML Improvements
+
 ## Upgrading
 
 See [upgrade notes]({{< relref "../installation/upgrading.md" >}}).
