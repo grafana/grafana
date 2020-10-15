@@ -35,14 +35,14 @@ export interface FeatureToggles {
   live: boolean;
   expressions: boolean;
   ngalert: boolean;
+  // Just for demo at the moment
+  traceToLogs: boolean;
 
   /**
    * @remarks
    * Available only in Grafana Enterprise
    */
   meta: boolean;
-  datasourceInsights: boolean;
-  reportGrid: boolean;
 }
 
 /**
