@@ -36,32 +36,32 @@ const timeSrvStub = {
   }),
 };
 
+const testResponse: FetchResponse<LokiResponse> = {
+  data: {
+    data: {
+      resultType: LokiResultType.Stream,
+      result: [
+        {
+          stream: {},
+          values: [['1573646419522934000', 'hello']],
+        },
+      ],
+    },
+    status: 'success',
+  },
+  ok: true,
+  headers: ({} as unknown) as Headers,
+  redirected: false,
+  status: 200,
+  statusText: 'Success',
+  type: 'default',
+  url: '',
+  config: ({} as unknown) as BackendSrvRequest,
+};
+
 describe('LokiDatasource', () => {
   let fetchStream: Subject<FetchResponse>;
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
-
-  const testResponse: FetchResponse<LokiResponse> = {
-    data: {
-      data: {
-        resultType: LokiResultType.Stream,
-        result: [
-          {
-            stream: {},
-            values: [['1573646419522934000', 'hello']],
-          },
-        ],
-      },
-      status: 'success',
-    },
-    ok: true,
-    headers: ({} as unknown) as Headers,
-    redirected: false,
-    status: 200,
-    statusText: 'Success',
-    type: 'default',
-    url: '',
-    config: ({} as unknown) as BackendSrvRequest,
-  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -178,48 +178,42 @@ describe('LokiDatasource', () => {
   });
 
   describe('when querying', () => {
-    it('should run range and instant query in Explore', done => {
+    function setup(expr: string, app: CoreApp) {
       const ds = createLokiDSForTests();
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: '{job="grafana"}', refId: 'B' }],
-        app: CoreApp.Explore,
+        targets: [{ expr, refId: 'B' }],
+        app,
       });
-
       ds.runInstantQuery = jest.fn(() => of({ data: [] }));
       ds.runRangeQuery = jest.fn(() => of({ data: [] }));
+      return { ds, options };
+    }
 
-      observableTester().subscribeAndExpectOnComplete<DataQueryResponse>({
-        observable: ds.query(options),
-        expect: () => {
-          expect(ds.runInstantQuery).toBeCalled();
-          expect(ds.runRangeQuery).toBeCalled();
-        },
-        done,
-      });
+    it('should run range and instant query in Explore if running metric query', async () => {
+      const { ds, options } = setup('rate({job="grafana"}[10m])', CoreApp.Explore);
+      await ds.query(options).toPromise();
+      expect(ds.runInstantQuery).toBeCalled();
+      expect(ds.runRangeQuery).toBeCalled();
     });
 
-    it('should run only range query in Dashboard', done => {
-      const ds = createLokiDSForTests();
-      const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: '{job="grafana"}', refId: 'B' }],
-      });
-
-      ds.runInstantQuery = jest.fn(() => of({ data: [] }));
-      ds.runRangeQuery = jest.fn(() => of({ data: [] }));
-
-      observableTester().subscribeAndExpectOnComplete<DataQueryResponse>({
-        observable: ds.query(options),
-        expect: () => {
-          expect(ds.runRangeQuery).toBeCalled();
-        },
-        done,
-      });
+    it('should run only range query in Explore if running logs query', async () => {
+      const { ds, options } = setup('{job="grafana"}', CoreApp.Explore);
+      await ds.query(options).toPromise();
+      expect(ds.runInstantQuery).not.toBeCalled();
+      expect(ds.runRangeQuery).toBeCalled();
     });
 
-    it('should return series data for both queries in Explore', done => {
+    it('should run only range query in Dashboard', async () => {
+      const { ds, options } = setup('rate({job="grafana"}[10m])', CoreApp.Dashboard);
+      await ds.query(options).toPromise();
+      expect(ds.runInstantQuery).not.toBeCalled();
+      expect(ds.runRangeQuery).toBeCalled();
+    });
+
+    it('should return series data for both queries in Explore if metrics query', done => {
       const ds = createLokiDSForTests();
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: '{job="grafana"} |= "foo"', refId: 'B' }],
+        targets: [{ expr: 'rate({job="grafana"} |= "foo" [10m])', refId: 'B' }],
         app: CoreApp.Explore,
       });
 
