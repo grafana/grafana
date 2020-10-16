@@ -125,6 +125,7 @@ export { default as Chart } from './Chart';
 export { TooltipContainer } from './Chart/TooltipContainer';
 export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
+export { RangeSlider } from './Slider/RangeSlider';
 
 // TODO: namespace!!
 export { StringValueEditor } from './OptionsUI/string';

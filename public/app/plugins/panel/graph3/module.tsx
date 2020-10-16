@@ -24,23 +24,14 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           description: '',
           defaultValue: true,
         })
-        .addSelect({
+        .addSliderInput({
           path: 'line.width',
           name: 'Line width',
           defaultValue: 1,
           settings: {
-            options: [
-              { value: 1, label: '1 • thin' },
-              { value: 2, label: '2' },
-              { value: 3, label: '3' },
-              { value: 4, label: '4' },
-              { value: 5, label: '5' },
-              { value: 6, label: '6' },
-              { value: 7, label: '7' },
-              { value: 8, label: '8' },
-              { value: 9, label: '9' },
-              { value: 10, label: '10 • thick' },
-            ],
+            min: 1,
+            max: 10,
+            step: 1,
           },
           showIf: c => {
             return c.line.show;
@@ -52,23 +43,14 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           description: '',
           defaultValue: false,
         })
-        .addSelect({
+        .addSliderInput({
           path: 'points.radius',
           name: 'Point radius',
           defaultValue: 4,
           settings: {
-            options: [
-              { value: 1, label: '1 • thin' },
-              { value: 2, label: '2' },
-              { value: 3, label: '3' },
-              { value: 4, label: '4' },
-              { value: 5, label: '5' },
-              { value: 6, label: '6' },
-              { value: 7, label: '7' },
-              { value: 8, label: '8' },
-              { value: 9, label: '9' },
-              { value: 10, label: '10 • thick' },
-            ],
+            min: 1,
+            max: 10,
+            step: 1,
           },
           showIf: c => c.points.show,
         })
@@ -78,24 +60,14 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           description: '',
           defaultValue: false,
         })
-        .addSelect({
+        .addSliderInput({
           path: 'fill.alpha',
           name: 'Fill area opacity',
           defaultValue: 0.1,
           settings: {
-            options: [
-              { value: 0, label: 'No Fill' },
-              { value: 0.1, label: '10% • transparent' },
-              { value: 0.2, label: '20%' },
-              { value: 0.3, label: '30%' },
-              { value: 0.4, label: '40% ' },
-              { value: 0.5, label: '50%' },
-              { value: 0.6, label: '60%' },
-              { value: 0.7, label: '70%' },
-              { value: 0.8, label: '80%' },
-              { value: 0.9, label: '90%' },
-              { value: 1, label: '100% • opaque' },
-            ],
+            min: 0,
+            max: 1,
+            step: 0.1,
           },
         })
         .addTextInput({

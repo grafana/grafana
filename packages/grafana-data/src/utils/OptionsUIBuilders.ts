@@ -4,7 +4,6 @@ import { FieldType } from '../types/dataFrame';
 import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
 import {
   numberOverrideProcessor,
-  sliderOverrideProcessor,
   selectOverrideProcessor,
   stringOverrideProcessor,
   booleanOverrideProcessor,
@@ -41,15 +40,13 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addSliderInput<TSettings>(
-    config: FieldConfigEditorConfig<TOptions, TSettings & SliderFieldConfigSettings, number | number[]>
-  ) {
+  addSliderInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & SliderFieldConfigSettings, number>) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
       override: standardEditorsRegistry.get('slider').editor as any,
       editor: standardEditorsRegistry.get('slider').editor as any,
-      process: sliderOverrideProcessor,
+      process: numberOverrideProcessor,
       shouldApply: config.shouldApply ? config.shouldApply : field => field.type === FieldType.number,
       settings: config.settings || {},
     });
