@@ -52,7 +52,7 @@ export abstract class BigValueLayout {
     };
 
     if (this.props.colorMode === BigValueColorMode.Background) {
-      styles.color = 'white';
+      styles.color = getTextColorForBackground(this.valueColor);
     }
 
     return styles;
