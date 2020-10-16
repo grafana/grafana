@@ -6,6 +6,7 @@ export const REMOVE_METRIC = '@metrics/remove';
 export const CHANGE_METRIC_TYPE = '@metrics/change_type';
 export const CHANGE_METRIC_FIELD = '@metrics/change_field';
 export const CHANGE_METRIC_SETTING = '@metrics/change_setting';
+export const CHANGE_METRIC_META = '@metrics/change_meta';
 export const TOGGLE_METRIC_VISIBILITY = '@metrics/toggle_visibility';
 
 export type PipelineMetricAggregationType =
@@ -45,8 +46,11 @@ export interface MetricAggregationWithField extends BaseMetricAggregation {
 }
 
 export interface MetricAggregationWithSettings extends BaseMetricAggregation {
-  // TODO: settings is optional for compatibility reasons, old saved queries might not have it set.
   settings?: Record<string, string | boolean | undefined>;
+}
+
+export interface MetricAggregationWithMeta extends BaseMetricAggregation {
+  meta?: Record<string, string | boolean | undefined>;
 }
 
 export interface MetricAggregationWithMissingSupport extends MetricAggregationWithSettings {
@@ -109,7 +113,7 @@ interface Min
   };
 }
 
-type ExtendedStatType =
+type ExtendedStatMetaType =
   | 'avg'
   | 'min'
   | 'max'
@@ -120,12 +124,13 @@ type ExtendedStatType =
   | 'std_deviation_bounds_lower';
 export interface ExtendedStat {
   text: string;
-  value: ExtendedStatType;
+  value: ExtendedStatMetaType;
   default: boolean;
 }
 
 interface ExtendedStats
   extends MetricAggregationWithField,
+    MetricAggregationWithMeta,
     MetricAggregationWithMissingSupport,
     MetricAggregationWithInlineScript {
   type: 'extended_stats';
@@ -134,8 +139,8 @@ interface ExtendedStats
     missing?: string;
     sigma?: string;
   };
-  meta: {
-    [P in ExtendedStatType]?: boolean;
+  meta?: {
+    [P in ExtendedStatMetaType]?: boolean;
   };
 }
 
@@ -294,7 +299,11 @@ export const isMetricAggregationWithMissingSupport = (
 
 export const isMetricAggregationWithSettings = (
   metric: BaseMetricAggregation | MetricAggregationWithSettings
-): metric is MetricAggregationWithMissingSupport => metricAggregationConfig[metric.type].hasSettings;
+): metric is MetricAggregationWithSettings => metricAggregationConfig[metric.type].hasSettings;
+
+export const isMetricAggregationWithMeta = (
+  metric: BaseMetricAggregation | MetricAggregationWithMeta
+): metric is MetricAggregationWithMeta => metricAggregationConfig[metric.type].hasMeta;
 
 export const isMetricAggregationWithInlineScript = (
   metric: BaseMetricAggregation | MetricAggregationWithInlineScript
@@ -342,10 +351,20 @@ export interface ChangeMetricSettingAction<T extends MetricAggregationWithSettin
   };
 }
 
+export interface ChangeMetricMetaAction<T extends MetricAggregationWithMeta = MetricAggregationWithMeta>
+  extends Action<typeof CHANGE_METRIC_META> {
+  payload: {
+    metric: T;
+    meta: Extract<keyof Required<T>['meta'], string>;
+    newValue: string | number;
+  };
+}
+
 export type MetricAggregationAction =
   | AddMetricAction
   | RemoveMetricAction
   | ChangeMetricTypeAction
   | ChangeMetricFieldAction
   | ToggleMetricVisibilityAction
-  | ChangeMetricSettingAction;
+  | ChangeMetricSettingAction
+  | ChangeMetricMetaAction;

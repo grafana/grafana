@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 import React, { FunctionComponent, useState, ComponentProps } from 'react';
 import { extendedStats, movingAvgModelOptions, movingAvgModelSettings } from '../../query_def';
 import { useDispatch } from '../ElasticsearchQueryContext';
-import { changeMetricSetting } from './state/actions';
+import { changeMetricMeta, changeMetricSetting } from './state/actions';
 import {
   isMetricAggregationWithInlineScript,
   isMetricAggregationWithMissingSupport,
@@ -138,7 +138,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric }) => {
                 <InlineField label={stat.text} {...inlineFieldProps} key={stat.value}>
                   <Switch
                     // FIXME: This should go in meta
-                    // onChange={e => dispatch(changeMetricSetting(metric, stat.value, (e.target as any).checked))}
+                    onChange={e => dispatch(changeMetricMeta(metric, stat.value, (e.target as any).checked))}
                     value={metric.meta?.[stat.value] ?? stat.default}
                   />
                 </InlineField>

@@ -10,7 +10,9 @@ import {
   MetricAggregationAction,
   CHANGE_METRIC_FIELD,
   CHANGE_METRIC_SETTING,
+  CHANGE_METRIC_META,
   isMetricAggregationWithSettings,
+  isMetricAggregationWithMeta,
 } from './types';
 
 export const reducer = (
@@ -77,6 +79,25 @@ export const reducer = (
             settings: {
               ...metric.settings,
               [action.payload.setting]: action.payload.newValue,
+            },
+          };
+        }
+        // This should never happen.
+        return metric;
+      });
+
+    case CHANGE_METRIC_META:
+      return state.map(metric => {
+        if (metric.id !== action.payload.metric.id) {
+          return metric;
+        }
+
+        if (isMetricAggregationWithMeta(metric)) {
+          return {
+            ...metric,
+            meta: {
+              ...metric.meta,
+              [action.payload.meta]: action.payload.newValue,
             },
           };
         }

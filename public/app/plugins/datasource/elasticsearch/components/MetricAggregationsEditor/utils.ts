@@ -16,6 +16,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
     hasSettings: false,
+    hasMeta: false,
     supportsInlineScript: false,
   },
   avg: {
@@ -26,6 +27,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     isPipelineAgg: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
+    hasMeta: false,
   },
   sum: {
     label: 'Sum',
@@ -35,6 +37,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     isPipelineAgg: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
+    hasMeta: false,
   },
   max: {
     label: 'Max',
@@ -44,6 +47,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     isPipelineAgg: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
+    hasMeta: false,
   },
   min: {
     label: 'Min',
@@ -53,6 +57,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     isPipelineAgg: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
+    hasMeta: false,
   },
   extended_stats: {
     label: 'Extended Stats',
@@ -62,6 +67,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     isPipelineAgg: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
+    hasMeta: true,
   },
   percentiles: {
     label: 'Percentiles',
@@ -71,6 +77,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     isPipelineAgg: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
+    hasMeta: false,
   },
   cardinality: {
     label: 'Unique Count',
@@ -80,6 +87,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMultipleBucketPaths: false,
     hasSettings: true,
     supportsInlineScript: false,
+    hasMeta: false,
   },
   moving_avg: {
     label: 'Moving Average',
@@ -90,6 +98,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMultipleBucketPaths: false,
     hasSettings: true,
     supportsInlineScript: false,
+    hasMeta: false,
   },
   moving_fn: {
     label: 'Moving Function',
@@ -106,6 +115,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMultipleBucketPaths: false,
     hasSettings: true,
     supportsInlineScript: false,
+    hasMeta: false,
   },
   cumulative_sum: {
     label: 'Cumulative Sum',
@@ -116,6 +126,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMultipleBucketPaths: false,
     hasSettings: true,
     supportsInlineScript: false,
+    hasMeta: false,
   },
   bucket_script: {
     label: 'Bucket Script',
@@ -126,6 +137,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     minVersion: 2,
     hasSettings: true,
     supportsInlineScript: false,
+    hasMeta: false,
   },
   raw_document: {
     label: 'Raw Document (legacy)',
@@ -136,6 +148,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMultipleBucketPaths: false,
     hasSettings: true,
     supportsInlineScript: false,
+    hasMeta: false,
   },
   raw_data: {
     label: 'Raw Data',
@@ -146,6 +159,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMultipleBucketPaths: false,
     hasSettings: true,
     supportsInlineScript: false,
+    hasMeta: false,
   },
   logs: {
     label: 'Logs',
@@ -155,6 +169,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMultipleBucketPaths: false,
     hasSettings: true,
     supportsInlineScript: false,
+    hasMeta: false,
   },
 };
 

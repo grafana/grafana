@@ -8,6 +8,8 @@ import {
   MetricAggregationAction,
   CHANGE_METRIC_SETTING,
   MetricAggregationWithSettings,
+  MetricAggregationWithMeta,
+  CHANGE_METRIC_META,
 } from './types';
 
 export const addMetric = (metricType: MetricAggregation['type']): MetricAggregationAction => ({
@@ -59,6 +61,19 @@ export const changeMetricSetting = <T extends MetricAggregationWithSettings = Me
   payload: {
     metric,
     setting,
+    newValue,
+  },
+});
+
+export const changeMetricMeta = <T extends MetricAggregationWithMeta = MetricAggregationWithMeta>(
+  metric: T,
+  meta: Extract<keyof Required<T>['meta'], string>,
+  newValue: string | number
+): MetricAggregationAction => ({
+  type: CHANGE_METRIC_META,
+  payload: {
+    metric,
+    meta,
     newValue,
   },
 });

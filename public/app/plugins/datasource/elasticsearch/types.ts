@@ -27,6 +27,7 @@ interface MetricConfiguration {
   isSingleMetric?: boolean;
   // TODO: this can probably be inferred from other settings
   hasSettings: boolean;
+  hasMeta: boolean;
 }
 
 interface BucketConfiguration {
