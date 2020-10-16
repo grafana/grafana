@@ -86,7 +86,7 @@ describe('LokiDatasource', () => {
         range,
       };
 
-      const req = ds.createRangeQuery(target, options as any);
+      const req = ds.createRangeQuery(target, options as any, 1000);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
       expect(adjustIntervalSpy).toHaveBeenCalledWith(1000, expect.anything());
@@ -101,7 +101,7 @@ describe('LokiDatasource', () => {
         intervalMs: 2000,
       };
 
-      const req = ds.createRangeQuery(target, options as any);
+      const req = ds.createRangeQuery(target, options as any, 1000);
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
       expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything());
@@ -109,15 +109,20 @@ describe('LokiDatasource', () => {
   });
 
   describe('when querying with limits', () => {
-    const runLimitTest = ({ maxDataPoints, maxLines, expectedLimit, done }: any) => {
+    const runLimitTest = ({
+      maxDataPoints = 123,
+      queryMaxLines,
+      dsMaxLines = 456,
+      expectedLimit,
+      done,
+      expr = '{label="val"}',
+    }: any) => {
       let settings: any = {
         url: 'myloggingurl',
+        jsonData: {
+          maxLines: dsMaxLines,
+        },
       };
-
-      if (Number.isFinite(maxLines!)) {
-        const customData = { ...(settings.jsonData || {}), maxLines: 20 };
-        settings = { ...settings, jsonData: customData };
-      }
 
       const templateSrvMock = ({
         getAdhocFilters: (): any[] => [],
@@ -126,14 +131,8 @@ describe('LokiDatasource', () => {
 
       const ds = new LokiDatasource(settings, templateSrvMock, timeSrvStub as any);
 
-      const options = getQueryOptions<LokiQuery>({ targets: [{ expr: 'foo', refId: 'B', maxLines: maxDataPoints }] });
-
-      if (Number.isFinite(maxDataPoints!)) {
-        options.maxDataPoints = maxDataPoints;
-      } else {
-        // By default is 500
-        delete options.maxDataPoints;
-      }
+      const options = getQueryOptions<LokiQuery>({ targets: [{ expr, refId: 'B', maxLines: queryMaxLines }] });
+      options.maxDataPoints = maxDataPoints;
 
       observableTester().subscribeAndExpectOnComplete<DataQueryResponse>({
         observable: ds.query(options).pipe(take(1)),
@@ -147,33 +146,33 @@ describe('LokiDatasource', () => {
       fetchStream.next(testResponse);
     };
 
-    it('should use default max lines when no limit given', done => {
+    it('should use datasource max lines when no limit given and it is log query', done => {
       runLimitTest({
-        expectedLimit: 1000,
+        expectedLimit: 456,
         done,
       });
     });
 
-    it('should use custom max lines if limit is set', done => {
+    it('should use custom max lines from query if set and it is logs query', done => {
       runLimitTest({
-        maxLines: 20,
+        queryMaxLines: 20,
         expectedLimit: 20,
         done,
       });
     });
 
-    it('should use custom maxDataPoints if set in request', () => {
+    it('should use custom max lines from query if set and it is logs query even if it is higher than data source limit', done => {
       runLimitTest({
-        maxDataPoints: 500,
+        queryMaxLines: 500,
         expectedLimit: 500,
+        done,
       });
     });
 
-    it('should use datasource maxLimit if maxDataPoints is higher', () => {
+    it('should use maxDataPoints if it is metrics query', () => {
       runLimitTest({
-        maxLines: 20,
-        maxDataPoints: 500,
-        expectedLimit: 20,
+        expr: 'rate({label="val"}[10m])',
+        expectedLimit: 123,
       });
     });
   });
@@ -442,7 +441,7 @@ describe('LokiDatasource', () => {
       // Odd timerange/interval combination that would lead to a float step
       const options = { range, intervalMs: 2000 };
 
-      expect(Number.isInteger(ds.createRangeQuery(query, options as any).step!)).toBeTruthy();
+      expect(Number.isInteger(ds.createRangeQuery(query, options as any, 1000).step!)).toBeTruthy();
     });
   });
 
