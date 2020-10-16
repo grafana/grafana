@@ -19,6 +19,7 @@ import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { ExemplarsDataFrameViewDTO } from 'app/plugins/panel/graph3/plugins/ExemplarsPlugin';
 import ReactDOMServer from 'react-dom/server';
 import React from 'react';
+import { deviation, descending } from 'd3';
 import {
   Exemplar,
   ExemplarTraceIDDestination,
@@ -69,17 +70,6 @@ export function transform(
   };
   const prometheusResult = response.data.data;
 
-  // function makeDensityFilter(step?: number) {
-  //   let exemplarsInStep: ExemplarsDataFrameViewDTO[] = [];
-  //   let ts = 0;
-  //   return function(acc: ExemplarsDataFrameViewDTO[], exemplar: ExemplarsDataFrameViewDTO) {
-  //     if (ts === 0) {
-  //       ts = exemplar.time;
-  //     }
-  //     return acc;
-  //   }
-  // }
-
   if (isExemplarData(prometheusResult)) {
     const events: ExemplarsDataFrameViewDTO[] = [];
     prometheusResult.forEach(exemplarData => {
@@ -93,9 +83,10 @@ export function transform(
       events.push(...data);
     });
 
-    // Grouping exemplars by step, treating start and end as step-aligned
+    // Grouping exemplars by step
     const step = options.step || 15;
     const bucketedExemplars: { [ts: string]: ExemplarsDataFrameViewDTO[] } = {};
+    const values: number[] = [];
     for (const exemplar of events) {
       // Align exemplar timestamp to nearest step second
       const alignedTs = String(Math.floor(exemplar.time / 1000 / step) * step * 1000);
@@ -104,13 +95,37 @@ export function transform(
         bucketedExemplars[alignedTs] = [];
       }
       bucketedExemplars[alignedTs].push(exemplar);
+      values.push(exemplar.y);
     }
 
-    // Getting exemplar with highest y-value of each bucket
+    // Getting exemplars from each bucket
+    const stddev = deviation(values);
     const sampledBuckets = Object.keys(bucketedExemplars).sort();
-    const findHighest = (acc: ExemplarsDataFrameViewDTO | undefined, curr: ExemplarsDataFrameViewDTO) =>
-      !acc || curr.y > acc.y ? curr : acc;
-    const sampledExemplars = sampledBuckets.map(ts => bucketedExemplars[ts].reduce(findHighest, undefined));
+    const sampledExemplars = [];
+    for (const ts of sampledBuckets) {
+      const exemplarsInBucket = bucketedExemplars[ts];
+      if (exemplarsInBucket.length === 1) {
+        sampledExemplars.push(exemplarsInBucket[0]);
+      } else {
+        // Choose which values to sample
+        const bucketValues = exemplarsInBucket.map(ex => ex.y).sort(descending);
+        const sampledBucketValues = bucketValues.reduce((acc: number[], curr) => {
+          if (acc.length === 0) {
+            // First value is max and is always added
+            acc.push(curr);
+          } else {
+            // Then take values only when at least 2 stddev distance to previously taken value
+            const prev = acc[acc.length - 1];
+            if (stddev && prev - stddev * 2 >= 0) {
+              acc.push(curr);
+            }
+          }
+          return acc;
+        }, []);
+        // Find the exemplars for the sampled values
+        sampledExemplars.push(...sampledBucketValues.map(value => exemplarsInBucket.find(ex => ex.y === value)));
+      }
+    }
 
     const dataFrame = new ArrayDataFrame(sampledExemplars as AnnotationEvent[]);
     dataFrame.meta = { dataTopic: DataTopic.Annotations };
