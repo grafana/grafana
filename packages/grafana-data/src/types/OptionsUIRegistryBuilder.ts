@@ -77,7 +77,7 @@ export interface OptionsUIRegistryBuilderAPI<
   ): this;
 
   addSliderInput?<TSettings extends SliderFieldConfigSettings = SliderFieldConfigSettings>(
-    config: OptionEditorConfig<TOptions, TSettings, number | number[]>
+    config: OptionEditorConfig<TOptions, TSettings, number>
   ): this;
 
   addTextInput?<TSettings extends StringFieldConfigSettings = StringFieldConfigSettings>(

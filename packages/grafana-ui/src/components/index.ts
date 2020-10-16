@@ -131,6 +131,7 @@ export { Segment, SegmentAsync, SegmentInput, SegmentSelect } from './Segment/';
 export { default as Chart } from './Chart';
 export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
+export { RangeSlider } from './Slider/RangeSlider';
 
 // TODO: namespace!!
 export { StringValueEditor } from './OptionsUI/string';
