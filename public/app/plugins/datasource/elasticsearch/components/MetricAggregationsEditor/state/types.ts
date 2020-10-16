@@ -133,7 +133,8 @@ interface ExtendedStats
     script?: string;
     missing?: string;
     sigma?: string;
-  } & {
+  };
+  meta: {
     [P in ExtendedStatType]?: boolean;
   };
 }

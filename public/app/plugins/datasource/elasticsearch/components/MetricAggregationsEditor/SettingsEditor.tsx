@@ -13,7 +13,7 @@ import { justifyStart } from './styles';
 import { isValidNumber } from './utils';
 
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
-  labelWidth: 15,
+  labelWidth: 16,
 };
 
 interface Props {
@@ -24,7 +24,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric }) => {
   const [open, setOpen] = useState(false);
   const dispatch = useDispatch();
 
-  if (metric.type === 'count') {
+  if (metric.type === 'count' || metric.type === 'logs') {
     return null;
   }
 
@@ -124,7 +124,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric }) => {
           )}
 
           {metric.type === 'cardinality' && (
-            <InlineField label="Percentiles" {...inlineFieldProps}>
+            <InlineField label="Precision Threshold" {...inlineFieldProps}>
               <Input
                 onBlur={e => dispatch(changeMetricSetting(metric, 'precision_threshold', e.target.value))}
                 defaultValue={metric.settings?.precision_threshold ?? ''}
@@ -137,9 +137,9 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric }) => {
               {extendedStats.map(stat => (
                 <InlineField label={stat.text} {...inlineFieldProps} key={stat.value}>
                   <Switch
-                    // FIXME: Performance of this is kinda bad, need to investigate
-                    onChange={e => dispatch(changeMetricSetting(metric, stat.value, (e.target as any).checked))}
-                    value={metric.settings?.[stat.value] ?? stat.default}
+                    // FIXME: This should go in meta
+                    // onChange={e => dispatch(changeMetricSetting(metric, stat.value, (e.target as any).checked))}
+                    value={metric.meta?.[stat.value] ?? stat.default}
                   />
                 </InlineField>
               ))}

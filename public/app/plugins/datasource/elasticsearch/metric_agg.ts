@@ -3,7 +3,11 @@ import _ from 'lodash';
 import * as queryDef from './query_def';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
-import { MetricAggregation } from './state/metricAggregation/types';
+import {
+  isPipelineAggregation,
+  isPipelineAggregationWithMultipleBucketPaths,
+  MetricAggregation,
+} from './components/MetricAggregationsEditor/state/types';
 
 export class ElasticMetricAggCtrl {
   /** @ngInject */
@@ -42,8 +46,8 @@ export class ElasticMetricAggCtrl {
       $scope.aggDef = _.find($scope.metricAggTypes, { value: $scope.agg.type });
       $scope.isValidAgg = $scope.aggDef != null;
 
-      if (queryDef.isPipelineAgg($scope.agg.type)) {
-        if (queryDef.isPipelineAggWithMultipleBucketPaths($scope.agg.type)) {
+      if (isPipelineAggregation($scope.agg)) {
+        if (isPipelineAggregationWithMultipleBucketPaths($scope.agg.type)) {
           $scope.variablesLinkText = 'Options';
 
           if ($scope.agg.settings.script) {
@@ -57,7 +61,7 @@ export class ElasticMetricAggCtrl {
         const pipelineOptions = queryDef.getPipelineOptions($scope.agg);
         if (pipelineOptions.length > 0) {
           _.each(pipelineOptions, opt => {
-            $scope.agg.settings[opt.text] = $scope.agg.settings[opt.text] || opt.default;
+            $scope.agg.settings[opt.label] = $scope.agg.settings[opt.label] || opt.default;
           });
           $scope.settingsLinkText = 'Options';
         }
@@ -180,7 +184,7 @@ export class ElasticMetricAggCtrl {
         $scope.target.bucketAggs = [queryDef.defaultBucketAgg()];
       }
 
-      $scope.showVariables = queryDef.isPipelineAggWithMultipleBucketPaths($scope.agg.type);
+      $scope.showVariables = isPipelineAggregationWithMultipleBucketPaths($scope.agg);
       $scope.updatePipelineAggOptions();
       $scope.onChange();
     };

@@ -7,6 +7,7 @@ import {
   MovingAverageModelOption,
   MovingAverageSettingDefinition,
   MovingAverageModel,
+  MetricAggregationType,
 } from './components/MetricAggregationsEditor/state/types';
 import { metricAggregationConfig, pipelineOptions } from './components/MetricAggregationsEditor/utils';
 import { BucketsConfiguration, BucketAggregation, ElasticsearchQuery } from './types';
@@ -209,4 +210,23 @@ export const findMetricById = (metrics: any[], id: string) => {
 
 export function hasMetricOfType(target: any, type: string): boolean {
   return target && target.metrics && target.metrics.some((m: any) => m.type === type);
+}
+
+/**
+ * @deprecated TODO: Remove
+ */
+export function isPipelineAgg(metricType: MetricAggregationType) {
+  if (metricType in pipelineOptions) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * @deprecated TODO: Remove
+ */
+export function isPipelineAggWithMultipleBucketPaths(metricType: MetricAggregationType) {
+  return !!metricAggregationConfig[metricType].supportsMultipleBucketPaths;
+  // return metricAggTypes.find(t => t.value === metricType && t.supportsMultipleBucketPaths) !== undefined;
 }
