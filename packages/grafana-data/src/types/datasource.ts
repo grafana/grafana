@@ -292,7 +292,7 @@ export abstract class DataSourceApi<
    *
    * Note: `plugin.json` must also define `live: true`
    *
-   * @experimental
+   * @alpha -- experimental
    */
   channelSupport?: LiveChannelSupport;
 

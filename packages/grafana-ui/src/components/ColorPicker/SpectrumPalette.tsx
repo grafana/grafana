@@ -6,7 +6,7 @@ import tinycolor from 'tinycolor2';
 import ColorInput from './ColorInput';
 import { Themeable } from '../../types';
 import SpectrumPalettePointer, { SpectrumPalettePointerProps } from './SpectrumPalettePointer';
-import { GrafanaTheme, getColorFromHexRgbOrName } from '@grafana/data';
+import { GrafanaTheme, getColorForTheme } from '@grafana/data';
 
 export interface SpectrumPaletteProps extends Themeable {
   color: string;
@@ -86,7 +86,7 @@ const SpectrumPalette: React.FunctionComponent<SpectrumPaletteProps> = ({ color,
   return (
     <div>
       <SpectrumPicker
-        color={tinycolor(getColorFromHexRgbOrName(color)).toRgb()}
+        color={tinycolor(getColorForTheme(color, theme)).toRgb()}
         onChange={(a: ColorResult) => {
           onChange(tinycolor(a.rgb).toString());
         }}

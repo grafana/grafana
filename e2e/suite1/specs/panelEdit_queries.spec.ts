@@ -69,9 +69,20 @@ e2e.scenario({
     });
 
     // Change to CSV Metric Values scenario for A
-    e2e.components.DataSource.TestData.QueryTab.scenarioSelect()
-      .eq(1)
-      .select('CSV Metric Values');
+    e2e.components.DataSource.TestData.QueryTab.scenarioSelectContainer()
+      .should('be.visible')
+      .within(() => {
+        e2e.components.Select.input()
+          .eq(0)
+          .should('be.visible')
+          .click();
+
+        cy.contains('CSV Metric Values')
+          .scrollIntoView()
+          .should('be.visible')
+          .eq(0)
+          .click();
+      });
 
     e2e().wait('@apiPostQuery');
 

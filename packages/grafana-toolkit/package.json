@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/toolkit",
-  "version": "7.3.0-pre.0",
+  "version": "7.4.0-pre.0",
   "description": "Grafana Toolkit",
   "keywords": [
     "grafana",
@@ -29,7 +29,7 @@
     "@babel/core": "7.9.0",
     "@babel/preset-env": "7.9.0",
     "@grafana/data": "next",
-    "@grafana/eslint-config": "2.0.1",
+    "@grafana/eslint-config": "2.0.3",
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@grafana/ui": "next",
     "@types/command-exists": "^1.2.0",
