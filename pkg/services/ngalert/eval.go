@@ -76,7 +76,7 @@ type Result struct {
 	State    State // Enum
 }
 
-// State is a enum of the evaluation state for an alert instance.
+// State is an enum of the evaluation state for an alert instance.
 type State int
 
 const (
