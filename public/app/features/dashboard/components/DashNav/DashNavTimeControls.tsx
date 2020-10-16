@@ -33,9 +33,11 @@ export interface Props extends Themeable {
   location: LocationState;
   onChangeTimeZone: typeof updateTimeZoneForSession;
 }
-export interface State {
+
+interface State {
   isError: boolean;
 }
+
 class UnthemedDashNavTimeControls extends Component<Props, State> {
   state: State = { isError: false };
   componentDidMount() {
@@ -110,10 +112,6 @@ class UnthemedDashNavTimeControls extends Component<Props, State> {
     }
   };
 
-  onClearError = () => {
-    this.setState({ isError: false });
-  };
-
   onChangeTimeZone = (timeZone: TimeZone) => {
     this.props.dashboard.timezone = timeZone;
     this.props.onChangeTimeZone(timeZone);
@@ -122,6 +120,10 @@ class UnthemedDashNavTimeControls extends Component<Props, State> {
 
   onZoom = () => {
     appEvents.emit(CoreEvents.zoomOut, 2);
+  };
+
+  onClose = () => {
+    this.setState({ isError: false });
   };
 
   render() {
@@ -142,7 +144,7 @@ class UnthemedDashNavTimeControls extends Component<Props, State> {
           onMoveBackward={this.onMoveBack}
           onMoveForward={this.onMoveForward}
           onZoom={this.onZoom}
-          onClearError={this.onClearError}
+          onClose={this.onClose}
           onChangeTimeZone={this.onChangeTimeZone}
           invalid={this.state.isError}
           error={'Invalid time range'}

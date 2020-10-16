@@ -28,8 +28,8 @@ export interface Props {
   hideTimeZone?: boolean;
   placeholder?: string;
   clearable?: boolean;
-  invalid: boolean;
-  error: string;
+  invalid?: boolean;
+  error?: string;
 }
 
 const noop = () => {};

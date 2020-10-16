@@ -67,7 +67,7 @@ export interface Props extends Themeable {
   onMoveBackward: () => void;
   onMoveForward: () => void;
   onZoom: () => void;
-  onClearError: () => void;
+  onClose: () => void;
   history?: TimeRange[];
   invalid: boolean;
   error: string;
@@ -95,8 +95,8 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
   };
 
   onClose = () => {
+    this.props.onClose();
     this.setState({ isOpen: false });
-    this.props.onClearError();
   };
 
   onError = () => {
