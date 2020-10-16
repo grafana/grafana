@@ -5,6 +5,7 @@ import { ReducerID } from '../transformations/fieldReducer';
 import { GrafanaTheme } from '../types/theme';
 import { MappingType } from '../types';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
+import { getTestTheme } from '../utils/testdata/testTheme';
 
 describe('FieldDisplay', () => {
   beforeAll(() => {
@@ -241,7 +242,7 @@ function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}
       overrides: [],
       defaults: {},
     },
-    theme: {} as GrafanaTheme,
+    theme: getTestTheme(),
   };
 
   return merge<GetFieldDisplayValuesOptions, any>(options, extend);
