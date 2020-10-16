@@ -188,7 +188,7 @@ func (ng *AlertNG) LoadAlertCondition(dashboardID int64, panelID int64, conditio
 	return &condition, nil
 }
 
-// Execute runs Conditions' expressions or queries.
+// Execute runs the Condition's expressions or queries.
 func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*ExecutionResults, error) {
 	result := ExecutionResults{}
 	if !c.IsValid() {
