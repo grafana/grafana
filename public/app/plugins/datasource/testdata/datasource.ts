@@ -39,6 +39,8 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
           refId: 'TestDataDataSource-QueryVariable',
           stringInput: query,
           scenarioId: 'variables-query',
+          csvWave: null,
+          points: [],
         }),
       },
     };

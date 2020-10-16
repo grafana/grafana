@@ -9,11 +9,11 @@ import {
   MetricFindQueryTypes,
   VariableQueryData,
 } from '../types';
-import { VariableQueryEditorProps } from '@grafana/data';
 import CloudMonitoringDatasource from '../datasource';
 import { getTemplateSrv } from '@grafana/runtime';
+import { QueryEditorProps } from '@grafana/data';
 
-type Props = VariableQueryEditorProps<
+type Props = QueryEditorProps<
   CloudMonitoringDatasource,
   CloudMonitoringQuery,
   CloudMonitoringOptions,

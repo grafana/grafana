@@ -317,12 +317,13 @@ export interface MetadataInspectorProps<
 export interface QueryEditorProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
+  TVQuery extends DataQuery = TQuery
 > {
   datasource: DSType;
-  query: TQuery;
+  query: TVQuery;
   onRunQuery: () => void;
-  onChange: (value: TQuery) => void;
+  onChange: (value: TVQuery) => void;
   onBlur?: () => void;
   /**
    * Contains query response filtered by refId of QueryResultBase and possible query error

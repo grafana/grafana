@@ -1,11 +1,5 @@
-import React, { ComponentType, FC, useCallback } from 'react';
-import {
-  DataQuery,
-  DataSourceApi,
-  DataSourceJsonData,
-  DefaultVariableQuery,
-  VariableQueryEditorProps,
-} from '@grafana/data';
+import React, { ComponentType, useCallback } from 'react';
+import { DataQuery, DataSourceApi, DataSourceJsonData, DefaultVariableQuery, QueryEditorProps } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { LEGACY_VARIABLE_QUERY_EDITOR_NAME, LegacyVariableQueryEditor } from './LegacyVariableQueryEditor';
@@ -17,32 +11,32 @@ import {
 } from '../guard';
 import { VariableQueryProps } from '../../../types';
 
-export type VariableQueryEditorType =
-  | ComponentType<VariableQueryProps>
-  | ComponentType<VariableQueryEditorProps<any>>
-  | null;
+export type VariableQueryEditorType<
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
+> = ComponentType<VariableQueryProps> | ComponentType<QueryEditorProps<any, TQuery, TOptions, any>> | null;
 
-export const isLegacyQueryEditor = <
+export function isLegacyQueryEditor<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 >(
   component: VariableQueryEditorType,
   datasource: DataSourceApi<TQuery, TOptions>
-): component is ComponentType<VariableQueryProps> => {
+): component is ComponentType<VariableQueryProps> {
   if (!component) {
     return false;
   }
 
   return component.displayName === LEGACY_VARIABLE_QUERY_EDITOR_NAME || hasLegacyVariableSupport(datasource);
-};
+}
 
-export const isQueryEditor = <
+export function isQueryEditor<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 >(
   component: VariableQueryEditorType,
   datasource: DataSourceApi<TQuery, TOptions>
-): component is ComponentType<VariableQueryEditorProps<any>> => {
+): component is ComponentType<QueryEditorProps<any>> {
   if (!component) {
     return false;
   }
@@ -53,44 +47,42 @@ export const isQueryEditor = <
       hasDefaultVariableSupport(datasource) ||
       hasCustomVariableSupport(datasource))
   );
-};
+}
 
-export const variableQueryEditorFactory = <
+export function variableQueryEditorFactory<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
-  VariableQuery extends DataQuery = DataQuery
->(
-  datasource: DataSourceApi<TQuery, TOptions>
-): FC<VariableQueryEditorProps<any, TQuery, TOptions, any>> => {
+  VariableQuery extends DataQuery = TQuery
+>(datasource: DataSourceApi<TQuery, TOptions>): VariableQueryEditorType {
   if (hasCustomVariableSupport(datasource)) {
-    return customVariableQueryEditorFactory<TQuery, TOptions, VariableQuery>();
+    return datasource.variables.custom.editor;
   }
 
   if (hasDatasourceVariableSupport(datasource)) {
-    return datasourceVariableQueryEditorFactory<TQuery, TOptions>();
+    return datasource.variables.datasource.editor;
   }
 
-  return defaultVariableQueryEditorFactory<TQuery, TOptions>();
-};
+  if (hasDefaultVariableSupport(datasource)) {
+    return DefaultVariableQueryEditor;
+  }
 
-const defaultVariableQueryEditorFactory = <
+  return null;
+}
+
+function DefaultVariableQueryEditor<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
->(): FC<VariableQueryEditorProps<any, TQuery, TOptions, DefaultVariableQuery>> => ({
+>({
   datasource: propsDatasource,
   query: propsQuery,
   onChange: propsOnChange,
-}) => {
+}: QueryEditorProps<any, TQuery, TOptions, DefaultVariableQuery>) {
   const onChange = useCallback(
     (query: any) => {
       propsOnChange({ refId: 'DefaultVariableQueryEditor', query });
     },
     [propsOnChange]
   );
-
-  if (!hasDefaultVariableSupport(propsDatasource)) {
-    return null;
-  }
 
   return (
     <LegacyVariableQueryEditor
@@ -100,39 +92,4 @@ const defaultVariableQueryEditorFactory = <
       templateSrv={getTemplateSrv()}
     />
   );
-};
-
-const customVariableQueryEditorFactory = <
-  TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData,
-  VariableQuery extends DataQuery = any
->(): FC<VariableQueryEditorProps<any, TQuery, TOptions, VariableQuery>> => ({
-  datasource: propsDatasource,
-  query: propsQuery,
-  onChange: propsOnChange,
-}) => {
-  if (!hasCustomVariableSupport(propsDatasource)) {
-    return null;
-  }
-
-  const VariableQueryEditor = propsDatasource.variables.custom.editor;
-
-  return <VariableQueryEditor datasource={propsDatasource} query={propsQuery} onChange={propsOnChange} />;
-};
-
-const datasourceVariableQueryEditorFactory = <
-  TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
->(): FC<VariableQueryEditorProps<any, TQuery, TOptions, TQuery>> => ({
-  datasource: propsDatasource,
-  query: propsQuery,
-  onChange: propsOnChange,
-}) => {
-  if (!hasDatasourceVariableSupport(propsDatasource)) {
-    return null;
-  }
-
-  const VariableQueryEditor = propsDatasource.variables.datasource.editor;
-
-  return <VariableQueryEditor datasource={propsDatasource} query={propsQuery} onChange={propsOnChange} />;
-};
+}

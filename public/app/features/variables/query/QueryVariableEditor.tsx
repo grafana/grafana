@@ -157,7 +157,14 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     }
 
     if (isQueryEditor(VariableQueryEditor, datasource)) {
-      return <VariableQueryEditor datasource={datasource} query={query} onChange={this.onQueryChange} />;
+      return (
+        <VariableQueryEditor
+          datasource={datasource}
+          query={query}
+          onChange={this.onQueryChange}
+          onRunQuery={() => {}}
+        />
+      );
     }
 
     return null;
