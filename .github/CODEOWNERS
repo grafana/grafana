@@ -58,3 +58,6 @@ lerna.json @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/prometheus @grafana/observability-squad
 /public/app/plugins/datasource/cloud-monitoring @grafana/backend-platform
 /public/app/plugins/datasource/zipkin @grafana/observability-squad
+
+# Cloud middleware
+/grafana-mixin/ @grafana/cloud-middleware
