@@ -33,7 +33,11 @@ export interface Props extends Themeable {
   location: LocationState;
   onChangeTimeZone: typeof updateTimeZoneForSession;
 }
-class UnthemedDashNavTimeControls extends Component<Props> {
+export interface State {
+  isError: boolean;
+}
+class UnthemedDashNavTimeControls extends Component<Props, State> {
+  state: State = { isError: false };
   componentDidMount() {
     // Only reason for this is that sometimes time updates can happen via redux location changes
     // and this happens before timeSrv has had chance to update state (as it listens to angular route-updated)
@@ -100,7 +104,14 @@ class UnthemedDashNavTimeControls extends Component<Props> {
 
     if (!exceededMaxTimeBack && !exceededMaxTimeSpan) {
       getTimeSrv().setTime(nextRange);
+      this.setState({ isError: false });
+    } else {
+      this.setState({ isError: true });
     }
+  };
+
+  onClearError = () => {
+    this.setState({ isError: false });
   };
 
   onChangeTimeZone = (timeZone: TimeZone) => {
@@ -132,6 +143,8 @@ class UnthemedDashNavTimeControls extends Component<Props> {
           onMoveForward={this.onMoveForward}
           onZoom={this.onZoom}
           onChangeTimeZone={this.onChangeTimeZone}
+          invalid={this.state.isError}
+          error={'Invalid time range'}
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}

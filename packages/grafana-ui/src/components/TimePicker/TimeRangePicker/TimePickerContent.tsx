@@ -10,6 +10,7 @@ import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeForm } from './TimeRangeForm';
 import { TimeRangeList } from './TimeRangeList';
 import { TimePickerFooter } from './TimePickerFooter';
+import { FieldValidationMessage } from '../../Forms/FieldValidationMessage';
 
 const getStyles = stylesFactory((theme: GrafanaTheme, isReversed) => {
   const containerBorder = theme.isDark ? theme.palette.dark9 : theme.palette.gray5;
@@ -56,6 +57,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isReversed) => {
     `,
     spacing: css`
       margin-top: 16px;
+    `,
+    fieldValidationWrapper: css`
+      margin-top: ${theme.spacing.formSpacingBase / 2}px;
     `,
   };
 });
@@ -135,6 +139,8 @@ interface Props {
   hideTimeZone?: boolean;
   /** Reverse the order of relative and absolute range pickers. Used to left align the picker in forms */
   isReversed?: boolean;
+  invalid: boolean;
+  error: string;
 }
 
 interface PropsWithScreenSize extends Props {
@@ -177,6 +183,12 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = pr
           />
         </CustomScrollbar>
       </div>
+      {props.invalid && props.error && (
+        <div className={styles.fieldValidationWrapper}>
+          <FieldValidationMessage>{props.error}</FieldValidationMessage>
+        </div>
+      )}
+
       {!props.hideTimeZone && isFullscreen && (
         <TimePickerFooter timeZone={props.timeZone} onChangeTimeZone={props.onChangeTimeZone} />
       )}

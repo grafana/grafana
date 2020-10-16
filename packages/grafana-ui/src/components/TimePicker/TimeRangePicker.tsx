@@ -39,6 +39,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: noRightBorderStyle;
       border-right: 0;
     `,
+    fieldValidationWrapper: css`
+      margin-top: ${theme.spacing.formSpacingBase / 2}px;
+    `,
   };
 });
 
@@ -68,6 +71,8 @@ export interface Props extends Themeable {
   onMoveForward: () => void;
   onZoom: () => void;
   history?: TimeRange[];
+  invalid: boolean;
+  error: string;
 }
 
 export interface State {
@@ -95,6 +100,10 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
     this.setState({ isOpen: false });
   };
 
+  onError = () => {
+    this.setState({ isOpen: true });
+  };
+
   render() {
     const {
       value,
@@ -107,6 +116,8 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
       theme,
       history,
       onChangeTimeZone,
+      invalid,
+      error,
     } = this.props;
 
     const { isOpen } = this.state;
@@ -146,11 +157,17 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
                   history={history}
                   showHistory
                   onChangeTimeZone={onChangeTimeZone}
+                  invalid={invalid}
+                  error={error}
                 />
               </ClickOutsideWrapper>
             )}
           </div>
-
+          {invalid && error && (
+            <ClickOutsideWrapper includeButtonPress={false} onClick={this.onError}>
+              {isOpen && ''}
+            </ClickOutsideWrapper>
+          )}
           {timeSyncButton}
 
           {hasAbsolute && (

@@ -28,6 +28,8 @@ export interface Props {
   hideTimeZone?: boolean;
   placeholder?: string;
   clearable?: boolean;
+  invalid: boolean;
+  error: string;
 }
 
 const noop = () => {};
@@ -39,6 +41,8 @@ export const TimeRangeInput: FC<Props> = ({
   clearable,
   hideTimeZone = true,
   timeZone = 'browser',
+  invalid,
+  error,
   placeholder = 'Select time range',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -94,6 +98,8 @@ export const TimeRangeInput: FC<Props> = ({
             className={styles.content}
             hideTimeZone={hideTimeZone}
             isReversed
+            invalid={invalid}
+            error={error}
           />
         </ClickOutsideWrapper>
       )}
