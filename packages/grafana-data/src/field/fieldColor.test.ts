@@ -1,4 +1,4 @@
-import { Field, GrafanaThemeType, GrafanaTheme, FieldColorModeId } from '../types';
+import { Field, FieldColorModeId } from '../types';
 import { getTestTheme } from '../utils/testdata/testTheme';
 import { fieldColorModeRegistry, FieldValueColorCalculator } from './fieldColor';
 
