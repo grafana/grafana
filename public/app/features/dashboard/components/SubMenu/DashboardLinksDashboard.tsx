@@ -1,4 +1,4 @@
-import React, { PureComponent, RefObject } from 'react';
+import React, { createRef, PureComponent } from 'react';
 import { Icon, Tooltip } from '@grafana/ui';
 import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -19,8 +19,8 @@ interface State {
 
 export class DashboardLinksDashboard extends PureComponent<Props, State> {
   state: State = { resolvedLinks: [] };
-  wrapperRef: RefObject<HTMLDivElement> = React.createRef();
-  listItemRef: RefObject<HTMLUListElement> = React.createRef();
+  wrapperRef = createRef<HTMLDivElement>();
+  listItemRef = createRef<HTMLUListElement>();
 
   componentDidMount() {
     this.searchForDashboards();
@@ -81,14 +81,14 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
     );
   };
 
-  getDropdownLocation = (): string => {
-    const [leftPosition, rightPosition] = ['pull-left', 'pull-right'];
+  getDropdownLocationCssClass = (): string => {
+    const [pullLeftCssClass, pullRightCssClass] = ['pull-left', 'pull-right'];
     const wrapper = this.wrapperRef.current;
     const list = this.listItemRef.current;
     if (!wrapper || !list) {
-      return rightPosition;
+      return pullRightCssClass;
     }
-    return wrapper.offsetLeft > list.offsetWidth - wrapper.offsetWidth ? rightPosition : leftPosition;
+    return wrapper.offsetLeft > list.offsetWidth - wrapper.offsetWidth ? pullRightCssClass : pullLeftCssClass;
   };
 
   renderDropdown = () => {
@@ -106,7 +106,7 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
           <Icon name="bars" />
           <span>{linkInfo.title}</span>
         </a>
-        <ul className={'dropdown-menu ' + this.getDropdownLocation()} role="menu" ref={this.listItemRef}>
+        <ul className={'dropdown-menu ' + this.getDropdownLocationCssClass()} role="menu" ref={this.listItemRef}>
           {resolvedLinks.length > 0 &&
             resolvedLinks.map((resolvedLink, index) => {
               return (
