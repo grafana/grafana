@@ -29,7 +29,6 @@ load(
     'publish_packages_step',
     'notify_pipeline',
     'integration_test_services',
-    'drone_tag_cmd',
 )
 
 def release_npm_packages_step(edition, ver_mode):
@@ -41,7 +40,7 @@ def release_npm_packages_step(edition, ver_mode):
         'echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc',
     ]
     if ver_mode == 'release':
-        commands.extend([drone_tag_cmd, './scripts/build/release-packages.sh $${DRONE_TAG}',])
+        commands.append('./scripts/build/release-packages.sh ${DRONE_TAG}')
 
     return {
         'name': 'release-npm-packages',
@@ -140,9 +139,8 @@ def release_pipelines():
                     },
                 },
                 'commands': [
-                    drone_tag_cmd,
-                    './bin/grabpl publish-packages --edition oss $${DRONE_TAG}',
-                    './bin/grabpl publish-packages --edition enterprise $${DRONE_TAG}',
+                    './bin/grabpl publish-packages --edition oss ${DRONE_TAG}',
+                    './bin/grabpl publish-packages --edition enterprise ${DRONE_TAG}',
                 ],
             },
         ], depends_on=[p['name'] for p in oss_pipelines + enterprise_pipelines], install_deps=False,
