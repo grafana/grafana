@@ -155,7 +155,7 @@ func (db *Mysql) TruncateDBTables() error {
 			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", db.Quote(table.Name))); err != nil {
 				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
 			}
-			if _, err := sess.Exec(fmt.Sprintf("ALTER TABLE %v AUTO_INCREMENT = 2;", db.Quote(table.Name))); err != nil {
+			if _, err := sess.Exec(fmt.Sprintf("ALTER TABLE %v AUTO_INCREMENT = 3;", db.Quote(table.Name))); err != nil {
 				return errutil.Wrapf(err, "failed to reset table %q", table.Name)
 			}
 		default:
