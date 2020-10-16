@@ -51,6 +51,7 @@ export type TraceSpanData = {
   traceID: string;
   processID: string;
   operationName: string;
+  // Times are in microseconds
   startTime: number;
   duration: number;
   logs: TraceLog[];

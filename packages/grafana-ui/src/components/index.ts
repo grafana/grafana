@@ -69,15 +69,6 @@ export {
   BigValueTextMode,
 } from './BigValue/BigValue';
 
-export { GraphCustomFieldConfig } from './uPlot/types';
-export { UPlotChart } from './uPlot/Plot';
-export * from './uPlot/geometries';
-export { usePlotConfigContext } from './uPlot/context';
-export { Canvas } from './uPlot/Canvas';
-export * from './uPlot/plugins';
-export { useRefreshAfterGraphRendered } from './uPlot/hooks';
-export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';
-
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';
@@ -158,6 +149,7 @@ export { FieldValidationMessage } from './Forms/FieldValidationMessage';
 export { InlineField } from './Forms/InlineField';
 export { InlineLabel } from './Forms/InlineLabel';
 export { InlineFieldRow } from './Forms/InlineFieldRow';
+export { FieldArray } from './Forms/FieldArray';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';
@@ -207,3 +199,14 @@ const LegacyForms = {
   Switch,
 };
 export { LegacyForms, LegacyInputStatus };
+
+// WIP, need renames and exports cleanup
+export { GraphCustomFieldConfig } from './uPlot/types';
+export { UPlotChart } from './uPlot/Plot';
+export * from './uPlot/geometries';
+export { usePlotConfigContext } from './uPlot/context';
+export { Canvas } from './uPlot/Canvas';
+export * from './uPlot/plugins';
+export { useRefreshAfterGraphRendered } from './uPlot/hooks';
+export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';
+export { GraphNG } from './GraphNG/GraphNG';
