@@ -51,7 +51,7 @@ type AlertExecCtx struct {
 // Condition contains backend expressions and queries and the RefID
 // of the query or expression that will be evaluated.
 type Condition struct {
-	RefID string `json:"condition"`
+	RefID string `json:"refId"`
 
 	QueriesAndExpressions []tsdb.Query `json:"queriesAndExpressions"`
 }
