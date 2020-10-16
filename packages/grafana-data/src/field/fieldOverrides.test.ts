@@ -15,7 +15,6 @@ import {
   FieldConfigPropertyItem,
   FieldConfigSource,
   FieldType,
-  GrafanaTheme,
   InterpolateFunction,
   ThresholdsMode,
   FieldColorModeId,
