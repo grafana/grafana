@@ -15,7 +15,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 
-import TimelineCollapser from './TimelineCollapser';
+import { TimelineCollapser } from './TimelineCollapser';
 
 describe('<TimelineCollapser>', () => {
   it('renders without exploding', () => {
