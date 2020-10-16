@@ -4,16 +4,16 @@ import { DataFrame, FieldColor, TimeRange, TimeZone } from '@grafana/data';
 
 export type NullValuesMode = 'null' | 'connected' | 'asZero';
 
-export enum MicroPlotAxisSide {
-  top = 0,
-  right = 1,
-  bottom = 2,
-  left = 3,
+export enum AxisSide {
+  Top,
+  Right,
+  Bottom,
+  Left,
 }
 
 interface AxisConfig {
   label: string;
-  side: number;
+  side: AxisSide;
   grid: boolean;
   width: number;
 }
