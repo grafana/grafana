@@ -2,11 +2,11 @@ import { from, merge, MonoTypeOperatorFunction, Observable, Subject, Subscriptio
 import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { v4 as uuidv4 } from 'uuid';
-import { BackendSrv as BackendService, BackendSrvRequest, FetchResponse, FetchError } from '@grafana/runtime';
+import { BackendSrv as BackendService, BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
 import { AppEvents, DataQueryErrorType } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
-import config, { getConfig } from 'app/core/config';
+import { getConfig } from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
@@ -40,7 +40,7 @@ export class BackendSrv implements BackendService {
     appEvents: appEvents,
     contextSrv: contextSrv,
     logout: () => {
-      window.location.href = config.appSubUrl + '/logout';
+      window.location.reload();
     },
   };
 

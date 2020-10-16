@@ -156,6 +156,8 @@
       name: PostgreSQL
     - link: /datasources/prometheus/
       name: Prometheus
+    - link: /datasources/tempo/
+      name: Tempo
     - link: /datasources/testdata/
       name: TestData DB
     - link: /datasources/zipkin/
@@ -337,6 +339,8 @@
 - name: What's new in Grafana
   link: /whatsnew/
   children:
+    - name: Version 7.3
+      link: /whatsnew/whats-new-in-v7-3/
     - name: Version 7.2
       link: /whatsnew/whats-new-in-v7-2/
     - name: Version 7.1

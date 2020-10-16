@@ -153,7 +153,7 @@ Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentatio
 
 ## Annotations
 
-You can use any non-metric Loki query as a source for annotations. Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
+You can use any non-metric Loki query as a source for [annotations]({{< relref "../dashboards/annotations" >}}). Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
 
 > **Note:** Annotations for Loki are only available in Grafana v6.4+
 

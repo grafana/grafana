@@ -7,6 +7,8 @@ import { NotificationSettings } from './NotificationSettings';
 import { BasicSettings } from './BasicSettings';
 import { ChannelSettings } from './ChannelSettings';
 
+import config from 'app/core/config';
+
 interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
   selectableChannels: Array<SelectableValue<string>>;
   selectedChannel?: NotificationChannelType;
@@ -102,7 +104,7 @@ export const NotificationChannelForm: FC<Props> = ({
           <Button type="button" variant="secondary" onClick={() => onTestChannel(getValues({ nest: true }))}>
             Test
           </Button>
-          <a href="/alerting/notifications">
+          <a href={`${config.appSubUrl}/alerting/notifications`}>
             <Button type="button" variant="secondary">
               Back
             </Button>
