@@ -120,8 +120,25 @@ export function getColorForTheme(color: string, theme: GrafanaTheme): string {
  */
 export function getColorFromHexRgbOrName(color: string, type?: GrafanaThemeType): string {
   const themeType = type ?? GrafanaThemeType.Dark;
+  if (themeType === GrafanaThemeType.Dark) {
+    const darkTheme = ({
+      type: themeType,
+      colors: {
+        panelBg: '#141619',
+      },
+    } as unknown) as GrafanaTheme;
 
-  return getColorForTheme(color, ({ type: themeType } as unknown) as GrafanaTheme);
+    return getColorForTheme(color, darkTheme);
+  }
+
+  const lightTheme = ({
+    type: themeType,
+    colors: {
+      panelBg: '#000000',
+    },
+  } as unknown) as GrafanaTheme;
+
+  return getColorForTheme(color, lightTheme);
 }
 
 const buildNamedColorsPalette = () => {
