@@ -181,7 +181,6 @@ func NewOAuthService() {
 				apiUrl:               info.ApiUrl,
 				emailAttributeName:   info.EmailAttributeName,
 				emailAttributePath:   info.EmailAttributePath,
-				nameAttributeName:    sec.Key("name_attribute_name").String(),
 				nameAttributePath:    sec.Key("name_attribute_path").String(),
 				roleAttributePath:    info.RoleAttributePath,
 				loginAttributePath:   sec.Key("login_attribute_path").String(),

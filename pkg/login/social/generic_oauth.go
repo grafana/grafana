@@ -24,7 +24,6 @@ type SocialGenericOAuth struct {
 	emailAttributeName   string
 	emailAttributePath   string
 	loginAttributePath   string
-	nameAttributeName    string
 	nameAttributePath    string
 	roleAttributePath    string
 	idTokenAttributeName string
@@ -110,9 +109,6 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 
 		if userInfo.Name == "" {
 			userInfo.Name = s.extractUserName(data)
-			if userInfo.Name != "" {
-				s.log.Debug("Set user info name from extracted name", "name", userInfo.Name)
-			}
 		}
 
 		if userInfo.Login == "" {
@@ -313,14 +309,6 @@ func (s *SocialGenericOAuth) extractUserName(data *UserInfoJson) string {
 		} else if name != "" {
 			s.log.Debug("Setting user info name from nameAttributePath", "nameAttributePath", s.nameAttributePath)
 			return name
-		}
-	}
-
-	if s.nameAttributeName != "" {
-		names, ok := data.Attributes[s.nameAttributeName]
-		if ok && len(names) != 0 {
-			s.log.Debug("Setting user info name from nameAttributeName", "nameAttributeName", s.nameAttributeName)
-			return names[0]
 		}
 	}
 
