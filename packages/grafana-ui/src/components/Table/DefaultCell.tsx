@@ -66,7 +66,7 @@ function getCellStyle(tableStyles: TableStyles, field: Field, displayValue: Disp
       .spin(5)
       .toRgbString();
 
-    const textColor = getTextColorForBackground(displayValue.color);
+    const textColor = getTextColorForBackground(displayValue.color!);
 
     return tableStyles.buildCellContainerStyle(
       textColor,
