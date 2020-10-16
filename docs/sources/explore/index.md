@@ -19,7 +19,7 @@ For infrastructure monitoring and incident response, you no longer need to switc
 
 1. Receive an alert
 1. Drill down and examine metrics
-1. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces).
+1. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces)
 
 If you just want to explore your data and do not want to create a dashboard, then Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time.
 
@@ -35,7 +35,7 @@ If you want to start with an existing query in a panel, choose the Explore optio
 
 {{< docs-imagebox img="/img/docs/v65/explore_panel_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
-Choose your data source from the dropdown in the top left. Prometheus has a custom Explore implementation, the other data sources use their standard query editor.
+Choose your data source from the dropdown in the top left. [Prometheus](https://grafana.com/oss/prometheus/) has a custom Explore implementation, the other data sources use their standard query editor.
 
 The query field is where you can write your query and explore your data. There are three buttons beside the query field, a clear button (X), an add query button (+) and the remove query button (-). Just like the normal query editor, you can add and remove multiple queries.
 
@@ -49,9 +49,15 @@ In split view, timepickers for both panels can be linked (if you change one, the
 
 You can close the newly created query by clicking on the Close Split button.
 
+## Share shortened link
+
+> Share shortened link is only available in Grafana 7.3 and above.
+
+The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs containing complex query parameters. You can create a shortened link by clicking on the **Share** option in Explore toolbar.
+
 ## Query history
 
-Query history is a list of queries that you have used in Explore. The history is local to your browser and is not shared with others. To open and interact with your history, click the **Query history** button in Explore.
+Query history is a list of queries that you have used in Explore. The history is local to your browser and is not shared. To open and interact with your history, click the **Query history** button in Explore.
 
 ### View query history
 
@@ -60,7 +66,7 @@ Query history lets you view the history of your querying. For each individual qu
 - Run a query.
 - Create and/or edit a comment.
 - Copy a query to the clipboard.
-- Copy a URL link with the query to the clipboard.
+- Copy a shortened link with the query to the clipboard.
 - Star a query.
 
 ### Manage favorite queries
@@ -145,9 +151,9 @@ Click on the filter button <span title="Filter for label" class="logs-label__ico
 
 Along with metrics, Explore allows you to investigate your logs with the following data sources:
 
-- [Loki](../features/datasources/loki)
-- [InfluxDB](../features/datasources/influxdb)
-- [Elasticsearch](../features/datasources/elasticsearch)
+- [Loki](../datasources/loki)
+- [InfluxDB](../datasources/influxdb)
+- [Elasticsearch](../datasources/elasticsearch)
 
 ### Visualization options
 
@@ -193,7 +199,7 @@ If your logs are structured in `json` or `logfmt`, then you can show or hide par
 
 As mentioned, one of the log integrations is for the new open source log aggregation system from Grafana Labs - [Loki](https://github.com/grafana/loki). Loki is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels. For more information about Grafana Loki, refer to [Grafana Loki](https://github.com/grafana/loki) or the Grafana Labs hosted variant: [Grafana Cloud Logs](https://grafana.com/loki).
 
-See [Loki's data source documentation](../features/datasources/loki) on how to query for log data.
+See [Loki's data source documentation](../datasources/loki) on how to query for log data.
 
 #### Switch from metrics to logs
 
@@ -223,8 +229,8 @@ While in Live tail view new logs will come from the bottom of the screen and wil
 
 You can visualize traces from tracing data sources in explore. Data sources currently supported:
 
-- [Jaeger]({{< relref "../features/datasources/jaeger.md" >}})
-- [Zipkin]({{< relref "../features/datasources/zipkin.md" >}})
+- [Jaeger]({{< relref "../datasources/jaeger.md" >}})
+- [Zipkin]({{< relref "../datasources/zipkin.md" >}})
 
 For information about how to use the query editor see documentation for specific data source.
 

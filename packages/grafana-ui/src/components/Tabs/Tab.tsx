@@ -51,6 +51,8 @@ export const Tab = React.forwardRef<HTMLLIElement, TabProps>(
   }
 );
 
+Tab.displayName = 'Tab';
+
 const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
   const colors = theme.colors;
 

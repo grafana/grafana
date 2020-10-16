@@ -1,10 +1,10 @@
 import { AreaProps, LineProps, PointProps } from './types';
 import tinycolor from 'tinycolor2';
-import { getColorFromHexRgbOrName } from '@grafana/data';
 
 export const getAreaConfig = (props: AreaProps) => {
+  // TODO can we pass therem here? or make sure color is already correct?
   const fill = props.fill
-    ? tinycolor(getColorFromHexRgbOrName(props.color))
+    ? tinycolor(props.color)
         .setAlpha(props.fill)
         .toRgbString()
     : undefined;
