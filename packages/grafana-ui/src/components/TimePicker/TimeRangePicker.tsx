@@ -39,9 +39,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: noRightBorderStyle;
       border-right: 0;
     `,
-    fieldValidationWrapper: css`
-      margin-top: ${theme.spacing.formSpacingBase / 2}px;
-    `,
   };
 });
 
@@ -70,6 +67,7 @@ export interface Props extends Themeable {
   onMoveBackward: () => void;
   onMoveForward: () => void;
   onZoom: () => void;
+  onClearError: () => void;
   history?: TimeRange[];
   invalid: boolean;
   error: string;
@@ -98,6 +96,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
 
   onClose = () => {
     this.setState({ isOpen: false });
+    this.props.onClearError();
   };
 
   onError = () => {

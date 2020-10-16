@@ -142,6 +142,7 @@ class UnthemedDashNavTimeControls extends Component<Props, State> {
           onMoveBackward={this.onMoveBack}
           onMoveForward={this.onMoveForward}
           onZoom={this.onZoom}
+          onClearError={this.onClearError}
           onChangeTimeZone={this.onChangeTimeZone}
           invalid={this.state.isError}
           error={'Invalid time range'}
