@@ -128,23 +128,3 @@ func (app *AppPlugin) initApp() {
 		}
 	}
 }
-
-func (app *AppPlugin) onLegacyPluginStart(pluginID string, client *grpcplugin.LegacyClient, logger log.Logger) error {
-	if client.DatasourcePlugin != nil {
-		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-			return wrapper.NewDatasourcePluginWrapper(logger, client.DatasourcePlugin), nil
-		})
-	}
-
-	return nil
-}
-
-func (app *AppPlugin) onPluginStart(pluginID string, client *grpcplugin.Client, logger log.Logger) error {
-	if client.DataPlugin != nil {
-		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-			return wrapper.NewDatasourcePluginWrapperV2(logger, app.Id, app.Type, client.DataPlugin), nil
-		})
-	}
-
-	return nil
-}
