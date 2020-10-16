@@ -114,12 +114,22 @@ export class TimePickerSettings extends PureComponent<Props, State> {
             </Tooltip>
           </div>
           <div className="gf-form">
+            <span className="gf-form-label width-7">Max time back</span>
+            <Tooltip placement="right" content={'Enter the maximum time users can go back'}>
+              <Input
+                width={60}
+                invalid={!this.state.isMaxTimeBackValid}
+                onChange={this.onMaxTimeBackChange}
+                defaultValue={this.props.maxTimeBack}
+              />
+            </Tooltip>
+          </div>
+          <div className="gf-form">
             <span className="gf-form-label width-7">Max time span</span>
             <Tooltip placement="right" content={'Enter the maximum time span allowed by time range controls'}>
               <Input
                 width={60}
                 invalid={!this.state.isMaxTimeSpanValid}
-                placeholder="0m"
                 onChange={this.onMaxTimeSpanChange}
                 defaultValue={this.props.maxTimeSpan}
               />
@@ -132,18 +142,6 @@ export class TimePickerSettings extends PureComponent<Props, State> {
               checked={this.props.timePickerHidden ?? false}
               onChange={this.onHideTimePickerChange}
             />
-          </div>
-
-          <div className="gf-form">
-            <span className="gf-form-label width-7">Max Time Back</span>
-            <Tooltip placement="right" content={'Enter the maximum time users can go back'}>
-              <Input
-                width={60}
-                invalid={!this.state.isMaxTimeBackValid}
-                onChange={this.onMaxTimeBackChange}
-                defaultValue={this.props.maxTimeBack}
-              />
-            </Tooltip>
           </div>
         </div>
       </div>

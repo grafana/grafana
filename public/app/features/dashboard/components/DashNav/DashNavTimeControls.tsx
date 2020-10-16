@@ -98,7 +98,7 @@ class UnthemedDashNavTimeControls extends Component<Props> {
     const nextTimeSpan = timeRange.to.valueOf() - timeRange.from.valueOf();
     const exceededMaxTimeSpan = panel.maxTimeSpan && nextTimeSpan > rangeUtil.intervalToMs(panel.maxTimeSpan);
 
-    if (!exceededMaxTimeBack || !exceededMaxTimeSpan) {
+    if (!exceededMaxTimeBack && !exceededMaxTimeSpan) {
       getTimeSrv().setTime(nextRange);
     }
   };

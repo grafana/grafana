@@ -249,4 +249,33 @@ describe('timeSrv', () => {
       expect(_dashboard.refresh).toBe('10s');
     });
   });
+
+  describe('zoomOut', () => {
+    let setTimeSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      setTimeSpy = jest.spyOn(timeSrv, 'setTime');
+    });
+
+    afterEach(() => {
+      setTimeSpy.mockRestore();
+    });
+
+    it('should call setTime when maxTimeSpan is not set', () => {
+      timeSrv.zoomOut(2);
+      expect(setTimeSpy).toHaveBeenCalled();
+    });
+
+    it('should call setTime when zoom does not exceed maxTimeSpan', () => {
+      timeSrv.init({ ..._dashboard, timepicker: { maxTimeSpan: '12h' } });
+      timeSrv.zoomOut(2);
+      expect(setTimeSpy).toHaveBeenCalled();
+    });
+
+    it('should not call setTime when zoom exceeds maxTimeSpan', () => {
+      timeSrv.init({ ..._dashboard, timepicker: { maxTimeSpan: '5s' } });
+      timeSrv.zoomOut(2);
+      expect(setTimeSpy).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -291,9 +291,10 @@ export class TimeSrv {
     const range = this.timeRange();
     const { from, to } = getZoomedTimeRange(range, factor);
 
-    const { maxTimeSpan } = this.dashboard.timepicker;
+    const { maxTimeSpan } = this.dashboard?.timepicker ?? { maxTimeSpan: undefined };
     const nextTimeSpan = to - from;
     const exceededMaxTimeSpan = maxTimeSpan && nextTimeSpan > rangeUtil.intervalToMs(maxTimeSpan);
+
     if (!exceededMaxTimeSpan) {
       this.setTime({ from: toUtc(from), to: toUtc(to) });
     }
