@@ -30,12 +30,6 @@ export interface SliderFieldConfigSettings {
   step?: number;
 }
 
-export const sliderOverrideProcessor = (
-  value: any,
-  _context: FieldOverrideContext,
-  _settings?: SliderFieldConfigSettings
-) => value as number | number[];
-
 export interface DataLinksFieldConfigSettings {}
 
 export const dataLinksOverrideProcessor = (
