@@ -161,6 +161,14 @@ describe('LokiDatasource', () => {
       });
     });
 
+    it('should use custom max lines from query if set and it is logs query even if it is higher than data source limit', done => {
+      runLimitTest({
+        queryMaxLines: 500,
+        expectedLimit: 500,
+        done,
+      });
+    });
+
     it('should use maxDataPoints if it is metrics query', () => {
       runLimitTest({
         expr: 'rate({label="val"}[10m])',

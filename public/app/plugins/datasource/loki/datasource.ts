@@ -196,7 +196,9 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         // actually happen both Dashboards and Explore should send some value here. If not maxLines does not make that
         // much sense but nor any other arbitrary value.
         (options as DataQueryRequest<LokiQuery>).maxDataPoints || this.maxLines
-      : Math.min(target.maxLines || Infinity, this.maxLines);
+      : // If user wants maxLines 0 we still fallback to data source limit. I think that makes sense as why would anyone
+        // want to do a query and not see any results?
+        target.maxLines || this.maxLines;
 
     if ((options as DataQueryRequest<LokiQuery>).liveStreaming) {
       return this.runLiveQuery(target, maxDataPoints);
