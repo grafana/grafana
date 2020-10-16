@@ -26,7 +26,6 @@ import {
   isMatrixData,
   MatrixOrVectorResult,
   PromDataSuccessResponse,
-  PromExemplarData,
   PromMetric,
   PromQuery,
   PromQueryRequest,
@@ -86,9 +85,9 @@ export function transform(
     prometheusResult.forEach(exemplarData => {
       const data = exemplarData.exemplars.map(exemplar => {
         return {
-          time: exemplar.timestamp,
-          text: getText(exemplar, exemplarData.seriesLabels, transformOptions.exemplarTraceIDDestination),
-          y: exemplar.value,
+          time: exemplar.scrapeTimestamp,
+          text: getText(exemplar.exemplar, exemplarData.seriesLabels, transformOptions.exemplarTraceIDDestination),
+          y: exemplar.exemplar.value,
         } as ExemplarsDataFrameViewDTO;
       });
       events.push(...data);

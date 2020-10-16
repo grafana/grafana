@@ -69,6 +69,11 @@ export interface Labels {
   traceID: string;
 }
 
+export interface ScrapeExemplar {
+  exemplar: Exemplar;
+  scrapeTimestamp: number;
+}
+
 export interface Exemplar {
   labels: Labels;
   value: number;
@@ -78,7 +83,7 @@ export interface Exemplar {
 
 export interface PromExemplarData {
   seriesLabels: PromMetric;
-  exemplars: Exemplar[];
+  exemplars: ScrapeExemplar[];
 }
 
 export interface PromVectorData {
