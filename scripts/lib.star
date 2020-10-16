@@ -224,7 +224,7 @@ def lint_backend_step(edition):
             'revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...',
             './scripts/revive-strict',
             './scripts/tidy-check.sh',
-            './scripts/mixin-check.sh,
+            './scripts/mixin-check.sh',
         ],
     }
 

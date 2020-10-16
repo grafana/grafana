@@ -33,6 +33,7 @@ steps:
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
   - ./scripts/tidy-check.sh
+  - ./scripts/mixin-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -301,6 +302,7 @@ steps:
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
   - ./scripts/tidy-check.sh
+  - ./scripts/mixin-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -744,6 +746,7 @@ steps:
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
   - ./scripts/tidy-check.sh
+  - ./scripts/mixin-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -1112,6 +1115,7 @@ steps:
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
   - ./scripts/tidy-check.sh
+  - ./scripts/mixin-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -1524,6 +1528,7 @@ steps:
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
   - ./scripts/tidy-check.sh
+  - ./scripts/mixin-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -1874,6 +1879,7 @@ steps:
   - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
   - ./scripts/revive-strict
   - ./scripts/tidy-check.sh
+  - ./scripts/mixin-check.sh
   environment:
     CGO_ENABLED: 1
   depends_on:
