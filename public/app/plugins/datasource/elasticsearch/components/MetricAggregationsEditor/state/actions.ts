@@ -55,7 +55,7 @@ export const toggleMetricVisibility = (id: MetricAggregation['id']): MetricAggre
 export const changeMetricSetting = <T extends MetricAggregationWithSettings = MetricAggregationWithSettings>(
   metric: T,
   setting: Extract<keyof Required<T>['settings'], string>,
-  newValue: string | number
+  newValue: string | number | string[]
 ): MetricAggregationAction => ({
   type: CHANGE_METRIC_SETTING,
   payload: {

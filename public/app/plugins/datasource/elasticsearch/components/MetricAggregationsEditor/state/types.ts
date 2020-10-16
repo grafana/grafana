@@ -46,7 +46,7 @@ export interface MetricAggregationWithField extends BaseMetricAggregation {
 }
 
 export interface MetricAggregationWithSettings extends BaseMetricAggregation {
-  settings?: Record<string, string | boolean | undefined>;
+  settings?: Record<string, unknown>;
 }
 
 export interface MetricAggregationWithMeta extends BaseMetricAggregation {
@@ -150,7 +150,7 @@ interface Percentiles
     MetricAggregationWithInlineScript {
   type: 'percentiles';
   settings?: {
-    percentiles?: string;
+    percents?: string[];
     script?: string;
     missing?: string;
   };
@@ -347,7 +347,7 @@ export interface ChangeMetricSettingAction<T extends MetricAggregationWithSettin
   payload: {
     metric: T;
     setting: Extract<keyof Required<T>['settings'], string>;
-    newValue: string | number;
+    newValue: string | number | string[];
   };
 }
 
