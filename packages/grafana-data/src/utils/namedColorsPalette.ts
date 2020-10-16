@@ -120,6 +120,7 @@ export function getColorForTheme(color: string, theme: GrafanaTheme): string {
  */
 export function getColorFromHexRgbOrName(color: string, type?: GrafanaThemeType): string {
   const themeType = type ?? GrafanaThemeType.Dark;
+
   if (themeType === GrafanaThemeType.Dark) {
     const darkTheme = ({
       type: themeType,
