@@ -1,4 +1,4 @@
-// Package eval executes the condition for an alert defintion, evaluates the condition results, and
+// Package eval executes the condition for an alert definition, evaluates the condition results, and
 // returns the alert instance states.
 package eval
 
@@ -95,7 +95,6 @@ func (s State) String() string {
 
 // IsValid checks the conditions validity
 func (c Condition) IsValid() bool {
-
 	// TODO search for refIDs in QueriesAndExpressions
 	return len(c.QueriesAndExpressions) != 0
 }
