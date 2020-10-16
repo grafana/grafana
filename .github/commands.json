@@ -37,6 +37,6 @@
 		"action": "updateLabels",
 		"addLabel": "needs more info",
 		"removeLabel": "~needs more info",
-		"comment": "Thanks for creating this issue! We figured it's missing some basic information. Thanks for creating this issue! We figured it's missing some basic information, such as query results or version number, or in some other way doesn't follow our [issue reporting](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md#report-bugs) guidelines.\n\nHappy graphing!"
+		"comment": "Thanks for creating this issue! We figured it's missing some basic information. \r\n\r\nFor data visualization issues: \r\n- Query results from the inspect drawer (data tab & query inspector)\r\n- Panel settings can be extracted in the panel inspect drawer JSON tab\r\n\r\nFor a dashboard related issues: \r\n- Dashboard JSON can be found in the dashboard settings JSON model view\r\n\r\nFor authentication and alerting Grafana server logs are useful. \r\n\r\nHappy graphing!"
 	}
 ]

@@ -23,18 +23,16 @@ Before submitting a new issue, try to make sure someone hasn't already reported 
 
 Report a bug by submitting a [bug report](https://github.com/grafana/grafana/issues/new?labels=type%3A+bug&template=1-bug_report.md). Make sure that you provide as much information as possible on how to reproduce the bug.
 
-#### Issue information
+Follow the issue template and additional information depending on what type of issue you are reporting.
 
-- Grafana version
-- Data source type & version
-- OS Grafana is installed o
-- User OS & Browser
-- Grafana plugins
-
-For a query related issues
-
+For data visualization issues:
 - Query results from the inspect drawer (data tab & query inspector)
-- Panel json or dashboard json if it is a panel or dashboard issue
+- Panel settings can be extracted in the panel inspect drawer JSON tab
+
+For a dashboard related issues:
+- Dashboard JSON can be found in the dashboard settings JSON model view
+
+For authentication and alerting Grafana server logs are useful.
 
 #### Security issues
 
