@@ -56,6 +56,10 @@ mv $HOME/go/bin/mage /usr/local/bin
 /bin/rm -rf /tmp/mage
 /bin/rm -rf $HOME/go
 
+# add cypress
+yarn global add cypress
+# verify cypress install
+cypress verify
 #
 # Install grafana-toolkit deps
 #
