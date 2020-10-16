@@ -1,5 +1,5 @@
 grabpl_version = '0.5.18'
-build_image = 'grafana/build-container:1.2.27'
+build_image = 'grafana/build-container:1.2.28'
 publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 alpine_image = 'alpine:3.12'
@@ -221,7 +221,8 @@ def lint_backend_step(edition):
             'revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...',
             './scripts/revive-strict',
             './scripts/tidy-check.sh',
-            './scripts/mixin-check.sh',
+            './grafana-mixin/scripts/lint.sh',
+            './grafana-mixin/scripts/build.sh',
         ],
     }
 
