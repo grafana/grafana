@@ -99,7 +99,9 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       }));
 
     for (const target of filteredTargets) {
-      if (options.app === CoreApp.Explore) {
+      // In explore we want to show result of metrics instant query in a table under the graph panel to mimic behaviour of prometheus.
+      // We don't want to do that in dashboards though as user would have to pick the correct data frame.
+      if (options.app === CoreApp.Explore && isMetricsQuery(target.expr)) {
         subQueries.push(this.runInstantQuery(target, options, filteredTargets.length));
       }
       subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
