@@ -340,72 +340,80 @@ type ITestDB interface {
 	Logf(format string, args ...interface{})
 }
 
+var testSqlStore *SqlStore
+
 // InitTestDB initializes the test DB.
 func InitTestDB(t ITestDB) *SqlStore {
 	t.Helper()
-	sqlstore := &SqlStore{}
-	sqlstore.Bus = bus.New()
-	sqlstore.CacheService = localcache.New(5*time.Minute, 10*time.Minute)
-	sqlstore.skipEnsureDefaultOrgAndUser = true
+	if testSqlStore == nil {
+		testSqlStore = &SqlStore{}
+		testSqlStore.Bus = bus.New()
+		testSqlStore.CacheService = localcache.New(5*time.Minute, 10*time.Minute)
+		testSqlStore.skipEnsureDefaultOrgAndUser = true
 
-	dbType := migrator.SQLITE
+		dbType := migrator.SQLITE
 
-	// environment variable present for test db?
-	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		t.Logf("Using database type %q", db)
-		dbType = db
-	}
+		// environment variable present for test db?
+		if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+			t.Logf("Using database type %q", db)
+			dbType = db
+		}
 
-	// set test db config
-	sqlstore.Cfg = setting.NewCfg()
-	sec, err := sqlstore.Cfg.Raw.NewSection("database")
-	if err != nil {
-		t.Fatalf("Failed to create section: %s", err)
-	}
-	if _, err := sec.NewKey("type", dbType); err != nil {
-		t.Fatalf("Failed to create key: %s", err)
-	}
-
-	switch dbType {
-	case "mysql":
-		if _, err := sec.NewKey("connection_string", sqlutil.MySQLTestDB().ConnStr); err != nil {
+		// set test db config
+		testSqlStore.Cfg = setting.NewCfg()
+		sec, err := testSqlStore.Cfg.Raw.NewSection("database")
+		if err != nil {
+			t.Fatalf("Failed to create section: %s", err)
+		}
+		if _, err := sec.NewKey("type", dbType); err != nil {
 			t.Fatalf("Failed to create key: %s", err)
 		}
-	case "postgres":
-		if _, err := sec.NewKey("connection_string", sqlutil.PostgresTestDB().ConnStr); err != nil {
-			t.Fatalf("Failed to create key: %s", err)
+
+		switch dbType {
+		case "mysql":
+			if _, err := sec.NewKey("connection_string", sqlutil.MySQLTestDB().ConnStr); err != nil {
+				t.Fatalf("Failed to create key: %s", err)
+			}
+		case "postgres":
+			if _, err := sec.NewKey("connection_string", sqlutil.PostgresTestDB().ConnStr); err != nil {
+				t.Fatalf("Failed to create key: %s", err)
+			}
+		default:
+			if _, err := sec.NewKey("connection_string", sqlutil.Sqlite3TestDB().ConnStr); err != nil {
+				t.Fatalf("Failed to create key: %s", err)
+			}
 		}
-	default:
-		if _, err := sec.NewKey("connection_string", sqlutil.Sqlite3TestDB().ConnStr); err != nil {
-			t.Fatalf("Failed to create key: %s", err)
+
+		// need to get engine to clean db before we init
+		t.Logf("Creating database connection: %q", sec.Key("connection_string"))
+		engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
+		if err != nil {
+			t.Fatalf("Failed to init test database: %v", err)
 		}
+
+		testSqlStore.Dialect = migrator.NewDialect(engine)
+
+		// temp global var until we get rid of global vars
+		dialect = testSqlStore.Dialect
+
+		t.Logf("Cleaning DB")
+		if err := dialect.CleanDB(); err != nil {
+			t.Fatalf("Failed to clean test db %v", err)
+		}
+
+		if err := testSqlStore.Init(); err != nil {
+			t.Fatalf("Failed to init test database: %v", err)
+		}
+
+		testSqlStore.engine.DatabaseTZ = time.UTC
+		testSqlStore.engine.TZLocation = time.UTC
 	}
 
-	// need to get engine to clean db before we init
-	t.Logf("Creating database connection: %q", sec.Key("connection_string"))
-	engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
-	if err != nil {
-		t.Fatalf("Failed to init test database: %v", err)
+	if err := dialect.TruncateDBTables(); err != nil {
+		t.Fatalf("Failed to truncate test db %v", err)
 	}
 
-	sqlstore.Dialect = migrator.NewDialect(engine)
-
-	// temp global var until we get rid of global vars
-	dialect = sqlstore.Dialect
-
-	t.Logf("Cleaning DB")
-	if err := dialect.CleanDB(); err != nil {
-		t.Fatalf("Failed to clean test db %v", err)
-	}
-
-	if err := sqlstore.Init(); err != nil {
-		t.Fatalf("Failed to init test database: %v", err)
-	}
-
-	sqlstore.engine.DatabaseTZ = time.UTC
-	sqlstore.engine.TZLocation = time.UTC
-
-	return sqlstore
+	return testSqlStore
 }
 
 func IsTestDbMySql() bool {
