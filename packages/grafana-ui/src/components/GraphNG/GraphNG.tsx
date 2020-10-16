@@ -103,7 +103,9 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, ...plotProps }
     scales.push(<Scale key="scale-x" scaleKey="x" time />);
   }
 
-  axes.push(<Axis key="axis-scale--x" scaleKey="x" values={timeStampsConfig} side={2} />);
+  axes.push(
+    <Axis key="axis-scale--x" scaleKey="x" field={alignedData.fields[timeIndex]} values={timeStampsConfig} side={2} />
+  );
 
   let seriesIdx = 0;
   const uniqueScales: Record<string, boolean> = {};
@@ -127,6 +129,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, ...plotProps }
       axes.push(
         <Axis
           key={`axis-${scale}-${i}`}
+          field={field}
           scaleKey={scale}
           label={config.custom?.axis?.label}
           size={config.custom?.axis?.width}

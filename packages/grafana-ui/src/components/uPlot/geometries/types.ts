@@ -1,3 +1,5 @@
+import { Field } from '@grafana/data';
+
 export interface LineProps {
   scaleKey: string;
   stroke: string;
@@ -26,6 +28,7 @@ export interface AxisProps {
   grid?: boolean;
   formatValue?: (v: any) => string;
   values?: any;
+  field?: Field;
 }
 
 export interface ScaleProps {

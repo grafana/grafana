@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { AxisProps } from './types';
-import { usePlotConfigContext } from '../context';
+import { usePlotConfigContext, usePlotContext } from '../context';
 import { useTheme } from '../../../themes';
 import uPlot from 'uplot';
+import { Field } from '@grafana/data';
 
 export const useAxisConfig = (getConfig: () => any) => {
   const { addAxis } = usePlotConfigContext();
@@ -32,12 +33,13 @@ export const useAxisConfig = (getConfig: () => any) => {
 
 export const Axis: React.FC<AxisProps> = props => {
   const theme = useTheme();
+  const size = useAxisSize(props);
+
   const gridColor = useMemo(() => (theme.isDark ? theme.palette.gray1 : theme.palette.gray4), [theme]);
   const {
     scaleKey,
     label,
     show = true,
-    size = 80,
     stroke = theme.colors.text,
     side = 3,
     grid = true,
@@ -73,3 +75,36 @@ export const Axis: React.FC<AxisProps> = props => {
   return null;
 };
 Axis.displayName = 'Axis';
+
+const lineHeight = 25;
+
+const useAxisSize = (props: AxisProps): number => {
+  const { isPlotReady, getPlotInstance } = usePlotContext();
+  let size = 0;
+
+  if (!isPlotReady) {
+    return 0;
+  }
+
+  if (props.label && props.label.length > 0) {
+    size += lineHeight * 2;
+  }
+
+  const valueExtras = displaySettings(props.field);
+  const measure = getPlotInstance().ctx.measureText(valueExtras);
+
+  switch (props.side ?? 3) {
+    case 2:
+      return size + lineHeight * 2;
+    default:
+      return size + measure.width;
+  }
+};
+
+const displaySettings = (field?: Field): string => {
+  if (!field || !field.display) {
+    return '';
+  }
+  const settings = field.display(field.config.max ?? '');
+  return `${settings.prefix ?? ''} ${settings.suffix ?? ''}`;
+};

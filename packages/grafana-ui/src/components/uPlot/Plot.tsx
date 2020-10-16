@@ -22,7 +22,6 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     props.timeZone
   );
   const prevConfig = usePrevious(currentConfig);
-
   const getPlotInstance = useCallback(() => {
     if (!plotInstance) {
       throw new Error("Plot hasn't initialised yet");
