@@ -60,15 +60,6 @@ mv $HOME/go/bin/mage /usr/local/bin
 yarn global add cypress
 # verify cypress install
 cypress verify
-#
-# Install grafana-toolkit deps
-#
-# Skip - no longer included
-#
-#pushd /usr/local/grafana-toolkit
-#yarn install
-#ln -s /usr/local/grafana-toolkit/bin/grafana-toolkit.js /usr/local/bin/grafana-toolkit
-#popd
 
 # Get the size down
 /bin/rm -rf /var/lib/apt/lists
