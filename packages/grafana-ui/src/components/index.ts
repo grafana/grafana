@@ -201,7 +201,7 @@ const LegacyForms = {
 export { LegacyForms, LegacyInputStatus };
 
 // WIP, need renames and exports cleanup
-export { GraphCustomFieldConfig } from './uPlot/types';
+export { GraphCustomFieldConfig, AxisSide } from './uPlot/types';
 export { UPlotChart } from './uPlot/Plot';
 export * from './uPlot/geometries';
 export { usePlotConfigContext } from './uPlot/context';
