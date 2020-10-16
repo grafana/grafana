@@ -115,7 +115,7 @@ You can choose which exporter to use in the [configuration file](https://grafana
 
 Options are `file`, `loki` and `console`. Use spaces to separate multiple modes, e.g. `file loki`.
 
-By default, when a user create or update a dashboard, its content will not appear in the logs as it can significantly increase the size of your logs. If this is important information for you and you can handle the amount of data, you can enable this option in the configuration.
+By default, when a user create or update a dashboard, its content will not appear in the logs as it can significantly increase the size of your logs. If this is important information for you and you can handle the amount of data generated, you can enable this option in the configuration.
 
 ```ini
 [auditing]
