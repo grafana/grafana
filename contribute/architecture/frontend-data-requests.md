@@ -28,7 +28,7 @@ Depending on how the web browser implements the protocol for HTTP 1.1, it will l
 
 Unless you have configured Grafana to use HTTP2, the browser limits parallel data requests according to the browser's implementation. For more information on how to enable HTTP2, refer to [Configuration](https://grafana.com/docs/grafana/latest/administration/configuration/#protocol).
 
-Because there is a _max_parallel_browser_request_ limit, if some the requests take a long time, they will block later requests and make interacting with Grafana very slow.
+Because there is a _max_parallel_browser_request_ limit, if some of the requests take a long time, they will block later requests and make interacting with Grafana very slow.
 
 #### Before Grafana 7.2
 Not supported. 
