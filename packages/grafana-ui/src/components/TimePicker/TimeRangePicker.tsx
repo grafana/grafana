@@ -82,16 +82,25 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
     isOpen: false,
   };
 
+  componentDidUpdate(prevProps: Props, prevState: State) {
+    if (!this.props.invalid && prevState.isOpen) {
+      this.setState({ isOpen: false });
+    }
+  }
+
   onChange = (timeRange: TimeRange) => {
     this.props.onChange(timeRange);
-    this.setState({ isOpen: false });
   };
 
   onOpen = (event: FormEvent<HTMLButtonElement>) => {
     const { isOpen } = this.state;
     event.stopPropagation();
     event.preventDefault();
-    this.setState({ isOpen: !isOpen });
+    if (!isOpen) {
+      this.setState({ isOpen: true });
+    } else {
+      this.onClose();
+    }
   };
 
   onClose = () => {
@@ -162,11 +171,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
               </ClickOutsideWrapper>
             )}
           </div>
-          {invalid && error && (
-            <ClickOutsideWrapper includeButtonPress={false} onClick={this.onError}>
-              {isOpen && ''}
-            </ClickOutsideWrapper>
-          )}
+
           {timeSyncButton}
 
           {hasAbsolute && (
