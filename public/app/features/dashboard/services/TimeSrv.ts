@@ -292,10 +292,14 @@ export class TimeSrv {
     const { from, to } = getZoomedTimeRange(range, factor);
 
     const { maxTimeSpan } = this.dashboard?.timepicker ?? { maxTimeSpan: undefined };
+    const { maxTimeBack } = this.dashboard?.timepicker ?? { maxTimeBack: undefined };
+    const maxTimeBackRange = 'now-' + maxTimeBack;
+    const nextTimeBack = (to - from) / 2;
     const nextTimeSpan = to - from;
     const exceededMaxTimeSpan = maxTimeSpan && nextTimeSpan > rangeUtil.intervalToMs(maxTimeSpan);
+    const exceededMaxTimeBack = maxTimeBack && nextTimeBack > rangeUtil.intervalToMs(maxTimeBackRange);
 
-    if (!exceededMaxTimeSpan) {
+    if (!exceededMaxTimeSpan && !exceededMaxTimeBack) {
       this.setTime({ from: toUtc(from), to: toUtc(to) });
     }
   }

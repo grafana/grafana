@@ -261,7 +261,7 @@ describe('timeSrv', () => {
       setTimeSpy.mockRestore();
     });
 
-    it('should call setTime when maxTimeSpan is not set', () => {
+    it('should call setTime when maxTimeSpan and maxTimeBack is not set', () => {
       timeSrv.zoomOut(2);
       expect(setTimeSpy).toHaveBeenCalled();
     });
@@ -274,6 +274,36 @@ describe('timeSrv', () => {
 
     it('should not call setTime when zoom exceeds maxTimeSpan', () => {
       timeSrv.init({ ..._dashboard, timepicker: { maxTimeSpan: '5s' } });
+      timeSrv.zoomOut(2);
+      expect(setTimeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should call setTime when zoom does not exceed maxTimeBack', () => {
+      timeSrv.init({ ..._dashboard, timepicker: { maxTimeBack: '12h' } });
+      timeSrv.zoomOut(2);
+      expect(setTimeSpy).toHaveBeenCalled();
+    });
+
+    it('should not call setTime when zoom exceeds maxTimeBack', () => {
+      timeSrv.init({ ..._dashboard, timepicker: { maxTimeBack: '5s' } });
+      timeSrv.zoomOut(2);
+      expect(setTimeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should call setTime when both maxTimeSpan and maxTimeBack is set and does not exceed', () => {
+      timeSrv.init({ ..._dashboard, timepicker: { maxTimeBack: '12h', maxTimeSpan: '1d' } });
+      timeSrv.zoomOut(2);
+      expect(setTimeSpy).toHaveBeenCalled();
+    });
+
+    it('should not call setTime when zoom exceeds maxTimeSpan but not maxTimeBack', () => {
+      timeSrv.init({ ..._dashboard, timepicker: { maxTimeBack: '12h', maxTimeSpan: '5s' } });
+      timeSrv.zoomOut(2);
+      expect(setTimeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not call setTime when zoom exceeds maxTimeBack but not maxTimeSpan', () => {
+      timeSrv.init({ ..._dashboard, timepicker: { maxTimeBack: '5s', maxTimeSpan: '12h' } });
       timeSrv.zoomOut(2);
       expect(setTimeSpy).not.toHaveBeenCalled();
     });
