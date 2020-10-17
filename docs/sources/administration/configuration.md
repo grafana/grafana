@@ -549,8 +549,10 @@ Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 
 > Only available in Grafana v6.7+.
 
-This prevents users from setting the dashboard refresh interval of a lower than given interval. Per default this is 5 seconds.
+This feature prevents users from setting the dashboard refresh interval to a lower value than a given interval value. The default interval value is 5 seconds.
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
+
+As of Grafana v7.3, this also limits the refresh interval options in Explore.
 
 ### default_home_dashboard_path
 
