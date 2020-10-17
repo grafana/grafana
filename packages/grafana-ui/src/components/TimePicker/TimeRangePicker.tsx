@@ -108,10 +108,6 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
     this.setState({ isOpen: false });
   };
 
-  onError = () => {
-    this.setState({ isOpen: true });
-  };
-
   render() {
     const {
       value,
