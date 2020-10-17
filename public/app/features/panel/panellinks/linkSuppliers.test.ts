@@ -1,5 +1,5 @@
 import { getFieldLinksSupplier } from './linkSuppliers';
-import { applyFieldOverrides, DataFrameView, dateTime, FieldDisplay, GrafanaTheme, toDataFrame } from '@grafana/data';
+import { applyFieldOverrides, DataFrameView, dateTime, FieldDisplay, toDataFrame } from '@grafana/data';
 import { getLinkSrv, LinkService, LinkSrv, setLinkSrv } from './link_srv';
 import { TemplateSrv } from '../../templating/template_srv';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
