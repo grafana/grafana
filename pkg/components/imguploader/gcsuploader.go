@@ -3,6 +3,7 @@ package imguploader
 import (
 	"context"
 	"fmt"
+	"golang.org/x/oauth2/jwt"
 	"io"
 	"io/ioutil"
 	"os"
