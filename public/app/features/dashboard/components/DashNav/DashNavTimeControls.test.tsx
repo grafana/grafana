@@ -60,6 +60,18 @@ describe('DashNavTimeControls', () => {
       expect(setTimeSpy).toHaveBeenCalled();
     });
 
+    it('should not call setTime when time range exceeds both maxTimeSpan and maxTimeBack', () => {
+      const dashboard = new DashboardModel({
+        timepicker: {
+          maxTimeBack: '5s',
+          maxTimeSpan: '5s',
+        },
+      });
+      wrapper.setProps({ dashboard });
+      wrapper.instance().onChangeTimePicker(timeRange);
+      expect(setTimeSpy).not.toHaveBeenCalled();
+    });
+
     it('should not call setTime when time range exceeds maxTimeBack', () => {
       const dashboard = new DashboardModel({
         timepicker: {
@@ -75,6 +87,30 @@ describe('DashNavTimeControls', () => {
       const dashboard = new DashboardModel({
         timepicker: {
           maxTimeBack: '5s',
+        },
+      });
+      wrapper.setProps({ dashboard });
+      wrapper.instance().onChangeTimePicker(timeRange);
+      expect(setTimeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not call setTime when time range exceeds maxTimeSpan but not maxTimeBack', () => {
+      const dashboard = new DashboardModel({
+        timepicker: {
+          maxTimeBack: '6h',
+          maxTimeSpan: '5s',
+        },
+      });
+      wrapper.setProps({ dashboard });
+      wrapper.instance().onChangeTimePicker(timeRange);
+      expect(setTimeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not call setTime when time range exceeds maxTimeBack but not maxTimeSpan', () => {
+      const dashboard = new DashboardModel({
+        timepicker: {
+          maxTimeBack: '5s',
+          maxTimeSpan: '6h',
         },
       });
       wrapper.setProps({ dashboard });
