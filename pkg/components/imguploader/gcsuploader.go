@@ -84,7 +84,9 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 		}
 	}
 
-	err = u.uploadFile(ctx, client, imageDiskPath, key)
+	if err = u.uploadFile(ctx, client, imageDiskPath, key); err != nil {
+		return "", err
+	}
 
 	if !u.enableSignedUrls {
 		return fmt.Sprintf("https://storage.googleapis.com/%s/%s", u.bucket, key), nil
