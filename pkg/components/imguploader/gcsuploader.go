@@ -3,6 +3,7 @@ package imguploader
 import (
 	"context"
 	"fmt"
+	"golang.org/x/oauth2/jwt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -84,10 +85,44 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 	}
 
 	err = u.uploadFile(ctx, client, imageDiskPath, key)
-	if err != nil {
-		return "", err
+
+	if !u.enableSignedUrls {
+		return fmt.Sprintf("https://storage.googleapis.com/%s/%s", u.bucket, key), nil
 	}
-	return fmt.Sprintf("https://storage.googleapis.com/%s/%s", u.bucket, key), nil
+
+	u.log.Debug("Signing GCS URL")
+	var conf *jwt.Config
+	if u.keyFile != "" {
+		jsonKey, err := ioutil.ReadFile(u.keyFile)
+		if err != nil {
+			return "", fmt.Errorf("ioutil.ReadFile: %v", err)
+		}
+		conf, err = google.JWTConfigFromJSON(jsonKey)
+		if err != nil {
+			return "", fmt.Errorf("google.JWTConfigFromJSON: %v", err)
+		}
+	} else {
+		creds, err := google.FindDefaultCredentials(ctx, storage.ScopeReadWrite)
+		if err != nil {
+			return "", fmt.Errorf("google.FindDefaultCredentials: %v", err)
+		}
+		conf, err = google.JWTConfigFromJSON(creds.JSON)
+		if err != nil {
+			return "", fmt.Errorf("google.JWTConfigFromJSON: %v", err)
+		}
+	}
+	opts := &storage.SignedURLOptions{
+		Scheme:         storage.SigningSchemeV4,
+		Method:         "GET",
+		GoogleAccessID: conf.Email,
+		PrivateKey:     conf.PrivateKey,
+		Expires:        time.Now().Add(u.signedUrlExpiration),
+	}
+	signedUrl, err := storage.SignedURL(u.bucket, key, opts)
+	if err != nil {
+		return "", fmt.Errorf("storage.SignedURL: %v", err)
+	}
+	return signedUrl, nil
 }
 
 func (u *GCSUploader) uploadFile(
