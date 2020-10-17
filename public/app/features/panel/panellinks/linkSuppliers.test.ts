@@ -3,6 +3,7 @@ import { applyFieldOverrides, DataFrameView, dateTime, FieldDisplay, GrafanaThem
 import { getLinkSrv, LinkService, LinkSrv, setLinkSrv } from './link_srv';
 import { TemplateSrv } from '../../templating/template_srv';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
+import { getTheme } from '@grafana/ui';
 
 describe('getFieldLinksSupplier', () => {
   let originalLinkSrv: LinkService;
@@ -91,7 +92,7 @@ describe('getFieldLinksSupplier', () => {
       replaceVariables: (val: string) => val,
       getDataSourceSettingsByUid: (val: string) => ({} as any),
       timeZone: 'utc',
-      theme: {} as GrafanaTheme,
+      theme: getTheme(),
       autoMinMax: true,
     })[0];
 
