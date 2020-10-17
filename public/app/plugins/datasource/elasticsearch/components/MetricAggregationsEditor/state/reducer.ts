@@ -1,6 +1,6 @@
 import { defaultMetricAgg } from '../../../query_def';
 import { ElasticsearchQuery } from '../../../types';
-import { getChildren } from '../utils';
+import { getChildren, metricAggregationConfig } from '../utils';
 import {
   ADD_METRIC,
   CHANGE_METRIC_TYPE,
@@ -23,25 +23,32 @@ export const reducer = (
     case ADD_METRIC:
       const nextId = parseInt(state[state.length - 1].id, 10) + 1;
       return [...state, defaultMetricAgg(nextId.toString())];
+
     case REMOVE_METRIC:
       const metricToRemove = state.find(m => m.id === action.payload.id)!;
       const metricsToRemove = [metricToRemove, ...getChildren(metricToRemove, state)];
       const resultingMetrics = state.filter(metric => !metricsToRemove.some(toRemove => toRemove.id === metric.id));
       return resultingMetrics;
+
     case CHANGE_METRIC_TYPE:
-      // TODO: Here we should do some checks to clean out metric configurations that are not compatible
-      // with the new one (eg. `settings` or `field`)
+      return state
+        .filter(metric =>
+          // When the new metric type is `isSingleMetric` we remove all other metrics from the query
+          // TODO: This needs to be also done in the Bucket Aggregation reducer
+          !!metricAggregationConfig[action.payload.type].isSingleMetric ? metric.id === action.payload.id : true
+        )
+        .map(metric => {
+          if (metric.id !== action.payload.id) {
+            return metric;
+          }
 
-      return state.map(metric => {
-        if (metric.id !== action.payload.id) {
-          return metric;
-        }
-
-        return {
-          ...metric,
-          type: action.payload.type,
-        } as MetricAggregation;
-      });
+          // TODO: Here we should do some checks to clean out metric configurations that are not compatible
+          // with the new one (eg. `settings` or `field`)
+          return {
+            ...metric,
+            type: action.payload.type,
+          } as MetricAggregation;
+        });
 
     case CHANGE_METRIC_FIELD:
       return state.map(metric => {
