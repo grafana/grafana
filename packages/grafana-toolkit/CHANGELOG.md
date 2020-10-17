@@ -3,6 +3,11 @@
 ### Features / Enhancements
 * **grafana/toolkit**: expose Jest maxWorkers arg for plugin test & build tasks. [#27724](https://github.com/grafana/grafana/pull/27724), [@domasx2](https://github.com/domasx2)
 
+# 7.2.1 (2020-10-08)
+
+### Features / Enhancements
+* **grafana/toolkit**: Add --coverage flag to plugin build command. [#27743](https://github.com/grafana/grafana/pull/27743), [@gassiss](https://github.com/gassiss)
+
 # 7.2.0 (2020-09-23)
 
 ### Bug Fixes
