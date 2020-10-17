@@ -467,7 +467,7 @@ describe('when rendering table with different patterns', () => {
       };
 
       //@ts-ignore
-      const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv);
+      const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv, getTheme());
       const html = renderer.renderCell(1, 0, 1230);
 
       expect(html).toBe(expected);
@@ -537,7 +537,7 @@ describe('when rendering cells with different alignment options', () => {
       };
 
       //@ts-ignore
-      const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv);
+      const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv, getTheme());
       const html = renderer.renderCell(1, 0, 42);
 
       expect(html).toBe(expected);
