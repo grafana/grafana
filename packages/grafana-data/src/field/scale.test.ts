@@ -1,4 +1,4 @@
-import { ThresholdsMode, Field, FieldType, GrafanaThemeType, GrafanaTheme } from '../types';
+import { ThresholdsMode, Field, FieldType } from '../types';
 import { sortThresholds } from './thresholds';
 import { ArrayVector } from '../vector/ArrayVector';
 import { getScaleCalculator } from './scale';
