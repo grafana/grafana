@@ -2,10 +2,11 @@ package es
 
 import (
 	"fmt"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 const (
