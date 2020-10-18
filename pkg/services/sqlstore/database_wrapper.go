@@ -31,7 +31,7 @@ func init() {
 
 	databaseQueryHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
-		Name:      "http_request_duration_seconds",
+		Name:      "database_queries_duration_seconds",
 		Help:      "Database query histogram",
 		Buckets:   prometheus.ExponentialBuckets(0.00001, 4, 10),
 	}, []string{"status"})
@@ -85,10 +85,15 @@ func (h *databaseQueryWrapper) After(ctx context.Context, query string, args ...
 
 // OnError instances will be called if any error happens
 func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query string, args ...interface{}) error {
+	status := "error"
+	if err == nil || err == driver.ErrSkip {
+		status = "success"
+	}
+
 	begin := ctx.Value(databaseQueryWrapperKey{}).(time.Time) //type check
-	databaseQueryCounter.WithLabelValues("error").Inc()
-	databaseQueryHistogram.WithLabelValues("error").Observe(time.Since(begin).Seconds())
-	logger.Debug("query finished", "status", "error", "elapsed time", time.Since(begin), "sql", query)
+	databaseQueryCounter.WithLabelValues(status).Inc()
+	databaseQueryHistogram.WithLabelValues(status).Observe(time.Since(begin).Seconds())
+	logger.Debug("query finished", "status", status, "elapsed time", time.Since(begin), "sql", query, "error", err)
 	return nil
 }
 
