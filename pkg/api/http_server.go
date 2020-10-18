@@ -337,7 +337,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}))
 
 	// These endpoints are used for monitoring the Grafana instance
-	// and should not be redirect or rejected.
+	// and should not be redirected or rejected.
 	m.Use(hs.healthzHandler)
 	m.Use(hs.apiHealthHandler)
 	m.Use(hs.metricsEndpoint)
@@ -395,7 +395,7 @@ func (hs *HTTPServer) healthzHandler(ctx *macaron.Context) {
 }
 
 // apiHealthHandler will return ok if Grafana's web server is running and it
-// can access the database. If the database cannot be access it will return
+// can access the database. If the database cannot be accessed it will return
 // http status code 503.
 func (hs *HTTPServer) apiHealthHandler(ctx *macaron.Context) {
 	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
@@ -410,7 +410,7 @@ func (hs *HTTPServer) apiHealthHandler(ctx *macaron.Context) {
 		data.Set("commit", setting.BuildCommit)
 	}
 
-	if err := bus.Dispatch(&models.GetDBHealthQuery{}); err != nil {
+	if !hs.databaseHealthy() {
 		data.Set("database", "failing")
 		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		ctx.Resp.WriteHeader(503)
