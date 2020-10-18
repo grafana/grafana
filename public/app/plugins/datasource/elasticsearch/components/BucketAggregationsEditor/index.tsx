@@ -1,24 +1,24 @@
 import React, { FunctionComponent } from 'react';
 import { InlineFieldRow } from '@grafana/ui';
 import { AddRemove } from '../AddRemove';
-import { useElasticsearchQuery } from '../ElasticsearchQueryContext';
 import { BucketAggregationEditor } from './BucketAggregationEditor';
+import { BucketAggregation } from '../../types';
+import { useDispatch } from '../ElasticsearchQueryContext';
 
-export const BucketAggregationsEditor: FunctionComponent = () => {
-  const { query, addBucketAggregation, removeBucketAggregation } = useElasticsearchQuery();
+interface Props {
+  value: BucketAggregation[];
+}
+
+export const BucketAggregationsEditor: FunctionComponent<Props> = ({ value }) => {
+  const dispatch = useDispatch<any>();
 
   return (
     <>
-      {query.bucketAggs.map((bucketAgg, index) => (
+      {value.map((bucketAgg, index) => (
         <InlineFieldRow key={bucketAgg.id}>
-          <BucketAggregationEditor bucketAgg={bucketAgg} />
+          <BucketAggregationEditor value={bucketAgg} />
 
-          <AddRemove
-            index={index}
-            elements={query.bucketAggs}
-            onAdd={addBucketAggregation}
-            onRemove={removeBucketAggregation}
-          />
+          <AddRemove index={index} elements={value} onAdd={() => {}} onRemove={() => {}} />
         </InlineFieldRow>
       ))}
     </>

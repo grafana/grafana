@@ -19,15 +19,14 @@ const toOption = (bucketAgg: BucketAggregation) => ({
 });
 
 interface QueryMetricEditorProps {
-  bucketAgg: BucketAggregation;
-  onChange: (bucketAgg: BucketAggregation) => void;
+  value: BucketAggregation;
 }
 
-export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> = ({ bucketAgg, onChange }) => {
+export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> = ({ value }) => {
   const datasource = useDatasource();
 
   const getFields = () => {
-    if (bucketAgg.type === 'date_histogram') {
+    if (value.type === 'date_histogram') {
       return datasource.getFields('date');
     } else {
       return datasource.getFields();
@@ -44,12 +43,12 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
             console.log(e);
             // TODO: This
           }}
-          value={toOption(bucketAgg)}
+          value={toOption(value)}
         />
       </InlineField>
 
-      {bucketAggregationConfig[bucketAgg.type].requiresField && (
-        <SegmentAsync loadOptions={getFields} onChange={() => {}} placeholder="Select Field" value={bucketAgg.field} />
+      {bucketAggregationConfig[value.type].requiresField && (
+        <SegmentAsync loadOptions={getFields} onChange={() => {}} placeholder="Select Field" value={value.field} />
       )}
     </>
   );

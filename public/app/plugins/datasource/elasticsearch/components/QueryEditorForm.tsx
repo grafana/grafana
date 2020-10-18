@@ -2,6 +2,7 @@ import React, { ComponentProps, FunctionComponent, memo } from 'react';
 import { InlineField, InlineFieldRow, Input, QueryField } from '@grafana/ui';
 import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { ElasticsearchQuery } from '../types';
+import { BucketAggregationsEditor } from './BucketAggregationsEditor';
 
 const labelsProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 15,
@@ -36,6 +37,7 @@ export const QueryEditorForm: FunctionComponent<Props> = memo(({ value }) => {
       </InlineFieldRow>
 
       <MetricAggregationsEditor value={value.metrics || []} />
+      <BucketAggregationsEditor value={value.bucketAggs || []} />
     </>
   );
 });
