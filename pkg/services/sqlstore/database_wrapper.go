@@ -86,6 +86,7 @@ func (h *databaseQueryWrapper) After(ctx context.Context, query string, args ...
 // OnError instances will be called if any error happens
 func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query string, args ...interface{}) error {
 	status := "error"
+	// https://golang.org/pkg/database/sql/driver/#ErrSkip
 	if err == nil || err == driver.ErrSkip {
 		status = "success"
 	}
@@ -94,7 +95,7 @@ func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query str
 	databaseQueryCounter.WithLabelValues(status).Inc()
 	databaseQueryHistogram.WithLabelValues(status).Observe(time.Since(begin).Seconds())
 	logger.Debug("query finished", "status", status, "elapsed time", time.Since(begin), "sql", query, "error", err)
-	return nil
+	return err
 }
 
 type databaseQueryWrapperParser struct {
