@@ -36,13 +36,15 @@ export const Scale: React.FC<ScaleProps> = props => {
   const getConfig = () => {
     let config: uPlot.Scale = {
       time: !!time,
+    };
+    if (scaleKey === '__fixed') {
       // HACK to enforce axis at 0
-      range: (u: any, dataMin: number, dataMax: number) => {
+      config.range = (u: any, dataMin: number, dataMax: number) => {
         let [min, max] = uPlot.rangeNum(dataMin, dataMax, 0.2, true);
 
         return [Math.min(0, min), Math.max(0, max)];
-      },
-    };
+      };
+    }
     return config;
   };
 

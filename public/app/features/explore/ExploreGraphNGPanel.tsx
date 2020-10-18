@@ -1,11 +1,97 @@
-import { AbsoluteTimeRange, dateTime, GrafanaTheme, LoadingState, PanelData, TimeZone } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
-import { Collapse, Icon, useTheme } from '@grafana/ui';
-import { GraphPanel } from 'app/plugins/panel/graph3/GraphPanel';
+import { AbsoluteTimeRange, DataFrame, dateTime, GrafanaTheme, TimeZone } from '@grafana/data';
+import {
+  Canvas,
+  Collapse,
+  ContextMenuPlugin,
+  GraphNG,
+  Icon,
+  LegendDisplayMode,
+  LegendPlugin,
+  TooltipPlugin,
+  useStyles,
+  ZoomPlugin,
+} from '@grafana/ui';
+import { ExemplarsPlugin } from 'app/plugins/panel/graph3/plugins/ExemplarsPlugin';
+import { VizLayout } from 'app/plugins/panel/graph3/VizLayout';
 import { css, cx } from 'emotion';
 import React, { useState } from 'react';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
+
+interface Props {
+  data: DataFrame[];
+  annotations?: DataFrame[];
+  isLoading: boolean;
+  width: number;
+  absoluteRange: AbsoluteTimeRange;
+  timeZone: TimeZone;
+  onUpdateTimeRange: (absoluteRange: AbsoluteTimeRange) => void;
+}
+
+export function ExploreGraphNGPanel({
+  width,
+  data,
+  timeZone,
+  absoluteRange,
+  onUpdateTimeRange,
+  isLoading,
+  annotations,
+}: Props) {
+  const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
+  const style = useStyles(getStyles);
+  const timeRange = {
+    from: dateTime(absoluteRange.from),
+    to: dateTime(absoluteRange.to),
+    raw: {
+      from: dateTime(absoluteRange.from),
+      to: dateTime(absoluteRange.to),
+    },
+  };
+
+  const seriesToShow = showAllTimeSeries ? data : data.slice(0, MAX_NUMBER_OF_TIME_SERIES);
+
+  return (
+    <>
+      {data.length > MAX_NUMBER_OF_TIME_SERIES && !showAllTimeSeries && (
+        <div className={cx([style.timeSeriesDisclaimer])}>
+          <Icon className={style.disclaimerIcon} name="exclamation-triangle" />
+          {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
+          <span
+            className={cx([style.showAllTimeSeries])}
+            onClick={() => setShowAllTimeSeries(true)}
+          >{`Show all ${data.length}`}</span>
+        </div>
+      )}
+
+      <Collapse label="Graph" loading={isLoading} isOpen>
+        <VizLayout width={width - 20} height={300}>
+          {({ builder, getLayout }) => {
+            const layout = getLayout();
+            // when all layout slots are ready we can calculate the canvas(actual viz) size
+            const canvasSize = layout.isReady
+              ? {
+                  width: width - 20 - (layout.left.width + layout.right.width),
+                  height: 300 - (layout.top.height + layout.bottom.height),
+                }
+              : { width: 0, height: 0 };
+            builder.addSlot('bottom', <LegendPlugin placement="bottom" displayMode={LegendDisplayMode.List} />);
+
+            return (
+              <GraphNG timeRange={timeRange} timeZone={timeZone} data={seriesToShow} {...canvasSize}>
+                {builder.addSlot('canvas', <Canvas />).render()}
+                <TooltipPlugin mode="single" timeZone={timeZone} />
+                <ZoomPlugin onZoom={onUpdateTimeRange} />
+                <ContextMenuPlugin />
+
+                {annotations && <ExemplarsPlugin exemplars={annotations} timeZone={timeZone} />}
+              </GraphNG>
+            );
+          }}
+        </VizLayout>
+      </Collapse>
+    </>
+  );
+}
 
 const getStyles = (theme: GrafanaTheme) => ({
   timeSeriesDisclaimer: css`
@@ -28,66 +114,3 @@ const getStyles = (theme: GrafanaTheme) => ({
     color: ${theme.colors.linkExternal};
   `,
 });
-
-interface Props {
-  data: PanelData;
-  width: number;
-  absoluteRange: AbsoluteTimeRange;
-  timeZone: TimeZone;
-  onUpdateTimeRange: (absoluteRange: AbsoluteTimeRange) => void;
-}
-
-export function ExploreGraphNGPanel({ width, data, timeZone, absoluteRange, onUpdateTimeRange }: Props) {
-  const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
-  const theme = useTheme();
-  const style = getStyles(theme);
-  const timeRange = {
-    from: dateTime(absoluteRange.from),
-    to: dateTime(absoluteRange.to),
-    raw: {
-      from: dateTime(absoluteRange.from),
-      to: dateTime(absoluteRange.to),
-    },
-  };
-
-  const seriesToShow = showAllTimeSeries ? data : { ...data, series: data.series.slice(0, MAX_NUMBER_OF_TIME_SERIES) };
-
-  return (
-    <>
-      {data.series.length > MAX_NUMBER_OF_TIME_SERIES && !showAllTimeSeries && (
-        <div className={cx([style.timeSeriesDisclaimer])}>
-          <Icon className={style.disclaimerIcon} name="exclamation-triangle" />
-          {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
-          <span
-            className={cx([style.showAllTimeSeries])}
-            onClick={() => setShowAllTimeSeries(true)}
-          >{`Show all ${data.series.length}`}</span>
-        </div>
-      )}
-
-      <Collapse label="Graph" loading={data.state === LoadingState.Loading} isOpen>
-        <GraphPanel
-          timeRange={timeRange}
-          height={300}
-          width={width - 20}
-          timeZone={timeZone}
-          data={seriesToShow}
-          fieldConfig={{ defaults: {}, overrides: [] }}
-          id={1}
-          onChangeTimeRange={onUpdateTimeRange}
-          transparent={true}
-          title=""
-          replaceVariables={getTemplateSrv().replace}
-          renderCounter={0}
-          options={{
-            legend: { isVisible: true, placement: 'bottom', asTable: false },
-            graph: { realTimeUpdates: false },
-            tooltipOptions: { mode: 'single' },
-          }}
-          onFieldConfigChange={config => console.log(config)}
-          onOptionsChange={options => console.log(options)}
-        />
-      </Collapse>
-    </>
-  );
-}

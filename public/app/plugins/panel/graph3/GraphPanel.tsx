@@ -9,6 +9,7 @@ import {
   ZoomPlugin,
 } from '@grafana/ui';
 import React from 'react';
+import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { Options } from './types';
 import { VizLayout } from './VizLayout';
@@ -56,7 +57,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
             <ContextMenuPlugin />
 
             {data.annotations && <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} />}
-            {/* {data.annotations && <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} />} */}
+            {data.annotations && <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} />}
             {/* TODO: */}
             {/*<AnnotationsEditorPlugin />*/}
           </GraphNG>

@@ -10,6 +10,7 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { AxisSide } from '@grafana/ui';
 import { MonoTypeOperatorFunction, of, OperatorFunction } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 import { dataFrameToLogsModel } from '../../../core/logs_model';
@@ -88,7 +89,7 @@ export const decorateWithGraphResult = (): MonoTypeOperatorFunction<ExplorePanel
         if (valueField) {
           valueField.config = {
             custom: {
-              axis: { label: '', side: 3, width: 60, grid: true },
+              axis: { label: '', side: AxisSide.Left, width: 60, grid: true },
               bars: { show: false },
               fill: { alpha: 0.1 },
               line: { show: true, width: 1 },

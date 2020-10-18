@@ -1,5 +1,4 @@
 import {
-  AnnotationEvent,
   ArrayDataFrame,
   ArrayVector,
   DataFrame,
@@ -17,9 +16,9 @@ import { FetchResponse } from '@grafana/runtime';
 import { Tag } from '@grafana/ui';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { ExemplarsDataFrameViewDTO } from 'app/plugins/panel/graph3/plugins/ExemplarsPlugin';
-import ReactDOMServer from 'react-dom/server';
+import { descending, deviation } from 'd3';
 import React from 'react';
-import { deviation, descending } from 'd3';
+import ReactDOMServer from 'react-dom/server';
 import {
   Exemplar,
   ExemplarTraceIDDestination,
@@ -123,11 +122,11 @@ export function transform(
           return acc;
         }, []);
         // Find the exemplars for the sampled values
-        sampledExemplars.push(...sampledBucketValues.map(value => exemplarsInBucket.find(ex => ex.y === value)));
+        sampledExemplars.push(...sampledBucketValues.map(value => exemplarsInBucket.find(ex => ex.y === value)!));
       }
     }
 
-    const dataFrame = new ArrayDataFrame(sampledExemplars as AnnotationEvent[]);
+    const dataFrame = new ArrayDataFrame(sampledExemplars);
     dataFrame.meta = { dataTopic: DataTopic.Annotations };
     return [dataFrame];
   }

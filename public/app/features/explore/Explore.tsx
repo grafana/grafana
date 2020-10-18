@@ -317,6 +317,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const styles = getStyles(theme);
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
+    const isLoading = queryResponse.state === LoadingState.Loading;
 
     // gets an error without a refID, so non-query-row-related error, like a connection error
     const queryErrors = queryResponse.error ? [queryResponse.error] : undefined;
@@ -368,11 +369,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                         <>
                           {showMetrics && graphResult && (
                             <ExploreGraphNGPanel
-                              data={{ ...queryResponse, series: graphResult }}
+                              data={graphResult}
                               width={width}
                               absoluteRange={absoluteRange}
                               timeZone={timeZone}
                               onUpdateTimeRange={this.onUpdateTimeRange}
+                              annotations={queryResponse.annotations}
+                              isLoading={isLoading}
                             />
                           )}
                           {showTable && (
