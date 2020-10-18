@@ -48,12 +48,12 @@ func WrapDatabaseDriverWithHooks(dbType string) string {
 	var d driver.Driver
 	if dbType == migrator.SQLITE {
 		d = &sqlite3.SQLiteDriver{}
-	}
-	if dbType == migrator.MYSQL {
+	} else if dbType == migrator.MYSQL {
 		d = &mysql.MySQLDriver{}
-	}
-	if dbType == migrator.POSTGRES {
+	} else if dbType == migrator.POSTGRES {
 		d = &pq.Driver{}
+	} else {
+		return dbType
 	}
 
 	driverWithHooks := dbType + "WithHooks"
@@ -76,7 +76,7 @@ func (h *databaseQueryWrapper) Before(ctx context.Context, query string, args ..
 
 // After hook will get the timestamp registered on the Before hook and print the elapsed time
 func (h *databaseQueryWrapper) After(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
-	begin := ctx.Value(databaseQueryWrapperKey{}).(time.Time) //type check
+	begin := ctx.Value(databaseQueryWrapperKey{}).(time.Time)
 	databaseQueryCounter.WithLabelValues("success").Inc()
 	databaseQueryHistogram.WithLabelValues("success").Observe(time.Since(begin).Seconds())
 	logger.Debug("query finished", "status", "success", "elapsed time", time.Since(begin), "sql", query)
@@ -91,7 +91,7 @@ func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query str
 		status = "success"
 	}
 
-	begin := ctx.Value(databaseQueryWrapperKey{}).(time.Time) //type check
+	begin := ctx.Value(databaseQueryWrapperKey{}).(time.Time)
 	databaseQueryCounter.WithLabelValues(status).Inc()
 	databaseQueryHistogram.WithLabelValues(status).Observe(time.Since(begin).Seconds())
 	logger.Debug("query finished", "status", status, "elapsed time", time.Since(begin), "sql", query, "error", err)

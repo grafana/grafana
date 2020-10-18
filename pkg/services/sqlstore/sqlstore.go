@@ -238,7 +238,7 @@ func (ss *SqlStore) getEngine() (*xorm.Engine, error) {
 		return nil, err
 	}
 
-	if ss.Cfg.FeatureToggles["database_metrics"] {
+	if ss.Cfg.IsDatabaseMetricsEnabled() {
 		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type)
 	}
 
