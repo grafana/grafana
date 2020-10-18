@@ -53,17 +53,27 @@ type Dialect interface {
 	IsDeadlock(err error) bool
 }
 
+type dialectFunc func(*xorm.Engine) Dialect
+
+var supportedDialects = map[string]dialectFunc{
+	MYSQL:    NewMysqlDialect,
+	SQLITE:   NewSqlite3Dialect,
+	POSTGRES: NewPostgresDialect,
+}
+
 func NewDialect(engine *xorm.Engine) Dialect {
 	name := engine.DriverName()
-	switch name {
-	case MYSQL:
-		return NewMysqlDialect(engine)
-	case SQLITE:
-		return NewSqlite3Dialect(engine)
-	case "sqlite3WithHooks":
-		return NewSqlite3Dialect(engine)
-	case POSTGRES:
-		return NewPostgresDialect(engine)
+	if fn, exist := supportedDialects[name]; exist {
+		return fn(engine)
+	}
+
+	// if the driver name ends with `WithHooks` its our
+	// internal fake database driver that enables pre and post
+	// hooks for database requests.
+	// `database_wrapper.go`
+	cleaned := strings.TrimRight(name, "WithHooks")
+	if fn, exist := supportedDialects[cleaned]; exist {
+		return fn(engine)
 	}
 
 	panic("Unsupported database type: " + name)

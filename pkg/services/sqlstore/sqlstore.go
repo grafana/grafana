@@ -2,7 +2,6 @@ package sqlstore
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net/url"
 	"os"
@@ -11,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gchaincl/sqlhooks"
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
@@ -28,8 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	_ "github.com/lib/pq"
-	"github.com/mattn/go-sqlite3"
-	"xorm.io/core"
 	"xorm.io/xorm"
 )
 
@@ -242,9 +238,9 @@ func (ss *SqlStore) getEngine() (*xorm.Engine, error) {
 		return nil, err
 	}
 
-	sql.Register("sqlite3WithHooks", sqlhooks.Wrap(&sqlite3.SQLiteDriver{}, &Hooks{}))
-	core.RegisterDriver("sqlite3WithHooks", &HookParser{dbType: "sqlite3"})
-	ss.dbCfg.Type = "sqlite3WithHooks"
+	if ss.Cfg.FeatureToggles["database_metrics"] {
+		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type)
+	}
 
 	sqlog.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
 	if ss.dbCfg.Type == migrator.SQLITE && strings.HasPrefix(connectionString, "file:") {
