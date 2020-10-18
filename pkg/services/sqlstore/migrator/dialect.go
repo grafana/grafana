@@ -56,23 +56,17 @@ type Dialect interface {
 type dialectFunc func(*xorm.Engine) Dialect
 
 var supportedDialects = map[string]dialectFunc{
-	MYSQL:    NewMysqlDialect,
-	SQLITE:   NewSqlite3Dialect,
-	POSTGRES: NewPostgresDialect,
+	MYSQL:                  NewMysqlDialect,
+	SQLITE:                 NewSqlite3Dialect,
+	POSTGRES:               NewPostgresDialect,
+	MYSQL + "WithHooks":    NewMysqlDialect,
+	SQLITE + "WithHooks":   NewSqlite3Dialect,
+	POSTGRES + "WithHooks": NewPostgresDialect,
 }
 
 func NewDialect(engine *xorm.Engine) Dialect {
 	name := engine.DriverName()
 	if fn, exist := supportedDialects[name]; exist {
-		return fn(engine)
-	}
-
-	// if the driver name ends with `WithHooks` its our
-	// internal fake database driver that enables pre and post
-	// hooks for database requests.
-	// `database_wrapper.go`
-	cleaned := strings.TrimRight(name, "WithHooks")
-	if fn, exist := supportedDialects[cleaned]; exist {
 		return fn(engine)
 	}
 

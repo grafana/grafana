@@ -56,7 +56,7 @@ func WrapDatabaseDriverWithHooks(dbType string) string {
 		d = &pq.Driver{}
 	}
 
-	var driverWithHooks string = dbType + "WithHooks"
+	driverWithHooks := dbType + "WithHooks"
 	sql.Register(driverWithHooks, sqlhooks.Wrap(d, &databaseQueryWrapper{}))
 	core.RegisterDriver(driverWithHooks, &databaseQueryWrapperParser{dbType: dbType})
 	return driverWithHooks
