@@ -2,7 +2,6 @@ import { AbsoluteTimeRange, DataFrame, dateTime, GrafanaTheme, TimeZone } from '
 import {
   Canvas,
   Collapse,
-  ContextMenuPlugin,
   GraphNG,
   Icon,
   LegendDisplayMode,
@@ -81,7 +80,6 @@ export function ExploreGraphNGPanel({
                 {builder.addSlot('canvas', <Canvas />).render()}
                 <TooltipPlugin mode="single" timeZone={timeZone} />
                 <ZoomPlugin onZoom={onUpdateTimeRange} />
-                <ContextMenuPlugin />
 
                 {annotations && <ExemplarsPlugin exemplars={annotations} timeZone={timeZone} />}
               </GraphNG>
