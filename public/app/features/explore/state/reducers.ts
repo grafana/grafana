@@ -512,7 +512,7 @@ export const processQueryResponse = (
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     update: makeInitialUpdateState(),
     showLogs: !!logsResult,
-    showMetrics: Boolean(graphResult?.length),
+    showMetrics: Boolean(graphResult),
     showTable: !!tableResult,
     showTrace: !!traceFrames.length,
   };
