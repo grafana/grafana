@@ -186,33 +186,15 @@ describe('decorateWithGraphLogsTraceAndTable', () => {
 
 describe('decorateWithGraphResult', () => {
   describe('when used without error', () => {
+    // [Zoltán]: Not sure if this test makes sense anymore
     it('then the graphResult should be correct', done => {
       const { timeSeries } = getTestContext();
-      const timeField = timeSeries.fields[0];
-      const valueField = timeSeries.fields[1];
       const panelData = createExplorePanelData({ graphFrames: [timeSeries] });
 
       observableTester().subscribeAndExpectOnNext({
         observable: of(panelData).pipe(decorateWithGraphResult()),
         expect: panelData => {
-          expect(panelData.graphResult![0]).toEqual({
-            label: 'A-series',
-            color: '#7EB26D',
-            data: [
-              [100, 4],
-              [200, 5],
-              [300, 6],
-            ],
-            info: [],
-            isVisible: true,
-            yAxis: {
-              index: 1,
-            },
-            seriesIndex: 0,
-            timeField,
-            valueField,
-            timeStep: 100,
-          });
+          expect(panelData.graphResult![0]).toEqual(timeSeries);
         },
         done,
       });

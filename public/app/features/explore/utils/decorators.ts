@@ -78,7 +78,7 @@ export const decorateWithGraphLogsTraceAndTable = (
 export const decorateWithGraphResult = (): MonoTypeOperatorFunction<ExplorePanelData> => inputStream =>
   inputStream.pipe(
     map(data => {
-      if (data.error) {
+      if (data.error || !data.graphFrames.length) {
         return { ...data, graphResult: null };
       }
 
