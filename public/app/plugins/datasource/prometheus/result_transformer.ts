@@ -12,15 +12,11 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
-import { FetchResponse } from '@grafana/runtime';
-import { Tag } from '@grafana/ui';
-import { getTemplateSrv } from 'app/features/templating/template_srv';
+import { FetchResponse, getTemplateSrv } from '@grafana/runtime';
 import { ExemplarsDataFrameViewDTO } from 'app/plugins/panel/graph3/plugins/ExemplarsPlugin';
 import { descending, deviation } from 'd3';
-import React from 'react';
-import ReactDOMServer from 'react-dom/server';
+import { getExemplarInfoComponent } from './components/ExemplarInfo';
 import {
-  Exemplar,
   ExemplarTraceIDDestination,
   isExemplarData,
   isMatrixData,
@@ -75,7 +71,11 @@ export function transform(
       const data = exemplarData.exemplars.map(exemplar => {
         return {
           time: exemplar.scrapeTimestamp,
-          text: getText(exemplar.exemplar, exemplarData.seriesLabels, transformOptions.exemplarTraceIDDestination),
+          component: getExemplarInfoComponent(
+            exemplar.exemplar,
+            exemplarData.seriesLabels,
+            transformOptions.exemplarTraceIDDestination
+          ),
           y: exemplar.exemplar.value,
         } as ExemplarsDataFrameViewDTO;
       });
@@ -166,46 +166,6 @@ export function transform(
 
   // Return matrix or vector result as DataFrame[]
   return dataFrame;
-}
-
-function getText(
-  exemplar: Exemplar,
-  seriesLabels: PromMetric,
-  exemplarTraceIDDestination?: ExemplarTraceIDDestination
-) {
-  let traceIDComponent: any;
-  if (exemplarTraceIDDestination) {
-    const traceID = exemplar.labels[exemplarTraceIDDestination.name];
-    const tag = ReactDOMServer.renderToString(<Tag name={traceID} colorIndex={6} />);
-    const href = exemplarTraceIDDestination.url.replace('${value}', traceID);
-    const anchorElement = `<a href="${href}" rel="noopener" target="_blank">${tag}</a>`;
-    traceIDComponent = anchorElement;
-  }
-
-  const template = `
-    <div>
-      <div style="padding:10px">Series labels</div>
-      <table class="exemplars-table">
-      ${Object.keys(seriesLabels)
-        .map(label => `<tr><td>${label}</td><td>${seriesLabels[label]}</td></tr>`)
-        .join('\n')}
-      </table>
-      <div style="padding:10px">Exemplar</div>
-      <table class="exemplars-table">
-        ${Object.keys(exemplar.labels)
-          .map(label => {
-            if (label === exemplarTraceIDDestination?.name) {
-              return `<tr><td>${label}</td><td>${traceIDComponent}</td></tr>`;
-            }
-            return `<tr><td>${label}</td><td>${exemplar.labels[label]}</td></tr>`;
-          })
-          .join('\n')}
-        <tr><td>timestamp</td><td>${exemplar.timestamp}</td></tr>
-        <tr><td>Value</td><td>${exemplar.value}</td></tr>
-      </table>
-    </div>`;
-
-  return template;
 }
 
 function getPreferredVisualisationType(isInstantQuery?: boolean, mixedQueries?: boolean) {

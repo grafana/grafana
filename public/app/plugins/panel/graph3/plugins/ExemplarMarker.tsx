@@ -5,11 +5,11 @@ import { css, cx } from 'emotion';
 
 interface ExemplarMarkerProps {
   time: string;
-  text: string;
+  component: React.ReactNode;
   tags: string[];
 }
 
-export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ time, text, tags }) => {
+export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ time, component, tags }) => {
   const styles = useStyles(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
   const markerRef = useRef<HTMLDivElement>(null);
@@ -51,7 +51,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ time, text, tags
             {time && <span className={styles.time}>{time}</span>}
           </div>
           <div className={styles.body}>
-            {text && <div dangerouslySetInnerHTML={{ __html: text }} />}
+            {component}
             <>
               <HorizontalGroup spacing="xs" wrap>
                 {tags?.map((t, i) => (
@@ -63,7 +63,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ time, text, tags
         </div>
       </TooltipContainer>
     );
-  }, [time, tags, text]);
+  }, [time, tags, component]);
 
   return (
     <>

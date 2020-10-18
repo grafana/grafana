@@ -12,7 +12,7 @@ interface ExemplarsPluginProps {
 export interface ExemplarsDataFrameViewDTO {
   time: number;
   y: number;
-  text: string;
+  component: React.ReactNode;
   tags: string[];
 }
 
@@ -45,7 +45,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
 
   const renderMarker = useCallback(
     (exemplar: ExemplarsDataFrameViewDTO) => {
-      return <ExemplarMarker time={timeFormatter(exemplar.time)} text={exemplar.text} tags={exemplar.tags} />;
+      return <ExemplarMarker time={timeFormatter(exemplar.time)} component={exemplar.component} tags={exemplar.tags} />;
     },
     [timeFormatter]
   );
