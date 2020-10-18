@@ -253,15 +253,14 @@ func formatDate(t time.Time, pattern string) string {
 
 	baseStart := strings.Index(pattern, "[")
 	for baseStart != -1 {
-		if baseStart == 0 {
-			isBaseFirst = true
-		}
+		var datePattern string
+
 		baseEnd := strings.Index(pattern, "]")
 		base = pattern[baseStart+1 : baseEnd]
 		bases = append(bases, base)
-
-		var datePattern string
-		if baseStart != 0 {
+		if baseStart == 0 {
+			isBaseFirst = true
+		} else {
 			datePattern = pattern[:baseStart]
 			formatted := t.Format(patternToLayout(datePattern))
 			formattedDatePatterns = append(formattedDatePatterns, formatted)
