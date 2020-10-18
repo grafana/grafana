@@ -46,13 +46,15 @@ func init() {
 // database queries.
 func WrapDatabaseDriverWithHooks(dbType string) string {
 	var d driver.Driver
-	if dbType == migrator.SQLITE {
-		d = &sqlite3.SQLiteDriver{}
-	} else if dbType == migrator.MYSQL {
-		d = &mysql.MySQLDriver{}
-	} else if dbType == migrator.POSTGRES {
-		d = &pq.Driver{}
-	} else {
+
+	drivers := map[string]driver.Driver{
+		migrator.SQLITE:   &sqlite3.SQLiteDriver{},
+		migrator.MYSQL:    &mysql.MySQLDriver{},
+		migrator.POSTGRES: &pq.Driver{},
+	}
+
+	d, exist := drivers[dbType]
+	if !exist {
 		return dbType
 	}
 
