@@ -15,7 +15,7 @@ export enum LiveChannelScope {
 }
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
 export interface LiveChannelConfig<TMessage = any> {
   /**
@@ -69,7 +69,7 @@ export enum LiveChannelEventType {
 }
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
 export interface LiveChannelStatusEvent {
   type: LiveChannelEventType.Status;
@@ -85,7 +85,7 @@ export interface LiveChannelStatusEvent {
   timestamp: number;
 
   /**
-   * flag if the channel is activly connected to the channel.
+   * flag if the channel is actively connected to the channel.
    * This may be false while the connections get established or if the network is lost
    * As long as the `shutdown` flag is not set, the connection will try to reestablish
    */
@@ -94,19 +94,19 @@ export interface LiveChannelStatusEvent {
   /**
    * The last error.
    *
-   * This will remain in the status until a new message is succesfully received from the channel
+   * This will remain in the status until a new message is successfully received from the channel
    */
   error?: any;
 }
 
 export interface LiveChannelJoinEvent {
   type: LiveChannelEventType.Join;
-  user: any; // @experimental -- will be filled in when we improve the UI
+  user: any; // @alpha -- experimental -- will be filled in when we improve the UI
 }
 
 export interface LiveChannelLeaveEvent {
   type: LiveChannelEventType.Leave;
-  user: any; // @experimental -- will be filled in when we improve the UI
+  user: any; // @alpha -- experimental -- will be filled in when we improve the UI
 }
 
 export interface LiveChannelMessageEvent<T> {
@@ -137,14 +137,14 @@ export function isLiveChannelMessageEvent<T>(evt: LiveChannelEvent<T>): evt is L
 }
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
 export interface LiveChannelPresenceStatus {
-  users: any; // @experimental -- will be filled in when we improve the UI
+  users: any; // @alpha -- experimental -- will be filled in when we improve the UI
 }
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
 export interface LiveChannelAddress {
   scope: LiveChannelScope;
@@ -153,7 +153,14 @@ export interface LiveChannelAddress {
 }
 
 /**
- * @experimental
+ * Check if the address has a scope, namespace, and path
+ */
+export function isValidLiveChannelAddress(addr?: LiveChannelAddress): addr is LiveChannelAddress {
+  return !!(addr?.path && addr.namespace && addr.scope);
+}
+
+/**
+ * @alpha -- experimental
  */
 export interface LiveChannel<TMessage = any, TPublish = any> {
   /** The fully qualified channel id: ${scope}/${namespace}/${path} */
@@ -194,7 +201,7 @@ export interface LiveChannel<TMessage = any, TPublish = any> {
 }
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
 export interface LiveChannelSupport {
   /**

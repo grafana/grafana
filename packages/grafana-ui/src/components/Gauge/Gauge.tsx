@@ -2,15 +2,17 @@ import React, { PureComponent } from 'react';
 import $ from 'jquery';
 import {
   DisplayValue,
-  getColorFromHexRgbOrName,
   formattedValueToString,
   FieldConfig,
   ThresholdsMode,
   getActiveThreshold,
   Threshold,
+  getColorForTheme,
+  FieldColorModeId,
+  FALLBACK_COLOR,
 } from '@grafana/data';
 import { Themeable } from '../../types';
-import { selectThemeVariant } from '../../themes';
+import { calculateFontSize } from '../../utils/measureText';
 
 export interface Props extends Themeable {
   height: number;
@@ -53,12 +55,18 @@ export class Gauge extends PureComponent<Props> {
   }
 
   getFormattedThresholds(decimals: number): Threshold[] {
-    const { field, theme } = this.props;
+    const { field, theme, value } = this.props;
+
+    if (field.color?.mode !== FieldColorModeId.Thresholds) {
+      return [{ value: field.min ?? 0, color: value.color ?? FALLBACK_COLOR }];
+    }
+
     const thresholds = field.thresholds ?? Gauge.defaultProps.field?.thresholds!;
     const isPercent = thresholds.mode === ThresholdsMode.Percentage;
     const steps = thresholds.steps;
     let min = field.min!;
     let max = field.max!;
+
     if (isPercent) {
       min = 0;
       max = 100;
@@ -67,7 +75,7 @@ export class Gauge extends PureComponent<Props> {
     const first = getActiveThreshold(min, steps);
     const last = getActiveThreshold(max, steps);
     const formatted: Threshold[] = [];
-    formatted.push({ value: +min.toFixed(decimals), color: getColorFromHexRgbOrName(first.color, theme.type) });
+    formatted.push({ value: +min.toFixed(decimals), color: getColorForTheme(first.color, theme) });
     let skip = true;
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
@@ -78,12 +86,12 @@ export class Gauge extends PureComponent<Props> {
         continue;
       }
       const prev = steps[i - 1];
-      formatted.push({ value: step.value, color: getColorFromHexRgbOrName(prev!.color, theme.type) });
+      formatted.push({ value: step.value, color: getColorForTheme(prev!.color, theme) });
       if (step === last) {
         break;
       }
     }
-    formatted.push({ value: +max.toFixed(decimals), color: getColorFromHexRgbOrName(last.color, theme.type) });
+    formatted.push({ value: +max.toFixed(decimals), color: getColorForTheme(last.color, theme) });
     return formatted;
   }
 
@@ -99,21 +107,12 @@ export class Gauge extends PureComponent<Props> {
 
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
     const dimension = Math.min(width, autoProps.gaugeHeight);
-
-    const backgroundColor = selectThemeVariant(
-      {
-        dark: theme.palette.dark8,
-        light: theme.palette.gray6,
-      },
-      theme.type
-    );
-
+    const backgroundColor = theme.colors.bg2;
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 5.5, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
     const text = formattedValueToString(value);
-    const fontSize = Math.min(dimension / 4, 100) * (text !== null ? this.getFontScale(text.length) : 1);
-
+    const fontSize = calculateFontSize(text, dimension - gaugeWidth * 3, dimension, 1, 48);
     const thresholdLabelFontSize = fontSize / 2.5;
 
     let min = field.min!;

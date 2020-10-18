@@ -687,4 +687,35 @@ describe('templateSrv', () => {
       expect(target).toBe('2020-07');
     });
   });
+
+  describe('handle objects gracefully', () => {
+    beforeEach(() => {
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value: { test: 'A' } } }]);
+    });
+
+    it('should not pass object to custom function', () => {
+      let passedValue: any = null;
+      _templateSrv.replace('this.${test}.filters', {}, (value: any) => {
+        passedValue = value;
+      });
+
+      expect(passedValue).toBe('[object Object]');
+    });
+  });
+
+  describe('handle objects gracefully and call toString if defined', () => {
+    beforeEach(() => {
+      const value = { test: 'A', toString: () => 'hello' };
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value } }]);
+    });
+
+    it('should not pass object to custom function', () => {
+      let passedValue: any = null;
+      _templateSrv.replace('this.${test}.filters', {}, (value: any) => {
+        passedValue = value;
+      });
+
+      expect(passedValue).toBe('hello');
+    });
+  });
 });

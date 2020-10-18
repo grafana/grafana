@@ -70,10 +70,10 @@ to show.
 
 The annotation query options are different for each data source.
 
-- [Graphite annotation queries]({{< relref "../features/datasources/graphite.md#annotations" >}})
-- [Elasticsearch annotation queries]({{< relref "../features/datasources/elasticsearch.md#annotations" >}})
-- [InfluxDB annotation queries]({{< relref "../features/datasources/influxdb.md#annotations" >}})
-- [Prometheus annotation queries]({{< relref "../features/datasources/prometheus.md#annotations" >}})
-- [MySQL annotation queries]({{< relref "../features/datasources/mysql.md#annotations" >}})
-- [Postgres annotation queries]({{< relref "../features/datasources/postgres.md#annotations" >}})
-- [Loki annotation queries]({{< relref "../features/datasources/loki.md#annotations" >}})
+- [Graphite annotation queries]({{< relref "../datasources/graphite.md#annotations" >}})
+- [Elasticsearch annotation queries]({{< relref "../datasources/elasticsearch.md#annotations" >}})
+- [InfluxDB annotation queries]({{< relref "../datasources/influxdb.md#annotations" >}})
+- [Prometheus annotation queries]({{< relref "../datasources/prometheus.md#annotations" >}})
+- [MySQL annotation queries]({{< relref "../datasources/mysql.md#annotations" >}})
+- [Postgres annotation queries]({{< relref "../datasources/postgres.md#annotations" >}})
+- [Loki annotation queries]({{< relref "../datasources/loki.md#annotations" >}})

@@ -47,7 +47,7 @@ Once you have a strategy or design guidelines, write them down to help maintain 
   - Consider including your name or initials in the dashboard name or as a tag so that people know who owns the dashboard.
   - Remove temporary experiment dashboards when you are done with them.
 - If you create many related dashboards, think about how to cross-reference them for easy navigation. Refer to [Best practices for managing dashboards]({{< relref "best-practices-for-managing-dashboards.md" >}}) for more information.
-- Grafana retrieves data from a data source. A basic understanding of [data sources]({{< relref "../features/datasources/data-sources.md" >}}) in general and your specific is important.
+- Grafana retrieves data from a data source. A basic understanding of [data sources]({{< relref "../datasources/_index.md" >}}) in general and your specific is important.
 - Avoid unnecessary dashboard refreshing to reduce the load on the network or backend. For example, if your data changes every hour, then you don't need to set the dashboard refresh rate to 30 seconds.
 - Use the left and right Y-axes when displaying time series with different units or ranges. 
 -  Add documentation to dashboards and panels.

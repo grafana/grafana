@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { cx } from 'emotion';
 import _ from 'lodash';
 import { SegmentSelect } from './SegmentSelect';
 import { SelectableValue } from '@grafana/data';
 import { useExpandableLabel, SegmentProps } from '.';
+import { useAsyncFn } from 'react-use';
+import { AsyncState } from 'react-use/lib/useAsync';
 
 export interface SegmentAsyncProps<T> extends SegmentProps<T> {
   value?: T | SelectableValue<T>;
@@ -20,20 +22,14 @@ export function SegmentAsync<T>({
   allowCustomValue,
   placeholder,
 }: React.PropsWithChildren<SegmentAsyncProps<T>>) {
-  const [selectPlaceholder, setSelectPlaceholder] = useState<string>('');
-  const [loadedOptions, setLoadedOptions] = useState<Array<SelectableValue<T>>>([]);
+  const [state, fetchOptions] = useAsyncFn(loadOptions, [loadOptions]);
   const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
 
   if (!expanded) {
     const label = _.isObject(value) ? value.label : value;
     return (
       <Label
-        onClick={async () => {
-          setSelectPlaceholder('Loading options...');
-          const opts = await loadOptions();
-          setLoadedOptions(opts);
-          setSelectPlaceholder(opts.length ? '' : 'No options found');
-        }}
+        onClick={fetchOptions}
         Component={
           Component || (
             <a className={cx('gf-form-label', 'query-part', !value && placeholder && 'query-placeholder', className)}>
@@ -48,21 +44,33 @@ export function SegmentAsync<T>({
   return (
     <SegmentSelect
       value={value && !_.isObject(value) ? { value } : value}
-      options={loadedOptions}
+      options={state.value ?? []}
       width={width}
-      noOptionsMessage={selectPlaceholder}
+      noOptionsMessage={mapStateToNoOptionsMessage(state)}
       allowCustomValue={allowCustomValue}
       onClickOutside={() => {
-        setSelectPlaceholder('');
-        setLoadedOptions([]);
         setExpanded(false);
       }}
       onChange={item => {
-        setSelectPlaceholder('');
-        setLoadedOptions([]);
         setExpanded(false);
         onChange(item);
       }}
     />
   );
+}
+
+function mapStateToNoOptionsMessage<T>(state: AsyncState<Array<SelectableValue<T>>>): string {
+  if (state.loading) {
+    return 'Loading options...';
+  }
+
+  if (state.error) {
+    return 'Failed to load options';
+  }
+
+  if (!Array.isArray(state.value) || state.value.length === 0) {
+    return 'No options found';
+  }
+
+  return '';
 }

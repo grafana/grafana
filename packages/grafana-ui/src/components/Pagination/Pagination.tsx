@@ -4,8 +4,11 @@ import { stylesFactory } from '../../themes';
 import { Button, ButtonVariant } from '../Button';
 
 interface Props {
+  /** The current page index being shown.  */
   currentPage: number;
+  /** Number of total pages.  */
   numberOfPages: number;
+  /** Callback function for fetching the selected page  */
   onNavigate: (toPage: number) => void;
 }
 

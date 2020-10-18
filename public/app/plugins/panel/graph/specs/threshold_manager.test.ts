@@ -1,4 +1,5 @@
 import angular from 'angular';
+import { config } from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { ThresholdManager } from '../threshold_manager';
 
@@ -31,6 +32,7 @@ describe('ThresholdManager', () => {
 
   describe('When creating plot markings', () => {
     plotOptionsScenario('for simple gt threshold', (ctx: any) => {
+      console.log('config', config.theme);
       ctx.setup([{ op: 'gt', value: 300, fill: true, line: true, colorMode: 'critical' }]);
 
       it('should add fill for threshold with fill: true', () => {
