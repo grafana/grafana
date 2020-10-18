@@ -1,5 +1,5 @@
 import React from 'react';
-import { GrafanaTheme, getColorFromHexRgbOrName } from '@grafana/data';
+import { getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { stylesFactory, useTheme } from '../../themes';
 import { css } from 'emotion';
@@ -25,7 +25,7 @@ export const ColorValueEditor: React.FC<Props> = ({ value, onChange }) => {
                 ref={ref}
                 onClick={showColorPicker}
                 onMouseLeave={hideColorPicker}
-                color={value ? getColorFromHexRgbOrName(value, theme.type) : theme.colors.formInputBorder}
+                color={value ? getColorForTheme(value, theme) : theme.colors.formInputBorder}
               />
             </div>
             {/* <div className={styles.colorText} onClick={showColorPicker}>

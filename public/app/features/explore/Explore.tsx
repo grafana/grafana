@@ -37,6 +37,7 @@ import {
   scanStart,
   setQueries,
   updateTimeRange,
+  splitOpen,
 } from './state/actions';
 
 import { ExploreId, ExploreItemState, ExploreUpdateState } from 'app/types/explore';
@@ -120,6 +121,7 @@ export interface ExploreProps {
   showTable: boolean;
   showLogs: boolean;
   showTrace: boolean;
+  splitOpen: typeof splitOpen;
 }
 
 enum ExploreDrawer {
@@ -308,6 +310,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       showTable,
       showLogs,
       showTrace,
+      splitOpen,
     } = this.props;
     const { openDrawer } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
@@ -398,7 +401,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                             // We expect only one trace at the moment to be in the dataframe
                             // If there is not data (like 404) we show a separate error so no need to show anything here
                             queryResponse.series[0] && (
-                              <TraceView trace={queryResponse.series[0].fields[0].values.get(0) as any} />
+                              <TraceView
+                                trace={queryResponse.series[0].fields[0].values.get(0) as any}
+                                splitOpenFn={splitOpen}
+                              />
                             )}
                         </>
                       )}
@@ -498,6 +504,7 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   setQueries,
   updateTimeRange,
   addQueryRow,
+  splitOpen,
 };
 
 export default compose(

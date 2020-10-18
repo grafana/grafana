@@ -51,6 +51,7 @@ export const basic = () => {
 
   return (
     <BigValue
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       theme={useTheme()}
       width={width}
       height={height}

@@ -2,11 +2,13 @@ import { ReducerID } from '../fieldReducer';
 import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { reduceTransformer } from './reduce';
+import { reduceFields, reduceTransformer } from './reduce';
 import { transformDataFrame } from '../transformDataFrame';
 import { Field, FieldType } from '../../types';
 import { ArrayVector } from '../../vector';
 import { observableTester } from '../../utils/tests/observableTester';
+import { notTimeFieldMatcher } from '../matchers/predicates';
+import { DataFrameView } from '../../dataframe';
 
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
@@ -253,5 +255,32 @@ describe('Reducer Transformer', () => {
       },
       done,
     });
+  });
+
+  it('reduces fields with single calculator', () => {
+    const frames = reduceFields(
+      [seriesAWithSingleField, seriesAWithMultipleFields], // data
+      notTimeFieldMatcher, // skip time fields
+      [ReducerID.last] // only one
+    );
+
+    // Convert each frame to a structure with the same fields
+    expect(frames.length).toEqual(2);
+    expect(frames[0].length).toEqual(1);
+    expect(frames[1].length).toEqual(1);
+
+    const view0 = new DataFrameView<any>(frames[0]);
+    const view1 = new DataFrameView<any>(frames[1]);
+    expect({ ...view0.get(0) }).toMatchInlineSnapshot(`
+      Object {
+        "temperature": 6,
+      }
+    `);
+    expect({ ...view1.get(0) }).toMatchInlineSnapshot(`
+      Object {
+        "humidity": 10000.6,
+        "temperature": 6,
+      }
+    `);
   });
 });
