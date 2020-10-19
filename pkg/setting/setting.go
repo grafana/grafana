@@ -324,6 +324,10 @@ func (c Cfg) IsLiveEnabled() bool {
 	return c.FeatureToggles["live"]
 }
 
+func (c Cfg) IsDatabaseMetricsEnabled() bool {
+	return c.FeatureToggles["database_metrics"]
+}
+
 type CommandLineArgs struct {
 	Config   string
 	HomePath string
