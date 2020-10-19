@@ -1077,7 +1077,7 @@ If both are set, then basic authentication is required to access the metrics end
 
 ## [metrics.environment_info]
 
-Adds dimensions to the `grafana_environment_info` metric, which can exposes more information about the grafana instance.
+Adds dimensions to the `grafana_environment_info` metric, which can expose more information about the Grafana instance.
 
 ```
 ; exampleLabel1 = exampleValue1

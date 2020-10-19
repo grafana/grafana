@@ -513,7 +513,7 @@ func SetBuildInformation(version, revision, branch string) {
 	grafanaBuildVersion.WithLabelValues(version, revision, branch, runtime.Version(), edition).Set(1)
 }
 
-// SetEnvironmentInformation exposes environment values provided by the operators as an `_info` metrics.
+// SetEnvironmentInformation exposes environment values provided by the operators as an `_info` metric.
 // If there are no environment metrics labels configured, this metric will not be exposed.
 func SetEnvironmentInformation(labels map[string]string) error {
 	if len(labels) == 0 {
@@ -522,7 +522,7 @@ func SetEnvironmentInformation(labels map[string]string) error {
 
 	grafanaEnvironmentInfo := prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:        "environment_info",
-		Help:        "A metric with a constant '1' value labeled by environment information about rhe running instance.",
+		Help:        "A metric with a constant '1' value labeled by environment information about the running instance.",
 		Namespace:   ExporterName,
 		ConstLabels: labels,
 	})
