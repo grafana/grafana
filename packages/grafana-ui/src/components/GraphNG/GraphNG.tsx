@@ -12,7 +12,7 @@ import { timeFormatToTemplate } from '../uPlot/utils';
 import { alignAndSortDataFramesByFieldName } from './utils';
 import { Area, Axis, Line, Point, Scale, SeriesGeometry } from '../uPlot/geometries';
 import { UPlotChart } from '../uPlot/Plot';
-import { GraphCustomFieldConfig, PlotProps } from '../uPlot/types';
+import { AxisSide, GraphCustomFieldConfig, PlotProps } from '../uPlot/types';
 import { useTheme } from '../../themes';
 
 const timeStampsConfig = [
@@ -103,7 +103,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, ...plotProps }
     scales.push(<Scale key="scale-x" scaleKey="x" time />);
   }
 
-  axes.push(<Axis key="axis-scale--x" scaleKey="x" values={timeStampsConfig} side={2} />);
+  axes.push(<Axis key="axis-scale--x" scaleKey="x" values={timeStampsConfig} side={AxisSide.Bottom} />);
 
   let seriesIdx = 0;
   const uniqueScales: Record<string, boolean> = {};
@@ -130,7 +130,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, ...plotProps }
           scaleKey={scale}
           label={config.custom?.axis?.label}
           size={config.custom?.axis?.width}
-          side={config.custom?.axis?.side || 3}
+          side={config.custom?.axis?.side || AxisSide.Left}
           grid={config.custom?.axis?.grid}
           formatValue={v => formattedValueToString(fmt(v))}
         />

@@ -22,7 +22,7 @@ export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { PieChart, PieChartType } from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
-export { RefreshPicker } from './RefreshPicker/RefreshPicker';
+export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
 export { TimeRangePicker } from './TimePicker/TimeRangePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { TimeZonePicker } from './TimePicker/TimeZonePicker';
@@ -201,7 +201,7 @@ const LegacyForms = {
 export { LegacyForms, LegacyInputStatus };
 
 // WIP, need renames and exports cleanup
-export { GraphCustomFieldConfig } from './uPlot/types';
+export { GraphCustomFieldConfig, AxisSide } from './uPlot/types';
 export { UPlotChart } from './uPlot/Plot';
 export * from './uPlot/geometries';
 export { usePlotConfigContext } from './uPlot/context';

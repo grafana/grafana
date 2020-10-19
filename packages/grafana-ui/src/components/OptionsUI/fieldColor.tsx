@@ -23,9 +23,11 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
   const styles = useStyles(getStyles);
 
   const options = fieldColorModeRegistry.list().map(mode => {
+    let suffix = mode.isByValue ? ' (by value)' : '';
+
     return {
       value: mode.id,
-      label: mode.name,
+      label: `${mode.name}${suffix}`,
       description: mode.description,
       isContinuous: mode.isContinuous,
       isByValue: mode.isByValue,

@@ -1,7 +1,8 @@
-import { ThresholdsMode, Field, FieldType, GrafanaThemeType, GrafanaTheme } from '../types';
+import { ThresholdsMode, Field, FieldType } from '../types';
 import { sortThresholds } from './thresholds';
 import { ArrayVector } from '../vector/ArrayVector';
 import { getScaleCalculator } from './scale';
+import { getTestTheme } from '../utils/testdata/testTheme';
 
 describe('getScaleCalculator', () => {
   it('should return percent, threshold and color', () => {
@@ -18,7 +19,7 @@ describe('getScaleCalculator', () => {
       values: new ArrayVector([0, 50, 100]),
     };
 
-    const calc = getScaleCalculator(field, { type: GrafanaThemeType.Dark } as GrafanaTheme);
+    const calc = getScaleCalculator(field, getTestTheme());
     expect(calc(70)).toEqual({
       percent: 0.7,
       threshold: thresholds[1],
