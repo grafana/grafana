@@ -85,8 +85,7 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 		}
 	}
 
-	err = u.uploadFile(ctx, client, imageDiskPath, key)
-	if err != nil {
+	if err := u.uploadFile(ctx, client, imageDiskPath, key); err != nil {
 		return "", err
 	}
 
