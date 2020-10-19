@@ -4,6 +4,8 @@ import flattenDeep from 'lodash/flattenDeep';
 import chunk from 'lodash/chunk';
 import zip from 'lodash/zip';
 import tinycolor from 'tinycolor2';
+import lightTheme from '../themes/light';
+import darkTheme from '../themes/dark';
 
 export const PALETTE_ROWS = 4;
 export const PALETTE_COLUMNS = 14;
@@ -91,6 +93,11 @@ function hexToHsl(color: string) {
 
 function hslToHex(color: any) {
   return tinycolor(color).toHexString();
+}
+
+export function getTextColorForBackground(color: string) {
+  const b = tinycolor(color).getBrightness();
+  return b > 150 ? lightTheme.colors.textStrong : darkTheme.colors.textStrong;
 }
 
 export let sortedColors = sortColorsByHue(colors);
