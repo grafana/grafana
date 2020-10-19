@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	httpRequestsInFlight prometheus.Gauge
+	httpRequestsInFlight         prometheus.Gauge
+	httpRequestDurationHistogram *prometheus.HistogramVec
 )
 
 func init() {
@@ -23,7 +24,17 @@ func init() {
 		},
 	)
 
-	prometheus.MustRegister(httpRequestsInFlight)
+	httpRequestDurationHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "grafana",
+			Name:      "http_request_duration_seconds",
+			Help:      "Histogram of latencies for HTTP requests.",
+			Buckets:   []float64{.1, .2, .4, 1, 3, 8, 20, 60, 120},
+		},
+		[]string{"handler"},
+	)
+
+	prometheus.MustRegister(httpRequestsInFlight, httpRequestDurationHistogram)
 }
 
 // RequestMetrics is a middleware handler that instruments the request
@@ -40,8 +51,10 @@ func RequestMetrics(handler string) macaron.Handler {
 		code := sanitizeCode(status)
 		method := sanitizeMethod(req.Method)
 		metrics.MHttpRequestTotal.WithLabelValues(handler, code, method).Inc()
+
 		duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
 		metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))
+		httpRequestDurationHistogram.WithLabelValues(handler).Observe(float64(duration))
 
 		switch {
 		case strings.HasPrefix(req.RequestURI, "/api/datasources/proxy"):
