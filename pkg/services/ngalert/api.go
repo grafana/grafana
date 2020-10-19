@@ -18,7 +18,7 @@ import (
 
 func (ng *AlertNG) registerAPIEndpoints() {
 	ng.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
-		alertDefinitions.Get("/eval/:dashboardID/:panelID/:refID", middleware.ReqSignedIn, api.Wrap(ng.AlertDefinitionEval))
+		alertDefinitions.Get("/eval/:alertDefinitionId", validateOrgAlertDefinition, api.Wrap(ng.AlertDefinitionEval))
 		alertDefinitions.Post("/eval", middleware.ReqSignedIn, binding.Bind(EvalAlertConditionCommand{}), api.Wrap(ng.ConditionEval))
 		alertDefinitions.Get("/:alertDefinitionId", validateOrgAlertDefinition, api.Wrap(ng.GetAlertDefinitionEndpoint))
 		alertDefinitions.Delete("/:alertDefinitionId", validateOrgAlertDefinition, api.Wrap(ng.DeleteAlertDefinitionEndpoint))
@@ -68,9 +68,7 @@ func (ng *AlertNG) ConditionEval(c *models.ReqContext, dto EvalAlertConditionCom
 
 // GET /api/alert-definitions/eval/:dashboardId/:panelId/:refId"
 func (ng *AlertNG) AlertDefinitionEval(c *models.ReqContext) api.Response {
-	dashboardID := c.ParamsInt64(":dashboardID")
-	panelID := c.ParamsInt64(":panelID")
-	conditionRefID := c.Params(":refID")
+	alertDefinitionID := c.ParamsInt64(":alertDefinitionId")
 
 	fromStr := c.Query("from")
 	if fromStr == "" {
@@ -82,7 +80,7 @@ func (ng *AlertNG) AlertDefinitionEval(c *models.ReqContext) api.Response {
 		toStr = "now"
 	}
 
-	conditions, err := ng.LoadAlertCondition(dashboardID, panelID, conditionRefID, c.SignedInUser, c.SkipCache)
+	conditions, err := ng.LoadAlertCondition(alertDefinitionID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		return api.Error(400, "Failed to load conditions", err)
 	}

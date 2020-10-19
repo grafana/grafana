@@ -1,10 +1,10 @@
 package ngalert
 
 import (
-	"encoding/json"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 // AlertNG is the service for evaluating the condition of an alert definition.
@@ -75,90 +74,62 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 }
 
 // LoadAlertCondition returns a Condition object for the given alertDefintionId.
-func (ng *AlertNG) LoadAlertCondition(dashboardID int64, panelID int64, conditionRefID string, signedInUser *models.SignedInUser, skipCache bool) (*eval.Condition, error) {
+func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64, signedInUser *models.SignedInUser, skipCache bool) (*eval.Condition, error) {
 	// get queries from the dashboard (because GEL expressions cannot be stored in alerts so far)
-	getDashboardQuery := models.GetDashboardQuery{Id: dashboardID}
-	if err := bus.Dispatch(&getDashboardQuery); err != nil {
+	getAlertDefinitionByIDQuery := GetAlertDefinitionByIDQuery{ID: alertDefinitionID}
+	if err := bus.Dispatch(&getAlertDefinitionByIDQuery); err != nil {
 		return nil, err
 	}
+	alertDefinition := getAlertDefinitionByIDQuery.Result
 
-	blob, err := getDashboardQuery.Result.Data.MarshalJSON()
-	if err != nil {
-		return nil, errors.New("Failed to marshal dashboard JSON")
-	}
-	var dash eval.MinimalDashboard
-	err = json.Unmarshal(blob, &dash)
-	if err != nil {
-		return nil, errors.New("Failed to unmarshal dashboard JSON")
-	}
+	condition := eval.Condition{RefID: alertDefinition.Condition}
+	var ds *models.DataSource
+	for _, query := range alertDefinition.Data {
+		dsName := query.Model.Get("datasource").MustString("")
+		if dsName != "__expr__" {
+			datasourceID, err := query.Model.Get("datasourceId").Int64()
 
-	condition := eval.Condition{}
-	for _, p := range dash.Panels {
-		if p.ID == panelID {
-			panelDatasource := p.Datasource
-			var ds *models.DataSource
-			for i, query := range p.Targets {
-				refID := query.Get("refId").MustString("A")
-				queryDatasource := query.Get("datasource").MustString()
-
-				if i == 0 && queryDatasource != "__expr__" {
-					dsName := panelDatasource
-					if queryDatasource != "" {
-						dsName = queryDatasource
-					}
-
-					getDataSourceByNameQuery := models.GetDataSourceByNameQuery{Name: dsName, OrgId: getDashboardQuery.Result.OrgId}
-					if err := bus.Dispatch(&getDataSourceByNameQuery); err != nil {
-						return nil, err
-					}
-
-					ds, err = ng.DatasourceCache.GetDatasource(getDataSourceByNameQuery.Result.Id, signedInUser, skipCache)
-					if err != nil {
-						return nil, err
-					}
-				}
-
-				if ds == nil {
-					return nil, errors.New("No datasource reference found")
-				}
-
-				if queryDatasource == "" {
-					query.Set("datasource", ds.Name)
-				}
-
-				if query.Get("datasourceId").MustString() == "" {
-					query.Set("datasourceId", ds.Id)
-				}
-
-				if query.Get("orgId").MustString() == "" { // GEL requires orgID inside the query JSON
-					// need to decide which organization id is expected there
-					// in grafana queries is passed the signed in user organization id:
-					// https://github.com/grafana/grafana/blob/34a355fe542b511ed02976523aa6716aeb00bde6/packages/grafana-runtime/src/utils/DataSourceWithBackend.ts#L60
-					// but I think that it should be datasource org id instead
-					query.Set("orgId", 0)
-				}
-
-				if query.Get("maxDataPoints").MustString() == "" { // GEL requires maxDataPoints inside the query JSON
-					query.Set("maxDataPoints", 100)
-				}
-
-				// intervalMS is calculated by the frontend
-				// should we do something similar?
-				if query.Get("intervalMs").MustString() == "" { // GEL requires intervalMs inside the query JSON
-					query.Set("intervalMs", 1000)
-				}
-
-				condition.QueriesAndExpressions = append(condition.QueriesAndExpressions, tsdb.Query{
-					RefId:         refID,
-					MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
-					IntervalMs:    query.Get("intervalMs").MustInt64(1000),
-					QueryType:     query.Get("queryType").MustString(""),
-					Model:         query,
-					DataSource:    ds,
-				})
+			ds, err = ng.DatasourceCache.GetDatasource(datasourceID, signedInUser, skipCache)
+			if err != nil {
+				return nil, err
 			}
 		}
+
+		if ds == nil {
+			return nil, errors.New("No datasource reference found")
+		}
+
+		if dsName == "" {
+			query.Model.Set("datasource", ds.Name)
+		}
+
+		if query.Model.Get("datasourceId").MustString() == "" {
+			query.Model.Set("datasourceId", ds.Id)
+		}
+
+		if query.Model.Get("orgId").MustString() == "" { // GEL requires orgID inside the query JSON
+			query.Model.Set("orgId", alertDefinition.OrgId)
+		}
+
+		if query.Model.Get("maxDataPoints").MustString() == "" { // GEL requires maxDataPoints inside the query JSON
+			query.Model.Set("maxDataPoints", 100)
+		}
+
+		// intervalMS is calculated by the frontend
+		// should we do something similar?
+		if query.Model.Get("intervalMs").MustString() == "" { // GEL requires intervalMs inside the query JSON
+			query.Model.Set("intervalMs", 1000)
+		}
+
+		condition.QueriesAndExpressions = append(condition.QueriesAndExpressions, tsdb.Query{
+			RefId:         query.Model.Get("refId").MustString(""),
+			MaxDataPoints: query.Model.Get("maxDataPoints").MustInt64(100),
+			IntervalMs:    query.Model.Get("intervalMs").MustInt64(1000),
+			QueryType:     query.Model.Get("queryType").MustString(""),
+			Model:         query.Model,
+			DataSource:    ds,
+		})
 	}
-	condition.RefID = conditionRefID
+
 	return &condition, nil
 }
