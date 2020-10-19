@@ -80,6 +80,8 @@ Customize user login using `login_attribute_path` configuration option. Order of
 
 You can customize the attribute name used to extract the ID token from the returned OAuth token with the `id_token_attribute_name` option.
 
+Customize user's displayed name using `name_attribute_path` configuration option. Order of operations is the same as for the `login_attribute_path` option.
+
 ## Set up OAuth2 with Auth0
 
 1. Create a new Client in Auth0
