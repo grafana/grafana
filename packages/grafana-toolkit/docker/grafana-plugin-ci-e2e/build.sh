@@ -18,5 +18,7 @@ fi
 
 docker build -t ${DOCKER_IMAGE_NAME} .
 docker push $DOCKER_IMAGE_NAME
+docker tag ${DOCKER_IMAGE_NAME} ${DOCKER_IMAGE_BASE_NAME}:latest
+docker push ${DOCKER_IMAGE_BASE_NAME}:latest
 
 [ -n "$INCLUDE_TOOLKIT" ] && /bin/rm -rfv install/grafana-toolkit

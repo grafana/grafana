@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { AxisProps } from './types';
 import { usePlotConfigContext } from '../context';
 import { useTheme } from '../../../themes';
@@ -32,6 +32,7 @@ export const useAxisConfig = (getConfig: () => any) => {
 
 export const Axis: React.FC<AxisProps> = props => {
   const theme = useTheme();
+  const gridColor = useMemo(() => (theme.isDark ? theme.palette.gray1 : theme.palette.gray4), [theme]);
   const {
     scaleKey,
     label,
@@ -54,7 +55,12 @@ export const Axis: React.FC<AxisProps> = props => {
       side,
       grid: {
         show: grid,
-        stroke: theme.palette.gray4,
+        stroke: gridColor,
+        width: 1 / devicePixelRatio,
+      },
+      ticks: {
+        show: true,
+        stroke: gridColor,
         width: 1 / devicePixelRatio,
       },
       values: values ? values : formatValue ? (u: uPlot, vals: any[]) => vals.map(v => formatValue(v)) : undefined,
