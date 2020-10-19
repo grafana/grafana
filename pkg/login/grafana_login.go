@@ -25,7 +25,7 @@ var validatePassword = func(providedPassword string, userPassword string, userSa
 }
 
 var loginUsingGrafanaDB = func(query *models.LoginUserQuery) (bool, error) {
-	if isLoginDisabled() {
+	if setting.DisableLogin {
 		return false, nil
 	}
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: query.Username}
