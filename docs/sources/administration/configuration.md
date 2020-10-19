@@ -1041,6 +1041,15 @@ If both are set, then basic authentication is required to access the metrics end
 
 <hr>
 
+## [metrics.environment_info]
+
+Adds dimensions to the `grafana_environment_info` metric, which can expose more information about the Grafana instance.
+
+```
+; exampleLabel1 = exampleValue1
+; exampleLabel2 = exampleValue2
+```
+
 ## [metrics.graphite]
 
 Use these options if you want to send internal Grafana metrics to Graphite.
