@@ -500,6 +500,39 @@ func TestLoginOAuthRedirect(t *testing.T) {
 	assert.Equal(t, location[0], "/login/github")
 }
 
+func TestLoginInternal(t *testing.T) {
+	mockSetIndexViewData()
+	defer resetSetIndexViewData()
+
+	sc := setupScenarioContext("/login")
+	hs := &HTTPServer{
+		Cfg:     setting.NewCfg(),
+		License: &licensing.OSSLicensingService{},
+		log:     &FakeLogger{},
+	}
+
+	sc.defaultHandler = Wrap(func(c *models.ReqContext) {
+		c.Req.URL.RawQuery = "internal=true"
+		hs.LoginView(c)
+	})
+
+	setting.OAuthService = &setting.OAuther{}
+	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
+	setting.OAuthService.OAuthInfos["github"] = &setting.OAuthInfo{
+		ClientId:     "fake",
+		ClientSecret: "fakefake",
+		Enabled:      true,
+		AllowSignup:  true,
+		Name:         "github",
+	}
+	setting.OAuthAutoLogin = true
+	sc.m.Get(sc.url, sc.defaultHandler)
+	sc.fakeReqNoAssertions("GET", sc.url).exec()
+
+	// Shouldn't redirect to the OAuth login URL
+	assert.Equal(t, sc.resp.Code, 200)
+}
+
 func TestAuthProxyLoginEnableLoginTokenDisabled(t *testing.T) {
 	sc := setupAuthProxyLoginTest(false)
 
