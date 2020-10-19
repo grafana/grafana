@@ -11,19 +11,10 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
-
-type MinimalDashboard struct {
-	Panels []struct {
-		ID         int64              `json:"id"`
-		Datasource string             `json:"datasource"`
-		Targets    []*simplejson.Json `json:"targets"`
-	} `json:"panels"`
-}
 
 // Condition contains backend expressions and queries and the RefID
 // of the query or expression that will be evaluated.
