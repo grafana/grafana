@@ -19,7 +19,7 @@ import (
 var (
 	databaseQueryCounter   *prometheus.CounterVec
 	databaseQueryHistogram *prometheus.HistogramVec
-	logger                 log.Logger
+	logger                 log.Logger = log.New("DBMetrics")
 )
 
 func init() {
@@ -37,8 +37,6 @@ func init() {
 	}, []string{"status"})
 
 	prometheus.MustRegister(databaseQueryCounter, databaseQueryHistogram)
-
-	logger = log.New("DBMetrics")
 }
 
 // WrapDatabaseDriverWithHooks creates a fake database driver that
