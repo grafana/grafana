@@ -10,13 +10,18 @@ import { getMappedValue } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
+import { getTestTheme } from '../utils/testdata/testTheme';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
-
-  // Context
+  /**
+   * Will pick browser timezone if not defined
+   */
   timeZone?: TimeZone;
-  theme?: GrafanaTheme; // Will pick 'dark' if not defined
+  /**
+   * Will pick 'dark' if not defined
+   */
+  theme?: GrafanaTheme;
 }
 
 // Reasonable units for time
@@ -35,6 +40,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
   const { field } = options;
   const config = field.config ?? {};
+
+  // Theme should be required or we need access to default theme instance from here
+  const theme = options.theme ?? getTestTheme();
+
   let unit = config.unit;
   let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
 
@@ -44,7 +53,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   }
 
   const formatFunc = getValueFormat(unit || 'none');
-  const scaleFunc = getScaleCalculator(field as Field, options.theme);
+  const scaleFunc = getScaleCalculator(field as Field, theme);
 
   return (value: any) => {
     const { mappings } = config;
@@ -106,7 +115,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       }
     }
 
-    return { text, numeric, prefix, suffix, ...scaleFunc(-Infinity) };
+    return { text, numeric, prefix, suffix, ...scaleFunc(0) };
   };
 }
 

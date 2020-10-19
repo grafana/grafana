@@ -5,7 +5,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphWithLegend, GraphWithLegendProps } from './GraphWithLegend';
 
 import { LegendPlacement, LegendDisplayMode } from '../Legend/Legend';
-import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorMode } from '@grafana/data';
+import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId } from '@grafana/data';
 
 export default {
   title: 'Visualizations/Graph',
@@ -36,7 +36,7 @@ const series: GraphSeriesXY[] = [
       values: new ArrayVector([10, 20, 10]),
       config: {
         color: {
-          mode: FieldColorMode.Fixed,
+          mode: FieldColorModeId.Fixed,
           fixedColor: 'red',
         },
       },
@@ -68,7 +68,7 @@ const series: GraphSeriesXY[] = [
       values: new ArrayVector([20, 30, 40]),
       config: {
         color: {
-          mode: FieldColorMode.Fixed,
+          mode: FieldColorModeId.Fixed,
           fixedColor: 'blue',
         },
       },

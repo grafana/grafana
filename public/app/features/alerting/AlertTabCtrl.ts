@@ -225,6 +225,19 @@ export class AlertTabCtrl {
       // fallback to using id if uid is missing
       if (!model) {
         model = _.find(this.notifications, { id: addedNotification.id });
+        if (!model) {
+          appEvents.emit(CoreEvents.showConfirmModal, {
+            title: 'Notifier with invalid ID is detected',
+            text: `Do you want to delete notifier with invalid ID: ${addedNotification.id} from the dashboard JSON?`,
+            text2: 'After successful deletion, make sure to save the dashboard for storing the update JSON.',
+            icon: 'trash-alt',
+            confirmText: 'Delete',
+            yesText: 'Delete',
+            onConfirm: async () => {
+              this.removeNotification(addedNotification);
+            },
+          });
+        }
       }
 
       if (model && model.isDefault === false) {
