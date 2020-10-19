@@ -81,6 +81,13 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
+	urlParams := c.Req.URL.Query()
+	if _, isInternal := urlParams["internal"]; isInternal {
+		hs.log.Info("Using internal login, skipping OAuth auto login")
+		c.HTML(200, getViewIndex(), viewData)
+		return
+	}
+
 	enabledOAuths := make(map[string]interface{})
 	for key, oauth := range setting.OAuthService.OAuthInfos {
 		enabledOAuths[key] = map[string]string{"name": oauth.Name}
