@@ -85,8 +85,8 @@ function getTimeRangeFromSpan(span: TraceSpan): TimeRange {
     // Weirdly Explore does not handle ISO string which would have been the default stringification if passed as object
     // and we have to use this custom format :( .
     raw: {
-      from: from.format('YYYYMMDDTHHmmss'),
-      to: to.format('YYYYMMDDTHHmmss'),
+      from: from.utc().format('YYYYMMDDTHHmmss'),
+      to: to.utc().format('YYYYMMDDTHHmmss'),
     },
   };
 }
