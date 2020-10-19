@@ -47,7 +47,14 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
       }
     }
     // With a single query just return the results
-     return forkJoin(queries).pipe(map((results:DataFrame[]) => ... )))
+    if (queries.length === 1) {
+      return queries[0];
+    }
+    if (queries.length > 1) {
+      // HELP!!!
+      return queries[0];
+    }
+    return of(); // nothing
   }
 
   metricFindQuery(options: any) {
