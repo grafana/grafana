@@ -68,9 +68,11 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
 
     if (scenario.id === 'grafana_api') {
       update.stringInput = 'datasources';
+    } else if (scenario.id === 'streaming_client') {
+      update.stringInput = '';
     } else if (scenario.id === 'live') {
       if (!update.channel) {
-        update.channel = 'random-2s-stream';
+        update.channel = 'random-2s-stream'; // default stream
       }
     }
 
