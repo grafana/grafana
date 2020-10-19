@@ -15,7 +15,7 @@ type Mysql struct {
 	BaseDialect
 }
 
-func NewMysqlDialect(engine *xorm.Engine) *Mysql {
+func NewMysqlDialect(engine *xorm.Engine) Dialect {
 	d := Mysql{}
 	d.BaseDialect.dialect = &d
 	d.BaseDialect.engine = engine
