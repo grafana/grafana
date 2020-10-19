@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -38,9 +39,9 @@ type DeleteAlertDefinitionByIDQuery struct {
 
 // SaveAlertDefinitionCommand is the query for saving a new alert definition.
 type SaveAlertDefinitionCommand struct {
-	Name      string    `json:"name"`
-	OrgID     int64     `json:"-"`
-	Condition Condition `json:"condition"`
+	Name      string         `json:"name"`
+	OrgID     int64          `json:"-"`
+	Condition eval.Condition `json:"condition"`
 
 	Result *AlertDefinition
 }
@@ -53,10 +54,10 @@ func (cmd *SaveAlertDefinitionCommand) IsValid() bool {
 
 // UpdateAlertDefinitionCommand is the query for updating an existing alert definition.
 type UpdateAlertDefinitionCommand struct {
-	ID        int64     `json:"-"`
-	Name      string    `json:"name"`
-	OrgID     int64     `json:"-"`
-	Condition Condition `json:"condition"`
+	ID        int64          `json:"-"`
+	Name      string         `json:"name"`
+	OrgID     int64          `json:"-"`
+	Condition eval.Condition `json:"condition"`
 
 	RowsAffected int64
 	Result       *AlertDefinition
@@ -69,6 +70,6 @@ func (cmd *UpdateAlertDefinitionCommand) IsValid() bool {
 }
 
 type EvalAlertConditionCommand struct {
-	Condition Condition `json:"condition"`
-	Now       time.Time `json:"now"`
+	Condition eval.Condition `json:"condition"`
+	Now       time.Time      `json:"now"`
 }

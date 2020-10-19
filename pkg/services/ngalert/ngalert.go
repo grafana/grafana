@@ -1,9 +1,10 @@
 package ngalert
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -73,16 +74,8 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("create alert_definition table", migrator.NewAddTableMigration(alertDefinition))
 }
 
-// AlertExecCtx is the context provided for executing an alert condition.§
-type AlertExecCtx struct {
-	AlertDefitionID int64
-	SignedInUser    *models.SignedInUser
-
-	Ctx context.Context
-}
-
 // LoadAlertCondition returns a Condition object for the given alertDefintionId.
-func (ng *AlertNG) LoadAlertCondition(dashboardID int64, panelID int64, conditionRefID string, signedInUser *models.SignedInUser, skipCache bool) (*Condition, error) {
+func (ng *AlertNG) LoadAlertCondition(dashboardID int64, panelID int64, conditionRefID string, signedInUser *models.SignedInUser, skipCache bool) (*eval.Condition, error) {
 	// get queries from the dashboard (because GEL expressions cannot be stored in alerts so far)
 	getDashboardQuery := models.GetDashboardQuery{Id: dashboardID}
 	if err := bus.Dispatch(&getDashboardQuery); err != nil {
@@ -93,13 +86,13 @@ func (ng *AlertNG) LoadAlertCondition(dashboardID int64, panelID int64, conditio
 	if err != nil {
 		return nil, errors.New("Failed to marshal dashboard JSON")
 	}
-	var dash minimalDashboard
+	var dash eval.MinimalDashboard
 	err = json.Unmarshal(blob, &dash)
 	if err != nil {
 		return nil, errors.New("Failed to unmarshal dashboard JSON")
 	}
 
-	condition := Condition{}
+	condition := eval.Condition{}
 	for _, p := range dash.Panels {
 		if p.ID == panelID {
 			panelDatasource := p.Datasource

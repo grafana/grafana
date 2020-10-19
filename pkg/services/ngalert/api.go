@@ -3,6 +3,8 @@ package ngalert
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api"
@@ -30,7 +32,7 @@ func (ng *AlertNG) ConditionEval(c *models.ReqContext, dto EvalAlertConditionCom
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	defer cancelFn()
 
-	alertExecCtx := AlertExecCtx{Ctx: alertCtx, SignedInUser: c.SignedInUser}
+	alertExecCtx := eval.AlertExecCtx{Ctx: alertCtx, SignedInUser: c.SignedInUser}
 
 	fromStr := c.Query("from")
 	if fromStr == "" {
@@ -47,7 +49,7 @@ func (ng *AlertNG) ConditionEval(c *models.ReqContext, dto EvalAlertConditionCom
 		return api.Error(400, "Failed to execute conditions", err)
 	}
 
-	evalResults, err := EvaluateExecutionResult(execResult)
+	evalResults, err := eval.EvaluateExecutionResult(execResult)
 	if err != nil {
 		return api.Error(400, "Failed to evaluate results", err)
 	}
@@ -88,14 +90,14 @@ func (ng *AlertNG) AlertDefinitionEval(c *models.ReqContext) api.Response {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	defer cancelFn()
 
-	alertExecCtx := AlertExecCtx{Ctx: alertCtx, SignedInUser: c.SignedInUser}
+	alertExecCtx := eval.AlertExecCtx{Ctx: alertCtx, SignedInUser: c.SignedInUser}
 
 	execResult, err := conditions.Execute(alertExecCtx, fromStr, toStr)
 	if err != nil {
 		return api.Error(400, "Failed to execute conditions", err)
 	}
 
-	evalResults, err := EvaluateExecutionResult(execResult)
+	evalResults, err := eval.EvaluateExecutionResult(execResult)
 	if err != nil {
 		return api.Error(400, "Failed to evaluate results", err)
 	}

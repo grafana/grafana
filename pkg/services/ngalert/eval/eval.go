@@ -1,4 +1,4 @@
-package ngalert
+package eval
 
 /*
 // Package eval executes the condition for an alert definition, evaluates the condition results, and
@@ -7,15 +7,17 @@ package eval
 */
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-type minimalDashboard struct {
+type MinimalDashboard struct {
 	Panels []struct {
 		ID         int64              `json:"id"`
 		Datasource string             `json:"datasource"`
@@ -72,6 +74,14 @@ func (s State) String() string {
 func (c Condition) IsValid() bool {
 	// TODO search for refIDs in QueriesAndExpressions
 	return len(c.QueriesAndExpressions) != 0
+}
+
+// AlertExecCtx is the context provided for executing an alert condition.§
+type AlertExecCtx struct {
+	AlertDefitionID int64
+	SignedInUser    *models.SignedInUser
+
+	Ctx context.Context
 }
 
 // Execute runs the Condition's expressions or queries.
