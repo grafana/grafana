@@ -21,7 +21,7 @@ export class QueryEditor extends PureComponent<Props> {
     {
       label: 'Live Measurements',
       value: GrafanaQueryType.LiveMeasurements,
-      description: 'Stream real-time measurements from grafana',
+      description: 'Stream real-time measurements from Grafana',
     },
   ];
 
@@ -139,8 +139,8 @@ export class QueryEditor extends PureComponent<Props> {
 
         <FeatureInfoBox title="Grafana Live - Measurements" featureState={FeatureState.alpha}>
           <p>
-            This supports real-time event streams in grafana core. This feature is under heavy development. Expect the
-            intefaces and structures to change as this becomes more production ready.
+            This supports real-time event streams in Grafana core. This feature is under heavy development. Expect the
+            interfaces and structures to change as this becomes more production ready.
           </p>
         </FeatureInfoBox>
       </>
