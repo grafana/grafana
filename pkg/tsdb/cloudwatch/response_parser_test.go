@@ -6,7 +6,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -61,17 +60,17 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Period: 60,
 			Alias:  "{{LoadBalancer}} Expanded",
 		}
-		series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+		frames, partialData, err := parseMetricResults(mdrs, labels, query)
 		require.NoError(t, err)
 
-		timeSeries := (*series)[0]
+		frame1 := frames[0]
 		assert.False(t, partialData)
-		assert.Equal(t, "lb1 Expanded", timeSeries.Name)
-		assert.Equal(t, "lb1", timeSeries.Tags["LoadBalancer"])
+		assert.Equal(t, "lb1 Expanded", frame1.Name)
+		assert.Equal(t, "lb1", frame1.Fields[1].Labels["LoadBalancer"])
 
-		timeSeries2 := (*series)[1]
-		assert.Equal(t, "lb2 Expanded", timeSeries2.Name)
-		assert.Equal(t, "lb2", timeSeries2.Tags["LoadBalancer"])
+		frame2 := frames[1]
+		assert.Equal(t, "lb2 Expanded", frame2.Name)
+		assert.Equal(t, "lb2", frame2.Fields[1].Labels["LoadBalancer"])
 	})
 
 	t.Run("Expand dimension value using substring", func(t *testing.T) {
@@ -123,17 +122,17 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Period: 60,
 			Alias:  "{{LoadBalancer}} Expanded",
 		}
-		series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+		frames, partialData, err := parseMetricResults(mdrs, labels, query)
 		require.NoError(t, err)
 
-		timeSeries := (*series)[0]
+		frame1 := frames[0]
 		assert.False(t, partialData)
-		assert.Equal(t, "lb1 Expanded", timeSeries.Name)
-		assert.Equal(t, "lb1", timeSeries.Tags["LoadBalancer"])
+		assert.Equal(t, "lb1 Expanded", frame1.Name)
+		assert.Equal(t, "lb1", frame1.Fields[1].Labels["LoadBalancer"])
 
-		timeSeries2 := (*series)[1]
-		assert.Equal(t, "lb2 Expanded", timeSeries2.Name)
-		assert.Equal(t, "lb2", timeSeries2.Tags["LoadBalancer"])
+		frame2 := frames[1]
+		assert.Equal(t, "lb2 Expanded", frame2.Name)
+		assert.Equal(t, "lb2", frame2.Fields[1].Labels["LoadBalancer"])
 	})
 
 	t.Run("Expand dimension value using wildcard", func(t *testing.T) {
@@ -185,11 +184,12 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Period: 60,
 			Alias:  "{{LoadBalancer}} Expanded",
 		}
-		series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+		frames, partialData, err := parseMetricResults(mdrs, labels, query)
 		require.NoError(t, err)
+
 		assert.False(t, partialData)
-		assert.Equal(t, "lb3 Expanded", (*series)[0].Name)
-		assert.Equal(t, "lb4 Expanded", (*series)[1].Name)
+		assert.Equal(t, "lb3 Expanded", frames[0].Name)
+		assert.Equal(t, "lb4 Expanded", frames[1].Name)
 	})
 
 	t.Run("Expand dimension value when no values are returned and a multi-valued template variable is used", func(t *testing.T) {
@@ -221,12 +221,13 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Period: 60,
 			Alias:  "{{LoadBalancer}} Expanded",
 		}
-		series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+		frames, partialData, err := parseMetricResults(mdrs, labels, query)
 		require.NoError(t, err)
+
 		assert.False(t, partialData)
-		assert.Len(t, *series, 2)
-		assert.Equal(t, "lb1 Expanded", (*series)[0].Name)
-		assert.Equal(t, "lb2 Expanded", (*series)[1].Name)
+		assert.Len(t, frames, 2)
+		assert.Equal(t, "lb1 Expanded", frames[0].Name)
+		assert.Equal(t, "lb2 Expanded", frames[1].Name)
 	})
 
 	t.Run("Expand dimension value when no values are returned and a multi-valued template variable and two single-valued dimensions are used", func(t *testing.T) {
@@ -260,12 +261,13 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Period: 60,
 			Alias:  "{{LoadBalancer}} Expanded {{InstanceType}} - {{Resource}}",
 		}
-		series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
+		frames, partialData, err := parseMetricResults(mdrs, labels, query)
 		require.NoError(t, err)
+
 		assert.False(t, partialData)
-		assert.Len(t, *series, 2)
-		assert.Equal(t, "lb1 Expanded micro - res", (*series)[0].Name)
-		assert.Equal(t, "lb2 Expanded micro - res", (*series)[1].Name)
+		assert.Len(t, frames, 2)
+		assert.Equal(t, "lb1 Expanded micro - res", frames[0].Name)
+		assert.Equal(t, "lb2 Expanded micro - res", frames[1].Name)
 	})
 
 	t.Run("Parse cloudwatch response", func(t *testing.T) {
@@ -302,15 +304,16 @@ func TestCloudWatchResponseParser(t *testing.T) {
 			Period: 60,
 			Alias:  "{{namespace}}_{{metric}}_{{stat}}",
 		}
-		series, partialData, err := parseGetMetricDataTimeSeries(mdrs, labels, query)
-		timeSeries := (*series)[0]
+		frames, partialData, err := parseMetricResults(mdrs, labels, query)
 		require.NoError(t, err)
+
+		frame := frames[0]
 		assert.False(t, partialData)
-		assert.Equal(t, "AWS/ApplicationELB_TargetResponseTime_Average", timeSeries.Name)
-		assert.Equal(t, "lb", timeSeries.Tags["LoadBalancer"])
-		assert.Equal(t, null.FloatFrom(10.0).String(), timeSeries.Points[0][0].String())
-		assert.Equal(t, null.FloatFrom(20.0).String(), timeSeries.Points[1][0].String())
-		assert.Equal(t, null.FloatFromPtr(nil).String(), timeSeries.Points[2][0].String())
-		assert.Equal(t, null.FloatFrom(30.0).String(), timeSeries.Points[3][0].String())
+		assert.Equal(t, "AWS/ApplicationELB_TargetResponseTime_Average", frame.Name)
+		assert.Equal(t, "lb", frame.Fields[1].Labels["LoadBalancer"])
+		assert.Equal(t, 10.0, *frame.Fields[1].At(0).(*float64))
+		assert.Equal(t, 20.0, *frame.Fields[1].At(1).(*float64))
+		assert.Nil(t, frame.Fields[1].At(2))
+		assert.Equal(t, 30.0, *frame.Fields[1].At(3).(*float64))
 	})
 }

@@ -196,7 +196,7 @@ func TestRequestParser(t *testing.T) {
 
 			res, err := parseRequestQuery(query, "ref1", from, to)
 			require.Nil(t, err)
-			assert.Equal(t, res.Period, 21600)
+			assert.Equal(t, 21600, res.Period)
 		})
 
 		t.Run("Time range is 2 years", func(t *testing.T) {

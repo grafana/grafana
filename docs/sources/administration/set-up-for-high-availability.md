@@ -24,7 +24,7 @@ Grafana will now persist all long term data in the database. How to configure th
 
 ## Alerting
 
-Currently alerting supports a limited form of high availability. Since v4.2.0, alert notifications are deduped when running multiple servers. This means all alerts are executed on every server but alert notifications are only sent once per alert. Grafana does not support load distribution between servers.
+Currently alerting supports a limited form of high availability. Since v4.2.0, [alert notifications](https://grafana.com/docs/grafana/latest/alerting/notifications/) are deduped when running multiple servers. This means all alerts are executed on every server but alert notifications are only sent once per alert. Grafana does not support load distribution between servers.
 
 ## User sessions
 

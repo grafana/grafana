@@ -80,7 +80,7 @@ The following sections provide general guidelines on topics specific to Grafana 
 - Concept and reference topic headings should be nouns or gerunds. Examples: Contributing to docs, Visualizations, Style guide
 - Avoid following one heading with another heading.
 - Avoid skipping heading levels. For example, an h1 should be followed by an h2 rather than an h3.
-- Avoid having just one lower-level heading. For example, h1, h2, h2, h3, h3, h2 is a good order. Do no go h1, h2, h3, h2, h3, h2.
+- Avoid having just one lower-level heading. For example, h1, h2, h2, h3, h3, h2 is a good order. Do not go h1, h2, h3, h2, h3, h2.
 - Don't include parenthetical words like (Important!) in headings.
 
 ### Images

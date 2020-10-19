@@ -5,7 +5,7 @@ import { TracePageHeader, TraceTimelineViewer } from '@jaegertracing/jaeger-ui-c
 import { TraceSpanData, TraceData } from '@grafana/data';
 
 function renderTraceView() {
-  const wrapper = shallow(<TraceView trace={response} />);
+  const wrapper = shallow(<TraceView trace={response} splitOpenFn={() => {}} />);
   return {
     timeline: wrapper.find(TraceTimelineViewer),
     header: wrapper.find(TracePageHeader),

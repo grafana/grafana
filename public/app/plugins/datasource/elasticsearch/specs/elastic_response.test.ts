@@ -1152,6 +1152,47 @@ describe('ElasticResponse', () => {
     });
   });
 
+  describe('Raw Data Query', () => {
+    beforeEach(() => {
+      targets = [
+        {
+          refId: 'A',
+          metrics: [{ type: 'raw_data', id: '1' }],
+          bucketAggs: [],
+        },
+      ];
+
+      response = {
+        responses: [
+          {
+            hits: {
+              total: {
+                relation: 'eq',
+                value: 1,
+              },
+              hits: [
+                {
+                  _id: '1',
+                  _type: '_doc',
+                  _index: 'index',
+                  _source: { sourceProp: 'asd' },
+                },
+              ],
+            },
+          },
+        ],
+      };
+
+      result = new ElasticResponse(targets, response).getTimeSeries();
+    });
+
+    it('should create dataframes with filterable fields', () => {
+      for (const field of result.data[0].fields) {
+        expect(field.config.filterable).toBe(true);
+      }
+    });
+  });
+
   describe('simple logs query and count', () => {
     const targets: any = [
       {
