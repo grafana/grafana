@@ -66,7 +66,7 @@ export class QueryEditor extends PureComponent<Props> {
       measurements = {};
     }
     const names: Array<SelectableValue<string>> = [
-      { value: '', label: 'All measurements', description: 'show every measurment streamed to this channel' },
+      { value: '', label: 'All measurements', description: 'Show every measurement streamed to this channel' },
     ];
 
     let info: LiveMeasurements | undefined = undefined;
@@ -111,7 +111,7 @@ export class QueryEditor extends PureComponent<Props> {
               onChange={this.onChannelChange}
               allowCustomValue={true}
               backspaceRemovesValue={true}
-              placeholder="Select measurments channel"
+              placeholder="Select measurements channel"
               isClearable={true}
               noOptionsMessage="Enter channel name"
               formatCreateLabel={(input: string) => `Conncet to: ${input}`}
@@ -124,7 +124,7 @@ export class QueryEditor extends PureComponent<Props> {
               <Select
                 options={names}
                 value={names.find(v => v.value === measurements?.name) || names[0]}
-                onChange={this.onMeasurmentNameChanged}
+                onChange={this.onMeasurementNameChanged}
                 allowCustomValue={true}
                 backspaceRemovesValue={true}
                 placeholder="Filter by name"
@@ -137,7 +137,7 @@ export class QueryEditor extends PureComponent<Props> {
           </div>
         )}
 
-        <FeatureInfoBox title="Grafana Live - Measurments" featureState={FeatureState.alpha}>
+        <FeatureInfoBox title="Grafana Live - Measurements" featureState={FeatureState.alpha}>
           <p>
             This supports real-time event streams in grafana core. This feature is under heavy development. Expect the
             intefaces and structures to change as this becomes more production ready.

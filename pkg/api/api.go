@@ -391,7 +391,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// The live handler will manage its own routes
 		if hs.Live != nil {
-			apiRoute.Any("/live/*", hs.LiveHTTPHandler)
+			apiRoute.Any("/live/*", Wrap(hs.LiveHTTPHandler))
 		}
 
 		// error test

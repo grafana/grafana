@@ -57,7 +57,7 @@ export interface MeasurementsQuery {
 }
 
 /**
- * Channels that recieve Measurements can collect them into frames
+ * Channels that receive Measurements can collect them into frames
  *
  * @experimental
  */

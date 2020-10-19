@@ -17,10 +17,10 @@ interface MeasurmentCacheConfig {
 }
 
 /** This is a cache scoped to a the measurement name */
-export class MeasurmentCache {
+export class MeasurementCache {
   readonly frames: Record<string, CircularDataFrame> = {}; // key is the labels
 
-  constructor(public name: string, private config: MeasurmentCacheConfig) {
+  constructor(public name: string, private config: MeasurementCacheConfig) {
     if (!this.config) {
       this.config = {
         append: 'tail',

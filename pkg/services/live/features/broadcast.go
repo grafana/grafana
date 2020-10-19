@@ -81,6 +81,6 @@ func (b *BroadcastRunner) DoChannelHTTP(c *models.ReqContext, channel string) {
 	}
 
 	c.JSON(400, util.DynMap{
-		"unsuppoted?": channel,
+		"unsupported?": channel,
 	})
 }

@@ -8,7 +8,7 @@ import (
 
 func TestParseChannelAddress(t *testing.T) {
 	addr := ParseChannelAddress("aaa/bbb/ccc/ddd")
-	if !addr.IsValid() {
+	require.True(t, addr.IsValid())
 		t.FailNow()
 	}
 

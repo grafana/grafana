@@ -25,7 +25,7 @@ import {
   toDataQueryError,
   getTemplateSrv,
   TemplateSrv,
-  getLiveMeasurmentsObserver,
+  getLiveMeasurementsObserver,
 } from '@grafana/runtime';
 import { queryMetricTree } from './metricTree';
 import { from, merge, Observable, of } from 'rxjs';

@@ -242,7 +242,7 @@ func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, 
 	// Parse the identifier ${scope}/${namespace}/${path}
 	id := ParseChannelAddress(channel)
 	if !id.IsValid() {
-		return nil, fmt.Errorf("invalid channel")
+		return nil, fmt.Errorf("invalid channel: %q", channel)
 	}
 	logger.Info("initChannel", "channel", channel, "id", id)
 
@@ -268,7 +268,7 @@ func (g *GrafanaLive) GetChannelNamespace(scope string, name string) (models.Cha
 		if ok {
 			return p, nil
 		}
-		return nil, fmt.Errorf("Unknown feature: %q", name)
+		return nil, fmt.Errorf("unknown feature: %q", name)
 	}
 
 	if scope == "ds" {

@@ -14,19 +14,19 @@ type ChannelAddress struct {
 // ParseChannelAddress parses the parts from a channel id:
 //   ${scope} / ${namespace} / ${path}
 func ParseChannelAddress(id string) ChannelAddress {
-	identifier := ChannelAddress{}
+	addr := ChannelAddress{}
 	parts := strings.SplitN(id, "/", 3)
 	length := len(parts)
 	if length > 0 {
-		identifier.Scope = parts[0]
+		addr.Scope = parts[0]
 	}
 	if length > 1 {
-		identifier.Namespace = parts[1]
+		addr.Namespace = parts[1]
 	}
 	if length > 2 {
-		identifier.Path = parts[2]
+		addr.Path = parts[2]
 	}
-	return identifier
+	return addr
 }
 
 // IsValid checks if all parts of the address are valid

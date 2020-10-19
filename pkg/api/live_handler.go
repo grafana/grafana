@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// LiveHTTPHandler will process any requets to /api/live/*
+// LiveHTTPHandler will process any requests to /api/live/*.
 func (hs *HTTPServer) LiveHTTPHandler(c *models.ReqContext) {
 	addr, ok := getChannelAddress(c.Req.Request.URL.Path)
 	if !ok {

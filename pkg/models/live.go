@@ -16,7 +16,7 @@ type ChannelHandler interface {
 	// Called when something writes into the channel.  The returned value will be broadcast if len() > 0
 	OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error)
 
-	// Called from the HTTP API
+	// DoChannelHTTP is called from the HTTP API
 	DoChannelHTTP(c *ReqContext, channel string)
 }
 

@@ -1,5 +1,5 @@
 import { MeasurementCollector } from './collector';
-import { MeasurmentAction } from './types';
+import { MeasurementAction } from './types';
 
 describe('MeasurementCollector', () => {
   it('should collect values', () => {
@@ -167,7 +167,7 @@ describe('MeasurementCollector', () => {
     `);
 
     collector.addBatch({
-      action: MeasurmentAction.Replace,
+      action: MeasurementAction.Replace,
       measures: [
         {
           name: 'test',
@@ -242,7 +242,7 @@ describe('MeasurementCollector', () => {
     `);
 
     collector.addBatch({
-      action: MeasurmentAction.Clear,
+      action: MeasurementAction.Clear,
       measures: [],
     });
     expect(collector.getData().length).toEqual(0);

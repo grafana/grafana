@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 
 import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQueryType } from './types';
-import { getBackendSrv, getTemplateSrv, toDataQueryResponse, getLiveMeasurmentsObserver } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv, toDataQueryResponse, getLiveMeasurementsObserver } from '@grafana/runtime';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
@@ -31,7 +31,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
         const { channel, measurements } = target;
         if (channel) {
           queries.push(
-            getLiveMeasurmentsObserver(
+            getLiveMeasurementsObserver(
               {
                 scope: LiveChannelScope.Grafana,
                 namespace: 'measurements',
@@ -47,14 +47,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
       }
     }
     // With a single query just return the results
-    if (queries.length === 1) {
-      return queries[0];
-    }
-    if (queries.length > 1) {
-      // HELP!!!
-      return queries[0];
-    }
-    return of(); // nothing
+     return forkJoin(queries).pipe(map((results:DataFrame[]) => ... )))
   }
 
   metricFindQuery(options: any) {
@@ -119,7 +112,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
 function getRandomWalk(request: DataQueryRequest): Observable<DataQueryResponse> {
   const { intervalMs, maxDataPoints, range, requestId } = request;
 
-  // Yes, this implementaiton ignores multiple targets!  But that matches exisitng behavior
+  // Yes, this implementation ignores multiple targets!  But that matches existing behavior
   const params: Record<string, any> = {
     intervalMs,
     maxDataPoints,
