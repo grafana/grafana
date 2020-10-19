@@ -16,7 +16,10 @@ interface MeasurementCacheConfig {
   capacity?: number;
 }
 
-/** This is a cache scoped to a the measurement name */
+/** This is a cache scoped to a the measurement name
+ *
+ * @alpha -- experimental
+ */
 export class MeasurementCache {
   readonly frames: Record<string, CircularDataFrame> = {}; // key is the labels
 
@@ -97,6 +100,9 @@ export class MeasurementCache {
   }
 }
 
+/**
+ * @alpha -- experimental
+ */
 export class MeasurementCollector implements LiveMeasurements {
   measurements = new Map<string, MeasurementCache>();
   config: MeasurementCacheConfig = {

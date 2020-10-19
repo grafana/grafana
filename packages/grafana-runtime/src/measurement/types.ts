@@ -3,7 +3,7 @@ import { DataFrame, Labels, FieldConfig } from '@grafana/data';
 /**
  * the raw channel events are batches of Measurements
  *
- * @experimental
+ * @alpha -- experimental
  */
 export interface Measurement {
   name: string;
@@ -14,7 +14,7 @@ export interface Measurement {
 }
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
 export enum MeasurementAction {
   /** The measurements will be added to the client buffer */
@@ -30,7 +30,7 @@ export enum MeasurementAction {
 /**
  * List of Measurements sent in a batch
  *
- * @experimental
+ * @alpha -- experimental
  */
 export interface MeasurementBatch {
   /**
@@ -59,7 +59,7 @@ export interface MeasurementsQuery {
 /**
  * Channels that receive Measurements can collect them into frames
  *
- * @experimental
+ * @alpha -- experimental
  */
 export interface LiveMeasurements {
   getData(query?: MeasurementsQuery): DataFrame[];

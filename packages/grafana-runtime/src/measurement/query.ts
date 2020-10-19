@@ -12,6 +12,9 @@ import { getGrafanaLiveSrv } from '../services/live';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
+/**
+ * @alpha -- experimental
+ */
 export function getLiveMeasurements(addr: LiveChannelAddress): LiveMeasurements | undefined {
   if (!isValidLiveChannelAddress(addr)) {
     return undefined;
@@ -29,6 +32,8 @@ export function getLiveMeasurements(addr: LiveChannelAddress): LiveMeasurements 
 
 /**
  * When you know the stream will be managed measurements
+ *
+ * @alpha -- experimental
  */
 export function getLiveMeasurementsObserver(
   addr: LiveChannelAddress,
