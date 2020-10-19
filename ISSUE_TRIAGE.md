@@ -91,7 +91,7 @@ Should explain what happened, what was expected and how to reproduce it together
 - User OS & Browser + versions
 - Using docker + what environment
 - Which plugins
-- Configuration database in use (sqlite, mysql, postgres)
+- Configuration database in use (SQLite, MySQL, Postgres)
 - Reverse proxy in front of Grafana, what version and configuration
 - Non-default configuration settings
 - Development environment like Go and Node versions, if applicable
@@ -166,7 +166,7 @@ If it's not perfectly clear that it's an actual bug, quickly try to reproduce it
 
 1. Add a comment describing detailed steps for how to reproduce it, if applicable.
 2. Label the issue `type/bug` and at least one `area/*` or `datasource/*` label.
-3. If you know that maintainers wont be able to put any resources into it for some time then label the issue with `help wanted` and optionally `beginner friendly` together with pointers on which code to update to fix the bug. This should signal to the community that we would appreciate any help we can get to resolve this.
+3. If you know that maintainers won't be able to put any resources into it for some time then label the issue with `help wanted` and optionally `beginner friendly` together with pointers on which code to update to fix the bug. This should signal to the community that we would appreciate any help we can get to resolve this.
 4. Move on to [prioritizing the issue](#4-prioritization-of-issues).
 
 **It can't be reproduced:**
@@ -324,7 +324,7 @@ If you're using Gmail it's highly recommended that you setup filters to automati
 This may be setup by personal preference, but here's a working configuration for reference.
 1. Follow instructions in [gist](https://gist.github.com/marefr/9167c2e31466f6316c1cba118874e74f)
 2. In Gmail, go to Settings -> Filters and Blocked Addresses
-3. Import filters -> select xml file -> Open file
+3. Import filters -> Select XML file -> Open file
 4. Review filters
 5. Optional, Check Apply new filters to existing email
 6. Create filters

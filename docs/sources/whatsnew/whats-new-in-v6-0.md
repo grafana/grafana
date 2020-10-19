@@ -62,7 +62,7 @@ aggregation system from Grafana Lab called [Grafana Loki](https://github.com/gra
 
 Loki is a horizontally-scalable, highly-available, multi-tenant log aggregation system inspired by Prometheus. It is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels.
 
-For more information about Grafana Loki, refer to [Github Grafana Loki](https://github.com/grafana/loki) or [Grafana Labs hosted Loki](https://grafana.com/loki).
+For more information about Grafana Loki, refer to [GitHub Grafana Loki](https://github.com/grafana/loki) or [Grafana Labs hosted Loki](https://grafana.com/loki).
 
 The Explore feature allows you to query logs and features a new log panel. In the near future, we will be adding support
 for other log sources to Explore and the next planned integration is Elasticsearch.

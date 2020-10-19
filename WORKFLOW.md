@@ -47,8 +47,8 @@ Grafana uses trunk-based development.
 In particular, we found that the following principles match how we work:
 - Master and release branches MUST always build without failure.
 - Branches SHOULD be merged often. Larger changes SHOULD be activated with feature flags until they are ready. Long-lived development branches SHOULD be avoided.
-- Changes MAY be enabled by default once they are in a complete state
-- Changes which span multiple PRs MUST be described in an overarching issue or Google Doc.
+- Changes MAY be enabled by default once they are in a complete state.
+- Changes which span multiple PRs MUST be described in an overarching issue or Google Docs.
 
 ## Releases
 
@@ -57,13 +57,13 @@ Releases MUST follow [Semantic Versioning](https://semver.org/) in naming and SH
 Release branches MUST be split from the following branches.
 - MAJOR release branches MUST be based on master.
 - MINOR release branches MUST be based on master.
-- PATCH release branches MUST be split from the relevant MINOR release branch’s most current PATCH
+- PATCH release branches MUST be split from the relevant MINOR release branch’s most current PATCH.
 
 Security releases follow the same process but MUST be prepared in secret. Security releases MUST NOT include changes which are not related to the security fix. Normal release processes MUST accommodate the security release process. SECURITY.md MUST be followed.
 
 PRs intended for inclusion in the next PATCH release MUST be labeled with `cherry-pick-needed` so they can be picked up by automated release tooling.
 
-Releases follow the following cadence
+Releases follow the following cadence:
 - MAJOR: Yearly
 - MINOR: Every 4-6 weeks
 - PATCH: As needed

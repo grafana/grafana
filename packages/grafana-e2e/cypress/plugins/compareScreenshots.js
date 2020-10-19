@@ -31,7 +31,7 @@ const compareScreenshots = async ({ config, screenshotsFolder, specName }) => {
   if (code <= 1) {
     let msg = `\nThe screenshot [${imageAPath}] differs from [${imageBPath}]`;
     msg += '\n';
-    msg += '\nCheck the Artifacts tab in the CircleCi build output for the actual screenshots.';
+    msg += '\nCheck the Artifacts tab in the CircleCI build output for the actual screenshots.';
     msg += '\n';
     msg += '\n  If the difference between expected and outcome is NOT acceptable then do the following:';
     msg += '\n    - Check the code for changes that causes this difference, fix that and retry.';
