@@ -15,7 +15,6 @@ import {
   FieldConfigPropertyItem,
   FieldConfigSource,
   FieldType,
-  GrafanaTheme,
   InterpolateFunction,
   ThresholdsMode,
   FieldColorModeId,
@@ -28,6 +27,7 @@ import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getFieldDisplayName } from './fieldState';
 import { ArrayVector } from '../vector';
 import { getDisplayProcessor } from './displayProcessor';
+import { getTestTheme } from '../utils/testdata/testTheme';
 
 const property1: any = {
   id: 'custom.property1', // Match field properties
@@ -136,7 +136,7 @@ describe('applyFieldOverrides', () => {
         },
         replaceVariables: (value: any) => value,
         getDataSourceSettingsByUid: undefined as any,
-        theme: {} as GrafanaTheme,
+        theme: getTestTheme(),
         fieldConfigRegistry: new FieldConfigOptionsRegistry(),
       });
 
@@ -199,7 +199,7 @@ describe('applyFieldOverrides', () => {
       fieldConfigRegistry: customFieldRegistry,
       getDataSourceSettingsByUid: undefined as any,
       replaceVariables: v => v,
-      theme: {} as GrafanaTheme,
+      theme: getTestTheme(),
     })[0];
 
     const outField = processed.fields[0];
@@ -216,7 +216,7 @@ describe('applyFieldOverrides', () => {
       fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
       getDataSourceSettingsByUid: undefined as any,
-      theme: (undefined as any) as GrafanaTheme,
+      theme: getTestTheme(),
       fieldConfigRegistry: customFieldRegistry,
     })[0];
     const valueColumn = data.fields[1];
@@ -244,7 +244,7 @@ describe('applyFieldOverrides', () => {
       fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
       getDataSourceSettingsByUid: undefined as any,
-      theme: (undefined as any) as GrafanaTheme,
+      theme: getTestTheme(),
       autoMinMax: true,
     })[0];
     const valueColumn = data.fields[1];
@@ -268,7 +268,7 @@ describe('applyFieldOverrides', () => {
         return value;
       }) as InterpolateFunction,
       getDataSourceSettingsByUid: undefined as any,
-      theme: (undefined as any) as GrafanaTheme,
+      theme: getTestTheme(),
       autoMinMax: true,
       fieldConfigRegistry: customFieldRegistry,
     })[0];
@@ -521,7 +521,7 @@ describe('getLinksSupplier', () => {
       // this is used only for internal links so isn't needed here
       () => ({} as any),
       {
-        theme: {} as GrafanaTheme,
+        theme: getTestTheme(),
       }
     );
     supplier({});
@@ -568,7 +568,7 @@ describe('getLinksSupplier', () => {
       // We do not need to interpolate anything for this test
       (value, vars, format) => value,
       uid => ({ name: 'testDS' } as any),
-      { theme: {} as GrafanaTheme }
+      { theme: getTestTheme() }
     );
     const links = supplier({ valueRowIndex: 0 });
     expect(links.length).toBe(1);
