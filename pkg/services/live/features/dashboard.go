@@ -5,7 +5,6 @@ import (
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // DashboardEvent events related to dashboards
@@ -26,13 +25,6 @@ func (g *DashboardHandler) GetHandlerForPath(path string) (models.ChannelHandler
 	return g, nil // all dashboards share the same handler
 }
 
-// DoNamespaceHTTP is called from the HTTP API.
-func (g *DashboardHandler) DoNamespaceHTTP(c *models.ReqContext) {
-	c.JSON(400, util.DynMap{
-		"Unsupported": "DashboardHandler",
-	})
-}
-
 // GetChannelOptions called fast and often
 func (g *DashboardHandler) GetChannelOptions(id string) centrifuge.ChannelOptions {
 	return centrifuge.ChannelOptions{
@@ -51,13 +43,6 @@ func (g *DashboardHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscr
 func (g *DashboardHandler) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
 	// TODO -- verify and keep track of editors?
 	return e.Data, nil
-}
-
-// DoChannelHTTP is called from the HTTP API.
-func (g *DashboardHandler) DoChannelHTTP(c *models.ReqContext, channel string) {
-	c.JSON(400, util.DynMap{
-		"Unsupported": channel,
-	})
 }
 
 // DashboardSaved should broadcast to the appropriate stream

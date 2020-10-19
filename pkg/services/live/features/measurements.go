@@ -1,12 +1,9 @@
 package features
 
 import (
-	"encoding/json"
-
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -22,13 +19,6 @@ type MeasurementsRunner struct {
 // GetHandlerForPath is called on init.
 func (m *MeasurementsRunner) GetHandlerForPath(path string) (models.ChannelHandler, error) {
 	return m, nil // for now all channels share config
-}
-
-// DoNamespaceHTTP is called from the HTTP API.
-func (m *MeasurementsRunner) DoNamespaceHTTP(c *models.ReqContext) {
-	c.JSON(400, util.DynMap{
-		"Unsupported": "MeasurementsRunner",
-	})
 }
 
 // GetChannelOptions gets channel options.
@@ -48,46 +38,4 @@ func (m *MeasurementsRunner) OnPublish(c *centrifuge.Client, e centrifuge.Publis
 	// currently generic... but should be more strict
 	// logger.Debug("GOT: %s", e.Channel)
 	return e.Data, nil
-}
-
-// DoChannelHTTP is called from the HTTP API.
-func (m *MeasurementsRunner) DoChannelHTTP(c *models.ReqContext, channel string) {
-	if c.Req.Method == "POST" {
-		body, err := c.Req.Body().Bytes()
-		if err != nil {
-			c.JSON(500, util.DynMap{
-				"message": "error reading body",
-				"error":   err.Error(),
-			})
-			return
-		}
-
-		msg := &models.MeasurementBatch{}
-		err = json.Unmarshal(body, &msg)
-		if err != nil {
-			c.JSON(500, util.DynMap{
-				"message": "body must be measurement batch",
-				"error":   err.Error(),
-			})
-			return
-		}
-
-		err = m.Publisher(channel, body) // original bytes?
-		if err != nil {
-			c.JSON(500, util.DynMap{
-				"message": "error publishing",
-				"error":   err.Error(),
-			})
-			return
-		}
-
-		c.JSON(200, util.DynMap{
-			"message": "OK",
-		})
-		return
-	}
-
-	c.JSON(400, util.DynMap{
-		"unsupported?": channel,
-	})
 }

@@ -8,7 +8,6 @@ import (
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // TestdataRunner manages all the `grafana/dashboard/*` channels
@@ -24,13 +23,6 @@ type testdataRunner struct {
 // TestdataSupplier manages all the `grafana/testdata/*` channels
 type TestdataSupplier struct {
 	Publisher models.ChannelPublisher
-}
-
-// DoNamespaceHTTP called from the http api
-func (g *TestdataSupplier) DoNamespaceHTTP(c *models.ReqContext) {
-	c.JSON(400, util.DynMap{
-		"Unsupported": "TestdataSupplier",
-	})
 }
 
 // GetHandlerForPath called on init
@@ -82,13 +74,6 @@ func (g *testdataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscrib
 // OnPublish called when an event is received from the websocket
 func (g *testdataRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
 	return nil, fmt.Errorf("can not publish to testdata")
-}
-
-// DoChannelHTTP called from the http api
-func (g *testdataRunner) DoChannelHTTP(c *models.ReqContext, channel string) {
-	c.JSON(400, util.DynMap{
-		"Unsupported": channel,
-	})
 }
 
 // RunRandomCSV just for an example
