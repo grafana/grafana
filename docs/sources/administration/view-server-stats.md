@@ -22,10 +22,12 @@ If you are a Grafana server admin, then you can view useful statistics about you
 The following statistics are displayed in the Stats tab:
 
 - Total users
+  **Note:** Total users = Total admins + Total editors + Total viewers
 - Total admins
 - Total editors
 - Total viewers
 - Active users (seen last 30 days)
+  **Note:** Active users = Active admins + Active editors + Active viewers
 - Active admins (seen last 30 days)
 - Active editors (seen last 30 days)
 - Active viewers (seen last 30 days)
@@ -37,3 +39,16 @@ The following statistics are displayed in the Stats tab:
 - Total dashboard tags
 - Total starred dashboards
 - Total alerts
+
+## Counting users
+
+If a user belongs to several organizations, then that user is counted once for each organization as a user in the highest role for each organization.
+
+For example, if Sofia is a Viewer in three organizations, an Editor in two organizations, and and Admin in three organizations, then she would be reflected in the stats as:
+
+- Total users     8
+- Total admins    3
+- Total editors   2
+- Total viewers   3
+
+The same is true for Active users counts as well.
