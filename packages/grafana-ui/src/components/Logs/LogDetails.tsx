@@ -100,7 +100,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
         onMouseLeave={onMouseLeave}
       >
         {showDuplicates && <td />}
-        <td className={levelClassName} />
+        <td className={levelClassName} aria-label="Log level" />
         <td colSpan={4}>
           <div className={style.logDetailsContainer}>
             <table className={style.logDetailsTable}>

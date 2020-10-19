@@ -147,7 +147,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     if (checkLogsError(row).hasError) {
       this.setState({
         hasError: true,
-        errorTooltip: checkLogsError(row).error,
+        errorTooltip: checkLogsError(row).errorMessage,
       });
     }
   };
