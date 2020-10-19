@@ -508,7 +508,7 @@ func TestLoginInternal(t *testing.T) {
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
 		License: &licensing.OSSLicensingService{},
-		log:     &FakeLogger{},
+		log:     log.New("test"),
 	}
 
 	sc.defaultHandler = Wrap(func(c *models.ReqContext) {

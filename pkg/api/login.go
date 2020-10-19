@@ -83,7 +83,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 
 	urlParams := c.Req.URL.Query()
 	if _, disableAutoLogin := urlParams["disableAutoLogin"]; disableAutoLogin {
-		hs.log.Info("Using internal login, skipping OAuth auto login")
+		hs.log.Debug("Auto login manually disabled")
 		c.HTML(200, getViewIndex(), viewData)
 		return
 	}
