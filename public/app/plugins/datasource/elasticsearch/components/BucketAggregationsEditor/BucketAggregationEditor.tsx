@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import { InlineField, Segment, SegmentAsync } from '@grafana/ui';
-import React, { FunctionComponent } from 'react';
+import React, { ComponentProps, FunctionComponent } from 'react';
 import { bucketAggregationConfig } from '../../query_def';
 import { BucketAggregation, BucketAggregationType } from '../../types';
 import { useDatasource } from '../ElasticsearchQueryContext';
@@ -20,9 +20,10 @@ const toOption = (bucketAgg: BucketAggregation) => ({
 
 interface QueryMetricEditorProps {
   value: BucketAggregation;
+  label: ComponentProps<typeof InlineField>['label'];
 }
 
-export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> = ({ value }) => {
+export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> = ({ value, label }) => {
   const datasource = useDatasource();
 
   const getFields = () => {
@@ -35,7 +36,7 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
 
   return (
     <>
-      <InlineField label="Group By" labelWidth={15}>
+      <InlineField label={label} labelWidth={15}>
         <Segment
           className={marginZero}
           options={bucketAggOptions}
