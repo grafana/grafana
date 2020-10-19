@@ -45,14 +45,14 @@ exports[`Render should render component 1`] = `
       />
     </a>
   }
-  mediaContent={
+  image={
     <Icon
       className="alert-rule-item__icon state class"
       name="icon"
       size="xl"
     />
   }
-  metaData={
+  metadata={
     Array [
       <span>
         <span
