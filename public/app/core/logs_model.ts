@@ -428,9 +428,9 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
 
     if (!errorMetaAdded && series.meta?.custom?.error) {
       meta.push({
-        label: 'Error',
+        label: '',
         value: series.meta?.custom.error,
-        kind: LogsMetaKind.String,
+        kind: LogsMetaKind.Error,
       });
       errorMetaAdded = true;
     }

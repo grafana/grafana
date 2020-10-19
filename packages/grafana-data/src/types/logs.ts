@@ -31,6 +31,7 @@ export enum LogsMetaKind {
   Number,
   String,
   LabelsMap,
+  Error,
 }
 
 export enum LogsSortOrder {

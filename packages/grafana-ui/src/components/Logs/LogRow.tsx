@@ -8,8 +8,10 @@ import {
   DataQueryResponse,
   GrafanaTheme,
   dateTimeFormat,
+  checkLogsError,
 } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
+import { Tooltip } from '../Tooltip/Tooltip';
 import { cx, css } from 'emotion';
 
 import {
@@ -57,6 +59,8 @@ interface State {
   showContext: boolean;
   showDetails: boolean;
   hasHoverBackground: boolean;
+  hasError: boolean;
+  errorTooltip?: string;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -74,7 +78,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     erroredLog: css`
       label: erroredLogRow;
-      color: ${theme.colors.textFaint};
+      color: ${theme.colors.textWeak};
     `,
   };
 });
@@ -90,7 +94,13 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     showContext: false,
     showDetails: false,
     hasHoverBackground: false,
+    hasError: false,
+    errorTooltip: undefined,
   };
+
+  componentDidMount() {
+    this.setErrorAndTooltip();
+  }
 
   toggleContext = () => {
     this.setState(state => {
@@ -131,12 +141,15 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     });
   };
 
-  // Error condition to change color of logs. If more conditions, we can then move it to utils.
-  checkErrorCondition = (row: LogRowModel) => {
-    if (row.labels.__error__) {
-      return true;
+  // Currently just 1 condition. In the future, when we have more, we can move the check to util.
+  setErrorAndTooltip = () => {
+    const { row } = this.props;
+    if (checkLogsError(row).hasError) {
+      this.setState({
+        hasError: true,
+        errorTooltip: checkLogsError(row).error,
+      });
     }
-    return false;
   };
 
   renderTimeStamp(epochMs: number) {
@@ -169,30 +182,29 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       theme,
       getFieldLinks,
     } = this.props;
-    const { showDetails, showContext, hasHoverBackground } = this.state;
+    const { showDetails, showContext, hasHoverBackground, hasError, errorTooltip } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const styles = getStyles(theme);
-    const logHasError = this.checkErrorCondition(row);
-    const hoverBackground = cx(style.logsRow, {
+    const logRowBackground = cx(style.logsRow, {
       [styles.hoverBackground]: hasHoverBackground,
-      [styles.erroredLog]: logHasError,
+      [styles.erroredLog]: hasError,
     });
 
     return (
       <>
-        <tr
-          className={hoverBackground}
-          onMouseEnter={this.addHoverBackground}
-          onMouseLeave={this.clearHoverBackground}
-          onClick={this.toggleDetails}
-          title={logHasError ? `Error: ${row.labels.__error__}` : undefined}
-        >
+        <tr className={logRowBackground} onClick={this.toggleDetails}>
           {showDuplicates && (
             <td className={style.logsRowDuplicates}>
               {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
             </td>
           )}
-          <td className={style.logsRowLevel} />
+          <td className={cx({ [style.logsRowLevel]: !hasError })}>
+            {hasError && (
+              <Tooltip content={`Error: ${errorTooltip}`} placement="right" theme="error">
+                <Icon className={style.logIconError} name="exclamation-triangle" size="sm" />
+              </Tooltip>
+            )}
+          </td>
           {!allowDetails && (
             <td title={showDetails ? 'Hide log details' : 'See log details'} className={style.logsRowToggleDetails}>
               <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
@@ -224,7 +236,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         </tr>
         {this.state.showDetails && (
           <LogDetails
-            className={hoverBackground}
+            className={logRowBackground}
             onMouseEnter={this.addHoverBackground}
             onMouseLeave={this.clearHoverBackground}
             showDuplicates={showDuplicates}
@@ -235,6 +247,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             onClickHideParsedField={onClickHideParsedField}
             getRows={getRows}
             row={row}
+            hasError={hasError}
             showParsedFields={showParsedFields}
           />
         )}
