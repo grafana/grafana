@@ -280,7 +280,6 @@ const getStyles = stylesFactory(
       wrapper: css`
         display: flex;
         flex-direction: column;
-        // margin-bottom: -${theme.spacing.formSpacingBase * 2}px;
       `,
       thresholds: css`
         display: flex;
