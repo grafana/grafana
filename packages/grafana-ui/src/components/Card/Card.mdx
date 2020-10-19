@@ -152,7 +152,7 @@ Cards can also be rendered with media content such icons or images.
     'Prometheus',
     <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
-  mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+  image={<img src={promLogo} alt="Prometheus Logo" />}
 />
 ```
 
@@ -163,7 +163,7 @@ Cards can also be rendered with media content such icons or images.
       'Prometheus',
       <a key='link' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
-    mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+    image={<img src={promLogo} alt="Prometheus Logo" />}
   />
 </Preview>
 
@@ -178,7 +178,7 @@ Cards also accept primary and secondary actions. Usually the primary actions are
     'Prometheus',
     <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
-  mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+  image={<img src={promLogo} alt="Prometheus Logo" />}
   actions={[<Button key="settings" variant="secondary">Settings</Button>, <Button key="explore" variant="secondary">Explore</Button>]}
   secondaryActions={[
     <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />,
@@ -194,7 +194,7 @@ Cards also accept primary and secondary actions. Usually the primary actions are
       'Prometheus',
       <a key='prom-link-3' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
-    mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+    image={<img src={promLogo} alt="Prometheus Logo" />}
     actions={[<Button key="settings" variant="secondary">
         Settings
       </Button>,
@@ -220,7 +220,7 @@ Card can have a disabled state, effectively making it and its actions non-clicka
     'Prometheus',
     <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
-  mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+  image={<img src={promLogo} alt="Prometheus Logo" />}
   disabled
 />
 ```
@@ -232,7 +232,7 @@ Card can have a disabled state, effectively making it and its actions non-clicka
       'Prometheus',
       <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
-    mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+    image={<img src={promLogo} alt="Prometheus Logo" />}
     disabled
   />
 </Preview>
@@ -244,7 +244,7 @@ Card can have a disabled state, effectively making it and its actions non-clicka
     'Prometheus',
     <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
-  mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+  image={<img src={promLogo} alt="Prometheus Logo" />}
   actions={[<Button key='settings' variant="secondary">Settings</Button>, <Button key='explore' variant="secondary">Explore</Button>]}
   secondaryActions={[
     <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />,
@@ -261,7 +261,7 @@ Card can have a disabled state, effectively making it and its actions non-clicka
       'Prometheus',
       <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
-    mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+    image={<img src={promLogo} alt="Prometheus Logo" />}
     actions={[<Button key='settings' variant="secondary">Settings</Button>, <Button key='explore' variant="secondary">Explore</Button>]}
     secondaryActions={[
       <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />,

@@ -54,7 +54,7 @@ export interface Props extends ContainerProps {
   /** Indicates if the card and all its actions can be interacted with */
   disabled?: boolean;
   /** Image or icon to be displayed on the let side of the card */
-  mediaContent?: ReactNode;
+  image?: ReactNode;
   /** Main card actions **/
   actions?: ReactElement[];
   /** Right-side actions */
@@ -72,7 +72,7 @@ export const Card: FC<Props> = ({
   tags = [],
   onTagClick,
   disabled,
-  mediaContent,
+  image,
   actions = [],
   tooltip,
   secondaryActions = [],
@@ -112,7 +112,7 @@ export const Card: FC<Props> = ({
       {...htmlProps}
     >
       <CardInner href={href}>
-        {mediaContent && <div className={styles.media}>{mediaContent}</div>}
+        {image && <div className={styles.media}>{image}</div>}
         <div className={styles.inner}>
           <div className={styles.heading}>{heading}</div>
           {meta && <div className={styles.metadata}>{meta}</div>}

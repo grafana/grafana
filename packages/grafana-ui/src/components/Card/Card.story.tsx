@@ -84,7 +84,7 @@ export const WithMedia = () => {
         </a>,
       ]}
       disabled={disabled}
-      mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+      image={<img src={promLogo} alt="Prometheus Logo" />}
     />
   );
 };
@@ -100,7 +100,7 @@ export const WithActions = () => {
         </a>,
       ]}
       disabled={disabled}
-      mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+      image={<img src={promLogo} alt="Prometheus Logo" />}
       actions={[
         <Button key="settings" variant="secondary">
           Settings
@@ -132,7 +132,7 @@ export const Full = () => {
         </a>,
       ]}
       disabled={disabled}
-      mediaContent={<img src={promLogo} alt="Prometheus Logo" />}
+      image={<img src={promLogo} alt="Prometheus Logo" />}
       tags={['firing', 'active', 'test', 'testdata', 'prometheus']}
       description="Description, body text. Greetings! Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
       actions={[
