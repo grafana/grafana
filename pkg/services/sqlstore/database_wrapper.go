@@ -75,9 +75,10 @@ func (h *databaseQueryWrapper) Before(ctx context.Context, query string, args ..
 // After hook will get the timestamp registered on the Before hook and print the elapsed time
 func (h *databaseQueryWrapper) After(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
 	begin := ctx.Value(databaseQueryWrapperKey{}).(time.Time)
+	elapsed := time.Since(begin)
 	databaseQueryCounter.WithLabelValues("success").Inc()
-	databaseQueryHistogram.WithLabelValues("success").Observe(time.Since(begin).Seconds())
-	logger.Debug("query finished", "status", "success", "elapsed time", time.Since(begin), "sql", query)
+	databaseQueryHistogram.WithLabelValues("success").Observe(elapsed.Seconds())
+	logger.Debug("query finished", "status", "success", "elapsed time", elapsed, "sql", query)
 	return ctx, nil
 }
 
@@ -90,9 +91,10 @@ func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query str
 	}
 
 	begin := ctx.Value(databaseQueryWrapperKey{}).(time.Time)
+	elapsed := time.Since(begin)
 	databaseQueryCounter.WithLabelValues(status).Inc()
-	databaseQueryHistogram.WithLabelValues(status).Observe(time.Since(begin).Seconds())
-	logger.Debug("query finished", "status", status, "elapsed time", time.Since(begin), "sql", query, "error", err)
+	databaseQueryHistogram.WithLabelValues(status).Observe(elapsed.Seconds())
+	logger.Debug("query finished", "status", status, "elapsed time", elapsed, "sql", query, "error", err)
 	return err
 }
 
