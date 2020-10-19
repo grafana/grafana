@@ -26,8 +26,6 @@ export const QueryEditor: FunctionComponent<ElasticQueryEditorProps> = ({
 
   return (
     <ElasticsearchProvider datasource={datasource} onChange={onQueryChange} query={query}>
-      {JSON.stringify(query.metrics, null, 2)}
-
       <QueryEditorForm value={query} />
     </ElasticsearchProvider>
   );

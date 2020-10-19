@@ -16,6 +16,8 @@ export const MetricAggregationsEditor: FunctionComponent<Props> = ({ value }) =>
 
   return (
     <>
+      {JSON.stringify(value, null, 2)}
+
       {value.map((metric, index) => (
         <InlineFieldRow key={metric.id}>
           <MetricEditor value={metric} />

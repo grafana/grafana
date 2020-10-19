@@ -1,8 +1,27 @@
 import { Action } from '../../../hooks/useReducerCallback';
-import { BucketAggregation } from '../../../types';
 
 export const ADD_BUCKET_AGG = '@bucketAggs/add';
 export const REMOVE_BUCKET_AGG = '@bucketAggs/remove';
+
+export type BucketAggregationType = 'terms' | 'filters' | 'geohash_grid' | 'date_histogram' | 'histogram';
+
+interface BaseBucketAggregation {
+  id: string;
+  type: BucketAggregationType;
+  field?: string;
+}
+
+interface DateHistogram extends BaseBucketAggregation {
+  type: 'date_histogram';
+  settings?: {
+    interval?: string;
+    min_doc_count?: string;
+    trimEdges?: string;
+    offset?: string;
+  };
+}
+
+export type BucketAggregation = DateHistogram;
 
 //
 // Action Types

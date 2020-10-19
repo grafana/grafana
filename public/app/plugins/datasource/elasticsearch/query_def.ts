@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { BucketAggregation } from './components/BucketAggregationsEditor/state/types';
 import {
   ExtendedStat,
   isMetricAggregationWithField,
@@ -10,7 +11,7 @@ import {
   MetricAggregationType,
 } from './components/MetricAggregationsEditor/state/types';
 import { metricAggregationConfig, pipelineOptions } from './components/MetricAggregationsEditor/utils';
-import { BucketsConfiguration, BucketAggregation, ElasticsearchQuery } from './types';
+import { BucketsConfiguration, ElasticsearchQuery } from './types';
 
 export const bucketAggregationConfig: BucketsConfiguration = {
   terms: {
@@ -201,7 +202,7 @@ export function defaultMetricAgg(id = '1'): MetricAggregation {
 }
 
 export function defaultBucketAgg(id = '1'): BucketAggregation {
-  return { type: 'date_histogram', id, settings: { interval: 'auto' }, hide: false };
+  return { type: 'date_histogram', id, settings: { interval: 'auto' } };
 }
 
 export const findMetricById = (metrics: any[], id: string) => {

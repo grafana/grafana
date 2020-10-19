@@ -2,9 +2,9 @@ import { SelectableValue } from '@grafana/data';
 import { InlineField, Segment, SegmentAsync } from '@grafana/ui';
 import React, { ComponentProps, FunctionComponent } from 'react';
 import { bucketAggregationConfig } from '../../query_def';
-import { BucketAggregation, BucketAggregationType } from '../../types';
 import { useDatasource } from '../ElasticsearchQueryContext';
 import { marginZero } from '../styles';
+import { BucketAggregation, BucketAggregationType } from './state/types';
 
 const bucketAggOptions: Array<SelectableValue<BucketAggregationType>> = Object.entries(bucketAggregationConfig).map(
   ([key, { label }]) => ({
