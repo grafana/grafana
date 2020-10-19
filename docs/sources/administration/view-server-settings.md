@@ -12,7 +12,7 @@ weight = 350
 
 # View Grafana server settings
 
-If you are a Grafana server admin, then you can use the Settings tab to view the settings applied to your Grafana server by the [Configuration]({{< relref "configuration.md" >}}) file and any environmental variables.
+If you are a Grafana server admin, then you can use the Settings tab to view the settings applied to your Grafana server by the [Configuration]({{< relref "configuration.md#config-file-locations" >}}) file and any environmental variables.
 
 > **Note:** Only Grafana server admins can access the **Server Admin** menu. For more information about about admin permissions, refer to [Grafana server admin]({{< relref "../permissions/_index.md" >}}).
 
