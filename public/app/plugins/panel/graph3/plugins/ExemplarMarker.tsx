@@ -67,9 +67,9 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ time, text, tags
 
   return (
     <>
-      <div ref={markerRef} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} className={cx(styles.markerWrapper)}>
-        <svg viewBox="0 0 599 599" width="8" height="8">
-          <path id="black_diamond" fill="#000" d="M 300,575 L 575,300 L 300,25 L 25,300 L 300,575 Z" />
+      <div ref={markerRef} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} className={styles.markerWrapper}>
+        <svg viewBox="0 0 599 599" width="8" height="8" className={cx(styles.marble, isOpen && styles.activeMarble)}>
+          <path d="M 300,575 L 575,300 L 300,25 L 25,300 L 300,575 Z" />
         </svg>
       </div>
       {isOpen && <Portal>{renderMarker()}</Portal>}
@@ -81,6 +81,19 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
   const bg = theme.isDark ? theme.palette.dark2 : theme.palette.white;
   const headerBg = theme.isDark ? theme.palette.dark9 : theme.palette.gray5;
   const shadowColor = theme.isDark ? theme.palette.black : theme.palette.white;
+  const marbleFill = theme.isDark ? theme.palette.gray3 : theme.palette.gray1;
+  const marbleFillHover = theme.isDark ? theme.palette.blue85 : theme.palette.blue77;
+
+  const marble = css`
+    display: block;
+    fill: ${marbleFill};
+    transition: transform 0.15s ease-out;
+  `;
+  const activeMarble = css`
+    fill: ${marbleFillHover};
+    transform: scale(1.3);
+    filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.5));
+  `;
 
   return {
     markerWrapper: css`
@@ -88,8 +101,11 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       width: 8px;
       height: 8px;
       box-sizing: content-box;
-      > svg {
-        display: block;
+
+      &:hover {
+        > svg {
+          ${activeMarble}
+        }
       }
     `,
     marker: css`
@@ -107,6 +123,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       max-width: 400px;
       box-shadow: 0 0 20px ${shadowColor};
     `,
+
     tooltip: css`
       background: none;
       padding: 0;
@@ -137,5 +154,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       padding: ${theme.spacing.sm};
       font-weight: ${theme.typography.weight.semibold};
     `,
+    marble,
+    activeMarble,
   };
 };
