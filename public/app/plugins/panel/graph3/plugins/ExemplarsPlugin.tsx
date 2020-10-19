@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrayVector,
   DataFrame,
@@ -8,11 +8,12 @@ import {
   systemDateFormats,
   TimeZone,
 } from '@grafana/data';
-import { EventsCanvas, usePlotContext } from '@grafana/ui';
+import { Axis, EventsCanvas, Scale, usePlotContext, usePlotPluginContext } from '@grafana/ui';
 import { ExemplarMarker } from './ExemplarMarker';
 
 interface ExemplarsPluginProps {
   exemplars: DataFrame[];
+  data: DataFrame[];
   timeZone: TimeZone;
 }
 
@@ -26,9 +27,37 @@ interface ExemplarsDataFrameViewDTO {
 
 export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, timeZone }) => {
   const plotCtx = usePlotContext();
+  const pluginId = 'ExemplarsPlugin';
+  const exemplarsScaleKey = 'scale-exemplars';
+  const pluginsApi = usePlotPluginContext();
 
   // TEMPORARY MOCK
   const [exemplarsMock, setExemplarsMock] = useState<DataFrame[]>([]);
+  const exemplarsMinMaxMock = useRef<[number, number]>();
+
+  useEffect(() => {
+    const unregister = pluginsApi.registerPlugin({
+      id: pluginId,
+      hooks: {
+        // set exemplars scale range manually due to bug reported in https://github.com/leeoniya/uPlot/issues/334
+        setScale: (u, key) => {
+          if (key === exemplarsScaleKey && exemplarsMinMaxMock.current) {
+            u.scales[key].min = exemplarsMinMaxMock.current[0];
+            u.scales[key].max = exemplarsMinMaxMock.current[1];
+          }
+        },
+      },
+    });
+
+    return () => {
+      unregister();
+    };
+  }, []);
+
+  useEffect(() => {
+    // TODO: get min/max value from exemplars dataframe
+    exemplarsMinMaxMock.current = [0, 100];
+  }, [exemplarsMinMaxMock]);
 
   const timeFormatter = useCallback(
     (value: number) => {
@@ -86,11 +115,15 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
   );
 
   return (
-    <EventsCanvas<ExemplarsDataFrameViewDTO>
-      id="exemplars"
-      events={exemplarsMock}
-      renderEventMarker={renderMarker}
-      mapEventToXYCoords={mapExemplarToXYCoords}
-    />
+    <>
+      <EventsCanvas<ExemplarsDataFrameViewDTO>
+        id="exemplars"
+        events={exemplarsMock}
+        renderEventMarker={renderMarker}
+        mapEventToXYCoords={mapExemplarToXYCoords}
+      />
+      <Scale scaleKey={exemplarsScaleKey} />
+      <Axis scaleKey={exemplarsScaleKey} side={1} size={60} grid={false} />
+    </>
   );
 };
