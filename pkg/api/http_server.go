@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/live"
@@ -331,7 +332,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
-		Directory:  path.Join(setting.StaticRootPath, "views"),
+		Directory:  filepath.Join(setting.StaticRootPath, "views"),
 		IndentJSON: macaron.Env != macaron.PROD,
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))
