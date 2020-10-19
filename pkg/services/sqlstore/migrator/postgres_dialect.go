@@ -15,7 +15,7 @@ type Postgres struct {
 	BaseDialect
 }
 
-func NewPostgresDialect(engine *xorm.Engine) *Postgres {
+func NewPostgresDialect(engine *xorm.Engine) Dialect {
 	d := Postgres{}
 	d.BaseDialect.dialect = &d
 	d.BaseDialect.engine = engine
