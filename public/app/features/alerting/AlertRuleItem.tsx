@@ -28,10 +28,10 @@ const AlertRuleItem = ({ rule, search, onTogglePause }: Props) => {
     <Card
       tag="li"
       heading={<a href={ruleUrl}>{renderText(rule.name)}</a>}
-      mediaContent={
+      image={
         <Icon size="xl" name={rule.stateIcon as IconName} className={`alert-rule-item__icon ${rule.stateClass}`} />
       }
-      metaData={[
+      metadata={[
         <span key="state">
           <span key="text" className={`${rule.stateClass}`}>
             {renderText(rule.stateText)}{' '}
