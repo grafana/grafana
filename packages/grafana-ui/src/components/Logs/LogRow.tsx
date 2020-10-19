@@ -72,6 +72,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: hoverBackground;
       background-color: ${bgColor};
     `,
+    erroredLog: css`
+      label: erroredLogRow;
+      color: ${theme.colors.textFaint};
+    `,
   };
 });
 /**
@@ -127,6 +131,14 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     });
   };
 
+  // Error condition to change color of logs. If more conditions, we can then move it to utils.
+  checkErrorCondition = (row: LogRowModel) => {
+    if (row.labels.__error__) {
+      return true;
+    }
+    return false;
+  };
+
   renderTimeStamp(epochMs: number) {
     return dateTimeFormat(epochMs, {
       timeZone: this.props.timeZone,
@@ -160,7 +172,11 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const { showDetails, showContext, hasHoverBackground } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const styles = getStyles(theme);
-    const hoverBackground = cx(style.logsRow, { [styles.hoverBackground]: hasHoverBackground });
+    const logHasError = this.checkErrorCondition(row);
+    const hoverBackground = cx(style.logsRow, {
+      [styles.hoverBackground]: hasHoverBackground,
+      [styles.erroredLog]: logHasError,
+    });
 
     return (
       <>
@@ -169,6 +185,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           onMouseEnter={this.addHoverBackground}
           onMouseLeave={this.clearHoverBackground}
           onClick={this.toggleDetails}
+          title={logHasError ? `Error: ${row.labels.__error__}` : undefined}
         >
           {showDuplicates && (
             <td className={style.logsRowDuplicates}>

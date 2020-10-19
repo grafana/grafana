@@ -325,6 +325,10 @@ export function lokiStreamsToDataframes(
     const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
     enhanceDataFrame(dataFrame, config);
 
+    if (meta.custom && dataFrame.fields.some(f => f.labels && Object.keys(f.labels).some(l => l === '__error__'))) {
+      meta.custom.error = "Wasn't able to parse all logs";
+    }
+
     return {
       ...dataFrame,
       refId: target.refId,
