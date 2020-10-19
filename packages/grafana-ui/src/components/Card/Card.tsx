@@ -1,7 +1,7 @@
-import React, { cloneElement, FC, HTMLAttributes, ReactElement, ReactNode } from 'react';
+import React, { cloneElement, FC, HTMLAttributes, ReactElement, ReactNode, useCallback, useMemo } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { useTheme, styleMixins } from '../../themes';
+import { useTheme, styleMixins, stylesFactory } from '../../themes';
 import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';
 import { OnTagClick } from '../Tags/Tag';
 import { TagList } from '../Tags/TagList';
@@ -44,7 +44,7 @@ export interface Props extends ContainerProps {
   /** Main heading for the Card **/
   heading: ReactNode;
   /** Additional data about the card. If array is supplied, elements will be rendered with vertical line separator */
-  metaData?: ReactNode | ReactNode[];
+  metadata?: ReactNode | ReactNode[];
   /** Card description text */
   description?: string;
   /** List of tags to display in the card */
@@ -68,7 +68,7 @@ export interface Props extends ContainerProps {
 export const Card: FC<Props> = ({
   heading,
   description,
-  metaData,
+  metadata,
   tags = [],
   onTagClick,
   disabled,
@@ -87,16 +87,21 @@ export const Card: FC<Props> = ({
   const theme = useTheme();
   const styles = getStyles(theme, disabled && !actions.length, disableHover);
   // Join meta data elements by '|'
-  const meta = Array.isArray(metaData)
-    ? (metaData as ReactNode[]).filter(Boolean).reduce((prev, curr, i) => [
-        prev,
-        <span key={`separator_${i}`} className={styles.separator}>
-          |
-        </span>,
-        curr,
-      ])
-    : metaData;
-  const onCardClick = disableHover ? () => {} : onClick;
+  const meta = useMemo(
+    () =>
+      Array.isArray(metadata)
+        ? (metadata as ReactNode[]).filter(Boolean).reduce((prev, curr, i) => [
+            prev,
+            <span key={`separator_${i}`} className={styles.separator}>
+              |
+            </span>,
+            curr,
+          ])
+        : metadata,
+    [metadata, styles.separator]
+  );
+  const onCardClick = useCallback(() => (disableHover ? () => {} : onClick), [disableHover, onClick]);
+
   return (
     <CardContainer
       tooltip={tooltip}
@@ -110,7 +115,7 @@ export const Card: FC<Props> = ({
         {mediaContent && <div className={styles.media}>{mediaContent}</div>}
         <div className={styles.inner}>
           <div className={styles.heading}>{heading}</div>
-          {meta && <div className={styles.metaData}>{meta}</div>}
+          {meta && <div className={styles.metadata}>{meta}</div>}
           {!!tags.length && <TagList tags={tags} onClick={onTagClick} className={styles.tagList} />}
           {description && <p className={styles.description}>{description}</p>}
           {hasActions && (
@@ -128,7 +133,7 @@ export const Card: FC<Props> = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) => {
+const getStyles = stylesFactory((theme: GrafanaTheme, disabled = false, disableHover = false) => {
   return {
     container: css`
       display: flex;
@@ -158,7 +163,7 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
       font-size: ${theme.typography.size.md};
       line-height: ${theme.typography.lineHeight.xs};
     `,
-    metaData: css`
+    metadata: css`
       font-size: ${theme.typography.size.sm};
       color: ${theme.colors.textSemiWeak};
       margin: ${theme.spacing.sm} 0 0;
@@ -219,4 +224,4 @@ const getStyles = (theme: GrafanaTheme, disabled = false, disableHover = false) 
       margin-top: ${theme.spacing.sm};
     `,
   };
-};
+});

@@ -64,7 +64,7 @@ export const WithTags = () => {
   return (
     <Card
       heading="Elasticsearch – Custom Templated Query"
-      metaData="Elastic Search"
+      metadata="Elastic Search"
       tags={['elasticsearch', 'test', 'testdata']}
       disabled={disabled}
     />
@@ -76,9 +76,8 @@ export const WithMedia = () => {
   return (
     <Card
       href="https://ops-us-east4.grafana.net/api/prom"
-      aria-label={'t'}
       heading="1-ops-tools1-fallback"
-      metaData={[
+      metadata={[
         'Prometheus',
         <a key="link2" href="https://ops-us-east4.grafana.net/api/prom">
           https://ops-us-east4.grafana.net/api/prom
@@ -94,7 +93,7 @@ export const WithActions = () => {
   return (
     <Card
       heading="1-ops-tools1-fallback"
-      metaData={[
+      metadata={[
         'Prometheus',
         <a key="link" href="https://ops-us-east4.grafana.net/api/prom">
           https://ops-us-east4.grafana.net/api/prom
@@ -124,7 +123,7 @@ export const Full = () => {
   return (
     <Card
       heading="Card title"
-      metaData={[
+      metadata={[
         'Subtitle',
         'Meta info 1',
         'Meta info 2',

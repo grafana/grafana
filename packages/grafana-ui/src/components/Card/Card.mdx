@@ -11,7 +11,7 @@ import promLogo from '../../../../../public/app/plugins/datasource/prometheus/im
 ## Usage
 
 ### Basic
-A basic Card component expects at least a heading to be used as title. Optionally a `metaData` prop is accepted, to provide some secondary information for the card. Multiple meta data elements can be provided as an array, in which case they will be separated by a horizontal line: `|`.
+A basic Card component expects at least a heading to be used as title. Optionally a `metadata` prop is accepted, to provide some secondary information for the card. Multiple meta data elements can be provided as an array, in which case they will be separated by a horizontal line: `|`.
 ```jsx
 <Card
   heading="Filter by name"
@@ -26,12 +26,12 @@ A basic Card component expects at least a heading to be used as title. Optionall
 </Preview>
 
 
-### Multiple metaData elements
+### Multiple metadata elements
 
 ```jsx
 <Card
   heading="Test dashboard"
-  metaData={['Folder: Test', 'Views: 100']}
+  metadata={['Folder: Test', 'Views: 100']}
   tags={['test', 'data', 'testdata']}
 />
 ```
@@ -39,7 +39,7 @@ A basic Card component expects at least a heading to be used as title. Optionall
 <Preview>
   <Card
     heading="Test dashboard"
-    metaData={['Folder: Test', 'Views: 100']}
+    metadata={['Folder: Test', 'Views: 100']}
     tags={['test', 'data', 'testdata']}
   />
 </Preview>
@@ -49,7 +49,7 @@ Metadata also accepts html elements, which could be links, for example. For elem
 ```jsx
 <Card
   heading="Test dashboard"
-   metaData={[
+   metadata={[
     'Prometheus',
     <a key='prom-link' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
@@ -59,7 +59,7 @@ Metadata also accepts html elements, which could be links, for example. For elem
 <Preview>
   <Card
     heading="Test dashboard"
-    metaData={[
+    metadata={[
       'Prometheus',
       <a key='prom-link-2' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
@@ -148,7 +148,7 @@ Cards can also be rendered with media content such icons or images.
 ```jsx
 <Card
   heading="1-ops-tools1-fallback"
-  metaData={[
+  metadata={[
     'Prometheus',
     <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
@@ -159,7 +159,7 @@ Cards can also be rendered with media content such icons or images.
 <Preview>
   <Card
     heading="1-ops-tools1-fallback"
-    metaData={[
+    metadata={[
       'Prometheus',
       <a key='link' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
@@ -174,7 +174,7 @@ Cards also accept primary and secondary actions. Usually the primary actions are
 ```jsx
  <Card
   heading="1-ops-tools1-fallback"
-  metaData={[
+  metadata={[
     'Prometheus',
     <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
@@ -190,7 +190,7 @@ Cards also accept primary and secondary actions. Usually the primary actions are
 <Preview>
   <Card
     heading="1-ops-tools1-fallback"
-    metaData={[
+    metadata={[
       'Prometheus',
       <a key='prom-link-3' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
@@ -216,7 +216,7 @@ Card can have a disabled state, effectively making it and its actions non-clicka
 ```jsx
  <Card
   heading="1-ops-tools1-fallback"
-  metaData={[
+  metadata={[
     'Prometheus',
     <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
@@ -228,7 +228,7 @@ Card can have a disabled state, effectively making it and its actions non-clicka
 <Preview>
   <Card
     heading="1-ops-tools1-fallback"
-    metaData={[
+    metadata={[
       'Prometheus',
       <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
@@ -240,7 +240,7 @@ Card can have a disabled state, effectively making it and its actions non-clicka
 ```jsx
  <Card
   heading="1-ops-tools1-fallback"
-  metaData={[
+  metadata={[
     'Prometheus',
     <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
@@ -257,7 +257,7 @@ Card can have a disabled state, effectively making it and its actions non-clicka
 <Preview>
   <Card
     heading="1-ops-tools1-fallback"
-    metaData={[
+    metadata={[
       'Prometheus',
       <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
