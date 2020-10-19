@@ -77,7 +77,7 @@ func (app *AppPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPlugi
 		fullpath := path.Join(app.PluginDir, cmd)
 		factory := grpcplugin.NewBackendPlugin(app.Id, fullpath, grpcplugin.PluginStartFuncs{})
 		if err := backendPluginManager.Register(app.Id, factory); err != nil {
-			return errutil.Wrapf(err, "Failed to register backend plugin")
+			return errutil.Wrapf(err, "failed to register backend plugin")
 		}
 	}
 
