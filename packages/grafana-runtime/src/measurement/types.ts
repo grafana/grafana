@@ -41,7 +41,7 @@ export interface MeasurementBatch {
   /**
    * List of measurements to process
    */
-  measures: Measurement[];
+  measurements: Measurement[];
 
   /**
    * This will set the capacity on the client buffer for everything

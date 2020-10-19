@@ -5,7 +5,7 @@ describe('MeasurementCollector', () => {
   it('should collect values', () => {
     const collector = new MeasurementCollector();
     collector.addBatch({
-      measures: [
+      measurements: [
         {
           name: 'test',
           labels: { host: 'a' },
@@ -168,7 +168,7 @@ describe('MeasurementCollector', () => {
 
     collector.addBatch({
       action: MeasurementAction.Replace,
-      measures: [
+      measurements: [
         {
           name: 'test',
           time: 105,
@@ -243,7 +243,7 @@ describe('MeasurementCollector', () => {
 
     collector.addBatch({
       action: MeasurementAction.Clear,
-      measures: [],
+      measurements: [],
     });
     expect(collector.getData().length).toEqual(0);
   });

@@ -185,7 +185,7 @@ export class MeasurementCollector implements LiveMeasurements {
       this.setCapacity(batch.capacity);
     }
 
-    for (const measure of batch.measures) {
+    for (const measure of batch.measurements) {
       const name = measure.name || '';
       let m = this.measurements.get(name);
       if (!m) {

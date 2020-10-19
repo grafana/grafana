@@ -89,7 +89,7 @@ func (g *testdataRunner) runRandomCSV() {
 		Values: make(map[string]interface{}, 5),
 	}
 	msg := models.MeasurementBatch{
-		Measures: []models.Measurement{measure},
+		Measurements: []models.Measurement{measure}, // always a single measurements
 	}
 
 	for t := range ticker.C {

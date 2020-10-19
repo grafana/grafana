@@ -42,8 +42,8 @@ type MeasurementBatch struct {
 	// Action is the action in question, the default is append.
 	Action MeasurementAction `json:"action,omitempty"`
 
-	// Measures is the array of measurements.
-	Measures []Measurement `json:"measures,omitempty"`
+	// Measurements is the array of measurements.
+	Measurements []Measurement `json:"measurements,omitempty"`
 
 	// Capacity is the suggested size of the client buffer
 	Capacity int64 `json:"capacity,omitempty"`
