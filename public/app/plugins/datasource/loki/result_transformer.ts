@@ -326,7 +326,7 @@ export function lokiStreamsToDataframes(
     enhanceDataFrame(dataFrame, config);
 
     if (meta.custom && dataFrame.fields.some(f => f.labels && Object.keys(f.labels).some(l => l === '__error__'))) {
-      meta.custom.error = "Wasn't able to parse all logs";
+      meta.custom.error = 'Error when parsing some of the logs';
     }
 
     return {
