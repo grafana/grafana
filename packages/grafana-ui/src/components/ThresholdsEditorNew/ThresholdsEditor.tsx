@@ -38,6 +38,8 @@ interface State {
 }
 
 export class ThresholdsEditor extends PureComponent<Props, State> {
+  private inputRef: React.RefObject<HTMLInputElement>;
+
   constructor(props: Props) {
     super(props);
 
@@ -45,6 +47,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     steps[0].value = -Infinity;
 
     this.state = { steps };
+    this.inputRef = React.createRef();
   }
 
   onAddThreshold = () => {
@@ -67,7 +70,12 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     const newThresholds = [...steps, add];
     sortThresholds(newThresholds);
 
-    this.setState({ steps: newThresholds }, this.onChange);
+    this.setState({ steps: newThresholds }, () => {
+      if (this.inputRef.current) {
+        this.inputRef.current.focus();
+      }
+      this.onChange();
+    });
   };
 
   onRemoveThreshold = (threshold: ThresholdWithKey) => {
@@ -167,7 +175,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
         key={isPercent.toString()}
         onChange={(event: ChangeEvent<HTMLInputElement>) => this.onChangeThresholdValue(event, threshold)}
         value={threshold.value}
-        autoFocus
+        ref={this.inputRef}
         onBlur={this.onBlur}
         prefix={
           <div className={styles.inputPrefix}>
@@ -209,13 +217,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                 {steps
                   .slice(0)
                   .reverse()
-                  .map(threshold => {
-                    return (
-                      <div className={styles.item} key={`${threshold.key}`}>
-                        {this.renderInput(threshold, styles)}
-                      </div>
-                    );
-                  })}
+                  .map(threshold => (
+                    <div className={styles.item} key={`${threshold.key}`}>
+                      {this.renderInput(threshold, styles)}
+                    </div>
+                  ))}
               </div>
 
               <div>
