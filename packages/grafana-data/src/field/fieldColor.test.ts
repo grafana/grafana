@@ -1,4 +1,5 @@
-import { Field, GrafanaThemeType, GrafanaTheme, FieldColorModeId } from '../types';
+import { Field, FieldColorModeId } from '../types';
+import { getTestTheme } from '../utils/testdata/testTheme';
 import { fieldColorModeRegistry, FieldValueColorCalculator } from './fieldColor';
 
 describe('fieldColorModeRegistry', () => {
@@ -9,10 +10,7 @@ describe('fieldColorModeRegistry', () => {
 
   function getCalculator(options: GetCalcOptions): FieldValueColorCalculator {
     const mode = fieldColorModeRegistry.get(options.mode);
-    return mode.getCalculator(
-      { state: { seriesIndex: options.seriesIndex } } as Field,
-      { type: GrafanaThemeType.Dark } as GrafanaTheme
-    );
+    return mode.getCalculator({ state: { seriesIndex: options.seriesIndex } } as Field, getTestTheme());
   }
 
   it('Schemes should interpolate', () => {
