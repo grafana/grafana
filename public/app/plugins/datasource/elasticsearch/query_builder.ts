@@ -318,11 +318,6 @@ export class ElasticQueryBuilder {
         metricAgg = { field: metric.field };
       }
 
-      if (metric.inlineScript) {
-        const keyName = this.esVersion < 56 ? 'inline' : 'source';
-        metricAgg.script = { [keyName]: metric.inlineScript };
-      }
-
       for (const prop in metric.settings) {
         if (metric.settings.hasOwnProperty(prop) && metric.settings[prop] !== null) {
           metricAgg[prop] = metric.settings[prop];

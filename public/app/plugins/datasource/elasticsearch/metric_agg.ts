@@ -115,8 +115,20 @@ export class ElasticMetricAggCtrl {
           break;
         }
       }
-      if ($scope.aggDef.supportsInlineScript && $scope.settingsLinkText === '') {
-        $scope.settingsLinkText = 'Options';
+      if ($scope.aggDef.supportsInlineScript) {
+        // I know this stores the inline script twice
+        // but having it like this simplifes the query_builder
+        const inlineScript = $scope.agg.inlineScript;
+        if (inlineScript) {
+          const inlineScriptKey = $scope.esVersion < 56 ? 'inline' : 'source';
+          $scope.agg.settings.script = { [inlineScriptKey]: inlineScript };
+        } else {
+          delete $scope.agg.settings.script;
+        }
+
+        if ($scope.settingsLinkText === '') {
+          $scope.settingsLinkText = 'Options';
+        }
       }
     };
 
