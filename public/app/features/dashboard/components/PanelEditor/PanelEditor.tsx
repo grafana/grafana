@@ -131,11 +131,16 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       return;
     }
 
-    const targetPane = pane === Pane.Top ? 'topPaneSize' : 'rightPaneSize';
     const { updatePanelEditorUIState } = this.props;
-    updatePanelEditorUIState({
-      [targetPane]: size,
-    });
+    if (pane === Pane.Top) {
+      updatePanelEditorUIState({
+        topPaneSize: `${(size / window.innerHeight) * 100}%`,
+      });
+    } else {
+      updatePanelEditorUIState({
+        rightPaneSize: size,
+      });
+    }
   };
 
   onDragStarted = () => {
@@ -187,10 +192,18 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   renderHorizontalSplit(styles: EditorStyles) {
     const { dashboard, panel, tabs, uiState } = this.props;
+    /*
+      Guesstimate the height of the browser window minus
+      panel toolbar and editor toolbar (~120px). This is to prevent resizing
+      the preview window beyond the browser window.
+     */
+    const windowHeight = window.innerHeight - 120;
+
     return tabs.length > 0 ? (
       <SplitPane
         split="horizontal"
         minSize={200}
+        maxSize={windowHeight}
         primary="first"
         /* Use persisted state for default size */
         defaultSize={uiState.topPaneSize}
