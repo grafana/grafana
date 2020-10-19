@@ -36,7 +36,7 @@ export const isMulti = (model: VariableModel): model is VariableWithMultiSupport
   return withMulti.hasOwnProperty('multi') && typeof withMulti.multi === 'boolean';
 };
 
-export interface DataSourceWithLegacyVariableSupport<
+interface DataSourceWithLegacyVariableSupport<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
@@ -44,12 +44,12 @@ export interface DataSourceWithLegacyVariableSupport<
   variables: undefined;
 }
 
-export interface DataSourceWithDefaultVariableSupport<
+interface DataSourceWithStandardVariableSupport<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
   variables: {
-    default: {
+    standard: {
       toDataQuery: (query: DefaultVariableQuery) => TQuery;
       query?: (request: DataQueryRequest<TQuery>) => Observable<DataQueryResponse>;
     };
@@ -58,13 +58,13 @@ export interface DataSourceWithDefaultVariableSupport<
   };
 }
 
-export interface DataSourceWithCustomVariableSupport<
+interface DataSourceWithCustomVariableSupport<
+  VariableQuery extends DataQuery = any,
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData,
-  VariableQuery extends DataQuery = any
+  TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
   variables: {
-    default: undefined;
+    standard: undefined;
     custom: {
       editor: ComponentType<QueryEditorProps<any, TQuery, TOptions, VariableQuery>>;
       query: (request: DataQueryRequest<TQuery>) => Observable<DataQueryResponse>;
@@ -73,12 +73,12 @@ export interface DataSourceWithCustomVariableSupport<
   };
 }
 
-export interface DataSourceWithDatasourceVariableSupport<
+interface DataSourceWithDatasourceVariableSupport<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
   variables: {
-    default: undefined;
+    standard: undefined;
     custom: undefined;
     datasource: {
       editor: ComponentType<QueryEditorProps<any, TQuery, TOptions, TQuery>>;
@@ -100,10 +100,10 @@ export const hasDefaultVariableSupport = <
   TOptions extends DataSourceJsonData = DataSourceJsonData
 >(
   datasource: DataSourceApi<TQuery, TOptions>
-): datasource is DataSourceWithDefaultVariableSupport<TQuery, TOptions> => {
+): datasource is DataSourceWithStandardVariableSupport<TQuery, TOptions> => {
   return (
-    Boolean(datasource.variables?.default) &&
-    Boolean(datasource.variables?.default?.toDataQuery) &&
+    Boolean(datasource.variables?.standard) &&
+    Boolean(datasource.variables?.standard?.toDataQuery) &&
     !Boolean(datasource.variables?.custom) &&
     !Boolean(datasource.variables?.datasource)
   );
@@ -114,12 +114,12 @@ export const hasCustomVariableSupport = <
   TOptions extends DataSourceJsonData = DataSourceJsonData
 >(
   datasource: DataSourceApi<TQuery, TOptions>
-): datasource is DataSourceWithCustomVariableSupport<TQuery, TOptions> => {
+): datasource is DataSourceWithCustomVariableSupport<any, TQuery, TOptions> => {
   return (
     Boolean(datasource.variables?.custom) &&
     Boolean(datasource.variables?.custom?.query) &&
     Boolean(datasource.variables?.custom?.editor) &&
-    !Boolean(datasource.variables?.default) &&
+    !Boolean(datasource.variables?.standard) &&
     !Boolean(datasource.variables?.datasource)
   );
 };
@@ -133,7 +133,7 @@ export const hasDatasourceVariableSupport = <
   return (
     Boolean(datasource.variables?.datasource) &&
     Boolean(datasource.variables?.datasource?.editor) &&
-    !Boolean(datasource.variables?.default) &&
+    !Boolean(datasource.variables?.standard) &&
     !Boolean(datasource.variables?.custom)
   );
 };

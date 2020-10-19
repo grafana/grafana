@@ -20,12 +20,11 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import cloneDeep from 'lodash/cloneDeep';
 import defaults from 'lodash/defaults';
 import LRU from 'lru-cache';
-import { forkJoin, from, merge, Observable, of, pipe, throwError } from 'rxjs';
-import { catchError, filter, map, mergeMap, tap } from 'rxjs/operators';
+import { forkJoin, merge, Observable, of, pipe, throwError } from 'rxjs';
+import { catchError, filter, map, tap } from 'rxjs/operators';
 import addLabelToQuery from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
-import PrometheusMetricFindQuery from './metric_find_query';
 import { getQueryHints } from './query_hints';
 import { getOriginalMetricName, renderTemplate, transform } from './result_transformer';
 import {
@@ -39,6 +38,7 @@ import {
   PromScalarData,
   PromVectorData,
 } from './types';
+import { PrometheusVariableSupport } from './variables';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 
@@ -78,40 +78,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.languageProvider = new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
-    const self = this;
-    this.variables = {
-      default: {
-        toDataQuery: query => ({
-          refId: 'PrometheusDatasource-VariableQuery',
-          expr: query,
-        }),
-        query: request => {
-          const query = request.targets[0].expr;
-          if (!query) {
-            return of({ data: [] });
-          }
 
-          const scopedVars = {
-            ...request.scopedVars,
-            __interval: { text: self.interval, value: self.interval },
-            __interval_ms: {
-              text: rangeUtil.intervalToMs(self.interval),
-              value: rangeUtil.intervalToMs(self.interval),
-            },
-            ...self.getRangeScopedVars(self.timeSrv.timeRange()),
-          };
-
-          const interpolated = self.templateSrv.replace(query, scopedVars, self.interpolateQueryExpr);
-          const metricFindQuery = new PrometheusMetricFindQuery(self, interpolated);
-          return of().pipe(
-            mergeMap(() => {
-              return from(metricFindQuery.process());
-            }),
-            map(results => ({ data: results }))
-          );
-        },
-      },
-    };
+    const standard = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
+    this.variables = { standard };
   }
 
   init = () => {

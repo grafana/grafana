@@ -15,15 +15,11 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { CloudMonitoringOptions, CloudMonitoringQuery, Filter, MetricDescriptor, QueryType } from './types';
 import { cloudMonitoringUnitMappings } from './constants';
 import API from './api';
-import CloudMonitoringMetricFindQuery from './CloudMonitoringMetricFindQuery';
-import { CloudMonitoringVariableQueryEditor } from './components/VariableQueryEditor';
-import { from } from 'rxjs';
-import { mergeMap } from 'rxjs/operators';
+import { CloudMonitoringVariableSupport } from './variables';
 
 export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonitoringQuery, CloudMonitoringOptions> {
   api: API;
   authenticationType: string;
-  private readonly findQueryHelper: CloudMonitoringMetricFindQuery;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<CloudMonitoringOptions>,
@@ -33,20 +29,9 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     super(instanceSettings);
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.api = new API(`${instanceSettings.url!}/cloudmonitoring/v3/projects/`);
-    this.findQueryHelper = new CloudMonitoringMetricFindQuery(this);
-    const self = this;
-    this.variables = {
-      custom: {
-        editor: CloudMonitoringVariableQueryEditor,
-        query: request => {
-          return from(this.ensureGCEDefaultProject()).pipe(
-            mergeMap(() => {
-              return from(self.findQueryHelper.execute(request.targets[0]));
-            })
-          );
-        },
-      },
-    };
+
+    const custom = new CloudMonitoringVariableSupport(this);
+    this.variables = { custom };
   }
 
   getVariables() {

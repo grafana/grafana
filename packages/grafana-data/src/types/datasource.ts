@@ -297,10 +297,10 @@ export abstract class DataSourceApi<
   channelSupport?: LiveChannelSupport;
 
   /**
-   * Define new variable support
+   * Defines new variable support
    * @experimental
    */
-  variables?: VariableSupport<DataSourceApi<TQuery, TOptions>, TQuery, TOptions>;
+  variables?: VariableSupport<DataSourceApi<TQuery, TOptions>>;
 }
 
 export interface MetadataInspectorProps<

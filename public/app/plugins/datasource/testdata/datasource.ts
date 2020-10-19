@@ -24,6 +24,7 @@ import { from, merge, Observable, of } from 'rxjs';
 import { delay, map } from 'rxjs/operators';
 import { runStream } from './runStreams';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
+import { TestDataVariableSupport } from './variables';
 
 type TestData = TimeSeries | TableData;
 
@@ -33,17 +34,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
-    this.variables = {
-      default: {
-        toDataQuery: query => ({
-          refId: 'TestDataDataSource-QueryVariable',
-          stringInput: query,
-          scenarioId: 'variables-query',
-          csvWave: null,
-          points: [],
-        }),
-      },
-    };
+    this.variables = { standard: new TestDataVariableSupport() };
   }
 
   query(options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
