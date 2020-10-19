@@ -37,7 +37,7 @@ export class QueryEditor extends PureComponent<Props> {
     onRunQuery();
   };
 
-  onMeasurmentNameChanged = (sel: SelectableValue<string>) => {
+  onMeasurementNameChanged = (sel: SelectableValue<string>) => {
     const { onChange, query, onRunQuery } = this.props;
     onChange({
       ...query,

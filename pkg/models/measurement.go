@@ -37,7 +37,7 @@ const (
 	MeasurementActionClear MeasurementAction = "clear"
 )
 
-// MeasurementBatch is a collection of measurments all sent at once
+// MeasurementBatch is a collection of measurements all sent at once
 type MeasurementBatch struct {
 	// Action is the action in question, the default is append.
 	Action MeasurementAction `json:"action,omitempty"`

@@ -6,7 +6,7 @@ interface MeasurementChannel {
   collector: MeasurementCollector;
 }
 
-export class LiveMeasurmentsSupport implements LiveChannelSupport {
+export class LiveMeasurementsSupport implements LiveChannelSupport {
   private cache: Record<string, MeasurementChannel> = {};
 
   /**

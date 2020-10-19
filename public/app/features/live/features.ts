@@ -1,7 +1,7 @@
 import { LiveChannelConfig } from '@grafana/data';
 import { MeasurementCollector } from '@grafana/runtime';
 import { getDashboardChannelsFeature } from './dashboard/dashboardWatcher';
-import { LiveMeasurmentsSupport } from './measurements/measurementsSupport';
+import { LiveMeasurementsSupport } from './measurements/measurementsSupport';
 import { grafanaLiveCoreFeatures } from './scopes';
 
 export function registerLiveFeatures() {

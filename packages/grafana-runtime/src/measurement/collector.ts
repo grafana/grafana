@@ -9,9 +9,9 @@ import {
   CircularVector,
   ArrayVector,
 } from '@grafana/data';
-import { Measurement, MeasurementBatch, LiveMeasurements, MeasurementsQuery, MeasurmentAction } from './types';
+import { Measurement, MeasurementBatch, LiveMeasurements, MeasurementsQuery, MeasurementAction } from './types';
 
-interface MeasurmentCacheConfig {
+interface MeasurementCacheConfig {
   append?: 'head' | 'tail';
   capacity?: number;
 }
@@ -39,7 +39,7 @@ export class MeasurementCache {
     });
   }
 
-  addMeasurement(m: Measurement, action: MeasurmentAction): DataFrame {
+  addMeasurement(m: Measurement, action: MeasurementAction): DataFrame {
     const key = m.labels ? formatLabels(m.labels) : '';
     let frame = this.frames[key];
     if (!frame) {
@@ -61,7 +61,7 @@ export class MeasurementCache {
     }
 
     // Clear existing values
-    if (action === MeasurmentAction.Replace) {
+    if (action === MeasurementAction.Replace) {
       for (const field of frame.fields) {
         (field.values as ArrayVector).buffer.length = 0; // same buffer, but reset to empty length
       }
@@ -98,8 +98,8 @@ export class MeasurementCache {
 }
 
 export class MeasurementCollector implements LiveMeasurements {
-  measurements = new Map<string, MeasurmentCache>();
-  config: MeasurmentCacheConfig = {
+  measurements = new Map<string, MeasurementCache>();
+  config: MeasurementCacheConfig = {
     append: 'tail',
     capacity: 600, // Default capacity 10min @ 1hz
   };
@@ -174,10 +174,10 @@ export class MeasurementCollector implements LiveMeasurements {
   //------------------------------------------------------
 
   addBatch = (batch: MeasurementBatch) => {
-    let action = batch.action ?? MeasurmentAction.Append;
-    if (action === MeasurmentAction.Clear) {
+    let action = batch.action ?? MeasurementAction.Append;
+    if (action === MeasurementAction.Clear) {
       this.measurements.clear();
-      action = MeasurmentAction.Append;
+      action = MeasurementAction.Append;
     }
 
     // Change the local buffer size
@@ -189,13 +189,13 @@ export class MeasurementCollector implements LiveMeasurements {
       const name = measure.name || '';
       let m = this.measurements.get(name);
       if (!m) {
-        m = new MeasurmentCache(name, this.config);
+        m = new MeasurementCache(name, this.config);
         this.measurements.set(name, m);
       }
       if (measure.values) {
         m.addMeasurement(measure, action);
       } else {
-        console.log('invalid measurment', measure);
+        console.log('invalid measurement', measure);
       }
     }
     return this;

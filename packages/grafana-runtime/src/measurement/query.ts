@@ -30,7 +30,7 @@ export function getLiveMeasurements(addr: LiveChannelAddress): LiveMeasurements 
 /**
  * When you know the stream will be managed measurements
  */
-export function getLiveMeasurmentsObserver(
+export function getLiveMeasurementsObserver(
   addr: LiveChannelAddress,
   requestId: string,
   query?: MeasurementsQuery

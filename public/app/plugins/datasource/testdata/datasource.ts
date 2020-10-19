@@ -237,7 +237,7 @@ function runGrafanaLiveQuery(
   if (!target.channel) {
     throw new Error(`Missing channel config`);
   }
-  return getLiveMeasurmentsObserver(
+  return getLiveMeasurementsObserver(
     {
       scope: LiveChannelScope.Grafana,
       namespace: 'testdata',

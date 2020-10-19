@@ -16,14 +16,14 @@ export interface Measurement {
 /**
  * @experimental
  */
-export enum MeasurmentAction {
-  /** The measurments will be added to the client buffer */
+export enum MeasurementAction {
+  /** The measurements will be added to the client buffer */
   Append = 'append',
 
-  /** The measurments will replace the client buffer  */
+  /** The measurements will replace the client buffer  */
   Replace = 'replace',
 
-  /** All measurments will be removed from the client buffer before processing */
+  /** All measurements will be removed from the client buffer before processing */
   Clear = 'clear',
 }
 
@@ -36,16 +36,16 @@ export interface MeasurementBatch {
   /**
    * The default action is to append values to the client buffer
    */
-  action?: MeasurmentAction;
+  action?: MeasurementAction;
 
   /**
-   * List of measurments to process
+   * List of measurements to process
    */
   measures: Measurement[];
 
   /**
    * This will set the capacity on the client buffer for everything
-   * in the measurment channel
+   * in the measurement channel
    */
   capacity?: number;
 }
