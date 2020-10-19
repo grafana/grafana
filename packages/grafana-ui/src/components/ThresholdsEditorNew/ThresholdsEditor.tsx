@@ -167,6 +167,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
         key={isPercent.toString()}
         onChange={(event: ChangeEvent<HTMLInputElement>) => this.onChangeThresholdValue(event, threshold)}
         value={threshold.value}
+        autoFocus
         onBlur={this.onBlur}
         prefix={
           <div className={styles.inputPrefix}>
