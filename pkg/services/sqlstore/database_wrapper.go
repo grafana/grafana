@@ -19,7 +19,7 @@ import (
 var (
 	databaseQueryCounter   *prometheus.CounterVec
 	databaseQueryHistogram *prometheus.HistogramVec
-	logger                 log.Logger = log.New("DBMetrics")
+	logger                 log.Logger = log.New("sqlstore.metrics")
 )
 
 func init() {
