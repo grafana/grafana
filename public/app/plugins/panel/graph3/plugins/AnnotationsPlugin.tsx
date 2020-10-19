@@ -33,7 +33,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
   );
 
   useEffect(() => {
-    if (plotCtx.isPlotReady && annotations.length > 0) {
+    if (plotCtx.isPlotReady) {
       const views: Array<DataFrameView<AnnotationsDataFrameViewDTO>> = [];
 
       for (const frame of annotations) {
