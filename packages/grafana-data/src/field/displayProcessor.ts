@@ -3,13 +3,14 @@ import _ from 'lodash';
 
 // Types
 import { Field, FieldType } from '../types/dataFrame';
-import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
+import { GrafanaTheme } from '../types/theme';
 import { DecimalCount, DecimalInfo, DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { getValueFormat } from '../valueFormats/valueFormats';
 import { getMappedValue } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
 import { getScaleCalculator } from './scale';
+import { getTestTheme } from '../utils/testdata/testTheme';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -41,7 +42,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   const config = field.config ?? {};
 
   // Theme should be required or we need access to default theme instance from here
-  const theme = options.theme ?? ({ type: GrafanaThemeType.Dark } as GrafanaTheme);
+  const theme = options.theme ?? getTestTheme();
 
   let unit = config.unit;
   let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
