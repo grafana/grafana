@@ -415,7 +415,7 @@ func applyEnvVariableOverrides(file *ini.File) error {
 	return nil
 }
 
-func (cfg *Cfg) readGrafanaEnvironmentMetrics() {
+func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 	environmentMetricsSection := cfg.Raw.Section("metrics.environment_info")
 	keys := environmentMetricsSection.Keys()
 	cfg.MetricsGrafanaEnvironmentInfo = make(map[string]string, len(keys))
@@ -425,15 +425,17 @@ func (cfg *Cfg) readGrafanaEnvironmentMetrics() {
 		labelValue := model.LabelValue(key.Value())
 
 		if !labelName.IsValid() {
-			cfg.Logger.Error("invalid label name in environment metrics configuration", "labelName", labelName)
+			return fmt.Errorf("invalid label name in [metrics.environment_info] configuration. name %q", labelName)
 		}
 
 		if !labelValue.IsValid() {
-			cfg.Logger.Error("invalid label value in environment metrics configuration", "labelValue", labelValue)
+			return fmt.Errorf("invalid label value in [metrics.environment_info] configuration. name %q value %q", labelName, labelValue)
 		}
 
 		cfg.MetricsGrafanaEnvironmentInfo[string(labelName)] = string(labelValue)
 	}
+
+	return nil
 }
 
 func (cfg *Cfg) readAnnotationSettings() {
@@ -806,7 +808,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
 	cfg.readAnnotationSettings()
-	cfg.readGrafanaEnvironmentMetrics()
+	if err := cfg.readGrafanaEnvironmentMetrics(); err != nil {
+		return err
+	}
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		log.Warnf("require_email_validation is enabled but smtp is disabled")
