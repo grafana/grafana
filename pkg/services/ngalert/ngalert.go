@@ -86,6 +86,9 @@ func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64, signedInUser *mod
 		dsName := query.Model.Get("datasource").MustString("")
 		if dsName != "__expr__" {
 			datasourceID, err := query.Model.Get("datasourceId").Int64()
+			if err != nil {
+				return nil, err
+			}
 
 			ds, err = ng.DatasourceCache.GetDatasource(datasourceID, signedInUser, skipCache)
 			if err != nil {

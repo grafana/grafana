@@ -13,9 +13,9 @@ func (ng *AlertNG) registerBusHandlers() {
 	ng.Bus.AddHandler(ng.GetAlertDefinitionByID)
 }
 
-func getAlertDefinitionByID(ID int64, sess *sqlstore.DBSession) (*AlertDefinition, error) {
+func getAlertDefinitionByID(alertDefinitionID int64, sess *sqlstore.DBSession) (*AlertDefinition, error) {
 	alertDefinition := AlertDefinition{}
-	has, err := sess.ID(ID).Get(&alertDefinition)
+	has, err := sess.ID(alertDefinitionID).Get(&alertDefinition)
 	if !has {
 		return nil, ErrAlertDefinitionNotFound
 	}
