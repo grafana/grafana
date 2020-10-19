@@ -6,11 +6,11 @@ import {
   FieldType,
   getDisplayProcessor,
   PanelData,
-  PreferredVisualisationType,
   sortLogsResult,
   standardTransformers,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { groupBy } from 'lodash';
 
 import { ExploreItemState, ExplorePanelData } from '../../../types';
 import { getGraphSeriesModel } from '../../../plugins/panel/graph2/getGraphSeriesModel';
@@ -41,24 +41,27 @@ export const decorateWithGraphLogsTraceAndTable = (
       const traceFrames: DataFrame[] = [];
 
       for (const frame of data.series) {
-        if (shouldShowInVisualisationTypeStrict(frame, 'logs')) {
-          logsFrames.push(frame);
-        } else if (shouldShowInVisualisationTypeStrict(frame, 'graph')) {
-          graphFrames.push(frame);
-        } else if (shouldShowInVisualisationTypeStrict(frame, 'trace')) {
-          traceFrames.push(frame);
-        } else if (shouldShowInVisualisationTypeStrict(frame, 'table')) {
-          tableFrames.push(frame);
-        } else if (isTimeSeries(frame, datasourceInstance?.meta.id)) {
-          if (shouldShowInVisualisationType(frame, 'graph')) {
+        switch (frame.meta?.preferredVisualisationType) {
+          case 'logs':
+            logsFrames.push(frame);
+            break;
+          case 'graph':
             graphFrames.push(frame);
-          }
-          if (shouldShowInVisualisationType(frame, 'table')) {
+            break;
+          case 'trace':
+            traceFrames.push(frame);
+            break;
+          case 'table':
             tableFrames.push(frame);
-          }
-        } else {
-          // We fallback to table if we do not have any better meta info about the dataframe.
-          tableFrames.push(frame);
+            break;
+          default:
+            if (isTimeSeries(frame, datasourceInstance?.meta.id)) {
+              graphFrames.push(frame);
+              tableFrames.push(frame);
+            } else {
+              // We fallback to table if we do not have any better meta info about the dataframe.
+              tableFrames.push(frame);
+            }
         }
       }
 
@@ -179,36 +182,8 @@ export const decorateWithLogsResult = (
   );
 
 function isTimeSeries(frame: DataFrame, datasource?: string): boolean {
-  // TEMP: Temporary hack. Remove when logs/metrics unification is done
-  if (datasource && datasource === 'cloudwatch') {
-    return isTimeSeriesCloudWatch(frame);
-  }
-
-  if (frame.fields.length === 2) {
-    if (frame.fields[0].type === FieldType.time) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function shouldShowInVisualisationType(frame: DataFrame, visualisation: PreferredVisualisationType) {
-  if (frame.meta?.preferredVisualisationType && frame.meta?.preferredVisualisationType !== visualisation) {
-    return false;
-  }
-
-  return true;
-}
-
-function shouldShowInVisualisationTypeStrict(frame: DataFrame, visualisation: PreferredVisualisationType) {
-  return frame.meta?.preferredVisualisationType === visualisation;
-}
-
-// TEMP: Temporary hack. Remove when logs/metrics unification is done
-function isTimeSeriesCloudWatch(frame: DataFrame): boolean {
-  return (
-    frame.fields.some(field => field.type === FieldType.time) &&
-    frame.fields.some(field => field.type === FieldType.number)
+  const grouped = groupBy(frame.fields, field => field.type);
+  return Boolean(
+    Object.keys(grouped).length === 2 && grouped[FieldType.time].length === 1 && grouped[FieldType.number]
   );
 }
