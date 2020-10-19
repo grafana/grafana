@@ -37,14 +37,6 @@ func (s *UserAuthTokenService) Init() error {
 	return nil
 }
 
-func IsBasicAuthEnabled() bool {
-	return setting.BasicAuthEnabled
-}
-
-func IsLoginDisabled() bool {
-	return setting.DisableLogin
-}
-
 func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, error) {
 	var count int64
 	var err error

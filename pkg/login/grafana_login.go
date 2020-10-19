@@ -5,12 +5,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-// isLoginDisabled checks if Basic Auth is enabled
-var isLoginDisabled = auth.IsLoginDisabled
 
 var validatePassword = func(providedPassword string, userPassword string, userSalt string) error {
 	passwordHashed, err := util.EncodePassword(providedPassword, userSalt)
