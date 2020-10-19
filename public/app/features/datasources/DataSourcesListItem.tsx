@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import { DataSourceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { PluginErrors } from '../../core/components/PluginErrors/PluginErrors';
 
 export interface Props {
   dataSource: DataSourceSettings;
@@ -26,7 +25,6 @@ export class DataSourcesListItem extends PureComponent<Props> {
                 {dataSource.isDefault && <span className="btn btn-secondary btn-small card-item-label">default</span>}
               </div>
               <div className="card-item-sub-name">{dataSource.url}</div>
-              {dataSource.errors && <PluginErrors errorCodes={dataSource.errors.map(e => e.errorCode)} />}
             </div>
           </div>
         </a>

@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import { PluginMeta } from '@grafana/data';
 import { PluginSignatureBadge } from './PluginSignatureBadge';
-import { PluginErrors } from '../../core/components/PluginErrors/PluginErrors';
 
 interface Props {
   plugin: PluginMeta;
@@ -29,7 +28,6 @@ const PluginListItem: FC<Props> = props => {
           <div className="card-item-details">
             <div className="card-item-name">{plugin.name}</div>
             <div className="card-item-sub-name">{`By ${plugin.info.author.name}`}</div>
-            {plugin.errors && <PluginErrors errorCodes={plugin.errors.map(e => e.errorCode)} />}
           </div>
         </div>
       </a>
