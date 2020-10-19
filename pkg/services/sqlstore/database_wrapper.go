@@ -19,7 +19,6 @@ import (
 var (
 	databaseQueryCounter   *prometheus.CounterVec
 	databaseQueryHistogram *prometheus.HistogramVec
-	logger                 log.Logger = log.New("sqlstore.metrics")
 )
 
 func init() {
@@ -55,14 +54,16 @@ func WrapDatabaseDriverWithHooks(dbType string) string {
 	}
 
 	driverWithHooks := dbType + "WithHooks"
-	sql.Register(driverWithHooks, sqlhooks.Wrap(d, &databaseQueryWrapper{}))
+	sql.Register(driverWithHooks, sqlhooks.Wrap(d, &databaseQueryWrapper{log: log.New("sqlstore.metrics")}))
 	core.RegisterDriver(driverWithHooks, &databaseQueryWrapperParser{dbType: dbType})
 	return driverWithHooks
 }
 
 // databaseQueryWrapper satisfies the sqlhook.databaseQueryWrapper interface
 // which allow us to wrap all SQL queries with a `Before` & `After` hook.
-type databaseQueryWrapper struct{}
+type databaseQueryWrapper struct {
+	log log.Logger
+}
 
 // databaseQueryWrapperKey is used as key to save values in `context.Context`
 type databaseQueryWrapperKey struct{}
@@ -78,7 +79,7 @@ func (h *databaseQueryWrapper) After(ctx context.Context, query string, args ...
 	elapsed := time.Since(begin)
 	databaseQueryCounter.WithLabelValues("success").Inc()
 	databaseQueryHistogram.WithLabelValues("success").Observe(elapsed.Seconds())
-	logger.Debug("query finished", "status", "success", "elapsed time", elapsed, "sql", query)
+	h.log.Debug("query finished", "status", "success", "elapsed time", elapsed, "sql", query)
 	return ctx, nil
 }
 
@@ -94,7 +95,7 @@ func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query str
 	elapsed := time.Since(begin)
 	databaseQueryCounter.WithLabelValues(status).Inc()
 	databaseQueryHistogram.WithLabelValues(status).Observe(elapsed.Seconds())
-	logger.Debug("query finished", "status", status, "elapsed time", elapsed, "sql", query, "error", err)
+	h.log.Debug("query finished", "status", status, "elapsed time", elapsed, "sql", query, "error", err)
 	return err
 }
 
