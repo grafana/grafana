@@ -9,7 +9,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
   let logColor = selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.gray2 }, theme.type);
   const borderColor = selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.gray2 }, theme.type);
   const bgColor = selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.dark4 }, theme.type);
-  const bgColorLogRow = selectThemeVariant({ light: theme.palette.gray7, dark: theme.palette.dark2 }, theme.type);
+  const hoverBgColor = selectThemeVariant({ light: theme.palette.gray7, dark: theme.palette.dark2 }, theme.type);
   const context = css`
     label: context;
     visibility: hidden;
@@ -93,7 +93,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       }
 
       &:hover {
-        background: ${bgColorLogRow};
+        background: ${hoverBgColor};
       }
     `,
     logsRowDuplicates: css`
