@@ -1,0 +1,18 @@
+{
+  "type": "panel",
+  "name": "SubMenu",
+  "id": "submenu",
+
+  "skipDataQuery": true,
+
+  "info": {
+    "author": {
+      "name": "Kamal Galrani",
+      "url": "https://github.com/KamalGalrani/"
+    },
+    "logos": {
+      "small": "img/icn-text-panel.svg",
+      "large": "img/icn-text-panel.svg"
+    }
+  }
+}

@@ -57,6 +57,7 @@ export class DashboardModel {
   style: any;
   timezone: any;
   editable: any;
+  hideSubMenu: any;
   graphTooltip: any;
   time: any;
   private originalTime: any;
@@ -112,6 +113,7 @@ export class DashboardModel {
     this.style = data.style || 'dark';
     this.timezone = data.timezone || '';
     this.editable = data.editable !== false;
+    this.hideSubMenu = data.hideSubMenu !== false;
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time || { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker || {};

@@ -10,12 +10,16 @@ import { SubMenuItems } from './SubMenuItems';
 import { DashboardLink } from '../../state/DashboardModel';
 
 interface OwnProps {
-  dashboard: DashboardModel;
-  links: DashboardLink[];
+  links?: DashboardLink[];
+  hideVariables?: boolean;
+  hideAnnotations?: boolean;
+  hideLinks?: boolean;
+  query?: string;
 }
 
 interface ConnectedProps {
   variables: VariableModel[];
+  dashboard: DashboardModel;
 }
 
 interface DispatchProps {}
@@ -36,31 +40,77 @@ class SubMenuUnConnected extends PureComponent<Props> {
     this.forceUpdate();
   };
 
+  getVariables = () => {
+    const { hideVariables, query } = this.props;
+    if (hideVariables) {
+      return [];
+    }
+
+    const variables = this.props.variables.filter(variable => variable.hide !== VariableHide.hideVariable);
+    if (query) {
+      const re = new RegExp(query as string);
+      return variables.filter(variable => variable.name.match(re) !== null);
+    }
+    return variables;
+  };
+
+  getAnnotations = () => {
+    const { dashboard, hideAnnotations, query } = this.props;
+    if (hideAnnotations) {
+      return [];
+    }
+
+    const annotations = dashboard.annotations.list.filter(annotation => annotation.hide !== true);
+    if (query) {
+      const re = new RegExp(query as string);
+      return annotations.filter(annotation => annotation.name.match(re) !== null);
+    }
+    return annotations;
+  };
+
+  getLinks = () => {
+    const { dashboard, hideLinks, query } = this.props;
+    if (hideLinks) {
+      return [];
+    }
+
+    const links = this.props.links || dashboard.links;
+    if (query) {
+      return [];
+    }
+    return links;
+  };
+
   isSubMenuVisible = () => {
-    if (this.props.dashboard.links.length > 0) {
+    const variables = this.getVariables();
+    if (variables.length > 0) {
       return true;
     }
 
-    const visibleVariables = this.props.variables.filter(variable => variable.hide !== VariableHide.hideVariable);
-    if (visibleVariables.length > 0) {
+    const annotations = this.getAnnotations();
+    if (annotations.length > 0) {
       return true;
     }
 
-    const visibleAnnotations = this.props.dashboard.annotations.list.filter(annotation => annotation.hide !== true);
-    return visibleAnnotations.length > 0;
+    const links = this.getLinks();
+    return links.length > 0;
   };
 
   render() {
-    const { dashboard, variables, links } = this.props;
+    const { dashboard } = this.props;
 
     if (!this.isSubMenuVisible()) {
       return null;
     }
 
+    const variables = this.getVariables();
+    const annotations = this.getAnnotations();
+    const links = this.getLinks();
+
     return (
       <div className="submenu-controls">
         <SubMenuItems variables={variables} />
-        <Annotations annotations={dashboard.annotations.list} onAnnotationChanged={this.onAnnotationStateChanged} />
+        <Annotations annotations={annotations} onAnnotationChanged={this.onAnnotationStateChanged} />
         <div className="gf-form gf-form--grow" />
         {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
         <div className="clearfix" />
@@ -72,6 +122,7 @@ class SubMenuUnConnected extends PureComponent<Props> {
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
   return {
     variables: getSubMenuVariables(state.templating.variables),
+    dashboard: state.dashboard.getModel() as DashboardModel,
   };
 };
 
