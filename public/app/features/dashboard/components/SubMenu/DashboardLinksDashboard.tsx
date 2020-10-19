@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { createRef, PureComponent } from 'react';
 import { Icon, Tooltip } from '@grafana/ui';
 import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -19,6 +19,8 @@ interface State {
 
 export class DashboardLinksDashboard extends PureComponent<Props, State> {
   state: State = { resolvedLinks: [] };
+  wrapperRef = createRef<HTMLDivElement>();
+  listItemRef = createRef<HTMLUListElement>();
 
   componentDidMount() {
     this.searchForDashboards();
@@ -43,7 +45,7 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
     const { link } = this.props;
 
     return (
-      <div className="gf-form" key={key} aria-label={selector}>
+      <div className="gf-form" key={key} aria-label={selector} ref={this.wrapperRef}>
         {link.tooltip && <Tooltip content={link.tooltip}>{linkElement}</Tooltip>}
         {!link.tooltip && <>{linkElement}</>}
       </div>
@@ -79,6 +81,16 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
     );
   };
 
+  getDropdownLocationCssClass = (): string => {
+    const [pullLeftCssClass, pullRightCssClass] = ['pull-left', 'pull-right'];
+    const wrapper = this.wrapperRef.current;
+    const list = this.listItemRef.current;
+    if (!wrapper || !list) {
+      return pullRightCssClass;
+    }
+    return wrapper.offsetLeft > list.offsetWidth - wrapper.offsetWidth ? pullRightCssClass : pullLeftCssClass;
+  };
+
   renderDropdown = () => {
     const { link, linkInfo } = this.props;
     const { resolvedLinks } = this.state;
@@ -94,7 +106,7 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
           <Icon name="bars" />
           <span>{linkInfo.title}</span>
         </a>
-        <ul className="dropdown-menu pull-right" role="menu">
+        <ul className={'dropdown-menu ' + this.getDropdownLocationCssClass()} role="menu" ref={this.listItemRef}>
           {resolvedLinks.length > 0 &&
             resolvedLinks.map((resolvedLink, index) => {
               return (

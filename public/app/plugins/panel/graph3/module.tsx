@@ -1,5 +1,5 @@
 import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
-import { GraphCustomFieldConfig } from '@grafana/ui';
+import { AxisSide, GraphCustomFieldConfig } from '@grafana/ui';
 import { GraphPanel } from './GraphPanel';
 import { Options } from './types';
 
@@ -113,11 +113,11 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           path: 'axis.side',
           name: 'Y axis side',
           category: ['Axis'],
-          defaultValue: 3,
+          defaultValue: AxisSide.Left,
           settings: {
             options: [
-              { value: 3, label: 'Left' },
-              { value: 1, label: 'Right' },
+              { value: AxisSide.Left, label: 'Left' },
+              { value: AxisSide.Right, label: 'Right' },
             ],
           },
         })
@@ -167,12 +167,6 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           ],
         },
       })
-      // .addBooleanSwitch({
-      //   path: 'graph.realTimeUpdates',
-      //   name: 'Real time updates',
-      //   description: 'continue to update the graph so the time axis matches the clock.',
-      //   defaultValue: false,
-      // })
       .addBooleanSwitch({
         category: ['Legend'],
         path: 'legend.isVisible',

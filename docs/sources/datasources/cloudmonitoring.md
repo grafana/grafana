@@ -171,7 +171,7 @@ In the Group By dropdown, you can see a list of metric and resource labels for a
 | `{{metadata.system_labels.xxx}}` | returns the meta data system label value | `{{metadata.system_labels.name}}` | `grafana`        |
 | `{{metadata.user_labels.xxx}}`   | returns the meta data user label value   | `{{metadata.user_labels.tag}}`    | `production`     |
 
-Example Alias By: `{{metric.type}} - {{metric.labels.instance_name}}`
+Example Alias By: `{{metric.type}} - {{metric.label.instance_name}}`
 
 Example Result: `compute.googleapis.com/instance/cpu/usage_time - server1-prod`
 
@@ -335,3 +335,24 @@ Only available in Grafana v7.1+.
 
 Click on a time series in the panel to see a context menu with a link to View in Metrics Explorer in Google Cloud Console. Clicking that link opens the Metrics Explorer in the Google Cloud Console and runs the query from the Grafana panel there.
 The link navigates the user first to the Google Account Chooser and after successfully selecting an account, the user is redirected to the Metrics Explorer. The provided link is valid for any account, but it only displays the query if your account has access to the GCP project specified in the query.
+
+## Out-of-the-box dashboards
+
+> Only available in Grafana v7.3+.
+
+The updated Cloud Monitoring data source ships with pre-configured dashboards for five of the most popular GCP services:
+
+1. BigQuery
+1. Cloud Load Balancing
+1. Cloud SQL
+1. Google Compute Engine `GCE`
+1. Google Kubernetes Engine `GKE`
+
+To import the pre-configured dashboards, go to the configuration page of a Cloud monitoring data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use.
+The datasource of the newly created dashboard panels will be the one selected above.
+
+The dashboards have a template variable which is populated with the projects accessible by the configured service account every time the dashboard is loaded. After the dashboard is loaded, you can select the project you prefer from the drop-down list.
+
+To customize the dashboard, we recommend saving the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
+
+{{< docs-imagebox img="/img/docs/v73/cloud-monitoring-dashboard-import.png" caption="Cloud Monitoring dashboard import" >}}

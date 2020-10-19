@@ -42,7 +42,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
 
   // THIS EVENT ONLY MOCKS EXEMPLAR Y VALUE!!!! TO BE REMOVED WHEN WE GET CORRECT EXEMPLARS SHAPE VIA PROPS
   useEffect(() => {
-    if (plotCtx.isPlotReady && exemplars.length) {
+    if (plotCtx.isPlotReady) {
       const mocks: DataFrame[] = [];
 
       for (const frame of exemplars) {

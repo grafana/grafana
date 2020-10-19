@@ -175,4 +175,12 @@ func addAlertMigrations(mg *Migrator) {
 	// change column type of alert.settings
 	mg.AddMigration("alter alert.settings to mediumtext", NewRawSqlMigration("").
 		Mysql("ALTER TABLE alert MODIFY settings MEDIUMTEXT;"))
+
+	mg.AddMigration("Add non-unique index alert_notification_state_alert_id", NewAddIndexMigration(alert_notification_state, &Index{
+		Cols: []string{"alert_id"}, Type: IndexType,
+	}))
+
+	mg.AddMigration("Add non-unique index alert_rule_tag_alert_id", NewAddIndexMigration(alertRuleTagTable, &Index{
+		Cols: []string{"alert_id"}, Type: IndexType,
+	}))
 }

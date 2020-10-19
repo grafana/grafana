@@ -155,7 +155,11 @@ RUN cd /tmp && \
     tar xf x86_64-linux-musl-cross.tgz && \
     rm x86_64-linux-musl-cross.tgz
 
-RUN go get -u github.com/mgechev/revive@v1.0.2
-RUN mv ${GOPATH}/bin/revive /usr/local/bin/
+RUN go get -u github.com/mgechev/revive@v1.0.2 && \
+  mv ${GOPATH}/bin/revive /usr/local/bin/ && \
+  go get github.com/google/go-jsonnet/cmd/jsonnetfmt && \
+  mv ${GOPATH}/bin/jsonnetfmt /usr/local/bin/ && \
+  go get github.com/monitoring-mixins/mixtool/cmd/mixtool && \
+  mv ${GOPATH}/bin/mixtool /usr/local/bin/
 
 COPY ./bootstrap.sh /tmp/bootstrap.sh
