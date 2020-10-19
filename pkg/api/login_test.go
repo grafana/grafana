@@ -504,6 +504,8 @@ func TestLoginInternal(t *testing.T) {
 	mockSetIndexViewData()
 	defer resetSetIndexViewData()
 
+	mockViewIndex()
+	defer resetViewIndex()
 	sc := setupScenarioContext("/login")
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
