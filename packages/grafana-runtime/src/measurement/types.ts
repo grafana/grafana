@@ -50,6 +50,9 @@ export interface MeasurementBatch {
   capacity?: number;
 }
 
+/**
+ * @alpha -- experimental
+ */
 export interface MeasurementsQuery {
   name?: string;
   labels?: Labels;
