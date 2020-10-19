@@ -23,5 +23,5 @@ func TestParseChannelAddress(t *testing.T) {
 
 	// Check an invalid identifier
 	addr = ParseChannelAddress("aaa/bbb")
-	require.True(t, addr.IsValid())
+	require.False(t, addr.IsValid())
 }
