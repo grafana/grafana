@@ -4,7 +4,9 @@ IMAGE = grafana/docs-base:latest
 
 docs-generate-frontend:
 	yarn install --pure-lockfile --no-progress
-	../scripts/ci-reference-docs-build.sh
+	yarn run packages:build
+	yarn run packages:docsExtract
+	yarn run packages:docsToMarkdown
 	yarn run packages:clean
 
 docs-no-generate-frontend:
