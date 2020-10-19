@@ -42,11 +42,9 @@ func init() {
 }
 
 // WrapDatabaseDriverWithHooks creates a fake database driver that
-// executes Pre and post functions which we use to gather metrics about
+// executes pre and post functions which we use to gather metrics about
 // database queries.
 func WrapDatabaseDriverWithHooks(dbType string) string {
-	var d driver.Driver
-
 	drivers := map[string]driver.Driver{
 		migrator.SQLITE:   &sqlite3.SQLiteDriver{},
 		migrator.MYSQL:    &mysql.MySQLDriver{},
@@ -65,13 +63,13 @@ func WrapDatabaseDriverWithHooks(dbType string) string {
 }
 
 // databaseQueryWrapper satisfies the sqlhook.databaseQueryWrapper interface
-// which allow use to wrapp all SQL queries with a `Before` & `After` hook.
+// which allow us to wrap all SQL queries with a `Before` & `After` hook.
 type databaseQueryWrapper struct{}
 
 // databaseQueryWrapperKey is used as key to save values in `context.Context`
 type databaseQueryWrapperKey struct{}
 
-// Before hook will print the query with it's args and return the context with the timestamp
+// Before hook will print the query with its args and return the context with the timestamp
 func (h *databaseQueryWrapper) Before(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
 	return context.WithValue(ctx, databaseQueryWrapperKey{}, time.Now()), nil
 }
@@ -85,7 +83,7 @@ func (h *databaseQueryWrapper) After(ctx context.Context, query string, args ...
 	return ctx, nil
 }
 
-// OnError instances will be called if any error happens
+// OnError will be called if any error happens
 func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query string, args ...interface{}) error {
 	status := "error"
 	// https://golang.org/pkg/database/sql/driver/#ErrSkip
