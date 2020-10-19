@@ -76,9 +76,10 @@ function getLokiQueryFromSpan(span: TraceSpan): string {
  * something more intelligent should probably be implemented
  */
 function getTimeRangeFromSpan(span: TraceSpan): TimeRange {
-  const from = dateTime(span.startTime / 1000 - 5 * 1000);
+  const from = dateTime(span.startTime / 1000 - 1000 * 60 * 60);
   const spanEndMs = (span.startTime + span.duration) / 1000;
-  const to = dateTime(spanEndMs + 1000 * 60 * 60);
+  const to = dateTime(spanEndMs + 5 * 1000);
+
   return {
     from,
     to,
