@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/go-macaron/session"
+	"github.com/prometheus/common/model"
 	ini "gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/components/gtime"
@@ -267,17 +268,20 @@ type Cfg struct {
 	CookieSameSiteDisabled           bool
 	CookieSameSiteMode               http.SameSite
 
-	TempDataLifetime                 time.Duration
+	TempDataLifetime         time.Duration
+	PluginsEnableAlpha       bool
+	PluginsAppsSkipVerifyTLS bool
+	PluginSettings           PluginSettings
+	PluginsAllowUnsigned     []string
+	DisableSanitizeHtml      bool
+	EnterpriseLicensePath    string
+
+	// Metrics
 	MetricsEndpointEnabled           bool
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
 	MetricsEndpointDisableTotalStats bool
-	PluginsEnableAlpha               bool
-	PluginsAppsSkipVerifyTLS         bool
-	PluginSettings                   PluginSettings
-	PluginsAllowUnsigned             []string
-	DisableSanitizeHtml              bool
-	EnterpriseLicensePath            string
+	MetricsGrafanaEnvironmentInfo    map[string]string
 
 	// Dashboards
 	DefaultHomeDashboardPath string
@@ -409,6 +413,27 @@ func applyEnvVariableOverrides(file *ini.File) error {
 	}
 
 	return nil
+}
+
+func (cfg *Cfg) readGrafanaEnvironmentMetrics() {
+	environmentMetricsSection := cfg.Raw.Section("metrics.environment_info")
+	keys := environmentMetricsSection.Keys()
+	cfg.MetricsGrafanaEnvironmentInfo = make(map[string]string, len(keys))
+
+	for _, key := range keys {
+		labelName := model.LabelName(key.Name())
+		labelValue := model.LabelValue(key.Value())
+
+		if !labelName.IsValid() {
+			cfg.Logger.Error("invalid label name in environment metrics configuration", "labelName", labelName)
+		}
+
+		if !labelValue.IsValid() {
+			cfg.Logger.Error("invalid label value in environment metrics configuration", "labelValue", labelValue)
+		}
+
+		cfg.MetricsGrafanaEnvironmentInfo[string(labelName)] = string(labelValue)
+	}
 }
 
 func (cfg *Cfg) readAnnotationSettings() {
@@ -781,6 +806,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
 	cfg.readAnnotationSettings()
+	cfg.readGrafanaEnvironmentMetrics()
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		log.Warnf("require_email_validation is enabled but smtp is disabled")
