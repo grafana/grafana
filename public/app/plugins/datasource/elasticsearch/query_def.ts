@@ -295,3 +295,8 @@ export const findMetricById = (metrics: any[], id: any) => {
 export function hasMetricOfType(target: any, type: string): boolean {
   return target && target.metrics && target.metrics.some((m: any) => m.type === type);
 }
+
+export function getInlineScriptSetting(inlineScript: string, esVersion: number) {
+  const keyName = esVersion < 56 ? 'inline' : 'source';
+  return { [keyName]: inlineScript };
+}

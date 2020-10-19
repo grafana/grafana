@@ -167,4 +167,21 @@ describe('ElasticQueryDef', () => {
       });
     });
   });
+
+  describe('getInlineScriptSetting', () => {
+    describe('using esversion < 5.6', () => {
+      test('should return setting with "inline" key', () => {
+        expect(queryDef.getInlineScriptSetting('_value * 42', 2)).toEqual({ inline: '_value * 42' });
+        expect(queryDef.getInlineScriptSetting('_value * 42', 5)).toEqual({ inline: '_value * 42' });
+      });
+    });
+
+    describe('using esversion >= 5.6', () => {
+      test('should return setting with "script" key', () => {
+        expect(queryDef.getInlineScriptSetting('_value * 42', 56)).toEqual({ source: '_value * 42' });
+        expect(queryDef.getInlineScriptSetting('_value * 42', 60)).toEqual({ source: '_value * 42' });
+        expect(queryDef.getInlineScriptSetting('_value * 42', 70)).toEqual({ source: '_value * 42' });
+      });
+    });
+  });
 });
