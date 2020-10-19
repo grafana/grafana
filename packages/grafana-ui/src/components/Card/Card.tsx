@@ -85,7 +85,7 @@ export const Card: FC<Props> = ({
   const hasActions = Boolean(actions.length || secondaryActions.length);
   const disableHover = disabled || actions.length > 1;
   const theme = useTheme();
-  const styles = getStyles(theme, disabled && !actions.length, disableHover);
+  const styles = getStyles(theme, disabled && !actions.length, disableHover || !onClick);
   // Join meta data elements by '|'
   const meta = useMemo(
     () =>
