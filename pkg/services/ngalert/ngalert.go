@@ -53,11 +53,9 @@ func (ng *AlertNG) IsDisabled() bool {
 // AddMigration defines database migrations.
 // If Alerting NG is not enabled does nothing.
 func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
-	/*
-		if ng.IsDisabled() {
-			return
-		}
-	*/
+	if ng.IsDisabled() {
+		return
+	}
 
 	alertDefinition := migrator.Table{
 		Name: "alert_definition",
