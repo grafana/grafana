@@ -512,7 +512,7 @@ func TestLoginInternal(t *testing.T) {
 	}
 
 	sc.defaultHandler = Wrap(func(c *models.ReqContext) {
-		c.Req.URL.RawQuery = "internal=true"
+		c.Req.URL.RawQuery = "disableAutoLogin=true"
 		hs.LoginView(c)
 	})
 
