@@ -399,7 +399,7 @@ The length of time that Grafana will wait for a successful TLS handshake with th
 
 ### expect_continue_timeout_seconds
 
-The length of time that Grafana will wait for a datasource’s first response headers after fully writing the request headers, if the request has an “Expect: 100-continue” header.  A value of `0` will result in the body being sent immediately. Default is `1` second. For more details check the [Transport.ExpectContinueTimeout](https://golang.org/pkg/net/http/#Transport.ExpectContinueTimeout) documentation.
+The length of time that Grafana will wait for a datasource’s first response headers after fully writing the request headers, if the request has an “Expect: 100-continue” header. A value of `0` will result in the body being sent immediately. Default is `1` second. For more details check the [Transport.ExpectContinueTimeout](https://golang.org/pkg/net/http/#Transport.ExpectContinueTimeout) documentation.
 
 ### max_idle_connections
 
@@ -623,7 +623,7 @@ Default is `false`.
 
 ### user_invite_max_lifetime_duration
 
-The duration in time a user invitation remains valid before expiring. 
+The duration in time a user invitation remains valid before expiring.
 This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
 Default is `24h` (24 hours). The minimum supported duration is `15m` (15 minutes).
 
@@ -1072,6 +1072,15 @@ If set to `true`, then total stats generation (`stat_totals_*` metrics) is disab
 If both are set, then basic authentication is required to access the metrics endpoint.
 
 <hr>
+
+## [metrics.environment_info]
+
+Adds dimensions to the `grafana_environment_info` metric, which can expose more information about the Grafana instance.
+
+```
+; exampleLabel1 = exampleValue1
+; exampleLabel2 = exampleValue2
+```
 
 ## [metrics.graphite]
 
