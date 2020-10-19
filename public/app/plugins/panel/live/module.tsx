@@ -31,7 +31,7 @@ export const plugin = new PanelPlugin<LivePanelOptions>(LivePanel).setPanelOptio
     .addBooleanSwitch({
       path: 'publish',
       name: 'Show Publish',
-      description: 'Display the a form to publish values',
+      description: 'Display a form to publish values',
       defaultValue: false,
     });
 });

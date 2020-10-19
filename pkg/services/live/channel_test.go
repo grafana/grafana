@@ -4,13 +4,12 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseChannelAddress(t *testing.T) {
 	addr := ParseChannelAddress("aaa/bbb/ccc/ddd")
 	require.True(t, addr.IsValid())
-		t.FailNow()
-	}
 
 	ex := ChannelAddress{
 		Scope:     "aaa",
@@ -24,7 +23,5 @@ func TestParseChannelAddress(t *testing.T) {
 
 	// Check an invalid identifier
 	addr = ParseChannelAddress("aaa/bbb")
-	if addr.IsValid() {
-		t.FailNow()
-	}
+	require.True(t, addr.IsValid())
 }

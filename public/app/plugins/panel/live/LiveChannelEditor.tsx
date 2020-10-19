@@ -141,7 +141,7 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
               <Label>Path</Label>
               <Select
                 options={paths}
-                value={paths.find(s => s.value === path) ?? (path ? { label: path, value: path } : undefined)}
+                value={findPathOption(paths, path)}
                 onChange={this.onPathChanged}
                 allowCustomValue={true}
                 backspaceRemovesValue={true}
@@ -152,6 +152,17 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
       </>
     );
   }
+}
+
+function findPathOption(paths: Array<SelectableValue<string>>, path?: string): SelectableValue<string> | undefined {
+  const v = paths.find(s => s.value === path);
+  if (v) {
+    return v;
+  }
+  if (path) {
+    return { label: path, value: path };
+  }
+  return undefined;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
