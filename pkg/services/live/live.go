@@ -20,7 +20,7 @@ var (
 
 // CoreGrafanaScope list of core features
 type CoreGrafanaScope struct {
-	Features map[string]models.ChannelNamespaceHandler
+	Features map[string]models.ChannelHandlerFactory
 
 	// The generic service to advertise dashboard changes
 	Dashboards models.DashboardActivityChannel
@@ -47,7 +47,7 @@ func InitializeBroker() (*GrafanaLive, error) {
 		channels:   make(map[string]models.ChannelHandler),
 		channelsMu: sync.RWMutex{},
 		GrafanaScope: CoreGrafanaScope{
-			Features: make(map[string]models.ChannelNamespaceHandler),
+			Features: make(map[string]models.ChannelHandlerFactory),
 		},
 	}
 
@@ -249,7 +249,7 @@ func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, 
 		return c, nil
 	}
 
-	getter, err := g.GetChannelNamespace(addr.Scope, addr.Namespace)
+	getter, err := g.GetChannelHandlerFactory(addr.Scope, addr.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -264,9 +264,9 @@ func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, 
 	return c, nil
 }
 
-// GetChannelNamespace gets a ChannelNamespaceHandler for a namespace.
+// GetChannelHandlerFactory gets a ChannelHandlerFactory for a namespace.
 // It gives threadsafe access to the channel.
-func (g *GrafanaLive) GetChannelNamespace(scope string, name string) (models.ChannelNamespaceHandler, error) {
+func (g *GrafanaLive) GetChannelHandlerFactory(scope string, name string) (models.ChannelHandlerFactory, error) {
 	if scope == "grafana" {
 		p, ok := g.GrafanaScope.Features[name]
 		if ok {
