@@ -10,7 +10,7 @@ weight = 700
 
 # Auditing
 
-> Only available in Grafana Enterprise v7.3+.
+> **Note:** Only available in Grafana Enterprise v7.3+.
 
 Auditing allows you to track important changes to your Grafana instance. Modifications to resources such as dashboards and data sources or a user failing to login will all result in an audit log being created. Learn more about what is being audited below.
 By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
