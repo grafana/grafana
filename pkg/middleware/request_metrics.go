@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/macaron.v1"
 )
@@ -38,31 +39,38 @@ func init() {
 }
 
 // RequestMetrics is a middleware handler that instruments the request
-func RequestMetrics(handler string) macaron.Handler {
-	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
-		rw := res.(macaron.ResponseWriter)
-		now := time.Now()
-		httpRequestsInFlight.Inc()
-		defer httpRequestsInFlight.Dec()
-		c.Next()
+func RequestMetrics(cfg *setting.Cfg) func(handler string) macaron.Handler {
+	return func(handler string) macaron.Handler {
+		return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
+			rw := res.(macaron.ResponseWriter)
+			now := time.Now()
+			httpRequestsInFlight.Inc()
+			defer httpRequestsInFlight.Dec()
+			c.Next()
 
-		status := rw.Status()
+			status := rw.Status()
 
-		code := sanitizeCode(status)
-		method := sanitizeMethod(req.Method)
-		metrics.MHttpRequestTotal.WithLabelValues(handler, code, method).Inc()
+			code := sanitizeCode(status)
+			method := sanitizeMethod(req.Method)
+			metrics.MHttpRequestTotal.WithLabelValues(handler, code, method).Inc()
 
-		duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
-		metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))
-		httpRequestDurationHistogram.WithLabelValues(handler).Observe(float64(duration))
+			duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
 
-		switch {
-		case strings.HasPrefix(req.RequestURI, "/api/datasources/proxy"):
-			countProxyRequests(status)
-		case strings.HasPrefix(req.RequestURI, "/api/"):
-			countApiRequests(status)
-		default:
-			countPageRequests(status)
+			// enable histogram and disable summaries for http requests.
+			if cfg.IsHTTPRequestHistogramEnabled() {
+				httpRequestDurationHistogram.WithLabelValues(handler).Observe(float64(duration))
+			} else {
+				metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))
+			}
+
+			switch {
+			case strings.HasPrefix(req.RequestURI, "/api/datasources/proxy"):
+				countProxyRequests(status)
+			case strings.HasPrefix(req.RequestURI, "/api/"):
+				countApiRequests(status)
+			default:
+				countPageRequests(status)
+			}
 		}
 	}
 }
