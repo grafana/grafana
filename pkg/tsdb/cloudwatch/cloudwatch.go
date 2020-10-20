@@ -232,15 +232,6 @@ func (e *cloudWatchExecutor) getRGTAClient(region string) (resourcegroupstagging
 	return e.rgtaClient, nil
 }
 
-func (e *cloudWatchExecutor) getServiceQuotasClient(region string) (servicequotasiface.ServiceQuotasAPI, error) {
-	sess, err := e.newSession(region)
-	if err != nil {
-		return nil, err
-	}
-
-	return newQuotasClient(sess), nil
-}
-
 func (e *cloudWatchExecutor) getQueue(region string) (chan bool, error) {
 	e.queueLock.Lock()
 	defer e.queueLock.Unlock()
@@ -258,11 +249,13 @@ func (e *cloudWatchExecutor) getQueue(region string) (chan bool, error) {
 }
 
 func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string) int {
-	client, err := e.getServiceQuotasClient(region)
+	sess, err := e.newSession(region)
 	if err != nil {
 		plog.Warn("Could not get service quota client")
 		return defaultConcurrentQueries
 	}
+
+	client := newQuotasClient(sess)
 
 	concurrentQueriesQuota, err := client.GetServiceQuota(&servicequotas.GetServiceQuotaInput{
 		ServiceCode: aws.String("logs"),
@@ -530,7 +523,9 @@ var newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatch
 	return client
 }
 
-// Service quotas client
+// Service quotas client factory.
+//
+// Stubbable by tests.
 var newQuotasClient = func(sess *session.Session) servicequotasiface.ServiceQuotasAPI {
 	client := servicequotas.New(sess)
 	client.Handlers.Send.PushFront(func(r *request.Request) {
