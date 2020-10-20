@@ -7,20 +7,17 @@ import { OnTagClick } from '../Tags/Tag';
 import { TagList } from '../Tags/TagList';
 
 interface ContainerProps extends HTMLAttributes<HTMLOrSVGElement> {
-  /** Customise the container html element for the card. Defaults to div */
-  tag?: keyof JSX.IntrinsicElements;
   /** Content for the card's tooltip */
   tooltip?: PopoverContent;
 }
 
-const CardContainer: FC<ContainerProps> = ({ tag = 'div', children, tooltip, ...props }) => {
-  const element = React.createElement(tag, props, children);
+const CardContainer: FC<ContainerProps> = ({ children, tooltip, ...props }) => {
   return tooltip ? (
     <Tooltip placement="top" content={tooltip} theme="info">
-      {element}
+      <div {...props}>{children}</div>
     </Tooltip>
   ) : (
-    element
+    <div {...props}>{children}</div>
   );
 };
 
@@ -76,7 +73,6 @@ export const Card: FC<Props> = ({
   actions = [],
   tooltip,
   secondaryActions = [],
-  tag,
   href,
   onClick,
   className,
@@ -105,7 +101,6 @@ export const Card: FC<Props> = ({
   return (
     <CardContainer
       tooltip={tooltip}
-      tag={tag}
       tabIndex={disableHover ? undefined : 0}
       className={cx(styles.container, className)}
       onClick={onCardClick}

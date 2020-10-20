@@ -51,7 +51,7 @@ Metadata also accepts html elements, which could be links, for example. For elem
 <Card
   heading="Test dashboard"
    metadata={[
-    'Prometheus',
+    'Grafana',
     <a key='prom-link' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
 />
@@ -61,7 +61,7 @@ Metadata also accepts html elements, which could be links, for example. For elem
   <Card
     heading="Test dashboard"
     metadata={[
-      'Prometheus',
+      'Grafana',
       <a key='prom-link-2' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
   />
@@ -85,60 +85,63 @@ Card can be used as a clickable link item by specifying `href` prop. In this cas
   />
 </Preview>
 
-### As a list item
+### Inside a list item
 
-Card can be used as a list item inside `ul` or `ol` elements by customizing its `tag` prop.
-
+To render cards in a list, it is possible to nest them inside `li` items.
 ```jsx
 <ul>
-  <Card
-    heading="List card item"
-    description="Card that is rendered as li element."
-    tag='li'
-  />
-  <Card
-    heading="List card item"
-    description="Card that is rendered as li element."
-    tag='li'
-  />
-  <Card
-    heading="List card item"
-    description="Card that is rendered as li element."
-    tag='li'
-  />
-  <Card
-    heading="List card item"
-    description="Card that is rendered as li element."
-    tag='li'
-  />
+  <li>
+    <Card
+      heading="List card item"
+      description="Card that is rendered inside li element."
+    />
+  </li>
+  <li>
+    <Card
+      heading="List card item"
+      description="Card that is rendered inside li element."
+    />
+  </li>
+  <li>
+    <Card
+      heading="List card item"
+      description="Card that is rendered inside li element."
+    />
+  </li>
+  <li>
+    <Card
+      heading="List card item"
+      description="Card that is rendered inside li element."
+    />
+  </li>
 </ul>
 ```
 <Preview>
-  <ul style={{padding: '20px', maxWidth: '800px'}}>
-    <Card
-      key={1}
-      heading="List card item"
-      description="Card that is rendered as li element."
-      tag='li'
-    />
-    <Card
-      key={2}
-      heading="List card item"
-      description="Card that is rendered as li element."
-      tag='li'
-    />
-    <Card
-      key={3}
-      heading="List card item"
-      description="Card that is rendered as li element."
-      tag='li'
-    />
-    <Card
-      key={4}
-      heading="List card item"
-      description="Card that is rendered as li element."
-      tag='li'
-    />
+  <ul style={{padding: '20px', maxWidth: '800px', listStyle: 'none'}}>
+    <li>
+      <Card
+        heading="List card item"
+        description="Card that is rendered inside li element."
+      />
+    </li>
+    <li>
+      <Card
+        heading="List card item"
+        description="Card that is rendered inside li element."
+      />
+    </li>
+    <li>
+      <Card
+        heading="List card item"
+        description="Card that is rendered inside li element."
+      />
+    </li>
+    <li>
+      <Card
+        heading="List card item"
+        description="Card that is rendered inside li element."
+      />
+    </li>
   </ul>
 </Preview>
 
@@ -150,10 +153,10 @@ Cards can also be rendered with media content such icons or images.
 <Card
   heading="1-ops-tools1-fallback"
   metadata={[
-    'Prometheus',
+    'Grafana',
     <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
-  image={<img src={logo} alt="Prometheus Logo" />}
+  image={<img src={logo} alt="Grafana Logo" />}
 />
 ```
 
@@ -161,10 +164,10 @@ Cards can also be rendered with media content such icons or images.
   <Card
     heading="1-ops-tools1-fallback"
     metadata={[
-      'Prometheus',
+      'Grafana',
       <a key='link' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
-    image={<img src={logo} alt="Prometheus Logo" />}
+    image={<img src={logo} alt="Grafana Logo" />}
   />
 </Preview>
 
@@ -176,10 +179,10 @@ Cards also accept primary and secondary actions. Usually the primary actions are
  <Card
   heading="1-ops-tools1-fallback"
   metadata={[
-    'Prometheus',
+    'Grafana',
     <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
-  image={<img src={logo} alt="Prometheus Logo" />}
+  image={<img src={logo} alt="Grafana Logo" />}
   actions={[<Button key="settings" variant="secondary">Settings</Button>, <Button key="explore" variant="secondary">Explore</Button>]}
   secondaryActions={[
     <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />,
@@ -192,10 +195,10 @@ Cards also accept primary and secondary actions. Usually the primary actions are
   <Card
     heading="1-ops-tools1-fallback"
     metadata={[
-      'Prometheus',
+      'Grafana',
       <a key='prom-link-3' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
-    image={<img src={logo} alt="Prometheus Logo" />}
+    image={<img src={logo} alt="Grafana Logo" />}
     actions={[<Button key="settings" variant="secondary">
         Settings
       </Button>,
@@ -218,10 +221,10 @@ Card can have a disabled state, effectively making it and its actions non-clicka
  <Card
   heading="1-ops-tools1-fallback"
   metadata={[
-    'Prometheus',
+    'Grafana',
     <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
-  image={<img src={logo} alt="Prometheus Logo" />}
+  image={<img src={logo} alt="Grafana Logo" />}
   disabled
 />
 ```
@@ -230,10 +233,10 @@ Card can have a disabled state, effectively making it and its actions non-clicka
   <Card
     heading="1-ops-tools1-fallback"
     metadata={[
-      'Prometheus',
+      'Grafana',
       <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
-    image={<img src={logo} alt="Prometheus Logo" />}
+    image={<img src={logo} alt="Grafana Logo" />}
     disabled
   />
 </Preview>
@@ -242,10 +245,10 @@ Card can have a disabled state, effectively making it and its actions non-clicka
  <Card
   heading="1-ops-tools1-fallback"
   metadata={[
-    'Prometheus',
+    'Grafana',
     <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
-  image={<img src={logo} alt="Prometheus Logo" />}
+  image={<img src={logo} alt="Grafana Logo" />}
   actions={[<Button key='settings' variant="secondary">Settings</Button>, <Button key='explore' variant="secondary">Explore</Button>]}
   secondaryActions={[
     <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />,
@@ -259,10 +262,10 @@ Card can have a disabled state, effectively making it and its actions non-clicka
   <Card
     heading="1-ops-tools1-fallback"
     metadata={[
-      'Prometheus',
+      'Grafana',
       <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
-    image={<img src={logo} alt="Prometheus Logo" />}
+    image={<img src={logo} alt="Grafana Logo" />}
     actions={[<Button key='settings' variant="secondary">Settings</Button>, <Button key='explore' variant="secondary">Explore</Button>]}
     secondaryActions={[
       <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />,
