@@ -168,7 +168,7 @@ export { Checkbox } from './Forms/Checkbox';
 export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
 export { TimeRangeInput } from './TimePicker/TimeRangeInput';
-export { Card } from './Card/Card';
+export { Card, Props as CardProps } from './Card/Card';
 
 // Legacy forms
 
