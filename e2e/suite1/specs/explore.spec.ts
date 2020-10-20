@@ -26,7 +26,5 @@ e2e.scenario({
 
     const canvases = e2e().get('canvas');
     canvases.should('have.length', 2);
-
-    e2e.components.DataSource.TestData.QueryTab.noise().should('have.length', 1);
   },
 });
