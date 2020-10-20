@@ -1,15 +1,15 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { AnnotationEvent, GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import { HorizontalGroup, Portal, Tag, TooltipContainer, useStyles } from '@grafana/ui';
-import { css, cx } from 'emotion';
+import { css } from 'emotion';
 
 interface AnnotationMarkerProps {
-  formatTime: (value: number) => string;
-  annotationEvent: AnnotationEvent;
-  x: number;
+  time: string;
+  text: string;
+  tags: string[];
 }
 
-export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ annotationEvent, x, formatTime }) => {
+export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ time, text, tags }) => {
   const styles = useStyles(getAnnotationMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
   const markerRef = useRef<HTMLDivElement>(null);
@@ -47,14 +47,14 @@ export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ annotationEv
       >
         <div ref={annotationPopoverRef} className={styles.wrapper}>
           <div className={styles.header}>
-            <span className={styles.title}>{annotationEvent.title}</span>
-            {annotationEvent.time && <span className={styles.time}>{formatTime(annotationEvent.time)}</span>}
+            {/*<span className={styles.title}>{annotationEvent.title}</span>*/}
+            {time && <span className={styles.time}>{time}</span>}
           </div>
           <div className={styles.body}>
-            {annotationEvent.text && <div dangerouslySetInnerHTML={{ __html: annotationEvent.text }} />}
+            {text && <div dangerouslySetInnerHTML={{ __html: text }} />}
             <>
               <HorizontalGroup spacing="xs" wrap>
-                {annotationEvent.tags?.map((t, i) => (
+                {tags?.map((t, i) => (
                   <Tag name={t} key={`${t}-${i}`} />
                 ))}
               </HorizontalGroup>
@@ -63,21 +63,11 @@ export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ annotationEv
         </div>
       </TooltipContainer>
     );
-  }, [annotationEvent]);
+  }, [time, tags, text]);
 
   return (
     <>
-      <div
-        ref={markerRef}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        className={cx(
-          styles.markerWrapper,
-          css`
-            left: ${x - 8}px;
-          `
-        )}
-      >
+      <div ref={markerRef} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} className={styles.markerWrapper}>
         <div className={styles.marker} />
       </div>
       {isOpen && <Portal>{renderMarker()}</Portal>}
@@ -93,8 +83,6 @@ const getAnnotationMarkerStyles = (theme: GrafanaTheme) => {
   return {
     markerWrapper: css`
       padding: 0 4px 4px 4px;
-      position: absolute;
-      top: 0;
     `,
     marker: css`
       width: 0;

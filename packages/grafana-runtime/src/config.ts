@@ -36,6 +36,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   authProxyEnabled = false;
   exploreEnabled = false;
   ldapEnabled = false;
+  sigV4AuthEnabled = false;
   samlEnabled = false;
   autoAssignOrg = true;
   verifyEmailEnabled = false;
@@ -54,8 +55,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
     live: false,
     expressions: false,
     meta: false,
-    datasourceInsights: false,
-    reportGrid: false,
+    ngalert: false,
+    traceToLogs: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
