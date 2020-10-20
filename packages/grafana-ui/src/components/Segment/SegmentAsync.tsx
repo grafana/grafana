@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { HTMLProps } from 'react';
 import { cx } from 'emotion';
 import _ from 'lodash';
 import { SegmentSelect } from './SegmentSelect';
@@ -7,7 +7,7 @@ import { useExpandableLabel, SegmentProps } from '.';
 import { useAsyncFn } from 'react-use';
 import { AsyncState } from 'react-use/lib/useAsync';
 
-export interface SegmentAsyncProps<T> extends SegmentProps<T> {
+export interface SegmentAsyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
   loadOptions: (query?: string) => Promise<Array<SelectableValue<T>>>;
   onChange: (item: SelectableValue<T>) => void;
@@ -21,6 +21,7 @@ export function SegmentAsync<T>({
   className,
   allowCustomValue,
   placeholder,
+  ...rest
 }: React.PropsWithChildren<SegmentAsyncProps<T>>) {
   const [state, fetchOptions] = useAsyncFn(loadOptions, [loadOptions]);
   const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
@@ -43,6 +44,7 @@ export function SegmentAsync<T>({
 
   return (
     <SegmentSelect
+      {...rest}
       value={value && !_.isObject(value) ? { value } : value}
       options={state.value ?? []}
       width={width}
