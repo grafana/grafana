@@ -99,6 +99,8 @@ func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64, signedInUser *mod
 			if err != nil {
 				return nil, err
 			}
+		} else {
+			ds = &models.DataSource{Name: dsName, Id: -100}
 		}
 
 		if ds == nil && dsName != "__expr__" {
