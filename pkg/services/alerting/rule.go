@@ -141,11 +141,11 @@ func NewRuleFromDBAlert(ruleDef *models.Alert, logTranslationFailures bool) (*Ru
 			uid, err := translateNotificationIDToUID(id, ruleDef.OrgId)
 			if err != nil {
 				if !errors.Is(err, models.ErrAlertNotificationFailedTranslateUniqueID) {
-					return nil, ValidationError{Reason: "Failed to tranlate notification id to uid:" + err.Error(), DashboardID: model.DashboardID, AlertID: model.ID, PanelID: model.PanelID}
+					logger.Error("Failed to tranlate notification id to uid", "error", err.Error(), "dashboardId", model.DashboardID, "alert", model.Name, "panelId", model.PanelID, "notificationId", id)
 				}
 
 				if logTranslationFailures {
-					logger.Warn("Unable to translate notification id to uid", "error", err.Error(), "dashboardId", model.DashboardID, "alertId", model.Name, "panelId", model.PanelID, "notificationId", id)
+					logger.Warn("Unable to translate notification id to uid", "dashboardId", model.DashboardID, "alert", model.Name, "panelId", model.PanelID, "notificationId", id)
 				}
 			} else {
 				model.Notifications = append(model.Notifications, uid)
