@@ -1,7 +1,7 @@
 package ngalert
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -92,7 +92,7 @@ func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64, signedInUser *mod
 		if dsName != "__expr__" {
 			datasourceID, err := query.Model.Get("datasourceId").Int64()
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to get datasourceId from query model: %w", err)
 			}
 
 			ds, err = ng.DatasourceCache.GetDatasource(datasourceID, signedInUser, skipCache)
@@ -104,7 +104,7 @@ func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64, signedInUser *mod
 		}
 
 		if ds == nil && dsName != "__expr__" {
-			return nil, errors.New("No datasource reference found")
+			return nil, fmt.Errorf("no datasource reference found")
 		}
 
 		if dsName == "" {
