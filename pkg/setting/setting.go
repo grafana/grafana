@@ -340,6 +340,14 @@ func (c Cfg) IsNgAlertEnabled() bool {
 	return c.FeatureToggles["ngalert"]
 }
 
+func (c Cfg) IsDatabaseMetricsEnabled() bool {
+	return c.FeatureToggles["database_metrics"]
+}
+
+func (c Cfg) IsHTTPRequestHistogramEnabled() bool {
+	return c.FeatureToggles["http_request_histogram"]
+}
+
 type CommandLineArgs struct {
 	Config   string
 	HomePath string

@@ -82,7 +82,7 @@ describe('createSpanLinkFactory', () => {
     } as any);
 
     expect(linkDef.href).toBe(
-      `/explore?left={"range":{"from":"20201014T005955","to":"20201014T020001"},"datasource":"Loki1","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"}","refId":""}]}`
+      `/explore?left={"range":{"from":"20201014T000000","to":"20201014T010006"},"datasource":"Loki1","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"}","refId":""}]}`
     );
   });
 });
