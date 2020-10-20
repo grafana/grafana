@@ -85,13 +85,13 @@ func (g *testDataRunner) runRandomCSV() {
 	walker := rand.Float64() * 100
 	ticker := time.NewTicker(time.Duration(g.speedMillis) * time.Millisecond)
 
-	measure := models.Measurement{
+	measurement := models.Measurement{
 		Name:   g.name,
 		Time:   0,
 		Values: make(map[string]interface{}, 5),
 	}
 	msg := models.MeasurementBatch{
-		Measurements: []models.Measurement{measure}, // always a single measurement
+		Measurements: []models.Measurement{measurement}, // always a single measurement
 	}
 
 	for t := range ticker.C {
@@ -101,10 +101,10 @@ func (g *testDataRunner) runRandomCSV() {
 		delta := rand.Float64() - 0.5
 		walker += delta
 
-		measure.Time = t.UnixNano() / int64(time.Millisecond)
-		measure.Values["value"] = walker
-		measure.Values["min"] = walker - ((rand.Float64() * spread) + 0.01)
-		measure.Values["max"] = walker + ((rand.Float64() * spread) + 0.01)
+		measurement.Time = t.UnixNano() / int64(time.Millisecond)
+		measurement.Values["value"] = walker
+		measurement.Values["min"] = walker - ((rand.Float64() * spread) + 0.01)
+		measurement.Values["max"] = walker + ((rand.Float64() * spread) + 0.01)
 
 		bytes, err := json.Marshal(&msg)
 		if err != nil {
@@ -114,7 +114,7 @@ func (g *testDataRunner) runRandomCSV() {
 
 		err = g.publisher(g.channel, bytes)
 		if err != nil {
-			logger.Warn("write", "channel", g.channel, "measure", measure)
+			logger.Warn("write", "channel", g.channel, "measurement", measurement)
 		}
 	}
 }
