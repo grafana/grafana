@@ -80,7 +80,9 @@ Customize user login using `login_attribute_path` configuration option. Order of
 
 You can customize the attribute name used to extract the ID token from the returned OAuth token with the `id_token_attribute_name` option.
 
-Customize user's displayed name using `name_attribute_path` configuration option. Order of operations is the same as for the `login_attribute_path` option.
+You can set the user's display name with JMESPath using the `name_attribute_path` configuration option. It operates the same way as the `login_attribute_path` option.
+
+> **Note:** `name_attribute_path` is available in Grafana 7.4+.
 
 ## Set up OAuth2 with Auth0
 
