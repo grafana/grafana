@@ -120,6 +120,11 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
     this.stream.next({ ...this.currentStatus });
   }
 
+  /** get the number of subscriptions to this channel */
+  getObserverCount(): number {
+    return this.stream.observers.length;
+  }
+
   /**
    * Get the stream of events and
    */

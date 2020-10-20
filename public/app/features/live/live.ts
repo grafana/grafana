@@ -60,7 +60,36 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
     this.centrifuge.on('connect', this.onConnect);
     this.centrifuge.on('disconnect', this.onDisconnect);
     this.centrifuge.on('publish', this.onServerSideMessage);
+
+    // Every 2.5 seconds, cleanup any orphaned channels
+    // channels may stay open for a max 5 seconds after they are orphaned
+    setInterval(this.cleanupOrphanedChannels, 2555);
   }
+
+  private orphanedChannelIDs: string[] = [];
+
+  private cleanupOrphanedChannels = () => {
+    // If channels that were orphaned in the last round are still orphaned, close them permanently
+    for (const key of this.orphanedChannelIDs) {
+      const channel = this.open.get(key);
+      if (channel && channel.getObserverCount() < 1) {
+        channel.disconnect();
+        this.open.delete(key);
+      }
+    }
+
+    // List all orphaned channels
+    this.orphanedChannelIDs.length = 0;
+    for (const channel of this.open.values()) {
+      const count = channel.getObserverCount();
+      if (count < 1) {
+        this.orphanedChannelIDs.push(channel.id);
+        console.log('ORPHANED', channel.id);
+      } else {
+        console.log('OK', channel.id, count);
+      }
+    }
+  };
 
   //----------------------------------------------------------
   // Internal functions
