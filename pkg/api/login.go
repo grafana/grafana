@@ -81,6 +81,13 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
+	urlParams := c.Req.URL.Query()
+	if _, disableAutoLogin := urlParams["disableAutoLogin"]; disableAutoLogin {
+		hs.log.Debug("Auto login manually disabled")
+		c.HTML(200, getViewIndex(), viewData)
+		return
+	}
+
 	enabledOAuths := make(map[string]interface{})
 	for key, oauth := range setting.OAuthService.OAuthInfos {
 		enabledOAuths[key] = map[string]string{"name": oauth.Name}
