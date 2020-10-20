@@ -6,7 +6,10 @@ import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';
 import { OnTagClick } from '../Tags/Tag';
 import { TagList } from '../Tags/TagList';
 
-interface ContainerProps extends HTMLAttributes<HTMLOrSVGElement> {
+/**
+ * @public
+ */
+export interface ContainerProps extends HTMLAttributes<HTMLOrSVGElement> {
   /** Content for the card's tooltip */
   tooltip?: PopoverContent;
 }
@@ -21,6 +24,9 @@ const CardContainer: FC<ContainerProps> = ({ children, tooltip, ...props }) => {
   );
 };
 
+/**
+ * @public
+ */
 export interface CardInnerProps {
   href?: string;
 }
@@ -37,6 +43,9 @@ const CardInner: FC<CardInnerProps> = ({ children, href }) => {
   );
 };
 
+/**
+ * @public
+ */
 export interface Props extends ContainerProps {
   /** Main heading for the Card **/
   heading: ReactNode;
@@ -62,6 +71,11 @@ export interface Props extends ContainerProps {
   onClick?: () => void;
 }
 
+/**
+ * Generic card component
+ *
+ * @public
+ */
 export const Card: FC<Props> = ({
   heading,
   description,

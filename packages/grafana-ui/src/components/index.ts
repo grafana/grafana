@@ -29,7 +29,7 @@ export { TimeZonePicker } from './TimePicker/TimeZonePicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
-export { Tag } from './Tags/Tag';
+export { Tag, OnTagClick } from './Tags/Tag';
 export { TagList } from './Tags/TagList';
 export { FilterPill } from './FilterPill/FilterPill';
 
@@ -168,7 +168,7 @@ export { Checkbox } from './Forms/Checkbox';
 export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
 export { TimeRangeInput } from './TimePicker/TimeRangeInput';
-export { Card, Props as CardProps } from './Card/Card';
+export { Card, Props as CardProps, ContainerProps, CardInnerProps } from './Card/Card';
 
 // Legacy forms
 
