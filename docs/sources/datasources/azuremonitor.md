@@ -133,17 +133,17 @@ The Azure Monitor data source Plugin provides the following queries you can spec
 
 | Name                                                                                               | Description                                                                     |
 | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| _Subscriptions()_                                                                                  | Returns a list of subscriptions.                                                |
-| _ResourceGroups()_                                                                                 | Returns a list of resource groups.                                              |
-| _ResourceGroups(12345678-aaaa-bbbb-cccc-123456789aaa)_                                             | Returns a list of resource groups for a specified subscription.                 |
-| _Namespaces(aResourceGroup)_                                                                       | Returns a list of namespaces for the specified resource group.                  |
-| _Namespaces(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup)_                                 | Returns a list of namespaces for the specified resource group and subscription. |
-| _ResourceNames(aResourceGroup, aNamespace)_                                                        | Returns a list of resource names.                                               |
-| _ResourceNames(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace)_                  | Returns a list of resource names for a specified subscription.                  |
-| _MetricNamespace(aResourceGroup, aNamespace, aResourceName)_                                       | Returns a list of metric namespaces.                                            |
-| _MetricNamespace(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace, aResourceName)_ | Returns a list of metric namespaces for a specified subscription.               |
-| _MetricNames(aResourceGroup, aNamespace, aResourceName)_                                           | Returns a list of metric names.                                                 |
-| _MetricNames(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace, aResourceName)_     | Returns a list of metric names for a specified subscription.                    |
+| `Subscriptions()`                                                                                  | Returns a list of subscriptions.                                                |
+| `ResourceGroups()`                                                                                 | Returns a list of resource groups.                                              |
+| `ResourceGroups(12345678-aaaa-bbbb-cccc-123456789aaa)`                                             | Returns a list of resource groups for a specified subscription.                 |
+| `Namespaces(aResourceGroup)`                                                                       | Returns a list of namespaces for the specified resource group.                  |
+| `Namespaces(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup)`                                 | Returns a list of namespaces for the specified resource group and subscription. |
+| `ResourceNames(aResourceGroup, aNamespace)`                                                        | Returns a list of resource names.                                               |
+| `ResourceNames(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace)`                  | Returns a list of resource names for a specified subscription.                  |
+| `MetricNamespace(aResourceGroup, aNamespace, aResourceName)`                                       | Returns a list of metric namespaces.                                            |
+| `MetricNamespace(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace, aResourceName)` | Returns a list of metric namespaces for a specified subscription.               |
+| `MetricNames(aResourceGroup, aNamespace, aResourceName)`                                           | Returns a list of metric names.                                                 |
+| `MetricNames(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace, aResourceName)`     | Returns a list of metric names for a specified subscription.                    |
 
 Examples:
 
@@ -212,8 +212,8 @@ Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentatio
 
 | Name                               | Description                                                  |
 | ---------------------------------- | ------------------------------------------------------------ |
-| _AppInsightsMetricNames()_         | Returns a list of metric names.                              |
-| _AppInsightsGroupBys(aMetricName)_ | Returns a list of "group bys" for the specified metric name. |
+| `AppInsightsMetricNames()`         | Returns a list of metric names.                              |
+| `AppInsightsGroupBys(aMetricName)` | Returns a list of "group bys" for the specified metric name. |
 
 Examples:
 
@@ -327,22 +327,22 @@ types of template variables.
 
 | Name                                               | Description                                                                                            |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| _workspaces()_                                     | Returns a list of workspaces for the default subscription.                                             |
-| _workspaces(12345678-aaaa-bbbb-cccc-123456789aaa)_ | Returns a list of workspaces for the specified subscription (the parameter can be quoted or unquoted). |
+| `workspaces()`                                     | Returns a list of workspaces for the default subscription.                                             |
+| `workspaces(12345678-aaaa-bbbb-cccc-123456789aaa)` | Returns a list of workspaces for the specified subscription (the parameter can be quoted or unquoted). |
 
 Example variable queries:
 
 <!-- prettier-ignore-start -->
 | Query                                                                                   | Description                                               |
 | --------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| _subscriptions()_                                                                       | Returns a list of Azure subscriptions                     |
-| _workspaces()_                                                                          | Returns a list of workspaces for default subscription     |
-| _workspaces("12345678-aaaa-bbbb-cccc-123456789aaa")_                                    | Returns a list of workspaces for a specified subscription |
-| _workspaces("$subscription")_                                                           | With template variable for the subscription parameter     |
-| _workspace("myWorkspace").Heartbeat \| distinct Computer_                               | Returns a list of Virtual Machines                        |
-| _workspace("$workspace").Heartbeat \| distinct Computer_                                | Returns a list of Virtual Machines with template variable |
-| _workspace("$workspace").Perf \| distinct ObjectName_                                   | Returns a list of objects from the Perf table             |
-| _workspace("$workspace").Perf \| where ObjectName == "$object" \| distinct CounterName_ | Returns a list of metric names from the Perf table        |
+| `subscriptions()`                                                                       | Returns a list of Azure subscriptions                     |
+| `workspaces()`                                                                          | Returns a list of workspaces for default subscription     |
+| `workspaces("12345678-aaaa-bbbb-cccc-123456789aaa")`                                    | Returns a list of workspaces for a specified subscription |
+| `workspaces("$subscription")`                                                           | With template variable for the subscription parameter     |
+| `workspace("myWorkspace").Heartbeat \| distinct Computer`                               | Returns a list of Virtual Machines                        |
+| `workspace("$workspace").Heartbeat \| distinct Computer`                                | Returns a list of Virtual Machines with template variable |
+| `workspace("$workspace").Perf \| distinct ObjectName`                                   | Returns a list of objects from the Perf table             |
+| `workspace("$workspace").Perf \| where ObjectName == "$object" \| distinct CounterName` | Returns a list of metric names from the Perf table        |
 
 <!-- prettier-ignore-end -->
 
