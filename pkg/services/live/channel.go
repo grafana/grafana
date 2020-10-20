@@ -6,9 +6,17 @@ import (
 
 // ChannelAddress is the channel id split by parts
 type ChannelAddress struct {
-	Scope     string `json:"scope,omitempty"`     // grafana, ds, or plugin
-	Namespace string `json:"namespace,omitempty"` // feature, id, or name
-	Path      string `json:"path,omitempty"`      // path within the channel handler
+	// Scope is "grafana", "ds", or "plugin"
+	Scope string `json:"scope,omitempty"`
+
+	// Namespace meaning depends on the scope.
+	// * when grafana, namespace is a "feature"
+	// * when ds, namespace is the datasource id
+	// * when plugin, namespace is the plugin name
+	Namespace string `json:"namespace,omitempty"`
+
+	// Within each namespace, the handler can process the path as needed
+	Path string `json:"path,omitempty"`
 }
 
 // ParseChannelAddress parses the parts from a channel id:
