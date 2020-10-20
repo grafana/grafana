@@ -4,9 +4,9 @@ import (
 	"strings"
 )
 
-// ChannelAddress is the channel id split by parts
+// ChannelAddress is the channel ID split by parts.
 type ChannelAddress struct {
-	// Scope is "grafana", "ds", or "plugin"
+	// Scope is "grafana", "ds", or "plugin".
 	Scope string `json:"scope,omitempty"`
 
 	// Namespace meaning depends on the scope.
@@ -15,12 +15,12 @@ type ChannelAddress struct {
 	// * when plugin, namespace is the plugin name
 	Namespace string `json:"namespace,omitempty"`
 
-	// Within each namespace, the handler can process the path as needed
+	// Within each namespace, the handler can process the path as needed.
 	Path string `json:"path,omitempty"`
 }
 
-// ParseChannelAddress parses the parts from a channel id:
-//   ${scope} / ${namespace} / ${path}
+// ParseChannelAddress parses the parts from a channel ID:
+//   ${scope} / ${namespace} / ${path}.
 func ParseChannelAddress(id string) ChannelAddress {
 	addr := ChannelAddress{}
 	parts := strings.SplitN(id, "/", 3)
@@ -37,12 +37,12 @@ func ParseChannelAddress(id string) ChannelAddress {
 	return addr
 }
 
-// IsValid checks if all parts of the address are valid
+// IsValid checks if all parts of the address are valid.
 func (ca *ChannelAddress) IsValid() bool {
 	return ca.Scope != "" && ca.Namespace != "" && ca.Path != ""
 }
 
-// ToChannelID converts this to a single string
+// ToChannelID converts this to a single string.
 func (ca *ChannelAddress) ToChannelID() string {
 	return ca.Scope + "/" + ca.Namespace + "/" + ca.Path
 }

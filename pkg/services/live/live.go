@@ -240,11 +240,11 @@ func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, 
 	}
 
 	// Parse the identifier ${scope}/${namespace}/${path}
-	id := ParseChannelAddress(channel)
-	if !id.IsValid() {
+	addr := ParseChannelAddress(channel)
+	if !addr.IsValid() {
 		return nil, fmt.Errorf("invalid channel: %q", channel)
 	}
-	logger.Info("initChannel", "channel", channel, "id", id)
+	logger.Info("initChannel", "channel", channel, "address", addr)
 
 	g.channelsMu.Lock()
 	defer g.channelsMu.Unlock()
@@ -253,7 +253,7 @@ func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, 
 		return c, nil
 	}
 
-	c, err := g.initChannel(id)
+	c, err := g.initChannel(addr)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +261,7 @@ func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, 
 	return c, nil
 }
 
-// GetChannelNamespace gives threadsafe access to the channel
+// GetChannelNamespace gives threadsafe access to the channel.
 func (g *GrafanaLive) GetChannelNamespace(scope string, name string) (models.ChannelNamespaceHandler, error) {
 	if scope == "grafana" {
 		p, ok := g.GrafanaScope.Features[name]
@@ -289,14 +289,14 @@ func (g *GrafanaLive) GetChannelNamespace(scope string, name string) (models.Cha
 	return nil, fmt.Errorf("invalid scope: %q", scope)
 }
 
-func (g *GrafanaLive) initChannel(id ChannelAddress) (models.ChannelHandler, error) {
-	namespace, err := g.GetChannelNamespace(id.Scope, id.Namespace)
+func (g *GrafanaLive) initChannel(addr ChannelAddress) (models.ChannelHandler, error) {
+	namespace, err := g.GetChannelNamespace(addr.Scope, addr.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	// First access will initialize
-	return namespace.GetHandlerForPath(id.Path)
+	return namespace.GetHandlerForPath(addr.Path)
 }
 
 // Publish sends the data to the channel without checking permissions etc

@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseChannelAddress(t *testing.T) {
+func TestParseChannelAddress_Valid(t *testing.T) {
 	addr := ParseChannelAddress("aaa/bbb/ccc/ddd")
 	require.True(t, addr.IsValid())
 
@@ -20,8 +20,9 @@ func TestParseChannelAddress(t *testing.T) {
 	if diff := cmp.Diff(addr, ex); diff != "" {
 		t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 	}
+}
 
-	// Check an invalid identifier
+func TestParseChannelAddress_Invalid(t *testing.T) {
 	addr = ParseChannelAddress("aaa/bbb")
 	require.False(t, addr.IsValid())
 }

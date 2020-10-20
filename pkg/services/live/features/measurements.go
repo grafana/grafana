@@ -10,7 +10,7 @@ var (
 	logger = log.New("live.features") // scoped to all features?
 )
 
-// MeasurementsRunner will simply broadcast all events to `grafana/broadcast/*` channels
+// MeasurementsRunner will simply broadcast all events to `grafana/broadcast/*` channels.
 // This makes no assumptions about the shape of the data and will broadcast it to anyone listening
 type MeasurementsRunner struct {
 	Publisher models.ChannelPublisher
@@ -27,7 +27,7 @@ func (m *MeasurementsRunner) GetChannelOptions(id string) centrifuge.ChannelOpti
 	return centrifuge.ChannelOptions{}
 }
 
-// OnSubscribe for now allows anyone to subscribe to any dashboard
+// OnSubscribe for now allows anyone to subscribe to any dashboard.
 func (m *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
 	// anyone can subscribe
 	return nil
@@ -35,7 +35,7 @@ func (m *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subs
 
 // OnPublish is called when an event is received from the websocket.
 func (m *MeasurementsRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
-	// currently generic... but should be more strict
+	// currently generic... but should be stricter
 	// logger.Debug("GOT: %s", e.Channel)
 	return e.Data, nil
 }
