@@ -19,6 +19,7 @@ import (
 )
 
 type LogQueryRunnerSupplier struct {
+	Publisher models.ChannelPublisher
 }
 
 type logQueryRunner struct {
@@ -74,11 +75,11 @@ func deleteResponseChannel(name string) {
 	plog.Warn("Channel with name '" + name + "' not found")
 }
 
-// GetHandlerForPath gets called on init.
-func (supplier *LogQueryRunnerSupplier) GetHandlerForPath(path string, publisher models.ChannelPublisher) (models.ChannelHandler, error) {
+// GetHandlerForPath gets the channel handler for a certain path.
+func (s *LogQueryRunnerSupplier) GetHandlerForPath(path string) (models.ChannelHandler, error) {
 	return &logQueryRunner{
 		channelName: path,
-		publish:     publisher,
+		publish:     s.Publisher,
 		running:     make(map[string]bool),
 	}, nil
 }
