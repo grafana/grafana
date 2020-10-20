@@ -96,7 +96,7 @@ func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64, signedInUser *mod
 			}
 		}
 
-		if ds == nil {
+		if ds == nil && dsName != "__expr__" {
 			return nil, errors.New("No datasource reference found")
 		}
 
@@ -104,26 +104,26 @@ func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64, signedInUser *mod
 			query.Model.Set("datasource", ds.Name)
 		}
 
-		if query.Model.Get("datasourceId").MustString() == "" {
+		if query.Model.Get("datasourceId").MustInt64() == 0 {
 			query.Model.Set("datasourceId", ds.Id)
 		}
 
-		if query.Model.Get("orgId").MustString() == "" { // GEL requires orgID inside the query JSON
+		if query.Model.Get("orgId").MustInt64() == 0 { // GEL requires orgID inside the query JSON
 			query.Model.Set("orgId", alertDefinition.OrgId)
 		}
 
-		if query.Model.Get("maxDataPoints").MustString() == "" { // GEL requires maxDataPoints inside the query JSON
+		if query.Model.Get("maxDataPoints").MustInt64() == 0 { // GEL requires maxDataPoints inside the query JSON
 			query.Model.Set("maxDataPoints", 100)
 		}
 
 		// intervalMS is calculated by the frontend
 		// should we do something similar?
-		if query.Model.Get("intervalMs").MustString() == "" { // GEL requires intervalMs inside the query JSON
+		if query.Model.Get("intervalMs").MustInt64() == 0 { // GEL requires intervalMs inside the query JSON
 			query.Model.Set("intervalMs", 1000)
 		}
 
 		condition.QueriesAndExpressions = append(condition.QueriesAndExpressions, tsdb.Query{
-			RefId:         query.Model.Get("refId").MustString(""),
+			RefId:         query.RefId,
 			MaxDataPoints: query.Model.Get("maxDataPoints").MustInt64(100),
 			IntervalMs:    query.Model.Get("intervalMs").MustInt64(1000),
 			QueryType:     query.Model.Get("queryType").MustString(""),
