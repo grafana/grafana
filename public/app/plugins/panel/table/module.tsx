@@ -48,6 +48,7 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
               { value: TableCellDisplayMode.BasicGauge, label: 'Basic gauge' },
               { value: TableCellDisplayMode.JSONView, label: 'JSON View' },
               { value: TableCellDisplayMode.Image, label: 'Image' },
+              { value: TableCellDisplayMode.SVG, label: 'SVG' },
             ],
           },
         })

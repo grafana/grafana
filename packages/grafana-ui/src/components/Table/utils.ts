@@ -15,6 +15,7 @@ import { BarGaugeCell } from './BarGaugeCell';
 import { TableCellDisplayMode, TableFieldOptions } from './types';
 import { JSONViewCell } from './JSONViewCell';
 import { ImageCell } from './ImageCell';
+import { SVGCell } from './SVGCell';
 
 export function getTextAlign(field?: Field): ContentPosition {
   if (!field) {
@@ -107,6 +108,8 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
       return BarGaugeCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
+    case TableCellDisplayMode.SVG:
+      return SVGCell;
   }
 
   // Default or Auto
