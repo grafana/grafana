@@ -3,9 +3,10 @@ import { boolean } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Card } from './Card';
 import mdx from './Card.mdx';
-import promLogo from '../../../../../public/app/plugins/datasource/prometheus/img/prometheus_logo.svg';
 import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
+
+const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png';
 
 export default {
   title: 'General/Card',
@@ -84,7 +85,7 @@ export const WithMedia = () => {
         </a>,
       ]}
       disabled={disabled}
-      image={<img src={promLogo} alt="Prometheus Logo" />}
+      image={<img src={logo} alt="Prometheus Logo" />}
     />
   );
 };
@@ -100,7 +101,7 @@ export const WithActions = () => {
         </a>,
       ]}
       disabled={disabled}
-      image={<img src={promLogo} alt="Prometheus Logo" />}
+      image={<img src={logo} alt="Prometheus Logo" />}
       actions={[
         <Button key="settings" variant="secondary">
           Settings
@@ -132,7 +133,7 @@ export const Full = () => {
         </a>,
       ]}
       disabled={disabled}
-      image={<img src={promLogo} alt="Prometheus Logo" />}
+      image={<img src={logo} alt="Prometheus Logo" />}
       tags={['firing', 'active', 'test', 'testdata', 'prometheus']}
       description="Description, body text. Greetings! Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
       actions={[

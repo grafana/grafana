@@ -2,7 +2,8 @@ import { Meta, Preview, Props } from "@storybook/addon-docs/blocks";
 import { Card } from "./Card";
 import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
-import promLogo from '../../../../../public/app/plugins/datasource/prometheus/img/prometheus_logo.svg';
+
+export const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png'
 
 <Meta title="MDX/Card" component={Card}/>
 
@@ -152,7 +153,7 @@ Cards can also be rendered with media content such icons or images.
     'Prometheus',
     <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
-  image={<img src={promLogo} alt="Prometheus Logo" />}
+  image={<img src={logo} alt="Prometheus Logo" />}
 />
 ```
 
@@ -163,7 +164,7 @@ Cards can also be rendered with media content such icons or images.
       'Prometheus',
       <a key='link' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
-    image={<img src={promLogo} alt="Prometheus Logo" />}
+    image={<img src={logo} alt="Prometheus Logo" />}
   />
 </Preview>
 
@@ -178,7 +179,7 @@ Cards also accept primary and secondary actions. Usually the primary actions are
     'Prometheus',
     <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
-  image={<img src={promLogo} alt="Prometheus Logo" />}
+  image={<img src={logo} alt="Prometheus Logo" />}
   actions={[<Button key="settings" variant="secondary">Settings</Button>, <Button key="explore" variant="secondary">Explore</Button>]}
   secondaryActions={[
     <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />,
@@ -194,7 +195,7 @@ Cards also accept primary and secondary actions. Usually the primary actions are
       'Prometheus',
       <a key='prom-link-3' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
-    image={<img src={promLogo} alt="Prometheus Logo" />}
+    image={<img src={logo} alt="Prometheus Logo" />}
     actions={[<Button key="settings" variant="secondary">
         Settings
       </Button>,
@@ -220,7 +221,7 @@ Card can have a disabled state, effectively making it and its actions non-clicka
     'Prometheus',
     <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
-  image={<img src={promLogo} alt="Prometheus Logo" />}
+  image={<img src={logo} alt="Prometheus Logo" />}
   disabled
 />
 ```
@@ -232,7 +233,7 @@ Card can have a disabled state, effectively making it and its actions non-clicka
       'Prometheus',
       <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
-    image={<img src={promLogo} alt="Prometheus Logo" />}
+    image={<img src={logo} alt="Prometheus Logo" />}
     disabled
   />
 </Preview>
@@ -244,7 +245,7 @@ Card can have a disabled state, effectively making it and its actions non-clicka
     'Prometheus',
     <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
   ]}
-  image={<img src={promLogo} alt="Prometheus Logo" />}
+  image={<img src={logo} alt="Prometheus Logo" />}
   actions={[<Button key='settings' variant="secondary">Settings</Button>, <Button key='explore' variant="secondary">Explore</Button>]}
   secondaryActions={[
     <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />,
@@ -261,7 +262,7 @@ Card can have a disabled state, effectively making it and its actions non-clicka
       'Prometheus',
       <a key='prom' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>,
     ]}
-    image={<img src={promLogo} alt="Prometheus Logo" />}
+    image={<img src={logo} alt="Prometheus Logo" />}
     actions={[<Button key='settings' variant="secondary">Settings</Button>, <Button key='explore' variant="secondary">Explore</Button>]}
     secondaryActions={[
       <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />,
