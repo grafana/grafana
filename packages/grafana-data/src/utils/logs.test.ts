@@ -362,6 +362,6 @@ describe('checkLogsError()', () => {
     },
   } as any) as LogRowModel;
   test('should return correct error if error is present', () => {
-    expect(checkLogsError(log)).toBe({ hasError: true, errorMessage: 'Error Message' });
+    expect(checkLogsError(log)).toStrictEqual({ hasError: true, errorMessage: 'Error Message' });
   });
 });
