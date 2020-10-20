@@ -62,7 +62,7 @@ export interface LicenseInfo {
  *
  * @public
  */
-export interface Sentry {
+export interface SentryConfig {
   enabled: boolean;
   dsn: string;
   customEndpoint: string;
@@ -114,5 +114,5 @@ export interface GrafanaConfig {
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
-  sentry: Sentry;
+  sentry: SentryConfig;
 }

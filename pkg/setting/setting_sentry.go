@@ -7,10 +7,10 @@ type Sentry struct {
 }
 
 func (cfg *Cfg) readSentryConfig() {
-	sentryRaw := cfg.Raw.Section("sentry")
+	raw := cfg.Raw.Section("log.frontend")
 	cfg.Sentry = Sentry{
-		Enabled:        sentryRaw.Key("enabled").MustBool(true),
-		DSN:            sentryRaw.Key("dsn").String(),
-		CustomEndpoint: sentryRaw.Key("custom_endpoint").String(),
+		Enabled:        raw.Key("enabled").MustBool(true),
+		DSN:            raw.Key("sentry_dsn").String(),
+		CustomEndpoint: raw.Key("custom_endpoint").String(),
 	}
 }
