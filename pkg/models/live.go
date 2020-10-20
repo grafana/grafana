@@ -2,7 +2,7 @@ package models
 
 import "github.com/centrifugal/centrifuge"
 
-// ChannelPublisher writes data into a channel.  Note that pemissions are not checked
+// ChannelPublisher writes data into a channel. Note that pemissions are not checked.
 type ChannelPublisher func(channel string, data []byte) error
 
 // ChannelHandler defines the core channel behavior
