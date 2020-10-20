@@ -417,7 +417,7 @@ func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 		dsInfo := e.getDSInfo(region)
 		dsInfo.Namespace = namespace
 
-		if dimensionValues, err = e.getDimensionsForCustomMetrics(region); err != nil {
+		if dimensionValues, err = e.getDimensionsForCustomMetrics(region, namespace); err != nil {
 			return nil, errutil.Wrap("unable to call AWS API", err)
 		}
 	}
@@ -702,13 +702,15 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 	return &resp, nil
 }
 
-func (e *cloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetricsOutput, error) {
+func (e *cloudWatchExecutor) getAllMetrics(region string, namespace string) (cloudwatch.ListMetricsOutput, error) {
 	client, err := e.getCWClient(region)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}
 
 	dsInfo := e.getDSInfo(region)
+	dsInfo.Namespace = namespace
+
 	params := &cloudwatch.ListMetricsInput{
 		Namespace: aws.String(dsInfo.Namespace),
 	}
@@ -733,7 +735,7 @@ func (e *cloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetric
 
 var metricsCacheLock sync.Mutex
 
-func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string) ([]string, error) {
+func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region string, namespace string) ([]string, error) {
 	plog.Debug("Getting metrics for custom metrics", "region", region, "namespace", namespace)
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
@@ -755,7 +757,7 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string
 	if customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire.After(time.Now()) {
 		return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
 	}
-	result, err := e.getAllMetrics(region)
+	result, err := e.getAllMetrics(region, namespace)
 	if err != nil {
 		return []string{}, err
 	}
@@ -776,11 +778,12 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string
 
 var dimensionsCacheLock sync.Mutex
 
-func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region string) ([]string, error) {
+func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region string, namespace string) ([]string, error) {
 	dimensionsCacheLock.Lock()
 	defer dimensionsCacheLock.Unlock()
 
 	dsInfo := e.getDSInfo(region)
+	dsInfo.Namespace = namespace
 
 	if _, ok := customMetricsDimensionsMap[dsInfo.Profile]; !ok {
 		customMetricsDimensionsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
@@ -796,7 +799,7 @@ func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region string) ([]str
 	if customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire.After(time.Now()) {
 		return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
 	}
-	result, err := e.getAllMetrics(region)
+	result, err := e.getAllMetrics(region, namespace)
 	if err != nil {
 		return []string{}, err
 	}
