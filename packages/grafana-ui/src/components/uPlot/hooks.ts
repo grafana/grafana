@@ -123,6 +123,7 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone)
       height,
       plugins: Object.entries(plugins).map(p => ({
         hooks: p[1].hooks,
+        opts: p[1].opts,
       })),
       tzDate,
     };

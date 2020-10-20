@@ -7,6 +7,7 @@ import {
   TooltipPlugin,
   ZoomPlugin,
   GraphNG,
+  BarChartPlugin,
 } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
 import { Options } from './types';
@@ -60,6 +61,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
             {data.annotations && <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} />}
             {/* TODO: */}
             {/*<AnnotationsEditorPlugin />*/}
+            <BarChartPlugin id="bar" />
           </GraphNG>
         );
       }}

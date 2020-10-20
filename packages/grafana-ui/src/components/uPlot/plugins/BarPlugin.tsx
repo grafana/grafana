@@ -10,29 +10,27 @@ export const BarChartPlugin: React.FC<BarChartPluginProps> = ({ id }) => {
   const pluginId = `BarChartPlugin:${id}`;
   const pluginsApi = usePlotPluginContext();
 
-  useEffect(
-    () =>
-      pluginsApi.registerPlugin({
-        id: pluginId,
-        hooks: {},
-        opts: (self: uPlot, opts: uPlot.Options) => {
-          opts.series = opts.series.map((serie, index) => {
-            if (index === 0) {
-              return serie;
-            }
+  useEffect(() => {
+    return pluginsApi.registerPlugin({
+      id: pluginId,
+      hooks: {},
+      opts: (self: uPlot, opts: uPlot.Options) => {
+        for (let index = 1; index < opts.series.length; index++) {
+          const serie = opts.series[index];
 
-            return uPlot.assign(serie, {
-              width: 0,
-              paths: drawBars,
-              points: {
-                show: drawPoints,
-              },
-            });
+          uPlot.assign(serie, {
+            width: 0,
+            paths: drawBars,
+            points: {
+              show: drawPoints,
+            },
           });
-        },
-      }),
-    []
-  );
+
+          console.log('series' + index, serie);
+        }
+      },
+    });
+  }, []);
 
   return null;
 };
@@ -67,10 +65,27 @@ const drawElements = (self: uPlot, seriesIdx: number, i0: number, i1: number, dr
   }
 };
 
-const drawBars = () => {};
+const drawBars = (self: uPlot, seriesIdx: number, i0: number, i1: number) => {
+  console.log('asdf bars');
+  const scaleY = self.series[seriesIdx].scale ?? 'y';
+  const zeroY = Math.round(self.valToPos(0, scaleY, true));
+  const fill = new Path2D();
+
+  const drawer: ElementDrawer = (index, x0, y0, offset, totalWidth) => {
+    const value = self.data[seriesIdx][index];
+    if (!isNumber(value) && !isString(value)) {
+      return;
+    }
+    fill.rect(x0 - totalWidth / 2 + offset, y0, barWidth, zeroY - y0);
+  };
+
+  drawElements(self, seriesIdx, i0, i1, drawer);
+  return { fill };
+};
 
 const drawPoints = (self: uPlot, seriesIdx: number, i0: number, i1: number) => {
-  const drawer = (index: number, x0: number, y0: number, offset: number, totalWidth: number) => {
+  console.log('asdf points');
+  const drawer: ElementDrawer = (index, x0, y0, offset, totalWidth) => {
     const value = self.data[seriesIdx][index];
     if (!isNumber(value) && !isString(value)) {
       return;
