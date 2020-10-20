@@ -23,6 +23,6 @@ func TestParseChannelAddress_Valid(t *testing.T) {
 }
 
 func TestParseChannelAddress_Invalid(t *testing.T) {
-	addr = ParseChannelAddress("aaa/bbb")
+	addr := ParseChannelAddress("aaa/bbb")
 	require.False(t, addr.IsValid())
 }

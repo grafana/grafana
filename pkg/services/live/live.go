@@ -89,7 +89,7 @@ func InitializeBroker() (*GrafanaLive, error) {
 
 	glive.GrafanaScope.Dashboards = dash
 	glive.GrafanaScope.Features["dashboard"] = dash
-	glive.GrafanaScope.Features["testdata"] = &features.TestdataSupplier{
+	glive.GrafanaScope.Features["testdata"] = &features.TestDataSupplier{
 		Publisher: glive.Publish,
 	}
 	glive.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{

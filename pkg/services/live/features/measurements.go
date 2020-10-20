@@ -16,7 +16,8 @@ type MeasurementsRunner struct {
 	Publisher models.ChannelPublisher
 }
 
-// GetHandlerForPath is called on init.
+// GetHandlerForPath gets the handler for a path.
+// It's called on init.
 func (m *MeasurementsRunner) GetHandlerForPath(path string) (models.ChannelHandler, error) {
 	return m, nil // for now all channels share config
 }

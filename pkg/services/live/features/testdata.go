@@ -10,8 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// TestdataRunner manages all the `grafana/dashboard/*` channels.
-type testdataRunner struct {
+// testDataRunner manages all the `grafana/dashboard/*` channels.
+type testDataRunner struct {
 	publisher   models.ChannelPublisher
 	running     bool
 	speedMillis int
@@ -20,18 +20,18 @@ type testdataRunner struct {
 	name        string
 }
 
-// TestdataSupplier manages all the `grafana/testdata/*` channels.
-type TestdataSupplier struct {
+// TestDataSupplier manages all the `grafana/testdata/*` channels.
+type TestDataSupplier struct {
 	Publisher models.ChannelPublisher
 }
 
 // GetHandlerForPath gets the channel handler for a path.
 // Called on init.
-func (g *TestdataSupplier) GetHandlerForPath(path string) (models.ChannelHandler, error) {
+func (g *TestDataSupplier) GetHandlerForPath(path string) (models.ChannelHandler, error) {
 	channel := "grafana/testdata/" + path
 
 	if path == "random-2s-stream" {
-		return &testdataRunner{
+		return &testDataRunner{
 			publisher:   g.Publisher,
 			running:     false,
 			speedMillis: 2000,
@@ -42,7 +42,7 @@ func (g *TestdataSupplier) GetHandlerForPath(path string) (models.ChannelHandler
 	}
 
 	if path == "random-flakey-stream" {
-		return &testdataRunner{
+		return &testDataRunner{
 			publisher:   g.Publisher,
 			running:     false,
 			speedMillis: 400,
@@ -56,12 +56,12 @@ func (g *TestdataSupplier) GetHandlerForPath(path string) (models.ChannelHandler
 
 // GetChannelOptions gets channel options.
 // Called fast and often.
-func (g *testdataRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
+func (g *testDataRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
 	return centrifuge.ChannelOptions{}
 }
 
 // OnSubscribe for now allows anyone to subscribe to any dashboard.
-func (g *testdataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
+func (g *testDataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
 	if !g.running {
 		g.running = true
 
@@ -74,12 +74,12 @@ func (g *testdataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscrib
 }
 
 // OnPublish is called when an event is received from the websocket.
-func (g *testdataRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
+func (g *testDataRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
 	return nil, fmt.Errorf("can not publish to testdata")
 }
 
 // runRandomCSV is just for an example.
-func (g *testdataRunner) runRandomCSV() {
+func (g *testDataRunner) runRandomCSV() {
 	spread := 50.0
 
 	walker := rand.Float64() * 100
