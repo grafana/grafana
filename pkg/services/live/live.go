@@ -258,7 +258,7 @@ func (g *GrafanaLive) initChannel(id ChannelIdentifier) (models.ChannelHandler, 
 	if id.Scope == "grafana" {
 		p, ok := g.GrafanaScope.Features[id.Namespace]
 		if ok {
-			return p.GetHandlerForPath(id.Path, g.Publish)
+			return p.GetHandlerForPath(id.Path)
 		}
 		return nil, fmt.Errorf("Unknown feature: %s", id.Namespace)
 	}
@@ -270,8 +270,10 @@ func (g *GrafanaLive) initChannel(id ChannelIdentifier) (models.ChannelHandler, 
 	if id.Scope == "plugin" {
 		// Temporary hack until we have a more generic solution later on
 		if id.Namespace == "cloudwatch" {
-			supplier := &cloudwatch.LogQueryRunnerSupplier{}
-			return supplier.GetHandlerForPath(id.Path, g.Publish)
+			supplier := &cloudwatch.LogQueryRunnerSupplier{
+				Publisher: g.Publish,
+			}
+			return supplier.GetHandlerForPath(id.Path)
 		}
 
 		p, ok := plugins.Plugins[id.Namespace]
@@ -279,7 +281,7 @@ func (g *GrafanaLive) initChannel(id ChannelIdentifier) (models.ChannelHandler, 
 			h := &PluginHandler{
 				Plugin: p,
 			}
-			return h.GetHandlerForPath(id.Path, g.Publish)
+			return h.GetHandlerForPath(id.Path)
 		}
 		return nil, fmt.Errorf("unknown plugin: %s", id.Namespace)
 	}

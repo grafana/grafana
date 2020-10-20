@@ -20,7 +20,7 @@ type DashboardHandler struct {
 	publisher models.ChannelPublisher
 }
 
-// CreateDashboardHandler Initialize a dashboard handler
+// CreateDashboardHandler initializes a dashboard handler.
 func CreateDashboardHandler(p models.ChannelPublisher) DashboardHandler {
 	return DashboardHandler{
 		publisher: p,
@@ -28,7 +28,7 @@ func CreateDashboardHandler(p models.ChannelPublisher) DashboardHandler {
 }
 
 // GetHandlerForPath called on init
-func (g *DashboardHandler) GetHandlerForPath(path string, publisher models.ChannelPublisher) (models.ChannelHandler, error) {
+func (g *DashboardHandler) GetHandlerForPath(path string) (models.ChannelHandler, error) {
 	return g, nil // all dashboards share the same handler
 }
 
