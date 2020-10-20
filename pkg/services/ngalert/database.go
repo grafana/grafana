@@ -11,6 +11,7 @@ func (ng *AlertNG) registerBusHandlers() {
 	ng.Bus.AddHandler(ng.SaveAlertDefinition)
 	ng.Bus.AddHandler(ng.UpdateAlertDefinition)
 	ng.Bus.AddHandler(ng.GetAlertDefinitionByID)
+	ng.Bus.AddHandler(ng.GetAlertDefinitions)
 }
 
 func getAlertDefinitionByID(alertDefinitionID int64, sess *sqlstore.DBSession) (*AlertDefinition, error) {
@@ -92,6 +93,20 @@ func (ng *AlertNG) UpdateAlertDefinition(cmd *UpdateAlertDefinitionCommand) erro
 
 		cmd.Result = alertDefinition
 		cmd.RowsAffected = affectedRows
+		return nil
+	})
+}
+
+// ListAlertDefinitions handler for retrieving alert definitions of specific organisation.
+func (ng *AlertNG) GetAlertDefinitions(cmd *ListAlertDefinitionsCommand) error {
+	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		alertDefinitions := make([]*AlertDefinition, 0)
+		q := "SELECT * FROM alert_definition WHERE org_id = ?"
+		if err := sess.SQL(q, cmd.OrgID).Find(&alertDefinitions); err != nil {
+			return err
+		}
+
+		cmd.Result = alertDefinitions
 		return nil
 	})
 }
