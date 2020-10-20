@@ -30,7 +30,7 @@ export const CSVWaveEditor = ({ onChange, query }: EditorProps) => {
               width={grow ? undefined : 32}
               type={type}
               name={id}
-              id={`csvWave.${id}`}
+              id={`csvWave.${id}-${query.refId}`}
               value={query.csvWave?.[id]}
               placeholder={placeholder}
               onChange={onChange}

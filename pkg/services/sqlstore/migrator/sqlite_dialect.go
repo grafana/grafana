@@ -12,7 +12,7 @@ type Sqlite3 struct {
 	BaseDialect
 }
 
-func NewSqlite3Dialect(engine *xorm.Engine) *Sqlite3 {
+func NewSqlite3Dialect(engine *xorm.Engine) Dialect {
 	d := Sqlite3{}
 	d.BaseDialect.dialect = &d
 	d.BaseDialect.engine = engine
