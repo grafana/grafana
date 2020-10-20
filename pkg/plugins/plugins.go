@@ -245,8 +245,6 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 			return fmt.Errorf("unknown plugin type %q", plugin.Type)
 		}
 
-		loader := reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
-
 		jsonFPath := filepath.Join(plugin.PluginDir, "plugin.json")
 
 		// External plugins need a module.js file for SystemJS to load
@@ -273,15 +271,13 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		jsonParser := json.NewDecoder(reader)
 
 		if signingError != nil {
-			plugin.Error = signingError
-		}
-
-		if plugin.Error != nil {
 			phantomLoader := &PhantomPlugin{*plugin}
 			if err := phantomLoader.Load(jsonParser, plugin, nil); err != nil {
 				return err
 			}
 		} else {
+			loader := reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
+
 			// Load the full plugin, and add it to manager
 			if err := loader.Load(jsonParser, plugin, scanner.backendPluginManager); err != nil {
 				return err

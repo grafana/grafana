@@ -74,8 +74,6 @@ type PluginBase struct {
 	GrafanaNetHasUpdate bool   `json:"-"`
 
 	Root *PluginBase
-
-	Error *PluginError
 }
 
 func (pb *PluginBase) registerPlugin(base *PluginBase) error {
@@ -104,7 +102,6 @@ func (pb *PluginBase) registerPlugin(base *PluginBase) error {
 	// Copy relevant fields from the base
 	pb.PluginDir = base.PluginDir
 	pb.Signature = base.Signature
-	pb.Error = base.Error
 
 	Plugins[pb.Id] = pb
 	return nil

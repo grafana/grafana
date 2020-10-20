@@ -80,10 +80,10 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 
 	result := make(dtos.PluginList, 0)
 	for _, pluginDef := range plugins.Plugins {
-		pluginErrors := plugins.Errors[pluginDef.Id]
+		pluginError := plugins.Errors[pluginDef.Id]
 
 		// filter out app sub plugins with no errors
-		if embeddedFilter == "0" && pluginDef.IncludedInAppId != "" && pluginErrors == nil {
+		if embeddedFilter == "0" && pluginDef.IncludedInAppId != "" && pluginError == nil {
 			continue
 		}
 
@@ -114,9 +114,9 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 			Signature:     pluginDef.Signature,
 		}
 
-		if pluginDef.Error != nil {
+		if pluginError != nil {
 			listItem.Error = &plugins.PluginErrorInfo{
-				ErrorCode: pluginDef.Error.ErrorCode.String(),
+				ErrorCode: pluginError.ErrorCode.String(),
 			}
 		}
 
@@ -172,9 +172,10 @@ func GetPluginSettingByID(c *models.ReqContext) Response {
 		Signature:     def.Signature,
 	}
 
-	if def.Error != nil {
+	pluginError := plugins.Errors[def.Id]
+	if pluginError != nil {
 		dto.Error = &plugins.PluginErrorInfo{
-			ErrorCode: def.Error.ErrorCode.String(),
+			ErrorCode: pluginError.ErrorCode.String(),
 		}
 	}
 
