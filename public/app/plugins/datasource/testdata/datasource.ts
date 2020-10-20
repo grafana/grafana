@@ -62,6 +62,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
           break;
         case 'variables-query':
           streams.push(this.variablesQuery(target, options));
+          break;
         default:
           queries.push({
             ...target,

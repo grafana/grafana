@@ -1,4 +1,4 @@
-import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { toDataQueryError } from '@grafana/runtime';
 
 import { updateOptions, validateVariableSelectionState } from '../state/actions';
 import { QueryVariableModel, VariableRefresh } from '../types';
@@ -10,6 +10,7 @@ import { addVariableEditorError, removeVariableEditorError } from '../editor/red
 import { updateVariableOptions, updateVariableTags } from './reducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { changeVariableProp } from '../state/sharedReducer';
+import { getTemplatedRegex } from '../utils';
 
 export const legacyUpdateQueryVariableOptions = (
   identifier: VariableIdentifier,
@@ -82,16 +83,4 @@ export const legacyChangeQueryVariableQuery = (
   dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
   dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition })));
   await dispatch(updateOptions(identifier));
-};
-
-const getTemplatedRegex = (variable: QueryVariableModel): string => {
-  if (!variable) {
-    return '';
-  }
-
-  if (!variable.regex) {
-    return '';
-  }
-
-  return getTemplateSrv().replace(variable.regex, {}, 'regex');
 };

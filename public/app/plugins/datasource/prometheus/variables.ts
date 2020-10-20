@@ -19,7 +19,9 @@ export class PrometheusVariableSupport implements StandardVariableSupport<Promet
     private readonly datasource: PrometheusDatasource,
     private readonly templateSrv: TemplateSrv = getTemplateSrv(),
     private readonly timeSrv: TimeSrv = getTimeSrv()
-  ) {}
+  ) {
+    this.query = this.query.bind(this);
+  }
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     const query = request.targets[0].expr;

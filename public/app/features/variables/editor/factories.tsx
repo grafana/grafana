@@ -6,8 +6,8 @@ import { LEGACY_VARIABLE_QUERY_EDITOR_NAME, LegacyVariableQueryEditor } from './
 import {
   hasCustomVariableSupport,
   hasDatasourceVariableSupport,
-  hasDefaultVariableSupport,
   hasLegacyVariableSupport,
+  hasStandardVariableSupport,
 } from '../guard';
 import { VariableQueryProps } from '../../../types';
 
@@ -44,7 +44,7 @@ export function isQueryEditor<
   return (
     component.displayName !== LEGACY_VARIABLE_QUERY_EDITOR_NAME &&
     (hasDatasourceVariableSupport(datasource) ||
-      hasDefaultVariableSupport(datasource) ||
+      hasStandardVariableSupport(datasource) ||
       hasCustomVariableSupport(datasource))
   );
 }
@@ -62,7 +62,7 @@ export function variableQueryEditorFactory<
     return datasource.variables.datasource.editor;
   }
 
-  if (hasDefaultVariableSupport(datasource)) {
+  if (hasStandardVariableSupport(datasource)) {
     return DefaultVariableQueryEditor;
   }
 

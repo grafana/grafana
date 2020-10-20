@@ -1,6 +1,9 @@
 import isString from 'lodash/isString';
 import { ScopedVars } from '@grafana/data';
 import { ALL_VARIABLE_TEXT } from './state/types';
+import { QueryVariableModel, VariableRefresh } from './types';
+import { getTemplateSrv } from '@grafana/runtime';
+import { getTimeSrv } from '../dashboard/services/TimeSrv';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -103,3 +106,24 @@ export const getCurrentText = (variable: any): string => {
 
   return variable.current.text;
 };
+
+export function getTemplatedRegex(variable: QueryVariableModel, templateSrv = getTemplateSrv()): string {
+  if (!variable) {
+    return '';
+  }
+
+  if (!variable.regex) {
+    return '';
+  }
+
+  return templateSrv.replace(variable.regex, {}, 'regex');
+}
+
+export function getLegacyQueryOptions(variable: QueryVariableModel, searchFilter?: string, timeSrv = getTimeSrv()) {
+  const queryOptions: any = { range: undefined, variable, searchFilter };
+  if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
+    queryOptions.range = timeSrv.timeRange();
+  }
+
+  return queryOptions;
+}

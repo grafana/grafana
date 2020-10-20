@@ -14,6 +14,9 @@ import { legacyUpdateQueryVariableOptions } from './legacyActions';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';
 import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
 import { variableQueryEditorFactory } from '../editor/factories';
+import { Subscription } from 'rxjs';
+import { variableQueryRunner } from './variableQueryRunner';
+import { variableQueryObserver } from './variableQueryObserver';
 
 export const updateQueryVariableOptions = (
   identifier: VariableIdentifier,
@@ -30,6 +33,17 @@ export const updateQueryVariableOptions = (
       if (hasLegacyVariableSupport(dataSource)) {
         return await dispatch(legacyUpdateQueryVariableOptions(identifier, searchFilter));
       }
+
+      // we need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
+      // variable will have the wrong current value as input
+      await new Promise((resolve, reject) => {
+        const subscription: Subscription = new Subscription();
+        const observer = variableQueryObserver(resolve, reject, subscription);
+        const responseSubscription = variableQueryRunner.getResponse(identifier).subscribe(observer);
+        subscription.add(responseSubscription);
+
+        variableQueryRunner.queueRequest({ identifier, dataSource, searchFilter });
+      });
     } catch (err) {
       const error = toDataQueryError(err);
       if (getState().templating.editor.id === variableInState.id) {

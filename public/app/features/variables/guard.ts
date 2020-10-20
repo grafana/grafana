@@ -95,7 +95,7 @@ export const hasLegacyVariableSupport = <
   return Boolean(datasource.metricFindQuery) && !Boolean(datasource.variables);
 };
 
-export const hasDefaultVariableSupport = <
+export const hasStandardVariableSupport = <
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 >(
