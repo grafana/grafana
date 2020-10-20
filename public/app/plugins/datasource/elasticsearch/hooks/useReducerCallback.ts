@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 export interface Action<T extends string = string> {
   type: T;
 }
+
 export type Reducer<S, A extends Action = Action> = (state: S, action: A) => S;
 
 export const combineReducers = <S, A extends Action = Action>(reducers: { [P in keyof S]: Reducer<S[P], A> }) => (
@@ -23,8 +24,7 @@ export const useReducerCallback = <State, A = Action>(
 ) => {
   const dispatch = useCallback(
     (action: A) => {
-      const newState = reducer(state, action);
-      onChange({ ...state, ...newState });
+      onChange(reducer(state, action));
     },
     [onChange, state, reducer]
   );

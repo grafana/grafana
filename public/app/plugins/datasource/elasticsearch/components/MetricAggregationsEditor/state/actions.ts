@@ -10,6 +10,10 @@ import {
   MetricAggregationWithSettings,
   MetricAggregationWithMeta,
   CHANGE_METRIC_META,
+  CHANGE_METRIC_ATTRIBUTE,
+  ChangeMetricAttributeAction,
+  ChangeMetricSettingAction,
+  ChangeMetricMetaAction,
 } from './types';
 
 export const addMetric = (metricType: MetricAggregation['type']): MetricAggregationAction => ({
@@ -52,11 +56,27 @@ export const toggleMetricVisibility = (id: MetricAggregation['id']): MetricAggre
   },
 });
 
+export const changeMetricAttribute = <
+  T extends MetricAggregation = MetricAggregation,
+  K extends Extract<keyof T, string> = Extract<keyof T, string>
+>(
+  metric: T,
+  attribute: K,
+  newValue: T[K]
+): ChangeMetricAttributeAction<T> => ({
+  type: CHANGE_METRIC_ATTRIBUTE,
+  payload: {
+    metric,
+    attribute,
+    newValue,
+  },
+});
+
 export const changeMetricSetting = <T extends MetricAggregationWithSettings = MetricAggregationWithSettings>(
   metric: T,
   setting: Extract<keyof Required<T>['settings'], string>,
   newValue: string | number | string[]
-): MetricAggregationAction => ({
+): ChangeMetricSettingAction<T> => ({
   type: CHANGE_METRIC_SETTING,
   payload: {
     metric,
@@ -69,7 +89,7 @@ export const changeMetricMeta = <T extends MetricAggregationWithMeta = MetricAgg
   metric: T,
   meta: Extract<keyof Required<T>['meta'], string>,
   newValue: string | number
-): MetricAggregationAction => ({
+): ChangeMetricMetaAction<T> => ({
   type: CHANGE_METRIC_META,
   payload: {
     metric,

@@ -7,6 +7,7 @@ export const CHANGE_METRIC_TYPE = '@metrics/change_type';
 export const CHANGE_METRIC_FIELD = '@metrics/change_field';
 export const CHANGE_METRIC_SETTING = '@metrics/change_setting';
 export const CHANGE_METRIC_META = '@metrics/change_meta';
+export const CHANGE_METRIC_ATTRIBUTE = '@metrics/change_attr';
 export const TOGGLE_METRIC_VISIBILITY = '@metrics/toggle_visibility';
 
 export type PipelineMetricAggregationType =
@@ -30,7 +31,7 @@ export type MetricAggregationType =
   | 'logs'
   | PipelineMetricAggregationType;
 
-interface PipelineVariable {
+export interface PipelineVariable {
   name: string;
   pipelineAgg: string;
 }
@@ -186,7 +187,8 @@ export interface BasePipelineMetricAggregation extends MetricAggregationWithFiel
   type: PipelineMetricAggregationType;
 }
 
-interface PipelineMetricAggregationWithMoultipleBucketPaths extends BasePipelineMetricAggregation {
+interface PipelineMetricAggregationWithMultipleBucketPaths {
+  type: PipelineMetricAggregationType;
   pipelineVariables?: PipelineVariable[];
 }
 
@@ -253,7 +255,7 @@ interface CumulativeSum extends BasePipelineMetricAggregation, MetricAggregation
   };
 }
 
-interface BucketScript extends PipelineMetricAggregationWithMoultipleBucketPaths, MetricAggregationWithSettings {
+export interface BucketScript extends PipelineMetricAggregationWithMultipleBucketPaths, MetricAggregationWithSettings {
   type: 'bucket_script';
   settings?: {
     script?: string;
@@ -289,8 +291,8 @@ export const isPipelineAggregation = (
 ): metric is PipelineMetricAggregation => metricAggregationConfig[metric.type].isPipelineAgg;
 
 export const isPipelineAggregationWithMultipleBucketPaths = (
-  metric: BaseMetricAggregation | PipelineMetricAggregationWithMoultipleBucketPaths
-): metric is PipelineMetricAggregationWithMoultipleBucketPaths =>
+  metric: BaseMetricAggregation | PipelineMetricAggregationWithMultipleBucketPaths
+): metric is PipelineMetricAggregationWithMultipleBucketPaths =>
   metricAggregationConfig[metric.type].supportsMultipleBucketPaths;
 
 export const isMetricAggregationWithMissingSupport = (
@@ -347,7 +349,7 @@ export interface ChangeMetricSettingAction<T extends MetricAggregationWithSettin
   payload: {
     metric: T;
     setting: Extract<keyof Required<T>['settings'], string>;
-    newValue: string | number | string[];
+    newValue: unknown;
   };
 }
 
@@ -360,11 +362,23 @@ export interface ChangeMetricMetaAction<T extends MetricAggregationWithMeta = Me
   };
 }
 
-export type MetricAggregationAction =
+export interface ChangeMetricAttributeAction<
+  T extends BaseMetricAggregation = MetricAggregation,
+  K extends Extract<keyof T, string> = Extract<keyof T, string>
+> extends Action<typeof CHANGE_METRIC_ATTRIBUTE> {
+  payload: {
+    metric: T;
+    attribute: K;
+    newValue: T[K];
+  };
+}
+
+export type MetricAggregationAction<T extends MetricAggregation = MetricAggregation> =
   | AddMetricAction
   | RemoveMetricAction
   | ChangeMetricTypeAction
   | ChangeMetricFieldAction
   | ToggleMetricVisibilityAction
-  | ChangeMetricSettingAction
-  | ChangeMetricMetaAction;
+  | ChangeMetricAttributeAction<T>
+  | ChangeMetricSettingAction<T>
+  | ChangeMetricMetaAction<T>;

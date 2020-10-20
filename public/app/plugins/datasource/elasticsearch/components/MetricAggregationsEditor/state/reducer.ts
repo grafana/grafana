@@ -13,6 +13,7 @@ import {
   CHANGE_METRIC_META,
   isMetricAggregationWithSettings,
   isMetricAggregationWithMeta,
+  CHANGE_METRIC_ATTRIBUTE,
 } from './types';
 
 export const reducer = (
@@ -123,6 +124,18 @@ export const reducer = (
         }
         // This should never happen.
         return metric;
+      });
+
+    case CHANGE_METRIC_ATTRIBUTE:
+      return state.map(metric => {
+        if (metric.id !== action.payload.metric.id) {
+          return metric;
+        }
+
+        return {
+          ...metric,
+          [action.payload.attribute]: action.payload.newValue,
+        };
       });
 
     default:

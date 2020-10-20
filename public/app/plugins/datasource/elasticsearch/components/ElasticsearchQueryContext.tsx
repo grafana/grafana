@@ -22,7 +22,7 @@ export const ElasticsearchProvider: FunctionComponent<Props> = ({ children, onCh
     bucketAggs: bucketAggsReducer,
   });
 
-  const dispatch = useReducerCallback(onChange, query, reducer);
+  const dispatch = useReducerCallback(newState => onChange({ ...query, ...newState }), query, reducer);
 
   return (
     <DatasourceContext.Provider value={datasource}>

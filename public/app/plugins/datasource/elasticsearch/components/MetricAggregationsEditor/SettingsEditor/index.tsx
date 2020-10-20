@@ -1,16 +1,17 @@
 import { Icon, InlineField, Input, Select, Switch } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import React, { FunctionComponent, useState, ComponentProps } from 'react';
-import { extendedStats, movingAvgModelOptions, movingAvgModelSettings } from '../../query_def';
-import { useDispatch } from '../ElasticsearchQueryContext';
-import { changeMetricMeta, changeMetricSetting } from './state/actions';
+import { extendedStats, movingAvgModelOptions, movingAvgModelSettings } from '../../../query_def';
+import { useDispatch } from '../../ElasticsearchQueryContext';
+import { changeMetricMeta, changeMetricSetting } from '../state/actions';
 import {
   isMetricAggregationWithInlineScript,
   isMetricAggregationWithMissingSupport,
   MetricAggregation,
-} from './state/types';
-import { justifyStart } from './styles';
-import { isValidNumber } from './utils';
+} from '../state/types';
+import { justifyStart } from '../styles';
+import { isValidNumber } from '../utils';
+import { BucketScriptSettingsEditor } from './BucketScriptSettingsEditor';
 
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 16,
@@ -18,9 +19,10 @@ const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
 
 interface Props {
   metric: MetricAggregation;
+  previousMetrics: MetricAggregation[];
 }
 
-export const SettingsEditor: FunctionComponent<Props> = ({ metric }) => {
+export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetrics }) => {
   const [open, setOpen] = useState(false);
   const dispatch = useDispatch();
 
@@ -113,6 +115,10 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric }) => {
             </>
           )}
 
+          {metric.type === 'bucket_script' && (
+            <BucketScriptSettingsEditor value={metric} previousMetrics={previousMetrics} />
+          )}
+
           {(metric.type === 'raw_data' || metric.type === 'raw_document') && (
             <InlineField label="Size" {...inlineFieldProps}>
               <Input
@@ -137,7 +143,6 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric }) => {
               {extendedStats.map(stat => (
                 <InlineField label={stat.text} {...inlineFieldProps} key={stat.value}>
                   <Switch
-                    // FIXME: This should go in meta
                     onChange={e => dispatch(changeMetricMeta(metric, stat.value, (e.target as any).checked))}
                     value={metric.meta?.[stat.value] ?? stat.default}
                   />

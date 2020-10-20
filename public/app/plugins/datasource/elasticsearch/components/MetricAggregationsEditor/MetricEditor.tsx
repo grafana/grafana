@@ -17,6 +17,7 @@ import {
 } from './state/types';
 import { metricAggregationConfig } from './utils';
 import { changeMetricField, changeMetricType, toggleMetricVisibility } from './state/actions';
+import { MetricPicker } from '../MetricPicker';
 
 const toOption = (metric: MetricAggregation) => ({
   label: metricAggregationConfig[metric.type].label,
@@ -96,18 +97,17 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
           )}
 
           {isPipelineAggregation(value) && !isPipelineAggregationWithMultipleBucketPaths(value) && (
-            <Segment
+            <MetricPicker
               className={cx(styles.color)}
-              options={metricsToOptions(previousMetrics)}
               onChange={e => dispatch(changeMetricField(value.id, e.value?.id!))}
-              placeholder="Select Metric"
-              value={value.field ? metricToOption(previousMetrics.find(p => p.id === value.field)!) : null}
+              options={previousMetrics}
+              value={value.field}
             />
           )}
         </div>
 
         <div className={css(flex, flexColumn)}>
-          <SettingsEditor metric={value} />
+          <SettingsEditor metric={value} previousMetrics={previousMetrics} />
         </div>
       </div>
 
@@ -115,15 +115,3 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
     </>
   );
 };
-
-const metricToOption = (metric: MetricAggregation) => ({
-  label: describeMetric(metric),
-  value: metric,
-});
-
-const metricsToOptions = (metrics: MetricAggregation[]): Array<SelectableValue<MetricAggregation>> =>
-  metrics.map(metricToOption);
-
-// This is a very ugly way to describe a metric (by ID)
-// Would be nice maybe to have something like `metricType(anotherMetricType(field))`
-const describeMetric = (metric: MetricAggregation) => `${metricAggregationConfig[metric.type].label} ${metric.id}`;
