@@ -73,7 +73,6 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 
 // LoadAlertCondition returns a Condition object for the given alertDefintionId.
 func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64, signedInUser *models.SignedInUser, skipCache bool) (*eval.Condition, error) {
-	// get queries from the dashboard (because GEL expressions cannot be stored in alerts so far)
 	getAlertDefinitionByIDQuery := GetAlertDefinitionByIDQuery{ID: alertDefinitionID}
 	if err := bus.Dispatch(&getAlertDefinitionByIDQuery); err != nil {
 		return nil, err
