@@ -324,7 +324,7 @@ Here is the result after applying the `Series to rows` transformation.
 | 2020-07-07 09:30:05 | Temperature | 19    |
 
 
-## Filter By Value
+## Filter by value
 
 
 This transformation allows you to filter your data directly in Grafana and remove some data points from your query result. You have the option to include or exclude data that match one or more conditions you define. The conditions are applied on a selected field.
