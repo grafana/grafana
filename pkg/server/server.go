@@ -22,6 +22,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	_ "github.com/grafana/grafana/pkg/infra/metrics"
 	_ "github.com/grafana/grafana/pkg/infra/remotecache"
 	_ "github.com/grafana/grafana/pkg/infra/serverlock"
@@ -117,6 +118,9 @@ func (s *Server) init(cfg *Config) error {
 
 	s.loadConfiguration()
 	s.writePIDFile()
+	if err := metrics.SetEnvironmentInformation(s.cfg.MetricsGrafanaEnvironmentInfo); err != nil {
+		return err
+	}
 
 	login.Init()
 	social.NewOAuthService()
