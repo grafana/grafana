@@ -41,6 +41,17 @@ type customMetricsCache struct {
 
 var customMetricsMetricsMap = make(map[string]*customMetricsCache)
 var customMetricsDimensionsMap = make(map[string]*customMetricsCache)
+
+type props struct {
+	region    string
+	profile   string
+	namespace string
+}
+
+func (p props) toArray() []string {
+	return []string{p.profile, p.region, p.namespace}
+}
+
 var metricsMap = map[string][]string{
 	"AWS/ACMPrivateCA":            {"CRLGenerated", "Failure", "MisconfiguredCRLBucket", "Success", "Time"},
 	"AWS/AmazonMQ":                {"BurstBalance", "ConsumerCount", "CpuCreditBalance", "CpuUtilization", "CurrentConnectionsCount", "DequeueCount", "DispatchCount", "EnqueueCount", "EnqueueTime", "EstablishedConnectionsCount", "ExpiredCount", "HeapUsage", "InactiveDurableTopicSubscribersCount", "InFlightCount", "JobSchedulerStorePercentUsage", "JournalFilesForFastRecovery", "JournalFilesForFullRecovery", "MemoryUsage", "NetworkIn", "NetworkOut", "OpenTransactionCount", "ProducerCount", "QueueSize", "ReceiveCount", "StorePercentUsage", "TempPercentUsage", "TotalConsumerCount", "TotalDequeueCount", "TotalEnqueueCount", "TotalMessageCount", "TotalProducerCount", "VolumeReadOps", "VolumeWriteOps"},
@@ -389,7 +400,9 @@ func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 	} else {
 		var err error
 		dsInfo := e.getDSInfo(region)
-		if namespaceMetrics, err = e.getMetricsForCustomMetrics(region, namespace, dsInfo.Profile); err != nil {
+
+		p := props{region: region, namespace: namespace, profile: dsInfo.Profile}
+		if namespaceMetrics, err = e.getMetricsForCustomMetrics(p); err != nil {
 			return nil, errutil.Wrap("unable to call AWS API", err)
 		}
 	}
@@ -417,7 +430,8 @@ func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 		var err error
 		dsInfo := e.getDSInfo(region)
 
-		if dimensionValues, err = e.getDimensionsForCustomMetrics(region, namespace, dsInfo.Profile); err != nil {
+		p := props{region: region, namespace: namespace, profile: dsInfo.Profile}
+		if dimensionValues, err = e.getDimensionsForCustomMetrics(p); err != nil {
 			return nil, errutil.Wrap("unable to call AWS API", err)
 		}
 	}
@@ -702,14 +716,14 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 	return &resp, nil
 }
 
-func (e *cloudWatchExecutor) getAllMetrics(region string, namespace string) (cloudwatch.ListMetricsOutput, error) {
-	client, err := e.getCWClient(region)
+func (e *cloudWatchExecutor) getAllMetrics(props props) (cloudwatch.ListMetricsOutput, error) {
+	client, err := e.getCWClient(props.region)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}
 
 	params := &cloudwatch.ListMetricsInput{
-		Namespace: aws.String(namespace),
+		Namespace: aws.String(props.namespace),
 	}
 
 	plog.Debug("Listing metrics pages")
@@ -732,13 +746,13 @@ func (e *cloudWatchExecutor) getAllMetrics(region string, namespace string) (clo
 
 var metricsCacheLock sync.Mutex
 
-func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace, profile string) ([]string, error) {
-	plog.Debug("Getting metrics for custom metrics", "region", region, "namespace", namespace)
+func (e *cloudWatchExecutor) getMetricsForCustomMetrics(props props) ([]string, error) {
+	plog.Debug("Getting metrics for custom metrics", "region", props.region, "namespace", props.namespace, "profile", props.profile)
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
 	bldr := strings.Builder{}
-	for i, s := range []string{profile, region, namespace} {
+	for i, s := range props.toArray() {
 		if i != 0 {
 			bldr.WriteString(":")
 		}
@@ -754,7 +768,7 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace, profi
 	if customMetricsMetricsMap[cacheKey].Expire.After(time.Now()) {
 		return customMetricsMetricsMap[cacheKey].Cache, nil
 	}
-	result, err := e.getAllMetrics(region, namespace)
+	result, err := e.getAllMetrics(props)
 	if err != nil {
 		return []string{}, err
 	}
@@ -775,12 +789,12 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace, profi
 
 var dimensionsCacheLock sync.Mutex
 
-func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region, namespace, profile string) ([]string, error) {
+func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(props props) ([]string, error) {
 	dimensionsCacheLock.Lock()
 	defer dimensionsCacheLock.Unlock()
 
 	bldr := strings.Builder{}
-	for i, s := range []string{profile, region, namespace} {
+	for i, s := range props.toArray() {
 		if i != 0 {
 			bldr.WriteString(":")
 		}
@@ -796,7 +810,7 @@ func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region, namespace, pr
 	if customMetricsDimensionsMap[cacheKey].Expire.After(time.Now()) {
 		return customMetricsDimensionsMap[cacheKey].Cache, nil
 	}
-	result, err := e.getAllMetrics(region, namespace)
+	result, err := e.getAllMetrics(props)
 	if err != nil {
 		return []string{}, err
 	}
