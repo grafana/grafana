@@ -33,6 +33,7 @@ export const buildPlotConfig = (props: PlotProps, plugins: Record<string, PlotPl
     },
     plugins: Object.entries(plugins).map(p => ({
       hooks: p[1].hooks,
+      opts: p[1].opts,
     })),
     hooks: {},
   } as any;
