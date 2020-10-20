@@ -678,7 +678,12 @@ export function splitClose(itemId: ExploreId): ThunkResult<void> {
  * Otherwise it copies the left state to be the right state. The copy keeps all query modifications but wipes the query
  * results.
  */
-export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: string; query: T }): ThunkResult<void> {
+export function splitOpen<T extends DataQuery = any>(options?: {
+  datasourceUid: string;
+  query: T;
+  // Don't use right now. It's used for Traces to Logs interaction but is hacky in how the range is actually handled.
+  range?: TimeRange;
+}): ThunkResult<void> {
   return async (dispatch, getState) => {
     // Clone left state to become the right state
     const leftState: ExploreItemState = getState().explore[ExploreId.left];
@@ -696,6 +701,19 @@ export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: 
       rightState.queryKeys = [];
       urlState.queries = [];
       rightState.urlState = urlState;
+      if (options.range) {
+        urlState.range = options.range.raw;
+        // This is super hacky. In traces to logs we want to create a link but also internally open split window.
+        // We use the same range object but the raw part is treated differently because it's parsed differently during
+        // init depending on whether we open split or new window.
+        rightState.range = {
+          ...options.range,
+          raw: {
+            from: options.range.from.utc().toISOString(),
+            to: options.range.to.utc().toISOString(),
+          },
+        };
+      }
 
       dispatch(splitOpenAction({ itemState: rightState }));
 
@@ -707,6 +725,7 @@ export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: 
       ];
 
       const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.datasourceUid);
+
       await dispatch(changeDatasource(ExploreId.right, dataSourceSettings!.name));
       await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
       await dispatch(runQueries(ExploreId.right));

@@ -13,7 +13,7 @@ import (
 )
 
 // POST /api/alert-definitions/eval
-func (hs *HTTPServer) ConditionsEval(c *models.ReqContext, dto dtos.EvalAlertConditionsCommand) Response {
+func (hs *HTTPServer) ConditionEval(c *models.ReqContext, dto dtos.EvalAlertConditionCommand) Response {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	defer cancelFn()
 
@@ -29,7 +29,7 @@ func (hs *HTTPServer) ConditionsEval(c *models.ReqContext, dto dtos.EvalAlertCon
 		toStr = "now"
 	}
 
-	execResult, err := dto.Conditions.Execute(alertExecCtx, fromStr, toStr)
+	execResult, err := dto.Condition.Execute(alertExecCtx, fromStr, toStr)
 	if err != nil {
 		return Error(400, "Failed to execute conditions", err)
 	}
@@ -67,7 +67,7 @@ func (hs *HTTPServer) AlertDefinitionEval(c *models.ReqContext) Response {
 		toStr = "now"
 	}
 
-	conditions, err := hs.AlertNG.LoadAlertConditions(dashboardID, panelID, conditionRefID, c.SignedInUser, c.SkipCache)
+	conditions, err := hs.AlertNG.LoadAlertCondition(dashboardID, panelID, conditionRefID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		return Error(400, "Failed to load conditions", err)
 	}
