@@ -8,8 +8,9 @@
       flex-direction: row;
 
       .graph-legend {
-        flex: 1 1 10px;
+        flex: 0 1 10px;
         max-height: 100%;
+        overflow-y: initial;
       }
 
       .graph-legend-series {
@@ -46,7 +47,7 @@
 
 .graph-legend {
   display: flex;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   max-height: 35%;
   margin: 0;
   text-align: center;

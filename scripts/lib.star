@@ -1,5 +1,5 @@
 grabpl_version = '0.5.18'
-build_image = 'grafana/build-container:1.2.27'
+build_image = 'grafana/build-container:1.2.28'
 publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 alpine_image = 'alpine:3.12'
@@ -7,8 +7,6 @@ windows_image = 'mcr.microsoft.com/windows:1809'
 dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
-
-drone_tag_cmd = 'export DRONE_TAG=$$(./bin/grabpl parse-tag-ref ${DRONE_COMMIT_REF})'
 
 def pipeline(
     name, edition, trigger, steps, ver_mode, services=[], platform='linux', depends_on=[],
@@ -100,8 +98,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
     pre_cmds = []
 
     if ver_mode == 'release':
-        pre_cmds.append(drone_tag_cmd)
-        common_cmds.append('./bin/grabpl verify-version $${DRONE_TAG}')
+        common_cmds.append('./bin/grabpl verify-version ${DRONE_TAG}')
     elif ver_mode == 'test-release':
         common_cmds.append('./bin/grabpl verify-version {}'.format(test_release_ver))
 
@@ -122,8 +119,8 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
         ])
     if edition == 'enterprise':
         if ver_mode == 'release':
-            committish = '$${DRONE_TAG}'
-            source_commit = ' $${DRONE_TAG}'
+            committish = '${DRONE_TAG}'
+            source_commit = ' ${DRONE_TAG}'
         elif ver_mode == 'test-release':
             committish = 'master'
             source_commit = ''
@@ -224,7 +221,8 @@ def lint_backend_step(edition):
             'revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...',
             './scripts/revive-strict',
             './scripts/tidy-check.sh',
-            './scripts/mixin-check.sh,
+            './grafana-mixin/scripts/lint.sh',
+            './grafana-mixin/scripts/build.sh',
         ],
     }
 
@@ -282,8 +280,7 @@ def publish_storybook_step(edition, ver_mode):
     else:
         commands = []
         if ver_mode == 'release':
-            channels = ['latest', '$${DRONE_TAG}',]
-            commands.append(drone_tag_cmd)
+            channels = ['latest', '${DRONE_TAG}',]
         else:
             channels = ['canary',]
         commands.extend([
@@ -322,8 +319,7 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
             },
         }
         cmds = [
-            drone_tag_cmd,
-            './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise $${{DRONE_TAG}}'.format(
+            './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise ${{DRONE_TAG}}'.format(
                 edition,
             ),
         ]
@@ -371,9 +367,8 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
     # TODO: Use percentage for num jobs
     if ver_mode == 'release':
         cmds = [
-            drone_tag_cmd,
             './bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps ' + \
-                '--edition {} --no-pull-enterprise $${{DRONE_TAG}}'.format(edition),
+                '--edition {} --no-pull-enterprise ${{DRONE_TAG}}'.format(edition),
         ]
     elif ver_mode == 'test-release':
         cmds = [
@@ -556,9 +551,8 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
     # TODO: Use percentage for jobs
     if ver_mode == 'release':
         cmds = [
-            drone_tag_cmd,
             '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
-                '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} $${{DRONE_TAG}}'.format(
+                '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} ${{DRONE_TAG}}'.format(
                     sign_args
                 ),
         ]
@@ -846,8 +840,6 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         source_commit = ' $$env:SOURCE_COMMIT'
 
     pre_cmds = []
-    if ver_mode == 'release':
-        pre_cmds.append('$$env:DRONE_TAG=$$(.\\grabpl.exe parse-tag-ref ${DRONE_TAG})')
     sfx = ''
     if edition == 'enterprise':
         sfx = '-enterprise'
@@ -868,7 +860,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         bucket_part = ''
         bucket = 'grafana-downloads'
         if ver_mode == 'release':
-            ver_part = '$$env:DRONE_TAG'
+            ver_part = '${DRONE_TAG}'
             dir = 'release'
         elif ver_mode == 'test-release':
             ver_part = test_release_ver
@@ -911,7 +903,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
 
     if edition == 'enterprise':
         if ver_mode == 'release':
-            committish = '$$env:DRONE_TAG'
+            committish = '${DRONE_TAG}'
         elif ver_mode == 'test-release':
             committish = 'master'
         else:
