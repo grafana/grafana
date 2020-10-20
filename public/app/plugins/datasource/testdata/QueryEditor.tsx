@@ -1,5 +1,5 @@
 // Libraries
-import React, { ChangeEvent, FormEvent, useMemo, useEffect } from 'react';
+import React, { ChangeEvent, FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 // Components
@@ -46,10 +46,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onChange(query);
     onRunQuery();
   };
-
-  useEffect(() => {
-    onUpdate(query);
-  }, []);
 
   const currentScenario = useMemo(() => scenarioList?.find(scenario => scenario.id === query.scenarioId), [
     scenarioList,

@@ -36,6 +36,8 @@ import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 type TestData = TimeSeries | TableData;
 
 export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
+  scenariosCache?: Promise<Scenario[]>;
+
   constructor(
     instanceSettings: DataSourceInstanceSettings,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
@@ -179,7 +181,11 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
   }
 
   getScenarios(): Promise<Scenario[]> {
-    return getBackendSrv().get('/api/tsdb/testdata/scenarios');
+    if (!this.scenariosCache) {
+      this.scenariosCache = getBackendSrv().get('/api/tsdb/testdata/scenarios');
+    }
+
+    return this.scenariosCache;
   }
 
   metricFindQuery(query: string, options: any) {
