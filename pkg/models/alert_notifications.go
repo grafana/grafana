@@ -15,6 +15,8 @@ var (
 	ErrAlertNotificationStateVersionConflict    = errors.New("alert notification state update version conflict")
 	ErrAlertNotificationStateAlreadyExist       = errors.New("alert notification state already exists")
 	ErrAlertNotificationFailedGenerateUniqueUid = errors.New("Failed to generate unique alert notification uid")
+	ErrAlertNotificationWithSameNameExists      = errors.New("alert notification with same name already exists")
+	ErrAlertNotificationWithSameUIDExists       = errors.New("alert notification with same uid already exists")
 )
 
 type AlertNotificationStateType string
