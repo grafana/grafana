@@ -7,7 +7,7 @@ import {
   fieldColorModeRegistry,
   FieldColorMode,
   GrafanaTheme,
-  getColorFromHexRgbOrName,
+  getColorForTheme,
 } from '@grafana/data';
 import { Select } from '../Select/Select';
 import { ColorValueEditor } from './color';
@@ -23,9 +23,11 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
   const styles = useStyles(getStyles);
 
   const options = fieldColorModeRegistry.list().map(mode => {
+    let suffix = mode.isByValue ? ' (by value)' : '';
+
     return {
       value: mode.id,
-      label: mode.name,
+      label: `${mode.name}${suffix}`,
       description: mode.description,
       isContinuous: mode.isContinuous,
       isByValue: mode.isByValue,
@@ -70,7 +72,7 @@ const FieldColorModeViz: FC<ModeProps> = ({ mode, theme }) => {
     return null;
   }
 
-  const colors = mode.colors.map(item => getColorFromHexRgbOrName(item, theme.type));
+  const colors = mode.colors.map(item => getColorForTheme(item, theme));
   const style: CSSProperties = {
     height: '8px',
     width: '100%',

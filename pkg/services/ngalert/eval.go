@@ -1,3 +1,5 @@
+// Package eval executes the condition for an alert definition, evaluates the condition results, and
+// returns the alert instance states.
 package eval
 
 import (
@@ -24,6 +26,7 @@ type minimalDashboard struct {
 	} `json:"panels"`
 }
 
+// AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
 	DatasourceCache datasources.CacheService `inject:""`
 }
@@ -33,10 +36,11 @@ func init() {
 }
 
 // Init initializes the AlertingService.
-func (e *AlertNG) Init() error {
+func (ng *AlertNG) Init() error {
 	return nil
 }
 
+// AlertExecCtx is the context provided for executing an alert condition.
 type AlertExecCtx struct {
 	AlertDefitionID int64
 	SignedInUser    *models.SignedInUser
@@ -44,55 +48,59 @@ type AlertExecCtx struct {
 	Ctx context.Context
 }
 
-// At least Warn or Crit condition must be non-empty
-type Conditions struct {
-	Condition string `json:"condition"`
+// Condition contains backend expressions and queries and the RefID
+// of the query or expression that will be evaluated.
+type Condition struct {
+	RefID string `json:"refId"`
 
 	QueriesAndExpressions []tsdb.Query `json:"queriesAndExpressions"`
 }
 
-type ExecutionResult struct {
-	AlertDefinitionId int64
+// ExecutionResults contains the unevaluated results from executing
+// a condition.
+type ExecutionResults struct {
+	AlertDefinitionID int64
 
 	Error error
 
 	Results data.Frames
 }
 
-type EvalResults []EvalResult
+// Results is a slice of evaluated alert instances states.
+type Results []Result
 
-type EvalResult struct {
+// Result contains the evaluated state of an alert instance
+// identified by its labels.
+type Result struct {
 	Instance data.Labels
 	State    State // Enum
 }
 
+// State is an enum of the evaluation state for an alert instance.
 type State int
 
 const (
+	// Normal is the eval state for an alert instance condition
+	// that evaluated to false.
 	Normal State = iota
-	Warning
-	Critical
-	Error
+
+	// Alerting is the eval state for an alert instance condition
+	// that evaluated to false.
+	Alerting
 )
 
 func (s State) String() string {
-	return [...]string{"Normal", "Warning", "Critical", "Error"}[s]
+	return [...]string{"Normal", "Alerting"}[s]
 }
 
 // IsValid checks the conditions validity
-func (c Conditions) IsValid() bool {
-	/*
-		if c.WarnCondition == "" && c.CritCondition == "" {
-			return false
-		}
-	*/
-
+func (c Condition) IsValid() bool {
 	// TODO search for refIDs in QueriesAndExpressions
 	return len(c.QueriesAndExpressions) != 0
 }
 
-// LoadAlertConditions returns a Conditions object for the given alertDefintionId.
-func (ng *AlertNG) LoadAlertConditions(dashboardID int64, panelID int64, conditionRefID string, signedInUser *models.SignedInUser, skipCache bool) (*Conditions, error) {
+// LoadAlertCondition returns a Condition object for the given alertDefintionId.
+func (ng *AlertNG) LoadAlertCondition(dashboardID int64, panelID int64, conditionRefID string, signedInUser *models.SignedInUser, skipCache bool) (*Condition, error) {
 	// get queries from the dashboard (because GEL expressions cannot be stored in alerts so far)
 	getDashboardQuery := models.GetDashboardQuery{Id: dashboardID}
 	if err := bus.Dispatch(&getDashboardQuery); err != nil {
@@ -109,7 +117,7 @@ func (ng *AlertNG) LoadAlertConditions(dashboardID int64, panelID int64, conditi
 		return nil, errors.New("Failed to unmarshal dashboard JSON")
 	}
 
-	conditions := Conditions{}
+	condition := Condition{}
 	for _, p := range dash.Panels {
 		if p.ID == panelID {
 			panelDatasource := p.Datasource
@@ -148,8 +156,8 @@ func (ng *AlertNG) LoadAlertConditions(dashboardID int64, panelID int64, conditi
 				}
 
 				if query.Get("orgId").MustString() == "" { // GEL requires orgID inside the query JSON
-					// need to decide which organisation id is expected there
-					// in grafana queries is passed the signed in user organisation id:
+					// need to decide which organization id is expected there
+					// in grafana queries is passed the signed in user organization id:
 					// https://github.com/grafana/grafana/blob/34a355fe542b511ed02976523aa6716aeb00bde6/packages/grafana-runtime/src/utils/DataSourceWithBackend.ts#L60
 					// but I think that it should be datasource org id instead
 					query.Set("orgId", 0)
@@ -165,7 +173,7 @@ func (ng *AlertNG) LoadAlertConditions(dashboardID int64, panelID int64, conditi
 					query.Set("intervalMs", 1000)
 				}
 
-				conditions.QueriesAndExpressions = append(conditions.QueriesAndExpressions, tsdb.Query{
+				condition.QueriesAndExpressions = append(condition.QueriesAndExpressions, tsdb.Query{
 					RefId:         refID,
 					MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
 					IntervalMs:    query.Get("intervalMs").MustInt64(1000),
@@ -176,14 +184,14 @@ func (ng *AlertNG) LoadAlertConditions(dashboardID int64, panelID int64, conditi
 			}
 		}
 	}
-	conditions.Condition = conditionRefID
-	return &conditions, nil
+	condition.RefID = conditionRefID
+	return &condition, nil
 }
 
-// Execute runs the WarnCondition and CritCondtion expressions or queries.
-func (conditions *Conditions) Execute(ctx AlertExecCtx, fromStr, toStr string) (*ExecutionResult, error) {
-	result := ExecutionResult{}
-	if !conditions.IsValid() {
+// Execute runs the Condition's expressions or queries.
+func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*ExecutionResults, error) {
+	result := ExecutionResults{}
+	if !c.IsValid() {
 		return nil, fmt.Errorf("Invalid conditions")
 	}
 
@@ -192,8 +200,8 @@ func (conditions *Conditions) Execute(ctx AlertExecCtx, fromStr, toStr string) (
 		Debug:     true,
 		User:      ctx.SignedInUser,
 	}
-	for i := range conditions.QueriesAndExpressions {
-		request.Queries = append(request.Queries, &conditions.QueriesAndExpressions[i])
+	for i := range c.QueriesAndExpressions {
+		request.Queries = append(request.Queries, &c.QueriesAndExpressions[i])
 	}
 
 	resp, err := plugins.Transform.Transform(ctx.Ctx, request)
@@ -202,7 +210,7 @@ func (conditions *Conditions) Execute(ctx AlertExecCtx, fromStr, toStr string) (
 		return &result, err
 	}
 
-	conditionResult := resp.Results[conditions.Condition]
+	conditionResult := resp.Results[c.RefID]
 	if conditionResult == nil {
 		err = fmt.Errorf("No GEL results")
 		result.Error = err
@@ -220,8 +228,8 @@ func (conditions *Conditions) Execute(ctx AlertExecCtx, fromStr, toStr string) (
 
 // EvaluateExecutionResult takes the ExecutionResult, and returns a frame where
 // each column is a string type that holds a string representing its state.
-func EvaluateExecutionResult(results *ExecutionResult) (EvalResults, error) {
-	evalResults := make([]EvalResult, 0)
+func EvaluateExecutionResult(results *ExecutionResults) (Results, error) {
+	evalResults := make([]Result, 0)
 	labels := make(map[string]bool)
 	for _, f := range results.Results {
 		rowLen, err := f.RowLen()
@@ -250,10 +258,10 @@ func EvaluateExecutionResult(results *ExecutionResult) (EvalResults, error) {
 		state := Normal
 		val, err := f.Fields[0].FloatAt(0)
 		if err != nil || val != 0 {
-			state = Critical
+			state = Alerting
 		}
 
-		evalResults = append(evalResults, EvalResult{
+		evalResults = append(evalResults, Result{
 			Instance: f.Fields[0].Labels,
 			State:    state,
 		})
@@ -264,7 +272,7 @@ func EvaluateExecutionResult(results *ExecutionResult) (EvalResults, error) {
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.
 // This may be temporary, as there might be a fair amount we want to display in the frontend, and it might not make sense to store that in data.Frame.
 // For the first pass, I would expect a Frame with a single row, and a column for each instance with a boolean value.
-func (evalResults EvalResults) AsDataFrame() data.Frame {
+func (evalResults Results) AsDataFrame() data.Frame {
 	fields := make([]*data.Field, 0)
 	for _, evalResult := range evalResults {
 		fields = append(fields, data.NewField("", evalResult.Instance, []bool{evalResult.State != Normal}))

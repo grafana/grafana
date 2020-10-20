@@ -35,6 +35,8 @@ const azureMonitorPlugin = async () =>
   await import(
     /* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/grafana-azure-monitor-datasource/module'
   );
+const tempoPlugin = async () =>
+  await import(/* webpackChunkName: "tempoPlugin" */ 'app/plugins/datasource/tempo/module');
 
 import * as textPanel from 'app/plugins/panel/text/module';
 import * as graph2Panel from 'app/plugins/panel/graph2/module';
@@ -78,6 +80,7 @@ const builtInPlugins: any = {
   'app/plugins/datasource/testdata/module': testDataDSPlugin,
   'app/plugins/datasource/cloud-monitoring/module': cloudMonitoringPlugin,
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
+  'app/plugins/datasource/tempo/module': tempoPlugin,
 
   'app/plugins/panel/text/module': textPanel,
   'app/plugins/panel/graph2/module': graph2Panel,
