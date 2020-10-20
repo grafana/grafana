@@ -18,10 +18,7 @@ func (b *BroadcastRunner) GetHandlerForPath(path string) (models.ChannelHandler,
 
 // GetChannelOptions called fast and often
 func (b *BroadcastRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
-	return centrifuge.ChannelOptions{
-		// HistorySize:    1,
-		// HistoryRecover: true,
-	}
+	return centrifuge.ChannelOptions{}
 }
 
 // OnSubscribe for now allows anyone to subscribe to any dashboard
