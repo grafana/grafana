@@ -605,7 +605,7 @@ def e2e_tests_server_step():
 def e2e_tests_step():
     return {
         'name': 'end-to-end-tests',
-        'image': 'grafana/ci-e2e:12.18-1',
+        'image': 'grafana/ci-e2e:12.19.0-1',
         'depends_on': [
             'end-to-end-tests-server',
         ],
