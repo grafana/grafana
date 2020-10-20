@@ -261,7 +261,8 @@ func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, 
 	return c, nil
 }
 
-// GetChannelNamespace gives threadsafe access to the channel.
+// GetChannelNamespace gets a ChannelNamespaceHandler for a namespace.
+// It gives threadsafe access to the channel.
 func (g *GrafanaLive) GetChannelNamespace(scope string, name string) (models.ChannelNamespaceHandler, error) {
 	if scope == "grafana" {
 		p, ok := g.GrafanaScope.Features[name]
@@ -290,13 +291,13 @@ func (g *GrafanaLive) GetChannelNamespace(scope string, name string) (models.Cha
 }
 
 func (g *GrafanaLive) initChannel(addr ChannelAddress) (models.ChannelHandler, error) {
-	namespace, err := g.GetChannelNamespace(addr.Scope, addr.Namespace)
+	getter, err := g.GetChannelNamespace(addr.Scope, addr.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	// First access will initialize
-	return namespace.GetHandlerForPath(addr.Path)
+	return getter.GetHandlerForPath(addr.Path)
 }
 
 // Publish sends the data to the channel without checking permissions etc

@@ -19,7 +19,8 @@ type ChannelHandler interface {
 
 // ChannelNamespaceHandler should be implemented by all core features.
 type ChannelNamespaceHandler interface {
-	// This is called fast and often -- it must be synchrnozed
+	// GetHandlerForPath gets a ChannelHandler for a path.
+	// This is called fast and often -- it must be synchronized
 	GetHandlerForPath(path string) (ChannelHandler, error)
 }
 
