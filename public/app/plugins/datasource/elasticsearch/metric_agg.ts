@@ -106,8 +106,10 @@ export class ElasticMetricAggCtrl {
           break;
         }
         case 'moving_fn': {
-          $scope.agg.settings.window = $scope.agg.settings.window != null ? $scope.agg.settings.window : 5;
-          $scope.agg.settings.script = $scope.agg.settings.script || 'MovingFunctions.simple(values)';
+                  const movingFunctionOptions = queryDef.getPipelineOptions($scope.agg);
+          _.each(movingFunctionOptions, opt => {
+            $scope.agg.settings[opt.text] = $scope.agg.settings[opt.text] || opt.default;
+          });
           break;
         }
         case 'raw_document':
