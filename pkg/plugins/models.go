@@ -75,7 +75,7 @@ type PluginBase struct {
 
 	Root *PluginBase
 
-	Errors *PluginErrors
+	Error *PluginError
 }
 
 func (pb *PluginBase) registerPlugin(base *PluginBase) error {
@@ -104,7 +104,7 @@ func (pb *PluginBase) registerPlugin(base *PluginBase) error {
 	// Copy relevant fields from the base
 	pb.PluginDir = base.PluginDir
 	pb.Signature = base.Signature
-	pb.Errors = base.Errors
+	pb.Error = base.Error
 
 	Plugins[pb.Id] = pb
 	return nil

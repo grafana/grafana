@@ -51,13 +51,9 @@ func GetDataSources(c *models.ReqContext) Response {
 
 		pluginError := plugins.Errors[ds.Type]
 		if pluginError != nil {
-			var pluginErrors []*dtos.DataSourceListItemError
-			for _, pluginErr := range pluginError.PluginErrors {
-				pluginErrors = append(pluginErrors, &dtos.DataSourceListItemError{
-					ErrorCode: pluginErr.ErrorCode.String(),
-				})
+			dsItem.Error = &dtos.DataSourceListItemError{
+				ErrorCode: pluginError.ErrorCode.String(),
 			}
-			dsItem.Errors = pluginErrors
 		}
 
 		result = append(result, dsItem)

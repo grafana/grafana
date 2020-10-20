@@ -19,27 +19,27 @@ type PluginSetting struct {
 	JsonData      map[string]interface{}      `json:"jsonData"`
 	DefaultNavUrl string                      `json:"defaultNavUrl"`
 
-	LatestVersion string                     `json:"latestVersion"`
-	HasUpdate     bool                       `json:"hasUpdate"`
-	State         plugins.PluginState        `json:"state"`
-	Signature     plugins.PluginSignature    `json:"signature"`
-	Errors        []*plugins.PluginErrorInfo `json:"errors"`
+	LatestVersion string                   `json:"latestVersion"`
+	HasUpdate     bool                     `json:"hasUpdate"`
+	State         plugins.PluginState      `json:"state"`
+	Signature     plugins.PluginSignature  `json:"signature"`
+	Error         *plugins.PluginErrorInfo `json:"error"`
 }
 
 type PluginListItem struct {
-	Name          string                     `json:"name"`
-	Type          string                     `json:"type"`
-	Id            string                     `json:"id"`
-	Enabled       bool                       `json:"enabled"`
-	Pinned        bool                       `json:"pinned"`
-	Info          *plugins.PluginInfo        `json:"info"`
-	LatestVersion string                     `json:"latestVersion"`
-	HasUpdate     bool                       `json:"hasUpdate"`
-	DefaultNavUrl string                     `json:"defaultNavUrl"`
-	Category      string                     `json:"category"`
-	State         plugins.PluginState        `json:"state"`
-	Signature     plugins.PluginSignature    `json:"signature"`
-	Errors        []*plugins.PluginErrorInfo `json:"errors"`
+	Name          string                   `json:"name"`
+	Type          string                   `json:"type"`
+	Id            string                   `json:"id"`
+	Enabled       bool                     `json:"enabled"`
+	Pinned        bool                     `json:"pinned"`
+	Info          *plugins.PluginInfo      `json:"info"`
+	LatestVersion string                   `json:"latestVersion"`
+	HasUpdate     bool                     `json:"hasUpdate"`
+	DefaultNavUrl string                   `json:"defaultNavUrl"`
+	Category      string                   `json:"category"`
+	State         plugins.PluginState      `json:"state"`
+	Signature     plugins.PluginSignature  `json:"signature"`
+	Error         *plugins.PluginErrorInfo `json:"error"`
 }
 
 type PluginList []PluginListItem
