@@ -93,9 +93,10 @@ export const Card: FC<Props> = ({
   ...htmlProps
 }) => {
   const hasActions = Boolean(actions.length || secondaryActions.length);
-  const disableHover = disabled || actions.length > 1;
+  const disableHover = disabled || actions.length > 1 || !onClick;
+  const disableEvents = disabled && !actions.length;
   const theme = useTheme();
-  const styles = getStyles(theme, disabled && !actions.length, disableHover || !onClick);
+  const styles = getStyles(theme, disableEvents, disableHover);
   // Join meta data elements by '|'
   const meta = useMemo(
     () =>
@@ -132,7 +133,11 @@ export const Card: FC<Props> = ({
               {!!actions.length && (
                 <div className={styles.actions}>{actions.map(action => cloneElement(action, { disabled }))}</div>
               )}
-              {!!secondaryActions.length && <div className={styles.secondaryActions}>{secondaryActions}</div>}
+              {!!secondaryActions.length && (
+                <div className={styles.secondaryActions}>
+                  {secondaryActions.map(action => cloneElement(action, { disabled }))}
+                </div>
+              )}
             </div>
           )}
         </div>
