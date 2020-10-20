@@ -135,16 +135,25 @@ export class TimeSrv {
   private initTimeFromUrl() {
     const params = this.$location.search();
 
+    let time = _.clone(this.time);
+
     if (params.time && params['time.window']) {
-      this.time = this.getTimeWindow(params.time, params['time.window']);
+      time = this.getTimeWindow(params.time, params['time.window']);
     }
 
     if (params.from) {
-      this.time.from = this.parseUrlParam(params.from) || this.time.from;
+      time.from = this.parseUrlParam(params.from) || this.time.from;
     }
     if (params.to) {
-      this.time.to = this.parseUrlParam(params.to) || this.time.to;
+      time.to = this.parseUrlParam(params.to) || this.time.to;
     }
+
+    if (this.isValidTime(time)) {
+      this.time = time;
+    } else {
+      this.setTime(this.time);
+    }
+
     // if absolute ignore refresh option saved to dashboard
     if (params.to && params.to.indexOf('now') === -1) {
       this.refresh = false;
@@ -291,17 +300,13 @@ export class TimeSrv {
     const range = this.timeRange();
     const { from, to } = getZoomedTimeRange(range, factor);
 
-    const { maxTimeBack } = this.dashboard?.timepicker ?? { maxTimeBack: undefined };
-    const maxTimeBackRange = 'now-' + maxTimeBack;
-    const nextTimeBack = (to - from) / 2;
-    const exceededMaxTimeBack = maxTimeBack && nextTimeBack > rangeUtil.intervalToMs(maxTimeBackRange);
+    const zoomedTimeRange: RawTimeRange = {
+      from: toUtc(from),
+      to: toUtc(to),
+    };
 
-    const { maxTimeSpan } = this.dashboard?.timepicker ?? { maxTimeSpan: undefined };
-    const nextTimeSpan = to - from;
-    const exceededMaxTimeSpan = maxTimeSpan && nextTimeSpan > rangeUtil.intervalToMs(maxTimeSpan);
-
-    if (!exceededMaxTimeBack && !exceededMaxTimeSpan) {
-      this.setTime({ from: toUtc(from), to: toUtc(to) });
+    if (this.isValidTime(zoomedTimeRange)) {
+      this.setTime(zoomedTimeRange);
     }
   }
 
@@ -313,6 +318,44 @@ export class TimeSrv {
       from: toUtc(from),
       to: toUtc(to),
     });
+  }
+
+  private isValidTimeBack(time: RawTimeRange): boolean {
+    const { maxTimeBack } = this.dashboard?.timepicker ?? { maxTimeBack: undefined };
+    if (!maxTimeBack) {
+      return true;
+    }
+
+    const maxTimeBackRawRange = {
+      from: 'now-' + maxTimeBack,
+      to: 'now',
+    };
+    const maxTimeBackRange = rangeUtil.convertRawToRange(maxTimeBackRawRange);
+    const maxTimeBackSpan = maxTimeBackRange.to.valueOf() - maxTimeBackRange.from.valueOf();
+
+    const timeBackRawRange = {
+      from: time.from,
+      to: 'now',
+    };
+    const timeBackRange = rangeUtil.convertRawToRange(timeBackRawRange);
+    const timeBackSpan = timeBackRange.to.valueOf() - timeBackRange.from.valueOf();
+
+    // Add 1 to maxTimeBackBack to allow for rounding errors
+    const exceededMaxTimeBack = timeBackSpan > maxTimeBackSpan + 1;
+    return !exceededMaxTimeBack;
+  }
+
+  private isValidTimeSpan(time: RawTimeRange): boolean {
+    const { maxTimeSpan } = this.dashboard?.timepicker ?? { maxTimeSpan: undefined };
+    const timeRange = rangeUtil.convertRawToRange(time);
+    const timeSpan = timeRange.to.valueOf() - timeRange.from.valueOf();
+    // Add 1 to maxTimeBackSpan to allow for rounding errors
+    const exceededMaxTimeSpan = maxTimeSpan && timeSpan > rangeUtil.intervalToMs(maxTimeSpan) + 1;
+    return !exceededMaxTimeSpan;
+  }
+
+  isValidTime(time: RawTimeRange) {
+    return this.isValidTimeBack(time) && this.isValidTimeSpan(time);
   }
 }
 

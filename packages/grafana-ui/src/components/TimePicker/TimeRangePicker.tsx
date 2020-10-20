@@ -67,10 +67,10 @@ export interface Props extends Themeable {
   onMoveBackward: () => void;
   onMoveForward: () => void;
   onZoom: () => void;
-  onClose: () => void;
+  onClose?: () => void;
   history?: TimeRange[];
-  invalid: boolean;
-  error: string;
+  invalid?: boolean;
+  error?: string;
 }
 
 export interface State {
@@ -82,7 +82,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
     isOpen: false,
   };
 
-  componentDidUpdate(prevProps: Props, prevState: State) {
+  componentDidUpdate(_prevProps: Props, prevState: State) {
     if (!this.props.invalid && prevState.isOpen) {
       this.setState({ isOpen: false });
     }
@@ -104,7 +104,9 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
   };
 
   onClose = () => {
-    this.props.onClose();
+    if (this.props.onClose !== undefined) {
+      this.props.onClose();
+    }
     this.setState({ isOpen: false });
   };
 
