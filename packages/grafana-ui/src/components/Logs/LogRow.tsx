@@ -59,8 +59,6 @@ interface State {
   showContext: boolean;
   showDetails: boolean;
   hasHoverBackground: boolean;
-  hasError: boolean;
-  errorTooltip?: string;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -76,7 +74,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: hoverBackground;
       background-color: ${bgColor};
     `,
-    erroredLog: css`
+    errorLogRow: css`
       label: erroredLogRow;
       color: ${theme.colors.textWeak};
     `,
@@ -94,13 +92,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     showContext: false,
     showDetails: false,
     hasHoverBackground: false,
-    hasError: false,
-    errorTooltip: undefined,
   };
-
-  componentDidMount() {
-    this.setErrorAndTooltip();
-  }
 
   toggleContext = () => {
     this.setState(state => {
@@ -141,17 +133,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     });
   };
 
-  // Currently just 1 condition. In the future, when we have more, we can move the check to util.
-  setErrorAndTooltip = () => {
-    const { row } = this.props;
-    if (checkLogsError(row).hasError) {
-      this.setState({
-        hasError: true,
-        errorTooltip: checkLogsError(row).errorMessage,
-      });
-    }
-  };
-
   renderTimeStamp(epochMs: number) {
     return dateTimeFormat(epochMs, {
       timeZone: this.props.timeZone,
@@ -182,12 +163,13 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       theme,
       getFieldLinks,
     } = this.props;
-    const { showDetails, showContext, hasHoverBackground, hasError, errorTooltip } = this.state;
+    const { showDetails, showContext, hasHoverBackground } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const styles = getStyles(theme);
+    const { errorMessage, hasError } = checkLogsError(row);
     const logRowBackground = cx(style.logsRow, {
       [styles.hoverBackground]: hasHoverBackground,
-      [styles.erroredLog]: hasError,
+      [styles.errorLogRow]: hasError,
     });
 
     return (
@@ -200,7 +182,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           )}
           <td className={cx({ [style.logsRowLevel]: !hasError })}>
             {hasError && (
-              <Tooltip content={`Error: ${errorTooltip}`} placement="right" theme="error">
+              <Tooltip content={`Error: ${errorMessage}`} placement="right" theme="error">
                 <Icon className={style.logIconError} name="exclamation-triangle" size="sm" />
               </Tooltip>
             )}
