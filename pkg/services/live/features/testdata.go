@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// TestdataRunner manages all the `grafana/dashboard/*` channels
+// TestdataRunner manages all the `grafana/dashboard/*` channels.
 type testdataRunner struct {
 	publisher   models.ChannelPublisher
 	running     bool
@@ -20,12 +20,13 @@ type testdataRunner struct {
 	name        string
 }
 
-// TestdataSupplier manages all the `grafana/testdata/*` channels
+// TestdataSupplier manages all the `grafana/testdata/*` channels.
 type TestdataSupplier struct {
 	Publisher models.ChannelPublisher
 }
 
-// GetHandlerForPath called on init
+// GetHandlerForPath gets the channel handler for a path.
+// Called on init.
 func (g *TestdataSupplier) GetHandlerForPath(path string) (models.ChannelHandler, error) {
 	channel := "grafana/testdata/" + path
 
@@ -53,12 +54,13 @@ func (g *TestdataSupplier) GetHandlerForPath(path string) (models.ChannelHandler
 	return nil, fmt.Errorf("unknown channel")
 }
 
-// GetChannelOptions called fast and often
+// GetChannelOptions gets channel options.
+// Called fast and often.
 func (g *testdataRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
 	return centrifuge.ChannelOptions{}
 }
 
-// OnSubscribe for now allows anyone to subscribe to any dashboard
+// OnSubscribe for now allows anyone to subscribe to any dashboard.
 func (g *testdataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
 	if !g.running {
 		g.running = true
@@ -71,12 +73,12 @@ func (g *testdataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscrib
 	return nil
 }
 
-// OnPublish called when an event is received from the websocket
+// OnPublish is called when an event is received from the websocket.
 func (g *testdataRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
 	return nil, fmt.Errorf("can not publish to testdata")
 }
 
-// RunRandomCSV just for an example
+// runRandomCSV is just for an example.
 func (g *testdataRunner) runRandomCSV() {
 	spread := 50.0
 
@@ -89,7 +91,7 @@ func (g *testdataRunner) runRandomCSV() {
 		Values: make(map[string]interface{}, 5),
 	}
 	msg := models.MeasurementBatch{
-		Measurements: []models.Measurement{measure}, // always a single measurements
+		Measurements: []models.Measurement{measure}, // always a single measurement
 	}
 
 	for t := range ticker.C {
