@@ -80,8 +80,10 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 
 	result := make(dtos.PluginList, 0)
 	for _, pluginDef := range plugins.Plugins {
+		pluginErrors := plugins.Errors[pluginDef.Id]
+
 		// filter out app sub plugins with no errors
-		if embeddedFilter == "0" && pluginDef.IncludedInAppId != "" && pluginDef.Errors == nil {
+		if embeddedFilter == "0" && pluginDef.IncludedInAppId != "" && pluginErrors == nil {
 			continue
 		}
 
@@ -110,10 +112,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 			DefaultNavUrl: pluginDef.DefaultNavUrl,
 			State:         pluginDef.State,
 			Signature:     pluginDef.Signature,
-		}
-
-		if pluginDef.Errors != nil {
-			listItem.Errors = pluginErrors(pluginDef)
+			Errors:        pluginErrorInfo(pluginDef.Id),
 		}
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
@@ -166,10 +165,7 @@ func GetPluginSettingByID(c *models.ReqContext) Response {
 		HasUpdate:     def.GrafanaNetHasUpdate,
 		State:         def.State,
 		Signature:     def.Signature,
-	}
-
-	if def.Errors != nil {
-		dto.Errors = pluginErrors(def)
+		Errors:        pluginErrorInfo(def.Id),
 	}
 
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
@@ -392,12 +388,16 @@ func translatePluginRequestErrorToAPIError(err error) Response {
 	return Error(500, "Plugin request failed", err)
 }
 
-func pluginErrors(def *plugins.PluginBase) []*plugins.PluginErrorInfo {
+func pluginErrorInfo(pluginId string) []*plugins.PluginErrorInfo {
 	var pluginErrors []*plugins.PluginErrorInfo
-	for _, pluginErr := range def.Errors.PluginErrors {
-		pluginErrors = append(pluginErrors, &plugins.PluginErrorInfo{
-			ErrorCode: pluginErr.ErrorCode.String(),
-		})
+
+	pluginError := plugins.Errors[pluginId]
+	if pluginError != nil {
+		for _, pluginErr := range pluginError.PluginErrors {
+			pluginErrors = append(pluginErrors, &plugins.PluginErrorInfo{
+				ErrorCode: pluginErr.ErrorCode.String(),
+			})
+		}
 	}
 	return pluginErrors
 }

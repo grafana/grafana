@@ -45,17 +45,19 @@ func GetDataSources(c *models.ReqContext) Response {
 
 		if plugin, exists := plugins.DataSources[ds.Type]; exists {
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
-			if plugin.Errors != nil {
-				var pluginErrors []*dtos.DataSourceListItemError
-				for _, pluginErr := range plugin.Errors.PluginErrors {
-					pluginErrors = append(pluginErrors, &dtos.DataSourceListItemError{
-						ErrorCode: pluginErr.ErrorCode.String(),
-					})
-				}
-				dsItem.Errors = pluginErrors
-			}
 		} else {
 			dsItem.TypeLogoUrl = "public/img/icn-datasource.svg"
+		}
+
+		pluginError := plugins.Errors[ds.Type]
+		if pluginError != nil {
+			var pluginErrors []*dtos.DataSourceListItemError
+			for _, pluginErr := range pluginError.PluginErrors {
+				pluginErrors = append(pluginErrors, &dtos.DataSourceListItemError{
+					ErrorCode: pluginErr.ErrorCode.String(),
+				})
+			}
+			dsItem.Errors = pluginErrors
 		}
 
 		result = append(result, dsItem)

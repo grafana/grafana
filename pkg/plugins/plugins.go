@@ -30,6 +30,7 @@ var (
 	StaticRoutes []*PluginStaticRoute
 	Apps         map[string]*AppPlugin
 	Plugins      map[string]*PluginBase
+	Errors       map[string]*PluginErrors
 	PluginTypes  map[string]interface{}
 	Renderer     *RendererPlugin
 	Transform    *TransformPlugin
@@ -69,6 +70,7 @@ func (pm *PluginManager) Init() error {
 	Panels = map[string]*PanelPlugin{}
 	Apps = map[string]*AppPlugin{}
 	Plugins = map[string]*PluginBase{}
+	Errors = map[string]*PluginErrors{}
 	PluginTypes = map[string]interface{}{
 		"panel":      PanelPlugin{},
 		"datasource": DataSourcePlugin{},
@@ -233,6 +235,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		if signingError != nil {
 			pm.log.Warn("Plugin has signature errors", "id", plugin.Id,
 				"signature", plugin.Signature, "status", signingError.ErrorCode.String())
+			Errors[plugin.Id] = &PluginErrors{PluginErrors: []PluginError{*signingError}}
 		}
 
 		pm.log.Debug("Attempting to add plugin", "id", plugin.Id)
@@ -275,12 +278,19 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 			}
 		}
 
-		// Load the full plugin, and add it to manager
-		if err := loader.Load(jsonParser, plugin, scanner.backendPluginManager); err != nil {
-			return err
+		if plugin.Errors != nil {
+			phantomLoader := &PhantomPlugin{*plugin}
+			if err := phantomLoader.Load(jsonParser, plugin, nil); err != nil {
+				return err
+			}
+		} else {
+			// Load the full plugin, and add it to manager
+			if err := loader.Load(jsonParser, plugin, scanner.backendPluginManager); err != nil {
+				return err
+			}
+			pm.log.Debug("Successfully added plugin", "id", plugin.Id)
 		}
 
-		pm.log.Debug("Successfully added plugin", "id", plugin.Id)
 	}
 
 	if len(scanner.errors) > 0 {
