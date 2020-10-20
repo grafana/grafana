@@ -681,6 +681,7 @@ export function splitClose(itemId: ExploreId): ThunkResult<void> {
 export function splitOpen<T extends DataQuery = any>(options?: {
   datasourceUid: string;
   query: T;
+  // Don't use right now. It's used for Traces to Logs interaction but is hacky in how the range is actually handled.
   range?: TimeRange;
 }): ThunkResult<void> {
   return async (dispatch, getState) => {
@@ -702,7 +703,16 @@ export function splitOpen<T extends DataQuery = any>(options?: {
       rightState.urlState = urlState;
       if (options.range) {
         urlState.range = options.range.raw;
-        rightState.range = options.range;
+        // This is super hacky. In traces to logs we want to create a link but also internally open split window.
+        // We use the same range object but the raw part is treated differently because it's parsed differently during
+        // init depending on whether we open split or new window.
+        rightState.range = {
+          ...options.range,
+          raw: {
+            from: options.range.from.utc().toISOString(),
+            to: options.range.to.utc().toISOString(),
+          },
+        };
       }
 
       dispatch(splitOpenAction({ itemState: rightState }));

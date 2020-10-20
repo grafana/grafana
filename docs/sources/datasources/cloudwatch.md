@@ -27,14 +27,14 @@ build dashboards or use Explore with CloudWatch metrics and CloudWatch Logs.
 
 | Name                       | Description                                                                                                             |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| _Name_                     | The data source name. This is how you refer to the data source in panels and queries.                                   |
-| _Default_                  | Default data source means that it will be pre-selected for new panels.                                                  |
-| _Default Region_           | Used in query editor to set region (can be changed on per query basis)                                                  |
-| _Custom Metrics namespace_ | Specify the CloudWatch namespace of Custom metrics                                                                      |
-| _Authentication Provider_  | Specify the authentication method.                                                                                      |
-| _Credentials Profile Name_ | If you use "Credentials file" for _Authentication Provider_, optionally specify a non-default profile.                  |
-| _Assume Role ARN_          | Optionally specify the ARN of a role to assume.                                                                         |
-| _External ID_              | If you are assuming a role in another account, that has been created with an external ID, specify the external ID here. |
+| `Name`                     | The data source name. This is how you refer to the data source in panels and queries.                                   |
+| `Default`                  | Default data source means that it will be pre-selected for new panels.                                                  |
+| `Default Region`           | Used in query editor to set region (can be changed on per query basis)                                                  |
+| `Custom Metrics namespace` | Specify the CloudWatch namespace of Custom metrics                                                                      |
+| `Auth Provider`            | Specify the provider to get credentials.                                                                                |
+| `Credentials` profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.                 |
+| `Assume Role Arn`          | Specify the ARN of the role to assume                                                                                   |
+| `External ID`              | If you are assuming a role in another account, that has been created with an external ID, specify the external ID here. |
 
 ## Authentication
 
@@ -258,15 +258,15 @@ Read more about the available dimensions in the [CloudWatch Metrics and Dimensio
 
 | Name                                                                          | Description                                                                                                                                                                        |
 | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| _regions()_                                                                   | Returns a list of all AWS regions                                                                                                                                                  |
-| _namespaces()_                                                                | Returns a list of namespaces CloudWatch support.                                                                                                                                   |
-| _metrics(namespace, [region])_                                                | Returns a list of metrics in the namespace. (specify region or use "default" for custom metrics)                                                                                   |
-| _dimension_\__keys(namespace)_                                                | Returns a list of dimension keys in the namespace.                                                                                                                                 |
-| _dimension_\__values(region, namespace, metric, dimension_\__key, [filters])_ | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, `dimension_key` or you can use dimension `filters` to get more specific result as well. |
-| _ebs_\__volume_\__ids(region, instance_\__id)_                                | Returns a list of volume ids matching the specified `region`, `instance_id`.                                                                                                       |
-| _ec2_\__instance_\__attribute(region, attribute_\__name, filters)_            | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.                                                                                         |
-| _resource_\__arns(region, resource_\__type, tags)_                            | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.                                                                                                |
-| _statistics()_                                                                | Returns a list of all the standard statistics                                                                                                                                      |
+| `regions()`                                                                   | Returns a list of all AWS regions                                                                                                                                                  |
+| `namespaces()`                                                                | Returns a list of namespaces CloudWatch support.                                                                                                                                   |
+| `metrics(namespace, [region])`                                                | Returns a list of metrics in the namespace. (specify region or use "default" for custom metrics)                                                                                   |
+| `dimension_\__keys(namespace)`                                                | Returns a list of dimension keys in the namespace.                                                                                                                                 |
+| `dimension_\__values(region, namespace, metric, dimension_\__key, [filters])` | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, `dimension_key` or you can use dimension `filters` to get more specific result as well. |
+| `ebs_\__volume_\__ids(region, instance_\__id)`                                | Returns a list of volume ids matching the specified `region`, `instance_id`.                                                                                                       |
+| `ec2_\__instance_\__attribute(region, attribute_\__name, filters)`            | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.                                                                                         |
+| `resource_\__arns(region, resource_\__type, tags)`                            | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.                                                                                                |
+| `statistics()`                                                                | Returns a list of all the standard statistics                                                                                                                                      |
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
@@ -276,14 +276,14 @@ Example dimension queries which will return list of resources for individual AWS
 
 | Query                                                                                                                            | Service          |
 | -------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| _dimension_\__values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)_                                                           | ELB              |
-| _dimension_\__values(us-east-1,AWS/ElastiCache,CPUUtilization,CacheClusterId)_                                                   | ElastiCache      |
-| _dimension_\__values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)_                                                   | RedShift         |
-| _dimension_\__values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)_                                                     | RDS              |
-| _dimension_\__values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)_                                                               | S3               |
-| _dimension_\__values(us-east-1,CWAgent,disk_\__used_\__percent,device,{"InstanceId":"\$instance_\__id"})_                        | CloudWatch Agent |
-| _resource_\__arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})_ | ELB              |
-| _resource_\__arns(eu-west-1,ec2:instance,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})_                      | EC2              |
+| `dimension_\__values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)`                                                           | ELB              |
+| `dimension_\__values(us-east-1,AWS/ElastiCache,CPUUtilization,CacheClusterId)`                                                   | ElastiCache      |
+| `dimension_\__values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)`                                                   | RedShift         |
+| `dimension_\__values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)`                                                     | RDS              |
+| `dimension_\__values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)`                                                               | S3               |
+| `dimension_\__values(us-east-1,CWAgent,disk_\__used_\__percent,device,{"InstanceId":"\$instance_\__id"})`                        | CloudWatch Agent |
+| `resource_\__arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})` | ELB              |
+| `resource_\__arns(eu-west-1,ec2:instance,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})`                      | EC2              |
 
 ## ec2_instance_attribute examples
 
@@ -381,7 +381,7 @@ It's now possible to configure data sources using config files with Grafana's pr
 
 Here are some provisioning examples for this data source.
 
-### Using AWS SDK Default
+### Using AWS SDK (default)
 
 ```yaml
 apiVersion: 1
@@ -393,7 +393,7 @@ datasources:
       defaultRegion: eu-west-2
 ```
 
-### Using credentials profile name (non-default) 
+### Using credentials' profile name (non-default)
 
 ```yaml
 apiVersion: 1

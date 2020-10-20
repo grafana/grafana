@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path"
+	"path/filepath"
 	"strconv"
 
 	sdkgrpcplugin "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
@@ -38,7 +38,7 @@ func (p *TransformPlugin) Load(decoder *json.Decoder, base *PluginBase, backendP
 	}
 
 	cmd := ComposePluginStartCommand(p.Executable)
-	fullpath := path.Join(p.PluginDir, cmd)
+	fullpath := filepath.Join(p.PluginDir, cmd)
 	factory := grpcplugin.NewBackendPlugin(p.Id, fullpath, grpcplugin.PluginStartFuncs{
 		OnStart: p.onPluginStart,
 	})
