@@ -66,9 +66,15 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 			{Name: "condition", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "data", Type: migrator.DB_Text, Nullable: false},
 		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"org_id"}, Type: migrator.IndexType},
+		},
 	}
 	// create table
 	mg.AddMigration("create alert_definition table", migrator.NewAddTableMigration(alertDefinition))
+
+	// create indices
+	mg.AddMigration("add index alert_definition org_id", migrator.NewAddIndexMigration(alertDefinition, alertDefinition.Indices[0]))
 }
 
 // LoadAlertCondition returns a Condition object for the given alertDefintionId.
