@@ -17,8 +17,8 @@ type ChannelHandler interface {
 	OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error)
 }
 
-// ChannelNamespaceHandler should be implemented by all core features.
-type ChannelNamespaceHandler interface {
+// ChannelHandlerFactory should be implemented by all core features.
+type ChannelHandlerFactory interface {
 	// GetHandlerForPath gets a ChannelHandler for a path.
 	// This is called fast and often -- it must be synchronized
 	GetHandlerForPath(path string) (ChannelHandler, error)
