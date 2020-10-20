@@ -92,12 +92,8 @@ func InitializeBroker() (*GrafanaLive, error) {
 	glive.GrafanaScope.Features["testdata"] = &features.TestDataSupplier{
 		Publisher: glive.Publish,
 	}
-	glive.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{
-		Publisher: glive.Publish,
-	}
-	glive.GrafanaScope.Features["measurements"] = &features.MeasurementsRunner{
-		Publisher: glive.Publish,
-	}
+	glive.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{}
+	glive.GrafanaScope.Features["measurements"] = &features.MeasurementsRunner{}
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
@@ -253,10 +249,17 @@ func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, 
 		return c, nil
 	}
 
-	c, err := g.initChannel(addr)
+	getter, err := g.GetChannelNamespace(addr.Scope, addr.Namespace)
 	if err != nil {
 		return nil, err
 	}
+
+	// First access will initialize
+	c, err = getter.GetHandlerForPath(addr.Path)
+	if err != nil {
+		return nil, err
+	}
+
 	g.channels[channel] = c
 	return c, nil
 }
@@ -288,16 +291,6 @@ func (g *GrafanaLive) GetChannelNamespace(scope string, name string) (models.Cha
 	}
 
 	return nil, fmt.Errorf("invalid scope: %q", scope)
-}
-
-func (g *GrafanaLive) initChannel(addr ChannelAddress) (models.ChannelHandler, error) {
-	getter, err := g.GetChannelNamespace(addr.Scope, addr.Namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	// First access will initialize
-	return getter.GetHandlerForPath(addr.Path)
 }
 
 // Publish sends the data to the channel without checking permissions etc

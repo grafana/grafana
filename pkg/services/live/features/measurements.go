@@ -13,7 +13,6 @@ var (
 // MeasurementsRunner will simply broadcast all events to `grafana/broadcast/*` channels.
 // This makes no assumptions about the shape of the data and will broadcast it to anyone listening
 type MeasurementsRunner struct {
-	Publisher models.ChannelPublisher
 }
 
 // GetHandlerForPath gets the handler for a path.
@@ -37,6 +36,6 @@ func (m *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subs
 // OnPublish is called when an event is received from the websocket.
 func (m *MeasurementsRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
 	// currently generic... but should be stricter
-	// logger.Debug("GOT: %s", e.Channel)
+	// logger.Debug("Measurements runner got event on channel", "channel", e.Channel)
 	return e.Data, nil
 }

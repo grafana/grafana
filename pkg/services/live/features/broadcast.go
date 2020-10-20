@@ -8,7 +8,6 @@ import (
 // BroadcastRunner will simply broadcast all events to `grafana/broadcast/*` channels
 // This assumes that data is a JSON object
 type BroadcastRunner struct {
-	Publisher models.ChannelPublisher
 }
 
 // GetHandlerForPath called on init
