@@ -25,12 +25,12 @@ Grafana ships with advanced support for OpenTSDB.
 
 | Name         | Description                                                                                                                           |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| *Name*       | The data source name. This is how you refer to the data source in panels and queries.                                                 |
-| *Default*    | Default data source means that it will be pre-selected for new panels.                                                                |
-| *Url*        | The HTTP protocol, ip and port of you opentsdb server (default port is usually 4242)                                                  |
-| *Access*     | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. |
-| *Version*    | Version = opentsdb version, either <=2.1 or 2.2                                                                                       |
-| *Resolution* | Metrics from opentsdb may have datapoints with either second or millisecond resolution.                                               |
+| `Name`       | The data source name. This is how you refer to the data source in panels and queries.                                                 |
+| `Default`    | Default data source means that it will be pre-selected for new panels.                                                                |
+| `Url`        | The HTTP protocol, ip and port of you opentsdb server (default port is usually 4242)                                                  |
+| `Access`     | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. |
+| `Version`    | Version = opentsdb version, either <=2.1 or 2.2                                                                                       |
+| `Resolution` | Metrics from opentsdb may have datapoints with either second or millisecond resolution.                                               |
 
 ## Query editor
 
@@ -65,11 +65,11 @@ When using OpenTSDB with a template variable of `query` type you can use followi
 
 | Query                       | Description                                                                       |
 | --------------------------- | --------------------------------------------------------------------------------- |
-| *metrics(prefix)*           | Returns metric names with specific prefix (can be empty)                          |
-| *tag_names(cpu)*            | Returns tag names (i.e. keys) for a specific cpu metric                           |
-| *tag_values(cpu, hostname)* | Returns tag values for metric cpu and tag key hostname                            |
-| *suggest_tagk(prefix)*      | Returns tag names (i.e. keys) for all metrics with specific prefix (can be empty) |
-| *suggest_tagv(prefix)*      | Returns tag values for all metrics with specific prefix (can be empty)            |
+| `metrics(prefix)`           | Returns metric names with specific prefix (can be empty)                          |
+| `tag_names(cpu)`            | Returns tag names (i.e. keys) for a specific cpu metric                           |
+| `tag_values(cpu, hostname)` | Returns tag values for metric cpu and tag key hostname                            |
+| `suggest_tagk(prefix)`      | Returns tag names (i.e. keys) for all metrics with specific prefix (can be empty) |
+| `suggest_tagv(prefix)`      | Returns tag values for all metrics with specific prefix (can be empty)            |
 
 If you do not see template variables being populated in `Preview of values` section, you need to enable
 `tsd.core.meta.enable_realtime_ts` in the OpenTSDB server settings. Also, to populate metadata of
@@ -83,8 +83,8 @@ Some examples are mentioned below to make nested template queries work successfu
 
 | Query                                                 | Description                                                                                              |
 | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| *tag_values(cpu, hostname, env=$env)*                 | Return tag values for cpu metric, selected env tag value and tag key hostname                            |
-| *tag_values(cpu, hostname, env=$env, region=$region)* | Return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname |
+| `tag_values(cpu, hostname, env=$env)`                 | Return tag values for cpu metric, selected env tag value and tag key hostname                            |
+| `tag_values(cpu, hostname, env=$env, region=$region)` | Return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname |
 
 For details on OpenTSDB metric queries, check out the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
 

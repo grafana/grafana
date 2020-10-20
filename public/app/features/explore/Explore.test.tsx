@@ -101,6 +101,7 @@ const dummyProps: ExploreProps = {
   showLogs: true,
   showTable: true,
   showTrace: true,
+  splitOpen: (() => {}) as any,
 };
 
 const setupErrors = (hasRefId?: boolean) => {

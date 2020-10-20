@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/shorturls"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
@@ -72,6 +74,7 @@ type HTTPServer struct {
 	PluginManager        *plugins.PluginManager           `inject:""`
 	SearchService        *search.SearchService            `inject:""`
 	AlertNG              *eval.AlertNG                    `inject:""`
+	ShortURLService      *shorturls.ShortURLService       `inject:""`
 	Live                 *live.GrafanaLive
 	Listener             net.Listener
 }
@@ -329,7 +332,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
-		Directory:  path.Join(setting.StaticRootPath, "views"),
+		Directory:  filepath.Join(setting.StaticRootPath, "views"),
 		IndentJSON: macaron.Env != macaron.PROD,
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))

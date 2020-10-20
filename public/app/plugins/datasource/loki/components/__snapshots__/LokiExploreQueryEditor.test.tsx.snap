@@ -54,6 +54,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
         "datasource": [Circular],
         "fetchSeriesLabels": [Function],
         "getBeginningCompletionItems": [Function],
+        "getPipeCompletionItem": [Function],
         "getTermCompletionItems": [Function],
         "labelKeys": Array [],
         "labelsCache": LRUCache {

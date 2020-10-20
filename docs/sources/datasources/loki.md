@@ -31,10 +31,10 @@ Just add it as a data source and you are ready to query your log data in [Explor
 
 | Name            | Description                                                                                                                                   |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| _Name_          | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                               |
-| _Default_       | Default data source means that it will be pre-selected for new panels.                                                                        |
-| _URL_           | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
-| _Maximum lines_ | Upper limit for number of log lines returned by Loki (default is 1000). Decrease if your browser is sluggish when displaying logs in Explore. |
+| `Name`          | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                               |
+| `Default`       | Default data source means that it will be pre-selected for new panels.                                                                        |
+| `URL`           | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
+| `Maximum lines` | Upper limit for number of log lines returned by Loki (default is 1000). Decrease if your browser is sluggish when displaying logs in Explore. |
 
 ### Derived fields
 
@@ -153,7 +153,7 @@ Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentatio
 
 ## Annotations
 
-You can use any non-metric Loki query as a source for annotations. Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
+You can use any non-metric Loki query as a source for [annotations]({{< relref "../dashboards/annotations" >}}). Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
 
 > **Note:** Annotations for Loki are only available in Grafana v6.4+
 

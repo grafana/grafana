@@ -79,6 +79,9 @@ type TVirtualizedTraceViewOwnProps = {
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
   theme: Theme;
+  createSpanLink?: (
+    span: TraceSpan
+  ) => { href: string; onClick?: (e: React.MouseEvent) => void; content: React.ReactNode };
 };
 
 type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
@@ -330,6 +333,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
       theme,
+      createSpanLink,
     } = this.props;
     // to avert flow error
     if (!trace) {
@@ -379,6 +383,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           hoverIndentGuideIds={hoverIndentGuideIds}
           addHoverIndentGuideId={addHoverIndentGuideId}
           removeHoverIndentGuideId={removeHoverIndentGuideId}
+          createSpanLink={createSpanLink}
         />
       </div>
     );
