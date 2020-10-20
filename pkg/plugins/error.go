@@ -19,14 +19,10 @@ func (e ErrorCode) String() string {
 	case signatureInvalid:
 		return "signatureInvalid"
 	default:
-		panic(fmt.Sprintf("Unrecognized error code %d", e))
+		panic(fmt.Sprintf("Unrecognized plugin error code %d", e))
 	}
 }
 
 type PluginError struct {
 	ErrorCode
-}
-
-type PluginErrors struct {
-	PluginErrors []PluginError
 }
