@@ -43,7 +43,7 @@ export const PredictablePulseEditor = ({ onChange, query }: EditorProps) => {
               width={32}
               type="number"
               name={id}
-              id={`pulseWave.${id}`}
+              id={`pulseWave.${id}-${query.refId}`}
               value={query.pulseWave?.[id as keyof PulseWaveQuery]}
               placeholder={placeholder}
               onChange={onInputChange}

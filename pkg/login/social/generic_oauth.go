@@ -24,6 +24,7 @@ type SocialGenericOAuth struct {
 	emailAttributeName   string
 	emailAttributePath   string
 	loginAttributePath   string
+	nameAttributePath    string
 	roleAttributePath    string
 	idTokenAttributeName string
 	teamIds              []int
@@ -107,13 +108,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		s.log.Debug("Processing external user info", "source", data.source, "data", data)
 
 		if userInfo.Name == "" {
-			if data.Name != "" {
-				s.log.Debug("Setting user info name from name field")
-				userInfo.Name = data.Name
-			} else if data.DisplayName != "" {
-				s.log.Debug("Setting user info name from display name field")
-				userInfo.Name = data.DisplayName
-			}
+			userInfo.Name = s.extractUserName(data)
 		}
 
 		if userInfo.Login == "" {
@@ -250,7 +245,7 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 
 	data.rawJSON = rawJSON
 	data.source = "token"
-	s.log.Debug("Received id_token", "raw_json", string(data.rawJSON), "data", data)
+	s.log.Debug("Received id_token", "raw_json", string(data.rawJSON), "data", data.String())
 	return &data
 }
 
@@ -272,7 +267,7 @@ func (s *SocialGenericOAuth) extractFromAPI(client *http.Client) *UserInfoJson {
 
 	data.rawJSON = rawJSON
 	data.source = "API"
-	s.log.Debug("Received user info response from API", "raw_json", string(rawJSON), "data", data)
+	s.log.Debug("Received user info response from API", "raw_json", string(rawJSON), "data", data.String())
 	return &data
 }
 
@@ -303,6 +298,31 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 		s.log.Debug("Failed to parse e-mail address", "error", emailErr.Error())
 	}
 
+	return ""
+}
+
+func (s *SocialGenericOAuth) extractUserName(data *UserInfoJson) string {
+	if s.nameAttributePath != "" {
+		name, err := s.searchJSONForAttr(s.nameAttributePath, data.rawJSON)
+		if err != nil {
+			s.log.Error("Failed to search JSON for attribute", "error", err)
+		} else if name != "" {
+			s.log.Debug("Setting user info name from nameAttributePath", "nameAttributePath", s.nameAttributePath)
+			return name
+		}
+	}
+
+	if data.Name != "" {
+		s.log.Debug("Setting user info name from name field")
+		return data.Name
+	}
+
+	if data.DisplayName != "" {
+		s.log.Debug("Setting user info name from display name field")
+		return data.DisplayName
+	}
+
+	s.log.Debug("Unable to find user info name")
 	return ""
 }
 
