@@ -123,7 +123,6 @@ export const Card: FC<Props> = ({
           )}
         </div>
       </CardInner>
-      <div className={styles.overlay} />
     </CardContainer>
   );
 };
@@ -140,6 +139,20 @@ const getStyles = stylesFactory((theme: GrafanaTheme, disabled = false, disableH
       position: relative;
       pointer-events: ${disabled ? 'none' : 'auto'};
       margin-bottom: ${theme.spacing.sm};
+
+      &::after {
+        content: '';
+        display: ${disabled ? 'block' : 'none'};
+        position: absolute;
+        top: 1px;
+        left: 1px;
+        right: 1px;
+        bottom: 1px;
+        background: linear-gradient(180deg, rgba(75, 79, 84, 0.5) 0%, rgba(82, 84, 92, 0.5) 100%);
+        width: calc(100% - 2px);
+        height: calc(100% - 2px);
+        border-radius: ${theme.border.radius.sm};
+      }
 
       &:hover {
         background: ${disableHover ? theme.colors.bg2 : styleMixins.hoverColor(theme.colors.bg2, theme)};
@@ -168,18 +181,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme, disabled = false, disableH
       margin: ${theme.spacing.sm} 0 0;
       color: ${theme.colors.textSemiWeak};
       line-height: ${theme.typography.lineHeight.md};
-    `,
-    overlay: css`
-      position: absolute;
-      top: 1px;
-      left: 1px;
-      right: 1px;
-      bottom: 1px;
-      background: linear-gradient(180deg, rgba(75, 79, 84, 0.5) 0%, rgba(82, 84, 92, 0.5) 100%);
-      width: calc(100% - 2px);
-      height: calc(100% - 2px);
-      z-index: ${disabled ? 0 : -1};
-      border-radius: ${theme.border.radius.sm};
     `,
     media: css`
       margin-right: ${theme.spacing.md};
