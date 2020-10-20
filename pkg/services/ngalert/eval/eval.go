@@ -67,7 +67,7 @@ func (c Condition) IsValid() bool {
 	return len(c.QueriesAndExpressions) != 0
 }
 
-// AlertExecCtx is the context provided for executing an alert condition.§
+// AlertExecCtx is the context provided for executing an alert condition.
 type AlertExecCtx struct {
 	AlertDefitionID int64
 	SignedInUser    *models.SignedInUser
