@@ -186,4 +186,5 @@ func NewEnabledPlugins() EnabledPlugins {
 
 type PluginErrorInfo struct {
 	ErrorCode string `json:"errorCode"`
+	PluginID  string `json:"pluginId,omitempty"`
 }

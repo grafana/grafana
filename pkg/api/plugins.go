@@ -379,6 +379,17 @@ func (hs *HTTPServer) getCachedPluginSettings(pluginID string, user *models.Sign
 	return query.Result, nil
 }
 
+func (hs *HTTPServer) GetPluginErrorsList(c *models.ReqContext) Response {
+	var pluginErrors []plugins.PluginErrorInfo
+	for id, e := range plugins.Errors {
+		pluginErrors = append(pluginErrors, plugins.PluginErrorInfo{
+			ErrorCode: e.ErrorCode.String(),
+			PluginID:  id,
+		})
+	}
+	return JSON(200, pluginErrors)
+}
+
 func translatePluginRequestErrorToAPIError(err error) Response {
 	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
 		return Error(404, "Plugin not found", err)
