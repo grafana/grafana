@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { createRef, PureComponent, RefObject } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
 import { Button, HorizontalGroup, Icon, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 import { css, cx } from 'emotion';
@@ -58,18 +58,47 @@ interface DispatchProps {
   updateTimeZoneForSession: typeof updateTimeZoneForSession;
 }
 
+interface State {
+  topPanelSize: string | number;
+  rightPanelSize: string | number;
+}
+
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-export class PanelEditorUnconnected extends PureComponent<Props> {
+export class PanelEditorUnconnected extends PureComponent<Props, State> {
   querySubscription: Unsubscribable;
+  rafToken: RefObject<number>;
+
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      topPanelSize: props.uiState.topPaneSize,
+      rightPanelSize: props.uiState.rightPaneSize,
+    };
+
+    this.rafToken = createRef<number>();
+  }
 
   componentDidMount() {
     this.props.initPanelEditor(this.props.sourcePanel, this.props.dashboard);
+
+    window.addEventListener('resize', this.updateSplitPaneSize);
   }
 
   componentWillUnmount() {
     this.props.panelEditorCleanUp();
+    window.removeEventListener('resize', this.updateSplitPaneSize);
   }
+
+  updateSplitPaneSize = () => {
+    if (this.rafToken.current !== undefined) {
+      window.cancelAnimationFrame(this.rafToken.current!);
+    }
+    window.requestAnimationFrame(() => {
+      this.setState({ rightPanelSize: this.props.uiState.rightPaneSize });
+      this.setState({ topPanelSize: this.props.uiState.topPaneSize });
+    });
+  };
 
   onPanelExit = () => {
     this.props.updateLocation({
@@ -138,7 +167,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       });
     } else {
       updatePanelEditorUIState({
-        rightPaneSize: size,
+        rightPaneSize: `${(size / window.innerWidth) * 100}%`,
       });
     }
   };
@@ -205,6 +234,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         minSize={200}
         maxSize={windowHeight}
         primary="first"
+        size={this.state.topPanelSize}
         /* Use persisted state for default size */
         defaultSize={uiState.topPaneSize}
         pane2Style={{ minHeight: 0 }}
@@ -326,10 +356,15 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   renderWithOptionsPane(styles: EditorStyles) {
     const { uiState } = this.props;
 
+    // Limit options pane width to 90% of screen.
+    const maxWidth = window.innerWidth * 0.9;
+
     return (
       <SplitPane
         split="vertical"
         minSize={300}
+        maxSize={maxWidth}
+        size={this.state.rightPanelSize}
         primary="second"
         /* Use persisted state for default size */
         defaultSize={uiState.rightPaneSize}
