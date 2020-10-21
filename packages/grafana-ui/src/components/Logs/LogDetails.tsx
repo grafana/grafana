@@ -91,7 +91,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const fields = getAllFields(row, getFieldLinks);
     const parsedFieldsAvailable = fields && fields.length > 0;
     // If logs with error, we are not showing the level color
-    const levelClassName = !hasError ? cx(style.logsRowLevel, styles.logsRowLevelDetails) : '';
+    const levelClassName = cx(!hasError && [style.logsRowLevel, styles.logsRowLevelDetails]);
 
     return (
       <tr
