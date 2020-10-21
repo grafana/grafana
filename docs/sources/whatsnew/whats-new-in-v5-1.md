@@ -42,7 +42,7 @@ Version | User    | User ID
 < 5.1   | grafana | 104
 >= 5.1  | grafana | 472
 
-Please read the [updated documentation](/installation/docker/#migration-from-a-previous-version-of-the-docker-container-to-5-1-or-later) which includes migration instructions and more information.
+Please read the [updated documentation](/installation/docker/#migrate-to-v51-or-later) which includes migration instructions and more information.
 
 ## Prometheus
 

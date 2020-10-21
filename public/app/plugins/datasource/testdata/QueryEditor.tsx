@@ -1,5 +1,5 @@
 // Libraries
-import React, { ChangeEvent, FormEvent, useMemo, useEffect } from 'react';
+import React, { ChangeEvent, FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 // Components
@@ -45,10 +45,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onChange(query);
     onRunQuery();
   };
-
-  useEffect(() => {
-    onUpdate(query);
-  }, []);
 
   const currentScenario = useMemo(() => scenarioList?.find(scenario => scenario.id === query.scenarioId), [
     scenarioList,
@@ -131,7 +127,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
           <InlineField label="String Input">
             <Input
               width={32}
-              id="stringInput"
+              id={`stringInput-${query.refId}`}
               name="stringInput"
               placeholder={query.stringInput}
               value={query.stringInput}
@@ -142,7 +138,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         <InlineField label="Alias" labelWidth={14}>
           <Input
             width={32}
-            id="alias"
+            id={`alias-${query.refId}`}
             type="text"
             placeholder="optional"
             pattern='[^<>&\\"]+'
@@ -170,7 +166,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
           >
             <Input
               width={32}
-              id="labels"
+              id={`labels-${query.refId}`}
               name="labels"
               onChange={onInputChange}
               value={query?.labels}
