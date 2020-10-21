@@ -114,12 +114,12 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
         top: 1px;
         bottom: 1px;
         width: 3px;
+        left: 4px;
         background-color: ${logColor};
       }
     `,
     logIconError: css`
       color: ${theme.palette.red};
-      margin-left: -5px;
     `,
     logsRowToggleDetails: css`
       label: logs-row-toggle-details__level;
