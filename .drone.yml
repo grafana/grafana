@@ -128,7 +128,7 @@ steps:
   - package
 
 - name: end-to-end-tests
-  image: grafana/ci-e2e:12.18-1
+  image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
   - ./bin/grabpl e2e-tests
@@ -423,7 +423,7 @@ steps:
   - package
 
 - name: end-to-end-tests
-  image: grafana/ci-e2e:12.18-1
+  image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
   - ./bin/grabpl e2e-tests
@@ -859,7 +859,7 @@ steps:
   - package
 
 - name: end-to-end-tests
-  image: grafana/ci-e2e:12.18-1
+  image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
   - ./bin/grabpl e2e-tests
@@ -1221,7 +1221,7 @@ steps:
   - package
 
 - name: end-to-end-tests
-  image: grafana/ci-e2e:12.18-1
+  image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
   - ./bin/grabpl e2e-tests
@@ -1628,7 +1628,7 @@ steps:
   - package
 
 - name: end-to-end-tests
-  image: grafana/ci-e2e:12.18-1
+  image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
   - ./bin/grabpl e2e-tests
@@ -1980,7 +1980,7 @@ steps:
   - package
 
 - name: end-to-end-tests
-  image: grafana/ci-e2e:12.18-1
+  image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
   - ./bin/grabpl e2e-tests
