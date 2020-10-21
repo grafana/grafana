@@ -30,6 +30,4 @@ const toOption = (metric: MetricAggregation) => ({
 
 const toOptions = (metrics: MetricAggregation[]): Array<SelectableValue<MetricAggregation>> => metrics.map(toOption);
 
-// This is a very ugly way to describe a metric (by ID)
-// Would be nice maybe to have something like `metricType(anotherMetricType(field))`
 const describeMetric = (metric: MetricAggregation) => `${metricAggregationConfig[metric.type].label} ${metric.id}`;

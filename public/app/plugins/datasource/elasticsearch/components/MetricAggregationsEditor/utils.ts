@@ -91,7 +91,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   moving_avg: {
     label: 'Moving Average',
-    requiresField: false,
+    requiresField: true,
     isPipelineAgg: true,
     minVersion: 2,
     supportsMissing: false,
@@ -108,7 +108,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   derivative: {
     label: 'Derivative',
-    requiresField: false,
+    requiresField: true,
     isPipelineAgg: true,
     minVersion: 2,
     supportsMissing: false,
@@ -119,7 +119,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   cumulative_sum: {
     label: 'Cumulative Sum',
-    requiresField: false,
+    requiresField: true,
     isPipelineAgg: true,
     minVersion: 2,
     supportsMissing: false,

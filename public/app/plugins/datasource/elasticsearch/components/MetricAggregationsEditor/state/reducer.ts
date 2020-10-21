@@ -35,7 +35,7 @@ export const reducer = (
       return state
         .filter(metric =>
           // When the new metric type is `isSingleMetric` we remove all other metrics from the query
-          // TODO: This needs to be also done in the Bucket Aggregation reducer
+          // leaving only the current one.
           !!metricAggregationConfig[action.payload.type].isSingleMetric ? metric.id === action.payload.id : true
         )
         .map(metric => {
@@ -44,7 +44,7 @@ export const reducer = (
           }
 
           // TODO: Here we should do some checks to clean out metric configurations that are not compatible
-          // with the new one (eg. `settings` or `field`)
+          // with the new one (eg. `settings` or `field`) and apply default settings for that metric.
           return {
             ...metric,
             type: action.payload.type,

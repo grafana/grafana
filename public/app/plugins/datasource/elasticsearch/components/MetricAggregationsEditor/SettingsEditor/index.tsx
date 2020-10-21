@@ -68,7 +68,6 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
           )}
 
           {metric.type === 'moving_avg' && (
-            // TODO: onBlur, defaultValue
             <>
               <InlineField label="Model" {...inlineFieldProps}>
                 <Select
