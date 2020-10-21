@@ -5,6 +5,7 @@ package gorules
 import "github.com/quasilyte/go-ruleguard/dsl/fluent"
 
 // This is a collection of rules for ruleguard: https://github.com/quasilyte/go-ruleguard
+// Copied from https://github.com/dgryski/semgrep-go
 
 // Remove extra conversions: mdempsky/unconvert
 func unconvert(m fluent.Matcher) {
