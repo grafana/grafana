@@ -80,10 +80,8 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 
 	result := make(dtos.PluginList, 0)
 	for _, pluginDef := range plugins.Plugins {
-		pluginError := plugins.Errors[pluginDef.Id]
-
-		// filter out app sub plugins with no errors
-		if embeddedFilter == "0" && pluginDef.IncludedInAppId != "" && pluginError == nil {
+		// filter out app sub plugins
+		if embeddedFilter == "0" && pluginDef.IncludedInAppId != "" {
 			continue
 		}
 
@@ -138,25 +136,6 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 		result = append(result, listItem)
 	}
 
-	for _, pluginErr := range plugins.Errors {
-		pluginErrDto := dtos.PluginListItem{
-			Id:            pluginErr.Id,
-			Name:          pluginErr.Name,
-			Type:          pluginErr.Type,
-			Category:      pluginErr.Category,
-			Info:          &pluginErr.Info,
-			LatestVersion: pluginErr.GrafanaNetVersion,
-			HasUpdate:     pluginErr.GrafanaNetHasUpdate,
-			DefaultNavUrl: pluginErr.DefaultNavUrl,
-			State:         pluginErr.State,
-			Signature:     pluginErr.Signature,
-			Error:         &plugins.PluginErrorInfo{ErrorCode: pluginErr.ErrorCode.String()},
-			Enabled:       false,
-		}
-
-		result = append(result, pluginErrDto)
-	}
-
 	sort.Sort(result)
 	return JSON(200, result)
 }
@@ -183,13 +162,6 @@ func GetPluginSettingByID(c *models.ReqContext) Response {
 		HasUpdate:     def.GrafanaNetHasUpdate,
 		State:         def.State,
 		Signature:     def.Signature,
-	}
-
-	pluginError := plugins.Errors[def.Id]
-	if pluginError != nil {
-		dto.Error = &plugins.PluginErrorInfo{
-			ErrorCode: pluginError.ErrorCode.String(),
-		}
 	}
 
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
