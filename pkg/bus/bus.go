@@ -147,6 +147,9 @@ func (b *InProcBus) Publish(msg Msg) error {
 		if ok && err != nil {
 			return err
 		}
+		if !ok {
+			return fmt.Errorf("expected listener to return an error, got '%v'", reflect.TypeOf(ret[0].Interface()))
+		}
 	}
 
 	return nil
