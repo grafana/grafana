@@ -17,7 +17,7 @@ import {
  *
  * Use one of the properties standard | custom | datasource to define the kind of query editor and query support you want to use in the Variable system
  *
- * @experimental
+ * @alpha -- experimental
  */
 export interface VariableSupport<
   DSType extends DataSourceApi<TQuery, TOptions>,
@@ -41,6 +41,11 @@ export interface VariableSupport<
   datasource?: DataSourceVariableSupport<DSType, TQuery, TOptions>;
 }
 
+/**
+ * Implement this interface in a data source plugin to use the standard query editor for Query variables
+ *
+ * @alpha -- experimental
+ */
 export interface StandardVariableSupport<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
@@ -50,6 +55,11 @@ export interface StandardVariableSupport<
   query?: (request: DataQueryRequest<TQuery>) => Observable<DataQueryResponse>;
 }
 
+/**
+ * Implement this interface in a data source plugin to use a customized query editor for Query variables
+ *
+ * @alpha -- experimental
+ */
 export interface CustomVariableSupport<
   DSType extends DataSourceApi<TQuery, TOptions>,
   VariableQuery extends DataQuery = any,
@@ -60,6 +70,11 @@ export interface CustomVariableSupport<
   query: (request: DataQueryRequest<VariableQuery>) => Observable<DataQueryResponse>;
 }
 
+/**
+ * Implement this interface in a data source plugin to use the query editor in the data source plugin for Query variables
+ *
+ * @alpha -- experimental
+ */
 export interface DataSourceVariableSupport<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
@@ -68,6 +83,11 @@ export interface DataSourceVariableSupport<
   editor: ComponentType<QueryEditorProps<DSType, TQuery, TOptions, TQuery>>;
 }
 
+/**
+ * Defines the standard DatQuery used by data source plugins that implement StandardVariableSupport
+ *
+ * @alpha -- experimental
+ */
 export interface StandardVariableQuery extends DataQuery {
   query: string;
 }

@@ -80,6 +80,9 @@ export class DataSourcePlugin<
     return this;
   }
 
+  /*
+   * @deprecated -- prefer using {@link CustomVariableSupport or DataSourceVariableSupport}
+   * */
   setVariableQueryEditor(VariableQueryEditor: any) {
     this.components.VariableQueryEditor = VariableQueryEditor;
     return this;
@@ -298,7 +301,7 @@ export abstract class DataSourceApi<
 
   /**
    * Defines new variable support
-   * @experimental
+   * @alpha -- experimental
    */
   variables?: VariableSupport<DataSourceApi<TQuery, TOptions>>;
 }
