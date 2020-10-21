@@ -8,6 +8,11 @@ min-confidence = 3
 min-len = 5
 min-occurrences = 5
 
+[linters-settings.gocritic]
+enabled-checks = ["ruleguard"]
+[linters-settings.gocritic.settings.ruleguard]
+rules = "pkg/ruleguard.rules.go"
+
 [linters]
 disable-all = true
 enable = [

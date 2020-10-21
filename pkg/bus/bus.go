@@ -143,9 +143,9 @@ func (b *InProcBus) Publish(msg Msg) error {
 
 	for _, listenerHandler := range listeners {
 		ret := reflect.ValueOf(listenerHandler).Call(params)
-		err := ret[0].Interface()
-		if err != nil {
-			return err.(error)
+		err, ok := ret[0].Interface().(error)
+		if ok && err != nil {
+			return err
 		}
 	}
 
