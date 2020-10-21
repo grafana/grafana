@@ -24,8 +24,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
-	"github.com/aws/aws-sdk-go/service/servicequotas"
-	"github.com/aws/aws-sdk-go/service/servicequotas/servicequotasiface"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -54,8 +52,6 @@ const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
-
-const defaultConcurrentQueries = 4
 
 func init() {
 	globalExecutor := newExecutor()
@@ -230,63 +226,6 @@ func (e *cloudWatchExecutor) getRGTAClient(region string) (resourcegroupstagging
 	e.rgtaClient = newRGTAClient(sess)
 
 	return e.rgtaClient, nil
-}
-
-func (e *cloudWatchExecutor) getQueue(region string) (chan bool, error) {
-	e.queueLock.Lock()
-	defer e.queueLock.Unlock()
-
-	if queue, ok := e.queuesByRegion[region]; ok {
-		return queue, nil
-	}
-
-	concurrentQueriesQuota := e.fetchConcurrentQueriesQuota(region)
-
-	queueChannel := make(chan bool, concurrentQueriesQuota)
-	e.queuesByRegion[region] = queueChannel
-
-	return queueChannel, nil
-}
-
-func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string) int {
-	sess, err := e.newSession(region)
-	if err != nil {
-		plog.Warn("Could not get service quota client")
-		return defaultConcurrentQueries
-	}
-
-	client := newQuotasClient(sess)
-
-	concurrentQueriesQuota, err := client.GetServiceQuota(&servicequotas.GetServiceQuotaInput{
-		ServiceCode: aws.String("logs"),
-		QuotaCode:   aws.String("L-32C48FBB"),
-	})
-	if err != nil {
-		plog.Warn("Could not get service quota")
-		return defaultConcurrentQueries
-	}
-
-	if concurrentQueriesQuota != nil && concurrentQueriesQuota.Quota != nil && concurrentQueriesQuota.Quota.Value != nil {
-		return int(*concurrentQueriesQuota.Quota.Value)
-	}
-
-	plog.Warn("Could not get service quota")
-
-	defaultConcurrentQueriesQuota, err := client.GetAWSDefaultServiceQuota(&servicequotas.GetAWSDefaultServiceQuotaInput{
-		ServiceCode: aws.String("logs"),
-		QuotaCode:   aws.String("L-32C48FBB"),
-	})
-	if err != nil {
-		plog.Warn("Could not get default service quota")
-		return defaultConcurrentQueries
-	}
-
-	if defaultConcurrentQueriesQuota != nil && defaultConcurrentQueriesQuota.Quota != nil && defaultConcurrentQueriesQuota.Quota.Value != nil {
-		return int(*defaultConcurrentQueriesQuota.Quota.Value)
-	}
-
-	plog.Warn("Could not get default service quota")
-	return defaultConcurrentQueries
 }
 
 func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
@@ -516,18 +455,6 @@ var newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 // Stubbable by tests.
 var newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 	client := cloudwatchlogs.New(sess)
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
-
-	return client
-}
-
-// Service quotas client factory.
-//
-// Stubbable by tests.
-var newQuotasClient = func(sess *session.Session) servicequotasiface.ServiceQuotasAPI {
-	client := servicequotas.New(sess)
 	client.Handlers.Send.PushFront(func(r *request.Request) {
 		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 	})

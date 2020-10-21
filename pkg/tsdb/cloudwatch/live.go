@@ -7,16 +7,24 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go/service/servicequotas"
+	"github.com/aws/aws-sdk-go/service/servicequotas/servicequotasiface"
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	util "github.com/grafana/grafana/pkg/util/retryer"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/sync/errgroup"
 )
+
+const defaultConcurrentQueries = 4
 
 type LogQueryRunnerSupplier struct {
 	Publisher models.ChannelPublisher
@@ -181,6 +189,63 @@ func (e *cloudWatchExecutor) sendLiveQueriesToChannel(queryContext *tsdb.TsdbQue
 	close(responseChannel)
 }
 
+func (e *cloudWatchExecutor) getQueue(region string) (chan bool, error) {
+	e.queueLock.Lock()
+	defer e.queueLock.Unlock()
+
+	if queue, ok := e.queuesByRegion[region]; ok {
+		return queue, nil
+	}
+
+	concurrentQueriesQuota := e.fetchConcurrentQueriesQuota(region)
+
+	queueChannel := make(chan bool, concurrentQueriesQuota)
+	e.queuesByRegion[region] = queueChannel
+
+	return queueChannel, nil
+}
+
+func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string) int {
+	sess, err := e.newSession(region)
+	if err != nil {
+		plog.Warn("Could not get service quota client")
+		return defaultConcurrentQueries
+	}
+
+	client := newQuotasClient(sess)
+
+	concurrentQueriesQuota, err := client.GetServiceQuota(&servicequotas.GetServiceQuotaInput{
+		ServiceCode: aws.String("logs"),
+		QuotaCode:   aws.String("L-32C48FBB"),
+	})
+	if err != nil {
+		plog.Warn("Could not get service quota")
+		return defaultConcurrentQueries
+	}
+
+	if concurrentQueriesQuota != nil && concurrentQueriesQuota.Quota != nil && concurrentQueriesQuota.Quota.Value != nil {
+		return int(*concurrentQueriesQuota.Quota.Value)
+	}
+
+	plog.Warn("Could not get service quota")
+
+	defaultConcurrentQueriesQuota, err := client.GetAWSDefaultServiceQuota(&servicequotas.GetAWSDefaultServiceQuotaInput{
+		ServiceCode: aws.String("logs"),
+		QuotaCode:   aws.String("L-32C48FBB"),
+	})
+	if err != nil {
+		plog.Warn("Could not get default service quota")
+		return defaultConcurrentQueries
+	}
+
+	if defaultConcurrentQueriesQuota != nil && defaultConcurrentQueriesQuota.Quota != nil && defaultConcurrentQueriesQuota.Quota.Value != nil {
+		return int(*defaultConcurrentQueriesQuota.Quota.Value)
+	}
+
+	plog.Warn("Could not get default service quota")
+	return defaultConcurrentQueries
+}
+
 func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan *tsdb.Response, query *tsdb.Query, timeRange *tsdb.TimeRange) error {
 	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
 	parameters := query.Model
@@ -270,4 +335,16 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 
 		return util.FuncSuccess, nil
 	}, maxAttempts, minRetryDelay, maxRetryDelay)
+}
+
+// Service quotas client factory.
+//
+// Stubbable by tests.
+var newQuotasClient = func(sess *session.Session) servicequotasiface.ServiceQuotasAPI {
+	client := servicequotas.New(sess)
+	client.Handlers.Send.PushFront(func(r *request.Request) {
+		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+	})
+
+	return client
 }
