@@ -1,20 +1,20 @@
 import React, { useState, useCallback } from 'react';
-import { SelectableValue } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { useTheme } from '../../themes';
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { HttpProxySettings } from './HttpProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
-import { DataSourceSettings } from '@grafana/data';
-import { HttpSettingsProps } from './types';
 import { CustomHeadersSettings } from './CustomHeadersSettings';
 import { Select } from '../Forms/Legacy/Select/Select';
 import { Input } from '../Forms/Legacy/Input/Input';
+import { Switch } from '../Forms/Legacy/Switch/Switch';
 import { Icon } from '../Icon/Icon';
 import { FormField } from '../FormField/FormField';
-import { FormLabel } from '../FormLabel/FormLabel';
-import { Switch } from '../Forms/Legacy/Switch/Switch';
+import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { TagsInput } from '../TagsInput/TagsInput';
+import { SigV4AuthSettings } from './SigV4AuthSettings';
+import { useTheme } from '../../themes';
+import { HttpSettingsProps } from './types';
 
 const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
   {
@@ -37,9 +37,9 @@ const HttpAccessHelp = () => (
     <p>
       Access mode controls how requests to the data source will be handled.
       <strong>
-        <i>Server</i>
+        &nbsp<i>Server</i>
       </strong>{' '}
-      should be the preferred way if nothing else stated.
+      should be the preferred way if nothing else is stated.
     </p>
     <div className="alert-title">Server access mode (Default):</div>
     <p>
@@ -56,7 +56,7 @@ const HttpAccessHelp = () => (
 );
 
 export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
-  const { defaultUrl, dataSourceConfig, onChange, showAccessOptions } = props;
+  const { defaultUrl, dataSourceConfig, onChange, showAccessOptions, sigV4AuthToggleEnabled } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
   const theme = useTheme();
@@ -149,12 +149,12 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
           )}
           {dataSourceConfig.access === 'proxy' && (
             <div className="gf-form">
-              <FormLabel
+              <InlineFormLabel
                 width={11}
                 tooltip="Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
               >
                 Whitelisted Cookies
-              </FormLabel>
+              </InlineFormLabel>
               <TagsInput
                 tags={dataSourceConfig.jsonData.keepCookies}
                 onChange={cookies =>
@@ -190,6 +190,21 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
             />
           </div>
 
+          {sigV4AuthToggleEnabled && (
+            <div className="gf-form-inline">
+              <Switch
+                label="SigV4 auth"
+                labelClass="width-13"
+                checked={dataSourceConfig.jsonData.sigV4Auth || false}
+                onChange={event => {
+                  onSettingsChange({
+                    jsonData: { ...dataSourceConfig.jsonData, sigV4Auth: event!.currentTarget.checked },
+                  });
+                }}
+              />
+            </div>
+          )}
+
           {dataSourceConfig.access === 'proxy' && (
             <HttpProxySettings
               dataSourceConfig={dataSourceConfig}
@@ -205,6 +220,8 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
             </div>
           </>
         )}
+
+        {dataSourceConfig.jsonData.sigV4Auth && <SigV4AuthSettings {...props} />}
 
         {(dataSourceConfig.jsonData.tlsAuth || dataSourceConfig.jsonData.tlsAuthWithCACert) && (
           <TLSAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />

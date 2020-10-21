@@ -9,11 +9,14 @@ import (
 )
 
 var (
+	ErrAlertNotificationNotFound                = errors.New("Alert notification not found")
 	ErrNotificationFrequencyNotFound            = errors.New("Notification frequency not specified")
 	ErrAlertNotificationStateNotFound           = errors.New("alert notification state not found")
 	ErrAlertNotificationStateVersionConflict    = errors.New("alert notification state update version conflict")
 	ErrAlertNotificationStateAlreadyExist       = errors.New("alert notification state already exists")
 	ErrAlertNotificationFailedGenerateUniqueUid = errors.New("Failed to generate unique alert notification uid")
+	ErrAlertNotificationWithSameNameExists      = errors.New("alert notification with same name already exists")
+	ErrAlertNotificationWithSameUIDExists       = errors.New("alert notification with same uid already exists")
 )
 
 type AlertNotificationStateType string
@@ -94,6 +97,8 @@ type DeleteAlertNotificationCommand struct {
 type DeleteAlertNotificationWithUidCommand struct {
 	Uid   string
 	OrgId int64
+
+	DeletedAlertNotificationId int64
 }
 
 type GetAlertNotificationUidQuery struct {

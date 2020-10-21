@@ -24,7 +24,7 @@ export const GraphLegendListItem: React.FunctionComponent<GraphLegendItemProps> 
   onLabelClick,
 }) => {
   const theme = useContext(ThemeContext);
-
+  const styles = getStyles(theme);
   return (
     <>
       <LegendSeriesIcon
@@ -44,11 +44,7 @@ export const GraphLegendListItem: React.FunctionComponent<GraphLegendItemProps> 
             onLabelClick(item, event);
           }
         }}
-        className={css`
-          cursor: pointer;
-          white-space: pre-wrap;
-          color: ${!item.isVisible && theme.colors.linkDisabled};
-        `}
+        className={cx(styles.label, !item.isVisible && styles.labelDisabled)}
       >
         {item.label}
       </div>
@@ -61,6 +57,7 @@ export const GraphLegendListItem: React.FunctionComponent<GraphLegendItemProps> 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     row: css`
+      label: LegendRow;
       font-size: ${theme.typography.size.sm};
       td {
         padding: ${theme.spacing.xxs} ${theme.spacing.sm};
@@ -68,8 +65,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     label: css`
+      label: LegendLabel;
       cursor: pointer;
       white-space: nowrap;
+    `,
+    labelDisabled: css`
+      label: LegendLabelDisabled;
+      color: ${theme.colors.linkDisabled};
     `,
     itemWrapper: css`
       display: flex;

@@ -19,11 +19,11 @@ import {
   LegacyResponseData,
   getFlotPairs,
   getDisplayProcessor,
-  getColorFromHexRgbOrName,
   PanelEvents,
   formattedValueToString,
   locationUtil,
   getFieldDisplayName,
+  getColorForTheme,
 } from '@grafana/data';
 
 import { convertOldAngularValueMapping } from '@grafana/ui';
@@ -542,7 +542,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
             show: true,
             fill: 1,
             lineWidth: 1,
-            fillColor: getColorFromHexRgbOrName(panel.sparkline.fillColor, config.theme.type),
+            fillColor: getColorForTheme(panel.sparkline.fillColor, config.theme),
             zero: false,
           },
         },
@@ -564,7 +564,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       const plotSeries = {
         data: data.sparkline,
-        color: getColorFromHexRgbOrName(panel.sparkline.lineColor, config.theme.type),
+        color: getColorForTheme(panel.sparkline.lineColor, config.theme),
       };
 
       $.plot(plotCanvas, [plotSeries], options);
@@ -585,7 +585,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       // Map panel colors to hex or rgb/a values
       if (panel.colors) {
-        data.colorMap = panel.colors.map((color: string) => getColorFromHexRgbOrName(color, config.theme.type));
+        data.colorMap = panel.colors.map((color: string) => getColorForTheme(color, config.theme));
       }
 
       const body = panel.gauge.show ? '' : getBigValueHtml();

@@ -212,7 +212,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"User added to organization"}
+{"message":"User added to organization","userId":1}
 ```
 
 ## Admin Organizations API
@@ -463,7 +463,7 @@ Content-Type: application/json
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"User added to organization"}
+{"message":"User added to organization", "userId": 1}
 ```
 
 ### Update Users in Organization

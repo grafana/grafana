@@ -9,7 +9,6 @@ const templateSrv = new TemplateSrvStub();
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
-  getTemplateSrv: () => templateSrv,
 }));
 
 describe('InfluxDataSource', () => {
@@ -22,7 +21,7 @@ describe('InfluxDataSource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
-    ctx.ds = new InfluxDatasource(ctx.instanceSettings);
+    ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
   });
 
   describe('When issuing metricFindQuery', () => {
@@ -124,7 +123,7 @@ describe('InfluxDataSource', () => {
 
     beforeEach(() => {
       ctx.instanceSettings.url = '/api/datasources/proxy/1';
-      ctx.ds = new InfluxDatasource(ctx.instanceSettings);
+      ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
     });
 
     describe('When issuing metricFindQuery', () => {

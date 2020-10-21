@@ -14,10 +14,15 @@ interface ValuePickerProps<T> {
   icon?: IconName;
   /** ValuePicker options  */
   options: Array<SelectableValue<T>>;
+  /** Callback to handle selected option */
   onChange: (value: SelectableValue<T>) => void;
+  /** Which ButtonVariant to render */
   variant?: ButtonVariant;
+  /** Size of button  */
   size?: ComponentSize;
+  /** Should the picker cover the full width of its parent */
   isFullWidth?: boolean;
+  /** Control where the menu is rendered */
   menuPlacement?: 'auto' | 'bottom' | 'top';
 }
 

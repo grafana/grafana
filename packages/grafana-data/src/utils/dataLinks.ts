@@ -26,8 +26,9 @@ export const DataLinkBuiltInVars = {
   valueCalc: '__value.calc',
 };
 
+// We inject these because we cannot import them directly as they reside inside grafana main package.
 type Options = {
-  onClickFn?: (options: { datasourceUid: string; query: any }) => void;
+  onClickFn?: (options: { datasourceUid: string; query: any; range?: TimeRange }) => void;
   replaceVariables: InterpolateFunction;
   getDataSourceSettingsByUid: (uid: string) => DataSourceInstanceSettings | undefined;
 };
@@ -62,6 +63,7 @@ export function mapInternalLinkToExplore(
           onClickFn?.({
             datasourceUid: link.internal!.datasourceUid,
             query: interpolatedQuery,
+            range,
           });
         }
       : undefined,
@@ -79,13 +81,6 @@ function generateInternalHref<T extends DataQuery = any>(datasourceName: string,
       range: range.raw,
       datasource: datasourceName,
       queries: [query],
-      // This should get overwritten if datasource does not support that mode and we do not know what mode is
-      // preferred anyway.
-      ui: {
-        showingGraph: true,
-        showingTable: true,
-        showingLogs: true,
-      },
     })}`
   );
 }

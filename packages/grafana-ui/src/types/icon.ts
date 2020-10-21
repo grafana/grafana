@@ -12,6 +12,8 @@ export type IconName =
   | 'filter'
   | 'angle-left'
   | 'angle-right'
+  | 'angle-double-right'
+  | 'angle-double-down'
   | 'pen'
   | 'envelope'
   | 'percentage'
@@ -115,7 +117,8 @@ export type IconName =
   | 'line-alt'
   | 'sort-amount-down'
   | 'cloud'
-  | 'draggabledots';
+  | 'draggabledots'
+  | 'folder-upload';
 
 export const getAvailableIcons = (): IconName[] => [
   'fa fa-spinner',
@@ -127,6 +130,8 @@ export const getAvailableIcons = (): IconName[] => [
   'filter',
   'angle-left',
   'angle-right',
+  'angle-double-right',
+  'angle-double-down',
   'pen',
   'envelope',
   'percentage',
@@ -230,4 +235,5 @@ export const getAvailableIcons = (): IconName[] => [
   'sort-amount-down',
   'cloud',
   'draggabledots',
+  'folder-upload',
 ];

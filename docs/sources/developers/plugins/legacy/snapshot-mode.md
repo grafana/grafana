@@ -8,7 +8,7 @@ aliases = ["/docs/grafana/latest/plugins/developing/snapshot-mode/"]
 
 {{< imgbox img="/img/docs/Grafana-snapshot-example.png" caption="A dashboard using snapshot data and not live data." >}}
 
-Grafana has this great feature where you can [save a snapshot of your dashboard]({{< relref "../../../reference/share_dashboard.md" >}}). Instead of sending a screenshot of a dashboard to someone, you can send them a working, interactive Grafana dashboard with the snapshot data embedded inside it. The snapshot can be saved on your Grafana server and is available to all your co-workers. Raintank also hosts a [snapshot server](http://snapshot.raintank.io/) if you want to send the snapshot to someone who does not have access to your Grafana server.
+Grafana has this great feature where you can [save a snapshot of your dashboard]({{< relref "../../../dashboards/json-model.md" >}}). Instead of sending a screenshot of a dashboard to someone, you can send them a working, interactive Grafana dashboard with the snapshot data embedded inside it. The snapshot can be saved on your Grafana server and is available to all your co-workers. Raintank also hosts a [snapshot server](http://snapshot.raintank.io/) if you want to send the snapshot to someone who does not have access to your Grafana server.
 
 {{< imgbox img="/img/docs/animated_gifs/snapshots.gif" caption="Selecting a snapshot" >}}
 
@@ -59,7 +59,7 @@ Now the location data is saved in the dashboard json but we will have to load it
 
 ## Loading custom data for snapshots
 
-The example below shows a function that loads the custom data. The data source for the custom data (an external api in this case) is not available in snapshot mode so a guard check is made to see if there is any snapshot data available first. If there is, then the snapshot data is used instead of trying to load the data from the external api.
+The example below shows a function that loads the custom data. The data source for the custom data (an external API in this case) is not available in snapshot mode so a guard check is made to see if there is any snapshot data available first. If there is, then the snapshot data is used instead of trying to load the data from the external API.
 
 ```javascript
 loadLocationDataFromFile(reload) {

@@ -1,16 +1,15 @@
-import { AppEvents, DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
-import { validateVariableSelectionState } from '../state/actions';
+import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
+import { toDataQueryError, getTemplateSrv } from '@grafana/runtime';
+
+import { updateOptions, validateVariableSelectionState } from '../state/actions';
 import { QueryVariableModel, VariableRefresh } from '../types';
 import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import templateSrv from '../../templating/template_srv';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import appEvents from '../../../core/app_events';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';
 import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
 import { getVariable } from '../state/selectors';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
-import { variableAdapters } from '../adapters';
 import { changeVariableProp } from '../state/sharedReducer';
 import { updateVariableOptions, updateVariableTags } from './reducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
@@ -60,17 +59,12 @@ export const updateQueryVariableOptions = (
         await dispatch(validateVariableSelectionState(toVariableIdentifier(variableInState)));
       }
     } catch (err) {
-      console.error(err);
-      if (err.data && err.data.message) {
-        err.message = err.data.message;
-      }
+      const error = toDataQueryError(err);
       if (getState().templating.editor.id === variableInState.id) {
-        dispatch(addVariableEditorError({ errorProp: 'update', errorText: err.message }));
+        dispatch(addVariableEditorError({ errorProp: 'update', errorText: error.message }));
       }
-      appEvents.emit(AppEvents.alertError, [
-        'Templating',
-        'Template variables could not be initialized: ' + err.message,
-      ]);
+
+      throw error;
     }
   };
 };
@@ -91,7 +85,7 @@ export const initQueryVariableEditor = (identifier: VariableIdentifier): ThunkRe
   if (!variable.datasource) {
     return;
   }
-  dispatch(changeQueryVariableDataSource(toVariableIdentifier(variable), variable.datasource));
+  await dispatch(changeQueryVariableDataSource(toVariableIdentifier(variable), variable.datasource));
 };
 
 export const changeQueryVariableDataSource = (
@@ -126,7 +120,7 @@ export const changeQueryVariableQuery = (
   dispatch(removeVariableEditorError({ errorProp: 'query' }));
   dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
   dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition })));
-  await variableAdapters.get(identifier.type).updateOptions(variableInState);
+  await dispatch(updateOptions(identifier));
 };
 
 const getTemplatedRegex = (variable: QueryVariableModel): string => {
@@ -138,5 +132,5 @@ const getTemplatedRegex = (variable: QueryVariableModel): string => {
     return '';
   }
 
-  return templateSrv.replace(variable.regex, {}, 'regex');
+  return getTemplateSrv().replace(variable.regex, {}, 'regex');
 };

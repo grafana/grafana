@@ -34,7 +34,7 @@ export class TextPanel extends PureComponent<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     // Since any change could be referenced in a template variable,
-    // This needs to process everytime (with debounce)
+    // This needs to process every time (with debounce)
     this.updateHTML();
   }
 

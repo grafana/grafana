@@ -49,6 +49,23 @@ export const BasicInputWithPlaceholder = () => {
   );
 };
 
+export const BasicInputWithHtmlAttributes = () => {
+  const [value, setValue] = useState('some text');
+  return (
+    <SegmentFrame>
+      <SegmentInput
+        data-testid="segment-input-test"
+        id="segment-input"
+        value={value}
+        onChange={text => {
+          setValue(text as string);
+          action('Segment value changed')(text);
+        }}
+      />
+    </SegmentFrame>
+  );
+};
+
 const InputComponent = ({ initialValue }: any) => {
   const [value, setValue] = useState(initialValue);
   return (

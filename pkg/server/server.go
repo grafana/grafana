@@ -22,6 +22,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	_ "github.com/grafana/grafana/pkg/infra/metrics"
 	_ "github.com/grafana/grafana/pkg/infra/remotecache"
 	_ "github.com/grafana/grafana/pkg/infra/serverlock"
@@ -117,6 +118,9 @@ func (s *Server) init(cfg *Config) error {
 
 	s.loadConfiguration()
 	s.writePIDFile()
+	if err := metrics.SetEnvironmentInformation(s.cfg.MetricsGrafanaEnvironmentInfo); err != nil {
+		return err
+	}
 
 	login.Init()
 	social.NewOAuthService()
@@ -179,10 +183,10 @@ func (s *Server) Run() (err error) {
 			}
 
 			err := service.Run(s.context)
-			// Mark that we are in shutdown mode
-			// So no more services are started
-			s.shutdownInProgress = true
 			if err != nil {
+				// Mark that we are in shutdown mode
+				// So no more services are started
+				s.shutdownInProgress = true
 				if err != context.Canceled {
 					// Server has crashed.
 					s.log.Error("Stopped "+descriptor.Name, "reason", err)
@@ -269,7 +273,7 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 	objs := []interface{}{
 		bus.GetBus(),
 		s.cfg,
-		routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing),
+		routing.NewRouteRegister(middleware.RequestMetrics(s.cfg), middleware.RequestTracing),
 		localcache.New(5*time.Minute, 10*time.Minute),
 		s,
 	}

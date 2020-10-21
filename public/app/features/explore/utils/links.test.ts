@@ -49,7 +49,7 @@ describe('getFieldLinksForExplore', () => {
     const links = getFieldLinksForExplore(field, 0, splitfn, range);
 
     expect(links[0].href).toBe(
-      '/explore?left={"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}],"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}'
+      '/explore?left={"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}]}'
     );
     expect(links[0].title).toBe('test_ds');
 
@@ -57,7 +57,11 @@ describe('getFieldLinksForExplore', () => {
       links[0].onClick({});
     }
 
-    expect(splitfn).toBeCalledWith({ datasourceUid: 'uid_1', query: { query: 'query_1' } });
+    expect(splitfn).toBeCalledWith({
+      datasourceUid: 'uid_1',
+      query: { query: 'query_1' },
+      range,
+    });
   });
 });
 
@@ -100,8 +104,8 @@ function setup(link: DataLink) {
   };
 
   const range: TimeRange = {
-    from: dateTime(),
-    to: dateTime(),
+    from: dateTime('2020-10-14T00:00:00'),
+    to: dateTime('2020-10-14T01:00:00'),
     raw: {
       from: 'now-1h',
       to: 'now',

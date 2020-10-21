@@ -434,7 +434,7 @@ export default class Colors {
   }
 
   /**
-   * @desc installs String prototype extensions
+   * @description installs String prototype extensions
    * @example
    * require ('ansicolor').nice
    * console.log ('foo'.bright.red)
@@ -455,17 +455,17 @@ export default class Colors {
   }
 
   /**
-   * @desc parses a string containing ANSI escape codes
-   * @return {Colors} parsed representation.
+   * @description parses a string containing ANSI escape codes
+   * @returns {Colors} parsed representation.
    */
   static parse(s: string) {
     return new Colors(s).parsed;
   }
 
   /**
-   * @desc strips ANSI codes from a string
+   * @description strips ANSI codes from a string
    * @param {string} s a string containing ANSI escape codes.
-   * @return {string} clean string.
+   * @returns {string} clean string.
    */
   static strip(s: string) {
     return s.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PRZcf-nqry=><]/g, ''); // hope V8 caches the regexp

@@ -49,11 +49,8 @@ interface Props extends Themeable {
   showBars: boolean;
   showLines: boolean;
   isStacked: boolean;
-  showingGraph?: boolean;
-  showingTable?: boolean;
   timeZone?: TimeZone;
   onUpdateTimeRange: (absoluteRange: AbsoluteTimeRange) => void;
-  onToggleGraph?: (showingGraph: boolean) => void;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
 }
 
@@ -74,13 +71,6 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
     });
   };
 
-  onClickGraphButton = () => {
-    const { onToggleGraph, showingGraph } = this.props;
-    if (onToggleGraph) {
-      onToggleGraph(showingGraph ?? false);
-    }
-  };
-
   onChangeTime = (from: number, to: number) => {
     const { onUpdateTimeRange } = this.props;
     onUpdateTimeRange({ from, to });
@@ -95,8 +85,6 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
       timeZone,
       absoluteRange,
       showPanel,
-      showingGraph,
-      showingTable,
       showBars,
       showLines,
       isStacked,
@@ -116,10 +104,9 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
       },
     };
 
-    const height = showPanel === false ? 100 : showingGraph && showingTable ? 200 : 400;
+    const height = showPanel ? 200 : 100;
     const lineWidth = showLines ? 1 : 5;
     const seriesToShow = showAllTimeSeries ? series : series.slice(0, MAX_NUMBER_OF_TIME_SERIES);
-
     return (
       <GraphSeriesToggler series={seriesToShow} onHiddenSeriesChanged={onHiddenSeriesChanged}>
         {({ onSeriesToggle, toggledSeries }: GraphSeriesTogglerAPI) => {
@@ -153,7 +140,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
   };
 
   render() {
-    const { series, showPanel, showingGraph, loading, theme } = this.props;
+    const { series, showPanel, loading, theme } = this.props;
     const { showAllTimeSeries } = this.state;
     const style = getStyles(theme);
 
@@ -171,13 +158,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
         )}
 
         {showPanel && (
-          <Collapse
-            label="Graph"
-            collapsible
-            isOpen={showingGraph}
-            loading={loading}
-            onToggle={this.onClickGraphButton}
-          >
+          <Collapse label="Graph" loading={loading} isOpen>
             {this.renderGraph()}
           </Collapse>
         )}

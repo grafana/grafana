@@ -31,7 +31,7 @@ Provider | Support | Role mapping | Team sync<br> *(Enterprise only)* | Active s
 
 Grafana of course has a built in user authentication system with password authentication enabled by default. You can
 disable authentication by enabling anonymous access. You can also hide login form and only allow login through an auth
-provider (listed above). There is also options for allowing self sign up.
+provider (listed above). There are also options for allowing self sign up.
 
 ### Login and short-lived tokens
 
@@ -59,11 +59,13 @@ Example:
 # Login cookie name
 login_cookie_name = grafana_session
 
-# The lifetime (days) an authenticated user can be inactive before being required to login at next visit. Default is 7 days.
-login_maximum_inactive_lifetime_days = 7
 
-# The maximum lifetime (days) an authenticated user can be logged in since login time before being required to login. Default is 30 days.
-login_maximum_lifetime_days = 30
+# The maximum lifetime (duration) an authenticated user can be inactive before being required to login at next visit. Default is 7 days (7d). This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month). The lifetime resets at each successful token rotation (token_rotation_interval_minutes).
+login_maximum_inactive_lifetime_duration = 
+
+
+# The maximum lifetime (duration) an authenticated user can be logged in since login time before being required to login. Default is 30 days (30d). This setting should be expressed as a duration, e.g. 5m (minutes), 6h (hours), 10d (days), 2w (weeks), 1M (month).
+login_maximum_lifetime_duration = 
 
 # How often should auth tokens be rotated for authenticated users when being active. The default is each 10 minutes.
 token_rotation_interval_minutes = 10

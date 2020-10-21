@@ -10,8 +10,54 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
+
+var datasourceRequestCounter = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Namespace: "grafana",
+		Name:      "datasource_request_total",
+		Help:      "A counter for outgoing requests for a datasource",
+	},
+	[]string{"datasource", "code", "method"},
+)
+
+var datasourceRequestSummary = prometheus.NewSummaryVec(
+	prometheus.SummaryOpts{
+		Namespace:  "grafana",
+		Name:       "datasource_request_duration_seconds",
+		Help:       "summary of outgoing datasource requests sent from Grafana",
+		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+	}, []string{"datasource", "code", "method"},
+)
+
+var datasourceResponseSummary = prometheus.NewSummaryVec(
+	prometheus.SummaryOpts{
+		Namespace:  "grafana",
+		Name:       "datasource_response_size_bytes",
+		Help:       "summary of datasource response sizes returned to Grafana",
+		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+	}, []string{"datasource"},
+)
+
+var datasourceRequestsInFlight = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Namespace: "grafana",
+		Name:      "datasource_request_in_flight",
+		Help:      "A gauge of outgoing datasource requests currently being sent by Grafana",
+	},
+	[]string{"datasource"},
+)
+
+func init() {
+	prometheus.MustRegister(datasourceRequestSummary,
+		datasourceRequestCounter,
+		datasourceRequestsInFlight,
+		datasourceResponseSummary)
+}
 
 type proxyTransportCache struct {
 	cache map[int64]cachedTransport
@@ -20,8 +66,41 @@ type proxyTransportCache struct {
 
 // dataSourceTransport implements http.RoundTripper (https://golang.org/pkg/net/http/#RoundTripper)
 type dataSourceTransport struct {
-	headers   map[string]string
-	transport *http.Transport
+	datasourceName string
+	headers        map[string]string
+	transport      *http.Transport
+	next           http.RoundTripper
+}
+
+func instrumentRoundtrip(datasourceName string, next http.RoundTripper) promhttp.RoundTripperFunc {
+	return promhttp.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
+		datasourceLabelName, err := metricutil.SanitizeLabelName(datasourceName)
+		// if the datasource named cannot be turned into a prometheus
+		// label we will skip instrumenting these metrics.
+		if err != nil {
+			return next.RoundTrip(r)
+		}
+
+		datasourceLabel := prometheus.Labels{"datasource": datasourceLabelName}
+
+		requestCounter := datasourceRequestCounter.MustCurryWith(datasourceLabel)
+		requestSummary := datasourceRequestSummary.MustCurryWith(datasourceLabel)
+		requestInFlight := datasourceRequestsInFlight.With(datasourceLabel)
+		responseSizeSummary := datasourceResponseSummary.With(datasourceLabel)
+
+		res, err := promhttp.InstrumentRoundTripperDuration(requestSummary,
+			promhttp.InstrumentRoundTripperCounter(requestCounter,
+				promhttp.InstrumentRoundTripperInFlight(requestInFlight, next))).
+			RoundTrip(r)
+
+		// we avoid measuring contentlength less than zero because it indicates
+		// that the content size is unknown. https://godoc.org/github.com/badu/http#Response
+		if res != nil && res.ContentLength > 0 {
+			responseSizeSummary.Observe(float64(res.ContentLength))
+		}
+
+		return res, err
+	})
 }
 
 // RoundTrip executes a single HTTP transaction, returning a Response for the provided Request.
@@ -30,7 +109,7 @@ func (d *dataSourceTransport) RoundTrip(req *http.Request) (*http.Response, erro
 		req.Header.Set(key, value)
 	}
 
-	return d.transport.RoundTrip(req)
+	return instrumentRoundtrip(d.datasourceName, d.next).RoundTrip(req)
 }
 
 type cachedTransport struct {
@@ -55,6 +134,7 @@ func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	}, nil
 }
 
+// Creates a HTTP Transport middleware chain
 func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	ptc.Lock()
 	defer ptc.Unlock()
@@ -77,17 +157,27 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 		Proxy:           http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
 			Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
-			KeepAlive: 30 * time.Second,
+			KeepAlive: time.Duration(setting.DataProxyKeepAlive) * time.Second,
 		}).Dial,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
+		ExpectContinueTimeout: time.Duration(setting.DataProxyExpectContinueTimeout) * time.Second,
+		MaxIdleConns:          setting.DataProxyMaxIdleConns,
+		IdleConnTimeout:       time.Duration(setting.DataProxyIdleConnTimeout) * time.Second,
+	}
+
+	// Set default next round tripper to the default transport
+	next := http.RoundTripper(transport)
+
+	// Add SigV4 middleware if enabled, which will then defer to the default transport
+	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool() && setting.SigV4AuthEnabled {
+		next = ds.sigV4Middleware(transport)
 	}
 
 	dsTransport := &dataSourceTransport{
-		headers:   customHeaders,
-		transport: transport,
+		datasourceName: ds.Name,
+		headers:        customHeaders,
+		transport:      transport,
+		next:           next,
 	}
 
 	ptc.cache[ds.Id] = cachedTransport{
@@ -96,6 +186,23 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	}
 
 	return dsTransport, nil
+}
+
+func (ds *DataSource) sigV4Middleware(next http.RoundTripper) http.RoundTripper {
+	decrypted := ds.DecryptedValues()
+
+	return &SigV4Middleware{
+		Config: &Config{
+			AccessKey:     decrypted["sigV4AccessKey"],
+			SecretKey:     decrypted["sigV4SecretKey"],
+			Region:        ds.JsonData.Get("sigV4Region").MustString(),
+			AssumeRoleARN: ds.JsonData.Get("sigV4AssumeRoleArn").MustString(),
+			AuthType:      ds.JsonData.Get("sigV4AuthType").MustString(),
+			ExternalID:    ds.JsonData.Get("sigV4ExternalId").MustString(),
+			Profile:       ds.JsonData.Get("sigV4Profile").MustString(),
+		},
+		Next: next,
+	}
 }
 
 func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
