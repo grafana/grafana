@@ -1,23 +1,24 @@
-import { Transports, Event, init as origSentryInit, BrowserOptions, setUser } from '@sentry/browser';
-import { logger, parseRetryAfterHeader, supportsReferrerPolicy, SyncPromise } from '@sentry/utils';
-import { Response, Status } from '@sentry/types';
-import config from 'app/core/config';
+import { Event } from '@sentry/browser';
+import { logger, parseRetryAfterHeader, PromiseBuffer, supportsReferrerPolicy, SyncPromise } from '@sentry/utils';
+import { Response, Status, TransportOptions } from '@sentry/types';
+import { BaseTransport } from '../types';
 
 /**
  * This is a copy of sentry's FetchTransport, edited to be able to push to any custom url
  * instead of using Sentry-specific endpoint logic
  */
 
-function makeTimestamp(time: number | undefined): string {
-  if (time) {
-    return new Date(time * 1000).toISOString();
-  }
-  return new Date().toISOString();
+export interface CustomEndpointTransportOptions extends Omit<TransportOptions, 'dsn'> {
+  endpoint: string;
 }
 
-export class CustomFetchTransport extends Transports.BaseTransport {
+export class CustomEndpointTransport implements BaseTransport {
   /** Locks transport after receiving 429 response */
   private _disabledUntil: Date = new Date(Date.now());
+
+  private readonly _buffer: PromiseBuffer<Response> = new PromiseBuffer(30);
+
+  constructor(private options: CustomEndpointTransportOptions) {}
 
   sendEvent(event: Event): PromiseLike<Response> {
     if (new Date(Date.now()) < this._disabledUntil) {
@@ -29,6 +30,7 @@ export class CustomFetchTransport extends Transports.BaseTransport {
     }
 
     const sentryReq = {
+      // convert all timestamps to iso string, so it's parseable by backend
       body: JSON.stringify({
         ...event,
         breadcrumbs: event.breadcrumbs?.map(breadcrumb => ({
@@ -37,7 +39,7 @@ export class CustomFetchTransport extends Transports.BaseTransport {
         })),
         timestamp: makeTimestamp(event.timestamp),
       }),
-      url: this.options.fetchParameters!.endpoint,
+      url: this.options.endpoint,
     };
 
     const options: RequestInit = {
@@ -88,38 +90,9 @@ export class CustomFetchTransport extends Transports.BaseTransport {
   }
 }
 
-export function initSentry() {
-  console.log('sentry', config.sentry);
-  if (config.sentry.enabled) {
-    const { dsn, customEndpoint } = config.sentry;
-
-    const sentryOptions: BrowserOptions = {
-      release: config.buildInfo.version,
-      environment: config.buildInfo.env,
-    };
-
-    if (dsn) {
-      sentryOptions.dsn = dsn;
-    } else if (customEndpoint) {
-      // does not send events without a valid dsn defined :-(
-      // but it won't actually be used, CustomFetchTransport will send to settings.customEndpoint
-      sentryOptions.dsn = 'https://examplePublicKey@o0.ingest.sentry.io/0';
-      sentryOptions.transport = CustomFetchTransport;
-      sentryOptions.transportOptions = {
-        dsn: '',
-        fetchParameters: {
-          endpoint: customEndpoint,
-        },
-      };
-    }
-    const { user } = config.bootData;
-    if (user) {
-      setUser({
-        email: user.email,
-        id: String(user.id),
-      });
-    }
-
-    origSentryInit(sentryOptions);
+function makeTimestamp(time: number | undefined): string {
+  if (time) {
+    return new Date(time * 1000).toISOString();
   }
+  return new Date().toISOString();
 }
