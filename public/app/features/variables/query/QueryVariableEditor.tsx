@@ -15,6 +15,8 @@ import { changeVariableMultiValue } from '../state/actions';
 import { isLegacyQueryEditor, isQueryEditor } from '../editor/factories';
 import { getTemplateSrv } from '@grafana/runtime';
 import { legacyChangeQueryVariableQuery } from './legacyActions';
+import { LoadingState } from '@grafana/data';
+import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 
 const { Switch } = LegacyForms;
 
@@ -156,6 +158,8 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
       );
     }
 
+    const range = getTimeSrv().timeRange();
+
     if (isQueryEditor(VariableQueryEditor, datasource)) {
       return (
         <VariableQueryEditor
@@ -163,6 +167,10 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
           query={query}
           onChange={this.onQueryChange}
           onRunQuery={() => {}}
+          data={{ series: [], state: LoadingState.Done, timeRange: range }}
+          range={range}
+          onBlur={() => {}}
+          history={[]}
         />
       );
     }
