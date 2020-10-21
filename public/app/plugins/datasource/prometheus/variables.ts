@@ -3,8 +3,8 @@ import { map } from 'rxjs/operators';
 import {
   DataQueryRequest,
   DataQueryResponse,
-  DefaultVariableQuery,
   rangeUtil,
+  StandardVariableQuery,
   StandardVariableSupport,
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
@@ -46,7 +46,7 @@ export class PrometheusVariableSupport implements StandardVariableSupport<Promet
     return metricFindStream.pipe(map(results => ({ data: results })));
   }
 
-  toDataQuery(query: DefaultVariableQuery): PromQuery {
+  toDataQuery(query: StandardVariableQuery): PromQuery {
     return {
       refId: 'PrometheusDatasource-VariableQuery',
       expr: query.query,

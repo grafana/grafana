@@ -39,6 +39,7 @@ import {
   PromVectorData,
 } from './types';
 import { PrometheusVariableSupport } from './variables';
+import PrometheusMetricFindQuery from './metric_find_query';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 
@@ -487,20 +488,20 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return error;
   };
 
-  // metricFindQuery(query: string) {
-  //   if (!query) {
-  //     return Promise.resolve([]);
-  //   }
-  //
-  //   const scopedVars = {
-  //     __interval: { text: this.interval, value: this.interval },
-  //     __interval_ms: { text: rangeUtil.intervalToMs(this.interval), value: rangeUtil.intervalToMs(this.interval) },
-  //     ...this.getRangeScopedVars(this.timeSrv.timeRange()),
-  //   };
-  //   const interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
-  //   const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
-  //   return metricFindQuery.process();
-  // }
+  metricFindQuery(query: string) {
+    if (!query) {
+      return Promise.resolve([]);
+    }
+
+    const scopedVars = {
+      __interval: { text: this.interval, value: this.interval },
+      __interval_ms: { text: rangeUtil.intervalToMs(this.interval), value: rangeUtil.intervalToMs(this.interval) },
+      ...this.getRangeScopedVars(this.timeSrv.timeRange()),
+    };
+    const interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
+    const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
+    return metricFindQuery.process();
+  }
 
   getRangeScopedVars(range: TimeRange = this.timeSrv.timeRange()) {
     const msRange = range.to.diff(range.from);

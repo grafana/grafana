@@ -1,5 +1,5 @@
 import React, { ComponentType, useCallback } from 'react';
-import { DataQuery, DataSourceApi, DataSourceJsonData, DefaultVariableQuery, QueryEditorProps } from '@grafana/data';
+import { DataQuery, DataSourceApi, DataSourceJsonData, QueryEditorProps, StandardVariableQuery } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { LEGACY_VARIABLE_QUERY_EDITOR_NAME, LegacyVariableQueryEditor } from './LegacyVariableQueryEditor';
@@ -63,23 +63,23 @@ export function variableQueryEditorFactory<
   }
 
   if (hasStandardVariableSupport(datasource)) {
-    return DefaultVariableQueryEditor;
+    return StandardVariableQueryEditor;
   }
 
   return null;
 }
 
-function DefaultVariableQueryEditor<
+function StandardVariableQueryEditor<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 >({
   datasource: propsDatasource,
   query: propsQuery,
   onChange: propsOnChange,
-}: QueryEditorProps<any, TQuery, TOptions, DefaultVariableQuery>) {
+}: QueryEditorProps<any, TQuery, TOptions, StandardVariableQuery>) {
   const onChange = useCallback(
     (query: any) => {
-      propsOnChange({ refId: 'DefaultVariableQueryEditor', query });
+      propsOnChange({ refId: 'StandardVariableQuery', query });
     },
     [propsOnChange]
   );

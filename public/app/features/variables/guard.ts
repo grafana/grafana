@@ -6,9 +6,9 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
-  DefaultVariableQuery,
   MetricFindValue,
   QueryEditorProps,
+  StandardVariableQuery,
 } from '@grafana/data';
 
 import {
@@ -50,7 +50,7 @@ interface DataSourceWithStandardVariableSupport<
 > extends DataSourceApi<TQuery, TOptions> {
   variables: {
     standard: {
-      toDataQuery: (query: DefaultVariableQuery) => TQuery;
+      toDataQuery: (query: StandardVariableQuery) => TQuery;
       query?: (request: DataQueryRequest<TQuery>) => Observable<DataQueryResponse>;
     };
     custom: undefined;

@@ -46,7 +46,7 @@ export interface StandardVariableSupport<
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
   TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
 > {
-  toDataQuery: (query: DefaultVariableQuery) => TQuery;
+  toDataQuery: (query: StandardVariableQuery) => TQuery;
   query?: (request: DataQueryRequest<TQuery>) => Observable<DataQueryResponse>;
 }
 
@@ -68,6 +68,6 @@ export interface DataSourceVariableSupport<
   editor: ComponentType<QueryEditorProps<DSType, TQuery, TOptions, TQuery>>;
 }
 
-export interface DefaultVariableQuery extends DataQuery {
+export interface StandardVariableQuery extends DataQuery {
   query: string;
 }
