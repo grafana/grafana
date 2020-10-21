@@ -94,38 +94,40 @@ func (s *LogQueryRunnerSupplier) GetHandlerForPath(path string) (models.ChannelH
 
 // GetChannelOptions gets channel options.
 // It's called fast and often.
-func (g *logQueryRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
+func (r *logQueryRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
 	return centrifuge.ChannelOptions{}
 }
 
 // OnSubscribe publishes results from the corresponding CloudWatch Logs query to the provided channel
-func (g *logQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
-	g.runningMu.Lock()
-	defer g.runningMu.Unlock()
+func (r *logQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
+	r.runningMu.Lock()
+	defer r.runningMu.Unlock()
 
-	if _, ok := g.running[e.Channel]; !ok {
-		g.running[e.Channel] = true
-		go func() {
-			if err := g.publishResults(e.Channel); err != nil {
-				plog.Error(err.Error())
-			}
-		}()
+	if _, ok := r.running[e.Channel]; ok {
+		return nil
 	}
+
+	r.running[e.Channel] = true
+	go func() {
+		if err := r.publishResults(e.Channel); err != nil {
+			plog.Error(err.Error())
+		}
+	}()
 
 	return nil
 }
 
 // OnPublish is called when an event is received from the websocket.
-func (g *logQueryRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
+func (r *logQueryRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
 	return nil, fmt.Errorf("can not publish")
 }
 
-func (g *logQueryRunner) publishResults(channelName string) error {
+func (r *logQueryRunner) publishResults(channelName string) error {
 	defer func() {
 		deleteResponseChannel(channelName)
-		g.runningMu.Lock()
-		delete(g.running, channelName)
-		g.runningMu.Unlock()
+		r.runningMu.Lock()
+		delete(r.running, channelName)
+		r.runningMu.Unlock()
 	}()
 
 	responseChannel, err := getResponseChannel(channelName)
@@ -139,7 +141,7 @@ func (g *logQueryRunner) publishResults(channelName string) error {
 			return err
 		}
 
-		if err := g.publish(channelName, responseBytes); err != nil {
+		if err := r.publish(channelName, responseBytes); err != nil {
 			return err
 		}
 	}
