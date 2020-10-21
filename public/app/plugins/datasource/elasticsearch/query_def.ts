@@ -159,10 +159,7 @@ export const pipelineOptions: any = {
     { text: 'predict', default: undefined },
     { text: 'minimize', default: false },
   ],
-  moving_fn: [
-    { text: 'window', default: 5 },
-    { text: 'script', default: 'MovingFunctions.unweightedAvg(values)' },
-  ],
+  moving_fn: [{ text: 'window', default: 5 }, { text: 'script' }],
   derivative: [{ text: 'unit', default: undefined }],
   cumulative_sum: [{ text: 'format', default: undefined }],
   bucket_script: [],
