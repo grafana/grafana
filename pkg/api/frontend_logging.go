@@ -44,7 +44,7 @@ func (exception *frontendSentryException) FmtStacktraces() string {
 	for _, value := range exception.Values {
 		stacktraces = append(stacktraces, value.FmtStacktrace())
 	}
-	return strings.Join(stacktraces, "\n \n")
+	return strings.Join(stacktraces, "\n\n")
 }
 
 func (event *FrontendSentryEvent) ToLogContext() log15.Ctx {
@@ -52,11 +52,13 @@ func (event *FrontendSentryEvent) ToLogContext() log15.Ctx {
 	ctx["url"] = event.Request.URL
 	ctx["user_agent"] = event.Request.Headers["User-Agent"]
 	ctx["event_id"] = event.EventID
+	ctx["original_timestamp"] = event.Timestamp
 	if event.Exception != nil {
 		ctx["stacktrace"] = event.Exception.FmtStacktraces()
 	}
 	if len(event.User.Email) > 0 {
 		ctx["user_email"] = event.User.Email
+		ctx["user_id"] = event.User.ID
 	}
 
 	return ctx
