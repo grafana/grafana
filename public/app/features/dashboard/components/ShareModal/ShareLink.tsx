@@ -4,7 +4,6 @@ import { LegacyForms, ClipboardButton, Icon, InfoBox, Input } from '@grafana/ui'
 const { Select, Switch } = LegacyForms;
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { createShortLink } from 'app/core/utils/shortLinks';
 import { buildImageUrl, buildShareUrl } from './utils';
 import { appEvents } from 'app/core/core';
 import config from 'app/core/config';
@@ -62,17 +61,16 @@ export class ShareLink extends PureComponent<Props, State> {
     const { panel } = this.props;
     const { useCurrentTimeRange, includeTemplateVars, useShortUrl, selectedTheme } = this.state;
 
-    const shareUrl = buildShareUrl(useCurrentTimeRange, includeTemplateVars, selectedTheme.value, panel);
+    const shareUrl = await buildShareUrl(
+      useCurrentTimeRange,
+      includeTemplateVars,
+      selectedTheme.value,
+      panel,
+      useShortUrl
+    );
     const imageUrl = buildImageUrl(useCurrentTimeRange, includeTemplateVars, selectedTheme.value, panel);
 
-    if (useShortUrl) {
-      const shortLink = await createShortLink(shareUrl);
-      if (shortLink) {
-        this.setState({ shareUrl: shortLink, imageUrl });
-      }
-    } else {
-      this.setState({ shareUrl, imageUrl });
-    }
+    this.setState({ shareUrl, imageUrl });
   };
 
   onUseCurrentTimeRangeChange = () => {
