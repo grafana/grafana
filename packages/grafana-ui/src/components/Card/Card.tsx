@@ -33,7 +33,7 @@ export interface CardInnerProps {
 
 const CardInner: FC<CardInnerProps> = ({ children, href }) => {
   const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = getCardStyles(theme);
   return href ? (
     <a className={styles.innerLink} href={href}>
       {children}
@@ -96,7 +96,7 @@ export const Card: FC<Props> = ({
   const disableHover = disabled || actions.length > 1 || !onClick;
   const disableEvents = disabled && !actions.length;
   const theme = useTheme();
-  const styles = getStyles(theme, disableEvents, disableHover);
+  const styles = getCardStyles(theme, disableEvents, disableHover);
   // Join meta data elements by '|'
   const meta = useMemo(
     () =>
@@ -146,7 +146,10 @@ export const Card: FC<Props> = ({
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme, disabled = false, disableHover = false) => {
+/**
+ * @public
+ */
+export const getCardStyles = stylesFactory((theme: GrafanaTheme, disabled = false, disableHover = false) => {
   return {
     container: css`
       display: flex;
