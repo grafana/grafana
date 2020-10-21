@@ -21,7 +21,7 @@ describe('createShortLink', () => {
 });
 
 describe('createAndCopyShortLink', () => {
-  it('creates short link and copies it to clipboard', async () => {
+  it('copies short link to clipboard', async () => {
     document.execCommand = jest.fn();
     await createAndCopyShortLink('www.verylonglinkwehavehere.com');
     expect(document.execCommand).toHaveBeenCalledWith('copy');

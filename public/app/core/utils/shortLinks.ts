@@ -15,10 +15,10 @@ function getRelativeURLPath(url: string) {
 
 export const createShortLink = memoizeOne(async function(path: string) {
   try {
-    const shortUrl = await getBackendSrv().post(`/api/short-urls`, {
+    const shortLink = await getBackendSrv().post(`/api/short-urls`, {
       path: getRelativeURLPath(path),
     });
-    return shortUrl.url;
+    return shortLink.url;
   } catch (err) {
     console.error('Error when creating shortened link: ', err);
     appEvents.emit(AppEvents.alertError, ['Error generating shortened link']);
