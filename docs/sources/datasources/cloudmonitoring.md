@@ -30,9 +30,9 @@ Grafana ships with built-in support for Google Cloud Monitoring. Just add it as 
 
 | Name                  | Description                                                                           |
 | --------------------- | ------------------------------------------------------------------------------------- |
-| _Name_                | The data source name. This is how you refer to the data source in panels and queries. |
-| _Default_             | Default data source means that it will be pre-selected for new panels.                |
-| _Service Account Key_ | Service Account Key File for a GCP Project. Instructions below on how to create it.   |
+| `Name`                | The data source name. This is how you refer to the data source in panels and queries. |
+| `Default`             | Default data source means that it will be pre-selected for new panels.                |
+| `Service Account Key` | Service Account Key File for a GCP Project. Instructions below on how to create it.   |
 
 ## Authentication
 
@@ -241,16 +241,16 @@ Variable of the type _Query_ allows you to query Google Cloud Monitoring for var
 
 | Name                             | Description                                                                                                   |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| _Metric Types_                   | Returns a list of metric type names that are available for the specified service.                             |
-| _Labels Keys_                    | Returns a list of keys for `metric label` and `resource label` in the specified metric.                       |
-| _Labels Values_                  | Returns a list of values for the label in the specified metric.                                               |
-| _Resource Types_                 | Returns a list of resource types for the specified metric.                                                    |
-| _Aggregations_                   | Returns a list of aggregations (cross series reducers) for the specified metric.                              |
-| _Aligners_                       | Returns a list of aligners (per series aligners) for the specified metric.                                    |
-| _Alignment periods_              | Returns a list of all alignment periods that are available in Google Cloud Monitoring query editor in Grafana |
-| _Selectors_                      | Returns a list of selectors that can be used in SLO (Service Level Objectives) queries                        |
-| _SLO Services_                   | Returns a list of Service Monitoring services that can be used in SLO queries                                 |
-| _Service Level Objectives (SLO)_ | Returns a list of SLO's for the specified SLO service                                                         |
+| `Metric Types`                   | Returns a list of metric type names that are available for the specified service.                             |
+| `Labels Keys`                    | Returns a list of keys for `metric label` and `resource label` in the specified metric.                       |
+| `Labels Values`                  | Returns a list of values for the label in the specified metric.                                               |
+| `Resource Types`                 | Returns a list of resource types for the specified metric.                                                    |
+| `Aggregations`                   | Returns a list of aggregations (cross series reducers) for the specified metric.                              |
+| `Aligners`                       | Returns a list of aligners (per series aligners) for the specified metric.                                    |
+| `Alignment periods`              | Returns a list of all alignment periods that are available in Google Cloud Monitoring query editor in Grafana |
+| `Selectors`                      | Returns a list of selectors that can be used in SLO (Service Level Objectives) queries                        |
+| `SLO Services`                   | Returns a list of Service Monitoring services that can be used in SLO queries                                 |
+| `Service Level Objectives (SLO)` | Returns a list of SLO's for the specified SLO service                                                         |
 
 ### Using variables in queries
 

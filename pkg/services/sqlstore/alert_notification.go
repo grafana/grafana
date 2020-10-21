@@ -299,7 +299,7 @@ func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) 
 		}
 
 		if existingQuery.Result != nil {
-			return fmt.Errorf("Alert notification uid %s already exists", cmd.Uid)
+			return models.ErrAlertNotificationWithSameUIDExists
 		}
 
 		// check if name exists
@@ -309,7 +309,7 @@ func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) 
 		}
 
 		if sameNameQuery.Result != nil {
-			return fmt.Errorf("Alert notification name %s already exists", cmd.Name)
+			return models.ErrAlertNotificationWithSameNameExists
 		}
 
 		var frequency time.Duration

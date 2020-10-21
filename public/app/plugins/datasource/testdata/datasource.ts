@@ -29,6 +29,8 @@ import { TestDataVariableSupport } from './variables';
 type TestData = TimeSeries | TableData;
 
 export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
+  scenariosCache?: Promise<Scenario[]>;
+
   constructor(
     instanceSettings: DataSourceInstanceSettings,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
@@ -173,7 +175,11 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
   }
 
   getScenarios(): Promise<Scenario[]> {
-    return getBackendSrv().get('/api/tsdb/testdata/scenarios');
+    if (!this.scenariosCache) {
+      this.scenariosCache = getBackendSrv().get('/api/tsdb/testdata/scenarios');
+    }
+
+    return this.scenariosCache;
   }
 
   variablesQuery(target: TestDataQuery, options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
