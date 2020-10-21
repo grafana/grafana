@@ -15,6 +15,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     margin-right: ${theme.spacing.d};
     display: flex;
     align-items: baseline;
+
+    .logs-meta-item__error {
+      color: ${theme.palette.red};
+    }
   `,
   metaLabel: css`
     margin-right: calc(${theme.spacing.d} / 2);
