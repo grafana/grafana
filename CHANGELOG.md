@@ -59,7 +59,7 @@
 
 ### Features / Enhancements
 
-Do not use the `database_metrics` feature flag. It corrupts your database.
+**Caution:** Please do not use the `database_metrics` feature flag. It will corrupt MySQL database tables. See [#28440](https://github.com/grafana/grafana/issues/28440) for more information.
 
 ~~**Instrumentation**: Add counters and histograms for database queries. [#28236](https://github.com/grafana/grafana/pull/28236), [@bergquist](https://github.com/bergquist)~~
 
