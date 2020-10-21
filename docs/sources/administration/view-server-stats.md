@@ -42,9 +42,9 @@ The following statistics are displayed in the Stats tab:
 
 ## Counting users
 
-If a user belongs to several organizations, then that user is counted once for each organization as a user in the highest organization role they are assigned.
+If a user belongs to several organizations, then that user is counted once as a user in the highest organization role they are assigned, regardless of how many organizations the user belongs to.
 
-For example, if Sofia is a Viewer in two organizations, an Editor in two organizations, and and Admin in three organizations, then she would be reflected in the stats as:
+For example, if Sofia is a Viewer in two organizations, an Editor in two organizations, and Admin in three organizations, then she would be reflected in the stats as:
 
 - Total users     1
 - Total admins    1
