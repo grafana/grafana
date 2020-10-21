@@ -66,6 +66,7 @@ export interface SentryConfig {
   enabled: boolean;
   dsn: string;
   customEndpoint: string;
+  sampleRate: number;
 }
 
 /**

@@ -66,6 +66,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     enabled: false,
     dsn: '',
     customEndpoint: '',
+    sampleRate: 1,
   };
 
   constructor(options: GrafanaBootConfig) {
