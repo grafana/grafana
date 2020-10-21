@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
-	util "github.com/grafana/grafana/pkg/util/retryer"
+	"github.com/grafana/grafana/pkg/util/retryer"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/sync/errgroup"
 )
@@ -273,10 +273,10 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 	}
 
 	recordsMatched := 0.0
-	return util.Retry(func() (util.RetrySignal, error) {
+	return retryer.Retry(func() (retryer.RetrySignal, error) {
 		getQueryResultsOutput, err := logsClient.GetQueryResultsWithContext(ctx, queryResultsInput)
 		if err != nil {
-			return util.FuncError, err
+			return retryer.FuncError, err
 		}
 
 		retryNeeded := *getQueryResultsOutput.Statistics.RecordsMatched <= recordsMatched
@@ -284,7 +284,7 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 
 		dataFrame, err := logsResultsToDataframes(getQueryResultsOutput)
 		if err != nil {
-			return util.FuncError, err
+			return retryer.FuncError, err
 		}
 
 		dataFrame.Name = query.RefId
@@ -302,7 +302,7 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 		if len(statsGroups) > 0 && len(dataFrame.Fields) > 0 {
 			groupedFrames, err := groupResults(dataFrame, statsGroups)
 			if err != nil {
-				return util.FuncError, err
+				return retryer.FuncError, err
 			}
 
 			dataFrames = groupedFrames
@@ -328,12 +328,12 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 		}
 
 		if isTerminated(*getQueryResultsOutput.Status) {
-			return util.FuncComplete, nil
+			return retryer.FuncComplete, nil
 		} else if retryNeeded {
-			return util.FuncFailure, nil
+			return retryer.FuncFailure, nil
 		}
 
-		return util.FuncSuccess, nil
+		return retryer.FuncSuccess, nil
 	}, maxAttempts, minRetryDelay, maxRetryDelay)
 }
 
