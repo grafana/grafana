@@ -101,7 +101,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
           <div className="page-action-bar__spacer" />
           {this.props.variables.length > 0 && variableToEdit === null && (
             <>
-              <VariablesDependenciesButton />
+              <VariablesDependenciesButton variables={this.props.variables} />
               <a
                 type="button"
                 className="btn btn-primary"
@@ -125,7 +125,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
               onDuplicateVariable={this.onDuplicateVariable}
               onRemoveVariable={this.onRemoveVariable}
             />
-            <VariablesUnknownTable />
+            <VariablesUnknownTable dashboard={this.props.dashboard} variables={this.props.variables} />
           </>
         )}
         {variableToEdit && <VariableEditorEditor identifier={toVariableIdentifier(variableToEdit)} />}

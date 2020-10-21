@@ -1,7 +1,7 @@
 import { getPropsWithVariable } from './utils';
 
-describe('monkey', () => {
-  it('pass', () => {
+describe('getPropsWithVariable', () => {
+  it('when called it should return the correct graph', () => {
     const result = getPropsWithVariable(
       '$unknownVariable',
       {

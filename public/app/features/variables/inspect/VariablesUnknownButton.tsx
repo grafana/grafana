@@ -1,16 +1,16 @@
-import React, { FC, MouseEvent, useCallback, useMemo, useState } from 'react';
-import { Provider, useSelector } from 'react-redux';
-import { IconButton, Modal } from '@grafana/ui';
-
-import { StoreState } from '../../../types';
-import { getVariables } from '../state/selectors';
+import React, { FC, useMemo } from 'react';
+import { Provider } from 'react-redux';
+import { IconButton } from '@grafana/ui';
 import { createUsagesNetwork, transformUsagesToNetwork } from './utils';
-import { NetWorkGraph } from './NetworkGraph';
 import { store } from '../../../store/store';
-import { VariableIdentifier } from '../state/types';
+import { VariableModel } from '../types';
+import { DashboardModel } from '../../dashboard/state';
+import { NetworkGraphModal } from './NetworkGraphModal';
 
 interface OwnProps {
-  identifier: VariableIdentifier;
+  variable: VariableModel;
+  variables: VariableModel[];
+  dashboard: DashboardModel | null;
 }
 
 interface ConnectedProps {}
@@ -19,50 +19,29 @@ interface DispatchProps {}
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-export const UnProvidedVariablesUnknownGraphButton: FC<Props> = ({ identifier }) => {
-  const [showModal, setShowModal] = useState(false);
-  const variables = useSelector((state: StoreState) => getVariables(state));
-  const dashboard = useSelector((state: StoreState) => state.dashboard.getModel());
+export const UnProvidedVariablesUnknownGraphButton: FC<Props> = ({ variable, variables, dashboard }) => {
+  const { id } = variable;
   const { unknown } = useMemo(() => createUsagesNetwork(variables, dashboard), [variables, dashboard]);
-  const network = useMemo(() => transformUsagesToNetwork(unknown).find(n => n.variable.id === identifier.id), [
-    identifier,
-    unknown,
-  ]);
+  const network = useMemo(() => transformUsagesToNetwork(unknown).find(n => n.variable.id === id), [id, unknown]);
   const unknownExist = useMemo(() => Object.keys(unknown).length > 0, [unknown]);
-  const onClick = useCallback(
-    (event: MouseEvent) => {
-      event.preventDefault();
-      setShowModal(true);
-    },
-    [setShowModal]
-  );
-  const onClose = useCallback(() => setShowModal(false), [setShowModal]);
 
   if (!unknownExist || !network) {
     return null;
   }
 
   const nodes = network.nodes.map(n => {
-    if (n.label.includes(`$${identifier.id}`)) {
+    if (n.label.includes(`$${id}`)) {
       return { ...n, color: '#FB7E81' };
     }
     return n;
   });
 
   return (
-    <>
-      <Modal
-        isOpen={showModal}
-        title={`Showing usages for: $${identifier.id}`}
-        icon="info-circle"
-        iconTooltip="The graph can be moved, zoomed in and zoomed out."
-        onClickBackdrop={onClose}
-        onDismiss={onClose}
-      >
-        <NetWorkGraph nodes={nodes} edges={network.edges} direction="UD" />
-      </Modal>
-      <IconButton onClick={onClick} name="code-branch" title="Show usages" />
-    </>
+    <NetworkGraphModal show={false} title={`Showing usages for: $${id}`} nodes={nodes} edges={network.edges}>
+      {({ showModal }) => {
+        return <IconButton onClick={() => showModal()} name="code-branch" title="Show usages" />;
+      }}
+    </NetworkGraphModal>
   );
 };
 

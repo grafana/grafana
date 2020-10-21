@@ -1,17 +1,18 @@
 import React, { FC, useMemo } from 'react';
-import { Provider, useSelector } from 'react-redux';
+import { Provider } from 'react-redux';
 import { css } from 'emotion';
 import { Icon, Tooltip, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-
-import { StoreState } from '../../../types';
-import { getVariables } from '../state/selectors';
 import { createUsagesNetwork, transformUsagesToNetwork } from './utils';
 import { store } from '../../../store/store';
 import { VariablesUnknownButton } from './VariablesUnknownButton';
-import { toVariableIdentifier } from '../state/types';
+import { VariableModel } from '../types';
+import { DashboardModel } from '../../dashboard/state';
 
-interface OwnProps {}
+interface OwnProps {
+  variables: VariableModel[];
+  dashboard: DashboardModel | null;
+}
 
 interface ConnectedProps {}
 
@@ -19,10 +20,8 @@ interface DispatchProps {}
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-export const UnProvidedVariablesUnknownTable: FC<Props> = props => {
+export const UnProvidedVariablesUnknownTable: FC<Props> = ({ variables, dashboard }) => {
   const style = useStyles(getStyles);
-  const variables = useSelector((state: StoreState) => getVariables(state));
-  const dashboard = useSelector((state: StoreState) => state.dashboard.getModel());
   const { unknown } = useMemo(() => createUsagesNetwork(variables, dashboard), [variables, dashboard]);
   const networks = useMemo(() => transformUsagesToNetwork(unknown), [unknown]);
   const unknownExist = useMemo(() => Object.keys(unknown).length > 0, [unknown]);
@@ -61,7 +60,7 @@ export const UnProvidedVariablesUnknownTable: FC<Props> = props => {
                   <td style={{ width: '1%' }} />
                   <td style={{ width: '1%' }} />
                   <td style={{ width: '100%', textAlign: 'right' }} className="pointer max-width">
-                    <VariablesUnknownButton identifier={toVariableIdentifier(variable)} />
+                    <VariablesUnknownButton variable={variable} variables={variables} dashboard={dashboard} />
                   </td>
                 </tr>
               );

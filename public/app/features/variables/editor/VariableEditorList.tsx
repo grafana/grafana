@@ -123,7 +123,11 @@ export class VariableEditorList extends PureComponent<Props> {
                         </td>
 
                         <td style={{ width: '1%' }}>
-                          <VariableUsagesButton identifier={toVariableIdentifier(variable)} />
+                          <VariableUsagesButton
+                            variable={variable}
+                            variables={this.props.variables}
+                            dashboard={this.props.dashboard}
+                          />
                         </td>
 
                         <td style={{ width: '1%' }}>
