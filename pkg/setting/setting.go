@@ -16,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-macaron/session"
 	"github.com/prometheus/common/model"
 	ini "gopkg.in/ini.v1"
 
@@ -170,7 +169,6 @@ var (
 	BasicAuthEnabled bool
 
 	// Session settings.
-	SessionOptions         session.Options
 	SessionConnMaxLifetime int64
 
 	// Global setting objects.

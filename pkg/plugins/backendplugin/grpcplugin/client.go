@@ -66,11 +66,6 @@ type PluginDescriptor struct {
 	startFns         PluginStartFuncs
 }
 
-// PluginID returns the plugin ID.
-func (pd PluginDescriptor) PluginID() string {
-	return pd.pluginID
-}
-
 // getV2PluginSet returns list of plugins supported on v2.
 func getV2PluginSet() goplugin.PluginSet {
 	return goplugin.PluginSet{

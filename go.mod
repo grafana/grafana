@@ -33,7 +33,6 @@ require (
 	github.com/gchaincl/sqlhooks v1.3.0
 	github.com/go-macaron/binding v0.0.0-20190806013118-0b4f37bab25b
 	github.com/go-macaron/gzip v0.0.0-20160222043647-cad1c6580a07
-	github.com/go-macaron/session v0.0.0-20190805070824-1a3cdc6f5659
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/go-stack/stack v1.8.0
 	github.com/gobwas/glob v0.2.3
