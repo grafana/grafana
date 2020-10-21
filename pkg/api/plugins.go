@@ -114,12 +114,6 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 			Signature:     pluginDef.Signature,
 		}
 
-		if pluginError != nil {
-			listItem.Error = &plugins.PluginErrorInfo{
-				ErrorCode: pluginError.ErrorCode.String(),
-			}
-		}
-
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
 			listItem.Enabled = pluginSetting.Enabled
 			listItem.Pinned = pluginSetting.Pinned
@@ -142,6 +136,25 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 		}
 
 		result = append(result, listItem)
+	}
+
+	for _, pluginErr := range plugins.Errors {
+		pluginErrDto := dtos.PluginListItem{
+			Id:            pluginErr.Id,
+			Name:          pluginErr.Name,
+			Type:          pluginErr.Type,
+			Category:      pluginErr.Category,
+			Info:          &pluginErr.Info,
+			LatestVersion: pluginErr.GrafanaNetVersion,
+			HasUpdate:     pluginErr.GrafanaNetHasUpdate,
+			DefaultNavUrl: pluginErr.DefaultNavUrl,
+			State:         pluginErr.State,
+			Signature:     pluginErr.Signature,
+			Error:         &plugins.PluginErrorInfo{ErrorCode: pluginErr.ErrorCode.String()},
+			Enabled:       false,
+		}
+
+		result = append(result, pluginErrDto)
 	}
 
 	sort.Sort(result)
@@ -380,7 +393,7 @@ func (hs *HTTPServer) getCachedPluginSettings(pluginID string, user *models.Sign
 }
 
 func (hs *HTTPServer) GetPluginErrorsList(c *models.ReqContext) Response {
-	var pluginErrors []plugins.PluginErrorInfo
+	pluginErrors := make([]plugins.PluginErrorInfo, 0)
 	for id, e := range plugins.Errors {
 		pluginErrors = append(pluginErrors, plugins.PluginErrorInfo{
 			ErrorCode: e.ErrorCode.String(),

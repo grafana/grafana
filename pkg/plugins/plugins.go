@@ -235,6 +235,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 			pm.log.Warn("Plugin has signature errors", "id", plugin.Id,
 				"signature", plugin.Signature, "status", signingError.ErrorCode.String())
 			Errors[plugin.Id] = signingError
+			continue
 		}
 
 		pm.log.Debug("Attempting to add plugin", "id", plugin.Id)
