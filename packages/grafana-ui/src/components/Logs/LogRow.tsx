@@ -183,7 +183,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           <td className={cx({ [style.logsRowLevel]: !hasError })}>
             {hasError && (
               <Tooltip content={`Error: ${errorMessage}`} placement="right" theme="error">
-                <Icon className={style.logIconError} name="exclamation-triangle" size="sm" />
+                <Icon className={style.logIconError} name="exclamation-triangle" size="xs" />
               </Tooltip>
             )}
           </td>
