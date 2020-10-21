@@ -13,7 +13,7 @@ weight = -17
 
 # What's new in Grafana v7.3
 
-This topic includes the release notes for the Grafana v7.3. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+This topic includes the release notes for Grafana v7.3. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## Highlights
 
