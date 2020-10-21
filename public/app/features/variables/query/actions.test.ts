@@ -1,4 +1,4 @@
-import { LoadingState } from '@grafana/data';
+import { DefaultTimeRange, LoadingState } from '@grafana/data';
 
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
@@ -33,6 +33,7 @@ import { expect } from 'test/lib/common';
 import { updateOptions } from '../state/actions';
 import { notifyApp } from '../../../core/reducers/appNotification';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 
 const mocks: Record<string, any> = {
   datasource: {
@@ -62,6 +63,19 @@ jest.mock('../../templating/template_srv', () => ({
 }));
 
 describe('query actions', () => {
+  let originalTimeSrv: TimeSrv;
+
+  beforeEach(() => {
+    originalTimeSrv = getTimeSrv();
+    setTimeSrv(({
+      timeRange: jest.fn().mockReturnValue(DefaultTimeRange),
+    } as unknown) as TimeSrv);
+  });
+
+  afterEach(() => {
+    setTimeSrv(originalTimeSrv);
+  });
+
   variableAdapters.setInit(() => [createQueryVariableAdapter()]);
 
   describe('when updateQueryVariableOptions is dispatched for variable with tags and includeAll', () => {
@@ -80,15 +94,11 @@ describe('query actions', () => {
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
       const update = { results: optionsMetrics, templatedRegex: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [updateOptions, updateTags, setCurrentAction] = actions;
-        const expectedNumberOfActions = 3;
-
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
-        expect(updateTags).toEqual(updateVariableTags(toVariablePayload(variable, tagsMetrics)));
-        expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        updateVariableOptions(toVariablePayload(variable, update)),
+        updateVariableTags(toVariablePayload(variable, tagsMetrics)),
+        setCurrentVariableValue(toVariablePayload(variable, { option }))
+      );
     });
   });
 
@@ -135,14 +145,10 @@ describe('query actions', () => {
       const option = createOption('A');
       const update = { results: optionsMetrics, templatedRegex: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [updateOptions, setCurrentAction] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
-        expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        updateVariableOptions(toVariablePayload(variable, update)),
+        setCurrentVariableValue(toVariablePayload(variable, { option }))
+      );
     });
   });
 

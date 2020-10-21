@@ -13,7 +13,7 @@ import CloudMonitoringDatasource from '../datasource';
 import { getTemplateSrv } from '@grafana/runtime';
 import { QueryEditorProps } from '@grafana/data';
 
-type Props = QueryEditorProps<
+export type Props = QueryEditorProps<
   CloudMonitoringDatasource,
   CloudMonitoringQuery,
   CloudMonitoringOptions,

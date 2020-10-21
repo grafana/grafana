@@ -328,7 +328,10 @@ class VariableQueryRunner {
       source.pipe(
         map(tagResults => {
           const { dispatch, variable } = args;
-          dispatch(updateVariableTags(toVariablePayload(variable, tagResults)));
+
+          if (variable.useTags) {
+            dispatch(updateVariableTags(toVariablePayload(variable, tagResults)));
+          }
         })
       );
   }

@@ -17,7 +17,6 @@ const setupTestContext = (options: Partial<Props>) => {
     changeQueryVariableDataSource: jest.fn(),
     changeQueryVariableQuery: jest.fn(),
     changeVariableMultiValue: jest.fn(),
-    legacyChangeQueryVariableQuery: jest.fn(),
     editor: {
       ...initialVariableEditorState,
       extended: {

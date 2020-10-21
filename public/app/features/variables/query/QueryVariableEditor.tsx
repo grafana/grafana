@@ -14,7 +14,6 @@ import { toVariableIdentifier } from '../state/types';
 import { changeVariableMultiValue } from '../state/actions';
 import { isLegacyQueryEditor, isQueryEditor } from '../editor/factories';
 import { getTemplateSrv } from '@grafana/runtime';
-import { legacyChangeQueryVariableQuery } from './legacyActions';
 import { LoadingState } from '@grafana/data';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 
@@ -30,7 +29,6 @@ interface DispatchProps {
   initQueryVariableEditor: typeof initQueryVariableEditor;
   changeQueryVariableDataSource: typeof changeQueryVariableDataSource;
   changeQueryVariableQuery: typeof changeQueryVariableQuery;
-  legacyChangeQueryVariableQuery: typeof legacyChangeQueryVariableQuery;
   changeVariableMultiValue: typeof changeVariableMultiValue;
 }
 
@@ -78,13 +76,13 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
   onLegacyQueryChange = async (query: any, definition: string) => {
     if (this.props.variable.query !== query) {
-      this.props.legacyChangeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, definition);
+      this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, definition);
     }
   };
 
   onQueryChange = async (query: any) => {
     if (this.props.variable.query !== query) {
-      this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query);
+      this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, '');
     }
   };
 
@@ -358,7 +356,6 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   changeQueryVariableDataSource,
   changeQueryVariableQuery,
   changeVariableMultiValue,
-  legacyChangeQueryVariableQuery,
 };
 
 export const QueryVariableEditor = connectWithStore(

@@ -94,10 +94,11 @@ export const changeQueryVariableDataSource = (
   };
 };
 
-export const changeQueryVariableQuery = (identifier: VariableIdentifier, query: any): ThunkResult<void> => async (
-  dispatch,
-  getState
-) => {
+export const changeQueryVariableQuery = (
+  identifier: VariableIdentifier,
+  query: any,
+  definition?: string
+): ThunkResult<void> => async (dispatch, getState) => {
   const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
   if (typeof query === 'string' && query.match(new RegExp('\\$' + variableInState.name + '(/| |$)'))) {
     const errorText = 'Query cannot contain a reference to itself. Variable: $' + variableInState.name;
@@ -107,9 +108,13 @@ export const changeQueryVariableQuery = (identifier: VariableIdentifier, query: 
 
   dispatch(removeVariableEditorError({ errorProp: 'query' }));
   dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
-  if (typeof query === 'string') {
+
+  if (definition) {
+    dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition })));
+  } else if (typeof query === 'string') {
     dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: query })));
   }
+
   await dispatch(updateOptions(identifier));
 };
 
