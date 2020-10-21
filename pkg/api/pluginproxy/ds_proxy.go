@@ -362,6 +362,6 @@ func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
 func tokensEq(t1, t2 *oauth2.Token) bool {
 	return t1.AccessToken == t2.AccessToken &&
 		t1.RefreshToken == t2.RefreshToken &&
-		t1.Expiry == t2.Expiry &&
+		t1.Expiry.Equal(t2.Expiry) &&
 		t1.TokenType == t2.TokenType
 }
