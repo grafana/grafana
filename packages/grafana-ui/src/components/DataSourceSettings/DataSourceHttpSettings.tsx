@@ -68,7 +68,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
         ...change,
       });
     },
-    [dataSourceConfig]
+    [dataSourceConfig, onChange]
   );
 
   switch (dataSourceConfig.access) {
