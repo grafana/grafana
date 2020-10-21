@@ -15,7 +15,7 @@ function getRelativeURLPath(url: string) {
 
 export const createShortLink = memoizeOne(async function(path: string) {
   try {
-    const shortUrl = await getBackendSrv().post(`/api/short-url`, {
+    const shortUrl = await getBackendSrv().post(`/api/short-urls`, {
       path: getRelativeURLPath(path),
     });
     return shortUrl.url;
