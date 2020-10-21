@@ -12,41 +12,46 @@ weight = 700
 
 > **Note:** Only available in Grafana Enterprise v7.3+.
 
-Auditing allows you to track important changes to your Grafana instance. Modifications to resources such as dashboards and data sources or a user failing to login will all result in an audit log being created. Learn more about what is being audited below.
-By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
+Auditing allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
 
 ## Audit logs
 
+Audit logs are JSON objects representing user actions like:
+- Modifications ro resources such as dashboards and data sources.
+- A user failing to log in.
+
 ### Format
 
-Audit logs are JSON objects containing the following fields. The fields followed by **\*** are always available, the others depends on the request made.
+Audit logs contain the following fields. The fields followed by **\*** are always available, the others depends on the type of action logged.
 
-- **timestamp\* -** _string -_ The date and time the request was made, in coordinated universal time (UTC) using the [RFC3339](https://tools.ietf.org/html/rfc3339#section-5.6) format.
-- **user\* -** _object -_ Information about the user that made the request. At least one of the `UserID` / `ApiKeyID` fields will not be empty if `isAnonymous=false`.
-  - **userId -** _number -_ ID of the Grafana user that made the request.
-  - **orgId\* -** _number -_ Current organization of the user that made the request.
-  - **orgRole -** _string -_ Current role of the user that made the request.
-  - **name -** _string -_ Name of the Grafana user that made the request.
-  - **apiKeyId -** _number -_ ID of the Grafana API key used to make the request.
-  - **isAnonymous\* -** _boolean -_ `true` if an anonymous user made the request, `false` otherwise.
-- **action\* -** _string -_ The request action (eg. `create`, `update`, `manage-permissions`).
-- **request\* -** _object -_ Information about the HTTP request.
-  - **params -** _object -_ Request path parameters.
-  - **query -** _object -_ Request query parameters.
-  - **body -** _string -_ Request body.
-- **Result\* -** _object -_ Information about the HTTP response.
-  - **statusType\* -** _string -_ `success` if the request action was successful, `failure` otherwise.
-  - **statusCode -** _number -_ HTTP status of the request.
-  - **failureMessage -** _string -_ HTTP error message.
-  - **body -** _string -_ Response body.
-- **resources -** _array -_ Information about the resources that the request action impacted. Can be null for non-resource actions like `login` and `logout`.
-  - **id\* -** _number -_ ID of the resource.
-  - **type\* -** _string -_ Type of the resource (logged resources are: `alert`, `alert-notification`, `annotation`, `api-key`, `auth-token`, `dashboard`, `datasource`, `folder`, `org`, `panel`, `playlist`, `report`, `team`, `user`, `version`).
-- **requestUri\* -** _string -_ Request URI.
-- **ipAddress\* -** _string -_ IP address that the request was made from.
-- **userAgent\* -** _string -_ Agent through which the request was made.
-- **grafanaVersion\* -** _string -_ Grafana current version when this log is created.
-- **additionalData -** _object -_ Provide additional information on the request. For now, it's only used in `login` actions to log external user information if an external system was used to log in.
+| Field name | Type | Description |
+| ---------- | ---- | ----------- |
+| `timestamp`\* | string | The date and time the request was made, in coordinated universal time (UTC) using the [RFC3339](https://tools.ietf.org/html/rfc3339#section-5.6) format. |
+| `user`\* | object | Information about the user that made the request. At least one of the `UserID` / `ApiKeyID` fields will not be empty if `isAnonymous=false`. |
+| `user.userId` | number | ID of the Grafana user that made the request. |
+| `user.orgId`\* | number | Current organization of the user that made the request. |
+| `user.orgRole` | string | Current role of the user that made the request. |
+| `user.name` | string | Name of the Grafana user that made the request. |
+| `user.apiKeyId` | number | ID of the Grafana API key used to make the request. |
+| `user.isAnonymous`\* | boolean | `true` if an anonymous user made the request, `false` otherwise. |
+| `action`\* | string | The request action (eg. `create`, `update`, `manage-permissions`). |
+| `request`\* | object | Information about the HTTP request. |
+| `request.params` | object | Request path parameters. |
+| `request.query` | object | Request query parameters. |
+| `request.body` | string | Request body. |
+| `result`\* | object | Information about the HTTP response. |
+| `result.statusType`\* | string | `success` if the request action was successful, `failure` otherwise. |
+| `result.statusCode` | number | HTTP status of the request. |
+| `result.failureMessage` | string | HTTP error message. |
+| `result.body` | string | Response body. |
+| `resources` | array | Information about the resources that the request action impacted. Can be null for non-resource actions like `login` and `logout`. |
+| `resources[x].id`\* | number | ID of the resource. |
+| `resources[x].type`\* | string | Type of the resource (logged resources are: `alert`, `alert-notification`, `annotation`, `api-key`, `auth-token`, `dashboard`, `datasource`, `folder`, `org`, `panel`, `playlist`, `report`, `team`, `user`, `version`). |
+| `requestUri`\* | string | Request URI. |
+| `ipAddress`\* | string | IP address that the request was made from. |
+| `userAgent`\* | string | Agent through which the request was made. |
+| `grafanaVersion`\* | string | Grafana current version when this log is created. |
+| `additionalData` | object | Provide additional information on the request. For now, it's only used in `login` actions to log external user information if an external system was used to log in. |
 
 ### Recorded actions
 
@@ -54,68 +59,68 @@ The audit logs include records about the following categories of actions:
 
 **Sessions**
 
-- Login
-- Logout
-- Revoke a user authentication token
-- Create or delete an API key
+- Login.
+- Logout.
+- Revoke a user authentication token.
+- Create or delete an API key.
 
 **User management**
 
-- Create, update or delete a user
-- Enable or disable a user
-- Manage user role and permissions
-- LDAP sync or information access
+- Create, update, or delete a user.
+- Enable or disable a user.
+- Manage user role and permissions.
+- LDAP sync or information access.
 
 **Team and organization management**
 
-- Create, update or delete a team / organization
-- Add or remove a member to a team / organization
-- Manage team / organization members roles
-- Invite an external member to an organization
-- Revoke a pending invitation to an organization
-- Add or remove an external group to sync with a team
+- Create, update, or delete a team or organization.
+- Add or remove a member of a team or organization.
+- Manage team or organization members roles.
+- Invite an external member to an organization.
+- Revoke a pending invitation to an organization.
+- Add or remove an external group to sync with a team.
 
 **Folder and dashboard management**
 
-- Create, update or delete a folder
-- Manage folder permissions
-- Create, import, update or delete a dashboard
-- Restore an old dashboard version
-- Manage dashboard permissions
+- Create, update, or delete a folder.
+- Manage folder permissions.
+- Create, import, update, or delete a dashboard.
+- Restore an old dashboard version.
+- Manage dashboard permissions.
 
 **Data sources management**
 
-- Create, update or delete a data source
-- Manage data source permissions
+- Create, update, or delete a data source.
+- Manage data source permissions.
 
 **Alerts and notification channels management**
 
-- Create, update or delete a notification channel
-- Test an alert or a notification channel
-- Pause an alert
+- Create, update, or delete a notification channel.
+- Test an alert or a notification channel.
+- Pause an alert.
 
 **Reporting**
 
-- Create, update or delete a report
-- Update reporting settings
-- Send reporting email
+- Create, update, or delete a report.
+- Update reporting settings.
+- Send reporting email.
 
 **Annotations, playlists and snapshots management**
 
-- Create, update or delete an annotation
-- Create, update or delete a playlist
-- Create or delete a snapshot
+- Create, update, or delete an annotation.
+- Create, update, or delete a playlist.
+- Create or delete a snapshot.
 
 ## Configuration
 
-> The auditing feature is disabled by default.
+> **Note:** The auditing feature is disabled by default.
 
 Audit logs can be saved into files, sent to a Loki instance or sent to the Grafana default logger. By default, only the file exporter is enabled.
-You can choose which exporter to use in the [configuration file](https://grafana.com/docs/grafana/latest/administration/configuration).
+You can choose which exporter to use in the [configuration file]({{< relref "../administration/configuration.md" >}}).
 
-Options are `file`, `loki` and `console`. Use spaces to separate multiple modes, e.g. `file loki`.
+Options are `file`, `loki`, and `console`. Use spaces to separate multiple modes, such as `file loki`.
 
-By default, when a user create or update a dashboard, its content will not appear in the logs as it can significantly increase the size of your logs. If this is important information for you and you can handle the amount of data generated, you can enable this option in the configuration.
+By default, when a user create or update a dashboard, its content will not appear in the logs as it can significantly increase the size of your logs. If this is important information for you and you can handle the amount of data generated, then you can enable this option in the configuration.
 
 ```ini
 [auditing]
@@ -149,7 +154,7 @@ Audit logs are sent to a [Loki](https://grafana.com/oss/loki/) service.
 
 ```ini
 [auditing.logs.loki]
-# Set the url for writing logs to Loki
+# Set the URL for writing logs to Loki
 url = localhost:9095
 # Defaults to true. If true, it establishes a secure connection to Loki
 tls = true
@@ -163,4 +168,4 @@ If you have multiple Grafana instances sending logs to the same Loki service or 
 
 ### Console exporter
 
-Audit logs are sent to the Grafana default logger. The audit logs will use the `auditing.console` logger and be logged on `debug`-level, learn how to enable debug logging in the [log configuration](https://grafana.com/docs/grafana/latest/administration/configuration/#log) section of the documentation. Accessing the audit logs in this way is not recommended for production use.
+Audit logs are sent to the Grafana default logger. The audit logs use the `auditing.console` logger and are logged on `debug`-level, learn how to enable debug logging in the [log configuration]({{< relref "../administration/configuration.md#log" >}}) section of the documentation. Accessing the audit logs in this way is not recommended for production use.

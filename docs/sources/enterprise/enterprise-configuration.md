@@ -105,11 +105,11 @@ Scale factor for rendering images. Value `2` is enough for monitor resolutions, 
 
 ### enabled
 
-Enable the auditing feature
+Enable the auditing feature.
 
 ### loggers
 
-List of enabled loggers
+List of enabled loggers.
 
 ### log_dashboard_content
 
@@ -119,21 +119,21 @@ Keep dashboard content in the logs (request or response fields). This can signif
 
 ### path
 
-Path to logs folder
+Path to logs folder.
 
 ### max_files
 
-Maximum log files to keep
+Maximum log files to keep.
 
 ### max_file_size_mb
 
-Max size in megabytes per log file
+Max size in megabytes per log file.
 
 ## [auditing.logs.loki]
 
 ### url
 
-Set the url for writing logs to Loki
+Set the url for writing logs to Loki.
 
 ### tls
 
