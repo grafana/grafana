@@ -8,7 +8,6 @@ import Prism from 'prismjs';
 import {
   AnnotationEvent,
   AnnotationQueryRequest,
-  CoreApp,
   DataFrame,
   DataFrameView,
   DataQueryError,
@@ -25,8 +24,9 @@ import {
   QueryResultMeta,
   ScopedVars,
   TimeRange,
+  CoreApp,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchError, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, TemplateSrv, BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
@@ -45,7 +45,6 @@ import { LiveStreams, LokiLiveTarget } from './live_streams';
 import LanguageProvider, { rangeToParams } from './language_provider';
 import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import LokiQueryEditor from './components/LokiQueryEditor';
 import syntax from './syntax';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
@@ -76,11 +75,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
-    this.variables = {
-      datasource: {
-        editor: LokiQueryEditor,
-      },
-    };
   }
 
   _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
