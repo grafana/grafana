@@ -10,7 +10,6 @@ import { addVariableEditorError, changeVariableEditorExtended, removeVariableEdi
 import { changeVariableProp } from '../state/sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { hasLegacyVariableSupport } from '../guard';
-import { legacyUpdateQueryVariableOptions } from './legacyActions';
 import { importDataSourcePlugin } from '../../plugins/plugin_loader';
 import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
 import { variableQueryEditorFactory } from '../editor/factories';
@@ -29,10 +28,6 @@ export const updateQueryVariableOptions = (
         dispatch(removeVariableEditorError({ errorProp: 'update' }));
       }
       const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');
-
-      if (hasLegacyVariableSupport(dataSource)) {
-        return await dispatch(legacyUpdateQueryVariableOptions(identifier, searchFilter));
-      }
 
       // we need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
       // variable will have the wrong current value as input

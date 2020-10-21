@@ -1,5 +1,5 @@
 import { from, merge, Observable, of, OperatorFunction, Subject, throwError, Unsubscribable } from 'rxjs';
-import { catchError, filter, finalize, map, mergeMap, takeUntil } from 'rxjs/operators';
+import { catchError, filter, finalize, first, map, mergeMap, takeUntil } from 'rxjs/operators';
 import {
   CoreApp,
   DataQuery,
@@ -17,15 +17,14 @@ import {
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { getVariable } from '../state/selectors';
 import { QueryVariableModel, VariableRefresh } from '../types';
-import { runRequest } from '../../dashboard/state/runRequest';
 import { updateVariableOptions, updateVariableTags } from './reducer';
 import { StoreState, ThunkDispatch } from '../../../types';
 import { dispatch, getState } from '../../../store/store';
 import { getLegacyQueryOptions, getTemplatedRegex } from '../utils';
 import { validateVariableSelectionState } from '../state/actions';
 import { v4 as uuidv4 } from 'uuid';
-import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import { hasCustomVariableSupport, hasDatasourceVariableSupport, hasStandardVariableSupport } from '../guard';
+import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { getQueryRunners, QueryRunner } from './queryRunners';
 
 interface UpdateOptionsArgs {
   identifier: VariableIdentifier;
@@ -45,6 +44,7 @@ interface VariableQueryRunnerArgs {
   getVariable: typeof getVariable;
   getTemplatedRegex: typeof getTemplatedRegex;
   getTimeSrv: typeof getTimeSrv;
+  getQueryRunners: typeof getQueryRunners;
 }
 
 class VariableQueryRunner {
@@ -55,7 +55,14 @@ class VariableQueryRunner {
   private readonly queryRunners: QueryRunner[];
 
   constructor(
-    private dependencies: VariableQueryRunnerArgs = { dispatch, getState, getVariable, getTemplatedRegex, getTimeSrv }
+    private dependencies: VariableQueryRunnerArgs = {
+      dispatch,
+      getState,
+      getVariable,
+      getTemplatedRegex,
+      getTimeSrv,
+      getQueryRunners,
+    }
   ) {
     this.updateOptionsRequests = new Subject<UpdateOptionsArgs>();
     this.updateOptionsResults = new Subject<UpdateOptionsResults>();
@@ -63,7 +70,7 @@ class VariableQueryRunner {
     this.onNewRequest = this.onNewRequest.bind(this);
     this.runUpdateTagsRequest = this.runUpdateTagsRequest.bind(this);
     this.subscription = this.updateOptionsRequests.subscribe(this.onNewRequest);
-    this.queryRunners = [new StandardQueryRunner(), new CustomQueryRunner(), new DatasourceQueryRunner()];
+    this.queryRunners = this.dependencies.getQueryRunners();
   }
 
   queueRequest(args: UpdateOptionsArgs): void {
@@ -87,14 +94,13 @@ class VariableQueryRunner {
     try {
       const beforeUid = getState().templating.transaction.uid;
 
-      const variableInState = this.dependencies.getVariable<QueryVariableModel>(
-        identifier.id,
-        this.dependencies.getState()
-      );
-
       this.updateOptionsResults.next({ identifier, state: LoadingState.Loading });
 
-      const runnerArgs = { variable: variableInState, dataSource, searchFilter };
+      const variable = this.dependencies.getVariable<QueryVariableModel>(identifier.id, this.dependencies.getState());
+      const dispatch = this.dependencies.dispatch;
+      const getTemplatedRegexFunc = this.dependencies.getTemplatedRegex;
+      const timeSrv = this.dependencies.getTimeSrv();
+      const runnerArgs = { variable, dataSource, searchFilter, timeSrv };
       const runner = this.queryRunners.find(runner => runner.canRun(runnerArgs));
 
       if (!runner) {
@@ -116,37 +122,29 @@ class VariableQueryRunner {
         return;
       }
 
-      const request = this.getRequest(variableInState, args, target);
+      const request = this.getRequest(variable, args, target);
 
       runner
         .runRequest(runnerArgs, request)
         .pipe(
           filter(() => {
             // lets check if we started another batch during the execution of the observable. If so we just want to abort the rest.
-            const afterUid = getState().templating.transaction.uid;
+            const afterUid = this.dependencies.getState().templating.transaction.uid;
             return beforeUid === afterUid;
           }),
+          first(data => data.state === LoadingState.Done || data.state === LoadingState.Error),
           this.toMetricFindValues(),
-          mergeMap(results => {
-            const templatedRegex = this.dependencies.getTemplatedRegex(variableInState);
-            const payload = toVariablePayload(variableInState, { results, templatedRegex });
-            this.dependencies.dispatch(updateVariableOptions(payload));
-
-            return this.runUpdateTagsRequest(variableInState, args);
-          }),
-          mergeMap(() => {
+          this.updateOptionsState({ variable, dispatch, getTemplatedRegexFunc }),
+          this.runUpdateTagsRequest({ variable, dataSource, searchFilter, timeSrv }),
+          this.updateTagsState({ variable, dispatch }),
+          filter(() => {
             // If we are searching options there is no need to validate selection state
             // This condition was added to as validateVariableSelectionState will update the current value of the variable
             // So after search and selection the current value is already update so no setValue, refresh & url update is performed
             // The if statement below fixes https://github.com/grafana/grafana/issues/25671
-            if (!searchFilter) {
-              return from(
-                this.dependencies.dispatch(validateVariableSelectionState(toVariableIdentifier(variableInState)))
-              );
-            }
-
-            return of([]);
+            return !searchFilter;
           }),
+          this.validateVariableSelectionState({ variable, dispatch }),
           takeUntil(
             merge(this.updateOptionsRequests, this.cancelRequests).pipe(
               filter(args => {
@@ -176,21 +174,6 @@ class VariableQueryRunner {
     } catch (error) {
       this.updateOptionsResults.next({ identifier, state: LoadingState.Error, error });
     }
-  }
-
-  runUpdateTagsRequest(variable: QueryVariableModel, args: UpdateOptionsArgs): Observable<MetricFindValue[]> {
-    const { dataSource, searchFilter } = args;
-
-    if (variable.useTags && dataSource.metricFindQuery) {
-      return from(dataSource.metricFindQuery(variable.tagsQuery, getLegacyQueryOptions(variable, searchFilter))).pipe(
-        map(tagResults => {
-          this.dependencies.dispatch(updateVariableTags(toVariablePayload(variable, tagResults)));
-          return tagResults;
-        })
-      );
-    }
-
-    return of([]);
   }
 
   private getRequest(variable: QueryVariableModel, args: UpdateOptionsArgs, target: DataQuery) {
@@ -267,21 +250,102 @@ class VariableQueryRunner {
           }
 
           if (!stringIndex) {
-            return [];
+            throw new Error("Couldn't find any text column in results.");
           }
 
           for (const frame of frames) {
             for (let index = 0; index < frame.length; index++) {
               const expandable = expandableIndex ? frame.fields[expandableIndex].values.get(index) : undefined;
               const string = frame.fields[stringIndex].values.get(index);
-              const text = textIndex ? frame.fields[textIndex].values.get(index) : string;
-              const value = valueIndex ? frame.fields[valueIndex].values.get(index) : text;
+              const text = textIndex ? frame.fields[textIndex].values.get(index) : null;
+              const value = valueIndex ? frame.fields[valueIndex].values.get(index) : null;
 
-              metrics.push({ text, value, expandable });
+              if (!valueIndex && !textIndex) {
+                metrics.push({ text: string, value: string, expandable });
+                continue;
+              }
+
+              if (!valueIndex && textIndex) {
+                metrics.push({ text, value: text, expandable });
+                continue;
+              }
+
+              if (valueIndex && !textIndex) {
+                metrics.push({ text: value, value, expandable });
+                continue;
+              }
             }
           }
 
           return metrics;
+        })
+      );
+  }
+
+  private updateOptionsState(args: {
+    variable: QueryVariableModel;
+    dispatch: ThunkDispatch;
+    getTemplatedRegexFunc: typeof getTemplatedRegex;
+  }): OperatorFunction<MetricFindValue[], void> {
+    return source =>
+      source.pipe(
+        map(results => {
+          const { variable, dispatch, getTemplatedRegexFunc } = args;
+          const templatedRegex = getTemplatedRegexFunc(variable);
+          const payload = toVariablePayload(variable, { results, templatedRegex });
+          dispatch(updateVariableOptions(payload));
+        })
+      );
+  }
+
+  private runUpdateTagsRequest(args: {
+    variable: QueryVariableModel;
+    dataSource: DataSourceApi;
+    timeSrv: TimeSrv;
+    searchFilter?: string;
+  }): OperatorFunction<void, MetricFindValue[]> {
+    return source =>
+      source.pipe(
+        mergeMap(() => {
+          const { dataSource, searchFilter, variable, timeSrv } = args;
+
+          if (variable.useTags && dataSource.metricFindQuery) {
+            return from(
+              dataSource.metricFindQuery(variable.tagsQuery, getLegacyQueryOptions(variable, searchFilter, timeSrv))
+            );
+          }
+
+          return of([]);
+        })
+      );
+  }
+
+  private updateTagsState(args: {
+    variable: QueryVariableModel;
+    dispatch: ThunkDispatch;
+  }): OperatorFunction<MetricFindValue[], void> {
+    return source =>
+      source.pipe(
+        map(tagResults => {
+          const { dispatch, variable } = args;
+          dispatch(updateVariableTags(toVariablePayload(variable, tagResults)));
+        })
+      );
+  }
+
+  private validateVariableSelectionState(args: {
+    variable: QueryVariableModel;
+    dispatch: ThunkDispatch;
+  }): OperatorFunction<void, void> {
+    return source =>
+      source.pipe(
+        mergeMap(tagResults => {
+          const { dispatch, variable } = args;
+          // If we are searching options there is no need to validate selection state
+          // This condition was added to as validateVariableSelectionState will update the current value of the variable
+          // So after search and selection the current value is already update so no setValue, refresh & url update is performed
+          // The if statement below fixes https://github.com/grafana/grafana/issues/25671
+          return from(dispatch(validateVariableSelectionState(toVariableIdentifier(variable))));
         })
       );
   }
@@ -302,92 +366,6 @@ class VariableQueryRunner {
       (firstValue.hasOwnProperty('value') && typeof firstValue.value === 'string') ||
       (firstValue.hasOwnProperty('Value') && typeof firstValue.Value === 'string')
     );
-  }
-}
-
-export interface RunnerArgs {
-  dataSource: DataSourceApi;
-  searchFilter?: string;
-  variable: QueryVariableModel;
-}
-
-export interface QueryRunner {
-  canRun: (args: RunnerArgs) => boolean;
-  getTarget: (args: RunnerArgs) => DataQuery | null;
-  runRequest: (args: RunnerArgs, request: DataQueryRequest) => Observable<PanelData>;
-}
-
-export function getEmptyMetricFindValueObservable(): Observable<PanelData> {
-  return of({ state: LoadingState.Done, series: [], timeRange: DefaultTimeRange });
-}
-
-export class StandardQueryRunner implements QueryRunner {
-  canRun({ dataSource }: RunnerArgs) {
-    return hasStandardVariableSupport(dataSource);
-  }
-
-  getTarget({ dataSource, variable }: RunnerArgs) {
-    if (!hasStandardVariableSupport(dataSource)) {
-      return null;
-    }
-
-    return dataSource.variables.standard.toDataQuery(variable.query);
-  }
-
-  runRequest({ dataSource }: RunnerArgs, request: DataQueryRequest) {
-    if (!hasStandardVariableSupport(dataSource)) {
-      return getEmptyMetricFindValueObservable();
-    }
-
-    if (!dataSource.variables.standard.query) {
-      runRequest(dataSource, request);
-    }
-
-    return runRequest(dataSource, request, dataSource.variables.standard.query);
-  }
-}
-
-export class CustomQueryRunner implements QueryRunner {
-  canRun({ dataSource }: RunnerArgs) {
-    return hasCustomVariableSupport(dataSource);
-  }
-
-  getTarget({ dataSource, variable }: RunnerArgs) {
-    if (!hasCustomVariableSupport(dataSource)) {
-      return null;
-    }
-
-    return variable.query;
-  }
-
-  runRequest({ dataSource }: RunnerArgs, request: DataQueryRequest) {
-    if (!hasCustomVariableSupport(dataSource)) {
-      return getEmptyMetricFindValueObservable();
-    }
-
-    return runRequest(dataSource, request, dataSource.variables.custom.query);
-  }
-}
-
-export class DatasourceQueryRunner implements QueryRunner {
-  canRun({ dataSource }: RunnerArgs) {
-    return hasDatasourceVariableSupport(dataSource);
-  }
-
-  getTarget({ dataSource, variable }: RunnerArgs) {
-    if (!hasDatasourceVariableSupport(dataSource)) {
-      return null;
-    }
-
-    return variable.query;
-  }
-
-  runRequest({ dataSource }: RunnerArgs, request: DataQueryRequest) {
-    if (!hasDatasourceVariableSupport(dataSource)) {
-      return getEmptyMetricFindValueObservable();
-    }
-
-    return runRequest(dataSource, request);
   }
 }
 
