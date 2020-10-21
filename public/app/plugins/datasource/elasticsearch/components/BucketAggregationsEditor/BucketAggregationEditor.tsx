@@ -2,9 +2,10 @@ import { SelectableValue } from '@grafana/data';
 import { InlineField, Segment, SegmentAsync } from '@grafana/ui';
 import React, { ComponentProps, FunctionComponent } from 'react';
 import { bucketAggregationConfig } from '../../query_def';
-import { useDatasource } from '../ElasticsearchQueryContext';
+import { useDatasource, useDispatch } from '../ElasticsearchQueryContext';
 import { marginZero } from '../styles';
-import { BucketAggregation, BucketAggregationType } from './state/types';
+import { changeBucketAggregationType } from './state/actions';
+import { BucketAggregation, BucketAggregationAction, BucketAggregationType } from './state/types';
 
 const bucketAggOptions: Array<SelectableValue<BucketAggregationType>> = Object.entries(bucketAggregationConfig).map(
   ([key, { label }]) => ({
@@ -25,6 +26,7 @@ interface QueryMetricEditorProps {
 
 export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> = ({ value, label }) => {
   const datasource = useDatasource();
+  const dispatch = useDispatch<BucketAggregationAction>();
 
   const getFields = () => {
     if (value.type === 'date_histogram') {
@@ -40,10 +42,7 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
         <Segment
           className={marginZero}
           options={bucketAggOptions}
-          onChange={e => {
-            console.log(e);
-            // TODO: This
-          }}
+          onChange={e => dispatch(changeBucketAggregationType(value.id, e.value!))}
           value={toOption(value)}
         />
       </InlineField>
