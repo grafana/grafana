@@ -585,7 +585,7 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 	plugin := plugins.DataSourcePlugin{}
 	_, err := NewDataSourceProxy(&ds, &plugin, &ctx, "api/method", &cfg)
 	require.Error(t, err)
-	assert.True(t, strings.HasPrefix(err.Error(), `Validation of data source URL "://host/root" failed`))
+	assert.True(t, strings.HasPrefix(err.Error(), `validation of data source URL "://host/root" failed`))
 }
 
 func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {

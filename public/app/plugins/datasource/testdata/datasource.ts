@@ -208,7 +208,9 @@ function runArrowFile(target: TestDataQuery, req: DataQueryRequest<TestDataQuery
   if (target.stringInput && target.stringInput.length > 10) {
     try {
       const table = base64StringToArrowTable(target.stringInput);
-      data = [arrowTableToDataFrame(table)];
+      const frame = arrowTableToDataFrame(table);
+      frame.refId = target.refId;
+      data = [frame];
     } catch (e) {
       console.warn('Error reading saved arrow', e);
       const error = toDataQueryError(e);
@@ -216,7 +218,7 @@ function runArrowFile(target: TestDataQuery, req: DataQueryRequest<TestDataQuery
       return of({ state: LoadingState.Error, error, data });
     }
   }
-  return of({ state: LoadingState.Done, data });
+  return of({ state: LoadingState.Done, data, key: req.requestId + target.refId });
 }
 
 function runGrafanaAPI(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
