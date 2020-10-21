@@ -61,8 +61,7 @@ func TestPluginManager_Init(t *testing.T) {
 		setting.PluginsPath = "testdata/unsigned"
 
 		pm := &PluginManager{
-			Cfg:                  &setting.Cfg{},
-			BackendPluginManager: &fakeBackendPluginManager{},
+			Cfg: &setting.Cfg{},
 		}
 		err := pm.Init()
 		require.NoError(t, err)
@@ -97,8 +96,7 @@ func TestPluginManager_Init(t *testing.T) {
 		setting.PluginsPath = "testdata/invalid-signature"
 
 		pm := &PluginManager{
-			Cfg:                  &setting.Cfg{},
-			BackendPluginManager: &fakeBackendPluginManager{},
+			Cfg: &setting.Cfg{},
 		}
 		err := pm.Init()
 		require.NoError(t, err)
