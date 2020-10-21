@@ -142,7 +142,7 @@ func (b *InProcBus) Publish(msg Msg) error {
 	for _, listenerHandler := range listeners {
 		ret := reflect.ValueOf(listenerHandler).Call(params)
 		err, ok := ret[0].Interface().(error)
-		if err != nil {
+		if ok && err != nil {
 			if ok {
 				return err
 			}
