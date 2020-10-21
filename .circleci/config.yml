@@ -30,7 +30,7 @@ executors:
       - image: cimg/go:1.14
   e2e:
     docker:
-      - image: grafana/ci-e2e:12.18-1
+      - image: grafana/ci-e2e:12.19.0-1
   grafana-build:
     docker:
       - image: grafana/build-container:1.2.26
