@@ -54,15 +54,13 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       url: `datasources/edit/${dataSource.id}/permissions`,
     });
 
-    if (config.featureToggles.datasourceInsights) {
-      navModel.children!.push({
-        active: false,
-        icon: 'info-circle',
-        id: `datasource-insights-${dataSource.id}`,
-        text: 'Insights',
-        url: `datasources/edit/${dataSource.id}/insights`,
-      });
-    }
+    navModel.children!.push({
+      active: false,
+      icon: 'info-circle',
+      id: `datasource-insights-${dataSource.id}`,
+      text: 'Insights',
+      url: `datasources/edit/${dataSource.id}/insights`,
+    });
   }
 
   return navModel;

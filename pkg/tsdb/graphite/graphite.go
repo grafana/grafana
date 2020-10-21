@@ -73,7 +73,7 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	formData["target"] = []string{target}
 
-	if setting.Env == setting.DEV {
+	if setting.Env == setting.Dev {
 		glog.Debug("Graphite request", "params", formData)
 	}
 
@@ -122,7 +122,7 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 			Points: series.DataPoints,
 		})
 
-		if setting.Env == setting.DEV {
+		if setting.Env == setting.Dev {
 			glog.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
 		}
 	}

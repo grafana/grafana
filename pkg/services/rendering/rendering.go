@@ -64,7 +64,7 @@ func (rs *RenderingService) Init() error {
 		// RendererCallbackUrl has already been passed, it won't generate an error.
 		u, _ := url.Parse(rs.Cfg.RendererCallbackUrl)
 		rs.domain = u.Hostname()
-	case setting.HttpAddr != setting.DEFAULT_HTTP_ADDR:
+	case setting.HttpAddr != setting.DefaultHTTPAddr:
 		rs.domain = setting.HttpAddr
 	default:
 		rs.domain = "localhost"
@@ -227,9 +227,9 @@ func (rs *RenderingService) getURL(path string) string {
 
 	protocol := setting.Protocol
 	switch setting.Protocol {
-	case setting.HTTP:
+	case setting.HTTPScheme:
 		protocol = "http"
-	case setting.HTTP2, setting.HTTPS:
+	case setting.HTTP2Scheme, setting.HTTPSScheme:
 		protocol = "https"
 	}
 

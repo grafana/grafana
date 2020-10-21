@@ -9,14 +9,14 @@ import {
   DataQuery,
   DataSourceApi,
   dateTimeForTimeZone,
+  ExploreUrlState,
   isDateTime,
   LoadingState,
+  LogsDedupStrategy,
   PanelData,
   QueryFixAction,
   RawTimeRange,
   TimeRange,
-  ExploreUrlState,
-  LogsDedupStrategy,
 } from '@grafana/data';
 // Services & Utils
 import store from 'app/core/store';
@@ -40,17 +40,21 @@ import {
 import {
   addToRichHistory,
   deleteAllFromRichHistory,
-  updateStarredInRichHistory,
-  updateCommentInRichHistory,
   deleteQueryInRichHistory,
   getRichHistory,
+  updateCommentInRichHistory,
+  updateStarredInRichHistory,
 } from 'app/core/utils/richHistory';
 // Types
-import { ExploreItemState, ThunkResult } from 'app/types';
+import { ThunkResult } from 'app/types';
 
-import { ExploreId, QueryOptions } from 'app/types/explore';
+import { ExploreId, ExploreItemState, QueryOptions } from 'app/types/explore';
 import {
   addQueryRowAction,
+  cancelQueriesAction,
+  changeDedupStrategyAction,
+  ChangeDedupStrategyPayload,
+  changeLoadingStateAction,
   changeQueryAction,
   changeRangeAction,
   changeRefreshIntervalAction,
@@ -59,7 +63,6 @@ import {
   ChangeSizePayload,
   clearQueriesAction,
   historyUpdatedAction,
-  richHistoryUpdatedAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
@@ -69,6 +72,7 @@ import {
   queriesImportedAction,
   queryStoreSubscriptionAction,
   queryStreamUpdatedAction,
+  richHistoryUpdatedAction,
   scanStartAction,
   scanStopAction,
   setQueriesAction,
@@ -77,19 +81,21 @@ import {
   splitOpenAction,
   syncTimesAction,
   updateDatasourceInstanceAction,
-  changeLoadingStateAction,
-  cancelQueriesAction,
-  changeDedupStrategyAction,
-  ChangeDedupStrategyPayload,
 } from './actionTypes';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
-import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getExploreDatasources } from './selectors';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import {
+  decorateWithGraphLogsTraceAndTable,
+  decorateWithGraphResult,
+  decorateWithLogsResult,
+  decorateWithTableResult,
+} from '../utils/decorators';
 
 /**
  * Adds a query row after the row with the given index.
@@ -466,9 +472,13 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
         // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
         // actually can see what is happening.
         live ? throttleTime(500) : identity,
-        map((data: PanelData) => preProcessPanelData(data, queryResponse))
+        map((data: PanelData) => preProcessPanelData(data, queryResponse)),
+        decorateWithGraphLogsTraceAndTable(getState().explore[exploreId].datasourceInstance),
+        decorateWithGraphResult(),
+        decorateWithTableResult(),
+        decorateWithLogsResult(getState().explore[exploreId])
       )
-      .subscribe((data: PanelData) => {
+      .subscribe(data => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
@@ -668,7 +678,12 @@ export function splitClose(itemId: ExploreId): ThunkResult<void> {
  * Otherwise it copies the left state to be the right state. The copy keeps all query modifications but wipes the query
  * results.
  */
-export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: string; query: T }): ThunkResult<void> {
+export function splitOpen<T extends DataQuery = any>(options?: {
+  datasourceUid: string;
+  query: T;
+  // Don't use right now. It's used for Traces to Logs interaction but is hacky in how the range is actually handled.
+  range?: TimeRange;
+}): ThunkResult<void> {
   return async (dispatch, getState) => {
     // Clone left state to become the right state
     const leftState: ExploreItemState = getState().explore[ExploreId.left];
@@ -686,6 +701,19 @@ export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: 
       rightState.queryKeys = [];
       urlState.queries = [];
       rightState.urlState = urlState;
+      if (options.range) {
+        urlState.range = options.range.raw;
+        // This is super hacky. In traces to logs we want to create a link but also internally open split window.
+        // We use the same range object but the raw part is treated differently because it's parsed differently during
+        // init depending on whether we open split or new window.
+        rightState.range = {
+          ...options.range,
+          raw: {
+            from: options.range.from.utc().toISOString(),
+            to: options.range.to.utc().toISOString(),
+          },
+        };
+      }
 
       dispatch(splitOpenAction({ itemState: rightState }));
 
@@ -697,6 +725,7 @@ export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: 
       ];
 
       const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.datasourceUid);
+
       await dispatch(changeDatasource(ExploreId.right, dataSourceSettings!.name));
       await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
       await dispatch(runQueries(ExploreId.right));

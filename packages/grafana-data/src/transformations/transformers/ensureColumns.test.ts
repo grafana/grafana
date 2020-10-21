@@ -5,6 +5,7 @@ import { mockTransformationsRegistry } from '../../utils/tests/mockTransformatio
 import { transformDataFrame } from '../transformDataFrame';
 import { ensureColumnsTransformer } from './ensureColumns';
 import { seriesToColumnsTransformer } from './seriesToColumns';
+import { observableTester } from '../../utils/tests/observableTester';
 
 const seriesA = toDataFrame({
   fields: [
@@ -35,17 +36,19 @@ describe('ensureColumns transformer', () => {
     mockTransformationsRegistry([ensureColumnsTransformer, seriesToColumnsTransformer]);
   });
 
-  it('will transform to columns if time field exists and multiple frames', () => {
+  it('will transform to columns if time field exists and multiple frames', done => {
     const cfg = {
       id: DataTransformerID.ensureColumns,
       options: {},
     };
 
     const data = [seriesA, seriesBC];
-    const filtered = transformDataFrame([cfg], data);
 
-    expect(filtered.length).toEqual(1);
-    expect(filtered[0]).toMatchInlineSnapshot(`
+    observableTester().subscribeAndExpectOnNext({
+      observable: transformDataFrame([cfg], data),
+      expect: filtered => {
+        expect(filtered.length).toEqual(1);
+        expect(filtered[0]).toMatchInlineSnapshot(`
       Object {
         "fields": Array [
           Object {
@@ -108,29 +111,42 @@ describe('ensureColumns transformer', () => {
         "refId": undefined,
       }
     `);
+      },
+      done,
+    });
   });
 
-  it('will not transform to columns if time field is missing for any of the series', () => {
+  it('will not transform to columns if time field is missing for any of the series', done => {
     const cfg = {
       id: DataTransformerID.ensureColumns,
       options: {},
     };
 
     const data = [seriesBC, seriesNoTime];
-    const filtered = transformDataFrame([cfg], data);
 
-    expect(filtered).toEqual(data);
+    observableTester().subscribeAndExpectOnNext({
+      observable: transformDataFrame([cfg], data),
+      expect: filtered => {
+        expect(filtered).toEqual(data);
+      },
+      done,
+    });
   });
 
-  it('will not transform to columns if only one series', () => {
+  it('will not transform to columns if only one series', done => {
     const cfg = {
       id: DataTransformerID.ensureColumns,
       options: {},
     };
 
     const data = [seriesBC];
-    const filtered = transformDataFrame([cfg], data);
 
-    expect(filtered).toEqual(data);
+    observableTester().subscribeAndExpectOnNext({
+      observable: transformDataFrame([cfg], data),
+      expect: filtered => {
+        expect(filtered).toEqual(data);
+      },
+      done,
+    });
   });
 });

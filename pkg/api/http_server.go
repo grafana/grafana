@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/shorturls"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
@@ -29,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/login"
+	eval "github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -70,6 +73,8 @@ type HTTPServer struct {
 	BackendPluginManager backendplugin.Manager            `inject:""`
 	PluginManager        *plugins.PluginManager           `inject:""`
 	SearchService        *search.SearchService            `inject:""`
+	AlertNG              *eval.AlertNG                    `inject:""`
+	ShortURLService      *shorturls.ShortURLService       `inject:""`
 	Live                 *live.GrafanaLive
 	Listener             net.Listener
 }
@@ -106,11 +111,11 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		Handler: hs.macaron,
 	}
 	switch setting.Protocol {
-	case setting.HTTP2:
+	case setting.HTTP2Scheme:
 		if err := hs.configureHttp2(); err != nil {
 			return err
 		}
-	case setting.HTTPS:
+	case setting.HTTPSScheme:
 		if err := hs.configureHttps(); err != nil {
 			return err
 		}
@@ -138,7 +143,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	}()
 
 	switch setting.Protocol {
-	case setting.HTTP, setting.SOCKET:
+	case setting.HTTPScheme, setting.SocketScheme:
 		if err := hs.httpSrv.Serve(listener); err != nil {
 			if err == http.ErrServerClosed {
 				hs.log.Debug("server was shutdown gracefully")
@@ -146,7 +151,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 			}
 			return err
 		}
-	case setting.HTTP2, setting.HTTPS:
+	case setting.HTTP2Scheme, setting.HTTPSScheme:
 		if err := hs.httpSrv.ServeTLS(listener, setting.CertFile, setting.KeyFile); err != nil {
 			if err == http.ErrServerClosed {
 				hs.log.Debug("server was shutdown gracefully")
@@ -169,13 +174,13 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 	}
 
 	switch setting.Protocol {
-	case setting.HTTP, setting.HTTPS, setting.HTTP2:
+	case setting.HTTPScheme, setting.HTTPSScheme, setting.HTTP2Scheme:
 		listener, err := net.Listen("tcp", hs.httpSrv.Addr)
 		if err != nil {
 			return nil, errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
 		}
 		return listener, nil
-	case setting.SOCKET:
+	case setting.SocketScheme:
 		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
 		if err != nil {
 			return nil, errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
@@ -327,13 +332,13 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
-		Directory:  path.Join(setting.StaticRootPath, "views"),
+		Directory:  filepath.Join(setting.StaticRootPath, "views"),
 		IndentJSON: macaron.Env != macaron.PROD,
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
 	// These endpoints are used for monitoring the Grafana instance
-	// and should not be redirect or rejected.
+	// and should not be redirected or rejected.
 	m.Use(hs.healthzHandler)
 	m.Use(hs.apiHealthHandler)
 	m.Use(hs.metricsEndpoint)
@@ -391,7 +396,7 @@ func (hs *HTTPServer) healthzHandler(ctx *macaron.Context) {
 }
 
 // apiHealthHandler will return ok if Grafana's web server is running and it
-// can access the database. If the database cannot be access it will return
+// can access the database. If the database cannot be accessed it will return
 // http status code 503.
 func (hs *HTTPServer) apiHealthHandler(ctx *macaron.Context) {
 	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
@@ -406,7 +411,7 @@ func (hs *HTTPServer) apiHealthHandler(ctx *macaron.Context) {
 		data.Set("commit", setting.BuildCommit)
 	}
 
-	if err := bus.Dispatch(&models.GetDBHealthQuery{}); err != nil {
+	if !hs.databaseHealthy() {
 		data.Set("database", "failing")
 		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		ctx.Resp.WriteHeader(503)
@@ -437,7 +442,7 @@ func (hs *HTTPServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, 
 		}
 	}
 
-	if setting.Env == setting.DEV {
+	if setting.Env == setting.Dev {
 		headers = func(c *macaron.Context) {
 			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
 		}

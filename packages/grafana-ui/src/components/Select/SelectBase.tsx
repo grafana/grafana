@@ -113,6 +113,7 @@ export function SelectBase<T>({
   loadOptions,
   loadingMessage = 'Loading options...',
   maxMenuHeight = 300,
+  minMenuHeight,
   maxVisibleValues,
   menuPlacement = 'auto',
   menuPosition,
@@ -143,7 +144,7 @@ export function SelectBase<T>({
       }
       onChange(value);
     },
-    [isMulti, value, onChange]
+    [isMulti, onChange]
   );
   let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
   const creatableProps: any = {};
@@ -190,6 +191,7 @@ export function SelectBase<T>({
     isOptionDisabled,
     isSearchable,
     maxMenuHeight,
+    minMenuHeight,
     maxVisibleValues,
     menuIsOpen: isOpen,
     menuPlacement,
