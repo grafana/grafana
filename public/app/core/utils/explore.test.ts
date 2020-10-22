@@ -11,6 +11,7 @@ import {
   updateHistory,
   getExploreUrl,
   GetExploreUrlArguments,
+  getTimeRangeFromUrl,
 } from './explore';
 import store from 'app/core/store';
 import { DataQueryError, dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
@@ -276,6 +277,15 @@ describe('hasRefId', () => {
 
       expect(result).toBe(input.data[3].series[3]);
     });
+  });
+});
+
+describe('getTimeRangeFromUrl', () => {
+  it('should parse moment date', () => {
+    // convert date strings to moment object
+    const range = { from: dateTime('2020-10-22T10:44:33.615Z'), to: dateTime('2020-10-22T10:49:33.615Z') };
+    const result = getTimeRangeFromUrl(range, 'browser');
+    expect(result.raw).toEqual(range);
   });
 });
 
