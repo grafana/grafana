@@ -335,7 +335,7 @@ export interface ChangeMetricTypeAction extends Action<typeof CHANGE_METRIC_TYPE
 export interface ChangeMetricFieldAction extends Action<typeof CHANGE_METRIC_FIELD> {
   payload: {
     id: MetricAggregation['id'];
-    field: string;
+    field: MetricAggregationWithField['field'];
   };
 }
 export interface ToggleMetricVisibilityAction extends Action<typeof TOGGLE_METRIC_VISIBILITY> {

@@ -4,6 +4,8 @@ import {
   BucketAggregationAction,
   REMOVE_BUCKET_AGG,
   CHANGE_BUCKET_AGG_TYPE,
+  CHANGE_BUCKET_AGG_FIELD,
+  BucketAggregationWithField,
 } from './types';
 
 export const addBucketAggregation = (aggregationType: BucketAggregation['type']): BucketAggregationAction => ({
@@ -28,5 +30,16 @@ export const changeBucketAggregationType = (
   payload: {
     id,
     newType,
+  },
+});
+
+export const changeBucketAggregationField = (
+  id: BucketAggregationWithField['id'],
+  newField: BucketAggregationWithField['field']
+): BucketAggregationAction => ({
+  type: CHANGE_BUCKET_AGG_FIELD,
+  payload: {
+    id,
+    newField,
   },
 });

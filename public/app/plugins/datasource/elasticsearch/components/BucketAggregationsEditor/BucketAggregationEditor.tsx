@@ -4,8 +4,13 @@ import React, { ComponentProps, FunctionComponent } from 'react';
 import { bucketAggregationConfig } from '../../query_def';
 import { useDatasource, useDispatch } from '../ElasticsearchQueryContext';
 import { marginZero } from '../styles';
-import { changeBucketAggregationType } from './state/actions';
-import { BucketAggregation, BucketAggregationAction, BucketAggregationType } from './state/types';
+import { changeBucketAggregationField, changeBucketAggregationType } from './state/actions';
+import {
+  BucketAggregation,
+  BucketAggregationAction,
+  BucketAggregationType,
+  isBucketAggregationWithField,
+} from './state/types';
 
 const bucketAggOptions: Array<SelectableValue<BucketAggregationType>> = Object.entries(bucketAggregationConfig).map(
   ([key, { label }]) => ({
@@ -47,8 +52,13 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
         />
       </InlineField>
 
-      {bucketAggregationConfig[value.type].requiresField && (
-        <SegmentAsync loadOptions={getFields} onChange={() => {}} placeholder="Select Field" value={value.field} />
+      {isBucketAggregationWithField(value) && (
+        <SegmentAsync
+          loadOptions={getFields}
+          onChange={e => dispatch(changeBucketAggregationField(value.id, e.value))}
+          placeholder="Select Field"
+          value={value.field}
+        />
       )}
     </>
   );

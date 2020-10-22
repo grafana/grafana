@@ -1,18 +1,28 @@
 import { Action } from '../../../hooks/useReducerCallback';
+import { bucketAggregationConfig } from '../../../query_def';
 
 export const ADD_BUCKET_AGG = '@bucketAggs/add';
 export const REMOVE_BUCKET_AGG = '@bucketAggs/remove';
 export const CHANGE_BUCKET_AGG_TYPE = '@bucketAggs/change_type';
+export const CHANGE_BUCKET_AGG_FIELD = '@bucketAggs/change_field';
 
 export type BucketAggregationType = 'terms' | 'filters' | 'geohash_grid' | 'date_histogram' | 'histogram';
 
 interface BaseBucketAggregation {
   id: string;
   type: BucketAggregationType;
+  settings?: Record<string, unknown>;
+}
+
+export interface BucketAggregationWithField extends BaseBucketAggregation {
   field?: string;
 }
 
-interface DateHistogram extends BaseBucketAggregation {
+export const isBucketAggregationWithField = (
+  bucketAgg: BucketAggregation | BucketAggregationWithField
+): bucketAgg is BucketAggregationWithField => bucketAggregationConfig[bucketAgg.type].requiresField;
+
+interface DateHistogram extends BucketAggregationWithField {
   type: 'date_histogram';
   settings?: {
     interval?: string;
@@ -22,7 +32,40 @@ interface DateHistogram extends BaseBucketAggregation {
   };
 }
 
-export type BucketAggregation = DateHistogram;
+interface Histogram extends BucketAggregationWithField {
+  type: 'histogram';
+  settings?: {
+    interval?: string;
+    min_doc_count?: string;
+  };
+}
+
+interface Terms extends BucketAggregationWithField {
+  type: 'terms';
+  settings?: {
+    order?: 'top' | 'bottom';
+    size?: number;
+    min_doc_count?: string;
+    orderBy?: string;
+    missing?: string;
+  };
+}
+
+interface Filters extends BaseBucketAggregation {
+  type: 'filters';
+  settings?: {
+    filters?: Array<{ query?: string; label?: string }>;
+  };
+}
+
+interface GeoHashGrid extends BucketAggregationWithField {
+  type: 'geohash_grid';
+  settings?: {
+    precision?: number;
+  };
+}
+
+export type BucketAggregation = DateHistogram | Histogram | Terms | Filters | GeoHashGrid;
 
 //
 // Action Types
@@ -45,7 +88,15 @@ export interface ChangeBucketAggregationTypeAction extends Action<typeof CHANGE_
   };
 }
 
+export interface ChangeBucketAggregationFieldAction extends Action<typeof CHANGE_BUCKET_AGG_FIELD> {
+  payload: {
+    id: BucketAggregation['id'];
+    newField: BucketAggregationWithField['field'];
+  };
+}
+
 export type BucketAggregationAction =
   | AddBucketAggregationAction
   | RemoveBucketAggregationAction
-  | ChangeBucketAggregationTypeAction;
+  | ChangeBucketAggregationTypeAction
+  | ChangeBucketAggregationFieldAction;

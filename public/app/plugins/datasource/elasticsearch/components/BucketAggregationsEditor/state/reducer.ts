@@ -8,6 +8,7 @@ import {
   BucketAggregationAction,
   REMOVE_BUCKET_AGG,
   CHANGE_BUCKET_AGG_TYPE,
+  CHANGE_BUCKET_AGG_FIELD,
 } from './types';
 
 export const reducer = (
@@ -33,6 +34,18 @@ export const reducer = (
         return {
           ...bucketAgg,
           type: action.payload.newType,
+        } as BucketAggregation;
+      });
+
+    case CHANGE_BUCKET_AGG_FIELD:
+      return state.map(bucketAgg => {
+        if (bucketAgg.id !== action.payload.id) {
+          return bucketAgg;
+        }
+
+        return {
+          ...bucketAgg,
+          field: action.payload.newField,
         };
       });
 
