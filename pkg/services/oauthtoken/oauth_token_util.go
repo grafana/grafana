@@ -2,7 +2,6 @@ package oauthtoken
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -15,34 +14,35 @@ var (
 	logger = log.New("oauthtoken")
 )
 
-func GetCurrentOAuthToken(ctx context.Context, user *models.SignedInUser) (*oauth2.Token, error) {
+// GetCurrentOAuthToken returns the OAuth token, if any, for the authenticated user. Will try to refresh the token if it has expired.
+func GetCurrentOAuthToken(ctx context.Context, user *models.SignedInUser) *oauth2.Token {
 	if user == nil {
 		// No user, therefore no token
-		return nil, nil
+		return nil
 	}
 
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: user.UserId}
 	if err := bus.Dispatch(authInfoQuery); err != nil {
 		if err == models.ErrUserNotFound {
 			// Not necessarily an error.  User may be logged in another way.
-			logger.Debug("No oauth token for user", "userid", user.UserId, "username", user.Login)
+			logger.Debug("no OAuth token for user found", "userId", user.UserId, "username", user.Login)
 		} else {
-			logger.Error("Error getting oauth token for user", "userid", user.UserId, "username", user.Login, "error", err)
+			logger.Error("failed to get OAuth token for user", "userId", user.UserId, "username", user.Login, "error", err)
 		}
-		return nil, nil
+		return nil
 	}
 
 	authProvider := authInfoQuery.Result.AuthModule
 	connect, err := social.GetConnector(authProvider)
 	if err != nil {
-		logger.Error("failed to get OAuth connector", "error", err)
-		return nil, errors.New("failed to retrieve OAuth token")
+		logger.Error("failed to get OAuth connector", "provider", authProvider, "error", err)
+		return nil
 	}
 
 	client, err := social.GetOAuthHttpClient(authProvider)
 	if err != nil {
-		logger.Error("failed to create OAuth http client", "error", err)
-		return nil, errors.New("failed to retrieve OAuth token")
+		logger.Error("failed to get OAuth http client", "provider", authProvider, "error", err)
+		return nil
 	}
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
 
@@ -55,8 +55,8 @@ func GetCurrentOAuthToken(ctx context.Context, user *models.SignedInUser) (*oaut
 	// TokenSource handles refreshing the token if it has expired
 	token, err := connect.TokenSource(ctx, persistedToken).Token()
 	if err != nil {
-		logger.Error("failed to retrieve access token from OAuth", "provider", authInfoQuery.Result.AuthModule, "userid", user.UserId, "username", user.Login, "error", err)
-		return nil, errors.New("failed to retrieve OAuth token")
+		logger.Error("failed to retrieve OAuth access token", "provider", authInfoQuery.Result.AuthModule, "userId", user.UserId, "username", user.Login, "error", err)
+		return nil
 	}
 
 	// If the tokens are not the same, update the entry in the DB
@@ -68,14 +68,15 @@ func GetCurrentOAuthToken(ctx context.Context, user *models.SignedInUser) (*oaut
 			OAuthToken: token,
 		}
 		if err := bus.Dispatch(updateAuthCommand); err != nil {
-			logger.Error("failed to update auth info during token refresh", "userid", user.UserId, "username", user.Login, "error", err)
-			return nil, errors.New("failed to retrieve OAuth token")
+			logger.Error("failed to update auth info during token refresh", "userId", user.UserId, "username", user.Login, "error", err)
+			return nil
 		}
-		logger.Debug("Updated OAuth info while proxying an OAuth pass-thru request", "userid", user.UserId, "username", user.Login)
+		logger.Debug("updated OAuth info for user", "userId", user.UserId, "username", user.Login)
 	}
-	return token, nil
+	return token
 }
 
+// IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
 func IsOAuthPassThruEnabled(ds *models.DataSource) bool {
 	return ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool()
 }

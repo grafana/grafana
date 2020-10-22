@@ -208,14 +208,7 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		}
 
 		if oauthtoken.IsOAuthPassThruEnabled(proxy.ds) {
-			token, err := oauthtoken.GetCurrentOAuthToken(proxy.ctx.Req.Context(), proxy.ctx.SignedInUser)
-			if err != nil {
-				logger.Error("Error fetching OAuth token for user", "error", err)
-				return
-			}
-			// Token can still be nil if OAuthPassThruEnabled on the datasource, but the
-			// user is logged in another way.  The datasource can decide what to do.
-			if token != nil {
+			if token := oauthtoken.GetCurrentOAuthToken(proxy.ctx.Req.Context(), proxy.ctx.SignedInUser); token != nil {
 				req.Header.Del("Authorization")
 				req.Header.Add("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 			}
