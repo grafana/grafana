@@ -64,29 +64,29 @@ func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
 		return nil, err
 	}
 
-	if strings.Contains(req.URL.RawPath, "%2C") {
-		req.URL.RawPath = rest.EscapePath(req.URL.RawPath, false)
-	}
-
-	// if X-Forwarded-For header exists, exclude from signing since it breaks AWS request verification
-	forwardHeader := req.Header.Get("X-Forwarded-For")
-	if forwardHeader != "" {
-		req.Header.Del("X-Forwarded-For")
-	}
-
 	body, err := replaceBody(req)
 	if err != nil {
 		return nil, err
 	}
 
-	header, err := signer.Sign(req, bytes.NewReader(body), awsServiceNamespace(m.Config.DatasourceType), m.Config.Region, time.Now().UTC())
-
-	// reset X-Forwarded-For header if it existed pre-signing
-	if forwardHeader != "" {
-		req.Header.Set("X-Forwarded-For", forwardHeader)
+	if strings.Contains(req.URL.RawPath, "%2C") {
+		req.URL.RawPath = rest.EscapePath(req.URL.RawPath, false)
 	}
 
-	return header, err
+	// if X-Forwarded-For header is present, omit during signing step as it breaks AWS request verification
+	forwardHeader := req.Header.Get("X-Forwarded-For")
+	if forwardHeader != "" {
+		req.Header.Del("X-Forwarded-For")
+
+		header, err := signer.Sign(req, bytes.NewReader(body), awsServiceNamespace(m.Config.DatasourceType), m.Config.Region, time.Now().UTC())
+
+		// reset pre-existing X-Forwarded-For header value
+		req.Header.Set("X-Forwarded-For", forwardHeader)
+
+		return header, err
+	}
+
+	return signer.Sign(req, bytes.NewReader(body), awsServiceNamespace(m.Config.DatasourceType), m.Config.Region, time.Now().UTC())
 }
 
 func (m *SigV4Middleware) signer() (*v4.Signer, error) {
