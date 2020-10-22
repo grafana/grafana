@@ -34,6 +34,7 @@ import { updateOptions } from '../state/actions';
 import { notifyApp } from '../../../core/reducers/appNotification';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { setVariableQueryRunner, VariableQueryRunner } from './variableQueryRunner';
 
 const mocks: Record<string, any> = {
   datasource: {
@@ -70,6 +71,7 @@ describe('query actions', () => {
     setTimeSrv(({
       timeRange: jest.fn().mockReturnValue(DefaultTimeRange),
     } as unknown) as TimeSrv);
+    setVariableQueryRunner(new VariableQueryRunner());
   });
 
   afterEach(() => {
