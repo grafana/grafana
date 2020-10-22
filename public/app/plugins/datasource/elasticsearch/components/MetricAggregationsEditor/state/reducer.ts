@@ -85,7 +85,7 @@ export const reducer = (
           // FIXME: this can be done in a better way, also romeving empty objects
           const newSettings = Object.entries({
             ...metric.settings,
-            [action.payload.setting]: action.payload.newValue,
+            [action.payload.settingName]: action.payload.newValue,
           }).reduce((acc, [key, value]) => {
             if (value?.length === 0) {
               return { ...acc };

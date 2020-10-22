@@ -9,6 +9,7 @@ import { ToggleVisibilityButton } from '../ToggleVisibilityButton';
 import { SettingsEditor } from './SettingsEditor';
 import {
   isMetricAggregationWithField,
+  isMetricAggregationWithSettings,
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
   MetricAggregation,
@@ -106,9 +107,11 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
           )}
         </div>
 
-        <div className={css(flex, flexColumn)}>
-          <SettingsEditor metric={value} previousMetrics={previousMetrics} />
-        </div>
+        {isMetricAggregationWithSettings(value) && (
+          <div className={css(flex, flexColumn)}>
+            <SettingsEditor metric={value} previousMetrics={previousMetrics} />
+          </div>
+        )}
       </div>
 
       <ToggleVisibilityButton onClick={() => dispatch(toggleMetricVisibility(value.id))} hide={value.hide} />

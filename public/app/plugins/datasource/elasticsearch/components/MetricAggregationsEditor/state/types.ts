@@ -46,21 +46,13 @@ export interface MetricAggregationWithField extends BaseMetricAggregation {
   field: string;
 }
 
-export interface MetricAggregationWithSettings extends BaseMetricAggregation {
-  settings?: Record<string, unknown>;
-}
-
-export interface MetricAggregationWithMeta extends BaseMetricAggregation {
-  meta?: Record<string, string | boolean | undefined>;
-}
-
-export interface MetricAggregationWithMissingSupport extends MetricAggregationWithSettings {
+export interface MetricAggregationWithMissingSupport extends BaseMetricAggregation {
   settings?: {
     missing?: string;
   };
 }
 
-export interface MetricAggregationWithInlineScript extends MetricAggregationWithSettings {
+export interface MetricAggregationWithInlineScript extends BaseMetricAggregation {
   settings?: {
     script?: string;
   };
@@ -81,10 +73,7 @@ interface Average
   };
 }
 
-interface Sum
-  extends MetricAggregationWithField,
-    MetricAggregationWithMissingSupport,
-    MetricAggregationWithInlineScript {
+interface Sum extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'sum';
   settings?: {
     script?: string;
@@ -92,10 +81,7 @@ interface Sum
   };
 }
 
-interface Max
-  extends MetricAggregationWithField,
-    MetricAggregationWithMissingSupport,
-    MetricAggregationWithInlineScript {
+interface Max extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'max';
   settings?: {
     script?: string;
@@ -103,10 +89,7 @@ interface Max
   };
 }
 
-interface Min
-  extends MetricAggregationWithField,
-    MetricAggregationWithMissingSupport,
-    MetricAggregationWithInlineScript {
+interface Min extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'min';
   settings?: {
     script?: string;
@@ -129,11 +112,7 @@ export interface ExtendedStat {
   default: boolean;
 }
 
-interface ExtendedStats
-  extends MetricAggregationWithField,
-    MetricAggregationWithMeta,
-    MetricAggregationWithMissingSupport,
-    MetricAggregationWithInlineScript {
+interface ExtendedStats extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'extended_stats';
   settings?: {
     script?: string;
@@ -145,10 +124,7 @@ interface ExtendedStats
   };
 }
 
-interface Percentiles
-  extends MetricAggregationWithField,
-    MetricAggregationWithMissingSupport,
-    MetricAggregationWithInlineScript {
+interface Percentiles extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'percentiles';
   settings?: {
     percents?: string[];
@@ -157,22 +133,22 @@ interface Percentiles
   };
 }
 
-interface UniqueCount extends MetricAggregationWithField, MetricAggregationWithMissingSupport {
+export interface UniqueCount extends MetricAggregationWithField {
   type: 'cardinality';
-  settings?: {
+  settings: {
     precision_threshold?: string;
     missing?: string;
   };
 }
 
-interface RawDocument extends MetricAggregationWithSettings {
+interface RawDocument extends BaseMetricAggregation {
   type: 'raw_document';
   settings?: {
     size?: string;
   };
 }
 
-interface RawData extends MetricAggregationWithSettings {
+interface RawData extends BaseMetricAggregation {
   type: 'raw_data';
   settings?: {
     size?: string;
@@ -187,7 +163,7 @@ export interface BasePipelineMetricAggregation extends MetricAggregationWithFiel
   type: PipelineMetricAggregationType;
 }
 
-interface PipelineMetricAggregationWithMultipleBucketPaths {
+interface PipelineMetricAggregationWithMultipleBucketPaths extends BaseMetricAggregation {
   type: PipelineMetricAggregationType;
   pipelineVariables?: PipelineVariable[];
 }
@@ -208,21 +184,21 @@ type BaseMovingAverageModelSettings = {
 } & { [P in MovingAverageSettingsKey]?: string };
 
 interface MovingAverageEWMAModelSettings extends BaseMovingAverageModelSettings {
-  alpha?: string;
-  minimize?: string;
+  alpha: string;
+  minimize: string;
 }
 interface MovingAverageHoltModelSettings extends BaseMovingAverageModelSettings {
-  alpha?: string;
-  beta?: string;
-  minimize?: string;
+  alpha: string;
+  beta: string;
+  minimize: string;
 }
 interface MovingAverageHoltWintersModelSettings extends BaseMovingAverageModelSettings {
-  alpha?: string;
-  beta?: string;
-  gamma?: string;
-  period?: string;
-  pad?: string;
-  minimize?: string;
+  alpha: string;
+  beta: string;
+  gamma: string;
+  period: string;
+  pad: string;
+  minimize: string;
 }
 
 type MovingAverageModelSettings =
@@ -236,26 +212,26 @@ export interface MovingAverageSettingDefinition {
   type?: 'boolean' | 'string';
 }
 
-interface MovingAverage extends BasePipelineMetricAggregation, MetricAggregationWithSettings {
+interface MovingAverage extends BasePipelineMetricAggregation {
   type: 'moving_avg';
   settings?: MovingAverageModelSettings;
 }
 
-interface Derivative extends BasePipelineMetricAggregation, MetricAggregationWithSettings {
+export interface Derivative extends BasePipelineMetricAggregation {
   type: 'derivative';
   settings?: {
     unit?: string;
   };
 }
 
-interface CumulativeSum extends BasePipelineMetricAggregation, MetricAggregationWithSettings {
+interface CumulativeSum extends BasePipelineMetricAggregation {
   type: 'cumulative_sum';
   settings?: {
     format?: string;
   };
 }
 
-export interface BucketScript extends PipelineMetricAggregationWithMultipleBucketPaths, MetricAggregationWithSettings {
+export interface BucketScript extends PipelineMetricAggregationWithMultipleBucketPaths {
   type: 'bucket_script';
   settings?: {
     script?: string;
@@ -264,19 +240,26 @@ export interface BucketScript extends PipelineMetricAggregationWithMultipleBucke
 
 type PipelineMetricAggregation = MovingAverage | Derivative | CumulativeSum | BucketScript;
 
-export type MetricAggregation =
-  | Count
-  | Average
-  | Sum
-  | Max
-  | Min
-  | ExtendedStats
-  | Percentiles
-  | UniqueCount
-  | PipelineMetricAggregation
-  | RawDocument
+export type MetricAggregationWithSettings =
+  | BucketScript
+  | CumulativeSum
+  | Derivative
   | RawData
-  | Logs;
+  | RawDocument
+  | UniqueCount
+  | Percentiles
+  | ExtendedStats
+  | Min
+  | Max
+  | Sum
+  | Average
+  | MovingAverage;
+
+export type MetricAggregationWithMeta = ExtendedStats;
+
+export type MetricAggregation = Count | Logs | PipelineMetricAggregation | MetricAggregationWithSettings;
+
+export type SettingKeyOf<T extends MetricAggregationWithSettings> = Extract<keyof NonNullable<T['settings']>, string>;
 
 /**
  * Checks if `metric` requires a field (either referring to a document or another aggregation)
@@ -344,17 +327,16 @@ export interface ToggleMetricVisibilityAction extends Action<typeof TOGGLE_METRI
   };
 }
 
-export interface ChangeMetricSettingAction<T extends MetricAggregationWithSettings = MetricAggregationWithSettings>
+export interface ChangeMetricSettingAction<T extends MetricAggregationWithSettings>
   extends Action<typeof CHANGE_METRIC_SETTING> {
   payload: {
     metric: T;
-    setting: Extract<keyof Required<T>['settings'], string>;
+    settingName: SettingKeyOf<T>;
     newValue: unknown;
   };
 }
 
-export interface ChangeMetricMetaAction<T extends MetricAggregationWithMeta = MetricAggregationWithMeta>
-  extends Action<typeof CHANGE_METRIC_META> {
+export interface ChangeMetricMetaAction<T extends MetricAggregationWithMeta> extends Action<typeof CHANGE_METRIC_META> {
   payload: {
     metric: T;
     meta: Extract<keyof Required<T>['meta'], string>;
@@ -363,7 +345,7 @@ export interface ChangeMetricMetaAction<T extends MetricAggregationWithMeta = Me
 }
 
 export interface ChangeMetricAttributeAction<
-  T extends BaseMetricAggregation = MetricAggregation,
+  T extends BaseMetricAggregation,
   K extends Extract<keyof T, string> = Extract<keyof T, string>
 > extends Action<typeof CHANGE_METRIC_ATTRIBUTE> {
   payload: {
@@ -373,12 +355,15 @@ export interface ChangeMetricAttributeAction<
   };
 }
 
-export type MetricAggregationAction<T extends MetricAggregation = MetricAggregation> =
+type CommonActions =
   | AddMetricAction
   | RemoveMetricAction
   | ChangeMetricTypeAction
   | ChangeMetricFieldAction
-  | ToggleMetricVisibilityAction
+  | ToggleMetricVisibilityAction;
+
+export type MetricAggregationAction<T extends MetricAggregation = MetricAggregation> =
+  | (T extends MetricAggregationWithSettings ? ChangeMetricSettingAction<T> : never)
+  | (T extends MetricAggregationWithMeta ? ChangeMetricMetaAction<T> : never)
   | ChangeMetricAttributeAction<T>
-  | ChangeMetricSettingAction<T>
-  | ChangeMetricMetaAction<T>;
+  | CommonActions;

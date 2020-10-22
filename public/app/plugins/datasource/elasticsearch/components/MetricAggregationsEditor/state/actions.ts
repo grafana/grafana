@@ -14,6 +14,7 @@ import {
   ChangeMetricAttributeAction,
   ChangeMetricSettingAction,
   ChangeMetricMetaAction,
+  SettingKeyOf,
 } from './types';
 
 export const addMetric = (metricType: MetricAggregation['type']): MetricAggregationAction => ({
@@ -56,10 +57,7 @@ export const toggleMetricVisibility = (id: MetricAggregation['id']): MetricAggre
   },
 });
 
-export const changeMetricAttribute = <
-  T extends MetricAggregation = MetricAggregation,
-  K extends Extract<keyof T, string> = Extract<keyof T, string>
->(
+export const changeMetricAttribute = <T extends MetricAggregation, K extends Extract<keyof T, string>>(
   metric: T,
   attribute: K,
   newValue: T[K]
@@ -72,20 +70,21 @@ export const changeMetricAttribute = <
   },
 });
 
-export const changeMetricSetting = <T extends MetricAggregationWithSettings = MetricAggregationWithSettings>(
+export const changeMetricSetting = <T extends MetricAggregationWithSettings, K extends SettingKeyOf<T>>(
   metric: T,
-  setting: Extract<keyof Required<T>['settings'], string>,
-  newValue: string | number | string[]
+  settingName: K,
+  // Maybe this could have been NonNullable<T['settings']>[K], but it doesn't seem to work really well
+  newValue: string | string[]
 ): ChangeMetricSettingAction<T> => ({
   type: CHANGE_METRIC_SETTING,
   payload: {
     metric,
-    setting,
+    settingName,
     newValue,
   },
 });
 
-export const changeMetricMeta = <T extends MetricAggregationWithMeta = MetricAggregationWithMeta>(
+export const changeMetricMeta = <T extends MetricAggregationWithMeta>(
   metric: T,
   meta: Extract<keyof Required<T>['meta'], string>,
   newValue: string | number
