@@ -25,9 +25,6 @@ const (
 	Credentials AuthType = "credentials"
 )
 
-// Whether the byte value can be sent without escaping in AWS URLs
-var noEscape [256]bool
-
 type SigV4Middleware struct {
 	Config *Config
 	Next   http.RoundTripper
@@ -46,24 +43,6 @@ type Config struct {
 	AssumeRoleARN string
 	ExternalID    string
 	Region        string
-}
-
-func NewSigV4Middleware(config *Config, next http.RoundTripper) (m *SigV4Middleware) {
-	for i := 0; i < len(noEscape); i++ {
-		// AWS expects every character except these to be escaped
-		noEscape[i] = (i >= 'A' && i <= 'Z') ||
-			(i >= 'a' && i <= 'z') ||
-			(i >= '0' && i <= '9') ||
-			i == '-' ||
-			i == '.' ||
-			i == '_' ||
-			i == '~'
-	}
-
-	return &SigV4Middleware{
-		Config: config,
-		Next:   next,
-	}
 }
 
 func (m *SigV4Middleware) RoundTrip(req *http.Request) (*http.Response, error) {
