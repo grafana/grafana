@@ -43,7 +43,7 @@ export const PluginsErrorsInfoUnconnected: React.FC<PluginsErrorsInfoProps> = ({
     <InfoBox
       aria-label={selectors.pages.PluginsList.signatureErrorNotice}
       severity="warning"
-      urlTitle="Read more about plugins signing"
+      urlTitle="Read more about plugin signing"
       url="TODO"
     >
       <div>
