@@ -62,6 +62,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
 
     const update = { ...query, scenarioId: item.value! };
 
+    if (scenario.stringInput) {
+      update.stringInput = scenario.stringInput;
+    }
+
     if (scenario.id === 'grafana_api') {
       update.stringInput = 'datasources';
     } else if (scenario.id === 'streaming_client') {

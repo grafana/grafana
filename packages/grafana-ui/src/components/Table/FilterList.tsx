@@ -24,7 +24,7 @@ export const FilterList: FC<Props> = ({ options, values, onChange }) => {
     searchFilter,
   ]);
   const gutter = parseInt(theme.spacing.sm, 10);
-  const height = useMemo(() => Math.min(items.length * ITEM_HEIGHT, MIN_HEIGHT) + gutter, [items]);
+  const height = useMemo(() => Math.min(items.length * ITEM_HEIGHT, MIN_HEIGHT) + gutter, [gutter, items.length]);
 
   const onInputChange = useCallback(
     (event: React.FormEvent<HTMLInputElement>) => {
