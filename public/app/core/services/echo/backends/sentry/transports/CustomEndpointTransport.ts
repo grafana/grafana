@@ -3,14 +3,16 @@ import { logger, parseRetryAfterHeader, PromiseBuffer, supportsReferrerPolicy, S
 import { Response, Status, TransportOptions } from '@sentry/types';
 import { BaseTransport } from '../types';
 
-/**
- * This is a copy of sentry's FetchTransport, edited to be able to push to any custom url
- * instead of using Sentry-specific endpoint logic
- */
-
 export interface CustomEndpointTransportOptions extends Omit<TransportOptions, 'dsn'> {
   endpoint: string;
 }
+
+/**
+ * This is a copy of sentry's FetchTransport, edited to be able to push to any custom url
+ * instead of using Sentry-specific endpoint logic.
+ * Also transofrms some of the payload values to be parseable by go.
+ * Sends events sequanetially and implements back-off in case of rate limiting.
+ */
 
 export class CustomEndpointTransport implements BaseTransport {
   /** Locks transport after receiving 429 response */
@@ -33,6 +35,17 @@ export class CustomEndpointTransport implements BaseTransport {
       // convert all timestamps to iso string, so it's parseable by backend
       body: JSON.stringify({
         ...event,
+        exception: event.exception
+          ? {
+              values: event.exception.values?.map(value => ({
+                ...value,
+                // according to both typescript and go types, value is supposed to be string.
+                // but in some odd cases at runtime it turns out to be an empty object {}
+                // let's fix it here
+                value: fmtSentryErrorValue(value.value),
+              })),
+            }
+          : event.exception,
         breadcrumbs: event.breadcrumbs?.map(breadcrumb => ({
           ...breadcrumb,
           timestamp: makeTimestamp(breadcrumb.timestamp),
@@ -95,4 +108,13 @@ function makeTimestamp(time: number | undefined): string {
     return new Date(time * 1000).toISOString();
   }
   return new Date().toISOString();
+}
+
+function fmtSentryErrorValue(value: unknown): string | undefined {
+  if (typeof value === 'string' || value === undefined) {
+    return value;
+  } else if (value && typeof value === 'object' && Object.keys(value).length === 0) {
+    return '';
+  }
+  return String(value);
 }
