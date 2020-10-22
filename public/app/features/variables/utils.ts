@@ -1,8 +1,9 @@
 import isString from 'lodash/isString';
 import { ScopedVars } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+
 import { ALL_VARIABLE_TEXT } from './state/types';
 import { QueryVariableModel, VariableRefresh } from './types';
-import { getTemplateSrv } from '@grafana/runtime';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 
 /*

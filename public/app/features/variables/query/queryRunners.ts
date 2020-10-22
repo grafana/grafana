@@ -1,4 +1,5 @@
 import { from, Observable, of } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
 import { DataQuery, DataQueryRequest, DataSourceApi, DefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
 
 import { QueryVariableModel } from '../types';
@@ -8,39 +9,65 @@ import {
   hasLegacyVariableSupport,
   hasStandardVariableSupport,
 } from '../guard';
-import { runRequest } from 'app/features/dashboard/state/runRequest';
 import { getLegacyQueryOptions } from '../utils';
-import { mergeMap } from 'rxjs/operators';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 
 export interface RunnerArgs {
-  dataSource: DataSourceApi;
-  searchFilter?: string;
   variable: QueryVariableModel;
+  dataSource: DataSourceApi;
   timeSrv: TimeSrv;
+  runRequest: (
+    datasource: DataSourceApi,
+    request: DataQueryRequest,
+    queryFunction?: typeof datasource.query
+  ) => Observable<PanelData>;
+  searchFilter?: string;
 }
 
+type QueryRunnerType = 'legacy' | 'standard' | 'custom' | 'datasource';
+type GetTargetArgs = { dataSource: DataSourceApi; variable: QueryVariableModel };
+
 export interface QueryRunner {
-  canRun: (args: RunnerArgs) => boolean;
-  getTarget: (args: RunnerArgs) => DataQuery | null;
+  type: QueryRunnerType;
+  canRun: (dataSource: DataSourceApi) => boolean;
+  getTarget: (args: GetTargetArgs) => DataQuery;
   runRequest: (args: RunnerArgs, request: DataQueryRequest) => Observable<PanelData>;
 }
 
-export function getQueryRunners(): QueryRunner[] {
-  return [new LegacyQueryRunner(), new StandardQueryRunner(), new CustomQueryRunner(), new DatasourceQueryRunner()];
+export class QueryRunners {
+  private readonly runners: QueryRunner[];
+  constructor() {
+    this.runners = [
+      new LegacyQueryRunner(),
+      new StandardQueryRunner(),
+      new CustomQueryRunner(),
+      new DatasourceQueryRunner(),
+    ];
+  }
+
+  getRunnerForDatasource(datasource: DataSourceApi): QueryRunner {
+    const runner = this.runners.find(runner => runner.canRun(datasource));
+    if (runner) {
+      return runner;
+    }
+
+    throw new Error("Couldn't find a query runner that matches supplied arguments.");
+  }
 }
 
-export class LegacyQueryRunner implements QueryRunner {
-  canRun({ dataSource }: RunnerArgs) {
+class LegacyQueryRunner implements QueryRunner {
+  type: QueryRunnerType = 'legacy';
+
+  canRun(dataSource: DataSourceApi) {
     return hasLegacyVariableSupport(dataSource);
   }
 
-  getTarget({ dataSource, variable }: RunnerArgs) {
-    if (!hasLegacyVariableSupport(dataSource)) {
-      return null;
+  getTarget({ dataSource, variable }: GetTargetArgs) {
+    if (hasLegacyVariableSupport(dataSource)) {
+      return variable.query;
     }
 
-    return variable.query;
+    throw new Error("Couldn't create a target with supplied arguments.");
   }
 
   runRequest({ dataSource, variable, searchFilter, timeSrv }: RunnerArgs, request: DataQueryRequest) {
@@ -57,52 +84,56 @@ export class LegacyQueryRunner implements QueryRunner {
         }
 
         const series: any = values;
-        return of({ series, state: LoadingState.Done, timeRange: timeSrv.timeRange() });
+        return of({ series, state: LoadingState.Done, timeRange: DefaultTimeRange });
       })
     );
   }
 }
 
-export class StandardQueryRunner implements QueryRunner {
-  canRun({ dataSource }: RunnerArgs) {
+class StandardQueryRunner implements QueryRunner {
+  type: QueryRunnerType = 'standard';
+
+  canRun(dataSource: DataSourceApi) {
     return hasStandardVariableSupport(dataSource);
   }
 
-  getTarget({ dataSource, variable }: RunnerArgs) {
-    if (!hasStandardVariableSupport(dataSource)) {
-      return null;
+  getTarget({ dataSource, variable }: GetTargetArgs) {
+    if (hasStandardVariableSupport(dataSource)) {
+      return dataSource.variables.standard.toDataQuery(variable.query);
     }
 
-    return dataSource.variables.standard.toDataQuery(variable.query);
+    throw new Error("Couldn't create a target with supplied arguments.");
   }
 
-  runRequest({ dataSource }: RunnerArgs, request: DataQueryRequest) {
+  runRequest({ dataSource, runRequest }: RunnerArgs, request: DataQueryRequest) {
     if (!hasStandardVariableSupport(dataSource)) {
       return getEmptyMetricFindValueObservable();
     }
 
     if (!dataSource.variables.standard.query) {
-      runRequest(dataSource, request);
+      return runRequest(dataSource, request);
     }
 
     return runRequest(dataSource, request, dataSource.variables.standard.query);
   }
 }
 
-export class CustomQueryRunner implements QueryRunner {
-  canRun({ dataSource }: RunnerArgs) {
+class CustomQueryRunner implements QueryRunner {
+  type: QueryRunnerType = 'custom';
+
+  canRun(dataSource: DataSourceApi) {
     return hasCustomVariableSupport(dataSource);
   }
 
-  getTarget({ dataSource, variable }: RunnerArgs) {
-    if (!hasCustomVariableSupport(dataSource)) {
-      return null;
+  getTarget({ dataSource, variable }: GetTargetArgs) {
+    if (hasCustomVariableSupport(dataSource)) {
+      return variable.query;
     }
 
-    return variable.query;
+    throw new Error("Couldn't create a target with supplied arguments.");
   }
 
-  runRequest({ dataSource }: RunnerArgs, request: DataQueryRequest) {
+  runRequest({ dataSource, runRequest }: RunnerArgs, request: DataQueryRequest) {
     if (!hasCustomVariableSupport(dataSource)) {
       return getEmptyMetricFindValueObservable();
     }
@@ -111,20 +142,22 @@ export class CustomQueryRunner implements QueryRunner {
   }
 }
 
-export class DatasourceQueryRunner implements QueryRunner {
-  canRun({ dataSource }: RunnerArgs) {
+class DatasourceQueryRunner implements QueryRunner {
+  type: QueryRunnerType = 'datasource';
+
+  canRun(dataSource: DataSourceApi) {
     return hasDatasourceVariableSupport(dataSource);
   }
 
-  getTarget({ dataSource, variable }: RunnerArgs) {
-    if (!hasDatasourceVariableSupport(dataSource)) {
-      return null;
+  getTarget({ dataSource, variable }: GetTargetArgs) {
+    if (hasDatasourceVariableSupport(dataSource)) {
+      return variable.query;
     }
 
-    return variable.query;
+    throw new Error("Couldn't create a target with supplied arguments.");
   }
 
-  runRequest({ dataSource }: RunnerArgs, request: DataQueryRequest) {
+  runRequest({ dataSource, runRequest }: RunnerArgs, request: DataQueryRequest) {
     if (!hasDatasourceVariableSupport(dataSource)) {
       return getEmptyMetricFindValueObservable();
     }
@@ -133,6 +166,6 @@ export class DatasourceQueryRunner implements QueryRunner {
   }
 }
 
-export function getEmptyMetricFindValueObservable(): Observable<PanelData> {
+function getEmptyMetricFindValueObservable(): Observable<PanelData> {
   return of({ state: LoadingState.Done, series: [], timeRange: DefaultTimeRange });
 }

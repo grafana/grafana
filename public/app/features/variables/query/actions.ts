@@ -14,7 +14,7 @@ import { importDataSourcePlugin } from '../../plugins/plugin_loader';
 import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
 import { variableQueryEditorFactory } from '../editor/factories';
 import { Subscription } from 'rxjs';
-import { variableQueryRunner } from './variableQueryRunner';
+import { getVariableQueryRunner } from './variableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
 
 export const updateQueryVariableOptions = (
@@ -35,10 +35,12 @@ export const updateQueryVariableOptions = (
       await new Promise((resolve, reject) => {
         const subscription: Subscription = new Subscription();
         const observer = variableQueryObserver(resolve, reject, subscription);
-        const responseSubscription = variableQueryRunner.getResponse(identifier).subscribe(observer);
+        const responseSubscription = getVariableQueryRunner()
+          .getResponse(identifier)
+          .subscribe(observer);
         subscription.add(responseSubscription);
 
-        variableQueryRunner.queueRequest({ identifier, dataSource, searchFilter });
+        getVariableQueryRunner().queueRequest({ identifier, dataSource, searchFilter });
       });
     } catch (err) {
       const error = toDataQueryError(err);

@@ -30,10 +30,10 @@ import {
   AppEvents,
   setLocale,
   setMarkdownOptions,
+  setTimeZoneResolver,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
-  setTimeZoneResolver,
 } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { checkBrowserCompatibility } from 'app/core/utils/browser';
@@ -47,10 +47,11 @@ import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
-import { getStandardFieldConfigs, getStandardOptionEditors, getScrollbarWidth } from '@grafana/ui';
+import { getScrollbarWidth, getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
+import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/variableQueryRunner';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -103,6 +104,7 @@ export class GrafanaApp {
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
     standardTransformersRegistry.setInit(getStandardTransformers);
     variableAdapters.setInit(getDefaultVariableAdapters);
+    setVariableQueryRunner(new VariableQueryRunner());
 
     app.config(
       (

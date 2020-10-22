@@ -24,7 +24,8 @@ import { getLegacyQueryOptions, getTemplatedRegex } from '../utils';
 import { validateVariableSelectionState } from '../state/actions';
 import { v4 as uuidv4 } from 'uuid';
 import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
-import { getQueryRunners, QueryRunner } from './queryRunners';
+import { QueryRunners } from './queryRunners';
+import { runRequest } from '../../dashboard/state/runRequest';
 
 interface UpdateOptionsArgs {
   identifier: VariableIdentifier;
@@ -44,15 +45,15 @@ interface VariableQueryRunnerArgs {
   getVariable: typeof getVariable;
   getTemplatedRegex: typeof getTemplatedRegex;
   getTimeSrv: typeof getTimeSrv;
-  getQueryRunners: typeof getQueryRunners;
+  queryRunners: QueryRunners;
+  runRequest: typeof runRequest;
 }
 
-class VariableQueryRunner {
+export class VariableQueryRunner {
   private readonly updateOptionsRequests: Subject<UpdateOptionsArgs>;
   private readonly updateOptionsResults: Subject<UpdateOptionsResults>;
   private readonly cancelRequests: Subject<{ identifier: VariableIdentifier }>;
   private readonly subscription: Unsubscribable;
-  private readonly queryRunners: QueryRunner[];
 
   constructor(
     private dependencies: VariableQueryRunnerArgs = {
@@ -61,7 +62,8 @@ class VariableQueryRunner {
       getVariable,
       getTemplatedRegex,
       getTimeSrv,
-      getQueryRunners,
+      queryRunners: new QueryRunners(),
+      runRequest,
     }
   ) {
     this.updateOptionsRequests = new Subject<UpdateOptionsArgs>();
@@ -70,7 +72,6 @@ class VariableQueryRunner {
     this.onNewRequest = this.onNewRequest.bind(this);
     this.runUpdateTagsRequest = this.runUpdateTagsRequest.bind(this);
     this.subscription = this.updateOptionsRequests.subscribe(this.onNewRequest);
-    this.queryRunners = this.dependencies.getQueryRunners();
   }
 
   queueRequest(args: UpdateOptionsArgs): void {
@@ -96,32 +97,20 @@ class VariableQueryRunner {
 
       this.updateOptionsResults.next({ identifier, state: LoadingState.Loading });
 
-      const variable = this.dependencies.getVariable<QueryVariableModel>(identifier.id, this.dependencies.getState());
-      const dispatch = this.dependencies.dispatch;
-      const getTemplatedRegexFunc = this.dependencies.getTemplatedRegex;
-      const timeSrv = this.dependencies.getTimeSrv();
-      const runnerArgs = { variable, dataSource, searchFilter, timeSrv };
-      const runner = this.queryRunners.find(runner => runner.canRun(runnerArgs));
+      const {
+        dispatch,
+        runRequest,
+        getTemplatedRegex: getTemplatedRegexFunc,
+        getVariable,
+        queryRunners,
+        getTimeSrv,
+      } = this.dependencies;
 
-      if (!runner) {
-        this.updateOptionsResults.next({
-          identifier,
-          state: LoadingState.Error,
-          error: new Error("Couldn't find specific query runner with supplied arguments."),
-        });
-        return;
-      }
-
-      const target = runner.getTarget(runnerArgs);
-      if (!target) {
-        this.updateOptionsResults.next({
-          identifier,
-          state: LoadingState.Error,
-          error: new Error("Couldn't create specific target with supplied arguments."),
-        });
-        return;
-      }
-
+      const variable = getVariable<QueryVariableModel>(identifier.id, this.dependencies.getState());
+      const timeSrv = getTimeSrv();
+      const runnerArgs = { variable, dataSource, searchFilter, timeSrv, runRequest };
+      const runner = queryRunners.getRunnerForDatasource(dataSource);
+      const target = runner.getTarget({ dataSource, variable });
       const request = this.getRequest(variable, args, target);
 
       runner
@@ -372,4 +361,12 @@ class VariableQueryRunner {
   }
 }
 
-export const variableQueryRunner = new VariableQueryRunner();
+let singleton: VariableQueryRunner;
+
+export function setVariableQueryRunner(runner: VariableQueryRunner): void {
+  singleton = runner;
+}
+
+export function getVariableQueryRunner(): VariableQueryRunner {
+  return singleton;
+}
