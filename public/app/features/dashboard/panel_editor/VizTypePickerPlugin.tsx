@@ -136,7 +136,11 @@ interface PanelPluginBadgeProps {
 const PanelPluginBadge: React.FC<PanelPluginBadgeProps> = ({ plugin }) => {
   const display = getPanelStateBadgeDisplayModel(plugin);
 
-  if (plugin.signature && plugin.signature !== PluginSignatureStatus.valid) {
+  if (
+    plugin.signature &&
+    plugin.signature !== PluginSignatureStatus.valid &&
+    plugin.signature !== PluginSignatureStatus.internal
+  ) {
     return <PluginSignatureBadge status={plugin.signature} />;
   }
   if (plugin.state !== PluginState.deprecated && plugin.state !== PluginState.alpha) {
