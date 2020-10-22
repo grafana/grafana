@@ -83,15 +83,25 @@ func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
 		return nil, err
 	}
 
-	// including this header breaks the signature verification on AWS' side
-	req.Header.Del("X-Forwarded-For")
-
 	if strings.Contains(req.URL.RawPath, "%2C") {
 		req.URL.RawPath = rest.EscapePath(req.URL.RawPath, false)
 	}
 
+	// if X-Forwarded-For header exists, exclude from signing since it breaks AWS request verification
+	forwardHeader := req.Header.Get("X-Forwarded-For")
+	if forwardHeader != "" {
+		req.Header.Del("X-Forwarded-For")
+	}
+
 	payload := bytes.NewReader(replaceBody(req))
-	return signer.Sign(req, payload, "es", m.Config.Region, time.Now().UTC())
+	header, err := signer.Sign(req, payload, "es", m.Config.Region, time.Now().UTC())
+
+	// reset X-Forwarded-For header if it existed pre-signing
+	if forwardHeader != "" {
+		req.Header.Set("X-Forwarded-For", forwardHeader)
+	}
+
+	return header, err
 }
 
 func (m *SigV4Middleware) signer() (*v4.Signer, error) {
