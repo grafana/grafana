@@ -5,8 +5,23 @@ import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { setPluginsSearchQuery } from './state/reducers';
 import { render, screen, waitFor } from '@testing-library/react';
 import { selectors } from '@grafana/e2e-selectors';
+import { Provider } from 'react-redux';
+import { configureStore } from '../../store/configureStore';
+import { afterEach } from '../../../test/lib/common';
+
+let errorsReturnMock: any = [];
+
+jest.mock('@grafana/runtime', () => ({
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  getBackendSrv: () => ({
+    get: () => {
+      return errorsReturnMock as any;
+    },
+  }),
+}));
 
 const setup = (propOverrides?: object) => {
+  const store = configureStore();
   const props: Props = {
     navModel: {
       main: {
@@ -25,50 +40,47 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  return render(<PluginListPage {...props} />);
+  return render(
+    <Provider store={store}>
+      <PluginListPage {...props} />
+    </Provider>
+  );
 };
 
 describe('Render', () => {
-  it('should render component', () => {
+  afterEach(() => {
+    errorsReturnMock = [];
+  });
+
+  it('should render component', async () => {
+    errorsReturnMock = [];
     setup();
-    expect(screen.queryByLabelText(selectors.pages.PluginsList.page)).toBeInTheDocument();
-    expect(screen.queryByLabelText(selectors.pages.PluginsList.list)).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByLabelText(selectors.pages.PluginsList.page)).toBeInTheDocument();
+      expect(screen.queryByLabelText(selectors.pages.PluginsList.list)).not.toBeInTheDocument();
+    });
   });
 
   it('should render list', async () => {
+    errorsReturnMock = [];
     setup({
       hasFetched: true,
     });
     await waitFor(() => {
       expect(screen.queryByLabelText(selectors.pages.PluginsList.list)).toBeInTheDocument();
-      expect(screen.queryByLabelText(selectors.pages.PluginsList.signatureErrorNotice)).not.toBeInTheDocument();
     });
   });
 
   describe('Plugin signature errors', () => {
     it('should render notice if there are plugins with signing errors', async () => {
+      errorsReturnMock = [{ pluginId: 'invalid-sig', errorCode: PluginErrorCode.invalidSignature }];
       setup({
         hasFetched: true,
-        plugins: [
-          {
-            id: 'plugin-with-invalid-sig',
-            info: {
-              logos: { small: 'url' },
-              author: { name: 'James Dean' },
-            },
-          },
-        ],
-        errors: [
-          {
-            pluginId: 'plugin-with-invalid-sig',
-            errorCode: PluginErrorCode.invalidSignature,
-          },
-        ],
       });
 
-      await waitFor(() => {
-        expect(screen.queryByLabelText(selectors.pages.PluginsList.signatureErrorNotice)).toBeInTheDocument();
-      });
+      await waitFor(() =>
+        expect(screen.getByLabelText(selectors.pages.PluginsList.signatureErrorNotice)).toBeInTheDocument()
+      );
     });
   });
 });
