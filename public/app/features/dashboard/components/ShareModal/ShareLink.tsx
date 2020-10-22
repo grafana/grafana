@@ -3,9 +3,8 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { LegacyForms, ClipboardButton, Icon, InfoBox, Input } from '@grafana/ui';
 const { Select, Switch } = LegacyForms;
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { buildImageUrl, buildShareUrl, getRelativeURLPath } from './utils';
+import { buildImageUrl, buildShareUrl } from './utils';
 import { appEvents } from 'app/core/core';
 import config from 'app/core/config';
 
@@ -58,22 +57,20 @@ export class ShareLink extends PureComponent<Props, State> {
     }
   }
 
-  buildUrl = () => {
+  buildUrl = async () => {
     const { panel } = this.props;
     const { useCurrentTimeRange, includeTemplateVars, useShortUrl, selectedTheme } = this.state;
 
-    const shareUrl = buildShareUrl(useCurrentTimeRange, includeTemplateVars, selectedTheme.value, panel);
+    const shareUrl = await buildShareUrl(
+      useCurrentTimeRange,
+      includeTemplateVars,
+      selectedTheme.value,
+      panel,
+      useShortUrl
+    );
     const imageUrl = buildImageUrl(useCurrentTimeRange, includeTemplateVars, selectedTheme.value, panel);
 
-    if (useShortUrl) {
-      getBackendSrv()
-        .post(`/api/short-urls`, {
-          path: getRelativeURLPath(shareUrl),
-        })
-        .then(res => this.setState({ shareUrl: res.url, imageUrl }));
-    } else {
-      this.setState({ shareUrl, imageUrl });
-    }
+    this.setState({ shareUrl, imageUrl });
   };
 
   onUseCurrentTimeRangeChange = () => {
@@ -126,11 +123,11 @@ export class ShareLink extends PureComponent<Props, State> {
                 checked={includeTemplateVars}
                 onChange={this.onIncludeTemplateVarsChange}
               />
-              <Switch labelClass="width-12" label="Shorten URL" checked={useShortUrl} onChange={this.onUrlShorten} />
               <div className="gf-form">
                 <label className="gf-form-label width-12">Theme</label>
                 <Select width={10} options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
               </div>
+              <Switch labelClass="width-12" label="Shorten URL" checked={useShortUrl} onChange={this.onUrlShorten} />
             </div>
             <div>
               <div className="gf-form-group">

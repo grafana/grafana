@@ -147,7 +147,7 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
     if (shouldScrollToBottom && listContainerRef.current) {
       setScrollTop(listContainerRef.current.offsetHeight);
     }
-  });
+  }, [shouldScrollToBottom]);
 
   const headerProps = {
     row,
@@ -197,18 +197,17 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   onLoadMoreContext,
   hasMoreContextRows,
 }) => {
-  const handleEscKeyDown = (e: KeyboardEvent): void => {
-    if (e.keyCode === 27) {
-      onOutsideClick();
-    }
-  };
-
   useEffect(() => {
+    const handleEscKeyDown = (e: KeyboardEvent): void => {
+      if (e.keyCode === 27) {
+        onOutsideClick();
+      }
+    };
     document.addEventListener('keydown', handleEscKeyDown, false);
     return () => {
       document.removeEventListener('keydown', handleEscKeyDown, false);
     };
-  }, []);
+  }, [onOutsideClick]);
 
   return (
     <ClickOutsideWrapper onClick={onOutsideClick}>

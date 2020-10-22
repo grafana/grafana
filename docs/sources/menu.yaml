@@ -339,6 +339,8 @@
 - name: What's new in Grafana
   link: /whatsnew/
   children:
+    - name: Version 7.3
+      link: /whatsnew/whats-new-in-v7-3/
     - name: Version 7.2
       link: /whatsnew/whats-new-in-v7-2/
     - name: Version 7.1
@@ -397,6 +399,8 @@
   children:
     - name: Overview
       link: /enterprise/
+    - name: Activate license
+      link: /enterprise/activate-license/
     - name: Configuration
       link: /enterprise/enterprise-configuration/
     - name: Data source permissions
