@@ -280,11 +280,15 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 			// Load the full plugin, and add it to manager
 			if err := loader.Load(jsonParser, plugin, scanner.backendPluginManager); err != nil {
+				if errors.Is(err, duplicatePluginError{}) {
+					pm.log.Warn("Plugin is duplicate", "error", err)
+					scanner.errors = append(scanner.errors, err)
+					continue
+				}
 				return err
 			}
 			pm.log.Debug("Successfully added plugin", "id", plugin.Id)
 		}
-
 	}
 
 	if len(scanner.errors) > 0 {
