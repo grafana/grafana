@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 )
@@ -42,8 +43,8 @@ type GrafanaLive struct {
 	GrafanaScope CoreGrafanaScope
 }
 
-// InitializeBroker initializes the broker and starts listening for requests.
-func InitializeBroker() (*GrafanaLive, error) {
+// Register registers GrafanaLive with the service registry.
+func Register() {
 	glive := &GrafanaLive{
 		channels:   make(map[string]models.ChannelHandler),
 		channelsMu: sync.RWMutex{},
@@ -51,7 +52,13 @@ func InitializeBroker() (*GrafanaLive, error) {
 			Features: make(map[string]models.ChannelHandlerProvider),
 		},
 	}
+	registry.RegisterService(glive)
+}
 
+// Init initializes the instance.
+// Required to implement the registry.Service interface.
+func (g *GrafanaLive) Init() error {
+	logger.Debug("GrafanaLive initing")
 	// We use default config here as starting point. Default config contains
 	// reasonable values for available options.
 	cfg := centrifuge.DefaultConfig
@@ -61,7 +68,7 @@ func InitializeBroker() (*GrafanaLive, error) {
 
 	// This function is called fast and often -- it must be sychronized
 	cfg.ChannelOptionsFunc = func(channel string) (centrifuge.ChannelOptions, bool, error) {
-		handler, err := glive.GetChannelHandler(channel)
+		handler, err := g.GetChannelHandler(channel)
 		if err != nil {
 			logger.Error("ChannelOptionsFunc", "channel", channel, "err", err)
 			if err.Error() == "404" { // ????
@@ -79,18 +86,18 @@ func InitializeBroker() (*GrafanaLive, error) {
 	// only from client side.
 	node, err := centrifuge.New(cfg)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	glive.node = node
+	g.node = node
 
 	// Initialize the main features
-	dash := features.CreateDashboardHandler(glive.Publish)
-	tds := features.CreateTestdataSupplier(glive.Publish)
+	dash := features.CreateDashboardHandler(g.Publish)
+	tds := features.CreateTestdataSupplier(g.Publish)
 
-	glive.GrafanaScope.Dashboards = &dash
-	glive.GrafanaScope.Features["dashboard"] = &dash
-	glive.GrafanaScope.Features["testdata"] = &tds
-	glive.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{}
+	g.GrafanaScope.Dashboards = &dash
+	g.GrafanaScope.Features["dashboard"] = &dash
+	g.GrafanaScope.Features["testdata"] = &tds
+	g.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{}
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
@@ -118,7 +125,7 @@ func InitializeBroker() (*GrafanaLive, error) {
 	node.OnSubscribe(func(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
 		reply := centrifuge.SubscribeReply{}
 
-		handler, err := glive.GetChannelHandler(e.Channel)
+		handler, err := g.GetChannelHandler(e.Channel)
 		if err != nil {
 			return reply, err
 		}
@@ -138,7 +145,7 @@ func InitializeBroker() (*GrafanaLive, error) {
 	// Called when something is written to the websocket
 	node.OnPublish(func(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
 		reply := centrifuge.PublishReply{}
-		handler, err := glive.GetChannelHandler(e.Channel)
+		handler, err := g.GetChannelHandler(e.Channel)
 		if err != nil {
 			return reply, err
 		}
@@ -155,7 +162,7 @@ func InitializeBroker() (*GrafanaLive, error) {
 
 	// Run node. This method does not block.
 	if err := node.Run(); err != nil {
-		return nil, err
+		return err
 	}
 
 	// SockJS will find the best protocol possible for the browser
@@ -172,7 +179,7 @@ func InitializeBroker() (*GrafanaLive, error) {
 		WriteBufferSize: 1024,
 	})
 
-	glive.WebsocketHandler = func(ctx *models.ReqContext) {
+	g.WebsocketHandler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
 		if user == nil {
 			ctx.Resp.WriteHeader(401)
@@ -220,7 +227,8 @@ func InitializeBroker() (*GrafanaLive, error) {
 		// Unknown path
 		ctx.Resp.WriteHeader(404)
 	}
-	return glive, nil
+
+	return nil
 }
 
 // GetChannelHandler gives threadsafe access to the channel

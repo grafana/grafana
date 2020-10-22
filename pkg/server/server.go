@@ -36,6 +36,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/auth"
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/live"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
 	_ "github.com/grafana/grafana/pkg/services/provisioning"
 	_ "github.com/grafana/grafana/pkg/services/rendering"
@@ -121,6 +122,7 @@ func (s *Server) init(cfg *Config) error {
 	if err := metrics.SetEnvironmentInformation(s.cfg.MetricsGrafanaEnvironmentInfo); err != nil {
 		return err
 	}
+	s.initEnabledFeatures()
 
 	login.Init()
 	social.NewOAuthService()
@@ -151,7 +153,17 @@ func (s *Server) init(cfg *Config) error {
 		}
 	}
 
+	// After all services are initialized, it should be safe to register all routes
+	s.HTTPServer.RegisterRoutes()
+
 	return nil
+}
+
+// initEnabledFeatures initializes services that are behind enabled feature toggles.
+func (s *Server) initEnabledFeatures() {
+	if s.cfg.IsLiveEnabled() {
+		live.Register()
+	}
 }
 
 // Run initializes and starts services. This will block until all services have
@@ -293,7 +305,7 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 
 	// Resolve services and their dependencies.
 	if err := serviceGraph.Populate(); err != nil {
-		return errutil.Wrapf(err, "Failed to populate service dependency")
+		return errutil.Wrapf(err, "Failed to populate service dependencies")
 	}
 
 	return nil

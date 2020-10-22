@@ -136,6 +136,7 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 		})
 	}
 
+	// Make into a service method, so said service can have a CloudWatch service
 	resp, err := tsdb.HandleRequest(c.Req.Context(), ds, request)
 	if err != nil {
 		return Error(500, "Metric request error", err)

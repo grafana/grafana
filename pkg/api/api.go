@@ -9,7 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func (hs *HTTPServer) registerRoutes() {
+// RegisterRoutes registers all API HTTP routes.
+func (hs *HTTPServer) RegisterRoutes() {
 	reqSignedIn := middleware.ReqSignedIn
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
@@ -435,7 +436,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/avatar/:hash", avatarCacheServer.Handler)
 
 	// Live streaming
-	if hs.Live != nil {
+	if hs.Cfg.IsLiveEnabled() {
 		r.Any("/live/*", hs.Live.WebsocketHandler)
 	}
 
