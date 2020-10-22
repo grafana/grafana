@@ -380,12 +380,6 @@ const parseRawTime = (value: string | DateTime): TimeFragment | null => {
     return toUtc(value, 'YYYY-MM-DD HH:mm:ss');
   }
 
-  // [Zoltan] There shouldn't be a number here
-  // if (!isNaN(value)) {
-  //   const epoch = parseInt(value, 10);
-  //   return toUtc(epoch);
-  // }
-
   return null;
 };
 
