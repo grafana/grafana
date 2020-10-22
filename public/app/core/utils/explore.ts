@@ -380,6 +380,18 @@ const parseRawTime = (value: string | DateTime): TimeFragment | null => {
     return toUtc(value, 'YYYY-MM-DD HH:mm:ss');
   }
 
+  // This should handle cases where value is an epoch time as string
+  if (value.match(/^\d+$/)) {
+    const epoch = parseInt(value, 10);
+    return toUtc(epoch);
+  }
+
+  // This should handle ISO strings
+  const time = toUtc(value);
+  if (time.isValid()) {
+    return time;
+  }
+
   return null;
 };
 
