@@ -40,6 +40,8 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
         <LogLabels labels={value} />
       </span>
     );
+  } else if (kind === LogsMetaKind.Error) {
+    return <span className="logs-meta-item__error">{value}</span>;
   }
   return value;
 }

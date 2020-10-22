@@ -28,6 +28,7 @@ export interface Props extends Themeable {
   showDuplicates: boolean;
   getRows: () => LogRowModel[];
   className?: string;
+  hasError?: boolean;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -70,6 +71,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const {
       row,
       theme,
+      hasError,
       onClickFilterOutLabel,
       onClickFilterLabel,
       getRows,
@@ -88,6 +90,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const labelsAvailable = Object.keys(labels).length > 0;
     const fields = getAllFields(row, getFieldLinks);
     const parsedFieldsAvailable = fields && fields.length > 0;
+    // If logs with error, we are not showing the level color
+    const levelClassName = cx(!hasError && [style.logsRowLevel, styles.logsRowLevelDetails]);
 
     return (
       <tr
@@ -96,7 +100,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
         onMouseLeave={onMouseLeave}
       >
         {showDuplicates && <td />}
-        <td className={cx(style.logsRowLevel, styles.logsRowLevelDetails)} />
+        <td className={levelClassName} aria-label="Log level" />
         <td colSpan={4}>
           <div className={style.logDetailsContainer}>
             <table className={style.logDetailsTable}>

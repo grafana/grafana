@@ -419,10 +419,21 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   // Hack to print loki stats in Explore. Should be using proper stats display via drawer in Explore (rework in 7.1)
   let totalBytes = 0;
   const queriesVisited: { [refId: string]: boolean } = {};
+  // To add just 1 error message
+  let errorMetaAdded = false;
 
   for (const series of logSeries) {
     const totalBytesKey = series.meta?.custom?.lokiQueryStatKey;
     const { refId } = series; // Stats are per query, keeping track by refId
+
+    if (!errorMetaAdded && series.meta?.custom?.error) {
+      meta.push({
+        label: '',
+        value: series.meta?.custom.error,
+        kind: LogsMetaKind.Error,
+      });
+      errorMetaAdded = true;
+    }
 
     if (refId && !queriesVisited[refId]) {
       if (totalBytesKey && series.meta?.stats) {
