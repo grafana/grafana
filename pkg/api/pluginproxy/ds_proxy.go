@@ -13,12 +13,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
-
 	"github.com/grafana/grafana/pkg/api/datasource"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"

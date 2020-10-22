@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"golang.org/x/oauth2"
