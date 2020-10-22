@@ -6,8 +6,8 @@ title: Shared Content
 npm i
 ```
 
-Syntax to invoke this file would be:
+Syntax to invoke this file would be the following, minus the backslash:
 
 ```
-{{< docs/shared "example" >}}
+\{{< docs/shared "example" >}}
 ```
