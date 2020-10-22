@@ -347,7 +347,7 @@ function getPluginTabsNav(
 
   pages.push({
     text: 'Readme',
-    icon: 'book',
+    icon: 'file-alt',
     url: `${appSubUrl}${path}?page=${PAGE_ID_README}`,
     id: PAGE_ID_README,
   });
