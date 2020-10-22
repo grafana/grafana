@@ -220,8 +220,8 @@ var decimalConverter = data.FieldConverter{
 			return &out, err
 		}
 
-		// As far as I can tell this always comes in a string, but this was in the
-		// ADX code, so leaving it in case does sometimes become a number somehow.
+		// As far as I can tell this always comes in a string, but this is in the
+		// ADX code, so leaving this in case values do sometimes become a number somehow.
 		jN, nOk := v.(json.Number)
 		if !nOk {
 			return nil, fmt.Errorf("unexpected type, expected json.Number or string but got type %T with a value of %v", v, v)
