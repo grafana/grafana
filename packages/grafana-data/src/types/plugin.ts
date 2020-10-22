@@ -16,11 +16,23 @@ export enum PluginType {
 }
 
 export enum PluginSignatureStatus {
+  unsigned = 'unsigned', // no MANIFEST file
   internal = 'internal', // core plugin, no signature
   valid = 'valid', // signed and accurate MANIFEST
   invalid = 'invalid', // invalid signature
   modified = 'modified', // valid signature, but content mismatch
-  unsigned = 'unsigned', // no MANIFEST file
+  missing = 'missing', // missing signature file
+}
+
+export enum PluginErrorCode {
+  missingSignature = 'signatureMissing',
+  invalidSignature = 'signatureInvalid',
+  modifiedSignature = 'signatureModified',
+}
+
+export interface PluginError {
+  errorCode: PluginErrorCode;
+  pluginId: string;
 }
 
 export interface PluginMeta<T extends KeyValue = {}> {
