@@ -74,8 +74,12 @@ func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
 		req.Header.Del("X-Forwarded-For")
 	}
 
-	payload := bytes.NewReader(replaceBody(req))
-	header, err := signer.Sign(req, payload, awsServiceNamespace(m.Config.DatasourceType), m.Config.Region, time.Now().UTC())
+	body, err := replaceBody(req)
+	if err != nil {
+		return nil, err
+	}
+
+	header, err := signer.Sign(req, bytes.NewReader(body), awsServiceNamespace(m.Config.DatasourceType), m.Config.Region, time.Now().UTC())
 
 	// reset X-Forwarded-For header if it existed pre-signing
 	if forwardHeader != "" {
@@ -120,13 +124,16 @@ func (m *SigV4Middleware) credentials() (*credentials.Credentials, error) {
 	return nil, fmt.Errorf("unrecognized authType: %s", authType)
 }
 
-func replaceBody(req *http.Request) []byte {
+func replaceBody(req *http.Request) ([]byte, error) {
 	if req.Body == nil {
-		return []byte{}
+		return []byte{}, nil
 	}
-	payload, _ := ioutil.ReadAll(req.Body)
+	payload, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err
+	}
 	req.Body = ioutil.NopCloser(bytes.NewReader(payload))
-	return payload
+	return payload, nil
 }
 
 func awsServiceNamespace(dsType string) string {
