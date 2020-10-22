@@ -270,25 +270,18 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 		jsonParser := json.NewDecoder(reader)
 
-		if signingError != nil {
-			phantomLoader := &PhantomPlugin{*plugin}
-			if err := phantomLoader.Load(jsonParser, plugin, nil); err != nil {
-				return err
-			}
-		} else {
-			loader := reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
+		loader := reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
 
-			// Load the full plugin, and add it to manager
-			if err := loader.Load(jsonParser, plugin, scanner.backendPluginManager); err != nil {
-				if errors.Is(err, duplicatePluginError{}) {
-					pm.log.Warn("Plugin is duplicate", "error", err)
-					scanner.errors = append(scanner.errors, err)
-					continue
-				}
-				return err
+		// Load the full plugin, and add it to manager
+		if err := loader.Load(jsonParser, plugin, scanner.backendPluginManager); err != nil {
+			if errors.Is(err, duplicatePluginError{}) {
+				pm.log.Warn("Plugin is duplicate", "error", err)
+				scanner.errors = append(scanner.errors, err)
+				continue
 			}
-			pm.log.Debug("Successfully added plugin", "id", plugin.Id)
+			return err
 		}
+		pm.log.Debug("Successfully added plugin", "id", plugin.Id)
 	}
 
 	if len(scanner.errors) > 0 {
