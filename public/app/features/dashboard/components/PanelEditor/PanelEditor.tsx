@@ -1,39 +1,42 @@
 import React, { createRef, PureComponent } from 'react';
-import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
-import { Button, HorizontalGroup, Icon, RadioButtonGroup, stylesFactory } from '@grafana/ui';
-import { css, cx } from 'emotion';
-import config from 'app/core/config';
-import AutoSizer from 'react-virtualized-auto-sizer';
-
-import { PanelModel } from '../../state/PanelModel';
-import { DashboardModel } from '../../state/DashboardModel';
-import { DashboardPanel } from '../../dashgrid/DashboardPanel';
-
-import SplitPane from 'react-split-pane';
-import { StoreState } from '../../../../types/store';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { updateLocation } from '../../../../core/reducers/location';
+import AutoSizer from 'react-virtualized-auto-sizer';
+import SplitPane from 'react-split-pane';
+import { css, cx } from 'emotion';
+import { debounce } from 'lodash';
 import { Unsubscribable } from 'rxjs';
-import { DisplayMode, displayModes, PanelEditorTab } from './types';
+
+import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Button, HorizontalGroup, Icon, RadioButtonGroup, stylesFactory } from '@grafana/ui';
+
+import config from 'app/core/config';
+import { appEvents } from 'app/core/core';
+import { calculatePanelSize } from './utils';
+
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
-import { CoreEvents, LocationState } from 'app/types';
-import { calculatePanelSize } from './utils';
-import { initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
-import { PanelEditorUIState, setDiscardChanges } from './state/reducers';
-import { getPanelEditorTabs } from './state/selectors';
-import { getPanelStateById } from '../../state/selectors';
 import { OptionsPaneContent } from './OptionsPaneContent';
-import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
-import { VariableModel } from 'app/features/variables/types';
-import { getVariables } from 'app/features/variables/state/selectors';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
-import { appEvents } from 'app/core/core';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
-import { selectors } from '@grafana/e2e-selectors';
-import { debounce } from 'lodash';
+import { DashboardPanel } from '../../dashgrid/DashboardPanel';
+
+import { initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
+
+import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
+import { updateLocation } from 'app/core/reducers/location';
+import { PanelEditorUIState, setDiscardChanges } from './state/reducers';
+
+import { getPanelEditorTabs } from './state/selectors';
+import { getPanelStateById } from '../../state/selectors';
+import { getVariables } from 'app/features/variables/state/selectors';
+
+import { CoreEvents, LocationState, StoreState } from 'app/types';
+import { DisplayMode, displayModes, PanelEditorTab } from './types';
+import { VariableModel } from 'app/features/variables/types';
+import { DashboardModel, PanelModel } from '../../state';
 
 interface OwnProps {
   dashboard: DashboardModel;
