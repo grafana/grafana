@@ -84,13 +84,13 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">Trace</td>
     <td>
-      An observed execution path of a request through a distributed system. For more information, refer to [What is Distributed Tracing?](https://opentracing.io/docs/overview/what-is-tracing/).
+      An observed execution path of a request through a distributed system. For more information, refer to [What is Distributed Tracing?](https://opentracing.io/docs/overview/what-is-tracing/)
     </td>
   </tr>
   <tr>
     <td style="vertical-align: top">Transformation</td>
     <td>
-      Transformations process the result set of a query before it’s passed on for visualization.
+      Transformations process the result set of a query before it’s passed on for visualization. 
     </td>
   </tr>
   <tr>

@@ -3,9 +3,9 @@
   children:
     - name: What is Grafana?
       link: /getting-started/what-is-grafana/
-    - name: Getting started with Grafana
+    - name: With Grafana
       link: /getting-started/getting-started/
-    - name: Getting started with Grafana and Prometheus
+    - name: With Grafana and Prometheus
       link: /getting-started/getting-started-prometheus/
     - name: Intro to time series
       link: /getting-started/timeseries/

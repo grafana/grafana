@@ -10,9 +10,9 @@ parent = "guides"
 weight = 200
 +++
 
-# Getting Started with Grafana
+# Getting started with Grafana
 
-This topic will help you get started with Grafana and build your first dashboard. To learn more about Grafana, refer to [What is Grafana?]({{< relref "what-is-grafana.md" >}}).
+This topic helps you get started with Grafana and build your first dashboard. To learn more about Grafana, refer to [What is Grafana?]({{< relref "what-is-grafana.md" >}}).
 
 ## Step 1: Install Grafana
 
@@ -20,12 +20,11 @@ Grafana can be installed on many different operating systems. For a list of mini
 
 ## Step 2: Log in
 
-To login to Grafana for the first time:
+To log in to Grafana for the first time:
 
 1. Open your web browser and go to http://localhost:3000/. The default HTTP port that Grafana listens to is `3000` unless you have configured a different port.
 1. On the login page, enter `admin` for username and password.
-1. Click **Log In**.
-1. If login is successful, you will see a prompt to change the password.
+1. Click **Log In**. If login is successful, you will see a prompt to change the password.
 1. Click **OK** on the prompt, then change your password.
 
 > **Note:** We strongly recommend that you follow Grafana's best practices and change the default administrator password. Don't forget to record your credentials!
@@ -38,7 +37,7 @@ To create your first dashboard:
 1. In the New Dashbard/Edit Panel view, go to the **Query** tab.
 1. Configure your [query]({{< relref "../panels/queries.md" >}}) by selecting ``-- Grafana --`` from the [data source selector]({{< relref "../panels/queries.md/#data-source-selector" >}}). This generates the Random Walk dashboard.
 1. Click the  **Save** icon in the top right corner of your screen to save the dashboard.
-1. Add a descriptive name, and click **Save**.
+1. Add a descriptive name, and then click **Save**.
 
  Congratulations, you have created your first dashboard and it is displaying results.
 
