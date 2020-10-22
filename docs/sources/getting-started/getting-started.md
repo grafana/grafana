@@ -24,7 +24,7 @@ To log in to Grafana for the first time:
 
 1. Open your web browser and go to http://localhost:3000/. The default HTTP port that Grafana listens to is `3000` unless you have configured a different port.
 1. On the login page, enter `admin` for username and password.
-1. Click **Log In**. If login is successful, you will see a prompt to change the password.
+1. Click **Log In**. If login is successful, then you will see a prompt to change the password.
 1. Click **OK** on the prompt, then change your password.
 
 > **Note:** We strongly recommend that you follow Grafana's best practices and change the default administrator password. Don't forget to record your credentials!
