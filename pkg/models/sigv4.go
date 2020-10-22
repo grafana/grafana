@@ -83,6 +83,7 @@ func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
 		return nil, err
 	}
 
+	// including this header breaks the signature verification on AWS' side
 	req.Header.Del("X-Forwarded-For")
 
 	if strings.Contains(req.URL.RawPath, "%2C") {
