@@ -185,7 +185,7 @@ func getAlertNotificationUidInternal(query *models.GetAlertNotificationUidQuery,
 	}
 
 	if len(results) == 0 {
-		return fmt.Errorf("Alert notification [ Id: %v, OrgId: %v ] not found", query.Id, query.OrgId)
+		return models.ErrAlertNotificationFailedTranslateUniqueID
 	}
 
 	query.Result = results[0]

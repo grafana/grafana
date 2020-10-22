@@ -113,7 +113,7 @@ func getTimeDurationStringToSeconds(str string) (int64, error) {
 
 // NewRuleFromDBAlert maps a db version of
 // alert to an in-memory version.
-func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
+func NewRuleFromDBAlert(ruleDef *models.Alert, logTranslationFailures bool) (*Rule, error) {
 	model := &Rule{}
 	model.ID = ruleDef.Id
 	model.OrgID = ruleDef.OrgId
@@ -140,7 +140,13 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 		if id, err := jsonModel.Get("id").Int64(); err == nil {
 			uid, err := translateNotificationIDToUID(id, ruleDef.OrgId)
 			if err != nil {
-				logger.Error("Unable to translate notification id to uid", "error", err.Error(), "dashboardId", model.DashboardID, "alertId", model.ID, "panelId", model.PanelID, "notificationId", id)
+				if !errors.Is(err, models.ErrAlertNotificationFailedTranslateUniqueID) {
+					logger.Error("Failed to tranlate notification id to uid", "error", err.Error(), "dashboardId", model.DashboardID, "alert", model.Name, "panelId", model.PanelID, "notificationId", id)
+				}
+
+				if logTranslationFailures {
+					logger.Warn("Unable to translate notification id to uid", "dashboardId", model.DashboardID, "alert", model.Name, "panelId", model.PanelID, "notificationId", id)
+				}
 			} else {
 				model.Notifications = append(model.Notifications, uid)
 			}
@@ -176,7 +182,6 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 func translateNotificationIDToUID(id int64, orgID int64) (string, error) {
 	notificationUID, err := getAlertNotificationUIDByIDAndOrgID(id, orgID)
 	if err != nil {
-		logger.Debug("Failed to translate Notification Id to Uid", "orgID", orgID, "Id", id)
 		return "", err
 	}
 
