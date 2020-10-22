@@ -5,17 +5,16 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/session"
-
-	"github.com/aws/aws-sdk-go/aws/defaults"
-
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/defaults"
+	"github.com/aws/aws-sdk-go/aws/session"
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
+	"github.com/aws/aws-sdk-go/private/protocol/rest"
 )
 
 type AuthType string
@@ -25,6 +24,9 @@ const (
 	Keys        AuthType = "keys"
 	Credentials AuthType = "credentials"
 )
+
+// Whether the byte value can be sent without escaping in AWS URLs
+var noEscape [256]bool
 
 type SigV4Middleware struct {
 	Config *Config
@@ -42,6 +44,24 @@ type Config struct {
 	AssumeRoleARN string
 	ExternalID    string
 	Region        string
+}
+
+func NewSigV4Middleware(config *Config, next http.RoundTripper) (m *SigV4Middleware) {
+	for i := 0; i < len(noEscape); i++ {
+		// AWS expects every character except these to be escaped
+		noEscape[i] = (i >= 'A' && i <= 'Z') ||
+			(i >= 'a' && i <= 'z') ||
+			(i >= '0' && i <= '9') ||
+			i == '-' ||
+			i == '.' ||
+			i == '_' ||
+			i == '~'
+	}
+
+	return &SigV4Middleware{
+		Config: config,
+		Next:   next,
+	}
 }
 
 func (m *SigV4Middleware) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -63,15 +83,14 @@ func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
 		return nil, err
 	}
 
-	if req.Body != nil {
-		// consume entire request body so that the signer can generate a hash from the contents
-		body, err := ioutil.ReadAll(req.Body)
-		if err != nil {
-			return nil, err
-		}
-		return signer.Sign(req, bytes.NewReader(body), "grafana", m.Config.Region, time.Now().UTC())
+	req.Header.Del("X-Forwarded-For")
+
+	if strings.Contains(req.URL.RawPath, "%2C") {
+		req.URL.RawPath = rest.EscapePath(req.URL.RawPath, false)
 	}
-	return signer.Sign(req, nil, "grafana", m.Config.Region, time.Now().UTC())
+
+	payload := bytes.NewReader(replaceBody(req))
+	return signer.Sign(req, payload, "es", m.Config.Region, time.Now().UTC())
 }
 
 func (m *SigV4Middleware) signer() (*v4.Signer, error) {
@@ -107,4 +126,13 @@ func (m *SigV4Middleware) credentials() (*credentials.Credentials, error) {
 	}
 
 	return nil, fmt.Errorf("unrecognized authType: %s", authType)
+}
+
+func replaceBody(req *http.Request) []byte {
+	if req.Body == nil {
+		return []byte{}
+	}
+	payload, _ := ioutil.ReadAll(req.Body)
+	req.Body = ioutil.NopCloser(bytes.NewReader(payload))
+	return payload
 }
