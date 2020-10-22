@@ -1,4 +1,6 @@
 import set from 'lodash/set';
+import { from, merge, Observable, of } from 'rxjs';
+import { delay, map } from 'rxjs/operators';
 
 import {
   AnnotationEvent,
@@ -12,16 +14,21 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataTopic,
+  LiveChannelScope,
   LoadingState,
   TableData,
   TimeRange,
   TimeSeries,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
-import { getBackendSrv, getTemplateSrv, TemplateSrv, toDataQueryError } from '@grafana/runtime';
+import {
+  getBackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
+  toDataQueryError,
+  getLiveMeasurementsObserver,
+} from '@grafana/runtime';
 import { queryMetricTree } from './metricTree';
-import { from, merge, Observable, of } from 'rxjs';
-import { delay, map } from 'rxjs/operators';
 import { runStream } from './runStreams';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 import { TestDataVariableSupport } from './variables';
@@ -50,6 +57,9 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
       }
 
       switch (target.scenarioId) {
+        case 'live':
+          streams.push(runGrafanaLiveQuery(target, options));
+          break;
         case 'streaming_client':
           streams.push(runStream(target, options));
           break;
@@ -201,7 +211,9 @@ function runArrowFile(target: TestDataQuery, req: DataQueryRequest<TestDataQuery
   if (target.stringInput && target.stringInput.length > 10) {
     try {
       const table = base64StringToArrowTable(target.stringInput);
-      data = [arrowTableToDataFrame(table)];
+      const frame = arrowTableToDataFrame(table);
+      frame.refId = target.refId;
+      data = [frame];
     } catch (e) {
       console.warn('Error reading saved arrow', e);
       const error = toDataQueryError(e);
@@ -209,7 +221,7 @@ function runArrowFile(target: TestDataQuery, req: DataQueryRequest<TestDataQuery
       return of({ state: LoadingState.Error, error, data });
     }
   }
-  return of({ state: LoadingState.Done, data });
+  return of({ state: LoadingState.Done, data, key: req.requestId + target.refId });
 }
 
 function runGrafanaAPI(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
@@ -224,5 +236,24 @@ function runGrafanaAPI(target: TestDataQuery, req: DataQueryRequest<TestDataQuer
           data: [frame],
         };
       })
+  );
+}
+
+let liveQueryCounter = 1000;
+
+function runGrafanaLiveQuery(
+  target: TestDataQuery,
+  req: DataQueryRequest<TestDataQuery>
+): Observable<DataQueryResponse> {
+  if (!target.channel) {
+    throw new Error(`Missing channel config`);
+  }
+  return getLiveMeasurementsObserver(
+    {
+      scope: LiveChannelScope.Grafana,
+      namespace: 'testdata',
+      path: target.channel,
+    },
+    `testStream.${liveQueryCounter++}`
   );
 }

@@ -1,8 +1,7 @@
-import memoizeOne from 'memoize-one';
 import { splitOpen } from '../state/actions';
 import { Field, LinkModel, TimeRange, mapInternalLinkToExplore } from '@grafana/data';
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
-import { getDataSourceSrv, getTemplateSrv, getBackendSrv, config } from '@grafana/runtime';
+import { getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 
 /**
  * Get links from the field of a dataframe and in addition check if there is associated
@@ -60,23 +59,3 @@ function getTitleFromHref(href: string): string {
   }
   return title;
 }
-
-function buildHostUrl() {
-  return `${window.location.protocol}//${window.location.host}${config.appSubUrl}`;
-}
-
-function getRelativeURLPath(url: string) {
-  let path = url.replace(buildHostUrl(), '');
-  return path.startsWith('/') ? path.substring(1, path.length) : path;
-}
-
-export const createShortLink = memoizeOne(async function(path: string) {
-  try {
-    const shortUrl = await getBackendSrv().post(`/api/short-urls`, {
-      path: getRelativeURLPath(path),
-    });
-    return shortUrl.url;
-  } catch (err) {
-    console.error('Error when creating shortened link: ', err);
-  }
-});
