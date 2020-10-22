@@ -260,6 +260,15 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
+		Id:   "live",
+		Name: "Grafana Live",
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			// Real work is in javascript client
+			return tsdb.NewQueryResult()
+		},
+	})
+
+	registerScenario(&Scenario{
 		Id:   "grafana_api",
 		Name: "Grafana API",
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
