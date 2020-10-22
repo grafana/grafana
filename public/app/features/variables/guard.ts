@@ -86,6 +86,10 @@ interface DataSourceWithDatasourceVariableSupport<
   };
 }
 
+/*
+ * The following guard function are both TypeScript type guards.
+ * They also make the basis for the logic used by variableQueryRunner and determining which QueryEditor to use
+ * */
 export const hasLegacyVariableSupport = <
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
