@@ -1,4 +1,4 @@
-import React, { createRef, PureComponent, RefObject } from 'react';
+import React, { createRef, PureComponent } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
 import { Button, HorizontalGroup, Icon, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 import { css, cx } from 'emotion';
@@ -33,6 +33,7 @@ import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { appEvents } from 'app/core/core';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { selectors } from '@grafana/e2e-selectors';
+import { debounce } from 'lodash';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -58,31 +59,16 @@ interface DispatchProps {
   updateTimeZoneForSession: typeof updateTimeZoneForSession;
 }
 
-interface State {
-  topPanelSize: string | number;
-  rightPanelSize: string | number;
-}
-
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
-export class PanelEditorUnconnected extends PureComponent<Props, State> {
+export class PanelEditorUnconnected extends PureComponent<Props> {
   querySubscription: Unsubscribable;
-  rafToken: RefObject<number>;
-
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      topPanelSize: props.uiState.topPaneSize,
-      rightPanelSize: props.uiState.rightPaneSize,
-    };
-
-    this.rafToken = createRef<number>();
-  }
+  rafToken = createRef<number>();
 
   componentDidMount() {
     this.props.initPanelEditor(this.props.sourcePanel, this.props.dashboard);
 
-    window.addEventListener('resize', this.updateSplitPaneSize);
+    window.addEventListener('resize', debounce(this.updateSplitPaneSize, 100));
   }
 
   componentWillUnmount() {
@@ -95,8 +81,7 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
       window.cancelAnimationFrame(this.rafToken.current!);
     }
     window.requestAnimationFrame(() => {
-      this.setState({ rightPanelSize: this.props.uiState.rightPaneSize });
-      this.setState({ topPanelSize: this.props.uiState.topPaneSize });
+      this.forceUpdate();
     });
   };
 
@@ -234,7 +219,7 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
         minSize={200}
         maxSize={windowHeight}
         primary="first"
-        size={this.state.topPanelSize}
+        size={uiState.topPaneSize}
         /* Use persisted state for default size */
         defaultSize={uiState.topPaneSize}
         pane2Style={{ minHeight: 0 }}
@@ -332,8 +317,8 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
     );
   }
 
-  renderOptionsPane() {
-    const { plugin, dashboard, panel, uiState } = this.props;
+  renderOptionsPane(width: number) {
+    const { plugin, dashboard, panel } = this.props;
 
     if (!plugin) {
       return <div />;
@@ -344,7 +329,7 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
         plugin={plugin}
         dashboard={dashboard}
         panel={panel}
-        width={uiState.rightPaneSize as number}
+        width={width}
         onClose={this.onTogglePanelOptions}
         onFieldConfigsChange={this.onFieldConfigChange}
         onPanelOptionsChanged={this.onPanelOptionsChanged}
@@ -359,12 +344,18 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
     // Limit options pane width to 90% of screen.
     const maxWidth = window.innerWidth * 0.9;
 
+    // Need to handle when width is relative. ie a percentage of the viewport
+    const width =
+      typeof uiState.rightPaneSize === 'string'
+        ? (parseFloat(uiState.rightPaneSize) / 100) * window.innerWidth
+        : uiState.rightPaneSize;
+
     return (
       <SplitPane
         split="vertical"
         minSize={300}
         maxSize={maxWidth}
-        size={this.state.rightPanelSize}
+        size={width >= 300 ? width : 300}
         primary="second"
         /* Use persisted state for default size */
         defaultSize={uiState.rightPaneSize}
@@ -373,7 +364,7 @@ export class PanelEditorUnconnected extends PureComponent<Props, State> {
         onDragFinished={size => this.onDragFinished(Pane.Right, size)}
       >
         {this.renderHorizontalSplit(styles)}
-        {this.renderOptionsPane()}
+        {this.renderOptionsPane(width)}
       </SplitPane>
     );
   }
