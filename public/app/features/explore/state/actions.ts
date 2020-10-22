@@ -1,5 +1,5 @@
 // Libraries
-import { map, throttleTime } from 'rxjs/operators';
+import { map, mergeMap, throttleTime } from 'rxjs/operators';
 import { identity } from 'rxjs';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { DataSourceSrv } from '@grafana/runtime';
@@ -84,7 +84,7 @@ import {
 } from './actionTypes';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
-import { updateLocation } from '../../../core/actions';
+import { notifyApp, updateLocation } from '../../../core/actions';
 import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -96,6 +96,7 @@ import {
   decorateWithLogsResult,
   decorateWithTableResult,
 } from '../utils/decorators';
+import { createErrorNotification } from '../../../core/copy/appNotification';
 
 /**
  * Adds a query row after the row with the given index.
@@ -427,6 +428,8 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       queryResponse,
       querySubscription,
       history,
+      refreshInterval,
+      absoluteRange,
     } = exploreItemState;
 
     if (!hasNonEmptyQuery(queries)) {
@@ -473,47 +476,54 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
         // actually can see what is happening.
         live ? throttleTime(500) : identity,
         map((data: PanelData) => preProcessPanelData(data, queryResponse)),
-        decorateWithGraphLogsTraceAndTable(getState().explore[exploreId].datasourceInstance),
-        decorateWithGraphResult(),
-        decorateWithTableResult(),
-        decorateWithLogsResult(getState().explore[exploreId])
+        map(decorateWithGraphLogsTraceAndTable),
+        map(decorateWithGraphResult),
+        map(decorateWithLogsResult({ absoluteRange, refreshInterval })),
+        mergeMap(decorateWithTableResult)
       )
-      .subscribe(data => {
-        if (!data.error && firstResponse) {
-          // Side-effect: Saving history in localstorage
-          const nextHistory = updateHistory(history, datasourceId, queries);
-          const nextRichHistory = addToRichHistory(
-            richHistory || [],
-            datasourceId,
-            datasourceName,
-            queries,
-            false,
-            '',
-            ''
-          );
-          dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
-          dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
+      .subscribe(
+        data => {
+          if (!data.error && firstResponse) {
+            // Side-effect: Saving history in localstorage
+            const nextHistory = updateHistory(history, datasourceId, queries);
+            const nextRichHistory = addToRichHistory(
+              richHistory || [],
+              datasourceId,
+              datasourceName,
+              queries,
+              false,
+              '',
+              ''
+            );
+            dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+            dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
 
-          // We save queries to the URL here so that only successfully run queries change the URL.
-          dispatch(stateSave());
-        }
-
-        firstResponse = false;
-
-        dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
-
-        // Keep scanning for results if this was the last scanning transaction
-        if (getState().explore[exploreId].scanning) {
-          if (data.state === LoadingState.Done && data.series.length === 0) {
-            const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
-            dispatch(updateTime({ exploreId, absoluteRange: range }));
-            dispatch(runQueries(exploreId));
-          } else {
-            // We can stop scanning if we have a result
-            dispatch(scanStopAction({ exploreId }));
+            // We save queries to the URL here so that only successfully run queries change the URL.
+            dispatch(stateSave());
           }
+
+          firstResponse = false;
+
+          dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
+
+          // Keep scanning for results if this was the last scanning transaction
+          if (getState().explore[exploreId].scanning) {
+            if (data.state === LoadingState.Done && data.series.length === 0) {
+              const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
+              dispatch(updateTime({ exploreId, absoluteRange: range }));
+              dispatch(runQueries(exploreId));
+            } else {
+              // We can stop scanning if we have a result
+              dispatch(scanStopAction({ exploreId }));
+            }
+          }
+        },
+        error => {
+          dispatch(notifyApp(createErrorNotification('Query processing error', error)));
+          dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
+          console.error(error);
         }
-      });
+      );
 
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
   };
