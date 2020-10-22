@@ -29,6 +29,9 @@ import {
   TransformOptions,
 } from './types';
 
+const POSITIVE_INFINITY_SAMPLE_VALUE = '+Inf';
+const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';
+
 export function transform(
   response: FetchResponse<PromDataSuccessResponse>,
   transformOptions: {
@@ -190,7 +193,7 @@ function transformToDataFrame(data: MatrixOrVectorResult, options: TransformOpti
     const dps: PromValue[] = [];
 
     for (const value of data.values) {
-      let dpValue: number | null = parseFloat(value[1]);
+      let dpValue: number | null = parseSampleValue(value[1]);
 
       if (isNaN(dpValue)) {
         dpValue = null;
@@ -254,12 +257,12 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
       d.values.forEach(val => {
         timeField.values.add(val[0] * 1000);
         metricFields.forEach(metricField => metricField.values.add(getLabelValue(d.metric, metricField.name)));
-        valueField.values.add(parseFloat(val[1]));
+        valueField.values.add(parseSampleValue(val[1]));
       });
     } else {
       timeField.values.add(d.value[0] * 1000);
       metricFields.forEach(metricField => metricField.values.add(getLabelValue(d.metric, metricField.name)));
-      valueField.values.add(parseFloat(d.value[1]));
+      valueField.values.add(parseSampleValue(d.value[1]));
     }
   });
 
@@ -274,7 +277,7 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
 function getLabelValue(metric: PromMetric, label: string): string | number {
   if (metric.hasOwnProperty(label)) {
     if (label === 'le') {
-      return parseHistogramLabel(metric[label]);
+      return parseSampleValue(metric[label]);
     }
     return metric[label];
   }
@@ -300,7 +303,7 @@ function getValueField(
     type: FieldType.number,
     config: {},
     display: getDisplayProcessor(),
-    values: new ArrayVector<number | null>(data.map(val => (parseValue ? parseFloat(val[1]) : val[1]))),
+    values: new ArrayVector<number | null>(data.map(val => (parseValue ? parseSampleValue(val[1]) : val[1]))),
   };
 }
 
@@ -364,8 +367,8 @@ function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
 
   try {
     // fail if not integer. might happen with bad queries
-    le1 = parseHistogramLabel(s1.name ?? '');
-    le2 = parseHistogramLabel(s2.name ?? '');
+    le1 = parseSampleValue(s1.name ?? '');
+    le2 = parseSampleValue(s2.name ?? '');
   } catch (err) {
     console.error(err);
     return 0;
@@ -382,9 +385,13 @@ function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
   return 0;
 }
 
-function parseHistogramLabel(le: string): number {
-  if (le === '+Inf') {
-    return +Infinity;
+function parseSampleValue(value: string): number {
+  switch (value) {
+    case POSITIVE_INFINITY_SAMPLE_VALUE:
+      return Number.POSITIVE_INFINITY;
+    case NEGATIVE_INFINITY_SAMPLE_VALUE:
+      return Number.NEGATIVE_INFINITY;
+    default:
+      return parseFloat(value);
   }
-  return Number(le);
 }

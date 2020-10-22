@@ -58,7 +58,7 @@ func main() {
 
 		v           = flag.Bool("v", false, "prints current version and exits")
 		profile     = flag.Bool("profile", false, "Turn on pprof profiling")
-		profilePort = flag.Uint("profile-port", 6060, "Define custom port for profiling")
+		profilePort = flag.Uint64("profile-port", 6060, "Define custom port for profiling")
 		tracing     = flag.Bool("tracing", false, "Turn on tracing")
 		tracingFile = flag.String("tracing-file", "trace.out", "Define tracing output file")
 	)

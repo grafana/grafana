@@ -7,48 +7,43 @@ import (
 	"time"
 
 	"github.com/centrifugal/centrifuge"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// TestdataRunner manages all the `grafana/dashboard/*` channels
-type testdataRunner struct {
+// testDataRunner manages all the `grafana/dashboard/*` channels.
+type testDataRunner struct {
 	publisher   models.ChannelPublisher
 	running     bool
 	speedMillis int
 	dropPercent float64
 	channel     string
+	name        string
 }
 
-// TestdataSupplier manages all the `grafana/testdata/*` channels
-type TestdataSupplier struct {
-	publisher models.ChannelPublisher
+// TestDataSupplier manages all the `grafana/testdata/*` channels.
+type TestDataSupplier struct {
+	Publisher models.ChannelPublisher
 }
 
-// CreateTestdataSupplier Initialize a dashboard handler
-func CreateTestdataSupplier(p models.ChannelPublisher) TestdataSupplier {
-	return TestdataSupplier{
-		publisher: p,
-	}
-}
-
-// GetHandlerForPath called on init
-func (g *TestdataSupplier) GetHandlerForPath(path string) (models.ChannelHandler, error) {
+// GetHandlerForPath gets the channel handler for a path.
+// Called on init.
+func (g *TestDataSupplier) GetHandlerForPath(path string) (models.ChannelHandler, error) {
 	channel := "grafana/testdata/" + path
 
 	if path == "random-2s-stream" {
-		return &testdataRunner{
-			publisher:   g.publisher,
+		return &testDataRunner{
+			publisher:   g.Publisher,
 			running:     false,
 			speedMillis: 2000,
 			dropPercent: 0,
 			channel:     channel,
+			name:        path,
 		}, nil
 	}
 
 	if path == "random-flakey-stream" {
-		return &testdataRunner{
-			publisher:   g.publisher,
+		return &testDataRunner{
+			publisher:   g.Publisher,
 			running:     false,
 			speedMillis: 400,
 			dropPercent: .6,
@@ -59,13 +54,14 @@ func (g *TestdataSupplier) GetHandlerForPath(path string) (models.ChannelHandler
 	return nil, fmt.Errorf("unknown channel")
 }
 
-// GetChannelOptions called fast and often
-func (g *testdataRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
+// GetChannelOptions gets channel options.
+// Called fast and often.
+func (g *testDataRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
 	return centrifuge.ChannelOptions{}
 }
 
-// OnSubscribe for now allows anyone to subscribe to any dashboard
-func (g *testdataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
+// OnSubscribe for now allows anyone to subscribe to any dashboard.
+func (g *testDataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
 	if !g.running {
 		g.running = true
 
@@ -77,26 +73,26 @@ func (g *testdataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscrib
 	return nil
 }
 
-// OnPublish called when an event is received from the websocket
-func (g *testdataRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
+// OnPublish is called when an event is received from the websocket.
+func (g *testDataRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
 	return nil, fmt.Errorf("can not publish to testdata")
 }
 
-type randomWalkMessage struct {
-	Time  int64
-	Value float64
-	Min   float64
-	Max   float64
-}
-
-// RunRandomCSV just for an example
-func (g *testdataRunner) runRandomCSV() {
+// runRandomCSV is just for an example.
+func (g *testDataRunner) runRandomCSV() {
 	spread := 50.0
 
 	walker := rand.Float64() * 100
 	ticker := time.NewTicker(time.Duration(g.speedMillis) * time.Millisecond)
 
-	line := randomWalkMessage{}
+	measurement := models.Measurement{
+		Name:   g.name,
+		Time:   0,
+		Values: make(map[string]interface{}, 5),
+	}
+	msg := models.MeasurementBatch{
+		Measurements: []models.Measurement{measurement}, // always a single measurement
+	}
 
 	for t := range ticker.C {
 		if rand.Float64() <= g.dropPercent {
@@ -105,12 +101,12 @@ func (g *testdataRunner) runRandomCSV() {
 		delta := rand.Float64() - 0.5
 		walker += delta
 
-		line.Time = t.UnixNano() / int64(time.Millisecond)
-		line.Value = walker
-		line.Min = walker - ((rand.Float64() * spread) + 0.01)
-		line.Max = walker + ((rand.Float64() * spread) + 0.01)
+		measurement.Time = t.UnixNano() / int64(time.Millisecond)
+		measurement.Values["value"] = walker
+		measurement.Values["min"] = walker - ((rand.Float64() * spread) + 0.01)
+		measurement.Values["max"] = walker + ((rand.Float64() * spread) + 0.01)
 
-		bytes, err := json.Marshal(&line)
+		bytes, err := json.Marshal(&msg)
 		if err != nil {
 			logger.Warn("unable to marshal line", "error", err)
 			continue
@@ -118,7 +114,7 @@ func (g *testdataRunner) runRandomCSV() {
 
 		err = g.publisher(g.channel, bytes)
 		if err != nil {
-			logger.Warn("write", "channel", g.channel, "line", line)
+			logger.Warn("write", "channel", g.channel, "measurement", measurement)
 		}
 	}
 }
