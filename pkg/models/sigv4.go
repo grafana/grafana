@@ -38,6 +38,8 @@ type Config struct {
 
 	Profile string
 
+	DatasourceType string
+
 	AccessKey string
 	SecretKey string
 
@@ -94,7 +96,7 @@ func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
 	}
 
 	payload := bytes.NewReader(replaceBody(req))
-	header, err := signer.Sign(req, payload, "es", m.Config.Region, time.Now().UTC())
+	header, err := signer.Sign(req, payload, awsServiceNamespace(m.Config.DatasourceType), m.Config.Region, time.Now().UTC())
 
 	// reset X-Forwarded-For header if it existed pre-signing
 	if forwardHeader != "" {
@@ -146,4 +148,15 @@ func replaceBody(req *http.Request) []byte {
 	payload, _ := ioutil.ReadAll(req.Body)
 	req.Body = ioutil.NopCloser(bytes.NewReader(payload))
 	return payload
+}
+
+func awsServiceNamespace(dsType string) string {
+	switch dsType {
+	case DS_ES:
+		return "es"
+	case DS_PROMETHEUS:
+		return "prometheus"
+	default:
+		panic(fmt.Sprintf("Unsupported datasource %s", dsType))
+	}
 }
