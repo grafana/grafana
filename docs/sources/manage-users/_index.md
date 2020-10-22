@@ -9,23 +9,51 @@ weight = 40
 
 # Manage users
 
-Create users and teams and configure [Permissions]({{< relref "../permissions/_index.md" >}}) to make sure that users only have access to the resources they need.
+Grafana offers several options for grouping users. Each level has different tools for managing user accounts and different tasks that they can perform.
 
-Only Administrators can manage users and teams.
+One of the most important user management tasks is assigning roles, which govern what [permissions]({{< relref "../permissions/_index.md" >}}) a user has. The correct permissions ensure that users only have access to the resources they need.
 
-## Users
+## Server
 
-Users are named accounts in Grafana that can be granted permissions to access resources throughout Grafana.
+The highest and broadest level of user group in Grafana is the server. Every user with an account in a Grafana instance is a member of the server group.
 
+Grafana Server Admins are user accounts that have the Grafana Admin option set to **Yes**. They can perform the following tasks:
+
+LINK TO MANAGE USERS IN SERVER
 - [Add or remove a user]({{< relref "./add-or-remove-user.md" >}})
 - [Enable or disable a user]({{< relref "./enable-or-disable-user.md" >}})
 
+## Organization
+
+Organizations are groups of users on a server. Users can belong to more than one organization, but each user must belong to at least one organization.
+
+Data sources, plugins, and dashboards are associated with organizations. This means that you could have a server with two organizations, one with a Prometheus data source and another with an InfluxDB data source. Each organization would have separate data and dashboards.
+
+Members of organizations have permissions based on their _role_ in the organization. For more information, refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}).
+
+Organization Admins are user accounts that are assigned the Admin role for an organization. They can perform the following tasks:
+
+LINK TO ORG MANAGE USER TASKS
+
+
 ## Teams
 
-Teams allow you to grant permissions for a group of users.
+Teams are groups of users that are all members of the same organization. Teams allow you to grant permissions for a group of users. Teams are most often used to manage [permissions for folders and dashboards]({{< relref "../permissions/dashboard_folder_permissions.md" >}}). Enterprise users might use them to apply [data source permissions]({{< relref "../enterprise/datasource_permissions.md" >}}).
+
+Teams are mostly managed by Organization Admins, but if the Grafana server setting [editors_can_admin]({{< relref "../administration/configuration.md#editors_can_admin" >}}) is applied, then users assigned the Team Admin role can manage teams as well.
+
+Organization Admins and Team Admins can perform the following tasks:
 
 - [Create or remove a team]({{< relref "./create-or-remove-team.md" >}})
 - [Add or remove a user from a team]({{< relref "./add-or-remove-user-from-team.md" >}})
+- FINISH LIST
+
+## Users
+
+Users are named accounts in Grafana that can be granted permissions to access resources throughout Grafana. All users can perform manage their own user accounts to a certain extent.
+
+All users can perform the following tasks:
+- LIST TASKS
 
 ## Learn more
 
