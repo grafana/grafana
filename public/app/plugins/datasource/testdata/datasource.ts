@@ -17,9 +17,16 @@ import {
   TimeRange,
   DataTopic,
   AnnotationEvent,
+  LiveChannelScope,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
-import { getBackendSrv, toDataQueryError, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import {
+  getBackendSrv,
+  toDataQueryError,
+  getTemplateSrv,
+  TemplateSrv,
+  getLiveMeasurementsObserver,
+} from '@grafana/runtime';
 import { queryMetricTree } from './metricTree';
 import { from, merge, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -47,6 +54,9 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
       }
 
       switch (target.scenarioId) {
+        case 'live':
+          streams.push(runGrafanaLiveQuery(target, options));
+          break;
         case 'streaming_client':
           streams.push(runStream(target, options));
           break;
@@ -217,5 +227,24 @@ function runGrafanaAPI(target: TestDataQuery, req: DataQueryRequest<TestDataQuer
           data: [frame],
         };
       })
+  );
+}
+
+let liveQueryCounter = 1000;
+
+function runGrafanaLiveQuery(
+  target: TestDataQuery,
+  req: DataQueryRequest<TestDataQuery>
+): Observable<DataQueryResponse> {
+  if (!target.channel) {
+    throw new Error(`Missing channel config`);
+  }
+  return getLiveMeasurementsObserver(
+    {
+      scope: LiveChannelScope.Grafana,
+      namespace: 'testdata',
+      path: target.channel,
+    },
+    `testStream.${liveQueryCounter++}`
   );
 }
