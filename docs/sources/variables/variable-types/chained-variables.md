@@ -4,7 +4,9 @@ keywords = ["grafana", "templating", "variable", "nested", "chained", "linked"]
 type = "docs"
 aliases = ["/docs/grafana/latest/variables/chained-variables.md"]
 [menu.docs]
-weight = 600
+identifier = "chained-variable"
+parent = "variable-types"
+weight = 800
 +++
 
 # Chained variables

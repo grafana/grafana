@@ -62,15 +62,7 @@ interface LogsContainerProps {
   splitOpen: typeof splitOpen;
 }
 
-interface LogsContainerState {
-  logsContainerOpen: boolean;
-}
-
-export class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState> {
-  state: LogsContainerState = {
-    logsContainerOpen: true,
-  };
-
+export class LogsContainer extends PureComponent<LogsContainerProps> {
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
@@ -102,12 +94,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
     return getFieldLinksForExplore(field, rowIndex, this.props.splitOpen, this.props.range);
   };
 
-  onToggleCollapse = () => {
-    this.setState(state => ({
-      logsContainerOpen: !state.logsContainerOpen,
-    }));
-  };
-
   render() {
     const {
       loading,
@@ -130,8 +116,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
       exploreId,
     } = this.props;
 
-    const { logsContainerOpen } = this.state;
-
     return (
       <>
         <LogsCrossFadeTransition visible={isLive}>
@@ -151,13 +135,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
           </Collapse>
         </LogsCrossFadeTransition>
         <LogsCrossFadeTransition visible={!isLive}>
-          <Collapse
-            label="Logs"
-            loading={loading}
-            isOpen={logsContainerOpen}
-            onToggle={this.onToggleCollapse}
-            collapsible
-          >
+          <Collapse label="Logs" loading={loading} isOpen>
             <Logs
               dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
               logRows={logRows}

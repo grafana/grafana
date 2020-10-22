@@ -19,12 +19,12 @@ type TsdbQuery struct {
 }
 
 type Query struct {
-	RefId         string
-	Model         *simplejson.Json
-	DataSource    *models.DataSource
-	MaxDataPoints int64
-	IntervalMs    int64
-	QueryType     string
+	RefId         string             `json:"refID"`
+	Model         *simplejson.Json   `json:"model,omitempty"`
+	DataSource    *models.DataSource `json:"datasource"`
+	MaxDataPoints int64              `json:"maxDataPoints"`
+	IntervalMs    int64              `json:"intervalMs"`
+	QueryType     string             `json:"queryType"`
 }
 
 type Response struct {
@@ -89,7 +89,7 @@ func NewTimeSeries(name string, points TimeSeriesPoints) *TimeSeries {
 	}
 }
 
-// DataFrames interface for retrieving encoded and decoded data frames.
+// DataFrames is an interface for retrieving encoded and decoded data frames.
 //
 // See NewDecodedDataFrames and NewEncodedDataFrames for more information.
 type DataFrames interface {

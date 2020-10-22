@@ -21,7 +21,7 @@ type URLValidationError struct {
 
 // Error returns the error message.
 func (e URLValidationError) Error() string {
-	return fmt.Sprintf("Validation of data source URL %q failed: %s", e.URL, e.Err.Error())
+	return fmt.Sprintf("validation of data source URL %q failed: %s", e.URL, e.Err.Error())
 }
 
 // Unwrap returns the wrapped error.

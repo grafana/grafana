@@ -4,7 +4,7 @@ import { withKnobs, object } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
 import { UseState } from '../../../../utils/storybook/UseState';
 import { SelectableValue } from '@grafana/data';
-import { Select, AsyncSelect } from './Select';
+import { Select, AsyncSelect as AsyncSelectComponent } from './Select';
 
 export default {
   title: 'Forms/Legacy/Select',
@@ -70,22 +70,19 @@ export const withAllowCustomValue = () => {
   );
 };
 
-export const asyncSelect = () => {
+export const AsyncSelect = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [value, setValue] = useState<SelectableValue<any>>();
-  const loadAsyncOptions = useCallback(
-    inputValue => {
-      return new Promise<Array<SelectableValue<string>>>(resolve => {
-        setTimeout(() => {
-          setIsLoading(false);
-          resolve(options.filter(option => option.label && option.label.includes(inputValue)));
-        }, 1000);
-      });
-    },
-    [value]
-  );
+  const loadAsyncOptions = useCallback(inputValue => {
+    return new Promise<Array<SelectableValue<string>>>(resolve => {
+      setTimeout(() => {
+        setIsLoading(false);
+        resolve(options.filter(option => option.label && option.label.includes(inputValue)));
+      }, 1000);
+    });
+  }, []);
   return (
-    <AsyncSelect
+    <AsyncSelectComponent
       value={value}
       defaultOptions
       width={20}

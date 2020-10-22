@@ -5,6 +5,10 @@ import { ElasticsearchAggregation } from './types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
 
+function createDefaultMetric(id = 0): ElasticsearchAggregation {
+  return { type: 'count', field: 'select field', id: (id + 1).toString() };
+}
+
 export class ElasticMetricAggCtrl {
   /** @ngInject */
   constructor($scope: any, uiSegmentSrv: any, $rootScope: GrafanaRootScope) {
@@ -21,7 +25,7 @@ export class ElasticMetricAggCtrl {
     };
 
     $scope.updatePipelineAggOptions = () => {
-      $scope.pipelineAggOptions = queryDef.getPipelineAggOptions($scope.target);
+      $scope.pipelineAggOptions = queryDef.getPipelineAggOptions($scope.target, $scope.agg);
     };
 
     $rootScope.onAppEvent(
@@ -195,12 +199,19 @@ export class ElasticMetricAggCtrl {
         0
       );
 
-      metricAggs.splice(addIndex, 0, { type: 'count', field: 'select field', id: (id + 1).toString() });
+      metricAggs.splice(addIndex, 0, createDefaultMetric(id));
       $scope.onChange();
     };
 
     $scope.removeMetricAgg = () => {
-      metricAggs.splice($scope.index, 1);
+      const metricBeingRemoved = metricAggs[$scope.index];
+      const metricsToRemove = queryDef.getAncestors($scope.target, metricBeingRemoved);
+      const newMetricAggs = metricAggs.filter(m => !metricsToRemove.includes(m.id));
+      if (newMetricAggs.length > 0) {
+        metricAggs.splice(0, metricAggs.length, ...newMetricAggs);
+      } else {
+        metricAggs.splice(0, metricAggs.length, createDefaultMetric());
+      }
       $scope.onChange();
     };
 

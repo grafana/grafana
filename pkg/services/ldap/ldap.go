@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
+	"net"
+	"strconv"
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
@@ -110,7 +112,7 @@ func (server *Server) Dial() error {
 		}
 	}
 	for _, host := range strings.Split(server.Config.Host, " ") {
-		address := fmt.Sprintf("%s:%d", host, server.Config.Port)
+		address := net.JoinHostPort(host, strconv.Itoa(server.Config.Port))
 		if server.Config.UseSSL {
 			tlsCfg := &tls.Config{
 				InsecureSkipVerify: server.Config.SkipVerifySSL,
@@ -363,10 +365,9 @@ func (server *Server) getSearchRequest(
 
 	search := ""
 	for _, login := range logins {
-		query := strings.Replace(
+		query := strings.ReplaceAll(
 			server.Config.SearchFilter,
 			"%s", ldap.EscapeFilter(login),
-			-1,
 		)
 
 		search += query
@@ -509,10 +510,9 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 			)
 		}
 
-		filter := strings.Replace(
+		filter := strings.ReplaceAll(
 			config.GroupSearchFilter, "%s",
 			ldap.EscapeFilter(filterReplace),
-			-1,
 		)
 
 		server.log.Info("Searching for user's groups", "filter", filter)

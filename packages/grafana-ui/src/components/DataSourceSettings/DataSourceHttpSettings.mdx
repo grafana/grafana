@@ -13,7 +13,7 @@ It is used in a `ConfigEditor` for data source plugins. You can find more exampl
 ### Example usage
 ```jsx
 export const ConfigEditor = (props: Props) => {
-  const { options, onOptionsChange } = props;
+  const { options, onOptionsChange, config } = props;
   return (
     <>
       <DataSourceHttpSettings
@@ -21,6 +21,7 @@ export const ConfigEditor = (props: Props) => {
         dataSourceConfig={options}
         showAccessOptions={true}
         onChange={onOptionsChange}
+        sigV4AuthEnabled={false}
       />
 
       {/* Additional configuration settings for your data source plugin.*/}

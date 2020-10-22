@@ -207,10 +207,10 @@ var Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string)
 	}
 	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval)
 
-	sql = strings.Replace(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10), -1)
-	sql = strings.Replace(sql, "$__interval", interval.Text, -1)
-	sql = strings.Replace(sql, "$__unixEpochFrom()", fmt.Sprintf("%d", timeRange.GetFromAsSecondsEpoch()), -1)
-	sql = strings.Replace(sql, "$__unixEpochTo()", fmt.Sprintf("%d", timeRange.GetToAsSecondsEpoch()), -1)
+	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
+	sql = strings.ReplaceAll(sql, "$__interval", interval.Text)
+	sql = strings.ReplaceAll(sql, "$__unixEpochFrom()", fmt.Sprintf("%d", timeRange.GetFromAsSecondsEpoch()))
+	sql = strings.ReplaceAll(sql, "$__unixEpochTo()", fmt.Sprintf("%d", timeRange.GetToAsSecondsEpoch()))
 
 	return sql, nil
 }
@@ -506,7 +506,7 @@ func (e *sqlQueryEndpoint) processRow(cfg *processCfg) error {
 
 		series.Points = append(series.Points, tsdb.TimePoint{value, null.FloatFrom(timestamp)})
 
-		if setting.Env == setting.DEV {
+		if setting.Env == setting.Dev {
 			e.log.Debug("Rows", "metric", metric, "time", timestamp, "value", value)
 		}
 	}

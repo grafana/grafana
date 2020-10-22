@@ -3,7 +3,7 @@ import React, { memo } from 'react';
 
 // Types
 import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
-import { FormLabel } from '@grafana/ui/src/components/FormLabel/FormLabel';
+import { InlineFormLabel } from '@grafana/ui';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { CloudWatchLogsQueryField } from './LogsQueryField';
@@ -56,9 +56,9 @@ export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor
       syntax={syntax}
       allowCustomValue={allowCustomValue}
       ExtraFieldElement={
-        <FormLabel className={`gf-form-label--btn ${labelClass}`} width="auto" tooltip="Link to Graph in AWS">
+        <InlineFormLabel className={`gf-form-label--btn ${labelClass}`} width="auto" tooltip="Link to Graph in AWS">
           <CloudWatchLink query={query as CloudWatchLogsQuery} panelData={data} datasource={datasource} />
-        </FormLabel>
+        </InlineFormLabel>
       }
     />
   );

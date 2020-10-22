@@ -181,6 +181,7 @@ func NewOAuthService() {
 				apiUrl:               info.ApiUrl,
 				emailAttributeName:   info.EmailAttributeName,
 				emailAttributePath:   info.EmailAttributePath,
+				nameAttributePath:    sec.Key("name_attribute_path").String(),
 				roleAttributePath:    info.RoleAttributePath,
 				loginAttributePath:   sec.Key("login_attribute_path").String(),
 				idTokenAttributeName: sec.Key("id_token_attribute_name").String(),
@@ -258,8 +259,8 @@ func GetOAuthHttpClient(name string) (*http.Client, error) {
 
 	if info.TlsClientCert != "" || info.TlsClientKey != "" {
 		cert, err := tls.LoadX509KeyPair(info.TlsClientCert, info.TlsClientKey)
-		logger.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
 		if err != nil {
+			logger.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
 			return nil, fmt.Errorf("Failed to setup TlsClientCert")
 		}
 

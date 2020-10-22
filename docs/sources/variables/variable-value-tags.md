@@ -2,7 +2,9 @@
 title = "Enter Value tags"
 type = "docs"
 [menu.docs]
-weight = 800
+identifier = "variables-value-groups"
+parent = "variables"
+weight = 500
 +++
 
 # Enter variable value groups/tags (experimental feature)
@@ -31,4 +33,4 @@ Enter a data source query that should return a list of values for a specified ta
 
 The `$tag` variable will have the value of the tag that the user chooses. 
 
-For example, if you have a Graphite query for tags, `regions.*`, that returns a list of regions. The the values query could be `regions.$tag.*`, which if the user chooses Europe would be interpolated to `regions.Europe.*`.
+For example, if you have a Graphite query for tags, `regions.*`, that returns a list of regions. The values query could be `regions.$tag.*`, which if the user chooses Europe would be interpolated to `regions.Europe.*`.

@@ -1,28 +1,35 @@
 import React from 'react';
-import { shallow } from 'enzyme';
-import { PromExploreExtraField, PromExploreExtraFieldProps } from './PromExploreExtraField';
+import { render, screen } from '@testing-library/react';
+import { PromExploreExtraFieldProps, PromExploreExtraField } from './PromExploreExtraField';
 
 const setup = (propOverrides?: PromExploreExtraFieldProps) => {
-  const label = 'Prometheus Explore Extra Field';
-  const value = '123';
-  const onChangeFunc = jest.fn();
+  const queryType = 'range';
+  const stepValue = '1';
+  const onStepChange = jest.fn();
+  const onQueryTypeChange = jest.fn();
   const onKeyDownFunc = jest.fn();
 
   const props: any = {
-    label,
-    value,
-    onChangeFunc,
+    queryType,
+    stepValue,
+    onStepChange,
+    onQueryTypeChange,
     onKeyDownFunc,
   };
 
   Object.assign(props, propOverrides);
 
-  return shallow(<PromExploreExtraField {...props} />);
+  return render(<PromExploreExtraField {...props} />);
 };
 
-describe('PrometheusExploreExtraField', () => {
-  it('should render component', () => {
-    const wrapper = setup();
-    expect(wrapper).toMatchSnapshot();
+describe('PromExploreExtraField', () => {
+  it('should render step field', () => {
+    setup();
+    expect(screen.getByTestId('stepField')).toBeInTheDocument();
+  });
+
+  it('should render query type field', () => {
+    setup();
+    expect(screen.getByTestId('queryTypeField')).toBeInTheDocument();
   });
 });

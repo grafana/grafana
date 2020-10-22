@@ -3,6 +3,8 @@ title = "Add a data source variable"
 type = "docs"
 aliases = ["/docs/grafana/latest/variables/add-data-source-variable.md"]
 [menu.docs]
+identifier = "add-datasource-variable"
+parent = "variable-types"
 weight = 500
 +++
 
@@ -24,7 +26,7 @@ _Data source_ variables allow you to quickly change the data source for an entir
 
 ## Enter Data source options
 
-1. In the **Type** list, select the target data source for the variable. For more information about data sources, refer to [Add a data source]({{< relref "../../features/datasources/add-a-data-source.md" >}}).
+1. In the **Type** list, select the target data source for the variable. For more information about data sources, refer to [Add a data source]({{< relref "../../datasources/add-a-data-source.md" >}}).
 1. (optional) In **Instance name filter**, enter a regex filter for which data source instances to choose from in the variable value drop-down list. Leave this field empty to display all instances.
 1. (optional) Enter [Selection Options]({{< relref "../variable-selection-options.md" >}}).
 1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.

@@ -2,7 +2,7 @@ import { FieldConfig } from './dataFrame';
 import { DataTransformerConfig } from './transformations';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
 
-export type KeyValue<T = any> = { [s: string]: T };
+export type KeyValue<T = any> = Record<string, T>;
 
 /**
  * Represent panel data loading state.
@@ -13,6 +13,10 @@ export enum LoadingState {
   Streaming = 'Streaming',
   Done = 'Done',
   Error = 'Error',
+}
+
+export enum DataTopic {
+  Annotations = 'annotations',
 }
 
 export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';
@@ -32,6 +36,12 @@ export interface QueryResultMeta {
 
   /** Currently used to show results in Explore only in preferred visualisation option */
   preferredVisualisationType?: PreferredVisualisationType;
+
+  /**
+   * Optionally identify which topic the frame should be assigned to.
+   * A value specified in the response will override what the request asked for.
+   */
+  dataTopic?: DataTopic;
 
   /**
    * This is the raw query sent to the underlying system.  All macros and templating

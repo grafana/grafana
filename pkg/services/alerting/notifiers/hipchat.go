@@ -121,7 +121,7 @@ func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	message := ""
-	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
+	if evalContext.Rule.State != models.AlertStateOK { // don't add message when going back to alert state ok.
 		message += " " + evalContext.Rule.Message
 	}
 
@@ -129,7 +129,7 @@ func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		message = evalContext.GetNotificationTitle() + " in state " + evalContext.GetStateModel().Text
 	}
 
-	//HipChat has a set list of colors
+	// HipChat has a set list of colors
 	var color string
 	switch evalContext.Rule.State {
 	case models.AlertStateOK:
