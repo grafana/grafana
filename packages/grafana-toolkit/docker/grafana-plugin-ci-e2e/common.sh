@@ -4,4 +4,6 @@
 ## Common variable declarations
 ##
 
-DOCKER_IMAGE_NAME="grafana/grafana-plugin-ci-e2e:1.0.0"
+DOCKER_IMAGE_BASE_NAME="grafana/grafana-plugin-ci-e2e"
+DOCKER_IMAGE_VERSION="1.0.1"
+DOCKER_IMAGE_NAME="${DOCKER_IMAGE_BASE_NAME}:${DOCKER_IMAGE_VERSION}"

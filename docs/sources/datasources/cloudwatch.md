@@ -27,27 +27,32 @@ build dashboards or use Explore with CloudWatch metrics and CloudWatch Logs.
 
 | Name                       | Description                                                                                                             |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| _Name_                     | The data source name. This is how you refer to the data source in panels and queries.                                   |
-| _Default_                  | Default data source means that it will be pre-selected for new panels.                                                  |
-| _Default Region_           | Used in query editor to set region (can be changed on per query basis)                                                  |
-| _Custom Metrics namespace_ | Specify the CloudWatch namespace of Custom metrics                                                                      |
-| _Auth Provider_            | Specify the provider to get credentials.                                                                                |
-| _Credentials_ profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.                 |
-| _Assume Role Arn_          | Specify the ARN of the role to assume                                                                                   |
-| _External ID_              | If you are assuming a role in another account, that has been created with an external ID, specify the external ID here. |
+| `Name`                     | The data source name. This is how you refer to the data source in panels and queries.                                   |
+| `Default`                  | Default data source means that it will be pre-selected for new panels.                                                  |
+| `Default Region`           | Used in query editor to set region (can be changed on per query basis)                                                  |
+| `Custom Metrics namespace` | Specify the CloudWatch namespace of Custom metrics                                                                      |
+| `Auth Provider`            | Specify the provider to get credentials.                                                                                |
+| `Credentials` profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.                 |
+| `Assume Role Arn`          | Specify the ARN of the role to assume                                                                                   |
+| `External ID`              | If you are assuming a role in another account, that has been created with an external ID, specify the external ID here. |
 
 ## Authentication
 
-### IAM Roles
+### AWS credentials
 
-Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. If your Grafana
-server is running on AWS you can use IAM Roles and authentication will be handled automatically.
+There are three different authentication methods available. `AWS SDK Default` performs no custom configuration at all and instead uses the [default provider](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html) as specified by the AWS SDK for Go. This requires you to configure your AWS credentials separately, such as if you've [configured the CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html), if you're [running on an EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html), [in an ECS task](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html) or for a [Service Account in a Kubernetes cluster](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
+
+`Credentials file` corresponds directly to the [SharedCredentialsProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#SharedCredentialsProvider) provider in the Go SDK. In short, it will read the AWS shared credentials file and find the given profile. While `AWS SDK Default` will also find the shared credentials file, this option allows you to specify which profile to use without using environment variables. It doesn't have any implicit fallbacks to other credential providers, and will fail if using credentials from the credentials file doesn't work.
+
+`Access & secret key` corresponds to the [StaticProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#StaticProvider) and uses the given access key ID and secret key to authenticate. This method doesn't have any fallbacks, and will fail if the provided key pair doesn't work.
+
+### IAM roles
+
+Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. Providing you have chosen the _AWS SDK Default_ authentication method, and your Grafana server is running on AWS, you can use IAM Roles to handle authentication automically.
 
 See the AWS documentation on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
 
-> **Note:** [AWS Role Switching](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-cli.html) is not supported at the moment.
-
-## IAM Policies
+### IAM policies
 
 Grafana needs permissions granted via IAM to be able to read CloudWatch metrics
 and EC2 tags/instances/regions. You can attach these permissions to IAM roles and
@@ -101,22 +106,26 @@ Here is a minimal policy example:
 }
 ```
 
-### AWS credentials
+### Assuming a role
 
-If Auth Provider is `Credentials file`, Grafana tries to get credentials in the following order.
+The `Assume Role ARN` field allows you to specify which IAM role to assume, if any. When left blank, the provided credentials are used directly and the associated role or user should have the required permissions. If this field is non-blank, on the other hand, the provided credentials are used to perform an [sts:AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) call.
 
-- Environment variables. (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`)
-- Hard-code credentials.
-- Shared credentials file.
-- IAM role for Amazon EC2.
+### EKS IAM roles for service accounts
 
-See the AWS documentation on [Configuring the AWS SDK for Go](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html)
+The Grafana process in the container runs as user 472 (called "grafana"). When Kubernetes mounts your projected credentials, they will by default only be available to the root user. In order to allow user 472 to access the credentials (and avoid it falling back to the IAM role attached to the EC2 instance), you will need to provide a [security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for your pod.
+
+```
+securityContext:
+	fsGroup: 472
+	runAsUser: 472
+	runAsGroup: 472
+```
 
 ### AWS credentials file
 
 Create a file at `~/.aws/credentials`. That is the `HOME` path for user running grafana-server.
 
-> **Note:** If you think you have the credentials file in the right place but it is still not working then you might try moving your .aws file to '/usr/share/grafana/' and make sure your credentials file has at most 0644 permissions.
+> **Note:** If you think you have the credentials file in the right place and it is still not working, you might try moving your .aws file to '/usr/share/grafana/' and make sure your credentials file has at most 0644 permissions.
 
 Example content:
 
@@ -249,15 +258,15 @@ Read more about the available dimensions in the [CloudWatch Metrics and Dimensio
 
 | Name                                                                          | Description                                                                                                                                                                        |
 | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| _regions()_                                                                   | Returns a list of all AWS regions                                                                                                                                                  |
-| _namespaces()_                                                                | Returns a list of namespaces CloudWatch support.                                                                                                                                   |
-| _metrics(namespace, [region])_                                                | Returns a list of metrics in the namespace. (specify region or use "default" for custom metrics)                                                                                   |
-| _dimension_\__keys(namespace)_                                                | Returns a list of dimension keys in the namespace.                                                                                                                                 |
-| _dimension_\__values(region, namespace, metric, dimension_\__key, [filters])_ | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, `dimension_key` or you can use dimension `filters` to get more specific result as well. |
-| _ebs_\__volume_\__ids(region, instance_\__id)_                                | Returns a list of volume ids matching the specified `region`, `instance_id`.                                                                                                       |
-| _ec2_\__instance_\__attribute(region, attribute_\__name, filters)_            | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.                                                                                         |
-| _resource_\__arns(region, resource_\__type, tags)_                            | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.                                                                                                |
-| _statistics()_                                                                | Returns a list of all the standard statistics                                                                                                                                      |
+| `regions()`                                                                   | Returns a list of all AWS regions                                                                                                                                                  |
+| `namespaces()`                                                                | Returns a list of namespaces CloudWatch support.                                                                                                                                   |
+| `metrics(namespace, [region])`                                                | Returns a list of metrics in the namespace. (specify region or use "default" for custom metrics)                                                                                   |
+| `dimension_\__keys(namespace)`                                                | Returns a list of dimension keys in the namespace.                                                                                                                                 |
+| `dimension_\__values(region, namespace, metric, dimension_\__key, [filters])` | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, `dimension_key` or you can use dimension `filters` to get more specific result as well. |
+| `ebs_\__volume_\__ids(region, instance_\__id)`                                | Returns a list of volume ids matching the specified `region`, `instance_id`.                                                                                                       |
+| `ec2_\__instance_\__attribute(region, attribute_\__name, filters)`            | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.                                                                                         |
+| `resource_\__arns(region, resource_\__type, tags)`                            | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.                                                                                                |
+| `statistics()`                                                                | Returns a list of all the standard statistics                                                                                                                                      |
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
@@ -267,14 +276,14 @@ Example dimension queries which will return list of resources for individual AWS
 
 | Query                                                                                                                            | Service          |
 | -------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| _dimension_\__values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)_                                                           | ELB              |
-| _dimension_\__values(us-east-1,AWS/ElastiCache,CPUUtilization,CacheClusterId)_                                                   | ElastiCache      |
-| _dimension_\__values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)_                                                   | RedShift         |
-| _dimension_\__values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)_                                                     | RDS              |
-| _dimension_\__values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)_                                                               | S3               |
-| _dimension_\__values(us-east-1,CWAgent,disk_\__used_\__percent,device,{"InstanceId":"\$instance_\__id"})_                        | CloudWatch Agent |
-| _resource_\__arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})_ | ELB              |
-| _resource_\__arns(eu-west-1,ec2:instance,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})_                      | EC2              |
+| `dimension_\__values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)`                                                           | ELB              |
+| `dimension_\__values(us-east-1,AWS/ElastiCache,CPUUtilization,CacheClusterId)`                                                   | ElastiCache      |
+| `dimension_\__values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)`                                                   | RedShift         |
+| `dimension_\__values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)`                                                     | RDS              |
+| `dimension_\__values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)`                                                               | S3               |
+| `dimension_\__values(us-east-1,CWAgent,disk_\__used_\__percent,device,{"InstanceId":"\$instance_\__id"})`                        | CloudWatch Agent |
+| `resource_\__arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})` | ELB              |
+| `resource_\__arns(eu-west-1,ec2:instance,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})`                      | EC2              |
 
 ## ec2_instance_attribute examples
 
@@ -372,13 +381,25 @@ It's now possible to configure data sources using config files with Grafana's pr
 
 Here are some provisioning examples for this data source.
 
-### Using credentials profile name (non-default) 
+### Using AWS SDK (default)
+
+```yaml
+apiVersion: 1
+datasources:
+  - name: CloudWatch
+    type: cloudwatch
+    jsonData:
+      authType: default
+      defaultRegion: eu-west-2
+```
+
+### Using credentials' profile name (non-default)
 
 ```yaml
 apiVersion: 1
 
 datasources:
-  - name: Cloudwatch
+  - name: CloudWatch
     type: cloudwatch
     jsonData:
       authType: credentials
@@ -393,7 +414,7 @@ datasources:
 apiVersion: 1
 
 datasources:
-  - name: Cloudwatch
+  - name: CloudWatch
     type: cloudwatch
     jsonData:
       authType: keys
@@ -401,4 +422,17 @@ datasources:
     secureJsonData:
       accessKey: '<your access key>'
       secretKey: '<your secret key>'
+```
+
+### Using AWS SDK Default and ARN of IAM Role to Assume
+
+```yaml
+apiVersion: 1
+datasources:
+  - name: CloudWatch
+    type: cloudwatch
+    jsonData:
+      authType: default
+      assumeRoleArn: arn:aws:iam::123456789012:root
+      defaultRegion: eu-west-2
 ```

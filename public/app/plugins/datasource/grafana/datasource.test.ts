@@ -7,6 +7,11 @@ import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType } from './t
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
+  getTemplateSrv: () => ({
+    replace: (val: string) => {
+      return val.replace('$var2', 'replaced__delimiter__replaced2').replace('$var', 'replaced');
+    },
+  }),
 }));
 
 describe('grafana data source', () => {
@@ -25,13 +30,7 @@ describe('grafana data source', () => {
         return Promise.resolve([]);
       });
 
-      const templateSrvStub = {
-        replace: (val: string) => {
-          return val.replace('$var2', 'replaced__delimiter__replaced2').replace('$var', 'replaced');
-        },
-      };
-
-      ds = new GrafanaDatasource({} as DataSourceInstanceSettings, templateSrvStub as any);
+      ds = new GrafanaDatasource({} as DataSourceInstanceSettings);
     });
 
     describe('with tags that have template variables', () => {

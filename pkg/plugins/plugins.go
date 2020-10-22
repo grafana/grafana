@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -79,7 +78,7 @@ func (pm *PluginManager) Init() error {
 
 	pm.log.Info("Starting plugin search")
 
-	plugDir := path.Join(setting.StaticRootPath, "app/plugins")
+	plugDir := filepath.Join(setting.StaticRootPath, "app/plugins")
 	pm.log.Debug("Scanning core plugin directory", "dir", plugDir)
 	if err := pm.scan(plugDir, false); err != nil {
 		return errutil.Wrapf(err, "failed to scan core plugin directory '%s'", plugDir)
@@ -271,6 +270,12 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 		// Load the full plugin, and add it to manager
 		if err := loader.Load(jsonParser, plugin, scanner.backendPluginManager); err != nil {
+			if errors.Is(err, duplicatePluginError{}) {
+				pm.log.Warn("Plugin is duplicate", "error", err)
+				scanner.errors = append(scanner.errors, err)
+				continue
+			}
+
 			return err
 		}
 
