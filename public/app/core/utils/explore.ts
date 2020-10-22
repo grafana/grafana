@@ -23,6 +23,8 @@ import {
   urlUtil,
   ExploreUrlState,
   rangeUtil,
+  DateTime,
+  isDateTime,
 } from '@grafana/data';
 import store from 'app/core/store';
 import { v4 as uuidv4 } from 'uuid';
@@ -355,9 +357,13 @@ export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRa
   };
 };
 
-const parseRawTime = (value: any): TimeFragment | null => {
+const parseRawTime = (value: string | DateTime): TimeFragment | null => {
   if (value === null) {
     return null;
+  }
+
+  if (isDateTime(value)) {
+    return value;
   }
 
   if (value.indexOf('now') !== -1) {
@@ -374,9 +380,16 @@ const parseRawTime = (value: any): TimeFragment | null => {
     return toUtc(value, 'YYYY-MM-DD HH:mm:ss');
   }
 
-  if (!isNaN(value)) {
+  // This should handle cases where value is an epoch time as string
+  if (value.match(/^\d+$/)) {
     const epoch = parseInt(value, 10);
     return toUtc(epoch);
+  }
+
+  // This should handle ISO strings
+  const time = toUtc(value);
+  if (time.isValid()) {
+    return time;
   }
 
   return null;
