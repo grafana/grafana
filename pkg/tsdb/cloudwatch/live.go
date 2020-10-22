@@ -44,6 +44,8 @@ const (
 )
 
 var (
+	// We need to make an injectable service to manage this state
+	// The service must be shared between the live component and live
 	channelMu        = sync.Mutex{}
 	responseChannels = map[string]chan *tsdb.Response{}
 )
@@ -130,6 +132,8 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 		r.runningMu.Unlock()
 	}()
 
+	// Need an injectable service here, to share the channel state.
+	//
 	responseChannel, err := getResponseChannel(channelName)
 	if err != nil {
 		return err
@@ -149,10 +153,14 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 	return nil
 }
 
+// executeLiveLogQuery executes a CloudWatch Logs query with live updates over WebSocket.
+// A WebSocket channel is created, which goroutines sends responses over.
 func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	responseChannelName := uuid.Must(uuid.NewV4()).String()
 	responseChannel := make(chan *tsdb.Response)
+	// We need an injectable service here, to share this state
 	if err := addResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel); err != nil {
+		close(responseChannel)
 		return nil, err
 	}
 
@@ -173,9 +181,11 @@ func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryConte
 }
 
 func (e *cloudWatchExecutor) sendLiveQueriesToChannel(queryContext *tsdb.TsdbQuery, responseChannel chan *tsdb.Response) {
-	requestContext, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	defer close(responseChannel)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 	defer cancel()
-	eg, ectx := errgroup.WithContext(requestContext)
+	eg, ectx := errgroup.WithContext(ctx)
 
 	for _, query := range queryContext.Queries {
 		query := query
@@ -187,8 +197,6 @@ func (e *cloudWatchExecutor) sendLiveQueriesToChannel(queryContext *tsdb.TsdbQue
 	if err := eg.Wait(); err != nil {
 		plog.Error(err.Error())
 	}
-
-	close(responseChannel)
 }
 
 func (e *cloudWatchExecutor) getQueue(region string) (chan bool, error) {

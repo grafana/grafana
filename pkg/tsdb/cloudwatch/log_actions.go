@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -16,12 +17,14 @@ import (
 )
 
 func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	plog.Debug("Received request to execute log queries", "numQueries", len(queryContext.Queries))
 	resultChan := make(chan *tsdb.QueryResult, len(queryContext.Queries))
 	eg, ectx := errgroup.WithContext(ctx)
 
 	for _, query := range queryContext.Queries {
 		query := query
 		eg.Go(func() error {
+			plog.Debug("Executing log query", "query", query)
 			dataframe, err := e.executeLogAction(ectx, queryContext, query)
 			if err != nil {
 				return err
@@ -95,10 +98,13 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, queryContext 
 	case "GetLogGroupFields":
 		data, err = e.handleGetLogGroupFields(ctx, logsClient, parameters, query.RefId)
 	case "StartQuery":
+		plog.Debug("Starting log query", "region", region)
 		data, err = e.handleStartQuery(ctx, logsClient, parameters, queryContext.TimeRange, query.RefId)
 	case "StopQuery":
+		plog.Debug("Stopping log query", "region", region)
 		data, err = e.handleStopQuery(ctx, logsClient, parameters)
 	case "GetQueryResults":
+		plog.Debug("Getting log query results", "region", region)
 		data, err = e.handleGetQueryResults(ctx, logsClient, parameters, query.RefId)
 	case "GetLogEvents":
 		data, err = e.handleGetLogEvents(ctx, logsClient, parameters)
@@ -215,6 +221,8 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	// CloudWatch wouldn't consider a query using a non-alised @log/@logStream valid.
 	modifiedQueryString := "fields @timestamp,ltrim(@log) as " + logIdentifierInternal + ",ltrim(@logStream) as " + logStreamIdentifierInternal + "|" + parameters.Get("queryString").MustString("")
 
+	groupNames := strings.Join(parameters.Get("logGroupNames").MustStringArray(), ",")
+
 	startQueryInput := &cloudwatchlogs.StartQueryInput{
 		StartTime:     aws.Int64(startTime.Unix()),
 		EndTime:       aws.Int64(endTime.Unix()),
@@ -225,6 +233,8 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 	if resultsLimit, err := parameters.Get("limit").Int64(); err == nil {
 		startQueryInput.Limit = aws.Int64(resultsLimit)
 	}
+
+	plog.Debug("Starting logs query", "groupNames", groupNames, "queryString", modifiedQueryString)
 
 	return logsClient.StartQueryWithContext(ctx, startQueryInput)
 }
