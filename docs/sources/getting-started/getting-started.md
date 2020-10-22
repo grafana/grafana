@@ -52,7 +52,7 @@ To create your first dashboard:
 
 ### Admins
 
-The following topics are of interest to team admin or server admin users:
+The following topics are of interest to Grafana server admin users:
 
 - [Grafana configuration]({{< relref "../administration/configuration.md" >}})
 - [Authentication]({{< relref "../auth/overview.md" >}})
