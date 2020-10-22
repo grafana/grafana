@@ -7,7 +7,7 @@ import { EchoSrvTransport } from './transports/EchoSrvTransport';
 import { BuildInfo } from '@grafana/data';
 import { SentryEchoEvent, User, BaseTransport } from './types';
 
-interface SentryEchoBackendOptions extends SentryConfig {
+export interface SentryEchoBackendOptions extends SentryConfig {
   user?: User;
   buildInfo: BuildInfo;
 }
@@ -15,7 +15,7 @@ interface SentryEchoBackendOptions extends SentryConfig {
 export class SentryEchoBackend implements EchoBackend<SentryEchoEvent, SentryEchoBackendOptions> {
   supportedEvents = [EchoEventType.Sentry];
 
-  private transports: BaseTransport[];
+  transports: BaseTransport[];
 
   constructor(public options: SentryEchoBackendOptions) {
     // set up transports to post events to grafana backend and/or Sentry
