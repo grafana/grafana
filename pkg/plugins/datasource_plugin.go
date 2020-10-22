@@ -2,7 +2,7 @@ package plugins
 
 import (
 	"encoding/json"
-	"path"
+	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -45,7 +45,7 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backend
 
 	if p.Backend {
 		cmd := ComposePluginStartCommand(p.Executable)
-		fullpath := path.Join(p.PluginDir, cmd)
+		fullpath := filepath.Join(p.PluginDir, cmd)
 		factory := grpcplugin.NewBackendPlugin(p.Id, fullpath, grpcplugin.PluginStartFuncs{
 			OnLegacyStart: p.onLegacyPluginStart,
 			OnStart:       p.onPluginStart,

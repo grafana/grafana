@@ -201,7 +201,7 @@ Once these two properties are set, you can send the alerts to Kafka for further 
 
 ### Google Hangouts Chat
 
-Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. Configuring such a webhook is described [here](https://developers.google.com/hangouts/chat/how-tos/webhooks).
+Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. For more information about configuring a webhook, refer to [webhooks](https://developers.google.com/hangouts/chat/how-tos/webhooks).
 
 ### Squadcast
 

@@ -16,6 +16,7 @@ export interface ElasticsearchAggregation {
   type: string;
   settings?: any;
   field?: string;
+  pipelineVariables?: Array<{ name?: string; pipelineAgg?: string }>;
 }
 
 export interface ElasticsearchQuery extends DataQuery {

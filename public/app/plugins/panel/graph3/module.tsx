@@ -1,11 +1,5 @@
-import {
-  FieldColor,
-  FieldConfigProperty,
-  identityOverrideProcessor,
-  PanelPlugin,
-  standardEditorsRegistry,
-} from '@grafana/data';
-import { GraphCustomFieldConfig } from '@grafana/ui';
+import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { AxisSide, GraphCustomFieldConfig } from '@grafana/ui';
 import { GraphPanel } from './GraphPanel';
 import { Options } from './types';
 
@@ -14,6 +8,7 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
     standardOptions: [
       // FieldConfigProperty.Min,
       // FieldConfigProperty.Max,
+      FieldConfigProperty.Color,
       FieldConfigProperty.Unit,
       FieldConfigProperty.DisplayName,
       FieldConfigProperty.Decimals,
@@ -23,21 +18,6 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
 
     useCustomConfig: builder => {
       builder
-        // TODO:  Until we fix standard color property let's do it the custom editor way
-        .addCustomEditor<{}, FieldColor>({
-          path: 'line.color',
-          id: 'line.color',
-          name: 'Series color',
-          shouldApply: () => true,
-          settings: {
-            allowUndefined: true,
-            textWhenUndefined: 'Automatic',
-          },
-          defaultValue: undefined,
-          editor: standardEditorsRegistry.get('color').editor as any,
-          override: standardEditorsRegistry.get('color').editor as any,
-          process: identityOverrideProcessor,
-        })
         .addBooleanSwitch({
           path: 'line.show',
           name: 'Show lines',
@@ -133,11 +113,11 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           path: 'axis.side',
           name: 'Y axis side',
           category: ['Axis'],
-          defaultValue: 3,
+          defaultValue: AxisSide.Left,
           settings: {
             options: [
-              { value: 3, label: 'Left' },
-              { value: 1, label: 'Right' },
+              { value: AxisSide.Left, label: 'Left' },
+              { value: AxisSide.Right, label: 'Right' },
             ],
           },
         })
@@ -187,12 +167,6 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           ],
         },
       })
-      // .addBooleanSwitch({
-      //   path: 'graph.realTimeUpdates',
-      //   name: 'Real time updates',
-      //   description: 'continue to update the graph so the time axis matches the clock.',
-      //   defaultValue: false,
-      // })
       .addBooleanSwitch({
         category: ['Legend'],
         path: 'legend.isVisible',

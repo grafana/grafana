@@ -10,6 +10,7 @@ import { Icon, IconButton, LegacyForms, SetInterval, Tooltip } from '@grafana/ui
 import { DataQuery, RawTimeRange, TimeRange, TimeZone } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
+import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import {
   cancelQueries,
   changeDatasource,
@@ -262,6 +263,13 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                 />
               </div>
             ) : null}
+            <div className={'explore-toolbar-content-item'}>
+              <Tooltip content={'Copy shortened link'} placement="bottom">
+                <button className={'btn navbar-button'} onClick={() => createAndCopyShortLink(window.location.href)}>
+                  <Icon name="share-alt" />
+                </button>
+              </Tooltip>
+            </div>
             {!isLive && (
               <div className="explore-toolbar-content-item">
                 <ExploreTimeControls

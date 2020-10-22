@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -338,7 +337,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 
 	filePath := hs.Cfg.DefaultHomeDashboardPath
 	if filePath == "" {
-		filePath = path.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
+		filePath = filepath.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
 	}
 
 	file, err := os.Open(filePath)

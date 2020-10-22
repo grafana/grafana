@@ -253,7 +253,7 @@ class PluginPage extends PureComponent<Props, State> {
         <h4>Dependencies</h4>
         <ul className="ui-list plugin-info-list">
           <li className="plugin-info-list-item">
-            <img src="public/img/grafana_icon.svg" />
+            <img src="public/img/grafana_icon.svg" alt="Grafana logo" />
             Grafana {dependencies.grafanaVersion}
           </li>
           {dependencies.plugins &&
@@ -345,17 +345,15 @@ function getPluginTabsNav(
   let defaultPage: string | undefined;
   const pages: NavModelItem[] = [];
 
-  if (true) {
-    pages.push({
-      text: 'Readme',
-      icon: 'fa fa-fw fa-file-text-o',
-      url: `${appSubUrl}${path}?page=${PAGE_ID_README}`,
-      id: PAGE_ID_README,
-    });
-  }
+  pages.push({
+    text: 'Readme',
+    icon: 'file-alt',
+    url: `${appSubUrl}${path}?page=${PAGE_ID_README}`,
+    id: PAGE_ID_README,
+  });
 
-  // We allow non admins to see plugins but only their readme. Config is hidden even though the API needs to be
-  // public for plugins to work properly.
+  // We allow non admins to see plugins but only their readme. Config is hidden
+  // even though the API needs to be public for plugins to work properly.
   if (isAdmin) {
     // Only show Config/Pages for app
     if (meta.type === PluginType.app) {

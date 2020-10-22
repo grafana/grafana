@@ -2,7 +2,7 @@ package models
 
 import "github.com/centrifugal/centrifuge"
 
-// ChannelPublisher writes data into a channel
+// ChannelPublisher writes data into a channel. Note that pemissions are not checked.
 type ChannelPublisher func(channel string, data []byte) error
 
 // ChannelHandler defines the core channel behavior
@@ -17,9 +17,10 @@ type ChannelHandler interface {
 	OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error)
 }
 
-// ChannelHandlerProvider -- this should be implemented by any core feature
-type ChannelHandlerProvider interface {
-	// This is called fast and often -- it must be synchrnozed
+// ChannelHandlerFactory should be implemented by all core features.
+type ChannelHandlerFactory interface {
+	// GetHandlerForPath gets a ChannelHandler for a path.
+	// This is called fast and often -- it must be synchronized
 	GetHandlerForPath(path string) (ChannelHandler, error)
 }
 
