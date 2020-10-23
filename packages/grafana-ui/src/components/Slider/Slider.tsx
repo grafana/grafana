@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent, FunctionComponent } from 'react';
+import React, { useState, useCallback, ChangeEvent, FunctionComponent } from 'react';
 import SliderComponent from 'rc-slider';
 import { cx } from 'emotion';
 import { Global } from '@emotion/core';
@@ -35,25 +35,34 @@ export const Slider: FunctionComponent<Props> = ({
   const styles = getStyles(theme, isHorizontal);
   const SliderWithTooltip = SliderComponent;
   const [slidervalue, setSliderValue] = useState<number>(value || min);
-  const onSliderChange = (v: number) => {
+  const onSliderChange = useCallback((v: number) => {
     setSliderValue(v);
-    !!onChange && onChange(v);
-  };
-  const onSliderInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+
+    if (onChange) {
+      onChange(v);
+    }
+  }, []);
+  const onSliderInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     let v = +e.target.value;
 
     v > max && (v = max);
     v < min && (v = min);
 
     setSliderValue(v);
-    !!onChange && onChange(v);
-    !!onAfterChange && onAfterChange(v);
-  };
+
+    if (onChange) {
+      onChange(v);
+    }
+
+    if (onAfterChange) {
+      onAfterChange(v);
+    }
+  }, []);
   return (
     <div className={cx(styles.container, styles.slider)}>
       {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
       <Global styles={styles.tooltip} />
-      <label className={cx(styles.sliderInput)}>
+      <label className={styles.sliderInput}>
         <SliderWithTooltip
           min={min}
           max={max}
