@@ -233,7 +233,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		pm.log.Debug("Found plugin", "id", plugin.Id, "signature", plugin.Signature, "hasRoot", plugin.Root != nil)
 		signingError := scanner.validateSignature(plugin)
 		if signingError != nil {
-			pm.log.Debug("Failed to validate plugin signature", "id", plugin.Id,
+			pm.log.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.Id,
 				"signature", plugin.Signature, "status", signingError.ErrorCode.String())
 			pluginScanningErrors[plugin.Id] = signingError
 			continue
