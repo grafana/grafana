@@ -171,16 +171,9 @@ func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64, signedInUser *mod
 		}
 		query.Interval = time.Duration(intervalMs) * time.Millisecond
 
-		blob, err := json.Marshal(model)
-		if err != nil {
+		if query.JSON, err = json.Marshal(model); err != nil {
 			return nil, fmt.Errorf("unable to marshal query model %w", err)
 		}
-		rm := json.RawMessage{}
-		err = rm.UnmarshalJSON(blob)
-		if err != nil {
-			return nil, fmt.Errorf("unable to unmarshal query model %w", err)
-		}
-		query.JSON = rm
 		condition.QueriesAndExpressions = append(condition.QueriesAndExpressions, query)
 	}
 
