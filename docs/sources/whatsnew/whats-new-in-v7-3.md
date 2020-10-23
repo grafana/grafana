@@ -72,25 +72,25 @@ Example of a login event:
 
 For more details, see the [Auditing docs](/).
 
-### Datasource Usage Insights
+### Data source usage insights
 
-Datasource usage insights is a new feature in Grafana Enterprise 7.3 that allows you to gain insight into how a datasource is being used and how well it works. There is a new tab in the datasource settings page called insights that will show you information about how the datasource has been used in the past 30 days.
+Data source usage insights allows you to gain insight into how a data source is being used and how well it works. There is a new tab in the data source settings page called insights that will show you information about how the data source has been used in the past 30 days.
 
-Insights per day:
+Insights:
 
-- Queries last 30 days
-- Errors last 30 days
-- Average load duration last 30 days (ms)
+- Queries in the last 30 days
+- Errors during the last 30 days
+- Average load duration in the last 30 days (ms)
 
-### SAML Improvements
+### SAML improvements
 
-#### Single Logout
+#### Single logout
 
-SAML’s single logout feature allows users to log out from all applications associated with the current IdP session established via SAML SSO. Learn more in the [docs]({{<relref "../enterprise/saml/#single-logout">}}). 
+SAML’s single logout capability allows users to log out from all applications associated with the current IdP session established via SAML SSO. For more information, refer to the [docs]({{<relref "../enterprise/saml/#single-logout">}}). 
 
-#### IdP-initiated Single-Sign-On
+#### IdP-initiated single-sign-on
 
-IdP-initiated Single-Sign-On allows logins directly from the SAML identity provider (IdP). This feature is disabled by default for security reasons. Learn more in the [docs]({{<relref "../enterprise/saml/#idp-initiated-single-sign-on-sso">}}). 
+IdP-initiated Single-Sign-On allows logins directly from the SAML identity provider (IdP). It is disabled by default for security reasons. For more information, refer to the [docs]({{<relref "../enterprise/saml/#idp-initiated-single-sign-on-sso">}}). 
 
 ## Upgrading
 
