@@ -91,8 +91,12 @@ func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64, signedInUser *mod
 	for _, query := range alertDefinition.Data {
 		model := make(map[string]interface{})
 		err := json.Unmarshal(query.JSON, &model)
-		intfc, _ := model["datasource"]
-		dsName, _ := intfc.(string)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal query model %w", err)
+		}
+
+		i := model["datasource"]
+		dsName, _ := i.(string)
 		if dsName != "__expr__" {
 			i, ok := model["datasourceId"]
 			if !ok {
