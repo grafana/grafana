@@ -129,6 +129,8 @@ If you want to skip automatic OAuth login and sign in with a username and passwo
 
 Example: `grafana.example.com/login?disableAutoLogin` or `grafana.example.com/login?disableAutoLogin=true`
 
+> **Note:** `disableAutoLogin` parameter is available in Grafana 7.4+.
+
 ### Hide sign-out menu
 
 Set the option detailed below to true to hide sign-out menu link. Useful if you use an auth proxy.
