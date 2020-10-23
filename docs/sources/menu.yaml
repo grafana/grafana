@@ -407,6 +407,8 @@
       link: /enterprise/
     - name: Activate license
       link: /enterprise/activate-license/
+    - name: Auditing
+      link: /enterprise/auditing/
     - name: Configuration
       link: /enterprise/enterprise-configuration/
     - name: Data source permissions
