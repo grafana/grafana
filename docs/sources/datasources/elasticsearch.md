@@ -251,21 +251,21 @@ datasources:
 
 ## Amazon Elasticsearch Service
 
-For AWS users using Amazon's Elasticsearch Service, it is possible to use Grafana's Elasticsearch data source to visualize your Elasticsearch data.
-If you are using an IAM policy to control access to your Amazon Elasticsearch Service domain, you must use AWS Signature Version 4 (AWS SigV4) to sign all requests to that domain.
-For more details on AWS SigV4, please see the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
+AWS users using Amazon's Elasticsearch Service can use Grafana's Elasticsearch data source to visualize Elasticsearch data.
+If you are using an AWS Identity and Access Management (IAM) policy to control access to your Amazon Elasticsearch Service domain, then you must use AWS Signature Version 4 (AWS SigV4) to sign all requests to that domain.
+For more details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
 
-### AWS Signature Version 4 Authentication
+### AWS Signature Version 4 authentication
 
-> Only available in Grafana v7.3+.
+> **Note:** Only available in Grafana v7.3+.
 
-In order to sign requests to your Amazon Elasticsearch Service domain, SigV4 can be enabled via the Grafana configuration file (it is disabled by default). 
+In order to sign requests to your Amazon Elasticsearch Service domain, SigV4 can be enabled in the Grafana configuration file. This feature is disabled by default. 
 
 ```ini
 [auth]
 sigv4_auth_enabled = true
 ```
 
-Once AWS SigV4 is enabled, it can be configured on the Elasticsearch data source configuration page. The authentication options are documented [here](./datasources/cloudwatch.md#authentication).
+Once AWS SigV4 is enabled, it can be configured on the Elasticsearch data source configuration page. Refer to [Cloudwatch authentication](./datasources/cloudwatch.md#authentication) for more information about authentication options.
 
 {{< docs-imagebox img="/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS Elasticsearch Service" >}}
