@@ -248,3 +248,24 @@ datasources:
       logMessageField: message
       logLevelField: fields.level
 ```
+
+## Amazon Elasticsearch Service
+
+For AWS users using Amazon's Elasticsearch Service, it is possible to use Grafana's Elasticsearch Data Source to visualize your Elasticsearch data.
+If you are using an IAM policy to control access to your Amazon Elasticsearch Service domain, you must use AWS Signature Version 4 (AWS SigV4) to sign all requests to that domain.
+For more details on AWS SigV4, please see the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
+
+### AWS Signature Version 4 Authentication
+
+> Only available in Grafana v7.3+.
+
+In order to sign requests to your Amazon Elasticsearch Service domain, SigV4 can be enabled via the Grafana configuration file (it is disabled by default). 
+
+```ini
+[auth]
+sigv4_auth_enabled = true
+```
+
+Once SigV4 is enabled, it can be configured on the Data Source configuration page. The authentication options are documented [here](../datasources/cloudwatch.md#authentication).
+
+{{< docs-imagebox img="/img/docs/v73/elasticsearch-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="AWS Elasticsearch SigV4" >}}

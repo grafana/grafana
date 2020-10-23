@@ -15,14 +15,13 @@ weight = -17
 
 This topic includes the release notes for Grafana v7.3. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
-## Highlights
-
-Grafana 7.3 comes with a number of features and enhancements:
+The main highlights are:
 
 - [**Google Cloud Monitoring:** Out of the box dashboards]({{< relref "#cloud-monitoring-out-of-the-box-dashboards" >}})
 - [**Shorten URL for dashboards and Explore**]({{< relref "#shorten-url-for-dashboards-and-explore" >}})
+- [**SigV4 Authentication for Amazon Elasticsearch Service**]({{< relref "#sigv4-authentication-for-AWS-users" >}})
 
-#### Cloud monitoring out-of-the-box dashboards
+## Cloud monitoring out-of-the-box dashboards
 
 The updated Cloud monitoring data source is shipped with pre-configured dashboards for five of the most popular GCP services:
 
@@ -39,6 +38,12 @@ For more details, see the [Google Cloud Monitoring docs]({{<relref "../datasourc
 ## Shorten URL for dashboards and Explore
 
 This is an amazing new feature that was created in cooperation with one of our community members. The new **share shortened link** capability allows you to create smaller and simpler URLs of the format `/goto/:uid` instead of using longer URLs that can contain complex query parameters. In Explore, you can create a shortened link by clicking on the share button in Explore toolbar. In the dashboards, a shortened url option is available through the share panel or dashboard button.
+
+## SigV4 authentication for AWS users
+
+You can now configure your Elasticsearch Data Source to access your Amazon Elasticsearch Service domain directly from Grafana.
+
+For more details, see the [Elasticsearch docs]({{<relref "../datasources/elasticsearch/#aws-signature-version-4-authentication">}})
 
 ## Grafana Enterprise features
 
