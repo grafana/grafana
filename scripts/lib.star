@@ -884,12 +884,12 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'gcloud auth activate-service-account --key-file=gcpkey.json',
             'rm gcpkey.json',
             'cp C:\\App\\nssm-2.24.zip .',
-            '.\\grabpl.exe windows-installer --edition {}{} {}'.format(edition, bucket_part, ver_part),
         ]
         if (ver_mode == 'master' and (edition != 'enterprise' or is_downstream)) or ver_mode in (
             'release', 'test-release',
         ):
             installer_commands.extend([
+                '.\\grabpl.exe windows-installer --edition {}{} {}'.format(edition, bucket_part, ver_part),
                 '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
                 'gsutil cp $$fname gs://{}/{}/{}/'.format(bucket, edition, dir),
                 'gsutil cp "$$fname.sha256" gs://{}/{}/{}/'.format(bucket, edition, dir),
