@@ -18,16 +18,14 @@ export default {
 
 const menuItems = [{ label: 'Test', items: [{ label: 'First' }, { label: 'Second' }] }];
 
-export const basic = () => {
+export const Basic = () => {
   return <ContextMenu x={10} y={11} onClose={() => {}} items={menuItems} />;
 };
 
-export const withState = () => {
+export const WithState = () => {
   return (
     <WithContextMenu getContextMenuItems={() => menuItems}>
-      {({ openMenu }) => {
-        return <IconButton name="info-circle" onClick={openMenu} />;
-      }}
+      {({ openMenu }) => <IconButton name="info-circle" onClick={openMenu} />}
     </WithContextMenu>
   );
 };

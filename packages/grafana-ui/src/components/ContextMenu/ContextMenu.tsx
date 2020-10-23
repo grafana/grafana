@@ -23,10 +23,15 @@ export interface ContextMenuGroup {
   items: ContextMenuItem[];
 }
 export interface ContextMenuProps {
+  /** Starting horizontal position for the menu */
   x: number;
+  /** Starting vertical position for the menu */
   y: number;
+  /** Callback for closing the menu */
   onClose: () => void;
+  /** List of the menu items to display */
   items?: ContextMenuGroup[];
+  /** A function that returns header element */
   renderHeader?: () => React.ReactNode;
 }
 
