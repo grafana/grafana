@@ -29,7 +29,7 @@ describe('SentryEchoBackend', () => {
     enabled: true,
     buildInfo,
     dsn: 'https://examplePublicKey@o0.ingest.testsentry.io/0',
-    sampleRate: 0.5,
+    sampleRate: 1,
     customEndpoint: '',
     user: {
       email: 'darth.vader@sith.glx',
@@ -86,7 +86,7 @@ describe('SentryEchoBackend', () => {
     });
   });
 
-  it.only('integration test with EchoSrv, Sentry and CustomFetchTransport', async () => {
+  it('integration test with EchoSrv, Sentry and CustomFetchTransport', async () => {
     // sets up the whole thing between window.onerror and backend endpoint call, checks that error is reported
 
     // use actual sentry & mock window.fetch
@@ -97,7 +97,7 @@ describe('SentryEchoBackend', () => {
     fetchSpy.mockResolvedValue({ status: 200 } as Response);
 
     // set up echo srv & sentry backend
-    const echo = new Echo();
+    const echo = new Echo({ debug: true });
     setEchoSrv(echo);
     const sentryBackend = new SentryEchoBackend({
       ...options,
@@ -120,7 +120,7 @@ describe('SentryEchoBackend', () => {
     window.onerror!(error.message, undefined, undefined, undefined, error);
 
     // check that error was reported to backend
-    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1), { timeout: 1000 });
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
     const [url, reqInit]: [string, RequestInit] = fetchSpy.mock.calls[0];
     expect(url).toEqual('/log');
     expect((JSON.parse(reqInit.body as string) as SentryEvent).exception!.values![0].value).toEqual('test error');

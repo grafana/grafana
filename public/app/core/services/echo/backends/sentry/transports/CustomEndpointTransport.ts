@@ -1,10 +1,11 @@
 import { Event, Severity } from '@sentry/browser';
 import { logger, parseRetryAfterHeader, PromiseBuffer, supportsReferrerPolicy, SyncPromise } from '@sentry/utils';
-import { Response, Status, TransportOptions } from '@sentry/types';
+import { Response, Status } from '@sentry/types';
 import { BaseTransport } from '../types';
 
-export interface CustomEndpointTransportOptions extends Omit<TransportOptions, 'dsn'> {
+export interface CustomEndpointTransportOptions {
   endpoint: string;
+  fetchParameters?: Partial<RequestInit>;
 }
 
 /**
@@ -71,10 +72,6 @@ export class CustomEndpointTransport implements BaseTransport {
 
     if (this.options.fetchParameters !== undefined) {
       Object.assign(options, this.options.fetchParameters);
-    }
-
-    if (this.options.headers !== undefined) {
-      Object.assign(options.headers, this.options.headers);
     }
 
     return this._buffer.add(
