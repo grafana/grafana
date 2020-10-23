@@ -186,11 +186,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
         <List
           items={items || []}
           renderItem={(item, index) => {
-            return (
-              <>
-                <ContextMenuGroupComponent group={item} onClick={onClose} />
-              </>
-            );
+            return <ContextMenuGroupComponent group={item} onClick={onClose} />;
           }}
         />
       </div>
