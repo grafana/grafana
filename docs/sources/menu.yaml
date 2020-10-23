@@ -3,8 +3,10 @@
   children:
     - name: What is Grafana?
       link: /getting-started/what-is-grafana/
-    - name: Getting started
+    - name: With Grafana
       link: /getting-started/getting-started/
+    - name: With Grafana and Prometheus
+      link: /getting-started/getting-started-prometheus/
     - name: Intro to time series
       link: /getting-started/timeseries/
     - name: Time series dimensions
@@ -405,6 +407,8 @@
       link: /enterprise/
     - name: Activate license
       link: /enterprise/activate-license/
+    - name: Auditing
+      link: /enterprise/auditing/
     - name: Configuration
       link: /enterprise/enterprise-configuration/
     - name: Data source permissions
