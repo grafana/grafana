@@ -31,7 +31,6 @@ in the animated gif below the cell will automatically expand to show you full co
 
 Another new feature that can be seen in the image above is the new image cell display mode. If you have a field value that is an image URL or a base64 encoded image you can configure the table to display it as an image.
 
-
 ## New color scheme option
 
 {{< figure src="/img/docs/v73/color_scheme_dropdown.png" max-width="450px" caption="Color scheme" class="pull-right" >}}
