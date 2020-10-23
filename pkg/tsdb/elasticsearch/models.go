@@ -36,19 +36,20 @@ type MetricAgg struct {
 }
 
 var metricAggType = map[string]string{
-	"count":          "Count",
-	"avg":            "Average",
-	"sum":            "Sum",
-	"max":            "Max",
-	"min":            "Min",
-	"extended_stats": "Extended Stats",
-	"percentiles":    "Percentiles",
-	"cardinality":    "Unique Count",
-	"moving_avg":     "Moving Average",
-	"cumulative_sum": "Cumulative Sum",
-	"derivative":     "Derivative",
-	"bucket_script":  "Bucket Script",
-	"raw_document":   "Raw Document",
+	"count":           "Count",
+	"avg":             "Average",
+	"sum":             "Sum",
+	"max":             "Max",
+	"min":             "Min",
+	"extended_stats":  "Extended Stats",
+	"percentiles":     "Percentiles",
+	"cardinality":     "Unique Count",
+	"scripted_metric": "Scripted Metric",
+	"moving_avg":      "Moving Average",
+	"cumulative_sum":  "Cumulative Sum",
+	"derivative":      "Derivative",
+	"bucket_script":   "Bucket Script",
+	"raw_document":    "Raw Document",
 }
 
 var extendedStats = map[string]string{

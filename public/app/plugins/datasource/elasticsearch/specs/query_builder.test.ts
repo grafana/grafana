@@ -244,6 +244,34 @@ describe('ElasticQueryBuilder', () => {
         expect(query.size).toBe(1337);
       });
 
+      it('with scripted_metric', () => {
+        const query = builder.build({
+          metrics: [
+            {
+              id: '4',
+              settings: {
+                init_script: 'state.transactions = []',
+                map_script:
+                  'state.transactions.add(doc.type.value == "sale" ? doc.amount.value : -1 * doc.amount.value)',
+                combine_script: 'double profit = 0; for (t in state.transactions) { profit += t } return profit',
+                reduce_script: 'double profit = 0; for (a in states) { profit += a } return profit5',
+              },
+              type: 'scripted_metric',
+            },
+          ],
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
+        });
+
+        const firstLevel = query.aggs['2'];
+
+        expect(firstLevel.aggs['4']).not.toBe(undefined);
+        expect(firstLevel.aggs['4'].scripted_metric).not.toBe(undefined);
+        expect(firstLevel.aggs['4'].scripted_metric.field).toBe(undefined);
+        expect(firstLevel.aggs['4'].scripted_metric.map_script).toBe(
+          'state.transactions.add(doc.type.value == "sale" ? doc.amount.value : -1 * doc.amount.value)'
+        );
+      });
+
       it('with moving average', () => {
         const query = builder.build({
           metrics: [

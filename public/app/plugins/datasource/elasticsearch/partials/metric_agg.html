@@ -121,6 +121,54 @@
     </div>
   </div>
 
+  <div ng-if="agg.type === 'scripted_metric' && esVersion < 70">
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Init</label>
+      <input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.init" ng-blur="onChangeInternal()" spellcheck='false'>
+    </div>
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">
+        Map
+          <info-popover mode="right-normal">
+            map_script is a required parameter.
+          </info-popover>
+      </label>
+      <input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.map" ng-blur="onChangeInternal()" spellcheck='false'>
+    </div>
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Combine</label>
+      <input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.combine" ng-blur="onChangeInternal()" spellcheck='false'>
+    </div>
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Reduce</label>
+      <input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.reduce" ng-blur="onChangeInternal()" spellcheck='false'>
+    </div>
+  </div>
+
+  <div ng-if="agg.type === 'scripted_metric' && esVersion >= 70">
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">
+        Init
+        <info-popover mode="right-normal">
+          init_script is an optional parameter.
+        </info-popover>
+      </label>
+      <input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.init" ng-blur="onChangeInternal()" spellcheck='false'>
+    </div>
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Map</label>
+      <input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.map" ng-blur="onChangeInternal()" spellcheck='false'>
+    </div>
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Combine</label>
+      <input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.combine" ng-blur="onChangeInternal()" spellcheck='false'>
+    </div>
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Reduce</label>
+      <input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.reduce" ng-blur="onChangeInternal()" spellcheck='false'>
+    </div>
+  </div>
+
   <div class="gf-form offset-width-7" ng-if="aggDef.supportsInlineScript">
     <label class="gf-form-label width-10">Script</label>
     <input type="text" class="gf-form-input max-width-12" empty-to-null ng-model="agg.inlineScript" ng-blur="onChangeInternal()" spellcheck='false' placeholder="_value * 1">

@@ -52,6 +52,12 @@ export const metricAggTypes = [
     supportsMissing: true,
   },
   {
+    text: 'Scripted Metric',
+    value: 'scripted_metric',
+    requiresField: false,
+    minVersion: 2,
+  },
+  {
     text: 'Moving Average',
     value: 'moving_avg',
     requiresField: false,
@@ -91,6 +97,13 @@ export const bucketAggTypes = [
   { text: 'Geo Hash Grid', value: 'geohash_grid', requiresField: true },
   { text: 'Date Histogram', value: 'date_histogram', requiresField: true },
   { text: 'Histogram', value: 'histogram', requiresField: true },
+];
+
+export const scriptedMetricOptions = [
+  { text: 'Init', value: 'init_script' },
+  { text: 'Map', value: 'map_script' },
+  { text: 'Combine', value: 'combine_script' },
+  { text: 'Reduce', value: 'reduce_script' },
 ];
 
 export const orderByOptions = [

@@ -315,7 +315,7 @@ export class ElasticQueryBuilder {
           }
         }
       } else {
-        metricAgg = { field: metric.field };
+        metricAgg = metric.type === 'scripted_metric' ? {} : { field: metric.field };
       }
 
       for (const prop in metric.settings) {

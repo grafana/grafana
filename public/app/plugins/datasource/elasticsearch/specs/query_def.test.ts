@@ -122,6 +122,14 @@ describe('ElasticQueryDef', () => {
         expect(result).toBe(false);
       });
     });
+
+    describe('Scripted Metric', () => {
+      const result = queryDef.isPipelineAgg('scripted_metric');
+
+      test('is not pipe line metric', () => {
+        expect(result).toBe(false);
+      });
+    });
   });
 
   describe('isPipelineAggWithMultipleBucketPaths', () => {
@@ -135,6 +143,14 @@ describe('ElasticQueryDef', () => {
 
     describe('moving_avg', () => {
       const result = queryDef.isPipelineAggWithMultipleBucketPaths('moving_avg');
+
+      test('should not have multiple bucket paths support', () => {
+        expect(result).toBe(false);
+      });
+    });
+
+    describe('scripted_metric', () => {
+      const result = queryDef.isPipelineAggWithMultipleBucketPaths('scripted_metric');
 
       test('should not have multiple bucket paths support', () => {
         expect(result).toBe(false);
@@ -157,13 +173,13 @@ describe('ElasticQueryDef', () => {
 
     describe('using esversion 2', () => {
       test('should get pipeline aggs', () => {
-        expect(queryDef.getMetricAggTypes(2).length).toBe(15);
+        expect(queryDef.getMetricAggTypes(2).length).toBe(16);
       });
     });
 
     describe('using esversion 5', () => {
       test('should get pipeline aggs', () => {
-        expect(queryDef.getMetricAggTypes(5).length).toBe(15);
+        expect(queryDef.getMetricAggTypes(5).length).toBe(16);
       });
     });
   });

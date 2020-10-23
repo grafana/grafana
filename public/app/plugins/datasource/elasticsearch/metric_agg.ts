@@ -15,6 +15,7 @@ export class ElasticMetricAggCtrl {
     const metricAggs: ElasticsearchAggregation[] = $scope.target.metrics;
     $scope.metricAggTypes = queryDef.getMetricAggTypes($scope.esVersion);
     $scope.extendedStats = queryDef.extendedStats;
+    $scope.scriptedMetricOptions = queryDef.scriptedMetricOptions;
     $scope.pipelineAggOptions = [];
     $scope.modelSettingsValues = {};
 
@@ -76,6 +77,14 @@ export class ElasticMetricAggCtrl {
         case 'percentiles': {
           $scope.agg.settings.percents = $scope.agg.settings.percents || [25, 50, 75, 95, 99];
           $scope.settingsLinkText = 'Values: ' + $scope.agg.settings.percents.join(',');
+          break;
+        }
+        case 'scripted_metric': {
+          $scope.settingsLinkText = 'Settings';
+          for (const key in queryDef.scriptedMetricOptions) {
+            let opt = queryDef.scriptedMetricOptions[key];
+            $scope.agg.settings[opt.value] = $scope.agg.settings[opt.value] || '';
+          }
           break;
         }
         case 'extended_stats': {
@@ -175,7 +184,9 @@ export class ElasticMetricAggCtrl {
       ) {
         $scope.target.bucketAggs = [queryDef.defaultBucketAgg()];
       }
-
+      if ($scope.agg.type === 'scripted_metric') {
+        delete $scope.agg.field;
+      }
       $scope.showVariables = queryDef.isPipelineAggWithMultipleBucketPaths($scope.agg.type);
       $scope.updatePipelineAggOptions();
       $scope.onChange();
