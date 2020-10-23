@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Components
 import { HorizontalGroup, Select } from '@grafana/ui';
-import { SelectableValue, DataSourceSelectItem, PluginSignatureStatus } from '@grafana/data';
+import { SelectableValue, DataSourceSelectItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { isUnsignedPluginSignature, PluginSignatureBadge } from '../../../features/plugins/PluginSignatureBadge';
 

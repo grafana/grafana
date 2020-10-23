@@ -32,7 +32,7 @@ export function mapPluginErrorCodeToSignatureStatus(code: PluginErrorCode) {
     case PluginErrorCode.modifiedSignature:
       return PluginSignatureStatus.modified;
     default:
-      return PluginSignatureStatus.unsigned;
+      return PluginSignatureStatus.missing;
   }
 }
 

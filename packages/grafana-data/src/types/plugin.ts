@@ -16,7 +16,6 @@ export enum PluginType {
 }
 
 export enum PluginSignatureStatus {
-  unsigned = 'unsigned', // no MANIFEST file
   internal = 'internal', // core plugin, no signature
   valid = 'valid', // signed and accurate MANIFEST
   invalid = 'invalid', // invalid signature
