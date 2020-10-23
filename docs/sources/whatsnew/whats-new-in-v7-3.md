@@ -70,7 +70,7 @@ Example of a login event:
 }
 ``` 
 
-For more details, see the [Auditing docs](/).
+For more details, see the [Auditing docs]({{<relref "../enterprise/auditing.md">}}).
 
 ### Data source usage insights
 
