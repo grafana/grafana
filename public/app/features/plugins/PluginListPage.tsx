@@ -56,7 +56,7 @@ export const PluginListPage: React.FC<Props> = ({
               <br />
               <p>
                 Note that <strong>unsigned front-end datasource and panel plugins</strong> are still usable, but this is
-                a subject of change in the upcoming releases of Grafana
+                subject to change in the upcoming releases of Grafana
               </p>
             </>
           </PluginsErrorsInfo>
