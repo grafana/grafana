@@ -29,7 +29,7 @@
     "@babel/core": "7.9.0",
     "@babel/preset-env": "7.9.0",
     "@grafana/data": "next",
-    "@grafana/eslint-config": "2.0.3",
+    "@grafana/eslint-config": "2.0.4",
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@grafana/ui": "next",
     "@types/command-exists": "^1.2.0",
