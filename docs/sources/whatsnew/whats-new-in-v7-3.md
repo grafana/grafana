@@ -41,7 +41,7 @@ This is an amazing new feature that was created in cooperation with one of our c
 
 ## SigV4 authentication for AWS users
 
-You can now configure your Elasticsearch Data Source to access your Amazon Elasticsearch Service domain directly from Grafana.
+You can now configure your Elasticsearch data source to access your Amazon Elasticsearch Service domain directly from Grafana.
 
 For more details, see the [Elasticsearch docs]({{<relref "../datasources/elasticsearch/#aws-signature-version-4-authentication">}})
 
