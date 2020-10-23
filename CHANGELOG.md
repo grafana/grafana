@@ -1,3 +1,22 @@
+# 7.3.0-beta2 (2020-10-22)
+
+### Features / Enhancements
+* **Add monitoring mixing for Grafana**. [#28285](https://github.com/grafana/grafana/pull/28285), [@bergquist](https://github.com/bergquist)
+* **CloudWatch**: Missing Namespace AWS/EC2CapacityReservations. [#28309](https://github.com/grafana/grafana/pull/28309), [@nonamef](https://github.com/nonamef)
+* **Explore**: Support wide data frames. [#28393](https://github.com/grafana/grafana/pull/28393), [@aocenas](https://github.com/aocenas)
+* **Instrumentation**: Add counters and histograms for database queries. [#28236](https://github.com/grafana/grafana/pull/28236), [@bergquist](https://github.com/bergquist)
+* **Loki**: Visually distinguish error logs for LogQL2. [#28359](https://github.com/grafana/grafana/pull/28359), [@ivanahuckova](https://github.com/ivanahuckova)
+
+### Bug Fixes
+* **API**: Fix short URLs. [#28300](https://github.com/grafana/grafana/pull/28300), [@aknuds1](https://github.com/aknuds1)
+* **BackendSrv**: Fixes queue countdown when unsubscribe is before response. [#28323](https://github.com/grafana/grafana/pull/28323), [@hugohaggmark](https://github.com/hugohaggmark)
+* **CloudWatch/Athena - valid metrics and dimensions.**. [#28436](https://github.com/grafana/grafana/pull/28436), [@kwarunek](https://github.com/kwarunek)
+* **Dashboard links**: Places drop down list so it's always visible. [#28330](https://github.com/grafana/grafana/pull/28330), [@maknik](https://github.com/maknik)
+* **Graph**: Fix for graph size not taking up full height or width. [#28314](https://github.com/grafana/grafana/pull/28314), [@jackw](https://github.com/jackw)
+* **Loki**: Base maxDataPoints limits on query type. [#28298](https://github.com/grafana/grafana/pull/28298), [@aocenas](https://github.com/aocenas)
+* **Loki**: Run instant query only when doing metric query. [#28325](https://github.com/grafana/grafana/pull/28325), [@aocenas](https://github.com/aocenas)
+* **Plugins**: Don't exit on duplicate plugin. [#28390](https://github.com/grafana/grafana/pull/28390), [@aknuds1](https://github.com/aknuds1)
+
 # 7.3.0-beta1 (2020-10-15)
 
 ### Breaking changes

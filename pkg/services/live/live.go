@@ -22,7 +22,7 @@ var (
 
 // CoreGrafanaScope list of core features
 type CoreGrafanaScope struct {
-	Features map[string]models.ChannelHandlerProvider
+	Features map[string]models.ChannelHandlerFactory
 
 	// The generic service to advertise dashboard changes
 	Dashboards models.DashboardActivityChannel
@@ -49,7 +49,7 @@ func Register() {
 		channels:   make(map[string]models.ChannelHandler),
 		channelsMu: sync.RWMutex{},
 		GrafanaScope: CoreGrafanaScope{
-			Features: make(map[string]models.ChannelHandlerProvider),
+			Features: make(map[string]models.ChannelHandlerFactory),
 		},
 	}
 	registry.RegisterService(glive)
@@ -91,13 +91,17 @@ func (g *GrafanaLive) Init() error {
 	g.node = node
 
 	// Initialize the main features
-	dash := features.CreateDashboardHandler(g.Publish)
-	tds := features.CreateTestdataSupplier(g.Publish)
+	dash := &features.DashboardHandler{
+		Publisher: g.Publish,
+	}
 
-	g.GrafanaScope.Dashboards = &dash
-	g.GrafanaScope.Features["dashboard"] = &dash
-	g.GrafanaScope.Features["testdata"] = &tds
+	g.GrafanaScope.Dashboards = dash
+	g.GrafanaScope.Features["dashboard"] = dash
+	g.GrafanaScope.Features["testdata"] = &features.TestDataSupplier{
+		Publisher: g.Publish,
+	}
 	g.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{}
+	g.GrafanaScope.Features["measurements"] = &features.MeasurementsRunner{}
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
@@ -241,11 +245,11 @@ func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, 
 	}
 
 	// Parse the identifier ${scope}/${namespace}/${path}
-	id, err := ParseChannelIdentifier(channel)
-	if err != nil {
-		return nil, err
+	addr := ParseChannelAddress(channel)
+	if !addr.IsValid() {
+		return nil, fmt.Errorf("invalid channel: %q", channel)
 	}
-	logger.Info("initChannel", "channel", channel, "id", id)
+	logger.Info("initChannel", "channel", channel, "address", addr)
 
 	g.channelsMu.Lock()
 	defer g.channelsMu.Unlock()
@@ -254,47 +258,55 @@ func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, 
 		return c, nil
 	}
 
-	c, err = g.initChannel(id)
+	getter, err := g.GetChannelHandlerFactory(addr.Scope, addr.Namespace)
 	if err != nil {
 		return nil, err
 	}
+
+	// First access will initialize
+	c, err = getter.GetHandlerForPath(addr.Path)
+	if err != nil {
+		return nil, err
+	}
+
 	g.channels[channel] = c
 	return c, nil
 }
 
-func (g *GrafanaLive) initChannel(id ChannelIdentifier) (models.ChannelHandler, error) {
-	if id.Scope == "grafana" {
-		p, ok := g.GrafanaScope.Features[id.Namespace]
+// GetChannelHandlerFactory gets a ChannelHandlerFactory for a namespace.
+// It gives threadsafe access to the channel.
+func (g *GrafanaLive) GetChannelHandlerFactory(scope string, name string) (models.ChannelHandlerFactory, error) {
+	if scope == "grafana" {
+		p, ok := g.GrafanaScope.Features[name]
 		if ok {
-			return p.GetHandlerForPath(id.Path)
+			return p, nil
 		}
-		return nil, fmt.Errorf("Unknown feature: %s", id.Namespace)
+		return nil, fmt.Errorf("unknown feature: %q", name)
 	}
 
-	if id.Scope == "ds" {
-		return nil, fmt.Errorf("todo... look up datasource: %s", id.Namespace)
+	if scope == "ds" {
+		return nil, fmt.Errorf("todo... look up datasource: %q", name)
 	}
 
-	if id.Scope == "plugin" {
+	if scope == "plugin" {
 		// Temporary hack until we have a more generic solution later on
-		if id.Namespace == "cloudwatch" {
-			supplier := &cloudwatch.LogQueryRunnerSupplier{
+		if name == "cloudwatch" {
+			return &cloudwatch.LogQueryRunnerSupplier{
 				Publisher: g.Publish,
-			}
-			return supplier.GetHandlerForPath(id.Path)
+			}, nil
 		}
 
-		p, ok := plugins.Plugins[id.Namespace]
+		p, ok := plugins.Plugins[name]
 		if ok {
 			h := &PluginHandler{
 				Plugin: p,
 			}
-			return h.GetHandlerForPath(id.Path)
+			return h, nil
 		}
-		return nil, fmt.Errorf("unknown plugin: %s", id.Namespace)
+		return nil, fmt.Errorf("unknown plugin: %q", name)
 	}
 
-	return nil, fmt.Errorf("invalid scope: %s", id.Scope)
+	return nil, fmt.Errorf("invalid scope: %q", scope)
 }
 
 // Publish sends the data to the channel without checking permissions etc
