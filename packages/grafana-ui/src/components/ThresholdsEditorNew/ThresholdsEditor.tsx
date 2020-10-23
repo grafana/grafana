@@ -38,7 +38,7 @@ interface State {
 }
 
 export class ThresholdsEditor extends PureComponent<Props, State> {
-  private inputRef: React.RefObject<HTMLInputElement>;
+  private latestThresholdInputRef: HTMLInputElement | null;
 
   constructor(props: Props) {
     super(props);
@@ -47,8 +47,12 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     steps[0].value = -Infinity;
 
     this.state = { steps };
-    this.inputRef = React.createRef();
+    this.latestThresholdInputRef = null;
   }
+
+  setLatestThresholdInputRef = (node: HTMLInputElement | null) => {
+    this.latestThresholdInputRef = node;
+  };
 
   onAddThreshold = () => {
     const { steps } = this.state;
@@ -71,8 +75,8 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     sortThresholds(newThresholds);
 
     this.setState({ steps: newThresholds }, () => {
-      if (this.inputRef.current) {
-        this.inputRef.current.focus();
+      if (this.latestThresholdInputRef) {
+        this.latestThresholdInputRef.focus();
       }
       this.onChange();
     });
@@ -144,7 +148,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     });
   };
 
-  renderInput(threshold: ThresholdWithKey, styles: ThresholdStyles) {
+  renderInput(threshold: ThresholdWithKey, styles: ThresholdStyles, idx: number) {
     const isPercent = this.props.thresholds.mode === ThresholdsMode.Percentage;
 
     if (!isFinite(threshold.value)) {
@@ -175,7 +179,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
         key={isPercent.toString()}
         onChange={(event: ChangeEvent<HTMLInputElement>) => this.onChangeThresholdValue(event, threshold)}
         value={threshold.value}
-        ref={this.inputRef}
+        ref={node => {
+          if (idx === 0) {
+            this.setLatestThresholdInputRef(node);
+          }
+        }}
         onBlur={this.onBlur}
         prefix={
           <div className={styles.inputPrefix}>
@@ -217,9 +225,9 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                 {steps
                   .slice(0)
                   .reverse()
-                  .map(threshold => (
+                  .map((threshold, idx) => (
                     <div className={styles.item} key={`${threshold.key}`}>
-                      {this.renderInput(threshold, styles)}
+                      {this.renderInput(threshold, styles, idx)}
                     </div>
                   ))}
               </div>
