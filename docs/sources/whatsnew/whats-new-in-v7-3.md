@@ -21,6 +21,8 @@ Grafana 7.3 comes with a number of features and enhancements:
 
 - [**Google Cloud Monitoring:** Out of the box dashboards]({{< relref "#cloud-monitoring-out-of-the-box-dashboards" >}})
 - [**Shorten URL for dashboards and Explore**]({{< relref "#shorten-url-for-dashboards-and-explore" >}})
+- [**Table improvements and new image cell mode**]({{< relref "#table-improvements-and-new-image-cell-mode" >}})
+- [**New color scheme option**]({{< relref "#new-color-scheme-option" >}})
 
 ## Table improvements and new image cell mode
 
