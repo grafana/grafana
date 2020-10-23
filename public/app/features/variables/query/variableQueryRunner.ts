@@ -1,31 +1,32 @@
-import { from, merge, Observable, of, OperatorFunction, Subject, throwError, Unsubscribable } from 'rxjs';
-import { catchError, filter, finalize, first, map, mergeMap, takeUntil } from 'rxjs/operators';
+import { merge, Observable, of, Subject, throwError, Unsubscribable } from 'rxjs';
+import { catchError, filter, finalize, first, takeUntil } from 'rxjs/operators';
 import {
   CoreApp,
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
   DefaultTimeRange,
-  FieldType,
-  getFieldDisplayName,
   LoadingState,
-  MetricFindValue,
-  PanelData,
   ScopedVars,
 } from '@grafana/data';
 
-import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
+import { VariableIdentifier } from '../state/types';
 import { getVariable } from '../state/selectors';
 import { QueryVariableModel, VariableRefresh } from '../types';
-import { updateVariableOptions, updateVariableTags } from './reducer';
 import { StoreState, ThunkDispatch } from '../../../types';
 import { dispatch, getState } from '../../../store/store';
-import { getLegacyQueryOptions, getTemplatedRegex } from '../utils';
-import { validateVariableSelectionState } from '../state/actions';
+import { getTemplatedRegex } from '../utils';
 import { v4 as uuidv4 } from 'uuid';
-import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { QueryRunners } from './queryRunners';
 import { runRequest } from '../../dashboard/state/runRequest';
+import {
+  runUpdateTagsRequest,
+  toMetricFindValues,
+  updateOptionsState,
+  updateTagsState,
+  validateVariableSelection,
+} from './operators';
 
 interface UpdateOptionsArgs {
   identifier: VariableIdentifier;
@@ -70,7 +71,6 @@ export class VariableQueryRunner {
     this.updateOptionsResults = new Subject<UpdateOptionsResults>();
     this.cancelRequests = new Subject<{ identifier: VariableIdentifier }>();
     this.onNewRequest = this.onNewRequest.bind(this);
-    this.runUpdateTagsRequest = this.runUpdateTagsRequest.bind(this);
     this.subscription = this.updateOptionsRequests.subscribe(this.onNewRequest);
   }
 
@@ -122,10 +122,10 @@ export class VariableQueryRunner {
             return beforeUid === afterUid;
           }),
           first(data => data.state === LoadingState.Done || data.state === LoadingState.Error),
-          this.toMetricFindValues(),
-          this.updateOptionsState({ variable, dispatch, getTemplatedRegexFunc }),
-          this.runUpdateTagsRequest({ variable, dataSource, searchFilter, timeSrv }),
-          this.updateTagsState({ variable, dispatch }),
+          toMetricFindValues(),
+          updateOptionsState({ variable, dispatch, getTemplatedRegexFunc }),
+          runUpdateTagsRequest({ variable, dataSource, searchFilter }),
+          updateTagsState({ variable, dispatch }),
           filter(() => {
             // If we are searching options there is no need to validate selection state
             // This condition was added to as validateVariableSelectionState will update the current value of the variable
@@ -133,7 +133,7 @@ export class VariableQueryRunner {
             // The if statement below fixes https://github.com/grafana/grafana/issues/25671
             return !searchFilter;
           }),
-          this.validateVariableSelectionState({ variable, dispatch }),
+          validateVariableSelection({ variable, dispatch }),
           takeUntil(
             merge(this.updateOptionsRequests, this.cancelRequests).pipe(
               filter(args => {
@@ -189,175 +189,6 @@ export class VariableQueryRunner {
     };
 
     return request;
-  }
-
-  private toMetricFindValues(): OperatorFunction<PanelData, MetricFindValue[]> {
-    return source =>
-      source.pipe(
-        map(panelData => {
-          const frames = panelData.series;
-          if (!frames || !frames.length) {
-            return [];
-          }
-
-          if (VariableQueryRunner.areMetricFindValues(frames)) {
-            return frames;
-          }
-
-          const metrics: MetricFindValue[] = [];
-
-          let valueIndex: number | null = null;
-          let textIndex: number | null = null;
-          let stringIndex: number | null = null;
-          let expandableIndex: number | null = null;
-
-          for (const frame of frames) {
-            for (let index = 0; index < frame.fields.length; index++) {
-              const field = frame.fields[index];
-              const fieldName = getFieldDisplayName(field, frame, frames).toLowerCase();
-
-              if (field.type === FieldType.string && !stringIndex) {
-                stringIndex = index;
-              }
-
-              if (fieldName === 'text' && field.type === FieldType.string && !textIndex) {
-                textIndex = index;
-              }
-
-              if (fieldName === 'value' && field.type === FieldType.string && !valueIndex) {
-                valueIndex = index;
-              }
-
-              if (
-                fieldName === 'expandable' &&
-                (field.type === FieldType.boolean || field.type === FieldType.number) &&
-                !expandableIndex
-              ) {
-                expandableIndex = index;
-              }
-            }
-          }
-
-          if (!stringIndex) {
-            throw new Error("Couldn't find any text column in results.");
-          }
-
-          for (const frame of frames) {
-            for (let index = 0; index < frame.length; index++) {
-              const expandable = expandableIndex ? frame.fields[expandableIndex].values.get(index) : undefined;
-              const string = frame.fields[stringIndex].values.get(index);
-              const text = textIndex ? frame.fields[textIndex].values.get(index) : null;
-              const value = valueIndex ? frame.fields[valueIndex].values.get(index) : null;
-
-              if (!valueIndex && !textIndex) {
-                metrics.push({ text: string, value: string, expandable });
-                continue;
-              }
-
-              if (!valueIndex && textIndex) {
-                metrics.push({ text, value: text, expandable });
-                continue;
-              }
-
-              if (valueIndex && !textIndex) {
-                metrics.push({ text: value, value, expandable });
-                continue;
-              }
-            }
-          }
-
-          return metrics;
-        })
-      );
-  }
-
-  private updateOptionsState(args: {
-    variable: QueryVariableModel;
-    dispatch: ThunkDispatch;
-    getTemplatedRegexFunc: typeof getTemplatedRegex;
-  }): OperatorFunction<MetricFindValue[], void> {
-    return source =>
-      source.pipe(
-        map(results => {
-          const { variable, dispatch, getTemplatedRegexFunc } = args;
-          const templatedRegex = getTemplatedRegexFunc(variable);
-          const payload = toVariablePayload(variable, { results, templatedRegex });
-          dispatch(updateVariableOptions(payload));
-        })
-      );
-  }
-
-  private runUpdateTagsRequest(args: {
-    variable: QueryVariableModel;
-    dataSource: DataSourceApi;
-    timeSrv: TimeSrv;
-    searchFilter?: string;
-  }): OperatorFunction<void, MetricFindValue[]> {
-    return source =>
-      source.pipe(
-        mergeMap(() => {
-          const { dataSource, searchFilter, variable, timeSrv } = args;
-
-          if (variable.useTags && dataSource.metricFindQuery) {
-            return from(
-              dataSource.metricFindQuery(variable.tagsQuery, getLegacyQueryOptions(variable, searchFilter, timeSrv))
-            );
-          }
-
-          return of([]);
-        })
-      );
-  }
-
-  private updateTagsState(args: {
-    variable: QueryVariableModel;
-    dispatch: ThunkDispatch;
-  }): OperatorFunction<MetricFindValue[], void> {
-    return source =>
-      source.pipe(
-        map(tagResults => {
-          const { dispatch, variable } = args;
-
-          if (variable.useTags) {
-            dispatch(updateVariableTags(toVariablePayload(variable, tagResults)));
-          }
-        })
-      );
-  }
-
-  private validateVariableSelectionState(args: {
-    variable: QueryVariableModel;
-    dispatch: ThunkDispatch;
-  }): OperatorFunction<void, void> {
-    return source =>
-      source.pipe(
-        mergeMap(tagResults => {
-          const { dispatch, variable } = args;
-          // If we are searching options there is no need to validate selection state
-          // This condition was added to as validateVariableSelectionState will update the current value of the variable
-          // So after search and selection the current value is already update so no setValue, refresh & url update is performed
-          // The if statement below fixes https://github.com/grafana/grafana/issues/25671
-          return from(dispatch(validateVariableSelectionState(toVariableIdentifier(variable))));
-        })
-      );
-  }
-
-  private static areMetricFindValues(data: any[]): data is MetricFindValue[] {
-    if (!data) {
-      return false;
-    }
-
-    if (!data.length) {
-      return true;
-    }
-
-    const firstValue: any = data[0];
-    return (
-      (firstValue.hasOwnProperty('text') && typeof firstValue.text === 'string') ||
-      (firstValue.hasOwnProperty('Text') && typeof firstValue.Text === 'string') ||
-      (firstValue.hasOwnProperty('value') && typeof firstValue.value === 'string') ||
-      (firstValue.hasOwnProperty('Value') && typeof firstValue.Value === 'string')
-    );
   }
 }
 
