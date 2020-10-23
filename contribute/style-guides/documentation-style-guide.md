@@ -225,7 +225,10 @@ Two words if used as a verb, one word if used as a noun.
 
 ### node_exporter, windows_exporter
 
-When referencing Prometheus data source, always use "node_exporter" and "windows_exporter.
+When referencing the Prometheus data source exporters, always use "node_exporter" and "windows_exporter" when referring to those tools.
+
+**Correct:** node_exporter, windows_exporter
+**Incorrect:** Node Exporter, node exporter, Windows Exporter, Windows exporter, windows exporter 
 
 **Examples**
 
