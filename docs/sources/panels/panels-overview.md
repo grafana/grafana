@@ -2,7 +2,6 @@
 title = "Panels"
 aliases = ["/docs/grafana/latest/features/panels/panels/"]
 weight = 4
-draft = "true"
 +++
 
 # Panel overview

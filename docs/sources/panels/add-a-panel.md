@@ -1,7 +1,6 @@
 +++
 title = "Add a panel"
 weight = 100
-draft = "true"
 +++
 
 # Add a panel
