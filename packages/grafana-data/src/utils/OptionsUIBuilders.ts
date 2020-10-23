@@ -149,9 +149,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
-  addSliderInput<TSettings>(
-    config: PanelOptionsEditorConfig<TOptions, TSettings & SliderFieldConfigSettings, number | number[]>
-  ) {
+  addSliderInput<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings & SliderFieldConfigSettings, number>) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
