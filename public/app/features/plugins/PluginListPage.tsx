@@ -32,7 +32,7 @@ export const PluginListPage: React.FC<Props> = ({
   loadPlugins,
 }) => {
   useAsync(async () => {
-    return await loadPlugins();
+    loadPlugins();
   }, [loadPlugins]);
 
   const linkButton = {

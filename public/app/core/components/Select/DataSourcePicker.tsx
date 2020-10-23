@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 import { HorizontalGroup, Select } from '@grafana/ui';
 import { SelectableValue, DataSourceSelectItem, PluginSignatureStatus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { PluginSignatureBadge } from '../../../features/plugins/PluginSignatureBadge';
+import { isUnsignedPluginSignature, PluginSignatureBadge } from '../../../features/plugins/PluginSignatureBadge';
 
 export interface Props {
   onChange: (ds: DataSourceSelectItem) => void;
@@ -89,12 +89,7 @@ export class DataSourcePicker extends PureComponent<Props> {
           value={value}
           invalid={invalid}
           getOptionLabel={o => {
-            if (
-              o.meta.signature &&
-              o.meta.signature !== PluginSignatureStatus.valid &&
-              o.meta.signature !== PluginSignatureStatus.internal &&
-              o !== value
-            ) {
+            if (isUnsignedPluginSignature(o.meta.signature) && o !== value) {
               return (
                 <HorizontalGroup align="center" justify="space-between">
                   <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />

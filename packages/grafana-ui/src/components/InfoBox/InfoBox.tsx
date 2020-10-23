@@ -7,7 +7,7 @@ import { IconButton } from '../IconButton/IconButton';
 import { HorizontalGroup } from '../Layout/Layout';
 import panelArtDark from './panelArt_dark.svg';
 import panelArtLight from './panelArt_light.svg';
-import { AlertVariant } from '..';
+import { AlertVariant } from '../Alert/Alert';
 import { getColorsFromSeverity } from '../../utils/colors';
 
 export interface InfoBoxProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {

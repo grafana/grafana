@@ -19,6 +19,10 @@ export const PluginSignatureBadge: React.FC<Props> = ({ status, ...otherProps })
   );
 };
 
+export function isUnsignedPluginSignature(signature?: PluginSignatureStatus) {
+  return signature && signature !== PluginSignatureStatus.valid && signature !== PluginSignatureStatus.internal;
+}
+
 export function mapPluginErrorCodeToSignatureStatus(code: PluginErrorCode) {
   switch (code) {
     case PluginErrorCode.invalidSignature:
