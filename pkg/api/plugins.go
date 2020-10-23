@@ -365,14 +365,7 @@ func (hs *HTTPServer) getCachedPluginSettings(pluginID string, user *models.Sign
 }
 
 func (hs *HTTPServer) GetPluginErrorsList(c *models.ReqContext) Response {
-	pluginErrors := make([]plugins.PluginErrorInfo, 0)
-	for id, e := range plugins.Errors {
-		pluginErrors = append(pluginErrors, plugins.PluginErrorInfo{
-			ErrorCode: e.ErrorCode.String(),
-			PluginID:  id,
-		})
-	}
-	return JSON(200, pluginErrors)
+	return JSON(200, plugins.ScanningErrors())
 }
 
 func translatePluginRequestErrorToAPIError(err error) Response {

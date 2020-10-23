@@ -29,7 +29,6 @@ var (
 	StaticRoutes []*PluginStaticRoute
 	Apps         map[string]*AppPlugin
 	Plugins      map[string]*PluginBase
-	Errors       map[string]*PluginError
 	PluginTypes  map[string]interface{}
 	Renderer     *RendererPlugin
 	Transform    *TransformPlugin
@@ -37,6 +36,8 @@ var (
 	GrafanaLatestVersion string
 	GrafanaHasUpdate     bool
 	plog                 log.Logger
+
+	pluginScanningErrors map[string]*PluginError
 )
 
 type PluginScanner struct {
@@ -69,7 +70,6 @@ func (pm *PluginManager) Init() error {
 	Panels = map[string]*PanelPlugin{}
 	Apps = map[string]*AppPlugin{}
 	Plugins = map[string]*PluginBase{}
-	Errors = map[string]*PluginError{}
 	PluginTypes = map[string]interface{}{
 		"panel":      PanelPlugin{},
 		"datasource": DataSourcePlugin{},
@@ -77,6 +77,7 @@ func (pm *PluginManager) Init() error {
 		"renderer":   RendererPlugin{},
 		"transform":  TransformPlugin{},
 	}
+	pluginScanningErrors = map[string]*PluginError{}
 
 	pm.log.Info("Starting plugin search")
 
@@ -232,9 +233,9 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		pm.log.Debug("Found plugin", "id", plugin.Id, "signature", plugin.Signature, "hasRoot", plugin.Root != nil)
 		signingError := scanner.validateSignature(plugin)
 		if signingError != nil {
-			pm.log.Warn("Plugin has signature errors", "id", plugin.Id,
+			pm.log.Debug("Failed to validate plugin signature", "id", plugin.Id,
 				"signature", plugin.Signature, "status", signingError.ErrorCode.String())
-			Errors[plugin.Id] = signingError
+			pluginScanningErrors[plugin.Id] = signingError
 			continue
 		}
 
@@ -437,6 +438,17 @@ func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
 	default:
 		panic(fmt.Sprintf("Plugin %q has unrecognized plugin signature state %q", plugin.Id, plugin.Signature))
 	}
+}
+
+func ScanningErrors() []PluginErrorInfo {
+	scanningErrs := make([]PluginErrorInfo, 0)
+	for id, e := range pluginScanningErrors {
+		scanningErrs = append(scanningErrs, PluginErrorInfo{
+			ErrorCode: e.ErrorCode.String(),
+			PluginID:  id,
+		})
+	}
+	return scanningErrs
 }
 
 func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
