@@ -256,6 +256,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/plugins/:pluginId/health", Wrap(hs.CheckHealth))
 		apiRoute.Any("/plugins/:pluginId/resources", hs.CallResource)
 		apiRoute.Any("/plugins/:pluginId/resources/*", hs.CallResource)
+		apiRoute.Any("/plugins/errors", Wrap(hs.GetPluginErrorsList))
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", Wrap(GetPluginDashboards))
