@@ -28,10 +28,6 @@ export const flexColumn = css`
   flex-direction: column;
 `;
 
-export const justifyStart = css`
-  justify-content: start;
-`;
-
 export const alignItemsStart = css`
   align-items: start;
 `;
