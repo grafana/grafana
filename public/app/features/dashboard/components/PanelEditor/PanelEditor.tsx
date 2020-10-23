@@ -1,9 +1,8 @@
-import React, { createRef, PureComponent } from 'react';
+import React, { createRef, MutableRefObject, PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import SplitPane from 'react-split-pane';
 import { css, cx } from 'emotion';
-import { debounce } from 'lodash';
 import { Unsubscribable } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
@@ -71,7 +70,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   componentDidMount() {
     this.props.initPanelEditor(this.props.sourcePanel, this.props.dashboard);
 
-    window.addEventListener('resize', debounce(this.updateSplitPaneSize, 100));
+    window.addEventListener('resize', this.updateSplitPaneSize);
   }
 
   componentWillUnmount() {
@@ -83,7 +82,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     if (this.rafToken.current !== undefined) {
       window.cancelAnimationFrame(this.rafToken.current!);
     }
-    window.requestAnimationFrame(() => {
+    (this.rafToken as MutableRefObject<number>).current = window.requestAnimationFrame(() => {
       this.forceUpdate();
     });
   };
@@ -151,11 +150,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     const { updatePanelEditorUIState } = this.props;
     if (pane === Pane.Top) {
       updatePanelEditorUIState({
-        topPaneSize: `${(size / window.innerHeight) * 100}%`,
+        topPaneSize: size / window.innerHeight,
       });
     } else {
       updatePanelEditorUIState({
-        rightPaneSize: `${(size / window.innerWidth) * 100}%`,
+        rightPaneSize: size / window.innerWidth,
       });
     }
   };
@@ -215,6 +214,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       the preview window beyond the browser window.
      */
     const windowHeight = window.innerHeight - 120;
+    const size = uiState.topPaneSize >= 1 ? uiState.topPaneSize : (uiState.topPaneSize as number) * window.innerHeight;
 
     return tabs.length > 0 ? (
       <SplitPane
@@ -222,7 +222,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         minSize={200}
         maxSize={windowHeight}
         primary="first"
-        size={uiState.topPaneSize}
+        size={size}
         /* Use persisted state for default size */
         defaultSize={uiState.topPaneSize}
         pane2Style={{ minHeight: 0 }}
@@ -349,9 +349,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     // Need to handle when width is relative. ie a percentage of the viewport
     const width =
-      typeof uiState.rightPaneSize === 'string'
-        ? (parseFloat(uiState.rightPaneSize) / 100) * window.innerWidth
-        : uiState.rightPaneSize;
+      uiState.rightPaneSize <= 1
+        ? (uiState.rightPaneSize as number) * window.innerWidth
+        : (uiState.rightPaneSize as number);
 
     return (
       <SplitPane
