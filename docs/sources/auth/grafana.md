@@ -2,11 +2,6 @@
 title = "Grafana Authentication"
 description = "Grafana OAuthentication Guide "
 keywords = ["grafana", "configuration", "documentation", "oauth"]
-
-
-
-
-
 weight = 100
 +++
 

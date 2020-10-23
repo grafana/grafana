@@ -1,7 +1,6 @@
 +++
 title = "Table field options"
 keywords = ["grafana", "table options", "documentation", "format tables"]
-
 weight = 500
 +++
 

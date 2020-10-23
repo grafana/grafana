@@ -1,6 +1,5 @@
 +++
 title = "Sign a plugin"
-
 +++
 
 # Sign a plugin

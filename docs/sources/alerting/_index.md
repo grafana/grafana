@@ -1,9 +1,5 @@
 +++
 title = "Alerting"
-
-
-
-
 weight = 100
 +++
 

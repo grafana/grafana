@@ -2,12 +2,7 @@
 title = "LDAP Authentication"
 description = "Grafana LDAP Authentication Guide "
 keywords = ["grafana", "configuration", "documentation", "ldap", "active directory"]
-
 aliases = ["/docs/grafana/latest/installation/ldap/"]
-
-
-
-
 weight = 300
 +++
 
@@ -85,9 +80,6 @@ search_base_dns = ["dc=grafana,dc=org"]
 
 # Specify names of the LDAP attributes your LDAP uses
 [servers.attributes]
-
-sur
-user
 member_of = "memberOf"
 email =  "email"
 ```
@@ -244,9 +236,6 @@ search_filter = "(cn=%s)"
 search_base_dns = ["dc=grafana,dc=org"]
 
 [servers.attributes]
-
-sur
-user
 member_of = "memberOf"
 email =  "email"
 
@@ -273,9 +262,6 @@ search_filter = "(cn=%s)"
 search_base_dns = ["ou=users,dc=grafana,dc=org"]
 
 [servers.attributes]
-
-sur
-user
 member_of = "memberOf"
 email =  "email"
 
@@ -299,9 +285,6 @@ search_filter = "(cn=%s)"
 search_base_dns = ["ou=users,dc=grafana,dc=org"]
 
 [servers.attributes]
-
-sur
-user
 member_of = "memberOf"
 email =  "email"
 
@@ -337,9 +320,6 @@ search_filter = "(sAMAccountName=%s)"
 search_base_dns = ["dc=corp,dc=local"]
 
 [servers.attributes]
-
-sur
-user
 member_of = "memberOf"
 email =  "mail"
 

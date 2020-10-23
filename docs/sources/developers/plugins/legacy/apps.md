@@ -1,7 +1,6 @@
 +++
 title = "Legacy app plugins"
 keywords = ["grafana", "plugins", "documentation"]
-
 aliases = ["/docs/grafana/latest/plugins/developing/apps/"]
 +++
 

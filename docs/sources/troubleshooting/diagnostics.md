@@ -1,7 +1,5 @@
 +++
 title = "Enable diagnostics"
-
-
 weight = 200
 +++
 

@@ -1,11 +1,6 @@
 +++
 title = "Add data source"
-
 aliases = ["/docs/grafana/latest/features/datasources/add-a-data-source/"]
-
-
-
-
 weight = 100
 +++
 

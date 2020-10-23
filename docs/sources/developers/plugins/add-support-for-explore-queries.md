@@ -1,6 +1,5 @@
 +++
 title = "Add support for Explore queries"
-
 +++
 
 # Add support for Explore queries

@@ -2,9 +2,6 @@
 title = "Install on macOS"
 description = "Installing Grafana on macOS"
 keywords = ["grafana", "configuration", "documentation", "mac", "homebrew", "osx"]
-
-
-
 weight = 500
 +++
 

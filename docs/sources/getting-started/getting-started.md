@@ -2,11 +2,7 @@
 title = "Getting started with Grafana"
 description = "Guide for getting started with Grafana"
 keywords = ["grafana", "intro", "guide", "started"]
-
 aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
-
-
-
 weight = 200
 +++
 

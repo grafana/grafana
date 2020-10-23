@@ -1,11 +1,7 @@
 +++
 title = "Alert list panel"
 keywords = ["grafana", "alert list", "documentation", "panel", "alertlist"]
-
 aliases = ["/docs/grafana/latest/reference/alertlist/", "/docs/grafana/latest/features/panels/alertlist/"]
-
-
-
 weight = 100
 +++
 

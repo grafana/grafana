@@ -1,9 +1,5 @@
 +++
 title = "Formatting multi-value variables"
-
-
-
-
 weight = 600
 +++
 

@@ -1,10 +1,7 @@
 +++
 title = "Share panel"
 keywords = ["grafana", "dashboard", "documentation", "sharing"]
-
 aliases = ["/docs/grafana/latest/reference/share_panel/"]
-
-
 weight = 600
 +++
 

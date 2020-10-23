@@ -1,6 +1,5 @@
 +++
 title = "Add support for annotations"
-
 +++
 
 # Add support for annotations

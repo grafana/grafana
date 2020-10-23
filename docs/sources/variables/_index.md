@@ -1,8 +1,5 @@
 +++
 title = "Templates and variables"
-
-
-
 weight = 130
 +++
 

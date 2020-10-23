@@ -1,8 +1,6 @@
 +++
 title = "View server stats"
-
 keywords = ["grafana", "server", "statistics"]
-
 weight = 1150
 +++
 

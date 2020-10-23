@@ -2,11 +2,6 @@
 title = "Azure AD OAuth2 authentication"
 description = "Grafana Azure AD OAuth Guide "
 keywords = ["grafana", "configuration", "documentation", "oauth"]
-
-
-
-
-
 weight = 700
 +++
 

@@ -2,11 +2,6 @@
 title = "Upgrade Grafana"
 description = "Guide for upgrading Grafana"
 keywords = ["grafana", "configuration", "documentation", "upgrade"]
-
-
-
-
-
 weight = 700
 +++
 

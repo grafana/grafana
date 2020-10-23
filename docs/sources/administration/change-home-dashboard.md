@@ -2,11 +2,6 @@
 title = "Change the default home dashboard"
 description = "How to replace the default home dashboard"
 keywords = ["grafana", "configuration", "documentation", "home"]
-
-
-
-
-
 weight = 100
 +++
 

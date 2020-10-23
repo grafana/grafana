@@ -1,11 +1,7 @@
 +++
 title = "Variables syntax and types"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
-
 aliases = ["/docs/grafana/latest/reference/templating"]
-
-
-
 weight = 100
 +++
 

@@ -2,11 +2,6 @@
 title = "Datasource Permissions"
 description = "Grafana Datasource Permissions Guide "
 keywords = ["grafana", "configuration", "documentation", "datasource", "permissions", "users", "teams", "enterprise"]
-
-
-
-
-
 weight = 900
 +++
 

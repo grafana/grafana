@@ -2,11 +2,6 @@
 title = "Enterprise configuration"
 description = "Enterprise configuration documentation"
 keywords = ["grafana", "configuration", "documentation", "enterprise"]
-
-
-
-
-
 weight = 300
 +++
 

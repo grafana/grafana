@@ -1,9 +1,5 @@
 +++
 title = "Apply a transformation"
-
-
-
-
 weight = 300
 +++
 

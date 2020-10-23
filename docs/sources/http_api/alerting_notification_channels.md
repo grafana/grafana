@@ -3,10 +3,6 @@ title = "Alerting Notification Channels HTTP API "
 description = "Grafana Alerting Notification Channel HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "alerting", "alerts", "notifications"]
 aliases = []
-
-
-
-
 +++
 
 # Alerting Notification Channels API

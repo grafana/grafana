@@ -1,9 +1,5 @@
 +++
 title = "Enter variable Selection Options"
-
-
-
-
 weight = 400
 +++
 

@@ -1,9 +1,5 @@
 +++
 title = "Overview"
-
-
-
-
 weight = 300
 +++
 

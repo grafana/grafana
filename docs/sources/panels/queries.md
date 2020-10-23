@@ -1,9 +1,5 @@
 +++
 title = "Queries"
-
-
-
-
 weight = 300
 +++
 

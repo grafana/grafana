@@ -1,9 +1,5 @@
 +++
 title = "Inspect a panel"
-
-
-
-
 weight = 400
 +++
 

@@ -1,9 +1,6 @@
 +++
 title = "Dashboard overview"
-
 aliases = ["/docs/grafana/latest/features/dashboard/dashboards/"]
-
-
 weight = 100
 +++
 

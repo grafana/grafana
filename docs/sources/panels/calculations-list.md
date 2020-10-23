@@ -1,9 +1,5 @@
 +++
 title = "Calculations list"
-
-
-
-
 weight = 300
 +++
 

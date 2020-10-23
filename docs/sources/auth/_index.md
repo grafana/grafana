@@ -1,11 +1,6 @@
 +++
 title = "Authentication"
 description = "Authentication"
-
-
-
-
-
 weight = 30
 +++
 

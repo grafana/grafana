@@ -1,8 +1,5 @@
 +++
 title = "Panel editor"
-
-
-
 weight = 200
 +++
 

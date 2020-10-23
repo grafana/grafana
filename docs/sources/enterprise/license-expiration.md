@@ -2,9 +2,6 @@
 title = "License Expiration"
 description = ""
 keywords = ["grafana", "licensing"]
-
-
-
 weight = 8
 +++
 

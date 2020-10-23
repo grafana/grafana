@@ -2,10 +2,6 @@
 title = "Change your password"
 description = "How to change your Grafana password"
 keywords = ["grafana", "password", "change", "preferences"]
-
-
-
-
 weight = 100
 +++
 

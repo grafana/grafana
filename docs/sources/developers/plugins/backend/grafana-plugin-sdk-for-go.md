@@ -1,7 +1,6 @@
 +++
 title = "Grafana Plugin SDK for Go"
 keywords = ["grafana", "plugins", "backend", "plugin", "backend-plugins", "sdk", "documentation"]
-
 +++
 
 # Grafana plugin SDK for Go

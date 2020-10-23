@@ -1,6 +1,5 @@
 +++
 title = "Developers"
-
 aliases = ["/docs/plugins/developing/"]
 +++
 

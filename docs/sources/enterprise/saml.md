@@ -3,10 +3,6 @@ title = "SAML Authentication"
 description = "Grafana SAML Authentication"
 keywords = ["grafana", "saml", "documentation", "saml-auth"]
 aliases = ["/docs/grafana/latest/auth/saml/"]
-
-
-
-
 weight = 500
 +++
 
@@ -139,7 +135,6 @@ For Grafana to map the user information, it looks at the individual attributes w
 
 Grafana provides configuration options that let you modify which keys to look at for these values. The data we need to create the user in Grafana is Name, Login handle, and email.
 
-An example is `assertion_attribute_` where Grafana looks within the assertion for an attribute with a friendly name or name of `givenName`. Both, the friendly name (e.g. `givenName`) or the name (e.g. `urn:oid:2.5.4.42`) can be used interchangeably as the value for the configuration option.
 
 ### Configure team sync
 

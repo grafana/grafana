@@ -2,11 +2,6 @@
 title = "Create alerts"
 description = "Configure alert rules"
 keywords = ["grafana", "alerting", "guide", "rules"]
-
-
-
-
-
 weight = 200
 +++
 

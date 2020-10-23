@@ -1,11 +1,6 @@
 +++
 title = "Data sources"
-
 aliases = ["/docs/grafana/latest/datasources/overview/"]
-
-
-
-
 weight = 50
 +++
 

@@ -1,9 +1,5 @@
 +++
 title = "Alerts overview"
-
-
-
-
 aliases = ["/docs/grafana/latest/alerting/rules/", "/docs/grafana/latest/alerting/metrics/", "/docs/grafana/latest/alerting/rules/#query-condition-example", "/docs/grafana/latest/alerting/rules/#for", "/docs/grafana/latest/alerting/rules/#rule-config"]
 weight = 100
 +++

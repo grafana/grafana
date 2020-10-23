@@ -2,8 +2,6 @@
 title = "cURL examples"
 description = "cURL examples"
 keywords = ["grafana", "http", "documentation", "api", "curl"]
-
-
 +++
 
 # cURL examples

@@ -1,7 +1,6 @@
 +++
 title = "Data links"
 keywords = ["grafana", "data links", "documentation", "playlist"]
-
 aliases = ["/docs/grafana/latest/reference/datalinks/"]
 +++
 

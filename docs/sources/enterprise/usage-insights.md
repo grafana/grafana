@@ -3,10 +3,6 @@ title = "Usage-insights"
 description = "Usage-insights"
 keywords = ["grafana", "usage-insights", "enterprise"]
 aliases = ["/docs/grafana/latest/enterprise/usage-insights/"]
-
-
-
-
 weight = 700
 +++
 

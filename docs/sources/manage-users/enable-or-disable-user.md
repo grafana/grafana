@@ -1,10 +1,6 @@
 +++
 title = "Enable or disable a user"
 keywords = ["grafana", "configuration", "documentation", "users"]
-
-
-
-
 weight = 200
 +++
 

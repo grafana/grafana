@@ -1,9 +1,5 @@
 +++
 title = "Share query results"
-
-
-
-
 weight = 310
 +++
 

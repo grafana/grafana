@@ -2,9 +2,6 @@
 title = "Install on Windows"
 description = "Install Grafana on Windows"
 keywords = ["grafana", "configuration", "documentation", "windows"]
-
-
-
 weight = 400
 +++
 

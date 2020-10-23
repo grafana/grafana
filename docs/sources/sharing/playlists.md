@@ -1,10 +1,6 @@
 +++
 title = "Playlists"
 keywords = ["grafana", "dashboard", "documentation", "playlist"]
-
-
-
-
 weight = 4
 draft = "true"
 +++

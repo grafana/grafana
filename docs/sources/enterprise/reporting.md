@@ -2,10 +2,7 @@
 title = "Reporting"
 description = ""
 keywords = ["grafana", "reporting"]
-
 aliases = ["/docs/grafana/latest/administration/reports"]
-
-
 weight = 400
 +++
 

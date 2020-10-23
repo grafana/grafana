@@ -1,9 +1,5 @@
 +++
 title = "Manage users"
-
-
-
-
 weight = 40
 +++
 

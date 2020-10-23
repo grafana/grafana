@@ -1,9 +1,6 @@
 +++
 title = "Share a Dashboard"
 keywords = ["grafana", "dashboard", "documentation", "sharing"]
-
-
-
 weight = 6
 draft = "true"
 +++

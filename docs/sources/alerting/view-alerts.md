@@ -2,11 +2,6 @@
 title = "View alerts"
 description = "View existing alert rules"
 keywords = ["grafana", "alerting", "guide", "rules", "view"]
-
-
-
-
-
 weight = 400
 +++
 

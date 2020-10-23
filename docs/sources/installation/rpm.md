@@ -3,11 +3,6 @@ title = "Install on RPM-based Linux"
 description = "Grafana Installation guide for RPM-based Linux, such as Centos, Fedora, OpenSuse, and Red Hat."
 keywords = ["grafana", "installation", "documentation", "centos", "fedora", "opensuse", "redhat"]
 aliases = ["/docs/grafana/latest/installation/installation/rpm"]
-
-
-
-
-
 weight = 300
 +++
 

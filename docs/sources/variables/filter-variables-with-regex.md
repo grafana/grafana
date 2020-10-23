@@ -1,10 +1,6 @@
 +++
 title = "Filter variables with regex"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
-
-
-
-
 weight = 700
 +++
 

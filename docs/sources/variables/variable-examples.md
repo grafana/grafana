@@ -1,10 +1,6 @@
 +++
 title = "Variable examples"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
-
-
-
-
 weight = 200
 +++
 

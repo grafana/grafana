@@ -1,6 +1,5 @@
 +++
 title = "Share a plugin"
-
 +++
 
 # Share a plugin

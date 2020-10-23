@@ -1,10 +1,6 @@
 +++
 title = "Advanced variable format options"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
-
-
-
-
 weight = 600
 +++
 

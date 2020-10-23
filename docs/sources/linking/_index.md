@@ -1,8 +1,5 @@
 +++
 title = "Linking"
-
-
-
 weight = 100
 +++
 

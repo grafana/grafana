@@ -2,10 +2,6 @@
 title = "Histograms and heatmaps"
 description = "An introduction to histograms and heatmaps"
 keywords = ["grafana", "heatmap", "panel", "documentation", "histogram"]
-
-
-
-
 weight = 400
 +++
 

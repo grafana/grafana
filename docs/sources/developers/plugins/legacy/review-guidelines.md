@@ -1,6 +1,5 @@
 +++
 title = "Legacy review guidelines"
-
 aliases = ["/docs/grafana/latest/plugins/developing/plugin-review-guidelines/"]
 +++
 

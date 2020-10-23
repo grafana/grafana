@@ -2,11 +2,6 @@
 title = "Alert notifications"
 description = "Alerting notifications guide"
 keywords = ["Grafana", "alerting", "guide", "notifications"]
-
-
-
-
-
 weight = 100
 +++
 

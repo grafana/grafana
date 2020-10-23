@@ -1,10 +1,6 @@
 +++
 title = "Best practices for creating dashboards"
 description = "Best practices for creating dashboards in Grafana"
-
-
-
-
 weight = 100
 +++
 

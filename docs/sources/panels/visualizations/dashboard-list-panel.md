@@ -1,11 +1,7 @@
 +++
 title = "Dashboard list panel"
 keywords = ["grafana", "dashboard list", "documentation", "panel", "dashlist"]
-
 aliases = ["/docs/grafana/latest/reference/dashlist/", "/docs/grafana/latest/features/panels/dashlist/"]
-
-
-
 weight = 300
 +++
 

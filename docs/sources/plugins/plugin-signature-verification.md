@@ -1,6 +1,5 @@
 +++
 title = "Plugin signature verification"
-
 +++
 
 # Plugin signature verification

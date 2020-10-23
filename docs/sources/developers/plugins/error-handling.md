@@ -1,6 +1,5 @@
 +++
 title = "Error handling"
-
 +++
 
 # Error handling

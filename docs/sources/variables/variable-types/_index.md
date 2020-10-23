@@ -1,8 +1,5 @@
 +++
 title = "Variables types"
-
-
-
 weight = 140
 +++
 

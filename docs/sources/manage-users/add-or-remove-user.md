@@ -1,10 +1,6 @@
 +++
 title = "Add or remove a user"
 keywords = ["grafana", "configuration", "documentation", "users"]
-
-
-
-
 weight = 100
 +++
 

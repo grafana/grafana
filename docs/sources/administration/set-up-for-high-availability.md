@@ -1,9 +1,7 @@
 +++
 title = "Set up Grafana for high availability"
-
 keywords = ["grafana", "tutorials", "HA", "high availability"]
 aliases = ["/docs/grafana/latest/tutorials/ha_setup/"]
-
 weight = 1200
 +++
 

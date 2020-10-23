@@ -1,6 +1,5 @@
 +++
 title = "Plugin migration guide"
-
 +++
 
 # Plugin migration guide

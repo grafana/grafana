@@ -1,9 +1,5 @@
 +++
 title = "Transformations"
-
-
-
-
 weight = 300
 +++
 

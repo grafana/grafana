@@ -1,10 +1,7 @@
 +++
 title = "Search"
 keywords = ["grafana", "dashboard", "documentation", "search"]
-
 aliases =["/docs/grafana/latest/reference/search/"]
-
-
 weight = 5
 +++
 

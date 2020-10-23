@@ -1,9 +1,5 @@
 +++
 title = "Enter Value tags"
-
-
-
-
 weight = 500
 +++
 

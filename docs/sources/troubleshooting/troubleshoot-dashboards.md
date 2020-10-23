@@ -2,8 +2,6 @@
 title = "Troubleshoot dashboards"
 description = "Guide to troubleshooting Grafana dashboards"
 keywords = ["grafana", "troubleshooting", "documentation", "dashboards"]
-
-
 weight = 100
 +++
 

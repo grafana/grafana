@@ -1,8 +1,5 @@
 +++
 title = "Panels"
-
-
-
 weight = 4
 +++
 

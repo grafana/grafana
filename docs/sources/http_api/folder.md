@@ -3,10 +3,6 @@ title = "Folder HTTP API "
 description = "Grafana Folder HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "folder"]
 aliases = ["/docs/grafana/latest/http_api/folder/"]
-
-
-
-
 +++
 
 # Folder API

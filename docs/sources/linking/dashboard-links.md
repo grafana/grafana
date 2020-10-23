@@ -2,9 +2,6 @@
 title = "Dashboard links"
 description = ""
 keywords = ["grafana", "linking", "create links", "link dashboards", "navigate"]
-
-
-
 weight = 200
 +++
 

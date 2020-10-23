@@ -1,11 +1,7 @@
 +++
 title = "Explore"
 keywords = ["explore", "loki", "logs"]
-
 aliases = ["/docs/grafana/latest/features/explore/"]
-
-
-
 weight = 90
 +++
 

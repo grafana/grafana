@@ -1,7 +1,6 @@
 +++
 title = "Contribute to Grafana"
 keywords = ["grafana", "documentation", "developers", "resources"]
-
 +++
 
 # Contribute to Grafana

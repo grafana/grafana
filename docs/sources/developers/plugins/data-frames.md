@@ -1,6 +1,5 @@
 +++
 title = "Data frames"
-
 +++
 
 # Data frames

@@ -1,9 +1,5 @@
 +++
 title = "Thresholds"
-
-
-
-
 weight = 300
 +++
 

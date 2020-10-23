@@ -2,10 +2,6 @@
 title = "Pause alert rule"
 description = "Pause an existing alert rule"
 keywords = ["grafana", "alerting", "guide", "rules", "view"]
-
-
-
-
 weight = 400
 +++
 

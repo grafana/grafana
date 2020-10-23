@@ -4,7 +4,6 @@
 # -----------------------------------------------------------------------
 title = "API Reference"
 keywords = ["grafana","documentation","sdk"]
-
 +++
 
 ## API Reference

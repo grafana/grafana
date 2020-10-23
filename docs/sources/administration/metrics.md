@@ -2,9 +2,6 @@
 title = "Internal Grafana metrics"
 description = "Internal metrics exposed by Grafana"
 keywords = ["grafana", "metrics", "internal metrics"]
-
-
-
 weight = 8
 +++
 

@@ -2,9 +2,6 @@
 title = "Image rendering"
 description = ""
 keywords = ["grafana", "image", "rendering", "plugin"]
-
-
-
 weight = 8
 +++
 

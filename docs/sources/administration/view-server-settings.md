@@ -2,11 +2,6 @@
 title = "View server settings"
 description = "How to view server settings in the Grafana UI"
 keywords = ["grafana", "configuration", "server", "settings"]
-
-
-
-
-
 weight = 350
 +++
 

@@ -1,9 +1,5 @@
 +++
 title = "Transformation types and options"
-
-
-
-
 weight = 300
 +++
 

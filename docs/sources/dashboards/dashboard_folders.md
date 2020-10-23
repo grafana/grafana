@@ -1,11 +1,7 @@
 +++
 title = "Dashboard Folders"
 keywords = ["grafana", "dashboard", "dashboard folders", "folder", "folders", "documentation", "guide"]
-
 aliases = ["/docs/grafana/latest/reference/dashboard_folders/"]
-
-
-
 weight = 3
 +++
 

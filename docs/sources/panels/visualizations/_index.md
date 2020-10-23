@@ -1,8 +1,5 @@
 +++
 title = "Visualizations"
-
-
-
 weight = 600
 +++
 

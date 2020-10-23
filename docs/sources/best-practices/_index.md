@@ -1,9 +1,6 @@
 +++
 title = "Best practices"
 description = "Best practices for working with Grafana"
-
-
-
 weight = 20
 +++
 

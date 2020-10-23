@@ -1,10 +1,6 @@
 +++
 title = "News panel"
 keywords = ["grafana", "news", "documentation", "panels", "news panel"]
-
-
-
-
 weight = 800
 +++
 

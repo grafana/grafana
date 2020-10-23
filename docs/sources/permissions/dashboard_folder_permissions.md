@@ -2,11 +2,6 @@
 title = "Dashboard and Folder Permissions"
 description = "Grafana Dashboard and Folder Permissions Guide "
 keywords = ["grafana", "configuration", "documentation", "dashboard", "folder", "permissions", "teams"]
-
-
-
-
-
 weight = 200
 +++
 

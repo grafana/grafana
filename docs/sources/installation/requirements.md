@@ -2,11 +2,6 @@
 title = "Requirements"
 description = "Requirements for Grafana"
 keywords = ["grafana", "installation", "documentation"]
-
-
-
-
-
 weight = 100
 +++
 

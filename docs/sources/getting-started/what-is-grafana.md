@@ -2,12 +2,7 @@
 title = "What is Grafana?"
 description = "Overview of Grafana and features"
 keywords = ["grafana", "intro", "guide", "started"]
-
-
 aliases = ["/docs/grafana/latest/guides/what-is-grafana"]
-
-
-
 weight = 200
 +++
 

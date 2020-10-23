@@ -1,10 +1,6 @@
 +++
 title = "Dashboard management maturity model"
 description = "Explanation of dashboard management maturity model"
-
-
-
-
 weight = 400
 +++
 

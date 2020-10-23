@@ -1,9 +1,6 @@
 +++
 title = "Install plugins"
-
 aliases = ["/docs/plugins/installation/"]
-
-
 weight = 1
 +++
 

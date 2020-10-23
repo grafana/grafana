@@ -1,6 +1,5 @@
 +++
 title = "Build a plugin."
-
 +++
 
 # Build a plugin
