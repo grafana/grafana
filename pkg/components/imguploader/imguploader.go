@@ -86,10 +86,10 @@ func NewImageUploader() (ImageUploader, error) {
 		keyFile := gcssec.Key("key_file").MustString("")
 		bucketName := gcssec.Key("bucket").MustString("")
 		path := gcssec.Key("path").MustString("")
-		enableSignedUrls := gcssec.Key("enable_signed_urls").MustBool(false)
-		signedUrlExpiration := gcssec.Key("signed_url_expiration").MustString(defaultSGcsSignedUrlExpiration.String())
+		enableSignedURLs := gcssec.Key("enable_signed_urls").MustBool(false)
+		signedURLExpiration := gcssec.Key("signed_url_expiration").MustString(defaultSGcsSignedUrlExpiration.String())
 
-		return NewGCSUploader(keyFile, bucketName, path, enableSignedUrls, signedUrlExpiration)
+		return NewGCSUploader(keyFile, bucketName, path, enableSignedURLs, signedURLExpiration)
 	case "azure_blob":
 		azureBlobSec, err := setting.Raw.GetSection("external_image_storage.azure_blob")
 		if err != nil {

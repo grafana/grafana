@@ -3,18 +3,18 @@ package imguploader
 import (
 	"context"
 	"fmt"
-	"golang.org/x/oauth2/jwt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
 	"time"
 
+	"golang.org/x/oauth2/jwt"
+
 	"cloud.google.com/go/storage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/oauth2/google"
-	"golang.org/x/oauth2/jwt"
 	"google.golang.org/api/option"
 )
 
@@ -23,12 +23,12 @@ type GCSUploader struct {
 	bucket              string
 	path                string
 	log                 log.Logger
-	enableSignedUrls    bool
-	signedUrlExpiration time.Duration
+	enableSignedURLs    bool
+	signedURLExpiration time.Duration
 }
 
-func NewGCSUploader(keyFile, bucket, path string, enableSignedUrls bool, signedUrlExpiration string) (*GCSUploader, error) {
-	expiration, err := time.ParseDuration(signedUrlExpiration)
+func NewGCSUploader(keyFile, bucket, path string, enableSignedURLs bool, signedURLExpiration string) (*GCSUploader, error) {
+	expiration, err := time.ParseDuration(signedURLExpiration)
 	if err != nil {
 		return nil, err
 	}
@@ -40,11 +40,12 @@ func NewGCSUploader(keyFile, bucket, path string, enableSignedUrls bool, signedU
 		bucket:              bucket,
 		path:                path,
 		log:                 log.New("gcsuploader"),
-		enableSignedUrls:    enableSignedUrls,
-		signedUrlExpiration: expiration,
+		enableSignedURLs:    enableSignedURLs,
+		signedURLExpiration: expiration,
 	}
 
-	uploader.log.Debug(fmt.Sprintf("Created GCSUploader key=%q bucket=%q path=%q, enable_signed_urls=%v signed_url_expiration=%q", keyFile, bucket, path, enableSignedUrls, expiration.String()))
+	uploader.log.Debug("Created GCSUploader", "key", keyFile, "bucket", bucket, "path", path, "enableSignedUrls",
+		enableSignedURLs, "signedUrlExpiration", expiration.String())
 
 	return uploader, nil
 }
@@ -58,16 +59,20 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 	fileName += pngExt
 	key := path.Join(u.path, fileName)
 
-	var client *storage.Client
+	var keyData []byte
 	if u.keyFile != "" {
 		u.log.Debug("Opening key file ", u.keyFile)
-		data, err := ioutil.ReadFile(u.keyFile)
+		keyData, err = ioutil.ReadFile(u.keyFile)
 		if err != nil {
 			return "", err
 		}
+	}
 
+	const scope = "https://www.googleapis.com/auth/devstorage.read_write"
+	var client *storage.Client
+	if u.keyFile != "" {
 		u.log.Debug("Creating Google credentials from JSON")
-		creds, err := google.CredentialsFromJSON(ctx, data)
+		creds, err := google.CredentialsFromJSON(ctx, keyData, scope)
 		if err != nil {
 			return "", err
 		}
@@ -79,7 +84,7 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 		}
 	} else {
 		u.log.Debug("Creating GCS client with default application credentials")
-		client, err = storage.NewClient(ctx)
+		client, err = storage.NewClient(ctx, option.WithScopes(scope))
 		if err != nil {
 			return "", err
 		}
@@ -89,18 +94,14 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 		return "", err
 	}
 
-	if !u.enableSignedUrls {
+	if !u.enableSignedURLs {
 		return fmt.Sprintf("https://storage.googleapis.com/%s/%s", u.bucket, key), nil
 	}
 
 	u.log.Debug("Signing GCS URL")
 	var conf *jwt.Config
 	if u.keyFile != "" {
-		jsonKey, err := ioutil.ReadFile(u.keyFile)
-		if err != nil {
-			return "", fmt.Errorf("failed to read %q: %s", u.keyFile, err)
-		}
-		conf, err = google.JWTConfigFromJSON(jsonKey)
+		conf, err = google.JWTConfigFromJSON(keyData)
 		if err != nil {
 			return "", err
 		}
@@ -119,7 +120,7 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 		Method:         "GET",
 		GoogleAccessID: conf.Email,
 		PrivateKey:     conf.PrivateKey,
-		Expires:        time.Now().Add(u.signedUrlExpiration),
+		Expires:        time.Now().Add(u.signedURLExpiration),
 	}
 	signedURL, err := storage.SignedURL(u.bucket, key, opts)
 	if err != nil {
@@ -135,23 +136,30 @@ func (u *GCSUploader) uploadFile(
 	imageDiskPath,
 	key string,
 ) error {
-	u.log.Debug("Opening image file ", imageDiskPath)
-
+	u.log.Debug("Opening image file ", "path", imageDiskPath)
 	fileReader, err := os.Open(imageDiskPath)
 	if err != nil {
 		return err
 	}
 	defer fileReader.Close()
 
-	// TODO: Only enable public read if not using signed URLs
-	u.log.Debug("Uploading to GCS bucket using SDK")
+	// Set public access if not generating a signed URL
+	pubAcc := !u.enableSignedURLs
+
+	u.log.Debug("Uploading to GCS bucket using SDK", "bucket", u.bucket, "key", key, "public", pubAcc)
+
+	uri := fmt.Sprintf("gs://%s/%s", u.bucket, key)
+
 	wc := client.Bucket(u.bucket).Object(key).NewWriter(ctx)
+	if pubAcc {
+		wc.ObjectAttrs.PredefinedACL = "publicRead"
+	}
 	if _, err := io.Copy(wc, fileReader); err != nil {
 		wc.Close()
-		return fmt.Errorf("failed to upload to gs://%s/%s: %s", u.bucket, key, err)
+		return fmt.Errorf("failed to upload to %s: %s", uri, err)
 	}
 	if err := wc.Close(); err != nil {
-		return fmt.Errorf("failed to upload to gs://%s/%s: %s", u.bucket, key, err)
+		return fmt.Errorf("failed to upload to %s: %s", uri, err)
 	}
 
 	return nil
