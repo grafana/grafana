@@ -28,6 +28,7 @@ const defaultConcurrentQueries = 4
 
 type LogQueryRunnerSupplier struct {
 	Publisher models.ChannelPublisher
+	Service   *LogsService
 }
 
 type logQueryRunner struct {
@@ -35,6 +36,7 @@ type logQueryRunner struct {
 	publish     models.ChannelPublisher
 	running     map[string]bool
 	runningMu   sync.Mutex
+	service     *LogsService
 }
 
 const (
@@ -43,54 +45,13 @@ const (
 	maxRetryDelay = 30 * time.Second
 )
 
-var (
-	// We need to make an injectable service to manage this state
-	// The service must be shared between the live component and live
-	channelMu        = sync.Mutex{}
-	responseChannels = map[string]chan *tsdb.Response{}
-)
-
-func addResponseChannel(name string, channel chan *tsdb.Response) error {
-	channelMu.Lock()
-	defer channelMu.Unlock()
-
-	if _, ok := responseChannels[name]; ok {
-		return fmt.Errorf("channel with name '%s' already exists", name)
-	}
-
-	responseChannels[name] = channel
-	return nil
-}
-
-func getResponseChannel(name string) (chan *tsdb.Response, error) {
-	channelMu.Lock()
-	defer channelMu.Unlock()
-
-	if responseChannel, ok := responseChannels[name]; ok {
-		return responseChannel, nil
-	}
-
-	return nil, fmt.Errorf("channel with name '%s' not found", name)
-}
-
-func deleteResponseChannel(name string) {
-	channelMu.Lock()
-	defer channelMu.Unlock()
-
-	if _, ok := responseChannels[name]; ok {
-		delete(responseChannels, name)
-		return
-	}
-
-	plog.Warn("Channel with name '" + name + "' not found")
-}
-
 // GetHandlerForPath gets the channel handler for a certain path.
 func (s *LogQueryRunnerSupplier) GetHandlerForPath(path string) (models.ChannelHandler, error) {
 	return &logQueryRunner{
 		channelName: path,
 		publish:     s.Publisher,
 		running:     make(map[string]bool),
+		service:     s.Service,
 	}, nil
 }
 
@@ -126,15 +87,13 @@ func (r *logQueryRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEve
 
 func (r *logQueryRunner) publishResults(channelName string) error {
 	defer func() {
-		deleteResponseChannel(channelName)
+		r.service.DeleteResponseChannel(channelName)
 		r.runningMu.Lock()
 		delete(r.running, channelName)
 		r.runningMu.Unlock()
 	}()
 
-	// Need an injectable service here, to share the channel state.
-	//
-	responseChannel, err := getResponseChannel(channelName)
+	responseChannel, err := r.service.GetResponseChannel(channelName)
 	if err != nil {
 		return err
 	}
@@ -158,8 +117,7 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	responseChannelName := uuid.Must(uuid.NewV4()).String()
 	responseChannel := make(chan *tsdb.Response)
-	// We need an injectable service here, to share this state
-	if err := addResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel); err != nil {
+	if err := e.logsService.AddResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel); err != nil {
 		close(responseChannel)
 		return nil, err
 	}

@@ -41,6 +41,8 @@ type GrafanaLive struct {
 
 	// The core internal features
 	GrafanaScope CoreGrafanaScope
+
+	LogsService *cloudwatch.LogsService `inject:""`
 }
 
 // Register registers GrafanaLive with the service registry.
@@ -293,6 +295,7 @@ func (g *GrafanaLive) GetChannelHandlerFactory(scope string, name string) (model
 		if name == "cloudwatch" {
 			return &cloudwatch.LogQueryRunnerSupplier{
 				Publisher: g.Publish,
+				Service:   g.LogsService,
 			}, nil
 		}
 

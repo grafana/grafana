@@ -122,7 +122,9 @@ func (s *Server) init(cfg *Config) error {
 	if err := metrics.SetEnvironmentInformation(s.cfg.MetricsGrafanaEnvironmentInfo); err != nil {
 		return err
 	}
-	s.initEnabledFeatures()
+	if s.cfg.IsLiveEnabled() {
+		live.Register()
+	}
 
 	login.Init()
 	social.NewOAuthService()
@@ -153,17 +155,10 @@ func (s *Server) init(cfg *Config) error {
 		}
 	}
 
-	// After all services are initialized, it should be safe to register all routes
+	// After services are initialized, it should be safe to register all routes
 	s.HTTPServer.RegisterRoutes()
 
 	return nil
-}
-
-// initEnabledFeatures initializes services that are behind enabled feature toggles.
-func (s *Server) initEnabledFeatures() {
-	if s.cfg.IsLiveEnabled() {
-		live.Register()
-	}
 }
 
 // Run initializes and starts services. This will block until all services have
