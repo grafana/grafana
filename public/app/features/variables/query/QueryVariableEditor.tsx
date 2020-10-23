@@ -82,7 +82,13 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
   onQueryChange = async (query: any) => {
     if (this.props.variable.query !== query) {
-      this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, '');
+      let definition = '';
+
+      if (query && query.hasOwnProperty('query') && typeof query.query === 'string') {
+        definition = query.query;
+      }
+
+      this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, definition);
     }
   };
 
