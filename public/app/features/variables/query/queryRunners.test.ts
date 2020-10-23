@@ -10,13 +10,13 @@ describe('QueryRunners', () => {
       const timeSrv = {
         timeRange: jest.fn().mockReturnValue(DefaultTimeRange),
       };
-      const dataSource: any = { metricFindQuery: jest.fn().mockResolvedValue([{ text: 'A', value: 'A' }]) };
-      const runner = new QueryRunners().getRunnerForDatasource(dataSource);
+      const datasource: any = { metricFindQuery: jest.fn().mockResolvedValue([{ text: 'A', value: 'A' }]) };
+      const runner = new QueryRunners().getRunnerForDatasource(datasource);
       const runRequest = jest.fn().mockReturnValue(of({}));
-      const runnerArgs: any = { dataSource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
+      const runnerArgs: any = { datasource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
       const request: any = {};
 
-      return { timeSrv, dataSource, runner, variable, runnerArgs, request };
+      return { timeSrv, datasource, runner, variable, runnerArgs, request };
     };
 
     describe('and calling getRunnerForDatasource', () => {
@@ -28,14 +28,14 @@ describe('QueryRunners', () => {
 
     describe('and calling getTarget', () => {
       it('then it should return correct target', () => {
-        const { runner, dataSource, variable } = getLegacyTestContext();
-        const target = runner.getTarget({ dataSource, variable });
+        const { runner, datasource, variable } = getLegacyTestContext();
+        const target = runner.getTarget({ datasource, variable });
         expect(target).toEqual('A query');
       });
     });
 
     describe('and calling runRequest with a variable that refreshes when time range changes', () => {
-      const { dataSource, runner, runnerArgs, request, timeSrv } = getLegacyTestContext({
+      const { datasource, runner, runnerArgs, request, timeSrv } = getLegacyTestContext({
         query: 'A query',
         refresh: VariableRefresh.onTimeRangeChanged,
       });
@@ -60,8 +60,8 @@ describe('QueryRunners', () => {
       });
 
       it('and it should call metricFindQuery with correct options', () => {
-        expect(dataSource.metricFindQuery).toHaveBeenCalledTimes(1);
-        expect(dataSource.metricFindQuery).toHaveBeenCalledWith('A query', {
+        expect(datasource.metricFindQuery).toHaveBeenCalledTimes(1);
+        expect(datasource.metricFindQuery).toHaveBeenCalledWith('A query', {
           range: {
             from: {},
             raw: {
@@ -80,7 +80,7 @@ describe('QueryRunners', () => {
     });
 
     describe('and calling runRequest with a variable that does not refresh when time range changes', () => {
-      const { dataSource, runner, runnerArgs, request, timeSrv } = getLegacyTestContext({
+      const { datasource, runner, runnerArgs, request, timeSrv } = getLegacyTestContext({
         query: 'A query',
         refresh: VariableRefresh.never,
       });
@@ -105,8 +105,8 @@ describe('QueryRunners', () => {
       });
 
       it('and it should call metricFindQuery with correct options', () => {
-        expect(dataSource.metricFindQuery).toHaveBeenCalledTimes(1);
-        expect(dataSource.metricFindQuery).toHaveBeenCalledWith('A query', {
+        expect(datasource.metricFindQuery).toHaveBeenCalledTimes(1);
+        expect(datasource.metricFindQuery).toHaveBeenCalledWith('A query', {
           range: undefined,
           searchFilter: 'A searchFilter',
           variable: {
@@ -119,18 +119,18 @@ describe('QueryRunners', () => {
   });
 
   describe('when using a data source with standard variable support', () => {
-    const getStandardTestContext = (dataSource?: any) => {
+    const getStandardTestContext = (datasource?: any) => {
       const variable: any = { query: { refId: 'A', query: 'A query' } };
       const timeSrv = {};
-      dataSource = dataSource ?? {
+      datasource = datasource ?? {
         variables: { standard: { toDataQuery: (query: any) => ({ ...query, extra: 'extra' }) } },
       };
-      const runner = new QueryRunners().getRunnerForDatasource(dataSource);
+      const runner = new QueryRunners().getRunnerForDatasource(datasource);
       const runRequest = jest.fn().mockReturnValue(of({}));
-      const runnerArgs: any = { dataSource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
+      const runnerArgs: any = { datasource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
       const request: any = {};
 
-      return { timeSrv, dataSource, runner, variable, runnerArgs, request, runRequest };
+      return { timeSrv, datasource, runner, variable, runnerArgs, request, runRequest };
     };
 
     describe('and calling getRunnerForDatasource', () => {
@@ -142,14 +142,14 @@ describe('QueryRunners', () => {
 
     describe('and calling getTarget', () => {
       it('then it should return correct target', () => {
-        const { runner, variable, dataSource } = getStandardTestContext();
-        const target = runner.getTarget({ dataSource, variable });
+        const { runner, variable, datasource } = getStandardTestContext();
+        const target = runner.getTarget({ datasource, variable });
         expect(target).toEqual({ refId: 'A', query: 'A query', extra: 'extra' });
       });
     });
 
     describe('and calling runRequest with a datasource that uses a custom query', () => {
-      const { runner, request, runnerArgs, runRequest, dataSource } = getStandardTestContext({
+      const { runner, request, runnerArgs, runRequest, datasource } = getStandardTestContext({
         variables: { standard: { toDataQuery: () => undefined, query: () => undefined } },
       });
       const observable = runner.runRequest(runnerArgs, request);
@@ -166,12 +166,12 @@ describe('QueryRunners', () => {
 
       it('then it should call runRequest with correct args', () => {
         expect(runRequest).toHaveBeenCalledTimes(1);
-        expect(runRequest).toHaveBeenCalledWith(dataSource, {}, dataSource.variables.standard.query);
+        expect(runRequest).toHaveBeenCalledWith(datasource, {}, datasource.variables.standard.query);
       });
     });
 
     describe('and calling runRequest with a datasource that has no custom query', () => {
-      const { runner, request, runnerArgs, runRequest, dataSource } = getStandardTestContext({
+      const { runner, request, runnerArgs, runRequest, datasource } = getStandardTestContext({
         variables: { standard: { toDataQuery: () => undefined } },
       });
       const observable = runner.runRequest(runnerArgs, request);
@@ -188,7 +188,7 @@ describe('QueryRunners', () => {
 
       it('then it should call runRequest with correct args', () => {
         expect(runRequest).toHaveBeenCalledTimes(1);
-        expect(runRequest).toHaveBeenCalledWith(dataSource, {});
+        expect(runRequest).toHaveBeenCalledWith(datasource, {});
       });
     });
   });
@@ -197,15 +197,15 @@ describe('QueryRunners', () => {
     const getCustomTestContext = () => {
       const variable: any = { query: { refId: 'A', query: 'A query' } };
       const timeSrv = {};
-      const dataSource: any = {
+      const datasource: any = {
         variables: { custom: { query: () => undefined, editor: {} } },
       };
-      const runner = new QueryRunners().getRunnerForDatasource(dataSource);
+      const runner = new QueryRunners().getRunnerForDatasource(datasource);
       const runRequest = jest.fn().mockReturnValue(of({}));
-      const runnerArgs: any = { dataSource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
+      const runnerArgs: any = { datasource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
       const request: any = {};
 
-      return { timeSrv, dataSource, runner, variable, runnerArgs, request, runRequest };
+      return { timeSrv, datasource, runner, variable, runnerArgs, request, runRequest };
     };
 
     describe('and calling getRunnerForDatasource', () => {
@@ -217,14 +217,14 @@ describe('QueryRunners', () => {
 
     describe('and calling getTarget', () => {
       it('then it should return correct target', () => {
-        const { runner, variable, dataSource } = getCustomTestContext();
-        const target = runner.getTarget({ dataSource, variable });
+        const { runner, variable, datasource } = getCustomTestContext();
+        const target = runner.getTarget({ datasource, variable });
         expect(target).toEqual({ refId: 'A', query: 'A query' });
       });
     });
 
     describe('and calling runRequest', () => {
-      const { runner, request, runnerArgs, runRequest, dataSource } = getCustomTestContext();
+      const { runner, request, runnerArgs, runRequest, datasource } = getCustomTestContext();
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', done => {
@@ -239,7 +239,7 @@ describe('QueryRunners', () => {
 
       it('then it should call runRequest with correct args', () => {
         expect(runRequest).toHaveBeenCalledTimes(1);
-        expect(runRequest).toHaveBeenCalledWith(dataSource, {}, dataSource.variables.custom.query);
+        expect(runRequest).toHaveBeenCalledWith(datasource, {}, datasource.variables.custom.query);
       });
     });
   });
@@ -248,15 +248,15 @@ describe('QueryRunners', () => {
     const getDatasourceTestContext = () => {
       const variable: any = { query: { refId: 'A', query: 'A query' } };
       const timeSrv = {};
-      const dataSource: any = {
+      const datasource: any = {
         variables: { datasource: { editor: {} } },
       };
-      const runner = new QueryRunners().getRunnerForDatasource(dataSource);
+      const runner = new QueryRunners().getRunnerForDatasource(datasource);
       const runRequest = jest.fn().mockReturnValue(of({}));
-      const runnerArgs: any = { dataSource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
+      const runnerArgs: any = { datasource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
       const request: any = {};
 
-      return { timeSrv, dataSource, runner, variable, runnerArgs, request, runRequest };
+      return { timeSrv, datasource, runner, variable, runnerArgs, request, runRequest };
     };
 
     describe('and calling getRunnerForDatasource', () => {
@@ -268,14 +268,14 @@ describe('QueryRunners', () => {
 
     describe('and calling getTarget', () => {
       it('then it should return correct target', () => {
-        const { runner, dataSource, variable } = getDatasourceTestContext();
-        const target = runner.getTarget({ dataSource, variable });
+        const { runner, datasource, variable } = getDatasourceTestContext();
+        const target = runner.getTarget({ datasource, variable });
         expect(target).toEqual({ refId: 'A', query: 'A query' });
       });
     });
 
     describe('and calling runRequest', () => {
-      const { runner, request, runnerArgs, runRequest, dataSource } = getDatasourceTestContext();
+      const { runner, request, runnerArgs, runRequest, datasource } = getDatasourceTestContext();
       const observable = runner.runRequest(runnerArgs, request);
 
       it('then it should return correct observable', done => {
@@ -290,7 +290,7 @@ describe('QueryRunners', () => {
 
       it('then it should call runRequest with correct args', () => {
         expect(runRequest).toHaveBeenCalledTimes(1);
-        expect(runRequest).toHaveBeenCalledWith(dataSource, {});
+        expect(runRequest).toHaveBeenCalledWith(datasource, {});
       });
     });
   });

@@ -48,7 +48,7 @@ function getTestContext(variable?: QueryVariableModel) {
   const getTimeSrv = jest.fn().mockReturnValue({
     timeRange: jest.fn().mockReturnValue(DefaultTimeRange),
   });
-  const dataSource: any = { metricFindQuery: jest.fn().mockResolvedValue([]) };
+  const datasource: any = { metricFindQuery: jest.fn().mockResolvedValue([]) };
   const identifier = toVariableIdentifier(variable);
   const searchFilter = undefined;
   const getTemplatedRegex = jest.fn().mockReturnValue('getTemplatedRegex result');
@@ -86,7 +86,7 @@ function getTestContext(variable?: QueryVariableModel) {
 
   return {
     identifier,
-    dataSource,
+    datasource,
     runner,
     searchFilter,
     getTemplatedRegex,
@@ -107,7 +107,7 @@ describe('VariableQueryRunner', () => {
       const {
         identifier,
         runner,
-        dataSource,
+        datasource,
         getState,
         getVariable,
         queryRunners,
@@ -131,7 +131,7 @@ describe('VariableQueryRunner', () => {
           expect(queryRunners.getRunnerForDatasource).toHaveBeenCalledTimes(1);
           expect(queryRunner.getTarget).toHaveBeenCalledTimes(1);
           expect(queryRunner.runRequest).toHaveBeenCalledTimes(1);
-          expect(dataSource.metricFindQuery).not.toHaveBeenCalled();
+          expect(datasource.metricFindQuery).not.toHaveBeenCalled();
 
           // updateVariableOptions and validateVariableSelectionState
           expect(dispatch).toHaveBeenCalledTimes(2);
@@ -146,7 +146,7 @@ describe('VariableQueryRunner', () => {
         done,
       });
 
-      runner.queueRequest({ identifier, dataSource });
+      runner.queueRequest({ identifier, datasource });
     });
   });
 
@@ -160,7 +160,7 @@ describe('VariableQueryRunner', () => {
       const {
         identifier,
         runner,
-        dataSource,
+        datasource,
         getState,
         getVariable,
         queryRunners,
@@ -184,7 +184,7 @@ describe('VariableQueryRunner', () => {
           expect(queryRunners.getRunnerForDatasource).toHaveBeenCalledTimes(1);
           expect(queryRunner.getTarget).toHaveBeenCalledTimes(1);
           expect(queryRunner.runRequest).toHaveBeenCalledTimes(1);
-          expect(dataSource.metricFindQuery).toHaveBeenCalledTimes(1);
+          expect(datasource.metricFindQuery).toHaveBeenCalledTimes(1);
 
           // updateVariableOptions, updateVariableTags and validateVariableSelectionState
           expect(dispatch).toHaveBeenCalledTimes(3);
@@ -200,7 +200,7 @@ describe('VariableQueryRunner', () => {
         done,
       });
 
-      runner.queueRequest({ identifier, dataSource });
+      runner.queueRequest({ identifier, datasource });
     });
   });
 
@@ -210,7 +210,7 @@ describe('VariableQueryRunner', () => {
         const {
           identifier,
           runner,
-          dataSource,
+          datasource,
           getState,
           getVariable,
           queryRunners,
@@ -238,13 +238,13 @@ describe('VariableQueryRunner', () => {
             expect(queryRunners.getRunnerForDatasource).toHaveBeenCalledTimes(1);
             expect(queryRunner.getTarget).not.toHaveBeenCalled();
             expect(queryRunner.runRequest).not.toHaveBeenCalled();
-            expect(dataSource.metricFindQuery).not.toHaveBeenCalled();
+            expect(datasource.metricFindQuery).not.toHaveBeenCalled();
             expect(dispatch).not.toHaveBeenCalled();
           },
           done,
         });
 
-        runner.queueRequest({ identifier, dataSource });
+        runner.queueRequest({ identifier, datasource });
       });
     });
 
@@ -253,7 +253,7 @@ describe('VariableQueryRunner', () => {
         const {
           identifier,
           runner,
-          dataSource,
+          datasource,
           getState,
           getVariable,
           queryRunners,
@@ -279,13 +279,13 @@ describe('VariableQueryRunner', () => {
             expect(queryRunners.getRunnerForDatasource).toHaveBeenCalledTimes(1);
             expect(queryRunner.getTarget).toHaveBeenCalledTimes(1);
             expect(queryRunner.runRequest).toHaveBeenCalledTimes(1);
-            expect(dataSource.metricFindQuery).not.toHaveBeenCalled();
+            expect(datasource.metricFindQuery).not.toHaveBeenCalled();
             expect(dispatch).not.toHaveBeenCalled();
           },
           done,
         });
 
-        runner.queueRequest({ identifier, dataSource });
+        runner.queueRequest({ identifier, datasource });
       });
     });
 
@@ -299,7 +299,7 @@ describe('VariableQueryRunner', () => {
         const {
           identifier,
           runner,
-          dataSource,
+          datasource,
           getState,
           getVariable,
           queryRunners,
@@ -307,7 +307,7 @@ describe('VariableQueryRunner', () => {
           dispatch,
         } = getTestContext(variable);
 
-        dataSource.metricFindQuery = jest.fn().mockRejectedValue(new Error('metricFindQuery error'));
+        datasource.metricFindQuery = jest.fn().mockRejectedValue(new Error('metricFindQuery error'));
 
         expectOnResults({
           identifier,
@@ -325,13 +325,13 @@ describe('VariableQueryRunner', () => {
             expect(queryRunners.getRunnerForDatasource).toHaveBeenCalledTimes(1);
             expect(queryRunner.getTarget).toHaveBeenCalledTimes(1);
             expect(queryRunner.runRequest).toHaveBeenCalledTimes(1);
-            expect(dataSource.metricFindQuery).toHaveBeenCalledTimes(1);
+            expect(datasource.metricFindQuery).toHaveBeenCalledTimes(1);
             expect(dispatch).toHaveBeenCalledTimes(1);
           },
           done,
         });
 
-        runner.queueRequest({ identifier, dataSource });
+        runner.queueRequest({ identifier, datasource });
       });
     });
   });
@@ -339,7 +339,7 @@ describe('VariableQueryRunner', () => {
   describe('cancellation cases', () => {
     describe('long running request is cancelled', () => {
       it('then it should work as expected', done => {
-        const { identifier, dataSource, runner, queryRunner } = getTestContext();
+        const { identifier, datasource, runner, queryRunner } = getTestContext();
 
         queryRunner.runRequest = jest
           .fn()
@@ -359,14 +359,14 @@ describe('VariableQueryRunner', () => {
           done,
         });
 
-        runner.queueRequest({ identifier, dataSource });
+        runner.queueRequest({ identifier, datasource });
         runner.cancelRequest(identifier);
       });
     });
 
     describe('an identical request is triggered before first request is finished', () => {
       it('then it should work as expected', done => {
-        const { identifier, dataSource, runner, queryRunner } = getTestContext();
+        const { identifier, datasource, runner, queryRunner } = getTestContext();
 
         queryRunner.runRequest = jest
           .fn()
@@ -388,8 +388,8 @@ describe('VariableQueryRunner', () => {
           done,
         });
 
-        runner.queueRequest({ identifier, dataSource });
-        runner.queueRequest({ identifier, dataSource });
+        runner.queueRequest({ identifier, datasource });
+        runner.queueRequest({ identifier, datasource });
       });
     });
   });

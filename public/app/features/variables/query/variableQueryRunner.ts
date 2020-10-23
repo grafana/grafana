@@ -30,7 +30,7 @@ import {
 
 interface UpdateOptionsArgs {
   identifier: VariableIdentifier;
-  dataSource: DataSourceApi;
+  datasource: DataSourceApi;
   searchFilter?: string;
 }
 
@@ -92,7 +92,7 @@ export class VariableQueryRunner {
   }
 
   private onNewRequest(args: UpdateOptionsArgs): void {
-    const { dataSource, identifier, searchFilter } = args;
+    const { datasource, identifier, searchFilter } = args;
     try {
       const {
         dispatch,
@@ -110,9 +110,9 @@ export class VariableQueryRunner {
 
       const variable = getVariable<QueryVariableModel>(identifier.id, getState());
       const timeSrv = getTimeSrv();
-      const runnerArgs = { variable, dataSource, searchFilter, timeSrv, runRequest };
-      const runner = queryRunners.getRunnerForDatasource(dataSource);
-      const target = runner.getTarget({ dataSource, variable });
+      const runnerArgs = { variable, datasource, searchFilter, timeSrv, runRequest };
+      const runner = queryRunners.getRunnerForDatasource(datasource);
+      const target = runner.getTarget({ datasource, variable });
       const request = this.getRequest(variable, args, target);
 
       runner
@@ -126,7 +126,7 @@ export class VariableQueryRunner {
           first(data => data.state === LoadingState.Done || data.state === LoadingState.Error),
           toMetricFindValues(),
           updateOptionsState({ variable, dispatch, getTemplatedRegexFunc }),
-          runUpdateTagsRequest({ variable, dataSource, searchFilter }),
+          runUpdateTagsRequest({ variable, datasource, searchFilter }),
           updateTagsState({ variable, dispatch }),
           validateVariableSelection({ variable, dispatch, searchFilter }),
           takeUntil(

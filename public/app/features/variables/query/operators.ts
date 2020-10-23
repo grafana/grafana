@@ -113,7 +113,7 @@ export function updateOptionsState(args: {
 export function runUpdateTagsRequest(
   args: {
     variable: QueryVariableModel;
-    dataSource: DataSourceApi;
+    datasource: DataSourceApi;
     searchFilter?: string;
   },
   timeSrv: TimeSrv = getTimeSrv()
@@ -121,11 +121,11 @@ export function runUpdateTagsRequest(
   return source =>
     source.pipe(
       mergeMap(() => {
-        const { dataSource, searchFilter, variable } = args;
+        const { datasource, searchFilter, variable } = args;
 
-        if (variable.useTags && dataSource.metricFindQuery) {
+        if (variable.useTags && datasource.metricFindQuery) {
           return from(
-            dataSource.metricFindQuery(variable.tagsQuery, getLegacyQueryOptions(variable, searchFilter, timeSrv))
+            datasource.metricFindQuery(variable.tagsQuery, getLegacyQueryOptions(variable, searchFilter, timeSrv))
           );
         }
 

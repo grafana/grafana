@@ -27,8 +27,8 @@ export const updateQueryVariableOptions = (
       if (getState().templating.editor.id === variableInState.id) {
         dispatch(removeVariableEditorError({ errorProp: 'update' }));
       }
-      const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');
-      dispatch(upgradeLegacyQueries(identifier, dataSource));
+      const datasource = await getDatasourceSrv().get(variableInState.datasource ?? '');
+      dispatch(upgradeLegacyQueries(identifier, datasource));
 
       // we need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
       // variable will have the wrong current value as input
@@ -40,7 +40,7 @@ export const updateQueryVariableOptions = (
           .subscribe(observer);
         subscription.add(responseSubscription);
 
-        getVariableQueryRunner().queueRequest({ identifier, dataSource, searchFilter });
+        getVariableQueryRunner().queueRequest({ identifier, datasource, searchFilter });
       });
     } catch (err) {
       const error = toDataQueryError(err);

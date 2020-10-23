@@ -94,9 +94,9 @@ describe('operators', () => {
         const timeSrv: any = {
           timeRange: jest.fn(),
         };
-        const dataSource: any = { metricFindQuery: jest.fn().mockResolvedValue([{ text: 'A text' }]) };
+        const datasource: any = { metricFindQuery: jest.fn().mockResolvedValue([{ text: 'A text' }]) };
         const searchFilter = 'A search filter';
-        const observable = of(undefined).pipe(runUpdateTagsRequest({ variable, dataSource, searchFilter }, timeSrv));
+        const observable = of(undefined).pipe(runUpdateTagsRequest({ variable, datasource, searchFilter }, timeSrv));
 
         observableTester().subscribeAndExpectOnNext({
           observable,
@@ -104,8 +104,8 @@ describe('operators', () => {
             const { index, global, ...rest } = initialQueryVariableModelState;
             expect(value).toEqual([{ text: 'A text' }]);
             expect(timeSrv.timeRange).toHaveBeenCalledTimes(1);
-            expect(dataSource.metricFindQuery).toHaveBeenCalledTimes(1);
-            expect(dataSource.metricFindQuery).toHaveBeenCalledWith('A tags query', {
+            expect(datasource.metricFindQuery).toHaveBeenCalledTimes(1);
+            expect(datasource.metricFindQuery).toHaveBeenCalledWith('A tags query', {
               range: undefined,
               searchFilter: 'A search filter',
               variable: {
@@ -134,9 +134,9 @@ describe('operators', () => {
         const timeSrv: any = {
           timeRange: jest.fn(),
         };
-        const dataSource: any = {};
+        const datasource: any = {};
         const searchFilter = 'A search filter';
-        const observable = of(undefined).pipe(runUpdateTagsRequest({ variable, dataSource, searchFilter }, timeSrv));
+        const observable = of(undefined).pipe(runUpdateTagsRequest({ variable, datasource, searchFilter }, timeSrv));
 
         observableTester().subscribeAndExpectOnNext({
           observable,
@@ -159,16 +159,16 @@ describe('operators', () => {
         const timeSrv: any = {
           timeRange: jest.fn(),
         };
-        const dataSource: any = { metricFindQuery: jest.fn().mockResolvedValue([{ text: 'A text' }]) };
+        const datasource: any = { metricFindQuery: jest.fn().mockResolvedValue([{ text: 'A text' }]) };
         const searchFilter = 'A search filter';
-        const observable = of(undefined).pipe(runUpdateTagsRequest({ variable, dataSource, searchFilter }, timeSrv));
+        const observable = of(undefined).pipe(runUpdateTagsRequest({ variable, datasource, searchFilter }, timeSrv));
 
         observableTester().subscribeAndExpectOnNext({
           observable,
           expect: value => {
             expect(value).toEqual([]);
             expect(timeSrv.timeRange).not.toHaveBeenCalled();
-            expect(dataSource.metricFindQuery).not.toHaveBeenCalled();
+            expect(datasource.metricFindQuery).not.toHaveBeenCalled();
           },
           done,
         });
