@@ -2,11 +2,11 @@
 title = "Organization roles"
 description = "Grafana organization roles guide "
 keywords = ["grafana", "configuration", "documentation", "organization", "roles", "permissions"]
-type = "docs"
-[menu.docs]
-name = "Organization Roles"
-identifier = "organization-roles"
-parent = "permissions"
+
+
+
+
+
 weight = 100
 +++
 

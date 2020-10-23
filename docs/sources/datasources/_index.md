@@ -1,11 +1,11 @@
 +++
 title = "Data sources"
-type = "docs"
+
 aliases = ["/docs/grafana/latest/datasources/overview/"]
-[menu.docs]
-name = "Data sources"
-identifier = "datasources"
-parent = "features"
+
+
+
+
 weight = 50
 +++
 

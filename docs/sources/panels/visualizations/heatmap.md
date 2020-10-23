@@ -2,11 +2,11 @@
 title = "Heatmap"
 description = "Heatmap visualization documentation"
 keywords = ["grafana", "heatmap", "panel", "documentation"]
-type = "docs"
+
 aliases =["/docs/grafana/latest/features/panels/heatmap/"]
-[menu.docs]
-name = "Heatmap"
-parent = "visualizations"
+
+
+
 weight = 600
 +++
 

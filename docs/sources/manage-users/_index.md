@@ -1,9 +1,9 @@
 +++
 title = "Manage users"
-type = "docs"
-[menu.docs]
-name = "Manage users"
-identifier = "manage-users"
+
+
+
+
 weight = 40
 +++
 

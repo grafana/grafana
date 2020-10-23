@@ -1,9 +1,9 @@
 +++
 title = "Panels"
-type = "docs"
+
 aliases = ["/docs/grafana/latest/features/panels/panels/"]
-[menu.docs]
-identifier = "panels"
+
+
 weight = 4
 draft = "true"
 +++

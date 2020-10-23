@@ -1,6 +1,6 @@
 +++
 title = "Legacy code style guide"
-type = "docs"
+
 aliases = ["/docs/grafana/latest/plugins/developing/code-styleguide/"]
 +++
 

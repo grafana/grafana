@@ -1,9 +1,9 @@
 +++
 title = "Apply a transformation"
-type = "docs"
-[menu.docs]
-identifier = "apply-transformation"
-parent = "transformations"
+
+
+
+
 weight = 300
 +++
 

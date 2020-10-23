@@ -1,8 +1,8 @@
 +++
 title = "Variables types"
-type = "docs"
-[menu.docs]
-identifier = "variable-types"
+
+
+
 weight = 140
 +++
 

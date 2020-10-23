@@ -2,11 +2,11 @@
 title = "Alert notifications"
 description = "Alerting notifications guide"
 keywords = ["Grafana", "alerting", "guide", "notifications"]
-type = "docs"
-[menu.docs]
-name = "Notifications"
-identifier = "alert-notification"
-parent = "alerting"
+
+
+
+
+
 weight = 100
 +++
 

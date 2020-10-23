@@ -2,11 +2,11 @@
 title = "Enterprise configuration"
 description = "Enterprise configuration documentation"
 keywords = ["grafana", "configuration", "documentation", "enterprise"]
-type = "docs"
-[menu.docs]
-name = "Enterprise configuration"
-identifier = "enterprise-config"
-parent = "enterprise"
+
+
+
+
+
 weight = 300
 +++
 

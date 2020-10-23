@@ -1,7 +1,7 @@
 +++
 title = "Configure specific fields"
 keywords = ["grafana", "field options", "documentation", "format fields", "overrides", "override fields"]
-type = "docs"
+
 weight = 300
 +++
 

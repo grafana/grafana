@@ -1,6 +1,6 @@
 +++
 title = "Error handling"
-type = "docs"
+
 +++
 
 # Error handling

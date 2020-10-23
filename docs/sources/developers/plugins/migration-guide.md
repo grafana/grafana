@@ -1,6 +1,6 @@
 +++
 title = "Plugin migration guide"
-type = "docs"
+
 +++
 
 # Plugin migration guide

@@ -1,11 +1,11 @@
 +++
 title = "Dashboard list panel"
 keywords = ["grafana", "dashboard list", "documentation", "panel", "dashlist"]
-type = "docs"
+
 aliases = ["/docs/grafana/latest/reference/dashlist/", "/docs/grafana/latest/features/panels/dashlist/"]
-[menu.docs]
-name = "Dashboard list"
-parent = "visualizations"
+
+
+
 weight = 300
 +++
 

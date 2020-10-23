@@ -1,6 +1,6 @@
 +++
 title = "Add support for annotations"
-type = "docs"
+
 +++
 
 # Add support for annotations

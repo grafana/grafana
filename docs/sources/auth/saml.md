@@ -3,10 +3,10 @@ title = "SAML Authentication"
 description = "Grafana SAML Authentication"
 keywords = ["grafana", "saml", "documentation", "saml-auth"]
 aliases = ["/docs/grafana/latest/auth/saml/"]
-type = "docs"
-[menu.docs]
-name = "SAML"
-parent = "authentication"
+
+
+
+
 weight = 1100
 +++
 

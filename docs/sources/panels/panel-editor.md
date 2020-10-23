@@ -1,8 +1,8 @@
 +++
 title = "Panel editor"
-type = "docs"
-[menu.docs]
-identifier = "panel-editor"
+
+
+
 weight = 200
 +++
 

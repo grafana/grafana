@@ -1,9 +1,9 @@
 +++
 title = "Transformations"
-type = "docs"
-[menu.docs]
-identifier = "transformations"
-parent = "panels"
+
+
+
+
 weight = 300
 +++
 

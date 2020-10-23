@@ -1,7 +1,7 @@
 +++
 title = "Configure all fields"
 keywords = ["grafana", "field options", "documentation", "format fields", "change all fields"]
-type = "docs"
+
 weight = 200
 +++
 

@@ -1,10 +1,10 @@
 +++
 title = "Variables"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable", "repeat"]
-type = "docs"
-[menu.docs]
-identifier = "repeat-panel-rows"
-parent = "variables"
+
+
+
+
 weight = 800
 +++
 

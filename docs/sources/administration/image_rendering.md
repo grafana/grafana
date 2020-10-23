@@ -2,9 +2,9 @@
 title = "Image rendering"
 description = ""
 keywords = ["grafana", "image", "rendering", "plugin"]
-type = "docs"
-[menu.docs]
-parent = "features"
+
+
+
 weight = 8
 +++
 

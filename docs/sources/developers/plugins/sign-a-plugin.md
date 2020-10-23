@@ -1,6 +1,6 @@
 +++
 title = "Sign a plugin"
-type = "docs"
+
 +++
 
 # Sign a plugin

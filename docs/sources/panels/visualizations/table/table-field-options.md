@@ -1,7 +1,7 @@
 +++
 title = "Table field options"
 keywords = ["grafana", "table options", "documentation", "format tables"]
-type = "docs"
+
 weight = 500
 +++
 
@@ -69,5 +69,5 @@ Shows value formatted as code. If a value is an object the JSON view allowing br
 ## Column filter
 
 > **Note:** This feature is available in Grafana 7.2+.
-> 
+>
 Turn this on to enable table field filters. For more information, refer to [Filter table columns]({{< relref "filter-table-columns.md" >}}).

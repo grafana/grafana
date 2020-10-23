@@ -1,6 +1,6 @@
 +++
 title = "Developers"
-type = "docs"
+
 aliases = ["/docs/plugins/developing/"]
 +++
 

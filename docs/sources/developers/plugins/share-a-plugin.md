@@ -1,6 +1,6 @@
 +++
 title = "Share a plugin"
-type = "docs"
+
 +++
 
 # Share a plugin

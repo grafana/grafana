@@ -1,8 +1,8 @@
 +++
 title = "View server stats"
-type = "docs"
+
 keywords = ["grafana", "server", "statistics"]
-[menu.docs]
+
 weight = 1150
 +++
 
