@@ -210,3 +210,16 @@ export const sortLogsResult = (logsResult: LogsModel | null, sortOrder: LogsSort
 
 export const sortLogRows = (logRows: LogRowModel[], sortOrder: LogsSortOrder) =>
   sortOrder === LogsSortOrder.Ascending ? logRows.sort(sortInAscendingOrder) : logRows.sort(sortInDescendingOrder);
+
+// Currently supports only error condition in Loki logs
+export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorMessage?: string } => {
+  if (logRow.labels.__error__) {
+    return {
+      hasError: true,
+      errorMessage: logRow.labels.__error__,
+    };
+  }
+  return {
+    hasError: false,
+  };
+};
