@@ -19,7 +19,7 @@ The main highlights are:
 
 - [**Google Cloud Monitoring:** Out of the box dashboards]({{< relref "#cloud-monitoring-out-of-the-box-dashboards" >}})
 - [**Shorten URL for dashboards and Explore**]({{< relref "#shorten-url-for-dashboards-and-explore" >}})
-- [**SigV4 Authentication for Amazon Elasticsearch Service**]({{< relref "#sigv4-authentication-for-AWS-users" >}})
+- [**SigV4 Authentication for Amazon Elasticsearch Service**]({{< relref "#sigv4-authentication-for-aws-users" >}})
 
 ## Google Cloud monitoring out-of-the-box dashboards
 
