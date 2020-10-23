@@ -38,7 +38,7 @@ interface State {
 }
 
 export class ThresholdsEditor extends PureComponent<Props, State> {
-  private latestThresholdInputRef: HTMLInputElement | null;
+  private latestThresholdInputRef: React.RefObject<HTMLInputElement>;
 
   constructor(props: Props) {
     super(props);
@@ -47,12 +47,8 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     steps[0].value = -Infinity;
 
     this.state = { steps };
-    this.latestThresholdInputRef = null;
+    this.latestThresholdInputRef = React.createRef();
   }
-
-  setLatestThresholdInputRef = (node: HTMLInputElement | null) => {
-    this.latestThresholdInputRef = node;
-  };
 
   onAddThreshold = () => {
     const { steps } = this.state;
@@ -75,8 +71,8 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     sortThresholds(newThresholds);
 
     this.setState({ steps: newThresholds }, () => {
-      if (this.latestThresholdInputRef) {
-        this.latestThresholdInputRef.focus();
+      if (this.latestThresholdInputRef.current) {
+        this.latestThresholdInputRef.current.focus();
       }
       this.onChange();
     });
@@ -179,11 +175,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
         key={isPercent.toString()}
         onChange={(event: ChangeEvent<HTMLInputElement>) => this.onChangeThresholdValue(event, threshold)}
         value={threshold.value}
-        ref={node => {
-          if (idx === 0) {
-            this.setLatestThresholdInputRef(node);
-          }
-        }}
+        ref={idx === 0 ? this.latestThresholdInputRef : null}
         onBlur={this.onBlur}
         prefix={
           <div className={styles.inputPrefix}>
