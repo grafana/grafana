@@ -379,4 +379,47 @@ describe('Prometheus Result Transformer', () => {
       expect(result[0].fields[1].values.toArray()).toEqual([null, null, 10, null, 10]);
     });
   });
+
+  describe('When infinity values are returned', () => {
+    describe('When resultType is scalar', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: 'scalar',
+          result: [1443454528, '+Inf'],
+        },
+      };
+
+      it('should correctly parse values', () => {
+        const result: DataFrame[] = transform({ data: response } as any, { ...options, target: { format: 'table' } });
+        expect(result[0].fields[1].values.toArray()).toEqual([Number.POSITIVE_INFINITY]);
+      });
+    });
+
+    describe('When resultType is vector', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: 'vector',
+          result: [
+            {
+              metric: { __name__: 'test', job: 'testjob' },
+              value: [1443454528, '+Inf'],
+            },
+            {
+              metric: { __name__: 'test', job: 'testjob' },
+              value: [1443454528, '-Inf'],
+            },
+          ],
+        },
+      };
+
+      describe('When format is table', () => {
+        it('should correctly parse values', () => {
+          const result: DataFrame[] = transform({ data: response } as any, { ...options, target: { format: 'table' } });
+          expect(result[0].fields[3].values.toArray()).toEqual([Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]);
+        });
+      });
+    });
+  });
 });

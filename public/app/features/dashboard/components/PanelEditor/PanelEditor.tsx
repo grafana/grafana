@@ -118,7 +118,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   onFieldConfigChange = (config: FieldConfigSource) => {
-    console.log(config);
     const { panel } = this.props;
 
     panel.updateFieldConfig({

@@ -180,6 +180,12 @@ module.exports = {
       chunks: 'all',
       minChunks: 1,
       cacheGroups: {
+        unicons: {
+          test: /[\\/]node_modules[\\/]@iconscout[\\/]react-unicons[\\/].*[jt]sx?$/,
+          chunks: 'initial',
+          priority: 20,
+          enforce: true,
+        },
         moment: {
           test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
           chunks: 'initial',

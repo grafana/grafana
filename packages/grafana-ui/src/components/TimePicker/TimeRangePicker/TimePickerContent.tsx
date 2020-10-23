@@ -192,14 +192,14 @@ export const TimePickerContent: React.FC<Props> = props => {
 };
 
 const NarrowScreenForm: React.FC<FormProps> = props => {
-  if (!props.visible) {
-    return null;
-  }
-
   const theme = useTheme();
   const styles = getNarrowScreenStyles(theme);
   const isAbsolute = isDateTime(props.value.raw.from) || isDateTime(props.value.raw.to);
   const [collapsed, setCollapsed] = useState(isAbsolute);
+
+  if (!props.visible) {
+    return null;
+  }
 
   return (
     <>
@@ -238,12 +238,12 @@ const NarrowScreenForm: React.FC<FormProps> = props => {
 };
 
 const FullScreenForm: React.FC<FormProps> = props => {
+  const theme = useTheme();
+  const styles = getFullScreenStyles(theme);
+
   if (!props.visible) {
     return null;
   }
-
-  const theme = useTheme();
-  const styles = getFullScreenStyles(theme);
 
   return (
     <>

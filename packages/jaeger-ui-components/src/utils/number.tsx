@@ -24,7 +24,7 @@
  *
  * @param {number} number
  * @param {number} precision
- * @return {number} number at new floating precision
+ * @returns {number} number at new floating precision
  */
 export function toFloatPrecision(number: number, precision: number): number {
   const log10Length = Math.floor(Math.log10(Math.abs(number))) + 1;
