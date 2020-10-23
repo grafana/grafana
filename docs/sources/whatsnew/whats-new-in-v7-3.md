@@ -78,19 +78,17 @@ Data source usage insights allows you to gain insight into how a data source is 
 
 Insights:
 
-- Queries in the last 30 days
-- Errors during the last 30 days
-- Average load duration in the last 30 days (ms)
+- Queries per day
+- Errors per day
+- Average load duration per day (ms)
 
-### SAML improvements
+### SAML Single logout
 
-#### Single logout
+SAML’s single logout (SLO) capability allows users to log out from all applications associated with the current IdP session established via SAML SSO. For more information, refer to the [docs]({{<relref "../enterprise/saml/#single-logout">}}). 
 
-SAML’s single logout capability allows users to log out from all applications associated with the current IdP session established via SAML SSO. For more information, refer to the [docs]({{<relref "../enterprise/saml/#single-logout">}}). 
+### SAML IdP-initiated single sign on
 
-#### IdP-initiated single-sign-on
-
-IdP-initiated Single-Sign-On allows logins directly from the SAML identity provider (IdP). It is disabled by default for security reasons. For more information, refer to the [docs]({{<relref "../enterprise/saml/#idp-initiated-single-sign-on-sso">}}). 
+IdP-initiated single sign on (SSO) allows the user to log in directly from the SAML identity provider (IdP). It is disabled by default for security reasons. For more information, refer to the [docs]({{<relref "../enterprise/saml/#idp-initiated-single-sign-on-sso">}}). 
 
 ## Upgrading
 
