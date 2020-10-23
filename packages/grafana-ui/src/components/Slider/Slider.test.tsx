@@ -17,7 +17,6 @@ describe('Slider', () => {
     expect(wrapper.html()).toContain('aria-valuemin="10"');
     expect(wrapper.html()).toContain('aria-valuemax="20"');
     expect(wrapper.html()).toContain('aria-valuenow="10"');
-    expect(wrapper.html()).toContain('aria-valuenow="20"');
   });
 
   it('renders correct contents with a value', () => {
