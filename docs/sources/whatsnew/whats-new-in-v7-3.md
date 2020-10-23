@@ -82,9 +82,9 @@ Insights:
 - Errors per day
 - Average load duration per day (ms)
 
-### SAML Single logout
+### SAML single logout
 
-SAML’s single logout (SLO) capability allows users to log out from all applications associated with the current IdP session established via SAML SSO. For more information, refer to the [docs]({{<relref "../enterprise/saml/#single-logout">}}). 
+SAML’s single logout (SLO) capability allows users to log out from all applications associated with the current identity provider (IdP) session established via SAML SSO. For more information, refer to the [docs]({{<relref "../enterprise/saml/#single-logout">}}). 
 
 ### SAML IdP-initiated single sign on
 
