@@ -76,17 +76,18 @@ function getLokiQueryFromSpan(span: TraceSpan): string {
  * something more intelligent should probably be implemented
  */
 function getTimeRangeFromSpan(span: TraceSpan): TimeRange {
-  const from = dateTime(span.startTime / 1000 - 5 * 1000);
+  const from = dateTime(span.startTime / 1000 - 1000 * 60 * 60);
   const spanEndMs = (span.startTime + span.duration) / 1000;
-  const to = dateTime(spanEndMs + 1000 * 60 * 60);
+  const to = dateTime(spanEndMs + 5 * 1000);
+
   return {
     from,
     to,
     // Weirdly Explore does not handle ISO string which would have been the default stringification if passed as object
     // and we have to use this custom format :( .
     raw: {
-      from: from.format('YYYYMMDDTHHmmss'),
-      to: to.format('YYYYMMDDTHHmmss'),
+      from: from.utc().format('YYYYMMDDTHHmmss'),
+      to: to.utc().format('YYYYMMDDTHHmmss'),
     },
   };
 }

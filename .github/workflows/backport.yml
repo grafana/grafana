@@ -1,6 +1,6 @@
 name: Backport PR Creator
 on:
-  pull_request:
+  pull_request_target:
     types:
       - closed
       - labeled
