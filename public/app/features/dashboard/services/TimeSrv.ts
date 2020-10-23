@@ -148,7 +148,7 @@ export class TimeSrv {
       time.to = this.parseUrlParam(params.to) || this.time.to;
     }
 
-    if (this.isValidTime(time)) {
+    if (this.isValidTimeRange(time)) {
       this.time = time;
     } else {
       this.setTime(this.time);
@@ -305,7 +305,7 @@ export class TimeSrv {
       to: toUtc(to),
     };
 
-    if (this.isValidTime(zoomedTimeRange)) {
+    if (this.isValidTimeRange(zoomedTimeRange)) {
       this.setTime(zoomedTimeRange);
     }
   }
@@ -354,7 +354,7 @@ export class TimeSrv {
     return !exceededMaxTimeSpan;
   }
 
-  isValidTime(time: RawTimeRange) {
+  isValidTimeRange(time: RawTimeRange) {
     return this.isValidTimeBack(time) && this.isValidTimeSpan(time);
   }
 }

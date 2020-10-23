@@ -89,7 +89,7 @@ class UnthemedDashNavTimeControls extends Component<Props, State> {
       to: hasDelay ? 'now-' + panel.nowDelay : adjustedTo,
     };
 
-    if (getTimeSrv().isValidTime(nextRange)) {
+    if (getTimeSrv().isValidTimeRange(nextRange)) {
       getTimeSrv().setTime(nextRange);
       this.setState({ isError: false });
     } else {
