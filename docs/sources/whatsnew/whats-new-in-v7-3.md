@@ -46,9 +46,49 @@ These features are included in the Grafana Enterprise edition software.
 
 ### Auditing
 
-### Datasource Usage Insights
+Auditing tracks important changes to your Grafana instance to help you manage and mitigate suspicious activity and meet compliance requirements. Grafana logs events (as JSON) to file or directly to [loki](/oss/loki/).
 
-### SAML Improvements
+Example of a login event:
+
+```json
+{
+  "timestamp": "2020-10-22T10:18:00.838094347Z",
+  "user": {
+    "userId": 1,
+    "orgId": 1,
+    "isAnonymous": false
+  },
+  "action": "login-grafana",
+  "result": {
+    "statusType": "success",
+    "statusCode": 200
+  },
+  "requestUri": "/login",
+  "ipAddress": "127.0.0.1:41324",
+  "userAgent": "Chrome/86.0.4240.111",
+  "grafanaVersion": "7.3.0"
+}
+``` 
+
+For more details, see the [Auditing docs]({{<relref "../enterprise/auditing.md">}}).
+
+### Data source usage insights
+
+Data source usage insights allows you to gain insight into how a data source is being used and how well it works. There is a new tab in the data source settings page called insights that will show you information about how the data source has been used in the past 30 days.
+
+Insights:
+
+- Queries per day
+- Errors per day
+- Average load duration per day (ms)
+
+### SAML single logout
+
+SAML’s single logout (SLO) capability allows users to log out from all applications associated with the current identity provider (IdP) session established via SAML SSO. For more information, refer to the [docs]({{<relref "../enterprise/saml/#single-logout">}}). 
+
+### SAML IdP-initiated single sign on
+
+IdP-initiated single sign on (SSO) allows the user to log in directly from the SAML identity provider (IdP). It is disabled by default for security reasons. For more information, refer to the [docs]({{<relref "../enterprise/saml/#idp-initiated-single-sign-on-sso">}}). 
 
 ## Upgrading
 
