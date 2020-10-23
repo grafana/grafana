@@ -65,34 +65,43 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boole
      * It accepts object containing the computed name and flattened styles returned from css from @emotion/core
      * */
     tooltip: cssCore`
-  body {
-    .rc-slider-tooltip {
-      cursor: grab;
-      user-select: none;
-      z-index: ${theme.zIndex.tooltip};
-    }
+      body {
+        .rc-slider-tooltip {
+          cursor: grab;
+          user-select: none;
+          z-index: ${theme.zIndex.tooltip};
+        }
 
-    .rc-slider-tooltip-inner {
-      color: ${theme.colors.text};
-      background-color: transparent !important;
-      border-radius: 0;
-      box-shadow: none;
-    }
+        .rc-slider-tooltip-inner {
+          color: ${theme.colors.text};
+          background-color: transparent !important;
+          border-radius: 0;
+          box-shadow: none;
+        }
 
-    .rc-slider-tooltip-placement-top .rc-slider-tooltip-arrow {
-      display: none;
-    }
+        .rc-slider-tooltip-placement-top .rc-slider-tooltip-arrow {
+          display: none;
+        }
 
-    .rc-slider-tooltip-placement-top {
-      padding: 0;
-    }
-  }
-`,
+        .rc-slider-tooltip-placement-top {
+          padding: 0;
+        }
+      }
+    `,
     sliderInput: css`
       display: flex;
       flex-direction: row;
       align-items: center;
       width: 100%;
+    `,
+    sliderInputVertical: css`
+      flex-direction: column;
+      height: 100%;
+
+      .rc-slider {
+        margin: 0;
+        order: 2;
+      }
     `,
     sliderInputField: css`
       display: flex;
@@ -104,6 +113,10 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boole
       border-radius: ${theme.border.radius.sm};
       border: 1px solid ${theme.colors.formInputBorder};
       ${getFocusStyle(theme)};
+    `,
+    sliderInputFieldVertical: css`
+      margin: 0 0 ${theme.spacing.lg} 0;
+      order: 1;
     `,
   };
 });

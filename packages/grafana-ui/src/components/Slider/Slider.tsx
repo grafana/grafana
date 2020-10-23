@@ -58,11 +58,13 @@ export const Slider: FunctionComponent<Props> = ({
       onAfterChange(v);
     }
   }, []);
+  const sliderInputClassNames = !isHorizontal ? [styles.sliderInputVertical] : [];
+  const sliderInputFieldClassNames = !isHorizontal ? [styles.sliderInputFieldVertical] : [];
   return (
     <div className={cx(styles.container, styles.slider)}>
       {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
       <Global styles={styles.tooltip} />
-      <label className={styles.sliderInput}>
+      <label className={cx(styles.sliderInput, ...sliderInputClassNames)}>
         <SliderWithTooltip
           min={min}
           max={max}
@@ -75,7 +77,7 @@ export const Slider: FunctionComponent<Props> = ({
           reverse={reverse}
         />
         <input
-          className={cx(styles.sliderInputField)}
+          className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
           type="number"
           value={`${slidervalue}`} // to fix the react leading zero issue
           onChange={onSliderInputChange}
