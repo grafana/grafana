@@ -338,12 +338,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       },
       (err: any) => {
         console.error(err);
-        if (err.data && err.data.error) {
-          let message = angular.toJson(err.data.error);
-          if (err.data.error.reason) {
-            message = err.data.error.reason;
-          }
-          return { status: 'error', message: message };
+        if (err.message) {
+          return { status: 'error', message: err.message };
         } else {
           return { status: 'error', message: err.status };
         }
