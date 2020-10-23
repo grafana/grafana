@@ -1,9 +1,9 @@
 import React from 'react';
-import { ContextMenu } from './ContextMenu';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import mdx from './ContextMenu.mdx';
-import { WithContextMenu } from './WithContextMenu';
 import { IconButton } from '../IconButton/IconButton';
+import { ContextMenu } from './ContextMenu';
+import { WithContextMenu } from './WithContextMenu';
+import mdx from './ContextMenu.mdx';
 
 export default {
   title: 'General/ContextMenu',
