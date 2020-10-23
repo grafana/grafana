@@ -12,7 +12,7 @@ import { afterEach } from '../../../test/lib/common';
 let errorsReturnMock: any = [];
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...(jest.requireActual('@grafana/runtime') as object),
   getBackendSrv: () => ({
     get: () => {
       return errorsReturnMock as any;
