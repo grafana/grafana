@@ -268,4 +268,4 @@ sigv4_auth_enabled = true
 
 Once AWS SigV4 is enabled, it can be configured on the Elasticsearch data source configuration page. The authentication options are documented [here](../datasources/cloudwatch.md#authentication).
 
-{{< docs-imagebox img="/img/docs/v73/elasticsearch--sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS Elasticsearch Service" >}}
+{{< docs-imagebox img="/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS Elasticsearch Service" >}}
