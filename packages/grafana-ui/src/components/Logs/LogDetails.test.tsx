@@ -45,6 +45,12 @@ describe('LogDetails', () => {
       expect(wrapper.text().includes('key1label1key2label2')).toBe(true);
     });
   });
+  describe('when log row has error', () => {
+    it('should not render log level border', () => {
+      const wrapper = setup({ hasError: true }, undefined);
+      expect(wrapper.find({ 'aria-label': 'Log level' }).html()).not.toContain('logs-row__level');
+    });
+  });
   describe('when row entry has parsable fields', () => {
     it('should render heading ', () => {
       const wrapper = setup(undefined, { entry: 'test=successful' });

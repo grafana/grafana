@@ -14,6 +14,7 @@ import { TestDataQuery, Scenario } from './types';
 import { PredictablePulseEditor } from './components/PredictablePulseEditor';
 import { CSVWaveEditor } from './components/CSVWaveEditor';
 import { defaultQuery } from './constants';
+import { GrafanaLiveEditor } from './components/GrafanaLiveEditor';
 
 const showLabelsFor = ['random_walk', 'predictable_pulse', 'predictable_csv_wave'];
 const endpoints = [
@@ -59,17 +60,23 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       return;
     }
 
-    let stringInput = scenario.stringInput ?? '';
+    const update = { ...query, scenarioId: item.value! };
 
-    if (scenario.id === 'grafana_api') {
-      stringInput = 'datasources';
+    if (scenario.stringInput) {
+      update.stringInput = scenario.stringInput;
     }
 
-    onUpdate({
-      ...query,
-      scenarioId: item.value!,
-      stringInput,
-    });
+    if (scenario.id === 'grafana_api') {
+      update.stringInput = 'datasources';
+    } else if (scenario.id === 'streaming_client') {
+      update.stringInput = '';
+    } else if (scenario.id === 'live') {
+      if (!update.channel) {
+        update.channel = 'random-2s-stream'; // default stream
+      }
+    }
+
+    onUpdate(update);
   };
 
   const onInputChange = (e: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -179,6 +186,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       {scenarioId === 'manual_entry' && <ManualEntryEditor onChange={onUpdate} query={query} onRunQuery={onRunQuery} />}
       {scenarioId === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
       {scenarioId === 'streaming_client' && <StreamingClientEditor onChange={onStreamClientChange} query={query} />}
+      {scenarioId === 'live' && <GrafanaLiveEditor onChange={onUpdate} query={query} />}
       {scenarioId === 'logs' && (
         <InlineFieldRow>
           <InlineField label="Lines" labelWidth={14}>

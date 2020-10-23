@@ -107,7 +107,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.applyRoutes()
 
 	hs.httpSrv = &http.Server{
-		Addr:    fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort),
+		Addr:    net.JoinHostPort(setting.HttpAddr, setting.HttpPort),
 		Handler: hs.macaron,
 	}
 	switch setting.Protocol {
