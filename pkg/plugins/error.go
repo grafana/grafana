@@ -1,28 +1,14 @@
 package plugins
 
-import "fmt"
-
 const (
-	signatureMissing ErrorCode = iota
-	signatureModified
-	signatureInvalid
+	signatureMissing  ErrorCode = "signatureMissing"
+	signatureModified ErrorCode = "signatureModified"
+	signatureInvalid  ErrorCode = "signatureInvalid"
 )
 
-type ErrorCode int
-
-func (e ErrorCode) String() string {
-	switch e {
-	case signatureMissing:
-		return "signatureMissing"
-	case signatureModified:
-		return "signatureModified"
-	case signatureInvalid:
-		return "signatureInvalid"
-	default:
-		panic(fmt.Sprintf("Unrecognized plugin error code %d", e))
-	}
-}
+type ErrorCode string
 
 type PluginError struct {
-	ErrorCode
+	ErrorCode `json:"errorCode"`
+	PluginID  string `json:"pluginId,omitempty"`
 }
