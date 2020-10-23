@@ -1,10 +1,11 @@
 package ngalert
 
 import (
+	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -88,14 +89,21 @@ func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64, signedInUser *mod
 	condition := eval.Condition{RefID: alertDefinition.Condition}
 	var ds *models.DataSource
 	for _, query := range alertDefinition.Data {
-		dsName := query.Model.Get("datasource").MustString("")
+		model := make(map[string]interface{})
+		err := json.Unmarshal(query.JSON, &model)
+		intfc, _ := model["datasource"]
+		dsName, _ := intfc.(string)
 		if dsName != "__expr__" {
-			datasourceID, err := query.Model.Get("datasourceId").Int64()
-			if err != nil {
-				return nil, fmt.Errorf("failed to get datasourceId from query model: %w", err)
+			i, ok := model["datasourceId"]
+			if !ok {
+				return nil, fmt.Errorf("failed to get datasourceId from query model")
+			}
+			datasourceID, ok := i.(float64)
+			if !ok {
+				return nil, fmt.Errorf("failed to cast datasourceId to int64")
 			}
 
-			ds, err = ng.DatasourceCache.GetDatasource(datasourceID, signedInUser, skipCache)
+			ds, err = ng.DatasourceCache.GetDatasource(int64(datasourceID), signedInUser, skipCache)
 			if err != nil {
 				return nil, err
 			}
@@ -108,35 +116,68 @@ func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64, signedInUser *mod
 		}
 
 		if dsName == "" {
-			query.Model.Set("datasource", ds.Name)
+			model["datasource"] = ds.Name
 		}
 
-		if query.Model.Get("datasourceId").MustInt64() == 0 {
-			query.Model.Set("datasourceId", ds.Id)
+		i, ok := model["datasourceId"]
+		if !ok {
+			model["datasourceId"] = ds.Id
+		} else {
+			datasourceID, ok := i.(int64)
+			if !ok || datasourceID == 0 {
+				model["datasourceId"] = ds.Id
+			}
 		}
 
-		if query.Model.Get("orgId").MustInt64() == 0 { // GEL requires orgID inside the query JSON
-			query.Model.Set("orgId", alertDefinition.OrgId)
+		i, ok = model["orgId"] // GEL requires orgID inside the query JSON
+		if !ok {
+			model["orgId"] = alertDefinition.OrgId
+		} else {
+			orgID, ok := i.(int64)
+			if !ok || orgID == 0 {
+				model["orgId"] = alertDefinition.OrgId
+			}
 		}
 
-		if query.Model.Get("maxDataPoints").MustInt64() == 0 { // GEL requires maxDataPoints inside the query JSON
-			query.Model.Set("maxDataPoints", 100)
+		const defaultMaxDataPoints = 100
+		var maxDataPoints int64
+		i, ok = model["maxDataPoints"] // GEL requires maxDataPoints inside the query JSON
+		if !ok {
+			maxDataPoints = defaultMaxDataPoints
+		} else {
+			maxDataPoints, ok = i.(int64)
+			if !ok || maxDataPoints == 0 {
+				maxDataPoints = defaultMaxDataPoints
+			}
 		}
+		query.MaxDataPoints = maxDataPoints
 
 		// intervalMS is calculated by the frontend
 		// should we do something similar?
-		if query.Model.Get("intervalMs").MustInt64() == 0 { // GEL requires intervalMs inside the query JSON
-			query.Model.Set("intervalMs", 1000)
+		const defaultIntervalMs = 1000
+		var intervalMs int64
+		i, ok = model["intervalMs"] // GEL requires intervalMs inside the query JSON
+		if !ok {
+			intervalMs = defaultIntervalMs
+		} else {
+			intervalMs, ok = i.(int64)
+			if !ok || i == 0 {
+				intervalMs = defaultIntervalMs
+			}
 		}
+		query.Interval = time.Duration(intervalMs) * time.Millisecond
 
-		condition.QueriesAndExpressions = append(condition.QueriesAndExpressions, tsdb.Query{
-			RefId:         query.RefId,
-			MaxDataPoints: query.Model.Get("maxDataPoints").MustInt64(100),
-			IntervalMs:    query.Model.Get("intervalMs").MustInt64(1000),
-			QueryType:     query.Model.Get("queryType").MustString(""),
-			Model:         query.Model,
-			DataSource:    ds,
-		})
+		blob, err := json.Marshal(model)
+		if err != nil {
+			return nil, fmt.Errorf("unable to marshal query model %w", err)
+		}
+		rm := json.RawMessage{}
+		err = rm.UnmarshalJSON(blob)
+		if err != nil {
+			return nil, fmt.Errorf("unable to unmarshal query model %w", err)
+		}
+		query.JSON = rm
+		condition.QueriesAndExpressions = append(condition.QueriesAndExpressions, query)
 	}
 
 	return &condition, nil

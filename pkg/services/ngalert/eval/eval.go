@@ -10,7 +10,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -21,7 +23,7 @@ import (
 type Condition struct {
 	RefID string `json:"refId"`
 
-	QueriesAndExpressions []tsdb.Query `json:"queriesAndExpressions"`
+	QueriesAndExpressions []backend.DataQuery `json:"queriesAndExpressions"`
 }
 
 // ExecutionResults contains the unevaluated results from executing
@@ -82,30 +84,47 @@ func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*Execution
 		return nil, fmt.Errorf("Invalid conditions")
 	}
 
-	request := &tsdb.TsdbQuery{
-		TimeRange: tsdb.NewTimeRange(fromStr, toStr),
-		Debug:     true,
-		User:      ctx.SignedInUser,
+	pbQuery := &pluginv2.QueryDataRequest{
+		PluginContext: &pluginv2.PluginContext{
+			// TODO: Things probably
+		},
+		Queries: []*pluginv2.DataQuery{},
 	}
 	for i := range c.QueriesAndExpressions {
-		request.Queries = append(request.Queries, &c.QueriesAndExpressions[i])
+		q := c.QueriesAndExpressions[i]
+		pbQuery.Queries = append(pbQuery.Queries, &pluginv2.DataQuery{
+			Json:          q.JSON,
+			IntervalMS:    q.Interval.Milliseconds(),
+			RefId:         q.RefID,
+			MaxDataPoints: q.MaxDataPoints,
+			QueryType:     q.QueryType,
+			TimeRange: &pluginv2.TimeRange{
+				FromEpochMS: q.TimeRange.From.UnixNano() / 1e6,
+				ToEpochMS:   q.TimeRange.To.UnixNano() / 1e6,
+			},
+		})
 	}
 
-	resp, err := plugins.Transform.Transform(ctx.Ctx, request)
+	tw := plugins.Transform
+	pbRes, err := tw.TransformClient.TransformData(ctx.Ctx, pbQuery, tw.Callback)
 	if err != nil {
-		result.Error = err
 		return &result, err
 	}
 
-	conditionResult := resp.Results[c.RefID]
-	if conditionResult == nil {
+	for refID, res := range pbRes.Responses {
+		if refID != c.RefID {
+			continue
+		}
+		df := tsdb.NewEncodedDataFrames(res.Frames)
+		result.Results, err = df.Decoded()
+		if err != nil {
+			result.Error = err
+			return &result, err
+		}
+	}
+
+	if len(result.Results) == 0 {
 		err = fmt.Errorf("No GEL results")
-		result.Error = err
-		return &result, err
-	}
-
-	result.Results, err = conditionResult.Dataframes.Decoded()
-	if err != nil {
 		result.Error = err
 		return &result, err
 	}

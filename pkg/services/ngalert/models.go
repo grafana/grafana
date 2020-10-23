@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 // AlertDefinition is the model for alert definitions in Alerting NG.
@@ -14,7 +14,7 @@ type AlertDefinition struct {
 	OrgId     int64
 	Name      string
 	Condition string
-	Data      []tsdb.Query
+	Data      []backend.DataQuery
 }
 
 var (
