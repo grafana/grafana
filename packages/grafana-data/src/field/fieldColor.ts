@@ -42,7 +42,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
         'blue',
         'red',
         'green',
-        'yellow',
+        'orange',
         'purple',
         'orange',
         'dark-blue',
