@@ -9,7 +9,7 @@ export const PANEL_EDITOR_UI_STATE_STORAGE_KEY = 'grafana.dashboard.editor.ui';
 export const DEFAULT_PANEL_EDITOR_UI_STATE: PanelEditorUIState = {
   isPanelOptionsVisible: true,
   rightPaneSize: 400,
-  topPaneSize: '45%',
+  topPaneSize: 0.45,
   mode: DisplayMode.Fill,
 };
 
