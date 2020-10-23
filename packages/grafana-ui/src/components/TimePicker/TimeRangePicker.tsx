@@ -75,21 +75,26 @@ export interface Props extends Themeable {
 
 export interface State {
   isOpen: boolean;
+  maybeClosing: boolean;
 }
 
 export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
   state: State = {
     isOpen: false,
+    maybeClosing: false,
   };
 
   componentDidUpdate(_prevProps: Props, prevState: State) {
-    if (!this.props.invalid && prevState.isOpen) {
+    // onChange should only close if it does not cause invalid props to be true
+    if (!this.props.invalid && prevState.maybeClosing) {
       this.setState({ isOpen: false });
     }
+    this.setState({ maybeClosing: false });
   }
 
   onChange = (timeRange: TimeRange) => {
     this.props.onChange(timeRange);
+    this.setState({ maybeClosing: true });
   };
 
   onOpen = (event: FormEvent<HTMLButtonElement>) => {
