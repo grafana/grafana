@@ -2510,7 +2510,6 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -2834,7 +2833,6 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --edition enterprise --build-id $$env:DRONE_BUILD_NUMBER
   environment:
     GCP_KEY:
       from_secret: gcp_key
