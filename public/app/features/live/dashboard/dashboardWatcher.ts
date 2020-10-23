@@ -23,6 +23,7 @@ class DashboardWatcher {
   uid?: string;
   ignoreSave?: boolean;
   editing = false;
+  lastEditing?: DashboardEvent;
 
   setEditingState(state: boolean) {
     const changed = (this.editing = state);
@@ -42,7 +43,8 @@ class DashboardWatcher {
       sessionId,
       uid: this.uid!,
       action: this.editing ? DashboardEventAction.EditingStarted : DashboardEventAction.EditingCanceled,
-      message: 'user (name)',
+      message: (window as any).grafanaBootData?.user?.name,
+      timestamp: Date.now(),
     };
     this.channel!.publish!(msg);
   }
@@ -56,7 +58,11 @@ class DashboardWatcher {
     // Check for changes
     if (uid !== this.uid) {
       this.leave();
-      this.channel = live.getChannel(LiveChannelScope.Grafana, 'dashboard', uid);
+      this.channel = live.getChannel({
+        scope: LiveChannelScope.Grafana,
+        namespace: 'dashboard',
+        path: uid,
+      });
       this.channel.getStream().subscribe(this.observer);
       this.uid = uid;
     }
@@ -73,6 +79,16 @@ class DashboardWatcher {
 
   ignoreNextSave() {
     this.ignoreSave = true;
+  }
+
+  getRecentEditingEvent() {
+    if (this.lastEditing && this.lastEditing.timestamp) {
+      const elapsed = Date.now() - this.lastEditing.timestamp;
+      if (elapsed > 5000) {
+        this.lastEditing = undefined;
+      }
+    }
+    return this.lastEditing;
   }
 
   observer = {
@@ -98,7 +114,7 @@ class DashboardWatcher {
 
             const dash = getDashboardSrv().getCurrent();
             if (dash.uid !== event.message.uid) {
-              console.log('dashboard event for differnt dashboard?', event, dash);
+              console.log('dashboard event for different dashboard?', event, dash);
               return;
             }
 
@@ -117,10 +133,15 @@ class DashboardWatcher {
               }
             } else if (showPopup) {
               if (action === DashboardEventAction.EditingStarted) {
-                appEvents.emit(AppEvents.alertWarning, [
-                  'Another session is editing this dashboard',
-                  event.message.message,
-                ]);
+                const editingEvent = event.message;
+                const recent = this.getRecentEditingEvent();
+                if (!recent || recent.message !== editingEvent.message) {
+                  appEvents.emit(AppEvents.alertWarning, [
+                    'Another session is editing this dashboard',
+                    editingEvent.message,
+                  ]);
+                }
+                this.lastEditing = editingEvent;
               }
             }
             return;
@@ -147,7 +168,6 @@ export function getDashboardChannelsFeature(): CoreGrafanaLiveFeature {
   const dashboardConfig: LiveChannelConfig = {
     path: '${uid}',
     description: 'Dashboard change events',
-    variables: [{ value: 'uid', label: '${uid}', description: 'unique id for a dashboard' }],
     hasPresence: true,
     canPublish: () => true,
   };

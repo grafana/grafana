@@ -821,7 +821,7 @@ filebeat.inputs:
 
 # By default Ingest pipelines are not updated if a pipeline with the same ID
 # already exists. If this option is enabled Filebeat overwrites pipelines
-# everytime a new Elasticsearch connection is established.
+# every time a new Elasticsearch connection is established.
 #filebeat.overwrite_pipelines: false
 
 # How long filebeat waits on shutdown for the publisher to finish.

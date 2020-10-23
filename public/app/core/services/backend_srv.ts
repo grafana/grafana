@@ -2,11 +2,11 @@ import { from, merge, MonoTypeOperatorFunction, Observable, Subject, Subscriptio
 import { catchError, filter, map, mergeMap, retryWhen, share, takeUntil, tap, throwIfEmpty } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 import { v4 as uuidv4 } from 'uuid';
-import { BackendSrv as BackendService, BackendSrvRequest, FetchResponse, FetchError } from '@grafana/runtime';
+import { BackendSrv as BackendService, BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
 import { AppEvents, DataQueryErrorType } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
-import config, { getConfig } from 'app/core/config';
+import { getConfig } from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
@@ -40,7 +40,7 @@ export class BackendSrv implements BackendService {
     appEvents: appEvents,
     contextSrv: contextSrv,
     logout: () => {
-      window.location.href = config.appSubUrl + '/logout';
+      window.location.reload();
     },
   };
 
@@ -65,10 +65,11 @@ export class BackendSrv implements BackendService {
   }
 
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
-    return new Observable(observer => {
-      // We need to match an entry added to the queue stream with the entry that is eventually added to the response stream
-      const id = uuidv4();
+    // We need to match an entry added to the queue stream with the entry that is eventually added to the response stream
+    const id = uuidv4();
+    const fetchQueue = this.fetchQueue;
 
+    return new Observable(observer => {
       // Subscription is an object that is returned whenever you subscribe to an Observable.
       // You can also use it as a container of many subscriptions and when it is unsubscribed all subscriptions within are also unsubscribed.
       const subscriptions: Subscription = new Subscription();
@@ -89,6 +90,9 @@ export class BackendSrv implements BackendService {
 
       // This returned function will be called whenever the returned Observable from the fetch<T> function is unsubscribed/errored/completed/canceled.
       return function unsubscribe() {
+        // Change status to Done moved here from ResponseQueue because this unsubscribe was called before the responseQueue produced a result
+        fetchQueue.setDone(id);
+
         // When subscriptions is unsubscribed all the implicitly added subscriptions above are also unsubscribed.
         subscriptions.unsubscribe();
       };

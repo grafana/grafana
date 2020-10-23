@@ -315,6 +315,7 @@ export class DashboardPage extends PureComponent<Props, State> {
             autoHeightMin="100%"
             setScrollTop={this.setScrollTop}
             scrollTop={updateScrollTop}
+            hideHorizontalTrack={true}
             updateAfterMountMs={500}
             className="custom-scrollbar--page"
           >
