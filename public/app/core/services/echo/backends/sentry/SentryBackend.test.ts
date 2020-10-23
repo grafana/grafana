@@ -5,7 +5,9 @@ import { FetchTransport } from '@sentry/browser/dist/transports';
 import { CustomEndpointTransport } from './transports/CustomEndpointTransport';
 import { EchoSrvTransport } from './transports/EchoSrvTransport';
 import { SentryEchoEvent } from './types';
-import { EchoEventType, EchoMeta } from '@grafana/runtime';
+import { EchoBackend, EchoEventType, EchoMeta, setEchoSrv } from '@grafana/runtime';
+import { waitFor } from '@testing-library/react';
+import { Echo } from '../../Echo';
 
 jest.mock('@sentry/browser');
 
@@ -82,5 +84,48 @@ describe('SentryEchoBackend', () => {
       expect(transport.sendEvent).toHaveBeenCalledTimes(1);
       expect(transport.sendEvent).toHaveBeenCalledWith(event.payload);
     });
+  });
+
+  it.only('integration test with EchoSrv, Sentry and CustomFetchTransport', async () => {
+    // sets up the whole thing between window.onerror and backend endpoint call, checks that error is reported
+
+    // use actual sentry & mock window.fetch
+    const sentry = jest.requireActual('@sentry/browser');
+    (initSentry as jest.Mock).mockImplementation(sentry.init);
+    (sentrySetUser as jest.Mock).mockImplementation(sentry.setUser);
+    const fetchSpy = (window.fetch = jest.fn());
+    fetchSpy.mockResolvedValue({ status: 200 } as Response);
+
+    // set up echo srv & sentry backend
+    const echo = new Echo();
+    setEchoSrv(echo);
+    const sentryBackend = new SentryEchoBackend({
+      ...options,
+      dsn: '',
+      customEndpoint: '/log',
+    });
+    echo.addBackend(sentryBackend);
+
+    // lets add another echo backend for sentry events for good measure
+    const myCustomErrorBackend: EchoBackend = {
+      supportedEvents: [EchoEventType.Sentry],
+      flush: () => {},
+      options: {},
+      addEvent: jest.fn(),
+    };
+    echo.addBackend(myCustomErrorBackend);
+
+    // fire off an error using global error handler, Sentry should pick it up
+    const error = new Error('test error');
+    window.onerror!(error.message, undefined, undefined, undefined, error);
+
+    // check that error was reported to backend
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1), { timeout: 1000 });
+    const [url, reqInit]: [string, RequestInit] = fetchSpy.mock.calls[0];
+    expect(url).toEqual('/log');
+    expect((JSON.parse(reqInit.body as string) as SentryEvent).exception!.values![0].value).toEqual('test error');
+
+    // check that our custom backend got it too
+    expect(myCustomErrorBackend.addEvent).toHaveBeenCalledTimes(1);
   });
 });

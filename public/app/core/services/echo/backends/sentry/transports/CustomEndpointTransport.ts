@@ -1,4 +1,4 @@
-import { Event } from '@sentry/browser';
+import { Event, Severity } from '@sentry/browser';
 import { logger, parseRetryAfterHeader, PromiseBuffer, supportsReferrerPolicy, SyncPromise } from '@sentry/utils';
 import { Response, Status, TransportOptions } from '@sentry/types';
 import { BaseTransport } from '../types';
@@ -20,7 +20,7 @@ export class CustomEndpointTransport implements BaseTransport {
 
   private readonly _buffer: PromiseBuffer<Response> = new PromiseBuffer(30);
 
-  constructor(private options: CustomEndpointTransportOptions) {}
+  constructor(public options: CustomEndpointTransportOptions) {}
 
   sendEvent(event: Event): PromiseLike<Response> {
     if (new Date(Date.now()) < this._disabledUntil) {
@@ -35,6 +35,7 @@ export class CustomEndpointTransport implements BaseTransport {
       // convert all timestamps to iso string, so it's parseable by backend
       body: JSON.stringify({
         ...event,
+        level: event.level ?? (event.exception ? Severity.Error : Severity.Info),
         exception: event.exception
           ? {
               values: event.exception.values?.map(value => ({
