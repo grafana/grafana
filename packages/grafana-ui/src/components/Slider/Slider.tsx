@@ -3,24 +3,13 @@ import SliderComponent from 'rc-slider';
 import { cx } from 'emotion';
 import { Global } from '@emotion/core';
 import { useTheme } from '../../themes/ThemeContext';
-import { Orientation } from '../../types/orientation';
 import { getStyles } from './styles';
+import { SliderProps } from './types';
 
-export interface Props {
-  min: number;
-  max: number;
-  orientation?: Orientation;
-  /** Set current positions of handle(s). If only 1 value supplied, only 1 handle displayed. */
-  value?: number;
-  reverse?: boolean;
-  step?: number;
-  tooltipAlwaysVisible?: boolean;
-  formatTooltipResult?: (value: number) => number;
-  onChange?: (value: number) => void;
-  onAfterChange?: (value?: number) => void;
-}
-
-export const Slider: FunctionComponent<Props> = ({
+/**
+ * @public
+ */
+export const Slider: FunctionComponent<SliderProps> = ({
   min,
   max,
   onChange,

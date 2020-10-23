@@ -1,8 +1,9 @@
 import React from 'react';
-import { Slider, Props } from './Slider';
+import { Slider } from './Slider';
+import { SliderProps } from './types';
 import { mount } from 'enzyme';
 
-const sliderProps: Props = {
+const sliderProps: SliderProps = {
   min: 10,
   max: 20,
 };

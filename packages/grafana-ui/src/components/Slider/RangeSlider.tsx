@@ -3,25 +3,15 @@ import { Range as RangeComponent, createSliderWithTooltip } from 'rc-slider';
 import { cx } from 'emotion';
 import { Global } from '@emotion/core';
 import { useTheme } from '../../themes/ThemeContext';
-import { Orientation } from '../../types/orientation';
 import { getStyles } from './styles';
+import { RangeSliderProps } from './types';
 
-export interface Props {
-  min: number;
-  max: number;
-  orientation?: Orientation;
-  /** Set current positions of handle(s). If only 1 value supplied, only 1 handle displayed. */
-  value?: number[];
-  reverse?: boolean;
-  step?: number;
-  tooltipAlwaysVisible?: boolean;
-  formatTooltipResult?: (value: number) => number | string;
-  onChange?: (value: number[]) => void;
-  onAfterChange?: (value: number[]) => void;
-}
-
-/** RichHistoryQueriesTab uses this Range Component */
-export const RangeSlider: FunctionComponent<Props> = ({
+/**
+ * @public
+ *
+ * RichHistoryQueriesTab uses this Range Component
+ */
+export const RangeSlider: FunctionComponent<RangeSliderProps> = ({
   min,
   max,
   onChange,

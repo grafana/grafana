@@ -1,8 +1,9 @@
 import React from 'react';
-import { RangeSlider, Props } from './RangeSlider';
+import { RangeSlider } from './RangeSlider';
+import { RangeSliderProps } from './types';
 import { render } from '@testing-library/react';
 
-const sliderProps: Props = {
+const sliderProps: RangeSliderProps = {
   min: 10,
   max: 20,
 };
