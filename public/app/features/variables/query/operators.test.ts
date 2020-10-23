@@ -14,14 +14,16 @@ import {
 } from './operators';
 
 describe('operators', () => {
-  describe('validateVariableSelectionState', () => {
+  describe('validateVariableSelection', () => {
     describe('when called', () => {
       it('then the correct observable should be created', done => {
         const variable = queryBuilder()
           .withId('query')
           .build();
         const dispatch = jest.fn().mockResolvedValue({});
-        const observable = of(undefined).pipe(validateVariableSelection({ variable, dispatch }));
+        const observable = of(undefined).pipe(
+          validateVariableSelection({ variable, dispatch, searchFilter: 'A search filter' })
+        );
 
         observableTester().subscribeAndExpectOnNext({
           observable,
@@ -218,7 +220,7 @@ describe('operators', () => {
         { name: 'value', type: FieldType.string, values: ['VA', 'VB', 'VC'] },
       ],
     });
-    const frameWithoutTextAndValueField = toDataFrame({
+    const frameWithAStringField = toDataFrame({
       fields: [{ name: 'label', type: FieldType.string, values: ['A', 'B', 'C'] }],
     });
     const frameWithExpandableField = toDataFrame({
@@ -260,7 +262,7 @@ describe('operators', () => {
         ],
       },
       {
-        series: [frameWithoutTextAndValueField],
+        series: [frameWithAStringField],
         expected: [
           { text: 'A', value: 'A' },
           { text: 'B', value: 'B' },
@@ -285,6 +287,25 @@ describe('operators', () => {
           observable,
           expect: value => {
             expect(value).toEqual(expected);
+          },
+          done,
+        });
+      });
+    });
+
+    describe('when called without metric find values and string fields', () => {
+      it('then the observable throws', done => {
+        const frameWithTimeField = toDataFrame({
+          fields: [{ name: 'time', type: FieldType.time, values: [1, 2, 3] }],
+        });
+
+        const panelData: any = { series: [frameWithTimeField] };
+        const observable = of(panelData).pipe(toMetricFindValues());
+
+        observableTester().subscribeAndExpectOnError({
+          observable,
+          expect: value => {
+            expect(value).toEqual(new Error("Couldn't find any field of type string in the results."));
           },
           done,
         });

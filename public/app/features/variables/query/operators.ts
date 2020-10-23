@@ -60,7 +60,7 @@ export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValu
         }
 
         if (stringIndex === -1) {
-          throw new Error("Couldn't find any text column in results.");
+          throw new Error("Couldn't find any field of type string in the results.");
         }
 
         for (const frame of frames) {
@@ -153,16 +153,22 @@ export function updateTagsState(args: {
 export function validateVariableSelection(args: {
   variable: QueryVariableModel;
   dispatch: ThunkDispatch;
+  searchFilter?: string;
 }): OperatorFunction<void, void> {
   return source =>
     source.pipe(
       mergeMap(() => {
-        const { dispatch, variable } = args;
+        const { dispatch, variable, searchFilter } = args;
+
         // If we are searching options there is no need to validate selection state
         // This condition was added to as validateVariableSelectionState will update the current value of the variable
         // So after search and selection the current value is already update so no setValue, refresh & url update is performed
         // The if statement below fixes https://github.com/grafana/grafana/issues/25671
-        return from(dispatch(validateVariableSelectionState(toVariableIdentifier(variable))));
+        if (!searchFilter) {
+          return from(dispatch(validateVariableSelectionState(toVariableIdentifier(variable))));
+        }
+
+        return of<void>();
       })
     );
 }

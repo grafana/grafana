@@ -38,6 +38,7 @@ export interface UpdateOptionsResults {
   state: LoadingState;
   identifier: VariableIdentifier;
   error?: any;
+  cancelled?: boolean;
 }
 
 interface VariableQueryRunnerArgs {
@@ -90,13 +91,9 @@ export class VariableQueryRunner {
     this.subscription.unsubscribe();
   }
 
-  onNewRequest(args: UpdateOptionsArgs): void {
+  private onNewRequest(args: UpdateOptionsArgs): void {
     const { dataSource, identifier, searchFilter } = args;
     try {
-      const beforeUid = getState().templating.transaction.uid;
-
-      this.updateOptionsResults.next({ identifier, state: LoadingState.Loading });
-
       const {
         dispatch,
         runRequest,
@@ -104,9 +101,14 @@ export class VariableQueryRunner {
         getVariable,
         queryRunners,
         getTimeSrv,
+        getState,
       } = this.dependencies;
 
-      const variable = getVariable<QueryVariableModel>(identifier.id, this.dependencies.getState());
+      const beforeUid = getState().templating.transaction.uid;
+
+      this.updateOptionsResults.next({ identifier, state: LoadingState.Loading });
+
+      const variable = getVariable<QueryVariableModel>(identifier.id, getState());
       const timeSrv = getTimeSrv();
       const runnerArgs = { variable, dataSource, searchFilter, timeSrv, runRequest };
       const runner = queryRunners.getRunnerForDatasource(dataSource);
@@ -118,7 +120,7 @@ export class VariableQueryRunner {
         .pipe(
           filter(() => {
             // lets check if we started another batch during the execution of the observable. If so we just want to abort the rest.
-            const afterUid = this.dependencies.getState().templating.transaction.uid;
+            const afterUid = getState().templating.transaction.uid;
             return beforeUid === afterUid;
           }),
           first(data => data.state === LoadingState.Done || data.state === LoadingState.Error),
@@ -126,14 +128,7 @@ export class VariableQueryRunner {
           updateOptionsState({ variable, dispatch, getTemplatedRegexFunc }),
           runUpdateTagsRequest({ variable, dataSource, searchFilter }),
           updateTagsState({ variable, dispatch }),
-          filter(() => {
-            // If we are searching options there is no need to validate selection state
-            // This condition was added to as validateVariableSelectionState will update the current value of the variable
-            // So after search and selection the current value is already update so no setValue, refresh & url update is performed
-            // The if statement below fixes https://github.com/grafana/grafana/issues/25671
-            return !searchFilter;
-          }),
-          validateVariableSelection({ variable, dispatch }),
+          validateVariableSelection({ variable, dispatch, searchFilter }),
           takeUntil(
             merge(this.updateOptionsRequests, this.cancelRequests).pipe(
               filter(args => {
@@ -141,6 +136,7 @@ export class VariableQueryRunner {
 
                 if (args.identifier.id === identifier.id) {
                   cancelRequest = true;
+                  this.updateOptionsResults.next({ identifier, state: LoadingState.Loading, cancelled: cancelRequest });
                 }
 
                 return cancelRequest;
