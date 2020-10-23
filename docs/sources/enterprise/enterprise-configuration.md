@@ -103,9 +103,11 @@ Scale factor for rendering images. Value `2` is enough for monitor resolutions, 
 
 ## [auditing]
 
+[Auditing]({{< relref "auditing.md" >}}) allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
+
 ### enabled
 
-Enable the auditing feature.
+Enable the auditing feature. Defaults to false.
 
 ### loggers
 
@@ -133,7 +135,7 @@ Max size in megabytes per log file.
 
 ### url
 
-Set the url for writing logs to Loki.
+Set the URL for writing logs to Loki.
 
 ### tls
 

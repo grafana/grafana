@@ -59,8 +59,8 @@ The audit logs include records about the following categories of actions:
 
 **Sessions**
 
-- Login.
-- Logout.
+- Log in.
+- Log out.
 - Revoke a user authentication token.
 - Create or delete an API key.
 
@@ -75,7 +75,8 @@ The audit logs include records about the following categories of actions:
 
 - Create, update, or delete a team or organization.
 - Add or remove a member of a team or organization.
-- Manage team or organization members roles.
+- Manage organization members roles.
+- Manage team members permissions.
 - Invite an external member to an organization.
 - Revoke a pending invitation to an organization.
 - Add or remove an external group to sync with a team.
@@ -150,7 +151,7 @@ max_file_size_mb = 256
 
 ### Loki exporter
 
-Audit logs are sent to a [Loki](https://grafana.com/oss/loki/) service.
+Audit logs are sent to a [Loki](/oss/loki/) service.
 
 ```ini
 [auditing.logs.loki]
