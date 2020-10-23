@@ -2,7 +2,7 @@
     image: sensu/sensu:latest
     container_name: sensu-backend
     ports:
-      - "3000:3000"
+      - "3080:3000"
       - "8080:8080"
       - "8081:8081"
     volumes:
