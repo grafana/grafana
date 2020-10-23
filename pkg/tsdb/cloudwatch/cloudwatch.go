@@ -56,13 +56,36 @@ var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
 func init() {
+	registry.Register(&registry.Descriptor{
+		Name:         "CloudWatchService",
+		InitPriority: registry.Low,
+		Instance:     &CloudWatchService{},
+	})
+}
+
+type CloudWatchService struct {
+	LogsService *LogsService `inject:""`
+}
+
+func (s *CloudWatchService) Init() error {
+	plog.Debug("initing")
+
 	var globalExecutor *cloudWatchExecutor
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 		if globalExecutor == nil {
-			globalExecutor = newExecutor()
+			globalExecutor = newExecutor2(s.LogsService)
 		}
 		return globalExecutor, nil
 	})
+
+	return nil
+}
+
+func newExecutor2(logsService *LogsService) *cloudWatchExecutor {
+	return &cloudWatchExecutor{
+		queuesByRegion: map[string]chan bool{},
+		logsService:    logsService,
+	}
 }
 
 func newExecutor() *cloudWatchExecutor {
