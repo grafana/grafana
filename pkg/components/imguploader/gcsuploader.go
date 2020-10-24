@@ -137,7 +137,7 @@ func (u *GCSUploader) uploadFile(
 	imageDiskPath,
 	key string,
 ) error {
-	u.log.Debug("Opening image file ", "path", imageDiskPath)
+	u.log.Debug("Opening image file", "path", imageDiskPath)
 	fileReader, err := os.Open(imageDiskPath)
 	if err != nil {
 		return err
@@ -156,7 +156,7 @@ func (u *GCSUploader) uploadFile(
 		wc.ObjectAttrs.PredefinedACL = "publicRead"
 	}
 	if _, err := io.Copy(wc, fileReader); err != nil {
-		wc.Close()
+		_ = wc.Close()
 		return fmt.Errorf("failed to upload to %s: %s", uri, err)
 	}
 	if err := wc.Close(); err != nil {
