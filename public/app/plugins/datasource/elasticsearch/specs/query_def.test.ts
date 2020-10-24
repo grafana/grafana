@@ -123,7 +123,7 @@ describe('ElasticQueryDef', () => {
       });
     });
 
-    describe('Scripted Metric', () => {
+    describe('scripted_metric', () => {
       const result = queryDef.isPipelineAgg('scripted_metric');
 
       test('is not pipe line metric', () => {

@@ -99,7 +99,7 @@ export const bucketAggTypes = [
   { text: 'Histogram', value: 'histogram', requiresField: true },
 ];
 
-export const scriptedMetricOptions = [
+export const scriptedMetricParams = [
   { text: 'Init', value: 'init_script' },
   { text: 'Map', value: 'map_script' },
   { text: 'Combine', value: 'combine_script' },
@@ -241,6 +241,24 @@ export function getPipelineAggOptions(target: ElasticsearchQuery, metric?: Elast
   }
   const ancestors = getAncestors(target, metric);
   return metrics.filter(m => !ancestors.includes(m.id)).map(m => ({ text: describeMetric(m), value: m.id }));
+}
+
+export function getScriptedMetricParams(esVersion: any) {
+  return _.map(scriptedMetricParams, param => {
+    let required;
+    switch (param.value) {
+      case 'map_script':
+        required = true;
+        break;
+      case 'combine_script':
+      case 'reduce_script':
+        required = typeof esVersion === 'number' ? esVersion >= 70 : true;
+        break;
+      default:
+        required = false;
+    }
+    return { ...param, required };
+  });
 }
 
 export function getMovingAvgSettings(model: any, filtered: boolean) {
