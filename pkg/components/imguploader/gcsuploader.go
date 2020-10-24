@@ -68,7 +68,8 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 		}
 	}
 
-	const scope = "https://www.googleapis.com/auth/devstorage.read_write"
+	const scope = storage.ScopeReadWrite
+
 	var client *storage.Client
 	if u.keyFile != "" {
 		u.log.Debug("Creating Google credentials from JSON")
@@ -106,7 +107,7 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 			return "", err
 		}
 	} else {
-		creds, err := google.FindDefaultCredentials(ctx, storage.ScopeReadWrite)
+		creds, err := google.FindDefaultCredentials(ctx, scope)
 		if err != nil {
 			return "", fmt.Errorf("failed to find default Google credentials: %s", err)
 		}
