@@ -123,6 +123,10 @@ Some metric aggregations are called Pipeline aggregations, for example, *Moving 
 
 ![](/img/docs/elasticsearch/pipeline_metrics_editor.png)
 
+## Scripting Language
+
+From Elasticsearch v5.0 and above, the default scripting language changed to *Painless*. For this scripting language, variables are referenced using params.<var>. For Elasticsearch version before v5.0, the default scripting language is *Groovy*, and variables are referenced using <var>. 
+
 ## Templating
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place.
