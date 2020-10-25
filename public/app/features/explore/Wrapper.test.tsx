@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import Wrapper from './Wrapper';
 import { configureStore } from '../../store/configureStore';
 import { Provider } from 'react-redux';
@@ -14,6 +14,8 @@ import {
   QueryEditorProps,
   ScopedVars,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { setTimeSrv } from '../dashboard/services/TimeSrv';
 import { from, Observable } from 'rxjs';
 import { updateLocation } from '../../core/reducers/location';
@@ -22,133 +24,159 @@ import { LokiDatasource } from '../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../plugins/datasource/loki/types';
 import { fromPairs } from 'lodash';
 
-// jest.mock('./XRayQueryField', () => {
-//   return {
-//     __esModule: true,
-//     XRayQueryField: jest.fn(props => (
-//       <input data-testid={'query-field-mock'} onChange={e => props.onChange({ query: e.target.value })} />
-//     )),
-//   };
-// });
-
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,
-    default: (props: any) => <div>{props.children({ width: 100 })}</div>,
+    default: (props: any) => <div>{props.children({ width: 1000 })}</div>,
   };
 });
-// async function renderWithQuery(query: Omit<XrayQuery, 'refId'>, rerender?: any) {
-//   const renderFunc = rerender || render;
-//
-//   const onChange = jest.fn();
-//   let utils: any;
-//   await act(async () => {
-//     utils = renderFunc(
-//       <QueryEditor
-//         {...{
-//           ...defaultProps,
-//           query: {
-//             refId: 'A',
-//             ...query,
-//           },
-//         }}
-//         onChange={onChange}
-//       />
-//     );
-//     await waitFor(() => {});
-//   });
-//
-//   return { ...utils, onChange };
-// }
 
 describe('Wrapper', () => {
-  describe('initialization', () => {
-    it('shows warning if there are no data sources', async () => {
-      setup({ datasources: [] });
-      expect(screen.getByText(/Explore requires at least one data source/i)).toBeDefined();
+  it('shows warning if there are no data sources', async () => {
+    setup({ datasources: [] });
+    expect(screen.getByText(/Explore requires at least one data source/i)).toBeDefined();
+  });
+
+  it('inits url and renders editor but does not call query on empty url', async () => {
+    const { datasources } = setup();
+
+    // Wait for rendering the editor
+    await screen.findByText(/Editor/i);
+
+    // At this point url should be initialised to some defaults
+    expect(store.getState().location.query).toEqual({
+      orgId: '1',
+      left: JSON.stringify(['now-1h', 'now', 'loki', {}]),
+    });
+    expect(datasources.loki.query).not.toBeCalled();
+  });
+
+  it('runs query when url contains query and renders results', async () => {
+    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
+    const { datasources } = setup({ query });
+    (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
+
+    // Make sure we render the logs panel
+    await screen.findByText(/^Logs$/i);
+
+    // Make sure we render the log line
+    await screen.findByText(/custom log line/i);
+
+    // And that the editor gets the expr from the url
+    await screen.findByText(`loki Editor input: { label="value"}`);
+
+    // We did not change the url
+    expect(store.getState().location.query).toEqual({
+      orgId: '1',
+      ...query,
     });
 
-    it('inits url and renders editor but does not call query on empty url', async () => {
-      const { datasources } = setup();
+    // We called the data source query method once
+    expect(datasources.loki.query).toBeCalledTimes(1);
+    expect((datasources.loki.query as Mock).mock.calls[0][0]).toMatchObject({
+      targets: [{ expr: '{ label="value"}' }],
+    });
+  });
 
-      // Wait for rendering the editor
-      await screen.findByText(/Editor/i);
+  it('handles url change and runs the new query', async () => {
+    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
+    const { datasources } = setup({ query });
+    (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
+    // Wait for rendering the logs
+    await screen.findByText(/custom log line/i);
 
-      // At this point url should be initialised to some defaults
-      expect(store.getState().location.query).toEqual({
-        orgId: '1',
-        left: JSON.stringify(['now-1h', 'now', 'loki', {}]),
-      });
-      expect(datasources.loki.query).not.toBeCalled();
+    (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse('different log'));
+    store.dispatch(
+      updateLocation({
+        path: '/explore',
+        query: { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="different"}' }]) },
+      })
+    );
+
+    // Editor renders the new query
+    await screen.findByText(`loki Editor input: { label="different"}`);
+    // Renders new response
+    await screen.findByText(/different log/i);
+  });
+
+  it('handles url change and runs the new query with different datasource', async () => {
+    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
+    const { datasources } = setup({ query });
+    (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
+    // Wait for rendering the logs
+    await screen.findByText(/custom log line/i);
+
+    (datasources.elastic.query as Mock).mockReturnValueOnce(makeMetricsQueryResponse());
+    store.dispatch(
+      updateLocation({
+        path: '/explore',
+        query: { left: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'other query' }]) },
+      })
+    );
+
+    // Editor renders the new query
+    await screen.findByText(`loki Editor input: other query`);
+    // Renders graph
+    await screen.findByText(/Graph/i);
+  });
+
+  it('handles changing the datasource manually', async () => {
+    const { datasources } = setup();
+    // Wait for rendering the editor
+    await screen.findByText(/Editor/i);
+    await changeDatasource('elastic');
+    await screen.findByText('elastic Editor input:');
+    expect(datasources.elastic.query).not.toBeCalled();
+  });
+
+  it('opens the split pane', async () => {
+    const { datasources } = setup();
+    // Wait for rendering the editor
+    const splitButton = await screen.findByText(/split/i);
+    fireEvent.click(splitButton);
+    const editors = await screen.findAllByText('loki Editor input:');
+
+    expect(editors.length).toBe(2);
+    expect(datasources.loki.query).not.toBeCalled();
+  });
+
+  it('inits with two panes if specified in url', async () => {
+    const query = {
+      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
+      right: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'error' }]),
+    };
+
+    const { datasources } = setup({ query });
+    (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
+    (datasources.elastic.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
+
+    // Make sure we render the logs panel
+    const logsPanels = await screen.findAllByText(/^Logs$/i);
+    expect(logsPanels.length).toBe(2);
+
+    // Make sure we render the log line
+    const logsLines = await screen.findAllByText(/custom log line/i);
+    expect(logsLines.length).toBe(2);
+
+    // And that the editor gets the expr from the url
+    await screen.findByText(`loki Editor input: { label="value"}`);
+    await screen.findByText(`elastic Editor input: error`);
+
+    // We did not change the url
+    expect(store.getState().location.query).toEqual({
+      orgId: '1',
+      ...query,
     });
 
-    it('runs query when url contains query and renders results', async () => {
-      const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
-      const { datasources } = setup({ query });
-      (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
-
-      // Make sure we render the logs panel
-      await screen.findByText(/^Logs$/i);
-
-      // Make sure we render the log line
-      await screen.findByText(/custom log line/i);
-
-      // And that the editor gets the expr from the url
-      await screen.findByText(`Editor input: { label="value"}`);
-
-      // We did not change the url
-      expect(store.getState().location.query).toEqual({
-        orgId: '1',
-        ...query,
-      });
-
-      // We called the data source query method once
-      expect(datasources.loki.query).toBeCalledTimes(1);
-      expect((datasources.loki.query as Mock).mock.calls[0][0]).toMatchObject({
-        targets: [{ expr: '{ label="value"}' }],
-      });
+    // We called the data source query method once
+    expect(datasources.loki.query).toBeCalledTimes(1);
+    expect((datasources.loki.query as Mock).mock.calls[0][0]).toMatchObject({
+      targets: [{ expr: '{ label="value"}' }],
     });
 
-    it('handles url change and runs the new query', async () => {
-      const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
-      const { datasources } = setup({ query });
-      (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
-      // Wait for rendering the logs
-      await screen.findByText(/custom log line/i);
-
-      (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse('different log'));
-      store.dispatch(
-        updateLocation({
-          path: '/explore',
-          query: { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="different"}' }]) },
-        })
-      );
-
-      // Editor renders the new query
-      await screen.findByText(`Editor input: { label="different"}`);
-      // Renders new response
-      await screen.findByText(/different log/i);
-    });
-
-    it('handles url change and runs the new query with different datasource', async () => {
-      const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
-      const { datasources } = setup({ query });
-      (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
-      // Wait for rendering the logs
-      await screen.findByText(/custom log line/i);
-
-      (datasources.elastic.query as Mock).mockReturnValueOnce(makeMetricsQueryResponse());
-      store.dispatch(
-        updateLocation({
-          path: '/explore',
-          query: { left: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'other query' }]) },
-        })
-      );
-
-      // Editor renders the new query
-      await screen.findByText(`Editor input: other query`);
-      // Renders graph
-      await screen.findByText(/Graph/i);
+    expect(datasources.elastic.query).toBeCalledTimes(1);
+    expect((datasources.elastic.query as Mock).mock.calls[0][0]).toMatchObject({
+      targets: [{ expr: 'error' }],
     });
   });
 });
@@ -159,6 +187,10 @@ type SetupOptions = {
   query?: any;
 };
 function setup(options?: SetupOptions): { datasources: { [name: string]: DataSourceApi } } {
+  // Clear this up otherwise it persists data source selection
+  // TODO: probably add test for that too
+  window.localStorage.clear();
+
   // Create this here so any mocks are recreated on setup and don't retain state
   const defaultDatasources: DatasourceSetup[] = [makeDatasourceSetup(), makeDatasourceSetup({ name: 'elastic' })];
 
@@ -218,7 +250,9 @@ function makeDatasourceSetup({ name = 'loki' }: { name?: string } = {}): Datasou
     api: {
       components: {
         QueryEditor: (props: QueryEditorProps<LokiDatasource, LokiQuery>) => (
-          <div>Editor input: {props.query.expr}</div>
+          <div>
+            {name} Editor input: {props.query.expr}
+          </div>
         ),
       },
       name: name,
@@ -241,4 +275,17 @@ function makeMetricsQueryResponse(): Observable<DataQueryResponse> {
   const df = new ArrayDataFrame([{ ts: Date.now(), val: 1 }]);
   df.fields[0].type = FieldType.time;
   return from([{ data: [df] }]);
+}
+
+async function changeDatasource(name: string) {
+  const datasourcePicker = await screen.findByLabelText(selectors.components.DataSourcePicker.container);
+  // Bit awkward here but we need to fire the event on some child component that we don't have any label for.
+  // We do not have label because we do not simulate proper element width and so we are using small styles where
+  // label is missing.
+  screen.debug(datasourcePicker.children[0].children[0].children[0], 20000);
+
+  // The select uses mouseDown for opening
+  fireEvent.mouseDown(datasourcePicker.children[0].children[0]);
+  const elasticOption = await screen.findByText(name);
+  fireEvent.click(elasticOption);
 }
