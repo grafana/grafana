@@ -17,19 +17,21 @@ func ParseInterval(interval string) (time.Duration, error) {
 		return time.ParseDuration(interval)
 	}
 
-	num, _ := strconv.Atoi(string(result[1]))
+	num, err := strconv.Atoi(string(result[1]))
+	if err != nil {
+		return 0, err
+	}
 	period := string(result[2])
-	now := time.Now()
 
 	switch period {
 	case "d":
-		return now.Sub(now.AddDate(0, 0, -num)), nil
+		return time.Duration(num*24) * time.Hour, nil
 	case "w":
-		return now.Sub(now.AddDate(0, 0, -num*7)), nil
+		return time.Duration(num*24*7) * time.Hour, nil
 	case "M":
-		return now.Sub(now.AddDate(0, -num, 0)), nil
+		return time.Duration(num*24*7*4) * time.Hour, nil
 	case "y":
-		return now.Sub(now.AddDate(-num, 0, 0)), nil
+		return time.Duration(num*24*7*4*12) * time.Hour, nil
 	}
 
 	return 0, fmt.Errorf("ParseInterval: invalid duration %q", interval)

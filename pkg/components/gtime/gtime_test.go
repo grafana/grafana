@@ -10,19 +10,17 @@ import (
 )
 
 func TestParseInterval(t *testing.T) {
-	now := time.Now()
-
 	tcs := []struct {
 		interval string
 		duration time.Duration
 		err      *regexp.Regexp
 	}{
-		{interval: "1d", duration: now.Sub(now.AddDate(0, 0, -1))},
-		{interval: "1w", duration: now.Sub(now.AddDate(0, 0, -7))},
-		{interval: "2w", duration: now.Sub(now.AddDate(0, 0, -14))},
-		{interval: "1M", duration: now.Sub(now.AddDate(0, -1, 0))},
-		{interval: "1y", duration: now.Sub(now.AddDate(-1, 0, 0))},
-		{interval: "5y", duration: now.Sub(now.AddDate(-5, 0, 0))},
+		{interval: "1d", duration: 24 * time.Hour},
+		{interval: "1w", duration: 24 * 7 * time.Hour},
+		{interval: "2w", duration: 24 * 7 * 2 * time.Hour},
+		{interval: "1M", duration: 24 * 7 * 4 * time.Hour},
+		{interval: "1y", duration: 24 * 7 * 4 * 12 * time.Hour},
+		{interval: "5y", duration: 24 * 7 * 4 * 12 * 5 * time.Hour},
 		{interval: "invalid-duration", err: regexp.MustCompile(`^time: invalid duration "?invalid-duration"?$`)},
 	}
 
