@@ -37,10 +37,13 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
 
   // TODO: Move this in a hook
   const getFields = () => {
-    if (value.type === 'date_histogram') {
-      return datasource.getFields('date');
-    } else {
-      return datasource.getFields();
+    switch (value.type) {
+      case 'date_histogram':
+        return datasource.getFields('date');
+      case 'geohash_grid':
+        return datasource.getFields('geo_point');
+      default:
+        return datasource.getFields();
     }
   };
 

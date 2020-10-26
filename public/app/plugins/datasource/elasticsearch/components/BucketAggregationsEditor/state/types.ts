@@ -65,7 +65,7 @@ interface Filters extends BaseBucketAggregation {
 interface GeoHashGrid extends BucketAggregationWithField {
   type: 'geohash_grid';
   settings?: {
-    precision?: number;
+    precision?: string;
   };
 }
 

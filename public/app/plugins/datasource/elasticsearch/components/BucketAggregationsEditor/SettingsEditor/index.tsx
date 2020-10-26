@@ -83,6 +83,15 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
           </InlineField>
         </>
       )}
+
+      {bucketAgg.type === 'geohash_grid' && (
+        <InlineField label="Precision" {...inlineFieldProps}>
+          <Input
+            onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'precision', e.target.value!))}
+            defaultValue={bucketAgg.settings?.precision ?? '3'}
+          />
+        </InlineField>
+      )}
     </SettingsEditorContainer>
   );
 };

@@ -446,6 +446,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return ELASTIC_META_FIELDS.includes(fieldName);
   }
 
+  // TODO: instead of being a string, this could be a custom type representing all the elastic types
   async getFields(type?: string) {
     const configuredEsVersion = this.esVersion;
     return this.get('/_mapping').then((result: any) => {
