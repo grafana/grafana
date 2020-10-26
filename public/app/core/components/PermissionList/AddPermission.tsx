@@ -63,7 +63,6 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
   };
 
   onPermissionChanged = (permission: SelectableValue<PermissionLevel>) => {
-    console.log(permission);
     this.setState({ permission: permission.value! });
   };
 
@@ -87,7 +86,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     const newItem = this.state;
     const pickerClassName = 'min-width-20';
     const isValid = this.isValid();
-    console.log(newItem);
+
     return (
       <div className="cta-form">
         <button className="cta-form__close btn btn-transparent" onClick={onCancel}>
@@ -124,7 +123,6 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
                   value={this.state.permission}
                   options={dashboardPermissionLevels}
                   onChange={this.onPermissionChanged}
-                  isOpen
                   width={25}
                 />
               </InlineField>
