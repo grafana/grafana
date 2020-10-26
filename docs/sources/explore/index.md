@@ -157,7 +157,7 @@ Along with metrics, Explore allows you to investigate your logs with the followi
 
 ### Logs visualization
 
-Results of log queries are shown as histograms in graph and individual logs are displayed below. If datasource does not send histogram data for the requested time range, the logs model computes a timeseries based on the log row counts bucketed by an automcatically calculated time interval. The start of histogram is anchored by the first log row's timestamp from the result. The end of the timeseries is anchored to the timepicker's **To** range.
+Results of log queries are shown as histograms in graph and individual logs are displayed below. If datasource does not send histogram data for the requested time range, the logs model computes a time series based on the log row counts bucketed by an automatically calculated time interval and the start of histogram is then anchored by the first log row's timestamp from the result. The end of the time series is anchored to the timepicker's **To** range.
 
 ### Visualization options
 
