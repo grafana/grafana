@@ -35,11 +35,25 @@ const (
 )
 
 type PluginNotFoundError struct {
-	PluginId string
+	PluginID string
 }
 
 func (e PluginNotFoundError) Error() string {
-	return fmt.Sprintf("Plugin with id %s not found", e.PluginId)
+	return fmt.Sprintf("plugin with ID %q not found", e.PluginID)
+}
+
+type duplicatePluginError struct {
+	Plugin         *PluginBase
+	ExistingPlugin *PluginBase
+}
+
+func (e duplicatePluginError) Error() string {
+	return fmt.Sprintf("plugin with ID %q already loaded from %q", e.Plugin.Id, e.ExistingPlugin.PluginDir)
+}
+
+func (e duplicatePluginError) Is(err error) bool {
+	_, ok := err.(duplicatePluginError)
+	return ok
 }
 
 // PluginLoader can load a plugin.
@@ -77,12 +91,12 @@ type PluginBase struct {
 }
 
 func (pb *PluginBase) registerPlugin(base *PluginBase) error {
-	if _, exists := Plugins[pb.Id]; exists {
-		return fmt.Errorf("Plugin with ID %q already exists", pb.Id)
+	if p, exists := Plugins[pb.Id]; exists {
+		return duplicatePluginError{Plugin: pb, ExistingPlugin: p}
 	}
 
 	if !strings.HasPrefix(base.PluginDir, setting.StaticRootPath) {
-		plog.Info("Registering plugin", "name", pb.Name)
+		plog.Info("Registering plugin", "id", pb.Id)
 	}
 
 	if len(pb.Dependencies.Plugins) == 0 {

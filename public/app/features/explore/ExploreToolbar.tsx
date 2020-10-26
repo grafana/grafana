@@ -7,11 +7,10 @@ import { css } from 'emotion';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { Icon, IconButton, LegacyForms, SetInterval, Tooltip } from '@grafana/ui';
-import { DataQuery, RawTimeRange, TimeRange, TimeZone, AppEvents } from '@grafana/data';
+import { DataQuery, RawTimeRange, TimeRange, TimeZone } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
-import { copyStringToClipboard } from 'app/core/utils/explore';
-import appEvents from 'app/core/app_events';
+import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import {
   cancelQueries,
   changeDatasource,
@@ -27,7 +26,6 @@ import { getTimeZone } from '../profile/state/selectors';
 import { updateTimeZoneForSession } from '../profile/state/reducers';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 import kbn from '../../core/utils/kbn';
-import { createShortLink } from './utils/links';
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ResponsiveButton } from './ResponsiveButton';
@@ -155,16 +153,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
     return datasourceName ? exploreDatasources.find(datasource => datasource.name === datasourceName) : undefined;
   };
 
-  copyAndSaveShortLink = async () => {
-    const shortLink = await createShortLink(window.location.href);
-    if (shortLink) {
-      copyStringToClipboard(shortLink);
-      appEvents.emit(AppEvents.alertSuccess, ['Shortened link copied to clipboard']);
-    } else {
-      appEvents.emit(AppEvents.alertError, ['Error generating shortened link']);
-    }
-  };
-
   render() {
     const {
       datasourceMissing,
@@ -277,7 +265,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
             ) : null}
             <div className={'explore-toolbar-content-item'}>
               <Tooltip content={'Copy shortened link'} placement="bottom">
-                <button className={'btn navbar-button'} onClick={this.copyAndSaveShortLink}>
+                <button className={'btn navbar-button'} onClick={() => createAndCopyShortLink(window.location.href)}>
                   <Icon name="share-alt" />
                 </button>
               </Tooltip>

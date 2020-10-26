@@ -169,7 +169,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
         top: collisions.bottom ? y - rect.height - OFFSET : y + OFFSET,
       });
     }
-  }, [menuRef.current]);
+  }, [x, y]);
 
   useClickAway(menuRef, () => {
     if (onClose) {

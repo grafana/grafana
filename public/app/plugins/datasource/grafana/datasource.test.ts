@@ -1,13 +1,24 @@
 import { DataSourceInstanceSettings, dateTime, AnnotationQueryRequest } from '@grafana/data';
 
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { getTemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 import { GrafanaDatasource } from './datasource';
 import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
+  getTemplateSrv: () => {
+    let templateSrv = new TemplateSrv();
+    templateSrv.init([
+      { type: 'query', name: 'var', current: { value: 'replaced' } },
+      { type: 'query', name: 'var2', current: { value: ['replaced', 'replaced2'] } },
+      { type: 'query', name: 'var3', current: { value: ['replaced3', 'replaced4'] } },
+      { type: 'query', name: 'var4', current: { value: ['replaced?', 'replaced?2'] } },
+      { type: 'query', name: 'var5', current: { value: ['replaced?3', 'replaced?4'] } },
+    ]);
+    return templateSrv;
+  },
 }));
 
 describe('grafana data source', () => {
@@ -26,16 +37,7 @@ describe('grafana data source', () => {
         return Promise.resolve([]);
       });
 
-      let templateSrv = getTemplateSrv() as any;
-      templateSrv.init([
-        { type: 'query', name: 'var', current: { value: 'replaced' } },
-        { type: 'query', name: 'var2', current: { value: ['replaced', 'replaced2'] } },
-        { type: 'query', name: 'var3', current: { value: ['replaced3', 'replaced4'] } },
-        { type: 'query', name: 'var4', current: { value: ['replaced?', 'replaced?2'] } },
-        { type: 'query', name: 'var5', current: { value: ['replaced?3', 'replaced?4'] } },
-      ]);
-
-      ds = new GrafanaDatasource({} as DataSourceInstanceSettings, templateSrv);
+      ds = new GrafanaDatasource({} as DataSourceInstanceSettings);
     });
 
     describe('with tags that have template variables', () => {
