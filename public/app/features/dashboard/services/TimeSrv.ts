@@ -148,9 +148,10 @@ export class TimeSrv {
       time.to = this.parseUrlParam(params.to) || this.time.to;
     }
 
-    if (this.isValidTimeRange(time)) {
+    try {
+      this.validateTimeRange(time);
       this.time = time;
-    } else {
+    } catch {
       this.setTime(this.time);
     }
 
@@ -305,9 +306,10 @@ export class TimeSrv {
       to: toUtc(to),
     };
 
-    if (this.isValidTimeRange(zoomedTimeRange)) {
+    try {
+      this.validateTimeRange(zoomedTimeRange);
       this.setTime(zoomedTimeRange);
-    }
+    } catch {}
   }
 
   shiftTime(direction: number) {
@@ -320,10 +322,10 @@ export class TimeSrv {
     });
   }
 
-  private isValidTimeBack(time: RawTimeRange): boolean {
+  private validateTimeBack(time: RawTimeRange) {
     const { maxTimeBack } = this.dashboard?.timepicker ?? { maxTimeBack: undefined };
     if (!maxTimeBack) {
-      return true;
+      return;
     }
 
     const maxTimeBackRawRange = {
@@ -342,20 +344,29 @@ export class TimeSrv {
 
     // Add 1 to maxTimeBackBack to allow for rounding errors
     const exceededMaxTimeBack = timeBackSpan > maxTimeBackSpan + 1;
-    return !exceededMaxTimeBack;
+    if (exceededMaxTimeBack) {
+      throw new Error(`Time range start point exceeds maximum of ${maxTimeBack} back`);
+    }
   }
 
-  private isValidTimeSpan(time: RawTimeRange): boolean {
+  private validateTimeSpan(time: RawTimeRange) {
     const { maxTimeSpan } = this.dashboard?.timepicker ?? { maxTimeSpan: undefined };
     const timeRange = rangeUtil.convertRawToRange(time);
     const timeSpan = timeRange.to.valueOf() - timeRange.from.valueOf();
     // Add 1 to maxTimeBackSpan to allow for rounding errors
     const exceededMaxTimeSpan = maxTimeSpan && timeSpan > rangeUtil.intervalToMs(maxTimeSpan) + 1;
-    return !exceededMaxTimeSpan;
+    if (exceededMaxTimeSpan) {
+      throw new Error(`Time range exceeds maximum time span of ${maxTimeSpan}`);
+    }
   }
 
-  isValidTimeRange(time: RawTimeRange) {
-    return this.isValidTimeBack(time) && this.isValidTimeSpan(time);
+  validateTimeRange(time: RawTimeRange) {
+    try {
+      this.validateTimeBack(time);
+      this.validateTimeSpan(time);
+    } catch (err) {
+      throw new Error(`Invalid time range: ${err.message}`);
+    }
   }
 }
 

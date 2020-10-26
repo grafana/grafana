@@ -250,34 +250,34 @@ describe('timeSrv', () => {
     });
   });
 
-  describe('isValidTimeRange', () => {
-    it('should return true when no limits are set', () => {
-      expect(timeSrv.isValidTimeRange({ from: 'now-6h', to: 'now' })).toBe(true);
-      expect(timeSrv.isValidTimeRange({ from: 'now-6y', to: 'now+6h' })).toBe(true);
+  describe('validateTimeRange', () => {
+    it('should not throw when no limits are set', () => {
+      expect(() => timeSrv.validateTimeRange({ from: 'now-6h', to: 'now' })).not.toThrow();
+      expect(() => timeSrv.validateTimeRange({ from: 'now-6y', to: 'now+6h' })).not.toThrow();
     });
 
-    it('should return true when time range does not exceed maxTimeBack', () => {
+    it('should not throw when time range does not exceed maxTimeBack', () => {
       timeSrv.init({ ..._dashboard, timepicker: { maxTimeBack: '6h' } });
-      expect(timeSrv.isValidTimeRange({ from: 'now-5h', to: 'now-3h' })).toBe(true);
-      expect(timeSrv.isValidTimeRange({ from: 'now-6h', to: 'now+3h' })).toBe(true);
+      expect(() => timeSrv.validateTimeRange({ from: 'now-5h', to: 'now-3h' })).not.toThrow();
+      expect(() => timeSrv.validateTimeRange({ from: 'now-6h', to: 'now+3h' })).not.toThrow();
     });
 
-    it('should return true when time range does not exceed maxTimeSpan', () => {
+    it('should not throw when time range does not exceed maxTimeSpan', () => {
       timeSrv.init({ ..._dashboard, timepicker: { maxTimeSpan: '6h' } });
-      expect(timeSrv.isValidTimeRange({ from: 'now-7h', to: 'now-1h' })).toBe(true);
-      expect(timeSrv.isValidTimeRange({ from: 'now-5h', to: 'now+1h' })).toBe(true);
+      expect(() => timeSrv.validateTimeRange({ from: 'now-7h', to: 'now-1h' })).not.toThrow();
+      expect(() => timeSrv.validateTimeRange({ from: 'now-5h', to: 'now+1h' })).not.toThrow();
     });
 
-    it('should return false when time range exceeds maxTimeBack', () => {
+    it('should throw when time range exceeds maxTimeBack', () => {
       timeSrv.init({ ..._dashboard, timepicker: { maxTimeBack: '6h' } });
-      expect(timeSrv.isValidTimeRange({ from: 'now-7h', to: 'now-1h' })).toBe(false);
-      expect(timeSrv.isValidTimeRange({ from: 'now-7h', to: 'now+1h' })).toBe(false);
+      expect(() => timeSrv.validateTimeRange({ from: 'now-7h', to: 'now-1h' })).toThrow();
+      expect(() => timeSrv.validateTimeRange({ from: 'now-7h', to: 'now+1h' })).toThrow();
     });
 
-    it('should return false when time range exceeds maxTimeSpan', () => {
+    it('should throw when time range exceeds maxTimeSpan', () => {
       timeSrv.init({ ..._dashboard, timepicker: { maxTimeSpan: '6h' } });
-      expect(timeSrv.isValidTimeRange({ from: 'now-7h', to: 'now' })).toBe(false);
-      expect(timeSrv.isValidTimeRange({ from: 'now-5h', to: 'now+2h' })).toBe(false);
+      expect(() => timeSrv.validateTimeRange({ from: 'now-7h', to: 'now' })).toThrow();
+      expect(() => timeSrv.validateTimeRange({ from: 'now-5h', to: 'now+2h' })).toThrow();
     });
   });
 });

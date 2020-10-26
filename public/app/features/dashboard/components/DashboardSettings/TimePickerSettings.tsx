@@ -5,6 +5,13 @@ import isEmpty from 'lodash/isEmpty';
 import { selectors } from '@grafana/e2e-selectors';
 import { AutoRefreshIntervals } from './AutoRefreshIntervals';
 
+export const isValidTimeSpanInput = (value: string): boolean => {
+  const timeUnits = ['ms', 's', 'm', 'h', 'd', 'w', 'M', 'y'];
+  // this pattern matches a number without leading zeros followed by a time unit and optional trailing whitespace
+  const regexp = new RegExp(`^(0|[1-9]\\d*)(${timeUnits.join('|')})\\s*$`);
+  return isEmpty(value) || regexp.test(value);
+};
+
 interface Props {
   onTimeZoneChange: (timeZone: TimeZone) => void;
   onRefreshIntervalChange: (interval: string[]) => void;
@@ -49,9 +56,9 @@ export class TimePickerSettings extends PureComponent<Props, State> {
   onMaxTimeBackChange = (event: React.FormEvent<HTMLInputElement>) => {
     const value = event.currentTarget.value;
 
-    if (isEmpty(value) || (rangeUtil.isValidTimeSpan(value) && !value.includes('now'))) {
+    if (isValidTimeSpanInput(value)) {
       this.setState({ isMaxTimeBackValid: true });
-      this.props.onMaxTimeBackChange(value);
+      this.props.onMaxTimeBackChange(value.trimRight());
     } else {
       this.setState({ isMaxTimeBackValid: false });
     }
@@ -60,9 +67,9 @@ export class TimePickerSettings extends PureComponent<Props, State> {
   onMaxTimeSpanChange = (event: React.FormEvent<HTMLInputElement>) => {
     const value = event.currentTarget.value;
 
-    if (isEmpty(value) || (rangeUtil.isValidTimeSpan(value) && !value.includes('now'))) {
+    if (isValidTimeSpanInput(value)) {
       this.setState({ isMaxTimeSpanValid: true });
-      this.props.onMaxTimeSpanChange(value);
+      this.props.onMaxTimeSpanChange(value.trimRight());
     } else {
       this.setState({ isMaxTimeSpanValid: false });
     }

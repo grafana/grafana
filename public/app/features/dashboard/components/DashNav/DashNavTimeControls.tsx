@@ -36,10 +36,11 @@ export interface Props extends Themeable {
 
 interface State {
   isError: boolean;
+  errorMessage: string;
 }
 
 class UnthemedDashNavTimeControls extends Component<Props, State> {
-  state: State = { isError: false };
+  state: State = { isError: false, errorMessage: '' };
   componentDidMount() {
     // Only reason for this is that sometimes time updates can happen via redux location changes
     // and this happens before timeSrv has had chance to update state (as it listens to angular route-updated)
@@ -89,11 +90,12 @@ class UnthemedDashNavTimeControls extends Component<Props, State> {
       to: hasDelay ? 'now-' + panel.nowDelay : adjustedTo,
     };
 
-    if (getTimeSrv().isValidTimeRange(nextRange)) {
+    try {
+      getTimeSrv().validateTimeRange(nextRange);
       getTimeSrv().setTime(nextRange);
-      this.setState({ isError: false });
-    } else {
-      this.setState({ isError: true });
+      this.setState({ isError: false, errorMessage: '' });
+    } catch (err) {
+      this.setState({ isError: true, errorMessage: err.message });
     }
   };
 
@@ -108,7 +110,7 @@ class UnthemedDashNavTimeControls extends Component<Props, State> {
   };
 
   onClose = () => {
-    this.setState({ isError: false });
+    this.setState({ isError: false, errorMessage: '' });
   };
 
   render() {
@@ -132,7 +134,7 @@ class UnthemedDashNavTimeControls extends Component<Props, State> {
           onClose={this.onClose}
           onChangeTimeZone={this.onChangeTimeZone}
           invalid={this.state.isError}
-          error={'Invalid time range'}
+          error={this.state.errorMessage}
         />
         <RefreshPicker
           onIntervalChanged={this.onChangeRefreshInterval}
