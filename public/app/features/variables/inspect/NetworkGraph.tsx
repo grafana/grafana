@@ -18,7 +18,7 @@ interface DispatchProps {}
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
 
-export const NetWorkGraph: FC<Props> = ({ nodes, edges, direction, width, height, onDoubleClick }) => {
+export const NetworkGraph: FC<Props> = ({ nodes, edges, direction, width, height, onDoubleClick }) => {
   let network: any = null;
   const ref = useRef(null);
 

@@ -1,7 +1,7 @@
 import { GraphEdge, GraphNode } from './utils';
 import React, { useCallback, useState } from 'react';
 import { Modal } from '@grafana/ui';
-import { NetWorkGraph, Props as NetWorkGraphProps } from './NetworkGraph';
+import { NetworkGraph, Props as NetWorkGraphProps } from './NetworkGraph';
 
 interface NetworkGraphModalApi {
   showModal: () => void;
@@ -36,7 +36,7 @@ export function NetworkGraphModal({ edges, nodes, show: propsShow, title, childr
         onClickBackdrop={onClose}
         onDismiss={onClose}
       >
-        <NetWorkGraph nodes={nodes} edges={edges} />
+        <NetworkGraph nodes={nodes} edges={edges} />
       </Modal>
       {children({ showModal })}
     </>

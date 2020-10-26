@@ -53,13 +53,13 @@ export const UnProvidedVariablesUnknownTable: FC<Props> = ({ variables, dashboar
               const { id, name } = variable;
               return (
                 <tr key={id}>
-                  <td style={{ width: '1%', verticalAlign: 'top' }}>
-                    <span className="pointer template-variable">{name}</span>
+                  <td className={style.firstColumn}>
+                    <span>{name}</span>
                   </td>
-                  <td style={{ width: '1%' }} />
-                  <td style={{ width: '1%' }} />
-                  <td style={{ width: '1%' }} />
-                  <td style={{ width: '100%', textAlign: 'right' }} className="pointer max-width">
+                  <td className={style.defaultColumn} />
+                  <td className={style.defaultColumn} />
+                  <td className={style.defaultColumn} />
+                  <td className={style.lastColumn}>
                     <VariablesUnknownButton variable={variable} variables={variables} dashboard={dashboard} />
                   </td>
                 </tr>
@@ -80,6 +80,21 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   infoIcon: css`
     margin-left: ${theme.spacing.sm};
+  `,
+  defaultColumn: css`
+    width: 1%;
+  `,
+  firstColumn: css`
+    width: 1%;
+    vertical-align: top;
+    color: ${theme.colors.textStrong};
+  `,
+  lastColumn: css`
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+    text-align: right;
   `,
 });
 
