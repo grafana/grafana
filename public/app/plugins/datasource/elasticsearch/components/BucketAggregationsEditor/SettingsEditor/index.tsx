@@ -160,6 +160,27 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
           </InlineField>
         </>
       )}
+
+      {bucketAgg.type === 'histogram' && (
+        <>
+          <InlineField label="Interval" {...inlineFieldProps}>
+            <Select
+              onChange={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'interval', e.value!))}
+              options={intervalOptions}
+              // TODO: Not sure we have a better way of handling custom values
+              defaultValue={selectDefaultValue(intervalOptions, bucketAgg.settings?.interval)}
+              allowCustomValue
+            />
+          </InlineField>
+
+          <InlineField label="Min Doc Count" {...inlineFieldProps}>
+            <Input
+              onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
+              defaultValue={bucketAgg.settings?.min_doc_count ?? '0'}
+            />
+          </InlineField>
+        </>
+      )}
     </SettingsEditorContainer>
   );
 };
