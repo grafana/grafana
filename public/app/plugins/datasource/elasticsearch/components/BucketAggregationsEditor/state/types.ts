@@ -40,10 +40,12 @@ interface Histogram extends BucketAggregationWithField {
   };
 }
 
+type TermsOrder = 'desc' | 'asc';
+
 interface Terms extends BucketAggregationWithField {
   type: 'terms';
   settings?: {
-    order?: 'top' | 'bottom';
+    order?: TermsOrder;
     size?: number;
     min_doc_count?: string;
     orderBy?: string;

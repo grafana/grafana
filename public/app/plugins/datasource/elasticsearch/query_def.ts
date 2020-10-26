@@ -36,27 +36,6 @@ export const bucketAggregationConfig: BucketsConfiguration = {
   },
 };
 
-export const orderByOptions = [
-  { text: 'Doc Count', value: '_count' },
-  { text: 'Term value', value: '_term' },
-];
-
-export const orderOptions = [
-  { text: 'Top', value: 'desc' },
-  { text: 'Bottom', value: 'asc' },
-];
-
-export const sizeOptions = [
-  { text: 'No limit', value: '0' },
-  { text: '1', value: '1' },
-  { text: '2', value: '2' },
-  { text: '3', value: '3' },
-  { text: '5', value: '5' },
-  { text: '10', value: '10' },
-  { text: '15', value: '15' },
-  { text: '20', value: '20' },
-];
-
 export const extendedStats: ExtendedStat[] = [
   { text: 'Avg', value: 'avg', default: false },
   { text: 'Min', value: 'min', default: false },

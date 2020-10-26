@@ -1,9 +1,9 @@
 import { SelectableValue } from '@grafana/data';
 import { InlineField, Segment, SegmentAsync, useTheme } from '@grafana/ui';
-import { css, cx } from 'emotion';
+import { cx } from 'emotion';
 import React, { FunctionComponent } from 'react';
 import { useDatasource, useDispatch, useQuery } from '../ElasticsearchQueryContext';
-import { flex, flexColumn, getStyles, alignItemsStart } from './styles';
+import { getStyles } from './styles';
 import { marginZero } from '../styles';
 import { ToggleVisibilityButton } from '../ToggleVisibilityButton';
 import { SettingsEditor } from './SettingsEditor';
@@ -19,6 +19,7 @@ import {
 import { metricAggregationConfig } from './utils';
 import { changeMetricField, changeMetricType, toggleMetricVisibility } from './state/actions';
 import { MetricPicker } from '../MetricPicker';
+import { QueryEditorRow } from '../QueryEditorRow';
 
 const toOption = (metric: MetricAggregation) => ({
   label: metricAggregationConfig[metric.type].label,
@@ -75,46 +76,38 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
   };
 
   return (
-    <>
-      <div className={flex}>
-        <div className={cx(flex, alignItemsStart)}>
-          <InlineField label={`Metric (${value.id})`} labelWidth={15} className={cx(styles.color)}>
-            <Segment
-              className={cx(styles.color, marginZero)}
-              options={getTypeOptions(previousMetrics, datasource.esVersion)}
-              onChange={e => dispatch(changeMetricType(value.id, e.value!))}
-              value={toOption(value)}
-            />
-          </InlineField>
+    <QueryEditorRow>
+      <InlineField label={`Metric (${value.id})`} labelWidth={15} className={cx(styles.color)}>
+        <Segment
+          className={cx(styles.color, marginZero)}
+          options={getTypeOptions(previousMetrics, datasource.esVersion)}
+          onChange={e => dispatch(changeMetricType(value.id, e.value!))}
+          value={toOption(value)}
+        />
+      </InlineField>
 
-          {isMetricAggregationWithField(value) && !isPipelineAggregation(value) && (
-            <SegmentAsync
-              className={cx(styles.color)}
-              loadOptions={getFields}
-              onChange={e => dispatch(changeMetricField(value.id, e.value!))}
-              placeholder="Select Metric"
-              value={value.field}
-            />
-          )}
+      {isMetricAggregationWithField(value) && !isPipelineAggregation(value) && (
+        <SegmentAsync
+          className={cx(styles.color)}
+          loadOptions={getFields}
+          onChange={e => dispatch(changeMetricField(value.id, e.value!))}
+          placeholder="Select Metric"
+          value={value.field}
+        />
+      )}
 
-          {isPipelineAggregation(value) && !isPipelineAggregationWithMultipleBucketPaths(value) && (
-            <MetricPicker
-              className={cx(styles.color)}
-              onChange={e => dispatch(changeMetricField(value.id, e.value?.id!))}
-              options={previousMetrics}
-              value={value.field}
-            />
-          )}
-        </div>
+      {isPipelineAggregation(value) && !isPipelineAggregationWithMultipleBucketPaths(value) && (
+        <MetricPicker
+          className={cx(styles.color)}
+          onChange={e => dispatch(changeMetricField(value.id, e.value?.id!))}
+          options={previousMetrics}
+          value={value.field}
+        />
+      )}
 
-        {isMetricAggregationWithSettings(value) && (
-          <div className={css(flex, flexColumn)}>
-            <SettingsEditor metric={value} previousMetrics={previousMetrics} />
-          </div>
-        )}
-      </div>
+      {isMetricAggregationWithSettings(value) && <SettingsEditor metric={value} previousMetrics={previousMetrics} />}
 
       <ToggleVisibilityButton onClick={() => dispatch(toggleMetricVisibility(value.id))} hide={value.hide} />
-    </>
+    </QueryEditorRow>
   );
 };

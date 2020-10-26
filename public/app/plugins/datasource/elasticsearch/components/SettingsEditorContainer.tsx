@@ -9,7 +9,12 @@ export const SettingsEditorContainer: FunctionComponent<Props> = ({ label, child
   const [open, setOpen] = useState(false);
 
   return (
-    <>
+    <div
+      className={css`
+        display: flex;
+        flex-direction: column;
+      `}
+    >
       <button
         className={cx(
           'gf-form-label',
@@ -28,6 +33,6 @@ export const SettingsEditorContainer: FunctionComponent<Props> = ({ label, child
       </button>
 
       {open && children}
-    </>
+    </div>
   );
 };

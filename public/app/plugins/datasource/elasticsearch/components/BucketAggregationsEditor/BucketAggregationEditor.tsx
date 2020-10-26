@@ -3,7 +3,9 @@ import { InlineField, Segment, SegmentAsync } from '@grafana/ui';
 import React, { ComponentProps, FunctionComponent } from 'react';
 import { bucketAggregationConfig } from '../../query_def';
 import { useDatasource, useDispatch } from '../ElasticsearchQueryContext';
+import { QueryEditorRow } from '../QueryEditorRow';
 import { marginZero } from '../styles';
+import { SettingsEditor } from './SettingsEditor';
 import { changeBucketAggregationField, changeBucketAggregationType } from './state/actions';
 import {
   BucketAggregation,
@@ -33,6 +35,7 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
   const datasource = useDatasource();
   const dispatch = useDispatch<BucketAggregationAction>();
 
+  // TODO: Move this in a hook
   const getFields = () => {
     if (value.type === 'date_histogram') {
       return datasource.getFields('date');
@@ -42,7 +45,7 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
   };
 
   return (
-    <>
+    <QueryEditorRow>
       <InlineField label={label} labelWidth={15}>
         <Segment
           className={marginZero}
@@ -60,6 +63,8 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
           value={value.field}
         />
       )}
-    </>
+
+      <SettingsEditor bucketAgg={value} />
+    </QueryEditorRow>
   );
 };

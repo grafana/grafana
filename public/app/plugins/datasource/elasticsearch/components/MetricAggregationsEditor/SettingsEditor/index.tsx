@@ -13,6 +13,7 @@ import { BucketScriptSettingsEditor } from './BucketScriptSettingsEditor';
 import { SettingField } from './SettingField';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 
+// TODO" Move this somewhere and share it with BucketsAggregation Editor
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 16,
 };
