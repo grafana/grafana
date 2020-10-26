@@ -55,3 +55,15 @@ It shows two kinds of information:
 In the search view, you can sort dashboards using these insights data. It helps you find unused or broken dashboards or discover most viewed ones.
 
 {{< docs-imagebox img="/img/docs/enterprise/improved_search.png" max-width="650px" class="docs-image--no-shadow" >}}
+
+## Data source insights
+
+Data source insight gives you information about how much a data source has been used and how many errors it has returned. It shows thirty days of data.
+
+To find data source insights, go to:
+1. Data source list view
+2. Click on a data source
+3. Click the insights tab
+
+
+<!-- image here -->
