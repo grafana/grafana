@@ -193,13 +193,14 @@ func (ds *DataSource) sigV4Middleware(next http.RoundTripper) http.RoundTripper 
 
 	return &SigV4Middleware{
 		Config: &Config{
-			AccessKey:     decrypted["sigV4AccessKey"],
-			SecretKey:     decrypted["sigV4SecretKey"],
-			Region:        ds.JsonData.Get("sigV4Region").MustString(),
-			AssumeRoleARN: ds.JsonData.Get("sigV4AssumeRoleArn").MustString(),
-			AuthType:      ds.JsonData.Get("sigV4AuthType").MustString(),
-			ExternalID:    ds.JsonData.Get("sigV4ExternalId").MustString(),
-			Profile:       ds.JsonData.Get("sigV4Profile").MustString(),
+			DatasourceType: ds.Type,
+			AccessKey:      decrypted["sigV4AccessKey"],
+			SecretKey:      decrypted["sigV4SecretKey"],
+			Region:         ds.JsonData.Get("sigV4Region").MustString(),
+			AssumeRoleARN:  ds.JsonData.Get("sigV4AssumeRoleArn").MustString(),
+			AuthType:       ds.JsonData.Get("sigV4AuthType").MustString(),
+			ExternalID:     ds.JsonData.Get("sigV4ExternalId").MustString(),
+			Profile:        ds.JsonData.Get("sigV4Profile").MustString(),
 		},
 		Next: next,
 	}
