@@ -23,7 +23,7 @@ When creating or updating a data link, press Cmd+Space or Ctrl+Space on your key
 ## Add a data link
 
 1. Hover your cursor over the panel that you want to add a link to and then press `e`. Or click the dropdown arrow next to the panel title and then click **Edit**.
-1. On the Field tab, scroll down to the Data links section. (Panel tab for graph visualizations.)
+1. On the Field tab, scroll down to the Data links section.
 1. Expand Data links and then click **Add link**.
 1. Enter a **Title**. **Title** is a human-readable label for the link that will be displayed in the UI.
 1. Enter the **URL** you want to link to.
@@ -36,14 +36,14 @@ When creating or updating a data link, press Cmd+Space or Ctrl+Space on your key
 
 ## Update a data link
 
-1. On the Field tab, find the link that you want to make changes to. (Panel tab for graph visualizations.)
-1. Click the Edit (pencil) icon to open the Edit link window. 
-1. Make any necessary changes.
-1. Click **Save** to save changes and close the window.
-1. Click **Save** in the upper right to save your changes to the dashboard.
+1. On the Field tab, find the link that you want to make changes to.
+2. Click the Edit (pencil) icon to open the Edit link window.
+3. Make any necessary changes.
+4. Click **Save** to save changes and close the window.
+5. Click **Save** in the upper right to save your changes to the dashboard.
 
 ## Delete a data link
 
-1. On the Field tab, find the link that you want to delete. (Panel tab for graph visualizations.)
-1. Click the **X** icon next to the link you want to delete. 
+1. On the Field tab, find the link that you want to delete.
+1. Click the **X** icon next to the link you want to delete.
 1. Click **Save** in the upper right to save your changes to the dashboard.
