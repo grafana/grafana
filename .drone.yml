@@ -875,19 +875,6 @@ steps:
   depends_on:
   - package
 
-- name: publish-storybook
-  image: grafana/grafana-ci-deploy:1.2.6
-  commands:
-  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/latest
-  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/${DRONE_TAG}
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-  depends_on:
-  - build-storybook
-
 - name: copy-packages-for-docker
   image: grafana/build-container:1.2.28
   commands:
@@ -951,18 +938,6 @@ steps:
   - test-backend
   - test-frontend
 
-- name: release-npm-packages
-  image: grafana/build-container:1.2.28
-  commands:
-  - ./node_modules/.bin/lerna bootstrap
-  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
-  - ./scripts/build/release-packages.sh ${DRONE_TAG}
-  environment:
-    NPM_TOKEN:
-      from_secret: npm_token
-  depends_on:
-  - end-to-end-tests
-
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.2.6
   commands:
@@ -983,6 +958,31 @@ steps:
   - end-to-end-tests
   - mysql-integration-tests
   - postgres-integration-tests
+
+- name: release-npm-packages
+  image: grafana/build-container:1.2.28
+  commands:
+  - ./node_modules/.bin/lerna bootstrap
+  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
+  - ./scripts/build/release-packages.sh ${DRONE_TAG}
+  environment:
+    NPM_TOKEN:
+      from_secret: npm_token
+  depends_on:
+  - end-to-end-tests
+
+- name: publish-storybook
+  image: grafana/grafana-ci-deploy:1.2.6
+  commands:
+  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
+  - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/latest
+  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/${DRONE_TAG}
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  depends_on:
+  - build-storybook
 
 services:
 - name: postgres
@@ -1644,16 +1644,6 @@ steps:
   depends_on:
   - package
 
-- name: publish-storybook
-  image: grafana/grafana-ci-deploy:1.2.6
-  commands:
-  - echo Testing release
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-  depends_on:
-  - build-storybook
-
 - name: copy-packages-for-docker
   image: grafana/build-container:1.2.28
   commands:
@@ -1711,17 +1701,6 @@ steps:
   - test-backend
   - test-frontend
 
-- name: release-npm-packages
-  image: grafana/build-container:1.2.28
-  commands:
-  - ./node_modules/.bin/lerna bootstrap
-  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
-  environment:
-    NPM_TOKEN:
-      from_secret: npm_token
-  depends_on:
-  - end-to-end-tests
-
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.2.6
   commands:
@@ -1742,6 +1721,27 @@ steps:
   - end-to-end-tests
   - mysql-integration-tests
   - postgres-integration-tests
+
+- name: release-npm-packages
+  image: grafana/build-container:1.2.28
+  commands:
+  - ./node_modules/.bin/lerna bootstrap
+  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
+  environment:
+    NPM_TOKEN:
+      from_secret: npm_token
+  depends_on:
+  - end-to-end-tests
+
+- name: publish-storybook
+  image: grafana/grafana-ci-deploy:1.2.6
+  commands:
+  - echo Testing release
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  depends_on:
+  - build-storybook
 
 services:
 - name: postgres
