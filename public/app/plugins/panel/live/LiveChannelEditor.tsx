@@ -5,7 +5,6 @@ import {
   LiveChannelScope,
   LiveChannelAddress,
   LiveChannelSupport,
-  LiveChannelConfig,
   SelectableValue,
   StandardEditorProps,
   FeatureState,
@@ -28,7 +27,6 @@ interface State {
   namespaces: Array<SelectableValue<string>>;
   paths: Array<SelectableValue<string>>;
   support?: LiveChannelSupport;
-  config?: LiveChannelConfig;
 }
 
 export class LiveChannelEditor extends PureComponent<Props, State> {
@@ -48,12 +46,12 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
   }
 
   async updateSelectOptions() {
-    const { scope, namespace, path } = this.props.value;
+    const { value } = this.props;
+    const { scope, namespace } = value;
     const srv = getGrafanaLiveCentrifugeSrv();
     const namespaces = await srv.scopes[scope].listNamespaces();
     const support = namespace ? await srv.scopes[scope].getChannelSupport(namespace) : undefined;
     const paths = support ? await support.getSupportedPaths() : undefined;
-    const config = support && path ? await support.getChannelConfig(path) : undefined;
 
     this.setState({
       namespaces,
@@ -65,20 +63,25 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
             description: p.description,
           }))
         : [],
-      config,
     });
   }
 
   onScopeChanged = (v: SelectableValue<LiveChannelScope>) => {
     if (v.value) {
-      this.props.onChange({ scope: v.value } as LiveChannelAddress);
+      this.props.onChange({
+        scope: v.value,
+        namespace: (undefined as unknown) as string,
+        path: (undefined as unknown) as string,
+      } as LiveChannelAddress);
     }
   };
 
   onNamespaceChanged = (v: SelectableValue<string>) => {
     const update = {
       scope: this.props.value?.scope,
+      path: (undefined as unknown) as string,
     } as LiveChannelAddress;
+
     if (v.value) {
       update.namespace = v.value;
     }
@@ -122,7 +125,10 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
               <Label>Namespace</Label>
               <Select
                 options={namespaces}
-                value={namespaces.find(s => s.value === namespace) || namespace || ''}
+                value={
+                  namespaces.find(s => s.value === namespace) ??
+                  (namespace ? { label: namespace, value: namespace } : undefined)
+                }
                 onChange={this.onNamespaceChanged}
                 allowCustomValue={true}
                 backspaceRemovesValue={true}
@@ -135,7 +141,7 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
               <Label>Path</Label>
               <Select
                 options={paths}
-                value={paths.find(s => s.value === path) || path || ''}
+                value={findPathOption(paths, path)}
                 onChange={this.onPathChanged}
                 allowCustomValue={true}
                 backspaceRemovesValue={true}
@@ -146,6 +152,17 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
       </>
     );
   }
+}
+
+function findPathOption(paths: Array<SelectableValue<string>>, path?: string): SelectableValue<string> | undefined {
+  const v = paths.find(s => s.value === path);
+  if (v) {
+    return v;
+  }
+  if (path) {
+    return { label: path, value: path };
+  }
+  return undefined;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({

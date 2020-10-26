@@ -1,4 +1,3 @@
-import { SelectableValue } from './select';
 import { Observable } from 'rxjs';
 
 /**
@@ -17,7 +16,7 @@ export enum LiveChannelScope {
 /**
  * @alpha -- experimental
  */
-export interface LiveChannelConfig<TMessage = any> {
+export interface LiveChannelConfig<TMessage = any, TController = any> {
   /**
    * The path definition.  either static, or it may contain variables identifed with {varname}
    */
@@ -27,11 +26,6 @@ export interface LiveChannelConfig<TMessage = any> {
    * An optional description for the channel
    */
   description?: string;
-
-  /**
-   * When variables exist, this list will identify each one
-   */
-  variables?: Array<SelectableValue<string>>;
 
   /**
    * The channel keeps track of who else is connected to the same channel
@@ -46,6 +40,9 @@ export interface LiveChannelConfig<TMessage = any> {
 
   /** convert the raw stream message into a message that should be broadcast */
   processMessage?: (msg: any) => TMessage;
+
+  /** some channels are managed by an explicit interface */
+  getController?: () => TController;
 }
 
 export enum LiveChannelConnectionState {

@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
+	"net"
+	"strconv"
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
@@ -110,7 +112,7 @@ func (server *Server) Dial() error {
 		}
 	}
 	for _, host := range strings.Split(server.Config.Host, " ") {
-		address := fmt.Sprintf("%s:%d", host, server.Config.Port)
+		address := net.JoinHostPort(host, strconv.Itoa(server.Config.Port))
 		if server.Config.UseSSL {
 			tlsCfg := &tls.Config{
 				InsecureSkipVerify: server.Config.SkipVerifySSL,

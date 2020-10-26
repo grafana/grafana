@@ -39,7 +39,7 @@ export const setGrafanaLiveSrv = (instance: GrafanaLiveSrv) => {
 };
 
 /**
- * Used to retrieve the {@link GrafanaLiveSrv} that allows you to subscribe to
+ * Used to retrieve the GrafanaLiveSrv that allows you to subscribe to
  * server side events and streams
  *
  * @alpha -- experimental
