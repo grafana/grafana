@@ -2,7 +2,8 @@ import React, { ComponentProps } from 'react';
 import { InlineField, Input } from '@grafana/ui';
 import { useDispatch } from '../../ElasticsearchQueryContext';
 import { changeMetricSetting } from '../state/actions';
-import { MetricAggregationWithSettings, SettingKeyOf, ChangeMetricSettingAction } from '../state/types';
+import { MetricAggregationWithSettings, ChangeMetricSettingAction } from '../state/types';
+import { SettingKeyOf } from '../../types';
 
 interface Props<T extends MetricAggregationWithSettings, K extends SettingKeyOf<T>> {
   label: string;

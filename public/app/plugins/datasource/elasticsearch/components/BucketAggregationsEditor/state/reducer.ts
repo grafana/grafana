@@ -9,6 +9,7 @@ import {
   REMOVE_BUCKET_AGG,
   CHANGE_BUCKET_AGG_TYPE,
   CHANGE_BUCKET_AGG_FIELD,
+  CHANGE_BUCKET_AGG_SETTING,
 } from './types';
 
 export const reducer = (
@@ -61,6 +62,35 @@ export const reducer = (
         return [defaultBucketAgg()];
       }
       return state;
+
+    case CHANGE_BUCKET_AGG_SETTING:
+      return state.map(bucketAgg => {
+        if (bucketAgg.id !== action.payload.bucketAgg.id) {
+          return bucketAgg;
+        }
+
+        // FIXME: this can be done in a better way, also romeving empty objects
+        // Also, can be extracted to be in common with the one for metrics
+        const newSettings = Object.entries({
+          ...bucketAgg.settings,
+          [action.payload.settingName]: action.payload.newValue,
+        }).reduce((acc, [key, value]) => {
+          if (value?.length === 0) {
+            return { ...acc };
+          }
+          return {
+            ...acc,
+            [key]: value,
+          };
+        }, {});
+
+        return {
+          ...bucketAgg,
+          settings: {
+            ...newSettings,
+          },
+        };
+      });
 
     default:
       return state;

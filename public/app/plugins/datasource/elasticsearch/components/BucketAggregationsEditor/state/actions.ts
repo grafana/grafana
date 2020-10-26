@@ -1,3 +1,4 @@
+import { SettingKeyOf } from '../../types';
 import {
   ADD_BUCKET_AGG,
   BucketAggregation,
@@ -6,6 +7,8 @@ import {
   CHANGE_BUCKET_AGG_TYPE,
   CHANGE_BUCKET_AGG_FIELD,
   BucketAggregationWithField,
+  CHANGE_BUCKET_AGG_SETTING,
+  ChangeBucketAggregationSettingAction,
 } from './types';
 
 export const addBucketAggregation = (aggregationType: BucketAggregation['type']): BucketAggregationAction => ({
@@ -41,5 +44,18 @@ export const changeBucketAggregationField = (
   payload: {
     id,
     newField,
+  },
+});
+
+export const changeBucketAggregationSetting = <T extends BucketAggregation, K extends SettingKeyOf<T>>(
+  bucketAgg: T,
+  settingName: K,
+  newValue: string | string[]
+): ChangeBucketAggregationSettingAction<T> => ({
+  type: CHANGE_BUCKET_AGG_SETTING,
+  payload: {
+    bucketAgg,
+    settingName,
+    newValue,
   },
 });

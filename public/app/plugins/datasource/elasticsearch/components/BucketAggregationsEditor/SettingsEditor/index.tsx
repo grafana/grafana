@@ -2,7 +2,8 @@ import { InlineField, Input, Select } from '@grafana/ui';
 import React, { ComponentProps, FunctionComponent } from 'react';
 import { useDispatch } from '../../ElasticsearchQueryContext';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
-import { BucketAggregation, BucketAggregationAction } from '../state/types';
+import { changeBucketAggregationSetting } from '../state/actions';
+import { BucketAggregation } from '../state/types';
 
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 16,
@@ -35,7 +36,7 @@ interface Props {
 }
 
 export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
-  const dispatch = useDispatch<BucketAggregationAction>();
+  const dispatch = useDispatch();
 
   return (
     <SettingsEditorContainer label="Settings">
@@ -43,8 +44,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
         <>
           <InlineField label="Order" {...inlineFieldProps}>
             <Select
-              // TODO: onBlur
-              onChange={() => {}}
+              onChange={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'order', e.value!))}
               options={orderOptions}
               defaultValue={bucketAgg.settings?.order}
             />
@@ -52,8 +52,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
 
           <InlineField label="Size" {...inlineFieldProps}>
             <Select
-              // TODO: onChange
-              onChange={() => {}}
+              onChange={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'size', e.value!))}
               options={sizeOptions}
               defaultValue={bucketAgg.settings?.size}
               allowCustomValue
@@ -62,16 +61,14 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
 
           <InlineField label="Min Doc Count" {...inlineFieldProps}>
             <Input
-              // TODO: onBlur
-              onBlur={() => {}}
+              onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
               defaultValue={bucketAgg.settings?.min_doc_count ?? '0'}
             />
           </InlineField>
 
           <InlineField label="Order By" {...inlineFieldProps}>
             <Select
-              // TODO: onChange
-              onChange={() => {}}
+              onChange={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'orderBy', e.value!))}
               // TODO: This can also select from previously selected metrics
               options={orderByOptions}
               defaultValue={bucketAgg.settings?.orderBy}
@@ -80,8 +77,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
 
           <InlineField label="Missing" {...inlineFieldProps}>
             <Input
-              // TODO: onBlur
-              onBlur={() => {}}
+              onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'missing', e.target.value!))}
               defaultValue={bucketAgg.settings?.missing}
             />
           </InlineField>

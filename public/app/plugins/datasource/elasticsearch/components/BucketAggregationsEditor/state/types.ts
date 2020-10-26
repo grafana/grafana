@@ -1,10 +1,12 @@
 import { Action } from '../../../hooks/useReducerCallback';
 import { bucketAggregationConfig } from '../../../query_def';
+import { SettingKeyOf } from '../../types';
 
 export const ADD_BUCKET_AGG = '@bucketAggs/add';
 export const REMOVE_BUCKET_AGG = '@bucketAggs/remove';
 export const CHANGE_BUCKET_AGG_TYPE = '@bucketAggs/change_type';
 export const CHANGE_BUCKET_AGG_FIELD = '@bucketAggs/change_field';
+export const CHANGE_BUCKET_AGG_SETTING = '@bucketAggs/change_setting';
 
 export type BucketAggregationType = 'terms' | 'filters' | 'geohash_grid' | 'date_histogram' | 'histogram';
 
@@ -97,8 +99,18 @@ export interface ChangeBucketAggregationFieldAction extends Action<typeof CHANGE
   };
 }
 
-export type BucketAggregationAction =
+export interface ChangeBucketAggregationSettingAction<T extends BucketAggregation>
+  extends Action<typeof CHANGE_BUCKET_AGG_SETTING> {
+  payload: {
+    bucketAgg: T;
+    settingName: SettingKeyOf<T>;
+    newValue: unknown;
+  };
+}
+
+export type BucketAggregationAction<T extends BucketAggregation = BucketAggregation> =
   | AddBucketAggregationAction
   | RemoveBucketAggregationAction
   | ChangeBucketAggregationTypeAction
-  | ChangeBucketAggregationFieldAction;
+  | ChangeBucketAggregationFieldAction
+  | ChangeBucketAggregationSettingAction<T>;

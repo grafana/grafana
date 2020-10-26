@@ -1,3 +1,4 @@
+import { SettingKeyOf } from '../../types';
 import {
   ADD_METRIC,
   CHANGE_METRIC_FIELD,
@@ -14,7 +15,6 @@ import {
   ChangeMetricAttributeAction,
   ChangeMetricSettingAction,
   ChangeMetricMetaAction,
-  SettingKeyOf,
 } from './types';
 
 export const addMetric = (metricType: MetricAggregation['type']): MetricAggregationAction => ({
