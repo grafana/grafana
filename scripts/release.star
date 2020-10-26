@@ -56,7 +56,7 @@ def release_npm_packages_step(edition, ver_mode):
         'commands': commands,
     }
 
-def get_steps(edition, ver_mode):
+def get_steps(edition, ver_mode, publish):
     steps = [
         lint_backend_step(edition),
         codespell_step(),
@@ -70,22 +70,25 @@ def get_steps(edition, ver_mode):
         e2e_tests_server_step(),
         e2e_tests_step(),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
-        publish_storybook_step(edition=edition, ver_mode=ver_mode),
         copy_packages_for_docker_step(),
-        build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=True),
-        build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=True),
+        build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=publish),
+        build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=publish),
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
-        release_npm_packages_step(edition=edition, ver_mode=ver_mode),
-        upload_packages_step(edition=edition, ver_mode=ver_mode),
     ]
+    if publish:
+        steps.extend([
+            upload_packages_step(edition=edition, ver_mode=ver_mode),
+            release_npm_packages_step(edition=edition, ver_mode=ver_mode),
+            publish_storybook_step(edition=edition, ver_mode=ver_mode),
+        ])
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
 
     return steps, windows_steps
 
-def get_oss_pipelines(trigger, ver_mode):
+def get_oss_pipelines(trigger, ver_mode, publish):
     services = integration_test_services()
-    steps, windows_steps = get_steps(edition='oss', ver_mode=ver_mode)
+    steps, windows_steps = get_steps(edition='oss', ver_mode=ver_mode, publish=publish)
     return [
         pipeline(
             name='oss-build-{}'.format(ver_mode), edition='oss', trigger=trigger, services=services, steps=steps,
@@ -97,57 +100,59 @@ def get_oss_pipelines(trigger, ver_mode):
         ),
     ]
 
-def get_enterprise_pipelines(trigger, ver_mode):
+def get_enterprise_pipelines(trigger, ver_mode, publish):
     services = integration_test_services()
-    steps, windows_steps = get_steps(edition='enterprise', ver_mode=ver_mode)
+    steps, windows_steps = get_steps(edition='enterprise', ver_mode=ver_mode, publish=publish)
     return [
         pipeline(
-            name='enterprise-build-{}'.format(ver_mode), edition='enterprise', trigger=trigger, services=services, steps=steps,
-            ver_mode=ver_mode,
+            name='enterprise-build-{}'.format(ver_mode), edition='enterprise', trigger=trigger, services=services,
+            steps=steps, ver_mode=ver_mode,
         ),
         pipeline(
-            name='enterprise-windows-{}'.format(ver_mode), edition='enterprise', trigger=trigger, steps=windows_steps, platform='windows',
-            depends_on=['enterprise-build-{}'.format(ver_mode)], ver_mode=ver_mode,
+            name='enterprise-windows-{}'.format(ver_mode), edition='enterprise', trigger=trigger, steps=windows_steps,
+            platform='windows', depends_on=['enterprise-build-{}'.format(ver_mode)], ver_mode=ver_mode,
         ),
     ]
 
-def release_pipelines():
-    ver_mode = 'release'
-
+def release_pipelines(ver_mode='release', trigger=None):
     services = integration_test_services()
-    trigger = {
-        'ref': ['refs/tags/v*',],
-    }
+    if not trigger:
+        trigger = {
+            'ref': ['refs/tags/v*',],
+        }
+
+    publish = ver_mode in ('release', 'test-release',)
 
     # The release pipelines include also enterprise ones, so both editions are built for a release.
     # We could also solve this by triggering a downstream build for the enterprise repo, but by including enterprise
     # in OSS release builds, we simplify the UX for the release engineer.
-    oss_pipelines = get_oss_pipelines(ver_mode=ver_mode, trigger=trigger)
-    enterprise_pipelines = get_enterprise_pipelines(ver_mode=ver_mode, trigger=trigger)
+    oss_pipelines = get_oss_pipelines(ver_mode=ver_mode, trigger=trigger, publish=publish)
+    enterprise_pipelines = get_enterprise_pipelines(ver_mode=ver_mode, trigger=trigger, publish=publish)
 
-    publish_pipeline = pipeline(
-        name='publish-{}'.format(ver_mode), trigger=trigger, edition='oss', steps=[
-            {
-                'name': 'publish-packages',
-                'image': publish_image,
-                'depends_on': [
-                    'initialize',
-                ],
-                'environment': {
-                    'GRAFANA_COM_API_KEY': {
-                        'from_secret': 'grafana_api_key',
+    pipelines = oss_pipelines + enterprise_pipelines
+    if publish:
+        publish_pipeline = pipeline(
+            name='publish-{}'.format(ver_mode), trigger=trigger, edition='oss', steps=[
+                {
+                    'name': 'publish-packages',
+                    'image': publish_image,
+                    'depends_on': [
+                        'initialize',
+                    ],
+                    'environment': {
+                        'GRAFANA_COM_API_KEY': {
+                            'from_secret': 'grafana_api_key',
+                        },
                     },
+                    'commands': [
+                        './bin/grabpl publish-packages --edition oss ${DRONE_TAG}',
+                        './bin/grabpl publish-packages --edition enterprise ${DRONE_TAG}',
+                    ],
                 },
-                'commands': [
-                    './bin/grabpl publish-packages --edition oss ${DRONE_TAG}',
-                    './bin/grabpl publish-packages --edition enterprise ${DRONE_TAG}',
-                ],
-            },
-        ], depends_on=[p['name'] for p in oss_pipelines + enterprise_pipelines], install_deps=False,
-        ver_mode=ver_mode,
-    )
-
-    pipelines = oss_pipelines + enterprise_pipelines + [publish_pipeline,]
+            ], depends_on=[p['name'] for p in oss_pipelines + enterprise_pipelines], install_deps=False,
+            ver_mode=ver_mode,
+        )
+        pipelines.append(publish_pipeline)
 
     pipelines.append(notify_pipeline(
         name='notify-{}'.format(ver_mode), slack_channel='grafana-ci-notifications', trigger=trigger,
@@ -164,8 +169,8 @@ def test_release_pipelines():
         'event': ['custom',],
     }
 
-    oss_pipelines = get_oss_pipelines(ver_mode=ver_mode, trigger=trigger)
-    enterprise_pipelines = get_enterprise_pipelines(ver_mode=ver_mode, trigger=trigger)
+    oss_pipelines = get_oss_pipelines(ver_mode=ver_mode, trigger=trigger, publish=True)
+    enterprise_pipelines = get_enterprise_pipelines(ver_mode=ver_mode, trigger=trigger, publish=True)
 
     publish_cmd = './bin/grabpl publish-packages --edition {{}} --dry-run {}'.format(test_release_ver)
 
