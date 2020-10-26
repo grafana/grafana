@@ -67,7 +67,12 @@ func (ng *AlertNG) SaveAlertDefinition(cmd *SaveAlertDefinitionCommand) error {
 			Data:      cmd.Condition.QueriesAndExpressions,
 		}
 
-		_, err := sess.Insert(alertDefinition)
+		err := ng.validate(alertDefinition, cmd.SignedInUser, cmd.SkipCache)
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Insert(alertDefinition)
 		if err != nil {
 			return err
 		}
@@ -86,6 +91,12 @@ func (ng *AlertNG) UpdateAlertDefinition(cmd *UpdateAlertDefinitionCommand) erro
 			Condition: cmd.Condition.RefID,
 			Data:      cmd.Condition.QueriesAndExpressions,
 		}
+
+		err := ng.validate(alertDefinition, cmd.SignedInUser, cmd.SkipCache)
+		if err != nil {
+			return err
+		}
+
 		affectedRows, err := sess.ID(cmd.ID).Update(alertDefinition)
 		if err != nil {
 			return err

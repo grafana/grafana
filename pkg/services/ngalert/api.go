@@ -148,6 +148,8 @@ func (ng *AlertNG) DeleteAlertDefinitionEndpoint(c *models.ReqContext) api.Respo
 // PUT /api/alert-definitions/:alertDefinitionId
 func (ng *AlertNG) UpdateAlertDefinitionEndpoint(c *models.ReqContext, cmd UpdateAlertDefinitionCommand) api.Response {
 	cmd.ID = c.ParamsInt64(":alertDefinitionId")
+	cmd.SignedInUser = c.SignedInUser
+	cmd.SkipCache = c.SkipCache
 
 	if err := ng.Bus.Dispatch(&cmd); err != nil {
 		return api.Error(500, "Failed to update alert definition", err)
@@ -159,6 +161,8 @@ func (ng *AlertNG) UpdateAlertDefinitionEndpoint(c *models.ReqContext, cmd Updat
 // POST /api/alert-definitions
 func (ng *AlertNG) CreateAlertDefinitionEndpoint(c *models.ReqContext, cmd SaveAlertDefinitionCommand) api.Response {
 	cmd.OrgID = c.SignedInUser.OrgId
+	cmd.SignedInUser = c.SignedInUser
+	cmd.SkipCache = c.SkipCache
 
 	if err := ng.Bus.Dispatch(&cmd); err != nil {
 		return api.Error(500, "Failed to create alert definition", err)
