@@ -66,12 +66,13 @@ type DeleteAuthInfoCommand struct {
 }
 
 type SendLoginLogCommand struct {
-	ReqContext   *ReqContext
-	LogAction    string
-	User         *User
-	ExternalUser *ExternalUserInfo
-	HTTPStatus   int
-	Error        error
+	ReqContext    *ReqContext
+	LogAction     string
+	User          *User
+	ExternalUser  *ExternalUserInfo
+	LoginUsername string
+	HTTPStatus    int
+	Error         error
 }
 
 // ----------------------
