@@ -252,6 +252,14 @@ steps:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.20/windows/grabpl.exe -OutFile grabpl.exe
 
+- name: test-backend
+  image: grafana/ci-build-windows:0.1.5
+  commands:
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
+  depends_on:
+  - initialize
+
 trigger:
   event:
   - pull_request
@@ -607,6 +615,14 @@ steps:
   commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.20/windows/grabpl.exe -OutFile grabpl.exe
+
+- name: test-backend
+  image: grafana/ci-build-windows:0.1.5
+  commands:
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
+  depends_on:
+  - initialize
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -1026,6 +1042,14 @@ steps:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.20/windows/grabpl.exe -OutFile grabpl.exe
 
+- name: test-backend
+  image: grafana/ci-build-windows:0.1.5
+  commands:
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
+  depends_on:
+  - initialize
+
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
   commands:
@@ -1376,6 +1400,14 @@ steps:
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
+
+- name: test-backend
+  image: grafana/ci-build-windows:0.1.5
+  commands:
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
+  depends_on:
+  - initialize
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -1785,6 +1817,14 @@ steps:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.20/windows/grabpl.exe -OutFile grabpl.exe
 
+- name: test-backend
+  image: grafana/ci-build-windows:0.1.5
+  commands:
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
+  depends_on:
+  - initialize
+
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
   commands:
@@ -2129,6 +2169,14 @@ steps:
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
+
+- name: test-backend
+  image: grafana/ci-build-windows:0.1.5
+  commands:
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
+  depends_on:
+  - initialize
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
@@ -2501,6 +2549,14 @@ steps:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.20/windows/grabpl.exe -OutFile grabpl.exe
 
+- name: test-backend
+  image: grafana/ci-build-windows:0.1.5
+  commands:
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
+  depends_on:
+  - initialize
+
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1
   commands:
@@ -2823,6 +2879,14 @@ steps:
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
+
+- name: test-backend
+  image: grafana/ci-build-windows:0.1.5
+  commands:
+  - ./bin/grabpl test-backend
+  - ./bin/grabpl integration-tests
+  depends_on:
+  - initialize
 
 - name: build-windows-installer
   image: grafana/ci-wix:0.1.1

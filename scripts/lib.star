@@ -7,6 +7,14 @@ windows_image = 'mcr.microsoft.com/windows:1809'
 dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
+windows_build_image = 'grafana/ci-build-windows:0.1.5'
+
+test_backend_cmds = [
+    # First execute non-integration tests in parallel, since it should be safe
+    './bin/grabpl test-backend',
+    # Then execute integration tests in serial
+    './bin/grabpl integration-tests',
+]
 
 def pipeline(
     name, edition, trigger, steps, ver_mode, services=[], platform='linux', depends_on=[],
@@ -436,12 +444,7 @@ def test_backend_step():
             'initialize',
             'lint-backend',
         ],
-        'commands': [
-            # First execute non-integration tests in parallel, since it should be safe
-            './bin/grabpl test-backend',
-            # Then execute integration tests in serial
-            './bin/grabpl integration-tests',
-        ],
+        'commands': test_backend_cmds,
     }
 
 def test_frontend_step():
@@ -854,6 +857,12 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'name': 'initialize',
             'image': wix_image,
             'commands': init_cmds,
+        },
+        {
+            'name': 'test-backend',
+            'image': windows_build_image,
+            'commands': test_backend_cmds,
+            'depends_on': ['initialize',],
         },
     ]
     if (ver_mode == 'master' and (edition != 'enterprise' or is_downstream)) or ver_mode in (
