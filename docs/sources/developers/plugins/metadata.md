@@ -170,7 +170,7 @@ For data source plugins. Token authentication section used with an OAuth API.
 
 | Property  | Type              | Required | Description                                                                                   |
 |-----------|-------------------|----------|-----------------------------------------------------------------------------------------------|
-| `headers` | array             | No       | For data source plugins. Route headers adds HTTP headers to the token authentication request. |
+| `headers` | array             | No       | For data source plugins. Add HTTP headers to the token authentication request. |
 | `params`  | [object](#params) | No       | For data source plugins. Parameters for the token authentication request.                     |
 | `url`     | string            | No       | For data source plugins. URL to fetch the authentication token.                               |
 
@@ -186,4 +186,3 @@ For data source plugins. Parameters for the token authentication request.
 | `client_secret` | string | No       | For data source plugins. OAuth client secret. Usually populated by decrypting the secret from the SecureJson blob. |
 | `grant_type`    | string | No       | For data source plugins. OAuth grant type.                                                                         |
 | `resource`      | string | No       | For data source plugins. OAuth resource.                                                                           |
-

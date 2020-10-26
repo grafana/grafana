@@ -202,13 +202,13 @@ func (provider *accessTokenProvider) getAccessTokenCacheKey() string {
 	return fmt.Sprintf("%v_%v_%v_%v", provider.datasourceId, provider.datasourceVersion, provider.route.Path, provider.route.Method)
 }
 
-func addAuthHeaders(reqHeaders *http.Header, route *plugins.AppPluginRoute, data templateData) error {
-	for _, header := range route.TokenAuth.Headers {
-		interpolated, err := InterpolateString(header.Content, data)
+func addAuthHeaders(header *http.Header, route *plugins.AppPluginRoute, data templateData) error {
+	for _, h := range route.TokenAuth.Headers {
+		interpolated, err := InterpolateString(h.Content, data)
 		if err != nil {
 			return err
 		}
-		reqHeaders.Add(header.Name, interpolated)
+		header.Add(h.Name, interpolated)
 	}
 
 	return nil
