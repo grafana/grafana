@@ -12,11 +12,14 @@ In order to perform any of these tasks, you must be logged in to Grafana on an a
 
 > **Note:** The Grafana Server Admin role does not exist in Grafana Cloud. Grafana Cloud users cannot perform tasks listed in this section.
 
-## View the user account list XXX
+## View the user account list
 
 See a complete list of users with accounts on your Grafana server.
 
-{{< docs/shared "view-user-list.md" >}}
+1. Hover your cursor over the **Server Admin** (shield) icon until a menu appears.
+1. Click **Users**.
+
+{{< docs/shared "view-user-list" >}}
 
 Grafana displays all user accounts on the server, listed in alphabetical order by user name. The following information is displayed:
 - **Login -** The value in the **Username** field of the account.
@@ -29,7 +32,7 @@ Grafana displays all user accounts on the server, listed in alphabetical order b
 
 See all details associated with a specific user account.
 
-{{< docs/shared "manage-users/view-user-list" >}}
+1. [View the user account list](#view-the-user-account-list).
 1. Click the user account you wish to view. If necessary, use the search field at the top of the tab to search for the specific user account that you need.
 
 Each user account contains the following sections.
