@@ -41,7 +41,8 @@
           },
           {
             "name":"XDecimal",
-            "type":"decimal"}
+            "type":"decimal"
+          }
         ],
         "rows": [
           [
