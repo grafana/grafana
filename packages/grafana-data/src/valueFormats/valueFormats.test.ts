@@ -16,6 +16,7 @@ const formatTests: ValueFormatTest[] = [
   // Currency
   { id: 'currencyUSD', decimals: 2, value: 1532.82, result: '$1.53K' },
   { id: 'currencyKRW', decimals: 2, value: 1532.82, result: '₩1.53K' },
+  { id: 'currencyIDR', decimals: 2, value: 1532.82, result: 'Rp1.53K' },
 
   // Standard
   { id: 'ms', decimals: 4, value: 0.0024, result: '0.0024 ms' },
